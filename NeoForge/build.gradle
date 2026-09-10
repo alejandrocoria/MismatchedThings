@@ -1,0 +1,85 @@
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+    id 'idea'
+    id 'net.darkhax.curseforgegradle' version '1.1.28'
+    id "com.modrinth.minotaur" version "2.9.0"
+}
+
+base.archivesName = "${project.mod_name}-${project.minecraft_version}-neoforge"
+
+neoForge {
+    version = neoforge_version
+    // Automatically enable neoforge AccessTransformers if the file exists
+    def at = project(':Common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+    runs {
+        configureEach {
+            ideName = "NeoForge ${it.name.capitalize()} (${project.path})" // Unify the run config names with fabric
+        }
+        client {
+            client()
+            gameDirectory = project.file('runs/client')
+        }
+        server {
+            server()
+            gameDirectory = project.file('runs/server')
+            programArgument('--nogui')
+        }
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+
+    dependencies {
+
+    }
+}
+
+idea {
+    module {
+        excludeDirs += file('runs')
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+registerProcessDocsTask(
+        "NeoForge",
+        neoforge_version,
+        ""
+)
+
+tasks.register('publishCurseForge', TaskPublishCurseForge) {
+    apiToken = "${curseForgeApiKey}"
+    def mainFile = upload(curseforge_project_id, jar)
+    mainFile.displayName = "${minecraft_version}-${version}-neoforge"
+    mainFile.releaseType = release_type
+    mainFile.addModLoader("NeoForge")
+    mainFile.addJavaVersion("Java 25")
+    mainFile.addGameVersion("${minecraft_version}")
+    mainFile.addEnvironment("Server", "Client")
+    mainFile.changelogType = "markdown"
+    mainFile.changelog = file("$project.buildDir/doc/changelog.md")
+}
+
+modrinth {
+//    debugMode.set(true)
+    token = "${modrinthApiKey}"
+    projectId = modrinth_project_id
+    versionNumber = "${minecraft_version}-${version}-neoforge"
+    versionName = "${mod_name}-${minecraft_version}-${version}-neoforge"
+    versionType = release_type
+    uploadFile = jar
+    gameVersions = ["${minecraft_version}"]
+    loaders = ["neoforge"]
+    changelog.set(providers.provider {
+        file("$project.buildDir/doc/changelog.md").text
+    })
+}
