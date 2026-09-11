@@ -36,6 +36,10 @@ public record BootHalf(ItemStack source) {
         return source.copy();
     }
 
+    public static boolean isValidSource(ItemStack source) {
+        return source != null && validationError(source) == null;
+    }
+
     @Override
     public boolean equals(Object object) {
         return this == object || object instanceof BootHalf other && ItemStack.matches(source, other.source);
