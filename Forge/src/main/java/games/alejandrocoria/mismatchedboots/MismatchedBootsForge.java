@@ -10,6 +10,7 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 @Mod(Constants.MOD_ID)
 public class MismatchedBootsForge {
     public MismatchedBootsForge(FMLJavaModLoadingContext context) {
+        ModRegistries.register(context.getModBusGroup());
         FMLCommonSetupEvent.getBus(context.getModBusGroup()).addListener(MismatchedBootsForge::onCommonSetup);
 
         if (FMLEnvironment.dist.isClient()) {

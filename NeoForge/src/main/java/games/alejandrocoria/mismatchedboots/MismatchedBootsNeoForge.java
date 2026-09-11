@@ -8,6 +8,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 @Mod(Constants.MOD_ID)
 public class MismatchedBootsNeoForge {
     public MismatchedBootsNeoForge(IEventBus eventBus) {
+        ModRegistries.register(eventBus);
         MismatchedBoots.init();
         eventBus.addListener((FMLClientSetupEvent event) -> MismatchedBootsClientNeoForge.onClientSetup(event, eventBus));
     }

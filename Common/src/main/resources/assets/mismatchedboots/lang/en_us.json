@@ -1,0 +1,6 @@
+{
+  "item.mismatchedboots.mixed_boots": "Mismatched Boots",
+  "tooltip.mismatchedboots.mixed_boots.left": "Left: %s",
+  "tooltip.mismatchedboots.mixed_boots.right": "Right: %s",
+  "tooltip.mismatchedboots.mixed_boots.invalid": "Missing or invalid boot data"
+}
