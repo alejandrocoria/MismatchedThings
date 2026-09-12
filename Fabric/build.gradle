@@ -33,7 +33,6 @@ loom {
             property("mixin.debug.export", "true")
             ideConfigGenerated(true)
             runDir("runs/client")
-            programArg("--username=Dev")
         }
         server {
             server()
@@ -43,6 +42,46 @@ loom {
             runDir("runs/server")
         }
     }
+}
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "${mod_id}-test"
+        enableGameTests = true
+        enableClientGameTests = true
+        eula = true
+        clearRunDirectory = true
+        username = "MBTest"
+    }
+}
+
+tasks.register('verifyGameplay') {
+    group = 'verification'
+    description = 'Runs the canonical Fabric server GameTest suite.'
+    dependsOn tasks.named('runGameTest')
+}
+
+tasks.register('verifyClient') {
+    group = 'verification'
+    description = 'Runs the unattended Fabric client GameTest suite.'
+    dependsOn tasks.named('runClientGameTest')
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyGameplay')
+}
+
+tasks.named('runGameTest') {
+    systemProperty 'fabric-api.gametest.report-file',
+            layout.buildDirectory.file('reports/gametest/results.xml').get().asFile.absolutePath
+}
+
+tasks.named('runClientGameTest') {
+    def showWindow = providers.gradleProperty('showClientGameTestWindow')
+            .map { it.toBoolean() }
+            .getOrElse(false)
+    systemProperty 'mismatchedboots.test.hideClientWindow', !showWindow
 }
 
 idea {

@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.gametest.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "MinecraftWindowMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

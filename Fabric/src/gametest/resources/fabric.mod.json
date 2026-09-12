@@ -1,0 +1,28 @@
+{
+    "schemaVersion": 1,
+    "id": "mismatchedboots-test",
+    "version": "1.0.0",
+    "name": "MismatchedBoots Tests",
+    "environment": "*",
+    "entrypoints": {
+        "fabric-gametest": [
+            "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.CraftingGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.CrafterGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.WorkstationGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.EquipmentGameTests"
+        ],
+        "fabric-client-gametest": [
+            "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsClientGameTest"
+        ]
+    },
+    "mixins": [
+        "mismatchedboots-test.client.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "*",
+        "mismatchedboots": "*"
+    }
+}
