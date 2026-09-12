@@ -13,6 +13,9 @@ issueTrackerURL="${mod_issues}"
     authors="${mod_author}"
     description="${mod_description}"
 
+[[mixins]]
+    config="mismatchedboots.mixins.json"
+
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"

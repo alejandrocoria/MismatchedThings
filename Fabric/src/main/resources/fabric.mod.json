@@ -27,6 +27,11 @@
         ]
     },
 
+    "mixins": [
+        "mismatchedboots.mixins.json",
+        "mismatchedboots.fabric.mixins.json"
+    ],
+
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",

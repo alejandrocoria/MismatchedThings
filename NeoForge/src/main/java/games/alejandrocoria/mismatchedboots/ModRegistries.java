@@ -1,6 +1,5 @@
 package games.alejandrocoria.mismatchedboots;
 
-import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -16,7 +15,7 @@ final class ModRegistries {
             DeferredRegister.create(Registries.RECIPE_SERIALIZER, Constants.MOD_ID);
 
     static {
-        ITEMS.registerItem(ModContent.MIXED_BOOTS_NAME, MixedBootsItem::new, ModContent::mixedBootsProperties);
+        ITEMS.registerItem(ModContent.MIXED_BOOTS_NAME, NeoForgeMixedBootsItem::new, ModContent::mixedBootsProperties);
         DATA_COMPONENT_TYPES.register(ModContent.MIXED_BOOTS_DATA_NAME, ModContent::createMixedBootsDataType);
         RECIPE_SERIALIZERS.register(ModContent.MIXED_BOOTS_RECIPE_NAME, ModContent::createMixedBootsRecipeSerializer);
     }

@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRecipe;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.TypedDataComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -50,7 +51,23 @@ public final class ModContent {
     }
 
     public static Optional<MixedBootsData> getMixedBootsData(ItemStack stack) {
-        return mixedBootsDataType().map(stack::get);
+        Optional<MixedBootsData> registeredData = mixedBootsDataType().map(stack::get);
+        if (registeredData.isPresent()) {
+            return registeredData;
+        }
+        for (TypedDataComponent<?> component : stack.getComponents()) {
+            if (component.value() instanceof MixedBootsData data) {
+                return Optional.of(data);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public static boolean isMixedBoots(ItemStack stack) {
+        return !stack.isEmpty()
+                && (stack.getItem() instanceof MixedBootsItem
+                || MIXED_BOOTS_ID.equals(BuiltInRegistries.ITEM.getKey(stack.getItem()))
+                || getMixedBootsData(stack).isPresent());
     }
 
     private static Identifier id(String path) {
