@@ -35,6 +35,12 @@ set APP_HOME=%DIRNAME%
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
+@rem Avoid Java 25 loopback pipe failures caused by legacy 8.3 user temp paths.
+set "MISMATCHED_BOOTS_GRADLE_TEMP=%APP_HOME%\.gradle\tmp"
+if not exist "%MISMATCHED_BOOTS_GRADLE_TEMP%" mkdir "%MISMATCHED_BOOTS_GRADLE_TEMP%"
+set "TEMP=%MISMATCHED_BOOTS_GRADLE_TEMP%"
+set "TMP=%MISMATCHED_BOOTS_GRADLE_TEMP%"
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 
