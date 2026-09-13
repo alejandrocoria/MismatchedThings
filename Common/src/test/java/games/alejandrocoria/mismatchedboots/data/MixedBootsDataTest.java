@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.data;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import io.netty.buffer.Unpooled;
@@ -101,6 +102,18 @@ class MixedBootsDataTest {
         JsonElement encoded = ItemStack.CODEC.encodeStart(JsonOps.INSTANCE, twoBoots).getOrThrow();
 
         assertTrue(BootHalf.CODEC.parse(JsonOps.INSTANCE, encoded).isError());
+    }
+
+    @Test
+    void persistentCodecRejectsMissingRegistryItemsWithoutSubstitution() {
+        JsonObject missingBoot = new JsonObject();
+        missingBoot.addProperty("id", "missing_mod:lost_boots");
+        missingBoot.addProperty("count", 1);
+
+        var result = BootHalf.CODEC.parse(JsonOps.INSTANCE, missingBoot);
+
+        assertTrue(result.isError());
+        assertTrue(result.result().isEmpty());
     }
 
     @Test
