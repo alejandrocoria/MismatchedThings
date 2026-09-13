@@ -19,6 +19,9 @@ issueTrackerURL="${mod_issues}"
 [[mixins]]
     config="mismatchedboots.forge.mixins.json"
 
+[[mixins]]
+    config="mismatchedboots.client.mixins.json"
+
 [[dependencies.${mod_id}]]
     modId="forge"
     mandatory=true

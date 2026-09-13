@@ -29,7 +29,8 @@
 
     "mixins": [
         "mismatchedboots.mixins.json",
-        "mismatchedboots.fabric.mixins.json"
+        "mismatchedboots.fabric.mixins.json",
+        "mismatchedboots.client.mixins.json"
     ],
 
     "depends": {
