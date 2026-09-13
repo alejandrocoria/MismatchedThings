@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.CameraType;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -18,6 +19,9 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
     @Override
     public void runTest(ClientGameTestContext context) {
         context.runOnClient(client -> {
+            if (client.options.getSoundSourceVolume(SoundSource.MASTER) != 0.0F) {
+                throw new AssertionError("Client GameTest master volume is not muted");
+            }
             if (Boolean.getBoolean("mismatchedboots.test.hideClientWindow")) {
                 int visibility = GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE);
                 if (visibility != GLFW.GLFW_FALSE) {

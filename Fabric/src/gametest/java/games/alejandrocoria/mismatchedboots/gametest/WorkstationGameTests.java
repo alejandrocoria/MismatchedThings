@@ -1,6 +1,5 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
-import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.Holder;

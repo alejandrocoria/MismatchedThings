@@ -5,16 +5,21 @@
     "name": "MismatchedBoots Tests",
     "environment": "*",
     "entrypoints": {
+        "main": [
+            "games.alejandrocoria.mismatchedboots.gametest.TestContent"
+        ],
         "fabric-gametest": [
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.CraftingGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.CrafterGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.WorkstationGameTests",
-            "games.alejandrocoria.mismatchedboots.gametest.EquipmentGameTests"
+            "games.alejandrocoria.mismatchedboots.gametest.EquipmentGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.PersistenceGameTests"
         ],
         "fabric-client-gametest": [
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest",
+            "games.alejandrocoria.mismatchedboots.gametest.PersistenceClientGameTest",
             "games.alejandrocoria.mismatchedboots.client.render.EquippedRenderingClientGameTest"
         ]
     },
