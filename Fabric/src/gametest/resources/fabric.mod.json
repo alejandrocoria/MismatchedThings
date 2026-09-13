@@ -14,7 +14,8 @@
         ],
         "fabric-client-gametest": [
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsClientGameTest",
-            "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest"
+            "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest",
+            "games.alejandrocoria.mismatchedboots.client.render.EquippedRenderingClientGameTest"
         ]
     },
     "mixins": [

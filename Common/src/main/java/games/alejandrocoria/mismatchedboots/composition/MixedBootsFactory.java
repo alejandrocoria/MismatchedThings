@@ -99,7 +99,7 @@ public final class MixedBootsFactory {
         return new Equippable(
                 EquipmentSlot.FEET,
                 source.equipSound(),
-                Optional.empty(),
+                source.assetId(),
                 Optional.empty(),
                 source.allowedEntities(),
                 source.dispensable(),

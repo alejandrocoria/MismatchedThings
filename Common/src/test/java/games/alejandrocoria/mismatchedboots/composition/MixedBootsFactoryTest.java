@@ -126,7 +126,7 @@ class MixedBootsFactoryTest {
         assertEquals(ownerEquippable.canBeSheared(), projected.canBeSheared());
         assertEquals(ownerEquippable.shearingSound(), projected.shearingSound());
         assertEquals(ownerEquippable.allowedEntities(), projected.allowedEntities());
-        assertTrue(projected.assetId().isEmpty());
+        assertEquals(ownerEquippable.assetId(), projected.assetId());
         assertTrue(projected.cameraOverlay().isEmpty());
 
         MixedBootsData data = primary.get(mixedDataType);

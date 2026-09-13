@@ -4,6 +4,7 @@
   "package": "games.alejandrocoria.mismatchedboots.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "HumanoidArmorLayerMixin",
     "ItemModelResolverMixin",
     "ItemStackRenderStateAccessor",
     "LayerRenderStateAccessor"
