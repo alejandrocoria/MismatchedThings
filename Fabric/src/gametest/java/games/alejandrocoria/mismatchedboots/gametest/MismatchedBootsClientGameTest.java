@@ -6,10 +6,16 @@ import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -57,6 +63,7 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                 if (!hasExpectedSynchronizedData(mixedStacks.getFirst())) {
                     throw new AssertionError("Synchronized mixed stack has incorrect source data");
                 }
+                assertCurrentIronGoldAttributeTooltip(client, mixedStacks.getFirst());
             });
             context.takeScreenshot("mismatchedboots-client-sentinel");
         }
@@ -68,5 +75,36 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                         .filter(data -> data.left().source().is(Items.IRON_BOOTS)
                                 && data.right().source().is(Items.GOLDEN_BOOTS))
                         .isPresent();
+    }
+
+    private static void assertCurrentIronGoldAttributeTooltip(
+            Minecraft client, ItemStack stack) {
+        List<Component> tooltip = stack.getTooltipLines(
+                Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
+        String armorTranslation = Attributes.ARMOR.value().getDescriptionId();
+        List<Component> armorModifierLines = tooltip.stream()
+                .filter(line -> line.getContents() instanceof TranslatableContents contents
+                        && contents.getKey().startsWith("attribute.modifier."))
+                .filter(line -> containsTranslation(line, armorTranslation))
+                .toList();
+        if (armorModifierLines.size() != 2) {
+            throw new AssertionError(
+                    "Current iron/gold tooltip did not contain two structured armor modifier lines: " + tooltip);
+        }
+    }
+
+    private static boolean containsTranslation(Component component, String translationKey) {
+        if (component.getContents() instanceof TranslatableContents contents) {
+            if (contents.getKey().equals(translationKey)) {
+                return true;
+            }
+            for (Object argument : contents.getArgs()) {
+                if (argument instanceof Component nested && containsTranslation(nested, translationKey)) {
+                    return true;
+                }
+            }
+        }
+        return component.getSiblings().stream()
+                .anyMatch(sibling -> containsTranslation(sibling, translationKey));
     }
 }

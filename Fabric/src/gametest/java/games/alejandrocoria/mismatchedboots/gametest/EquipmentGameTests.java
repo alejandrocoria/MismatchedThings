@@ -9,11 +9,13 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.zombie.Zombie;
@@ -21,6 +23,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -33,6 +36,48 @@ import net.minecraft.world.phys.AABB;
 import java.util.List;
 
 public final class EquipmentGameTests {
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void currentIronGoldCompositionSuppliesOneAndAHalfArmor(GameTestHelper helper) {
+        ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, BlockPos.ZERO);
+        var ironArmor = new ItemStack(Items.IRON_BOOTS)
+                .getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                .modifiers()
+                .stream()
+                .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Iron boots have no armor modifier"));
+        var goldArmor = new ItemStack(Items.GOLDEN_BOOTS)
+                .getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                .modifiers()
+                .stream()
+                .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Golden boots have no armor modifier"));
+        helper.assertValueEqual(ironArmor.modifier().id(), goldArmor.modifier().id(),
+                "vanilla boot armor modifier identity");
+        helper.assertValueEqual(ironArmor.modifier().id(), Identifier.withDefaultNamespace("armor.boots"),
+                "vanilla boot armor modifier ID");
+
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        stand.setItemSlot(EquipmentSlot.FEET, mixed);
+
+        var armorEntries = mixed.getOrDefault(
+                        DataComponents.ATTRIBUTE_MODIFIERS,
+                        ItemAttributeModifiers.EMPTY)
+                .modifiers()
+                .stream()
+                .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
+                .toList();
+        helper.assertValueEqual(armorEntries.size(), 2, "current iron/gold stored armor entries");
+        helper.assertTrue(armorEntries.stream().allMatch(entry ->
+                        entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")),
+                "Current production armor entries did not use generated IDs: " + armorEntries);
+        helper.succeedWhen(() -> helper.assertTrue(
+                Math.abs(stand.getAttributeValue(Attributes.ARMOR) - 1.5D) < 1.0E-12D,
+                "Current iron/gold equipped armor was not 1.5: "
+                        + stand.getAttributeValue(Attributes.ARMOR)));
+    }
+
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void durabilityChangesOnlyTheRootAndBreakingRemovesIt(GameTestHelper helper) {
         ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, BlockPos.ZERO);
