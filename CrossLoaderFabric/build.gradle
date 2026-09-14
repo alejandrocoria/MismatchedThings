@@ -1,0 +1,48 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.fabricmc.fabric-loom'
+}
+
+base.archivesName = "mismatchedboots-network-test-fabric"
+
+evaluationDependsOn(':Fabric')
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    compileOnly files(project(':Fabric').sourceSets.main.output)
+}
+
+sourceSets.main.java.srcDir rootProject.file('CrossLoaderTest/src/main/java')
+
+def crossLoaderPort = providers.gradleProperty('crossLoaderPort').getOrElse('25575')
+def crossLoaderMarkers = providers.gradleProperty('crossLoaderMarkers')
+        .getOrElse(layout.buildDirectory.dir('markers').get().asFile.absolutePath)
+
+loom {
+    runs {
+        crossLoaderServer {
+            server()
+            setConfigName('Fabric Network Acceptance Server')
+            ideConfigGenerated(false)
+            runDir('build/run/server')
+            property('mismatchedboots.crossloader.markers', crossLoaderMarkers)
+            property('mismatchedboots.crossloader.loader', 'fabric')
+            property('mismatchedboots.crossloader.stopAfterReady',
+                    providers.gradleProperty('crossLoaderStopAfterReady').getOrElse('false'))
+            vmArg('-Xmx1G')
+        }
+        crossLoaderClient {
+            client()
+            setConfigName('Fabric Network Acceptance Client')
+            ideConfigGenerated(false)
+            runDir('build/run/client')
+            property('mismatchedboots.crossloader.markers', crossLoaderMarkers)
+            property('mismatchedboots.crossloader.loader', 'fabric')
+            property('mismatchedboots.test.hideClientWindow', 'true')
+            programArgs('--quickPlayMultiplayer', "127.0.0.1:${crossLoaderPort}")
+            vmArg('-Xmx1G')
+        }
+    }
+}

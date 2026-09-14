@@ -30,6 +30,7 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("removal")
@@ -112,7 +113,7 @@ public final class CompatibilityGameTests {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         ItemStack mixed = GameTestStacks.pair(
                 new ItemStack(TestContent.requireComponentBoots()), new ItemStack(Items.DIAMOND_BOOTS)).primary();
-        Component deathFixtureName = Component.literal("Death Fixture");
+        Component deathFixtureName = Component.literal("Death Fixture " + UUID.randomUUID());
         mixed.set(DataComponents.CUSTOM_NAME, deathFixtureName);
         MixedBootsData snapshots = GameTestStacks.data(mixed);
         player.getInventory().setItem(9, mixed);

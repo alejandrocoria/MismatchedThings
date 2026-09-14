@@ -1,0 +1,251 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.concurrent.TimeUnit
+
+def networkAcceptanceRoot = layout.buildDirectory.dir('network-acceptance')
+def gradleLauncher = rootProject.file('gradlew.bat')
+
+def endpointProject = { String loader ->
+    loader == 'fabric' ? project(':CrossLoaderFabric') : project(':CrossLoaderNeoForge')
+}
+
+def productionArtifact = { String loader ->
+    def projectPath = loader == 'fabric' ? ':Fabric' : ':NeoForge'
+    project(projectPath).tasks.named('jar').get().archiveFile.get().asFile
+}
+
+def runDirectory = { String loader, String endpoint ->
+    endpointProject(loader).layout.buildDirectory.dir("run/${endpoint}").get().asFile
+}
+
+def prepareEndpoint = { String loader, String endpoint, int port, File extraMod ->
+    File directory = runDirectory(loader, endpoint)
+    delete(directory)
+    File mods = new File(directory, 'mods')
+    File config = new File(directory, 'config')
+    mods.mkdirs()
+    config.mkdirs()
+    Files.copy(productionArtifact(loader).toPath(),
+            new File(mods, productionArtifact(loader).name).toPath(),
+            StandardCopyOption.REPLACE_EXISTING)
+    if (extraMod != null) {
+        Files.copy(extraMod.toPath(), new File(mods, extraMod.name).toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+    }
+    new File(config, 'mismatchedboots-server.toml').text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+
+[attributes."futuremod:dormant"]
+policy = "minimum"
+'''
+    if (endpoint == 'server') {
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = """online-mode=false
+server-port=${port}
+spawn-protection=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+"""
+    } else {
+        new File(directory, 'options.txt').text = '''soundCategory_master:0.0
+narrator:0
+'''
+        if (loader == 'neoforge') {
+            new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+        }
+    }
+}
+
+def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady ->
+    String taskName = ":${endpointProject(loader).name}:runCrossLoader${endpoint.capitalize()}"
+    List<String> gradleArguments = [
+            gradleLauncher.absolutePath,
+            '--no-daemon',
+            '--console=plain',
+            '-Dorg.gradle.jvmargs=-Xmx768m',
+            "-PcrossLoaderPort=${port}",
+            "-PcrossLoaderMarkers=${markers.absolutePath}",
+            "-PcrossLoaderStopAfterReady=${stopAfterReady}",
+            taskName
+    ]
+    List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+            ? ['cmd.exe', '/d', '/c'] + gradleArguments
+            : gradleArguments).collect { it.toString() }
+    File output = new File(markers, "${endpoint}-process.log")
+    println "Starting ${loader} ${endpoint} on port ${port}"
+    return new ProcessBuilder(command)
+            .directory(rootProject.projectDir)
+            .redirectErrorStream(true)
+            .redirectOutput(output)
+            .start()
+}
+
+def stopProcess = { Process process ->
+    if (process == null || !process.isAlive()) {
+        return
+    }
+    process.toHandle().descendants().forEach { it.destroy() }
+    process.destroy()
+    if (!process.waitFor(5, TimeUnit.SECONDS)) {
+        process.toHandle().descendants().forEach { it.destroyForcibly() }
+        process.destroyForcibly()
+        process.waitFor(5, TimeUnit.SECONDS)
+    }
+}
+
+def failureText = { File markers ->
+    markers.listFiles()?.findAll { it.name.endsWith('-failure.txt') }
+            ?.collect { "${it.name}:\n${it.text}" }
+            ?.join('\n')
+}
+
+def awaitServerReady = { Process server, File markers ->
+    File ready = new File(markers, 'server-ready.txt')
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(150)
+    while (!ready.isFile() && System.nanoTime() < deadline) {
+        String failure = failureText(markers)
+        if (failure) {
+            throw new GradleException(failure)
+        }
+        if (!server.isAlive()) {
+            throw new GradleException("Server exited before becoming ready; see ${markers}")
+        }
+        Thread.sleep(250)
+    }
+    if (!ready.isFile()) {
+        throw new GradleException("Server did not become ready within 150 seconds; see ${markers}")
+    }
+}
+
+def awaitExit = { Process process, String endpoint, File markers, long timeoutSeconds ->
+    if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
+        throw new GradleException("${endpoint.capitalize()} timed out; see ${markers}")
+    }
+    if (process.exitValue() != 0) {
+        throw new GradleException(
+                "${endpoint.capitalize()} exited with ${process.exitValue()}; see ${markers}")
+    }
+}
+
+def assertCleanLogs = { List<File> runDirectories, File markers ->
+    List<File> logs = [new File(markers, 'server-process.log'), new File(markers, 'client-process.log')]
+    runDirectories.each { directory ->
+        logs.add(new File(directory, 'logs/latest.log'))
+    }
+    String combined = logs.findAll(File::isFile).collect(File::getText).join('\n')
+    Map<String, String> forbidden = [
+            'missing network channel' : '(?i)(missing|required).{0,40}(network )?channel|channel.{0,40}(missing|required)',
+            'duplicate mod'            : '(?i)duplicate.{0,20}mod',
+            'CommonNetworking mismatch': '(?i)common.?networking.{0,80}(version mismatch|version conflict|incompatible version)'
+    ]
+    forbidden.each { description, pattern ->
+        if (combined =~ pattern) {
+            throw new GradleException("Detected ${description}; see ${markers}")
+        }
+    }
+}
+
+def assertPairMarkers = { File markers, String serverLoader, String clientLoader ->
+    String failure = failureText(markers)
+    if (failure) {
+        throw new GradleException(failure)
+    }
+    ['server-success.txt', 'client-success.txt', 'server-snapshot.txt', 'client-snapshot.txt',
+     'server-result.txt', 'client-result.txt'].each { name ->
+        if (!new File(markers, name).isFile()) {
+            throw new GradleException("Missing ${name}; see ${markers}")
+        }
+    }
+    if (new File(markers, 'server-success.txt').text != serverLoader) {
+        throw new GradleException("Server marker identifies the wrong loader; see ${markers}")
+    }
+    if (new File(markers, 'client-success.txt').text != clientLoader) {
+        throw new GradleException("Client marker identifies the wrong loader; see ${markers}")
+    }
+    if (new File(markers, 'server-snapshot.txt').text != new File(markers, 'client-snapshot.txt').text) {
+        throw new GradleException("Client and server rule snapshots differ; see ${markers}")
+    }
+    if (new File(markers, 'server-result.txt').text != new File(markers, 'client-result.txt').text) {
+        throw new GradleException("Client preview and server crafting result differ; see ${markers}")
+    }
+}
+
+def runPair = { String serverLoader, String clientLoader, int port ->
+    String pairName = "${serverLoader}-server_${clientLoader}-client"
+    File markers = networkAcceptanceRoot.get().dir(pairName).asFile
+    delete(markers)
+    markers.mkdirs()
+    prepareEndpoint(serverLoader, 'server', port, null)
+    prepareEndpoint(clientLoader, 'client', port, null)
+    Process server = null
+    Process client = null
+    try {
+        server = startEndpoint(serverLoader, 'server', port, markers, false)
+        awaitServerReady(server, markers)
+        client = startEndpoint(clientLoader, 'client', port, markers, false)
+        awaitExit(client, 'client', markers, 240)
+        awaitExit(server, 'server', markers, 60)
+        assertPairMarkers(markers, serverLoader, clientLoader)
+        assertCleanLogs([runDirectory(serverLoader, 'server'), runDirectory(clientLoader, 'client')], markers)
+        println "Passed ${serverLoader} server -> ${clientLoader} client"
+    } finally {
+        stopProcess(client)
+        stopProcess(server)
+    }
+}
+
+def journeyMapNeoForge = rootProject.file('../../JourneyMap/26.2/neoforge/build/libs/'
+        + 'journeymap-neoforge-26.2-6.0.4.jar')
+
+def runJourneyMapCoexistence = {
+    int port = 25578
+    File markers = networkAcceptanceRoot.get().dir('neoforge-journeymap').asFile
+    delete(markers)
+    markers.mkdirs()
+    if (!journeyMapNeoForge.isFile()) {
+        throw new GradleException("JourneyMap coexistence artifact is missing: ${journeyMapNeoForge}")
+    }
+    prepareEndpoint('neoforge', 'server', port, journeyMapNeoForge)
+    Process server = null
+    try {
+        server = startEndpoint('neoforge', 'server', port, markers, true)
+        awaitExit(server, 'server', markers, 180)
+        String failure = failureText(markers)
+        if (failure) {
+            throw new GradleException(failure)
+        }
+        if (!new File(markers, 'server-success.txt').isFile()) {
+            throw new GradleException("NeoForge/JourneyMap server did not report success; see ${markers}")
+        }
+        assertCleanLogs([runDirectory('neoforge', 'server')], markers)
+        println 'Passed NeoForge server startup beside JourneyMap'
+    } finally {
+        stopProcess(server)
+    }
+}
+
+tasks.register('verifyLoaderNetworking') {
+    group = 'verification'
+    description = 'Runs separate-process same-loader rule synchronization acceptance tests.'
+    dependsOn ':Fabric:jar', ':NeoForge:jar'
+
+    doLast {
+        String selectedCase = providers.gradleProperty('networkAcceptanceCase').getOrElse('all')
+        if (selectedCase == 'all' || selectedCase == 'fabric-fabric') {
+            runPair('fabric', 'fabric', 25575)
+        }
+        if (selectedCase == 'all' || selectedCase == 'neoforge-neoforge') {
+            runPair('neoforge', 'neoforge', 25576)
+        }
+        if (selectedCase == 'all' || selectedCase == 'journeymap') {
+            runJourneyMapCoexistence()
+        }
+        if (!(selectedCase in ['all', 'fabric-fabric', 'neoforge-neoforge', 'journeymap'])) {
+            throw new GradleException("Unknown networkAcceptanceCase: ${selectedCase}")
+        }
+    }
+}

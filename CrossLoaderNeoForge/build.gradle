@@ -1,0 +1,54 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
+}
+
+base.archivesName = "mismatchedboots-network-test-neoforge"
+
+evaluationDependsOn(':NeoForge')
+
+dependencies {
+    compileOnly files(project(':NeoForge').sourceSets.main.output)
+}
+
+sourceSets.main.java.srcDir rootProject.file('CrossLoaderTest/src/main/java')
+
+def crossLoaderPort = providers.gradleProperty('crossLoaderPort').getOrElse('25575')
+def crossLoaderMarkers = providers.gradleProperty('crossLoaderMarkers')
+        .getOrElse(layout.buildDirectory.dir('markers').get().asFile.absolutePath)
+
+neoForge {
+    version = neoforge_version
+
+    runs {
+        crossLoaderServer {
+            server()
+            disableIdeRun()
+            gameDirectory = project.file('build/run/server')
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.crossloader.markers', crossLoaderMarkers)
+            systemProperty('mismatchedboots.crossloader.loader', 'neoforge')
+            systemProperty('mismatchedboots.crossloader.stopAfterReady',
+                    providers.gradleProperty('crossLoaderStopAfterReady').getOrElse('false'))
+            jvmArgument('-Xmx1G')
+        }
+        crossLoaderClient {
+            client()
+            disableIdeRun()
+            gameDirectory = project.file('build/run/client')
+            systemProperty('mismatchedboots.crossloader.markers', crossLoaderMarkers)
+            systemProperty('mismatchedboots.crossloader.loader', 'neoforge')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.crossloader.dismissWarnings', 'true')
+            programArgument('--quickPlayMultiplayer')
+            programArgument("127.0.0.1:${crossLoaderPort}")
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    mods {
+        mismatchedboots_crossloader_test {
+            sourceSet sourceSets.main
+        }
+    }
+}
