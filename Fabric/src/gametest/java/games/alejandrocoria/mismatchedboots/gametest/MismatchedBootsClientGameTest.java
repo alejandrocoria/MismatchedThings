@@ -63,7 +63,7 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                 if (!hasExpectedSynchronizedData(mixedStacks.getFirst())) {
                     throw new AssertionError("Synchronized mixed stack has incorrect source data");
                 }
-                assertCurrentIronGoldAttributeTooltip(client, mixedStacks.getFirst());
+                assertIronGoldAttributeTooltip(client, mixedStacks.getFirst());
             });
             context.takeScreenshot("mismatchedboots-client-sentinel");
         }
@@ -77,7 +77,7 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                         .isPresent();
     }
 
-    private static void assertCurrentIronGoldAttributeTooltip(
+    private static void assertIronGoldAttributeTooltip(
             Minecraft client, ItemStack stack) {
         List<Component> tooltip = stack.getTooltipLines(
                 Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
@@ -87,9 +87,9 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                         && contents.getKey().startsWith("attribute.modifier."))
                 .filter(line -> containsTranslation(line, armorTranslation))
                 .toList();
-        if (armorModifierLines.size() != 2) {
+        if (armorModifierLines.size() != 1) {
             throw new AssertionError(
-                    "Current iron/gold tooltip did not contain two structured armor modifier lines: " + tooltip);
+                    "Iron/gold tooltip did not contain one structured armor modifier line: " + tooltip);
         }
     }
 

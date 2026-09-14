@@ -6,9 +6,14 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.equipment.Equippable;
 
 final class GameTestStacks {
@@ -35,6 +40,20 @@ final class GameTestStacks {
         return stack;
     }
 
+    static ItemStack ownerDivergentBoots(Item item, double amount) {
+        ItemStack stack = new ItemStack(item);
+        stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
+                .add(
+                        Attributes.FOLLOW_RANGE,
+                        new AttributeModifier(
+                                Identifier.fromNamespaceAndPath("mismatchedboots-test", "owner_divergence"),
+                                amount,
+                                AttributeModifier.Operation.ADD_VALUE),
+                        EquipmentSlotGroup.FEET)
+                .build());
+        return stack;
+    }
+
     static MixedBootsData data(ItemStack stack) {
         return ModContent.getMixedBootsData(stack)
                 .orElseThrow(() -> new AssertionError("Stack has no mixed boots data: " + stack));
@@ -56,5 +75,19 @@ final class GameTestStacks {
                 outputName + " has the wrong right source: " + data.right().source());
         helper.assertValueEqual(data.left().source().getCount(), 1, outputName + " left source count");
         helper.assertValueEqual(data.right().source().getCount(), 1, outputName + " right source count");
+    }
+
+    static void assertOwnerDivergentAttribute(
+            GameTestHelper helper, ItemStack stack, double expectedAmount, String outputName) {
+        var entries = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                .modifiers().stream()
+                .filter(entry -> entry.attribute().equals(Attributes.FOLLOW_RANGE))
+                .toList();
+        helper.assertValueEqual(entries.size(), 1, outputName + " divergent attribute entries");
+        helper.assertValueEqual(entries.getFirst().modifier().id(),
+                Identifier.fromNamespaceAndPath("mismatchedboots-test", "owner_divergence"),
+                outputName + " divergent attribute ID");
+        helper.assertTrue(Math.abs(entries.getFirst().modifier().amount() - expectedAmount) < 1.0E-12D,
+                outputName + " divergent attribute amount was " + entries.getFirst().modifier().amount());
     }
 }

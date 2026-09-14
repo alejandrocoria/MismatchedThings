@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -9,17 +11,22 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ItemStackWithSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -34,6 +41,8 @@ public final class PersistenceGameTests {
     private static final String RESTART_MODE_PROPERTY = "mismatchedboots.test.persistence.restartMode";
     private static final String RESTART_TOKEN_PROPERTY = "mismatchedboots.test.persistence.restartToken";
     private static final BlockPos RESTART_CHEST_POS = new BlockPos(8, 64, 8);
+    private static final Identifier RESTART_MODIFIER_ID =
+            Identifier.fromNamespaceAndPath("mismatchedboots-test", "restart_rule");
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void containerRoundTripPreservesBothOrientationsAndOpaqueOwnership(GameTestHelper helper) {
@@ -120,6 +129,16 @@ public final class PersistenceGameTests {
             ItemStack restarted = ((ChestBlockEntity) blockEntity).getItem(0);
             assertPersistedPrimary(helper, restarted, "server restart", token);
             helper.assertValueEqual(restarted.getDamageValue(), 23, "server restart root damage");
+            assertMovementAmount(restarted, 3.0D, "stored result after rule change");
+            helper.assertValueEqual(AttributeRuleState.current().policyFor(
+                            Identifier.withDefaultNamespace("movement_speed")),
+                    AttributePolicy.COMBINE, "restart read process movement-speed policy");
+
+            MixedBootsData storedSources = GameTestStacks.data(restarted);
+            assertMovementAmount(storedSources.left().source(), 2.0D, "stored left snapshot");
+            assertMovementAmount(storedSources.right().source(), 4.0D, "stored right snapshot");
+            ItemStack newlyCrafted = restartPair(token).primary();
+            assertMovementAmount(newlyCrafted, 6.0D, "new result after rule change");
         } else {
             throw new AssertionError("Unknown persistence restart mode: " + mode);
         }
@@ -132,7 +151,8 @@ public final class PersistenceGameTests {
         if (!(blockEntity instanceof ChestBlockEntity chest)) {
             throw new AssertionError("Could not create the restart persistence chest");
         }
-        ItemStack stack = persistedPair(token).primary();
+        ItemStack stack = restartPair(token).primary();
+        assertMovementAmount(stack, 3.0D, "write-process result");
         stack.setDamageValue(23);
         chest.setItem(0, stack);
         chest.setChanged();
@@ -142,6 +162,36 @@ public final class PersistenceGameTests {
         ItemStack owner = new ItemStack(TestContent.requireComponentBoots());
         owner.set(TestContent.requireOpaqueComponent(), opaqueValue);
         return GameTestStacks.pair(owner, new ItemStack(Items.DIAMOND_BOOTS));
+    }
+
+    private static MixedBootsPair restartPair(String opaqueValue) {
+        ItemStack owner = new ItemStack(TestContent.requireComponentBoots());
+        owner.set(TestContent.requireOpaqueComponent(), opaqueValue);
+        owner.set(DataComponents.ATTRIBUTE_MODIFIERS, movementModifiers(2.0D));
+        ItemStack other = new ItemStack(Items.DIAMOND_BOOTS);
+        other.set(DataComponents.ATTRIBUTE_MODIFIERS, movementModifiers(4.0D));
+        return GameTestStacks.pair(owner, other);
+    }
+
+    private static ItemAttributeModifiers movementModifiers(double amount) {
+        return ItemAttributeModifiers.builder()
+                .add(
+                        Attributes.MOVEMENT_SPEED,
+                        new AttributeModifier(RESTART_MODIFIER_ID, amount, AttributeModifier.Operation.ADD_VALUE),
+                        EquipmentSlotGroup.FEET)
+                .build();
+    }
+
+    private static void assertMovementAmount(ItemStack stack, double expected, String description) {
+        var entries = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                .modifiers().stream()
+                .filter(entry -> entry.attribute().equals(Attributes.MOVEMENT_SPEED))
+                .toList();
+        if (entries.size() != 1
+                || !entries.getFirst().modifier().id().equals(RESTART_MODIFIER_ID)
+                || Math.abs(entries.getFirst().modifier().amount() - expected) >= 1.0E-12D) {
+            throw new AssertionError(description + " did not contain movement speed " + expected + ": " + entries);
+        }
     }
 
     private static void assertPersistedPrimary(

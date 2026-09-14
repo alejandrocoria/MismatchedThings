@@ -50,22 +50,44 @@ public final class CraftingGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     @SuppressWarnings("removal")
+    public void normalTakeKeepsOwnerDivergentAttributesIn2x2And3x3(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        InventoryMenu inventoryMenu = new InventoryMenu(player.getInventory(), true, player);
+        placeDivergent(inventoryMenu, 0, 3);
+        ItemStack inventoryResult = inventoryMenu.getSlot(0).safeTake(1, 1, player);
+        assertDivergentTransaction(helper, inventoryMenu, inventoryResult, 0, "2x2");
+
+        CraftingMenu tableMenu = new CraftingMenu(
+                1, player.getInventory(), ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
+        placeDivergent(tableMenu, 2, 7);
+        ItemStack tableResult = tableMenu.getSlot(0).safeTake(1, 1, player);
+        assertDivergentTransaction(helper, tableMenu, tableResult, 2, "3x3");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    @SuppressWarnings("removal")
     public void shiftClickMovesPrimaryAndLeavesInverse(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         CraftingMenu menu = craftingMenu(helper, player);
-        place(menu, 0, Items.IRON_BOOTS, 8, Items.GOLDEN_BOOTS);
+        placeDivergent(menu, 0, 8);
 
         ItemStack moved = menu.quickMoveStack(player, 0);
 
         GameTestStacks.assertOrientation(helper, moved, Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "shift-click result");
+        GameTestStacks.assertOwnerDivergentAttribute(helper, moved, 2.0D, "shift-click result");
         GameTestStacks.assertOrientation(helper, menu.getInputGridSlots().get(0).getItem(),
                 Items.GOLDEN_BOOTS, Items.IRON_BOOTS, "shift-click remainder");
+        GameTestStacks.assertOwnerDivergentAttribute(
+                helper, menu.getInputGridSlots().get(0).getItem(), 6.0D, "shift-click remainder");
         List<ItemStack> inventoryOutputs = player.getInventory().getNonEquipmentItems().stream()
                 .filter(ModContent::isMixedBoots)
                 .toList();
         helper.assertValueEqual(inventoryOutputs.size(), 1, "mixed boots in player inventory");
         GameTestStacks.assertOrientation(helper, inventoryOutputs.getFirst(),
                 Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "shift-click inventory result");
+        GameTestStacks.assertOwnerDivergentAttribute(
+                helper, inventoryOutputs.getFirst(), 2.0D, "shift-click inventory result");
         assertOnlyInverseRemains(helper, menu, 0);
         assertNoDroppedItems(helper, "shift-click craft");
         helper.succeed();
@@ -145,6 +167,11 @@ public final class CraftingGameTests {
         menu.getInputGridSlots().get(secondSlot).set(new ItemStack(second));
     }
 
+    private static void placeDivergent(AbstractCraftingMenu menu, int firstSlot, int secondSlot) {
+        menu.getInputGridSlots().get(firstSlot).set(GameTestStacks.ownerDivergentBoots(Items.IRON_BOOTS, 2.0D));
+        menu.getInputGridSlots().get(secondSlot).set(GameTestStacks.ownerDivergentBoots(Items.GOLDEN_BOOTS, 6.0D));
+    }
+
     private static CraftingMenu craftingMenu(GameTestHelper helper, ServerPlayer player) {
         return new CraftingMenu(1, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
@@ -156,6 +183,24 @@ public final class CraftingGameTests {
         helper.assertValueEqual(primary.getCount(), 1, "primary result count");
         assertOnlyInverseRemains(helper, menu, remainderSlot);
         assertNoDroppedItems(helper, "normal craft");
+    }
+
+    private static void assertDivergentTransaction(
+            GameTestHelper helper,
+            AbstractCraftingMenu menu,
+            ItemStack primary,
+            int remainderSlot,
+            String grid) {
+        GameTestStacks.assertOrientation(helper, primary, Items.IRON_BOOTS, Items.GOLDEN_BOOTS,
+                grid + " primary result");
+        GameTestStacks.assertOwnerDivergentAttribute(helper, primary, 2.0D, grid + " primary result");
+        ItemStack inverse = menu.getInputGridSlots().get(remainderSlot).getItem();
+        GameTestStacks.assertOrientation(helper, inverse, Items.GOLDEN_BOOTS, Items.IRON_BOOTS,
+                grid + " inverse remainder");
+        GameTestStacks.assertOwnerDivergentAttribute(helper, inverse, 6.0D, grid + " inverse remainder");
+        helper.assertValueEqual(menu.getInputGridSlots().stream().filter(slot -> !slot.getItem().isEmpty()).count(),
+                1L, grid + " non-empty input slots after craft");
+        assertNoDroppedItems(helper, grid + " divergent craft");
     }
 
     private static void assertOnlyInverseRemains(

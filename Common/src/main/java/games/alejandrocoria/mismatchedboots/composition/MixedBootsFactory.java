@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.composition;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
@@ -12,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.equipment.Equippable;
 
@@ -37,17 +40,27 @@ public final class MixedBootsFactory {
             ItemStack second,
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType) {
+        return createPair(first, second, mixedBoots, dataType, AttributeRuleState.current());
+    }
+
+    static MixedBootsPair createPair(
+            ItemStack first,
+            ItemStack second,
+            Holder<Item> mixedBoots,
+            DataComponentType<MixedBootsData> dataType,
+            AttributeRuleSet rules) {
         BootHalf firstHalf = new BootHalf(first);
         BootHalf secondHalf = new BootHalf(second);
         ItemStack firstSource = firstHalf.source();
         ItemStack secondSource = secondHalf.source();
         DurabilityMerger.Result durability = DurabilityMerger.merge(firstSource, secondSource);
+        AttributeComposer.Result attributes = AttributeComposer.compose(firstSource, secondSource, rules);
         ItemEnchantments enchantments = EnchantmentMerger.merge(firstSource, secondSource);
 
         ItemStack primary = createOrientation(
-                firstHalf, secondHalf, mixedBoots, dataType, durability, enchantments);
+                firstHalf, secondHalf, mixedBoots, dataType, durability, attributes.primary(), enchantments);
         ItemStack inverse = createOrientation(
-                secondHalf, firstHalf, mixedBoots, dataType, durability, enchantments);
+                secondHalf, firstHalf, mixedBoots, dataType, durability, attributes.inverse(), enchantments);
         return new MixedBootsPair(primary, inverse);
     }
 
@@ -57,6 +70,7 @@ public final class MixedBootsFactory {
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType,
             DurabilityMerger.Result durability,
+            ItemAttributeModifiers attributes,
             ItemEnchantments enchantments) {
         ItemStack owner = left.source();
         ItemStack other = right.source();
@@ -80,7 +94,7 @@ public final class MixedBootsFactory {
             output.set(DataComponents.DAMAGE, durability.damage());
         }
 
-        output.set(DataComponents.ATTRIBUTE_MODIFIERS, AttributeMerger.merge(owner, other));
+        output.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes);
         output.set(DataComponents.ENCHANTMENTS, enchantments);
         output.set(dataType, new MixedBootsData(left, right));
 

@@ -68,13 +68,14 @@ public final class EquipmentGameTests {
                 .stream()
                 .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
                 .toList();
-        helper.assertValueEqual(armorEntries.size(), 2, "current iron/gold stored armor entries");
-        helper.assertTrue(armorEntries.stream().allMatch(entry ->
-                        entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")),
-                "Current production armor entries did not use generated IDs: " + armorEntries);
+        helper.assertValueEqual(armorEntries.size(), 1, "iron/gold stored armor entries");
+        helper.assertValueEqual(armorEntries.getFirst().modifier().id(), ironArmor.modifier().id(),
+                "iron/gold stored armor modifier ID");
+        helper.assertTrue(Math.abs(armorEntries.getFirst().modifier().amount() - 1.5D) < 1.0E-12D,
+                "Iron/gold stored armor amount was not 1.5: " + armorEntries);
         helper.succeedWhen(() -> helper.assertTrue(
                 Math.abs(stand.getAttributeValue(Attributes.ARMOR) - 1.5D) < 1.0E-12D,
-                "Current iron/gold equipped armor was not 1.5: "
+                "Iron/gold equipped armor was not 1.5: "
                         + stand.getAttributeValue(Attributes.ARMOR)));
     }
 

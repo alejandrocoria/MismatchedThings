@@ -14,6 +14,7 @@
             "games.alejandrocoria.mismatchedboots.gametest.CrafterGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.WorkstationGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.EquipmentGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.AttributeRulesGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.PersistenceGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.CompatibilityGameTests"
         ],

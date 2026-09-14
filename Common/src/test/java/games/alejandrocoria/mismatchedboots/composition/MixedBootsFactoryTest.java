@@ -4,6 +4,10 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.Lifecycle;
+import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.SharedConstants;
@@ -46,14 +50,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -209,7 +211,7 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void halvesEveryAttributeAndGeneratesStableCollisionFreeIds() {
+    void composesAttributesByIdentityWithoutGeneratingModifierIds() {
         Identifier sharedId = Identifier.fromNamespaceAndPath("test", "shared");
         ItemAttributeModifiers.Display customDisplay = ItemAttributeModifiers.Display.override(Component.literal("custom"));
         Holder<Attribute> moddedAttribute = syntheticAttribute("mana");
@@ -230,31 +232,64 @@ class MixedBootsFactoryTest {
         ItemAttributeModifiers primary = firstPair.primary().get(DataComponents.ATTRIBUTE_MODIFIERS);
         ItemAttributeModifiers repeated = repeatedPair.primary().get(DataComponents.ATTRIBUTE_MODIFIERS);
 
-        assertEquals(5, primary.modifiers().size());
-        assertEquals(
-                List.of(-0.1, 0.0, 1.0, 1.75, 2.0),
+        ItemAttributeModifiers inverse = firstPair.inverse().get(DataComponents.ATTRIBUTE_MODIFIERS);
+
+        assertEquals(3, primary.modifiers().size());
+        assertEquals(2, inverse.modifiers().size());
+        assertEquals(List.of(-0.1, 3.0, 3.5),
                 primary.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
+        assertEquals(List.of(-0.1, 3.0),
+                inverse.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
         assertTrue(primary.modifiers().stream().anyMatch(entry ->
                 entry.slot() == EquipmentSlotGroup.ANY
                         && entry.display().equals(ItemAttributeModifiers.Display.hidden())));
         assertTrue(primary.modifiers().stream().anyMatch(entry -> entry.display().equals(customDisplay)));
+        assertTrue(inverse.modifiers().stream().noneMatch(entry -> entry.display().equals(customDisplay)));
         assertEquals(primary, repeated);
+        assertEquals(List.of(sharedId, Identifier.fromNamespaceAndPath("test", "mana"), sharedId),
+                primary.modifiers().stream().map(entry -> entry.modifier().id()).toList());
+        assertTrue(primary.modifiers().stream().noneMatch(entry ->
+                entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+        assertTrue(inverse.modifiers().stream().noneMatch(entry ->
+                entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+    }
 
-        Set<String> attributeAndIds = new HashSet<>();
-        for (ItemAttributeModifiers.Entry entry : primary.modifiers()) {
-            String key = entry.attribute().unwrapKey().orElseThrow().identifier() + ":" + entry.modifier().id();
-            assertTrue(attributeAndIds.add(key));
-            assertTrue(entry.modifier().id().toString().startsWith("mismatchedboots:attribute/"));
-        }
+    @Test
+    void productionFactoryUsesTheCurrentRuleSnapshot() {
+        AttributeRuleSet combineArmor = new AttributeRuleSet(
+                AttributePolicy.SEPARATE,
+                Map.of(Identifier.withDefaultNamespace("armor"), AttributePolicy.COMBINE));
+        AttributeRuleState.install(combineArmor);
+        try {
+            ItemStack iron = boots(Items.IRON_BOOTS);
+            iron.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
+                    .add(Attributes.ARMOR,
+                            modifier(Identifier.withDefaultNamespace("armor.boots"), 2.0D,
+                                    AttributeModifier.Operation.ADD_VALUE),
+                            EquipmentSlotGroup.FEET)
+                    .build());
+            ItemStack gold = boots(Items.GOLDEN_BOOTS);
+            gold.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
+                    .add(Attributes.ARMOR,
+                            modifier(Identifier.withDefaultNamespace("armor.boots"), 1.0D,
+                                    AttributeModifier.Operation.ADD_VALUE),
+                            EquipmentSlotGroup.FEET)
+                    .build());
+            MixedBootsPair pair = MixedBootsFactory.createPair(
+                    iron, gold, outputItem, mixedDataType);
 
-        assertNotEquals(
-                firstPair.primary().get(DataComponents.ATTRIBUTE_MODIFIERS),
-                firstPair.inverse().get(DataComponents.ATTRIBUTE_MODIFIERS));
-        ItemAttributeModifiers inverse = firstPair.inverse().get(DataComponents.ATTRIBUTE_MODIFIERS);
-        for (Holder<Attribute> attribute : List.of(
-                Attributes.ARMOR, Attributes.MOVEMENT_SPEED, Attributes.ARMOR_TOUGHNESS, moddedAttribute)) {
-            assertEquals(primary.compute(attribute, 10.0, EquipmentSlot.FEET),
-                    inverse.compute(attribute, 10.0, EquipmentSlot.FEET));
+            for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
+                List<ItemAttributeModifiers.Entry> armor = output.getOrDefault(
+                                DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                        .modifiers().stream()
+                        .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
+                        .toList();
+                assertEquals(1, armor.size());
+                assertEquals(Identifier.withDefaultNamespace("armor.boots"), armor.getFirst().modifier().id());
+                assertEquals(3.0D, armor.getFirst().modifier().amount());
+            }
+        } finally {
+            AttributeRuleState.restoreDefaults();
         }
     }
 
@@ -410,7 +445,8 @@ class MixedBootsFactoryTest {
     }
 
     private static MixedBootsPair create(ItemStack first, ItemStack second) {
-        return MixedBootsFactory.createPair(first, second, outputItem, mixedDataType);
+        return MixedBootsFactory.createPair(
+                first, second, outputItem, mixedDataType, AttributeRuleDefaults.ruleSet());
     }
 
     private static ItemStack boots(Item item) {

@@ -1,6 +1,9 @@
 package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.client.MismatchedBootsClientForge;
+import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -12,6 +15,8 @@ public class MismatchedBootsForge {
     public MismatchedBootsForge(FMLJavaModLoadingContext context) {
         ModRegistries.register(context.getModBusGroup());
         FMLCommonSetupEvent.getBus(context.getModBusGroup()).addListener(MismatchedBootsForge::onCommonSetup);
+        ServerStartingEvent.BUS.addListener(event -> AttributeRulesLifecycle.onServerStarting());
+        ServerStoppedEvent.BUS.addListener(event -> AttributeRulesLifecycle.onServerStopped());
 
         if (FMLEnvironment.dist.isClient()) {
             FMLClientSetupEvent.getBus(context.getModBusGroup()).addListener(MismatchedBootsClientForge::onClientSetup);

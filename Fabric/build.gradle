@@ -87,6 +87,16 @@ loom {
             runDir("build/run/persistenceGameTest")
             source("gametest")
         }
+        attributeRules {
+            inherit server
+            property("fabric-api.gametest")
+            property(
+                    "fabric-api.gametest.report-file",
+                    layout.buildDirectory.file('reports/gametest/attribute-rules.xml').get().asFile.absolutePath)
+            property("mismatchedboots.test.attributeRules", "true")
+            runDir("build/run/attributeRulesGameTest")
+            source("gametest")
+        }
     }
 }
 
@@ -106,8 +116,52 @@ tasks.named('runPersistenceWrite') {
     dependsOn tasks.named('preparePersistenceRestart')
 }
 
-tasks.named('runPersistenceRead') {
+def preparePersistenceRestartRead = tasks.register('preparePersistenceRestartRead') {
+    group = 'verification'
+    description = 'Changes the isolated persistence config after the write process.'
     dependsOn tasks.named('runPersistenceWrite')
+    doLast {
+        def configFile = layout.buildDirectory.file(
+                'run/persistenceGameTest/config/mismatchedboots-server.toml').get().asFile
+        configFile.parentFile.mkdirs()
+        configFile.text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+'''
+    }
+}
+
+tasks.named('runPersistenceRead') {
+    dependsOn preparePersistenceRestartRead
+}
+
+tasks.register('prepareAttributeRulesGameTest', Delete) {
+    group = 'verification'
+    description = 'Creates the isolated non-default attribute-rule GameTest config.'
+    delete layout.buildDirectory.dir('run/attributeRulesGameTest')
+    doLast {
+        def runDirectory = layout.buildDirectory.dir('run/attributeRulesGameTest').get().asFile
+        runDirectory.mkdirs()
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
+        def configFile = new File(runDirectory, 'config/mismatchedboots-server.toml')
+        configFile.parentFile.mkdirs()
+        configFile.text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+
+[attributes."minecraft:waypoint_transmit_range"]
+policy = "reject"
+'''
+    }
+}
+
+tasks.named('runAttributeRules') {
+    dependsOn tasks.named('prepareAttributeRulesGameTest')
 }
 
 tasks.register('verifyPersistenceRestart') {
@@ -119,7 +173,7 @@ tasks.register('verifyPersistenceRestart') {
 tasks.register('verifyGameplay') {
     group = 'verification'
     description = 'Runs the canonical Fabric server GameTest suite.'
-    dependsOn tasks.named('runGameTest')
+    dependsOn tasks.named('runGameTest'), tasks.named('runAttributeRules')
 }
 
 tasks.register('verifyClient') {

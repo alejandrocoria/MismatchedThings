@@ -77,8 +77,8 @@ public final class CrafterGameTests {
 
         for (int[] layout : layouts) {
             crafter.clearContent();
-            crafter.setItem(layout[0], new ItemStack(Items.IRON_BOOTS));
-            crafter.setItem(layout[1], new ItemStack(Items.GOLDEN_BOOTS));
+            crafter.setItem(layout[0], GameTestStacks.ownerDivergentBoots(Items.IRON_BOOTS, 2.0D));
+            crafter.setItem(layout[1], GameTestStacks.ownerDivergentBoots(Items.GOLDEN_BOOTS, 6.0D));
             helper.tickBlock(CRAFTER);
 
             List<ItemEntity> entities = nearbyItemEntities(helper);
@@ -99,8 +99,8 @@ public final class CrafterGameTests {
             assertTwoOrientations(helper, nearbyItems(helper), "first redstone pulse");
             helper.assertTrue(crafter.isEmpty(), "First redstone pulse retained an input");
             assertUnusedSlotsRemainDisabled(helper, crafter);
-            crafter.setItem(0, new ItemStack(Items.IRON_BOOTS));
-            crafter.setItem(8, new ItemStack(Items.GOLDEN_BOOTS));
+            crafter.setItem(0, GameTestStacks.ownerDivergentBoots(Items.IRON_BOOTS, 2.0D));
+            crafter.setItem(8, GameTestStacks.ownerDivergentBoots(Items.GOLDEN_BOOTS, 6.0D));
             helper.pulseRedstone(POWER, 1);
         });
         helper.runAfterDelay(12, () -> {
@@ -122,8 +122,8 @@ public final class CrafterGameTests {
         helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
                 .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
         CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
-        crafter.setItem(0, new ItemStack(Items.IRON_BOOTS));
-        crafter.setItem(8, new ItemStack(Items.GOLDEN_BOOTS));
+        crafter.setItem(0, GameTestStacks.ownerDivergentBoots(Items.IRON_BOOTS, 2.0D));
+        crafter.setItem(8, GameTestStacks.ownerDivergentBoots(Items.GOLDEN_BOOTS, 6.0D));
         if (disableUnusedSlots) {
             for (int slot = 1; slot < 8; slot++) {
                 crafter.setSlotState(slot, false);
@@ -163,6 +163,14 @@ public final class CrafterGameTests {
         helper.assertValueEqual(outputs.stream()
                 .filter(stack -> isOrientation(stack, Items.GOLDEN_BOOTS, Items.IRON_BOOTS)).count(),
                 1L, "inverse outputs in " + location);
+        ItemStack primary = outputs.stream()
+                .filter(stack -> isOrientation(stack, Items.IRON_BOOTS, Items.GOLDEN_BOOTS))
+                .findFirst().orElseThrow();
+        ItemStack inverse = outputs.stream()
+                .filter(stack -> isOrientation(stack, Items.GOLDEN_BOOTS, Items.IRON_BOOTS))
+                .findFirst().orElseThrow();
+        GameTestStacks.assertOwnerDivergentAttribute(helper, primary, 2.0D, "Crafter primary in " + location);
+        GameTestStacks.assertOwnerDivergentAttribute(helper, inverse, 6.0D, "Crafter inverse in " + location);
     }
 
     private static void assertUnusedSlotsRemainDisabled(GameTestHelper helper, CrafterBlockEntity crafter) {
