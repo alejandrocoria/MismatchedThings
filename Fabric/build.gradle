@@ -197,9 +197,21 @@ tasks.named('runClientGameTest') {
             .getOrElse(false)
     systemProperty 'mismatchedboots.test.hideClientWindow', !showWindow
     doFirst {
-        def optionsFile = layout.buildDirectory.file('run/clientGameTest/options.txt').get().asFile
+        def runDirectory = layout.buildDirectory.dir('run/clientGameTest').get().asFile
+        def optionsFile = new File(runDirectory, 'options.txt')
         optionsFile.parentFile.mkdirs()
         optionsFile.text = 'soundCategory_master:0.0\n'
+        def configFile = new File(runDirectory, 'config/mismatchedboots-server.toml')
+        configFile.parentFile.mkdirs()
+        configFile.text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+
+[attributes."futuremod:dormant"]
+policy = "minimum"
+'''
     }
 }
 

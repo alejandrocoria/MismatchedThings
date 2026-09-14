@@ -127,7 +127,6 @@ public final class CompatibilityGameTests {
         GameRules gameRules = helper.getLevel().getGameRules();
         boolean keepInventory = gameRules.get(GameRules.KEEP_INVENTORY);
         gameRules.set(GameRules.KEEP_INVENTORY, false, server);
-        player.setHealth(0.0F);
         player.die(helper.getLevel().damageSources().genericKill());
 
         helper.runAfterDelay(1, () -> {

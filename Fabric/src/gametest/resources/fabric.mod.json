@@ -19,6 +19,7 @@
             "games.alejandrocoria.mismatchedboots.gametest.CompatibilityGameTests"
         ],
         "fabric-client-gametest": [
+            "games.alejandrocoria.mismatchedboots.gametest.AttributeRulesClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.PersistenceClientGameTest",
@@ -32,6 +33,7 @@
         "fabricloader": "*",
         "fabric-api": "*",
         "minecraft": "*",
-        "mismatchedboots": "*"
+        "mismatchedboots": "*",
+        "commonnetworking": "*"
     }
 }
