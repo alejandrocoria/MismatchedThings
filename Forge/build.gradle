@@ -4,11 +4,16 @@ plugins {
     id 'multiloader-loader'
     id 'idea'
     id 'net.minecraftforge.gradle' version '[7.0.11,8.0)'
+    id 'net.minecraftforge.jarjar' version '0.2.3'
     id 'net.darkhax.curseforgegradle' version '1.1.28'
     id "com.modrinth.minotaur" version "2.9.0"
 }
 
 base.archivesName = "${project.mod_name}-${project.minecraft_version}-forge"
+
+jarJar.register() {
+    archiveClassifier = null
+}
 
 repositories {
     maven minecraft.mavenizer
@@ -20,6 +25,16 @@ repositories {
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     annotationProcessor 'net.minecraftforge:eventbus-validator:7.0-beta.10'
+    implementation("mysticdrew:common-networking-forge:${common_networking_version}") {
+        transitive = false
+    }
+    jarJar("mysticdrew:common-networking-forge:${common_networking_version}") {
+        transitive = false
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('jarJar')
 }
 
 minecraft {
@@ -70,9 +85,11 @@ tasks.processResources {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
+def publishJar = tasks.named('jarJar')
+
 tasks.register('publishCurseForge', TaskPublishCurseForge) {
     apiToken = "${curseForgeApiKey}"
-    def mainFile = upload(curseforge_project_id, jar)
+    def mainFile = upload(curseforge_project_id, publishJar)
     mainFile.displayName = "${minecraft_version}-${version}-forge"
     mainFile.releaseType = release_type
     mainFile.addModLoader("Forge")
@@ -90,7 +107,7 @@ modrinth {
     versionNumber = "${minecraft_version}-${version}-forge"
     versionName = "${mod_name}-${minecraft_version}-${version}-forge"
     versionType = release_type
-    uploadFile = jar
+    uploadFile = publishJar
     gameVersions = ["${minecraft_version}"]
     loaders = ["forge"]
     changelog.set(providers.provider {

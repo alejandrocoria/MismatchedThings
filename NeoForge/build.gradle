@@ -43,8 +43,17 @@ neoForge {
     }
 
     dependencies {
-
+        implementation "mysticdrew:common-networking-neoforge:${common_networking_version}"
+        implementation "com.electronwill.night-config:core:${nightconfig_version}"
+        implementation "com.electronwill.night-config:toml:${nightconfig_version}"
+        jarJar "mysticdrew:common-networking-neoforge:[${common_networking_version}]"
+        jarJar "com.electronwill.night-config:core:[${nightconfig_version}]"
+        jarJar "com.electronwill.night-config:toml:[${nightconfig_version}]"
     }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('jarJar')
 }
 
 dependencies {

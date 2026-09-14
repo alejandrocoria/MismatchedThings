@@ -1,6 +1,10 @@
 package games.alejandrocoria.mismatchedboots.platform.services;
 
+import java.nio.file.Path;
+
 public interface IPlatformHelper {
+
+    Path getConfigDirectory();
 
     /**
      * Gets the name of the current platform

@@ -112,6 +112,8 @@ public final class CompatibilityGameTests {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         ItemStack mixed = GameTestStacks.pair(
                 new ItemStack(TestContent.requireComponentBoots()), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        Component deathFixtureName = Component.literal("Death Fixture");
+        mixed.set(DataComponents.CUSTOM_NAME, deathFixtureName);
         MixedBootsData snapshots = GameTestStacks.data(mixed);
         player.getInventory().setItem(9, mixed);
         AABB dropBounds = player.getBoundingBox().inflate(3.0);
@@ -125,31 +127,35 @@ public final class CompatibilityGameTests {
         GameRules gameRules = helper.getLevel().getGameRules();
         boolean keepInventory = gameRules.get(GameRules.KEEP_INVENTORY);
         gameRules.set(GameRules.KEEP_INVENTORY, false, server);
-        try {
-            player.setHealth(0.0F);
-            player.die(helper.getLevel().damageSources().genericKill());
+        player.setHealth(0.0F);
+        player.die(helper.getLevel().damageSources().genericKill());
 
-            List<ItemStack> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, dropBounds, Entity::isAlive)
-                    .stream()
-                    .filter(entity -> !existingDropIds.contains(entity.getId()))
-                    .map(ItemEntity::getItem)
-                    .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
-                    .toList();
-            helper.assertValueEqual(drops.size(), 1, "player-death mixed drops");
-            GameTestStacks.assertOrientation(helper, drops.getFirst(),
-                    TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "player-death drop");
-            helper.assertTrue(GameTestStacks.data(drops.getFirst()).equals(snapshots),
-                    "Player death changed the nested source snapshots");
+        helper.runAfterDelay(1, () -> {
+            try {
+                List<ItemStack> drops = helper.getLevel()
+                        .getEntitiesOfClass(ItemEntity.class, dropBounds, Entity::isAlive)
+                        .stream()
+                        .filter(entity -> !existingDropIds.contains(entity.getId()))
+                        .map(ItemEntity::getItem)
+                        .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
+                        .filter(stack -> deathFixtureName.equals(stack.get(DataComponents.CUSTOM_NAME)))
+                        .toList();
+                helper.assertValueEqual(drops.size(), 1, "player-death mixed drops");
+                GameTestStacks.assertOrientation(helper, drops.getFirst(),
+                        TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "player-death drop");
+                helper.assertTrue(GameTestStacks.data(drops.getFirst()).equals(snapshots),
+                        "Player death changed the nested source snapshots");
 
-            ServerPlayer respawned = server.getPlayerList()
-                    .respawn(player, false, Entity.RemovalReason.KILLED);
-            helper.assertTrue(
-                    respawned.getInventory().getNonEquipmentItems().stream().noneMatch(ModContent::isMixedBoots),
-                    "Respawn duplicated the dropped mixed stack into the player inventory");
-        } finally {
-            gameRules.set(GameRules.KEEP_INVENTORY, keepInventory, server);
-        }
-        helper.succeed();
+                ServerPlayer respawned = server.getPlayerList()
+                        .respawn(player, false, Entity.RemovalReason.KILLED);
+                helper.assertTrue(
+                        respawned.getInventory().getNonEquipmentItems().stream().noneMatch(ModContent::isMixedBoots),
+                        "Respawn duplicated the dropped mixed stack into the player inventory");
+                helper.succeed();
+            } finally {
+                gameRules.set(GameRules.KEEP_INVENTORY, keepInventory, server);
+            }
+        });
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)

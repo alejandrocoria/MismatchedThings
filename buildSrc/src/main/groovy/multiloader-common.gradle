@@ -19,6 +19,18 @@ repositories {
 
     mavenLocal()
     mavenCentral()
+    exclusiveContent {
+        forRepositories(
+                mavenLocal(),
+                maven {
+                    name = 'CommonNetworking'
+                    url = 'https://jm.gserv.me/repository/maven-public/'
+                }
+        )
+        filter {
+            includeGroupAndSubgroups('mysticdrew')
+        }
+    }
     // https://docs.gradle.org/current/userguide/declaring_repositories.html#declaring_content_exclusively_found_in_one_repository
     exclusiveContent {
         forRepository {
@@ -111,7 +123,8 @@ processResources {
             "forge_version":                        forge_version,
             "forge_loader_version_range":           forge_loader_version_range,
             "neoforge_version":                     neoforge_version,
-            "neoforge_loader_version_range":        neoforge_loader_version_range
+            "neoforge_loader_version_range":        neoforge_loader_version_range,
+            "common_networking_version":            common_networking_version
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

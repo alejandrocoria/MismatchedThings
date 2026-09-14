@@ -27,6 +27,13 @@ issueTrackerURL="${mod_issues}"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
+    modId="commonnetworking"
+    type="required"
+    versionRange="[${common_networking_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
     modId="minecraft"
     type="required"
     versionRange="${minecraft_version_range}"

@@ -27,3 +27,71 @@ tasks.register("publishMod") {
             ":NeoForge:modrinth"
     )
 }
+
+tasks.register("verifyPackagedDependencies") {
+    group = "verification"
+    description = "Verifies loader-specific bundled libraries and dependency metadata."
+
+    doLast {
+        def artifacts = [
+                fabric  : project(":Fabric").tasks.named("jar").get().archiveFile.get().asFile,
+                forge   : project(":Forge").tasks.named("jarJar").get().archiveFile.get().asFile,
+                neoforge: project(":NeoForge").tasks.named("jar").get().archiveFile.get().asFile
+        ]
+        def entryPrefixes = [fabric: "META-INF/jars/", forge: "META-INF/jarjar/", neoforge: "META-INF/jarjar/"]
+
+        artifacts.each { loader, artifact ->
+            if (!artifact.isFile()) {
+                throw new GradleException("Missing ${loader} artifact: ${artifact}")
+            }
+
+            def zip = new java.util.zip.ZipFile(artifact)
+            try {
+                def entries = []
+                def enumeration = zip.entries()
+                while (enumeration.hasMoreElements()) {
+                    entries.add(enumeration.nextElement().name)
+                }
+                def prefix = entryPrefixes[loader]
+                def expectedBackend = "${prefix}common-networking-${loader}-${common_networking_version}.jar".toString()
+                def bundledBackends = entries.findAll {
+                    it.substring(it.lastIndexOf('/') + 1).startsWith("common-networking-")
+                }
+                if (bundledBackends != [expectedBackend]) {
+                    throw new GradleException("${artifact} must contain only ${expectedBackend}; found ${bundledBackends}")
+                }
+
+                def expectedNightConfig = loader == "forge" ? [] : [
+                        "${prefix}core-${nightconfig_version}.jar",
+                        "${prefix}toml-${nightconfig_version}.jar"
+                ].collect { it.toString() }
+                expectedNightConfig.each { expected ->
+                    if (!entries.contains(expected)) {
+                        throw new GradleException("${artifact.name} does not contain ${expected}")
+                    }
+                }
+                def bundledNightConfig = entries.findAll {
+                    def fileName = it.substring(it.lastIndexOf('/') + 1)
+                    (fileName.startsWith("core-") || fileName.startsWith("toml-")) && fileName.endsWith(".jar")
+                }
+                if (bundledNightConfig.size() != expectedNightConfig.size()
+                        || !bundledNightConfig.containsAll(expectedNightConfig)) {
+                    throw new GradleException("${artifact.name} contains unexpected NightConfig libraries: ${bundledNightConfig}")
+                }
+
+                def descriptorPath = loader == "fabric" ? "fabric.mod.json"
+                        : loader == "forge" ? "META-INF/mods.toml" : "META-INF/neoforge.mods.toml"
+                def descriptorEntry = zip.getEntry(descriptorPath)
+                if (descriptorEntry == null) {
+                    throw new GradleException("${artifact.name} is missing ${descriptorPath}")
+                }
+                def descriptor = zip.getInputStream(descriptorEntry).getText("UTF-8")
+                if (!descriptor.contains("commonnetworking") || !descriptor.contains(common_networking_version)) {
+                    throw new GradleException("${artifact.name} does not require CommonNetworking ${common_networking_version}")
+                }
+            } finally {
+                zip.close()
+            }
+        }
+    }
+}

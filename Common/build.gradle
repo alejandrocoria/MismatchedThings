@@ -19,7 +19,12 @@ neoForge {
 neoForge.addModdingDependenciesTo(sourceSets["test"])
 
 tasks.named('test', Test).configure {
+    def testWorkDirectory = layout.buildDirectory.dir('test-work')
     useJUnitPlatform()
+    workingDir testWorkDirectory
+    doFirst {
+        testWorkDirectory.get().asFile.mkdirs()
+    }
 }
 
 dependencies {
@@ -28,8 +33,17 @@ dependencies {
     compileOnly 'io.github.llamalad7:mixinextras-common:0.3.5'
     annotationProcessor 'io.github.llamalad7:mixinextras-common:0.3.5'
 
+    compileOnly("mysticdrew:common-networking-common:${common_networking_version}") {
+        transitive = false
+    }
+    api "com.electronwill.night-config:core:${nightconfig_version}"
+    api "com.electronwill.night-config:toml:${nightconfig_version}"
+
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation("mysticdrew:common-networking-common:${common_networking_version}") {
+        transitive = false
+    }
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

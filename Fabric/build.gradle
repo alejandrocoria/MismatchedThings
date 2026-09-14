@@ -16,6 +16,11 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     implementation 'com.google.code.findbugs:jsr305:3.0.1'
+    api(include("mysticdrew:common-networking-fabric:${common_networking_version}")) {
+        transitive = false
+    }
+    include(implementation("com.electronwill.night-config:core:${nightconfig_version}"))
+    include(implementation("com.electronwill.night-config:toml:${nightconfig_version}"))
 }
 
 loom {
