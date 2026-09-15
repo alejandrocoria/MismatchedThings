@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import org.joml.Matrix3x2fc;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -47,6 +48,9 @@ abstract class GuiGraphicsExtractorMixin {
         }
 
         GuiGraphicsExtractor graphics = (GuiGraphicsExtractor) (Object) this;
+        if (!mismatchedboots$supportsRectangularClipping(graphics.pose())) {
+            return;
+        }
         boolean foil = stack.hasFoil();
         mismatchedboots$renderHalf(
                 graphics,
@@ -87,5 +91,16 @@ abstract class GuiGraphicsExtractorMixin {
         } finally {
             graphics.disableScissor();
         }
+    }
+
+    private static boolean mismatchedboots$supportsRectangularClipping(Matrix3x2fc pose) {
+        return Float.isFinite(pose.m00())
+                && Float.isFinite(pose.m01())
+                && Float.isFinite(pose.m10())
+                && Float.isFinite(pose.m11())
+                && Float.isFinite(pose.m20())
+                && Float.isFinite(pose.m21())
+                && pose.m01() == 0.0F
+                && pose.m10() == 0.0F;
     }
 }

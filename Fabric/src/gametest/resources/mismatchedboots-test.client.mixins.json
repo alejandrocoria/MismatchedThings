@@ -6,7 +6,10 @@
   "client": [
     "EquipmentLayerRendererMixin",
     "FabricNetworkHandlerMixin",
+    "GuiGraphicsExtractorProbeMixin",
     "GuiRenderStateMixin",
+    "ItemModelResolverProbeMixin",
+    "LayerRenderStateTestAccessor",
     "MinecraftWindowMixin"
   ],
   "injectors": {
