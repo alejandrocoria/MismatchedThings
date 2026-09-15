@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
@@ -10,14 +11,19 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.entity.ItemFrameRenderer;
 import net.minecraft.client.renderer.entity.state.ItemFrameRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.gui.GuiItemRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +37,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,6 +49,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class ItemRenderingClientGameTest implements FabricClientGameTest {
     private static final float EXPECTED_OFFSET = 0.15F;
     private static final float EPSILON = 0.0001F;
+    private static final int CLIPPING_X = 40;
+    private static final int CLIPPING_Y = 40;
+    private static final int CONTROL_X = 64;
 
     @Override
     public void runTest(ClientGameTestContext context) {
@@ -49,9 +61,157 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             context.waitFor(ItemRenderingClientGameTest::hasBothOrientations);
 
             context.runOnClient(ItemRenderingClientGameTest::verifyRenderStates);
+            verifyGuiClipping(context);
             captureGuiAndHandContexts(context, singleplayer);
             captureWorldContexts(context, singleplayer);
             verifyAfterResourceReload(context);
+        }
+    }
+
+    private static void verifyGuiClipping(ClientGameTestContext context) {
+        ItemStack visualStack = createClippingPair(false);
+        verifyGuiClipping(context, visualStack, false);
+        Path screenshot = context.takeScreenshot("exploration2-gui-clipping");
+        AtomicInteger guiScale = new AtomicInteger();
+        context.runOnClient(client -> guiScale.set(client.getWindow().getGuiScale()));
+        assertClippedPixels(screenshot, guiScale.get());
+
+        ItemStack glintStack = createClippingPair(true);
+        verifyGuiClipping(context, glintStack, true);
+
+        context.runOnClient(client -> GuiItemSubmissionProbe.arm(CLIPPING_X, CLIPPING_Y));
+        context.setScreen(() -> new ClippingTestScreen(glintStack, true));
+        context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
+        context.runOnClient(client -> assertGuiSubmissions(GuiItemSubmissionProbe.take(), true, true));
+
+        context.runOnClient(client -> GuiItemSubmissionProbe.arm(CONTROL_X, CLIPPING_Y, 1));
+        context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
+        context.runOnClient(client -> {
+            GuiItemRenderState control = GuiItemSubmissionProbe.take().getFirst();
+            if (control.scissorArea() != null) {
+                throw new AssertionError("GUI clipping leaked its scissor to a later vanilla item: "
+                        + control.scissorArea());
+            }
+        });
+
+        context.setScreen(() -> null);
+        context.waitForScreen(null);
+    }
+
+    private static void verifyGuiClipping(
+            ClientGameTestContext context, ItemStack stack, boolean expectedFoil) {
+        context.runOnClient(client -> GuiItemSubmissionProbe.arm(CLIPPING_X, CLIPPING_Y));
+        context.setScreen(() -> new ClippingTestScreen(stack, false));
+        context.waitForScreen(ClippingTestScreen.class);
+        context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
+        context.runOnClient(client -> assertGuiSubmissions(
+                GuiItemSubmissionProbe.take(), false, expectedFoil));
+        context.waitTicks(2);
+    }
+
+    private static ItemStack createClippingPair(boolean foil) {
+        ItemStack left = new ItemStack(Items.IRON_BOOTS);
+        left.set(DataComponents.ITEM_MODEL,
+                Identifier.fromNamespaceAndPath("mismatchedboots-test", "clipping_red"));
+        ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
+        right.set(DataComponents.ITEM_MODEL,
+                Identifier.fromNamespaceAndPath("mismatchedboots-test", "clipping_blue"));
+        ItemStack mixed = MixedBootsFactory.createPair(left, right).primary();
+        mixed.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+        return mixed;
+    }
+
+    private static void assertGuiSubmissions(
+            List<GuiItemRenderState> submissions, boolean nested, boolean expectedFoil) {
+        if (submissions.size() != 2) {
+            throw new AssertionError("GUI clipping expected two item submissions but got " + submissions.size());
+        }
+
+        int outerLeft = nested ? CLIPPING_X + 2 : CLIPPING_X;
+        int outerRight = nested ? CLIPPING_X + 14 : CLIPPING_X + 16;
+        assertGuiSubmission(
+                submissions.get(0), outerLeft, CLIPPING_X + 8, "red_concrete", expectedFoil, "left");
+        assertGuiSubmission(
+                submissions.get(1), CLIPPING_X + 8, outerRight, "blue_concrete", expectedFoil, "right");
+    }
+
+    private static void assertClippedPixels(Path screenshot, int guiScale) {
+        int leftRed = 0;
+        int leftBlue = 0;
+        int rightRed = 0;
+        int rightBlue = 0;
+        try (NativeImage image = NativeImage.read(Files.newInputStream(screenshot))) {
+            int center = (CLIPPING_X + 8) * guiScale;
+            for (int y = CLIPPING_Y * guiScale; y < (CLIPPING_Y + 16) * guiScale; y++) {
+                for (int x = CLIPPING_X * guiScale; x < (CLIPPING_X + 16) * guiScale; x++) {
+                    int pixel = image.getPixel(x, y);
+                    int red = pixel >> 16 & 0xFF;
+                    int green = pixel >> 8 & 0xFF;
+                    int blue = pixel & 0xFF;
+                    boolean redPixel = red > green + 30 && red > blue + 30;
+                    boolean bluePixel = blue > red + 30 && blue > green + 30;
+                    if (x < center) {
+                        leftRed += redPixel ? 1 : 0;
+                        leftBlue += bluePixel ? 1 : 0;
+                    } else {
+                        rightRed += redPixel ? 1 : 0;
+                        rightBlue += bluePixel ? 1 : 0;
+                    }
+                }
+            }
+        } catch (IOException exception) {
+            throw new AssertionError("Could not inspect the GUI clipping screenshot", exception);
+        }
+
+        int minimumSourcePixels = 20 * guiScale * guiScale;
+        if (leftRed < minimumSourcePixels || rightBlue < minimumSourcePixels) {
+            throw new AssertionError("GUI clipping did not preserve both source halves: "
+                    + leftRed + " red pixels, " + rightBlue + " blue pixels");
+        }
+        if (leftBlue != 0 || rightRed != 0) {
+            throw new AssertionError("GUI clipping leaked pixels across the center: "
+                    + leftBlue + " blue pixels on the left, " + rightRed + " red pixels on the right");
+        }
+    }
+
+    private static void assertGuiSubmission(
+            GuiItemRenderState submission,
+            int expectedLeft,
+            int expectedRight,
+            String expectedSprite,
+            boolean expectedFoil,
+            String side) {
+        ScreenRectangle scissor = submission.scissorArea();
+        if (submission.x() != CLIPPING_X || submission.y() != CLIPPING_Y) {
+            throw new AssertionError("GUI clipping moved the " + side + " source item");
+        }
+        if (scissor == null
+                || scissor.left() != expectedLeft
+                || scissor.right() != expectedRight
+                || scissor.top() != CLIPPING_Y
+                || scissor.bottom() != CLIPPING_Y + 16) {
+            throw new AssertionError("GUI clipping has an incorrect " + side + " scissor: " + scissor);
+        }
+        assertSourceOrderSingle(submission.itemStackRenderState(), expectedSprite, "GUI clipping " + side);
+        assertFoilSingle(submission.itemStackRenderState(), expectedFoil, "GUI clipping " + side);
+    }
+
+    private static void assertSourceOrderSingle(
+            ItemStackRenderState state, String expectedSprite, String scenario) {
+        ItemStackRenderStateAccessor stateAccess = access(state);
+        if (stateAccess.mismatchedboots$getActiveLayerCount() != 1) {
+            throw new AssertionError(scenario + " expected one source layer but got "
+                    + stateAccess.mismatchedboots$getActiveLayerCount());
+        }
+        assertSprite(layer(stateAccess, 0).mismatchedboots$getQuads(), expectedSprite, scenario);
+    }
+
+    private static void assertFoilSingle(ItemStackRenderState state, boolean expected, String scenario) {
+        ItemStackRenderStateAccessor stateAccess = access(state);
+        boolean actual = layer(stateAccess, 0).mismatchedboots$getFoilType()
+                != ItemStackRenderState.FoilType.NONE;
+        if (actual != expected) {
+            throw new AssertionError(scenario + " has an incorrect glint state");
         }
     }
 
@@ -334,5 +494,41 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         return ModContent.getMixedBootsData(stack)
                 .filter(data -> data.left().source().is(left) && data.right().source().is(right))
                 .isPresent();
+    }
+
+    private static final class ClippingTestScreen extends Screen {
+        private final ItemStack stack;
+        private final boolean nested;
+
+        private ClippingTestScreen(ItemStack stack, boolean nested) {
+            super(Component.literal("MismatchedBoots GUI clipping test"));
+            this.stack = stack;
+            this.nested = nested;
+        }
+
+        @Override
+        public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+            graphics.fill(0, 0, width, height, 0xFF202020);
+        }
+
+        @Override
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+            if (nested) {
+                graphics.enableScissor(CLIPPING_X + 2, CLIPPING_Y, CLIPPING_X + 14, CLIPPING_Y + 16);
+            }
+            try {
+                graphics.item(stack, CLIPPING_X, CLIPPING_Y);
+            } finally {
+                if (nested) {
+                    graphics.disableScissor();
+                }
+            }
+            graphics.item(new ItemStack(Items.DIAMOND_BOOTS), CONTROL_X, CLIPPING_Y);
+        }
+
+        @Override
+        public boolean isPauseScreen() {
+            return false;
+        }
     }
 }

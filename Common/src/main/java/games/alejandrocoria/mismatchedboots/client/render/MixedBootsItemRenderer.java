@@ -43,7 +43,7 @@ public final class MixedBootsItemRenderer {
         return true;
     }
 
-    static ItemStack sourceView(ItemStack source, boolean foil) {
+    public static ItemStack sourceView(ItemStack source, boolean foil) {
         ItemStack view = source.copy();
         view.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
         return view;
