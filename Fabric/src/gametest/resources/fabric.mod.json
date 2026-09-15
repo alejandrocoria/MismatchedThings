@@ -21,6 +21,7 @@
         "fabric-client-gametest": [
             "games.alejandrocoria.mismatchedboots.gametest.AttributeRulesClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.CandidateAGuiClientGameTest",
+            "games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.NonGuiGeometryCharacterizationClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest",

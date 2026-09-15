@@ -6,6 +6,9 @@
   "mixins": [
     "AnvilMenuEnchantMixin"
   ],
+  "client": [
+    "LayerRenderStateExtensionMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

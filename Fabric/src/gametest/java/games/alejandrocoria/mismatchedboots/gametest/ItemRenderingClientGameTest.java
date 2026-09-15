@@ -247,11 +247,11 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
                 ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
                 ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)) {
             ItemStackRenderState primary = resolve(client, pair.primary(), displayContext);
-            assertSideBySide(primary, "primary " + displayContext);
+            assertComposition(primary, displayContext, "primary " + displayContext);
             assertSourceOrder(primary, "iron_boots", "golden_boots", "primary " + displayContext);
 
             ItemStackRenderState inverse = resolve(client, pair.inverse(), displayContext);
-            assertSideBySide(inverse, "inverse " + displayContext);
+            assertComposition(inverse, displayContext, "inverse " + displayContext);
             assertSourceOrder(inverse, "golden_boots", "iron_boots", "inverse " + displayContext);
         }
 
@@ -389,7 +389,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
                 client.getEntityRenderDispatcher().getRenderer(frame);
         ItemFrameRenderState state = renderer.createRenderState();
         renderer.extractRenderState(frame, state, 0.0F);
-        assertSideBySide(state.item, "item-frame render state");
+        assertClipped(state.item, "item-frame render state");
         assertSourceOrder(state.item, "golden_boots", "iron_boots", "item-frame render state");
     }
 
@@ -447,6 +447,40 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
                 || Math.abs(right.m11() - 0.8F) > EPSILON
                 || Math.abs(right.m22() - 1.0F) > EPSILON) {
             throw new AssertionError(scenario + " has incorrect source scale");
+        }
+    }
+
+    private static void assertComposition(
+            ItemStackRenderState state, ItemDisplayContext displayContext, String scenario) {
+        if (displayContext == ItemDisplayContext.GUI) {
+            assertSideBySide(state, scenario);
+        } else {
+            assertClipped(state, scenario);
+        }
+    }
+
+    private static void assertClipped(ItemStackRenderState state, String scenario) {
+        ItemStackRenderStateAccessor stateAccess = access(state);
+        if (stateAccess.mismatchedboots$getActiveLayerCount() != 2) {
+            throw new AssertionError(scenario + " expected two clipped layers but got "
+                    + stateAccess.mismatchedboots$getActiveLayerCount());
+        }
+        for (int index = 0; index < 2; index++) {
+            LayerRenderStateAccessor layer = layer(stateAccess, index);
+            Matrix4f transform = layer.mismatchedboots$getLocalTransform();
+            if (!transform.equals(new Matrix4f(), EPSILON)) {
+                throw new AssertionError(scenario + " retained a side-by-side transform on layer " + index);
+            }
+            for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
+                for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
+                    float canonicalX = transform.transformPosition(
+                            quad.position(vertex), new org.joml.Vector3f()).x - 0.5F;
+                    if ((index == 0 && canonicalX > EPSILON)
+                            || (index == 1 && canonicalX < -EPSILON)) {
+                        throw new AssertionError(scenario + " crossed the center on layer " + index);
+                    }
+                }
+            }
         }
     }
 
