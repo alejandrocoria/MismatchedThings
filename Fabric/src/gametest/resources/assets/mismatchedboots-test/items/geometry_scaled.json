@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "mismatchedboots-test:item/geometry_full",
+    "transformation": {
+      "left_rotation": [0.0, 0.0, 0.0, 1.0],
+      "scale": [0.75, 0.5, 1.25],
+      "translation": [0.0, 0.0, 0.0],
+      "right_rotation": [0.0, 0.0, 0.0, 1.0]
+    }
+  }
+}

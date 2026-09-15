@@ -10,7 +10,8 @@
     "GuiRenderStateMixin",
     "ItemModelResolverProbeMixin",
     "LayerRenderStateTestAccessor",
-    "MinecraftWindowMixin"
+    "MinecraftWindowMixin",
+    "SubmitNodeStorageProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1
