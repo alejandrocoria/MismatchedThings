@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class BakedQuadClipper {
@@ -45,12 +46,13 @@ public final class BakedQuadClipper {
                     point(clippingPosition));
         }
 
-        QuadClipper.Result geometry = QuadClipper.clip(new QuadClipper.Quad(
+        QuadClipper.PolygonResult geometry = QuadClipper.clipPolygon(new QuadClipper.Quad(
                 vertices[0], vertices[1], vertices[2], vertices[3]), side);
         return switch (geometry.decision()) {
             case KEEP -> Result.keep(input);
             case DROP -> Result.drop();
-            case SPLIT -> Result.split(rebuild(input, Objects.requireNonNull(geometry.quad())));
+            case SPLIT -> Result.split(BakedPolygonTessellator.tessellate(
+                    input, Objects.requireNonNull(geometry.polygon())));
             case INCOMPATIBLE -> Result.incompatible(switch (
                     Objects.requireNonNull(geometry.incompatibility())) {
                 case NOT_RECTANGLE -> Incompatibility.NOT_RECTANGLE;
@@ -59,34 +61,8 @@ public final class BakedQuadClipper {
         };
     }
 
-    private static BakedQuad rebuild(BakedQuad source, QuadClipper.Quad geometry) {
-        QuadClipper.Vertex vertex0 = geometry.vertex(0);
-        QuadClipper.Vertex vertex1 = geometry.vertex(1);
-        QuadClipper.Vertex vertex2 = geometry.vertex(2);
-        QuadClipper.Vertex vertex3 = geometry.vertex(3);
-        return new BakedQuad(
-                vector(vertex0.position()),
-                vector(vertex1.position()),
-                vector(vertex2.position()),
-                vector(vertex3.position()),
-                packedUv(vertex0),
-                packedUv(vertex1),
-                packedUv(vertex2),
-                packedUv(vertex3),
-                source.direction(),
-                source.materialInfo());
-    }
-
-    private static long packedUv(QuadClipper.Vertex vertex) {
-        return UVPair.pack(vertex.uv().u(), vertex.uv().v());
-    }
-
     private static QuadClipper.Point point(Vector3fc vector) {
         return new QuadClipper.Point(vector.x(), vector.y(), vector.z());
-    }
-
-    private static Vector3f vector(QuadClipper.Point point) {
-        return new Vector3f(point.x(), point.y(), point.z());
     }
 
     public enum ExtensionMetadata {
@@ -102,38 +78,43 @@ public final class BakedQuadClipper {
 
     public record Result(
             QuadClipper.Decision decision,
-            @Nullable BakedQuad quad,
+            List<BakedQuad> quads,
             @Nullable Incompatibility incompatibility) {
         public Result {
             Objects.requireNonNull(decision, "decision");
-            if ((decision == QuadClipper.Decision.KEEP || decision == QuadClipper.Decision.SPLIT)
-                    && (quad == null || incompatibility != null)) {
-                throw new IllegalArgumentException(decision + " requires only a baked quad");
+            quads = List.copyOf(Objects.requireNonNull(quads, "quads"));
+            if (decision == QuadClipper.Decision.KEEP
+                    && (quads.size() != 1 || incompatibility != null)) {
+                throw new IllegalArgumentException("KEEP requires exactly one baked quad");
+            }
+            if (decision == QuadClipper.Decision.SPLIT
+                    && (quads.isEmpty() || quads.size() > 2 || incompatibility != null)) {
+                throw new IllegalArgumentException("SPLIT requires one or two baked quads");
             }
             if (decision == QuadClipper.Decision.INCOMPATIBLE
-                    && (quad != null || incompatibility == null)) {
+                    && (!quads.isEmpty() || incompatibility == null)) {
                 throw new IllegalArgumentException("INCOMPATIBLE requires only a reason");
             }
             if (decision == QuadClipper.Decision.DROP
-                    && (quad != null || incompatibility != null)) {
-                throw new IllegalArgumentException("DROP cannot carry a baked quad or reason");
+                    && (!quads.isEmpty() || incompatibility != null)) {
+                throw new IllegalArgumentException("DROP cannot carry baked quads or a reason");
             }
         }
 
         static Result keep(BakedQuad quad) {
-            return new Result(QuadClipper.Decision.KEEP, quad, null);
+            return new Result(QuadClipper.Decision.KEEP, List.of(quad), null);
         }
 
         static Result drop() {
-            return new Result(QuadClipper.Decision.DROP, null, null);
+            return new Result(QuadClipper.Decision.DROP, List.of(), null);
         }
 
-        static Result split(BakedQuad quad) {
-            return new Result(QuadClipper.Decision.SPLIT, quad, null);
+        static Result split(List<BakedQuad> quads) {
+            return new Result(QuadClipper.Decision.SPLIT, quads, null);
         }
 
         static Result incompatible(Incompatibility incompatibility) {
-            return new Result(QuadClipper.Decision.INCOMPATIBLE, null, incompatibility);
+            return new Result(QuadClipper.Decision.INCOMPATIBLE, List.of(), incompatibility);
         }
     }
 }

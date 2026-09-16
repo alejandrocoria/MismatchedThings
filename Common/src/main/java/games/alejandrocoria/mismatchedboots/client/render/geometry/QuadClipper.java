@@ -13,6 +13,23 @@ public final class QuadClipper {
     }
 
     public static Result clip(Quad input, Side side) {
+        PolygonResult polygonResult = clipPolygon(input, side);
+        return switch (polygonResult.decision()) {
+            case KEEP -> Result.keep();
+            case DROP -> Result.drop();
+            case INCOMPATIBLE -> Result.incompatible(
+                    Objects.requireNonNull(polygonResult.incompatibility()));
+            case SPLIT -> {
+                Polygon polygon = Objects.requireNonNull(polygonResult.polygon());
+                if (polygon.vertices().size() != Quad.VERTEX_COUNT) {
+                    yield Result.incompatible(Incompatibility.UNSUPPORTED_TOPOLOGY);
+                }
+                yield Result.split(new Quad(polygon.vertices()));
+            }
+        };
+    }
+
+    public static PolygonResult clipPolygon(Quad input, Side side) {
         Objects.requireNonNull(input, "input");
         Objects.requireNonNull(side, "side");
         validateFinite(input);
@@ -28,31 +45,30 @@ public final class QuadClipper {
         }
 
         if (!hasLeft && !hasRight) {
-            return side == Side.RIGHT ? Result.keep() : Result.drop();
+            return side == Side.RIGHT ? PolygonResult.keep() : PolygonResult.drop();
         }
         if (!hasRight) {
-            return side == Side.LEFT ? Result.keep() : Result.drop();
+            return side == Side.LEFT ? PolygonResult.keep() : PolygonResult.drop();
         }
         if (!hasLeft) {
-            return side == Side.RIGHT ? Result.keep() : Result.drop();
+            return side == Side.RIGHT ? PolygonResult.keep() : PolygonResult.drop();
         }
 
         if (!isRectangle(input)) {
-            return Result.incompatible(Incompatibility.NOT_RECTANGLE);
+            return PolygonResult.incompatible(Incompatibility.NOT_RECTANGLE);
         }
         if (hasCenter) {
-            return Result.incompatible(Incompatibility.UNSUPPORTED_TOPOLOGY);
+            return PolygonResult.incompatible(Incompatibility.UNSUPPORTED_TOPOLOGY);
         }
 
         List<Integer> crossingEdges = crossingEdges(input);
-        if (crossingEdges.size() != 2
-                || Math.floorMod(crossingEdges.get(0) - crossingEdges.get(1), 4) != 2) {
-            return Result.incompatible(Incompatibility.UNSUPPORTED_TOPOLOGY);
+        if (crossingEdges.size() != 2) {
+            return PolygonResult.incompatible(Incompatibility.UNSUPPORTED_TOPOLOGY);
         }
 
-        Quad clipped = clipRectangle(input, side);
-        validateOutput(input, clipped);
-        return Result.split(clipped);
+        Polygon clipped = clipRectangle(input, side);
+        validateOutput(input, clipped, side);
+        return PolygonResult.split(clipped);
     }
 
     private static List<Integer> crossingEdges(Quad quad) {
@@ -68,8 +84,8 @@ public final class QuadClipper {
         return crossingEdges;
     }
 
-    private static Quad clipRectangle(Quad input, Side side) {
-        List<Vertex> output = new ArrayList<>(Quad.VERTEX_COUNT);
+    private static Polygon clipRectangle(Quad input, Side side) {
+        List<Vertex> output = new ArrayList<>(Quad.VERTEX_COUNT + 1);
         for (int index = 0; index < Quad.VERTEX_COUNT; index++) {
             Vertex current = input.vertex(index);
             Vertex next = input.vertex((index + 1) % Quad.VERTEX_COUNT);
@@ -82,11 +98,7 @@ public final class QuadClipper {
                 output.add(intersection(current, next));
             }
         }
-        if (output.size() != Quad.VERTEX_COUNT) {
-            throw new IllegalStateException("A supported rectangular cut produced "
-                    + output.size() + " vertices instead of four");
-        }
-        return new Quad(output);
+        return new Polygon(output);
     }
 
     private static Vertex intersection(Vertex first, Vertex second) {
@@ -170,18 +182,53 @@ public final class QuadClipper {
         }
     }
 
-    private static void validateOutput(Quad input, Quad output) {
+    private static void validateOutput(Quad input, Polygon output, Side side) {
         validateFinite(output);
         Point inputNormal = edge(input, 0).cross(edge(input, 1));
-        Point outputNormal = edge(output, 0).cross(edge(output, 1));
+        Point outputNormal = polygonNormal(output);
         if (outputNormal.lengthSquared() <= GEOMETRY_EPSILON * GEOMETRY_EPSILON
                 || outputNormal.dot(inputNormal) <= 0.0F) {
-            throw new IllegalStateException("A supported rectangular cut produced invalid area or winding");
+            throw new IllegalStateException("A supported cut produced invalid area or winding");
+        }
+        for (int first = 0; first < output.vertices().size(); first++) {
+            for (int second = first + 1; second < output.vertices().size(); second++) {
+                if (output.vertex(first).clippingPosition()
+                        .distanceSquared(output.vertex(second).clippingPosition())
+                        <= GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
+                    throw new IllegalStateException("A supported cut produced duplicate vertices");
+                }
+            }
         }
         for (Vertex vertex : output.vertices()) {
             if (Math.abs(vertex.clippingPosition().x()) > GEOMETRY_EPSILON
                     && !input.vertices().contains(vertex)) {
                 throw new IllegalStateException("A generated intersection does not lie on the clipping plane");
+            }
+            if (!side.containsWithBoundary(vertex.clippingPosition().x())) {
+                throw new IllegalStateException("A supported cut retained a vertex owned by the other side");
+            }
+        }
+    }
+
+    private static Point polygonNormal(Polygon polygon) {
+        Point origin = polygon.vertex(0).clippingPosition();
+        for (int index = 1; index < polygon.vertices().size() - 1; index++) {
+            Point normal = polygon.vertex(index).clippingPosition().subtract(origin)
+                    .cross(polygon.vertex(index + 1).clippingPosition().subtract(origin));
+            if (normal.lengthSquared() > GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
+                return normal;
+            }
+        }
+        return new Point(0.0F, 0.0F, 0.0F);
+    }
+
+    private static void validateFinite(Polygon polygon) {
+        for (int index = 0; index < polygon.vertices().size(); index++) {
+            Vertex vertex = polygon.vertex(index);
+            if (!vertex.position().isFinite()
+                    || !vertex.clippingPosition().isFinite()
+                    || !vertex.uv().isFinite()) {
+                throw new IllegalArgumentException("Polygon vertex " + index + " contains a non-finite value");
             }
         }
     }
@@ -217,6 +264,10 @@ public final class QuadClipper {
         };
 
         abstract boolean contains(float x);
+
+        boolean containsWithBoundary(float x) {
+            return this == LEFT ? x <= GEOMETRY_EPSILON : x >= -GEOMETRY_EPSILON;
+        }
     }
 
     public enum Decision {
@@ -307,6 +358,57 @@ public final class QuadClipper {
 
         public Vertex vertex(int index) {
             return vertices.get(index);
+        }
+    }
+
+    public record Polygon(List<Vertex> vertices) {
+        private static final int MINIMUM_VERTICES = 3;
+        private static final int MAXIMUM_VERTICES = 5;
+
+        public Polygon {
+            vertices = List.copyOf(vertices);
+            if (vertices.size() < MINIMUM_VERTICES || vertices.size() > MAXIMUM_VERTICES) {
+                throw new IllegalArgumentException("A clipped polygon must contain three to five vertices");
+            }
+        }
+
+        public Vertex vertex(int index) {
+            return vertices.get(index);
+        }
+    }
+
+    public record PolygonResult(
+            Decision decision,
+            @Nullable Polygon polygon,
+            @Nullable Incompatibility incompatibility) {
+        public PolygonResult {
+            Objects.requireNonNull(decision, "decision");
+            if (decision == Decision.SPLIT && (polygon == null || incompatibility != null)) {
+                throw new IllegalArgumentException("SPLIT requires only a clipped polygon");
+            }
+            if (decision == Decision.INCOMPATIBLE && (polygon != null || incompatibility == null)) {
+                throw new IllegalArgumentException("INCOMPATIBLE requires only a reason");
+            }
+            if ((decision == Decision.KEEP || decision == Decision.DROP)
+                    && (polygon != null || incompatibility != null)) {
+                throw new IllegalArgumentException(decision + " cannot carry a polygon or reason");
+            }
+        }
+
+        static PolygonResult keep() {
+            return new PolygonResult(Decision.KEEP, null, null);
+        }
+
+        static PolygonResult drop() {
+            return new PolygonResult(Decision.DROP, null, null);
+        }
+
+        static PolygonResult split(Polygon polygon) {
+            return new PolygonResult(Decision.SPLIT, polygon, null);
+        }
+
+        static PolygonResult incompatible(Incompatibility incompatibility) {
+            return new PolygonResult(Decision.INCOMPATIBLE, null, incompatibility);
         }
     }
 

@@ -16,6 +16,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,8 +40,8 @@ class BakedQuadClipperTest {
 
             assertEquals(QuadClipper.Decision.SPLIT, leftResult.decision());
             assertEquals(QuadClipper.Decision.SPLIT, rightResult.decision());
-            BakedQuad left = leftResult.quad();
-            BakedQuad right = rightResult.quad();
+            BakedQuad left = onlyQuad(leftResult);
+            BakedQuad right = onlyQuad(rightResult);
 
             assertPosition(left.position(0), 0.0F, 0.0F, 0.5F);
             assertPosition(left.position(1), 0.5F, 0.0F, 0.5F);
@@ -77,7 +78,7 @@ class BakedQuadClipperTest {
     void preservesDirectionAndEveryMaterialFieldByIdentity() {
         try (MaterialFixture fixture = MaterialFixture.animatedTranslucent()) {
             BakedQuad input = quad(fixture.material());
-            BakedQuad output = clip(input, new Matrix4f(), QuadClipper.Side.LEFT).quad();
+            BakedQuad output = onlyQuad(clip(input, new Matrix4f(), QuadClipper.Side.LEFT));
 
             assertEquals(Direction.SOUTH, output.direction());
             assertSame(input.materialInfo(), output.materialInfo());
@@ -102,10 +103,11 @@ class BakedQuadClipperTest {
             BakedQuadClipper.Result dropped = clip(input, whollyLeft, QuadClipper.Side.RIGHT);
 
             assertEquals(QuadClipper.Decision.KEEP, kept.decision());
-            assertSame(input, kept.quad());
+            assertEquals(1, kept.quads().size());
+            assertSame(input, kept.quads().getFirst());
             assertNull(kept.incompatibility());
             assertEquals(QuadClipper.Decision.DROP, dropped.decision());
-            assertNull(dropped.quad());
+            assertTrue(dropped.quads().isEmpty());
             assertNull(dropped.incompatibility());
         }
     }
@@ -116,7 +118,7 @@ class BakedQuadClipperTest {
             BakedQuad input = quad(fixture.material());
             Matrix4f translated = new Matrix4f().translation(0.25F, 0.0F, 0.0F);
 
-            BakedQuad left = clip(input, translated, QuadClipper.Side.LEFT).quad();
+            BakedQuad left = onlyQuad(clip(input, translated, QuadClipper.Side.LEFT));
 
             assertPosition(left.position(1), 0.25F, 0.0F, 0.5F);
             assertPosition(left.position(2), 0.25F, 1.0F, 0.5F);
@@ -139,7 +141,7 @@ class BakedQuadClipperTest {
             assertEquals(QuadClipper.Decision.INCOMPATIBLE, result.decision());
             assertEquals(BakedQuadClipper.Incompatibility.UNSUPPORTED_EXTENSION_METADATA,
                     result.incompatibility());
-            assertNull(result.quad());
+            assertTrue(result.quads().isEmpty());
             assertEquals(quad(fixture.material()), input);
         }
     }
@@ -163,7 +165,7 @@ class BakedQuadClipperTest {
 
             assertEquals(QuadClipper.Decision.INCOMPATIBLE, result.decision());
             assertEquals(BakedQuadClipper.Incompatibility.NOT_RECTANGLE, result.incompatibility());
-            assertNull(result.quad());
+            assertTrue(result.quads().isEmpty());
         }
     }
 
@@ -177,7 +179,43 @@ class BakedQuadClipperTest {
 
             assertEquals(QuadClipper.Decision.INCOMPATIBLE, result.decision());
             assertEquals(BakedQuadClipper.Incompatibility.NOT_RECTANGLE, result.incompatibility());
-            assertNull(result.quad());
+            assertTrue(result.quads().isEmpty());
+        }
+    }
+
+    @Test
+    void tessellatesAdjacentEdgeCutsIntoOneOrTwoBoundedPrimitives() {
+        try (MaterialFixture fixture = MaterialFixture.animatedTranslucent()) {
+            BakedQuad diamond = new BakedQuad(
+                    new Vector3f(1.0F, 0.0F, 0.5F),
+                    new Vector3f(2.0F, 1.0F, 0.5F),
+                    new Vector3f(1.0F, 2.0F, 0.5F),
+                    new Vector3f(0.0F, 1.0F, 0.5F),
+                    UVPair.pack(8.0F, 0.0F),
+                    UVPair.pack(16.0F, 8.0F),
+                    UVPair.pack(8.0F, 16.0F),
+                    UVPair.pack(0.0F, 8.0F),
+                    Direction.SOUTH,
+                    fixture.material());
+
+            BakedQuadClipper.Result left = clip(diamond, new Matrix4f(), QuadClipper.Side.LEFT);
+            BakedQuadClipper.Result right = clip(diamond, new Matrix4f(), QuadClipper.Side.RIGHT);
+
+            assertEquals(QuadClipper.Decision.SPLIT, left.decision());
+            assertEquals(1, left.quads().size());
+            assertTriangle(left.quads().getFirst());
+            assertEquals(QuadClipper.Decision.SPLIT, right.decision());
+            assertEquals(2, right.quads().size());
+            assertFalse(isTriangle(right.quads().getFirst()));
+            assertTriangle(right.quads().get(1));
+            for (BakedQuad output : left.quads()) {
+                assertSame(diamond.materialInfo(), output.materialInfo());
+                assertEquals(diamond.direction(), output.direction());
+            }
+            for (BakedQuad output : right.quads()) {
+                assertSame(diamond.materialInfo(), output.materialInfo());
+                assertEquals(diamond.direction(), output.direction());
+            }
         }
     }
 
@@ -223,8 +261,43 @@ class BakedQuadClipperTest {
             assertThrows(IllegalArgumentException.class,
                     () -> clip(missingDirection, new Matrix4f(), QuadClipper.Side.LEFT));
             assertThrows(IllegalArgumentException.class, () -> new BakedQuadClipper.Result(
-                    QuadClipper.Decision.SPLIT, null, null));
+                    QuadClipper.Decision.SPLIT, List.of(), null));
+            assertThrows(IllegalArgumentException.class, () -> new BakedQuadClipper.Result(
+                    QuadClipper.Decision.DROP, List.of(input), null));
         }
+    }
+
+    @Test
+    void snapshotsAndBoundsResultPrimitiveLists() {
+        try (MaterialFixture fixture = MaterialFixture.animatedTranslucent()) {
+            BakedQuad input = quad(fixture.material());
+            List<BakedQuad> mutable = new ArrayList<>(List.of(input));
+            BakedQuadClipper.Result result = new BakedQuadClipper.Result(
+                    QuadClipper.Decision.SPLIT, mutable, null);
+            mutable.clear();
+
+            assertEquals(1, result.quads().size());
+            assertSame(input, result.quads().getFirst());
+            assertThrows(UnsupportedOperationException.class, () -> result.quads().clear());
+            assertThrows(IllegalArgumentException.class, () -> new BakedQuadClipper.Result(
+                    QuadClipper.Decision.KEEP, List.of(input, input), null));
+            assertThrows(IllegalArgumentException.class, () -> new BakedQuadClipper.Result(
+                    QuadClipper.Decision.SPLIT, List.of(input, input, input), null));
+        }
+    }
+
+    private static BakedQuad onlyQuad(BakedQuadClipper.Result result) {
+        assertEquals(1, result.quads().size());
+        return result.quads().getFirst();
+    }
+
+    private static void assertTriangle(BakedQuad quad) {
+        assertTrue(isTriangle(quad));
+        assertEquals(quad.packedUV2(), quad.packedUV3());
+    }
+
+    private static boolean isTriangle(BakedQuad quad) {
+        return quad.position2().equals(quad.position3());
     }
 
     private static BakedQuadClipper.Result clip(
@@ -300,7 +373,7 @@ class BakedQuadClipperTest {
         assertEquals(v, UVPair.unpackV(packed), EPSILON);
     }
 
-    private record MaterialFixture(
+    record MaterialFixture(
             NativeImage image,
             TextureAtlasSprite sprite,
             RenderType renderType,

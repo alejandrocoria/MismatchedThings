@@ -1,0 +1,6 @@
+{
+  "parent": "mismatchedboots_crossloader_test:item/intersecting_boots",
+  "textures": {
+    "texture": "minecraft:block/blue_concrete"
+  }
+}

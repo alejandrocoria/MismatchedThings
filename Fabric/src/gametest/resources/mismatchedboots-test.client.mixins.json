@@ -4,6 +4,7 @@
   "package": "games.alejandrocoria.mismatchedboots.gametest.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "BakedQuadClipperProbeMixin",
     "EquipmentLayerRendererMixin",
     "FabricNetworkHandlerMixin",
     "GuiGraphicsExtractorProbeMixin",

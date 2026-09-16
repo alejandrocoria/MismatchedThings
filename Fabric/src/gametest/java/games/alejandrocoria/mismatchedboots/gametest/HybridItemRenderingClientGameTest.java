@@ -38,7 +38,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     private static final Identifier FULL_MODEL = testId("geometry_full");
     private static final Identifier ROTATED_MODEL = testId("geometry_rotated");
     private static final Identifier EXTENSION_MODEL = ItemLayerResolutionProbe.EXTENSION_MODEL;
-    private static final Identifier MULTI_LATE_ROTATED_MODEL = testId("geometry_multi_late_rotated");
+    private static final Identifier MULTI_ROTATED_MODEL = testId("geometry_multi_late_rotated");
     private static final Identifier RIGHT_ONLY_MODEL = testId("geometry_right_only");
 
     @Override
@@ -49,7 +49,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
             context.runOnClient(client -> {
                 verifyCompatibleVanillaPairs(client);
                 verifyMetadataAndSingleResolution(client);
-                verifyLateIncompatibilityIsAtomic(client);
+                verifyMultiLayerRotatedClipping(client);
                 verifySpecialRendererFallback(client);
                 verifyFabricExtensionFallback(client);
                 verifyEmptyAndDiscardedSides(client);
@@ -119,8 +119,8 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         }
     }
 
-    private static void verifyLateIncompatibilityIsAtomic(Minecraft client) {
-        ItemStack left = modelBoot(Items.IRON_BOOTS, MULTI_LATE_ROTATED_MODEL);
+    private static void verifyMultiLayerRotatedClipping(Minecraft client) {
+        ItemStack left = modelBoot(Items.IRON_BOOTS, MULTI_ROTATED_MODEL);
         ItemStack right = modelBoot(Items.GOLDEN_BOOTS, FULL_MODEL);
         ItemStackRenderState leftBaseline = resolve(client, left, ItemDisplayContext.FIXED);
         ItemStackRenderState rightBaseline = resolve(client, right, ItemDisplayContext.FIXED);
@@ -128,14 +128,23 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 MixedBootsFactory.createPair(left, right).primary(), ItemDisplayContext.FIXED);
 
         if (layerCount(leftBaseline) != 2 || layerCount(rightBaseline) != 1 || layerCount(output) != 3) {
-            throw new AssertionError("The late-incompatibility fixture resolved unexpected layer counts");
+            throw new AssertionError("The multi-layer rotated fixture resolved unexpected layer counts");
         }
-        assertFallbackLayer(layer(leftBaseline, 0), layer(output, 0), -FALLBACK_OFFSET,
-                "compatible layer before late failure");
-        assertFallbackLayer(layer(leftBaseline, 1), layer(output, 1), -FALLBACK_OFFSET,
-                "late incompatible layer");
-        assertFallbackLayer(layer(rightBaseline, 0), layer(output, 2), FALLBACK_OFFSET,
-                "opposite source after late failure");
+        assertClippedLayer(output, 0, QuadClipper.Side.LEFT, false,
+                "ordinary layer before rotated layer");
+        assertClippedLayer(output, 1, QuadClipper.Side.LEFT, false,
+                "rotated layer");
+        assertClippedLayer(output, 2, QuadClipper.Side.RIGHT, false,
+                "opposite source after rotated layer");
+        assertMatrix(layer(output, 0).mismatchedboots$getLocalTransform(),
+                layer(leftBaseline, 0).mismatchedboots$getLocalTransform(),
+                "ordinary clipped layer transform");
+        assertMatrix(layer(output, 1).mismatchedboots$getLocalTransform(),
+                layer(leftBaseline, 1).mismatchedboots$getLocalTransform(),
+                "rotated clipped layer transform");
+        assertMatrix(layer(output, 2).mismatchedboots$getLocalTransform(),
+                layer(rightBaseline, 0).mismatchedboots$getLocalTransform(),
+                "opposite clipped layer transform");
     }
 
     private static void verifySpecialRendererFallback(Minecraft client) {
@@ -271,11 +280,49 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (!allowEmpty && extents.length == 0) {
             throw new AssertionError(scenario + " has no clipped extents");
         }
-        for (Vector3fc extent : extents) {
-            Vector3f canonical = localTransform.transformPosition(
-                    new Vector3f(extent)).sub(0.5F, 0.5F, 0.5F);
-            assertOwnedX(canonical.x, side, scenario + " extent");
+        assertExtentsBoundQuads(accessor.mismatchedboots$getQuads(), extents, scenario);
+    }
+
+    private static void assertExtentsBoundQuads(
+            List<BakedQuad> quads, Vector3fc[] extents, String scenario) {
+        if (quads.isEmpty()) {
+            if (extents.length != 0) {
+                throw new AssertionError(scenario + " retained extents for empty geometry");
+            }
+            return;
         }
+        if (extents.length != 8) {
+            throw new AssertionError(scenario + " expected eight AABB extents but got " + extents.length);
+        }
+
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float minZ = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        float maxZ = Float.NEGATIVE_INFINITY;
+        for (BakedQuad quad : quads) {
+            for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
+                Vector3fc position = quad.position(vertex);
+                minX = Math.min(minX, position.x());
+                minY = Math.min(minY, position.y());
+                minZ = Math.min(minZ, position.z());
+                maxX = Math.max(maxX, position.x());
+                maxY = Math.max(maxY, position.y());
+                maxZ = Math.max(maxZ, position.z());
+            }
+        }
+        Vector3fc[] expected = {
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(minX, minY, maxZ),
+                new Vector3f(minX, maxY, minZ),
+                new Vector3f(minX, maxY, maxZ),
+                new Vector3f(maxX, minY, minZ),
+                new Vector3f(maxX, minY, maxZ),
+                new Vector3f(maxX, maxY, minZ),
+                new Vector3f(maxX, maxY, maxZ)
+        };
+        assertExtentsEqual(expected, extents, scenario);
     }
 
     private static void assertOwnedX(float x, QuadClipper.Side side, String scenario) {

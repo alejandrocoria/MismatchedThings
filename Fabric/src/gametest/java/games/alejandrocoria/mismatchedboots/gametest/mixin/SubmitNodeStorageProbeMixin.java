@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.gametest.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import games.alejandrocoria.mismatchedboots.gametest.ItemSubmissionPoseProbe;
+import games.alejandrocoria.mismatchedboots.gametest.RuntimeItemSubmissionProbe;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -27,5 +28,6 @@ abstract class SubmitNodeStorageProbeMixin {
             ItemStackRenderState.FoilType foilType,
             CallbackInfo callback) {
         ItemSubmissionPoseProbe.record(displayContext, poseStack.last().pose(), quads);
+        RuntimeItemSubmissionProbe.record(displayContext, poseStack.last().pose(), quads, foilType);
     }
 }

@@ -72,6 +72,57 @@ class QuadClipperTest {
     }
 
     @Test
+    void clipsAdjacentEdgesIntoHandAuthoredTriangleAndPentagon() {
+        QuadClipper.Vertex vertex0 = vertex(0.5F, -1.0F, 0.0F, 10.0F, 20.0F);
+        QuadClipper.Vertex vertex1 = vertex(1.5F, 0.0F, 0.0F, 30.0F, 24.0F);
+        QuadClipper.Vertex vertex2 = vertex(0.5F, 1.0F, 0.0F, 34.0F, 44.0F);
+        QuadClipper.Vertex vertex3 = vertex(-0.5F, 0.0F, 0.0F, 14.0F, 40.0F);
+        QuadClipper.Quad input = new QuadClipper.Quad(vertex0, vertex1, vertex2, vertex3);
+
+        QuadClipper.Polygon left = splitPolygon(input, QuadClipper.Side.LEFT);
+        QuadClipper.Polygon right = splitPolygon(input, QuadClipper.Side.RIGHT);
+
+        assertEquals(3, left.vertices().size());
+        assertVertex(left.vertex(0), 0.0F, 0.5F, 0.0F, 24.0F, 42.0F);
+        assertSame(vertex3, left.vertex(1));
+        assertVertex(left.vertex(2), 0.0F, -0.5F, 0.0F, 12.0F, 30.0F);
+
+        assertEquals(5, right.vertices().size());
+        assertSame(vertex0, right.vertex(0));
+        assertSame(vertex1, right.vertex(1));
+        assertSame(vertex2, right.vertex(2));
+        assertVertex(right.vertex(3), 0.0F, 0.5F, 0.0F, 24.0F, 42.0F);
+        assertVertex(right.vertex(4), 0.0F, -0.5F, 0.0F, 12.0F, 30.0F);
+
+        assertTrue(normal(left).dot(normal(input)) > 0.0F);
+        assertTrue(normal(right).dot(normal(input)) > 0.0F);
+        assertIncompatible(input, QuadClipper.Incompatibility.UNSUPPORTED_TOPOLOGY);
+    }
+
+    @Test
+    void clipsAdjacentEdgesForEveryCyclicStartAndBothValidWindings() {
+        List<QuadClipper.Vertex> forward = adjacentEdgeRectangle().vertices();
+        List<QuadClipper.Vertex> reverse = List.of(
+                forward.get(0), forward.get(3), forward.get(2), forward.get(1));
+
+        for (List<QuadClipper.Vertex> winding : List.of(forward, reverse)) {
+            for (int rotation = 0; rotation < 4; rotation++) {
+                QuadClipper.Quad input = new QuadClipper.Quad(rotate(winding, rotation));
+                QuadClipper.Point inputNormal = normal(input);
+                QuadClipper.Polygon left = splitPolygon(input, QuadClipper.Side.LEFT);
+                QuadClipper.Polygon right = splitPolygon(input, QuadClipper.Side.RIGHT);
+
+                assertEquals(3, left.vertices().size());
+                assertEquals(5, right.vertices().size());
+                assertTrue(normal(left).dot(inputNormal) > 0.0F,
+                        "Left winding changed at rotation " + rotation);
+                assertTrue(normal(right).dot(inputNormal) > 0.0F,
+                        "Right winding changed at rotation " + rotation);
+            }
+        }
+    }
+
+    @Test
     void computesInterpolationFromClippingSpaceAndReturnsRawSpacePositions() {
         QuadClipper.Quad input = new QuadClipper.Quad(
                 vertex(10.0F, -1.0F, 0.0F, 0.0F, 10.0F, -1.0F),
@@ -260,13 +311,42 @@ class QuadClipperTest {
     }
 
     @Test
+    void polygonClippingIsDeterministicAndDoesNotMutateItsInput() {
+        QuadClipper.Quad firstInput = adjacentEdgeRectangle();
+        QuadClipper.Quad equalInput = copy(firstInput);
+
+        QuadClipper.PolygonResult first = QuadClipper.clipPolygon(firstInput, QuadClipper.Side.RIGHT);
+        QuadClipper.PolygonResult repeated = QuadClipper.clipPolygon(firstInput, QuadClipper.Side.RIGHT);
+        QuadClipper.PolygonResult equalIdentity = QuadClipper.clipPolygon(equalInput, QuadClipper.Side.RIGHT);
+
+        assertEquals(first, repeated);
+        assertEquals(first, equalIdentity);
+        assertNotSame(firstInput, equalInput);
+        assertEquals(adjacentEdgeRectangle(), firstInput);
+    }
+
+    @Test
     void validatesQuadAndResultShapesAtTheirBoundary() {
         assertThrows(IllegalArgumentException.class, () -> new QuadClipper.Quad(List.of()));
+        assertThrows(IllegalArgumentException.class, () -> new QuadClipper.Polygon(List.of()));
+        assertThrows(IllegalArgumentException.class, () -> new QuadClipper.Polygon(List.of(
+                vertex(0.0F, 0.0F, 0.0F),
+                vertex(1.0F, 0.0F, 0.0F),
+                vertex(1.0F, 1.0F, 0.0F),
+                vertex(0.0F, 1.0F, 0.0F),
+                vertex(-1.0F, 1.0F, 0.0F),
+                vertex(-1.0F, 0.0F, 0.0F))));
         assertThrows(IllegalArgumentException.class, () -> new QuadClipper.Result(
                 QuadClipper.Decision.SPLIT, null, null));
         assertThrows(IllegalArgumentException.class, () -> new QuadClipper.Result(
                 QuadClipper.Decision.INCOMPATIBLE,
                 rectangle(-1.0F, 1.0F, -1.0F, 1.0F),
+                QuadClipper.Incompatibility.NOT_RECTANGLE));
+        assertThrows(IllegalArgumentException.class, () -> new QuadClipper.PolygonResult(
+                QuadClipper.Decision.SPLIT, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new QuadClipper.PolygonResult(
+                QuadClipper.Decision.INCOMPATIBLE,
+                new QuadClipper.Polygon(adjacentEdgeRectangle().vertices()),
                 QuadClipper.Incompatibility.NOT_RECTANGLE));
     }
 
@@ -282,6 +362,14 @@ class QuadClipperTest {
                     x * sine + y * cosine, 0.0F));
         }
         return new QuadClipper.Quad(vertices);
+    }
+
+    private static QuadClipper.Quad adjacentEdgeRectangle() {
+        return new QuadClipper.Quad(
+                vertex(0.5F, -1.0F, 0.0F),
+                vertex(1.5F, 0.0F, 0.0F),
+                vertex(0.5F, 1.0F, 0.0F),
+                vertex(-0.5F, 0.0F, 0.0F));
     }
 
     private static QuadClipper.Quad warpedRectangle(float deviation) {
@@ -323,11 +411,30 @@ class QuadClipperTest {
                 .cross(quad.vertex(2).clippingPosition().subtract(quad.vertex(1).clippingPosition()));
     }
 
+    private static QuadClipper.Point normal(QuadClipper.Polygon polygon) {
+        QuadClipper.Point origin = polygon.vertex(0).clippingPosition();
+        for (int index = 1; index < polygon.vertices().size() - 1; index++) {
+            QuadClipper.Point result = polygon.vertex(index).clippingPosition().subtract(origin)
+                    .cross(polygon.vertex(index + 1).clippingPosition().subtract(origin));
+            if (result.lengthSquared() > EPSILON * EPSILON) {
+                return result;
+            }
+        }
+        throw new AssertionError("Polygon has no measurable normal");
+    }
+
     private static QuadClipper.Quad split(QuadClipper.Quad input, QuadClipper.Side side) {
         QuadClipper.Result result = QuadClipper.clip(input, side);
         assertEquals(QuadClipper.Decision.SPLIT, result.decision());
         assertNull(result.incompatibility());
         return result.quad();
+    }
+
+    private static QuadClipper.Polygon splitPolygon(QuadClipper.Quad input, QuadClipper.Side side) {
+        QuadClipper.PolygonResult result = QuadClipper.clipPolygon(input, side);
+        assertEquals(QuadClipper.Decision.SPLIT, result.decision());
+        assertNull(result.incompatibility());
+        return result.polygon();
     }
 
     private static void assertDecision(

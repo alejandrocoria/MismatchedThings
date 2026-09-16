@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "LoadingErrorScreenMixin",
-    "MinecraftWindowMixin"
+    "MinecraftWindowMixin",
+    "SubmitNodeStorageProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

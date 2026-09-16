@@ -126,7 +126,7 @@ public final class MixedBootsItemRenderer {
                         range.side(),
                         extensionMetadata);
                 switch (result.decision()) {
-                    case KEEP, SPLIT -> replacement.add(result.quad());
+                    case KEEP, SPLIT -> replacement.addAll(result.quads());
                     case DROP -> {
                     }
                     case INCOMPATIBLE -> {
