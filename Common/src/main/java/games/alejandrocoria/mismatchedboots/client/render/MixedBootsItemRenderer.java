@@ -96,6 +96,10 @@ public final class MixedBootsItemRenderer {
             quads.clear();
             quads.addAll(plan.quads());
             plan.layer().setExtents(plan.extents());
+            plan.extension().commit().run();
+            if (plan.extension().animated()) {
+                output.setAnimated();
+            }
         }
         return true;
     }
@@ -110,21 +114,13 @@ public final class MixedBootsItemRenderer {
                 return false;
             }
 
-            BakedQuadClipper.ExtensionMetadata extensionMetadata =
-                    layer instanceof LayerExtensionMetadata metadata
-                            && metadata.mismatchedboots$hasUnsupportedGeometry()
-                            ? BakedQuadClipper.ExtensionMetadata.UNSUPPORTED
-                            : BakedQuadClipper.ExtensionMetadata.NONE;
-            if (extensionMetadata == BakedQuadClipper.ExtensionMetadata.UNSUPPORTED) {
-                return false;
-            }
             List<BakedQuad> replacement = new ArrayList<>(accessor.mismatchedboots$getQuads().size());
             for (BakedQuad quad : accessor.mismatchedboots$getQuads()) {
                 BakedQuadClipper.Result result = BakedQuadClipper.clip(
                         quad,
                         accessor.mismatchedboots$getLocalTransform(),
                         range.side(),
-                        extensionMetadata);
+                        BakedQuadClipper.ExtensionMetadata.NONE);
                 switch (result.decision()) {
                     case KEEP, SPLIT -> replacement.addAll(result.quads());
                     case DROP -> {
@@ -134,7 +130,13 @@ public final class MixedBootsItemRenderer {
                     }
                 }
             }
-            plans.add(new LayerPlan(layer, List.copyOf(replacement), extents(replacement)));
+            LayerExtensionMetadata.Plan extension = layer instanceof LayerExtensionMetadata metadata
+                    ? metadata.mismatchedboots$planGeometry(accessor.mismatchedboots$getLocalTransform(), range.side())
+                    : LayerExtensionMetadata.Plan.NONE;
+            if (!extension.compatible()) {
+                return false;
+            }
+            plans.add(new LayerPlan(layer, List.copyOf(replacement), extents(replacement), extension));
         }
         return true;
     }
@@ -200,6 +202,7 @@ public final class MixedBootsItemRenderer {
     private record LayerPlan(
             ItemStackRenderState.LayerRenderState layer,
             List<BakedQuad> quads,
-            Supplier<Vector3fc[]> extents) {
+            Supplier<Vector3fc[]> extents,
+            LayerExtensionMetadata.Plan extension) {
     }
 }

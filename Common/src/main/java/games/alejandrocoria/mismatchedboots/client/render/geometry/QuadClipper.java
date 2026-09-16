@@ -30,6 +30,15 @@ public final class QuadClipper {
     }
 
     public static PolygonResult clipPolygon(Quad input, Side side) {
+        return clipPolygon(input, side, null);
+    }
+
+    public static TracedPolygonResult clipPolygonWithOrigins(Quad input, Side side) {
+        List<VertexOrigin> origins = new ArrayList<>(5);
+        return new TracedPolygonResult(clipPolygon(input, side, origins), origins);
+    }
+
+    private static PolygonResult clipPolygon(Quad input, Side side, @Nullable List<VertexOrigin> origins) {
         Objects.requireNonNull(input, "input");
         Objects.requireNonNull(side, "side");
         validateFinite(input);
@@ -66,7 +75,7 @@ public final class QuadClipper {
             return PolygonResult.incompatible(Incompatibility.UNSUPPORTED_TOPOLOGY);
         }
 
-        Polygon clipped = clipRectangle(input, side);
+        Polygon clipped = clipRectangle(input, side, origins);
         validateOutput(input, clipped, side);
         return PolygonResult.split(clipped);
     }
@@ -84,7 +93,7 @@ public final class QuadClipper {
         return crossingEdges;
     }
 
-    private static Polygon clipRectangle(Quad input, Side side) {
+    private static Polygon clipRectangle(Quad input, Side side, @Nullable List<VertexOrigin> origins) {
         List<Vertex> output = new ArrayList<>(Quad.VERTEX_COUNT + 1);
         for (int index = 0; index < Quad.VERTEX_COUNT; index++) {
             Vertex current = input.vertex(index);
@@ -93,15 +102,22 @@ public final class QuadClipper {
             boolean nextInside = side.contains(next.clippingPosition().x());
             if (currentInside) {
                 output.add(current);
+                if (origins != null) {
+                    origins.add(new VertexOrigin(index, index, 0.0F));
+                }
             }
             if (currentInside != nextInside) {
-                output.add(intersection(current, next));
+                float factor = intersectionFactor(current, next);
+                output.add(intersection(current, next, factor));
+                if (origins != null) {
+                    origins.add(new VertexOrigin(index, (index + 1) % Quad.VERTEX_COUNT, factor));
+                }
             }
         }
         return new Polygon(output);
     }
 
-    private static Vertex intersection(Vertex first, Vertex second) {
+    private static float intersectionFactor(Vertex first, Vertex second) {
         float firstX = first.clippingPosition().x();
         float secondX = second.clippingPosition().x();
         float factor = firstX / (firstX - secondX);
@@ -110,6 +126,10 @@ public final class QuadClipper {
                     + factor);
         }
 
+        return factor;
+    }
+
+    private static Vertex intersection(Vertex first, Vertex second, float factor) {
         Point clipping = first.clippingPosition().lerp(second.clippingPosition(), factor);
         return new Vertex(
                 first.position().lerp(second.position(), factor),
@@ -374,6 +394,32 @@ public final class QuadClipper {
 
         public Vertex vertex(int index) {
             return vertices.get(index);
+        }
+    }
+
+    public record VertexOrigin(int first, int second, float factor) {
+        public VertexOrigin {
+            if (first < 0 || first >= 4 || second < 0 || second >= 4 || !Float.isFinite(factor)
+                    || (first == second ? factor != 0.0F
+                    : second != (first + 1) % 4 || factor <= 0.0F || factor >= 1.0F)) {
+                throw new IllegalArgumentException("Invalid source vertex or edge intersection");
+            }
+        }
+
+        public boolean retained() {
+            return first == second;
+        }
+    }
+
+    public record TracedPolygonResult(PolygonResult geometry, List<VertexOrigin> origins) {
+        public TracedPolygonResult {
+            Objects.requireNonNull(geometry, "geometry");
+            origins = List.copyOf(origins);
+            int expected = geometry.decision() == Decision.SPLIT
+                    ? Objects.requireNonNull(geometry.polygon()).vertices().size() : 0;
+            if (origins.size() != expected) {
+                throw new IllegalArgumentException("Origins must match the clipped polygon");
+            }
         }
     }
 

@@ -9,6 +9,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.impl.client.renderer.LayerRenderStateExtension;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -16,6 +17,7 @@ import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,6 +31,9 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
+import net.minecraft.world.item.equipment.trim.TrimMaterials;
+import net.minecraft.world.item.equipment.trim.TrimPatterns;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -51,9 +56,19 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
     private static final Identifier RED_MODEL = testId("clipping_red");
     private static final Identifier ROTATED_RED_MODEL = testId("clipping_red_rotated");
     private static final Identifier BLUE_MODEL = testId("clipping_blue");
+    private final boolean meshRoute;
+
+    public HybridItemRenderingRuntimeClientGameTest() {
+        this(false);
+    }
+
+    HybridItemRenderingRuntimeClientGameTest(boolean meshRoute) {
+        this.meshRoute = meshRoute;
+    }
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        MeshTestFixtures.runtimeRoute = meshRoute;
         AtomicReference<CameraType> originalCamera = new AtomicReference<>();
         context.runOnClient(client -> originalCamera.set(client.options.getCameraType()));
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
@@ -73,6 +88,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             ItemLayerResolutionProbe.clear();
             QuadPlanningProbe.clear();
             RuntimeItemSubmissionProbe.clear();
+            MeshTestFixtures.clear();
         }
     }
 
@@ -218,6 +234,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             addFrame(level, center.offset(-2, 0, 0), coloredPair(true).primary());
             addFrame(level, center, rotatedPair(true));
             addFrame(level, center.offset(2, 0, 0), dyedPair());
+            addFrame(level, center.offset(0, 1, 0), trimmedPair(level));
         });
     }
 
@@ -346,7 +363,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         long frames = client.level.getEntitiesOfClass(ItemFrame.class, bounds, Entity::isAlive).stream()
                 .filter(frame -> ModContent.isMixedBoots(frame.getItem()))
                 .count();
-        return drops >= 3 && frames >= 3;
+        return drops >= 3 && frames >= 4;
     }
 
     private static boolean hasRotation(Minecraft client, int entityId, float expectedDegrees) {
@@ -425,6 +442,17 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         return MixedBootsFactory.createPair(leather, new ItemStack(Items.DIAMOND_BOOTS)).primary();
     }
 
+    private static ItemStack trimmedPair(ServerLevel level) {
+        ItemStack leather = new ItemStack(Items.LEATHER_BOOTS);
+        leather.set(DataComponents.DYED_COLOR, new DyedItemColor(0xCC3344));
+        leather.set(DataComponents.TRIM, new ArmorTrim(
+                level.registryAccess().lookupOrThrow(Registries.TRIM_MATERIAL).getOrThrow(TrimMaterials.QUARTZ),
+                level.registryAccess().lookupOrThrow(Registries.TRIM_PATTERN).getOrThrow(TrimPatterns.COAST)));
+        ItemStack mixed = MixedBootsFactory.createPair(leather, new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        mixed.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        return mixed;
+    }
+
     private static ItemStack modelBoot(Item item, Identifier model) {
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.ITEM_MODEL, model);
@@ -452,6 +480,11 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         int result = 0;
         for (int index = 0; index < accessor.mismatchedboots$getActiveLayerCount(); index++) {
             result += layer(accessor, index).mismatchedboots$getQuads().size();
+            var mesh = ((LayerRenderStateExtension) (Object)
+                    accessor.mismatchedboots$getLayers()[index]).fabric_getMutableMesh();
+            if (mesh != null) {
+                result += mesh.size();
+            }
         }
         return result;
     }
@@ -463,6 +496,23 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         }
         for (int index = 0; index < 2; index++) {
             LayerRenderStateAccessor layer = layer(accessor, index);
+            var mesh = ((LayerRenderStateExtension) (Object)
+                    accessor.mismatchedboots$getLayers()[index]).fabric_getMutableMesh();
+            int side = index;
+            if (MeshTestFixtures.runtimeRoute && (mesh == null || mesh.size() == 0)) {
+                throw new AssertionError(scenario + " did not contain real mesh geometry");
+            }
+            if (mesh != null) {
+                mesh.forEach(quad -> {
+                    for (int vertex = 0; vertex < 4; vertex++) {
+                        float x = layer.mismatchedboots$getLocalTransform()
+                                .transformPosition(quad.copyPos(vertex, null)).x - 0.5F;
+                        if ((side == 0 && x > EPSILON) || (side == 1 && x < -EPSILON)) {
+                            throw new AssertionError(scenario + " mesh crossed the canonical center");
+                        }
+                    }
+                });
+            }
             for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
                 for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                     float x = layer.mismatchedboots$getLocalTransform()

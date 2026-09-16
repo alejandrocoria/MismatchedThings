@@ -37,7 +37,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     private static final float FALLBACK_OFFSET = 0.15F;
     private static final Identifier FULL_MODEL = testId("geometry_full");
     private static final Identifier ROTATED_MODEL = testId("geometry_rotated");
-    private static final Identifier EXTENSION_MODEL = ItemLayerResolutionProbe.EXTENSION_MODEL;
+    private static final Identifier EXTENSION_MODEL = ItemLayerResolutionProbe.NONPLANAR_EXTENSION_MODEL;
     private static final Identifier MULTI_ROTATED_MODEL = testId("geometry_multi_late_rotated");
     private static final Identifier RIGHT_ONLY_MODEL = testId("geometry_right_only");
 
@@ -174,8 +174,9 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 MixedBootsFactory.createPair(extended, ordinary).primary(), ItemDisplayContext.FIXED);
 
         if (!(rawLayer(output, 0) instanceof LayerExtensionMetadata metadata)
-                || !metadata.mismatchedboots$hasUnsupportedGeometry()) {
-            throw new AssertionError("The Fabric extension payload was not retained for fallback");
+                || metadata.mismatchedboots$planGeometry(
+                        layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.LEFT).compatible()) {
+            throw new AssertionError("The unsupported nonplanar Fabric mesh was not retained for fallback");
         }
         assertFallbackLayer(layer(extendedBaseline, 0), layer(output, 0), -FALLBACK_OFFSET,
                 "Fabric extension layer");

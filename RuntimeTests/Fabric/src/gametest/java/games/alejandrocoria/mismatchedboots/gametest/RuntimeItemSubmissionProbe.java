@@ -79,6 +79,34 @@ public final class RuntimeItemSubmissionProbe {
         return submissions.stream().filter(submission -> submission.displayContext() == context).count() >= count;
     }
 
+    public static synchronized void recordMesh(
+            ItemDisplayContext context, Matrix4fc pose,
+            net.fabricmc.fabric.api.client.renderer.v1.mesh.MeshView mesh,
+            ItemStackRenderState.FoilType foil) {
+        if (!armed || mesh.size() == 0) return;
+        float[] bounds = {Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY};
+        int[] triangles = {0};
+        String[] sprite = {null};
+        mesh.forEach(quad -> {
+            String path = MeshTestFixtures.sprite(quad.tag());
+            if (targetSprites.stream().noneMatch(path::contains)) return;
+            sprite[0] = path;
+            if (quad.copyPos(2, null).equals(quad.copyPos(3, null))
+                    && quad.u(2) == quad.u(3) && quad.v(2) == quad.v(3)) triangles[0]++;
+            for (int vertex = 0; vertex < 4; vertex++) {
+                bounds[0] = Math.min(bounds[0], quad.x(vertex));
+                bounds[1] = Math.max(bounds[1], quad.x(vertex));
+            }
+        });
+        if (sprite[0] == null) return;
+        if (submissions.size() >= MAX_SUBMISSIONS) {
+            overflow = true;
+            armed = false;
+            return;
+        }
+        submissions.add(new Submission(context, sprite[0], bounds[0], bounds[1], triangles[0], foil, new Matrix4f(pose)));
+    }
+
     public static synchronized Snapshot take() {
         Snapshot result = new Snapshot(List.copyOf(submissions), overflow);
         clear();

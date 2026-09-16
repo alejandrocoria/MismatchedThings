@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.gametest.GuiItemResolutionProbe;
 import games.alejandrocoria.mismatchedboots.gametest.ItemLayerResolutionProbe;
+import games.alejandrocoria.mismatchedboots.gametest.MeshTestFixtures;
 import net.fabricmc.fabric.api.client.renderer.v1.render.FabricLayerRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -63,15 +64,22 @@ abstract class ItemModelResolverProbeMixin {
             CallbackInfo callback,
             @Share("mismatchedboots$firstLayer") LocalIntRef firstLayer) {
         Identifier modelId = stack.get(DataComponents.ITEM_MODEL);
-        if (modelId == null || !ItemLayerResolutionProbe.requiresExtensionGeometry(modelId)) {
+        if (modelId == null) {
             return;
         }
 
         ItemStackRenderStateAccessor accessor = (ItemStackRenderStateAccessor) (Object) state;
         for (int index = firstLayer.get(); index < accessor.mismatchedboots$getActiveLayerCount(); index++) {
+            MeshTestFixtures.append(modelId, accessor.mismatchedboots$getLayers()[index],
+                    index == accessor.mismatchedboots$getActiveLayerCount() - 1);
+            if (!ItemLayerResolutionProbe.requiresNonplanarExtensionGeometry(modelId)) {
+                continue;
+            }
             ((FabricLayerRenderState) (Object) accessor.mismatchedboots$getLayers()[index])
                     .emitter()
                     .square(Direction.SOUTH, 0.0F, 0.0F, 1.0F, 1.0F, 0.5F)
+                    // A genuinely unsupported nonplanar face crossing the cut.
+                    .pos(2, 1.0F, 1.0F, 0.6F)
                     .emit();
         }
     }

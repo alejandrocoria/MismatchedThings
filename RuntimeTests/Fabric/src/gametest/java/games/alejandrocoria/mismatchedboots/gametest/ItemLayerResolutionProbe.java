@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 public final class ItemLayerResolutionProbe {
-    public static final Identifier EXTENSION_MODEL = Identifier.fromNamespaceAndPath(
-            "mismatchedboots-test", "geometry_extension");
+    public static final Identifier NONPLANAR_EXTENSION_MODEL = Identifier.fromNamespaceAndPath(
+            "mismatchedboots-test", "geometry_extension_nonplanar");
 
     private static Set<Identifier> targets = Set.of();
     private static final Map<Identifier, Integer> counts = new HashMap<>();
@@ -31,8 +31,8 @@ public final class ItemLayerResolutionProbe {
         return counts.getOrDefault(modelId, 0);
     }
 
-    public static boolean requiresExtensionGeometry(Identifier modelId) {
-        return EXTENSION_MODEL.equals(modelId);
+    public static boolean requiresNonplanarExtensionGeometry(Identifier modelId) {
+        return NONPLANAR_EXTENSION_MODEL.equals(modelId);
     }
 
     public static void clear() {

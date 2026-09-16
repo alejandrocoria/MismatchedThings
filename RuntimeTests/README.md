@@ -53,3 +53,19 @@ Reports, screenshots, and run directories are under each runtime project's
 `build` directory. Network acceptance result markers and process logs remain
 under the root `build/network-acceptance` directory. Old `CrossLoader*` build
 directories and old Fabric test reports are not migrated or deleted.
+
+## Item geometry coverage
+
+The Fabric client suite exercises both ordinary baked quads and real Fabric
+Renderer API meshes. Synthetic fixtures check full-scale clipping, rotated
+triangle/pentagon cuts, per-vertex attributes, quad properties, layer tint and
+foil, bounds, and complete atomic fallback on late incompatibility. Submission
+probes include Fabric's extended mesh overload, not just vanilla quad lists.
+Both routes also render hands, ground rotations, frames, dyed/trimmed boots,
+enchantment glint, simultaneous items, and resource reload. No external mod or
+resource pack is required by these tests.
+
+Structural assertions and tolerant pixel checks do not replace interactive
+review of external models, oblique seams, or GUI ownership. Common unit tests
+cover the pure clipping/provenance and shared tessellation convention; Fabric
+client tests cover the real API's encoding, normals, and mesh submission.
