@@ -36,7 +36,6 @@ import net.minecraft.world.item.equipment.trim.TrimPatterns;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -213,7 +212,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         pair.primary().set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
         pair.inverse().set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
         require(mesh(resolve(client, red, ItemDisplayContext.FIXED), 0).size() == 12, "Red source should have 12 mesh faces");
-        for (var context : Arrays.stream(ItemDisplayContext.values()).filter(value -> value != ItemDisplayContext.GUI).toList()) {
+        for (var context : ItemDisplayContext.values()) {
             for (var stack : List.of(pair.primary(), pair.inverse())) {
                 ItemStackRenderState output = resolve(client, stack, context);
                 for (int layer = 0; layer < 2; layer++) {
@@ -352,7 +351,6 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         for (var stack : List.of(pair.primary(), pair.inverse())) {
             stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
             for (var context : ItemDisplayContext.values()) {
-                if (context == ItemDisplayContext.GUI) continue;
                 var baseline = resolve(client, stack == pair.primary() ? leather : diamond, context);
                 var output = resolve(client, stack, context);
                 int sourceLayers = ((ItemStackRenderStateAccessor) (Object) baseline).mismatchedboots$getActiveLayerCount();

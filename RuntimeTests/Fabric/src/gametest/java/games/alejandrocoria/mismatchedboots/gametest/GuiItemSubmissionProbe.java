@@ -19,7 +19,7 @@ public final class GuiItemSubmissionProbe {
     }
 
     public static void arm(int x, int y) {
-        arm(x, y, 2);
+        arm(x, y, 1);
     }
 
     public static void arm(int x, int y, int count) {

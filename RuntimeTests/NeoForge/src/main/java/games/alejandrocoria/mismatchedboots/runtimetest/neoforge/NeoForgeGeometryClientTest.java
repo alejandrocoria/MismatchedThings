@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.blaze3d.vertex.PoseStack;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
+import games.alejandrocoria.mismatchedboots.client.render.MixedBootsGuiRenderState;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.BakedPolygonTessellator;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.BakedQuadClipper;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
@@ -11,9 +12,13 @@ import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.gui.GuiItemRenderState;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentPatch;
@@ -76,8 +81,10 @@ public final class NeoForgeGeometryClientTest {
             assertExpectedTopology(blue, "blue fixture");
             assertProductionClipping(client);
             assertGenuinelyIncompatibleFallback(client);
+            assertGuiClipping(client);
 
-            NetworkAcceptanceFiles.write("geometry-report.txt", red.describe("red") + blue.describe("blue"));
+            NetworkAcceptanceFiles.write("geometry-report.txt", red.describe("red") + blue.describe("blue")
+                    + "gui.canonicalOwnership=true\ngui.depthSharing=true\ngui.atomicFallback=true\n");
             NetworkAcceptanceFiles.write("geometry-success.txt", "neoforge\n");
             finished = true;
             client.stop();
@@ -375,6 +382,84 @@ public final class NeoForgeGeometryClientTest {
         assertNear(right.m00(), 0.8F, "right incompatible fallback scale");
         assertNear(left.m30(), -0.15F, "left incompatible fallback offset");
         assertNear(right.m30(), 0.15F, "right incompatible fallback offset");
+    }
+
+    private static void assertGuiClipping(Minecraft client) {
+        ItemStack left = modelBoot(Items.IRON_BOOTS, RED_MODEL);
+        ItemStack right = modelBoot(Items.GOLDEN_BOOTS, BLUE_MODEL);
+        ItemStack mixed = mixedStack(left, right);
+        mixed.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        ItemStack inverse = mixedStack(right, left);
+        inverse.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        GuiRenderState gui = new GuiRenderState();
+        GuiGraphicsExtractor graphics = new GuiGraphicsExtractor(client, gui, 0, 0);
+        graphics.item(mixed, 40, 40);
+        graphics.item(inverse, 80, 40);
+        List<GuiItemRenderState> items = new ArrayList<>();
+        gui.forEachItem(items::add);
+        assertCount(items.size(), 2, "GUI compositions");
+        if (!(items.getFirst().itemStackRenderState() instanceof MixedBootsGuiRenderState combined)
+                || items.stream().anyMatch(item -> item.scissorArea() != null)
+                || items.getFirst().itemStackRenderState().getModelIdentity()
+                .equals(items.getLast().itemStackRenderState().getModelIdentity())) {
+            throw new AssertionError("Oblique GUI models did not select distinct canonical compositions");
+        }
+        for (int side = 0; side < 2; side++) {
+            ItemStackRenderState source = combined.sources().get(side);
+            ItemStackRenderState.LayerRenderState layer = ((ItemStackRenderStateAccessor) (Object) source)
+                    .mismatchedboots$getLayers()[0];
+            assertProductionLayer(layer, side == 0 ? QuadClipper.Side.LEFT : QuadClipper.Side.RIGHT);
+        }
+        NeoForgeGeometrySubmissionProbe.arm(2);
+        combined.submit(new PoseStack(), new SubmitNodeStorage(), 0x00F000F0, 0, 0);
+        for (var submission : NeoForgeGeometrySubmissionProbe.takeAll()) {
+            if (submission.displayContext() != ItemDisplayContext.GUI
+                    || submission.foilType() != ItemStackRenderState.FoilType.STANDARD) {
+                throw new AssertionError("Composed GUI submissions changed context or root foil");
+            }
+        }
+        combined.visitExtents(position -> {
+            if (!position.isFinite()) throw new AssertionError("GUI composition has non-finite extents");
+        });
+
+        ItemStack special = modelBoot(Items.GOLDEN_BOOTS, Identifier.withDefaultNamespace("chest"));
+        ItemStack incompatible = mixedStack(left, special);
+        for (boolean rotated : List.of(false, true)) {
+            gui = new GuiRenderState();
+            graphics = new GuiGraphicsExtractor(client, gui, 0, 0);
+            if (rotated) graphics.pose().rotate(0.2F);
+            else graphics.enableScissor(42, 40, 54, 56);
+            graphics.item(incompatible, 40, 40);
+            if (!rotated) graphics.disableScissor();
+            graphics.item(modelBoot(Items.DIAMOND_BOOTS, Identifier.withDefaultNamespace("diamond_boots")), 80, 40);
+            items.clear();
+            gui.forEachItem(items::add);
+            assertCount(items.size(), rotated ? 2 : 3, "GUI incompatible route submissions");
+            if (items.getLast().scissorArea() != null) {
+                throw new AssertionError("GUI fallback leaked the caller scissor");
+            }
+            if (rotated) {
+                if (!(items.getFirst().itemStackRenderState() instanceof MixedBootsGuiRenderState fallback)) {
+                    throw new AssertionError("Unsafe GUI pose did not select side-by-side fallback");
+                }
+                Matrix4f transform = ((LayerRenderStateAccessor) (Object)
+                        ((ItemStackRenderStateAccessor) (Object) fallback.sources().getFirst())
+                                .mismatchedboots$getLayers()[0]).mismatchedboots$getLocalTransform();
+                assertNear(transform.m00(), 0.8F, "GUI side-by-side scale");
+                assertNear(transform.m30(), -0.15F, "GUI side-by-side offset");
+            } else {
+                if (!new ScreenRectangle(42, 40, 6, 16).equals(items.get(0).scissorArea())
+                        || !new ScreenRectangle(48, 40, 6, 16).equals(items.get(1).scissorArea())) {
+                    throw new AssertionError("GUI fallback lost native parent-scissor intersection");
+                }
+                ItemStackRenderState ordinary = items.getFirst().itemStackRenderState();
+                LayerRenderStateAccessor layer = (LayerRenderStateAccessor) (Object)
+                        ((ItemStackRenderStateAccessor) (Object) ordinary).mismatchedboots$getLayers()[0];
+                assertCount(layer.mismatchedboots$getQuads().size(), 12, "GUI intact source primitive count");
+                assertCount(triangleCount(layer.mismatchedboots$getQuads()), 0, "GUI intact source triangle count");
+                assertMatrix(layer.mismatchedboots$getLocalTransform(), new Matrix4f(), "GUI intact source transform");
+            }
+        }
     }
 
     private static ItemStack mixedStack(ItemStack leftSource, ItemStack rightSource) {

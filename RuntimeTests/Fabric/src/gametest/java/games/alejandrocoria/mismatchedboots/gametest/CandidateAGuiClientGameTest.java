@@ -1,8 +1,10 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.vertex.PoseStack;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
+import games.alejandrocoria.mismatchedboots.client.render.MixedBootsGuiRenderState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.gametest.mixin.LayerRenderStateTestAccessor;
@@ -10,11 +12,15 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.impl.client.renderer.LayerRenderStateExtension;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.client.renderer.state.gui.GuiItemRenderState;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -29,8 +35,10 @@ import org.joml.Matrix3x2fc;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +76,8 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
                 verifyAbnormalSourcesDoNotLeakScissors(context);
                 verifyRepeatedPairsAndModelIdentities(context);
                 verifyUnsupportedPoseFallback(context);
+                verifyObliqueGuiGeometry(context);
+                context.runOnClient(CandidateAGuiClientGameTest::verifyMeshScissorFallback);
                 verifyGuiScales(context);
                 verifyVisibleResourceReload(context);
             }
@@ -76,6 +86,9 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             context.runOnClient(client -> {
                 GuiItemSubmissionProbe.takeSnapshot();
                 GuiItemResolutionProbe.take();
+                MeshTestFixtures.clear();
+                MeshSubmissionProbe.take();
+                ItemLayerResolutionProbe.clear();
                 client.options.guiScale().set(originalGuiScale.get());
                 client.resizeGui();
             });
@@ -86,7 +99,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         ItemStack mixed = clippingPair(false);
         Transform transform = new Transform(11.0F, 7.0F, 1.5F, 0.75F, 0.0F);
 
-        GuiItemSubmissionProbe.armTargets(3, 1, ITEM_X, ITEM_Y, CONTROL_X, ITEM_Y);
+        GuiItemSubmissionProbe.armTargets(2, 1, ITEM_X, ITEM_Y, CONTROL_X, ITEM_Y);
         GuiItemResolutionProbe.arm(2, RED_MODEL, BLUE_MODEL);
         context.setScreen(() -> new CharacterizationScreen(
                 mixed, transform, true, true, true, OWNER_SEED, true));
@@ -96,7 +109,6 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             GuiItemSubmissionProbe.Snapshot snapshot = GuiItemSubmissionProbe.takeSnapshot();
             List<GuiItemResolutionProbe.Resolution> resolutions = GuiItemResolutionProbe.take();
             if (!snapshot.events().equals(List.of(
-                    GuiItemSubmissionProbe.EventType.ITEM,
                     GuiItemSubmissionProbe.EventType.ITEM,
                     GuiItemSubmissionProbe.EventType.DECORATION,
                     GuiItemSubmissionProbe.EventType.ITEM))) {
@@ -113,14 +125,12 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             Matrix3x2f expectedPose = transform.matrix();
             ScreenRectangle parent = transformedRectangle(
                     ITEM_X + 2, ITEM_Y, 12, ITEM_SIZE, expectedPose);
-            assertSubmission(snapshot.submissions().get(0), expectedPose,
-                    transformedRectangle(ITEM_X, ITEM_Y, ITEM_HALF, ITEM_SIZE, expectedPose)
-                            .intersection(parent), "red_concrete", "context left");
-            assertSubmission(snapshot.submissions().get(1), expectedPose,
-                    transformedRectangle(ITEM_X + ITEM_HALF, ITEM_Y, ITEM_HALF, ITEM_SIZE, expectedPose)
-                            .intersection(parent), "blue_concrete", "context right");
-            assertPose(snapshot.submissions().get(2).pose(), expectedPose, "post-clip control");
-            if (snapshot.submissions().get(2).scissorArea() != null) {
+            assertSubmission(snapshot.submissions().get(0), expectedPose, parent,
+                    "red_concrete", "context left");
+            assertSourceSprite(snapshot.submissions().get(0).itemStackRenderState(), "blue_concrete", "context right");
+            assertClippedComposition(snapshot.submissions().get(0));
+            assertPose(snapshot.submissions().get(1).pose(), expectedPose, "post-clip control");
+            if (snapshot.submissions().get(1).scissorArea() != null) {
                 throw new AssertionError("The transformed parent scissor leaked to the control item");
             }
 
@@ -151,12 +161,9 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             Matrix3x2f expectedPose = transform.matrix();
             ScreenRectangle parent = transformedRectangle(
                     ITEM_X + 2, ITEM_Y, 12, ITEM_SIZE, expectedPose);
-            assertSubmission(submissions.get(0), expectedPose,
-                    transformedRectangle(ITEM_X, ITEM_Y, ITEM_HALF, ITEM_SIZE, expectedPose)
-                            .intersection(parent), "red_concrete", "uniform scale left");
-            assertSubmission(submissions.get(1), expectedPose,
-                    transformedRectangle(ITEM_X + ITEM_HALF, ITEM_Y, ITEM_HALF, ITEM_SIZE, expectedPose)
-                            .intersection(parent), "blue_concrete", "uniform scale right");
+            assertSubmission(submissions.get(0), expectedPose, parent, "red_concrete", "uniform scale left");
+            assertSourceSprite(submissions.get(0).itemStackRenderState(), "blue_concrete", "uniform scale right");
+            assertClippedComposition(submissions.get(0));
         });
         closeScreen(context);
     }
@@ -165,7 +172,8 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         GuiItemSubmissionProbe.Snapshot ordinary = renderPair(context, MixedBootsFactory.createPair(
                 new ItemStack(Items.LEATHER_BOOTS), new ItemStack(Items.DIAMOND_BOOTS)).primary());
         assertSourceSprite(ordinary.submissions().get(0).itemStackRenderState(), "leather_boots", "leather source");
-        assertSourceSprite(ordinary.submissions().get(1).itemStackRenderState(), "diamond_boots", "diamond source");
+        assertSourceSprite(ordinary.submissions().get(0).itemStackRenderState(), "diamond_boots", "diamond source");
+        assertClippedComposition(ordinary.submissions().getFirst());
 
         DyedItemColor leftDye = new DyedItemColor(0xCC3344);
         DyedItemColor rightDye = new DyedItemColor(0x3366CC);
@@ -175,8 +183,9 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         right.set(DataComponents.DYED_COLOR, rightDye);
         GuiItemSubmissionProbe.Snapshot dyed = renderPair(
                 context, MixedBootsFactory.createPair(left, right).primary());
-        assertTint(dyed.submissions().get(0).itemStackRenderState(), leftDye.rgb(), "left dyed leather");
-        assertTint(dyed.submissions().get(1).itemStackRenderState(), rightDye.rgb(), "right dyed leather");
+        MixedBootsGuiRenderState composition = composition(dyed.submissions().getFirst());
+        assertTint(composition.sources().get(0), leftDye.rgb(), "left dyed leather");
+        assertTint(composition.sources().get(1), rightDye.rgb(), "right dyed leather");
     }
 
     private static void verifyRootFoilProjection(ClientGameTestContext context) {
@@ -208,7 +217,9 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         ItemStack special = MixedBootsFactory.createPair(
                 modelBoot(Items.IRON_BOOTS, Identifier.withDefaultNamespace("chest")),
                 modelBoot(Items.GOLDEN_BOOTS, BLUE_MODEL)).primary();
-        GuiItemSubmissionProbe.Snapshot specialSnapshot = showPair(context, special);
+        GuiItemSubmissionProbe.Snapshot specialSnapshot = showPair(context, special, 2);
+        assertScissor(specialSnapshot.submissions().get(0), ITEM_X, ITEM_X + ITEM_HALF, "special left");
+        assertScissor(specialSnapshot.submissions().get(1), ITEM_X + ITEM_HALF, ITEM_X + ITEM_SIZE, "special right");
         if (testLayer(specialSnapshot.submissions().get(0).itemStackRenderState(), 0)
                 .mismatchedboots$getSpecialRenderer() == null) {
             throw new AssertionError("The special source did not reach a SpecialModelRenderer layer");
@@ -232,7 +243,8 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         }
         context.waitTicks(2);
         Path screenshot = context.takeScreenshot("candidate-a-oversized-model");
-        assertOversizedPixelsStayClipped(screenshot, currentGuiScale(context));
+        assertClippedComposition(snapshot.submissions().getFirst());
+        assertBothHalvesVisible(screenshot, currentGuiScale(context), "oversized geometry");
         closeScreen(context);
     }
 
@@ -241,7 +253,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         noModel.remove(DataComponents.ITEM_MODEL);
         ItemStack noModelPair = MixedBootsFactory.createPair(noModel, new ItemStack(Items.GOLDEN_BOOTS)).primary();
         GuiItemSubmissionProbe.Snapshot noModelSnapshot = renderPairWithControl(context, noModelPair);
-        if (!noModelSnapshot.submissions().get(0).itemStackRenderState().isEmpty()) {
+        if (!composition(noModelSnapshot.submissions().getFirst()).sources().get(0).isEmpty()) {
             throw new AssertionError("The model-less source unexpectedly produced geometry");
         }
         assertControlHasNoScissor(noModelSnapshot, "model-less source");
@@ -262,30 +274,46 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         ItemStack first = clippingPair(false);
         ItemStack second = clippingPair(false);
         int secondX = ITEM_X + 40;
-        GuiItemSubmissionProbe.armTargets(4, 0, ITEM_X, ITEM_Y, secondX, ITEM_Y);
+        GuiItemSubmissionProbe.armTargets(4, 0,
+                ITEM_X, ITEM_Y, secondX, ITEM_Y, secondX + 40, ITEM_Y, secondX + 80, ITEM_Y);
         context.setScreen(() -> new RepeatedPairsScreen(first, second, secondX));
         context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
         context.runOnClient(client -> {
             List<GuiItemRenderState> submissions = GuiItemSubmissionProbe.take();
             assertSourceSprite(submissions.get(0).itemStackRenderState(), "red_concrete", "first pair left");
-            assertSourceSprite(submissions.get(1).itemStackRenderState(), "blue_concrete", "first pair right");
-            assertSourceSprite(submissions.get(2).itemStackRenderState(), "red_concrete", "second pair left");
-            assertSourceSprite(submissions.get(3).itemStackRenderState(), "blue_concrete", "second pair right");
-            Object firstLeft = submissions.get(0).itemStackRenderState().getModelIdentity();
-            Object firstRight = submissions.get(1).itemStackRenderState().getModelIdentity();
-            Object secondLeft = submissions.get(2).itemStackRenderState().getModelIdentity();
-            Object secondRight = submissions.get(3).itemStackRenderState().getModelIdentity();
-            if (!Objects.equals(firstLeft, secondLeft)
-                    || !Objects.equals(firstRight, secondRight)
-                    || Objects.equals(firstLeft, firstRight)) {
+            assertSourceSprite(submissions.get(0).itemStackRenderState(), "blue_concrete", "first pair right");
+            assertSourceSprite(submissions.get(1).itemStackRenderState(), "red_concrete", "second pair left");
+            assertSourceSprite(submissions.get(1).itemStackRenderState(), "blue_concrete", "second pair right");
+            Object firstIdentity = submissions.get(0).itemStackRenderState().getModelIdentity();
+            Object secondIdentity = submissions.get(1).itemStackRenderState().getModelIdentity();
+            Object inverseIdentity = submissions.get(2).itemStackRenderState().getModelIdentity();
+            Object fullSourceIdentity = submissions.get(3).itemStackRenderState().getModelIdentity();
+            if (!Objects.equals(firstIdentity, secondIdentity)
+                    || Objects.equals(firstIdentity, inverseIdentity)
+                    || Objects.equals(firstIdentity, fullSourceIdentity)
+                    || composition(submissions.get(0)).sources().stream()
+                    .anyMatch(source -> Objects.equals(firstIdentity, source.getModelIdentity()))) {
                 throw new AssertionError("Repeated pairs produced unstable or collapsed model identities");
             }
+            if (!Objects.equals(fullSourceIdentity,
+                    composition(submissions.get(0)).sources().getFirst().getModelIdentity())) {
+                throw new AssertionError("The ordinary source did not exercise the same native model identity");
+            }
         });
+        context.waitTicks(2);
+        Path screenshot = context.takeScreenshot("gui-composition-atlas-identities");
+        int scale = currentGuiScale(context);
+        assertColoredHalves(screenshot, scale, ITEM_X, ITEM_Y, 0);
+        assertColoredHalves(screenshot, scale, secondX, ITEM_Y, 0);
+        assertAtlasPixels(screenshot, scale, secondX + 40, true);
+        assertAtlasPixels(screenshot, scale, secondX + 80, false);
         closeScreen(context);
     }
 
     private static void verifyUnsupportedPoseFallback(ClientGameTestContext context) {
-        ItemStack mixed = clippingPair(false);
+        ItemStack mixed = MixedBootsFactory.createPair(
+                modelBoot(Items.IRON_BOOTS, RED_MODEL),
+                modelBoot(Items.GOLDEN_BOOTS, Identifier.withDefaultNamespace("chest"))).primary();
         Transform rotated = new Transform(0.0F, 0.0F, 1.0F, 1.0F, 0.2F);
         GuiItemSubmissionProbe.armTargets(1, 0, ITEM_X, ITEM_Y);
         context.setScreen(() -> new CharacterizationScreen(
@@ -296,7 +324,9 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             if (submission.scissorArea() != null) {
                 throw new AssertionError("Unsupported rotated GUI pose did not use the unclipped fallback");
             }
-            if (access(submission.itemStackRenderState()).mismatchedboots$getActiveLayerCount() != 2) {
+            if (layerCount(submission.itemStackRenderState()) != 2
+                    || Math.abs(layer(submission.itemStackRenderState(), 0)
+                    .mismatchedboots$getLocalTransform().m00() - 0.8F) > EPSILON) {
                 throw new AssertionError("Unsupported rotated GUI pose did not use side-by-side rendering");
             }
         });
@@ -311,13 +341,159 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             });
             context.waitFor(client -> client.getWindow().getGuiScale() == requestedScale);
             GuiItemSubmissionProbe.Snapshot snapshot = showPair(context, clippingPair(false));
-            assertScissor(snapshot.submissions().get(0), ITEM_X, ITEM_X + ITEM_HALF, "scale " + requestedScale);
-            assertScissor(snapshot.submissions().get(1), ITEM_X + ITEM_HALF, ITEM_X + ITEM_SIZE,
-                    "scale " + requestedScale);
+            if (snapshot.submissions().getFirst().scissorArea() != null) {
+                throw new AssertionError("Compatible GUI geometry unexpectedly used a screen scissor");
+            }
+            assertClippedComposition(snapshot.submissions().getFirst());
             context.waitTicks(2);
             Path screenshot = context.takeScreenshot("candidate-a-gui-scale-" + requestedScale);
             assertColoredHalves(screenshot, requestedScale, ITEM_X, ITEM_Y, 0);
             closeScreen(context);
+        }
+    }
+
+    private static void verifyObliqueGuiGeometry(ClientGameTestContext context) {
+        Identifier red = testId("mesh_rotated_red");
+        Identifier blue = testId("mesh_rotated_blue");
+        for (boolean extended : List.of(false, true)) {
+            context.runOnClient(client -> {
+                MeshTestFixtures.clear();
+                if (extended) {
+                    MeshTestFixtures.models.put(red, MeshTestFixtures.Mode.ANIMATED);
+                    MeshTestFixtures.models.put(blue, MeshTestFixtures.Mode.MESH_ONLY);
+                }
+            });
+            ItemStack left = modelBoot(Items.IRON_BOOTS, red);
+            ItemStack right = modelBoot(Items.GOLDEN_BOOTS, blue);
+            var pair = MixedBootsFactory.createPair(left, right);
+            pair.primary().set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+            pair.inverse().set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+            GuiItemSubmissionProbe.Snapshot snapshot = showPair(context, pair.primary());
+            context.runOnClient(client -> {
+                MixedBootsGuiRenderState combined = composition(snapshot.submissions().getFirst());
+                if (extended && !combined.isAnimated()) {
+                    throw new AssertionError("The composed GUI state lost surviving Fabric mesh animation");
+                }
+                assertClippedComposition(snapshot.submissions().getFirst());
+                if (snapshot.submissions().getFirst().scissorArea() != null) {
+                    throw new AssertionError("Oblique GUI geometry used screen-space ownership");
+                }
+                MeshSubmissionProbe.arm();
+                combined.submit(new PoseStack(), new SubmitNodeStorage(), 0x00F000F0, 0, 0);
+                var submissions = MeshSubmissionProbe.take();
+                if (submissions.size() != 2) {
+                    throw new AssertionError("The composed GUI item did not submit both sources together");
+                }
+                for (int side = 0; side < 2; side++) {
+                    var source = combined.sources().get(side);
+                    var sourceLayer = rawLayer(source, 0);
+                    var mesh = ((LayerRenderStateExtension) (Object) sourceLayer).fabric_getMutableMesh();
+                    var faces = MeshSubmissionProbe.fingerprint(mesh);
+                    var quads = layer(source, 0).mismatchedboots$getQuads();
+                    long triangles = extended ? faces.stream().filter(face ->
+                            face.vertices().get(2).equals(face.vertices().get(3))).count()
+                            : quads.stream().filter(quad -> quad.position2().equals(quad.position3())).count();
+                    if ((extended ? faces.size() : quads.size()) != 12 || triangles != 4) {
+                        throw new AssertionError("Oblique GUI ownership did not keep its characterized 12 primitives/4 triangles");
+                    }
+                    for (var face : faces) {
+                        for (var vertex : face.vertices()) {
+                            float x = vertex.position().x;
+                            if ((side == 0 && x > 0.5F + EPSILON) || (side == 1 && x < 0.5F - EPSILON)) {
+                                throw new AssertionError("GUI mesh retained the other source's half");
+                            }
+                        }
+                    }
+                    TrackingItemStackRenderState baseline = new TrackingItemStackRenderState();
+                    client.getItemModelResolver().updateForTopItem(baseline,
+                            side == 0 ? left : right, ItemDisplayContext.GUI, client.level, null, 0);
+                    if (!testLayer(source, 0).mismatchedboots$getItemTransform()
+                            .equals(testLayer(baseline, 0).mismatchedboots$getItemTransform())) {
+                        throw new AssertionError("Canonical clipping changed the oblique GUI display transform");
+                    }
+                    MeshSubmissionProbe.arm();
+                    baseline.submit(new PoseStack(), new SubmitNodeStorage(), 0x00F000F0, 0, 0);
+                    var originalSubmission = MeshSubmissionProbe.take().getFirst();
+                    var actual = submissions.get(side);
+                    if (!actual.pose().equals(originalSubmission.pose(), EPSILON)
+                            || actual.context() != ItemDisplayContext.GUI
+                            || actual.foil() != ItemStackRenderState.FoilType.STANDARD) {
+                        throw new AssertionError("The shared GUI submission changed pose, context, or root foil");
+                    }
+                }
+                // A rotated caller pose does not change geometry compatibility.
+                GuiRenderState gui = new GuiRenderState();
+                GuiGraphicsExtractor graphics = new GuiGraphicsExtractor(client, gui, 0, 0);
+                ItemLayerResolutionProbe.arm(Set.of(red, blue));
+                graphics.pose().rotate(0.2F);
+                graphics.item(pair.primary(), ITEM_X, ITEM_Y);
+                graphics.item(pair.inverse(), CONTROL_X, ITEM_Y);
+                List<GuiItemRenderState> items = new ArrayList<>();
+                gui.forEachItem(items::add);
+                if (ItemLayerResolutionProbe.count(red) != 2 || ItemLayerResolutionProbe.count(blue) != 2) {
+                    throw new AssertionError("GUI geometry selection re-resolved source models");
+                }
+                ItemLayerResolutionProbe.clear();
+                if (items.size() != 2 || items.stream().anyMatch(item ->
+                        !(item.itemStackRenderState() instanceof MixedBootsGuiRenderState))
+                        || Objects.equals(items.get(0).itemStackRenderState().getModelIdentity(),
+                        items.get(1).itemStackRenderState().getModelIdentity())) {
+                    throw new AssertionError("Rotated GUI composition or inverse-pair cache identity collapsed");
+                }
+            });
+            context.waitTicks(2);
+            Path screenshot = context.takeScreenshot(extended ? "gui-oblique-fabric-mesh" : "gui-oblique-baked-model");
+            assertAtlasPixels(screenshot, currentGuiScale(context), ITEM_X, true);
+            closeScreen(context);
+        }
+        context.runOnClient(client -> MeshTestFixtures.clear());
+    }
+
+    private static void verifyMeshScissorFallback(net.minecraft.client.Minecraft client) {
+        MeshTestFixtures.clear();
+        MeshTestFixtures.models.put(BLUE_MODEL, MeshTestFixtures.Mode.INVALID_LATE);
+        try {
+            ItemStack mixed = clippingPair(false);
+            GuiRenderState gui = new GuiRenderState();
+            GuiGraphicsExtractor graphics = new GuiGraphicsExtractor(client, gui, 0, 0);
+            ItemLayerResolutionProbe.arm(Set.of(RED_MODEL, BLUE_MODEL));
+            graphics.enableScissor(ITEM_X + 2, ITEM_Y, ITEM_X + 14, ITEM_Y + ITEM_SIZE);
+            graphics.item(mixed, ITEM_X, ITEM_Y);
+            graphics.disableScissor();
+            graphics.item(new ItemStack(Items.DIAMOND_BOOTS), CONTROL_X, ITEM_Y);
+            List<GuiItemRenderState> items = new ArrayList<>();
+            gui.forEachItem(items::add);
+            if (ItemLayerResolutionProbe.count(RED_MODEL) != 1 || ItemLayerResolutionProbe.count(BLUE_MODEL) != 1) {
+                throw new AssertionError("GUI fallback re-resolved its source models");
+            }
+            ItemLayerResolutionProbe.clear();
+            if (items.size() != 3 || items.getLast().scissorArea() != null) {
+                throw new AssertionError("Nonplanar GUI mesh did not use two atomic scissors or leaked the parent");
+            }
+            assertScissor(items.get(0), ITEM_X + 2, ITEM_X + ITEM_HALF, "nonplanar left");
+            assertScissor(items.get(1), ITEM_X + ITEM_HALF, ITEM_X + 14, "nonplanar right");
+            for (int side = 0; side < 2; side++) {
+                TrackingItemStackRenderState baseline = new TrackingItemStackRenderState();
+                client.getItemModelResolver().updateForTopItem(baseline,
+                        modelBoot(side == 0 ? Items.IRON_BOOTS : Items.GOLDEN_BOOTS,
+                                side == 0 ? RED_MODEL : BLUE_MODEL),
+                        ItemDisplayContext.GUI, client.level, null, 0);
+                ItemStackRenderState actual = items.get(side).itemStackRenderState();
+                if (!layer(actual, 0).mismatchedboots$getQuads().equals(layer(baseline, 0).mismatchedboots$getQuads())
+                        || !MeshSubmissionProbe.fingerprint(((LayerRenderStateExtension) (Object)
+                        rawLayer(actual, 0)).fabric_getMutableMesh()).equals(
+                        MeshSubmissionProbe.fingerprint(((LayerRenderStateExtension) (Object)
+                                rawLayer(baseline, 0)).fabric_getMutableMesh()))
+                        || !layer(actual, 0).mismatchedboots$getLocalTransform()
+                        .equals(layer(baseline, 0).mismatchedboots$getLocalTransform(), EPSILON)
+                        || !Objects.equals(actual instanceof TrackingItemStackRenderState tracking
+                        ? tracking.getModelIdentity() : null, baseline.getModelIdentity())) {
+                    throw new AssertionError("Late incompatible mesh partially clipped or transformed a GUI source");
+                }
+            }
+        } finally {
+            MeshTestFixtures.clear();
+            ItemLayerResolutionProbe.clear();
         }
     }
 
@@ -338,7 +514,8 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         context.runOnClient(client -> {
             List<GuiItemRenderState> submissions = GuiItemSubmissionProbe.take();
             assertSourceSprite(submissions.get(0).itemStackRenderState(), "red_concrete", "post-reload left");
-            assertSourceSprite(submissions.get(1).itemStackRenderState(), "blue_concrete", "post-reload right");
+            assertSourceSprite(submissions.get(0).itemStackRenderState(), "blue_concrete", "post-reload right");
+            assertClippedComposition(submissions.getFirst());
         });
         closeScreen(context);
     }
@@ -350,7 +527,11 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
     }
 
     private static GuiItemSubmissionProbe.Snapshot showPair(ClientGameTestContext context, ItemStack stack) {
-        GuiItemSubmissionProbe.arm(ITEM_X, ITEM_Y);
+        return showPair(context, stack, 1);
+    }
+
+    private static GuiItemSubmissionProbe.Snapshot showPair(ClientGameTestContext context, ItemStack stack, int count) {
+        GuiItemSubmissionProbe.arm(ITEM_X, ITEM_Y, count);
         context.setScreen(() -> new CharacterizationScreen(
                 stack, Transform.IDENTITY, false, false, false, 0, false));
         context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
@@ -361,7 +542,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
 
     private static GuiItemSubmissionProbe.Snapshot renderPairWithControl(
             ClientGameTestContext context, ItemStack stack) {
-        GuiItemSubmissionProbe.armTargets(3, 0, ITEM_X, ITEM_Y, CONTROL_X, ITEM_Y);
+        GuiItemSubmissionProbe.armTargets(2, 0, ITEM_X, ITEM_Y, CONTROL_X, ITEM_Y);
         context.setScreen(() -> new CharacterizationScreen(
                 stack, Transform.IDENTITY, false, false, false, 0, true));
         context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
@@ -421,7 +602,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
     }
 
     private static void assertSourceSprite(ItemStackRenderState state, String expected, String scenario) {
-        int layerCount = access(state).mismatchedboots$getActiveLayerCount();
+        int layerCount = layerCount(state);
         for (int index = 0; index < layerCount; index++) {
             for (BakedQuad quad : layer(state, index).mismatchedboots$getQuads()) {
                 if (quad.materialInfo().sprite().contents().name().getPath().contains(expected)) {
@@ -443,7 +624,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
     private static void assertFoil(List<GuiItemRenderState> submissions, boolean expected, String scenario) {
         for (GuiItemRenderState submission : submissions) {
             ItemStackRenderState state = submission.itemStackRenderState();
-            int layerCount = access(state).mismatchedboots$getActiveLayerCount();
+            int layerCount = layerCount(state);
             for (int index = 0; index < layerCount; index++) {
                 boolean actual = layer(state, index).mismatchedboots$getFoilType()
                         != ItemStackRenderState.FoilType.NONE;
@@ -456,8 +637,8 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
 
     private static void assertControlHasNoScissor(
             GuiItemSubmissionProbe.Snapshot snapshot, String scenario) {
-        if (snapshot.submissions().size() != 3
-                || snapshot.submissions().get(2).scissorArea() != null) {
+        if (snapshot.submissions().size() != 2
+                || snapshot.submissions().get(1).scissorArea() != null) {
             throw new AssertionError(scenario + " leaked a scissor to the control item");
         }
     }
@@ -493,10 +674,6 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         } catch (IOException exception) {
             throw new AssertionError("Could not inspect " + scenario + " screenshot", exception);
         }
-    }
-
-    private static void assertOversizedPixelsStayClipped(Path screenshot, int scale) {
-        assertColoredHalves(screenshot, scale, ITEM_X, ITEM_Y, ITEM_SIZE);
     }
 
     private static void assertColoredHalves(Path screenshot, int scale, int xOrigin, int yOrigin, int padding) {
@@ -543,6 +720,30 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         return scale.get();
     }
 
+    private static void assertAtlasPixels(Path screenshot, int scale, int xOrigin, boolean blueThenRed) {
+        int left = 0;
+        int right = 0;
+        try (NativeImage image = NativeImage.read(Files.newInputStream(screenshot))) {
+            for (int y = ITEM_Y * scale; y < (ITEM_Y + ITEM_SIZE) * scale; y++) {
+                for (int x = xOrigin * scale; x < (xOrigin + ITEM_SIZE) * scale; x++) {
+                    int color = image.getPixel(x, y);
+                    int red = color >> 16 & 0xFF;
+                    int green = color >> 8 & 0xFF;
+                    int blue = color & 0xFF;
+                    boolean redPixel = red > green + 30 && red > blue + 30;
+                    boolean bluePixel = blue > red + 30 && blue > green + 30;
+                    if (x < (xOrigin + ITEM_HALF) * scale) left += (blueThenRed ? bluePixel : redPixel) ? 1 : 0;
+                    else right += redPixel ? 1 : 0;
+                }
+            }
+        } catch (IOException exception) {
+            throw new AssertionError("Could not inspect composed GUI atlas pixels", exception);
+        }
+        if (left < 8 * scale * scale || right < 8 * scale * scale) {
+            throw new AssertionError("The native GUI atlas lost expected ordered colors: " + left + ", " + right);
+        }
+    }
+
     private static ItemStack clippingPair(boolean foil) {
         ItemStack mixed = MixedBootsFactory.createPair(
                 modelBoot(Items.IRON_BOOTS, RED_MODEL),
@@ -566,11 +767,55 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
     }
 
     private static LayerRenderStateAccessor layer(ItemStackRenderState state, int index) {
-        return (LayerRenderStateAccessor) (Object) access(state).mismatchedboots$getLayers()[index];
+        return (LayerRenderStateAccessor) (Object) rawLayer(state, index);
     }
 
     private static LayerRenderStateTestAccessor testLayer(ItemStackRenderState state, int index) {
-        return (LayerRenderStateTestAccessor) (Object) access(state).mismatchedboots$getLayers()[index];
+        return (LayerRenderStateTestAccessor) (Object) rawLayer(state, index);
+    }
+
+    private static int layerCount(ItemStackRenderState state) {
+        return state instanceof MixedBootsGuiRenderState combined
+                ? combined.sources().stream().mapToInt(CandidateAGuiClientGameTest::layerCount).sum()
+                : access(state).mismatchedboots$getActiveLayerCount();
+    }
+
+    private static ItemStackRenderState.LayerRenderState rawLayer(ItemStackRenderState state, int index) {
+        if (state instanceof MixedBootsGuiRenderState combined) {
+            int leftCount = layerCount(combined.sources().getFirst());
+            return index < leftCount ? rawLayer(combined.sources().getFirst(), index)
+                    : rawLayer(combined.sources().getLast(), index - leftCount);
+        }
+        return access(state).mismatchedboots$getLayers()[index];
+    }
+
+    private static MixedBootsGuiRenderState composition(GuiItemRenderState item) {
+        if (!(item.itemStackRenderState() instanceof MixedBootsGuiRenderState combined)) {
+            throw new AssertionError("Compatible sources were not submitted as one depth-sharing composition");
+        }
+        return combined;
+    }
+
+    private static void assertClippedComposition(GuiItemRenderState item) {
+        MixedBootsGuiRenderState combined = composition(item);
+        for (int side = 0; side < 2; side++) {
+            ItemStackRenderState source = combined.sources().get(side);
+            for (int index = 0; index < layerCount(source); index++) {
+                LayerRenderStateAccessor layer = layer(source, index);
+                if (Math.abs(layer.mismatchedboots$getLocalTransform().m00() - 1.0F) > EPSILON
+                        || Math.abs(layer.mismatchedboots$getLocalTransform().m30()) > EPSILON) {
+                    throw new AssertionError("GUI geometry used fallback translation/scaling");
+                }
+                for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
+                    for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
+                        float x = quad.position(vertex).x();
+                        if ((side == 0 && x > 0.5F + EPSILON) || (side == 1 && x < 0.5F - EPSILON)) {
+                            throw new AssertionError("GUI geometry retained the other source's canonical half");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private record Transform(float translateX, float translateY, float scaleX, float scaleY, float rotation) {
@@ -677,6 +922,12 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             graphics.item(first, ITEM_X, ITEM_Y);
             graphics.item(second, secondX, ITEM_Y);
+            var data = ModContent.getMixedBootsData(first).orElseThrow();
+            graphics.item(MixedBootsFactory.createPair(data.right().source(), data.left().source()).primary(),
+                    secondX + 40, ITEM_Y);
+            ItemStack fullSource = data.left().source().copy();
+            fullSource.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, first.hasFoil());
+            graphics.item(fullSource, secondX + 80, ITEM_Y);
         }
 
         @Override

@@ -9,6 +9,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.ItemOwner;
@@ -47,16 +48,54 @@ public final class MixedBootsItemRenderer {
         boolean foil = stack.hasFoil();
         LayerRange left = appendSource(output, sourceView(data.left().source(), foil), resolver,
                 displayContext, level, owner, seed, QuadClipper.Side.LEFT, -SOURCE_OFFSET);
+        boolean oversized = output.isOversizedInGui();
         LayerRange right = appendSource(output, sourceView(data.right().source(), foil), resolver,
                 displayContext, level, owner, seed, QuadClipper.Side.RIGHT, SOURCE_OFFSET);
 
-        if (displayContext == ItemDisplayContext.GUI || !clipAtomically(output, left, right)) {
+        oversized |= output.isOversizedInGui();
+        if (!clipAtomically(output, left, output, right)) {
             applySideBySideFallback(output, left);
             applySideBySideFallback(output, right);
         }
         ((ItemStackRenderStateAccessor) (Object) output).mismatchedboots$setCachedModelBoundingBox(null);
-        output.setOversizedInGui(false);
+        output.setOversizedInGui(displayContext == ItemDisplayContext.GUI && oversized);
         return true;
+    }
+
+    public static GuiPreparation prepareGui(
+            MixedBootsData data,
+            boolean foil,
+            ItemModelResolver resolver,
+            @Nullable Level level,
+            @Nullable ItemOwner owner,
+            int seed) {
+        TrackingItemStackRenderState left = new TrackingItemStackRenderState();
+        TrackingItemStackRenderState right = new TrackingItemStackRenderState();
+        resolver.updateForTopItem(left, sourceView(data.left().source(), foil),
+                ItemDisplayContext.GUI, level, owner, seed);
+        resolver.updateForTopItem(right, sourceView(data.right().source(), foil),
+                ItemDisplayContext.GUI, level, owner, seed);
+        return new GuiPreparation(left, right,
+                clipAtomically(left, wholeSource(left, QuadClipper.Side.LEFT, -SOURCE_OFFSET),
+                        right, wholeSource(right, QuadClipper.Side.RIGHT, SOURCE_OFFSET)));
+    }
+
+    private static LayerRange wholeSource(ItemStackRenderState state, QuadClipper.Side side, float offset) {
+        return new LayerRange(0, ((ItemStackRenderStateAccessor) (Object) state)
+                .mismatchedboots$getActiveLayerCount(), side, offset);
+    }
+
+    public record GuiPreparation(
+            TrackingItemStackRenderState left,
+            TrackingItemStackRenderState right,
+            boolean clipped) {
+        public MixedBootsGuiRenderState compose() {
+            if (!clipped) {
+                applySideBySideFallback(left, wholeSource(left, QuadClipper.Side.LEFT, -SOURCE_OFFSET));
+                applySideBySideFallback(right, wholeSource(right, QuadClipper.Side.RIGHT, SOURCE_OFFSET));
+            }
+            return new MixedBootsGuiRenderState(left, right, clipped);
+        }
     }
 
     public static ItemStack sourceView(ItemStack source, boolean foil) {
@@ -86,9 +125,10 @@ public final class MixedBootsItemRenderer {
     }
 
     private static boolean clipAtomically(
-            ItemStackRenderState output, LayerRange left, LayerRange right) {
+            ItemStackRenderState leftOutput, LayerRange left,
+            ItemStackRenderState rightOutput, LayerRange right) {
         List<LayerPlan> plans = new ArrayList<>(left.size() + right.size());
-        if (!planRange(output, left, plans) || !planRange(output, right, plans)) {
+        if (!planRange(leftOutput, left, plans) || !planRange(rightOutput, right, plans)) {
             return false;
         }
         for (LayerPlan plan : plans) {
@@ -98,9 +138,11 @@ public final class MixedBootsItemRenderer {
             plan.layer().setExtents(plan.extents());
             plan.extension().commit().run();
             if (plan.extension().animated()) {
-                output.setAnimated();
+                plan.output().setAnimated();
             }
         }
+        ((ItemStackRenderStateAccessor) (Object) leftOutput).mismatchedboots$setCachedModelBoundingBox(null);
+        ((ItemStackRenderStateAccessor) (Object) rightOutput).mismatchedboots$setCachedModelBoundingBox(null);
         return true;
     }
 
@@ -136,7 +178,7 @@ public final class MixedBootsItemRenderer {
             if (!extension.compatible()) {
                 return false;
             }
-            plans.add(new LayerPlan(layer, List.copyOf(replacement), extents(replacement), extension));
+            plans.add(new LayerPlan(output, layer, List.copyOf(replacement), extents(replacement), extension));
         }
         return true;
     }
@@ -200,6 +242,7 @@ public final class MixedBootsItemRenderer {
     }
 
     private record LayerPlan(
+            ItemStackRenderState output,
             ItemStackRenderState.LayerRenderState layer,
             List<BakedQuad> quads,
             Supplier<Vector3fc[]> extents,

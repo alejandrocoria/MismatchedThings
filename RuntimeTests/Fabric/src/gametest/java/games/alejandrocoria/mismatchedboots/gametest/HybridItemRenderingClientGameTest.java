@@ -27,7 +27,6 @@ import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -63,9 +62,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     private static void verifyCompatibleVanillaPairs(Minecraft client) {
         MixedBootsPair pair = MixedBootsFactory.createPair(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
-        for (ItemDisplayContext context : Arrays.stream(ItemDisplayContext.values())
-                .filter(displayContext -> displayContext != ItemDisplayContext.GUI)
-                .toList()) {
+        for (ItemDisplayContext context : ItemDisplayContext.values()) {
             ItemStackRenderState primary = resolve(client, pair.primary(), context);
             assertClippedPair(primary, "iron_boots", "golden_boots", "primary " + context);
 

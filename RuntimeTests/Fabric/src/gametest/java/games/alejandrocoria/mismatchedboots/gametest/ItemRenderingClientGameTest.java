@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.gametest;
 import com.mojang.blaze3d.platform.NativeImage;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
+import games.alejandrocoria.mismatchedboots.client.render.MixedBootsGuiRenderState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -47,7 +48,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class ItemRenderingClientGameTest implements FabricClientGameTest {
-    private static final float EXPECTED_OFFSET = 0.15F;
     private static final float EPSILON = 0.0001F;
     private static final int CLIPPING_X = 40;
     private static final int CLIPPING_Y = 40;
@@ -123,16 +123,33 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
 
     private static void assertGuiSubmissions(
             List<GuiItemRenderState> submissions, boolean nested, boolean expectedFoil) {
-        if (submissions.size() != 2) {
-            throw new AssertionError("GUI clipping expected two item submissions but got " + submissions.size());
+        if (submissions.size() != 1
+                || !(submissions.getFirst().itemStackRenderState() instanceof MixedBootsGuiRenderState combined)) {
+            throw new AssertionError("GUI clipping expected one depth-sharing composition");
         }
-
-        int outerLeft = nested ? CLIPPING_X + 2 : CLIPPING_X;
-        int outerRight = nested ? CLIPPING_X + 14 : CLIPPING_X + 16;
-        assertGuiSubmission(
-                submissions.get(0), outerLeft, CLIPPING_X + 8, "red_concrete", expectedFoil, "left");
-        assertGuiSubmission(
-                submissions.get(1), CLIPPING_X + 8, outerRight, "blue_concrete", expectedFoil, "right");
+        GuiItemRenderState item = submissions.getFirst();
+        ScreenRectangle expectedScissor = nested
+                ? new ScreenRectangle(CLIPPING_X + 2, CLIPPING_Y, 12, 16) : null;
+        if (!java.util.Objects.equals(item.scissorArea(), expectedScissor)
+                || item.x() != CLIPPING_X || item.y() != CLIPPING_Y) {
+            throw new AssertionError("GUI geometry changed caller coordinates or parent scissor");
+        }
+        for (int side = 0; side < 2; side++) {
+            ItemStackRenderState source = combined.sources().get(side);
+            assertSourceOrderSingle(source, side == 0 ? "red_concrete" : "blue_concrete", "GUI geometry");
+            assertFoilSingle(source, expectedFoil, "GUI geometry");
+            LayerRenderStateAccessor layer = layer(access(source), 0);
+            assertNear(layer.mismatchedboots$getLocalTransform().m00(), 1.0F, "GUI geometry scale");
+            assertNear(layer.mismatchedboots$getLocalTransform().m30(), 0.0F, "GUI geometry offset");
+            for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
+                for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
+                    float x = quad.position(vertex).x();
+                    if ((side == 0 && x > 0.5F + EPSILON) || (side == 1 && x < 0.5F - EPSILON)) {
+                        throw new AssertionError("GUI geometry retained the other source's half");
+                    }
+                }
+            }
+        }
     }
 
     private static void assertClippedPixels(Path screenshot, int guiScale) {
@@ -172,28 +189,6 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             throw new AssertionError("GUI clipping leaked pixels across the center: "
                     + leftBlue + " blue pixels on the left, " + rightRed + " red pixels on the right");
         }
-    }
-
-    private static void assertGuiSubmission(
-            GuiItemRenderState submission,
-            int expectedLeft,
-            int expectedRight,
-            String expectedSprite,
-            boolean expectedFoil,
-            String side) {
-        ScreenRectangle scissor = submission.scissorArea();
-        if (submission.x() != CLIPPING_X || submission.y() != CLIPPING_Y) {
-            throw new AssertionError("GUI clipping moved the " + side + " source item");
-        }
-        if (scissor == null
-                || scissor.left() != expectedLeft
-                || scissor.right() != expectedRight
-                || scissor.top() != CLIPPING_Y
-                || scissor.bottom() != CLIPPING_Y + 16) {
-            throw new AssertionError("GUI clipping has an incorrect " + side + " scissor: " + scissor);
-        }
-        assertSourceOrderSingle(submission.itemStackRenderState(), expectedSprite, "GUI clipping " + side);
-        assertFoilSingle(submission.itemStackRenderState(), expectedFoil, "GUI clipping " + side);
     }
 
     private static void assertSourceOrderSingle(
@@ -247,11 +242,11 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
                 ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
                 ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)) {
             ItemStackRenderState primary = resolve(client, pair.primary(), displayContext);
-            assertComposition(primary, displayContext, "primary " + displayContext);
+            assertClipped(primary, "primary " + displayContext);
             assertSourceOrder(primary, "iron_boots", "golden_boots", "primary " + displayContext);
 
             ItemStackRenderState inverse = resolve(client, pair.inverse(), displayContext);
-            assertComposition(inverse, displayContext, "inverse " + displayContext);
+            assertClipped(inverse, "inverse " + displayContext);
             assertSourceOrder(inverse, "golden_boots", "iron_boots", "inverse " + displayContext);
         }
 
@@ -283,7 +278,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         ItemStackRenderState missing = resolve(client,
                 MixedBootsFactory.createPair(missingSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
                 ItemDisplayContext.GUI);
-        assertSideBySide(missing, "missing-model fallback");
+        assertClipped(missing, "missing-model geometry");
         assertSprite(layer(access(missing), 1).mismatchedboots$getQuads(),
                 "golden_boots", "missing-model fallback right source");
 
@@ -407,7 +402,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             reload.get().join();
             ItemStack mixed = MixedBootsFactory.createPair(
                     new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
-            assertSideBySide(resolve(client, mixed, ItemDisplayContext.GUI), "post-reload render");
+            assertClipped(resolve(client, mixed, ItemDisplayContext.GUI), "post-reload render");
         });
     }
 
@@ -417,46 +412,6 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         client.getItemModelResolver().updateForTopItem(
                 state, stack, displayContext, client.level, client.player, 0);
         return state;
-    }
-
-    private static void assertSideBySide(ItemStackRenderState state, String scenario) {
-        ItemStackRenderStateAccessor stateAccess = access(state);
-        if (stateAccess.mismatchedboots$getActiveLayerCount() != 2) {
-            throw new AssertionError(scenario + " expected two render layers but got "
-                    + stateAccess.mismatchedboots$getActiveLayerCount());
-        }
-        Matrix4f left = layer(stateAccess, 0).mismatchedboots$getLocalTransform();
-        Matrix4f right = layer(stateAccess, 1).mismatchedboots$getLocalTransform();
-        if (Math.abs(left.m30() + EXPECTED_OFFSET) > EPSILON
-                || Math.abs(right.m30() - EXPECTED_OFFSET) > EPSILON) {
-            throw new AssertionError(scenario + " has incorrect side offsets: "
-                    + left.m30() + ", " + right.m30());
-        }
-        if (Math.abs(left.m00() - 0.8F) > EPSILON
-                || Math.abs(left.m11() - 0.8F) > EPSILON
-                || Math.abs(left.m22() - 1.0F) > EPSILON
-                || Math.abs(right.m00() - 0.8F) > EPSILON
-                || Math.abs(right.m11() - 0.8F) > EPSILON
-                || Math.abs(right.m22() - 1.0F) > EPSILON) {
-            throw new AssertionError(scenario + " has incorrect source scaling");
-        }
-        if (Math.abs(left.m00() - 0.8F) > EPSILON
-                || Math.abs(left.m11() - 0.8F) > EPSILON
-                || Math.abs(left.m22() - 1.0F) > EPSILON
-                || Math.abs(right.m00() - 0.8F) > EPSILON
-                || Math.abs(right.m11() - 0.8F) > EPSILON
-                || Math.abs(right.m22() - 1.0F) > EPSILON) {
-            throw new AssertionError(scenario + " has incorrect source scale");
-        }
-    }
-
-    private static void assertComposition(
-            ItemStackRenderState state, ItemDisplayContext displayContext, String scenario) {
-        if (displayContext == ItemDisplayContext.GUI) {
-            assertSideBySide(state, scenario);
-        } else {
-            assertClipped(state, scenario);
-        }
     }
 
     private static void assertClipped(ItemStackRenderState state, String scenario) {
@@ -517,6 +472,12 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
 
     private static ItemStackRenderStateAccessor access(ItemStackRenderState state) {
         return (ItemStackRenderStateAccessor) (Object) state;
+    }
+
+    private static void assertNear(float actual, float expected, String scenario) {
+        if (!Float.isFinite(actual) || Math.abs(actual - expected) > EPSILON) {
+            throw new AssertionError(scenario + " expected " + expected + " but got " + actual);
+        }
     }
 
     private static LayerRenderStateAccessor layer(ItemStackRenderStateAccessor state, int index) {
