@@ -6,7 +6,7 @@ def networkAcceptanceRoot = layout.buildDirectory.dir('network-acceptance')
 def gradleLauncher = rootProject.file('gradlew.bat')
 
 def endpointProject = { String loader ->
-    loader == 'fabric' ? project(':CrossLoaderFabric') : project(':CrossLoaderNeoForge')
+    loader == 'fabric' ? project(':RuntimeTests:Fabric') : project(':RuntimeTests:NeoForge')
 }
 
 def productionArtifact = { String loader ->
@@ -61,15 +61,15 @@ narrator:0
 }
 
 def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady ->
-    String taskName = ":${endpointProject(loader).name}:runCrossLoader${endpoint.capitalize()}"
+    String taskName = "${endpointProject(loader).path}:runNetworkTest${endpoint.capitalize()}"
     List<String> gradleArguments = [
             gradleLauncher.absolutePath,
             '--no-daemon',
             '--console=plain',
             '-Dorg.gradle.jvmargs=-Xmx768m',
-            "-PcrossLoaderPort=${port}",
-            "-PcrossLoaderMarkers=${markers.absolutePath}",
-            "-PcrossLoaderStopAfterReady=${stopAfterReady}",
+            "-PnetworkTestPort=${port}",
+            "-PnetworkTestMarkers=${markers.absolutePath}",
+            "-PnetworkTestStopAfterReady=${stopAfterReady}",
             taskName
     ]
     List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')

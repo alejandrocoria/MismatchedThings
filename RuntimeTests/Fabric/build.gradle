@@ -1,0 +1,270 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.fabricmc.fabric-loom'
+}
+
+base.archivesName = "mismatchedboots-runtime-test-fabric"
+
+evaluationDependsOn(':Fabric')
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    compileOnly files(project(':Fabric').sourceSets.main.output)
+    compileOnly files(project(':Fabric').sourceSets.main.compileClasspath)
+}
+
+sourceSets {
+    networkTest {
+        java.srcDir rootProject.file('RuntimeTests/Common/src/main/java')
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath - sourceSets.main.output
+    }
+}
+
+loom {
+    def aw = project(':Common').file("src/main/resources/${mod_id}.accesswidener")
+    if (aw.exists()) {
+        accessWidenerPath.set(aw)
+    }
+    mixin {
+        useLegacyMixinAp = false
+    }
+    runs {
+        client {
+            client()
+            ideConfigGenerated(false)
+        }
+        server {
+            server()
+            ideConfigGenerated(false)
+        }
+    }
+}
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "${mod_id}-test"
+        enableGameTests = true
+        enableClientGameTests = true
+        // Loom otherwise wires client EULA preparation into every launch,
+        // including network runs, and deletes the client GameTest directory.
+        eula = false
+        clearRunDirectory = true
+        username = "MBTest"
+    }
+}
+
+// This project's main source set is intentionally empty; only test mods run here.
+sourceSets.gametest.runtimeClasspath -= sourceSets.main.output
+
+tasks.register('acceptGameTestEula') {
+    dependsOn tasks.named('deleteGameTestRunDir')
+    doLast {
+        def runDirectory = layout.buildDirectory.dir('run/clientGameTest').get().asFile
+        runDirectory.mkdirs()
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+    }
+}
+
+tasks.named('runClientGameTest') {
+    dependsOn tasks.named('acceptGameTestEula')
+}
+
+def persistenceRestartToken = UUID.randomUUID().toString()
+
+loom {
+    runs {
+        persistenceWrite {
+            inherit server
+            property("fabric-api.gametest")
+            property(
+                    "fabric-api.gametest.report-file",
+                    layout.buildDirectory.file('reports/gametest/persistence-write.xml').get().asFile.absolutePath)
+            property("mismatchedboots.test.persistence.restartMode", "write")
+            property("mismatchedboots.test.persistence.restartToken", persistenceRestartToken)
+            runDir("build/run/persistenceGameTest")
+            source("gametest")
+        }
+        persistenceRead {
+            inherit server
+            property("fabric-api.gametest")
+            property(
+                    "fabric-api.gametest.report-file",
+                    layout.buildDirectory.file('reports/gametest/persistence-read.xml').get().asFile.absolutePath)
+            property("mismatchedboots.test.persistence.restartMode", "read")
+            property("mismatchedboots.test.persistence.restartToken", persistenceRestartToken)
+            runDir("build/run/persistenceGameTest")
+            source("gametest")
+        }
+        attributeRules {
+            inherit server
+            property("fabric-api.gametest")
+            property(
+                    "fabric-api.gametest.report-file",
+                    layout.buildDirectory.file('reports/gametest/attribute-rules.xml').get().asFile.absolutePath)
+            property("mismatchedboots.test.attributeRules", "true")
+            runDir("build/run/attributeRulesGameTest")
+            source("gametest")
+        }
+    }
+}
+
+tasks.register('preparePersistenceRestart', Delete) {
+    group = 'verification'
+    description = 'Deletes the dedicated persistence world before the write run.'
+    delete layout.buildDirectory.dir('run/persistenceGameTest')
+    doLast {
+        def runDirectory = layout.buildDirectory.dir('run/persistenceGameTest').get().asFile
+        runDirectory.mkdirs()
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
+    }
+}
+
+tasks.named('runPersistenceWrite') {
+    dependsOn tasks.named('preparePersistenceRestart')
+}
+
+def preparePersistenceRestartRead = tasks.register('preparePersistenceRestartRead') {
+    group = 'verification'
+    description = 'Changes the isolated persistence config after the write process.'
+    dependsOn tasks.named('runPersistenceWrite')
+    doLast {
+        def configFile = layout.buildDirectory.file(
+                'run/persistenceGameTest/config/mismatchedboots-server.toml').get().asFile
+        configFile.parentFile.mkdirs()
+        configFile.text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+'''
+    }
+}
+
+tasks.named('runPersistenceRead') {
+    dependsOn preparePersistenceRestartRead
+}
+
+tasks.register('prepareAttributeRulesGameTest', Delete) {
+    group = 'verification'
+    description = 'Creates the isolated non-default attribute-rule GameTest config.'
+    delete layout.buildDirectory.dir('run/attributeRulesGameTest')
+    doLast {
+        def runDirectory = layout.buildDirectory.dir('run/attributeRulesGameTest').get().asFile
+        runDirectory.mkdirs()
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
+        def configFile = new File(runDirectory, 'config/mismatchedboots-server.toml')
+        configFile.parentFile.mkdirs()
+        configFile.text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+
+[attributes."minecraft:waypoint_transmit_range"]
+policy = "reject"
+'''
+    }
+}
+
+tasks.named('runAttributeRules') {
+    dependsOn tasks.named('prepareAttributeRulesGameTest')
+}
+
+tasks.register('verifyPersistenceRestart') {
+    group = 'verification'
+    description = 'Writes and reloads mixed boots across two Fabric server processes.'
+    dependsOn tasks.named('runPersistenceRead')
+}
+
+tasks.register('verifyGameplay') {
+    group = 'verification'
+    description = 'Runs the canonical Fabric server GameTest suite.'
+    dependsOn tasks.named('runGameTest'), tasks.named('runAttributeRules')
+}
+
+tasks.register('verifyClient') {
+    group = 'verification'
+    description = 'Runs the unattended Fabric client GameTest suite.'
+    dependsOn tasks.named('runClientGameTest')
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyGameplay')
+}
+
+tasks.named('runGameTest') {
+    systemProperty 'fabric-api.gametest.report-file',
+            layout.buildDirectory.file('reports/gametest/results.xml').get().asFile.absolutePath
+}
+
+tasks.named('runClientGameTest') {
+    def showWindow = providers.gradleProperty('showClientGameTestWindow')
+            .map { it.toBoolean() }
+            .getOrElse(false)
+    systemProperty 'mismatchedboots.test.hideClientWindow', !showWindow
+    doFirst {
+        def runDirectory = layout.buildDirectory.dir('run/clientGameTest').get().asFile
+        def optionsFile = new File(runDirectory, 'options.txt')
+        optionsFile.parentFile.mkdirs()
+        optionsFile.text = 'soundCategory_master:0.0\n'
+        def configFile = new File(runDirectory, 'config/mismatchedboots-server.toml')
+        configFile.parentFile.mkdirs()
+        configFile.text = '''[attributes]
+fallback = "separate"
+
+[attributes."minecraft:movement_speed"]
+policy = "combine"
+
+[attributes."futuremod:dormant"]
+policy = "minimum"
+'''
+    }
+}
+
+dependencies {
+    gametestRuntimeOnly files(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+}
+
+def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
+def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
+        .getOrElse(layout.buildDirectory.dir('markers').get().asFile.absolutePath)
+
+loom {
+    mods {
+        mismatchedboots_runtime_test {
+            sourceSet sourceSets.networkTest
+        }
+    }
+    runs {
+        networkTestServer {
+            server()
+            source('networkTest')
+            setConfigName('Fabric Network Acceptance Server')
+            ideConfigGenerated(false)
+            runDir('build/run/server')
+            property('mismatchedboots.runtimetest.markers', networkTestMarkers)
+            property('mismatchedboots.runtimetest.loader', 'fabric')
+            property('mismatchedboots.runtimetest.stopAfterReady',
+                    providers.gradleProperty('networkTestStopAfterReady').getOrElse('false'))
+            vmArg('-Xmx1G')
+        }
+        networkTestClient {
+            client()
+            source('networkTest')
+            setConfigName('Fabric Network Acceptance Client')
+            ideConfigGenerated(false)
+            runDir('build/run/client')
+            property('mismatchedboots.runtimetest.markers', networkTestMarkers)
+            property('mismatchedboots.runtimetest.loader', 'fabric')
+            property('mismatchedboots.test.hideClientWindow', 'true')
+            programArgs('--quickPlayMultiplayer', "127.0.0.1:${networkTestPort}")
+            vmArg('-Xmx1G')
+        }
+    }
+}

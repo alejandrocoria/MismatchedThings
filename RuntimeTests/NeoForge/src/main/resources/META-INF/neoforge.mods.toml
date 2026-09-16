@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+    modId="mismatchedboots_runtime_test"
+    version="1.0.0"
+    displayName="MismatchedBoots Runtime Tests"
+
+[[mixins]]
+    config="mismatchedboots-runtime-test.neoforge.mixins.json"
+
+[[dependencies.mismatchedboots_runtime_test]]
+    modId="neoforge"
+    type="required"
+    versionRange="[1,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.mismatchedboots_runtime_test]]
+    modId="mismatchedboots"
+    type="required"
+    versionRange="[1.0.0,)"
+    ordering="AFTER"
+    side="BOTH"
