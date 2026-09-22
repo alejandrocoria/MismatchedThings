@@ -53,9 +53,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -109,8 +111,8 @@ class MixedBootsFactoryTest {
         assertEquals(1, primary.get(DataComponents.MAX_STACK_SIZE));
         assertEquals(Component.translatable("item.mismatchedboots.mixed_boots"), primary.get(DataComponents.ITEM_NAME));
         assertEquals(ModContent.MIXED_BOOTS_ID, primary.get(DataComponents.ITEM_MODEL));
-        assertNull(primary.get(DataComponents.REPAIRABLE));
-        assertNull(inverse.get(DataComponents.REPAIRABLE));
+        assertRepairableAccepts(primary, Items.IRON_INGOT, Items.GOLD_INGOT);
+        assertRepairableAccepts(inverse, Items.IRON_INGOT, Items.GOLD_INGOT);
         assertEquals("alpha", primary.get(opaqueType));
         assertEquals("beta", inverse.get(opaqueType));
         assertNull(primary.get(rightOnlyType));
@@ -479,6 +481,14 @@ class MixedBootsFactoryTest {
 
     private static long remaining(int maximum, int damage) {
         return Math.max(0L, Math.min((long) maximum - damage, maximum));
+    }
+
+    private static void assertRepairableAccepts(ItemStack stack, Item... expectedItems) {
+        Repairable repairable = stack.get(DataComponents.REPAIRABLE);
+        assertNotNull(repairable);
+        assertEquals(Set.of(expectedItems), repairable.items().stream()
+                .map(Holder::value)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet()));
     }
 
     private static AttributeModifier modifier(

@@ -5,8 +5,8 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "BakedQuadClipperProbeMixin",
-    "FabricMeshClipperProbeMixin",
     "EquipmentLayerRendererMixin",
+    "FabricMeshClipperProbeMixin",
     "FabricNetworkHandlerMixin",
     "GuiGraphicsExtractorProbeMixin",
     "GuiRenderStateMixin",

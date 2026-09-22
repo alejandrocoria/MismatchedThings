@@ -134,38 +134,58 @@ public final class WorkstationGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void anvilRejectsRepairsAndMixedCombinations(GameTestHelper helper) {
+    public void anvilRepairsWithEitherSourceMaterial(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.giveExperienceLevels(30);
+
+        assertMaterialRepair(helper, player, Items.IRON_INGOT, 1);
+        assertMaterialRepair(helper, player, Items.GOLD_INGOT, 2);
+
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        mixed.setDamageValue(Math.max(1, mixed.getMaxDamage() / 4));
+        AnvilMenu unrelated = new AnvilMenu(3, player.getInventory());
+        unrelated.getSlot(AnvilMenu.INPUT_SLOT).set(mixed);
+        unrelated.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.DIAMOND));
+        helper.assertTrue(unrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
+                "Anvil repaired mixed boots with an unrelated material");
+
+        ItemStack ordinary = new ItemStack(Items.IRON_BOOTS);
+        ordinary.setDamageValue(Math.max(1, ordinary.getMaxDamage() / 4));
+        AnvilMenu control = new AnvilMenu(4, player.getInventory());
+        control.getSlot(AnvilMenu.INPUT_SLOT).set(ordinary);
+        control.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_INGOT));
+        helper.assertTrue(control.getSlot(AnvilMenu.RESULT_SLOT).getItem().is(Items.IRON_BOOTS),
+                "Ordinary material repair stopped working");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void anvilRejectsMixedCombinations(GameTestHelper helper) {
         var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         mixed.setDamageValue(Math.min(5, mixed.getMaxDamage()));
 
-        AnvilMenu repair = new AnvilMenu(1, player.getInventory());
-        repair.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
-        repair.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_INGOT));
-        helper.assertTrue(repair.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil repaired mixed boots with an owner material");
-
         ItemStack inverse = GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).inverse();
-        AnvilMenu combine = new AnvilMenu(2, player.getInventory());
+        AnvilMenu combine = new AnvilMenu(1, player.getInventory());
         combine.getSlot(AnvilMenu.INPUT_SLOT).set(mixed);
         combine.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(inverse);
         helper.assertTrue(combine.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Anvil combined two mixed orientations");
 
-        AnvilMenu sameOrientation = new AnvilMenu(3, player.getInventory());
+        AnvilMenu sameOrientation = new AnvilMenu(2, player.getInventory());
         sameOrientation.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
         sameOrientation.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(mixed.copy());
         helper.assertTrue(sameOrientation.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Anvil combined the same mixed orientation");
 
-        AnvilMenu unrelated = new AnvilMenu(4, player.getInventory());
+        AnvilMenu unrelated = new AnvilMenu(3, player.getInventory());
         unrelated.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
         unrelated.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(
                 GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.LEATHER_BOOTS));
         helper.assertTrue(unrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Anvil combined unrelated mixed boots");
 
-        AnvilMenu ordinarySacrifice = new AnvilMenu(5, player.getInventory());
+        AnvilMenu ordinarySacrifice = new AnvilMenu(4, player.getInventory());
         ordinarySacrifice.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
         ordinarySacrifice.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_BOOTS));
         helper.assertTrue(ordinarySacrifice.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
@@ -225,6 +245,42 @@ public final class WorkstationGameTests {
             GameTestHelper helper, GrindstoneMenu menu, String scenario) {
         helper.assertTrue(menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Grindstone accepted " + scenario);
+    }
+
+    private static void assertMaterialRepair(
+            GameTestHelper helper,
+            net.minecraft.world.entity.player.Player player,
+            net.minecraft.world.item.Item material,
+            int menuId) {
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        MixedBootsData originalData = GameTestStacks.data(mixed);
+        int originalDamage = Math.max(1, mixed.getMaxDamage() / 4);
+        mixed.setDamageValue(originalDamage);
+        AnvilMenu menu = new AnvilMenu(menuId, player.getInventory());
+        menu.getSlot(AnvilMenu.INPUT_SLOT).set(mixed);
+        menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(material, 2));
+
+        ItemStack preview = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(!preview.isEmpty(), "Anvil rejected source repair material " + material);
+        helper.assertValueEqual(preview.getDamageValue(), 0, "material repair preview damage");
+        helper.assertTrue(GameTestStacks.data(preview).equals(originalData),
+                "Material repair preview changed source snapshots");
+        int cost = menu.getCost();
+        helper.assertTrue(cost > 0, "Material repair had no experience cost");
+        int levelsBefore = player.experienceLevel;
+
+        ItemStack taken = menu.quickMoveStack(player, AnvilMenu.RESULT_SLOT);
+
+        helper.assertTrue(!taken.isEmpty(), "Material repair result could not be extracted");
+        helper.assertValueEqual(taken.getDamageValue(), 0, "extracted material repair damage");
+        helper.assertTrue(GameTestStacks.data(taken).equals(originalData),
+                "Extracted material repair changed source snapshots");
+        helper.assertTrue(menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().isEmpty(),
+                "Material repair did not consume the mixed input");
+        helper.assertValueEqual(menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().getCount(), 1,
+                "material items remaining after repair");
+        helper.assertValueEqual(player.experienceLevel, levelsBefore - cost,
+                "experience levels after material repair");
     }
 
     private static SmithingMenu smithing(

@@ -16,6 +16,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.enchantment.Repairable;
 import net.minecraft.world.item.equipment.Equippable;
 
 import java.util.List;
@@ -56,11 +57,14 @@ public final class MixedBootsFactory {
         DurabilityMerger.Result durability = DurabilityMerger.merge(firstSource, secondSource);
         AttributeComposer.Result attributes = AttributeComposer.compose(firstSource, secondSource, rules);
         ItemEnchantments enchantments = EnchantmentMerger.merge(firstSource, secondSource);
+        Optional<Repairable> repairable = RepairableComposer.compose(firstSource, secondSource);
 
         ItemStack primary = createOrientation(
-                firstHalf, secondHalf, mixedBoots, dataType, durability, attributes.primary(), enchantments);
+                firstHalf, secondHalf, mixedBoots, dataType, durability, attributes.primary(), enchantments,
+                repairable);
         ItemStack inverse = createOrientation(
-                secondHalf, firstHalf, mixedBoots, dataType, durability, attributes.inverse(), enchantments);
+                secondHalf, firstHalf, mixedBoots, dataType, durability, attributes.inverse(), enchantments,
+                repairable);
         return new MixedBootsPair(primary, inverse);
     }
 
@@ -71,7 +75,8 @@ public final class MixedBootsFactory {
             DataComponentType<MixedBootsData> dataType,
             DurabilityMerger.Result durability,
             ItemAttributeModifiers attributes,
-            ItemEnchantments enchantments) {
+            ItemEnchantments enchantments,
+            Optional<Repairable> repairable) {
         ItemStack owner = left.source();
         ItemStack other = right.source();
         ItemStack output = new ItemStack(mixedBoots, 1);
@@ -80,6 +85,7 @@ public final class MixedBootsFactory {
         output.applyComponents(owner.getComponents());
 
         output.remove(DataComponents.REPAIRABLE);
+        repairable.ifPresent(value -> output.set(DataComponents.REPAIRABLE, value));
         output.remove(dataType);
 
         output.set(DataComponents.MAX_STACK_SIZE, 1);
