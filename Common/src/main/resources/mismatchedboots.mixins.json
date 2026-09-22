@@ -4,7 +4,8 @@
   "package": "games.alejandrocoria.mismatchedboots.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "GrindstoneMenuMixin"
+    "GrindstoneMenuMixin",
+    "GrindstoneResultSlotXpMixin"
   ],
   "injectors": {
     "defaultRequire": 1

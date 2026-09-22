@@ -20,15 +20,32 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 public final class WorkstationGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void grindstoneRejectsMixedBootsInEitherInput(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
-        GrindstoneMenu first = new GrindstoneMenu(1, player.getInventory());
-        first.getSlot(GrindstoneMenu.INPUT_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
-        assertNoGrindstoneResult(helper, first, "mixed boots in first input");
+    public void grindstoneDisenchantsMixedBootsInFirstInput(GameTestHelper helper) {
+        assertSingleInputGrindstone(helper, GrindstoneMenu.INPUT_SLOT);
+    }
 
-        GrindstoneMenu second = new GrindstoneMenu(2, player.getInventory());
-        second.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
-        assertNoGrindstoneResult(helper, second, "mixed boots in second input");
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneDisenchantsMixedBootsInSecondInput(GameTestHelper helper) {
+        assertSingleInputGrindstone(helper, GrindstoneMenu.ADDITIONAL_SLOT);
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneCloseWithoutExtractionAwardsNoExperience(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        setEnchantment(mixed, enchantment(helper, Enchantments.UNBREAKING), 1, false);
+        GrindstoneMenu menu = new GrindstoneMenu(1, player.getInventory());
+        menu.getSlot(GrindstoneMenu.INPUT_SLOT).set(mixed);
+        helper.assertTrue(!menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
+                "Grindstone did not preview disenchantment before close");
+        menu.removed(player);
+        helper.assertValueEqual(grindstoneExperience(helper), 0, "experience after closing grindstone");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneStillRejectsTwoInputsWithMixedBoots(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
 
         GrindstoneMenu both = new GrindstoneMenu(3, player.getInventory());
         both.getSlot(GrindstoneMenu.INPUT_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
@@ -41,16 +58,59 @@ public final class WorkstationGameTests {
         paired.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_BOOTS));
         assertNoGrindstoneResult(helper, paired, "mixed boots paired with ordinary boots");
 
-        ItemStack modified = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
-        modified.setDamageValue(Math.min(5, modified.getMaxDamage() - 1));
-        setEnchantment(modified, enchantment(helper, Enchantments.UNBREAKING), 1, false);
-        GrindstoneMenu damagedAndEnchanted = new GrindstoneMenu(5, player.getInventory());
-        damagedAndEnchanted.getSlot(GrindstoneMenu.INPUT_SLOT).set(modified);
-        assertNoGrindstoneResult(helper, damagedAndEnchanted, "damaged and enchanted mixed boots");
+        GrindstoneMenu reversed = new GrindstoneMenu(5, player.getInventory());
+        reversed.getSlot(GrindstoneMenu.INPUT_SLOT).set(new ItemStack(Items.IRON_BOOTS));
+        reversed.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
+        assertNoGrindstoneResult(helper, reversed, "ordinary boots paired with mixed boots");
 
         helper.assertTrue(helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
                 helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).isEmpty(),
                 "Rejected grindstone input created experience");
+        helper.succeed();
+    }
+
+    private static void assertSingleInputGrindstone(GameTestHelper helper, int inputSlot) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        Holder<Enchantment> protection = enchantment(helper, Enchantments.PROTECTION);
+        Holder<Enchantment> curse = enchantment(helper, Enchantments.VANISHING_CURSE);
+        ItemStack left = new ItemStack(Items.IRON_BOOTS);
+        ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
+        setEnchantments(left, protection, curse);
+        setEnchantment(right, protection, 1, false);
+        ItemStack mixed = GameTestStacks.pair(left, right).primary();
+        MixedBootsData sources = GameTestStacks.data(mixed);
+        helper.assertValueEqual(mixed.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                .getLevel(protection), 2, "merged Protection level");
+        int originalDamage = Math.min(7, mixed.getMaxDamage() - 1);
+        mixed.setDamageValue(originalDamage);
+        mixed.set(DataComponents.CUSTOM_NAME, Component.literal("Custom pair"));
+        mixed.set(DataComponents.REPAIR_COST, 13);
+
+        GrindstoneMenu menu = grindstone(helper, player, inputSlot + 1);
+        menu.getSlot(inputSlot).set(mixed);
+        ItemStack preview = menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(!preview.isEmpty(), "Grindstone did not preview mixed boots in slot " + inputSlot);
+        ItemEnchantments resultEnchantments = preview.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        helper.assertValueEqual(resultEnchantments.getLevel(protection), 0, "removed Protection level");
+        helper.assertValueEqual(resultEnchantments.getLevel(curse), 1, "preserved curse level");
+        helper.assertValueEqual(preview.getDamageValue(), originalDamage, "grindstone preview damage");
+        helper.assertTrue(preview.getHoverName().equals(Component.literal("Custom pair")),
+                "Grindstone changed the custom name");
+        helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
+                "grindstone preview prior-work cost");
+        helper.assertTrue(GameTestStacks.data(preview).equals(sources), "Grindstone changed source snapshots");
+        helper.assertValueEqual(grindstoneExperience(helper), 0, "experience before extraction");
+
+        ItemStack taken = menu.quickMoveStack(player, GrindstoneMenu.RESULT_SLOT);
+        helper.assertTrue(!taken.isEmpty(), "Grindstone shift-click did not extract the result");
+        helper.assertTrue(GameTestStacks.data(taken).equals(sources), "Extraction changed source snapshots");
+        helper.assertValueEqual(taken.getDamageValue(), originalDamage, "extracted grindstone damage");
+        helper.assertTrue(menu.getSlot(GrindstoneMenu.INPUT_SLOT).getItem().isEmpty(),
+                "Grindstone did not clear the first input");
+        helper.assertTrue(menu.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
+                "Grindstone did not clear the second input");
+        helper.assertValueEqual(grindstoneExperience(helper), 1,
+                "bounded experience from two Protection I sources");
         helper.succeed();
     }
 
@@ -332,6 +392,18 @@ public final class WorkstationGameTests {
             GameTestHelper helper, GrindstoneMenu menu, String scenario) {
         helper.assertTrue(menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Grindstone accepted " + scenario);
+    }
+
+    private static GrindstoneMenu grindstone(
+            GameTestHelper helper, net.minecraft.world.entity.player.Player player, int menuId) {
+        return new GrindstoneMenu(menuId, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
+    }
+
+    private static int grindstoneExperience(GameTestHelper helper) {
+        return helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
+                        helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).stream()
+                .mapToInt(net.minecraft.world.entity.ExperienceOrb::getValue).sum();
     }
 
     private static void assertMaterialRepair(

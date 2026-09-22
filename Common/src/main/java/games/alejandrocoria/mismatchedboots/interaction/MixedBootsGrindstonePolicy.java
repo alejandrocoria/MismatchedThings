@@ -8,6 +8,13 @@ public final class MixedBootsGrindstonePolicy {
     }
 
     public static boolean rejects(ItemStack input, ItemStack additional) {
-        return ModContent.isMixedBoots(input) || ModContent.isMixedBoots(additional);
+        if (!ModContent.isMixedBoots(input) && !ModContent.isMixedBoots(additional)) {
+            return false;
+        }
+        if (!input.isEmpty() && !additional.isEmpty()) {
+            return true;
+        }
+        ItemStack mixed = input.isEmpty() ? additional : input;
+        return ModContent.getMixedBootsData(mixed).isEmpty();
     }
 }

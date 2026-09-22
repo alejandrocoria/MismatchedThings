@@ -31,16 +31,17 @@ class MixedBootsGrindstonePolicyTest {
     }
 
     @Test
-    void rejectsMixedBootsInEitherInputWithoutAffectingOrdinaryItems() {
+    void acceptsSingleMixedInputAndRejectsPopulatedPairs() {
         ItemStack mixed = boots(Items.CHAINMAIL_BOOTS);
         mixed.set(mixedDataType, new MixedBootsData(
                 new BootHalf(boots(Items.IRON_BOOTS)),
                 new BootHalf(boots(Items.GOLDEN_BOOTS))));
         ItemStack ordinary = boots(Items.IRON_BOOTS);
 
-        assertTrue(MixedBootsGrindstonePolicy.rejects(mixed, ItemStack.EMPTY));
-        assertTrue(MixedBootsGrindstonePolicy.rejects(ItemStack.EMPTY, mixed));
+        assertFalse(MixedBootsGrindstonePolicy.rejects(mixed, ItemStack.EMPTY));
+        assertFalse(MixedBootsGrindstonePolicy.rejects(ItemStack.EMPTY, mixed));
         assertTrue(MixedBootsGrindstonePolicy.rejects(mixed, ordinary));
+        assertTrue(MixedBootsGrindstonePolicy.rejects(ordinary, mixed));
         assertTrue(MixedBootsGrindstonePolicy.rejects(mixed, mixed));
         assertFalse(MixedBootsGrindstonePolicy.rejects(ordinary, ItemStack.EMPTY));
         assertFalse(MixedBootsGrindstonePolicy.rejects(ordinary, ordinary));
