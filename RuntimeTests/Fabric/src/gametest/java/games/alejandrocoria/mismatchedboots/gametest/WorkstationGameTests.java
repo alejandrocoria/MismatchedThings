@@ -39,12 +39,21 @@ public final class WorkstationGameTests {
         helper.assertTrue(!menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Grindstone did not preview disenchantment before close");
         menu.removed(player);
+
+        ItemStack paired = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        paired.setDamageValue(paired.getMaxDamage() / 2);
+        GrindstoneMenu repair = new GrindstoneMenu(2, player.getInventory());
+        repair.getSlot(GrindstoneMenu.INPUT_SLOT).set(paired);
+        repair.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_BOOTS));
+        helper.assertTrue(!repair.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
+                "Grindstone did not preview repair before close");
+        repair.removed(player);
         helper.assertValueEqual(grindstoneExperience(helper), 0, "experience after closing grindstone");
         helper.succeed();
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void grindstoneStillRejectsTwoInputsWithMixedBoots(GameTestHelper helper) {
+    public void grindstoneRejectsUnrelatedAndMixedDonors(GameTestHelper helper) {
         var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
 
         GrindstoneMenu both = new GrindstoneMenu(3, player.getInventory());
@@ -55,17 +64,117 @@ public final class WorkstationGameTests {
 
         GrindstoneMenu paired = new GrindstoneMenu(4, player.getInventory());
         paired.getSlot(GrindstoneMenu.INPUT_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
-        paired.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_BOOTS));
-        assertNoGrindstoneResult(helper, paired, "mixed boots paired with ordinary boots");
+        paired.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.DIAMOND_BOOTS));
+        assertNoGrindstoneResult(helper, paired, "mixed boots paired with unrelated boots");
 
         GrindstoneMenu reversed = new GrindstoneMenu(5, player.getInventory());
-        reversed.getSlot(GrindstoneMenu.INPUT_SLOT).set(new ItemStack(Items.IRON_BOOTS));
+        reversed.getSlot(GrindstoneMenu.INPUT_SLOT).set(new ItemStack(Items.DIAMOND_BOOTS));
         reversed.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
-        assertNoGrindstoneResult(helper, reversed, "ordinary boots paired with mixed boots");
+        assertNoGrindstoneResult(helper, reversed, "unrelated boots paired with mixed boots");
 
         helper.assertTrue(helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
                 helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).isEmpty(),
                 "Rejected grindstone input created experience");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneRepairsWithLeftSourceInFirstInput(GameTestHelper helper) {
+        assertOrdinaryGrindstoneDonor(helper, Items.IRON_BOOTS, GrindstoneMenu.INPUT_SLOT);
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneRepairsWithLeftSourceInSecondInput(GameTestHelper helper) {
+        assertOrdinaryGrindstoneDonor(helper, Items.IRON_BOOTS, GrindstoneMenu.ADDITIONAL_SLOT);
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneRepairsWithRightSourceInFirstInput(GameTestHelper helper) {
+        assertOrdinaryGrindstoneDonor(helper, Items.GOLDEN_BOOTS, GrindstoneMenu.INPUT_SLOT);
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneRepairsWithRightSourceInSecondInput(GameTestHelper helper) {
+        assertOrdinaryGrindstoneDonor(helper, Items.GOLDEN_BOOTS, GrindstoneMenu.ADDITIONAL_SLOT);
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void grindstoneRepairsUnenchantedMixedBootsWithoutExperience(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        mixed.setDamageValue(mixed.getMaxDamage() * 3 / 4);
+        ItemStack donor = new ItemStack(Items.GOLDEN_BOOTS);
+        donor.setDamageValue(donor.getMaxDamage() - 1);
+        GrindstoneMenu menu = grindstone(helper, player, 1);
+        menu.getSlot(GrindstoneMenu.INPUT_SLOT).set(mixed);
+        menu.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(donor);
+
+        ItemStack preview = menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(!preview.isEmpty(), "Unenchanted mixed boots could not be repaired");
+        helper.assertValueEqual(preview.getMaxDamage(), mixed.getMaxDamage(), "unenchanted repair maximum");
+        ItemStack taken = menu.quickMoveStack(player, GrindstoneMenu.RESULT_SLOT);
+        helper.assertTrue(!taken.isEmpty(), "Unenchanted grindstone repair could not be extracted");
+        helper.assertValueEqual(grindstoneExperience(helper), 0, "unenchanted repair experience");
+        helper.succeed();
+    }
+
+    private static void assertOrdinaryGrindstoneDonor(
+            GameTestHelper helper, Item donorItem, int mixedSlot) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        Holder<Enchantment> protection = enchantment(helper, Enchantments.PROTECTION);
+        Holder<Enchantment> curse = enchantment(helper, Enchantments.VANISHING_CURSE);
+        ItemStack left = new ItemStack(Items.IRON_BOOTS);
+        ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
+        setEnchantment(left, protection, 1, false);
+        setEnchantment(right, protection, 1, false);
+        ItemStack mixed = GameTestStacks.pair(left, right).primary();
+        MixedBootsData sources = GameTestStacks.data(mixed);
+        int rootMaximum = mixed.getMaxDamage();
+        mixed.setDamageValue(rootMaximum * 3 / 4);
+        mixed.set(DataComponents.CUSTOM_NAME, Component.literal("Repair target"));
+        mixed.set(DataComponents.REPAIR_COST, 17);
+        ItemStack donor = new ItemStack(donorItem);
+        donor.setDamageValue(donor.getMaxDamage() - 10);
+        ItemEnchantments.Mutable donorEnchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        donorEnchantments.set(protection, 4);
+        donorEnchantments.set(curse, 1);
+        donor.set(DataComponents.ENCHANTMENTS, donorEnchantments.toImmutable());
+
+        GrindstoneMenu menu = grindstone(helper, player, mixedSlot + 1);
+        menu.getSlot(mixedSlot).set(mixed);
+        menu.getSlot(mixedSlot == GrindstoneMenu.INPUT_SLOT
+                ? GrindstoneMenu.ADDITIONAL_SLOT : GrindstoneMenu.INPUT_SLOT).set(donor);
+        ItemStack preview = menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
+        int expectedDamage = Math.max(0, rootMaximum - (rootMaximum - mixed.getDamageValue()
+                + donor.getMaxDamage() - donor.getDamageValue() + rootMaximum * 5 / 100));
+        helper.assertTrue(!preview.isEmpty(), "Grindstone rejected source donor " + donorItem);
+        helper.assertTrue(preview.is(mixed.getItem()), "Grindstone returned the ordinary donor");
+        helper.assertValueEqual(preview.getMaxDamage(), rootMaximum, "grindstone repair maximum");
+        helper.assertValueEqual(preview.getDamageValue(), expectedDamage, "grindstone repair damage");
+        helper.assertTrue(GameTestStacks.data(preview).equals(sources), "Grindstone changed source snapshots");
+        helper.assertTrue(preview.getHoverName().equals(Component.literal("Repair target")),
+                "Grindstone changed the target's custom name");
+        ItemEnchantments resultEnchantments = preview.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        helper.assertValueEqual(resultEnchantments.getLevel(protection), 0, "removed donor Protection level");
+        helper.assertValueEqual(resultEnchantments.getLevel(curse), 1, "retained donor curse level");
+        helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
+                "grindstone donor prior-work cost");
+        helper.assertValueEqual(grindstoneExperience(helper), 0, "experience before donor extraction");
+
+        ItemStack taken = menu.quickMoveStack(player, GrindstoneMenu.RESULT_SLOT);
+        helper.assertTrue(!taken.isEmpty(), "Grindstone donor result could not be extracted");
+        helper.assertValueEqual(taken.getMaxDamage(), rootMaximum, "extracted donor repair maximum");
+        helper.assertValueEqual(taken.getDamageValue(), expectedDamage, "extracted donor repair damage");
+        helper.assertTrue(GameTestStacks.data(taken).equals(sources), "Donor extraction changed snapshots");
+        helper.assertTrue(menu.getSlot(GrindstoneMenu.INPUT_SLOT).getItem().isEmpty(),
+                "Grindstone did not consume its first input");
+        helper.assertTrue(menu.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
+                "Grindstone did not consume its second input");
+        int totalPotential = 1 + protection.value().getMinCost(4);
+        int minimumXp = (totalPotential + 1) / 2;
+        int experience = grindstoneExperience(helper);
+        helper.assertTrue(experience >= minimumXp && experience < minimumXp * 2,
+                "Ordinary donor did not contribute full XP potential: " + experience);
         helper.succeed();
     }
 
@@ -127,6 +236,19 @@ public final class WorkstationGameTests {
         helper.assertTrue(result.is(Items.IRON_BOOTS), "Ordinary grindstone operation produced no result");
         helper.assertTrue(result.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).isEmpty(),
                 "Ordinary grindstone result retained a removable enchantment");
+
+        ItemStack first = new ItemStack(Items.IRON_BOOTS);
+        ItemStack second = new ItemStack(Items.IRON_BOOTS);
+        first.setDamageValue(first.getMaxDamage() - 20);
+        second.setDamageValue(second.getMaxDamage() - 10);
+        GrindstoneMenu repair = new GrindstoneMenu(2, player.getInventory());
+        repair.getSlot(GrindstoneMenu.INPUT_SLOT).set(first);
+        repair.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(second);
+        ItemStack repaired = repair.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(repaired.is(Items.IRON_BOOTS), "Ordinary grindstone repair produced no result");
+        helper.assertValueEqual(repaired.getDamageValue(),
+                first.getMaxDamage() - (20 + 10 + first.getMaxDamage() * 5 / 100),
+                "ordinary grindstone repair damage");
         helper.succeed();
     }
 

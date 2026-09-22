@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.platform;
 
 import games.alejandrocoria.mismatchedboots.platform.services.IPlatformHelper;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
@@ -26,5 +27,10 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public boolean isDevelopmentEnvironment() {
         return !FMLLoader.getCurrent().isProduction();
+    }
+
+    @Override
+    public boolean canCombineRepair(ItemStack stack) {
+        return stack.isCombineRepairable();
     }
 }

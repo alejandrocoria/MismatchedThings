@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.platform.services;
 
+import net.minecraft.world.item.ItemStack;
+
 import java.nio.file.Path;
 
 public interface IPlatformHelper {
@@ -27,6 +29,10 @@ public interface IPlatformHelper {
      * @return True if in a development environment, false otherwise.
      */
     boolean isDevelopmentEnvironment();
+
+    default boolean canCombineRepair(ItemStack stack) {
+        return true;
+    }
 
     /**
      * Gets the name of the environment type as a string.

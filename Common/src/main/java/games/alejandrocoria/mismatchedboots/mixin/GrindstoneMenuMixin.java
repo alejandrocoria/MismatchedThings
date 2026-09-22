@@ -1,6 +1,11 @@
 package games.alejandrocoria.mismatchedboots.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsGrindstonePolicy;
+import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,5 +23,35 @@ abstract class GrindstoneMenuMixin {
         if (MixedBootsGrindstonePolicy.rejects(input, additional)) {
             callback.setReturnValue(ItemStack.EMPTY);
         }
+    }
+
+    @WrapOperation(
+            method = "computeResult",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/GrindstoneMenu;mergeItems(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;"))
+    private ItemStack mismatchedboots$orientAndRepair(
+            GrindstoneMenu menu, ItemStack input, ItemStack additional, Operation<ItemStack> original) {
+        ItemStack mixed = MixedBootsGrindstonePolicy.canUseOrdinaryDonor(input, additional) ? input : additional;
+        ItemStack donor = mixed == input ? additional : input;
+        if (!canRepair(mixed, donor)) {
+            return original.call(menu, input, additional);
+        }
+        ItemStack result = original.call(menu, mixed, donor);
+        return MixedBootsGrindstonePolicy.restoreDurability(result, mixed, donor);
+    }
+
+    @ModifyExpressionValue(
+            method = "mergeItems",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;is(Ljava/lang/Object;)Z"))
+    private boolean mismatchedboots$acceptSourceDonor(
+            boolean vanillaMatch,
+            @Local(argsOnly = true, ordinal = 0) ItemStack input,
+            @Local(argsOnly = true, ordinal = 1) ItemStack additional) {
+        return vanillaMatch || canRepair(input, additional);
+    }
+
+    private static boolean canRepair(ItemStack mixed, ItemStack donor) {
+        return MixedBootsGrindstonePolicy.canUseOrdinaryDonor(mixed, donor)
+                && Services.PLATFORM.canCombineRepair(mixed)
+                && Services.PLATFORM.canCombineRepair(donor);
     }
 }
