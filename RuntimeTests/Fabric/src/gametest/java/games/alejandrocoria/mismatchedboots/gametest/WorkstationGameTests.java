@@ -11,6 +11,7 @@ import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.inventory.SmithingMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -160,10 +161,78 @@ public final class WorkstationGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void anvilRejectsMixedCombinations(GameTestHelper helper) {
+    public void anvilRepairsWithEitherOrdinarySource(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.giveExperienceLevels(30);
+        Holder<Enchantment> unbreaking = enchantment(helper, Enchantments.UNBREAKING);
+
+        assertOrdinaryDonorRepair(helper, player, Items.IRON_BOOTS, unbreaking, 1);
+        assertOrdinaryDonorRepair(helper, player, Items.GOLDEN_BOOTS, unbreaking, 2);
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void anvilAppliesVanillaCompatibilityToOrdinaryDonorEnchantments(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        Holder<Enchantment> frostWalker = enchantment(helper, Enchantments.FROST_WALKER);
+        Holder<Enchantment> depthStrider = enchantment(helper, Enchantments.DEPTH_STRIDER);
+        Holder<Enchantment> unbreaking = enchantment(helper, Enchantments.UNBREAKING);
+
+        ItemStack frostSource = new ItemStack(Items.IRON_BOOTS);
+        setEnchantment(frostSource, frostWalker, 1, false);
+        ItemStack rejectsDepth = GameTestStacks.pair(frostSource, new ItemStack(Items.GOLDEN_BOOTS)).primary();
+        MixedBootsData rejectsDepthData = GameTestStacks.data(rejectsDepth);
+        rejectsDepth.setDamageValue(Math.max(1, rejectsDepth.getMaxDamage() * 3 / 4));
+        ItemStack depthDonor = new ItemStack(Items.IRON_BOOTS);
+        depthDonor.setDamageValue(Math.max(1, depthDonor.getMaxDamage() - 10));
+        setEnchantments(depthDonor, depthStrider, unbreaking);
+        AnvilMenu incompatible = new AnvilMenu(1, player.getInventory());
+        incompatible.getSlot(AnvilMenu.INPUT_SLOT).set(rejectsDepth);
+        incompatible.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(depthDonor);
+
+        ItemStack incompatibleResult = incompatible.getSlot(AnvilMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(!incompatibleResult.isEmpty(),
+                "Anvil discarded the donor's valid durability repair");
+        ItemEnchantments incompatibleEnchantments = incompatibleResult.getOrDefault(
+                DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        helper.assertValueEqual(incompatibleEnchantments.getLevel(frostWalker), 1,
+                "retained Frost Walker level");
+        helper.assertValueEqual(incompatibleEnchantments.getLevel(depthStrider), 0,
+                "rejected incompatible Depth Strider level");
+        helper.assertValueEqual(incompatibleEnchantments.getLevel(unbreaking), 1,
+                "accepted compatible Unbreaking level");
+        helper.assertTrue(GameTestStacks.data(incompatibleResult).equals(rejectsDepthData),
+                "Incompatible donor changed source snapshots");
+
+        ItemStack frost = new ItemStack(Items.IRON_BOOTS);
+        setEnchantment(frost, frostWalker, 1, false);
+        ItemStack depth = new ItemStack(Items.GOLDEN_BOOTS);
+        setEnchantment(depth, depthStrider, 1, false);
+        ItemStack keepsExistingConflict = GameTestStacks.pair(frost, depth).primary();
+        keepsExistingConflict.setDamageValue(Math.max(1, keepsExistingConflict.getMaxDamage() * 3 / 4));
+        ItemStack compatibleDonor = new ItemStack(Items.IRON_BOOTS);
+        compatibleDonor.setDamageValue(Math.max(1, compatibleDonor.getMaxDamage() - 10));
+        setEnchantment(compatibleDonor, unbreaking, 1, false);
+        AnvilMenu compatible = new AnvilMenu(2, player.getInventory());
+        compatible.getSlot(AnvilMenu.INPUT_SLOT).set(keepsExistingConflict);
+        compatible.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(compatibleDonor);
+
+        ItemEnchantments compatibleEnchantments = compatible.getSlot(AnvilMenu.RESULT_SLOT).getItem()
+                .getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        helper.assertValueEqual(compatibleEnchantments.getLevel(frostWalker), 1,
+                "existing Frost Walker level");
+        helper.assertValueEqual(compatibleEnchantments.getLevel(depthStrider), 1,
+                "existing Depth Strider level");
+        helper.assertValueEqual(compatibleEnchantments.getLevel(unbreaking), 1,
+                "compatible donor Unbreaking level");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void anvilRejectsUnsupportedBootCombinations(GameTestHelper helper) {
         var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
-        mixed.setDamageValue(Math.min(5, mixed.getMaxDamage()));
+        mixed.setDamageValue(Math.max(1, mixed.getMaxDamage() * 3 / 4));
 
         ItemStack inverse = GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).inverse();
         AnvilMenu combine = new AnvilMenu(1, player.getInventory());
@@ -185,11 +254,29 @@ public final class WorkstationGameTests {
         helper.assertTrue(unrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Anvil combined unrelated mixed boots");
 
-        AnvilMenu ordinarySacrifice = new AnvilMenu(4, player.getInventory());
-        ordinarySacrifice.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
-        ordinarySacrifice.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_BOOTS));
-        helper.assertTrue(ordinarySacrifice.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil repaired mixed boots with ordinary boots");
+        ItemStack diamondDonor = new ItemStack(Items.DIAMOND_BOOTS);
+        diamondDonor.setDamageValue(Math.max(1, diamondDonor.getMaxDamage() - 10));
+        AnvilMenu ordinaryUnrelated = new AnvilMenu(4, player.getInventory());
+        ordinaryUnrelated.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
+        ordinaryUnrelated.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(diamondDonor);
+        helper.assertTrue(ordinaryUnrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
+                "Anvil repaired mixed boots with an unrelated ordinary donor");
+
+        ItemStack ordinaryTarget = new ItemStack(Items.IRON_BOOTS);
+        ordinaryTarget.setDamageValue(Math.max(1, ordinaryTarget.getMaxDamage() * 3 / 4));
+        AnvilMenu reverse = new AnvilMenu(5, player.getInventory());
+        reverse.getSlot(AnvilMenu.INPUT_SLOT).set(ordinaryTarget);
+        reverse.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(mixed.copy());
+        helper.assertTrue(reverse.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
+                "Anvil accepted mixed boots as a donor for ordinary boots");
+
+        ItemStack ordinaryDonor = new ItemStack(Items.IRON_BOOTS);
+        ordinaryDonor.setDamageValue(Math.max(1, ordinaryDonor.getMaxDamage() - 10));
+        AnvilMenu ordinaryControl = new AnvilMenu(6, player.getInventory());
+        ordinaryControl.getSlot(AnvilMenu.INPUT_SLOT).set(ordinaryTarget.copy());
+        ordinaryControl.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(ordinaryDonor);
+        helper.assertTrue(ordinaryControl.getSlot(AnvilMenu.RESULT_SLOT).getItem().is(Items.IRON_BOOTS),
+                "Ordinary boot combination stopped working");
         helper.succeed();
     }
 
@@ -283,6 +370,57 @@ public final class WorkstationGameTests {
                 "experience levels after material repair");
     }
 
+    private static void assertOrdinaryDonorRepair(
+            GameTestHelper helper,
+            net.minecraft.world.entity.player.Player player,
+            Item donorItem,
+            Holder<Enchantment> donorEnchantment,
+            int menuId) {
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        MixedBootsData originalData = GameTestStacks.data(mixed);
+        int originalMaximum = mixed.getMaxDamage();
+        int originalDamage = Math.max(1, originalMaximum * 3 / 4);
+        mixed.setDamageValue(originalDamage);
+        ItemStack donor = new ItemStack(donorItem);
+        int donorDamage = Math.max(1, donor.getMaxDamage() - 10);
+        donor.setDamageValue(donorDamage);
+        setEnchantment(donor, donorEnchantment, 1, false);
+        AnvilMenu menu = new AnvilMenu(menuId, player.getInventory());
+        menu.getSlot(AnvilMenu.INPUT_SLOT).set(mixed);
+        menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(donor);
+
+        ItemStack preview = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem();
+        int expectedRemaining = originalMaximum - originalDamage
+                + donor.getMaxDamage() - donorDamage
+                + originalMaximum * 12 / 100;
+        int expectedDamage = Math.max(0, originalMaximum - expectedRemaining);
+        helper.assertTrue(!preview.isEmpty(), "Anvil rejected ordinary source donor " + donorItem);
+        helper.assertValueEqual(preview.getMaxDamage(), originalMaximum, "ordinary donor result maximum");
+        helper.assertValueEqual(preview.getDamageValue(), expectedDamage, "ordinary donor result damage");
+        helper.assertValueEqual(preview.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                .getLevel(donorEnchantment), 1, "ordinary donor enchantment level");
+        helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
+                "ordinary donor prior-work cost");
+        helper.assertTrue(GameTestStacks.data(preview).equals(originalData),
+                "Ordinary donor preview changed source snapshots");
+        int cost = menu.getCost();
+        helper.assertTrue(cost > 0, "Ordinary donor repair had no experience cost");
+        int levelsBefore = player.experienceLevel;
+
+        ItemStack taken = menu.quickMoveStack(player, AnvilMenu.RESULT_SLOT);
+
+        helper.assertTrue(!taken.isEmpty(), "Ordinary donor result could not be extracted");
+        helper.assertValueEqual(taken.getDamageValue(), expectedDamage, "extracted ordinary donor damage");
+        helper.assertTrue(GameTestStacks.data(taken).equals(originalData),
+                "Extracted ordinary donor changed source snapshots");
+        helper.assertTrue(menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().isEmpty(),
+                "Ordinary donor repair did not consume the mixed input");
+        helper.assertTrue(menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
+                "Ordinary donor repair did not consume the donor");
+        helper.assertValueEqual(player.experienceLevel, levelsBefore - cost,
+                "experience levels after ordinary donor repair");
+    }
+
     private static SmithingMenu smithing(
             GameTestHelper helper,
             net.minecraft.world.entity.player.Player player,
@@ -314,5 +452,15 @@ public final class WorkstationGameTests {
         enchantments.set(enchantment, level);
         stack.set(stored ? DataComponents.STORED_ENCHANTMENTS : DataComponents.ENCHANTMENTS,
                 enchantments.toImmutable());
+    }
+
+    private static void setEnchantments(
+            ItemStack stack,
+            Holder<Enchantment> first,
+            Holder<Enchantment> second) {
+        ItemEnchantments.Mutable enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        enchantments.set(first, 1);
+        enchantments.set(second, 1);
+        stack.set(DataComponents.ENCHANTMENTS, enchantments.toImmutable());
     }
 }

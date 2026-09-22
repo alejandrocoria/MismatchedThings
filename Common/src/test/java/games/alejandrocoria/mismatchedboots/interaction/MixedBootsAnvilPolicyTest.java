@@ -35,16 +35,29 @@ class MixedBootsAnvilPolicyTest {
     }
 
     @Test
-    void recognizesMixedDataAndRejectsOnlyTwoMixedInputs() {
+    void acceptsOnlyOrdinaryDonorsMatchingEitherSource() {
         ItemStack firstMixed = mixedBoots(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         ItemStack secondMixed = mixedBoots(Items.DIAMOND_BOOTS, Items.LEATHER_BOOTS);
-        ItemStack ordinary = boots(Items.CHAINMAIL_BOOTS);
+        ItemStack iron = boots(Items.IRON_BOOTS);
+        ItemStack gold = boots(Items.GOLDEN_BOOTS);
+        ItemStack unrelated = boots(Items.CHAINMAIL_BOOTS);
 
         assertTrue(ModContent.isMixedBoots(firstMixed));
-        assertTrue(MixedBootsAnvilPolicy.rejectsCombination(firstMixed, secondMixed));
-        assertFalse(MixedBootsAnvilPolicy.rejectsCombination(firstMixed, ordinary));
-        assertFalse(MixedBootsAnvilPolicy.rejectsCombination(ordinary, secondMixed));
-        assertFalse(MixedBootsAnvilPolicy.rejectsCombination(ordinary, ordinary));
+        assertTrue(MixedBootsAnvilPolicy.canUseOrdinaryDonor(firstMixed, iron, false));
+        assertTrue(MixedBootsAnvilPolicy.canUseOrdinaryDonor(firstMixed, gold, false));
+        assertFalse(MixedBootsAnvilPolicy.canUseOrdinaryDonor(firstMixed, unrelated, false));
+        assertFalse(MixedBootsAnvilPolicy.canUseOrdinaryDonor(firstMixed, firstMixed.copy(), true));
+        assertFalse(MixedBootsAnvilPolicy.canUseOrdinaryDonor(firstMixed, secondMixed, true));
+    }
+
+    @Test
+    void preservesTheVanillaDecisionForOrdinaryTargets() {
+        ItemStack ordinary = boots(Items.IRON_BOOTS);
+        ItemStack mixed = mixedBoots(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+
+        assertTrue(MixedBootsAnvilPolicy.canUseOrdinaryDonor(ordinary, boots(Items.IRON_BOOTS), true));
+        assertFalse(MixedBootsAnvilPolicy.canUseOrdinaryDonor(ordinary, boots(Items.GOLDEN_BOOTS), false));
+        assertFalse(MixedBootsAnvilPolicy.canUseOrdinaryDonor(ordinary, mixed, false));
     }
 
     @Test

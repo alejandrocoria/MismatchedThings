@@ -9,8 +9,21 @@ public final class MixedBootsAnvilPolicy {
     private MixedBootsAnvilPolicy() {
     }
 
-    public static boolean rejectsCombination(ItemStack input, ItemStack addition) {
-        return ModContent.isMixedBoots(input) && ModContent.isMixedBoots(addition);
+    public static boolean canUseOrdinaryDonor(
+            ItemStack input,
+            ItemStack addition,
+            boolean normallyAccepted) {
+        if (!ModContent.isMixedBoots(input)) {
+            return normallyAccepted;
+        }
+
+        MixedBootsData data = ModContent.getMixedBootsData(input).orElse(null);
+        if (data == null || ModContent.isMixedBoots(addition)) {
+            return false;
+        }
+
+        return addition.getItem() == data.left().source().getItem()
+                || addition.getItem() == data.right().source().getItem();
     }
 
     public static boolean canApplyEnchantment(
