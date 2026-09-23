@@ -27,6 +27,7 @@ Run Gradle tasks sequentially from the repository root:
 ```powershell
 .\gradlew.bat :Common:test
 .\gradlew.bat :Fabric:verifyGameplay
+.\gradlew.bat :RuntimeTests:Fabric:verifyDamageTagReload
 .\gradlew.bat :Fabric:verifyPersistenceRestart
 .\gradlew.bat :Fabric:verifyClient
 .\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization
@@ -35,7 +36,9 @@ Run Gradle tasks sequentially from the repository root:
 
 The established Fabric verification, GameTest run, and GameTest compilation
 tasks delegate to `:RuntimeTests:Fabric`. Direct `:RuntimeTests:Fabric` commands
-also work. `build`/`check` still include the Fabric server GameTests, but do not
+also work. `verifyGameplay` includes an isolated server run for changing a
+damage-type tag and reloading datapacks; the direct task above runs just that
+case. `build`/`check` still include the Fabric server GameTests, but do not
 launch client, persistence-restart, geometry, or network acceptance runs.
 
 `verifyLoaderNetworking` orchestrates real connections, prepares isolated
