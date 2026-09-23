@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": "minecraft:flint",
+  "base": "mismatchedboots:mixed_boots",
+  "result": {
+    "id": "minecraft:iron_boots"
+  },
+  "template": "minecraft:shears"
+}

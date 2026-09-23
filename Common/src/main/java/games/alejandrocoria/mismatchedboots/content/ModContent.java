@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.content;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRecipe;
+import games.alejandrocoria.mismatchedboots.recipe.MixedBootsSmithingBaseRecipe;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.TypedDataComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,9 +21,11 @@ public final class ModContent {
     public static final String MIXED_BOOTS_NAME = "mixed_boots";
     public static final String MIXED_BOOTS_DATA_NAME = "mixed_boots_data";
     public static final String MIXED_BOOTS_RECIPE_NAME = "mixed_boots";
+    public static final String SMITHING_BASE_RECIPE_NAME = "smithing_base";
     public static final Identifier MIXED_BOOTS_ID = id(MIXED_BOOTS_NAME);
     public static final Identifier MIXED_BOOTS_DATA_ID = id(MIXED_BOOTS_DATA_NAME);
     public static final Identifier MIXED_BOOTS_RECIPE_ID = id(MIXED_BOOTS_RECIPE_NAME);
+    public static final Identifier SMITHING_BASE_RECIPE_ID = id(SMITHING_BASE_RECIPE_NAME);
     public static final ResourceKey<Item> MIXED_BOOTS_KEY = ResourceKey.create(Registries.ITEM, MIXED_BOOTS_ID);
 
     private ModContent() {
@@ -42,6 +45,10 @@ public final class ModContent {
 
     public static RecipeSerializer<MixedBootsRecipe> createMixedBootsRecipeSerializer() {
         return MixedBootsRecipe.SERIALIZER;
+    }
+
+    public static RecipeSerializer<MixedBootsSmithingBaseRecipe> createSmithingBaseRecipeSerializer() {
+        return MixedBootsSmithingBaseRecipe.SERIALIZER;
     }
 
     @SuppressWarnings("unchecked")

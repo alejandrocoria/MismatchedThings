@@ -18,6 +18,7 @@ final class ModRegistries {
         ITEMS.registerItem(ModContent.MIXED_BOOTS_NAME, NeoForgeMixedBootsItem::new, ModContent::mixedBootsProperties);
         DATA_COMPONENT_TYPES.register(ModContent.MIXED_BOOTS_DATA_NAME, ModContent::createMixedBootsDataType);
         RECIPE_SERIALIZERS.register(ModContent.MIXED_BOOTS_RECIPE_NAME, ModContent::createMixedBootsRecipeSerializer);
+        RECIPE_SERIALIZERS.register(ModContent.SMITHING_BASE_RECIPE_NAME, ModContent::createSmithingBaseRecipeSerializer);
     }
 
     private ModRegistries() {

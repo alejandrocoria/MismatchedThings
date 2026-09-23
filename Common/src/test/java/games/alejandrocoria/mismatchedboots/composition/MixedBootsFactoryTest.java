@@ -66,6 +66,7 @@ class MixedBootsFactoryTest {
     private static DataComponentType<MixedBootsData> mixedDataType;
     private static DataComponentType<String> opaqueType;
     private static DataComponentType<String> rightOnlyType;
+    private static DataComponentType<String> addedType;
     private static Holder<Item> outputItem;
 
     @BeforeAll
@@ -75,6 +76,7 @@ class MixedBootsFactoryTest {
         mixedDataType = ModContent.createMixedBootsDataType();
         opaqueType = DataComponentType.<String>builder().persistent(Codec.STRING).build();
         rightOnlyType = DataComponentType.<String>builder().persistent(Codec.STRING).build();
+        addedType = DataComponentType.<String>builder().persistent(Codec.STRING).build();
         outputItem = Holder.direct(Items.CHAINMAIL_BOOTS, baseComponents(defaultEquippable()));
     }
 
@@ -444,6 +446,80 @@ class MixedBootsFactoryTest {
         ItemStack invalid = boots(Items.IRON_BOOTS);
         invalid.setCount(2);
         assertThrows(IllegalArgumentException.class, () -> create(invalid, second));
+    }
+
+    @Test
+    void recompositionProjectsUnknownOwnerChangesAndPreservesLiveRootValues() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        setDurability(left, 100, 0);
+        setDurability(right, 100, 0);
+        left.set(opaqueType, "old");
+        left.set(rightOnlyType, "removed");
+        right.set(DataComponents.REPAIRABLE,
+                new Repairable(HolderSet.direct(Holder.direct(Items.GOLD_INGOT))));
+        ItemStack root = create(left, right).primary();
+        root.set(DataComponents.CUSTOM_NAME, Component.literal("Anvil name"));
+        root.set(DataComponents.REPAIR_COST, 13);
+        root.setDamageValue(17);
+        ItemStack replacement = left.copy();
+        replacement.set(opaqueType, "new");
+        replacement.remove(rightOnlyType);
+        replacement.set(addedType, "introduced");
+        replacement.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
+                .add(Attributes.ARMOR,
+                        modifier(Identifier.fromNamespaceAndPath("test", "smithing_armor"), 4.0,
+                                AttributeModifier.Operation.ADD_VALUE),
+                        EquipmentSlotGroup.FEET)
+                .build());
+        replacement.set(DataComponents.EQUIPPABLE,
+                Equippable.builder(EquipmentSlot.FEET).setAsset(EquipmentAssets.DIAMOND).build());
+        replacement.set(DataComponents.REPAIRABLE,
+                new Repairable(HolderSet.direct(Holder.direct(Items.DIAMOND))));
+        ItemStack rootBefore = root.copy();
+        ItemStack replacementBefore = replacement.copy();
+
+        ItemStack result = MixedBootsRecomposer.recompose(
+                root, replacement, right, mixedDataType, AttributeRuleDefaults.ruleSet());
+
+        assertEquals("new", result.get(opaqueType));
+        assertNull(result.get(rightOnlyType));
+        assertEquals("introduced", result.get(addedType));
+        assertEquals(Component.literal("Anvil name"), result.get(DataComponents.CUSTOM_NAME));
+        assertEquals(13, result.get(DataComponents.REPAIR_COST));
+        assertEquals(17, result.getDamageValue());
+        assertRepairableAccepts(result, Items.DIAMOND, Items.GOLD_INGOT);
+        assertEquals(AttributeComposer.compose(replacement, right, AttributeRuleDefaults.ruleSet()).primary(),
+                result.get(DataComponents.ATTRIBUTE_MODIFIERS));
+        assertEquals(Optional.of(EquipmentAssets.DIAMOND), result.get(DataComponents.EQUIPPABLE).assetId());
+        assertEquals("new", result.get(mixedDataType).left().source().get(opaqueType));
+        assertTrue(ItemStack.matches(rootBefore, root));
+        assertTrue(ItemStack.matches(replacementBefore, replacement));
+    }
+
+    @Test
+    void recompositionKeepsDivergedUnknownRootAndClampsRawDamage() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        setDurability(left, 100, 0);
+        setDurability(right, 100, 0);
+        left.set(opaqueType, "source");
+        ItemStack root = create(left, right).primary();
+        root.set(opaqueType, "root override");
+        root.setDamageValue(90);
+        ItemStack replacement = left.copy();
+        replacement.set(opaqueType, "new source");
+        setDurability(replacement, 20, 0);
+        ItemStack newRight = right.copy();
+        setDurability(newRight, 20, 0);
+
+        ItemStack result = MixedBootsRecomposer.recompose(
+                root, replacement, newRight, mixedDataType, AttributeRuleDefaults.ruleSet());
+
+        assertEquals("root override", result.get(opaqueType));
+        assertEquals("new source", result.get(mixedDataType).left().source().get(opaqueType));
+        assertEquals(20, result.getMaxDamage());
+        assertEquals(20, result.getDamageValue());
     }
 
     private static MixedBootsPair create(ItemStack first, ItemStack second) {

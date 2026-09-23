@@ -111,7 +111,7 @@ public final class MixedBootsFactory {
         return output;
     }
 
-    private static Equippable projectEquippable(ItemStack owner) {
+    static Equippable projectEquippable(ItemStack owner) {
         Equippable source = owner.get(DataComponents.EQUIPPABLE);
         if (source == null) {
             throw new IllegalArgumentException("Mixed boots owner is not feet-equippable");

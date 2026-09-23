@@ -23,6 +23,10 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.MIXED_BOOTS_RECIPE_ID,
                 ModContent.createMixedBootsRecipeSerializer());
+        Registry.register(
+                BuiltInRegistries.RECIPE_SERIALIZER,
+                ModContent.SMITHING_BASE_RECIPE_ID,
+                ModContent.createSmithingBaseRecipeSerializer());
         ServerLifecycleEvents.SERVER_STARTING.register(server -> AttributeRulesLifecycle.onServerStarting());
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> AttributeRulesLifecycle.onServerStopped());
         MismatchedBoots.init();

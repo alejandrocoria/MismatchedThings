@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "GrindstoneMenuMixin",
-    "GrindstoneResultSlotXpMixin"
+    "GrindstoneResultSlotXpMixin",
+    "ItemCombinerMenuMixin",
+    "SmithingMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1
