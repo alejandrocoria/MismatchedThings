@@ -5,7 +5,6 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +13,6 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
 
-import java.util.Objects;
 import java.util.Optional;
 
 public final class MixedBootsSmithingPolicy {
@@ -61,22 +59,14 @@ public final class MixedBootsSmithingPolicy {
         }
 
         ItemStack assembled = match.get().value().assemble(input);
-        if (!isTrimLikeChange(source, assembled)) {
+        if (!isValidChange(source, assembled)) {
             return new Side(source, null);
         }
         return new Side(assembled, match.get());
     }
 
-    private static boolean isTrimLikeChange(ItemStack source, ItemStack assembled) {
-        if (!BootHalf.isValidSource(assembled) || !assembled.is(source.getItem())
-                || Objects.equals(source.get(DataComponents.TRIM), assembled.get(DataComponents.TRIM))) {
-            return false;
-        }
-        ItemStack oldWithoutTrim = source.copy();
-        ItemStack newWithoutTrim = assembled.copy();
-        oldWithoutTrim.remove(DataComponents.TRIM);
-        newWithoutTrim.remove(DataComponents.TRIM);
-        return ItemStack.matches(oldWithoutTrim, newWithoutTrim);
+    private static boolean isValidChange(ItemStack source, ItemStack assembled) {
+        return BootHalf.isValidSource(assembled) && !ItemStack.matches(source, assembled);
     }
 
     public record Result(

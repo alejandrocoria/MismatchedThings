@@ -1,10 +1,15 @@
 package games.alejandrocoria.mismatchedboots.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.interaction.SmithingMenuRecipeState;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.SmithingMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.level.Level;
@@ -16,19 +21,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Collections;
+import java.util.List;
+
 @Mixin(SmithingMenu.class)
 abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
     @Shadow @Final private Level level;
 
     @Unique private RecipeHolder<SmithingRecipe> mismatchedboots$additionalRecipe;
+    @Unique private RecipeHolder<SmithingRecipe> mismatchedboots$primaryRecipe;
+    @Unique private ItemStack mismatchedboots$preview;
+    @Unique private List<ItemStack> mismatchedboots$matchedInputs;
 
     @Inject(method = "createResult", at = @At("HEAD"))
     private void mismatchedboots$clearAdditionalRecipe(CallbackInfo callback) {
-        mismatchedboots$additionalRecipe = null;
+        mismatchedboots$clearAdditionalRecipe();
     }
 
     @Inject(method = "createResult", at = @At("RETURN"))
-    private void mismatchedboots$trySourceTrims(CallbackInfo callback) {
+    private void mismatchedboots$trySourceSmithing(CallbackInfo callback) {
         SmithingMenu menu = (SmithingMenu) (Object) this;
         if (!(level instanceof ServerLevel serverLevel)
                 || !menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty()) {
@@ -44,11 +55,50 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
             resultSlots.setRecipeUsed(result.primaryRecipe());
             resultSlots.setItem(0, result.output());
             mismatchedboots$additionalRecipe = result.additionalRecipe();
+            if (mismatchedboots$additionalRecipe != null) {
+                mismatchedboots$primaryRecipe = result.primaryRecipe();
+                mismatchedboots$preview = result.output().copy();
+                mismatchedboots$matchedInputs = List.of(
+                        menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().copy(),
+                        menu.getSlot(SmithingMenu.BASE_SLOT).getItem().copy(),
+                        menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().copy());
+            }
         });
+    }
+
+    @WrapOperation(
+            method = "onTake",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/ResultContainer;awardUsedRecipes(Lnet/minecraft/world/entity/player/Player;Ljava/util/List;)V"))
+    private void mismatchedboots$awardAdditionalRecipe(
+            ResultContainer resultSlots,
+            Player player,
+            List<ItemStack> inputs,
+            Operation<Void> original,
+            @Local(argsOnly = true) ItemStack taken) {
+        RecipeHolder<SmithingRecipe> additional = mismatchedboots$additionalRecipe;
+        boolean matchesPreview = additional != null
+                && resultSlots.getRecipeUsed() != null
+                && resultSlots.getRecipeUsed().id().equals(mismatchedboots$primaryRecipe.id())
+                && (taken.isEmpty() || ItemStack.isSameItemSameComponents(taken, mismatchedboots$preview))
+                && ItemStack.listMatches(inputs, mismatchedboots$matchedInputs);
+        try {
+            original.call(resultSlots, player, inputs);
+        } finally {
+            mismatchedboots$clearAdditionalRecipe();
+        }
+        if (matchesPreview) {
+            player.triggerRecipeCrafted(additional, inputs);
+            if (!additional.value().isSpecial()) {
+                player.awardRecipes(Collections.singleton(additional));
+            }
+        }
     }
 
     @Override
     public void mismatchedboots$clearAdditionalRecipe() {
         mismatchedboots$additionalRecipe = null;
+        mismatchedboots$primaryRecipe = null;
+        mismatchedboots$preview = null;
+        mismatchedboots$matchedInputs = null;
     }
 }

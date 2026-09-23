@@ -463,14 +463,17 @@ public final class WorkstationGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void smithingTrimsMixedBootsWithoutBreakingVanillaRecipes(GameTestHelper helper) {
+    public void smithingTransformsMixedBootsWithoutBreakingVanillaRecipes(GameTestHelper helper) {
         var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.IRON_BOOTS);
 
         SmithingMenu upgrade = smithing(helper, player,
                 new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), mixed, new ItemStack(Items.NETHERITE_INGOT));
-        helper.assertTrue(upgrade.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Smithing upgrade accepted mixed boots as its base");
+        ItemStack upgradedMixed = upgrade.getSlot(SmithingMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(upgradedMixed.is(mixed.getItem())
+                        && GameTestStacks.data(upgradedMixed).left().source().is(Items.NETHERITE_BOOTS)
+                        && GameTestStacks.data(upgradedMixed).right().source().is(Items.IRON_BOOTS),
+                "Smithing upgrade did not transform the eligible mixed boot source");
 
         SmithingMenu trim = smithing(helper, player,
                 new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), mixed, new ItemStack(Items.DIAMOND));
