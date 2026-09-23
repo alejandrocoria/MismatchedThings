@@ -18,6 +18,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.Item;
@@ -187,6 +188,57 @@ public final class SmithingUpgradeGameTests {
                 "addition consumed more than once");
         helper.assertValueEqual(RecipeCraftedProbe.count(player, IRON_RECIPE), 1,
                 "Secondary recipe fired twice for one output");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void ordinaryClickAwardsBothDistinctRecipes(GameTestHelper helper) {
+        ServerPlayer player = connectedMockPlayer(helper);
+        SmithingMenu menu = smithing(helper, player, new ItemStack(Items.PAPER),
+                GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS),
+                new ItemStack(Items.QUARTZ));
+        menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
+        helper.assertTrue(menu.getCarried().is(ModContent.MIXED_BOOTS_KEY),
+                "Ordinary click did not take the mixed result");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, COMPONENT_RECIPE), 1,
+                "Ordinary click primary crafted trigger");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, IRON_RECIPE), 1,
+                "Ordinary click secondary crafted trigger");
+        helper.assertTrue(player.getRecipeBook().contains(COMPONENT_RECIPE)
+                        && player.getRecipeBook().contains(IRON_RECIPE),
+                "Ordinary click did not award both recipes");
+        helper.assertTrue(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
+                "Ordinary click did not consume each smithing input");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void blockedShiftClickAwardsNeitherDistinctRecipe(GameTestHelper helper) {
+        ServerPlayer player = connectedMockPlayer(helper);
+        SmithingMenu menu = smithing(helper, player, new ItemStack(Items.PAPER),
+                GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS),
+                new ItemStack(Items.QUARTZ));
+        for (int slot = SmithingMenu.RESULT_SLOT + 1; slot < menu.slots.size(); slot++) {
+            menu.getSlot(slot).set(new ItemStack(Items.STONE, 64));
+        }
+
+        ItemStack moved = menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT);
+        helper.assertTrue(moved.isEmpty(), "Full inventory accepted a smithing shift-click");
+        helper.assertTrue(!menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
+                "Blocked shift-click removed the preview");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, COMPONENT_RECIPE), 0,
+                "Blocked shift-click triggered the primary recipe");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, IRON_RECIPE), 0,
+                "Blocked shift-click triggered the secondary recipe");
+        helper.assertTrue(!player.getRecipeBook().contains(COMPONENT_RECIPE)
+                        && !player.getRecipeBook().contains(IRON_RECIPE),
+                "Blocked shift-click awarded a recipe");
+        helper.assertTrue(!menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
+                        && !menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                        && !menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
+                "Blocked shift-click consumed a smithing input");
         helper.succeed();
     }
 

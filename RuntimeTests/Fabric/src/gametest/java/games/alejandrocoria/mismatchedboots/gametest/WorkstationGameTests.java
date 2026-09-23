@@ -529,8 +529,9 @@ public final class WorkstationGameTests {
     }
 
     private static int grindstoneExperience(GameTestHelper helper) {
+        // Orbs may drift outside the one-block test structure after spawning.
         return helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
-                        helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).stream()
+                        helper.getBounds().inflate(1.0), net.minecraft.world.entity.Entity::isAlive).stream()
                 .mapToInt(net.minecraft.world.entity.ExperienceOrb::getValue).sum();
     }
 

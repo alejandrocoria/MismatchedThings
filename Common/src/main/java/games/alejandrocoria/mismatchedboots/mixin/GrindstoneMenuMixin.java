@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(GrindstoneMenu.class)
 abstract class GrindstoneMenuMixin {
     @Inject(method = "computeResult", at = @At("HEAD"), cancellable = true)
-    private void mismatchedboots$rejectMixedBoots(
+    private void mismatchedboots$rejectUnsupportedMixedInputs(
             ItemStack input,
             ItemStack additional,
             CallbackInfoReturnable<ItemStack> callback) {

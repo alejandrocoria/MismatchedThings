@@ -24,9 +24,14 @@ not automatically placed by the recipe book.
 - Unknown components are inherited from the left source of each result rather
   than guessed or merged.
 
-Direct ingredient repair, combining two mixed pairs in an anvil, smithing, and
-grindstone processing are intentionally unsupported. Renaming and normally
-compatible enchanted books remain supported.
+An anvil repairs the live mixed pair with a material or ordinary boot matching
+either source, and supports renaming and compatible enchantments. A grindstone
+can disenchant one mixed pair or repair it with a matching ordinary boot; its
+XP payout is bounded and occurs only on extraction. Smithing applies loaded
+trim and upgrade recipes to each eligible source, using one template and one
+addition for the mixed result. Combining two mixed pairs in an anvil or
+grindstone remains unsupported, as do opaque smithing side effects outside the
+assembled item's identity and components.
 
 ## Rendering and compatibility
 
