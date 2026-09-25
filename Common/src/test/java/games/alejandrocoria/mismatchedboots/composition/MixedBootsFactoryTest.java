@@ -12,6 +12,10 @@ import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
+import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
+import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.SharedConstants;
@@ -188,7 +192,8 @@ class MixedBootsFactoryTest {
                         setDurability(first, firstMaximum, firstDamage);
                         setDurability(second, secondMaximum, secondDamage);
 
-                        DurabilityMerger.Result result = DurabilityMerger.merge(first, second);
+                        DurabilityMerger.Result result = DurabilityMerger.merge(
+                                first, second, DurabilityPolicy.AVERAGE).primary();
                         long sourceRemaining = remaining(firstMaximum, firstDamage) + remaining(secondMaximum, secondDamage);
                         long resultRemaining = (long) result.maximum() - result.damage();
 
@@ -218,6 +223,85 @@ class MixedBootsFactoryTest {
         assertEquals(150, pair.primary().getMaxDamage());
         assertEquals(pair.primary().getMaxDamage(), pair.inverse().getMaxDamage());
         assertEquals(pair.primary().getDamageValue(), pair.inverse().getDamageValue());
+    }
+
+    @Test
+    void separateDurabilityFollowsEachOwnerAndClampsSourceDamage() {
+        ItemStack first = boots(Items.IRON_BOOTS);
+        ItemStack second = boots(Items.GOLDEN_BOOTS);
+        setDurability(first, 101, 150);
+        DurabilityMerger.Results clamped = DurabilityMerger.merge(first, second, DurabilityPolicy.SEPARATE);
+        assertEquals(new DurabilityMerger.Result(101, 101), clamped.primary());
+        assertEquals(new DurabilityMerger.Result(0, 0), clamped.inverse());
+
+        first.set(DataComponents.DAMAGE, 100);
+        ComponentRules rules = new ComponentRules(
+                DurabilityPolicy.SEPARATE, RepairCostPolicy.MAXIMUM, ComponentRuleDefaults.ruleSet());
+
+        MixedBootsPair pair = MixedBootsFactory.createPair(
+                first, second, outputItem, mixedDataType, AttributeRuleDefaults.ruleSet(), rules);
+
+        assertEquals(101, pair.primary().getMaxDamage());
+        assertEquals(100, pair.primary().getDamageValue());
+        assertFalse(pair.inverse().has(DataComponents.MAX_DAMAGE));
+        assertFalse(pair.inverse().has(DataComponents.DAMAGE));
+        assertEquals(100, pair.primary().get(mixedDataType).left().source().getDamageValue());
+    }
+
+    @Test
+    void repairCostPoliciesHandleOrientationAbsenceRoundingAndBoundaries() {
+        ItemStack first = boots(Items.IRON_BOOTS);
+        ItemStack second = boots(Items.GOLDEN_BOOTS);
+        first.set(DataComponents.REPAIR_COST, 2);
+        second.set(DataComponents.REPAIR_COST, 5);
+
+        assertEquals(new RepairCostMerger.Results(2, 5),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
+        assertEquals(new RepairCostMerger.Results(4, 4),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
+        assertEquals(new RepairCostMerger.Results(2, 2),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
+        assertEquals(new RepairCostMerger.Results(5, 5),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
+
+        first.remove(DataComponents.REPAIR_COST);
+        assertEquals(new RepairCostMerger.Results(0, 5),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
+        assertEquals(new RepairCostMerger.Results(3, 3),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
+        assertEquals(new RepairCostMerger.Results(0, 0),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
+
+        first.set(DataComponents.REPAIR_COST, Integer.MAX_VALUE);
+        second.set(DataComponents.REPAIR_COST, Integer.MAX_VALUE);
+        assertEquals(new RepairCostMerger.Results(Integer.MAX_VALUE, Integer.MAX_VALUE),
+                RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
+
+        first.set(DataComponents.REPAIR_COST, -1);
+        second.set(DataComponents.REPAIR_COST, 5);
+        ItemStack firstBefore = first.copy();
+        ItemStack secondBefore = second.copy();
+        assertThrows(IllegalArgumentException.class,
+                () -> RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
+        assertThrows(IllegalArgumentException.class, () -> create(first, second));
+        assertTrue(ItemStack.matches(firstBefore, first));
+        assertTrue(ItemStack.matches(secondBefore, second));
+    }
+
+    @Test
+    void initialRepairCostUsesMaximumAndOmitsZero() {
+        ItemStack first = boots(Items.IRON_BOOTS);
+        ItemStack second = boots(Items.GOLDEN_BOOTS);
+        first.set(DataComponents.REPAIR_COST, 3);
+        second.set(DataComponents.REPAIR_COST, 8);
+
+        MixedBootsPair pair = create(first, second);
+
+        assertEquals(8, pair.primary().get(DataComponents.REPAIR_COST));
+        assertEquals(8, pair.inverse().get(DataComponents.REPAIR_COST));
+        pair = create(boots(Items.IRON_BOOTS), boots(Items.GOLDEN_BOOTS));
+        assertFalse(pair.primary().has(DataComponents.REPAIR_COST));
+        assertFalse(pair.inverse().has(DataComponents.REPAIR_COST));
     }
 
     @Test
@@ -300,6 +384,32 @@ class MixedBootsFactoryTest {
             }
         } finally {
             AttributeRuleState.restoreDefaults();
+        }
+    }
+
+    @Test
+    void productionFactoryUsesTheCompleteComponentRuleSnapshot() {
+        ComponentRules rules = new ComponentRules(
+                DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER, ComponentRuleDefaults.ruleSet());
+        ComponentRuleState.install(rules);
+        try {
+            ItemStack first = boots(Items.IRON_BOOTS);
+            ItemStack second = boots(Items.GOLDEN_BOOTS);
+            setDurability(first, 100, 10);
+            setDurability(second, 200, 40);
+            first.set(DataComponents.REPAIR_COST, 2);
+            second.set(DataComponents.REPAIR_COST, 5);
+
+            MixedBootsPair pair = MixedBootsFactory.createPair(first, second, outputItem, mixedDataType);
+
+            assertEquals(100, pair.primary().getMaxDamage());
+            assertEquals(10, pair.primary().getDamageValue());
+            assertEquals(2, pair.primary().get(DataComponents.REPAIR_COST));
+            assertEquals(200, pair.inverse().getMaxDamage());
+            assertEquals(40, pair.inverse().getDamageValue());
+            assertEquals(5, pair.inverse().get(DataComponents.REPAIR_COST));
+        } finally {
+            ComponentRuleState.restoreDefaults();
         }
     }
 
@@ -526,6 +636,37 @@ class MixedBootsFactoryTest {
         assertEquals("new source", result.get(mixedDataType).left().source().get(opaqueType));
         assertEquals(20, result.getMaxDamage());
         assertEquals(20, result.getDamageValue());
+    }
+
+    @Test
+    void recompositionUsesActiveDurabilityPolicyAndPreservesLiveRepairCost() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        setDurability(left, 100, 10);
+        setDurability(right, 200, 20);
+        left.set(DataComponents.REPAIR_COST, 2);
+        right.set(DataComponents.REPAIR_COST, 8);
+        ItemStack root = create(left, right).primary();
+        root.setDamageValue(90);
+        root.set(DataComponents.REPAIR_COST, 17);
+        ItemStack newLeft = left.copy();
+        setDurability(newLeft, 20, 0);
+        ComponentRules changedRules = new ComponentRules(
+                DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER, ComponentRuleDefaults.ruleSet());
+
+        ItemStack result = MixedBootsRecomposer.recompose(
+                root, newLeft, right, mixedDataType, AttributeRuleDefaults.ruleSet(), changedRules);
+
+        assertEquals(20, result.getMaxDamage());
+        assertEquals(20, result.getDamageValue());
+        assertEquals(17, result.get(DataComponents.REPAIR_COST));
+        assertTrue(ItemStack.matches(root.get(mixedDataType).right().source(),
+                result.get(mixedDataType).right().source()));
+
+        root.remove(DataComponents.REPAIR_COST);
+        result = MixedBootsRecomposer.recompose(
+                root, newLeft, right, mixedDataType, AttributeRuleDefaults.ruleSet(), changedRules);
+        assertFalse(result.has(DataComponents.REPAIR_COST));
     }
 
     @Test

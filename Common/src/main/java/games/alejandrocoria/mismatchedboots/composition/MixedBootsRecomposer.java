@@ -5,6 +5,8 @@ import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -23,7 +25,9 @@ public final class MixedBootsRecomposer {
     public static ItemStack recompose(ItemStack root, ItemStack newLeft, ItemStack newRight) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
                 .orElseThrow(() -> new IllegalStateException("MismatchedBoots data component is not registered"));
-        return recompose(root, newLeft, newRight, dataType, AttributeRuleState.current());
+        AttributeRuleSet attributeRules = AttributeRuleState.current();
+        ComponentRules componentRules = ComponentRuleState.current();
+        return recompose(root, newLeft, newRight, dataType, attributeRules, componentRules);
     }
 
     static ItemStack recompose(
@@ -32,12 +36,20 @@ public final class MixedBootsRecomposer {
             ItemStack newRight,
             DataComponentType<MixedBootsData> dataType,
             AttributeRuleSet rules) {
-        return recompose(root, newLeft, newRight, dataType, rules, ComponentRuleDefaults.ruleSet());
+        return recompose(root, newLeft, newRight, dataType, rules, ComponentRuleDefaults.state());
     }
 
     static ItemStack recompose(
             ItemStack root, ItemStack newLeft, ItemStack newRight,
             DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRuleSet componentRules) {
+        ComponentRules defaults = ComponentRuleDefaults.state();
+        return recompose(root, newLeft, newRight, dataType, rules,
+                new ComponentRules(defaults.durability(), defaults.repairCost(), componentRules));
+    }
+
+    static ItemStack recompose(
+            ItemStack root, ItemStack newLeft, ItemStack newRight,
+            DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRules componentRules) {
         MixedBootsData previous = Optional.ofNullable(root.get(dataType))
                 .orElseThrow(() -> new IllegalArgumentException("Missing mixed boots data"));
         BootHalf left = new BootHalf(newLeft);
@@ -46,10 +58,12 @@ public final class MixedBootsRecomposer {
         ItemStack rightSource = right.source();
 
         ComponentProjection.Result oldProjection = ComponentProjection.project(
-                previous.left().source(), previous.right().source(), componentRules);
-        ComponentProjection.Result newProjection = ComponentProjection.project(leftSource, rightSource, componentRules);
+                previous.left().source(), previous.right().source(), componentRules.components());
+        ComponentProjection.Result newProjection = ComponentProjection.project(
+                leftSource, rightSource, componentRules.components());
         ItemStack output = OwnerComponentMerger.merge(root, oldProjection, newProjection);
-        int maximum = DurabilityMerger.merge(leftSource, rightSource).maximum();
+        int maximum = DurabilityMerger.merge(
+                leftSource, rightSource, componentRules.durability()).primary().maximum();
         output.remove(DataComponents.MAX_DAMAGE);
         output.remove(DataComponents.DAMAGE);
         if (maximum > 0) {

@@ -5,6 +5,8 @@ import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
@@ -46,7 +48,9 @@ public final class MixedBootsFactory {
             ItemStack second,
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType) {
-        return createPair(first, second, mixedBoots, dataType, AttributeRuleState.current());
+        AttributeRuleSet attributeRules = AttributeRuleState.current();
+        ComponentRules componentRules = ComponentRuleState.current();
+        return createPair(first, second, mixedBoots, dataType, attributeRules, componentRules);
     }
 
     static MixedBootsPair createPair(
@@ -55,28 +59,40 @@ public final class MixedBootsFactory {
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType,
             AttributeRuleSet rules) {
-        return createPair(first, second, mixedBoots, dataType, rules, ComponentRuleDefaults.ruleSet());
+        return createPair(first, second, mixedBoots, dataType, rules, ComponentRuleDefaults.state());
     }
 
     static MixedBootsPair createPair(
             ItemStack first, ItemStack second, Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRuleSet componentRules) {
+        ComponentRules defaults = ComponentRuleDefaults.state();
+        return createPair(first, second, mixedBoots, dataType, rules,
+                new ComponentRules(defaults.durability(), defaults.repairCost(), componentRules));
+    }
+
+    static MixedBootsPair createPair(
+            ItemStack first, ItemStack second, Holder<Item> mixedBoots,
+            DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRules componentRules) {
         BootHalf firstHalf = new BootHalf(first);
         BootHalf secondHalf = new BootHalf(second);
         ItemStack firstSource = firstHalf.source();
         ItemStack secondSource = secondHalf.source();
-        ComponentProjection.Result components = ComponentProjection.project(firstSource, secondSource, componentRules);
-        DurabilityMerger.Result durability = DurabilityMerger.merge(firstSource, secondSource);
+        ComponentProjection.Result components = ComponentProjection.project(
+                firstSource, secondSource, componentRules.components());
+        DurabilityMerger.Results durability = DurabilityMerger.merge(
+                firstSource, secondSource, componentRules.durability());
+        RepairCostMerger.Results repairCost = RepairCostMerger.merge(
+                firstSource, secondSource, componentRules.repairCost());
         AttributeComposer.Result attributes = AttributeComposer.compose(firstSource, secondSource, rules);
         ItemEnchantments enchantments = EnchantmentMerger.merge(firstSource, secondSource);
         Optional<Repairable> repairable = RepairableComposer.compose(firstSource, secondSource);
 
         ItemStack primary = createOrientation(
-                firstHalf, secondHalf, mixedBoots, dataType, durability, attributes.primary(), enchantments,
-                repairable, components.primary(), components.managedTypes());
+                firstHalf, secondHalf, mixedBoots, dataType, durability.primary(), repairCost.primary(),
+                attributes.primary(), enchantments, repairable, components.primary(), components.managedTypes());
         ItemStack inverse = createOrientation(
-                secondHalf, firstHalf, mixedBoots, dataType, durability, attributes.inverse(), enchantments,
-                repairable, components.inverse(), components.managedTypes());
+                secondHalf, firstHalf, mixedBoots, dataType, durability.inverse(), repairCost.inverse(),
+                attributes.inverse(), enchantments, repairable, components.inverse(), components.managedTypes());
         return new MixedBootsPair(primary, inverse);
     }
 
@@ -86,6 +102,7 @@ public final class MixedBootsFactory {
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType,
             DurabilityMerger.Result durability,
+            int repairCost,
             ItemAttributeModifiers attributes,
             ItemEnchantments enchantments,
             Optional<Repairable> repairable,
@@ -111,6 +128,11 @@ public final class MixedBootsFactory {
         if (durability.damageable()) {
             output.set(DataComponents.MAX_DAMAGE, durability.maximum());
             output.set(DataComponents.DAMAGE, durability.damage());
+        }
+
+        output.remove(DataComponents.REPAIR_COST);
+        if (repairCost != 0) {
+            output.set(DataComponents.REPAIR_COST, repairCost);
         }
 
         output.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes);

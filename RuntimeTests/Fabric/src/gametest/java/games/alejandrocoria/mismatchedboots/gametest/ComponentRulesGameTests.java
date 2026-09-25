@@ -104,6 +104,31 @@ public final class ComponentRulesGameTests {
         helper.succeed();
     }
 
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void defaultDurabilityAndRepairCostUseBothSources(GameTestHelper helper) {
+        ItemStack left = new ItemStack(Items.IRON_BOOTS);
+        ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
+        left.set(DataComponents.MAX_DAMAGE, 101);
+        left.set(DataComponents.DAMAGE, 50);
+        left.set(DataComponents.REPAIR_COST, 2);
+        right.set(DataComponents.MAX_DAMAGE, 200);
+        right.set(DataComponents.DAMAGE, 20);
+        right.set(DataComponents.REPAIR_COST, 7);
+
+        var pair = GameTestStacks.pair(left, right);
+        for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
+            helper.assertValueEqual(root.getMaxDamage(), 150, "average maximum durability");
+            helper.assertValueEqual(root.getDamageValue(), 35, "average remaining durability");
+            helper.assertValueEqual(root.getOrDefault(DataComponents.REPAIR_COST, 0), 7,
+                    "maximum prior-work cost");
+        }
+        helper.assertValueEqual(GameTestStacks.data(pair.primary()).left().source()
+                .getOrDefault(DataComponents.REPAIR_COST, 0), 2, "left snapshot prior-work cost");
+        helper.assertValueEqual(GameTestStacks.data(pair.primary()).right().source()
+                .getOrDefault(DataComponents.REPAIR_COST, 0), 7, "right snapshot prior-work cost");
+        helper.succeed();
+    }
+
     private static void assertDamage(GameTestHelper helper, ItemStack root, boolean fire, boolean cactus) {
         var level = helper.getLevel();
         helper.assertValueEqual(root.canBeHurtBy(level.damageSources().inFire()), !fire, "in-fire stack damage");
