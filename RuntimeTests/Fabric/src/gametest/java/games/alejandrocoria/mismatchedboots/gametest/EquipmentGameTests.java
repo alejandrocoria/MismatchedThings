@@ -102,7 +102,12 @@ public final class EquipmentGameTests {
         ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, BlockPos.ZERO);
         ItemStack owner = new ItemStack(Items.IRON_BOOTS);
         owner.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
-        ItemStack unbreakable = GameTestStacks.pair(owner, new ItemStack(Items.GOLDEN_BOOTS)).primary();
+        ItemStack other = new ItemStack(Items.GOLDEN_BOOTS);
+        ItemStack oneSided = GameTestStacks.pair(owner, other).primary();
+        oneSided.hurtAndBreak(1, stand, EquipmentSlot.FEET);
+        helper.assertValueEqual(oneSided.getDamageValue(), 1, "one-sided unbreakable must not prevent damage");
+        other.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+        ItemStack unbreakable = GameTestStacks.pair(owner, other).primary();
         unbreakable.hurtAndBreak(100, stand, EquipmentSlot.FEET);
         helper.assertValueEqual(unbreakable.getDamageValue(), 0, "unbreakable mixed boots damage");
 

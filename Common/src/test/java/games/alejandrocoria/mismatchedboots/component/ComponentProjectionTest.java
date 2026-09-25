@@ -182,11 +182,15 @@ class ComponentProjectionTest {
 
         DataComponentType<Integer> limited = DataComponentType.<Integer>builder()
                 .persistent(Codec.intRange(0, 10)).build();
-        assertEquals(new ComponentProjection.Values<>(10, 100), ComponentProjection.projectValues(
+        assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
                 limited, 10, 100, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         // The mean is valid, but invalid sources must not be silently repaired by arithmetic.
-        assertEquals(new ComponentProjection.Values<>(-2, 12), ComponentProjection.projectValues(
+        assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
                 limited, -2, 12, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
+        assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
+                limited, null, 12, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
+        assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
+                limited, -2, null, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         DataComponentType<Integer> even = DataComponentType.<Integer>builder()
                 .persistent(Codec.INT.validate(value -> value % 2 == 0
                         ? DataResult.success(value) : DataResult.error(() -> "Expected an even value"))).build();

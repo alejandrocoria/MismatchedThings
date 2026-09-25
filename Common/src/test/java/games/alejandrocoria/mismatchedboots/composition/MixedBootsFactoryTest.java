@@ -8,6 +8,10 @@ import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
+import games.alejandrocoria.mismatchedboots.component.ComponentRule;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.SharedConstants;
@@ -40,6 +44,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.enchantment.Enchantable;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.enchantment.Repairable;
@@ -198,7 +204,7 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void unbreakableRemainsOwnerCopiedWithoutChangingDerivedDurability() {
+    void oneSidedUnbreakableIsOmittedWithoutChangingDerivedDurability() {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
         setDurability(first, 100, 10);
@@ -207,7 +213,7 @@ class MixedBootsFactoryTest {
 
         MixedBootsPair pair = create(first, second);
 
-        assertTrue(pair.primary().has(DataComponents.UNBREAKABLE));
+        assertFalse(pair.primary().has(DataComponents.UNBREAKABLE));
         assertFalse(pair.inverse().has(DataComponents.UNBREAKABLE));
         assertEquals(150, pair.primary().getMaxDamage());
         assertEquals(pair.primary().getMaxDamage(), pair.inverse().getMaxDamage());
@@ -520,6 +526,75 @@ class MixedBootsFactoryTest {
         assertEquals("new source", result.get(mixedDataType).left().source().get(opaqueType));
         assertEquals(20, result.getMaxDamage());
         assertEquals(20, result.getDamageValue());
+    }
+
+    @Test
+    void projectsDefaultsOnBothRootsWithoutChangingSnapshots() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        ItemLore lore = new ItemLore(List.of(Component.literal("Source lore")));
+        left.set(DataComponents.LORE, lore);
+        left.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+        left.set(DataComponents.ENCHANTABLE, new Enchantable(25));
+        right.set(DataComponents.ENCHANTABLE, new Enchantable(9));
+        ItemStack before = left.copy();
+        MixedBootsPair pair = create(left, right);
+        for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
+            assertNull(root.get(DataComponents.LORE));
+            assertNull(root.get(DataComponents.UNBREAKABLE));
+            assertEquals(new Enchantable(9), root.get(DataComponents.ENCHANTABLE));
+        }
+        assertEquals(lore, pair.primary().get(mixedDataType).left().source().get(DataComponents.LORE));
+        assertTrue(ItemStack.matches(before, left));
+    }
+
+    @Test
+    void recomposesSymmetricValuesAndPreservesRootAdditionsAndRemovals() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        left.set(DataComponents.ENCHANTABLE, new Enchantable(25));
+        right.set(DataComponents.ENCHANTABLE, new Enchantable(9));
+        MixedBootsPair pair = create(left, right);
+        ItemStack changedRight = right.copy();
+        changedRight.set(DataComponents.ENCHANTABLE, new Enchantable(15));
+        for (boolean inverse : new boolean[]{false, true}) {
+            ItemStack root = inverse ? pair.inverse() : pair.primary();
+            ItemStack newLeft = inverse ? changedRight : left;
+            ItemStack newRight = inverse ? left : changedRight;
+            ItemStack result = MixedBootsRecomposer.recompose(root, newLeft, newRight,
+                    mixedDataType, AttributeRuleDefaults.ruleSet());
+            assertEquals(new Enchantable(15), result.get(DataComponents.ENCHANTABLE));
+            root.remove(DataComponents.ENCHANTABLE);
+            ItemLore liveLore = new ItemLore(List.of(Component.literal("Live lore")));
+            root.set(DataComponents.LORE, liveLore);
+            result = MixedBootsRecomposer.recompose(root, newLeft, newRight,
+                    mixedDataType, AttributeRuleDefaults.ruleSet());
+            assertNull(result.get(DataComponents.ENCHANTABLE));
+            assertEquals(liveLore, result.get(DataComponents.LORE));
+        }
+        ItemStack root = create(left, right).primary();
+        changedRight.remove(DataComponents.ENCHANTABLE);
+        assertNull(MixedBootsRecomposer.recompose(root, left, changedRight,
+                mixedDataType, AttributeRuleDefaults.ruleSet()).get(DataComponents.ENCHANTABLE));
+    }
+
+    @Test
+    void changedRulesUseCurrentProjectionWithoutPretendingToKnowProvenance() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        left.set(DataComponents.ENCHANTABLE, new Enchantable(25));
+        right.set(DataComponents.ENCHANTABLE, new Enchantable(9));
+        ItemStack root = create(left, right).primary();
+        var entries = new java.util.LinkedHashMap<>(ComponentRuleDefaults.rules());
+        entries.put(Identifier.withDefaultNamespace("enchantable"), ComponentRule.of(ComponentPolicy.MAXIMUM));
+        ComponentRuleSet changedRules = new ComponentRuleSet(entries);
+        ItemStack upgraded = left.copy();
+        upgraded.set(DataComponents.ENCHANTABLE, new Enchantable(30));
+        assertEquals(new Enchantable(9), MixedBootsRecomposer.recompose(root, upgraded, right,
+                mixedDataType, AttributeRuleDefaults.ruleSet(), changedRules).get(DataComponents.ENCHANTABLE));
+        root.set(DataComponents.ENCHANTABLE, new Enchantable(25));
+        assertEquals(new Enchantable(30), MixedBootsRecomposer.recompose(root, upgraded, right,
+                mixedDataType, AttributeRuleDefaults.ruleSet(), changedRules).get(DataComponents.ENCHANTABLE));
     }
 
     private static MixedBootsPair create(ItemStack first, ItemStack second) {

@@ -64,9 +64,7 @@ public final class SmithingGameTests {
         helper.assertValueEqual(preview.get(TestContent.requireOpaqueComponent()), "root-only", "root-only component");
         helper.assertTrue(preview.getHoverName().equals(Component.literal("Anvil name")),
                 "Smithing lost the live root name");
-        helper.assertTrue(preview.get(DataComponents.TRIM).equals(
-                        GameTestStacks.data(preview).left().source().get(DataComponents.TRIM)),
-                "Root trim is not projected from the left source");
+        helper.assertTrue(!preview.has(DataComponents.TRIM), "Source trim leaked onto the root");
         helper.assertTrue(ItemStack.matches(original, mixed), "Preview mutated the input root");
         helper.assertTrue(!before.left().source().has(DataComponents.TRIM)
                         && !before.right().source().has(DataComponents.TRIM),

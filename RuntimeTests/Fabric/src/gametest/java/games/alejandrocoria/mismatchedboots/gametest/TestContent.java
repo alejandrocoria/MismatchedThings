@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
@@ -33,11 +34,18 @@ public final class TestContent implements ModInitializer {
     static DataComponentType<String> OPAQUE_COMPONENT;
     static DataComponentType<String> ADDED_COMPONENT;
     static DataComponentType<String> REMOVED_COMPONENT;
+    public static final Identifier NUMERIC_COMPONENT_ID = id("numeric");
+    public static DataComponentType<Integer> NUMERIC_COMPONENT;
     static Item COMPONENT_BOOTS;
     static Item UPGRADED_COMPONENT_BOOTS;
 
     @Override
     public void onInitialize() {
+        NUMERIC_COMPONENT = Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, NUMERIC_COMPONENT_ID,
+                DataComponentType.<Integer>builder()
+                        .persistent(Codec.intRange(0, 10).validate(value -> value % 2 == 0
+                                ? DataResult.success(value) : DataResult.error(() -> "Expected even value")))
+                        .networkSynchronized(ByteBufCodecs.VAR_INT).build());
         OPAQUE_COMPONENT = Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
                 OPAQUE_COMPONENT_ID,

@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.composition;
 
+import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.item.ItemStack;
 
@@ -8,41 +10,41 @@ import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
 
+/** Three-way merge of the root orientation's old/new projections, including owner policies. */
 final class OwnerComponentMerger {
     private OwnerComponentMerger() {
     }
 
     static ItemStack merge(
             ItemStack currentRoot,
-            ItemStack previousOwner,
-            ItemStack newOwner,
-            Set<DataComponentType<?>> managedTypes) {
+            ComponentProjection.Result previous,
+            ComponentProjection.Result replacement) {
         Objects.requireNonNull(currentRoot, "currentRoot");
-        Objects.requireNonNull(previousOwner, "previousOwner");
-        Objects.requireNonNull(newOwner, "newOwner");
-        Objects.requireNonNull(managedTypes, "managedTypes");
+        Objects.requireNonNull(previous, "previous");
+        Objects.requireNonNull(replacement, "replacement");
 
         ItemStack result = currentRoot.copy();
         Set<DataComponentType<?>> componentTypes = Collections.newSetFromMap(new IdentityHashMap<>());
-        componentTypes.addAll(currentRoot.getComponents().keySet());
-        componentTypes.addAll(previousOwner.getComponents().keySet());
-        componentTypes.addAll(newOwner.getComponents().keySet());
+        componentTypes.addAll(previous.managedTypes());
+        componentTypes.addAll(replacement.managedTypes());
 
         for (DataComponentType<?> type : componentTypes) {
-            if (!managedTypes.contains(type)
-                    && Objects.equals(currentRoot.get(type), previousOwner.get(type))) {
-                copyComponent(newOwner, result, type);
-            }
+            mergeComponent(currentRoot, previous.primary(), replacement.primary(), result, type);
         }
 
         return result;
     }
 
-    private static <T> void copyComponent(
-            ItemStack source,
+    private static <T> void mergeComponent(
+            ItemStack currentRoot,
+            DataComponentMap previous,
+            DataComponentMap replacement,
             ItemStack target,
             DataComponentType<T> type) {
-        T value = source.get(type);
+        if (!ComponentProjection.equivalentValues(type, currentRoot.get(type), previous.get(type))) {
+            return;
+        }
+        T value = replacement.get(type);
         if (value == null) {
             target.remove(type);
         } else {

@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.gametest;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.component.DataComponents;
@@ -51,12 +52,18 @@ public final class DamageTagReloadGameTests {
             selected.add(PACK_ID);
             server.reloadResources(selected).join();
 
-            ItemStack existing = new ItemStack(Items.IRON_BOOTS);
+            ItemStack first = new ItemStack(Items.IRON_BOOTS);
             DamageResistant resistance = new DamageResistant(
                     helper.getLevel().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
                             .getOrThrow(RESISTANCE_TAG));
-            existing.set(DataComponents.DAMAGE_RESISTANT, resistance);
+            first.set(DataComponents.DAMAGE_RESISTANT, resistance);
+            ItemStack second = new ItemStack(Items.GOLDEN_BOOTS);
+            second.set(DataComponents.DAMAGE_RESISTANT, resistance);
+            var pair = MixedBootsFactory.createPair(first, second);
+            ItemStack existing = pair.primary();
+            ItemStack inverse = pair.inverse();
             assertDamageBehavior(helper, existing, true, false, "before data-pack reload");
+            assertDamageBehavior(helper, inverse, true, false, "inverse before data-pack reload");
             RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess());
             JsonElement encoded = ItemStack.CODEC.encodeStart(ops, existing).getOrThrow();
             ItemStack decoded = ItemStack.CODEC.parse(ops, encoded).getOrThrow();
@@ -68,6 +75,7 @@ public final class DamageTagReloadGameTests {
             helper.assertTrue(existing.get(DataComponents.DAMAGE_RESISTANT) == resistance,
                     "Reload replaced the existing stack component");
             assertDamageBehavior(helper, existing, false, true, "after data-pack reload");
+            assertDamageBehavior(helper, inverse, false, true, "inverse after data-pack reload");
             assertDamageBehavior(helper, decoded, false, true, "decoded after data-pack reload");
             helper.succeed();
         } catch (IOException exception) {

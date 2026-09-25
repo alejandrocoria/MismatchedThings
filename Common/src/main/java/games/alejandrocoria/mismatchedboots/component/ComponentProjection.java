@@ -192,11 +192,13 @@ public final class ComponentProjection {
         if (type == DataComponents.ENCHANTABLE) {
             return enchantable(type, first, second, rule);
         }
-        if (first == null || second == null) {
+        if (!matchesKind(first, rule.number()) || !matchesKind(second, rule.number())) {
+            warnOnce(type, "numeric type mismatch; retaining owner values");
             return owner(first, second);
         }
-        if (!codecAccepts(type, first) || !codecAccepts(type, second)) {
-            warnOnce(type, "numeric codec rejected input; retaining owner values");
+        validateInput(type, first);
+        validateInput(type, second);
+        if (first == null || second == null) {
             return owner(first, second);
         }
 
@@ -218,15 +220,13 @@ public final class ComponentProjection {
     }
 
     private static <T> Values<T> enchantable(DataComponentType<T> type, T first, T second, ComponentRule rule) {
+        validateInput(type, first);
+        validateInput(type, second);
         if (first == null || second == null) {
             return new Values<>(null, null);
         }
         int left = ((Enchantable) first).value();
         int right = ((Enchantable) second).value();
-        if (!codecAccepts(type, first) || !codecAccepts(type, second)) {
-            warnOnce(type, "invalid enchantability; retaining owner values");
-            return owner(first, second);
-        }
         int result = calculate(left, right, rule.policy()).intValueExact();
         @SuppressWarnings("unchecked") T projected = (T) new Enchantable(result);
         if (!codecAccepts(type, projected)) {
@@ -234,6 +234,19 @@ public final class ComponentProjection {
             return owner(first, second);
         }
         return new Values<>(projected, projected);
+    }
+
+    private static boolean matchesKind(Object value, ComponentNumericKind kind) {
+        return value == null || (kind == ComponentNumericKind.INT && value instanceof Integer)
+                || (kind == ComponentNumericKind.LONG && value instanceof Long);
+    }
+
+    private static <T> void validateInput(DataComponentType<T> type, T value) {
+        if (value != null && !codecAccepts(type, value)) {
+            warnOnce(type, "numeric codec rejected input; rejecting composition");
+            throw new IllegalArgumentException("Invalid numeric component input: "
+                    + BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type));
+        }
     }
 
     private static BigInteger calculate(long first, long second, ComponentPolicy policy) {

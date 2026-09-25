@@ -2,11 +2,15 @@ package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,6 +25,7 @@ import net.minecraft.world.item.equipment.Equippable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public final class MixedBootsFactory {
     private MixedBootsFactory() {
@@ -50,10 +55,17 @@ public final class MixedBootsFactory {
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType,
             AttributeRuleSet rules) {
+        return createPair(first, second, mixedBoots, dataType, rules, ComponentRuleDefaults.ruleSet());
+    }
+
+    static MixedBootsPair createPair(
+            ItemStack first, ItemStack second, Holder<Item> mixedBoots,
+            DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRuleSet componentRules) {
         BootHalf firstHalf = new BootHalf(first);
         BootHalf secondHalf = new BootHalf(second);
         ItemStack firstSource = firstHalf.source();
         ItemStack secondSource = secondHalf.source();
+        ComponentProjection.Result components = ComponentProjection.project(firstSource, secondSource, componentRules);
         DurabilityMerger.Result durability = DurabilityMerger.merge(firstSource, secondSource);
         AttributeComposer.Result attributes = AttributeComposer.compose(firstSource, secondSource, rules);
         ItemEnchantments enchantments = EnchantmentMerger.merge(firstSource, secondSource);
@@ -61,10 +73,10 @@ public final class MixedBootsFactory {
 
         ItemStack primary = createOrientation(
                 firstHalf, secondHalf, mixedBoots, dataType, durability, attributes.primary(), enchantments,
-                repairable);
+                repairable, components.primary(), components.managedTypes());
         ItemStack inverse = createOrientation(
                 secondHalf, firstHalf, mixedBoots, dataType, durability, attributes.inverse(), enchantments,
-                repairable);
+                repairable, components.inverse(), components.managedTypes());
         return new MixedBootsPair(primary, inverse);
     }
 
@@ -76,9 +88,10 @@ public final class MixedBootsFactory {
             DurabilityMerger.Result durability,
             ItemAttributeModifiers attributes,
             ItemEnchantments enchantments,
-            Optional<Repairable> repairable) {
+            Optional<Repairable> repairable,
+            DataComponentMap components,
+            Set<DataComponentType<?>> projectedTypes) {
         ItemStack owner = left.source();
-        ItemStack other = right.source();
         ItemStack output = new ItemStack(mixedBoots, 1);
 
         List.copyOf(output.getComponents().keySet()).forEach(output::remove);
@@ -102,6 +115,8 @@ public final class MixedBootsFactory {
 
         output.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes);
         output.set(DataComponents.ENCHANTMENTS, enchantments);
+        projectedTypes.forEach(output::remove);
+        output.applyComponents(components);
         output.set(dataType, new MixedBootsData(left, right));
 
         Optional<com.mojang.serialization.DataResult.Error<ItemStack>> error = ItemStack.validateStrict(output).error();

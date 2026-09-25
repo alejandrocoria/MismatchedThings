@@ -53,8 +53,9 @@ public final class SmithingUpgradeGameTests {
         helper.assertTrue(sources.left().source().is(Items.NETHERITE_BOOTS), "Left diamond source did not upgrade");
         helper.assertTrue(sources.right().source().is(Items.NETHERITE_BOOTS), "Right diamond source did not upgrade");
         helper.assertTrue(sources.left().source().has(DataComponents.TRIM), "Existing source trim was lost");
-        helper.assertTrue(result.get(DataComponents.TRIM).equals(sources.left().source().get(DataComponents.TRIM)),
-                "Left trim was not projected to the root");
+        helper.assertTrue(!result.has(DataComponents.TRIM), "Source trim leaked onto the root");
+        helper.assertTrue(!result.canBeHurtBy(helper.getLevel().damageSources().inFire()),
+                "Two upgraded netherite sources did not project shared fire resistance");
         helper.assertValueEqual(result.getMaxDamage(), new ItemStack(Items.NETHERITE_BOOTS).getMaxDamage(),
                 "upgraded maximum durability");
         helper.assertValueEqual(result.getDamageValue(), 19, "preserved raw root damage");
@@ -286,6 +287,9 @@ public final class SmithingUpgradeGameTests {
         ItemStack mixed = GameTestStacks.mixed(left, right);
         ItemStack result = netherite(helper, player, mixed).getSlot(SmithingMenu.RESULT_SLOT).getItem();
         helper.assertTrue(!result.isEmpty(), "Single-source netherite upgrade was rejected");
+        helper.assertTrue(!result.has(DataComponents.DAMAGE_RESISTANT)
+                        && result.canBeHurtBy(helper.getLevel().damageSources().inFire()),
+                "Single-source netherite upgrade granted whole-item fire resistance");
         MixedBootsData sources = GameTestStacks.data(result);
         helper.assertTrue(sources.left().source().is(leftChanges ? Items.NETHERITE_BOOTS : left),
                 "Wrong left source after upgrade");

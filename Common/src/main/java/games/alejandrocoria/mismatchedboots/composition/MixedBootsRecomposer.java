@@ -2,6 +2,9 @@ package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -12,7 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Repairable;
 
 import java.util.Optional;
-import java.util.Set;
 
 public final class MixedBootsRecomposer {
     private MixedBootsRecomposer() {
@@ -30,6 +32,12 @@ public final class MixedBootsRecomposer {
             ItemStack newRight,
             DataComponentType<MixedBootsData> dataType,
             AttributeRuleSet rules) {
+        return recompose(root, newLeft, newRight, dataType, rules, ComponentRuleDefaults.ruleSet());
+    }
+
+    static ItemStack recompose(
+            ItemStack root, ItemStack newLeft, ItemStack newRight,
+            DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRuleSet componentRules) {
         MixedBootsData previous = Optional.ofNullable(root.get(dataType))
                 .orElseThrow(() -> new IllegalArgumentException("Missing mixed boots data"));
         BootHalf left = new BootHalf(newLeft);
@@ -37,20 +45,10 @@ public final class MixedBootsRecomposer {
         ItemStack leftSource = left.source();
         ItemStack rightSource = right.source();
 
-        Set<DataComponentType<?>> managed = Set.of(
-                DataComponents.DAMAGE,
-                DataComponents.ENCHANTMENTS,
-                DataComponents.CUSTOM_NAME,
-                DataComponents.REPAIR_COST,
-                DataComponents.MAX_DAMAGE,
-                DataComponents.ATTRIBUTE_MODIFIERS,
-                DataComponents.EQUIPPABLE,
-                DataComponents.MAX_STACK_SIZE,
-                DataComponents.ITEM_NAME,
-                DataComponents.ITEM_MODEL,
-                DataComponents.REPAIRABLE,
-                dataType);
-        ItemStack output = OwnerComponentMerger.merge(root, previous.left().source(), leftSource, managed);
+        ComponentProjection.Result oldProjection = ComponentProjection.project(
+                previous.left().source(), previous.right().source(), componentRules);
+        ComponentProjection.Result newProjection = ComponentProjection.project(leftSource, rightSource, componentRules);
+        ItemStack output = OwnerComponentMerger.merge(root, oldProjection, newProjection);
         int maximum = DurabilityMerger.merge(leftSource, rightSource).maximum();
         output.remove(DataComponents.MAX_DAMAGE);
         output.remove(DataComponents.DAMAGE);
