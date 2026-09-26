@@ -43,7 +43,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -261,11 +263,17 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
     }
 
     private static void verifyResourceReloadWithWorldItems(ClientGameTestContext context) {
+        AtomicReference<Map<Integer, ItemStack>> stackSnapshot = new AtomicReference<>();
+        context.runOnClient(client -> stackSnapshot.set(snapshotWorldItems(client)));
+        if (stackSnapshot.get().isEmpty()) {
+            throw new AssertionError("Resource-reload fixture contained no mixed world items");
+        }
         AtomicReference<CompletableFuture<Void>> reload = new AtomicReference<>();
         context.runOnClient(client -> reload.set(client.reloadResourcePacks()));
         context.waitFor(client -> reload.get() != null && reload.get().isDone(), 1200);
         context.runOnClient(client -> {
             reload.get().join();
+            assertWorldItemsUnchanged(client, stackSnapshot.get());
         });
         // The reload future completes before Minecraft finishes fading its loading overlay.
         context.waitTicks(40);
@@ -285,6 +293,34 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                 "red_concrete", "blue_concrete", true, "post-reload rotated frame");
         assertClippedOrientation(snapshot, ItemDisplayContext.FIXED,
                 "leather_boots", "diamond_boots", false, "post-reload dyed leather frame");
+    }
+
+    private static Map<Integer, ItemStack> snapshotWorldItems(Minecraft client) {
+        if (client.player == null || client.level == null) {
+            throw new AssertionError("Cannot snapshot world items without a client world");
+        }
+        AABB bounds = client.player.getBoundingBox().inflate(10.0);
+        Map<Integer, ItemStack> stacks = new LinkedHashMap<>();
+        client.level.getEntitiesOfClass(ItemEntity.class, bounds, Entity::isAlive).stream()
+                .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
+                .forEach(entity -> stacks.put(entity.getId(), entity.getItem().copy()));
+        client.level.getEntitiesOfClass(ItemFrame.class, bounds, Entity::isAlive).stream()
+                .filter(frame -> ModContent.isMixedBoots(frame.getItem()))
+                .forEach(frame -> stacks.put(frame.getId(), frame.getItem().copy()));
+        return Map.copyOf(stacks);
+    }
+
+    private static void assertWorldItemsUnchanged(Minecraft client, Map<Integer, ItemStack> expected) {
+        Map<Integer, ItemStack> actual = snapshotWorldItems(client);
+        if (!actual.keySet().equals(expected.keySet())) {
+            throw new AssertionError("Resource reload changed the mixed world-item set: expected "
+                    + expected.keySet() + ", actual " + actual.keySet());
+        }
+        expected.forEach((entityId, before) -> {
+            if (!ItemStack.matches(before, actual.get(entityId))) {
+                throw new AssertionError("Resource reload changed mixed stack data for entity " + entityId);
+            }
+        });
     }
 
     private static RuntimeItemSubmissionProbe.Snapshot takeSubmissions(ClientGameTestContext context) {

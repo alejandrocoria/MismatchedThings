@@ -80,6 +80,8 @@ loom {
         persistenceWrite {
             inherit server
             property("fabric-api.gametest")
+            property("fabric-api.gametest.filter",
+                    "mismatchedboots-test:persistence_game_tests_restart_round_trip_uses_the_dedicated_two_process_harness")
             property(
                     "fabric-api.gametest.report-file",
                     layout.buildDirectory.file('reports/gametest/persistence-write.xml').get().asFile.absolutePath)
@@ -91,6 +93,8 @@ loom {
         persistenceRead {
             inherit server
             property("fabric-api.gametest")
+            property("fabric-api.gametest.filter",
+                    "mismatchedboots-test:persistence_game_tests_restart_round_trip_uses_the_dedicated_two_process_harness")
             property(
                     "fabric-api.gametest.report-file",
                     layout.buildDirectory.file('reports/gametest/persistence-read.xml').get().asFile.absolutePath)
@@ -145,6 +149,27 @@ tasks.register('preparePersistenceRestart', Delete) {
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
+        def componentConfigFile = new File(runDirectory, 'config/mismatchedboots-components.toml')
+        componentConfigFile.parentFile.mkdirs()
+        componentConfigFile.text = '''[durability]
+policy = "average"
+
+[repair_cost]
+policy = "maximum"
+
+[components."mismatchedboots-test:numeric"]
+policy = "average"
+number = "int"
+
+[components."mismatchedboots-test:opaque"]
+policy = "same"
+
+[components."mismatchedboots-test:added"]
+policy = "same"
+
+[components."mismatchedboots-test:removed"]
+policy = "omit"
+'''
     }
 }
 
@@ -165,6 +190,27 @@ fallback = "separate"
 
 [attributes."minecraft:movement_speed"]
 policy = "combine"
+'''
+        def componentConfigFile = layout.buildDirectory.file(
+                'run/persistenceGameTest/config/mismatchedboots-components.toml').get().asFile
+        componentConfigFile.text = '''[durability]
+policy = "separate"
+
+[repair_cost]
+policy = "owner"
+
+[components."mismatchedboots-test:numeric"]
+policy = "average"
+number = "int"
+
+[components."mismatchedboots-test:opaque"]
+policy = "same"
+
+[components."mismatchedboots-test:added"]
+policy = "same"
+
+[components."mismatchedboots-test:removed"]
+policy = "omit"
 '''
     }
 }
