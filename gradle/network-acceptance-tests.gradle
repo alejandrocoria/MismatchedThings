@@ -41,6 +41,26 @@ policy = "combine"
 [attributes."futuremod:dormant"]
 policy = "minimum"
 '''
+    new File(config, 'mismatchedboots-components.toml').text = endpoint == 'server' ? '''[durability]
+policy = "separate"
+
+[repair_cost]
+policy = "owner"
+
+[components."minecraft:enchantable"]
+policy = "owner"
+
+[components."futuremod:dormant_energy"]
+policy = "share"
+''' : '''[durability]
+policy = "average"
+
+[repair_cost]
+policy = "maximum"
+
+[components."minecraft:enchantable"]
+policy = "minimum"
+'''
     if (endpoint == 'server') {
         new File(directory, 'eula.txt').text = 'eula=true\n'
         new File(directory, 'server.properties').text = """online-mode=false

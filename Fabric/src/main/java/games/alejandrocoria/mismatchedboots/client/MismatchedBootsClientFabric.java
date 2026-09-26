@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedboots.client;
 
-import games.alejandrocoria.mismatchedboots.network.AttributeRulesClientLifecycle;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
@@ -9,8 +9,8 @@ public class MismatchedBootsClientFabric implements ClientModInitializer {
     public void onInitializeClient() {
         MismatchedBootsClient.init();
         ClientPlayConnectionEvents.JOIN.register(
-                (handler, sender, client) -> AttributeRulesClientLifecycle.onConnected());
+                (handler, sender, client) -> CompositionRulesClientLifecycle.onConnected());
         ClientPlayConnectionEvents.DISCONNECT.register(
-                (handler, client) -> AttributeRulesClientLifecycle.onDisconnected());
+                (handler, client) -> CompositionRulesClientLifecycle.onDisconnected());
     }
 }

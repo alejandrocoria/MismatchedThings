@@ -1,7 +1,12 @@
 package games.alejandrocoria.mismatchedboots.runtimetest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
+import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
+import games.alejandrocoria.mismatchedboots.component.ComponentRule;
+import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
+import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,6 +16,9 @@ import net.minecraft.world.item.ItemStack;
 public final class NetworkAcceptanceServerTest {
     private static final Identifier MOVEMENT_SPEED = Identifier.withDefaultNamespace("movement_speed");
     private static final Identifier DORMANT_ATTRIBUTE = Identifier.fromNamespaceAndPath("futuremod", "dormant");
+    private static final Identifier ENCHANTABLE = Identifier.withDefaultNamespace("enchantable");
+    private static final Identifier DORMANT_COMPONENT =
+            Identifier.fromNamespaceAndPath("futuremod", "dormant_energy");
     private static final int TIMEOUT_TICKS = 3_600;
 
     private static int ticks;
@@ -31,7 +39,8 @@ public final class NetworkAcceptanceServerTest {
             if (!ready) {
                 assertRules();
                 NetworkAcceptanceFiles.write(
-                        "server-snapshot.txt", NetworkAcceptanceFiles.snapshot(AttributeRulesLifecycle.serverRules()));
+                        "server-snapshot.txt", NetworkAcceptanceFiles.snapshot(
+                                AttributeRulesLifecycle.serverRules(), ComponentRulesLifecycle.serverRules()));
                 NetworkAcceptanceFiles.write("server-ready.txt", loaderName());
                 ready = true;
                 if (Boolean.getBoolean("mismatchedboots.runtimetest.stopAfterReady")) {
@@ -63,6 +72,15 @@ public final class NetworkAcceptanceServerTest {
         if (rules.policyFor(MOVEMENT_SPEED) != AttributePolicy.COMBINE
                 || rules.policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM) {
             throw new AssertionError("Server did not load the isolated rules: " + rules);
+        }
+        var components = ComponentRulesLifecycle.serverRules();
+        if (components.durability() != DurabilityPolicy.SEPARATE
+                || components.repairCost() != RepairCostPolicy.OWNER
+                || !ComponentRule.of(ComponentPolicy.OWNER).equals(components.declarations().get(ENCHANTABLE))
+                || !ComponentRule.of(ComponentPolicy.SHARE).equals(
+                        components.declarations().get(DORMANT_COMPONENT))
+                || components.components().rules().containsKey(DORMANT_COMPONENT)) {
+            throw new AssertionError("Server did not load the isolated component rules: " + components);
         }
     }
 

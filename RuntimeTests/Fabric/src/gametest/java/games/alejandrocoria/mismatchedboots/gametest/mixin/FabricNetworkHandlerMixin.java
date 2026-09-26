@@ -4,6 +4,7 @@ import commonnetwork.networking.FabricNetworkHandler;
 import games.alejandrocoria.mismatchedboots.gametest.NetworkTrafficProbe;
 import games.alejandrocoria.mismatchedboots.network.AttributeRulesPayload;
 import games.alejandrocoria.mismatchedboots.network.ClientReadyPayload;
+import games.alejandrocoria.mismatchedboots.network.ComponentRulesPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +27,8 @@ abstract class FabricNetworkHandlerMixin {
             CustomPacketPayload payload, ServerPlayer player, boolean ignoreCheck, CallbackInfo callback) {
         if (payload instanceof AttributeRulesPayload rules) {
             NetworkTrafficProbe.recordAttributeRules(rules, ignoreCheck);
+        } else if (payload instanceof ComponentRulesPayload rules) {
+            NetworkTrafficProbe.recordComponentRules(rules, ignoreCheck);
         }
     }
 }

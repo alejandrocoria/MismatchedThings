@@ -12,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.enchantment.Enchantable;
 
 public final class NetworkAcceptanceStacks {
     public static final Identifier MOVEMENT_MODIFIER =
@@ -21,11 +22,19 @@ public final class NetworkAcceptanceStacks {
     }
 
     public static ItemStack firstSource() {
-        return source(Items.LEATHER_BOOTS, 2.0D);
+        ItemStack stack = source(Items.LEATHER_BOOTS, 2.0D);
+        stack.setDamageValue(11);
+        stack.set(DataComponents.REPAIR_COST, 2);
+        stack.set(DataComponents.ENCHANTABLE, new Enchantable(8));
+        return stack;
     }
 
     public static ItemStack secondSource() {
-        return source(Items.CHAINMAIL_BOOTS, 4.0D);
+        ItemStack stack = source(Items.CHAINMAIL_BOOTS, 4.0D);
+        stack.setDamageValue(7);
+        stack.set(DataComponents.REPAIR_COST, 5);
+        stack.set(DataComponents.ENCHANTABLE, new Enchantable(20));
+        return stack;
     }
 
     public static String describePrimary(ItemStack stack) {
@@ -45,10 +54,15 @@ public final class NetworkAcceptanceStacks {
                 || Double.compare(entry.modifier().amount(), 6.0D) != 0) {
             throw new AssertionError("Unexpected composed movement modifier: " + entry);
         }
+        assertComponents(stack, Items.LEATHER_BOOTS.getDefaultInstance().getMaxDamage(), 11, 2, 8);
         return "left=" + BuiltInRegistries.ITEM.getKey(data.left().source().getItem()) + '\n'
                 + "right=" + BuiltInRegistries.ITEM.getKey(data.right().source().getItem()) + '\n'
                 + "modifier=" + entry.modifier().id() + '\n'
-                + "amount=" + entry.modifier().amount() + '\n';
+                + "amount=" + entry.modifier().amount() + '\n'
+                + "max_damage=" + stack.getMaxDamage() + '\n'
+                + "damage=" + stack.getDamageValue() + '\n'
+                + "repair_cost=" + stack.getOrDefault(DataComponents.REPAIR_COST, 0) + '\n'
+                + "enchantable=" + stack.get(DataComponents.ENCHANTABLE).value() + '\n';
     }
 
     public static void assertInverse(ItemStack stack) {
@@ -59,6 +73,19 @@ public final class NetworkAcceptanceStacks {
             throw new AssertionError("Crafting left the wrong inverse orientation: " + data);
         }
         movementEntry(stack);
+        assertComponents(stack, Items.CHAINMAIL_BOOTS.getDefaultInstance().getMaxDamage(), 7, 5, 20);
+    }
+
+    private static void assertComponents(
+            ItemStack stack, int maxDamage, int damage, int repairCost, int enchantable) {
+        Enchantable value = stack.get(DataComponents.ENCHANTABLE);
+        if (stack.getMaxDamage() != maxDamage
+                || stack.getDamageValue() != damage
+                || stack.getOrDefault(DataComponents.REPAIR_COST, 0) != repairCost
+                || value == null
+                || value.value() != enchantable) {
+            throw new AssertionError("Unexpected composed components: " + stack.getComponents());
+        }
     }
 
     private static ItemStack source(Item item, double amount) {

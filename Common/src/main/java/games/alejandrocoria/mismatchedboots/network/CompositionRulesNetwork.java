@@ -5,15 +5,17 @@ import commonnetwork.networking.data.PacketContext;
 import commonnetwork.networking.data.Side;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class AttributeRulesNetwork {
+public final class CompositionRulesNetwork {
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
 
-    private AttributeRulesNetwork() {
+    private CompositionRulesNetwork() {
     }
 
     public static void register() {
@@ -21,9 +23,11 @@ public final class AttributeRulesNetwork {
             return;
         }
         Network.registerPacket(ClientReadyPayload.TYPE, ClientReadyPayload.STREAM_CODEC,
-                AttributeRulesNetwork::handleClientReady);
+                CompositionRulesNetwork::handleClientReady);
         Network.registerPacket(AttributeRulesPayload.TYPE, AttributeRulesPayload.STREAM_CODEC,
-                AttributeRulesNetwork::handleAttributeRules);
+                CompositionRulesNetwork::handleAttributeRules);
+        Network.registerPacket(ComponentRulesPayload.TYPE, ComponentRulesPayload.STREAM_CODEC,
+                CompositionRulesNetwork::handleComponentRules);
     }
 
     private static void handleClientReady(PacketContext<ClientReadyPayload> context) {
@@ -38,6 +42,8 @@ public final class AttributeRulesNetwork {
         }
         Network.getNetworkHandler().sendToClient(
                 new AttributeRulesPayload(AttributeRulesLifecycle.serverRules()), sender, true);
+        Network.getNetworkHandler().sendToClient(
+                new ComponentRulesPayload(ComponentRulesLifecycle.serverRules()), sender, true);
     }
 
     private static void handleAttributeRules(PacketContext<AttributeRulesPayload> context) {
@@ -46,5 +52,13 @@ public final class AttributeRulesNetwork {
             return;
         }
         AttributeRuleState.install(context.message().rules());
+    }
+
+    private static void handleComponentRules(PacketContext<ComponentRulesPayload> context) {
+        if (context.side() != Side.CLIENT) {
+            Constants.LOG.warn("Ignoring component-rules payload received on {}", context.side());
+            return;
+        }
+        ComponentRuleState.install(context.message().rules());
     }
 }

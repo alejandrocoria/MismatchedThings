@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,7 +31,7 @@ public final class NetworkAcceptanceFiles {
         write(endpoint + "-failure.txt", trace.toString());
     }
 
-    public static String snapshot(AttributeRuleSet rules) {
+    public static String snapshot(AttributeRuleSet rules, ComponentRules componentRules) {
         StringBuilder result = new StringBuilder("fallback=")
                 .append(rules.fallback().serializedName())
                 .append('\n');
@@ -38,6 +39,21 @@ public final class NetworkAcceptanceFiles {
                 .append('=')
                 .append(policy.serializedName())
                 .append('\n'));
+        result.append("durability=")
+                .append(componentRules.durability().serializedName())
+                .append('\n')
+                .append("repair_cost=")
+                .append(componentRules.repairCost().serializedName())
+                .append('\n');
+        componentRules.declarations().forEach((id, rule) -> {
+            result.append(id)
+                    .append('=')
+                    .append(rule.policy().serializedName());
+            if (rule.number() != null) {
+                result.append(':').append(rule.number().serializedName());
+            }
+            result.append('\n');
+        });
         return result.toString();
     }
 

@@ -1,9 +1,9 @@
 package games.alejandrocoria.mismatchedboots;
 
-import games.alejandrocoria.mismatchedboots.network.AttributeRulesNetwork;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesNetwork;
 
 public class MismatchedBoots {
     public static void init() {
-        AttributeRulesNetwork.register();
+        CompositionRulesNetwork.register();
     }
 }

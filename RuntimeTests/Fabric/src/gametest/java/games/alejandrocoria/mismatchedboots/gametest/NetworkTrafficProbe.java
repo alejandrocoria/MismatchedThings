@@ -1,6 +1,8 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.network.AttributeRulesPayload;
+import games.alejandrocoria.mismatchedboots.network.ComponentRulesPayload;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +25,14 @@ public final class NetworkTrafficProbe {
         EVENTS.add(new Event("attribute_rules", forced, payload));
     }
 
+    public static synchronized void recordComponentRules(ComponentRulesPayload payload, boolean forced) {
+        EVENTS.add(new Event("component_rules", forced, payload));
+    }
+
     public static synchronized List<Event> events() {
         return List.copyOf(EVENTS);
     }
 
-    public record Event(String name, boolean forced, AttributeRulesPayload payload) {
+    public record Event(String name, boolean forced, CustomPacketPayload payload) {
     }
 }

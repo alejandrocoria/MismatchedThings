@@ -2,6 +2,11 @@ package games.alejandrocoria.mismatchedboots.runtimetest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
+import games.alejandrocoria.mismatchedboots.component.ComponentRule;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
+import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
+import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.client.Minecraft;
@@ -14,6 +19,9 @@ import org.lwjgl.glfw.GLFW;
 public final class NetworkAcceptanceClientTest {
     private static final Identifier MOVEMENT_SPEED = Identifier.withDefaultNamespace("movement_speed");
     private static final Identifier DORMANT_ATTRIBUTE = Identifier.fromNamespaceAndPath("futuremod", "dormant");
+    private static final Identifier ENCHANTABLE = Identifier.withDefaultNamespace("enchantable");
+    private static final Identifier DORMANT_COMPONENT =
+            Identifier.fromNamespaceAndPath("futuremod", "dormant_energy");
     private static final int TIMEOUT_TICKS = 3_600;
 
     private static int ticks;
@@ -40,10 +48,19 @@ public final class NetworkAcceptanceClientTest {
             }
 
             var rules = AttributeRuleState.current();
+            var componentRules = ComponentRuleState.current();
             if (rules.policyFor(MOVEMENT_SPEED) != AttributePolicy.COMBINE
-                    || rules.policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM) {
+                    || rules.policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM
+                    || componentRules.durability() != DurabilityPolicy.SEPARATE
+                    || componentRules.repairCost() != RepairCostPolicy.OWNER
+                    || !ComponentRule.of(ComponentPolicy.OWNER).equals(
+                            componentRules.declarations().get(ENCHANTABLE))
+                    || !ComponentRule.of(ComponentPolicy.SHARE).equals(
+                            componentRules.declarations().get(DORMANT_COMPONENT))
+                    || componentRules.components().rules().containsKey(DORMANT_COMPONENT)) {
                 if (ticks > TIMEOUT_TICKS) {
-                    throw new AssertionError("Client did not receive the server rule snapshot: " + rules);
+                    throw new AssertionError("Client did not receive the server rule snapshots: "
+                            + rules + "; " + componentRules);
                 }
                 return;
             }
@@ -73,7 +90,8 @@ public final class NetworkAcceptanceClientTest {
                 throw new AssertionError("Client preview description differs from server result");
             }
 
-            NetworkAcceptanceFiles.write("client-snapshot.txt", NetworkAcceptanceFiles.snapshot(rules));
+            NetworkAcceptanceFiles.write(
+                    "client-snapshot.txt", NetworkAcceptanceFiles.snapshot(rules, componentRules));
             NetworkAcceptanceFiles.write("client-result.txt", receivedDescription);
             NetworkAcceptanceFiles.write("client-success.txt",
                     System.getProperty("mismatchedboots.runtimetest.loader", "unknown"));
