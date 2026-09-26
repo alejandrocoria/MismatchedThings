@@ -96,6 +96,13 @@ public final class TestContent implements ModInitializer {
         return OPAQUE_COMPONENT;
     }
 
+    static DataComponentType<Integer> requireNumericComponent() {
+        if (NUMERIC_COMPONENT == null) {
+            throw new IllegalStateException("Test content has not been initialized");
+        }
+        return NUMERIC_COMPONENT;
+    }
+
     private static DataComponentType<String> stringComponent(Identifier id) {
         return Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,

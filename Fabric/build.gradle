@@ -50,9 +50,9 @@ loom {
 }
 
 // Keep the established validation commands while runtime infrastructure lives separately.
-['verifyGameplay', 'verifyClient', 'verifyPersistenceRestart',
+['verifyGameplay', 'verifyClient', 'verifyPersistenceRestart', 'verifyComponentRulesConfig',
  'runGameTest', 'runClientGameTest', 'runPersistenceWrite', 'runPersistenceRead',
- 'runAttributeRules', 'compileGametestJava', 'processGametestResources', 'gametestClasses'].each { name ->
+ 'runAttributeRules', 'runComponentRules', 'compileGametestJava', 'processGametestResources', 'gametestClasses'].each { name ->
     tasks.register(name) {
         group = 'verification'
         description = "Delegates to the isolated Fabric runtime test project."

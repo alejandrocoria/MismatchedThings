@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.api.ModInitializer;
@@ -27,8 +28,14 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.SMITHING_BASE_RECIPE_ID,
                 ModContent.createSmithingBaseRecipeSerializer());
-        ServerLifecycleEvents.SERVER_STARTING.register(server -> AttributeRulesLifecycle.onServerStarting());
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> AttributeRulesLifecycle.onServerStopped());
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            AttributeRulesLifecycle.onServerStarting();
+            ComponentRulesLifecycle.onServerStarting();
+        });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            AttributeRulesLifecycle.onServerStopped();
+            ComponentRulesLifecycle.onServerStopped();
+        });
         MismatchedBoots.init();
     }
 }

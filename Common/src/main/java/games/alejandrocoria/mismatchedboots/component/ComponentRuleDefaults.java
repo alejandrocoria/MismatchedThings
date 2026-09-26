@@ -10,7 +10,7 @@ public final class ComponentRuleDefaults {
     private static final Map<Identifier, ComponentRule> RULES = createRules();
     private static final ComponentRuleSet RULE_SET = new ComponentRuleSet(RULES);
     private static final ComponentRules STATE = new ComponentRules(
-            DurabilityPolicy.AVERAGE, RepairCostPolicy.MAXIMUM, RULE_SET);
+            DurabilityPolicy.AVERAGE, RepairCostPolicy.MAXIMUM, RULES, RULE_SET);
 
     private ComponentRuleDefaults() {
     }

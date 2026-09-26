@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.client.MismatchedBootsClientNeoForge;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -14,8 +15,14 @@ public class MismatchedBootsNeoForge {
     public MismatchedBootsNeoForge(IEventBus eventBus) {
         ModRegistries.register(eventBus);
         MismatchedBoots.init();
-        NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> AttributeRulesLifecycle.onServerStarting());
-        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> AttributeRulesLifecycle.onServerStopped());
+        NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
+            AttributeRulesLifecycle.onServerStarting();
+            ComponentRulesLifecycle.onServerStarting();
+        });
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
+            AttributeRulesLifecycle.onServerStopped();
+            ComponentRulesLifecycle.onServerStopped();
+        });
         eventBus.addListener((FMLClientSetupEvent event) -> MismatchedBootsClientNeoForge.onClientSetup(event, eventBus));
     }
 }

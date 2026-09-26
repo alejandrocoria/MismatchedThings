@@ -20,6 +20,7 @@
             "games.alejandrocoria.mismatchedboots.gametest.PersistenceGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.CompatibilityGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.ComponentRulesGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.ComponentRulesConfigGameTests",
             "games.alejandrocoria.mismatchedboots.composition.ComponentCompositionGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.DamageTagReloadGameTests"
         ],
