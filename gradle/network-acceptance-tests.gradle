@@ -32,7 +32,7 @@ def prepareEndpoint = { String loader, String endpoint, int port, File extraMod 
         Files.copy(extraMod.toPath(), new File(mods, extraMod.name).toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
     }
-    new File(config, 'mismatchedboots-server.toml').text = '''[attributes]
+    new File(config, 'mismatchedboots-attributes.toml').text = '''[attributes]
 fallback = "separate"
 
 [attributes."minecraft:movement_speed"]

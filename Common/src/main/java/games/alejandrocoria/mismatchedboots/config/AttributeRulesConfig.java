@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public final class AttributeRulesConfig {
-    public static final String FILE_NAME = Constants.MOD_ID + "-server.toml";
+    public static final String FILE_NAME = Constants.MOD_ID + "-attributes.toml";
     private static final DateTimeFormatter BACKUP_TIMESTAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm-ss");
 
     private final Path path;

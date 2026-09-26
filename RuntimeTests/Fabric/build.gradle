@@ -158,7 +158,7 @@ def preparePersistenceRestartRead = tasks.register('preparePersistenceRestartRea
     dependsOn tasks.named('runPersistenceWrite')
     doLast {
         def configFile = layout.buildDirectory.file(
-                'run/persistenceGameTest/config/mismatchedboots-server.toml').get().asFile
+                'run/persistenceGameTest/config/mismatchedboots-attributes.toml').get().asFile
         configFile.parentFile.mkdirs()
         configFile.text = '''[attributes]
 fallback = "separate"
@@ -182,7 +182,7 @@ tasks.register('prepareAttributeRulesGameTest', Delete) {
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
-        def configFile = new File(runDirectory, 'config/mismatchedboots-server.toml')
+        def configFile = new File(runDirectory, 'config/mismatchedboots-attributes.toml')
         configFile.parentFile.mkdirs()
         configFile.text = '''[attributes]
 fallback = "separate"
@@ -297,7 +297,7 @@ tasks.named('runClientGameTest') {
         def optionsFile = new File(runDirectory, 'options.txt')
         optionsFile.parentFile.mkdirs()
         optionsFile.text = 'soundCategory_master:0.0\n'
-        def configFile = new File(runDirectory, 'config/mismatchedboots-server.toml')
+        def configFile = new File(runDirectory, 'config/mismatchedboots-attributes.toml')
         configFile.parentFile.mkdirs()
         configFile.text = '''[attributes]
 fallback = "separate"
