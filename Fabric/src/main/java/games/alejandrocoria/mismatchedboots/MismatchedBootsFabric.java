@@ -5,9 +5,12 @@ import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTabs;
 
 public class MismatchedBootsFabric implements ModInitializer {
     @Override
@@ -20,10 +23,15 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.ITEM,
                 ModContent.MIXED_BOOTS_ID,
                 new MixedBootsItem(ModContent.mixedBootsProperties().setId(ModContent.MIXED_BOOTS_KEY)));
-        Registry.register(
+        var workbench = Registry.register(
                 BuiltInRegistries.BLOCK,
                 ModContent.MISMATCHED_WORKBENCH_ID,
                 ModContent.createMismatchedWorkbenchBlock());
+        var workbenchItem = Registry.register(
+                BuiltInRegistries.ITEM,
+                ModContent.MISMATCHED_WORKBENCH_ID,
+                new BlockItem(workbench, ModContent.mismatchedWorkbenchItemProperties()
+                        .setId(ModContent.MISMATCHED_WORKBENCH_ITEM_KEY)));
         Registry.register(
                 BuiltInRegistries.MENU,
                 ModContent.MISMATCHED_WORKBENCH_ID,
@@ -44,6 +52,8 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_ID,
                 ModContent.createMixedBootsWorkbenchRecipeSerializer());
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
+                .register(output -> output.accept(workbenchItem));
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();

@@ -1,4 +1,5 @@
 {
+  "block.mismatchedboots.mismatched_workbench": "Mismatched Workbench",
   "item.mismatchedboots.mixed_boots": "Mismatched Boots",
   "tooltip.mismatchedboots.mixed_boots.left": "Izquierda: %s",
   "tooltip.mismatchedboots.mixed_boots.right": "Derecha: %s",

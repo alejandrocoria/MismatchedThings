@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "mismatchedboots:mismatched_workbench"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "mismatchedboots:blocks/mismatched_workbench"
+}

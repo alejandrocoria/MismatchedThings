@@ -23,6 +23,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 
 import java.util.Optional;
@@ -41,6 +42,8 @@ public final class ModContent {
     public static final Identifier MISMATCHED_WORKBENCH_ID = id(MISMATCHED_WORKBENCH_NAME);
     public static final Identifier MIXED_BOOTS_WORKBENCH_RECIPE_ID = id(MIXED_BOOTS_WORKBENCH_RECIPE_NAME);
     public static final ResourceKey<Item> MIXED_BOOTS_KEY = ResourceKey.create(Registries.ITEM, MIXED_BOOTS_ID);
+    public static final ResourceKey<Item> MISMATCHED_WORKBENCH_ITEM_KEY =
+            ResourceKey.create(Registries.ITEM, MISMATCHED_WORKBENCH_ID);
     public static final ResourceKey<Block> MISMATCHED_WORKBENCH_KEY =
             ResourceKey.create(Registries.BLOCK, MISMATCHED_WORKBENCH_ID);
 
@@ -78,10 +81,16 @@ public final class ModContent {
     public static MismatchedWorkbenchBlock createMismatchedWorkbenchBlock() {
         BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
                 .mapColor(MapColor.WOOD)
+                .instrument(NoteBlockInstrument.BASS)
                 .strength(2.5F)
                 .sound(SoundType.WOOD)
+                .ignitedByLava()
                 .setId(MISMATCHED_WORKBENCH_KEY);
         return new MismatchedWorkbenchBlock(properties);
+    }
+
+    public static Item.Properties mismatchedWorkbenchItemProperties() {
+        return new Item.Properties().useBlockDescriptionPrefix();
     }
 
     public static MenuType<MismatchedWorkbenchMenu> createMismatchedWorkbenchMenuType() {
@@ -90,6 +99,10 @@ public final class ModContent {
 
     public static Optional<Block> mismatchedWorkbenchBlock() {
         return Optional.ofNullable(BuiltInRegistries.BLOCK.getValue(MISMATCHED_WORKBENCH_ID));
+    }
+
+    public static Optional<Item> mismatchedWorkbenchItem() {
+        return Optional.ofNullable(BuiltInRegistries.ITEM.getValue(MISMATCHED_WORKBENCH_ID));
     }
 
     @SuppressWarnings("unchecked")

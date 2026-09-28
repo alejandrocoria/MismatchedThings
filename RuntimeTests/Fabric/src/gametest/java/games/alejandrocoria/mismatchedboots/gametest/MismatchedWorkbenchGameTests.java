@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
@@ -23,7 +22,7 @@ public final class MismatchedWorkbenchGameTests {
     private static final BlockPos WORKBENCH_POS = BlockPos.ZERO;
     private static final ResourceKey<Recipe<?>> TEST_RECIPE = ResourceKey.create(
             Registries.RECIPE,
-            Identifier.fromNamespaceAndPath("mismatchedboots-test", "mixed_boots_workbench"));
+            ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_ID);
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void previewTracksOrderedInputsAndInventoryRouting(GameTestHelper helper) {
