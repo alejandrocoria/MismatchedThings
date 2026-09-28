@@ -28,6 +28,14 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.SMITHING_BASE_RECIPE_ID,
                 ModContent.createSmithingBaseRecipeSerializer());
+        Registry.register(
+                BuiltInRegistries.RECIPE_TYPE,
+                ModContent.MISMATCHED_WORKBENCH_ID,
+                ModContent.mismatchedWorkbenchRecipeType());
+        Registry.register(
+                BuiltInRegistries.RECIPE_SERIALIZER,
+                ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_ID,
+                ModContent.createMixedBootsWorkbenchRecipeSerializer());
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();

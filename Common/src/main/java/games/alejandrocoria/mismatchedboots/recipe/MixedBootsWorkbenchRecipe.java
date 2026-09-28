@@ -1,0 +1,71 @@
+package games.alejandrocoria.mismatchedboots.recipe;
+
+import com.mojang.serialization.MapCodec;
+import games.alejandrocoria.mismatchedboots.Constants;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
+import games.alejandrocoria.mismatchedboots.data.BootHalf;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
+
+public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecipe {
+    private static final MixedBootsWorkbenchRecipe INSTANCE = new MixedBootsWorkbenchRecipe();
+    private static final MapCodec<MixedBootsWorkbenchRecipe> MAP_CODEC = MapCodec.unit(INSTANCE);
+    private static final StreamCodec<RegistryFriendlyByteBuf, MixedBootsWorkbenchRecipe> STREAM_CODEC =
+            StreamCodec.unit(INSTANCE);
+    public static final RecipeSerializer<MixedBootsWorkbenchRecipe> SERIALIZER =
+            new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
+
+    private final PairFactory pairFactory;
+
+    public MixedBootsWorkbenchRecipe() {
+        this(MixedBootsFactory::createPair);
+    }
+
+    MixedBootsWorkbenchRecipe(PairFactory pairFactory) {
+        this.pairFactory = pairFactory;
+    }
+
+    @Override
+    public boolean matches(MismatchedWorkbenchInput input, Level level) {
+        return BootHalf.isValidSource(input.left()) && BootHalf.isValidSource(input.right());
+    }
+
+    @Override
+    public MismatchedWorkbenchResult assemblePair(MismatchedWorkbenchInput input) {
+        if (!matches(input, null)) {
+            return MismatchedWorkbenchResult.EMPTY;
+        }
+
+        try {
+            MixedBootsPair pair = pairFactory.create(input.left().copy(), input.right().copy());
+            if (pair.primary().isEmpty() || pair.inverse().isEmpty()) {
+                Constants.LOG.debug("Rejected empty workbench output for {} and {}",
+                        BuiltInRegistries.ITEM.getKey(input.left().getItem()),
+                        BuiltInRegistries.ITEM.getKey(input.right().getItem()));
+                return MismatchedWorkbenchResult.EMPTY;
+            }
+            return new MismatchedWorkbenchResult(pair.primary(), pair.inverse());
+        } catch (IllegalArgumentException exception) {
+            Constants.LOG.debug("Rejected workbench composition for {} and {}: {}",
+                    BuiltInRegistries.ITEM.getKey(input.left().getItem()),
+                    BuiltInRegistries.ITEM.getKey(input.right().getItem()),
+                    exception.getMessage());
+            return MismatchedWorkbenchResult.EMPTY;
+        }
+    }
+
+    @Override
+    public RecipeSerializer<MixedBootsWorkbenchRecipe> getSerializer() {
+        return SERIALIZER;
+    }
+
+    @FunctionalInterface
+    interface PairFactory {
+        MixedBootsPair create(ItemStack left, ItemStack right);
+    }
+}
