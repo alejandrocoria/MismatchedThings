@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.content;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsSmithingBaseRecipe;
@@ -13,10 +14,16 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 
 import java.util.Optional;
 
@@ -34,6 +41,8 @@ public final class ModContent {
     public static final Identifier MISMATCHED_WORKBENCH_ID = id(MISMATCHED_WORKBENCH_NAME);
     public static final Identifier MIXED_BOOTS_WORKBENCH_RECIPE_ID = id(MIXED_BOOTS_WORKBENCH_RECIPE_NAME);
     public static final ResourceKey<Item> MIXED_BOOTS_KEY = ResourceKey.create(Registries.ITEM, MIXED_BOOTS_ID);
+    public static final ResourceKey<Block> MISMATCHED_WORKBENCH_KEY =
+            ResourceKey.create(Registries.BLOCK, MISMATCHED_WORKBENCH_ID);
 
     private ModContent() {
     }
@@ -64,6 +73,29 @@ public final class ModContent {
 
     public static RecipeSerializer<MixedBootsWorkbenchRecipe> createMixedBootsWorkbenchRecipeSerializer() {
         return MixedBootsWorkbenchRecipe.SERIALIZER;
+    }
+
+    public static MismatchedWorkbenchBlock createMismatchedWorkbenchBlock() {
+        BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
+                .mapColor(MapColor.WOOD)
+                .strength(2.5F)
+                .sound(SoundType.WOOD)
+                .setId(MISMATCHED_WORKBENCH_KEY);
+        return new MismatchedWorkbenchBlock(properties);
+    }
+
+    public static MenuType<MismatchedWorkbenchMenu> createMismatchedWorkbenchMenuType() {
+        return new MenuType<>(MismatchedWorkbenchMenu::new, FeatureFlags.VANILLA_SET);
+    }
+
+    public static Optional<Block> mismatchedWorkbenchBlock() {
+        return Optional.ofNullable(BuiltInRegistries.BLOCK.getValue(MISMATCHED_WORKBENCH_ID));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Optional<MenuType<MismatchedWorkbenchMenu>> mismatchedWorkbenchMenuType() {
+        return Optional.ofNullable((MenuType<MismatchedWorkbenchMenu>)
+                BuiltInRegistries.MENU.getValue(MISMATCHED_WORKBENCH_ID));
     }
 
     @SuppressWarnings("unchecked")

@@ -21,6 +21,14 @@ public class MismatchedBootsFabric implements ModInitializer {
                 ModContent.MIXED_BOOTS_ID,
                 new MixedBootsItem(ModContent.mixedBootsProperties().setId(ModContent.MIXED_BOOTS_KEY)));
         Registry.register(
+                BuiltInRegistries.BLOCK,
+                ModContent.MISMATCHED_WORKBENCH_ID,
+                ModContent.createMismatchedWorkbenchBlock());
+        Registry.register(
+                BuiltInRegistries.MENU,
+                ModContent.MISMATCHED_WORKBENCH_ID,
+                ModContent.createMismatchedWorkbenchMenuType());
+        Registry.register(
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.MIXED_BOOTS_RECIPE_ID,
                 ModContent.createMixedBootsRecipeSerializer());

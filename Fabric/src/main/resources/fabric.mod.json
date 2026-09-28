@@ -18,6 +18,7 @@
     "icon": "${mod_logo}",
 
     "environment": "*",
+    "accessWidener": "mismatchedboots.accesswidener",
     "entrypoints": {
         "main": [
             "games.alejandrocoria.mismatchedboots.MismatchedBootsFabric"
