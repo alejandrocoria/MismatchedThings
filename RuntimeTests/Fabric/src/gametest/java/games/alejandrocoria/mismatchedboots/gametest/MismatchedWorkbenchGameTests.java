@@ -49,11 +49,11 @@ public final class MismatchedWorkbenchGameTests {
         menu.getSlot(0).set(ItemStack.EMPTY);
         menu.getSlot(1).set(ItemStack.EMPTY);
         player.getInventory().setItem(9, new ItemStack(Items.IRON_BOOTS));
-        player.getInventory().setItem(40, new ItemStack(Items.GOLDEN_BOOTS));
+        player.getInventory().setItem(0, new ItemStack(Items.GOLDEN_BOOTS));
         helper.assertTrue(!menu.quickMoveStack(player, MismatchedWorkbenchMenu.PLAYER_INVENTORY_START).isEmpty(),
                 "Shift-click did not route a source from the main inventory");
-        helper.assertTrue(!menu.quickMoveStack(player, MismatchedWorkbenchMenu.OFFHAND_SLOT).isEmpty(),
-                "Shift-click did not route a source from the off hand");
+        helper.assertTrue(!menu.quickMoveStack(player, MismatchedWorkbenchMenu.HOTBAR_START).isEmpty(),
+                "Shift-click did not route a source from the hotbar");
         assertPair(helper, menu, Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "routed preview");
         helper.assertTrue(!menu.quickMoveStack(player, 0).isEmpty(),
                 "Shift-click did not return an uncommitted input");

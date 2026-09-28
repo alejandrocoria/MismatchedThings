@@ -9,7 +9,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -33,7 +32,6 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
     public static final int PLAYER_INVENTORY_END = 31;
     public static final int HOTBAR_START = 31;
     public static final int HOTBAR_END = 40;
-    public static final int OFFHAND_SLOT = 40;
 
     private final Player owner;
     private final ContainerLevelAccess access;
@@ -54,12 +52,11 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         this.access = access;
         this.inputs = new InputContainer();
 
-        this.addSlot(new InputSlot(inputs, 0, 62, 18));
-        this.addSlot(new InputSlot(inputs, 1, 98, 18));
-        this.addSlot(new OutputSlot(results, 0, 62, 54));
-        this.addSlot(new OutputSlot(results, 1, 98, 54));
-        this.addStandardInventorySlots(inventory, 8, 94);
-        this.addSlot(new OffhandSlot(inventory, owner, 174, 152));
+        this.addSlot(new InputSlot(inputs, 0, 69, 22));
+        this.addSlot(new InputSlot(inputs, 1, 91, 22));
+        this.addSlot(new OutputSlot(results, 0, 69, 66));
+        this.addSlot(new OutputSlot(results, 1, 91, 66));
+        this.addStandardInventorySlots(inventory, 8, 101);
         this.addDataSlot(committed);
     }
 
@@ -251,6 +248,11 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         public int getMaxStackSize() {
             return 1;
         }
+
+        @Override
+        public Identifier getNoItemIcon() {
+            return InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS;
+        }
     }
 
     private static boolean isValidInputItem(ItemStack stack) {
@@ -297,23 +299,4 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         }
     }
 
-    private static final class OffhandSlot extends Slot {
-        private final Player owner;
-
-        private OffhandSlot(Inventory inventory, Player owner, int x, int y) {
-            super(inventory, 40, x, y);
-            this.owner = owner;
-        }
-
-        @Override
-        public void setByPlayer(ItemStack stack, ItemStack previous) {
-            owner.onEquipItem(EquipmentSlot.OFFHAND, previous, stack);
-            super.setByPlayer(stack, previous);
-        }
-
-        @Override
-        public Identifier getNoItemIcon() {
-            return InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD;
-        }
-    }
 }

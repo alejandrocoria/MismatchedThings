@@ -24,5 +24,6 @@ public class MismatchedBootsNeoForge {
             ComponentRulesLifecycle.onServerStopped();
         });
         eventBus.addListener((FMLClientSetupEvent event) -> MismatchedBootsClientNeoForge.onClientSetup(event, eventBus));
+        eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
     }
 }

@@ -35,6 +35,7 @@
             "games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingRuntimeClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.NonGuiGeometryCharacterizationClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsClientGameTest",
+            "games.alejandrocoria.mismatchedboots.gametest.MismatchedWorkbenchClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.PersistenceClientGameTest",
             "games.alejandrocoria.mismatchedboots.client.render.EquippedRenderingClientGameTest"
