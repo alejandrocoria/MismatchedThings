@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
+import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.item.v1.ItemComponentTooltipProviderRegistry;
@@ -15,6 +16,7 @@ public final class FabricTooltipHookProbe implements ClientModInitializer {
     static final Component FINAL_LINE = Component.translatable("tooltip.mismatchedboots_test.fabric_final_hook");
 
     private static Observation observation;
+    private static int invocationCount;
 
     @Override
     public void onInitializeClient() {
@@ -24,6 +26,7 @@ public final class FabricTooltipHookProbe implements ClientModInitializer {
 
     static void reset() {
         observation = null;
+        invocationCount = 0;
     }
 
     static Observation observation() {
@@ -37,14 +40,20 @@ public final class FabricTooltipHookProbe implements ClientModInitializer {
         return observation != null;
     }
 
+    static int invocationCount() {
+        return invocationCount;
+    }
+
     private static void onTooltip(
             ItemStack stack,
             Item.TooltipContext context,
             TooltipFlag flag,
             List<Component> lines) {
-        if (!stack.has(TestContent.requireTooltipProbeComponent())) {
+        if (!stack.has(TestContent.requireTooltipProbeComponent())
+                && !ModContent.isMixedBoots(stack)) {
             return;
         }
+        invocationCount++;
         observation = new Observation(
                 stack,
                 context,

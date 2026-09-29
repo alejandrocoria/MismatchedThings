@@ -25,6 +25,8 @@ import net.minecraft.world.item.enchantment.Repairable;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public final class TestContent implements ModInitializer {
@@ -52,6 +54,8 @@ public final class TestContent implements ModInitializer {
     static Item UPGRADED_COMPONENT_BOOTS;
     static DataComponentType<TooltipProbe> TOOLTIP_PROBE_COMPONENT;
     static Item TOOLTIP_PROBE_ITEM;
+    private static final List<ItemTooltipObservation> ITEM_TOOLTIP_OBSERVATIONS = new ArrayList<>();
+    private static final List<ComponentTooltipObservation> COMPONENT_TOOLTIP_OBSERVATIONS = new ArrayList<>();
 
     @Override
     public void onInitialize() {
@@ -101,7 +105,10 @@ public final class TestContent implements ModInitializer {
         TOOLTIP_PROBE_ITEM = Registry.register(
                 BuiltInRegistries.ITEM,
                 TOOLTIP_PROBE_ITEM_ID,
-                new TooltipProbeItem(new Item.Properties().setId(TOOLTIP_PROBE_ITEM_KEY)));
+                new TooltipProbeItem(new Item.Properties()
+                        .stacksTo(1)
+                        .equippable(EquipmentSlot.FEET)
+                        .setId(TOOLTIP_PROBE_ITEM_KEY)));
     }
 
     static Item requireComponentBoots() {
@@ -139,6 +146,19 @@ public final class TestContent implements ModInitializer {
         return TOOLTIP_PROBE_ITEM;
     }
 
+    static void resetTooltipObservations() {
+        ITEM_TOOLTIP_OBSERVATIONS.clear();
+        COMPONENT_TOOLTIP_OBSERVATIONS.clear();
+    }
+
+    static List<ItemTooltipObservation> itemTooltipObservations() {
+        return List.copyOf(ITEM_TOOLTIP_OBSERVATIONS);
+    }
+
+    static List<ComponentTooltipObservation> componentTooltipObservations() {
+        return List.copyOf(COMPONENT_TOOLTIP_OBSERVATIONS);
+    }
+
     private static DataComponentType<String> stringComponent(Identifier id) {
         return Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -162,6 +182,8 @@ public final class TestContent implements ModInitializer {
                 Consumer<Component> consumer,
                 TooltipFlag flag,
                 DataComponentGetter components) {
+            COMPONENT_TOOLTIP_OBSERVATIONS.add(
+                    new ComponentTooltipObservation(context, flag, value));
             consumer.accept(Component.translatable("tooltip.mismatchedboots_test.component_probe", value));
         }
     }
@@ -179,7 +201,21 @@ public final class TestContent implements ModInitializer {
                 TooltipDisplay display,
                 Consumer<Component> tooltip,
                 TooltipFlag flag) {
+            ITEM_TOOLTIP_OBSERVATIONS.add(new ItemTooltipObservation(stack, context, display, flag));
             tooltip.accept(Component.translatable("tooltip.mismatchedboots_test.item_probe"));
         }
+    }
+
+    record ItemTooltipObservation(
+            ItemStack stack,
+            Item.TooltipContext context,
+            TooltipDisplay display,
+            TooltipFlag flag) {
+    }
+
+    record ComponentTooltipObservation(
+            Item.TooltipContext context,
+            TooltipFlag flag,
+            String value) {
     }
 }
