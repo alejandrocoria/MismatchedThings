@@ -141,7 +141,7 @@ loom {
             inherit server
             property("fabric-api.gametest")
             property("fabric-api.gametest.filter",
-                    "mismatchedboots-test:mismatched_workbench_content_game_tests_recipe_pack_removal_disables_only_composition")
+                    "mismatchedboots-test:mismatched_workbench_content_game_tests_recipe_pack_removal_disables_only_data_driven_transformations")
             property("mismatchedboots.test.workbenchRecipeReload", "true")
             property(
                     "fabric-api.gametest.report-file",
@@ -307,7 +307,7 @@ tasks.named('runDamageTagReload') {
 
 tasks.register('prepareWorkbenchRecipeReloadGameTest', Delete) {
     group = 'verification'
-    description = 'Clears the isolated workbench recipe-reload GameTest world.'
+    description = 'Clears the isolated recipe-removal GameTest world.'
     delete layout.buildDirectory.dir('run/workbenchRecipeReloadGameTest')
     doLast {
         def runDirectory = layout.buildDirectory.dir('run/workbenchRecipeReloadGameTest').get().asFile
@@ -329,7 +329,7 @@ tasks.register('verifyDamageTagReload') {
 
 tasks.register('verifyWorkbenchRecipeReload') {
     group = 'verification'
-    description = 'Checks independent data-pack removal of workbench composition.'
+    description = 'Checks data-pack removal of workbench composition and crafting repair.'
     dependsOn tasks.named('runWorkbenchRecipeReload')
 }
 

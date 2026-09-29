@@ -42,9 +42,9 @@ class MixedBootsGrindstonePolicyTest {
         assertFalse(MixedBootsGrindstonePolicy.rejects(mixed, ordinary));
         assertFalse(MixedBootsGrindstonePolicy.rejects(ordinary, mixed));
         assertFalse(MixedBootsGrindstonePolicy.rejects(mixed, otherSource));
-        assertTrue(MixedBootsGrindstonePolicy.canUseOrdinaryDonor(mixed, ordinary));
-        assertTrue(MixedBootsGrindstonePolicy.canUseOrdinaryDonor(mixed, otherSource));
-        assertFalse(MixedBootsGrindstonePolicy.canUseOrdinaryDonor(ordinary, mixed));
+        assertTrue(MixedBootsRepairPolicy.canUseOrdinaryDonor(mixed, ordinary));
+        assertTrue(MixedBootsRepairPolicy.canUseOrdinaryDonor(mixed, otherSource));
+        assertFalse(MixedBootsRepairPolicy.canUseOrdinaryDonor(ordinary, mixed));
         assertTrue(MixedBootsGrindstonePolicy.rejects(mixed, boots(Items.DIAMOND_BOOTS)));
         assertTrue(MixedBootsGrindstonePolicy.rejects(mixed, mixed));
         assertFalse(MixedBootsGrindstonePolicy.rejects(ordinary, ItemStack.EMPTY));
@@ -61,7 +61,7 @@ class MixedBootsGrindstonePolicyTest {
         ItemStack output = mixed.copy();
         output.set(DataComponents.MAX_DAMAGE, 500);
 
-        MixedBootsGrindstonePolicy.restoreDurability(output, mixed, donor);
+        MixedBootsRepairPolicy.restoreDurability(output, mixed, donor);
 
         assertEquals(200, output.getMaxDamage());
         assertEquals(130, output.getDamageValue());
@@ -70,13 +70,31 @@ class MixedBootsGrindstonePolicyTest {
         assertEquals(ModContent.getMixedBootsData(mixed), ModContent.getMixedBootsData(output));
 
         donor.setDamageValue(0);
-        MixedBootsGrindstonePolicy.restoreDurability(output, mixed, donor);
+        MixedBootsRepairPolicy.restoreDurability(output, mixed, donor);
         assertEquals(0, output.getDamageValue());
 
         mixed.setDamageValue(200);
         donor.setDamageValue(500);
-        MixedBootsGrindstonePolicy.restoreDurability(output, mixed, donor);
+        MixedBootsRepairPolicy.restoreDurability(output, mixed, donor);
         assertEquals(190, output.getDamageValue());
+    }
+
+    @Test
+    void calculatesTheFivePercentBonusWithoutIntegerOverflow() {
+        ItemStack mixed = mixed();
+        mixed.set(DataComponents.MAX_DAMAGE, Integer.MAX_VALUE);
+        mixed.setDamageValue(Integer.MAX_VALUE);
+        ItemStack donor = boots(Items.IRON_BOOTS);
+        donor.set(DataComponents.MAX_DAMAGE, Integer.MAX_VALUE);
+        donor.setDamageValue(Integer.MAX_VALUE);
+        ItemStack output = mixed.copy();
+
+        MixedBootsRepairPolicy.restoreDurability(output, mixed, donor);
+
+        int expectedDamage = (int) (Integer.MAX_VALUE - Integer.MAX_VALUE * 5L / 100L);
+        assertEquals(expectedDamage, output.getDamageValue());
+        assertEquals(Integer.MAX_VALUE, mixed.getDamageValue());
+        assertEquals(Integer.MAX_VALUE, donor.getDamageValue());
     }
 
     private static ItemStack mixed() {

@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsGrindstonePolicy;
+import games.alejandrocoria.mismatchedboots.interaction.MixedBootsRepairPolicy;
 import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.item.ItemStack;
@@ -30,13 +31,13 @@ abstract class GrindstoneMenuMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/GrindstoneMenu;mergeItems(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack mismatchedboots$orientAndRepair(
             GrindstoneMenu menu, ItemStack input, ItemStack additional, Operation<ItemStack> original) {
-        ItemStack mixed = MixedBootsGrindstonePolicy.canUseOrdinaryDonor(input, additional) ? input : additional;
+        ItemStack mixed = MixedBootsRepairPolicy.canUseOrdinaryDonor(input, additional) ? input : additional;
         ItemStack donor = mixed == input ? additional : input;
         if (!canRepair(mixed, donor)) {
             return original.call(menu, input, additional);
         }
         ItemStack result = original.call(menu, mixed, donor);
-        return MixedBootsGrindstonePolicy.restoreDurability(result, mixed, donor);
+        return MixedBootsRepairPolicy.restoreDurability(result, mixed, donor);
     }
 
     @ModifyExpressionValue(
@@ -50,7 +51,7 @@ abstract class GrindstoneMenuMixin {
     }
 
     private static boolean canRepair(ItemStack mixed, ItemStack donor) {
-        return MixedBootsGrindstonePolicy.canUseOrdinaryDonor(mixed, donor)
+        return MixedBootsRepairPolicy.canUseOrdinaryDonor(mixed, donor)
                 && Services.PLATFORM.canCombineRepair(mixed)
                 && Services.PLATFORM.canCombineRepair(donor);
     }

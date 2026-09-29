@@ -4,14 +4,20 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.FrontAndTop;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.CrafterBlockEntity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class CrafterGameTests {
     private static final BlockPos CRAFTER = BlockPos.ZERO;
@@ -71,6 +77,117 @@ public final class CrafterGameTests {
         });
     }
 
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void crafterRepairsAcrossRepeatedPulsesAndPreservesDisabledSlots(GameTestHelper helper) {
+        helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+        helper.setBlock(OUTPUT, Blocks.BARREL);
+        CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
+        Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
+        for (int slot = 1; slot < 8; slot++) {
+            crafter.setSlotState(slot, false);
+        }
+
+        ItemStack firstMixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        firstMixed.setDamageValue(firstMixed.getMaxDamage() - 5);
+        ItemStack firstDonor = new ItemStack(Items.IRON_BOOTS);
+        firstDonor.setDamageValue(firstDonor.getMaxDamage() - 3);
+        int firstExpectedDamage = expectedDamage(firstMixed, firstDonor);
+        var firstSources = GameTestStacks.data(firstMixed);
+        crafter.setItem(0, firstMixed);
+        crafter.setItem(8, firstDonor);
+
+        helper.pulseRedstone(POWER, 1);
+        helper.runAfterDelay(6, () -> {
+            List<ItemStack> firstOutputs = mixedOutputs(barrel);
+            helper.assertValueEqual(firstOutputs.size(), 1, "first Crafter repair output count");
+            helper.assertValueEqual(firstOutputs.getFirst().getDamageValue(), firstExpectedDamage,
+                    "first Crafter repair damage");
+            helper.assertTrue(GameTestStacks.data(firstOutputs.getFirst()).equals(firstSources),
+                    "First Crafter repair changed source snapshots");
+            assertCrafterConsumed(helper, crafter, "first repair pulse");
+            assertDisabledSlots(helper, crafter);
+
+            ItemStack secondDonor = new ItemStack(Items.GOLDEN_BOOTS);
+            ItemStack secondMixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+            var secondSources = GameTestStacks.data(secondMixed);
+            crafter.setItem(0, secondDonor);
+            crafter.setItem(8, secondMixed);
+            helper.pulseRedstone(POWER, 1);
+            helper.runAfterDelay(6, () -> {
+                List<ItemStack> outputs = mixedOutputs(barrel);
+                helper.assertValueEqual(outputs.size(), 2, "repeated Crafter repair output count");
+                ItemStack secondOutput = outputs.get(1);
+                helper.assertValueEqual(secondOutput.getDamageValue(), 0, "saturated Crafter repair damage");
+                helper.assertTrue(GameTestStacks.data(secondOutput).equals(secondSources),
+                        "Second Crafter repair changed source snapshots");
+                assertCrafterConsumed(helper, crafter, "second repair pulse");
+                assertDisabledSlots(helper, crafter);
+                helper.assertTrue(helper.getLevel().getEntities(
+                                EntityTypes.EXPERIENCE_ORB, helper.getBounds(), Entity::isAlive).isEmpty(),
+                        "Crafter repair created experience");
+                helper.succeed();
+            });
+        });
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void fullOutputContainerEjectsRepairWithoutLosingIt(GameTestHelper helper) {
+        helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+        helper.setBlock(OUTPUT, Blocks.BARREL);
+        CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
+        Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
+        for (int slot = 0; slot < barrel.getContainerSize(); slot++) {
+            barrel.setItem(slot, new ItemStack(Items.STONE, 64));
+        }
+        ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        var sources = GameTestStacks.data(mixed);
+        crafter.setItem(0, mixed);
+        crafter.setItem(8, new ItemStack(Items.IRON_BOOTS));
+
+        helper.pulseRedstone(POWER, 1);
+        helper.runAfterDelay(6, () -> {
+            assertCrafterConsumed(helper, crafter, "repair with full output container");
+            helper.assertTrue(barrel.countItem(Items.STONE) == barrel.getContainerSize() * 64,
+                    "Crafter changed a full output container");
+            List<ItemStack> drops = helper.getLevel().getEntitiesOfClass(
+                            ItemEntity.class, helper.getBounds().inflate(3.0), Entity::isAlive).stream()
+                    .map(ItemEntity::getItem)
+                    .filter(ModContent::isMixedBoots)
+                    .toList();
+            helper.assertValueEqual(drops.size(), 1, "ejected Crafter repair count");
+            helper.assertTrue(GameTestStacks.data(drops.getFirst()).equals(sources),
+                    "Ejected Crafter repair changed source snapshots");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void crafterRejectsInvalidRepairInputsWithoutConsumption(GameTestHelper helper) {
+        helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+        helper.setBlock(OUTPUT, Blocks.BARREL);
+        CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
+        Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
+
+        assertCrafterRejected(helper, crafter, barrel, List.of(
+                new SlottedStack(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS)),
+                new SlottedStack(8, new ItemStack(Items.DIAMOND_BOOTS))), "unrelated donor");
+        assertCrafterRejected(helper, crafter, barrel, List.of(
+                new SlottedStack(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS)),
+                new SlottedStack(8, GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).inverse())),
+                "Mixed/Mixed");
+        assertCrafterRejected(helper, crafter, barrel, List.of(
+                new SlottedStack(0, new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID))),
+                new SlottedStack(8, new ItemStack(Items.IRON_BOOTS))), "bare mixed stack");
+        assertCrafterRejected(helper, crafter, barrel, List.of(
+                new SlottedStack(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS)),
+                new SlottedStack(4, new ItemStack(Items.STONE)),
+                new SlottedStack(8, new ItemStack(Items.IRON_BOOTS))), "extra input");
+        helper.succeed();
+    }
+
     private static void assertInputsUnchanged(
             GameTestHelper helper,
             CrafterBlockEntity crafter,
@@ -94,5 +211,64 @@ public final class CrafterGameTests {
                         ItemEntity.class, helper.getBounds().inflate(3.0), Entity::isAlive).stream()
                         .noneMatch(entity -> ModContent.isMixedBoots(entity.getItem())),
                 description + " dispensed mixed boots");
+    }
+
+    private static void assertCrafterRejected(
+            GameTestHelper helper,
+            CrafterBlockEntity crafter,
+            Container output,
+            List<SlottedStack> inputs,
+            String description) {
+        crafter.clearContent();
+        output.clearContent();
+        List<ItemStack> before = new ArrayList<>(inputs.size());
+        for (SlottedStack input : inputs) {
+            crafter.setItem(input.slot(), input.stack());
+            before.add(input.stack().copy());
+        }
+
+        helper.tickBlock(CRAFTER);
+
+        for (int index = 0; index < inputs.size(); index++) {
+            SlottedStack input = inputs.get(index);
+            helper.assertTrue(ItemStack.matches(before.get(index), crafter.getItem(input.slot())),
+                    "Crafter " + description + " changed input " + input.slot());
+        }
+        helper.assertTrue(output.isEmpty(), "Crafter " + description + " inserted an output");
+        assertNoMixedDrops(helper, "Crafter " + description);
+    }
+
+    private static void assertCrafterConsumed(
+            GameTestHelper helper, CrafterBlockEntity crafter, String description) {
+        helper.assertTrue(crafter.getItem(0).isEmpty() && crafter.getItem(8).isEmpty(),
+                "Crafter did not consume both inputs after " + description);
+    }
+
+    private static void assertDisabledSlots(GameTestHelper helper, CrafterBlockEntity crafter) {
+        for (int slot = 1; slot < 8; slot++) {
+            helper.assertTrue(crafter.isSlotDisabled(slot), "Crafter slot " + slot + " became enabled");
+        }
+    }
+
+    private static List<ItemStack> mixedOutputs(Container container) {
+        List<ItemStack> outputs = new ArrayList<>();
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack stack = container.getItem(slot);
+            if (ModContent.isMixedBoots(stack)) {
+                outputs.add(stack);
+            }
+        }
+        return outputs;
+    }
+
+    private static int expectedDamage(ItemStack mixed, ItemStack donor) {
+        int maximum = mixed.getMaxDamage();
+        int remaining = maximum - mixed.getDamageValue()
+                + donor.getMaxDamage() - donor.getDamageValue()
+                + maximum * 5 / 100;
+        return Math.max(0, maximum - Math.min(maximum, remaining));
+    }
+
+    private record SlottedStack(int slot, ItemStack stack) {
     }
 }

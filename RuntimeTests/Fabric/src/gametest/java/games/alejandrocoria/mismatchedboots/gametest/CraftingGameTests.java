@@ -1,8 +1,12 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRepairRecipe;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractCraftingMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -12,14 +16,18 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.RepairItemRecipe;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RepairItemRecipe;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public final class CraftingGameTests {
+    private static final ResourceKey<Recipe<?>> MIXED_REPAIR_RECIPE = ResourceKey.create(
+            Registries.RECIPE, ModContent.MIXED_BOOTS_REPAIR_RECIPE_ID);
+
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void directCompositionRecipeIsAbsentFromEveryRepresentativeLayout(GameTestHelper helper) {
         int[][] playerLayouts = {{0, 1}, {0, 2}, {0, 3}, {1, 2}};
@@ -56,25 +64,47 @@ public final class CraftingGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void vanillaRepairRecipeCurrentlyProducesBareMixedBoots(GameTestHelper helper) {
+    public void loadedRepairRecipeAcceptsEitherSourceAndEitherOrder(GameTestHelper helper) {
         var pair = GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
-        ItemStack first = pair.primary();
-        ItemStack second = pair.inverse();
-        first.setDamageValue(Math.max(1, first.getMaxDamage() / 2));
-        second.setDamageValue(Math.max(1, second.getMaxDamage() / 2));
+        ItemStack mixed = pair.primary();
+        mixed.setDamageValue(Math.max(1, mixed.getMaxDamage() / 2));
 
-        CraftingInput input = input(2, 2, 0, first, 3, second);
-        var recipe = helper.getLevel().recipeAccess()
-                .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
-                .orElseThrow(() -> new AssertionError("Vanilla repair recipe did not accept two mixed stacks"));
-        helper.assertTrue(recipe.value() instanceof RepairItemRecipe,
-                "Two mixed stacks unexpectedly selected a non-vanilla repair recipe: " + recipe);
+        assertLoadedRepair(helper, mixed, new ItemStack(Items.IRON_BOOTS), 0, 3);
+        assertLoadedRepair(helper, new ItemStack(Items.IRON_BOOTS), mixed, 0, 3);
+        assertLoadedRepair(helper, mixed, new ItemStack(Items.GOLDEN_BOOTS), 1, 2);
+        assertLoadedRepair(helper, new ItemStack(Items.GOLDEN_BOOTS), mixed, 1, 2);
+        helper.succeed();
+    }
 
-        ItemStack output = recipe.value().assemble(input);
-        helper.assertTrue(output.is(ModContent.MIXED_BOOTS_KEY),
-                "Vanilla repair did not retain the mixed boots item identity");
-        helper.assertTrue(ModContent.getMixedBootsData(output).isEmpty(),
-                "Characterization changed: vanilla repair unexpectedly retained mixed boots data");
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void mixedInputsCannotReachTheVanillaRepairRecipe(GameTestHelper helper) {
+        var pair = GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        assertNoLoadedRecipe(helper, input(2, 2, 0, pair.primary(), 3, pair.inverse()),
+                "two mixed stacks");
+
+        ItemStack bareMixed = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+        assertNoLoadedRecipe(helper, input(2, 2, 0, bareMixed, 3, new ItemStack(Items.IRON_BOOTS)),
+                "bare mixed stack and ordinary donor");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void ordinaryCraftingRepairRemainsVanillaAndCompositionRemainsAbsent(GameTestHelper helper) {
+        ItemStack firstIron = new ItemStack(Items.IRON_BOOTS);
+        ItemStack secondIron = new ItemStack(Items.IRON_BOOTS);
+        firstIron.setDamageValue(Math.max(1, firstIron.getMaxDamage() / 2));
+        secondIron.setDamageValue(Math.max(1, secondIron.getMaxDamage() / 2));
+        CraftingInput repairInput = input(2, 2, 0, firstIron, 3, secondIron);
+        var repair = helper.getLevel().recipeAccess()
+                .getRecipeFor(RecipeType.CRAFTING, repairInput, helper.getLevel())
+                .orElseThrow(() -> new AssertionError("Ordinary vanilla repair recipe disappeared"));
+        helper.assertTrue(repair.value() instanceof RepairItemRecipe,
+                "Ordinary repair selected a non-vanilla recipe: " + repair);
+        helper.assertTrue(repair.value().assemble(repairInput).is(Items.IRON_BOOTS),
+                "Ordinary vanilla repair produced the wrong item");
+
+        assertNoLoadedRecipe(helper, input(2, 2, 0, new ItemStack(Items.IRON_BOOTS),
+                3, new ItemStack(Items.GOLDEN_BOOTS)), "two ordinary source boots");
         helper.succeed();
     }
 
@@ -92,6 +122,33 @@ public final class CraftingGameTests {
                 "Direct composition recipe remained for " + width + "x" + height
                         + " layout " + firstSlot + "/" + secondSlot
                         + " and order " + first + "/" + second + ": " + recipe);
+    }
+
+    private static void assertLoadedRepair(
+            GameTestHelper helper,
+            ItemStack first,
+            ItemStack second,
+            int firstSlot,
+            int secondSlot) {
+        CraftingInput input = input(2, 2, firstSlot, first, secondSlot, second);
+        var recipe = helper.getLevel().recipeAccess()
+                .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
+                .orElseThrow(() -> new AssertionError("Mixed repair recipe did not load or match"));
+        helper.assertTrue(recipe.id().equals(MIXED_REPAIR_RECIPE),
+                "Mixed repair selected the wrong recipe ID: " + recipe.id());
+        helper.assertTrue(recipe.value() instanceof MixedBootsRepairRecipe,
+                "Mixed repair selected the wrong recipe implementation: " + recipe);
+        ItemStack mixed = ModContent.isMixedBoots(first) ? first : second;
+        ItemStack output = recipe.value().assemble(input);
+        helper.assertTrue(output.is(ModContent.MIXED_BOOTS_KEY),
+                "Mixed repair did not retain the mixed item identity");
+        helper.assertTrue(ModContent.getMixedBootsData(output).equals(ModContent.getMixedBootsData(mixed)),
+                "Mixed repair did not retain the exact source data");
+    }
+
+    private static void assertNoLoadedRecipe(GameTestHelper helper, CraftingInput input, String description) {
+        var recipe = helper.getLevel().recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel());
+        helper.assertTrue(recipe.isEmpty(), description + " unexpectedly selected a recipe: " + recipe);
     }
 
     private static void assertNoMenuComposition(

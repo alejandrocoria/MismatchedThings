@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
+import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRepairRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsSmithingBaseRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import net.minecraft.core.component.DataComponentType;
@@ -32,11 +33,13 @@ public final class ModContent {
     public static final String MIXED_BOOTS_DATA_NAME = "mixed_boots_data";
     public static final String SMITHING_BASE_RECIPE_NAME = "smithing_base";
     public static final String MISMATCHED_WORKBENCH_NAME = "mismatched_workbench";
+    public static final String MIXED_BOOTS_REPAIR_RECIPE_NAME = "mixed_boots_repair";
     public static final String MIXED_BOOTS_WORKBENCH_RECIPE_NAME = "mixed_boots_workbench";
     public static final Identifier MIXED_BOOTS_ID = id(MIXED_BOOTS_NAME);
     public static final Identifier MIXED_BOOTS_DATA_ID = id(MIXED_BOOTS_DATA_NAME);
     public static final Identifier SMITHING_BASE_RECIPE_ID = id(SMITHING_BASE_RECIPE_NAME);
     public static final Identifier MISMATCHED_WORKBENCH_ID = id(MISMATCHED_WORKBENCH_NAME);
+    public static final Identifier MIXED_BOOTS_REPAIR_RECIPE_ID = id(MIXED_BOOTS_REPAIR_RECIPE_NAME);
     public static final Identifier MIXED_BOOTS_WORKBENCH_RECIPE_ID = id(MIXED_BOOTS_WORKBENCH_RECIPE_NAME);
     public static final ResourceKey<Item> MIXED_BOOTS_KEY = ResourceKey.create(Registries.ITEM, MIXED_BOOTS_ID);
     public static final ResourceKey<Item> MISMATCHED_WORKBENCH_ITEM_KEY =
@@ -65,6 +68,10 @@ public final class ModContent {
 
     public static RecipeType<MismatchedWorkbenchRecipe> mismatchedWorkbenchRecipeType() {
         return MismatchedWorkbenchRecipe.TYPE;
+    }
+
+    public static RecipeSerializer<MixedBootsRepairRecipe> createMixedBootsRepairRecipeSerializer() {
+        return MixedBootsRepairRecipe.SERIALIZER;
     }
 
     public static RecipeSerializer<MixedBootsWorkbenchRecipe> createMixedBootsWorkbenchRecipeSerializer() {

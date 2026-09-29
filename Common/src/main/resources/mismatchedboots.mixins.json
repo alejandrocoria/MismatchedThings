@@ -7,6 +7,7 @@
     "GrindstoneMenuMixin",
     "GrindstoneResultSlotXpMixin",
     "ItemCombinerMenuMixin",
+    "RepairItemRecipeMixin",
     "SmithingMenuMixin"
   ],
   "injectors": {

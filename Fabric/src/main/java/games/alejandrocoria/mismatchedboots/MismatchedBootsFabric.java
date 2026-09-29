@@ -41,6 +41,10 @@ public class MismatchedBootsFabric implements ModInitializer {
                 ModContent.SMITHING_BASE_RECIPE_ID,
                 ModContent.createSmithingBaseRecipeSerializer());
         Registry.register(
+                BuiltInRegistries.RECIPE_SERIALIZER,
+                ModContent.MIXED_BOOTS_REPAIR_RECIPE_ID,
+                ModContent.createMixedBootsRepairRecipeSerializer());
+        Registry.register(
                 BuiltInRegistries.RECIPE_TYPE,
                 ModContent.MISMATCHED_WORKBENCH_ID,
                 ModContent.mismatchedWorkbenchRecipeType());

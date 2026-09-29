@@ -38,6 +38,9 @@ final class ModRegistries {
         RECIPE_TYPES.register(ModContent.MISMATCHED_WORKBENCH_NAME, ModContent::mismatchedWorkbenchRecipeType);
         RECIPE_SERIALIZERS.register(ModContent.SMITHING_BASE_RECIPE_NAME, ModContent::createSmithingBaseRecipeSerializer);
         RECIPE_SERIALIZERS.register(
+                ModContent.MIXED_BOOTS_REPAIR_RECIPE_NAME,
+                ModContent::createMixedBootsRepairRecipeSerializer);
+        RECIPE_SERIALIZERS.register(
                 ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_NAME,
                 ModContent::createMixedBootsWorkbenchRecipeSerializer);
     }

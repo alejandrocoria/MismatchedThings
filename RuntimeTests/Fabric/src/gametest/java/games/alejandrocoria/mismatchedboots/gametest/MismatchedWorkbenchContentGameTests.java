@@ -32,6 +32,7 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RepairItemRecipe;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
@@ -47,13 +48,15 @@ import java.util.List;
 @SuppressWarnings("removal")
 public final class MismatchedWorkbenchContentGameTests {
     private static final String RELOAD_PROPERTY = "mismatchedboots.test.workbenchRecipeReload";
-    private static final String DISABLING_PACK_NAME = "mismatchedboots-disable-workbench-composition";
+    private static final String DISABLING_PACK_NAME = "mismatchedboots-disable-data-recipes";
     private static final String DISABLING_PACK_ID = "file/" + DISABLING_PACK_NAME;
     private static final BlockPos WORKBENCH_POS = BlockPos.ZERO;
     private static final ResourceKey<Recipe<?>> BLOCK_RECIPE = ResourceKey.create(
             Registries.RECIPE, ModContent.MISMATCHED_WORKBENCH_ID);
     private static final ResourceKey<Recipe<?>> COMPOSITION_RECIPE = ResourceKey.create(
             Registries.RECIPE, ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_ID);
+    private static final ResourceKey<Recipe<?>> REPAIR_RECIPE = ResourceKey.create(
+            Registries.RECIPE, ModContent.MIXED_BOOTS_REPAIR_RECIPE_ID);
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void shapedRecipeUsesSelectedPatternAndConsumesShears(GameTestHelper helper) {
@@ -194,7 +197,7 @@ public final class MismatchedWorkbenchContentGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE, maxTicks = 1200)
-    public void recipePackRemovalDisablesOnlyComposition(GameTestHelper helper) {
+    public void recipePackRemovalDisablesOnlyDataDrivenTransformations(GameTestHelper helper) {
         if (!Boolean.getBoolean(RELOAD_PROPERTY)) {
             helper.succeed();
             return;
@@ -214,8 +217,10 @@ public final class MismatchedWorkbenchContentGameTests {
 
             helper.assertTrue(server.getRecipeManager().byKey(COMPOSITION_RECIPE).isEmpty(),
                     "Disabled workbench composition recipe remained loaded");
+            helper.assertTrue(server.getRecipeManager().byKey(REPAIR_RECIPE).isEmpty(),
+                    "Disabled crafting repair recipe remained loaded");
             helper.assertTrue(server.getRecipeManager().byKey(BLOCK_RECIPE).isPresent(),
-                    "Removing composition also removed the block acquisition recipe");
+                    "Removing data-driven transformations also removed the block acquisition recipe");
             ServerPlayer player = helper.makeMockServerPlayerInLevel();
             helper.setBlock(WORKBENCH_POS, ModContent.mismatchedWorkbenchBlock().orElseThrow());
             MismatchedWorkbenchMenu menu = new MismatchedWorkbenchMenu(
@@ -229,12 +234,35 @@ public final class MismatchedWorkbenchContentGameTests {
                             Items.OAK_PLANKS, Items.OAK_PLANKS, Items.OAK_PLANKS,
                             Items.OAK_PLANKS, Items.OAK_PLANKS, Items.OAK_PLANKS), helper.getLevel()),
                     "Block acquisition recipe stopped matching after composition removal");
+            CraftingInput disabledRepair = CraftingInput.of(2, 1, List.of(
+                    GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS),
+                    new ItemStack(Items.IRON_BOOTS)));
+            helper.assertTrue(helper.getLevel().recipeAccess()
+                            .getRecipeFor(RecipeType.CRAFTING, disabledRepair, helper.getLevel()).isEmpty(),
+                    "Removed crafting repair recipe still matched a source donor");
+            CraftingInput mixedPair = CraftingInput.of(2, 1, List.of(
+                    GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).primary(),
+                    GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).inverse()));
+            helper.assertTrue(helper.getLevel().recipeAccess()
+                            .getRecipeFor(RecipeType.CRAFTING, mixedPair, helper.getLevel()).isEmpty(),
+                    "Removing crafting repair restored vanilla's bare Mixed/Mixed result");
+            CraftingInput ordinaryRepair = CraftingInput.of(2, 1, List.of(
+                    new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.IRON_BOOTS)));
+            var ordinaryRecipe = helper.getLevel().recipeAccess()
+                    .getRecipeFor(RecipeType.CRAFTING, ordinaryRepair, helper.getLevel())
+                    .orElseThrow(() -> new AssertionError("Removing mixed repair removed vanilla repair"));
+            helper.assertTrue(ordinaryRecipe.value() instanceof RepairItemRecipe,
+                    "Ordinary repair selected the wrong recipe after data-pack removal: " + ordinaryRecipe);
             menu.removed(player);
         } catch (IOException exception) {
             throw new AssertionError("Could not prepare the workbench recipe-removal data pack", exception);
         } finally {
             server.reloadResources(originalPacks).join();
         }
+        helper.assertTrue(server.getRecipeManager().byKey(COMPOSITION_RECIPE).isPresent(),
+                "Normal workbench composition recipe was not restored");
+        helper.assertTrue(server.getRecipeManager().byKey(REPAIR_RECIPE).isPresent(),
+                "Normal crafting repair recipe was not restored");
         helper.succeed();
     }
 
@@ -280,7 +308,7 @@ public final class MismatchedWorkbenchContentGameTests {
         PackFormat version = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
         Files.createDirectories(pack);
         Files.writeString(pack.resolve("pack.mcmeta"), """
-                {"pack":{"description":"Disable Mismatched Workbench composition",
+                {"pack":{"description":"Disable MismatchedBoots data recipes",
                 "min_format":[%d,%d],"max_format":[%d,%d]}}
                 """.formatted(version.major(), version.minor(), version.major(), version.minor()),
                 StandardCharsets.UTF_8);
@@ -289,6 +317,11 @@ public final class MismatchedWorkbenchContentGameTests {
         Files.writeString(recipe, """
                 {"fabric:load_conditions":[{"condition":"fabric:false"}],
                 "type":"mismatchedboots:mixed_boots_workbench"}
+                """, StandardCharsets.UTF_8);
+        Path repair = pack.resolve("data/mismatchedboots/recipe/mixed_boots_repair.json");
+        Files.writeString(repair, """
+                {"fabric:load_conditions":[{"condition":"fabric:false"}],
+                "type":"mismatchedboots:mixed_boots_repair"}
                 """, StandardCharsets.UTF_8);
     }
 }

@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRepairRecipe;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponentMap;
@@ -28,6 +29,9 @@ class NeoForgeMixedBootsItemTest {
     void productionRegistrationUsesTheNeoForgeItemHook() {
         assertInstanceOf(NeoForgeMixedBootsItem.class,
                 BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+        assertTrue(BuiltInRegistries.RECIPE_SERIALIZER.getValue(
+                        ModContent.MIXED_BOOTS_REPAIR_RECIPE_ID) == MixedBootsRepairRecipe.SERIALIZER,
+                "Crafting repair serializer is not registered");
     }
 
     @Test
