@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsGrindstoneXpPolicy;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.Holder;
@@ -7,6 +8,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.GrindstoneMenu;
@@ -15,6 +17,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 
@@ -160,6 +163,9 @@ public final class WorkstationGameTests {
         helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
                 "grindstone donor prior-work cost");
         helper.assertValueEqual(grindstoneExperience(helper), 0, "experience before donor extraction");
+        int mixedPotential = grindstoneExperiencePotential(mixed);
+        int totalPotential = MixedBootsGrindstoneXpPolicy.adjustPotential(mixed, mixedPotential)
+                + grindstoneExperiencePotential(donor);
 
         ItemStack taken = menu.quickMoveStack(player, GrindstoneMenu.RESULT_SLOT);
         helper.assertTrue(!taken.isEmpty(), "Grindstone donor result could not be extracted");
@@ -170,11 +176,12 @@ public final class WorkstationGameTests {
                 "Grindstone did not consume its first input");
         helper.assertTrue(menu.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
                 "Grindstone did not consume its second input");
-        int totalPotential = 1 + protection.value().getMinCost(4);
         int minimumXp = (totalPotential + 1) / 2;
         int experience = grindstoneExperience(helper);
         helper.assertTrue(experience >= minimumXp && experience < minimumXp * 2,
-                "Ordinary donor did not contribute full XP potential: " + experience);
+                "Mixed target and ordinary donor XP " + experience + " was outside vanilla range "
+                        + minimumXp + ".." + (minimumXp * 2 - 1)
+                        + " for potential " + totalPotential);
         helper.succeed();
     }
 
@@ -533,6 +540,17 @@ public final class WorkstationGameTests {
         return helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
                         helper.getBounds().inflate(1.0), net.minecraft.world.entity.Entity::isAlive).stream()
                 .mapToInt(net.minecraft.world.entity.ExperienceOrb::getValue).sum();
+    }
+
+    private static int grindstoneExperiencePotential(ItemStack stack) {
+        int potential = 0;
+        ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(stack);
+        for (var entry : enchantments.entrySet()) {
+            if (!entry.getKey().is(EnchantmentTags.CURSE)) {
+                potential += entry.getKey().value().getMinCost(entry.getIntValue());
+            }
+        }
+        return potential;
     }
 
     private static void assertMaterialRepair(
