@@ -12,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RepairItemRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
 
 import java.util.ArrayList;
@@ -51,6 +52,29 @@ public final class CraftingGameTests {
 
         helper.assertTrue(player.getInventory().getNonEquipmentItems().stream().noneMatch(ModContent::isMixedBoots),
                 "Ordinary crafting inserted mixed boots into the player inventory");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void vanillaRepairRecipeCurrentlyProducesBareMixedBoots(GameTestHelper helper) {
+        var pair = GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        ItemStack first = pair.primary();
+        ItemStack second = pair.inverse();
+        first.setDamageValue(Math.max(1, first.getMaxDamage() / 2));
+        second.setDamageValue(Math.max(1, second.getMaxDamage() / 2));
+
+        CraftingInput input = input(2, 2, 0, first, 3, second);
+        var recipe = helper.getLevel().recipeAccess()
+                .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
+                .orElseThrow(() -> new AssertionError("Vanilla repair recipe did not accept two mixed stacks"));
+        helper.assertTrue(recipe.value() instanceof RepairItemRecipe,
+                "Two mixed stacks unexpectedly selected a non-vanilla repair recipe: " + recipe);
+
+        ItemStack output = recipe.value().assemble(input);
+        helper.assertTrue(output.is(ModContent.MIXED_BOOTS_KEY),
+                "Vanilla repair did not retain the mixed boots item identity");
+        helper.assertTrue(ModContent.getMixedBootsData(output).isEmpty(),
+                "Characterization changed: vanilla repair unexpectedly retained mixed boots data");
         helper.succeed();
     }
 
