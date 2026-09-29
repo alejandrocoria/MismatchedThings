@@ -3,9 +3,9 @@
   "textures": {
     "down": "minecraft:block/oak_planks",
     "east": "mismatchedboots:block/mismatched_workbench_side",
-    "north": "mismatchedboots:block/mismatched_workbench_side",
+    "north": "mismatchedboots:block/mismatched_workbench_front",
     "particle": "mismatchedboots:block/mismatched_workbench_side",
-    "south": "mismatchedboots:block/mismatched_workbench_side",
+    "south": "mismatchedboots:block/mismatched_workbench_front",
     "up": "mismatchedboots:block/mismatched_workbench_top",
     "west": "mismatchedboots:block/mismatched_workbench_side"
   }
