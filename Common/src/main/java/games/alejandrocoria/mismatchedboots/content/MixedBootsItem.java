@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.content;
 
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.tooltip.MixedBootsTooltipFormatter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -30,11 +31,6 @@ public class MixedBootsItem extends Item {
             return;
         }
 
-        tooltip.accept(Component.translatable(
-                        "tooltip.mismatchedboots.mixed_boots.left", data.left().source().getHoverName())
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.accept(Component.translatable(
-                        "tooltip.mismatchedboots.mixed_boots.right", data.right().source().getHoverName())
-                .withStyle(ChatFormatting.GRAY));
+        MixedBootsTooltipFormatter.appendSourceSections(data, context, tooltip);
     }
 }

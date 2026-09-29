@@ -7,10 +7,13 @@ import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.RegistryOps;
@@ -23,6 +26,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
+import net.minecraft.world.item.equipment.trim.TrimMaterials;
+import net.minecraft.world.item.equipment.trim.TrimPatterns;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 
@@ -78,6 +87,11 @@ public final class CompatibilityGameTests {
                 Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
         assertTranslation(helper, invalidTooltip,
                 "tooltip.mismatchedboots.mixed_boots.invalid", "invalid-stack tooltip");
+        helper.assertTrue(indexOfTranslation(invalidTooltip,
+                        "tooltip.mismatchedboots.mixed_boots.left") < 0
+                        && indexOfTranslation(invalidTooltip,
+                        "tooltip.mismatchedboots.mixed_boots.right") < 0,
+                "Invalid stack tooltip exposed partial source regions: " + invalidTooltip);
 
         ItemStack left = new ItemStack(TestContent.requireComponentBoots());
         left.set(DataComponents.CUSTOM_NAME, Component.literal("Fixture Left"));
@@ -113,6 +127,91 @@ public final class CompatibilityGameTests {
                 "Creative tab control item was unavailable");
         helper.assertTrue(creativeEntries.stream().noneMatch(stack -> stack.is(ModContent.MIXED_BOOTS_KEY)),
                 "Creative tabs exposed a bare mixed stack without source data");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void registeredWorkbenchOutputsExposeSourceRegionsAndLiveRootDetails(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        var registryAccess = helper.getLevel().registryAccess();
+        var trimMaterials = registryAccess.lookupOrThrow(Registries.TRIM_MATERIAL);
+        var trimPatterns = registryAccess.lookupOrThrow(Registries.TRIM_PATTERN);
+        var enchantments = registryAccess.lookupOrThrow(Registries.ENCHANTMENT);
+        var leftPattern = trimPatterns.getOrThrow(TrimPatterns.COAST);
+        var rightPattern = trimPatterns.getOrThrow(TrimPatterns.DUNE);
+        var rootPattern = trimPatterns.getOrThrow(TrimPatterns.RIB);
+        ArmorTrim leftTrim = new ArmorTrim(
+                trimMaterials.getOrThrow(TrimMaterials.QUARTZ), leftPattern);
+        ArmorTrim rightTrim = new ArmorTrim(
+                trimMaterials.getOrThrow(TrimMaterials.REDSTONE), rightPattern);
+        ArmorTrim rootTrim = new ArmorTrim(
+                trimMaterials.getOrThrow(TrimMaterials.GOLD), rootPattern);
+        var unbreaking = enchantments.getOrThrow(Enchantments.UNBREAKING);
+
+        ItemStack left = new ItemStack(Items.IRON_BOOTS);
+        left.set(DataComponents.TRIM, leftTrim);
+        left.setDamageValue(20);
+        setEnchantment(left, unbreaking, 1);
+        ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
+        right.set(DataComponents.TRIM, rightTrim);
+        right.setDamageValue(10);
+        setEnchantment(right, unbreaking, 2);
+        ItemStack leftBefore = left.copy();
+        ItemStack rightBefore = right.copy();
+
+        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
+        var recipe = helper.getLevel().recipeAccess()
+                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
+                .orElseThrow(() -> new AssertionError("Live workbench recipe rejected tooltip fixtures"));
+        var result = recipe.value().assemblePair(input);
+        helper.assertTrue(result.isComplete(), "Live workbench recipe did not create tooltip outputs");
+        ItemStack primary = result.primary();
+        ItemStack inverse = result.inverse();
+        primary.set(DataComponents.TRIM, rootTrim);
+        inverse.set(DataComponents.TRIM, rootTrim);
+        Component rootName = Component.literal("Renamed Mismatched Boots");
+        primary.set(DataComponents.CUSTOM_NAME, rootName);
+        inverse.set(DataComponents.CUSTOM_NAME, rootName);
+        ItemStack primaryBefore = primary.copy();
+        ItemStack inverseBefore = inverse.copy();
+        MixedBootsData primaryDataBefore = GameTestStacks.data(primary);
+        MixedBootsData inverseDataBefore = GameTestStacks.data(inverse);
+        Item.TooltipContext context = Item.TooltipContext.of(helper.getLevel());
+
+        List<Component> primaryNormal = primary.getTooltipLines(context, player, TooltipFlag.NORMAL);
+        List<Component> inverseNormal = inverse.getTooltipLines(context, player, TooltipFlag.NORMAL);
+        List<Component> primaryAdvanced = primary.getTooltipLines(context, player, TooltipFlag.ADVANCED);
+
+        helper.assertTrue(primaryNormal.getFirst().equals(primary.getStyledHoverName())
+                        && primaryNormal.getFirst().getString().equals(rootName.getString()),
+                "Renamed root title was not kept separate from source identities: " + primaryNormal);
+        assertTooltipLayout(helper, primaryNormal, leftPattern.value().description(),
+                rightPattern.value().description(), rootPattern.value().description(), unbreaking,
+                primary.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(unbreaking),
+                "primary");
+        assertTooltipLayout(helper, inverseNormal, rightPattern.value().description(),
+                leftPattern.value().description(), rootPattern.value().description(), unbreaking,
+                inverse.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(unbreaking),
+                "inverse");
+
+        helper.assertValueEqual(countTranslation(primaryAdvanced, "item.durability"), 1L,
+                "advanced live-root durability lines");
+        helper.assertValueEqual(countTranslation(primaryAdvanced, "item.components"), 1L,
+                "advanced live-root component-count lines");
+        helper.assertTrue(indexOfText(primaryAdvanced, ModContent.MIXED_BOOTS_ID.toString()) >= 0,
+                "Advanced tooltip omitted the registered root item ID: " + primaryAdvanced);
+        helper.assertTrue(indexOfText(primaryAdvanced, "minecraft:iron_boots") < 0
+                        && indexOfText(primaryAdvanced, "minecraft:golden_boots") < 0,
+                "Advanced tooltip exposed historical source diagnostics: " + primaryAdvanced);
+
+        helper.assertTrue(ItemStack.matches(leftBefore, left) && ItemStack.matches(rightBefore, right),
+                "Workbench tooltip fixture inputs were mutated");
+        helper.assertTrue(ItemStack.matches(primaryBefore, primary)
+                        && ItemStack.matches(inverseBefore, inverse),
+                "Tooltip generation mutated a registered workbench output");
+        helper.assertTrue(primaryDataBefore.equals(GameTestStacks.data(primary))
+                        && inverseDataBefore.equals(GameTestStacks.data(inverse)),
+                "Tooltip generation mutated source snapshots");
         helper.succeed();
     }
 
@@ -222,6 +321,115 @@ public final class CompatibilityGameTests {
             Component component = lines.get(index);
             if (component.getContents() instanceof TranslatableContents contents
                     && contents.getKey().equals(key)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static void assertTooltipLayout(
+            GameTestHelper helper,
+            List<Component> lines,
+            Component expectedLeftTrim,
+            Component expectedRightTrim,
+            Component expectedRootTrim,
+            Holder<Enchantment> rootEnchantment,
+            int rootEnchantmentLevel,
+            String description) {
+        int left = indexOfTranslation(lines, "tooltip.mismatchedboots.mixed_boots.left");
+        int right = indexOfTranslation(lines, "tooltip.mismatchedboots.mixed_boots.right");
+        int leftTrim = indexContainingComponent(lines, expectedLeftTrim);
+        int rightTrim = indexContainingComponent(lines, expectedRightTrim);
+        int rootTrim = lastIndexContainingComponent(lines, expectedRootTrim);
+        int rootAttributes = indexOfTranslation(lines, "item.modifiers.feet");
+        Component effectiveEnchantment = Enchantment.getFullname(rootEnchantment, rootEnchantmentLevel);
+
+        helper.assertTrue(left == 1 && leftTrim > left,
+                description + " left source region was misplaced: " + lines);
+        helper.assertTrue(right > leftTrim && rightTrim > right,
+                description + " right source region was misplaced: " + lines);
+        helper.assertTrue(rootTrim > rightTrim && rootAttributes > rootTrim,
+                description + " live root region was misplaced: " + lines);
+        helper.assertTrue(hasEmptyBetween(lines, leftTrim, right)
+                        && hasEmptyBetween(lines, rightTrim, rootTrim),
+                description + " source boundaries lacked separators: " + lines);
+        helper.assertValueEqual(countTranslation(lines, "item.minecraft.smithing_template.upgrade"), 3L,
+                description + " trim section count");
+        helper.assertValueEqual(countTranslation(lines, "item.modifiers.feet"), 1L,
+                description + " live-root attribute section count");
+        helper.assertValueEqual(lines.stream().filter(effectiveEnchantment::equals).count(), 1L,
+                description + " effective enchantment line count");
+    }
+
+    private static void setEnchantment(
+            ItemStack stack, Holder<Enchantment> enchantment, int level) {
+        ItemEnchantments.Mutable values = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        values.set(enchantment, level);
+        stack.set(DataComponents.ENCHANTMENTS, values.toImmutable());
+    }
+
+    private static boolean hasEmptyBetween(List<Component> lines, int startExclusive, int endExclusive) {
+        for (int index = startExclusive + 1; index < endExclusive; index++) {
+            if (CommonComponents.EMPTY.equals(lines.get(index))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static long countTranslation(List<Component> lines, String key) {
+        return lines.stream().filter(line -> containsTranslation(line, key)).count();
+    }
+
+    private static int indexContainingComponent(List<Component> lines, Component expected) {
+        for (int index = 0; index < lines.size(); index++) {
+            if (containsComponent(lines.get(index), expected)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static int lastIndexContainingComponent(List<Component> lines, Component expected) {
+        for (int index = lines.size() - 1; index >= 0; index--) {
+            if (containsComponent(lines.get(index), expected)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean containsComponent(Component component, Component expected) {
+        if (component.getContents().equals(expected.getContents())) {
+            return true;
+        }
+        if (component.getContents() instanceof TranslatableContents contents) {
+            for (Object argument : contents.getArgs()) {
+                if (argument instanceof Component nested && containsComponent(nested, expected)) {
+                    return true;
+                }
+            }
+        }
+        return component.getSiblings().stream().anyMatch(sibling -> containsComponent(sibling, expected));
+    }
+
+    private static boolean containsTranslation(Component component, String key) {
+        if (component.getContents() instanceof TranslatableContents contents) {
+            if (contents.getKey().equals(key)) {
+                return true;
+            }
+            for (Object argument : contents.getArgs()) {
+                if (argument instanceof Component nested && containsTranslation(nested, key)) {
+                    return true;
+                }
+            }
+        }
+        return component.getSiblings().stream().anyMatch(sibling -> containsTranslation(sibling, key));
+    }
+
+    private static int indexOfText(List<Component> lines, String text) {
+        for (int index = 0; index < lines.size(); index++) {
+            if (lines.get(index).getString().equals(text)) {
                 return index;
             }
         }
