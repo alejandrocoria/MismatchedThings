@@ -13,7 +13,8 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
   acceptance. It is separate from `gametest` so its entrypoints and fixtures
   do not run during GameTests, or vice versa. The `main` source set is empty.
 - `NeoForge/src/main`: the auxiliary mod for network acceptance and targeted
-  client geometry checks. These use separate run directories and entry paths.
+  client geometry and tooltip checks. These use separate run directories and
+  entry paths.
 
 Runtime tests load the packaged production mod. Production output is available
 only for compilation; test classes, metadata, and fixtures are not included in
@@ -31,6 +32,7 @@ Run Gradle tasks sequentially from the repository root:
 .\gradlew.bat :Fabric:verifyPersistenceRestart
 .\gradlew.bat :Fabric:verifyClient
 .\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization
+.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipCharacterization
 .\gradlew.bat verifyLoaderNetworking
 ```
 
@@ -40,6 +42,8 @@ also work. `verifyGameplay` includes an isolated server run for changing a
 damage-type tag and reloading datapacks; the direct task above runs just that
 case. `build`/`check` still include the Fabric server GameTests, but do not
 launch client, persistence-restart, geometry, or network acceptance runs.
+The focused NeoForge tooltip characterization is likewise an explicit client
+task rather than part of `build`/`check`.
 
 `verifyLoaderNetworking` orchestrates real connections, prepares isolated
 directories, and checks result markers. Select a pair with

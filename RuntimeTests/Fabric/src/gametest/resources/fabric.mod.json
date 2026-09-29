@@ -8,6 +8,9 @@
         "main": [
             "games.alejandrocoria.mismatchedboots.gametest.TestContent"
         ],
+        "client": [
+            "games.alejandrocoria.mismatchedboots.gametest.FabricTooltipHookProbe"
+        ],
         "fabric-gametest": [
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedBootsGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.CraftingGameTests",
@@ -38,6 +41,7 @@
             "games.alejandrocoria.mismatchedboots.gametest.MismatchedWorkbenchClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.ItemRenderingClientGameTest",
             "games.alejandrocoria.mismatchedboots.gametest.PersistenceClientGameTest",
+            "games.alejandrocoria.mismatchedboots.gametest.TooltipHooksClientGameTest",
             "games.alejandrocoria.mismatchedboots.client.render.EquippedRenderingClientGameTest"
         ]
     },

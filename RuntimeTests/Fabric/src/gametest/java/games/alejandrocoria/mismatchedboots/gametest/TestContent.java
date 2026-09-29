@@ -5,19 +5,27 @@ import com.mojang.serialization.DataResult;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.item.component.TooltipProvider;
 import net.minecraft.world.item.enchantment.Repairable;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
+
+import java.util.function.Consumer;
 
 public final class TestContent implements ModInitializer {
     private static final String NAMESPACE = "mismatchedboots-test";
@@ -26,10 +34,14 @@ public final class TestContent implements ModInitializer {
     private static final Identifier REMOVED_COMPONENT_ID = id("removed");
     private static final Identifier COMPONENT_BOOTS_ID = id("component_boots");
     private static final Identifier UPGRADED_COMPONENT_BOOTS_ID = id("upgraded_component_boots");
+    private static final Identifier TOOLTIP_PROBE_COMPONENT_ID = id("tooltip_probe");
+    private static final Identifier TOOLTIP_PROBE_ITEM_ID = id("tooltip_probe_item");
     private static final ResourceKey<Item> COMPONENT_BOOTS_KEY =
             ResourceKey.create(Registries.ITEM, COMPONENT_BOOTS_ID);
     private static final ResourceKey<Item> UPGRADED_COMPONENT_BOOTS_KEY =
             ResourceKey.create(Registries.ITEM, UPGRADED_COMPONENT_BOOTS_ID);
+    private static final ResourceKey<Item> TOOLTIP_PROBE_ITEM_KEY =
+            ResourceKey.create(Registries.ITEM, TOOLTIP_PROBE_ITEM_ID);
 
     static DataComponentType<String> OPAQUE_COMPONENT;
     static DataComponentType<String> ADDED_COMPONENT;
@@ -38,6 +50,8 @@ public final class TestContent implements ModInitializer {
     public static DataComponentType<Integer> NUMERIC_COMPONENT;
     static Item COMPONENT_BOOTS;
     static Item UPGRADED_COMPONENT_BOOTS;
+    static DataComponentType<TooltipProbe> TOOLTIP_PROBE_COMPONENT;
+    static Item TOOLTIP_PROBE_ITEM;
 
     @Override
     public void onInitialize() {
@@ -55,6 +69,10 @@ public final class TestContent implements ModInitializer {
                         .build());
         ADDED_COMPONENT = stringComponent(ADDED_COMPONENT_ID);
         REMOVED_COMPONENT = stringComponent(REMOVED_COMPONENT_ID);
+        TOOLTIP_PROBE_COMPONENT = Registry.register(
+                BuiltInRegistries.DATA_COMPONENT_TYPE,
+                TOOLTIP_PROBE_COMPONENT_ID,
+                DataComponentType.<TooltipProbe>builder().persistent(TooltipProbe.CODEC).build());
         COMPONENT_BOOTS = Registry.register(
                 BuiltInRegistries.ITEM,
                 COMPONENT_BOOTS_ID,
@@ -80,6 +98,10 @@ public final class TestContent implements ModInitializer {
                                         .setAsset(EquipmentAssets.DIAMOND)
                                         .build())
                         .setId(UPGRADED_COMPONENT_BOOTS_KEY)));
+        TOOLTIP_PROBE_ITEM = Registry.register(
+                BuiltInRegistries.ITEM,
+                TOOLTIP_PROBE_ITEM_ID,
+                new TooltipProbeItem(new Item.Properties().setId(TOOLTIP_PROBE_ITEM_KEY)));
     }
 
     static Item requireComponentBoots() {
@@ -103,6 +125,20 @@ public final class TestContent implements ModInitializer {
         return NUMERIC_COMPONENT;
     }
 
+    static DataComponentType<TooltipProbe> requireTooltipProbeComponent() {
+        if (TOOLTIP_PROBE_COMPONENT == null) {
+            throw new IllegalStateException("Test content has not been initialized");
+        }
+        return TOOLTIP_PROBE_COMPONENT;
+    }
+
+    static Item requireTooltipProbeItem() {
+        if (TOOLTIP_PROBE_ITEM == null) {
+            throw new IllegalStateException("Test content has not been initialized");
+        }
+        return TOOLTIP_PROBE_ITEM;
+    }
+
     private static DataComponentType<String> stringComponent(Identifier id) {
         return Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -115,5 +151,35 @@ public final class TestContent implements ModInitializer {
 
     private static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(NAMESPACE, path);
+    }
+
+    record TooltipProbe(String value) implements TooltipProvider {
+        static final Codec<TooltipProbe> CODEC = Codec.STRING.xmap(TooltipProbe::new, TooltipProbe::value);
+
+        @Override
+        public void addToTooltip(
+                Item.TooltipContext context,
+                Consumer<Component> consumer,
+                TooltipFlag flag,
+                DataComponentGetter components) {
+            consumer.accept(Component.translatable("tooltip.mismatchedboots_test.component_probe", value));
+        }
+    }
+
+    private static final class TooltipProbeItem extends Item {
+        private TooltipProbeItem(Properties properties) {
+            super(properties);
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public void appendHoverText(
+                ItemStack stack,
+                TooltipContext context,
+                TooltipDisplay display,
+                Consumer<Component> tooltip,
+                TooltipFlag flag) {
+            tooltip.accept(Component.translatable("tooltip.mismatchedboots_test.item_probe"));
+        }
     }
 }

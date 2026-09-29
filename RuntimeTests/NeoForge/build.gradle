@@ -18,6 +18,8 @@ def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
         .getOrElse(layout.buildDirectory.dir('markers').get().asFile.absolutePath)
 def geometryMarkers = layout.buildDirectory.dir('geometry-markers')
 def geometryRunDirectory = layout.buildDirectory.dir('run/geometryClient')
+def tooltipMarkers = layout.buildDirectory.dir('tooltip-markers')
+def tooltipRunDirectory = layout.buildDirectory.dir('run/tooltipClient')
 
 neoForge {
     version = neoforge_version
@@ -52,6 +54,16 @@ neoForge {
             gameDirectory = geometryRunDirectory.get().asFile
             systemProperty('mismatchedboots.runtimetest.markers', geometryMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.geometryTest', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
+        tooltipClient {
+            client()
+            disableIdeRun()
+            gameDirectory = tooltipRunDirectory.get().asFile
+            systemProperty('mismatchedboots.runtimetest.markers', tooltipMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.tooltipTest', 'true')
             systemProperty('mismatchedboots.test.hideClientWindow', 'true')
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
@@ -105,5 +117,48 @@ tasks.register('verifyGeometryCharacterization') {
             throw new GradleException('NeoForge geometry characterization did not produce its result markers')
         }
         logger.lifecycle("NeoForge geometry characterization:\n${report.text}")
+    }
+}
+
+tasks.register('prepareTooltipClient') {
+    dependsOn(':NeoForge:jar')
+    doLast {
+        delete(tooltipMarkers)
+        delete(tooltipRunDirectory)
+
+        def runDirectory = tooltipRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        copy {
+            from(project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile })
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'
+        def configDirectory = new File(runDirectory, 'config')
+        configDirectory.mkdirs()
+        new File(configDirectory, 'fml.toml').text = 'earlyWindowControl = false\n'
+    }
+}
+
+tasks.named('runTooltipClient') {
+    dependsOn('prepareTooltipClient')
+}
+
+tasks.register('verifyTooltipCharacterization') {
+    group = 'verification'
+    description = 'Characterizes NeoForge tooltip hooks in a hidden and muted client.'
+    dependsOn('runTooltipClient')
+    doLast {
+        def markerDirectory = tooltipMarkers.get().asFile
+        def failure = new File(markerDirectory, 'tooltip-client-failure.txt')
+        if (failure.exists()) {
+            throw new GradleException("NeoForge tooltip characterization failed:\n${failure.text}")
+        }
+        def success = new File(markerDirectory, 'tooltip-success.txt')
+        def report = new File(markerDirectory, 'tooltip-report.txt')
+        if (!success.exists() || !report.exists()) {
+            throw new GradleException('NeoForge tooltip characterization did not produce its result markers')
+        }
+        logger.lifecycle("NeoForge tooltip characterization:\n${report.text}")
     }
 }

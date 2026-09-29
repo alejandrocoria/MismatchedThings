@@ -91,6 +91,19 @@ public final class CompatibilityGameTests {
         assertTranslation(helper, validTooltip,
                 "tooltip.mismatchedboots.mixed_boots.right", "valid right tooltip");
 
+        ItemStack ordered = GameTestStacks.pair(
+                new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
+        ItemStack orderedBefore = ordered.copy();
+        List<Component> orderedTooltip = ordered.getTooltipLines(
+                Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
+        int leftIndex = indexOfTranslation(orderedTooltip, "tooltip.mismatchedboots.mixed_boots.left");
+        int rightIndex = indexOfTranslation(orderedTooltip, "tooltip.mismatchedboots.mixed_boots.right");
+        int rootAttributesIndex = indexOfTranslation(orderedTooltip, "item.modifiers.feet");
+        helper.assertTrue(leftIndex > 0 && rightIndex > leftIndex && rootAttributesIndex > rightIndex,
+                "Source labels did not precede root details: " + orderedTooltip);
+        helper.assertTrue(ItemStack.matches(orderedBefore, ordered),
+                "Tooltip generation mutated the mixed stack");
+
         CreativeModeTabs.tryRebuildTabContents(
                 helper.getLevel().enabledFeatures(), true, helper.getLevel().registryAccess());
         List<ItemStack> creativeEntries = CreativeModeTabs.allTabs().stream()
@@ -202,5 +215,16 @@ public final class CompatibilityGameTests {
                         component.getContents() instanceof TranslatableContents contents
                                 && contents.getKey().equals(key)),
                 description + " did not contain " + key + ": " + lines);
+    }
+
+    private static int indexOfTranslation(List<Component> lines, String key) {
+        for (int index = 0; index < lines.size(); index++) {
+            Component component = lines.get(index);
+            if (component.getContents() instanceof TranslatableContents contents
+                    && contents.getKey().equals(key)) {
+                return index;
+            }
+        }
+        return -1;
     }
 }

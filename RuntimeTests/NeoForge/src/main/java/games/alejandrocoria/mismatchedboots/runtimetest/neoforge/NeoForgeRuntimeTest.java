@@ -25,6 +25,11 @@ public final class NeoForgeRuntimeTest {
                 });
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
                         NeoForgeGeometryClientTest.tick(Minecraft.getInstance()));
+            } else if (Boolean.getBoolean("mismatchedboots.runtimetest.tooltipTest")) {
+                eventBus.addListener(NeoForgeTooltipClientTest::registerAppenders);
+                NeoForge.EVENT_BUS.addListener(NeoForgeTooltipClientTest::onTooltip);
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
+                        NeoForgeTooltipClientTest.tick(Minecraft.getInstance()));
             } else {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
                         NetworkAcceptanceClientTest.tick(Minecraft.getInstance()));
