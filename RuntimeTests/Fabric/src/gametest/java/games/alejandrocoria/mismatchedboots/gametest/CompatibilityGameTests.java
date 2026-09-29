@@ -26,6 +26,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -148,8 +149,9 @@ public final class CompatibilityGameTests {
                 trimMaterials.getOrThrow(TrimMaterials.GOLD), rootPattern);
         var unbreaking = enchantments.getOrThrow(Enchantments.UNBREAKING);
 
-        ItemStack left = new ItemStack(Items.IRON_BOOTS);
+        ItemStack left = new ItemStack(Items.LEATHER_BOOTS);
         left.set(DataComponents.TRIM, leftTrim);
+        left.set(DataComponents.DYED_COLOR, new DyedItemColor(0x336699));
         left.setDamageValue(20);
         setEnchantment(left, unbreaking, 1);
         ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
@@ -198,9 +200,15 @@ public final class CompatibilityGameTests {
                 "advanced live-root durability lines");
         helper.assertValueEqual(countTranslation(primaryAdvanced, "item.components"), 1L,
                 "advanced live-root component-count lines");
+        helper.assertValueEqual(countTranslation(primaryNormal, "item.dyed"), 1L,
+                "normal source dyed-marker lines");
+        helper.assertValueEqual(countTranslation(primaryAdvanced, "item.color"), 1L,
+                "advanced source hexadecimal-color lines");
+        helper.assertValueEqual(countTranslation(primaryAdvanced, "item.dyed"), 0L,
+                "advanced source dyed-marker lines");
         helper.assertTrue(indexOfText(primaryAdvanced, ModContent.MIXED_BOOTS_ID.toString()) >= 0,
                 "Advanced tooltip omitted the registered root item ID: " + primaryAdvanced);
-        helper.assertTrue(indexOfText(primaryAdvanced, "minecraft:iron_boots") < 0
+        helper.assertTrue(indexOfText(primaryAdvanced, "minecraft:leather_boots") < 0
                         && indexOfText(primaryAdvanced, "minecraft:golden_boots") < 0,
                 "Advanced tooltip exposed historical source diagnostics: " + primaryAdvanced);
 

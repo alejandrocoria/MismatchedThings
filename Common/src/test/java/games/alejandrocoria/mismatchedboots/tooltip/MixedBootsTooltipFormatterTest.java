@@ -186,7 +186,7 @@ class MixedBootsTooltipFormatterTest {
     }
 
     @Test
-    void advancedEnclosingTooltipLeavesSourcesNormalAndRootAdvanced() {
+    void advancedTooltipUsesAdvancedSourceComponentsWithoutStackDiagnostics() {
         ItemStack left = boots(Items.LEATHER_BOOTS, 1.0);
         left.set(DataComponents.DYED_COLOR, new DyedItemColor(0x123456));
         left.setDamageValue(7);
@@ -194,12 +194,13 @@ class MixedBootsTooltipFormatterTest {
         ItemStack root = boots(Items.DIAMOND_BOOTS, 3.0);
         root.setDamageValue(11);
 
-        List<Component> lines = new ArrayList<>(format(left, right));
+        List<Component> lines = new ArrayList<>(format(left, right, TooltipFlag.ADVANCED));
         addDetails(root, TooltipFlag.ADVANCED, lines);
 
-        assertTrue(hasTranslation(lines, "item.dyed"));
-        assertFalse(hasTranslation(lines, "item.color"));
+        assertFalse(hasTranslation(lines, "item.dyed"));
+        assertTrue(hasTranslation(lines, "item.color"));
         assertEquals(1, countTranslation(lines, "item.durability"));
+        assertEquals(1, countTranslation(lines, "item.components"));
         assertFalse(lines.contains(
                 Component.literal("minecraft:leather_boots").withStyle(ChatFormatting.DARK_GRAY)));
         assertTrue(lines.contains(
@@ -235,7 +236,7 @@ class MixedBootsTooltipFormatterTest {
         List<Component> lines = new ArrayList<>();
 
         MixedBootsTooltipFormatter.appendSourceSections(
-                data, Item.TooltipContext.EMPTY, lines::add);
+                data, Item.TooltipContext.EMPTY, TooltipFlag.NORMAL, lines::add);
 
         assertTrue(ItemStack.matches(leftBefore, left));
         assertTrue(ItemStack.matches(rightBefore, right));
@@ -244,9 +245,13 @@ class MixedBootsTooltipFormatterTest {
     }
 
     private static List<Component> format(ItemStack left, ItemStack right) {
+        return format(left, right, TooltipFlag.NORMAL);
+    }
+
+    private static List<Component> format(ItemStack left, ItemStack right, TooltipFlag flag) {
         List<Component> lines = new ArrayList<>();
         MixedBootsTooltipFormatter.appendSourceSections(
-                data(left, right), Item.TooltipContext.EMPTY, lines::add);
+                data(left, right), Item.TooltipContext.EMPTY, flag, lines::add);
         return List.copyOf(lines);
     }
 

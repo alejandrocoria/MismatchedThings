@@ -217,7 +217,7 @@ public final class NeoForgeTooltipClientTest {
                     + appender.stack());
         }
         assertSame(context, appender.context(), "source appender context");
-        if (appender.player() != null || appender.flag() != TooltipFlag.NORMAL
+        if (appender.player() != null || appender.flag() != rootFlag
                 || !appender.display().hiddenComponents().contains(DataComponents.TRIM)
                 || !appender.display().hiddenComponents().contains(DataComponents.ENCHANTMENTS)) {
             throw new AssertionError("NeoForge source appender lost display, player, or flag state: "

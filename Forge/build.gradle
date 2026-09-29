@@ -85,6 +85,11 @@ tasks.processResources {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
+tasks.named('test', Test) {
+    // Forge currently has a compile-only compatibility fixture, not a runtime test.
+    failOnNoDiscoveredTests = false
+}
+
 def publishJar = tasks.named('jarJar')
 
 tasks.register('publishCurseForge', TaskPublishCurseForge) {

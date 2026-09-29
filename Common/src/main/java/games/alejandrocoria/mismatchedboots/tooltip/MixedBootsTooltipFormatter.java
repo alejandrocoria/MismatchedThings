@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -43,14 +45,16 @@ public final class MixedBootsTooltipFormatter {
     public static void appendSourceSections(
             MixedBootsData data,
             Item.TooltipContext context,
+            TooltipFlag flag,
             Consumer<Component> tooltip) {
         Objects.requireNonNull(data, "data");
         Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(flag, "flag");
         Objects.requireNonNull(tooltip, "tooltip");
 
-        appendSourceSection(LEFT_KEY, data.left(), context, tooltip);
+        appendSourceSection(LEFT_KEY, data.left(), context, flag, tooltip);
         tooltip.accept(CommonComponents.EMPTY);
-        appendSourceSection(RIGHT_KEY, data.right(), context, tooltip);
+        appendSourceSection(RIGHT_KEY, data.right(), context, flag, tooltip);
         tooltip.accept(CommonComponents.EMPTY);
     }
 
@@ -58,6 +62,7 @@ public final class MixedBootsTooltipFormatter {
             String sideKey,
             BootHalf half,
             Item.TooltipContext context,
+            TooltipFlag flag,
             Consumer<Component> tooltip) {
         ItemStack source = half.source();
         tooltip.accept(Component.translatable(sideKey, sourceName(source)).withStyle(ChatFormatting.GRAY));
@@ -68,7 +73,7 @@ public final class MixedBootsTooltipFormatter {
             return;
         }
 
-        appendSourceDetails(source, context, hideGameplayComponents(sourceDisplay), tooltip);
+        appendSourceDetails(source, context, hideGameplayComponents(sourceDisplay), flag, tooltip);
     }
 
     private static Component sourceName(ItemStack source) {
@@ -97,7 +102,38 @@ public final class MixedBootsTooltipFormatter {
             ItemStack source,
             Item.TooltipContext context,
             TooltipDisplay display,
+            TooltipFlag flag,
             Consumer<Component> tooltip) {
-        source.addDetailsToTooltip(context, display, null, TooltipFlag.NORMAL, tooltip);
+        if (!flag.isAdvanced()) {
+            source.addDetailsToTooltip(context, display, null, flag, tooltip);
+            return;
+        }
+
+        List<Component> details = new ArrayList<>();
+        source.addDetailsToTooltip(context, display, null, flag, details::add);
+        removeAdvancedStackDiagnostics(source, details);
+        details.forEach(tooltip);
+    }
+
+    private static void removeAdvancedStackDiagnostics(ItemStack source, List<Component> details) {
+        Component itemId = Component.literal(BuiltInRegistries.ITEM.getKey(source.getItem()).toString())
+                .withStyle(ChatFormatting.DARK_GRAY);
+        int componentCount = source.getComponents().size();
+        if (componentCount > 0) {
+            Component countLine = Component.translatable("item.components", componentCount)
+                    .withStyle(ChatFormatting.DARK_GRAY);
+            for (int index = details.size() - 2; index >= 0; index--) {
+                if (details.get(index).equals(itemId) && details.get(index + 1).equals(countLine)) {
+                    details.remove(index + 1);
+                    details.remove(index);
+                    return;
+                }
+            }
+        }
+
+        int itemIdIndex = details.lastIndexOf(itemId);
+        if (itemIdIndex >= 0) {
+            details.remove(itemIdIndex);
+        }
     }
 }

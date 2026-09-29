@@ -177,16 +177,17 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
             throw new AssertionError("Source item callback received the wrong snapshot: " + item.stack());
         }
         assertSame(tooltipContext, item.context(), "source item callback context");
-        if (item.flag() != TooltipFlag.NORMAL
+        if (item.flag() != rootFlag
                 || !item.display().hiddenComponents().contains(DataComponents.ENCHANTMENTS)) {
-            throw new AssertionError("Source item callback did not receive normal, filtered details: " + item);
+            throw new AssertionError("Source item callback did not receive the root flag and filtered details: "
+                    + item);
         }
 
         List<TestContent.ComponentTooltipObservation> componentObservations =
                 TestContent.componentTooltipObservations();
         if (componentObservations.size() != 2
                 || !componentObservations.get(0).value().equals("source-visible")
-                || componentObservations.get(0).flag() != TooltipFlag.NORMAL
+                || componentObservations.get(0).flag() != rootFlag
                 || componentObservations.get(0).context() != tooltipContext
                 || !componentObservations.get(1).value().equals(rootValue)
                 || componentObservations.get(1).flag() != rootFlag

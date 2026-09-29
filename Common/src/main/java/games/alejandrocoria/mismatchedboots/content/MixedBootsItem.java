@@ -31,6 +31,6 @@ public class MixedBootsItem extends Item {
             return;
         }
 
-        MixedBootsTooltipFormatter.appendSourceSections(data, context, tooltip);
+        MixedBootsTooltipFormatter.appendSourceSections(data, context, flag, tooltip);
     }
 }
