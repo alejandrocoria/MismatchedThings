@@ -3,9 +3,9 @@ package games.alejandrocoria.mismatchedboots.gametest;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
-import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRecipe;
+import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
+import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
@@ -15,9 +15,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.item.crafting.CraftingInput;
-
-import java.util.List;
 
 public final class AttributeRulesGameTests {
     private static final String CUSTOM_RULES_PROPERTY = "mismatchedboots.test.attributeRules";
@@ -39,16 +36,19 @@ public final class AttributeRulesGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void invalidNumericInputMakesTheProductionRecipeNonMatching(GameTestHelper helper) {
+    public void invalidNumericInputMakesWorkbenchCompositionFailAtomically(GameTestHelper helper) {
         ItemStack invalid = bootsWithModifier(Items.IRON_BOOTS, Attributes.ARMOR, Double.NaN);
-        CraftingInput input = CraftingInput.of(
-                2, 2, List.of(invalid, ItemStack.EMPTY, ItemStack.EMPTY, new ItemStack(Items.GOLDEN_BOOTS)));
-        MixedBootsRecipe recipe = new MixedBootsRecipe();
+        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(
+                invalid, new ItemStack(Items.GOLDEN_BOOTS));
+        MixedBootsWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe();
 
-        helper.assertTrue(!recipe.matches(input, helper.getLevel()), "Non-finite recipe unexpectedly matched");
-        helper.assertTrue(recipe.assemble(input).isEmpty(), "Non-finite recipe produced an output");
-        helper.assertTrue(recipe.getRemainingItems(input).stream().allMatch(ItemStack::isEmpty),
-                "Non-finite recipe produced a remainder");
+        helper.assertTrue(recipe.matches(input, helper.getLevel()),
+                "Structurally valid non-finite sources did not reach composition");
+        var result = recipe.assemblePair(input);
+        helper.assertTrue(!result.isComplete()
+                        && result.primary().isEmpty()
+                        && result.inverse().isEmpty(),
+                "Non-finite workbench composition exposed a partial result");
         helper.succeed();
     }
 
@@ -76,14 +76,16 @@ public final class AttributeRulesGameTests {
                 "configured second source amount");
 
         ItemStack rejected = bootsWithModifier(Items.IRON_BOOTS, Attributes.WAYPOINT_TRANSMIT_RANGE, 1.0D);
-        CraftingInput rejectedInput = CraftingInput.of(
-                2, 2, List.of(rejected, ItemStack.EMPTY, ItemStack.EMPTY, new ItemStack(Items.GOLDEN_BOOTS)));
-        MixedBootsRecipe recipe = new MixedBootsRecipe();
-        helper.assertTrue(!recipe.matches(rejectedInput, helper.getLevel()), "Configured reject recipe matched");
-        helper.assertTrue(recipe.assemble(rejectedInput).isEmpty(), "Configured reject recipe assembled");
-        NonNullList<ItemStack> remainders = recipe.getRemainingItems(rejectedInput);
-        helper.assertTrue(remainders.stream().allMatch(ItemStack::isEmpty),
-                "Configured reject recipe returned a remainder");
+        MismatchedWorkbenchInput rejectedInput = new MismatchedWorkbenchInput(
+                rejected, new ItemStack(Items.GOLDEN_BOOTS));
+        MixedBootsWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe();
+        helper.assertTrue(recipe.matches(rejectedInput, helper.getLevel()),
+                "Structurally valid configured-reject sources did not reach composition");
+        var rejectedResult = recipe.assemblePair(rejectedInput);
+        helper.assertTrue(!rejectedResult.isComplete()
+                        && rejectedResult.primary().isEmpty()
+                        && rejectedResult.inverse().isEmpty(),
+                "Configured reject exposed a partial workbench result");
         helper.succeed();
     }
 

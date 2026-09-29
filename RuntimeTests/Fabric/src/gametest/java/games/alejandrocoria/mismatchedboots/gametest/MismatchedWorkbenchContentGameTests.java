@@ -156,19 +156,12 @@ public final class MismatchedWorkbenchContentGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void legacyAndWorkbenchRoutesCreateEquivalentPairs(GameTestHelper helper) {
-        CraftingInput legacyInput = CraftingInput.of(2, 1, List.of(
+    public void directCraftingIsAbsentWhileWorkbenchCompositionRemains(GameTestHelper helper) {
+        CraftingInput directInput = CraftingInput.of(2, 1, List.of(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
-        RecipeHolder<CraftingRecipe> legacy = helper.getLevel().recipeAccess()
-                .getRecipeFor(RecipeType.CRAFTING, legacyInput, helper.getLevel())
-                .orElseThrow();
-        helper.assertTrue(legacy.id().equals(ResourceKey.create(Registries.RECIPE, ModContent.MIXED_BOOTS_RECIPE_ID)),
-                "Crafting grid selected an unexpected legacy recipe");
-        ItemStack legacyPrimary = legacy.value().assemble(legacyInput);
-        ItemStack legacyInverse = legacy.value().getRemainingItems(legacyInput).stream()
-                .filter(stack -> !stack.isEmpty())
-                .findFirst()
-                .orElseThrow();
+        helper.assertTrue(helper.getLevel().recipeAccess()
+                        .getRecipeFor(RecipeType.CRAFTING, directInput, helper.getLevel()).isEmpty(),
+                "Crafting grid retained a direct mixed-boots recipe");
 
         RecipeHolder<MismatchedWorkbenchRecipe> station = helper.getLevel().recipeAccess()
                 .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), new MismatchedWorkbenchInput(
@@ -176,11 +169,28 @@ public final class MismatchedWorkbenchContentGameTests {
                 .orElseThrow();
         var stationPair = station.value().assemblePair(new MismatchedWorkbenchInput(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
-        helper.assertTrue(ItemStack.matches(legacyPrimary, stationPair.primary()),
-                "Legacy and workbench primary outputs differ");
-        helper.assertTrue(ItemStack.matches(legacyInverse, stationPair.inverse()),
-                "Legacy and workbench inverse outputs differ");
+        helper.assertTrue(stationPair.isComplete(), "Workbench did not create both outputs");
+        GameTestStacks.assertOrientation(helper, stationPair.primary(),
+                Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "Workbench primary output");
+        GameTestStacks.assertOrientation(helper, stationPair.inverse(),
+                Items.GOLDEN_BOOTS, Items.IRON_BOOTS, "Workbench inverse output");
         helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void diamondUnlocksWorkbenchRecipeInTheVanillaRecipeBook(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        helper.assertTrue(!player.getRecipeBook().contains(BLOCK_RECIPE),
+                "Fresh player already knew the workbench recipe");
+
+        player.getInventory().add(new ItemStack(Items.DIAMOND));
+        player.inventoryMenu.broadcastChanges();
+
+        helper.runAfterDelay(1, () -> {
+            helper.assertTrue(player.getRecipeBook().contains(BLOCK_RECIPE),
+                    "Obtaining a diamond did not unlock the workbench recipe");
+            helper.succeed();
+        });
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE, maxTicks = 1200)

@@ -4,9 +4,9 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -23,8 +23,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 
@@ -36,21 +34,18 @@ import java.util.stream.Collectors;
 @SuppressWarnings("removal")
 public final class CompatibilityGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void moddedComponentBootsCraftThroughTheLiveRecipe(GameTestHelper helper) {
+    public void moddedComponentBootsComposeThroughTheLiveWorkbenchRecipe(GameTestHelper helper) {
         ItemStack modded = new ItemStack(TestContent.requireComponentBoots());
         modded.set(TestContent.requireOpaqueComponent(), "compatibility-alpha");
-        CraftingInput input = CraftingInput.of(2, 2, List.of(
-                modded, ItemStack.EMPTY, ItemStack.EMPTY, new ItemStack(Items.DIAMOND_BOOTS)));
+        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(modded, new ItemStack(Items.DIAMOND_BOOTS));
         var recipe = helper.getLevel().recipeAccess()
-                .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
-                .orElseThrow(() -> new AssertionError("Live recipe rejected the GameTest modded boots"));
+                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
+                .orElseThrow(() -> new AssertionError("Live workbench recipe rejected the GameTest modded boots"));
 
-        ItemStack primary = recipe.value().assemble(input);
-        NonNullList<ItemStack> remainders = recipe.value().getRemainingItems(input);
-        ItemStack inverse = remainders.stream()
-                .filter(stack -> !stack.isEmpty())
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Live recipe did not create the inverse remainder"));
+        var result = recipe.value().assemblePair(input);
+        helper.assertTrue(result.isComplete(), "Live workbench recipe did not create both outputs");
+        ItemStack primary = result.primary();
+        ItemStack inverse = result.inverse();
 
         GameTestStacks.assertOrientation(helper, primary,
                 TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "modded primary");

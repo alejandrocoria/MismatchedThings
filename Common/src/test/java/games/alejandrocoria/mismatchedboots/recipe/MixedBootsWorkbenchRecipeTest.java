@@ -117,6 +117,24 @@ class MixedBootsWorkbenchRecipeTest {
     }
 
     @Test
+    void acceptsSameBaseItemWithDistinctComponents() {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        left.set(DataComponents.CUSTOM_NAME, Component.literal("Left source"));
+        ItemStack right = boots(Items.IRON_BOOTS);
+        right.set(DataComponents.CUSTOM_NAME, Component.literal("Right source"));
+        MixedBootsWorkbenchRecipe recipe = copyingRecipe();
+
+        MismatchedWorkbenchResult result = recipe.assemblePair(
+                new MismatchedWorkbenchInput(left, right));
+
+        assertTrue(result.isComplete());
+        assertEquals(Items.IRON_BOOTS, result.primary().getItem());
+        assertEquals(Items.IRON_BOOTS, result.inverse().getItem());
+        assertEquals(Component.literal("Left source"), result.primary().get(DataComponents.CUSTOM_NAME));
+        assertEquals(Component.literal("Right source"), result.inverse().get(DataComponents.CUSTOM_NAME));
+    }
+
+    @Test
     void resultOwnsBothOutputsAndReturnsDefensiveCopies() {
         ItemStack primary = boots(Items.IRON_BOOTS);
         ItemStack inverse = boots(Items.GOLDEN_BOOTS);

@@ -62,7 +62,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
 
             context.runOnClient(ItemRenderingClientGameTest::verifyRenderStates);
             verifyGuiClipping(context);
-            captureGuiAndHandContexts(context, singleplayer);
+            captureGuiAndHandContexts(context);
             captureWorldContexts(context, singleplayer);
             verifyAfterResourceReload(context);
         }
@@ -293,8 +293,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         }
     }
 
-    private static void captureGuiAndHandContexts(
-            ClientGameTestContext context, TestSingleplayerContext singleplayer) {
+    private static void captureGuiAndHandContexts(ClientGameTestContext context) {
         context.runOnClient(client -> client.options.setCameraType(CameraType.FIRST_PERSON));
         context.waitTicks(5);
         context.takeScreenshot("phase5-first-person-hand");
@@ -307,16 +306,6 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         context.waitForScreen(InventoryScreen.class);
         context.waitTicks(3);
         context.takeScreenshot("phase5-inventory");
-
-        singleplayer.getServer().runOnServer(server -> {
-            ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
-            player.inventoryMenu.getInputGridSlots().get(0).set(new ItemStack(Items.IRON_BOOTS));
-            player.inventoryMenu.getInputGridSlots().get(3).set(new ItemStack(Items.GOLDEN_BOOTS));
-        });
-        context.waitFor(client -> client.player != null
-                && ModContent.isMixedBoots(client.player.inventoryMenu.getSlot(0).getItem()));
-        context.waitTicks(3);
-        context.takeScreenshot("phase5-crafting-result");
 
         context.setScreen(() -> null);
         context.waitForScreen(null);
