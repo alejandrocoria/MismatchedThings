@@ -65,7 +65,11 @@ public final class MixedBootsTooltipFormatter {
             TooltipFlag flag,
             Consumer<Component> tooltip) {
         ItemStack source = half.source();
-        tooltip.accept(Component.translatable(sideKey, sourceName(source)).withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty()
+                .withStyle(ChatFormatting.GRAY)
+                .append(Component.translatable(sideKey).withStyle(ChatFormatting.BOLD))
+                .append(CommonComponents.SPACE)
+                .append(sourceName(source)));
 
         TooltipDisplay sourceDisplay = source.getOrDefault(
                 DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);

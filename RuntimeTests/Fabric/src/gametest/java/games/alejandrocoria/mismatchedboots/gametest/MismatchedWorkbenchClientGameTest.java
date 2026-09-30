@@ -271,10 +271,18 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
 
     private static boolean hasTooltipLine(
             List<Component> tooltip, String lineKey, String sourceKey) {
-        return tooltip.stream().anyMatch(line -> line.getContents() instanceof TranslatableContents contents
-                && contents.getKey().equals(lineKey)
-                && List.of(contents.getArgs()).stream().anyMatch(argument ->
-                argument instanceof Component component && containsTranslation(component, sourceKey)));
+        return tooltip.stream().anyMatch(line ->
+                containsBoldTranslation(line, lineKey) && containsTranslation(line, sourceKey));
+    }
+
+    private static boolean containsBoldTranslation(Component component, String key) {
+        if (component.getContents() instanceof TranslatableContents contents
+                && contents.getKey().equals(key)
+                && component.getStyle().isBold()) {
+            return true;
+        }
+        return component.getSiblings().stream()
+                .anyMatch(sibling -> containsBoldTranslation(sibling, key));
     }
 
     private static boolean containsTranslation(Component component, String key) {

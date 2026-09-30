@@ -2,8 +2,8 @@
   "block.mismatchedboots.mismatched_workbench": "Mismatched Workbench",
   "container.mismatchedboots.mismatched_workbench": "Mismatched Workbench",
   "item.mismatchedboots.mixed_boots": "Mismatched Boots",
-  "tooltip.mismatchedboots.mixed_boots.left": "Izquierda: %s",
-  "tooltip.mismatchedboots.mixed_boots.right": "Derecha: %s",
+  "tooltip.mismatchedboots.mixed_boots.left": "Izquierda:",
+  "tooltip.mismatchedboots.mixed_boots.right": "Derecha:",
   "tooltip.mismatchedboots.mixed_boots.name_with_natural": "%1$s (%2$s)",
   "tooltip.mismatchedboots.mixed_boots.invalid": "Faltan los datos de las botas o no son válidos"
 }

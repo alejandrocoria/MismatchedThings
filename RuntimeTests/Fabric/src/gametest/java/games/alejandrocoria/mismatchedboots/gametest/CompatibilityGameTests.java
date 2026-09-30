@@ -105,6 +105,11 @@ public final class CompatibilityGameTests {
                 "tooltip.mismatchedboots.mixed_boots.left", "valid left tooltip");
         assertTranslation(helper, validTooltip,
                 "tooltip.mismatchedboots.mixed_boots.right", "valid right tooltip");
+        helper.assertTrue(containsBoldTranslation(validTooltip,
+                        "tooltip.mismatchedboots.mixed_boots.left")
+                        && containsBoldTranslation(validTooltip,
+                        "tooltip.mismatchedboots.mixed_boots.right"),
+                "Valid source labels were not bold: " + validTooltip);
 
         ItemStack ordered = GameTestStacks.pair(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
@@ -318,17 +323,13 @@ public final class CompatibilityGameTests {
 
     private static void assertTranslation(
             GameTestHelper helper, List<Component> lines, String key, String description) {
-        helper.assertTrue(lines.stream().anyMatch(component ->
-                        component.getContents() instanceof TranslatableContents contents
-                                && contents.getKey().equals(key)),
+        helper.assertTrue(lines.stream().anyMatch(component -> containsTranslation(component, key)),
                 description + " did not contain " + key + ": " + lines);
     }
 
     private static int indexOfTranslation(List<Component> lines, String key) {
         for (int index = 0; index < lines.size(); index++) {
-            Component component = lines.get(index);
-            if (component.getContents() instanceof TranslatableContents contents
-                    && contents.getKey().equals(key)) {
+            if (containsTranslation(lines.get(index), key)) {
                 return index;
             }
         }
@@ -356,6 +357,11 @@ public final class CompatibilityGameTests {
                 description + " left source region was misplaced: " + lines);
         helper.assertTrue(right > leftTrim && rightTrim > right,
                 description + " right source region was misplaced: " + lines);
+        helper.assertTrue(containsBoldTranslation(lines.get(left),
+                        "tooltip.mismatchedboots.mixed_boots.left")
+                        && containsBoldTranslation(lines.get(right),
+                        "tooltip.mismatchedboots.mixed_boots.right"),
+                description + " source labels were not bold: " + lines);
         helper.assertTrue(rootTrim > rightTrim && rootAttributes > rootTrim,
                 description + " live root region was misplaced: " + lines);
         helper.assertTrue(hasEmptyBetween(lines, leftTrim, right)
@@ -433,6 +439,27 @@ public final class CompatibilityGameTests {
             }
         }
         return component.getSiblings().stream().anyMatch(sibling -> containsTranslation(sibling, key));
+    }
+
+    private static boolean containsBoldTranslation(List<Component> lines, String key) {
+        return lines.stream().anyMatch(line -> containsBoldTranslation(line, key));
+    }
+
+    private static boolean containsBoldTranslation(Component component, String key) {
+        if (component.getContents() instanceof TranslatableContents contents
+                && contents.getKey().equals(key)
+                && component.getStyle().isBold()) {
+            return true;
+        }
+        if (component.getContents() instanceof TranslatableContents contents) {
+            for (Object argument : contents.getArgs()) {
+                if (argument instanceof Component nested && containsBoldTranslation(nested, key)) {
+                    return true;
+                }
+            }
+        }
+        return component.getSiblings().stream()
+                .anyMatch(sibling -> containsBoldTranslation(sibling, key));
     }
 
     private static int indexOfText(List<Component> lines, String text) {

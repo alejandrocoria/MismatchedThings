@@ -163,8 +163,7 @@ class MixedBootsTooltipFormatterTest {
         left.set(DataComponents.CUSTOM_NAME, customName);
 
         List<Component> lines = format(left, boots(Items.GOLDEN_BOOTS, 1.0));
-        TranslatableContents side = translation(lines.getFirst(), LEFT_KEY);
-        Component name = assertInstanceOf(Component.class, side.getArgs()[0]);
+        Component name = sideName(lines.getFirst());
         TranslatableContents combined = translation(name, NAME_WITH_NATURAL_KEY);
 
         assertEquals(customName, combined.getArgs()[0]);
@@ -179,9 +178,8 @@ class MixedBootsTooltipFormatterTest {
         left.set(DataComponents.CUSTOM_NAME, left.getItemName());
 
         List<Component> lines = format(left, boots(Items.GOLDEN_BOOTS, 1.0));
-        TranslatableContents side = translation(lines.getFirst(), LEFT_KEY);
 
-        assertEquals(left.getHoverName(), side.getArgs()[0]);
+        assertEquals(left.getHoverName(), sideName(lines.getFirst()));
         assertFalse(hasTranslation(lines.getFirst(), NAME_WITH_NATURAL_KEY));
     }
 
@@ -344,9 +342,19 @@ class MixedBootsTooltipFormatterTest {
     }
 
     private static void assertSide(Component line, String key, Component expectedName) {
-        TranslatableContents contents = translation(line, key);
-        assertEquals(expectedName, contents.getArgs()[0]);
+        assertEquals(3, line.getSiblings().size());
+        Component label = line.getSiblings().get(0);
+        TranslatableContents contents = translation(label, key);
+        assertEquals(0, contents.getArgs().length);
+        assertTrue(label.getStyle().isBold());
+        assertEquals(CommonComponents.SPACE, line.getSiblings().get(1));
+        assertEquals(expectedName, sideName(line));
+        assertFalse(sideName(line).getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.GRAY), line.getStyle().getColor());
+    }
+
+    private static Component sideName(Component line) {
+        return line.getSiblings().get(2);
     }
 
     private static TranslatableContents translation(Component component, String key) {
@@ -385,4 +393,5 @@ class MixedBootsTooltipFormatterTest {
         }
         return -1;
     }
+
 }
