@@ -15,11 +15,31 @@ dependencies {
     compileOnly files(project(':Fabric').sourceSets.main.compileClasspath)
 }
 
+configurations {
+    advancedNetheriteFabric {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    advancedNetheriteFabric('maven.modrinth:CFX9ftUJ:5lXHbz4w') {
+        transitive = false
+    }
+}
+
 sourceSets {
     networkTest {
         java.srcDir rootProject.file('RuntimeTests/Common/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.runtimeClasspath - sourceSets.main.output
+    }
+    advancedNetheriteTest {
+        java.srcDir rootProject.file('RuntimeTests/AdvancedNetherite/src/main/java')
+        compileClasspath += sourceSets.main.compileClasspath
+        compileClasspath += files(project(':Fabric').sourceSets.main.output)
+        compileClasspath += configurations.advancedNetheriteFabric
+        runtimeClasspath += output + compileClasspath
     }
 }
 
@@ -149,6 +169,19 @@ loom {
             runDir("build/run/behaviorTagReloadGameTest")
             source("gametest")
         }
+        advancedNetheriteCompatibility {
+            inherit server
+            setConfigName('Fabric Advanced Netherite Compatibility')
+            ideConfigGenerated(false)
+            property('fabric-api.gametest')
+            property(
+                    'fabric-api.gametest.report-file',
+                    layout.buildDirectory.file(
+                            'reports/gametest/advanced-netherite.xml').get().asFile.absolutePath)
+            runDir('build/run/advancedNetheriteCompatibility')
+            source('main')
+            vmArg('-Xmx1G')
+        }
         workbenchRecipeReload {
             inherit server
             property("fabric-api.gametest")
@@ -160,6 +193,55 @@ loom {
                     layout.buildDirectory.file('reports/gametest/workbench-recipe-reload.xml').get().asFile.absolutePath)
             runDir("build/run/workbenchRecipeReloadGameTest")
             source("gametest")
+        }
+    }
+}
+
+def advancedNetheriteRunDirectory = layout.buildDirectory.dir('run/advancedNetheriteCompatibility')
+def advancedNetheriteReport = layout.buildDirectory.file('reports/gametest/advanced-netherite.xml')
+
+def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
+    archiveClassifier = 'advanced-netherite-test'
+    from sourceSets.advancedNetheriteTest.output
+}
+
+tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
+    dependsOn(':Fabric:jar', advancedNetheriteTestJar)
+    delete advancedNetheriteRunDirectory, advancedNetheriteReport
+    doLast {
+        def runDirectory = advancedNetheriteRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+        layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
+        copy {
+            from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+            from(advancedNetheriteTestJar.flatMap { it.archiveFile })
+            from(configurations.advancedNetheriteFabric)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+'''
+    }
+}
+
+tasks.named('runAdvancedNetheriteCompatibility') {
+    dependsOn tasks.named('prepareAdvancedNetheriteCompatibility')
+}
+
+tasks.register('verifyAdvancedNetheriteCompatibility') {
+    group = 'verification'
+    description = 'Runs bounded Fabric acceptance against Advanced Netherite 2.4.2.'
+    dependsOn(':Fabric:jar', advancedNetheriteTestJar)
+    doLast {
+        def processLog = layout.buildDirectory.file(
+                'reports/advanced-netherite/fabric-process.log').get().asFile
+        rootProject.ext.runBoundedGradleTask(
+                ':RuntimeTests:Fabric:runAdvancedNetheriteCompatibility', processLog, 240)
+        if (!advancedNetheriteReport.get().asFile.isFile()) {
+            throw new GradleException("Fabric Advanced Netherite GameTest report is missing; see ${processLog}")
         }
     }
 }

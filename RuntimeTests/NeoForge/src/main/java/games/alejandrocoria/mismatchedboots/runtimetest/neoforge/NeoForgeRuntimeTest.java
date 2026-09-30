@@ -14,8 +14,10 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        NeoForge.EVENT_BUS.addListener(
-                (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
+        if (!Boolean.getBoolean("mismatchedboots.runtimetest.advancedNetheriteTest")) {
+            NeoForge.EVENT_BUS.addListener(
+                    (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
+        }
         if (FMLEnvironment.getDist().isClient()) {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientResourceLoadFinishedEvent event) -> {

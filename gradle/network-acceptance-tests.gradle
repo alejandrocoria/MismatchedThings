@@ -117,6 +117,35 @@ def stopProcess = { Process process ->
     }
 }
 
+rootProject.ext.runBoundedGradleTask = { String taskPath, File output, long timeoutSeconds ->
+    output.parentFile.mkdirs()
+    List<String> gradleArguments = [
+            gradleLauncher.absolutePath,
+            '--no-daemon',
+            '--console=plain',
+            '-Dorg.gradle.jvmargs=-Xmx768m',
+            taskPath
+    ]
+    List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+            ? ['cmd.exe', '/d', '/c'] + gradleArguments
+            : gradleArguments).collect { it.toString() }
+    Process process = new ProcessBuilder(command)
+            .directory(rootProject.projectDir)
+            .redirectErrorStream(true)
+            .redirectOutput(output)
+            .start()
+    try {
+        if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
+            throw new GradleException("${taskPath} timed out after ${timeoutSeconds} seconds; see ${output}")
+        }
+        if (process.exitValue() != 0) {
+            throw new GradleException("${taskPath} exited with ${process.exitValue()}; see ${output}")
+        }
+    } finally {
+        stopProcess(process)
+    }
+}
+
 def failureText = { File markers ->
     markers.listFiles()?.findAll { it.name.endsWith('-failure.txt') }
             ?.collect { "${it.name}:\n${it.text}" }

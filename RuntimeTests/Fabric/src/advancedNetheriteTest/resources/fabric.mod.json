@@ -1,0 +1,22 @@
+{
+    "schemaVersion": 1,
+    "id": "mismatchedboots_advanced_netherite_test",
+    "version": "1.0.0",
+    "name": "MismatchedBoots Advanced Netherite Tests",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.advancednetherite.fabric.AdvancedNetheriteFabricTestContent"
+        ],
+        "fabric-gametest": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.advancednetherite.fabric.AdvancedNetheriteFabricGameTests"
+        ]
+    },
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "*",
+        "mismatchedboots": "*",
+        "advancednetherite": "*"
+    }
+}

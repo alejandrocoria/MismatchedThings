@@ -11,6 +11,29 @@ dependencies {
     compileOnly files(project(':NeoForge').sourceSets.main.output)
 }
 
+configurations {
+    advancedNetheriteNeoForge {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    advancedNetheriteNeoForge('maven.modrinth:CFX9ftUJ:JBg5bHJd') {
+        transitive = false
+    }
+}
+
+sourceSets {
+    advancedNetheriteTest {
+        java.srcDir rootProject.file('RuntimeTests/AdvancedNetherite/src/main/java')
+        compileClasspath += sourceSets.main.compileClasspath
+        compileClasspath += files(project(':NeoForge').sourceSets.main.output)
+        compileClasspath += configurations.advancedNetheriteNeoForge
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
 sourceSets.main.java.srcDir rootProject.file('RuntimeTests/Common/src/main/java')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
@@ -20,6 +43,8 @@ def geometryMarkers = layout.buildDirectory.dir('geometry-markers')
 def geometryRunDirectory = layout.buildDirectory.dir('run/geometryClient')
 def tooltipMarkers = layout.buildDirectory.dir('tooltip-markers')
 def tooltipRunDirectory = layout.buildDirectory.dir('run/tooltipClient')
+def advancedNetheriteMarkers = layout.buildDirectory.dir('advanced-netherite-markers')
+def advancedNetheriteRunDirectory = layout.buildDirectory.dir('run/advancedNetheriteCompatibility')
 
 neoForge {
     version = neoforge_version
@@ -68,11 +93,74 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
+        advancedNetheriteCompatibility {
+            server()
+            disableIdeRun()
+            gameDirectory = advancedNetheriteRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers',
+                    advancedNetheriteMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.advancedNetheriteTest', 'true')
+            jvmArgument('-Xmx1G')
+        }
     }
 
     mods {
         mismatchedboots_runtime_test {
             sourceSet sourceSets.main
+        }
+    }
+}
+
+neoForge.addModdingDependenciesTo(sourceSets.advancedNetheriteTest)
+
+def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
+    archiveClassifier = 'advanced-netherite-test'
+    from sourceSets.advancedNetheriteTest.output
+}
+
+tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
+    dependsOn(':NeoForge:jar', advancedNetheriteTestJar)
+    delete advancedNetheriteMarkers, advancedNetheriteRunDirectory
+    doLast {
+        def runDirectory = advancedNetheriteRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        copy {
+            from(project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile })
+            from(advancedNetheriteTestJar.flatMap { it.archiveFile })
+            from(configurations.advancedNetheriteNeoForge)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+'''
+    }
+}
+
+tasks.named('runAdvancedNetheriteCompatibility') {
+    dependsOn tasks.named('prepareAdvancedNetheriteCompatibility')
+}
+
+tasks.register('verifyAdvancedNetheriteCompatibility') {
+    group = 'verification'
+    description = 'Runs bounded NeoForge acceptance against Advanced Netherite 2.4.2.'
+    dependsOn(':NeoForge:jar', advancedNetheriteTestJar)
+    doLast {
+        def processLog = layout.buildDirectory.file(
+                'reports/advanced-netherite/neoforge-process.log').get().asFile
+        rootProject.ext.runBoundedGradleTask(
+                ':RuntimeTests:NeoForge:runAdvancedNetheriteCompatibility', processLog, 240)
+        def markerDirectory = advancedNetheriteMarkers.get().asFile
+        def failure = new File(markerDirectory, 'advanced-netherite-failure.txt')
+        if (failure.isFile()) {
+            throw new GradleException("NeoForge Advanced Netherite acceptance failed:\n${failure.text}")
+        }
+        def success = new File(markerDirectory, 'advanced-netherite-success.txt')
+        if (!success.isFile() || success.text != 'neoforge\n') {
+            throw new GradleException(
+                    "NeoForge Advanced Netherite acceptance did not produce its success marker; see ${processLog}")
         }
     }
 }
