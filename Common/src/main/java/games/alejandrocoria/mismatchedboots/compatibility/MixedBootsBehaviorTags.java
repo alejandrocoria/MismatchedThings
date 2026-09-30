@@ -11,11 +11,15 @@ public final class MixedBootsBehaviorTags {
     }
 
     public static boolean projects(ItemStack stack, TagKey<?> tag) {
-        if (!ItemTags.PIGLIN_SAFE_ARMOR.equals(tag)
+        if (!isProjected(tag)
                 || !stack.is(ModContent.MIXED_BOOTS_KEY)
                 || !(stack.getItem() instanceof MixedBootsItem)) {
             return false;
         }
         return MixedBootsSources.anySource(stack, source -> source.is(ItemTags.PIGLIN_SAFE_ARMOR));
+    }
+
+    static boolean isProjected(TagKey<?> tag) {
+        return ItemTags.PIGLIN_SAFE_ARMOR.equals(tag);
     }
 }

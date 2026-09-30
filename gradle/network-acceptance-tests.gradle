@@ -248,6 +248,49 @@ def runJourneyMapCoexistence = {
     }
 }
 
+def runServerStartup = { String loader, int port ->
+    File markers = networkAcceptanceRoot.get().dir("${loader}-server-startup").asFile
+    delete(markers)
+    markers.mkdirs()
+    prepareEndpoint(loader, 'server', port, null)
+    Process server = null
+    try {
+        server = startEndpoint(loader, 'server', port, markers, true)
+        awaitExit(server, 'server', markers, 180)
+        String failure = failureText(markers)
+        if (failure) {
+            throw new GradleException(failure)
+        }
+        File success = new File(markers, 'server-success.txt')
+        if (!success.isFile() || success.text != loader) {
+            throw new GradleException("${loader} server did not report successful startup; see ${markers}")
+        }
+        assertCleanLogs([runDirectory(loader, 'server')], markers)
+        println "Passed ${loader} self-terminating server startup"
+    } finally {
+        stopProcess(server)
+    }
+}
+
+tasks.register('verifyLoaderServerStartup') {
+    group = 'verification'
+    description = 'Starts loader servers without optional mods and stops them after readiness.'
+    dependsOn ':Fabric:jar', ':NeoForge:jar'
+
+    doLast {
+        String selectedLoader = providers.gradleProperty('serverStartupLoader').getOrElse('all')
+        if (selectedLoader == 'all' || selectedLoader == 'fabric') {
+            runServerStartup('fabric', 25579)
+        }
+        if (selectedLoader == 'all' || selectedLoader == 'neoforge') {
+            runServerStartup('neoforge', 25580)
+        }
+        if (!(selectedLoader in ['all', 'fabric', 'neoforge'])) {
+            throw new GradleException("Unknown serverStartupLoader: ${selectedLoader}")
+        }
+    }
+}
+
 tasks.register('verifyLoaderNetworking') {
     group = 'verification'
     description = 'Runs separate-process same-loader rule synchronization acceptance tests.'

@@ -137,6 +137,18 @@ loom {
             runDir("build/run/damageTagReloadGameTest")
             source("gametest")
         }
+        behaviorTagReload {
+            inherit server
+            property("fabric-api.gametest")
+            property("fabric-api.gametest.filter",
+                    "mismatchedboots-test:behavior_tag_reload_game_tests_existing_stack_tracks_piglin_safe_armor_reload")
+            property("mismatchedboots.test.behaviorTagReload", "true")
+            property(
+                    "fabric-api.gametest.report-file",
+                    layout.buildDirectory.file('reports/gametest/behavior-tag-reload.xml').get().asFile.absolutePath)
+            runDir("build/run/behaviorTagReloadGameTest")
+            source("gametest")
+        }
         workbenchRecipeReload {
             inherit server
             property("fabric-api.gametest")
@@ -305,6 +317,22 @@ tasks.named('runDamageTagReload') {
     dependsOn tasks.named('prepareDamageTagReloadGameTest')
 }
 
+tasks.register('prepareBehaviorTagReloadGameTest', Delete) {
+    group = 'verification'
+    description = 'Clears the isolated behavior-tag reload GameTest world.'
+    delete layout.buildDirectory.dir('run/behaviorTagReloadGameTest')
+    doLast {
+        def runDirectory = layout.buildDirectory.dir('run/behaviorTagReloadGameTest').get().asFile
+        runDirectory.mkdirs()
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
+    }
+}
+
+tasks.named('runBehaviorTagReload') {
+    dependsOn tasks.named('prepareBehaviorTagReloadGameTest')
+}
+
 tasks.register('prepareWorkbenchRecipeReloadGameTest', Delete) {
     group = 'verification'
     description = 'Clears the isolated recipe-removal GameTest world.'
@@ -325,6 +353,12 @@ tasks.register('verifyDamageTagReload') {
     group = 'verification'
     description = 'Checks an existing damage-resistance component across a Fabric data-pack reload.'
     dependsOn tasks.named('runDamageTagReload')
+}
+
+tasks.register('verifyBehaviorTagReload') {
+    group = 'verification'
+    description = 'Checks live piglin-safe projection across Fabric data-pack reloads.'
+    dependsOn tasks.named('runBehaviorTagReload')
 }
 
 tasks.register('verifyWorkbenchRecipeReload') {
@@ -350,7 +384,7 @@ tasks.register('verifyGameplay') {
     description = 'Runs the canonical Fabric server GameTest suite.'
     dependsOn tasks.named('runGameTest'), tasks.named('runAttributeRules'),
             tasks.named('verifyComponentRulesConfig'), tasks.named('verifyDamageTagReload'),
-            tasks.named('verifyWorkbenchRecipeReload')
+            tasks.named('verifyBehaviorTagReload'), tasks.named('verifyWorkbenchRecipeReload')
 }
 
 tasks.register('verifyClient') {

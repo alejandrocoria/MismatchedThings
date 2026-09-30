@@ -28,7 +28,8 @@
             "games.alejandrocoria.mismatchedboots.gametest.ComponentRulesConfigGameTests",
             "games.alejandrocoria.mismatchedboots.composition.ComponentCompositionGameTests",
             "games.alejandrocoria.mismatchedboots.gametest.DamageTagReloadGameTests",
-            "games.alejandrocoria.mismatchedboots.gametest.BehaviorTagGameTests"
+            "games.alejandrocoria.mismatchedboots.gametest.BehaviorTagGameTests",
+            "games.alejandrocoria.mismatchedboots.gametest.BehaviorTagReloadGameTests"
         ],
         "fabric-client-gametest": [
             "games.alejandrocoria.mismatchedboots.gametest.FabricMeshRenderingClientGameTest",

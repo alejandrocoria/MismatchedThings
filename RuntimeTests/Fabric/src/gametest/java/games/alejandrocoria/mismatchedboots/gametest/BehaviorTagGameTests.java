@@ -53,6 +53,15 @@ public final class BehaviorTagGameTests {
                 "Mixed boots inherited an unaudited repair tag");
         helper.assertTrue(!materialMixed.is(ItemTags.IRON_TOOL_MATERIALS),
                 "Mixed boots inherited an unaudited tier tag");
+
+        ItemStack recipeMaterial = new ItemStack(Items.COBBLESTONE);
+        recipeMaterial.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build());
+        helper.assertTrue(recipeMaterial.is(ItemTags.STONE_CRAFTING_MATERIALS),
+                "Recipe-tag fixture is not a member of stone_crafting_materials");
+        ItemStack recipeMixed = GameTestStacks.pair(
+                recipeMaterial, new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        helper.assertTrue(!recipeMixed.is(ItemTags.STONE_CRAFTING_MATERIALS),
+                "Mixed boots inherited an unaudited recipe tag");
         helper.succeed();
     }
 

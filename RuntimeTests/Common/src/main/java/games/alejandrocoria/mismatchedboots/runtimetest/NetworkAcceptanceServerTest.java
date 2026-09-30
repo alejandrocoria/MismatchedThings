@@ -5,13 +5,16 @@ import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public final class NetworkAcceptanceServerTest {
     private static final Identifier MOVEMENT_SPEED = Identifier.withDefaultNamespace("movement_speed");
@@ -38,6 +41,8 @@ public final class NetworkAcceptanceServerTest {
             ticks++;
             if (!ready) {
                 assertRules();
+                assertBehaviorTagProjection();
+                assertOptionalModAbsent();
                 NetworkAcceptanceFiles.write(
                         "server-snapshot.txt", NetworkAcceptanceFiles.snapshot(
                                 AttributeRulesLifecycle.serverRules(), ComponentRulesLifecycle.serverRules()));
@@ -81,6 +86,27 @@ public final class NetworkAcceptanceServerTest {
                         components.declarations().get(DORMANT_COMPONENT))
                 || components.components().rules().containsKey(DORMANT_COMPONENT)) {
             throw new AssertionError("Server did not load the isolated component rules: " + components);
+        }
+    }
+
+    private static void assertBehaviorTagProjection() {
+        var qualifying = MixedBootsFactory.createPair(
+                new ItemStack(Items.GOLDEN_BOOTS), new ItemStack(Items.IRON_BOOTS));
+        if (!qualifying.primary().is(ItemTags.PIGLIN_SAFE_ARMOR)
+                || !qualifying.inverse().is(ItemTags.PIGLIN_SAFE_ARMOR)) {
+            throw new AssertionError("Loader server did not project piglin safety in both orientations");
+        }
+        ItemStack ordinary = MixedBootsFactory.createPair(
+                new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        if (ordinary.is(ItemTags.PIGLIN_SAFE_ARMOR) || qualifying.primary().is(ItemTags.FOOT_ARMOR)) {
+            throw new AssertionError("Loader server projected an unsupported behavior tag");
+        }
+    }
+
+    private static void assertOptionalModAbsent() {
+        String hook = "com/autovw/advancednetherite/api/impl/IAdvancedHooks.class";
+        if (NetworkAcceptanceServerTest.class.getClassLoader().getResource(hook) != null) {
+            throw new AssertionError("Advanced Netherite unexpectedly entered the canonical runtime classpath");
         }
     }
 

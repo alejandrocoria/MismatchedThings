@@ -7,7 +7,11 @@ import net.minecraft.SharedConstants;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -93,6 +97,18 @@ class MixedBootsSourcesTest {
         assertEquals(1, data.right().source().getCount());
     }
 
+    @Test
+    void behaviorTagAllowlistRejectsEveryUnauditedCategory() {
+        assertTrue(MixedBootsBehaviorTags.isProjected(ItemTags.PIGLIN_SAFE_ARMOR));
+        assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.FOOT_ARMOR));
+        assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.REPAIRS_IRON_ARMOR));
+        assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.IRON_TOOL_MATERIALS));
+        assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.STONE_CRAFTING_MATERIALS));
+        assertFalse(MixedBootsBehaviorTags.isProjected(advancedNetheriteTag("pacify_piglins_armor")));
+        assertFalse(MixedBootsBehaviorTags.isProjected(advancedNetheriteTag("pacify_endermen_armor")));
+        assertFalse(MixedBootsBehaviorTags.isProjected(advancedNetheriteTag("pacify_phantoms_armor")));
+    }
+
     private static MixedBootsData data(Item left, Item right) {
         return new MixedBootsData(
                 new BootHalf(new ItemStack(left)),
@@ -103,5 +119,9 @@ class MixedBootsSourcesTest {
         item.builtInRegistryHolder().bindComponents(DataComponentMap.builder()
                 .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
                 .build());
+    }
+
+    private static TagKey<Item> advancedNetheriteTag(String path) {
+        return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("advancednetherite", path));
     }
 }
