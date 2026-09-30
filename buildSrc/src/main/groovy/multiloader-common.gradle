@@ -67,6 +67,15 @@ repositories {
     }
 }
 
+if (project.path in [':Common', ':Fabric', ':NeoForge', ':Forge']) {
+    dependencies {
+        compileOnly('maven.modrinth:CFX9ftUJ:5lXHbz4w') {
+            transitive = false
+        }
+        compileOnly 'org.ow2.asm:asm-tree:9.10.1'
+    }
+}
+
 // Declare capabilities on the outgoing configurations.
 // Read more about capabilities here: https://docs.gradle.org/current/userguide/component_capabilities.html#sec:declaring-additional-capabilities-for-a-local-component
 ['apiElements', 'runtimeElements', 'sourcesElements'/*, 'javadocElements'*/].each { variant ->

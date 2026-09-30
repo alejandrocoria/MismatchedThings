@@ -8,6 +8,8 @@ import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +17,8 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+
+import java.util.Arrays;
 
 public final class NetworkAcceptanceServerTest {
     private static final Identifier MOVEMENT_SPEED = Identifier.withDefaultNamespace("movement_speed");
@@ -104,9 +108,18 @@ public final class NetworkAcceptanceServerTest {
     }
 
     private static void assertOptionalModAbsent() {
-        String hook = "com/autovw/advancednetherite/api/impl/IAdvancedHooks.class";
-        if (NetworkAcceptanceServerTest.class.getClassLoader().getResource(hook) != null) {
+        String hookClass = "com.autovw.advancednetherite.api.impl.IAdvancedHooks";
+        String hookResource = hookClass.replace('.', '/') + ".class";
+        if (NetworkAcceptanceServerTest.class.getClassLoader().getResource(hookResource) != null) {
             throw new AssertionError("Advanced Netherite unexpectedly entered the canonical runtime classpath");
+        }
+        var mixedBoots = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
+        if (mixedBoots == null) {
+            throw new AssertionError("Mismatched Boots item is not registered");
+        }
+        if (Arrays.stream(mixedBoots.getClass().getInterfaces())
+                .anyMatch(type -> hookClass.equals(type.getName()))) {
+            throw new AssertionError("Optional Advanced Netherite interface was applied while its API was absent");
         }
     }
 
