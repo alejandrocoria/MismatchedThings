@@ -5,6 +5,7 @@
   "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.betterx",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "BetterEndMobEffectApplierMixin"
+    "BetterEndMobEffectApplierMixin",
+    "BetterNetherPiglinArmorMixin"
   ]
 }

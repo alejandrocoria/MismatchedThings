@@ -24,6 +24,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +32,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
@@ -42,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class BetterXCompatibilityGameTests {
@@ -52,6 +56,21 @@ public final class BetterXCompatibilityGameTests {
     private static final String EFFECT_APPLIER_INTERNAL =
             "org/betterx/betterend/interfaces/MobEffectApplier";
     private static final String APPLY_EFFECT = "(Lnet/minecraft/world/entity/LivingEntity;)V";
+    private static final String PIGLIN_RULE_PROPERTY =
+            "mismatchedboots.test.betterNether.enabled";
+    private static final String DEFAULT_CONFIG_DESCRIPTOR =
+            "Lorg/betterx/betternether/config/DefaultWorldConfig;";
+    private static final String BOOLEAN_VALUE_DESCRIPTOR =
+            "Lde/ambertation/wunderlib/configs/AbstractConfig$BooleanValue;";
+    private static final String NETHER_SET_DESCRIPTOR =
+            "Lorg/betterx/betternether/items/complex/NetherSet;";
+    private static final String EQUIPMENT_SET_INTERNAL =
+            "de/ambertation/wover/complex/api/equipment/EquipmentSet";
+    private static final String ARMOR_PIECES_DESCRIPTOR =
+            "()[Lnet/minecraft/world/item/Item;";
+    private static final String UPSTREAM_HANDLER_DESCRIPTOR =
+            "(Lnet/minecraft/world/entity/LivingEntity;"
+                    + "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V";
     private static final TagKey<Item> CRYSTALITE_SET = tag("betterend", "armor_set/crystalite");
     private static final TagKey<Item> UNAUDITED_BETTER_END = tag("betterend", "unaudited_control");
 
@@ -75,6 +94,37 @@ public final class BetterXCompatibilityGameTests {
         wrongBootInterface.interfaces.clear();
         require(!guardAccepts(effectApplierNode(), wrongBootInterface),
                 "Crystalite Boots without MobEffectApplier was accepted");
+        helper.succeed();
+    }
+
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void betterNetherGuardAcceptsOnlyTheExactExpectedApi(GameTestHelper helper) {
+        ClassNode[] exact = betterNetherApiNodes();
+        require(betterNetherGuardAccepts(exact),
+                "Exact Better Nether API shape was rejected");
+
+        ClassNode[] missingConfig = betterNetherApiNodes();
+        missingConfig[0] = null;
+        require(!betterNetherGuardAccepts(missingConfig),
+                "Missing Better Nether config class was accepted");
+
+        ClassNode[] missingSet = betterNetherApiNodes();
+        missingSet[2].fields.removeIf(field -> "FLAMING_RUBY_SET".equals(field.name));
+        require(!betterNetherGuardAccepts(missingSet),
+                "Missing Better Nether equipment set was accepted");
+
+        ClassNode[] staticAccessor = betterNetherApiNodes();
+        staticAccessor[4].methods.getFirst().access |= Opcodes.ACC_STATIC;
+        require(!betterNetherGuardAccepts(staticAccessor),
+                "Static armor-piece accessor was accepted");
+
+        ClassNode[] incompatibleMixin = betterNetherApiNodes();
+        incompatibleMixin[5].methods.getFirst().visibleAnnotations = null;
+        require(!betterNetherGuardAccepts(incompatibleMixin),
+                "Better Nether mixin without its cancellable HEAD injection was accepted");
+
+        require(guardAccepts(effectApplierNode(), crystaliteBootsNode()),
+                "A rejected Better Nether shape affected the independent Better End guard");
         helper.succeed();
     }
 
@@ -103,6 +153,63 @@ public final class BetterXCompatibilityGameTests {
                 Items.IRON_BOOTS.getDefaultInstance(), Items.GOLDEN_BOOTS.getDefaultInstance());
         assertNoSwiftness(effectApplier, player, unrelated.primary());
         assertRequiresEquippedMixedBoots(effectApplier, player, pair.primary());
+        helper.succeed();
+    }
+
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void betterNetherPiglinRuleUsesTheGuardedProductionAdapter(GameTestHelper helper) {
+        boolean configured = requiredBooleanProperty(PIGLIN_RULE_PROPERTY);
+        require(piglinRuleEnabled() == configured,
+                "Better Nether did not load the expected piglin configuration");
+
+        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        for (String path : List.of(
+                "cincinnasite_boots", "nether_ruby_boots", "flaming_ruby_boots")) {
+            ItemStack ordinary = item("betternether", path).getDefaultInstance();
+            player.setItemSlot(EquipmentSlot.FEET, ordinary);
+            require(PiglinAi.isWearingSafeArmor(player) == configured,
+                    path + " did not retain Better Nether's configured behavior");
+
+            MixedBootsPair pair = MixedBootsFactory.createPair(
+                    ordinary, Items.IRON_BOOTS.getDefaultInstance());
+            assertPiglinResult(player, pair.primary(), configured, path + " primary");
+            assertPiglinResult(player, pair.inverse(), configured, path + " inverse");
+        }
+
+        MixedBootsPair twoQualifying = MixedBootsFactory.createPair(
+                item("betternether", "cincinnasite_boots").getDefaultInstance(),
+                item("betternether", "flaming_ruby_boots").getDefaultInstance());
+        assertPiglinResult(
+                player, twoQualifying.primary(), configured, "two qualifying sources");
+
+        MixedBootsPair unrelated = MixedBootsFactory.createPair(
+                Items.IRON_BOOTS.getDefaultInstance(), Items.LEATHER_BOOTS.getDefaultInstance());
+        assertPiglinResult(player, unrelated.primary(), false, "unrelated mixed sources");
+
+        player.setItemSlot(EquipmentSlot.FEET, Items.GOLDEN_BOOTS.getDefaultInstance());
+        require(PiglinAi.isWearingSafeArmor(player),
+                "Adapter changed vanilla golden-boots safety");
+        player.setItemSlot(EquipmentSlot.FEET, Items.IRON_BOOTS.getDefaultInstance());
+        require(!PiglinAi.isWearingSafeArmor(player),
+                "Adapter made vanilla iron boots piglin-safe");
+        player.setItemSlot(
+                EquipmentSlot.FEET, item("betterend", "aeternium_boots").getDefaultInstance());
+        require(!PiglinAi.isWearingSafeArmor(player),
+                "Adapter made unrelated Better End boots piglin-safe");
+
+        ItemStack existing = twoQualifying.primary();
+        try {
+            setPiglinRule(!configured);
+            require(piglinRuleEnabled() != configured,
+                    "Better Nether piglin option did not change live");
+            assertPiglinResult(
+                    player, existing, !configured, "existing stack after live option change");
+        } finally {
+            setPiglinRule(configured);
+        }
+        require(piglinRuleEnabled() == configured,
+                "Better Nether piglin option was not restored");
+        assertPiglinResult(player, existing, configured, "existing stack after option restore");
         helper.succeed();
     }
 
@@ -173,6 +280,60 @@ public final class BetterXCompatibilityGameTests {
         } catch (IOException exception) {
             throw new AssertionError("Could not prepare the Crystalite tag data pack", exception);
         }
+    }
+
+    private static void assertPiglinResult(
+            Player player,
+            ItemStack mixed,
+            boolean expected,
+            String description) {
+        ItemStack unchangedRoot = mixed.copy();
+        MixedBootsData unchangedSources = mixedData(mixed);
+        player.setItemSlot(EquipmentSlot.FEET, mixed);
+        require(PiglinAi.isWearingSafeArmor(player) == expected,
+                description + " produced the wrong piglin-safe result");
+        assertUnchanged(mixed, unchangedRoot, unchangedSources, description);
+    }
+
+    private static boolean piglinRuleEnabled() {
+        Object value = piglinRuleValue();
+        try {
+            return Boolean.TRUE.equals(value.getClass().getMethod("get").invoke(value));
+        } catch (NoSuchMethodException | IllegalAccessException exception) {
+            throw new AssertionError("Could not read Better Nether's piglin option", exception);
+        } catch (InvocationTargetException exception) {
+            throw new AssertionError(
+                    "Better Nether's piglin option getter failed", exception.getCause());
+        }
+    }
+
+    private static void setPiglinRule(boolean enabled) {
+        Object value = piglinRuleValue();
+        try {
+            value.getClass().getMethod("set", Object.class).invoke(value, enabled);
+        } catch (NoSuchMethodException | IllegalAccessException exception) {
+            throw new AssertionError("Could not change Better Nether's piglin option", exception);
+        } catch (InvocationTargetException exception) {
+            throw new AssertionError(
+                    "Better Nether's piglin option setter failed", exception.getCause());
+        }
+    }
+
+    private static Object piglinRuleValue() {
+        try {
+            Class<?> configs = requiredClass("org.betterx.betternether.config.Configs");
+            Object gameRules = configs.getField("GAME_RULES").get(null);
+            return gameRules.getClass().getField("piglinIgnoreNetherArmor").get(gameRules);
+        } catch (NoSuchFieldException | IllegalAccessException exception) {
+            throw new AssertionError("Could not resolve Better Nether's piglin option", exception);
+        }
+    }
+
+    private static boolean requiredBooleanProperty(String name) {
+        String value = System.getProperty(name);
+        require("true".equals(value) || "false".equals(value),
+                "Missing expected boolean property " + name);
+        return Boolean.parseBoolean(value);
     }
 
     private static void assertProjectedSet(Player player, ItemStack mixed, String orientation) {
@@ -314,6 +475,30 @@ public final class BetterXCompatibilityGameTests {
         }
     }
 
+    private static boolean betterNetherGuardAccepts(ClassNode[] nodes) {
+        try {
+            Class<?> plugin = Class.forName(
+                    "games.alejandrocoria.mismatchedboots.compatibility.betterx.BetterXMixinPlugin",
+                    false,
+                    BetterXCompatibilityGameTests.class.getClassLoader());
+            Method method = plugin.getDeclaredMethod(
+                    "hasCompatibleBetterNetherApi",
+                    ClassNode.class,
+                    ClassNode.class,
+                    ClassNode.class,
+                    ClassNode.class,
+                    ClassNode.class,
+                    ClassNode.class);
+            require(method.trySetAccessible(), "Could not access Better Nether structural guard");
+            return (boolean) method.invoke(null, (Object[]) nodes);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException exception) {
+            throw new AssertionError("Could not invoke Better Nether structural guard", exception);
+        } catch (InvocationTargetException exception) {
+            throw new AssertionError(
+                    "Better Nether structural guard failed", exception.getCause());
+        }
+    }
+
     private static ServerPlayer connectedMockPlayer(GameTestHelper helper) {
         ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
         new ServerGamePacketListenerImpl(
@@ -405,6 +590,66 @@ public final class BetterXCompatibilityGameTests {
         node.interfaces.add(EFFECT_APPLIER_INTERNAL);
         node.methods.add(new MethodNode(Opcodes.ACC_PUBLIC, "applyEffect", APPLY_EFFECT, null, null));
         return node;
+    }
+
+    private static ClassNode[] betterNetherApiNodes() {
+        ClassNode configs = type(Opcodes.ACC_PUBLIC);
+        configs.fields.add(field(
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+                "GAME_RULES",
+                DEFAULT_CONFIG_DESCRIPTOR));
+
+        ClassNode defaultConfig = type(Opcodes.ACC_PUBLIC);
+        defaultConfig.fields.add(field(
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                "piglinIgnoreNetherArmor",
+                BOOLEAN_VALUE_DESCRIPTOR));
+
+        ClassNode equipmentItems = type(Opcodes.ACC_PUBLIC);
+        for (String name : List.of(
+                "CINCINNASITE_SET", "NETHER_RUBY_SET", "FLAMING_RUBY_SET")) {
+            equipmentItems.fields.add(field(
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+                    name,
+                    NETHER_SET_DESCRIPTOR));
+        }
+
+        ClassNode netherSet = type(Opcodes.ACC_PUBLIC);
+        netherSet.superName = EQUIPMENT_SET_INTERNAL;
+
+        ClassNode equipmentSet = type(Opcodes.ACC_PUBLIC);
+        equipmentSet.methods.add(new MethodNode(
+                Opcodes.ACC_PUBLIC,
+                "getArmorPieces",
+                ARMOR_PIECES_DESCRIPTOR,
+                null,
+                null));
+
+        ClassNode upstreamMixin = type(Opcodes.ACC_PUBLIC);
+        MethodNode handler = new MethodNode(
+                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                "bn_isWearingSafeArmor",
+                UPSTREAM_HANDLER_DESCRIPTOR,
+                null,
+                null);
+        AnnotationNode at = new AnnotationNode("Lorg/spongepowered/asm/mixin/injection/At;");
+        at.values = new ArrayList<>(List.of("value", "HEAD"));
+        AnnotationNode inject =
+                new AnnotationNode("Lorg/spongepowered/asm/mixin/injection/Inject;");
+        inject.values = new ArrayList<>(List.of(
+                "method", List.of("isWearingSafeArmor"),
+                "at", List.of(at),
+                "cancellable", true));
+        handler.visibleAnnotations = new ArrayList<>(List.of(inject));
+        upstreamMixin.methods.add(handler);
+
+        return new ClassNode[]{
+                configs, defaultConfig, equipmentItems, netherSet, equipmentSet, upstreamMixin
+        };
+    }
+
+    private static FieldNode field(int access, String name, String descriptor) {
+        return new FieldNode(access, name, descriptor, null, null);
     }
 
     private static ClassNode type(int access) {

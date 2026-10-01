@@ -1,5 +1,6 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.betternether.fabric;
+package games.alejandrocoria.mismatchedboots.compatibility.betterx;
 
+import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -22,15 +23,14 @@ public final class BetterNetherPiglinArmorAdapter {
     };
 
     private static Boundary boundary;
+    private static boolean boundaryResolved;
 
     private BetterNetherPiglinArmorAdapter() {
     }
 
     public static void augment(
             LivingEntity entity,
-            CallbackInfoReturnable<Boolean> callback,
-            String priority) {
-        BetterNetherSpikeProbe.recordEvaluation(priority);
+            CallbackInfoReturnable<Boolean> callback) {
         if (Boolean.TRUE.equals(callback.getReturnValue())) {
             return;
         }
@@ -47,22 +47,17 @@ public final class BetterNetherPiglinArmorAdapter {
                 continue;
             }
             if (MixedBootsSources.anySource(worn, source -> api.contains(source.getItem()))) {
-                BetterNetherSpikeProbe.recordClaim();
                 callback.setReturnValue(true);
                 return;
             }
         }
     }
 
-    static boolean isEnabledForTest() {
-        Boundary api = boundary();
-        return api != null && api.isEnabled();
-    }
-
     private static synchronized Boundary boundary() {
-        if (boundary != null) {
+        if (boundaryResolved) {
             return boundary;
         }
+        boundaryResolved = true;
         try {
             ClassLoader loader = BetterNetherPiglinArmorAdapter.class.getClassLoader();
             Class<?> configs = Class.forName(
@@ -82,12 +77,12 @@ public final class BetterNetherPiglinArmorAdapter {
             }
             Method getArmorPieces = sets[0].getClass().getMethod("getArmorPieces");
             boundary = new Boundary(enabled, getValue, sets, getArmorPieces);
-            return boundary;
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException
                  | IllegalAccessException | LinkageError exception) {
-            BetterNetherSpikeProbe.recordBoundaryFailure();
-            return null;
+            Constants.LOG.warn(
+                    "Could not resolve Better Nether runtime API; compatibility disabled", exception);
         }
+        return boundary;
     }
 
     private record Boundary(
@@ -99,7 +94,9 @@ public final class BetterNetherPiglinArmorAdapter {
             try {
                 return Boolean.TRUE.equals(getValue.invoke(enabledValue));
             } catch (IllegalAccessException | InvocationTargetException exception) {
-                BetterNetherSpikeProbe.recordBoundaryFailure();
+                Constants.LOG.warn(
+                        "Could not read Better Nether piglin configuration; compatibility disabled",
+                        exception);
                 return false;
             }
         }
@@ -116,7 +113,9 @@ public final class BetterNetherPiglinArmorAdapter {
                 }
                 return false;
             } catch (IllegalAccessException | InvocationTargetException | ClassCastException exception) {
-                BetterNetherSpikeProbe.recordBoundaryFailure();
+                Constants.LOG.warn(
+                        "Could not query Better Nether armor sets; compatibility disabled",
+                        exception);
                 return false;
             }
         }

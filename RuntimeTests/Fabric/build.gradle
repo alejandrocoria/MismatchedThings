@@ -72,11 +72,6 @@ sourceSets {
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
         runtimeClasspath += output + compileClasspath
     }
-    betterNetherSpikeTest {
-        compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':Fabric').sourceSets.main.output)
-        runtimeClasspath += output + compileClasspath
-    }
 }
 
 loom {
@@ -246,96 +241,31 @@ loom {
             source('main')
             vmArg('-Xmx1G')
         }
-        betterXCompatibility {
+        betterXCompatibilityEnabled {
             inherit server
-            setConfigName('Fabric BetterX Compatibility')
+            setConfigName('Fabric BetterX Compatibility (Piglin Enabled)')
             ideConfigGenerated(false)
             property('fabric-api.gametest')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betterx-compatibility.xml').get().asFile.absolutePath)
-            runDir('build/run/betterXCompatibility')
-            source('main')
-            vmArg('-Xmx1G')
-        }
-        betterNetherAdapterHighEnabled {
-            inherit server
-            setConfigName('Fabric Better Nether Adapter Spike (High, Enabled)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterNether.present', 'true')
             property('mismatchedboots.test.betterNether.enabled', 'true')
-            property('mismatchedboots.test.betterNether.priority', 'high')
             property(
                     'fabric-api.gametest.report-file',
                     layout.buildDirectory.file(
-                            'reports/gametest/betternether-adapter-high-enabled.xml').get().asFile.absolutePath)
-            runDir('build/run/betterNetherAdapterHighEnabled')
+                            'reports/gametest/betterx-compatibility-enabled.xml').get().asFile.absolutePath)
+            runDir('build/run/betterXCompatibilityEnabled')
             source('main')
             vmArg('-Xmx1G')
         }
-        betterNetherAdapterHighDisabled {
+        betterXCompatibilityDisabled {
             inherit server
-            setConfigName('Fabric Better Nether Adapter Spike (High, Disabled)')
+            setConfigName('Fabric BetterX Compatibility (Piglin Disabled)')
             ideConfigGenerated(false)
             property('fabric-api.gametest')
-            property('mismatchedboots.test.betterNether.present', 'true')
             property('mismatchedboots.test.betterNether.enabled', 'false')
-            property('mismatchedboots.test.betterNether.priority', 'high')
             property(
                     'fabric-api.gametest.report-file',
                     layout.buildDirectory.file(
-                            'reports/gametest/betternether-adapter-high-disabled.xml').get().asFile.absolutePath)
-            runDir('build/run/betterNetherAdapterHighDisabled')
-            source('main')
-            vmArg('-Xmx1G')
-        }
-        betterNetherAdapterLowEnabled {
-            inherit server
-            setConfigName('Fabric Better Nether Adapter Spike (Low, Enabled)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterNether.present', 'true')
-            property('mismatchedboots.test.betterNether.enabled', 'true')
-            property('mismatchedboots.test.betterNether.priority', 'low')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betternether-adapter-low-enabled.xml').get().asFile.absolutePath)
-            runDir('build/run/betterNetherAdapterLowEnabled')
-            source('main')
-            vmArg('-Xmx1G')
-        }
-        betterNetherAdapterLowDisabled {
-            inherit server
-            setConfigName('Fabric Better Nether Adapter Spike (Low, Disabled)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterNether.present', 'true')
-            property('mismatchedboots.test.betterNether.enabled', 'false')
-            property('mismatchedboots.test.betterNether.priority', 'low')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betternether-adapter-low-disabled.xml').get().asFile.absolutePath)
-            runDir('build/run/betterNetherAdapterLowDisabled')
-            source('main')
-            vmArg('-Xmx1G')
-        }
-        betterNetherAdapterAbsent {
-            inherit server
-            setConfigName('Fabric Better Nether Adapter Spike (Absent)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterNether.present', 'false')
-            property('mismatchedboots.test.betterNether.enabled', 'false')
-            property('mismatchedboots.test.betterNether.priority', 'high')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betternether-adapter-absent.xml').get().asFile.absolutePath)
-            runDir('build/run/betterNetherAdapterAbsent')
+                            'reports/gametest/betterx-compatibility-disabled.xml').get().asFile.absolutePath)
+            runDir('build/run/betterXCompatibilityDisabled')
             source('main')
             vmArg('-Xmx1G')
         }
@@ -360,14 +290,9 @@ def betterXEnabledRunDirectory = layout.buildDirectory.dir('run/betterXCharacter
 def betterXDisabledRunDirectory = layout.buildDirectory.dir('run/betterXCharacterizationDisabled')
 def betterXEnabledReport = layout.buildDirectory.file('reports/gametest/betterx-enabled.xml')
 def betterXDisabledReport = layout.buildDirectory.file('reports/gametest/betterx-disabled.xml')
-def betterXCompatibilityRunDirectory = layout.buildDirectory.dir('run/betterXCompatibility')
-def betterXCompatibilityReport = layout.buildDirectory.file('reports/gametest/betterx-compatibility.xml')
-def betterNetherSpikeCases = [
-        [suffix: 'HighEnabled', priority: 'high', enabled: true, present: true],
-        [suffix: 'HighDisabled', priority: 'high', enabled: false, present: true],
-        [suffix: 'LowEnabled', priority: 'low', enabled: true, present: true],
-        [suffix: 'LowDisabled', priority: 'low', enabled: false, present: true],
-        [suffix: 'Absent', priority: 'high', enabled: false, present: false]
+def betterXCompatibilityCases = [
+        [suffix: 'Enabled', enabled: true],
+        [suffix: 'Disabled', enabled: false]
 ]
 
 def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
@@ -383,11 +308,6 @@ def betterXTestJar = tasks.register('betterXTestJar', Jar) {
 def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', Jar) {
     archiveClassifier = 'betterx-compatibility-test'
     from sourceSets.betterXCompatibilityTest.output
-}
-
-def betterNetherSpikeTestJar = tasks.register('betterNetherSpikeTestJar', Jar) {
-    archiveClassifier = 'betternether-spike-test'
-    from sourceSets.betterNetherSpikeTest.output
 }
 
 tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
@@ -512,30 +432,55 @@ tasks.register('verifyBetterXCharacterization') {
     }
 }
 
-tasks.register('prepareBetterXCompatibility', Delete) {
-    dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
-    delete betterXCompatibilityRunDirectory, betterXCompatibilityReport
-    doLast {
-        def runDirectory = betterXCompatibilityRunDirectory.get().asFile
-        def modsDirectory = new File(runDirectory, 'mods')
-        modsDirectory.mkdirs()
-        layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-        layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-        copy {
-            from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
-            from(betterXCompatibilityTestJar.flatMap { it.archiveFile })
-            from(configurations.betterEndFabric)
-            into(modsDirectory)
-        }
-        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
-        new File(runDirectory, 'server.properties').text = '''online-mode=false
+def betterXCompatibilityPreparations = [:]
+betterXCompatibilityCases.each { spec ->
+    def runDirectory = layout.buildDirectory.dir("run/betterXCompatibility${spec.suffix}")
+    def report = layout.buildDirectory.file(
+            "reports/gametest/betterx-compatibility-${spec.suffix.toLowerCase(Locale.ROOT)}.xml")
+    def preparation = tasks.register("prepareBetterXCompatibility${spec.suffix}", Delete) {
+        dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
+        delete runDirectory, report
+        doLast {
+            def targetDirectory = runDirectory.get().asFile
+            def modsDirectory = new File(targetDirectory, 'mods')
+            modsDirectory.mkdirs()
+            layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+            layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
+            copy {
+                from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+                from(betterXCompatibilityTestJar.flatMap { it.archiveFile })
+                from(configurations.betterXFabric)
+                into(modsDirectory)
+            }
+            new File(targetDirectory, 'eula.txt').text = 'eula=true\n'
+            new File(targetDirectory, 'server.properties').text = '''online-mode=false
 max-tick-time=-1
 '''
-    }
+            def configFile = new File(
+                    targetDirectory, 'config/betternether/default_game_rules.json')
+            configFile.parentFile.mkdirs()
+            configFile.text = """{
+  \"create_version\": \"26.201.2\",
+  \"egg_plant\": {
+    \"mob_damage\": true,
+    \"player_damage\": true
+  },
+  \"piglin\": {
+    \"ignore_nether_armor\": ${spec.enabled},
+    \"wear_nether_armor\": true
+  },
+  \"modify_version\": \"26.201.2\"
 }
-
-tasks.named('runBetterXCompatibility') {
-    dependsOn tasks.named('prepareBetterXCompatibility')
+"""
+        }
+    }
+    betterXCompatibilityPreparations[spec.suffix] = [
+            preparation: preparation,
+            report: report
+    ]
+    tasks.named("runBetterXCompatibility${spec.suffix}") {
+        dependsOn preparation
+    }
 }
 
 tasks.register('verifyBetterXCompatibility') {
@@ -551,6 +496,15 @@ tasks.register('verifyBetterXCompatibility') {
         def betterEndJar = betterEndArtifact?.file
         if (betterEndJar == null) {
             throw new GradleException('Exact Better End artifact is missing from the tag-consumer audit')
+        }
+        def betterNetherArtifact = configurations.betterXFabric.resolvedConfiguration.resolvedArtifacts.find {
+            it.moduleVersion.id.group == 'maven.modrinth' &&
+                    it.moduleVersion.id.name == 'MpzVLzy5' &&
+                    it.moduleVersion.id.version == 'iBR9QMPF'
+        }
+        if (betterNetherArtifact == null) {
+            throw new GradleException(
+                    'Exact Better Nether artifact is missing from the piglin adapter audit')
         }
 
         def owner = 'org/betterx/betterend/registry/EndTags'
@@ -580,12 +534,32 @@ tasks.register('verifyBetterXCompatibility') {
             throw new GradleException("Unexpected Crystalite tag consumers: ${references}")
         }
 
-        def processLog = layout.buildDirectory.file(
-                'reports/betterx-compatibility/fabric-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runBetterXCompatibility', processLog, 300)
-        if (!betterXCompatibilityReport.get().asFile.isFile()) {
-            throw new GradleException("BetterX compatibility GameTest report is missing; see ${processLog}")
+        betterXCompatibilityCases.each { spec ->
+            def details = betterXCompatibilityPreparations[spec.suffix]
+            def processLog = layout.buildDirectory.file(
+                    "reports/betterx-compatibility/fabric-${spec.suffix.toLowerCase(Locale.ROOT)}-process.log")
+                    .get().asFile
+            rootProject.ext.runBoundedGradleTask(
+                    ":RuntimeTests:Fabric:runBetterXCompatibility${spec.suffix}",
+                    processLog,
+                    300)
+            if (!details.report.get().asFile.isFile()) {
+                throw new GradleException(
+                        "BetterX ${spec.suffix} GameTest report is missing; see ${processLog}")
+            }
+            def logText = processLog.getText('UTF-8')
+            def adapterWarnings = [
+                    'Better Nether is present with an incompatible API',
+                    'Better Nether is present without its expected API',
+                    'Could not inspect Better Nether API',
+                    'Could not resolve Better Nether runtime API',
+                    'Could not read Better Nether piglin configuration',
+                    'Could not query Better Nether armor sets'
+            ].findAll { logText.contains(it) }
+            if (!adapterWarnings.isEmpty()) {
+                throw new GradleException(
+                        "BetterX ${spec.suffix} emitted adapter warnings: ${adapterWarnings}")
+            }
         }
 
         def productionJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
@@ -596,6 +570,8 @@ tasks.register('verifyBetterXCompatibility') {
                 name.startsWith('org/betterx/')
                         || (name.endsWith('.jar') && (name.contains('better-end')
                         || name.contains('betterend')
+                        || name.contains('better-nether')
+                        || name.contains('betternether')
                         || name.contains('bclib')
                         || name.contains('worldweaver')
                         || name.contains('wover')))
@@ -608,8 +584,12 @@ tasks.register('verifyBetterXCompatibility') {
             def requiredEntries = [
                     'mismatchedboots.betterx.mixins.json',
                     'games/alejandrocoria/mismatchedboots/compatibility/betterx/BetterXMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedboots/compatibility/betterx/'
+                            + 'BetterNetherPiglinArmorAdapter.class',
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
-                            + 'BetterEndMobEffectApplierMixin.class'
+                            + 'BetterEndMobEffectApplierMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
+                            + 'BetterNetherPiglinArmorMixin.class'
             ]
             def missingEntries = requiredEntries.findAll { productionZip.getEntry(it) == null }
             if (!missingEntries.isEmpty()) {
@@ -620,120 +600,13 @@ tasks.register('verifyBetterXCompatibility') {
             def descriptor = productionZip.getInputStream(
                     productionZip.getEntry('fabric.mod.json')).getText('UTF-8')
             if (descriptor.contains('"betterend"')
+                    || descriptor.contains('"betternether"')
                     || descriptor.contains('"bclib"')
                     || descriptor.contains('"wover"')) {
-                throw new GradleException('Production Fabric metadata unexpectedly requires Better End')
+                throw new GradleException('Production Fabric metadata unexpectedly requires BetterX')
             }
         } finally {
             productionZip.close()
-        }
-    }
-}
-
-def betterNetherSpikePreparations = [:]
-betterNetherSpikeCases.each { spec ->
-    def reportStem = spec.suffix.replaceAll(/([a-z])([A-Z])/, '$1-$2').toLowerCase(Locale.ROOT)
-    def runDirectory = layout.buildDirectory.dir("run/betterNetherAdapter${spec.suffix}")
-    def report = layout.buildDirectory.file(
-            "reports/gametest/betternether-adapter-${reportStem}.xml")
-    def preparation = tasks.register("prepareBetterNetherAdapter${spec.suffix}", Delete) {
-        dependsOn(':Fabric:jar', betterNetherSpikeTestJar)
-        delete runDirectory, report
-        doLast {
-            def targetDirectory = runDirectory.get().asFile
-            def modsDirectory = new File(targetDirectory, 'mods')
-            modsDirectory.mkdirs()
-            layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-            layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-            copy {
-                from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
-                from(betterNetherSpikeTestJar.flatMap { it.archiveFile })
-                if (spec.present) {
-                    from(configurations.betterXFabric)
-                }
-                into(modsDirectory)
-            }
-            new File(targetDirectory, 'eula.txt').text = 'eula=true\n'
-            new File(targetDirectory, 'server.properties').text = '''online-mode=false
-max-tick-time=-1
-'''
-            if (spec.present) {
-                def configFile = new File(
-                        targetDirectory, 'config/betternether/default_game_rules.json')
-                configFile.parentFile.mkdirs()
-                configFile.text = """{
-  \"create_version\": \"26.201.2\",
-  \"egg_plant\": {
-    \"mob_damage\": true,
-    \"player_damage\": true
-  },
-  \"piglin\": {
-    \"ignore_nether_armor\": ${spec.enabled},
-    \"wear_nether_armor\": true
-  },
-  \"modify_version\": \"26.201.2\"
-}
-"""
-            }
-        }
-    }
-    betterNetherSpikePreparations[spec.suffix] = [
-            preparation: preparation,
-            report: report,
-            reportStem: reportStem
-    ]
-    tasks.named("runBetterNetherAdapter${spec.suffix}") {
-        dependsOn preparation
-    }
-}
-
-tasks.register('verifyBetterNetherAdapterSpike') {
-    group = 'verification'
-    description = 'Proves the config-faithful Better Nether 26.201.2 piglin adapter in both mixin orders.'
-    dependsOn(':Fabric:jar', betterNetherSpikeTestJar)
-    doLast {
-        def betterNetherArtifact = configurations.betterXFabric.resolvedConfiguration.resolvedArtifacts.find {
-            it.moduleVersion.id.group == 'maven.modrinth' &&
-                    it.moduleVersion.id.name == 'MpzVLzy5' &&
-                    it.moduleVersion.id.version == 'iBR9QMPF'
-        }
-        if (betterNetherArtifact == null) {
-            throw new GradleException('Exact Better Nether artifact is missing from the piglin adapter audit')
-        }
-
-        betterNetherSpikeCases.each { spec ->
-            def details = betterNetherSpikePreparations[spec.suffix]
-            def processLog = layout.buildDirectory.file(
-                    "reports/betternether-spike/fabric-${details.reportStem}-process.log").get().asFile
-            rootProject.ext.runBoundedGradleTask(
-                    ":RuntimeTests:Fabric:runBetterNetherAdapter${spec.suffix}",
-                    processLog,
-                    spec.present ? 300 : 180)
-            if (!details.report.get().asFile.isFile()) {
-                throw new GradleException(
-                        "Better Nether ${spec.suffix} GameTest report is missing; see ${processLog}")
-            }
-        }
-
-        def productionJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
-        def zip = new java.util.zip.ZipFile(productionJar)
-        try {
-            def embeddedBetterNether = zip.entries().findAll { entry ->
-                def name = entry.name.toLowerCase(Locale.ROOT)
-                name.startsWith('org/betterx/betternether/')
-                        || name.contains('betternether')
-            }
-            if (!embeddedBetterNether.isEmpty()) {
-                throw new GradleException(
-                        "Production Fabric JAR embeds Better Nether artifacts: ${embeddedBetterNether}")
-            }
-            def descriptor = zip.getInputStream(zip.getEntry('fabric.mod.json')).getText('UTF-8')
-            if (descriptor.contains('betternether')) {
-                throw new GradleException(
-                        'Production Fabric metadata unexpectedly requires Better Nether')
-            }
-        } finally {
-            zip.close()
         }
     }
 }
