@@ -73,7 +73,7 @@ sourceSets {
         compileClasspath += configurations.betterEndFabric
         runtimeClasspath += output + compileClasspath
     }
-    betterEndTagSpikeTest {
+    betterXCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
         runtimeClasspath += output + compileClasspath
@@ -280,16 +280,16 @@ loom {
             source('main')
             vmArg('-Xmx1G')
         }
-        betterEndTagProjection {
+        betterXCompatibility {
             inherit server
-            setConfigName('Fabric Better End Crystalite Tag Spike')
+            setConfigName('Fabric BetterX Compatibility')
             ideConfigGenerated(false)
             property('fabric-api.gametest')
             property(
                     'fabric-api.gametest.report-file',
                     layout.buildDirectory.file(
-                            'reports/gametest/betterend-tag-projection.xml').get().asFile.absolutePath)
-            runDir('build/run/betterEndTagProjection')
+                            'reports/gametest/betterx-compatibility.xml').get().asFile.absolutePath)
+            runDir('build/run/betterXCompatibility')
             source('main')
             vmArg('-Xmx1G')
         }
@@ -398,8 +398,8 @@ def betterEndPresentRunDirectory = layout.buildDirectory.dir('run/betterEndAdapt
 def betterEndAbsentRunDirectory = layout.buildDirectory.dir('run/betterEndAdapterAbsent')
 def betterEndPresentReport = layout.buildDirectory.file('reports/gametest/betterend-adapter-present.xml')
 def betterEndAbsentReport = layout.buildDirectory.file('reports/gametest/betterend-adapter-absent.xml')
-def betterEndTagRunDirectory = layout.buildDirectory.dir('run/betterEndTagProjection')
-def betterEndTagReport = layout.buildDirectory.file('reports/gametest/betterend-tag-projection.xml')
+def betterXCompatibilityRunDirectory = layout.buildDirectory.dir('run/betterXCompatibility')
+def betterXCompatibilityReport = layout.buildDirectory.file('reports/gametest/betterx-compatibility.xml')
 def betterNetherSpikeCases = [
         [suffix: 'HighEnabled', priority: 'high', enabled: true, present: true],
         [suffix: 'HighDisabled', priority: 'high', enabled: false, present: true],
@@ -423,9 +423,9 @@ def betterEndSpikeTestJar = tasks.register('betterEndSpikeTestJar', Jar) {
     from sourceSets.betterEndSpikeTest.output
 }
 
-def betterEndTagSpikeTestJar = tasks.register('betterEndTagSpikeTestJar', Jar) {
-    archiveClassifier = 'betterend-tag-spike-test'
-    from sourceSets.betterEndTagSpikeTest.output
+def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', Jar) {
+    archiveClassifier = 'betterx-compatibility-test'
+    from sourceSets.betterXCompatibilityTest.output
 }
 
 def betterNetherSpikeTestJar = tasks.register('betterNetherSpikeTestJar', Jar) {
@@ -645,18 +645,18 @@ tasks.register('verifyBetterEndAdapterSpike') {
     }
 }
 
-tasks.register('prepareBetterEndTagProjection', Delete) {
-    dependsOn(':Fabric:jar', betterEndTagSpikeTestJar)
-    delete betterEndTagRunDirectory, betterEndTagReport
+tasks.register('prepareBetterXCompatibility', Delete) {
+    dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
+    delete betterXCompatibilityRunDirectory, betterXCompatibilityReport
     doLast {
-        def runDirectory = betterEndTagRunDirectory.get().asFile
+        def runDirectory = betterXCompatibilityRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
         layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
         layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
         copy {
             from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
-            from(betterEndTagSpikeTestJar.flatMap { it.archiveFile })
+            from(betterXCompatibilityTestJar.flatMap { it.archiveFile })
             from(configurations.betterEndFabric)
             into(modsDirectory)
         }
@@ -667,14 +667,14 @@ max-tick-time=-1
     }
 }
 
-tasks.named('runBetterEndTagProjection') {
-    dependsOn tasks.named('prepareBetterEndTagProjection')
+tasks.named('runBetterXCompatibility') {
+    dependsOn tasks.named('prepareBetterXCompatibility')
 }
 
-tasks.register('verifyBetterEndTagProjectionSpike') {
+tasks.register('verifyBetterXCompatibility') {
     group = 'verification'
-    description = 'Audits and proves exact any-source projection for Better End 26.201.2 Crystalite armor.'
-    dependsOn(':Fabric:jar', betterEndTagSpikeTestJar)
+    description = 'Runs production compatibility acceptance against exact BetterX 26.201.2 artifacts.'
+    dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
     doLast {
         def betterEndArtifact = configurations.betterEndFabric.resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == 'maven.modrinth' &&
@@ -714,11 +714,11 @@ tasks.register('verifyBetterEndTagProjectionSpike') {
         }
 
         def processLog = layout.buildDirectory.file(
-                'reports/betterend-tag-spike/fabric-process.log').get().asFile
+                'reports/betterx-compatibility/fabric-process.log').get().asFile
         rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runBetterEndTagProjection', processLog, 300)
-        if (!betterEndTagReport.get().asFile.isFile()) {
-            throw new GradleException("Better End tag-projection GameTest report is missing; see ${processLog}")
+                ':RuntimeTests:Fabric:runBetterXCompatibility', processLog, 300)
+        if (!betterXCompatibilityReport.get().asFile.isFile()) {
+            throw new GradleException("BetterX compatibility GameTest report is missing; see ${processLog}")
         }
     }
 }

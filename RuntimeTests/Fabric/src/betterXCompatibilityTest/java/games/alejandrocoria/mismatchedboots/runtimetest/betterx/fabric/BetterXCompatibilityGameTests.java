@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.betterendtag.fabric;
+package games.alejandrocoria.mismatchedboots.runtimetest.betterx.fabric;
 
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
@@ -34,9 +34,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public final class BetterEndTagProjectionGameTests {
-    private static final String EMPTY_STRUCTURE = "mismatchedboots_betterend_tag_spike_test:empty";
-    private static final String PACK_NAME = "mismatchedboots-betterend-tag-spike";
+public final class BetterXCompatibilityGameTests {
+    private static final String EMPTY_STRUCTURE = "mismatchedboots_betterx_compatibility_test:empty";
+    private static final String PACK_NAME = "mismatchedboots-betterx-compatibility";
     private static final String PACK_ID = "file/" + PACK_NAME;
     private static final TagKey<Item> CRYSTALITE_SET = tag("betterend", "armor_set/crystalite");
     private static final TagKey<Item> UNAUDITED_BETTER_END = tag("betterend", "unaudited_control");
@@ -130,7 +130,7 @@ public final class BetterEndTagProjectionGameTests {
             Class<?> armor = Class.forName(
                     "org.betterx.betterend.item.CrystaliteArmor",
                     false,
-                    BetterEndTagProjectionGameTests.class.getClassLoader());
+                    BetterXCompatibilityGameTests.class.getClassLoader());
             Method method = armor.getMethod("hasFullSet", LivingEntity.class);
             return (boolean) method.invoke(null, player);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException exception) {
@@ -154,7 +154,7 @@ public final class BetterEndTagProjectionGameTests {
         PackFormat version = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
         Files.createDirectories(pack);
         Files.writeString(pack.resolve("pack.mcmeta"), """
-                {"pack":{"description":"MismatchedBoots Crystalite tag spike",
+                {"pack":{"description":"MismatchedBoots BetterX compatibility tests",
                 "min_format":[%d,%d],"max_format":[%d,%d]}}
                 """.formatted(version.major(), version.minor(), version.major(), version.minor()),
                 StandardCharsets.UTF_8);

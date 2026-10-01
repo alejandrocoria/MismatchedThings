@@ -2,7 +2,6 @@ package games.alejandrocoria.mismatchedboots.mixin;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsBehaviorTags;
 import net.minecraft.core.TypedInstance;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,7 +16,6 @@ interface TypedInstanceMixin {
             TagKey<?> tag,
             CallbackInfoReturnable<Boolean> callback) {
         if (Boolean.TRUE.equals(callback.getReturnValue())
-                || !ItemTags.PIGLIN_SAFE_ARMOR.equals(tag)
                 || !((Object) this instanceof ItemStack stack)) {
             return;
         }

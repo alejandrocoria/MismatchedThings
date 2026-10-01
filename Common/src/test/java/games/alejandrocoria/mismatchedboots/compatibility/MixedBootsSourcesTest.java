@@ -100,10 +100,12 @@ class MixedBootsSourcesTest {
     @Test
     void behaviorTagAllowlistRejectsEveryUnauditedCategory() {
         assertTrue(MixedBootsBehaviorTags.isProjected(ItemTags.PIGLIN_SAFE_ARMOR));
+        assertTrue(MixedBootsBehaviorTags.isProjected(betterEndTag("armor_set/crystalite")));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.FOOT_ARMOR));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.REPAIRS_IRON_ARMOR));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.IRON_TOOL_MATERIALS));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.STONE_CRAFTING_MATERIALS));
+        assertFalse(MixedBootsBehaviorTags.isProjected(betterEndTag("unaudited_control")));
         assertFalse(MixedBootsBehaviorTags.isProjected(advancedNetheriteTag("pacify_piglins_armor")));
         assertFalse(MixedBootsBehaviorTags.isProjected(advancedNetheriteTag("pacify_endermen_armor")));
         assertFalse(MixedBootsBehaviorTags.isProjected(advancedNetheriteTag("pacify_phantoms_armor")));
@@ -123,5 +125,9 @@ class MixedBootsSourcesTest {
 
     private static TagKey<Item> advancedNetheriteTag(String path) {
         return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("advancednetherite", path));
+    }
+
+    private static TagKey<Item> betterEndTag(String path) {
+        return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("betterend", path));
     }
 }
