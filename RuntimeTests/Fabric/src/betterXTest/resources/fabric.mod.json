@@ -1,0 +1,22 @@
+{
+    "schemaVersion": 1,
+    "id": "mismatchedboots_betterx_test",
+    "version": "1.0.0",
+    "name": "MismatchedBoots BetterX Characterization Tests",
+    "environment": "*",
+    "entrypoints": {
+        "fabric-gametest": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.betterx.fabric.BetterXCharacterizationGameTests"
+        ]
+    },
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "*",
+        "mismatchedboots": "*",
+        "betterend": "26.201.2",
+        "betternether": "26.201.2",
+        "bclib": "26.201.2",
+        "wover": "26.201.2"
+    }
+}

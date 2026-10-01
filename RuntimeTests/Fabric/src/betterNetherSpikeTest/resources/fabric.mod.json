@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "mismatchedboots_betternether_spike_test",
+  "version": "1.0.0",
+  "name": "MismatchedBoots Better Nether Adapter Spike Tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "games.alejandrocoria.mismatchedboots.runtimetest.betternether.fabric.BetterNetherAdapterSpikeGameTests"
+    ]
+  },
+  "mixins": [
+    "mismatchedboots-betternether-spike.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "minecraft": "*",
+    "mismatchedboots": "*"
+  }
+}
