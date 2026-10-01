@@ -4,6 +4,7 @@ import com.zurrtum.create.AllItems;
 import com.zurrtum.create.AllSynchedDatas;
 import com.zurrtum.create.client.foundation.item.TooltipModifier;
 import com.zurrtum.create.content.equipment.armor.DivingBootsItem;
+import games.alejandrocoria.mismatchedboots.compatibility.createfly.CreateFlyMixinPlugin;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -51,6 +52,7 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        context.runOnClient(client -> assertProductionTooltipGuard());
         context.runOnClient(client -> registerRegistryFixture());
         registerForeignTooltipHook();
         context.runOnClient(CreateFlyTooltipCharacterizationClientGameTest::assertUnattended);
@@ -65,6 +67,15 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
             context.runOnClient(CreateFlyTooltipCharacterizationClientGameTest::characterizeDivingState);
         }
         completeClientCharacterization();
+    }
+
+    private static void assertProductionTooltipGuard() {
+        CreateFlyMixinPlugin plugin = new CreateFlyMixinPlugin();
+        require(plugin.shouldApplyMixin(
+                        "games.alejandrocoria.mismatchedboots.tooltip.MixedBootsTooltipFormatter",
+                        "games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly."
+                                + "CreateFlyMixedBootsTooltipFormatterMixin"),
+                "Production tooltip guard rejected the exact Create Fly artifact");
     }
 
     private static void characterize(

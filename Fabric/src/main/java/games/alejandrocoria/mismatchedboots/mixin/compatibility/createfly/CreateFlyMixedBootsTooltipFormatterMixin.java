@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin;
+package games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly;
 
 import com.zurrtum.create.client.foundation.item.TooltipModifier;
 import games.alejandrocoria.mismatchedboots.tooltip.MixedBootsTooltipFormatter;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @Mixin(MixedBootsTooltipFormatter.class)
-public abstract class MixedBootsTooltipFormatterMixin {
+abstract class CreateFlyMixedBootsTooltipFormatterMixin {
     private static final Component PLACEHOLDER =
             Component.literal("mismatchedboots-create-fly-tooltip-placeholder");
 

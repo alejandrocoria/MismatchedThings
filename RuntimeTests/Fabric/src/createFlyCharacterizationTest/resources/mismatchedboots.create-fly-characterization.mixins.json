@@ -7,9 +7,6 @@
   "mixins": [
     "EntityFluidInteractionInvoker"
   ],
-  "client": [
-    "MixedBootsTooltipFormatterMixin"
-  ],
   "injectors": {
     "defaultRequire": 1
   }

@@ -24,6 +24,8 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             MIXIN_PACKAGE + "CreateFlyCardboardArmorHandlerMixin";
     private static final String BELT_MIXIN = MIXIN_PACKAGE + "CreateFlyBeltBlockMixin";
     private static final String DIVING_MIXIN = MIXIN_PACKAGE + "CreateFlyDivingBootsItemMixin";
+    private static final String TOOLTIP_MIXIN =
+            MIXIN_PACKAGE + "CreateFlyMixedBootsTooltipFormatterMixin";
 
     private static final String HANDLER_CLASS =
             "com.zurrtum.create.content.equipment.armor.CardboardArmorHandler";
@@ -34,6 +36,10 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             "com.zurrtum.create.content.kinetics.belt.BeltBlock";
     private static final String DIVING_BOOTS_CLASS =
             "com.zurrtum.create.content.equipment.armor.DivingBootsItem";
+    private static final String TOOLTIP_MODIFIER_CLASS =
+            "com.zurrtum.create.client.foundation.item.TooltipModifier";
+    private static final String SIMPLE_REGISTRY_CLASS =
+            "com.zurrtum.create.api.registry.SimpleRegistry";
 
     private static final String ARMOR_ITEM_INTERNAL = ARMOR_ITEM_CLASS.replace('.', '/');
     private static final String ALL_ITEMS_INTERNAL = ALL_ITEMS_CLASS.replace('.', '/');
@@ -62,10 +68,18 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
     private static final String ENTITY_TO_VOID = "(Lnet/minecraft/world/entity/Entity;)V";
     private static final String PLAYER_BOOLEAN_TO_VOID =
             "(Lnet/minecraft/world/entity/player/Player;Z)V";
+    private static final String TOOLTIP_MODIFIER_DESCRIPTOR =
+            "Lcom/zurrtum/create/client/foundation/item/TooltipModifier;";
+    private static final String SIMPLE_REGISTRY_DESCRIPTOR =
+            "Lcom/zurrtum/create/api/registry/SimpleRegistry;";
+    private static final String MODIFY_TOOLTIP =
+            "(Ljava/util/List;Lnet/minecraft/world/entity/player/Player;)V";
+    private static final String GET_REGISTRY_VALUE = "(Ljava/lang/Object;)Ljava/lang/Object;";
 
     private Boolean cardboardCompatible;
     private Boolean beltCompatible;
     private Boolean divingCompatible;
+    private Boolean tooltipCompatible;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -86,6 +100,9 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
         }
         if (DIVING_MIXIN.equals(mixinClassName)) {
             return isDivingCompatible();
+        }
+        if (TOOLTIP_MIXIN.equals(mixinClassName)) {
+            return isTooltipCompatible();
         }
         return true;
     }
@@ -176,6 +193,27 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                         "NETHERITE_DIVING_BOOTS",
                         DIVING_BOOTS_DESCRIPTOR,
                         Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
+    }
+
+    static boolean hasCompatibleTooltipApi(
+            ClassNode tooltipModifier, ClassNode simpleRegistry) {
+        return isPublicInterface(tooltipModifier)
+                && isPublicInterface(simpleRegistry)
+                && hasField(
+                        tooltipModifier,
+                        "REGISTRY",
+                        SIMPLE_REGISTRY_DESCRIPTOR,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                && hasMethod(
+                        tooltipModifier,
+                        "modify",
+                        MODIFY_TOOLTIP,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
+                && hasMethod(
+                        simpleRegistry,
+                        "get",
+                        GET_REGISTRY_VALUE,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT);
     }
 
     private static boolean hasCardboardPredicate(ClassNode handler) {
@@ -313,6 +351,12 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 && (node.access & Opcodes.ACC_INTERFACE) == 0;
     }
 
+    private static boolean isPublicInterface(ClassNode node) {
+        return node != null
+                && (node.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE))
+                == (Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE);
+    }
+
     private static boolean hasField(
             ClassNode owner, String name, String descriptor, int requiredFlags) {
         for (FieldNode field : owner.fields) {
@@ -414,5 +458,30 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                     exception);
         }
         return divingCompatible;
+    }
+
+    private synchronized boolean isTooltipCompatible() {
+        if (tooltipCompatible != null) {
+            return tooltipCompatible;
+        }
+
+        tooltipCompatible = false;
+        try {
+            var provider = MixinService.getService().getBytecodeProvider();
+            tooltipCompatible = hasCompatibleTooltipApi(
+                    provider.getClassNode(TOOLTIP_MODIFIER_CLASS),
+                    provider.getClassNode(SIMPLE_REGISTRY_CLASS));
+            if (!tooltipCompatible) {
+                Constants.LOG.warn(
+                        "Create Fly tooltip API is incompatible; tooltip compatibility disabled");
+            }
+        } catch (ClassNotFoundException exception) {
+            // Create Fly is optional. Its complete absence is expected and silent.
+        } catch (Exception | LinkageError exception) {
+            Constants.LOG.warn(
+                    "Could not inspect Create Fly tooltip API; tooltip compatibility disabled",
+                    exception);
+        }
+        return tooltipCompatible;
     }
 }

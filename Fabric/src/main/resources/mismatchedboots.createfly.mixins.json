@@ -9,6 +9,9 @@
     "CreateFlyCardboardArmorHandlerMixin",
     "CreateFlyDivingBootsItemMixin"
   ],
+  "client": [
+    "CreateFlyMixedBootsTooltipFormatterMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

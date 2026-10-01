@@ -490,7 +490,9 @@ tasks.register('verifyCreateFlyCharacterization') {
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
                             + 'CreateFlyBeltBlockMixin.class',
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
-                            + 'CreateFlyDivingBootsItemMixin.class']) {
+                            + 'CreateFlyDivingBootsItemMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyMixedBootsTooltipFormatterMixin.class']) {
                 if (!entries.contains(required)) {
                     throw new GradleException("Fabric output is missing ${required}")
                 }
