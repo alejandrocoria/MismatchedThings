@@ -19,6 +19,9 @@ dependencies {
     compileOnly('maven.modrinth:gc8OEnCC:VD4qwVUF') {
         transitive = false
     }
+    compileOnly('maven.modrinth:dKvj0eNn:phlsMPgT') {
+        transitive = false
+    }
     api(include("mysticdrew:common-networking-fabric:${common_networking_version}")) {
         transitive = false
     }

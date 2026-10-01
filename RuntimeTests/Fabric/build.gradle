@@ -370,7 +370,7 @@ tasks.named('runCreateFlyCharacterizationClient') {
 
 tasks.register('verifyCreateFlyCharacterization') {
     group = 'verification'
-    description = 'Characterizes exact Create Fly 6.0.9-1 behavior without production adapters.'
+    description = 'Verifies compatibility with the exact Create Fly 6.0.9-1 artifact.'
     dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
     doLast {
         def artifact = configurations.createFlyFabric.resolvedConfiguration.resolvedArtifacts.find {
@@ -475,6 +475,52 @@ tasks.register('verifyCreateFlyCharacterization') {
             }
         } finally {
             zip.close()
+        }
+
+        def fabricJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
+        def fabricZip = new java.util.zip.ZipFile(fabricJar)
+        try {
+            def entries = fabricZip.entries().collect { it.name }
+            for (def required : [
+                    'mismatchedboots.createfly.mixins.json',
+                    'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
+                            + 'CreateFlyMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyCardboardArmorHandlerMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyBeltBlockMixin.class']) {
+                if (!entries.contains(required)) {
+                    throw new GradleException("Fabric output is missing ${required}")
+                }
+            }
+            if (entries.any { it.startsWith('com/zurrtum/create/') }) {
+                throw new GradleException('Fabric output accidentally includes Create Fly classes')
+            }
+            if (entries.any {
+                def lower = it.toLowerCase(Locale.ROOT)
+                lower.endsWith('.jar')
+                        && (lower.contains('create-fly') || lower.contains('dkvj0enn'))
+            }) {
+                throw new GradleException('Fabric output accidentally nests the Create Fly artifact')
+            }
+            if (entries.any {
+                it.startsWith('games/alejandrocoria/mismatchedboots/runtimetest/createfly/')
+            }) {
+                throw new GradleException('Fabric output accidentally includes Create Fly test classes')
+            }
+
+            def metadataEntry = fabricZip.getEntry('fabric.mod.json')
+            def metadata = new groovy.json.JsonSlurper().parse(
+                    fabricZip.getInputStream(metadataEntry))
+            for (def dependencyGroup : ['depends', 'recommends', 'suggests']) {
+                if (metadata[dependencyGroup] instanceof Map
+                        && metadata[dependencyGroup].containsKey('create')) {
+                    throw new GradleException(
+                            "Fabric metadata accidentally declares Create Fly in ${dependencyGroup}")
+                }
+            }
+        } finally {
+            fabricZip.close()
         }
 
         def serverLog = layout.buildDirectory.file(

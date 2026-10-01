@@ -5,6 +5,7 @@ import com.zurrtum.create.AllSynchedDatas;
 import com.zurrtum.create.content.equipment.armor.CardboardArmorHandler;
 import com.zurrtum.create.content.equipment.armor.DivingBootsItem;
 import com.zurrtum.create.content.kinetics.belt.transport.BeltMovementHandler;
+import games.alejandrocoria.mismatchedboots.compatibility.createfly.CreateFlyMixinPlugin;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -29,6 +30,22 @@ import net.minecraft.world.phys.Vec3;
 public final class CreateFlyCharacterizationGameTests {
     private static final String EMPTY_STRUCTURE =
             "mismatchedboots_create_fly_characterization_test:empty";
+
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void productionCardboardGuardsAcceptTheExactArtifact(GameTestHelper helper) {
+        CreateFlyMixinPlugin plugin = new CreateFlyMixinPlugin();
+        require(plugin.shouldApplyMixin(
+                        "com.zurrtum.create.content.equipment.armor.CardboardArmorHandler",
+                        "games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly."
+                                + "CreateFlyCardboardArmorHandlerMixin"),
+                "Production Cardboard guard rejected the exact Create Fly artifact");
+        require(plugin.shouldApplyMixin(
+                        "com.zurrtum.create.content.kinetics.belt.BeltBlock",
+                        "games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly."
+                                + "CreateFlyBeltBlockMixin"),
+                "Production Belt guard rejected the exact Create Fly artifact");
+        helper.succeed();
+    }
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void cardboardAdapterRecognizesMixedSources(GameTestHelper helper) {

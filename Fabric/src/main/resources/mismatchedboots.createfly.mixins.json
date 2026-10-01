@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.createfly.CreateFlyMixinPlugin",
+  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "CreateFlyBeltBlockMixin",
+    "CreateFlyCardboardArmorHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,8 +1,8 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin;
 
 import com.zurrtum.create.AllItems;
-import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
