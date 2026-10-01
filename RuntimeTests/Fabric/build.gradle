@@ -29,6 +29,10 @@ configurations {
         canBeConsumed = false
         canBeResolved = true
     }
+    createFlyFabric {
+        canBeConsumed = false
+        canBeResolved = true
+    }
 }
 
 dependencies {
@@ -45,6 +49,9 @@ dependencies {
         transitive = false
     }
     betterEndFabric('maven.modrinth:RiN8rDVs:GHdiOIsp') {
+        transitive = false
+    }
+    createFlyFabric('maven.modrinth:dKvj0eNn:phlsMPgT') {
         transitive = false
     }
 }
@@ -65,6 +72,12 @@ sourceSets {
     betterXCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
+        runtimeClasspath += output + compileClasspath
+    }
+    createFlyCharacterizationTest {
+        compileClasspath += sourceSets.main.compileClasspath
+        compileClasspath += files(project(':Fabric').sourceSets.main.output)
+        compileClasspath += configurations.createFlyFabric
         runtimeClasspath += output + compileClasspath
     }
 }
@@ -236,6 +249,35 @@ loom {
             source('main')
             vmArg('-Xmx1G')
         }
+        createFlyCharacterizationServer {
+            inherit server
+            setConfigName('Fabric Create Fly Characterization Server')
+            ideConfigGenerated(false)
+            property('fabric-api.gametest')
+            property(
+                    'fabric-api.gametest.report-file',
+                    layout.buildDirectory.file(
+                            'reports/gametest/create-fly-characterization.xml').get().asFile.absolutePath)
+            runDir('build/run/createFlyCharacterizationServer')
+            source('main')
+            vmArg('-Xmx1G')
+        }
+        createFlyCharacterizationClient {
+            inherit client
+            setConfigName('Fabric Create Fly Characterization Client')
+            ideConfigGenerated(false)
+            property('fabric.client.gametest')
+            property('fabric.client.gametest.modid',
+                    'mismatchedboots_create_fly_characterization_test')
+            property('mismatchedboots.test.hideClientWindow', 'true')
+            property('mismatchedboots.test.createFly.clientMarker',
+                    layout.buildDirectory.file(
+                            'run/createFlyCharacterizationClient/client-characterization.ok')
+                            .get().asFile.absolutePath)
+            runDir('build/run/createFlyCharacterizationClient')
+            source('gametest')
+            vmArg('-Xmx1G')
+        }
         workbenchRecipeReload {
             inherit server
             property("fabric-api.gametest")
@@ -257,6 +299,12 @@ def betterXCompatibilityCases = [
         [suffix: 'Enabled', enabled: true],
         [suffix: 'Disabled', enabled: false]
 ]
+def createFlyServerRunDirectory =
+        layout.buildDirectory.dir('run/createFlyCharacterizationServer')
+def createFlyClientRunDirectory =
+        layout.buildDirectory.dir('run/createFlyCharacterizationClient')
+def createFlyCharacterizationReport =
+        layout.buildDirectory.file('reports/gametest/create-fly-characterization.xml')
 
 def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
     archiveClassifier = 'advanced-netherite-test'
@@ -266,6 +314,190 @@ def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
 def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', Jar) {
     archiveClassifier = 'betterx-compatibility-test'
     from sourceSets.betterXCompatibilityTest.output
+}
+
+def createFlyCharacterizationTestJar = tasks.register('createFlyCharacterizationTestJar', Jar) {
+    archiveClassifier = 'create-fly-characterization-test'
+    from sourceSets.createFlyCharacterizationTest.output
+}
+
+tasks.register('prepareCreateFlyCharacterizationServer', Delete) {
+    dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
+    delete createFlyServerRunDirectory, createFlyCharacterizationReport
+    doLast {
+        def runDirectory = createFlyServerRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+        layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
+        copy {
+            from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+            from(createFlyCharacterizationTestJar.flatMap { it.archiveFile })
+            from(configurations.createFlyFabric)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+'''
+    }
+}
+
+tasks.register('prepareCreateFlyCharacterizationClient', Delete) {
+    dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
+    delete createFlyClientRunDirectory
+    doLast {
+        def runDirectory = createFlyClientRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        copy {
+            from(createFlyCharacterizationTestJar.flatMap { it.archiveFile })
+            from(configurations.createFlyFabric)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'
+    }
+}
+
+tasks.named('runCreateFlyCharacterizationServer') {
+    dependsOn tasks.named('prepareCreateFlyCharacterizationServer')
+}
+
+tasks.named('runCreateFlyCharacterizationClient') {
+    dependsOn tasks.named('prepareCreateFlyCharacterizationClient')
+}
+
+tasks.register('verifyCreateFlyCharacterization') {
+    group = 'verification'
+    description = 'Characterizes exact Create Fly 6.0.9-1 behavior without production adapters.'
+    dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
+    doLast {
+        def artifact = configurations.createFlyFabric.resolvedConfiguration.resolvedArtifacts.find {
+            it.moduleVersion.id.group == 'maven.modrinth' &&
+                    it.moduleVersion.id.name == 'dKvj0eNn' &&
+                    it.moduleVersion.id.version == 'phlsMPgT'
+        }
+        def createFlyJar = artifact?.file
+        if (createFlyJar == null) {
+            throw new GradleException('Exact Create Fly artifact is missing')
+        }
+
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        def actualHash = createFlyJar.withInputStream { input ->
+            byte[] buffer = new byte[8192]
+            int count
+            while ((count = input.read(buffer)) >= 0) {
+                digest.update(buffer, 0, count)
+            }
+            digest.digest().encodeHex().toString().toUpperCase(Locale.ROOT)
+        }
+        def expectedHash = 'D9C6CB6116D5CAA1174A289ECD7D3CDD463CCEF6E8DB1249AB0BCFCD8C935870'
+        if (actualHash != expectedHash) {
+            throw new GradleException("Unexpected Create Fly artifact hash: ${actualHash}")
+        }
+
+        def classReferences = { java.util.zip.ZipFile zip, String owner ->
+            def references = []
+            zip.entries().each { entry ->
+                if (entry.name.endsWith('.class')) {
+                    byte[] bytes = zip.getInputStream(entry).readAllBytes()
+                    def constants = new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                    if (constants.contains(owner)) {
+                        references.add(entry.name)
+                    }
+                }
+            }
+            references.sort()
+        }
+        def zip = new java.util.zip.ZipFile(createFlyJar)
+        try {
+            def cardboardReferences = classReferences(
+                    zip, 'com/zurrtum/create/content/equipment/armor/CardboardArmorHandler')
+            def expectedCardboardReferences = [
+                    'com/zurrtum/create/client/content/equipment/armor/CardboardArmorHandlerClient.class',
+                    'com/zurrtum/create/client/content/equipment/armor/CardboardArmorStealthOverlay.class',
+                    'com/zurrtum/create/client/mixin/ClientLevelMixin.class',
+                    'com/zurrtum/create/content/equipment/armor/CardboardArmorHandler.class',
+                    'com/zurrtum/create/content/kinetics/belt/transport/BeltMovementHandler.class',
+                    'com/zurrtum/create/mixin/EntityMixin.class',
+                    'com/zurrtum/create/mixin/LivingEntityMixin.class',
+                    'com/zurrtum/create/mixin/ServerLevelMixin.class'
+            ].sort()
+            if (cardboardReferences != expectedCardboardReferences) {
+                throw new GradleException(
+                        "Unexpected Cardboard helper consumers: ${cardboardReferences}")
+            }
+
+            def divingReferences = classReferences(
+                    zip, 'com/zurrtum/create/content/equipment/armor/DivingBootsItem')
+            def expectedDivingReferences = [
+                    'com/zurrtum/create/AllCreativeModeTabs.class',
+                    'com/zurrtum/create/AllItems.class',
+                    'com/zurrtum/create/client/AllItemTooltips.class',
+                    'com/zurrtum/create/client/mixin/ClientLevelMixin.class',
+                    'com/zurrtum/create/content/equipment/armor/DivingBootsItem.class',
+                    'com/zurrtum/create/content/kinetics/belt/BeltBlock.class',
+                    'com/zurrtum/create/mixin/EntityMixin.class',
+                    'com/zurrtum/create/mixin/LivingEntityMixin.class',
+                    'com/zurrtum/create/mixin/ServerLevelMixin.class'
+            ].sort()
+            if (divingReferences != expectedDivingReferences) {
+                throw new GradleException(
+                        "Unexpected Diving Boots consumers: ${divingReferences}")
+            }
+
+            def beltEntry = zip.getEntry('com/zurrtum/create/content/kinetics/belt/BeltBlock.class')
+            def beltConstants = new String(
+                    zip.getInputStream(beltEntry).readAllBytes(),
+                    java.nio.charset.StandardCharsets.ISO_8859_1)
+            for (def required : [
+                    'com/zurrtum/create/AllItems',
+                    'CARDBOARD_BOOTS',
+                    'com/zurrtum/create/content/equipment/armor/DivingBootsItem',
+                    'isWornBy']) {
+                if (!beltConstants.contains(required)) {
+                    throw new GradleException("Create Fly BeltBlock lost ${required}")
+                }
+            }
+
+            def tooltipEntry = zip.getEntry('com/zurrtum/create/client/mixin/ItemStackMixin.class')
+            def tooltipConstants = new String(
+                    zip.getInputStream(tooltipEntry).readAllBytes(),
+                    java.nio.charset.StandardCharsets.ISO_8859_1)
+            for (def required : [
+                    'com/zurrtum/create/client/foundation/item/TooltipModifier',
+                    'REGISTRY',
+                    'modify']) {
+                if (!tooltipConstants.contains(required)) {
+                    throw new GradleException("Create Fly tooltip hook lost ${required}")
+                }
+            }
+        } finally {
+            zip.close()
+        }
+
+        def serverLog = layout.buildDirectory.file(
+                'reports/create-fly-characterization/fabric-server-process.log').get().asFile
+        rootProject.ext.runBoundedGradleTask(
+                ':RuntimeTests:Fabric:runCreateFlyCharacterizationServer', serverLog, 240)
+        if (!createFlyCharacterizationReport.get().asFile.isFile()) {
+            throw new GradleException(
+                    "Create Fly characterization report is missing; see ${serverLog}")
+        }
+
+        def clientLog = layout.buildDirectory.file(
+                'reports/create-fly-characterization/fabric-client-process.log').get().asFile
+        rootProject.ext.runBoundedGradleTask(
+                ':RuntimeTests:Fabric:runCreateFlyCharacterizationClient', clientLog, 300)
+        def clientMarker = layout.buildDirectory.file(
+                'run/createFlyCharacterizationClient/client-characterization.ok').get().asFile
+        if (!clientMarker.isFile()
+                || clientMarker.getText('UTF-8') != 'create-fly-characterization-passed\n') {
+            throw new GradleException(
+                    "Create Fly client characterization marker is missing; see ${clientLog}")
+        }
+    }
 }
 
 tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {

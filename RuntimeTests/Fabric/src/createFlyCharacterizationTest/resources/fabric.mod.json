@@ -1,0 +1,25 @@
+{
+    "schemaVersion": 1,
+    "id": "mismatchedboots_create_fly_characterization_test",
+    "version": "1.0.0",
+    "name": "MismatchedBoots Create Fly Characterization Tests",
+    "environment": "*",
+    "mixins": [
+        "mismatchedboots.create-fly-characterization.mixins.json"
+    ],
+    "entrypoints": {
+        "fabric-gametest": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.CreateFlyCharacterizationGameTests"
+        ],
+        "fabric-client-gametest": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.CreateFlyTooltipCharacterizationClientGameTest"
+        ]
+    },
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "26.2",
+        "mismatchedboots": "*",
+        "create": "6.0.9-1"
+    }
+}
