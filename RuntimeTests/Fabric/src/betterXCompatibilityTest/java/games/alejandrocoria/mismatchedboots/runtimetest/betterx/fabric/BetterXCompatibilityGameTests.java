@@ -6,12 +6,15 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -22,13 +25,17 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
 import org.objectweb.asm.Opcodes;
@@ -73,6 +80,8 @@ public final class BetterXCompatibilityGameTests {
                     + "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V";
     private static final TagKey<Item> CRYSTALITE_SET = tag("betterend", "armor_set/crystalite");
     private static final TagKey<Item> UNAUDITED_BETTER_END = tag("betterend", "unaudited_control");
+    private static final ResourceKey<Enchantment> RUBY_FIRE = ResourceKey.create(
+            Registries.ENCHANTMENT, Identifier.fromNamespaceAndPath("betternether", "ruby_fire"));
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void betterEndGuardAcceptsOnlyTheExactExpectedApi(GameTestHelper helper) {
@@ -213,6 +222,29 @@ public final class BetterXCompatibilityGameTests {
         helper.succeed();
     }
 
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void rubyFireRemainsAWorkingRootEnchantment(GameTestHelper helper) {
+        Holder.Reference<Enchantment> rubyFire = helper.getLevel().registryAccess()
+                .lookupOrThrow(Registries.ENCHANTMENT)
+                .getOrThrow(RUBY_FIRE);
+        ItemStack flamingRuby = betterXCustomStack(
+                helper, item("betternether", "flaming_ruby_boots"));
+        require(flamingRuby.getEnchantments().getLevel(rubyFire) == 1,
+                "Ordinary Flaming Ruby Boots do not carry Ruby Fire I");
+
+        MixedBootsPair pair = MixedBootsFactory.createPair(
+                flamingRuby, Items.IRON_BOOTS.getDefaultInstance());
+        require(pair.primary().getEnchantments().getLevel(rubyFire) == 1,
+                "Primary Mismatched root did not receive Ruby Fire I");
+        require(pair.inverse().getEnchantments().getLevel(rubyFire) == 1,
+                "Inverse Mismatched root did not receive Ruby Fire I");
+
+        assertRubyFireRetaliation(helper, flamingRuby.copy(), "ordinary Flaming Ruby Boots");
+        assertRubyFireRetaliation(helper, pair.primary(), "primary Mismatched root");
+        assertRubyFireRetaliation(helper, pair.inverse(), "inverse Mismatched root");
+        helper.succeed();
+    }
+
     @GameTest(structure = EMPTY_STRUCTURE, maxTicks = 1200)
     public void crystaliteProjectionIsExactAndReloadable(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
@@ -293,6 +325,53 @@ public final class BetterXCompatibilityGameTests {
         require(PiglinAi.isWearingSafeArmor(player) == expected,
                 description + " produced the wrong piglin-safe result");
         assertUnchanged(mixed, unchangedRoot, unchangedSources, description);
+    }
+
+    private static void assertRubyFireRetaliation(
+            GameTestHelper helper, ItemStack boots, String description) {
+        ServerPlayer wearer = connectedMockPlayer(helper);
+        wearer.setItemSlot(EquipmentSlot.FEET, boots);
+        ItemStack equipped = wearer.getItemBySlot(EquipmentSlot.FEET);
+        MixedBootsData before = ModContent.getMixedBootsData(equipped).orElse(null);
+        int initialDamage = equipped.getDamageValue();
+
+        Zombie attacker = helper.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
+        float initialHealth = attacker.getHealth();
+        for (int attempt = 0; attempt < 64 && !attacker.isOnFire(); attempt++) {
+            EnchantmentHelper.doPostAttackEffects(
+                    helper.getLevel(), wearer, helper.getLevel().damageSources().mobAttack(attacker));
+        }
+
+        require(attacker.isOnFire(), description + " never triggered Ruby Fire retaliation");
+        require(attacker.getHealth() < initialHealth,
+                description + " ignited without applying Ruby Fire damage");
+        require(equipped.getDamageValue() > initialDamage,
+                description + " triggered without damaging the enchanted boots");
+        if (before != null) {
+            require(before.equals(ModContent.getMixedBootsData(equipped).orElse(null)),
+                    description + " mutated its stored source snapshots");
+        }
+        attacker.discard();
+    }
+
+    private static ItemStack betterXCustomStack(GameTestHelper helper, Item item) {
+        ItemStack stack = item.getDefaultInstance();
+        Method setup = null;
+        for (Method method : item.getClass().getMethods()) {
+            if (method.getName().equals("setupItemStack") && method.getParameterCount() == 2) {
+                setup = method;
+                break;
+            }
+        }
+        require(setup != null, "BetterX item does not expose its custom-stack setup hook");
+        try {
+            setup.invoke(item, stack, helper.getLevel().registryAccess());
+        } catch (IllegalAccessException exception) {
+            throw new AssertionError("Could not access BetterX custom-stack setup", exception);
+        } catch (InvocationTargetException exception) {
+            throw new AssertionError("BetterX custom-stack setup failed", exception.getCause());
+        }
+        return stack;
     }
 
     private static boolean piglinRuleEnabled() {

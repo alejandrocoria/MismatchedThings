@@ -62,11 +62,6 @@ sourceSets {
         compileClasspath += configurations.advancedNetheriteFabric
         runtimeClasspath += output + compileClasspath
     }
-    betterXTest {
-        compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':Fabric').sourceSets.main.output)
-        runtimeClasspath += output + compileClasspath
-    }
     betterXCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
@@ -213,34 +208,6 @@ loom {
             source('main')
             vmArg('-Xmx1G')
         }
-        betterXCharacterizationEnabled {
-            inherit server
-            setConfigName('Fabric BetterX Characterization (Piglin Enabled)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterX.piglinIgnore', 'true')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betterx-enabled.xml').get().asFile.absolutePath)
-            runDir('build/run/betterXCharacterizationEnabled')
-            source('main')
-            vmArg('-Xmx1G')
-        }
-        betterXCharacterizationDisabled {
-            inherit server
-            setConfigName('Fabric BetterX Characterization (Piglin Disabled)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterX.piglinIgnore', 'false')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betterx-disabled.xml').get().asFile.absolutePath)
-            runDir('build/run/betterXCharacterizationDisabled')
-            source('main')
-            vmArg('-Xmx1G')
-        }
         betterXCompatibilityEnabled {
             inherit server
             setConfigName('Fabric BetterX Compatibility (Piglin Enabled)')
@@ -286,10 +253,6 @@ loom {
 
 def advancedNetheriteRunDirectory = layout.buildDirectory.dir('run/advancedNetheriteCompatibility')
 def advancedNetheriteReport = layout.buildDirectory.file('reports/gametest/advanced-netherite.xml')
-def betterXEnabledRunDirectory = layout.buildDirectory.dir('run/betterXCharacterizationEnabled')
-def betterXDisabledRunDirectory = layout.buildDirectory.dir('run/betterXCharacterizationDisabled')
-def betterXEnabledReport = layout.buildDirectory.file('reports/gametest/betterx-enabled.xml')
-def betterXDisabledReport = layout.buildDirectory.file('reports/gametest/betterx-disabled.xml')
 def betterXCompatibilityCases = [
         [suffix: 'Enabled', enabled: true],
         [suffix: 'Disabled', enabled: false]
@@ -298,11 +261,6 @@ def betterXCompatibilityCases = [
 def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
     archiveClassifier = 'advanced-netherite-test'
     from sourceSets.advancedNetheriteTest.output
-}
-
-def betterXTestJar = tasks.register('betterXTestJar', Jar) {
-    archiveClassifier = 'betterx-test'
-    from sourceSets.betterXTest.output
 }
 
 def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', Jar) {
@@ -347,87 +305,6 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
                 ':RuntimeTests:Fabric:runAdvancedNetheriteCompatibility', processLog, 240)
         if (!advancedNetheriteReport.get().asFile.isFile()) {
             throw new GradleException("Fabric Advanced Netherite GameTest report is missing; see ${processLog}")
-        }
-    }
-}
-
-def registerBetterXPreparation = { String taskName, def runDirectory, def report, boolean piglinIgnore ->
-    tasks.register(taskName, Delete) {
-        dependsOn(':Fabric:jar', betterXTestJar)
-        delete runDirectory, report
-        doLast {
-            def targetDirectory = runDirectory.get().asFile
-            def modsDirectory = new File(targetDirectory, 'mods')
-            modsDirectory.mkdirs()
-            layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-            layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-            copy {
-                from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
-                from(betterXTestJar.flatMap { it.archiveFile })
-                from(configurations.betterXFabric)
-                into(modsDirectory)
-            }
-            new File(targetDirectory, 'eula.txt').text = 'eula=true\n'
-            new File(targetDirectory, 'server.properties').text = '''online-mode=false
-max-tick-time=-1
-'''
-            def configFile = new File(targetDirectory, 'config/betternether/default_game_rules.json')
-            configFile.parentFile.mkdirs()
-            configFile.text = """{
-  \"create_version\": \"26.201.2\",
-  \"egg_plant\": {
-    \"mob_damage\": true,
-    \"player_damage\": true
-  },
-  \"piglin\": {
-    \"ignore_nether_armor\": ${piglinIgnore},
-    \"wear_nether_armor\": true
-  },
-  \"modify_version\": \"26.201.2\"
-}
-"""
-        }
-    }
-}
-
-def prepareBetterXEnabled = registerBetterXPreparation(
-        'prepareBetterXCharacterizationEnabled',
-        betterXEnabledRunDirectory,
-        betterXEnabledReport,
-        true)
-def prepareBetterXDisabled = registerBetterXPreparation(
-        'prepareBetterXCharacterizationDisabled',
-        betterXDisabledRunDirectory,
-        betterXDisabledReport,
-        false)
-
-tasks.named('runBetterXCharacterizationEnabled') {
-    dependsOn prepareBetterXEnabled
-}
-
-tasks.named('runBetterXCharacterizationDisabled') {
-    dependsOn prepareBetterXDisabled
-}
-
-tasks.register('verifyBetterXCharacterization') {
-    group = 'verification'
-    description = 'Characterizes exact Better End and Better Nether 26.201.2 behavior without production adapters.'
-    dependsOn(':Fabric:jar', betterXTestJar)
-    doLast {
-        def enabledLog = layout.buildDirectory.file(
-                'reports/betterx/fabric-enabled-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runBetterXCharacterizationEnabled', enabledLog, 300)
-        if (!betterXEnabledReport.get().asFile.isFile()) {
-            throw new GradleException("BetterX enabled GameTest report is missing; see ${enabledLog}")
-        }
-
-        def disabledLog = layout.buildDirectory.file(
-                'reports/betterx/fabric-disabled-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runBetterXCharacterizationDisabled', disabledLog, 300)
-        if (!betterXDisabledReport.get().asFile.isFile()) {
-            throw new GradleException("BetterX disabled GameTest report is missing; see ${disabledLog}")
         }
     }
 }
@@ -568,6 +445,7 @@ tasks.register('verifyBetterXCompatibility') {
             def forbiddenEntries = productionZip.entries().findAll { entry ->
                 def name = entry.name.toLowerCase(Locale.ROOT)
                 name.startsWith('org/betterx/')
+                        || name.startsWith('games/alejandrocoria/mismatchedboots/runtimetest/')
                         || (name.endsWith('.jar') && (name.contains('better-end')
                         || name.contains('betterend')
                         || name.contains('better-nether')
@@ -578,7 +456,7 @@ tasks.register('verifyBetterXCompatibility') {
             }
             if (!forbiddenEntries.isEmpty()) {
                 throw new GradleException(
-                        "Production Fabric JAR embeds Better End artifacts: ${forbiddenEntries}")
+                        "Production Fabric JAR contains forbidden compatibility artifacts: ${forbiddenEntries}")
             }
 
             def requiredEntries = [
