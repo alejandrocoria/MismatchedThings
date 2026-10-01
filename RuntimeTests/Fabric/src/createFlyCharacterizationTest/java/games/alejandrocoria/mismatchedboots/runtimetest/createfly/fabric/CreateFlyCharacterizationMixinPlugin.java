@@ -4,7 +4,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TypeInsnNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
@@ -13,27 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 public final class CreateFlyCharacterizationMixinPlugin implements IMixinConfigPlugin {
-    private static final String DIVING_MIXIN =
-            "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin."
-                    + "DivingBootsItemMixin";
     private static final String TOOLTIP_MIXIN =
             "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin."
                     + "MixedBootsTooltipFormatterMixin";
-    private static final String ALL_ITEMS_CLASS = "com.zurrtum.create.AllItems";
-    private static final String DIVING_BOOTS_CLASS =
-            "com.zurrtum.create.content.equipment.armor.DivingBootsItem";
     private static final String TOOLTIP_MODIFIER_CLASS =
             "com.zurrtum.create.client.foundation.item.TooltipModifier";
     private static final String SIMPLE_REGISTRY_CLASS =
             "com.zurrtum.create.api.registry.SimpleRegistry";
-    private static final String DIVING_BOOTS_INTERNAL = DIVING_BOOTS_CLASS.replace('.', '/');
-    private static final String DIVING_BOOTS_DESCRIPTOR = "L" + DIVING_BOOTS_INTERNAL + ";";
-    private static final String ENTITY_TO_STACK =
-            "(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/item/ItemStack;";
-    private static final String ENTITY_TO_BOOLEAN = "(Lnet/minecraft/world/entity/Entity;)Z";
-    private static final String ENTITY_TO_VOID = "(Lnet/minecraft/world/entity/Entity;)V";
-    private static final String PLAYER_BOOLEAN_TO_VOID =
-            "(Lnet/minecraft/world/entity/player/Player;Z)V";
     private static final String TOOLTIP_MODIFIER_DESCRIPTOR =
             "Lcom/zurrtum/create/client/foundation/item/TooltipModifier;";
     private static final String SIMPLE_REGISTRY_DESCRIPTOR =
@@ -43,7 +28,6 @@ public final class CreateFlyCharacterizationMixinPlugin implements IMixinConfigP
     private static final String GET_REGISTRY_VALUE =
             "(Ljava/lang/Object;)Ljava/lang/Object;";
 
-    private Boolean divingCompatible;
     private Boolean tooltipCompatible;
 
     @Override
@@ -57,9 +41,6 @@ public final class CreateFlyCharacterizationMixinPlugin implements IMixinConfigP
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (DIVING_MIXIN.equals(mixinClassName)) {
-            return isDivingCompatible();
-        }
         if (TOOLTIP_MIXIN.equals(mixinClassName)) {
             return isTooltipCompatible();
         }
@@ -91,37 +72,6 @@ public final class CreateFlyCharacterizationMixinPlugin implements IMixinConfigP
             IMixinInfo mixinInfo) {
     }
 
-    static boolean hasCompatibleDivingApi(ClassNode divingBoots, ClassNode allItems) {
-        return isPublicClass(divingBoots)
-                && isPublicClass(allItems)
-                && hasDivingWornItemPredicate(divingBoots)
-                && hasMethod(
-                        divingBoots,
-                        "isWornBy",
-                        ENTITY_TO_BOOLEAN,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
-                && hasMethod(
-                        divingBoots,
-                        "accelerateDescentUnderwater",
-                        ENTITY_TO_VOID,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
-                && hasMethod(
-                        divingBoots,
-                        "onLavaTravel",
-                        PLAYER_BOOLEAN_TO_VOID,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
-                && hasField(
-                        allItems,
-                        "COPPER_DIVING_BOOTS",
-                        DIVING_BOOTS_DESCRIPTOR,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
-                && hasField(
-                        allItems,
-                        "NETHERITE_DIVING_BOOTS",
-                        DIVING_BOOTS_DESCRIPTOR,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
-    }
-
     static boolean hasCompatibleTooltipApi(
             ClassNode tooltipModifier, ClassNode simpleRegistry) {
         return isPublicInterface(tooltipModifier)
@@ -141,31 +91,6 @@ public final class CreateFlyCharacterizationMixinPlugin implements IMixinConfigP
                         "get",
                         GET_REGISTRY_VALUE,
                         Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT);
-    }
-
-    private static boolean hasDivingWornItemPredicate(ClassNode divingBoots) {
-        for (MethodNode method : divingBoots.methods) {
-            if (!"getWornItem".equals(method.name)
-                    || !ENTITY_TO_STACK.equals(method.desc)
-                    || (method.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
-                    != (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)) {
-                continue;
-            }
-            for (var instruction : method.instructions) {
-                if (instruction instanceof TypeInsnNode typeInstruction
-                        && typeInstruction.getOpcode() == Opcodes.INSTANCEOF
-                        && DIVING_BOOTS_INTERNAL.equals(typeInstruction.desc)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean isPublicClass(ClassNode node) {
-        return node != null
-                && (node.access & Opcodes.ACC_PUBLIC) != 0
-                && (node.access & Opcodes.ACC_INTERFACE) == 0;
     }
 
     private static boolean isPublicInterface(ClassNode node) {
@@ -196,22 +121,6 @@ public final class CreateFlyCharacterizationMixinPlugin implements IMixinConfigP
             }
         }
         return false;
-    }
-
-    private synchronized boolean isDivingCompatible() {
-        if (divingCompatible != null) {
-            return divingCompatible;
-        }
-
-        try {
-            var provider = MixinService.getService().getBytecodeProvider();
-            divingCompatible = hasCompatibleDivingApi(
-                    provider.getClassNode(DIVING_BOOTS_CLASS),
-                    provider.getClassNode(ALL_ITEMS_CLASS));
-        } catch (Exception | LinkageError exception) {
-            divingCompatible = false;
-        }
-        return divingCompatible;
     }
 
     private synchronized boolean isTooltipCompatible() {

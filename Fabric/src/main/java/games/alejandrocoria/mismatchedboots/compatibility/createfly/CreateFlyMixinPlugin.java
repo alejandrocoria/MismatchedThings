@@ -23,6 +23,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
     private static final String CARDBOARD_MIXIN =
             MIXIN_PACKAGE + "CreateFlyCardboardArmorHandlerMixin";
     private static final String BELT_MIXIN = MIXIN_PACKAGE + "CreateFlyBeltBlockMixin";
+    private static final String DIVING_MIXIN = MIXIN_PACKAGE + "CreateFlyDivingBootsItemMixin";
 
     private static final String HANDLER_CLASS =
             "com.zurrtum.create.content.equipment.armor.CardboardArmorHandler";
@@ -31,6 +32,8 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
     private static final String ALL_ITEMS_CLASS = "com.zurrtum.create.AllItems";
     private static final String BELT_BLOCK_CLASS =
             "com.zurrtum.create.content.kinetics.belt.BeltBlock";
+    private static final String DIVING_BOOTS_CLASS =
+            "com.zurrtum.create.content.equipment.armor.DivingBootsItem";
 
     private static final String ARMOR_ITEM_INTERNAL = ARMOR_ITEM_CLASS.replace('.', '/');
     private static final String ALL_ITEMS_INTERNAL = ALL_ITEMS_CLASS.replace('.', '/');
@@ -51,9 +54,18 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;";
     private static final String ITEM_STACK_INTERNAL = "net/minecraft/world/item/ItemStack";
     private static final String ITEM_STACK_IS = "(Ljava/lang/Object;)Z";
+    private static final String DIVING_BOOTS_INTERNAL = DIVING_BOOTS_CLASS.replace('.', '/');
+    private static final String DIVING_BOOTS_DESCRIPTOR = "L" + DIVING_BOOTS_INTERNAL + ";";
+    private static final String ENTITY_TO_STACK =
+            "(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/item/ItemStack;";
+    private static final String ENTITY_TO_BOOLEAN = "(Lnet/minecraft/world/entity/Entity;)Z";
+    private static final String ENTITY_TO_VOID = "(Lnet/minecraft/world/entity/Entity;)V";
+    private static final String PLAYER_BOOLEAN_TO_VOID =
+            "(Lnet/minecraft/world/entity/player/Player;Z)V";
 
     private Boolean cardboardCompatible;
     private Boolean beltCompatible;
+    private Boolean divingCompatible;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -71,6 +83,9 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
         }
         if (BELT_MIXIN.equals(mixinClassName)) {
             return isBeltCompatible();
+        }
+        if (DIVING_MIXIN.equals(mixinClassName)) {
+            return isDivingCompatible();
         }
         return true;
     }
@@ -130,6 +145,37 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             }
         }
         return entityInside != null && hasSingleCardboardBeltPredicate(entityInside);
+    }
+
+    static boolean hasCompatibleDivingApi(ClassNode divingBoots, ClassNode allItems) {
+        return isPublicClass(divingBoots)
+                && isPublicClass(allItems)
+                && hasDivingWornItemPredicate(divingBoots)
+                && hasMethod(
+                        divingBoots,
+                        "isWornBy",
+                        ENTITY_TO_BOOLEAN,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                && hasMethod(
+                        divingBoots,
+                        "accelerateDescentUnderwater",
+                        ENTITY_TO_VOID,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                && hasMethod(
+                        divingBoots,
+                        "onLavaTravel",
+                        PLAYER_BOOLEAN_TO_VOID,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                && hasField(
+                        allItems,
+                        "COPPER_DIVING_BOOTS",
+                        DIVING_BOOTS_DESCRIPTOR,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                && hasField(
+                        allItems,
+                        "NETHERITE_DIVING_BOOTS",
+                        DIVING_BOOTS_DESCRIPTOR,
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
     }
 
     private static boolean hasCardboardPredicate(ClassNode handler) {
@@ -234,6 +280,25 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 && completePatterns == 1;
     }
 
+    private static boolean hasDivingWornItemPredicate(ClassNode divingBoots) {
+        for (MethodNode method : divingBoots.methods) {
+            if (!"getWornItem".equals(method.name)
+                    || !ENTITY_TO_STACK.equals(method.desc)
+                    || (method.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
+                    != (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)) {
+                continue;
+            }
+            for (AbstractInsnNode instruction : method.instructions) {
+                if (instruction instanceof TypeInsnNode typeInstruction
+                        && typeInstruction.getOpcode() == Opcodes.INSTANCEOF
+                        && DIVING_BOOTS_INTERNAL.equals(typeInstruction.desc)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private static AbstractInsnNode nextCodeInstruction(AbstractInsnNode instruction) {
         AbstractInsnNode next = instruction == null ? null : instruction.getNext();
         while (next != null && next.getOpcode() < 0) {
@@ -254,6 +319,18 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             if (name.equals(field.name)
                     && descriptor.equals(field.desc)
                     && (field.access & requiredFlags) == requiredFlags) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasMethod(
+            ClassNode owner, String name, String descriptor, int requiredFlags) {
+        for (MethodNode method : owner.methods) {
+            if (name.equals(method.name)
+                    && descriptor.equals(method.desc)
+                    && (method.access & requiredFlags) == requiredFlags) {
                 return true;
             }
         }
@@ -312,5 +389,30 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                     exception);
         }
         return beltCompatible;
+    }
+
+    private synchronized boolean isDivingCompatible() {
+        if (divingCompatible != null) {
+            return divingCompatible;
+        }
+
+        divingCompatible = false;
+        try {
+            var provider = MixinService.getService().getBytecodeProvider();
+            ClassNode divingBoots = provider.getClassNode(DIVING_BOOTS_CLASS);
+            divingCompatible = hasCompatibleDivingApi(
+                    divingBoots, provider.getClassNode(ALL_ITEMS_CLASS));
+            if (!divingCompatible) {
+                Constants.LOG.warn(
+                        "Create Fly Diving Boots API is incompatible; Diving compatibility disabled");
+            }
+        } catch (ClassNotFoundException exception) {
+            // Create Fly is optional. Its complete absence is expected and silent.
+        } catch (Exception | LinkageError exception) {
+            Constants.LOG.warn(
+                    "Could not inspect Create Fly Diving Boots API; Diving compatibility disabled",
+                    exception);
+        }
+        return divingCompatible;
     }
 }

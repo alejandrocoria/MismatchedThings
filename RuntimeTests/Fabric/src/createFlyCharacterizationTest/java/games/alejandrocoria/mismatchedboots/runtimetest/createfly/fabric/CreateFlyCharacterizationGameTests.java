@@ -32,7 +32,7 @@ public final class CreateFlyCharacterizationGameTests {
             "mismatchedboots_create_fly_characterization_test:empty";
 
     @GameTest(structure = EMPTY_STRUCTURE)
-    public void productionCardboardGuardsAcceptTheExactArtifact(GameTestHelper helper) {
+    public void productionGameplayGuardsAcceptTheExactArtifact(GameTestHelper helper) {
         CreateFlyMixinPlugin plugin = new CreateFlyMixinPlugin();
         require(plugin.shouldApplyMixin(
                         "com.zurrtum.create.content.equipment.armor.CardboardArmorHandler",
@@ -44,6 +44,11 @@ public final class CreateFlyCharacterizationGameTests {
                         "games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly."
                                 + "CreateFlyBeltBlockMixin"),
                 "Production Belt guard rejected the exact Create Fly artifact");
+        require(plugin.shouldApplyMixin(
+                        "com.zurrtum.create.content.equipment.armor.DivingBootsItem",
+                        "games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly."
+                                + "CreateFlyDivingBootsItemMixin"),
+                "Production Diving Boots guard rejected the exact Create Fly artifact");
         helper.succeed();
     }
 

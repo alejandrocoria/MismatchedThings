@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin;
+package games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly;
 
 import com.zurrtum.create.AllItems;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "com.zurrtum.create.content.equipment.armor.DivingBootsItem", remap = false)
-abstract class DivingBootsItemMixin {
+abstract class CreateFlyDivingBootsItemMixin {
     @Inject(
             method = "getWornItem(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/item/ItemStack;",
             at = @At("RETURN"),

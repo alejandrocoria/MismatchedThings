@@ -5,7 +5,6 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "DivingBootsItemMixin",
     "EntityFluidInteractionInvoker"
   ],
   "client": [
