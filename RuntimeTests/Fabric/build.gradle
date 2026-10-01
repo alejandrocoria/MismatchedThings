@@ -74,7 +74,7 @@ sourceSets {
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
         runtimeClasspath += output + compileClasspath
     }
-    createFlyCharacterizationTest {
+    createFlyCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
         compileClasspath += configurations.createFlyFabric
@@ -249,32 +249,32 @@ loom {
             source('main')
             vmArg('-Xmx1G')
         }
-        createFlyCharacterizationServer {
+        createFlyCompatibilityServer {
             inherit server
-            setConfigName('Fabric Create Fly Characterization Server')
+            setConfigName('Fabric Create Fly Compatibility Server')
             ideConfigGenerated(false)
             property('fabric-api.gametest')
             property(
                     'fabric-api.gametest.report-file',
                     layout.buildDirectory.file(
-                            'reports/gametest/create-fly-characterization.xml').get().asFile.absolutePath)
-            runDir('build/run/createFlyCharacterizationServer')
+                            'reports/gametest/create-fly-compatibility.xml').get().asFile.absolutePath)
+            runDir('build/run/createFlyCompatibilityServer')
             source('main')
             vmArg('-Xmx1G')
         }
-        createFlyCharacterizationClient {
+        createFlyCompatibilityClient {
             inherit client
-            setConfigName('Fabric Create Fly Characterization Client')
+            setConfigName('Fabric Create Fly Compatibility Client')
             ideConfigGenerated(false)
             property('fabric.client.gametest')
             property('fabric.client.gametest.modid',
-                    'mismatchedboots_create_fly_characterization_test')
+                    'mismatchedboots_create_fly_compatibility_test')
             property('mismatchedboots.test.hideClientWindow', 'true')
             property('mismatchedboots.test.createFly.clientMarker',
                     layout.buildDirectory.file(
-                            'run/createFlyCharacterizationClient/client-characterization.ok')
+                            'run/createFlyCompatibilityClient/client-compatibility.ok')
                             .get().asFile.absolutePath)
-            runDir('build/run/createFlyCharacterizationClient')
+            runDir('build/run/createFlyCompatibilityClient')
             source('gametest')
             vmArg('-Xmx1G')
         }
@@ -299,12 +299,12 @@ def betterXCompatibilityCases = [
         [suffix: 'Enabled', enabled: true],
         [suffix: 'Disabled', enabled: false]
 ]
-def createFlyServerRunDirectory =
-        layout.buildDirectory.dir('run/createFlyCharacterizationServer')
-def createFlyClientRunDirectory =
-        layout.buildDirectory.dir('run/createFlyCharacterizationClient')
-def createFlyCharacterizationReport =
-        layout.buildDirectory.file('reports/gametest/create-fly-characterization.xml')
+def createFlyCompatibilityServerRunDirectory =
+        layout.buildDirectory.dir('run/createFlyCompatibilityServer')
+def createFlyCompatibilityClientRunDirectory =
+        layout.buildDirectory.dir('run/createFlyCompatibilityClient')
+def createFlyCompatibilityReport =
+        layout.buildDirectory.file('reports/gametest/create-fly-compatibility.xml')
 
 def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
     archiveClassifier = 'advanced-netherite-test'
@@ -316,23 +316,23 @@ def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', 
     from sourceSets.betterXCompatibilityTest.output
 }
 
-def createFlyCharacterizationTestJar = tasks.register('createFlyCharacterizationTestJar', Jar) {
-    archiveClassifier = 'create-fly-characterization-test'
-    from sourceSets.createFlyCharacterizationTest.output
+def createFlyCompatibilityTestJar = tasks.register('createFlyCompatibilityTestJar', Jar) {
+    archiveClassifier = 'create-fly-compatibility-test'
+    from sourceSets.createFlyCompatibilityTest.output
 }
 
-tasks.register('prepareCreateFlyCharacterizationServer', Delete) {
-    dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
-    delete createFlyServerRunDirectory, createFlyCharacterizationReport
+tasks.register('prepareCreateFlyCompatibilityServer', Delete) {
+    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    delete createFlyCompatibilityServerRunDirectory, createFlyCompatibilityReport
     doLast {
-        def runDirectory = createFlyServerRunDirectory.get().asFile
+        def runDirectory = createFlyCompatibilityServerRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
         layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
         layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
         copy {
             from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
-            from(createFlyCharacterizationTestJar.flatMap { it.archiveFile })
+            from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
             from(configurations.createFlyFabric)
             into(modsDirectory)
         }
@@ -343,15 +343,15 @@ max-tick-time=-1
     }
 }
 
-tasks.register('prepareCreateFlyCharacterizationClient', Delete) {
-    dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
-    delete createFlyClientRunDirectory
+tasks.register('prepareCreateFlyCompatibilityClient', Delete) {
+    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    delete createFlyCompatibilityClientRunDirectory
     doLast {
-        def runDirectory = createFlyClientRunDirectory.get().asFile
+        def runDirectory = createFlyCompatibilityClientRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
         copy {
-            from(createFlyCharacterizationTestJar.flatMap { it.archiveFile })
+            from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
             from(configurations.createFlyFabric)
             into(modsDirectory)
         }
@@ -360,18 +360,18 @@ tasks.register('prepareCreateFlyCharacterizationClient', Delete) {
     }
 }
 
-tasks.named('runCreateFlyCharacterizationServer') {
-    dependsOn tasks.named('prepareCreateFlyCharacterizationServer')
+tasks.named('runCreateFlyCompatibilityServer') {
+    dependsOn tasks.named('prepareCreateFlyCompatibilityServer')
 }
 
-tasks.named('runCreateFlyCharacterizationClient') {
-    dependsOn tasks.named('prepareCreateFlyCharacterizationClient')
+tasks.named('runCreateFlyCompatibilityClient') {
+    dependsOn tasks.named('prepareCreateFlyCompatibilityClient')
 }
 
-tasks.register('verifyCreateFlyCharacterization') {
+tasks.register('verifyCreateFlyCompatibility') {
     group = 'verification'
     description = 'Verifies compatibility with the exact Create Fly 6.0.9-1 artifact.'
-    dependsOn(':Fabric:jar', createFlyCharacterizationTestJar)
+    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
     doLast {
         def artifact = configurations.createFlyFabric.resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == 'maven.modrinth' &&
@@ -528,24 +528,24 @@ tasks.register('verifyCreateFlyCharacterization') {
         }
 
         def serverLog = layout.buildDirectory.file(
-                'reports/create-fly-characterization/fabric-server-process.log').get().asFile
+                'reports/create-fly-compatibility/fabric-server-process.log').get().asFile
         rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runCreateFlyCharacterizationServer', serverLog, 240)
-        if (!createFlyCharacterizationReport.get().asFile.isFile()) {
+                ':RuntimeTests:Fabric:runCreateFlyCompatibilityServer', serverLog, 240)
+        if (!createFlyCompatibilityReport.get().asFile.isFile()) {
             throw new GradleException(
-                    "Create Fly characterization report is missing; see ${serverLog}")
+                    "Create Fly compatibility report is missing; see ${serverLog}")
         }
 
         def clientLog = layout.buildDirectory.file(
-                'reports/create-fly-characterization/fabric-client-process.log').get().asFile
+                'reports/create-fly-compatibility/fabric-client-process.log').get().asFile
         rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runCreateFlyCharacterizationClient', clientLog, 300)
+                ':RuntimeTests:Fabric:runCreateFlyCompatibilityClient', clientLog, 300)
         def clientMarker = layout.buildDirectory.file(
-                'run/createFlyCharacterizationClient/client-characterization.ok').get().asFile
+                'run/createFlyCompatibilityClient/client-compatibility.ok').get().asFile
         if (!clientMarker.isFile()
-                || clientMarker.getText('UTF-8') != 'create-fly-characterization-passed\n') {
+                || clientMarker.getText('UTF-8') != 'create-fly-compatibility-passed\n') {
             throw new GradleException(
-                    "Create Fly client characterization marker is missing; see ${clientLog}")
+                    "Create Fly client compatibility marker is missing; see ${clientLog}")
         }
     }
 }

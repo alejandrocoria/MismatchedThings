@@ -27,9 +27,9 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
-public final class CreateFlyCharacterizationGameTests {
+public final class CreateFlyCompatibilityGameTests {
     private static final String EMPTY_STRUCTURE =
-            "mismatchedboots_create_fly_characterization_test:empty";
+            "mismatchedboots_create_fly_compatibility_test:empty";
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void productionGameplayGuardsAcceptTheExactArtifact(GameTestHelper helper) {
@@ -76,9 +76,9 @@ public final class CreateFlyCharacterizationGameTests {
         assertCardboardCompatibility(helper, wearer, pair.inverse(), "inverse", 2);
 
         require(ItemStack.matches(cardboardBefore, cardboardSource),
-                "Cardboard source input changed during characterization");
+                "Cardboard source input changed during compatibility verification");
         require(ItemStack.matches(ironBefore, ironSource),
-                "Iron source input changed during characterization");
+                "Iron source input changed during compatibility verification");
 
         equipCardboardSet(wearer, AllItems.CARDBOARD_BOOTS.getDefaultInstance());
         wearer.setItemSlot(EquipmentSlot.HEAD, Items.IRON_HELMET.getDefaultInstance());
@@ -290,9 +290,9 @@ public final class CreateFlyCharacterizationGameTests {
         assertDivingRecognition(
                 player, pair.inverse(), expectedItem, description + " inverse");
         require(ItemStack.matches(firstBefore, first),
-                description + " first source input changed during characterization");
+                description + " first source input changed during compatibility verification");
         require(ItemStack.matches(secondBefore, second),
-                description + " second source input changed during characterization");
+                description + " second source input changed during compatibility verification");
     }
 
     private static void assertDivingRecognition(
@@ -448,13 +448,13 @@ public final class CreateFlyCharacterizationGameTests {
             ItemStack stack, ItemStack expectedRoot, MixedBootsData expectedSources,
             String description) {
         require(ItemStack.matches(expectedRoot, stack),
-                description + " characterization changed root item data");
+                description + " compatibility check changed root item data");
         if (expectedSources == null) {
             require(ModContent.getMixedBootsData(stack).isEmpty(),
-                    description + " characterization added stored source snapshots");
+                    description + " compatibility check added stored source snapshots");
         } else {
             require(expectedSources.equals(mixedData(stack)),
-                    description + " characterization changed stored source snapshots");
+                    description + " compatibility check changed stored source snapshots");
         }
     }
 

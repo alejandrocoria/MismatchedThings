@@ -34,17 +34,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class CreateFlyTooltipCharacterizationClientGameTest
+public final class CreateFlyTooltipCompatibilityClientGameTest
         implements FabricClientGameTest {
     private static final String CLIENT_MARKER_PROPERTY =
             "mismatchedboots.test.createFly.clientMarker";
     private static final String LEFT_KEY = "tooltip.mismatchedboots.mixed_boots.left";
     private static final String RIGHT_KEY = "tooltip.mismatchedboots.mixed_boots.right";
     private static final Component FOREIGN_FINAL_HOOK =
-            Component.literal("create-fly-characterization-foreign-final-hook");
+            Component.literal("create-fly-compatibility-foreign-final-hook");
     private static final Item REGISTRY_FIXTURE_ITEM = Items.CHAINMAIL_BOOTS;
     private static final Component REGISTRY_FIXTURE_CONTRIBUTION =
-            Component.literal("create-fly-characterization-registry-fixture");
+            Component.literal("create-fly-compatibility-registry-fixture");
 
     private static boolean foreignHookRegistered;
     private static int foreignHookInvocations;
@@ -55,18 +55,18 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
         context.runOnClient(client -> assertProductionTooltipGuard());
         context.runOnClient(client -> registerRegistryFixture());
         registerForeignTooltipHook();
-        context.runOnClient(CreateFlyTooltipCharacterizationClientGameTest::assertUnattended);
+        context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::assertUnattended);
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             singleplayer.getClientLevel().waitForChunksRender();
             characterize(context, AllItems.CARDBOARD_BOOTS, "Cardboard");
             characterize(context, AllItems.COPPER_DIVING_BOOTS, "Copper");
             characterize(context, AllItems.NETHERITE_DIVING_BOOTS, "Netherite");
             context.runOnClient(
-                    CreateFlyTooltipCharacterizationClientGameTest::characterizeRegistryDrivenSource);
-            context.runOnClient(CreateFlyTooltipCharacterizationClientGameTest::characterizeUnrelatedTooltip);
-            context.runOnClient(CreateFlyTooltipCharacterizationClientGameTest::characterizeDivingState);
+                    CreateFlyTooltipCompatibilityClientGameTest::characterizeRegistryDrivenSource);
+            context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::characterizeUnrelatedTooltip);
+            context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::characterizeDivingState);
         }
-        completeClientCharacterization();
+        completeClientCompatibilityVerification();
     }
 
     private static void assertProductionTooltipGuard() {
@@ -101,7 +101,7 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
 
     private static List<Component> characterizeMode(
             Minecraft client, ItemStack source, boolean shiftDown, String description) {
-        require(client.player != null, "Create Fly tooltip characterization has no client player");
+        require(client.player != null, "Create Fly tooltip compatibility test has no client player");
         require(client.hasShiftDown() == shiftDown,
                 description + " did not receive the expected client Shift state");
         require(TooltipModifier.REGISTRY.get(Items.IRON_BOOTS) == null,
@@ -122,14 +122,14 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
         assertMixedContribution(client, pair.inverse(), source, contribution, false,
                 description + " right source");
         require(ItemStack.matches(sourceBefore, source),
-                description + " source changed during tooltip characterization");
+                description + " source changed during tooltip compatibility verification");
         return contribution;
     }
 
     private static List<Component> contribution(
             TooltipModifier modifier, Minecraft client) {
         ArrayList<Component> lines = new ArrayList<>();
-        Component itemNamePlaceholder = Component.literal("create-fly-characterization");
+        Component itemNamePlaceholder = Component.literal("create-fly-compatibility");
         lines.add(itemNamePlaceholder);
         modifier.modify(lines, client.player);
         require(lines.remove(itemNamePlaceholder),
@@ -366,16 +366,16 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
 
     private static void assertUnattended(Minecraft client) {
         require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0.0F,
-                "Create Fly characterization client master volume is not muted");
+                "Create Fly compatibility client master volume is not muted");
         if (Boolean.getBoolean("mismatchedboots.test.hideClientWindow")) {
             require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE)
                             == GLFW.GLFW_FALSE,
-                    "Create Fly characterization client window is visible");
+                    "Create Fly compatibility client window is visible");
         }
     }
 
     private static void characterizeDivingState(Minecraft client) {
-        require(client.player != null, "Create Fly Diving characterization has no client player");
+        require(client.player != null, "Create Fly Diving compatibility test has no client player");
         ItemStack previous = client.player.getItemBySlot(EquipmentSlot.FEET).copy();
         MixedBootsPair pair = MixedBootsFactory.createPair(
                 AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
@@ -406,23 +406,23 @@ public final class CreateFlyTooltipCharacterizationClientGameTest
         require(!AllSynchedDatas.HEAVY_BOOTS.get(client.player),
                 orientation + " client HEAVY_BOOTS state did not clear after removal");
         require(ItemStack.matches(rootBefore, mixed),
-                orientation + " client Diving characterization changed root item data");
+                orientation + " client Diving compatibility check changed root item data");
         require(sourcesBefore.equals(mixedData(mixed)),
-                orientation + " client Diving characterization changed source snapshots");
+                orientation + " client Diving compatibility check changed source snapshots");
     }
 
-    private static void completeClientCharacterization() {
+    private static void completeClientCompatibilityVerification() {
         String marker = System.getProperty(CLIENT_MARKER_PROPERTY);
         require(marker != null && !marker.isBlank(),
-                "Create Fly client characterization marker is not configured");
+                "Create Fly client compatibility marker is not configured");
         try {
             Files.writeString(
                     Path.of(marker),
-                    "create-fly-characterization-passed\n",
+                    "create-fly-compatibility-passed\n",
                     StandardCharsets.UTF_8);
         } catch (IOException exception) {
             throw new AssertionError(
-                    "Could not write the Create Fly client characterization marker", exception);
+                    "Could not write the Create Fly client compatibility marker", exception);
         }
         System.out.flush();
         Runtime.getRuntime().halt(0);
