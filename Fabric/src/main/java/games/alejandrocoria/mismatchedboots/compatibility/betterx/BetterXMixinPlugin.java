@@ -1,5 +1,7 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.betterend.fabric;
+package games.alejandrocoria.mismatchedboots.compatibility.betterx;
 
+import games.alejandrocoria.mismatchedboots.Constants;
+import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -10,9 +12,10 @@ import org.spongepowered.asm.service.MixinService;
 import java.util.List;
 import java.util.Set;
 
-public final class BetterEndSpikeMixinPlugin implements IMixinConfigPlugin {
-    private static final String OPTIONAL_MIXIN =
-            "games.alejandrocoria.mismatchedboots.runtimetest.betterend.fabric.mixin."
+public final class BetterXMixinPlugin implements IMixinConfigPlugin {
+    private static final String BETTER_END_MOD_ID = "betterend";
+    private static final String BETTER_END_MIXIN =
+            "games.alejandrocoria.mismatchedboots.mixin.compatibility.betterx."
                     + "BetterEndMobEffectApplierMixin";
     private static final String EFFECT_APPLIER_CLASS =
             "org.betterx.betterend.interfaces.MobEffectApplier";
@@ -22,7 +25,7 @@ public final class BetterEndSpikeMixinPlugin implements IMixinConfigPlugin {
             "org.betterx.betterend.item.CrystaliteBoots";
     private static final String APPLY_EFFECT = "(Lnet/minecraft/world/entity/LivingEntity;)V";
 
-    private Boolean compatible;
+    private Boolean betterEndCompatible;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -35,7 +38,7 @@ public final class BetterEndSpikeMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return !OPTIONAL_MIXIN.equals(mixinClassName) || isApiCompatible();
+        return !BETTER_END_MIXIN.equals(mixinClassName) || isBetterEndCompatible();
     }
 
     @Override
@@ -55,7 +58,7 @@ public final class BetterEndSpikeMixinPlugin implements IMixinConfigPlugin {
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
     }
 
-    static boolean hasCompatibleApi(ClassNode effectApplier, ClassNode crystaliteBoots) {
+    static boolean hasCompatibleBetterEndApi(ClassNode effectApplier, ClassNode crystaliteBoots) {
         return effectApplier != null
                 && crystaliteBoots != null
                 && isPublicInterface(effectApplier)
@@ -88,21 +91,34 @@ public final class BetterEndSpikeMixinPlugin implements IMixinConfigPlugin {
         return false;
     }
 
-    private synchronized boolean isApiCompatible() {
-        if (compatible != null) {
-            return compatible;
+    private synchronized boolean isBetterEndCompatible() {
+        if (betterEndCompatible != null) {
+            return betterEndCompatible;
         }
 
         try {
             var provider = MixinService.getService().getBytecodeProvider();
-            compatible = hasCompatibleApi(
+            betterEndCompatible = hasCompatibleBetterEndApi(
                     provider.getClassNode(EFFECT_APPLIER_CLASS),
                     provider.getClassNode(CRYSTALITE_BOOTS_CLASS));
+            if (!betterEndCompatible && isBetterEndLoaded()) {
+                Constants.LOG.warn("Better End is present with an incompatible API; compatibility disabled");
+            }
         } catch (ClassNotFoundException exception) {
-            compatible = false;
+            betterEndCompatible = false;
+            if (isBetterEndLoaded()) {
+                Constants.LOG.warn("Better End is present without its expected API; compatibility disabled");
+            }
         } catch (Exception | LinkageError exception) {
-            compatible = false;
+            betterEndCompatible = false;
+            if (isBetterEndLoaded()) {
+                Constants.LOG.warn("Could not inspect Better End API; compatibility disabled", exception);
+            }
         }
-        return compatible;
+        return betterEndCompatible;
+    }
+
+    private static boolean isBetterEndLoaded() {
+        return FabricLoader.getInstance().isModLoaded(BETTER_END_MOD_ID);
     }
 }

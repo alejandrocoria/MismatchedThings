@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.betterx.BetterXMixinPlugin",
+  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.betterx",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "BetterEndMobEffectApplierMixin"
+  ]
+}

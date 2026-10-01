@@ -67,12 +67,6 @@ sourceSets {
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
         runtimeClasspath += output + compileClasspath
     }
-    betterEndSpikeTest {
-        compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':Fabric').sourceSets.main.output)
-        compileClasspath += configurations.betterEndFabric
-        runtimeClasspath += output + compileClasspath
-    }
     betterXCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
@@ -252,34 +246,6 @@ loom {
             source('main')
             vmArg('-Xmx1G')
         }
-        betterEndAdapterPresent {
-            inherit server
-            setConfigName('Fabric Better End Adapter Spike (Present)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterEnd.present', 'true')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betterend-adapter-present.xml').get().asFile.absolutePath)
-            runDir('build/run/betterEndAdapterPresent')
-            source('main')
-            vmArg('-Xmx1G')
-        }
-        betterEndAdapterAbsent {
-            inherit server
-            setConfigName('Fabric Better End Adapter Spike (Absent)')
-            ideConfigGenerated(false)
-            property('fabric-api.gametest')
-            property('mismatchedboots.test.betterEnd.present', 'false')
-            property(
-                    'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
-                            'reports/gametest/betterend-adapter-absent.xml').get().asFile.absolutePath)
-            runDir('build/run/betterEndAdapterAbsent')
-            source('main')
-            vmArg('-Xmx1G')
-        }
         betterXCompatibility {
             inherit server
             setConfigName('Fabric BetterX Compatibility')
@@ -394,10 +360,6 @@ def betterXEnabledRunDirectory = layout.buildDirectory.dir('run/betterXCharacter
 def betterXDisabledRunDirectory = layout.buildDirectory.dir('run/betterXCharacterizationDisabled')
 def betterXEnabledReport = layout.buildDirectory.file('reports/gametest/betterx-enabled.xml')
 def betterXDisabledReport = layout.buildDirectory.file('reports/gametest/betterx-disabled.xml')
-def betterEndPresentRunDirectory = layout.buildDirectory.dir('run/betterEndAdapterPresent')
-def betterEndAbsentRunDirectory = layout.buildDirectory.dir('run/betterEndAdapterAbsent')
-def betterEndPresentReport = layout.buildDirectory.file('reports/gametest/betterend-adapter-present.xml')
-def betterEndAbsentReport = layout.buildDirectory.file('reports/gametest/betterend-adapter-absent.xml')
 def betterXCompatibilityRunDirectory = layout.buildDirectory.dir('run/betterXCompatibility')
 def betterXCompatibilityReport = layout.buildDirectory.file('reports/gametest/betterx-compatibility.xml')
 def betterNetherSpikeCases = [
@@ -416,11 +378,6 @@ def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
 def betterXTestJar = tasks.register('betterXTestJar', Jar) {
     archiveClassifier = 'betterx-test'
     from sourceSets.betterXTest.output
-}
-
-def betterEndSpikeTestJar = tasks.register('betterEndSpikeTestJar', Jar) {
-    archiveClassifier = 'betterend-spike-test'
-    from sourceSets.betterEndSpikeTest.output
 }
 
 def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', Jar) {
@@ -555,96 +512,6 @@ tasks.register('verifyBetterXCharacterization') {
     }
 }
 
-def registerBetterEndSpikePreparation = { String taskName, def runDirectory, def report, boolean present ->
-    tasks.register(taskName, Delete) {
-        dependsOn(':Fabric:jar', betterEndSpikeTestJar)
-        delete runDirectory, report
-        doLast {
-            def targetDirectory = runDirectory.get().asFile
-            def modsDirectory = new File(targetDirectory, 'mods')
-            modsDirectory.mkdirs()
-            layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-            layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-            copy {
-                from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
-                from(betterEndSpikeTestJar.flatMap { it.archiveFile })
-                if (present) {
-                    from(configurations.betterEndFabric)
-                }
-                into(modsDirectory)
-            }
-            new File(targetDirectory, 'eula.txt').text = 'eula=true\n'
-            new File(targetDirectory, 'server.properties').text = '''online-mode=false
-max-tick-time=-1
-'''
-        }
-    }
-}
-
-def prepareBetterEndPresent = registerBetterEndSpikePreparation(
-        'prepareBetterEndAdapterPresent',
-        betterEndPresentRunDirectory,
-        betterEndPresentReport,
-        true)
-def prepareBetterEndAbsent = registerBetterEndSpikePreparation(
-        'prepareBetterEndAdapterAbsent',
-        betterEndAbsentRunDirectory,
-        betterEndAbsentReport,
-        false)
-
-tasks.named('runBetterEndAdapterPresent') {
-    dependsOn prepareBetterEndPresent
-}
-
-tasks.named('runBetterEndAdapterAbsent') {
-    dependsOn prepareBetterEndAbsent
-}
-
-tasks.register('verifyBetterEndAdapterSpike') {
-    group = 'verification'
-    description = 'Proves the guarded Better End 26.201.2 MobEffectApplier adapter without shipping it.'
-    dependsOn(':Fabric:jar', betterEndSpikeTestJar)
-    doLast {
-        def presentLog = layout.buildDirectory.file(
-                'reports/betterend-spike/fabric-present-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runBetterEndAdapterPresent', presentLog, 300)
-        if (!betterEndPresentReport.get().asFile.isFile()) {
-            throw new GradleException("Better End present GameTest report is missing; see ${presentLog}")
-        }
-
-        def absentLog = layout.buildDirectory.file(
-                'reports/betterend-spike/fabric-absent-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runBetterEndAdapterAbsent', absentLog, 180)
-        if (!betterEndAbsentReport.get().asFile.isFile()) {
-            throw new GradleException("Better End absent GameTest report is missing; see ${absentLog}")
-        }
-
-        def productionJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
-        def zip = new java.util.zip.ZipFile(productionJar)
-        try {
-            def embeddedBetterEnd = zip.entries().findAll { entry ->
-                def name = entry.name.toLowerCase(Locale.ROOT)
-                name.startsWith('org/betterx/')
-                        || name.contains('better-end')
-                        || name.contains('betterend')
-                        || name.contains('bclib')
-                        || name.contains('worldweaver')
-            }
-            if (!embeddedBetterEnd.isEmpty()) {
-                throw new GradleException("Production Fabric JAR embeds Better End artifacts: ${embeddedBetterEnd}")
-            }
-            def descriptor = zip.getInputStream(zip.getEntry('fabric.mod.json')).getText('UTF-8')
-            if (descriptor.contains('betterend') || descriptor.contains('bclib') || descriptor.contains('wover')) {
-                throw new GradleException('Production Fabric metadata unexpectedly requires Better End')
-            }
-        } finally {
-            zip.close()
-        }
-    }
-}
-
 tasks.register('prepareBetterXCompatibility', Delete) {
     dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
     delete betterXCompatibilityRunDirectory, betterXCompatibilityReport
@@ -719,6 +586,46 @@ tasks.register('verifyBetterXCompatibility') {
                 ':RuntimeTests:Fabric:runBetterXCompatibility', processLog, 300)
         if (!betterXCompatibilityReport.get().asFile.isFile()) {
             throw new GradleException("BetterX compatibility GameTest report is missing; see ${processLog}")
+        }
+
+        def productionJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
+        def productionZip = new java.util.zip.ZipFile(productionJar)
+        try {
+            def forbiddenEntries = productionZip.entries().findAll { entry ->
+                def name = entry.name.toLowerCase(Locale.ROOT)
+                name.startsWith('org/betterx/')
+                        || (name.endsWith('.jar') && (name.contains('better-end')
+                        || name.contains('betterend')
+                        || name.contains('bclib')
+                        || name.contains('worldweaver')
+                        || name.contains('wover')))
+            }
+            if (!forbiddenEntries.isEmpty()) {
+                throw new GradleException(
+                        "Production Fabric JAR embeds Better End artifacts: ${forbiddenEntries}")
+            }
+
+            def requiredEntries = [
+                    'mismatchedboots.betterx.mixins.json',
+                    'games/alejandrocoria/mismatchedboots/compatibility/betterx/BetterXMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
+                            + 'BetterEndMobEffectApplierMixin.class'
+            ]
+            def missingEntries = requiredEntries.findAll { productionZip.getEntry(it) == null }
+            if (!missingEntries.isEmpty()) {
+                throw new GradleException(
+                        "Production Fabric JAR is missing BetterX integration entries: ${missingEntries}")
+            }
+
+            def descriptor = productionZip.getInputStream(
+                    productionZip.getEntry('fabric.mod.json')).getText('UTF-8')
+            if (descriptor.contains('"betterend"')
+                    || descriptor.contains('"bclib"')
+                    || descriptor.contains('"wover"')) {
+                throw new GradleException('Production Fabric metadata unexpectedly requires Better End')
+            }
+        } finally {
+            productionZip.close()
         }
     }
 }

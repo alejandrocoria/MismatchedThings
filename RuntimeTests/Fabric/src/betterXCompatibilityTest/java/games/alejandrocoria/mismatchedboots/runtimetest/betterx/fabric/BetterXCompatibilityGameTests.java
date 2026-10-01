@@ -9,12 +9,19 @@ import net.minecraft.SharedConstants;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.pack.PackFormat;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -23,6 +30,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -38,8 +48,63 @@ public final class BetterXCompatibilityGameTests {
     private static final String EMPTY_STRUCTURE = "mismatchedboots_betterx_compatibility_test:empty";
     private static final String PACK_NAME = "mismatchedboots-betterx-compatibility";
     private static final String PACK_ID = "file/" + PACK_NAME;
+    private static final String EFFECT_APPLIER = "org.betterx.betterend.interfaces.MobEffectApplier";
+    private static final String EFFECT_APPLIER_INTERNAL =
+            "org/betterx/betterend/interfaces/MobEffectApplier";
+    private static final String APPLY_EFFECT = "(Lnet/minecraft/world/entity/LivingEntity;)V";
     private static final TagKey<Item> CRYSTALITE_SET = tag("betterend", "armor_set/crystalite");
     private static final TagKey<Item> UNAUDITED_BETTER_END = tag("betterend", "unaudited_control");
+
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void betterEndGuardAcceptsOnlyTheExactExpectedApi(GameTestHelper helper) {
+        ClassNode effectApplier = effectApplierNode();
+        ClassNode crystaliteBoots = crystaliteBootsNode();
+        require(guardAccepts(effectApplier, crystaliteBoots),
+                "Exact Better End API shape was rejected");
+        require(!guardAccepts(null, crystaliteBoots),
+                "Missing effect interface was accepted");
+        require(!guardAccepts(effectApplier, null),
+                "Missing Crystalite Boots class was accepted");
+
+        ClassNode wrongDescriptor = effectApplierNode();
+        wrongDescriptor.methods.getFirst().desc = "()V";
+        require(!guardAccepts(wrongDescriptor, crystaliteBootsNode()),
+                "Wrong applyEffect descriptor was accepted");
+
+        ClassNode wrongBootInterface = crystaliteBootsNode();
+        wrongBootInterface.interfaces.clear();
+        require(!guardAccepts(effectApplierNode(), wrongBootInterface),
+                "Crystalite Boots without MobEffectApplier was accepted");
+        helper.succeed();
+    }
+
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void crystaliteSwiftnessUsesTheGuardedProductionAdapter(GameTestHelper helper) {
+        ServerPlayer player = connectedMockPlayer(helper);
+        Class<?> effectApplier = requiredClass(EFFECT_APPLIER);
+        ItemStack crystalite = item("betterend", "crystalite_boots").getDefaultInstance();
+        require(effectApplier.isInstance(crystalite.getItem()),
+                "Ordinary Crystalite Boots do not implement MobEffectApplier");
+        require(!effectApplier.isInstance(Items.IRON_BOOTS),
+                "Unrelated iron boots unexpectedly implement MobEffectApplier");
+
+        assertSwiftnessLifecycle(effectApplier, player, crystalite, "ordinary Crystalite");
+
+        MixedBootsPair pair = MixedBootsFactory.createPair(
+                crystalite, Items.IRON_BOOTS.getDefaultInstance());
+        assertSwiftnessLifecycle(effectApplier, player, pair.primary(), "primary");
+        assertSwiftnessLifecycle(effectApplier, player, pair.inverse(), "inverse");
+
+        MixedBootsPair twoCrystalite = MixedBootsFactory.createPair(crystalite, crystalite);
+        assertSwiftnessLifecycle(
+                effectApplier, player, twoCrystalite.primary(), "two-source Crystalite");
+
+        MixedBootsPair unrelated = MixedBootsFactory.createPair(
+                Items.IRON_BOOTS.getDefaultInstance(), Items.GOLDEN_BOOTS.getDefaultInstance());
+        assertNoSwiftness(effectApplier, player, unrelated.primary());
+        assertRequiresEquippedMixedBoots(effectApplier, player, pair.primary());
+        helper.succeed();
+    }
 
     @GameTest(structure = EMPTY_STRUCTURE, maxTicks = 1200)
     public void crystaliteProjectionIsExactAndReloadable(GameTestHelper helper) {
@@ -67,11 +132,11 @@ public final class BetterXCompatibilityGameTests {
         require(crystalite.is(UNAUDITED_BETTER_END),
                 "Crystalite source is missing the unaudited Better End control tag");
         require(!existing.is(UNAUDITED_BETTER_END),
-                "The spike projected an unaudited Better End tag");
+                "Mismatched root projected an unaudited Better End tag");
         require(crystalite.is(ItemTags.FOOT_ARMOR),
                 "Crystalite source is missing its vanilla foot-armor tag");
         require(!existing.is(ItemTags.FOOT_ARMOR),
-                "The spike projected an unaudited vanilla tag");
+                "Mismatched root projected an unaudited vanilla tag");
 
         Path pack = server.getWorldPath(LevelResource.DATAPACK_DIR).resolve(PACK_NAME);
         try {
@@ -118,6 +183,84 @@ public final class BetterXCompatibilityGameTests {
                 orientation + " Mismatched root did not complete the Crystalite set");
     }
 
+    private static void assertSwiftnessLifecycle(
+            Class<?> effectApplier,
+            ServerPlayer player,
+            ItemStack stack,
+            String description) {
+        require(effectApplier.isInstance(stack.getItem()),
+                description + " item does not implement MobEffectApplier");
+        ItemStack unchangedRoot = stack.copy();
+        MixedBootsData unchangedSources = ModContent.getMixedBootsData(stack).orElse(null);
+        player.removeEffect(MobEffects.SPEED);
+        player.setItemSlot(EquipmentSlot.FEET, stack);
+
+        player.tickCount = 63;
+        invokeApplyEffect(effectApplier, stack.getItem(), player);
+        require(player.getEffect(MobEffects.SPEED) == null,
+                description + " applied Speed before the 64-tick boundary");
+
+        player.tickCount = 64;
+        invokeApplyEffect(effectApplier, stack.getItem(), player);
+        MobEffectInstance speed = player.getEffect(MobEffects.SPEED);
+        require(speed != null, description + " did not apply Swiftness");
+        require(speed.getAmplifier() == 0, description + " applied an unexpected amplifier");
+        require(speed.getDuration() == 80, description + " applied an unexpected duration");
+
+        player.removeEffect(MobEffects.SPEED);
+        player.addEffect(new MobEffectInstance(MobEffects.SPEED, 5, 0));
+        player.tickCount = 65;
+        invokeApplyEffect(effectApplier, stack.getItem(), player);
+        require(player.getEffect(MobEffects.SPEED).getDuration() == 5,
+                description + " refreshed Speed away from the 64-tick boundary");
+
+        player.tickCount = 128;
+        invokeApplyEffect(effectApplier, stack.getItem(), player);
+        speed = player.getEffect(MobEffects.SPEED);
+        require(speed != null && speed.getDuration() == 80,
+                description + " did not refresh Speed at the next 64-tick boundary");
+        require(ItemStack.matches(unchangedRoot, stack), description + " changed root item data");
+        if (unchangedSources != null) {
+            require(unchangedSources.equals(mixedData(stack)),
+                    description + " mutated stored source snapshots");
+        }
+    }
+
+    private static void assertNoSwiftness(
+            Class<?> effectApplier,
+            ServerPlayer player,
+            ItemStack mixed) {
+        ItemStack unchangedRoot = mixed.copy();
+        MixedBootsData unchangedSources = mixedData(mixed);
+        player.removeEffect(MobEffects.SPEED);
+        player.setItemSlot(EquipmentSlot.FEET, mixed);
+        player.tickCount = 64;
+
+        invokeApplyEffect(effectApplier, mixed.getItem(), player);
+
+        require(player.getEffect(MobEffects.SPEED) == null,
+                "Unrelated Mismatched sources received Crystalite Swiftness");
+        assertUnchanged(mixed, unchangedRoot, unchangedSources, "unrelated effect control");
+    }
+
+    private static void assertRequiresEquippedMixedBoots(
+            Class<?> effectApplier,
+            ServerPlayer player,
+            ItemStack qualifyingMixed) {
+        ItemStack unchangedRoot = qualifyingMixed.copy();
+        MixedBootsData unchangedSources = mixedData(qualifyingMixed);
+        player.removeEffect(MobEffects.SPEED);
+        player.setItemSlot(EquipmentSlot.FEET, Items.IRON_BOOTS.getDefaultInstance());
+        player.tickCount = 64;
+
+        invokeApplyEffect(effectApplier, qualifyingMixed.getItem(), player);
+
+        require(player.getEffect(MobEffects.SPEED) == null,
+                "Unequipped Mismatched sources applied Crystalite Swiftness");
+        assertUnchanged(
+                qualifyingMixed, unchangedRoot, unchangedSources, "unequipped effect control");
+    }
+
     private static void equipCrystaliteArmor(Player player, ItemStack boots) {
         player.setItemSlot(EquipmentSlot.HEAD, item("betterend", "crystalite_helmet").getDefaultInstance());
         player.setItemSlot(EquipmentSlot.CHEST, item("betterend", "crystalite_chestplate").getDefaultInstance());
@@ -138,6 +281,47 @@ public final class BetterXCompatibilityGameTests {
         } catch (InvocationTargetException exception) {
             throw new AssertionError("Better End's full-set predicate failed", exception.getCause());
         }
+    }
+
+    private static void invokeApplyEffect(
+            Class<?> effectApplier,
+            Object receiver,
+            LivingEntity entity) {
+        try {
+            Method method = effectApplier.getMethod("applyEffect", LivingEntity.class);
+            method.invoke(receiver, entity);
+        } catch (NoSuchMethodException | IllegalAccessException exception) {
+            throw new AssertionError("Could not invoke exact Better End applyEffect contract", exception);
+        } catch (InvocationTargetException exception) {
+            throw new AssertionError("Better End adapter failed", exception.getCause());
+        }
+    }
+
+    private static boolean guardAccepts(ClassNode effectApplier, ClassNode crystaliteBoots) {
+        try {
+            Class<?> plugin = Class.forName(
+                    "games.alejandrocoria.mismatchedboots.compatibility.betterx.BetterXMixinPlugin",
+                    false,
+                    BetterXCompatibilityGameTests.class.getClassLoader());
+            Method method = plugin.getDeclaredMethod(
+                    "hasCompatibleBetterEndApi", ClassNode.class, ClassNode.class);
+            require(method.trySetAccessible(), "Could not access Better End structural guard");
+            return (boolean) method.invoke(null, effectApplier, crystaliteBoots);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException exception) {
+            throw new AssertionError("Could not invoke Better End structural guard", exception);
+        } catch (InvocationTargetException exception) {
+            throw new AssertionError("Better End structural guard failed", exception.getCause());
+        }
+    }
+
+    private static ServerPlayer connectedMockPlayer(GameTestHelper helper) {
+        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        new ServerGamePacketListenerImpl(
+                helper.getLevel().getServer(),
+                new Connection(PacketFlow.SERVERBOUND),
+                player,
+                CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        return player;
     }
 
     private static ArrayList<String> selectPack(MinecraftServer server) {
@@ -195,6 +379,41 @@ public final class BetterXCompatibilityGameTests {
         require(identifier.equals(BuiltInRegistries.ITEM.getKey(item)),
                 "Missing exact Better End item " + identifier);
         return item;
+    }
+
+    private static Class<?> requiredClass(String name) {
+        try {
+            return Class.forName(name, false, BetterXCompatibilityGameTests.class.getClassLoader());
+        } catch (ClassNotFoundException exception) {
+            throw new AssertionError("Missing exact Better End class " + name, exception);
+        }
+    }
+
+    private static ClassNode effectApplierNode() {
+        ClassNode node = type(Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
+        node.methods.add(new MethodNode(
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                "applyEffect",
+                APPLY_EFFECT,
+                null,
+                null));
+        return node;
+    }
+
+    private static ClassNode crystaliteBootsNode() {
+        ClassNode node = type(Opcodes.ACC_PUBLIC);
+        node.interfaces.add(EFFECT_APPLIER_INTERNAL);
+        node.methods.add(new MethodNode(Opcodes.ACC_PUBLIC, "applyEffect", APPLY_EFFECT, null, null));
+        return node;
+    }
+
+    private static ClassNode type(int access) {
+        ClassNode node = new ClassNode();
+        node.version = Opcodes.V25;
+        node.access = access;
+        node.name = "fixture/Type";
+        node.superName = "java/lang/Object";
+        return node;
     }
 
     private static TagKey<Item> tag(String namespace, String path) {

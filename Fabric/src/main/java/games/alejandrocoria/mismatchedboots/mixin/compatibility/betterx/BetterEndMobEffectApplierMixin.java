@@ -1,8 +1,7 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.betterend.fabric.mixin;
+package games.alejandrocoria.mismatchedboots.mixin.compatibility.betterx;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
-import games.alejandrocoria.mismatchedboots.runtimetest.betterend.fabric.BetterEndSpikeProbe;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -21,7 +20,6 @@ public abstract class BetterEndMobEffectApplierMixin implements MobEffectApplier
 
         MixedBootsSources.anySource(equipped, source -> {
             if (source.getItem() instanceof CrystaliteBoots boots) {
-                BetterEndSpikeProbe.recordDelegation();
                 boots.applyEffect(entity);
                 return true;
             }
