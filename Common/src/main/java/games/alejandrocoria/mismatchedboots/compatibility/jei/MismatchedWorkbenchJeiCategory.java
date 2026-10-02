@@ -22,11 +22,11 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
             Constants.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
     private static final int WIDTH = 130;
     private static final int HEIGHT = 66;
-    private static final int LEFT_SLOT_X = 43;
+    private static final int LEFT_SLOT_X = 46;
     private static final int RIGHT_SLOT_X = LEFT_SLOT_X + 22;
     private static final int INPUT_Y = 2;
     private static final int OUTPUT_Y = 46;
-    private static final int ARROWS_X = 49;
+    private static final int ARROWS_X = 52;
     private static final int ARROWS_Y = 19;
 
     private final IDrawable arrows;
