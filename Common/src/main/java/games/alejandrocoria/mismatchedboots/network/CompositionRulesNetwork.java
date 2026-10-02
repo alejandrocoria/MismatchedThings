@@ -4,8 +4,6 @@ import commonnetwork.api.Network;
 import commonnetwork.networking.data.PacketContext;
 import commonnetwork.networking.data.Side;
 import games.alejandrocoria.mismatchedboots.Constants;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import net.minecraft.server.level.ServerPlayer;
@@ -51,7 +49,7 @@ public final class CompositionRulesNetwork {
             Constants.LOG.warn("Ignoring attribute-rules payload received on {}", context.side());
             return;
         }
-        AttributeRuleState.install(context.message().rules());
+        CompositionRulesClientLifecycle.installAttributeRules(context.message().rules());
     }
 
     private static void handleComponentRules(PacketContext<ComponentRulesPayload> context) {
@@ -59,6 +57,6 @@ public final class CompositionRulesNetwork {
             Constants.LOG.warn("Ignoring component-rules payload received on {}", context.side());
             return;
         }
-        ComponentRuleState.install(context.message().rules());
+        CompositionRulesClientLifecycle.installComponentRules(context.message().rules());
     }
 }

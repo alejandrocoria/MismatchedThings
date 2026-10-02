@@ -25,6 +25,9 @@
         ],
         "client": [
             "games.alejandrocoria.mismatchedboots.client.MismatchedBootsClientFabric"
+        ],
+        "jei_mod_plugin": [
+            "games.alejandrocoria.mismatchedboots.compatibility.jei.MismatchedBootsJeiPlugin"
         ]
     },
 

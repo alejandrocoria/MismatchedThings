@@ -65,6 +65,17 @@ repositories {
             includeGroupAndSubgroups("maven.modrinth")
         }
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'BlameJared'
+                url = 'https://maven.blamejared.com'
+            }
+        }
+        filter {
+            includeGroupAndSubgroups('mezz.jei')
+        }
+    }
 }
 
 if (project.path in [':Common', ':Fabric', ':NeoForge', ':Forge']) {

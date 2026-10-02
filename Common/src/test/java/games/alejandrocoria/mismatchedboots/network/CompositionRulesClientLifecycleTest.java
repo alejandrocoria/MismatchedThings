@@ -17,13 +17,14 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CompositionRulesClientLifecycleTest {
     @AfterEach
     void restoreDefaults() {
-        AttributeRuleState.restoreDefaults();
-        ComponentRuleState.restoreDefaults();
+        CompositionRulesClientLifecycle.onDisconnected();
     }
 
     @Test
@@ -43,6 +44,7 @@ class CompositionRulesClientLifecycleTest {
         assertEquals(1, sends.get());
         assertSame(AttributeRuleDefaults.ruleSet(), AttributeRuleState.current());
         assertSame(ComponentRuleDefaults.state(), ComponentRuleState.current());
+        assertFalse(CompositionRulesClientLifecycle.areRulesSynchronized());
     }
 
     @Test
@@ -59,6 +61,73 @@ class CompositionRulesClientLifecycleTest {
         CompositionRulesClientLifecycle.onDisconnected();
         assertSame(AttributeRuleDefaults.ruleSet(), AttributeRuleState.current());
         assertSame(ComponentRuleDefaults.state(), ComponentRuleState.current());
+    }
+
+    @Test
+    void listenersRunOnceAfterBothSnapshotsArriveInEitherOrder() {
+        AtomicInteger attributeFirstNotifications = new AtomicInteger();
+        Runnable removeAttributeFirst = CompositionRulesClientLifecycle.addSynchronizedListener(
+                attributeFirstNotifications::incrementAndGet);
+        try {
+            CompositionRulesClientLifecycle.installAttributeRules(rules(AttributePolicy.MAXIMUM));
+            assertFalse(CompositionRulesClientLifecycle.areRulesSynchronized());
+            assertEquals(0, attributeFirstNotifications.get());
+
+            CompositionRulesClientLifecycle.installComponentRules(componentRules(
+                    DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER));
+            CompositionRulesClientLifecycle.installComponentRules(componentRules(
+                    DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER));
+            assertTrue(CompositionRulesClientLifecycle.areRulesSynchronized());
+            assertEquals(1, attributeFirstNotifications.get());
+        } finally {
+            removeAttributeFirst.run();
+        }
+
+        CompositionRulesClientLifecycle.onConnected(() -> {
+        });
+        AtomicInteger componentFirstNotifications = new AtomicInteger();
+        Runnable removeComponentFirst = CompositionRulesClientLifecycle.addSynchronizedListener(
+                componentFirstNotifications::incrementAndGet);
+        try {
+            CompositionRulesClientLifecycle.installComponentRules(componentRules(
+                    DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER));
+            assertEquals(0, componentFirstNotifications.get());
+            CompositionRulesClientLifecycle.installAttributeRules(rules(AttributePolicy.MAXIMUM));
+            assertEquals(1, componentFirstNotifications.get());
+        } finally {
+            removeComponentFirst.run();
+        }
+    }
+
+    @Test
+    void lateListenerRunsImmediatelyAndReconnectRequiresBothNewSnapshots() {
+        CompositionRulesClientLifecycle.installAttributeRules(rules(AttributePolicy.MAXIMUM));
+        CompositionRulesClientLifecycle.installComponentRules(componentRules(
+                DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER));
+
+        AtomicInteger notifications = new AtomicInteger();
+        Runnable remove = CompositionRulesClientLifecycle.addSynchronizedListener(notifications::incrementAndGet);
+        try {
+            assertEquals(1, notifications.get());
+
+            CompositionRulesClientLifecycle.onConnected(() -> {
+            });
+            assertFalse(CompositionRulesClientLifecycle.areRulesSynchronized());
+            CompositionRulesClientLifecycle.installComponentRules(componentRules(
+                    DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER));
+            assertEquals(1, notifications.get());
+            CompositionRulesClientLifecycle.installAttributeRules(rules(AttributePolicy.MAXIMUM));
+            assertEquals(2, notifications.get());
+        } finally {
+            remove.run();
+        }
+
+        CompositionRulesClientLifecycle.onConnected(() -> {
+        });
+        CompositionRulesClientLifecycle.installAttributeRules(rules(AttributePolicy.MAXIMUM));
+        CompositionRulesClientLifecycle.installComponentRules(componentRules(
+                DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER));
+        assertEquals(2, notifications.get());
     }
 
     private static AttributeRuleSet rules(AttributePolicy policy) {

@@ -36,6 +36,7 @@ dependencies {
     compileOnly("mysticdrew:common-networking-common:${common_networking_version}") {
         transitive = false
     }
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     api "com.electronwill.night-config:core:${nightconfig_version}"
     api "com.electronwill.night-config:toml:${nightconfig_version}"
 
