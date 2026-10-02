@@ -37,6 +37,10 @@ dependencies {
         transitive = false
     }
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api:${rei_version}"
+    compileOnly "dev.architectury:architectury:${architectury_version}"
+    compileOnly 'me.shedaniel.cloth:basic-math:0.6.1'
+    compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
     api "com.electronwill.night-config:core:${nightconfig_version}"
     api "com.electronwill.night-config:toml:${nightconfig_version}"
 

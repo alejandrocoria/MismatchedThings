@@ -28,6 +28,9 @@
         ],
         "jei_mod_plugin": [
             "games.alejandrocoria.mismatchedboots.compatibility.jei.MismatchedBootsJeiPlugin"
+        ],
+        "rei_client": [
+            "games.alejandrocoria.mismatchedboots.compatibility.rei.MismatchedBootsReiClientPlugin"
         ]
     },
 

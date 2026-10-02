@@ -76,6 +76,30 @@ repositories {
             includeGroupAndSubgroups('mezz.jei')
         }
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Shedaniel'
+                url = 'https://maven.shedaniel.me'
+            }
+        }
+        filter {
+            includeGroupAndSubgroups('me.shedaniel')
+            includeGroupAndSubgroups('me.shedaniel.cloth')
+            includeGroupAndSubgroups('dev.architectury')
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Fabric'
+                url = 'https://maven.fabricmc.net'
+            }
+        }
+        filter {
+            includeGroupAndSubgroups('net.fabricmc')
+        }
+    }
 }
 
 if (project.path in [':Common', ':Fabric', ':NeoForge', ':Forge']) {
