@@ -349,7 +349,9 @@ tasks.register('prepareCreateFlyCompatibilityClient', Delete) {
     doLast {
         def runDirectory = createFlyCompatibilityClientRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
+        def configDirectory = new File(runDirectory, 'config')
         modsDirectory.mkdirs()
+        configDirectory.mkdirs()
         copy {
             from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
             from(configurations.createFlyFabric)
@@ -357,6 +359,38 @@ tasks.register('prepareCreateFlyCompatibilityClient', Delete) {
         }
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'
+        new File(configDirectory, 'flywheel-client.json').text = '''{
+  "backend": {
+    "comment": [
+      "Select the backend to use. Set to 'DEFAULT' to let Flywheel decide.",
+      "Allowed Values: DEFAULT, OFF, namespace:path"
+    ],
+    "value": "DEFAULT"
+  },
+  "limitUpdates": {
+    "comment": "Enable or disable instance update limiting with distance.",
+    "value": true
+  },
+  "workerThreads": {
+    "comment": [
+      "The number of worker threads to use. Set to -1 to let Flywheel decide. Set to 0 to disable parallelism. Requires a game restart to take effect.",
+      "Default: -1",
+      "Range: -1 ~ 12"
+    ],
+    "value": 0
+  },
+  "flwBackends": {
+    "comment": "Config options for Flywheel's built-in backends.",
+    "lightSmoothness": {
+      "comment": [
+        "How smooth Flywheel's shader-based lighting should be. May have a large performance impact.",
+        "Allowed Values: FLAT, TRI_LINEAR, SMOOTH, SMOOTH_INNER_FACE_CORRECTED"
+      ],
+      "value": "SMOOTH"
+    }
+  }
+}
+'''
     }
 }
 
