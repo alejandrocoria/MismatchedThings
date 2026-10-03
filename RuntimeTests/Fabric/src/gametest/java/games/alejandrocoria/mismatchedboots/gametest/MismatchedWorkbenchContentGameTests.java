@@ -34,6 +34,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.RepairItemRecipe;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -113,6 +114,8 @@ public final class MismatchedWorkbenchContentGameTests {
                 "Registered workbench item does not place the registered block");
         helper.assertTrue(block.defaultBlockState().is(BlockTags.MINEABLE_WITH_AXE),
                 "Workbench is not mineable with an axe");
+        helper.assertTrue(block.defaultBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH,
+                "Workbench default state does not face north");
 
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         BlockPos support = helper.absolutePos(WORKBENCH_POS);
@@ -127,12 +130,18 @@ public final class MismatchedWorkbenchContentGameTests {
                 new UseOnContext(player, InteractionHand.MAIN_HAND, hit));
         helper.assertTrue(placementContext.canPlace(),
                 "Workbench placement context rejected the target position");
-        helper.assertTrue(block.getStateForPlacement(placementContext) != null,
-                "Workbench did not provide a placement state");
+        var placementState = block.getStateForPlacement(placementContext);
+        Direction expectedFacing = placementContext.getHorizontalDirection().getOpposite();
+        helper.assertTrue(placementState != null
+                        && placementState.getValue(HorizontalDirectionalBlock.FACING) == expectedFacing,
+                "Workbench placement state does not face its placer");
         InteractionResult placement = placingStack.useOn(
                 new UseOnContext(player, InteractionHand.MAIN_HAND, hit));
         helper.assertTrue(helper.getLevel().getBlockState(placed).is(block),
                 "Workbench block item did not place the block: " + placement);
+        helper.assertTrue(helper.getLevel().getBlockState(placed)
+                        .getValue(HorizontalDirectionalBlock.FACING) == expectedFacing,
+                "Placed workbench does not face its placer");
         helper.assertTrue(helper.getLevel().getBlockEntity(placed) == null,
                 "Placed workbench unexpectedly created a block entity");
 

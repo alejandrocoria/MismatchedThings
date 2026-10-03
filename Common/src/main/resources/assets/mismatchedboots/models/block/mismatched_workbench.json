@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "minecraft:block/block",
   "textures": {
+    "blade": "mismatchedboots:block/mismatched_workbench_shear_blade",
     "down": "minecraft:block/oak_planks",
     "east": "mismatchedboots:block/mismatched_workbench_side",
     "north": "mismatchedboots:block/mismatched_workbench_front",
@@ -8,5 +9,64 @@
     "south": "mismatchedboots:block/mismatched_workbench_front",
     "up": "mismatchedboots:block/mismatched_workbench_top",
     "west": "mismatchedboots:block/mismatched_workbench_side"
-  }
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#down",
+          "cullface": "down"
+        },
+        "up": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#up",
+          "cullface": "up"
+        },
+        "north": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#north",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#south",
+          "cullface": "south"
+        },
+        "west": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#west",
+          "cullface": "west"
+        },
+        "east": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#east",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [8, 15, 2],
+      "to": [8, 19, 14],
+      "shade": false,
+      "rotation": {
+        "origin": [8, 15, 14],
+        "axis": "x",
+        "angle": 22.5,
+        "rescale": false
+      },
+      "faces": {
+        "west": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#blade"
+        },
+        "east": {
+          "uv": [16, 0, 0, 16],
+          "texture": "#blade"
+        }
+      }
+    }
+  ]
 }
