@@ -75,7 +75,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         context.runOnClient(client -> originalCamera.set(client.options.getCameraType()));
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             configureWorld(singleplayer);
-            singleplayer.getClientLevel().waitForChunksRender();
+            singleplayer.getConnection().waitForChunksRender();
             context.waitFor(client -> client.player != null && client.level != null);
 
             context.runOnClient(HybridItemRenderingRuntimeClientGameTest::verifyBoundedRepeatedPlanning);

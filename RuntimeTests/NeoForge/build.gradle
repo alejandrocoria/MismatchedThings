@@ -16,10 +16,17 @@ configurations {
         canBeConsumed = false
         canBeResolved = true
     }
+    journeyMapNeoForge {
+        canBeConsumed = false
+        canBeResolved = true
+    }
 }
 
 dependencies {
     advancedNetheriteNeoForge('maven.modrinth:CFX9ftUJ:JBg5bHJd') {
+        transitive = false
+    }
+    journeyMapNeoForge('maven.modrinth:lfHFW1mp:m1NSCXoV') {
         transitive = false
     }
 }

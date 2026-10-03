@@ -47,7 +47,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                         ModContent.mismatchedWorkbenchBlock().orElseThrow().defaultBlockState(), 3);
                 workbenchPos.set(pos.immutable());
             });
-            singleplayer.getClientLevel().waitForChunksRender();
+            singleplayer.getConnection().waitForChunksRender();
             context.waitFor(client -> client.level != null
                     && workbenchPos.get() != null
                     && client.level.getBlockState(workbenchPos.get())

@@ -247,18 +247,42 @@ def runPair = { String serverLoader, String clientLoader, int port ->
     }
 }
 
-def journeyMapNeoForge = rootProject.file('../../JourneyMap/26.2/neoforge/build/libs/'
-        + 'journeymap-neoforge-26.2-6.0.4.jar')
+def journeyMapNeoForge = {
+    def artifact = project(':RuntimeTests:NeoForge')
+            .configurations.journeyMapNeoForge
+            .resolvedConfiguration
+            .resolvedArtifacts
+            .find {
+                it.moduleVersion.id.group == 'maven.modrinth'
+                        && it.moduleVersion.id.name == 'lfHFW1mp'
+                        && it.moduleVersion.id.version == 'm1NSCXoV'
+            }
+    if (artifact == null) {
+        throw new GradleException('Exact JourneyMap 26.2-6.0.4 NeoForge artifact is missing')
+    }
+    artifact.file
+}
 
 def runJourneyMapCoexistence = {
     int port = 25578
     File markers = networkAcceptanceRoot.get().dir('neoforge-journeymap').asFile
     delete(markers)
     markers.mkdirs()
-    if (!journeyMapNeoForge.isFile()) {
-        throw new GradleException("JourneyMap coexistence artifact is missing: ${journeyMapNeoForge}")
+    File journeyMapArtifact = journeyMapNeoForge()
+    def digest = java.security.MessageDigest.getInstance('SHA-256')
+    def actualHash = journeyMapArtifact.withInputStream { input ->
+        byte[] buffer = new byte[8192]
+        int count
+        while ((count = input.read(buffer)) >= 0) {
+            digest.update(buffer, 0, count)
+        }
+        digest.digest().encodeHex().toString().toUpperCase(Locale.ROOT)
     }
-    prepareEndpoint('neoforge', 'server', port, journeyMapNeoForge)
+    def expectedHash = '0BDFB42301F34048B03FD323EE8E21D370777C22074160817A40EA6CCD4A7160'
+    if (actualHash != expectedHash) {
+        throw new GradleException("Unexpected JourneyMap artifact hash: ${actualHash}")
+    }
+    prepareEndpoint('neoforge', 'server', port, journeyMapArtifact)
     Process server = null
     try {
         server = startEndpoint('neoforge', 'server', port, markers, true)

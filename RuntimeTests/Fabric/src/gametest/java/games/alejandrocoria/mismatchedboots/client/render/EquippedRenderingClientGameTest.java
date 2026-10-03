@@ -38,7 +38,7 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             configureWorld(singleplayer);
-            singleplayer.getClientLevel().waitForChunksRender();
+            singleplayer.getConnection().waitForChunksRender();
 
             verifyStandardSplit(context, singleplayer);
             verifyVisualComponents(context, singleplayer);

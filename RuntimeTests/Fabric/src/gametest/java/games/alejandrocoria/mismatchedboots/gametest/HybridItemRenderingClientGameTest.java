@@ -43,7 +43,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     @Override
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
-            singleplayer.getClientLevel().waitForChunksRender();
+            singleplayer.getConnection().waitForChunksRender();
             context.waitFor(client -> client.player != null && client.level != null);
             context.runOnClient(client -> {
                 verifyCompatibleVanillaPairs(client);

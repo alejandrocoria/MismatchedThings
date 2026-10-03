@@ -9,12 +9,12 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -124,16 +124,17 @@ public final class NetworkAcceptanceServerTest {
     }
 
     private static void craftAndDeliver(ServerPlayer player) {
-        InventoryMenu menu = new InventoryMenu(player.getInventory(), true, player);
-        menu.getInputGridSlots().get(0).set(NetworkAcceptanceStacks.firstSource());
-        menu.getInputGridSlots().get(3).set(NetworkAcceptanceStacks.secondSource());
+        MismatchedWorkbenchMenu menu = new MismatchedWorkbenchMenu(1, player.getInventory());
+        menu.getSlot(MismatchedWorkbenchMenu.INPUT_START).set(NetworkAcceptanceStacks.firstSource());
+        menu.getSlot(MismatchedWorkbenchMenu.INPUT_START + 1).set(NetworkAcceptanceStacks.secondSource());
 
-        ItemStack crafted = menu.getSlot(0).safeTake(1, 1, player);
+        ItemStack crafted = menu.getSlot(MismatchedWorkbenchMenu.RESULT_START).safeTake(1, 1, player);
         String description = NetworkAcceptanceStacks.describePrimary(crafted);
-        ItemStack inverse = menu.getInputGridSlots().get(0).getItem();
+        ItemStack inverse = menu.getSlot(MismatchedWorkbenchMenu.RESULT_START + 1).safeTake(1, 1, player);
         NetworkAcceptanceStacks.assertInverse(inverse);
-        if (menu.getInputGridSlots().stream().filter(slot -> !slot.getItem().isEmpty()).count() != 1L) {
-            throw new AssertionError("Real crafting did not conserve exactly two outputs");
+        if (menu.slots.subList(MismatchedWorkbenchMenu.INPUT_START, MismatchedWorkbenchMenu.RESULT_END)
+                .stream().anyMatch(slot -> !slot.getItem().isEmpty())) {
+            throw new AssertionError("Workbench transaction retained inputs or outputs after both were taken");
         }
         if (!player.getInventory().add(crafted.copy())) {
             throw new AssertionError("Could not deliver the crafted stack to the client");
