@@ -1,7 +1,7 @@
 # MismatchedBoots
 
 MismatchedBoots combines any two pairs of boots into two oppositely oriented
-mixed pairs on Fabric, NeoForge, and Forge.
+mixed pairs on Fabric and NeoForge.
 
 ## Crafting
 

@@ -1,7 +1,7 @@
 # Runtime tests
 
 This directory contains test-only mods and their Gradle run configurations.
-Production sources remain in `Common`, `Fabric`, `NeoForge`, and `Forge` at the
+Production sources remain in `Common`, `Fabric`, and `NeoForge` at the
 repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 
 ## Layout

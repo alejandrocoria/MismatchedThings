@@ -19,13 +19,11 @@ tasks.configureEach { task ->
 
 tasks.register("publishMod") {
     group = "release"
-    description = "Publishes Fabric, Forge, and NeoForge builds to CurseForge and Modrinth."
+    description = "Publishes Fabric and NeoForge builds to CurseForge and Modrinth."
     dependsOn(
             ":Fabric:publishCurseForge",
-            ":Forge:publishCurseForge",
             ":NeoForge:publishCurseForge",
             ":Fabric:modrinth",
-            ":Forge:modrinth",
             ":NeoForge:modrinth"
     )
 }
@@ -37,10 +35,9 @@ tasks.register("verifyPackagedDependencies") {
     doLast {
         def artifacts = [
                 fabric  : project(":Fabric").tasks.named("jar").get().archiveFile.get().asFile,
-                forge   : project(":Forge").tasks.named("jarJar").get().archiveFile.get().asFile,
                 neoforge: project(":NeoForge").tasks.named("jar").get().archiveFile.get().asFile
         ]
-        def entryPrefixes = [fabric: "META-INF/jars/", forge: "META-INF/jarjar/", neoforge: "META-INF/jarjar/"]
+        def entryPrefixes = [fabric: "META-INF/jars/", neoforge: "META-INF/jarjar/"]
 
         artifacts.each { loader, artifact ->
             if (!artifact.isFile()) {
@@ -63,7 +60,7 @@ tasks.register("verifyPackagedDependencies") {
                     throw new GradleException("${artifact} must contain only ${expectedBackend}; found ${bundledBackends}")
                 }
 
-                def expectedNightConfig = loader == "forge" ? [] : [
+                def expectedNightConfig = [
                         "${prefix}core-${nightconfig_version}.jar",
                         "${prefix}toml-${nightconfig_version}.jar"
                 ].collect { it.toString() }
@@ -82,7 +79,7 @@ tasks.register("verifyPackagedDependencies") {
                 }
 
                 def descriptorPath = loader == "fabric" ? "fabric.mod.json"
-                        : loader == "forge" ? "META-INF/mods.toml" : "META-INF/neoforge.mods.toml"
+                        : "META-INF/neoforge.mods.toml"
                 def descriptorEntry = zip.getEntry(descriptorPath)
                 if (descriptorEntry == null) {
                     throw new GradleException("${artifact.name} is missing ${descriptorPath}")
