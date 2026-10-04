@@ -37,7 +37,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Unit;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -97,7 +97,7 @@ class MixedBootsFactoryTest {
                 SoundEvents.ARMOR_EQUIP_DIAMOND,
                 Optional.of(EquipmentAssets.DIAMOND),
                 Optional.of(Identifier.withDefaultNamespace("owner_overlay")),
-                Optional.of(HolderSet.direct(BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(EntityTypes.PLAYER))),
+                Optional.of(HolderSet.direct(BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(EntityType.PLAYER))),
                 false,
                 false,
                 false,

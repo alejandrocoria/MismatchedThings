@@ -27,7 +27,7 @@ public final class PersistenceClientGameTest implements FabricClientGameTest {
                 dropped.setNeverPickUp();
                 server.overworld().addFreshEntity(dropped);
             });
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.player != null
                     && client.player.getInventory().contains(PersistenceClientGameTest::hasExpectedData)
                     && client.level.getEntitiesOfClass(

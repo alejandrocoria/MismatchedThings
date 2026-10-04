@@ -20,11 +20,11 @@ public final class CompositionRulesNetwork {
         if (!REGISTERED.compareAndSet(false, true)) {
             return;
         }
-        Network.registerPacket(ClientReadyPayload.TYPE, ClientReadyPayload.STREAM_CODEC,
+        Network.registerPacket(ClientReadyPayload.TYPE, ClientReadyPayload.class, ClientReadyPayload.STREAM_CODEC,
                 CompositionRulesNetwork::handleClientReady);
-        Network.registerPacket(AttributeRulesPayload.TYPE, AttributeRulesPayload.STREAM_CODEC,
+        Network.registerPacket(AttributeRulesPayload.TYPE, AttributeRulesPayload.class, AttributeRulesPayload.STREAM_CODEC,
                 CompositionRulesNetwork::handleAttributeRules);
-        Network.registerPacket(ComponentRulesPayload.TYPE, ComponentRulesPayload.STREAM_CODEC,
+        Network.registerPacket(ComponentRulesPayload.TYPE, ComponentRulesPayload.class, ComponentRulesPayload.STREAM_CODEC,
                 CompositionRulesNetwork::handleComponentRules);
     }
 

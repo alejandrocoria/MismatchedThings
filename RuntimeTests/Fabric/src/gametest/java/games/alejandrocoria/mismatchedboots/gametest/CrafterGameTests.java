@@ -8,7 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -124,7 +124,7 @@ public final class CrafterGameTests {
                 assertCrafterConsumed(helper, crafter, "second repair pulse");
                 assertDisabledSlots(helper, crafter);
                 helper.assertTrue(helper.getLevel().getEntities(
-                                EntityTypes.EXPERIENCE_ORB, helper.getBounds(), Entity::isAlive).isEmpty(),
+                                EntityType.EXPERIENCE_ORB, helper.getBounds(), Entity::isAlive).isEmpty(),
                         "Crafter repair created experience");
                 helper.succeed();
             });

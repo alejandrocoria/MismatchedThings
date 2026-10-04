@@ -41,7 +41,6 @@ class AttributeRuleDefaultsTest {
 
         assertEquals(registeredMinecraftAttributes, AttributeRuleDefaults.rules().keySet());
         assertEquals(List.of(
-                minecraft("air_drag_modifier"),
                 minecraft("armor"),
                 minecraft("armor_toughness"),
                 minecraft("attack_damage"),
@@ -49,14 +48,12 @@ class AttributeRuleDefaultsTest {
                 minecraft("attack_speed"),
                 minecraft("block_break_speed"),
                 minecraft("block_interaction_range"),
-                minecraft("bounciness"),
                 minecraft("burning_time"),
                 minecraft("camera_distance"),
                 minecraft("explosion_knockback_resistance"),
                 minecraft("entity_interaction_range"),
                 minecraft("fall_damage_multiplier"),
                 minecraft("flying_speed"),
-                minecraft("friction_modifier"),
                 minecraft("gravity"),
                 minecraft("jump_strength"),
                 minecraft("knockback_resistance"),
@@ -74,9 +71,7 @@ class AttributeRuleDefaultsTest {
                 minecraft("submerged_mining_speed"),
                 minecraft("sweeping_damage_ratio"),
                 minecraft("water_movement_efficiency"),
-                minecraft("below_name_distance"),
                 minecraft("follow_range"),
-                minecraft("name_tag_distance"),
                 minecraft("spawn_reinforcements"),
                 minecraft("tempt_range"),
                 minecraft("waypoint_receive_range"),

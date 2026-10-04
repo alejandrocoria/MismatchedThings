@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -38,7 +38,7 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             configureWorld(singleplayer);
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
 
             verifyStandardSplit(context, singleplayer);
             verifyVisualComponents(context, singleplayer);
@@ -238,7 +238,7 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
         stand.setItemSlot(EquipmentSlot.FEET, mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
         level.addFreshEntity(stand);
 
-        Zombie baby = EntityTypes.HUSK.create(level, EntitySpawnReason.COMMAND);
+        Zombie baby = EntityType.HUSK.create(level, EntitySpawnReason.COMMAND);
         if (baby == null) {
             throw new AssertionError("Could not create the phase 6 baby humanoid");
         }

@@ -57,7 +57,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             configureWorld(singleplayer);
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(ItemRenderingClientGameTest::hasBothOrientations);
 
             context.runOnClient(ItemRenderingClientGameTest::verifyRenderStates);

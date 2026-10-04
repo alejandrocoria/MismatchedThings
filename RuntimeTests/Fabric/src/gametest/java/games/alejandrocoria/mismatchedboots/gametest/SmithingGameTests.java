@@ -20,7 +20,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 public final class SmithingGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void mixedBootsRouteToBaseSlotIncludingShiftClick(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         SmithingMenu menu = menu(helper, player);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         helper.assertTrue(menu.getSlot(SmithingMenu.BASE_SLOT).mayPlace(mixed),
@@ -38,7 +38,7 @@ public final class SmithingGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void trimBothSourcesPreservesRootAndConsumesInputsOnce(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         MixedBootsData before = GameTestStacks.data(mixed);
         mixed.setDamageValue(9);
@@ -97,7 +97,7 @@ public final class SmithingGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void repeatedTrimProducesNoResult(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack iron = ordinaryTrim(helper, player, Items.IRON_BOOTS);
         ItemStack gold = ordinaryTrim(helper, player, Items.GOLDEN_BOOTS);
         ItemStack mixed = GameTestStacks.pair(iron, gold).primary();
@@ -110,7 +110,7 @@ public final class SmithingGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void foreignSmithingResultTakesPrecedence(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         SmithingMenu menu = smithing(helper, player,
                 new ItemStack(Items.SHEARS), GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS),
                 new ItemStack(Items.FLINT));
@@ -120,7 +120,7 @@ public final class SmithingGameTests {
     }
 
     private static void assertSingleEligibleSource(GameTestHelper helper, Item left, Item right, boolean leftChanges) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         SmithingMenu menu = smithing(helper, player,
                 new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
                 GameTestStacks.mixed(left, right), new ItemStack(Items.DIAMOND));

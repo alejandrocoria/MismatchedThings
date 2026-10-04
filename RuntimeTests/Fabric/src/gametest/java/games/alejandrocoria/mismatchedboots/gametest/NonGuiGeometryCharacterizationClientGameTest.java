@@ -60,7 +60,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
     @Override
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.player != null && client.level != null);
             context.runOnClient(client -> {
                 characterizeVanillaBoots(client);

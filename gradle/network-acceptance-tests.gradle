@@ -255,10 +255,10 @@ def journeyMapNeoForge = {
             .find {
                 it.moduleVersion.id.group == 'maven.modrinth'
                         && it.moduleVersion.id.name == 'lfHFW1mp'
-                        && it.moduleVersion.id.version == 'm1NSCXoV'
+                        && it.moduleVersion.id.version == 'MYF1fYGU'
             }
     if (artifact == null) {
-        throw new GradleException('Exact JourneyMap 26.2-6.0.4 NeoForge artifact is missing')
+        throw new GradleException('Exact JourneyMap 26.1.2-6.0.4 NeoForge artifact is missing')
     }
     artifact.file
 }
@@ -278,7 +278,7 @@ def runJourneyMapCoexistence = {
         }
         digest.digest().encodeHex().toString().toUpperCase(Locale.ROOT)
     }
-    def expectedHash = '0BDFB42301F34048B03FD323EE8E21D370777C22074160817A40EA6CCD4A7160'
+    def expectedHash = '37352BA8D9033841EC787322541B9B48C501B8703B442A2BC9876D64DA188048'
     if (actualHash != expectedHash) {
         throw new GradleException("Unexpected JourneyMap artifact hash: ${actualHash}")
     }

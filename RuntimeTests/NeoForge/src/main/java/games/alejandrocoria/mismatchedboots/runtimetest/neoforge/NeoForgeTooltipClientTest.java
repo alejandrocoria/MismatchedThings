@@ -58,7 +58,8 @@ public final class NeoForgeTooltipClientTest {
         finalObservation = new FinalObservation(
                 event.getItemStack(),
                 event.getContext(),
-                event.getDisplay(),
+                event.getItemStack().getOrDefault(
+                        DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT),
                 event.getEntity(),
                 event.getFlags(),
                 List.copyOf(event.getToolTip()));

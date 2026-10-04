@@ -4,7 +4,7 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.fabric.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "MinecraftWindowMixin"
+    "WindowVisibilityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

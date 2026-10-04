@@ -16,10 +16,10 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     implementation 'com.google.code.findbugs:jsr305:3.0.1'
-    compileOnly('maven.modrinth:gc8OEnCC:VD4qwVUF') {
+    compileOnly('maven.modrinth:gc8OEnCC:tBdZGZeX') {
         transitive = false
     }
-    compileOnly('maven.modrinth:dKvj0eNn:phlsMPgT') {
+    compileOnly('maven.modrinth:dKvj0eNn:wV5IQLKg') {
         transitive = false
     }
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"

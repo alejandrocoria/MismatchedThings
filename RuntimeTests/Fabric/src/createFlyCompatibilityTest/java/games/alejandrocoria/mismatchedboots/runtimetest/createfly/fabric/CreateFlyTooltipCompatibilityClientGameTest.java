@@ -57,7 +57,7 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
         registerForeignTooltipHook();
         context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::assertUnattended);
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
             characterize(context, AllItems.CARDBOARD_BOOTS, "Cardboard");
             characterize(context, AllItems.COPPER_DIVING_BOOTS, "Copper");
             characterize(context, AllItems.NETHERITE_DIVING_BOOTS, "Netherite");

@@ -24,7 +24,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ItemStackWithSlot;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -81,7 +81,7 @@ public final class PersistenceGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void playerInventoryRoundTripPreservesLiveRootAndSnapshots(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         Inventory inventory = player.getInventory();
         ItemStack primary = persistedPair("inventory-alpha").primary();
         primary.setDamageValue(17);
@@ -107,8 +107,8 @@ public final class PersistenceGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void deathDropEntityRoundTripPreservesMixedStack(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(GameType.SURVIVAL);
-        Zombie zombie = helper.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, BlockPos.ZERO);
         zombie.setItemSlot(EquipmentSlot.FEET, persistedPair("drop-alpha").primary());
         zombie.setGuaranteedDrop(EquipmentSlot.FEET);
 
@@ -119,7 +119,7 @@ public final class PersistenceGameTests {
                 .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
                 .toList();
         helper.assertValueEqual(drops.size(), 1, "mixed boots death-drop entities");
-        ItemEntity decoded = new ItemEntity(EntityTypes.ITEM, helper.getLevel());
+        ItemEntity decoded = new ItemEntity(EntityType.ITEM, helper.getLevel());
         decoded.restoreFrom(drops.getFirst());
 
         assertPersistedPrimary(helper, decoded.getItem(), "death-drop entity", "drop-alpha");
@@ -369,7 +369,7 @@ public final class PersistenceGameTests {
     private static void assertSmithingAfterRuleChange(
             GameTestHelper helper, ItemStack root, boolean primary, String token) {
         ItemStack before = root.copy();
-        var player = helper.makeMockServerPlayer(GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.CREATIVE);
         SmithingMenu menu = new SmithingMenu(1, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
         menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(new ItemStack(Items.PAPER));

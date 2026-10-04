@@ -44,7 +44,7 @@ final class MismatchedWorkbenchJeiExamples {
         IIngredientHelper<ItemStack> helper = ingredientManager.getIngredientHelper(VanillaTypes.ITEM_STACK);
         return MismatchedWorkbenchJeiCycle.collectCandidates(
                 ingredientManager.getAllItemStacks(),
-                stack -> visibility.isIngredientVisible(VanillaTypes.ITEM_STACK, stack, UidContext.Recipe),
+                stack -> visibility.isIngredientVisible(VanillaTypes.ITEM_STACK, stack),
                 stack -> helper.getUid(stack, UidContext.Recipe),
                 stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
     }

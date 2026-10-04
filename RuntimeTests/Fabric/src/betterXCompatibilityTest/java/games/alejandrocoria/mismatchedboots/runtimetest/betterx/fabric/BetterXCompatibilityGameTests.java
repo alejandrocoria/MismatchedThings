@@ -25,7 +25,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
@@ -171,7 +171,7 @@ public final class BetterXCompatibilityGameTests {
         require(piglinRuleEnabled() == configured,
                 "Better Nether did not load the expected piglin configuration");
 
-        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         for (String path : List.of(
                 "cincinnasite_boots", "nether_ruby_boots", "flaming_ruby_boots")) {
             ItemStack ordinary = item("betternether", path).getDefaultInstance();
@@ -248,7 +248,7 @@ public final class BetterXCompatibilityGameTests {
     @GameTest(structure = EMPTY_STRUCTURE, maxTicks = 1200)
     public void crystaliteProjectionIsExactAndReloadable(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
-        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         ItemStack crystalite = item("betterend", "crystalite_boots").getDefaultInstance();
         MixedBootsPair pair = MixedBootsFactory.createPair(
                 crystalite, Items.IRON_BOOTS.getDefaultInstance());
@@ -335,7 +335,7 @@ public final class BetterXCompatibilityGameTests {
         MixedBootsData before = ModContent.getMixedBootsData(equipped).orElse(null);
         int initialDamage = equipped.getDamageValue();
 
-        Zombie attacker = helper.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
+        Zombie attacker = helper.spawn(EntityType.ZOMBIE, BlockPos.ZERO);
         float initialHealth = attacker.getHealth();
         for (int attempt = 0; attempt < 64 && !attacker.isOnFire(); attempt++) {
             EnchantmentHelper.doPostAttackEffects(
@@ -579,7 +579,7 @@ public final class BetterXCompatibilityGameTests {
     }
 
     private static ServerPlayer connectedMockPlayer(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         new ServerGamePacketListenerImpl(
                 helper.getLevel().getServer(),
                 new Connection(PacketFlow.SERVERBOUND),

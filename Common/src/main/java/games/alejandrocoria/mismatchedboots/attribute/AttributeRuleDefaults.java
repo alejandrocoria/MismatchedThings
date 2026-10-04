@@ -11,7 +11,6 @@ public final class AttributeRuleDefaults {
     public static final AttributePolicy FALLBACK = AttributePolicy.SEPARATE;
 
     private static final List<String> AVERAGED_ATTRIBUTES = List.of(
-            "air_drag_modifier",
             "armor",
             "armor_toughness",
             "attack_damage",
@@ -19,14 +18,12 @@ public final class AttributeRuleDefaults {
             "attack_speed",
             "block_break_speed",
             "block_interaction_range",
-            "bounciness",
             "burning_time",
             "camera_distance",
             "explosion_knockback_resistance",
             "entity_interaction_range",
             "fall_damage_multiplier",
             "flying_speed",
-            "friction_modifier",
             "gravity",
             "jump_strength",
             "knockback_resistance",
@@ -45,9 +42,7 @@ public final class AttributeRuleDefaults {
             "sweeping_damage_ratio",
             "water_movement_efficiency");
     private static final List<String> SEPARATE_ATTRIBUTES = List.of(
-            "below_name_distance",
             "follow_range",
-            "name_tag_distance",
             "spawn_reinforcements",
             "tempt_range",
             "waypoint_receive_range",

@@ -12,7 +12,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -38,7 +38,7 @@ import java.util.List;
 public final class EquipmentGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void currentIronGoldCompositionSuppliesOneAndAHalfArmor(GameTestHelper helper) {
-        ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, BlockPos.ZERO);
+        ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, BlockPos.ZERO);
         var ironArmor = new ItemStack(Items.IRON_BOOTS)
                 .getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
                 .modifiers()
@@ -81,7 +81,7 @@ public final class EquipmentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void durabilityChangesOnlyTheRootAndBreakingRemovesIt(GameTestHelper helper) {
-        ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, BlockPos.ZERO);
+        ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, BlockPos.ZERO);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         MixedBootsData snapshots = GameTestStacks.data(mixed);
         stand.setItemSlot(EquipmentSlot.FEET, mixed);
@@ -99,7 +99,7 @@ public final class EquipmentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void unbreakableAndUnbreakingFollowVanillaDurabilityPaths(GameTestHelper helper) {
-        ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, BlockPos.ZERO);
+        ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, BlockPos.ZERO);
         ItemStack owner = new ItemStack(Items.IRON_BOOTS);
         owner.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
         ItemStack other = new ItemStack(Items.GOLDEN_BOOTS);
@@ -125,7 +125,7 @@ public final class EquipmentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void mendingRepairsRootDamageWithoutChangingSources(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         ItemStack source = new ItemStack(Items.IRON_BOOTS);
         setEnchantment(source, enchantment(helper, Enchantments.MENDING), 1);
         ItemStack mixed = GameTestStacks.pair(source, new ItemStack(Items.GOLDEN_BOOTS)).primary();
@@ -143,7 +143,7 @@ public final class EquipmentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void inventoryShiftClickEquipsMixedBoots(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         player.getInventory().setItem(0, mixed);
         InventoryMenu menu = new InventoryMenu(player.getInventory(), true, player);
@@ -161,7 +161,7 @@ public final class EquipmentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void inventoryClickSwapsMixedBootsWithEquippedBoots(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         player.getInventory().setItem(0, mixed);
         player.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.LEATHER_BOOTS));
@@ -184,7 +184,7 @@ public final class EquipmentGameTests {
         helper.setBlock(BlockPos.ZERO, Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH));
         DispenserBlockEntity dispenser = helper.getBlockEntity(BlockPos.ZERO, DispenserBlockEntity.class);
         dispenser.setItem(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
-        ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, new BlockPos(0, 0, 1));
+        ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, new BlockPos(0, 0, 1));
 
         helper.tickBlock(BlockPos.ZERO);
 
@@ -196,8 +196,8 @@ public final class EquipmentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void deathDropKeepsOneValidMixedStackAndItsSources(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(GameType.SURVIVAL);
-        Zombie zombie = helper.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, BlockPos.ZERO);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         MixedBootsData snapshots = GameTestStacks.data(mixed);
         zombie.setItemSlot(EquipmentSlot.FEET, mixed);

@@ -64,7 +64,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         context.runOnClient(client -> originalGuiScale.set(client.options.guiScale().get()));
         try {
             try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
-                singleplayer.getConnection().waitForChunksRender();
+                singleplayer.getClientLevel().waitForChunksRender();
                 context.waitFor(client -> client.player != null && client.level != null);
 
                 verifyForwardedContextPoseAndDecorations(context);

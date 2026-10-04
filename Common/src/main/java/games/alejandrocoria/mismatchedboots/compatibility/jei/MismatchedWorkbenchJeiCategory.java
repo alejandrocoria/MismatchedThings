@@ -68,6 +68,6 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
             IRecipeExtrasBuilder builder,
             MismatchedWorkbenchJeiExample recipe,
             IFocusGroup focuses) {
-        builder.addDrawableWidget(arrows).setPosition(ARROWS_X, ARROWS_Y);
+        builder.addDrawable(arrows, ARROWS_X, ARROWS_Y);
     }
 }

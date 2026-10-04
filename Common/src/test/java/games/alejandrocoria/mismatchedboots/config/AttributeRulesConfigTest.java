@@ -93,7 +93,6 @@ class AttributeRulesConfigTest {
         String saved = Files.readString(path);
 
         assertOrdered(saved,
-                "[attributes.\"minecraft:air_drag_modifier\"]",
                 "[attributes.\"minecraft:armor\"]",
                 "[attributes.\"minecraft:waypoint_transmit_range\"]",
                 "[attributes.\"alpha:first\"]",

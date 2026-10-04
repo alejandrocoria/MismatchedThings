@@ -49,7 +49,7 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                         new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
                 server.getPlayerList().getPlayers().getFirst().getInventory().add(mixed);
             });
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.player != null
                     && client.player.getInventory().contains(
                     MismatchedBootsClientGameTest::hasExpectedSynchronizedData));

@@ -12,7 +12,7 @@ public final class AdvancedNetheriteFabricGameTests {
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void exactArtifactMatrixAndHookDispatchPass(GameTestHelper helper) {
-        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         AdvancedNetheriteCompatibilityAssertions.assertCompleteMatrix(player);
         helper.succeed();
     }

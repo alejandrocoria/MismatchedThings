@@ -47,7 +47,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                         ModContent.mismatchedWorkbenchBlock().orElseThrow().defaultBlockState(), 3);
                 workbenchPos.set(pos.immutable());
             });
-            singleplayer.getConnection().waitForChunksRender();
+            singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.level != null
                     && workbenchPos.get() != null
                     && client.level.getBlockState(workbenchPos.get())
@@ -59,7 +59,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                 if (clientMenu(client).slots.size() != MismatchedWorkbenchMenu.HOTBAR_END) {
                     throw new AssertionError("Workbench exposes a non-standard player equipment slot");
                 }
-                if (!(client.gui.screen() instanceof MismatchedWorkbenchScreen screen)
+                if (!(client.screen instanceof MismatchedWorkbenchScreen screen)
                         || !screen.getTitle().getString().equals("Mismatched Workbench")) {
                     throw new AssertionError("Workbench screen title was not localized");
                 }
@@ -126,7 +126,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                             "Workbench interaction sent MismatchedBoots synchronization payloads: "
                                     + NetworkTrafficProbe.events());
                 }
-                if (client.gui.screen() != null || client.player.containerMenu != client.player.inventoryMenu) {
+                if (client.screen != null || client.player.containerMenu != client.player.inventoryMenu) {
                     throw new AssertionError("Closing the workbench left a client screen or menu active");
                 }
             });
@@ -151,13 +151,13 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                 client.player,
                 InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false)));
-        context.waitFor(client -> client.gui.screen() instanceof MismatchedWorkbenchScreen
+        context.waitFor(client -> client.screen instanceof MismatchedWorkbenchScreen
                 && client.player.containerMenu instanceof MismatchedWorkbenchMenu);
     }
 
     private static void closeWorkbench(ClientGameTestContext context) {
         context.runOnClient(client -> client.player.closeContainer());
-        context.waitFor(client -> client.gui.screen() == null
+        context.waitFor(client -> client.screen == null
                 && client.player.containerMenu == client.player.inventoryMenu);
     }
 

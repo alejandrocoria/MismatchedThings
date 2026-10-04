@@ -14,7 +14,7 @@ import games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin.E
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
@@ -54,7 +54,7 @@ public final class CreateFlyCompatibilityGameTests {
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void cardboardAdapterRecognizesMixedSources(GameTestHelper helper) {
-        Player wearer = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player wearer = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         wearer.setPose(Pose.CROUCHING);
         equipCardboardSet(wearer, AllItems.CARDBOARD_BOOTS.getDefaultInstance());
 
@@ -114,7 +114,7 @@ public final class CreateFlyCompatibilityGameTests {
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void divingAdapterReturnsPrioritizedDefensiveSources(GameTestHelper helper) {
-        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         assertOrdinaryDivingRecognition(
                 player, AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(), "Copper");
         assertOrdinaryDivingRecognition(
@@ -150,7 +150,7 @@ public final class CreateFlyCompatibilityGameTests {
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void divingAdapterPreservesWaterMovementAndSyncedState(GameTestHelper helper) {
-        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         assertWaterBehavior(helper, player,
                 AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(), "ordinary Copper");
 
@@ -172,7 +172,7 @@ public final class CreateFlyCompatibilityGameTests {
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void divingAdapterPreservesNetheriteLavaDistinction(GameTestHelper helper) {
-        Player player = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         assertLavaBehavior(
                 player, AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(), false,
                 "ordinary Copper");
@@ -250,7 +250,7 @@ public final class CreateFlyCompatibilityGameTests {
 
     private static void assertTargetCleared(
             GameTestHelper helper, Player wearer, int offset, String description) {
-        Zombie mob = helper.spawn(EntityTypes.ZOMBIE, new BlockPos(offset, 0, 0));
+        Zombie mob = helper.spawn(EntityType.ZOMBIE, new BlockPos(offset, 0, 0));
         mob.tickCount = 16;
         mob.setTarget(wearer);
         CardboardArmorHandler.mobsMayLoseTargetWhenItIsWearingCardboard(mob);
@@ -259,7 +259,7 @@ public final class CreateFlyCompatibilityGameTests {
     }
 
     private static void assertTargetPreserved(GameTestHelper helper, Player wearer) {
-        Zombie mob = helper.spawn(EntityTypes.ZOMBIE, new BlockPos(3, 0, 0));
+        Zombie mob = helper.spawn(EntityType.ZOMBIE, new BlockPos(3, 0, 0));
         mob.tickCount = 16;
         mob.setTarget(wearer);
         CardboardArmorHandler.mobsMayLoseTargetWhenItIsWearingCardboard(mob);

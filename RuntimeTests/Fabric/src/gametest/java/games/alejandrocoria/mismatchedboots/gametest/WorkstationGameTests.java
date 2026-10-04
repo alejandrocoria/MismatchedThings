@@ -34,7 +34,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void grindstoneCloseWithoutExtractionAwardsNoExperience(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         setEnchantment(mixed, enchantment(helper, Enchantments.UNBREAKING), 1, false);
         GrindstoneMenu menu = new GrindstoneMenu(1, player.getInventory());
@@ -57,7 +57,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void grindstoneRejectsUnrelatedAndMixedDonors(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
 
         GrindstoneMenu both = new GrindstoneMenu(3, player.getInventory());
         both.getSlot(GrindstoneMenu.INPUT_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
@@ -75,7 +75,7 @@ public final class WorkstationGameTests {
         reversed.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
         assertNoGrindstoneResult(helper, reversed, "unrelated boots paired with mixed boots");
 
-        helper.assertTrue(helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
+        helper.assertTrue(helper.getLevel().getEntities(net.minecraft.world.entity.EntityType.EXPERIENCE_ORB,
                 helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).isEmpty(),
                 "Rejected grindstone input created experience");
         helper.succeed();
@@ -103,7 +103,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void grindstoneRepairsUnenchantedMixedBootsWithoutExperience(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         mixed.setDamageValue(mixed.getMaxDamage() * 3 / 4);
         ItemStack donor = new ItemStack(Items.GOLDEN_BOOTS);
@@ -123,7 +123,7 @@ public final class WorkstationGameTests {
 
     private static void assertOrdinaryGrindstoneDonor(
             GameTestHelper helper, Item donorItem, int mixedSlot) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         Holder<Enchantment> protection = enchantment(helper, Enchantments.PROTECTION);
         Holder<Enchantment> curse = enchantment(helper, Enchantments.VANISHING_CURSE);
         ItemStack left = new ItemStack(Items.IRON_BOOTS);
@@ -186,7 +186,7 @@ public final class WorkstationGameTests {
     }
 
     private static void assertSingleInputGrindstone(GameTestHelper helper, int inputSlot) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         Holder<Enchantment> protection = enchantment(helper, Enchantments.PROTECTION);
         Holder<Enchantment> curse = enchantment(helper, Enchantments.VANISHING_CURSE);
         ItemStack left = new ItemStack(Items.IRON_BOOTS);
@@ -232,7 +232,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void ordinaryGrindstoneOperationStillWorks(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack enchanted = new ItemStack(Items.IRON_BOOTS);
         setEnchantment(enchanted, enchantment(helper, Enchantments.UNBREAKING), 1, false);
         GrindstoneMenu menu = new GrindstoneMenu(1, player.getInventory());
@@ -261,7 +261,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void anvilRenameAndRenameRemovalPreserveMixedData(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack original = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         MixedBootsData originalData = GameTestStacks.data(original);
         AnvilMenu rename = new AnvilMenu(1, player.getInventory());
@@ -290,7 +290,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void anvilUsesEitherSourceForEnchantmentCompatibility(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.SURVIVAL);
         ItemStack swordAsBoot = GameTestStacks.feetItem(Items.IRON_SWORD);
         ItemStack mixed = GameTestStacks.pair(swordAsBoot, new ItemStack(Items.IRON_BOOTS)).primary();
         Holder<Enchantment> sharpness = enchantment(helper, Enchantments.SHARPNESS);
@@ -325,7 +325,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void anvilRepairsWithEitherSourceMaterial(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.SURVIVAL);
         player.giveExperienceLevels(30);
 
         assertMaterialRepair(helper, player, Items.IRON_INGOT, 1);
@@ -351,7 +351,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void anvilRepairsWithEitherOrdinarySource(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.SURVIVAL);
         player.giveExperienceLevels(30);
         Holder<Enchantment> unbreaking = enchantment(helper, Enchantments.UNBREAKING);
 
@@ -362,7 +362,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void anvilAppliesVanillaCompatibilityToOrdinaryDonorEnchantments(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         Holder<Enchantment> frostWalker = enchantment(helper, Enchantments.FROST_WALKER);
         Holder<Enchantment> depthStrider = enchantment(helper, Enchantments.DEPTH_STRIDER);
         Holder<Enchantment> unbreaking = enchantment(helper, Enchantments.UNBREAKING);
@@ -419,7 +419,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void anvilRejectsUnsupportedBootCombinations(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         mixed.setDamageValue(Math.max(1, mixed.getMaxDamage() * 3 / 4));
 
@@ -471,7 +471,7 @@ public final class WorkstationGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void smithingTransformsMixedBootsWithoutBreakingVanillaRecipes(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.IRON_BOOTS);
 
         SmithingMenu upgrade = smithing(helper, player,
@@ -537,7 +537,7 @@ public final class WorkstationGameTests {
 
     private static int grindstoneExperience(GameTestHelper helper) {
         // Orbs may drift outside the one-block test structure after spawning.
-        return helper.getLevel().getEntities(net.minecraft.world.entity.EntityTypes.EXPERIENCE_ORB,
+        return helper.getLevel().getEntities(net.minecraft.world.entity.EntityType.EXPERIENCE_ORB,
                         helper.getBounds().inflate(1.0), net.minecraft.world.entity.Entity::isAlive).stream()
                 .mapToInt(net.minecraft.world.entity.ExperienceOrb::getValue).sum();
     }

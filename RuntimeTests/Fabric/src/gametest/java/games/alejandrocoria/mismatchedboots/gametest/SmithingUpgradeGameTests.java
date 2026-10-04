@@ -34,7 +34,7 @@ public final class SmithingUpgradeGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void netheriteUpgradeChangesBothSourcesAndPreservesLiveRoot(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack trimmedDiamond = ordinaryTrim(helper, player, Items.DIAMOND_BOOTS);
         ItemStack mixed = GameTestStacks.pair(trimmedDiamond, new ItemStack(Items.DIAMOND_BOOTS)).primary();
         mixed.setDamageValue(19);
@@ -87,7 +87,7 @@ public final class SmithingUpgradeGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void netheriteUpgradeRejectsIneligibleSources(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         SmithingMenu menu = netherite(helper, player, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
         helper.assertTrue(menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
                 "Ineligible sources produced a netherite upgrade");
@@ -96,7 +96,7 @@ public final class SmithingUpgradeGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void upgradeClampsRawRootDamageToNewMaximum(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.IRON_BOOTS);
         mixed.set(DataComponents.MAX_DAMAGE, 2000);
         mixed.setDamageValue(1000);
@@ -109,7 +109,7 @@ public final class SmithingUpgradeGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void loadedModdedRecipesTransformItemsAndUnknownComponents(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack custom = new ItemStack(TestContent.COMPONENT_BOOTS);
         custom.set(TestContent.OPAQUE_COMPONENT, "original");
         custom.set(TestContent.REMOVED_COMPONENT, "remove me");
@@ -149,7 +149,7 @@ public final class SmithingUpgradeGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void invalidAssembledItemCannotBecomeABootHalf(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.GOLDEN_BOOTS);
         ItemStack before = mixed.copy();
         SmithingMenu menu = smithing(helper, player, new ItemStack(Items.BRICK), mixed,
@@ -283,7 +283,7 @@ public final class SmithingUpgradeGameTests {
 
     private static void assertSingleNetheriteUpgrade(
             GameTestHelper helper, Item left, Item right, boolean leftChanges) {
-        var player = helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         ItemStack mixed = GameTestStacks.mixed(left, right);
         ItemStack result = netherite(helper, player, mixed).getSlot(SmithingMenu.RESULT_SLOT).getItem();
         helper.assertTrue(!result.isEmpty(), "Single-source netherite upgrade was rejected");
@@ -325,7 +325,7 @@ public final class SmithingUpgradeGameTests {
     }
 
     private static ServerPlayer connectedMockPlayer(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(net.minecraft.world.level.GameType.CREATIVE);
+        ServerPlayer player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         new ServerGamePacketListenerImpl(helper.getLevel().getServer(),
                 new Connection(PacketFlow.SERVERBOUND), player,
                 CommonListenerCookie.createInitial(player.getGameProfile(), false));

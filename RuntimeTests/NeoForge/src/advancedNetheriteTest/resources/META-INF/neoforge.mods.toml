@@ -24,6 +24,6 @@ license="MIT"
 [[dependencies.mismatchedboots_advanced_netherite_test]]
     modId="advancednetherite"
     type="required"
-    versionRange="[2.4.2]"
+    versionRange="[2.4.1]"
     ordering="AFTER"
     side="SERVER"

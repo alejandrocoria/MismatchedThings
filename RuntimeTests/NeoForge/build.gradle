@@ -23,10 +23,10 @@ configurations {
 }
 
 dependencies {
-    advancedNetheriteNeoForge('maven.modrinth:CFX9ftUJ:JBg5bHJd') {
+    advancedNetheriteNeoForge('maven.modrinth:CFX9ftUJ:yvbzX6CA') {
         transitive = false
     }
-    journeyMapNeoForge('maven.modrinth:lfHFW1mp:m1NSCXoV') {
+    journeyMapNeoForge('maven.modrinth:lfHFW1mp:MYF1fYGU') {
         transitive = false
     }
 }
@@ -152,7 +152,7 @@ tasks.named('runAdvancedNetheriteCompatibility') {
 
 tasks.register('verifyAdvancedNetheriteCompatibility') {
     group = 'verification'
-    description = 'Runs bounded NeoForge acceptance against Advanced Netherite 2.4.2.'
+    description = 'Runs bounded NeoForge acceptance against Advanced Netherite 2.4.1.'
     dependsOn(':NeoForge:jar', advancedNetheriteTestJar)
     doLast {
         def processLog = layout.buildDirectory.file(
