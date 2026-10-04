@@ -2,8 +2,8 @@ package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -33,8 +33,7 @@ final class AttributeComposer {
 
     private static void collect(
             Map<Identifier, AttributeGroup> attributes, ItemStack source, Side side) {
-        ItemAttributeModifiers modifiers = source.getOrDefault(
-                DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
+        ItemAttributeModifiers modifiers = Services.PLATFORM.getCompositionAttributeModifiers(source);
         for (int index = 0; index < modifiers.modifiers().size(); index++) {
             ItemAttributeModifiers.Entry entry = modifiers.modifiers().get(index);
             if (!Double.isFinite(entry.modifier().amount())) {
