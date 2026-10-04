@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchExampleCycle;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
@@ -13,6 +14,7 @@ import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Comparator;
@@ -25,6 +27,16 @@ final class MismatchedWorkbenchReiExamples {
     private static final MismatchedWorkbenchRecipe WORKBENCH_RECIPE = new MixedBootsWorkbenchRecipe();
 
     private MismatchedWorkbenchReiExamples() {
+    }
+
+    static boolean requestsDisplay(
+            boolean requestsCategory,
+            List<ItemStack> recipesFor,
+            List<ItemStack> usagesFor,
+            Item workstation) {
+        return requestsCategory
+                || recipesFor.stream().anyMatch(stack -> ModContent.getMixedBootsData(stack).isPresent())
+                || usagesFor.stream().anyMatch(stack -> stack.is(workstation) || BootHalf.isValidSource(stack));
     }
 
     static Optional<MismatchedWorkbenchReiDisplay> create() {

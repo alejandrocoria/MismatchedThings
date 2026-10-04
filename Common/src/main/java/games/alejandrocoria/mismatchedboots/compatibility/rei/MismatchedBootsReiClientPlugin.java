@@ -1,7 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
@@ -16,7 +15,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class MismatchedBootsReiClientPlugin implements REIClientPlugin {
@@ -36,32 +34,17 @@ public class MismatchedBootsReiClientPlugin implements REIClientPlugin {
                 MismatchedWorkbenchReiDisplay.CATEGORY,
                 new DynamicDisplayGenerator<MismatchedWorkbenchReiDisplay>() {
                     @Override
-                    public Optional<List<MismatchedWorkbenchReiDisplay>> getRecipeFor(EntryStack<?> entry) {
-                        return itemStack(entry)
-                                .filter(stack -> ModContent.getMixedBootsData(stack).isPresent())
-                                .flatMap(stack -> createDisplay());
-                    }
-
-                    @Override
-                    public Optional<List<MismatchedWorkbenchReiDisplay>> getUsageFor(EntryStack<?> entry) {
-                        return itemStack(entry)
-                                .filter(stack -> stack.is(ModContent.mismatchedWorkbenchItem().orElseThrow())
-                                        || BootHalf.isValidSource(stack))
-                                .flatMap(stack -> createDisplay());
-                    }
-
-                    @Override
                     public Optional<List<MismatchedWorkbenchReiDisplay>> generate(ViewSearchBuilder builder) {
+                        // REI combines all three generator callbacks in one search. Publish only here;
+                        // its preferred category merely preserves the selected tab when reopening.
                         boolean requestsCategory = builder.getCategories().contains(MismatchedWorkbenchReiDisplay.CATEGORY)
-                                || builder.getFilteringCategories().contains(MismatchedWorkbenchReiDisplay.CATEGORY)
-                                || Objects.equals(
-                                builder.getPreferredOpenedCategory(),
-                                MismatchedWorkbenchReiDisplay.CATEGORY);
-                        return requestsCategory ? createDisplay() : Optional.empty();
-                    }
-
-                    private Optional<List<MismatchedWorkbenchReiDisplay>> createDisplay() {
-                        return MismatchedWorkbenchReiExamples.create().map(List::of);
+                                || builder.getFilteringCategories().contains(MismatchedWorkbenchReiDisplay.CATEGORY);
+                        boolean requestsDisplay = MismatchedWorkbenchReiExamples.requestsDisplay(
+                                requestsCategory,
+                                builder.getRecipesFor().stream().flatMap(entry -> itemStack(entry).stream()).toList(),
+                                builder.getUsagesFor().stream().flatMap(entry -> itemStack(entry).stream()).toList(),
+                                ModContent.mismatchedWorkbenchItem().orElseThrow());
+                        return requestsDisplay ? MismatchedWorkbenchReiExamples.create().map(List::of) : Optional.empty();
                     }
 
                     private Optional<ItemStack> itemStack(EntryStack<?> entry) {
