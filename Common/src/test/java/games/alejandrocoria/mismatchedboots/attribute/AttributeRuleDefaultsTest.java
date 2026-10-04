@@ -39,7 +39,10 @@ class AttributeRuleDefaultsTest {
                 .filter(id -> id.getNamespace().equals("minecraft"))
                 .collect(Collectors.toSet());
 
-        assertEquals(registeredMinecraftAttributes, AttributeRuleDefaults.rules().keySet());
+        List<Identifier> defaultMinecraftAttributes = AttributeRuleDefaults.rules().keySet().stream()
+                .filter(id -> id.getNamespace().equals("minecraft"))
+                .toList();
+        assertEquals(registeredMinecraftAttributes, Set.copyOf(defaultMinecraftAttributes));
         assertEquals(List.of(
                 minecraft("armor"),
                 minecraft("armor_toughness"),
@@ -76,7 +79,20 @@ class AttributeRuleDefaultsTest {
                 minecraft("tempt_range"),
                 minecraft("waypoint_receive_range"),
                 minecraft("waypoint_transmit_range")),
-                List.copyOf(AttributeRuleDefaults.rules().keySet()));
+                defaultMinecraftAttributes);
+    }
+
+    @Test
+    void neoForgeDefaultsAreExplicitAndDoNotRequireRegisteredAttributes() {
+        Map<Identifier, AttributePolicy> neoForgeRules = AttributeRuleDefaults.rules().entrySet().stream()
+                .filter(entry -> !entry.getKey().getNamespace().equals("minecraft"))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        assertEquals(Map.of(
+                Identifier.parse("neoforge:swim_speed"), AttributePolicy.AVERAGE,
+                Identifier.parse("neoforge:nametag_distance"), AttributePolicy.AVERAGE,
+                Identifier.parse("neoforge:creative_flight"), AttributePolicy.SEPARATE), neoForgeRules);
+        neoForgeRules.keySet().forEach(id -> assertFalse(BuiltInRegistries.ATTRIBUTE.containsKey(id)));
     }
 
     @Test

@@ -95,9 +95,43 @@ class AttributeRulesConfigTest {
         assertOrdered(saved,
                 "[attributes.\"minecraft:armor\"]",
                 "[attributes.\"minecraft:waypoint_transmit_range\"]",
+                "[attributes.\"neoforge:swim_speed\"]",
+                "[attributes.\"neoforge:nametag_distance\"]",
+                "[attributes.\"neoforge:creative_flight\"]",
                 "[attributes.\"alpha:first\"]",
                 "[attributes.\"zeta:last\"]");
         assertFalse(saved.contains("unknown"));
+    }
+
+    @Test
+    void existingConfigsInheritNeoForgeDefaultsWithoutRewritingAndCanOverrideThem() throws IOException {
+        Path path = configPath();
+        String existing = """
+                [attributes]
+                fallback = "maximum"
+                """;
+        Files.writeString(path, existing);
+
+        AttributeRuleSet inherited = new AttributeRulesConfig(path).load();
+
+        assertEquals(AttributePolicy.AVERAGE, inherited.policyFor(id("neoforge:swim_speed")));
+        assertEquals(AttributePolicy.AVERAGE, inherited.policyFor(id("neoforge:nametag_distance")));
+        assertEquals(AttributePolicy.SEPARATE, inherited.policyFor(id("neoforge:creative_flight")));
+        assertEquals(existing, Files.readString(path));
+
+        String overridden = existing + """
+
+                [attributes."neoforge:swim_speed"]
+                policy = "separate"
+                """;
+        Files.writeString(path, overridden);
+
+        AttributeRuleSet rules = new AttributeRulesConfig(path).load();
+
+        assertEquals(AttributePolicy.SEPARATE, rules.policyFor(id("neoforge:swim_speed")));
+        assertEquals(AttributePolicy.AVERAGE, rules.policyFor(id("neoforge:nametag_distance")));
+        assertEquals(AttributePolicy.SEPARATE, rules.policyFor(id("neoforge:creative_flight")));
+        assertEquals(overridden, Files.readString(path));
     }
 
     @Test

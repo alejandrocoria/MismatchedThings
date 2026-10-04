@@ -63,13 +63,17 @@ public final class AttributeRuleDefaults {
 
     private static Map<Identifier, AttributePolicy> createRules() {
         LinkedHashMap<Identifier, AttributePolicy> rules = new LinkedHashMap<>();
-        AVERAGED_ATTRIBUTES.forEach(path -> put(rules, path, AttributePolicy.AVERAGE));
-        SEPARATE_ATTRIBUTES.forEach(path -> put(rules, path, AttributePolicy.SEPARATE));
+        AVERAGED_ATTRIBUTES.forEach(path -> put(rules, "minecraft", path, AttributePolicy.AVERAGE));
+        SEPARATE_ATTRIBUTES.forEach(path -> put(rules, "minecraft", path, AttributePolicy.SEPARATE));
+        put(rules, "neoforge", "swim_speed", AttributePolicy.AVERAGE);
+        put(rules, "neoforge", "nametag_distance", AttributePolicy.AVERAGE);
+        put(rules, "neoforge", "creative_flight", AttributePolicy.SEPARATE);
         return Collections.unmodifiableMap(rules);
     }
 
-    private static void put(Map<Identifier, AttributePolicy> rules, String path, AttributePolicy policy) {
-        Identifier id = Identifier.fromNamespaceAndPath("minecraft", path);
+    private static void put(
+            Map<Identifier, AttributePolicy> rules, String namespace, String path, AttributePolicy policy) {
+        Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
         if (rules.put(id, policy) != null) {
             throw new IllegalStateException("Duplicate built-in attribute rule: " + id);
         }
