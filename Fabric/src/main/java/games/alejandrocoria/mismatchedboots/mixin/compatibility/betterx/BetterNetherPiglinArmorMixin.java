@@ -8,6 +8,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+// Better Nether cancels at HEAD (priority 1000). The lower-priority RETURN fallback
+// preserves every positive result; both priority orders were verified against that boundary.
 @Mixin(value = PiglinAi.class, priority = 900)
 abstract class BetterNetherPiglinArmorMixin {
     @Inject(method = "isWearingSafeArmor", at = @At("RETURN"), cancellable = true)

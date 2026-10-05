@@ -13,6 +13,9 @@ public final class MixedBootsSources {
     private MixedBootsSources() {
     }
 
+    /** Strict gameplay boundary: unlike ModContent's broad detection, require our
+     * item, registered data and two valid non-mixed sources before invoking consumers.
+     */
     public static boolean anySource(ItemStack stack, Predicate<ItemStack> predicate) {
         Objects.requireNonNull(predicate, "predicate");
         if (stack == null || stack.isEmpty() || stack.getCount() != 1

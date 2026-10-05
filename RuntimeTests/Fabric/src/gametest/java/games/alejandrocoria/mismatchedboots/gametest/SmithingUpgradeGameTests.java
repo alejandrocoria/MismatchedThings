@@ -193,6 +193,33 @@ public final class SmithingUpgradeGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void inPlaceInputEditsDoNotAwardTheStaleSecondaryRecipe(GameTestHelper helper) {
+        for (boolean changeCount : new boolean[]{true, false}) {
+            ServerPlayer player = connectedMockPlayer(helper);
+            SmithingMenu menu = smithing(helper, player, new ItemStack(Items.PAPER, 2),
+                    GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS),
+                    new ItemStack(Items.QUARTZ, 2));
+            // Emulate another consumer editing the live stack without a slot-change
+            // notification: the cached secondary attribution must match full inputs.
+            ItemStack template = menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem();
+            if (changeCount) {
+                template.setCount(3);
+            } else {
+                template.set(DataComponents.CUSTOM_NAME, Component.literal("Changed after preview"));
+            }
+            helper.assertTrue(!menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT).isEmpty(),
+                    "Input-edit fixture did not extract its existing preview");
+            helper.assertValueEqual(RecipeCraftedProbe.count(player, COMPONENT_RECIPE), 1,
+                    "Vanilla primary recipe attribution was suppressed");
+            helper.assertValueEqual(RecipeCraftedProbe.count(player, IRON_RECIPE), 0,
+                    "Stale secondary attribution ignored an input count/component edit");
+            helper.assertTrue(!player.getRecipeBook().contains(IRON_RECIPE),
+                    "Stale secondary recipe was added to the recipe book");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void ordinaryClickAwardsBothDistinctRecipes(GameTestHelper helper) {
         ServerPlayer player = connectedMockPlayer(helper);
         SmithingMenu menu = smithing(helper, player, new ItemStack(Items.PAPER),

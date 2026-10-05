@@ -2,8 +2,6 @@ package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
@@ -32,23 +30,6 @@ public final class MixedBootsRecomposer {
     }
 
     static ItemStack recompose(
-            ItemStack root,
-            ItemStack newLeft,
-            ItemStack newRight,
-            DataComponentType<MixedBootsData> dataType,
-            AttributeRuleSet rules) {
-        return recompose(root, newLeft, newRight, dataType, rules, ComponentRuleDefaults.state());
-    }
-
-    static ItemStack recompose(
-            ItemStack root, ItemStack newLeft, ItemStack newRight,
-            DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRuleSet componentRules) {
-        ComponentRules defaults = ComponentRuleDefaults.state();
-        return recompose(root, newLeft, newRight, dataType, rules,
-                new ComponentRules(defaults.durability(), defaults.repairCost(), componentRules));
-    }
-
-    static ItemStack recompose(
             ItemStack root, ItemStack newLeft, ItemStack newRight,
             DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRules componentRules) {
         MixedBootsData previous = Optional.ofNullable(root.get(dataType))
@@ -62,7 +43,7 @@ public final class MixedBootsRecomposer {
                 previous.left().source(), previous.right().source(), componentRules.components());
         ComponentProjection.Result newProjection = ComponentProjection.project(
                 leftSource, rightSource, componentRules.components());
-        ItemStack output = OwnerComponentMerger.merge(root, oldProjection, newProjection);
+        ItemStack output = ProjectedComponentMerger.merge(root, oldProjection, newProjection);
         int maximum = DurabilityMerger.merge(
                 leftSource, rightSource, componentRules.durability()).primary().maximum();
         output.remove(DataComponents.MAX_DAMAGE);

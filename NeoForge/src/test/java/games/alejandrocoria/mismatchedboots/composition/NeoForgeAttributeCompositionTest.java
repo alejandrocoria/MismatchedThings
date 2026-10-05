@@ -252,11 +252,12 @@ public class NeoForgeAttributeCompositionTest {
         assertEquals(ItemAttributeModifiers.Display.attributeModifiers(), entry.display());
         var jsonOps = RegistryOps.create(JsonOps.INSTANCE, builtInRegistryAccess());
         var encoded = ItemAttributeModifiers.CODEC.encodeStart(jsonOps, modifiers).getOrThrow();
-        assertEquals(modifiers, ItemAttributeModifiers.CODEC.parse(jsonOps, encoded).getOrThrow());
+        var decoded = ItemAttributeModifiers.CODEC.parse(jsonOps, encoded).getOrThrow();
+        assertEquals(modifiers, decoded);
         var hashOps = builtInRegistryAccess().createSerializationContext(HashOps.CRC32C_INSTANCE);
         var hash = new TypedDataComponent<>(DataComponents.ATTRIBUTE_MODIFIERS, modifiers)
                 .encodeValue(hashOps).getOrThrow();
-        assertEquals(hash, new TypedDataComponent<>(DataComponents.ATTRIBUTE_MODIFIERS, modifiers)
+        assertEquals(hash, new TypedDataComponent<>(DataComponents.ATTRIBUTE_MODIFIERS, decoded)
                 .encodeValue(hashOps).getOrThrow());
     }
 

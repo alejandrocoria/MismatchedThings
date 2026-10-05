@@ -9,6 +9,8 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 - `Common/src/main/java`: shared network acceptance scenarios and helpers.
   This is a shared source directory, not a separate Gradle project.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
+- `Fabric/src/test`: fast loader-local reflection-boundary JUnit regressions
+  against the packaged Fabric classes, with fake optional APIs and no game launch.
 - `Fabric/src/viewerCompatibilityTest`: optional real JEI/REI reload and
   repeated-opening probes, separate from the clean core client suite.
 - `Fabric/src/networkTest`: the auxiliary mod for real server/client network
@@ -29,6 +31,7 @@ Run Gradle tasks sequentially from the repository root:
 
 ```powershell
 .\gradlew.bat :Common:test
+.\gradlew.bat :RuntimeTests:Fabric:test
 .\gradlew.bat :Fabric:verifyGameplay
 .\gradlew.bat :RuntimeTests:Fabric:verifyDamageTagReload
 .\gradlew.bat :Fabric:verifyPersistenceRestart
@@ -46,7 +49,7 @@ The established Fabric verification, GameTest run, and GameTest compilation
 tasks delegate to `:RuntimeTests:Fabric`. Direct `:RuntimeTests:Fabric` commands
 also work. `verifyGameplay` includes an isolated server run for changing a
 damage-type tag and reloading datapacks; the direct task above runs just that
-case. `build`/`check` still include the Fabric server GameTests, but do not
+case. `build`/`check` include the Fabric server GameTests and loader-local JUnit, but do not
 launch client, persistence-restart, geometry, or network acceptance runs.
 The focused NeoForge tooltip characterization is likewise an explicit client
 task rather than part of `build`/`check`.
@@ -56,6 +59,11 @@ than successful coverage. `verifyGameTestContextGuard` deliberately starts one
 selected case without its required property and verifies the expected failure;
 its negative XML/log stay under `Fabric/build/context-guard`, outside positive
 GameTest reports. The focused fixture tasks enable their actual contexts.
+
+The Fabric JUnit task verifies Better Nether's live configuration and item-set
+queries, one warning and permanent boundary disablement after a reflective/API
+failure, and no per-tick retry. The real optional-mod gate remains
+`:RuntimeTests:Fabric:verifyBetterXCompatibility`; fake APIs do not replace it.
 
 `verifyQuiltSmoke` uses real Quilt Loader 0.31.0-beta.4, its pinned launcher
 libraries, Fabric API, and the packaged production Fabric JAR in a disposable

@@ -5,6 +5,5 @@ import org.slf4j.LoggerFactory;
 
 public class Constants {
     public static final String MOD_ID = "mismatchedboots";
-    public static final String MOD_NAME = "MismatchedBoots";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
 }

@@ -6,7 +6,6 @@ import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -27,7 +26,7 @@ public class MismatchedBootsNeoForge {
         });
         NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) ->
                 event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
-        eventBus.addListener((FMLClientSetupEvent event) -> MismatchedBootsClientNeoForge.onClientSetup(event, eventBus));
+        eventBus.addListener(MismatchedBootsClientNeoForge::onClientSetup);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
     }
 }

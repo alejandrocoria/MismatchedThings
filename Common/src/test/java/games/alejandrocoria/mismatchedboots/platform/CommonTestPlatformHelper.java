@@ -9,19 +9,4 @@ public final class CommonTestPlatformHelper implements IPlatformHelper {
     public Path getConfigDirectory() {
         return Path.of("config");
     }
-
-    @Override
-    public String getPlatformName() {
-        return "Common tests";
-    }
-
-    @Override
-    public boolean isModLoaded(String modId) {
-        return false;
-    }
-
-    @Override
-    public boolean isDevelopmentEnvironment() {
-        return true;
-    }
 }

@@ -13,7 +13,6 @@ public class MismatchedBootsClientFabric implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        MismatchedBootsClient.init();
         MenuScreens.register(ModContent.mismatchedWorkbenchMenuType().orElseThrow(),
                 MismatchedWorkbenchScreen::new);
         ClientPlayConnectionEvents.JOIN.register(

@@ -80,7 +80,7 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
                 && resultSlots.getRecipeUsed() != null
                 && resultSlots.getRecipeUsed().id().equals(mismatchedboots$primaryRecipe.id())
                 && (taken.isEmpty() || ItemStack.isSameItemSameComponents(taken, mismatchedboots$preview))
-                && ItemStack.listMatches(inputs, mismatchedboots$matchedInputs);
+                && mismatchedboots$sameInputs(inputs, mismatchedboots$matchedInputs);
         try {
             original.call(resultSlots, player, inputs);
         } finally {
@@ -92,6 +92,19 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
                 player.awardRecipes(Collections.singleton(additional));
             }
         }
+    }
+
+    @Unique
+    private static boolean mismatchedboots$sameInputs(List<ItemStack> inputs, List<ItemStack> snapshot) {
+        if (inputs.size() != snapshot.size()) {
+            return false;
+        }
+        for (int index = 0; index < inputs.size(); index++) {
+            if (!ItemStack.matches(inputs.get(index), snapshot.get(index))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

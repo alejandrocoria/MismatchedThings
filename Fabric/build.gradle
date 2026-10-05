@@ -75,7 +75,7 @@ loom {
 }
 
 tasks.named('check') {
-    dependsOn(':RuntimeTests:Fabric:verifyGameplay')
+    dependsOn(':RuntimeTests:Fabric:verifyGameplay', ':RuntimeTests:Fabric:test')
 }
 
 idea {

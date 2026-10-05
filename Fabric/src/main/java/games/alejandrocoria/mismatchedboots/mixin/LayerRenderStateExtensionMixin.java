@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.mixin;
 
 import games.alejandrocoria.mismatchedboots.client.render.geometry.FabricMeshClipper;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerExtensionMetadata;
+import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerGeometryExtension;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.impl.client.renderer.LayerRenderStateExtension;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 @SuppressWarnings("UnstableApiUsage")
 @Mixin(ItemStackRenderState.LayerRenderState.class)
-abstract class LayerRenderStateExtensionMixin implements LayerExtensionMetadata {
+abstract class LayerRenderStateExtensionMixin implements LayerGeometryExtension {
     @Override
     public Plan mismatchedboots$planGeometry(Matrix4fc localTransform, QuadClipper.Side side) {
         MutableMesh mesh = ((LayerRenderStateExtension) (Object) this).fabric_getMutableMesh();

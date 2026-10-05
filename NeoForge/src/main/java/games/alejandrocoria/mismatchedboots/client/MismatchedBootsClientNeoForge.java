@@ -3,19 +3,17 @@ package games.alejandrocoria.mismatchedboots.client;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-public class MismatchedBootsClientNeoForge {
-    public MismatchedBootsClientNeoForge() {
+public final class MismatchedBootsClientNeoForge {
+    private MismatchedBootsClientNeoForge() {
     }
 
-    public static void onClientSetup(FMLClientSetupEvent event, IEventBus eventBus) {
-        MismatchedBootsClient.init();
+    public static void onClientSetup(FMLClientSetupEvent event) {
         NeoForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingIn login) -> CompositionRulesClientLifecycle.onConnected());
         NeoForge.EVENT_BUS.addListener(

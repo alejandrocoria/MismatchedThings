@@ -10,19 +10,4 @@ public class FabricPlatformHelper implements IPlatformHelper {
     public Path getConfigDirectory() {
         return FabricLoader.getInstance().getConfigDir();
     }
-
-    @Override
-    public String getPlatformName() {
-        return "Fabric";
-    }
-
-    @Override
-    public boolean isModLoaded(String modId) {
-        return FabricLoader.getInstance().isModLoaded(modId);
-    }
-
-    @Override
-    public boolean isDevelopmentEnvironment() {
-        return FabricLoader.getInstance().isDevelopmentEnvironment();
-    }
 }

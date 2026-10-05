@@ -46,7 +46,7 @@ final class AttributeComposer {
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Attribute modifier uses an unregistered attribute"));
             attributes.computeIfAbsent(attributeId, ignored -> new AttributeGroup())
-                    .add(side, entry, index);
+                    .add(side, entry);
         }
     }
 
@@ -138,11 +138,8 @@ final class AttributeComposer {
     }
 
     private static void copy(
-            ItemAttributeModifiers.Builder target, List<IndexedEntry> entries) {
-        entries.forEach(indexed -> {
-            ItemAttributeModifiers.Entry entry = indexed.entry;
-            add(target, entry.attribute(), entry.modifier(), entry);
-        });
+            ItemAttributeModifiers.Builder target, List<ItemAttributeModifiers.Entry> entries) {
+        entries.forEach(entry -> add(target, entry.attribute(), entry.modifier(), entry));
     }
 
     private static void add(
@@ -157,23 +154,22 @@ final class AttributeComposer {
     }
 
     private static final class AttributeGroup {
-        private final List<IndexedEntry> firstEntries = new ArrayList<>();
-        private final List<IndexedEntry> secondEntries = new ArrayList<>();
+        private final List<ItemAttributeModifiers.Entry> firstEntries = new ArrayList<>();
+        private final List<ItemAttributeModifiers.Entry> secondEntries = new ArrayList<>();
         private final Map<Identifier, IdentityGroup> identities = new TreeMap<>();
 
-        private void add(Side side, ItemAttributeModifiers.Entry entry, int index) {
-            IndexedEntry indexed = new IndexedEntry(entry, index);
-            side.select(firstEntries, secondEntries).add(indexed);
+        private void add(Side side, ItemAttributeModifiers.Entry entry) {
+            side.select(firstEntries, secondEntries).add(entry);
             identities.computeIfAbsent(entry.modifier().id(), ignored -> new IdentityGroup())
-                    .add(side, indexed);
+                    .add(side, entry);
         }
     }
 
     private static final class IdentityGroup {
-        private final List<IndexedEntry> firstEntries = new ArrayList<>();
-        private final List<IndexedEntry> secondEntries = new ArrayList<>();
+        private final List<ItemAttributeModifiers.Entry> firstEntries = new ArrayList<>();
+        private final List<ItemAttributeModifiers.Entry> secondEntries = new ArrayList<>();
 
-        private void add(Side side, IndexedEntry entry) {
+        private void add(Side side, ItemAttributeModifiers.Entry entry) {
             side.select(firstEntries, secondEntries).add(entry);
         }
 
@@ -191,15 +187,12 @@ final class AttributeComposer {
         }
 
         private ItemAttributeModifiers.Entry firstEntry() {
-            return firstEntries.isEmpty() ? null : firstEntries.getFirst().entry;
+            return firstEntries.isEmpty() ? null : firstEntries.getFirst();
         }
 
         private ItemAttributeModifiers.Entry secondEntry() {
-            return secondEntries.isEmpty() ? null : secondEntries.getFirst().entry;
+            return secondEntries.isEmpty() ? null : secondEntries.getFirst();
         }
-    }
-
-    private record IndexedEntry(ItemAttributeModifiers.Entry entry, int index) {
     }
 
     private enum Side {

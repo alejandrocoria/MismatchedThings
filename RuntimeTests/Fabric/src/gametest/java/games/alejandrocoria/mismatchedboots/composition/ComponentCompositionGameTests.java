@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.gametest.TestContent;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -48,7 +49,7 @@ public final class ComponentCompositionGameTests {
         rejects(helper, () -> create(left, right, rules));
         rejects(helper, () -> create(right, left, rules));
         rejects(helper, () -> MixedBootsRecomposer.recompose(root, left, right,
-                ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), rules));
+                ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), withComponents(rules)));
         helper.assertTrue(ItemStack.matches(before, root), "Rejected recomposition mutated live root");
         helper.assertTrue(ItemStack.matches(leftBefore, left) && ItemStack.matches(rightBefore, right),
                 "Rejected composition changed or consumed inputs");
@@ -57,7 +58,12 @@ public final class ComponentCompositionGameTests {
 
     private static MixedBootsPair create(ItemStack left, ItemStack right, ComponentRuleSet rules) {
         return MixedBootsFactory.createPair(left, right, BuiltInRegistries.ITEM.getOrThrow(ModContent.MIXED_BOOTS_KEY),
-                ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), rules);
+                ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), withComponents(rules));
+    }
+
+    private static ComponentRules withComponents(ComponentRuleSet components) {
+        ComponentRules defaults = ComponentRuleDefaults.state();
+        return new ComponentRules(defaults.durability(), defaults.repairCost(), components);
     }
 
     private static void rejects(GameTestHelper helper, Runnable action) {

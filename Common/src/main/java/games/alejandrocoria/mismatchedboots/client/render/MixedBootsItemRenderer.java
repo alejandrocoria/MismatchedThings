@@ -3,7 +3,7 @@ package games.alejandrocoria.mismatchedboots.client.render;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.BakedQuadClipper;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerExtensionMetadata;
+import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerGeometryExtension;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -172,9 +172,9 @@ public final class MixedBootsItemRenderer {
                     }
                 }
             }
-            LayerExtensionMetadata.Plan extension = layer instanceof LayerExtensionMetadata metadata
+            LayerGeometryExtension.Plan extension = layer instanceof LayerGeometryExtension metadata
                     ? metadata.mismatchedboots$planGeometry(accessor.mismatchedboots$getLocalTransform(), range.side())
-                    : LayerExtensionMetadata.Plan.NONE;
+                    : LayerGeometryExtension.Plan.NONE;
             if (!extension.compatible()) {
                 return false;
             }
@@ -246,6 +246,6 @@ public final class MixedBootsItemRenderer {
             ItemStackRenderState.LayerRenderState layer,
             List<BakedQuad> quads,
             Supplier<Vector3fc[]> extents,
-            LayerExtensionMetadata.Plan extension) {
+            LayerGeometryExtension.Plan extension) {
     }
 }

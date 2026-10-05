@@ -117,6 +117,9 @@ public final class ModContent {
                 BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(MIXED_BOOTS_DATA_ID));
     }
 
+    /** Broad data discovery, including unregistered component types used by fixtures.
+     * Not proof of a valid gameplay item: consumers must validate item identity and sources.
+     */
     public static Optional<MixedBootsData> getMixedBootsData(ItemStack stack) {
         Optional<MixedBootsData> registeredData = mixedBootsDataType().map(stack::get);
         if (registeredData.isPresent()) {
@@ -130,6 +133,7 @@ public final class ModContent {
         return Optional.empty();
     }
 
+    /** Broad classification for excluding mixed/nested sources, not gameplay admission. */
     public static boolean isMixedBoots(ItemStack stack) {
         return !stack.isEmpty()
                 && (stack.getItem() instanceof MixedBootsItem

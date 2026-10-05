@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class OwnerComponentMergerTest {
+class ProjectedComponentMergerTest {
     private static DataComponentType<String> inheritedType;
     private static DataComponentType<String> divergedType;
     private static DataComponentType<String> removedType;
@@ -156,7 +156,7 @@ class OwnerComponentMergerTest {
                 .set(DataComponents.DAMAGE_RESISTANT, oldResistance).build(), DataComponentMap.EMPTY,
                 Set.of(DataComponents.DAMAGE_RESISTANT));
         var replacement = new ComponentProjection.Result(DataComponentMap.EMPTY, DataComponentMap.EMPTY, Set.of());
-        assertNull(OwnerComponentMerger.merge(root, previous, replacement).get(DataComponents.DAMAGE_RESISTANT));
+        assertNull(ProjectedComponentMerger.merge(root, previous, replacement).get(DataComponents.DAMAGE_RESISTANT));
         assertEquals(liveResistance, root.get(DataComponents.DAMAGE_RESISTANT));
     }
 
@@ -166,7 +166,7 @@ class OwnerComponentMergerTest {
         Set<DataComponentType<?>> newTypes = new HashSet<>(replacement.getComponents().keySet());
         oldTypes.removeAll(fixed);
         newTypes.removeAll(fixed);
-        return OwnerComponentMerger.merge(root,
+        return ProjectedComponentMerger.merge(root,
                 new ComponentProjection.Result(previous.getComponents(), DataComponentMap.EMPTY, oldTypes),
                 new ComponentProjection.Result(replacement.getComponents(), DataComponentMap.EMPTY, newTypes));
     }

@@ -21,12 +21,12 @@ public final class FabricMeshClipper {
     private FabricMeshClipper() {
     }
 
-    public static LayerExtensionMetadata.Plan plan(
+    public static LayerGeometryExtension.Plan plan(
             @Nullable MutableMesh source, Matrix4fc localTransform, QuadClipper.Side side) {
         Objects.requireNonNull(localTransform, "localTransform");
         Objects.requireNonNull(side, "side");
         if (source == null || source.size() == 0) {
-            return LayerExtensionMetadata.Plan.NONE;
+            return LayerGeometryExtension.Plan.NONE;
         }
         MutableMesh builder = Renderer.get().mutableMesh();
         QuadEmitter emitter = builder.emitter();
@@ -51,10 +51,10 @@ public final class FabricMeshClipper {
             }
         });
         if (!compatible[0]) {
-            return LayerExtensionMetadata.Plan.INCOMPATIBLE;
+            return LayerGeometryExtension.Plan.INCOMPATIBLE;
         }
         Mesh replacement = builder.immutableCopy();
-        return new LayerExtensionMetadata.Plan(true, () -> {
+        return new LayerGeometryExtension.Plan(true, () -> {
             source.clear();
             if (replacement.size() != 0) {
                 replacement.outputTo(source.emitter());

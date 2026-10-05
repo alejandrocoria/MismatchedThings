@@ -4,7 +4,7 @@ import org.joml.Matrix4fc;
 
 import java.util.Objects;
 
-public interface LayerExtensionMetadata {
+public interface LayerGeometryExtension {
     Plan mismatchedboots$planGeometry(Matrix4fc localTransform, QuadClipper.Side side);
 
     record Plan(boolean compatible, Runnable commit, boolean animated) {

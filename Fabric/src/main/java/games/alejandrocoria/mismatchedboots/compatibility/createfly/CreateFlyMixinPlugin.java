@@ -236,6 +236,9 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
     }
 
     private static boolean hasSingleCardboardBeltPredicate(MethodNode method) {
+        // The belt mixin modifies ItemStack.is without an ordinal. Require exactly one
+        // call and inspect the shift -> FEET -> CARDBOARD_BOOTS branch so upstream
+        // edits cannot also modify an unrelated predicate; ambiguity disables this hook.
         int shiftCalls = 0;
         int feetFields = 0;
         int cardboardFields = 0;

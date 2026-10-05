@@ -599,7 +599,7 @@ class MixedBootsFactoryTest {
         ItemStack replacementBefore = replacement.copy();
 
         ItemStack result = MixedBootsRecomposer.recompose(
-                root, replacement, right, mixedDataType, AttributeRuleDefaults.ruleSet());
+                root, replacement, right, mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
 
         assertEquals("new", result.get(opaqueType));
         assertNull(result.get(rightOnlyType));
@@ -633,7 +633,7 @@ class MixedBootsFactoryTest {
         setDurability(newRight, 20, 0);
 
         ItemStack result = MixedBootsRecomposer.recompose(
-                root, replacement, newRight, mixedDataType, AttributeRuleDefaults.ruleSet());
+                root, replacement, newRight, mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
 
         assertEquals("root override", result.get(opaqueType));
         assertEquals("new source", result.get(mixedDataType).left().source().get(opaqueType));
@@ -706,20 +706,20 @@ class MixedBootsFactoryTest {
             ItemStack newLeft = inverse ? changedRight : left;
             ItemStack newRight = inverse ? left : changedRight;
             ItemStack result = MixedBootsRecomposer.recompose(root, newLeft, newRight,
-                    mixedDataType, AttributeRuleDefaults.ruleSet());
+                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertEquals(new Enchantable(15), result.get(DataComponents.ENCHANTABLE));
             root.remove(DataComponents.ENCHANTABLE);
             ItemLore liveLore = new ItemLore(List.of(Component.literal("Live lore")));
             root.set(DataComponents.LORE, liveLore);
             result = MixedBootsRecomposer.recompose(root, newLeft, newRight,
-                    mixedDataType, AttributeRuleDefaults.ruleSet());
+                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertNull(result.get(DataComponents.ENCHANTABLE));
             assertEquals(liveLore, result.get(DataComponents.LORE));
         }
         ItemStack root = create(left, right).primary();
         changedRight.remove(DataComponents.ENCHANTABLE);
         assertNull(MixedBootsRecomposer.recompose(root, left, changedRight,
-                mixedDataType, AttributeRuleDefaults.ruleSet()).get(DataComponents.ENCHANTABLE));
+                mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state()).get(DataComponents.ENCHANTABLE));
     }
 
     @Test
@@ -735,15 +735,20 @@ class MixedBootsFactoryTest {
         ItemStack upgraded = left.copy();
         upgraded.set(DataComponents.ENCHANTABLE, new Enchantable(30));
         assertEquals(new Enchantable(9), MixedBootsRecomposer.recompose(root, upgraded, right,
-                mixedDataType, AttributeRuleDefaults.ruleSet(), changedRules).get(DataComponents.ENCHANTABLE));
+                mixedDataType, AttributeRuleDefaults.ruleSet(), withComponents(changedRules)).get(DataComponents.ENCHANTABLE));
         root.set(DataComponents.ENCHANTABLE, new Enchantable(25));
         assertEquals(new Enchantable(30), MixedBootsRecomposer.recompose(root, upgraded, right,
-                mixedDataType, AttributeRuleDefaults.ruleSet(), changedRules).get(DataComponents.ENCHANTABLE));
+                mixedDataType, AttributeRuleDefaults.ruleSet(), withComponents(changedRules)).get(DataComponents.ENCHANTABLE));
     }
 
     private static MixedBootsPair create(ItemStack first, ItemStack second) {
         return MixedBootsFactory.createPair(
-                first, second, outputItem, mixedDataType, AttributeRuleDefaults.ruleSet());
+                first, second, outputItem, mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+    }
+
+    private static ComponentRules withComponents(ComponentRuleSet components) {
+        ComponentRules defaults = ComponentRuleDefaults.state();
+        return new ComponentRules(defaults.durability(), defaults.repairCost(), components);
     }
 
     private static ItemStack boots(Item item) {

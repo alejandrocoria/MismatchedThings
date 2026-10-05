@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
+public final class GuiCompositionClientGameTest implements FabricClientGameTest {
     private static final float EPSILON = 0.0001F;
     private static final int ITEM_SIZE = 16;
     private static final int ITEM_HALF = ITEM_SIZE / 2;
@@ -77,7 +77,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
                 verifyRepeatedPairsAndModelIdentities(context);
                 verifyUnsupportedPoseFallback(context);
                 verifyObliqueGuiGeometry(context);
-                context.runOnClient(CandidateAGuiClientGameTest::verifyMeshScissorFallback);
+                context.runOnClient(GuiCompositionClientGameTest::verifyMeshScissorFallback);
                 verifyGuiScales(context);
                 verifyVisibleResourceReload(context);
             }
@@ -142,7 +142,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
                         || resolution.level() != client.level
                         || resolution.owner() != client.player
                         || resolution.seed() != OWNER_SEED) {
-                    throw new AssertionError("Candidate A changed source resolution context: " + resolution);
+                    throw new AssertionError("GUI composition changed source resolution context: " + resolution);
                 }
             }
         });
@@ -225,7 +225,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             throw new AssertionError("The special source did not reach a SpecialModelRenderer layer");
         }
         context.waitTicks(2);
-        Path screenshot = context.takeScreenshot("candidate-a-special-model");
+        Path screenshot = context.takeScreenshot("gui-composition-special-model");
         assertBothHalvesVisible(screenshot, currentGuiScale(context), "special model");
         closeScreen(context);
     }
@@ -242,7 +242,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             }
         }
         context.waitTicks(2);
-        Path screenshot = context.takeScreenshot("candidate-a-oversized-model");
+        Path screenshot = context.takeScreenshot("gui-composition-oversized-model");
         assertClippedComposition(snapshot.submissions().getFirst());
         assertBothHalvesVisible(screenshot, currentGuiScale(context), "oversized geometry");
         closeScreen(context);
@@ -346,7 +346,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
             }
             assertClippedComposition(snapshot.submissions().getFirst());
             context.waitTicks(2);
-            Path screenshot = context.takeScreenshot("candidate-a-gui-scale-" + requestedScale);
+            Path screenshot = context.takeScreenshot("gui-composition-gui-scale-" + requestedScale);
             assertColoredHalves(screenshot, requestedScale, ITEM_X, ITEM_Y, 0);
             closeScreen(context);
         }
@@ -704,11 +704,11 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
                 }
             }
         } catch (IOException exception) {
-            throw new AssertionError("Could not inspect Candidate A colored screenshot", exception);
+            throw new AssertionError("Could not inspect GUI composition colored screenshot", exception);
         }
         int minimum = 20 * scale * scale;
         if (leftRed < minimum || rightBlue < minimum || misplacedRed != 0 || misplacedBlue != 0) {
-            throw new AssertionError("Candidate A colored pixels violated its clipping bounds: left red="
+            throw new AssertionError("GUI composition colored pixels violated its clipping bounds: left red="
                     + leftRed + ", right blue=" + rightBlue + ", misplaced red=" + misplacedRed
                     + ", misplaced blue=" + misplacedBlue);
         }
@@ -776,7 +776,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
 
     private static int layerCount(ItemStackRenderState state) {
         return state instanceof MixedBootsGuiRenderState combined
-                ? combined.sources().stream().mapToInt(CandidateAGuiClientGameTest::layerCount).sum()
+                ? combined.sources().stream().mapToInt(GuiCompositionClientGameTest::layerCount).sum()
                 : access(state).mismatchedboots$getActiveLayerCount();
     }
 
@@ -850,7 +850,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
                 boolean decorations,
                 int seed,
                 boolean control) {
-            super(Component.literal("Candidate A characterization"));
+            super(Component.literal("GUI composition characterization"));
             this.stack = stack;
             this.transform = transform;
             this.parentScissor = parentScissor;
@@ -907,7 +907,7 @@ public final class CandidateAGuiClientGameTest implements FabricClientGameTest {
         private final int secondX;
 
         private RepeatedPairsScreen(ItemStack first, ItemStack second, int secondX) {
-            super(Component.literal("Candidate A repeated pairs"));
+            super(Component.literal("GUI composition repeated pairs"));
             this.first = first;
             this.second = second;
             this.secondX = secondX;

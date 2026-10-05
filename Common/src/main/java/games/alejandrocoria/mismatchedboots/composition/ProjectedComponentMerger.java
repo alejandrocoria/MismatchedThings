@@ -11,8 +11,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /** Three-way merge of the root orientation's old/new projections, including owner policies. */
-final class OwnerComponentMerger {
-    private OwnerComponentMerger() {
+final class ProjectedComponentMerger {
+    private ProjectedComponentMerger() {
     }
 
     static ItemStack merge(

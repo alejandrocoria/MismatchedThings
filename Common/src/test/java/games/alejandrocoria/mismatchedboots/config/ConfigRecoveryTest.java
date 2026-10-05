@@ -14,9 +14,12 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConfigRecoveryTest {
     @TempDir
@@ -87,6 +90,43 @@ class ConfigRecoveryTest {
         assertArrayEquals(original, Files.readAllBytes(path));
         try (var contents = Files.list(directory)) {
             assertEquals(1, contents.count());
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,true", "true,false", "false,true", "false,false"})
+    void failedSavePreservesOriginalAndAnyRequiredBackup(boolean attributes, boolean malformed) throws IOException {
+        Path path = directory.resolve(attributes ? AttributeRulesConfig.FILE_NAME : ComponentRulesConfig.FILE_NAME);
+        byte[] original = (malformed ? "[broken\n" : "# incomplete but valid\n")
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        Files.write(path, original);
+        List<Path> backups = new java.util.ArrayList<>();
+        TomlConfigIO files = new TomlConfigIO() {
+            @Override
+            Path backup(Path target) throws IOException {
+                Path preserved = super.backup(target);
+                backups.add(preserved);
+                return preserved;
+            }
+
+            @Override
+            CommentedFileConfig open(Path target) throws IOException {
+                throw new IOException("Injected save-open failure");
+            }
+        };
+
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () -> {
+            if (attributes) {
+                new AttributeRulesConfig(path, files).load();
+            } else {
+                new ComponentRulesConfig(path, files).load();
+            }
+        });
+        assertTrue(failure.getMessage().contains(path.toString()));
+        assertArrayEquals(original, Files.readAllBytes(path));
+        assertEquals(malformed ? 1 : 0, backups.size());
+        for (Path backup : backups) {
+            assertArrayEquals(original, Files.readAllBytes(backup));
         }
     }
 }

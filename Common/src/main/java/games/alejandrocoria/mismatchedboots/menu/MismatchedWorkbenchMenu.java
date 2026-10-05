@@ -37,7 +37,10 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
     private final ContainerLevelAccess access;
     private final InputContainer inputs;
     private final WorkbenchResultContainer results = new WorkbenchResultContainer();
+    // 0: outputs are previews and inputs remain owned by the player. 1: both inputs
+    // were consumed once; any remaining output is real and survives recipe reloads.
     private final DataSlot committed = DataSlot.standalone();
+    // Input removal notifies the menu synchronously; never rebuild a preview mid-commit.
     private boolean suppressInputChanges;
 
     public MismatchedWorkbenchMenu(int containerId, Inventory inventory) {
@@ -139,6 +142,8 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private void resultTaken(Player player, ItemStack output) {
+        // Vanilla has already removed/transferred this output before onTake. Do not
+        // remove it again; commit the inputs once and inspect only the remaining slots.
         if (player.level().isClientSide()) {
             return;
         }
@@ -231,6 +236,8 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         if (!player.level().isClientSide()) {
+            // Closing returns real inventory only: the committed remainder or the
+            // untouched inputs, never the disposable two-output preview as well.
             if (isCommitted()) {
                 this.clearContainer(player, results);
             } else {

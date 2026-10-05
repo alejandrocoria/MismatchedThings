@@ -2,8 +2,6 @@ package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
@@ -48,33 +46,6 @@ public final class MixedBootsFactory {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
                 .orElseThrow(() -> new IllegalStateException("MismatchedBoots data component is not registered"));
         return createPair(first, second, mixedBoots, dataType, attributes, components);
-    }
-
-    static MixedBootsPair createPair(
-            ItemStack first,
-            ItemStack second,
-            Holder<Item> mixedBoots,
-            DataComponentType<MixedBootsData> dataType) {
-        AttributeRuleSet attributeRules = AttributeRulesLifecycle.serverRules();
-        ComponentRules componentRules = ComponentRulesLifecycle.serverRules();
-        return createPair(first, second, mixedBoots, dataType, attributeRules, componentRules);
-    }
-
-    static MixedBootsPair createPair(
-            ItemStack first,
-            ItemStack second,
-            Holder<Item> mixedBoots,
-            DataComponentType<MixedBootsData> dataType,
-            AttributeRuleSet rules) {
-        return createPair(first, second, mixedBoots, dataType, rules, ComponentRuleDefaults.state());
-    }
-
-    static MixedBootsPair createPair(
-            ItemStack first, ItemStack second, Holder<Item> mixedBoots,
-            DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRuleSet componentRules) {
-        ComponentRules defaults = ComponentRuleDefaults.state();
-        return createPair(first, second, mixedBoots, dataType, rules,
-                new ComponentRules(defaults.durability(), defaults.repairCost(), componentRules));
     }
 
     static MixedBootsPair createPair(

@@ -3,7 +3,7 @@ package games.alejandrocoria.mismatchedboots.gametest;
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.render.MixedBootsItemRenderer;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerExtensionMetadata;
+import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerGeometryExtension;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
@@ -170,7 +170,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         ItemStackRenderState output = resolve(client,
                 MixedBootsFactory.createPair(extended, ordinary).primary(), ItemDisplayContext.FIXED);
 
-        if (!(rawLayer(output, 0) instanceof LayerExtensionMetadata metadata)
+        if (!(rawLayer(output, 0) instanceof LayerGeometryExtension metadata)
                 || metadata.mismatchedboots$planGeometry(
                         layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.LEFT).compatible()) {
             throw new AssertionError("The unsupported nonplanar Fabric mesh was not retained for fallback");
