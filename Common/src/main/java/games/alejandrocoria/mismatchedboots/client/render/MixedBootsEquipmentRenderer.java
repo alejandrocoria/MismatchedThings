@@ -74,6 +74,19 @@ public final class MixedBootsEquipmentRenderer {
         return equippable.assetId().orElse(null);
     }
 
+    /** Reapplies our side ownership after a loader extension resolves its final armor model. */
+    public static <S> Model<? super S> preserveSplit(
+            Model<? super S> original, Model<? super S> resolved) {
+        if (original == resolved || !(original instanceof SplitModel split)
+                || !(resolved instanceof HumanoidModel<?> humanoid)) {
+            return resolved;
+        }
+        // Structural views remain safe when cached models are queued for both feet/entities.
+        // Never toggle visibility here: submission and setupAnim happen at different times.
+        Side side = split.mismatchedboots$side();
+        return sideModel(resolved, side == Side.LEFT ? humanoid.leftLeg : humanoid.rightLeg, side);
+    }
+
     private static <S> Model<? super S> sideModel(
             Model<? super S> source, ModelPart leg, Side side) {
         return new SideModel<>(source, leg, side);

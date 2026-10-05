@@ -54,6 +54,34 @@ launch client, persistence-restart, geometry, or network acceptance runs.
 The focused NeoForge tooltip characterization is likewise an explicit client
 task rather than part of `build`/`check`.
 
+The NeoForge geometry client also exercises native equipment model replacement:
+side ownership after extension resolution, cached models shared across queued
+entities, custom animation, ordinary/default/non-humanoid controls, exactly one
+resolution per source, source immutability, native dye/overlay/trim/foil,
+extension texture, lighting, and outline parameters. These are actual native
+deferred submissions, not only the earlier recording-renderer fixture.
+
+An optional Ice and Fire CE probe uses the pinned installed candidate JARs:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -PiceAndFireTest=true
+```
+
+It copies only Ice and Fire 2.2-beta.3, Uranus 3.0-alpha.1, and Jupiter
+2.4.3 into the disposable geometry client, verifies their SHA-256 pins before
+copying, and leaves the development mods directory unchanged. Source JARs
+default to `NeoForge/runs/client/mods`; override with
+`-PiceAndFireTestModsDirectory=<directory>` if needed. Integration 0.2 is nested
+in Ice and Fire, not another source JAR. The ordinary run needs none of these mods.
+
+The probe checks all 30 custom-model boot variants and Sheep Boots, each in
+left/vanilla, vanilla/right, and same-item pairs (93 ordered pairs). It uses
+real registered items and their model/texture extensions with controlled native
+equipment assets, because item defaults are not bound before opening a world.
+It does not validate actual default components, gameplay, complete material
+appearance, unusual animations, or pixel-level visual quality. Current artifacts
+and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
+
 The broad server GameTest XML reports mark context-only no-ops as skipped rather
 than successful coverage. `verifyGameTestContextGuard` deliberately starts one
 selected case without its required property and verifies the expected failure;

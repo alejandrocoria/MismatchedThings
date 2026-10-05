@@ -83,11 +83,12 @@ public final class NeoForgeGeometryClientTest {
             assertGenuinelyIncompatibleFallback(client);
             assertGuiClipping(client);
             NeoForgeEquipmentRenderingClientTest.assertStandardRoute();
+            String equipmentReport = NeoForgeNativeEquipmentClientTest.assertNativeRoute();
 
             NetworkAcceptanceFiles.write("geometry-report.txt", red.describe("red") + blue.describe("blue")
                     + "gui.canonicalOwnership=true\ngui.depthSharing=true\ngui.atomicFallback=true\n"
                     + "equipment.standardRoute=true\nequipment.rootOwnership=true\n"
-                    + "equipment.atomicFallback=true\n");
+                    + "equipment.atomicFallback=true\n" + equipmentReport);
             NetworkAcceptanceFiles.write("geometry-success.txt", "neoforge\n");
             finished = true;
             client.stop();

@@ -113,7 +113,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
         }
     }
 
-    private static HumanoidModel<HumanoidRenderState> model() {
+    static HumanoidModel<HumanoidRenderState> model() {
         ModelPart root = LayerDefinition.create(mesh(), 64, 32).bakeRoot();
         return new HumanoidModel<>(root);
     }
@@ -152,7 +152,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
         return HumanoidModel.createMesh(new CubeDeformation(0.0F), 0.0F);
     }
 
-    private static ItemStack mixed(ItemStack left, ItemStack right) {
+    static ItemStack mixed(ItemStack left, ItemStack right) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
                 .orElseThrow(() -> new AssertionError("Mismatched boots data component is not registered"));
         Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
@@ -166,7 +166,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
         return new ItemStack(Holder.direct(mixedItem), 1, components);
     }
 
-    private static ItemStack source(Item item, ResourceKey<EquipmentAsset> asset) {
+    static ItemStack source(Item item, ResourceKey<EquipmentAsset> asset) {
         Equippable.Builder equippable = Equippable.builder(EquipmentSlot.FEET);
         if (asset != null) {
             equippable.setAsset(asset);

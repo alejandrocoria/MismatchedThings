@@ -20,6 +20,9 @@ public final class NeoForgeRuntimeTest {
         }
         if (FMLEnvironment.getDist().isClient()) {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {
+                NeoForgeNativeEquipmentClientTest.registerFixtures(eventBus);
+                eventBus.addListener(NeoForgeNativeEquipmentClientTest::registerExtensions);
+                eventBus.addListener(NeoForgeNativeEquipmentClientTest::captureRenderer);
                 NeoForge.EVENT_BUS.addListener((ClientResourceLoadFinishedEvent event) -> {
                     if (event.isInitial()) {
                         NeoForgeGeometryClientTest.resourcesLoaded();

@@ -56,6 +56,14 @@ def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
         .getOrElse(fixtureBuildDirectory.dir('markers').get().asFile.absolutePath)
 def geometryMarkers = fixtureBuildDirectory.dir('geometry-markers')
 def geometryRunDirectory = fixtureBuildDirectory.dir('run/geometryClient')
+def iceAndFireTest = providers.gradleProperty('iceAndFireTest').map { it.toBoolean() }.getOrElse(false)
+def iceAndFireModsDirectory = providers.gradleProperty('iceAndFireTestModsDirectory')
+        .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods'))
+def iceAndFireArtifacts = [
+        'iceandfire-2.2-beta.3.jar': 'ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2',
+        'uranus-3.0-alpha.1.jar': 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',
+        'jupiter-2.4.3-26.1.2-universal.jar': 'fc2f273c02788c5ff6736439de8cef9a7eb2662f768e8ee1ac23c57323ee740c'
+]
 def tooltipMarkers = fixtureBuildDirectory.dir('tooltip-markers')
 def tooltipRunDirectory = fixtureBuildDirectory.dir('run/tooltipClient')
 def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-markers')
@@ -94,6 +102,7 @@ neoForge {
             gameDirectory = geometryRunDirectory.get().asFile
             systemProperty('mismatchedboots.runtimetest.markers', geometryMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.geometryTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.iceAndFireTest', iceAndFireTest.toString())
             systemProperty('mismatchedboots.test.hideClientWindow', 'true')
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
@@ -183,6 +192,27 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
 tasks.register('prepareGeometryClient') {
     dependsOn(':NeoForge:jar')
     doLast {
+        def compatibilityArtifacts = []
+        if (iceAndFireTest) {
+            iceAndFireArtifacts.each { filename, expectedHash ->
+                def artifact = new File(iceAndFireModsDirectory, filename)
+                if (!artifact.isFile()) {
+                    throw new GradleException("Missing optional Ice and Fire fixture: ${artifact}")
+                }
+                def digest = java.security.MessageDigest.getInstance('SHA-256')
+                artifact.withInputStream { stream ->
+                    byte[] buffer = new byte[8192]
+                    int count
+                    while ((count = stream.read(buffer)) != -1) {
+                        digest.update(buffer, 0, count)
+                    }
+                }
+                if (digest.digest().encodeHex().toString() != expectedHash) {
+                    throw new GradleException("Unexpected optional Ice and Fire artifact: ${artifact}")
+                }
+                compatibilityArtifacts.add(artifact)
+            }
+        }
         fixtureFileOperations.delete { delete geometryMarkers }
         fixtureFileOperations.delete { delete geometryRunDirectory }
 
@@ -191,6 +221,7 @@ tasks.register('prepareGeometryClient') {
         modsDirectory.mkdirs()
         fixtureFileOperations.copy {
             from(productionArchive)
+            from(compatibilityArtifacts)
             into(modsDirectory)
         }
         new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'

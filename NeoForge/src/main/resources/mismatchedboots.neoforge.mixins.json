@@ -6,6 +6,9 @@
   "mixins": [
     "NeoForgeAnvilMenuDonorMixin"
   ],
+  "client": [
+    "NeoForgeEquipmentLayerRendererMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
