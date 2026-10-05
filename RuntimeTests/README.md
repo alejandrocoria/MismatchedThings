@@ -33,9 +33,13 @@ Run Gradle tasks sequentially from the repository root:
 .\gradlew.bat :RuntimeTests:Fabric:verifyDamageTagReload
 .\gradlew.bat :Fabric:verifyPersistenceRestart
 .\gradlew.bat :Fabric:verifyClient
+.\gradlew.bat :Fabric:verifyGameTestContextGuard
+.\gradlew.bat :Fabric:verifyQuiltSmoke
 .\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization
 .\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipCharacterization
 .\gradlew.bat verifyLoaderNetworking
+.\gradlew.bat verifyPackagedDependencies
+.\gradlew.bat verifyPackagedDependencyChecks
 ```
 
 The established Fabric verification, GameTest run, and GameTest compilation
@@ -46,6 +50,24 @@ case. `build`/`check` still include the Fabric server GameTests, but do not
 launch client, persistence-restart, geometry, or network acceptance runs.
 The focused NeoForge tooltip characterization is likewise an explicit client
 task rather than part of `build`/`check`.
+
+The broad server GameTest XML reports mark context-only no-ops as skipped rather
+than successful coverage. `verifyGameTestContextGuard` deliberately starts one
+selected case without its required property and verifies the expected failure;
+its negative XML/log stay under `Fabric/build/context-guard`, outside positive
+GameTest reports. The focused fixture tasks enable their actual contexts.
+
+`verifyQuiltSmoke` uses real Quilt Loader 0.31.0-beta.4, its pinned launcher
+libraries, Fabric API, and the packaged production Fabric JAR in a disposable
+server run. It selects the existing Workbench transaction cases, not the full
+Fabric suite; it does not claim Quilt client/rendering or optional-mod coverage.
+There is no production Quilt module. The verifier bounds the child process and
+checks actual loader identity and XML results. `runQuiltSmoke` is its internal
+launch task. No Quilt library enters production artifacts or ordinary tests.
+
+`verifyPackagedDependencies` declares and builds its final packaged JAR inputs.
+Its companion negative-control task checks corrupted copies in the root build
+directory, never modifies release JARs, and verifies rejection diagnostics.
 
 Optional recipe-viewer regressions run individually:
 
@@ -73,6 +95,11 @@ directories, and checks result markers. Select a pair with
 includes JourneyMap coexistence. The internal `runNetworkTestServer` and
 `runNetworkTestClient` tasks require that preparation and are not standalone
 verification entrypoints.
+
+To validate the declared minimum NeoForge loader, add
+`'-Pneoforge_version=26.1.2.99'` to the selected startup/network verifier.
+Explicit `neoforge_version`, `fabric_loader_version`, and `fabric_api_version`
+overrides propagate to its child Gradle runs. Normal indev NeoForge stays .114.
 
 Same-loader network acceptance also checks the actual inventory/use/dispenser
 routes: a bare invalid shell never equips, while a valid crafted pair still

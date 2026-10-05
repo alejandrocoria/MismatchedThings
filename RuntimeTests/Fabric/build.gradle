@@ -7,6 +7,12 @@ base.archivesName = "mismatchedboots-runtime-test-fabric"
 
 evaluationDependsOn(':Fabric')
 
+// Resolve project-owned services/providers during configuration, not from Task.project in actions.
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+def fixtureBuildDirectory = layout.buildDirectory
+def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
@@ -36,21 +42,27 @@ configurations {
 }
 
 dependencies {
+    // Advanced Netherite 2.4.1 Fabric; https://modrinth.com/mod/CFX9ftUJ/version/vudH2Rjv
     advancedNetheriteFabric('maven.modrinth:CFX9ftUJ:vudH2Rjv') {
         transitive = false
     }
+    // Better End 26.101.2; https://modrinth.com/mod/gc8OEnCC/version/tBdZGZeX
     betterEndFabric('maven.modrinth:gc8OEnCC:tBdZGZeX') {
         transitive = false
     }
+    // Better Nether; https://modrinth.com/mod/MpzVLzy5/version/gDLNJy17
     betterXFabric('maven.modrinth:MpzVLzy5:gDLNJy17') {
         transitive = false
     }
+    // BCLib 26.101.2; https://modrinth.com/mod/BgNRHReB/version/vBV7w4o0
     betterEndFabric('maven.modrinth:BgNRHReB:vBV7w4o0') {
         transitive = false
     }
+    // WorldWeaver (Wover) 26.101.2; https://modrinth.com/mod/RiN8rDVs/version/MSzkHfJp
     betterEndFabric('maven.modrinth:RiN8rDVs:MSzkHfJp') {
         transitive = false
     }
+    // Create Fly 6.0.9-4; https://modrinth.com/mod/dKvj0eNn/version/wV5IQLKg
     createFlyFabric('maven.modrinth:dKvj0eNn:wV5IQLKg') {
         transitive = false
     }
@@ -138,7 +150,7 @@ def viewerCases = [
                 'cloth-config-26.1.154 (Fabric).jar': 'FB7A5D869CE10EAAC2C2FE9AB84B4FC011A1FBFA575A93BE9845A386A7F0C7D3']]
 ]
 viewerCases.each { suffix, fixture ->
-    def runDirectory = layout.buildDirectory.dir("run/${fixture.id}RecipeReloadClient")
+    def runDirectory = fixtureBuildDirectory.dir("run/${fixture.id}RecipeReloadClient")
     def fixtureFiles = fixture.artifacts.collect { name, hash -> rootProject.file("Fabric/runs/client/mods/${name}") }
     loom.runs.create("${fixture.id}RecipeReloadClient") {
         inherit loom.runs.client
@@ -171,7 +183,7 @@ viewerCases.each { suffix, fixture ->
             directory.mkdirs()
             new File(directory, 'eula.txt').text = 'eula=true\n'
             new File(directory, 'options.txt').text = 'soundCategory_master:0.0\n'
-            copy {
+            fixtureFileOperations.copy {
                 from fixtureFiles, viewerCompatibilityTestJar.flatMap { it.archiveFile }
                 into new File(directory, 'mods')
             }
@@ -196,7 +208,7 @@ viewerCases.each { suffix, fixture ->
 tasks.register('acceptGameTestEula') {
     dependsOn tasks.named('deleteGameTestRunDir')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/clientGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/clientGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
     }
@@ -207,9 +219,22 @@ tasks.named('runClientGameTest') {
 }
 
 def persistenceRestartToken = UUID.randomUUID().toString()
+def contextGuardRunDirectory = fixtureBuildDirectory.dir('run/missingGameTestContext')
+def contextGuardReport = fixtureBuildDirectory.file('context-guard/negative.xml')
 
 loom {
     runs {
+        missingGameTestContext {
+            inherit server
+            ideConfigGenerated(false)
+            property('fabric-api.gametest')
+            property('fabric-api.gametest.filter',
+                    'mismatchedboots-test:component_rules_config_game_tests_configured_composition_works')
+            property('fabric-api.gametest.report-file', contextGuardReport.get().asFile.absolutePath)
+            // Deliberately omit mismatchedboots.test.componentRules: this must fail, not pass a no-op.
+            runDir('build/run/missingGameTestContext')
+            source('gametest')
+        }
         persistenceWrite {
             inherit server
             property("fabric-api.gametest")
@@ -217,7 +242,7 @@ loom {
                     "mismatchedboots-test:persistence_game_tests_restart_round_trip_uses_the_dedicated_two_process_harness")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/persistence-write.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/persistence-write.xml').get().asFile.absolutePath)
             property("mismatchedboots.test.persistence.restartMode", "write")
             property("mismatchedboots.test.persistence.restartToken", persistenceRestartToken)
             runDir("build/run/persistenceGameTest")
@@ -230,7 +255,7 @@ loom {
                     "mismatchedboots-test:persistence_game_tests_restart_round_trip_uses_the_dedicated_two_process_harness")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/persistence-read.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/persistence-read.xml').get().asFile.absolutePath)
             property("mismatchedboots.test.persistence.restartMode", "read")
             property("mismatchedboots.test.persistence.restartToken", persistenceRestartToken)
             runDir("build/run/persistenceGameTest")
@@ -241,7 +266,7 @@ loom {
             property("fabric-api.gametest")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/attribute-rules.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/attribute-rules.xml').get().asFile.absolutePath)
             property("mismatchedboots.test.attributeRules", "true")
             runDir("build/run/attributeRulesGameTest")
             source("gametest")
@@ -253,7 +278,7 @@ loom {
                     "mismatchedboots-test:component_rules_config_game_tests_configured_composition_works")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/component-rules.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/component-rules.xml').get().asFile.absolutePath)
             property("mismatchedboots.test.componentRules", "true")
             runDir("build/run/componentRulesGameTest")
             source("gametest")
@@ -266,7 +291,7 @@ loom {
             property("mismatchedboots.test.damageTagReload", "true")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/damage-tag-reload.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/damage-tag-reload.xml').get().asFile.absolutePath)
             runDir("build/run/damageTagReloadGameTest")
             source("gametest")
         }
@@ -278,7 +303,7 @@ loom {
             property("mismatchedboots.test.behaviorTagReload", "true")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/behavior-tag-reload.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/behavior-tag-reload.xml').get().asFile.absolutePath)
             runDir("build/run/behaviorTagReloadGameTest")
             source("gametest")
         }
@@ -289,7 +314,7 @@ loom {
             property('fabric-api.gametest')
             property(
                     'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
+                    fixtureBuildDirectory.file(
                             'reports/gametest/advanced-netherite.xml').get().asFile.absolutePath)
             runDir('build/run/advancedNetheriteCompatibility')
             source('main')
@@ -303,7 +328,7 @@ loom {
             property('mismatchedboots.test.betterNether.enabled', 'true')
             property(
                     'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
+                    fixtureBuildDirectory.file(
                             'reports/gametest/betterx-compatibility-enabled.xml').get().asFile.absolutePath)
             runDir('build/run/betterXCompatibilityEnabled')
             source('main')
@@ -317,7 +342,7 @@ loom {
             property('mismatchedboots.test.betterNether.enabled', 'false')
             property(
                     'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
+                    fixtureBuildDirectory.file(
                             'reports/gametest/betterx-compatibility-disabled.xml').get().asFile.absolutePath)
             runDir('build/run/betterXCompatibilityDisabled')
             source('main')
@@ -330,7 +355,7 @@ loom {
             property('fabric-api.gametest')
             property(
                     'fabric-api.gametest.report-file',
-                    layout.buildDirectory.file(
+                    fixtureBuildDirectory.file(
                             'reports/gametest/create-fly-compatibility.xml').get().asFile.absolutePath)
             runDir('build/run/createFlyCompatibilityServer')
             source('main')
@@ -345,7 +370,7 @@ loom {
                     'mismatchedboots_create_fly_compatibility_test')
             property('mismatchedboots.test.hideClientWindow', 'true')
             property('mismatchedboots.test.createFly.clientMarker',
-                    layout.buildDirectory.file(
+                    fixtureBuildDirectory.file(
                             'run/createFlyCompatibilityClient/client-compatibility.ok')
                             .get().asFile.absolutePath)
             runDir('build/run/createFlyCompatibilityClient')
@@ -360,25 +385,25 @@ loom {
             property("mismatchedboots.test.workbenchRecipeReload", "true")
             property(
                     "fabric-api.gametest.report-file",
-                    layout.buildDirectory.file('reports/gametest/workbench-recipe-reload.xml').get().asFile.absolutePath)
+                    fixtureBuildDirectory.file('reports/gametest/workbench-recipe-reload.xml').get().asFile.absolutePath)
             runDir("build/run/workbenchRecipeReloadGameTest")
             source("gametest")
         }
     }
 }
 
-def advancedNetheriteRunDirectory = layout.buildDirectory.dir('run/advancedNetheriteCompatibility')
-def advancedNetheriteReport = layout.buildDirectory.file('reports/gametest/advanced-netherite.xml')
+def advancedNetheriteRunDirectory = fixtureBuildDirectory.dir('run/advancedNetheriteCompatibility')
+def advancedNetheriteReport = fixtureBuildDirectory.file('reports/gametest/advanced-netherite.xml')
 def betterXCompatibilityCases = [
         [suffix: 'Enabled', enabled: true],
         [suffix: 'Disabled', enabled: false]
 ]
 def createFlyCompatibilityServerRunDirectory =
-        layout.buildDirectory.dir('run/createFlyCompatibilityServer')
+        fixtureBuildDirectory.dir('run/createFlyCompatibilityServer')
 def createFlyCompatibilityClientRunDirectory =
-        layout.buildDirectory.dir('run/createFlyCompatibilityClient')
+        fixtureBuildDirectory.dir('run/createFlyCompatibilityClient')
 def createFlyCompatibilityReport =
-        layout.buildDirectory.file('reports/gametest/create-fly-compatibility.xml')
+        fixtureBuildDirectory.file('reports/gametest/create-fly-compatibility.xml')
 
 def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
     archiveClassifier = 'advanced-netherite-test'
@@ -402,10 +427,10 @@ tasks.register('prepareCreateFlyCompatibilityServer', Delete) {
         def runDirectory = createFlyCompatibilityServerRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
-        layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-        layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-        copy {
-            from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+        fixtureBuildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+        fixtureBuildDirectory.dir('resources/main').get().asFile.mkdirs()
+        fixtureFileOperations.copy {
+            from(productionArchive)
             from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
             from(configurations.createFlyFabric)
             into(modsDirectory)
@@ -426,7 +451,7 @@ tasks.register('prepareCreateFlyCompatibilityClient', Delete) {
         def configDirectory = new File(runDirectory, 'config')
         modsDirectory.mkdirs()
         configDirectory.mkdirs()
-        copy {
+        fixtureFileOperations.copy {
             from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
             from(configurations.createFlyFabric)
             into(modsDirectory)
@@ -585,7 +610,7 @@ tasks.register('verifyCreateFlyCompatibility') {
             zip.close()
         }
 
-        def fabricJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
+        def fabricJar = productionArchive.get().asFile
         def fabricZip = new java.util.zip.ZipFile(fabricJar)
         try {
             def entries = fabricZip.entries().collect { it.name }
@@ -635,20 +660,20 @@ tasks.register('verifyCreateFlyCompatibility') {
             fabricZip.close()
         }
 
-        def serverLog = layout.buildDirectory.file(
+        def serverLog = fixtureBuildDirectory.file(
                 'reports/create-fly-compatibility/fabric-server-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
+        runBoundedGradleTask(
                 ':RuntimeTests:Fabric:runCreateFlyCompatibilityServer', serverLog, 240)
         if (!createFlyCompatibilityReport.get().asFile.isFile()) {
             throw new GradleException(
                     "Create Fly compatibility report is missing; see ${serverLog}")
         }
 
-        def clientLog = layout.buildDirectory.file(
+        def clientLog = fixtureBuildDirectory.file(
                 'reports/create-fly-compatibility/fabric-client-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
+        runBoundedGradleTask(
                 ':RuntimeTests:Fabric:runCreateFlyCompatibilityClient', clientLog, 300)
-        def clientMarker = layout.buildDirectory.file(
+        def clientMarker = fixtureBuildDirectory.file(
                 'run/createFlyCompatibilityClient/client-compatibility.ok').get().asFile
         if (!clientMarker.isFile()
                 || clientMarker.getText('UTF-8') != 'create-fly-compatibility-passed\n') {
@@ -665,10 +690,10 @@ tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
         def runDirectory = advancedNetheriteRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
-        layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-        layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-        copy {
-            from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+        fixtureBuildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+        fixtureBuildDirectory.dir('resources/main').get().asFile.mkdirs()
+        fixtureFileOperations.copy {
+            from(productionArchive)
             from(advancedNetheriteTestJar.flatMap { it.archiveFile })
             from(configurations.advancedNetheriteFabric)
             into(modsDirectory)
@@ -689,9 +714,9 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
     description = 'Runs bounded Fabric acceptance against Advanced Netherite 2.4.1.'
     dependsOn(':Fabric:jar', advancedNetheriteTestJar)
     doLast {
-        def processLog = layout.buildDirectory.file(
+        def processLog = fixtureBuildDirectory.file(
                 'reports/advanced-netherite/fabric-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
+        runBoundedGradleTask(
                 ':RuntimeTests:Fabric:runAdvancedNetheriteCompatibility', processLog, 240)
         if (!advancedNetheriteReport.get().asFile.isFile()) {
             throw new GradleException("Fabric Advanced Netherite GameTest report is missing; see ${processLog}")
@@ -701,8 +726,8 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
 
 def betterXCompatibilityPreparations = [:]
 betterXCompatibilityCases.each { spec ->
-    def runDirectory = layout.buildDirectory.dir("run/betterXCompatibility${spec.suffix}")
-    def report = layout.buildDirectory.file(
+    def runDirectory = fixtureBuildDirectory.dir("run/betterXCompatibility${spec.suffix}")
+    def report = fixtureBuildDirectory.file(
             "reports/gametest/betterx-compatibility-${spec.suffix.toLowerCase(Locale.ROOT)}.xml")
     def preparation = tasks.register("prepareBetterXCompatibility${spec.suffix}", Delete) {
         dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
@@ -711,10 +736,10 @@ betterXCompatibilityCases.each { spec ->
             def targetDirectory = runDirectory.get().asFile
             def modsDirectory = new File(targetDirectory, 'mods')
             modsDirectory.mkdirs()
-            layout.buildDirectory.dir('classes/java/main').get().asFile.mkdirs()
-            layout.buildDirectory.dir('resources/main').get().asFile.mkdirs()
-            copy {
-                from(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+            fixtureBuildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+            fixtureBuildDirectory.dir('resources/main').get().asFile.mkdirs()
+            fixtureFileOperations.copy {
+                from(productionArchive)
                 from(betterXCompatibilityTestJar.flatMap { it.archiveFile })
                 from(configurations.betterXFabric)
                 into(modsDirectory)
@@ -803,10 +828,10 @@ tasks.register('verifyBetterXCompatibility') {
 
         betterXCompatibilityCases.each { spec ->
             def details = betterXCompatibilityPreparations[spec.suffix]
-            def processLog = layout.buildDirectory.file(
+            def processLog = fixtureBuildDirectory.file(
                     "reports/betterx-compatibility/fabric-${spec.suffix.toLowerCase(Locale.ROOT)}-process.log")
                     .get().asFile
-            rootProject.ext.runBoundedGradleTask(
+            runBoundedGradleTask(
                     ":RuntimeTests:Fabric:runBetterXCompatibility${spec.suffix}",
                     processLog,
                     300)
@@ -829,7 +854,7 @@ tasks.register('verifyBetterXCompatibility') {
             }
         }
 
-        def productionJar = project(':Fabric').tasks.named('jar').get().archiveFile.get().asFile
+        def productionJar = productionArchive.get().asFile
         def productionZip = new java.util.zip.ZipFile(productionJar)
         try {
             def forbiddenEntries = productionZip.entries().findAll { entry ->
@@ -882,9 +907,9 @@ tasks.register('verifyBetterXCompatibility') {
 tasks.register('preparePersistenceRestart', Delete) {
     group = 'verification'
     description = 'Deletes the dedicated persistence world before the write run.'
-    delete layout.buildDirectory.dir('run/persistenceGameTest')
+    delete fixtureBuildDirectory.dir('run/persistenceGameTest')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/persistenceGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/persistenceGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
@@ -921,7 +946,7 @@ def preparePersistenceRestartRead = tasks.register('preparePersistenceRestartRea
     description = 'Changes the isolated persistence config after the write process.'
     dependsOn tasks.named('runPersistenceWrite')
     doLast {
-        def configFile = layout.buildDirectory.file(
+        def configFile = fixtureBuildDirectory.file(
                 'run/persistenceGameTest/config/mismatchedboots-attributes.toml').get().asFile
         configFile.parentFile.mkdirs()
         configFile.text = '''[attributes]
@@ -930,7 +955,7 @@ fallback = "separate"
 [attributes."minecraft:movement_speed"]
 policy = "combine"
 '''
-        def componentConfigFile = layout.buildDirectory.file(
+        def componentConfigFile = fixtureBuildDirectory.file(
                 'run/persistenceGameTest/config/mismatchedboots-components.toml').get().asFile
         componentConfigFile.text = '''[durability]
 policy = "separate"
@@ -961,9 +986,9 @@ tasks.named('runPersistenceRead') {
 tasks.register('prepareAttributeRulesGameTest', Delete) {
     group = 'verification'
     description = 'Creates the isolated non-default attribute-rule GameTest config.'
-    delete layout.buildDirectory.dir('run/attributeRulesGameTest')
+    delete fixtureBuildDirectory.dir('run/attributeRulesGameTest')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/attributeRulesGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/attributeRulesGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
@@ -988,9 +1013,9 @@ tasks.named('runAttributeRules') {
 tasks.register('prepareComponentRulesGameTest', Delete) {
     group = 'verification'
     description = 'Creates the isolated non-default component-rule GameTest config.'
-    delete layout.buildDirectory.dir('run/componentRulesGameTest')
+    delete fixtureBuildDirectory.dir('run/componentRulesGameTest')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/componentRulesGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/componentRulesGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
@@ -1019,9 +1044,9 @@ tasks.named('runComponentRules') {
 tasks.register('prepareDamageTagReloadGameTest', Delete) {
     group = 'verification'
     description = 'Clears the isolated data-pack reload GameTest world.'
-    delete layout.buildDirectory.dir('run/damageTagReloadGameTest')
+    delete fixtureBuildDirectory.dir('run/damageTagReloadGameTest')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/damageTagReloadGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/damageTagReloadGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
@@ -1035,9 +1060,9 @@ tasks.named('runDamageTagReload') {
 tasks.register('prepareBehaviorTagReloadGameTest', Delete) {
     group = 'verification'
     description = 'Clears the isolated behavior-tag reload GameTest world.'
-    delete layout.buildDirectory.dir('run/behaviorTagReloadGameTest')
+    delete fixtureBuildDirectory.dir('run/behaviorTagReloadGameTest')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/behaviorTagReloadGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/behaviorTagReloadGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
@@ -1051,9 +1076,9 @@ tasks.named('runBehaviorTagReload') {
 tasks.register('prepareWorkbenchRecipeReloadGameTest', Delete) {
     group = 'verification'
     description = 'Clears the isolated recipe-removal GameTest world.'
-    delete layout.buildDirectory.dir('run/workbenchRecipeReloadGameTest')
+    delete fixtureBuildDirectory.dir('run/workbenchRecipeReloadGameTest')
     doLast {
-        def runDirectory = layout.buildDirectory.dir('run/workbenchRecipeReloadGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/workbenchRecipeReloadGameTest').get().asFile
         runDirectory.mkdirs()
         new File(runDirectory, 'eula.txt').text = 'eula=true\n'
         new File(runDirectory, 'server.properties').text = 'online-mode=false\n'
@@ -1102,6 +1127,47 @@ tasks.register('verifyGameplay') {
             tasks.named('verifyBehaviorTagReload'), tasks.named('verifyWorkbenchRecipeReload')
 }
 
+tasks.register('prepareMissingGameTestContext', Delete) {
+    delete contextGuardRunDirectory, contextGuardReport
+    doLast {
+        def directory = contextGuardRunDirectory.get().asFile
+        directory.mkdirs()
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+    }
+}
+tasks.named('runMissingGameTestContext') {
+    dependsOn tasks.named('prepareMissingGameTestContext')
+}
+tasks.register('verifyGameTestContextGuard') {
+    group = 'verification'
+    description = 'Proves a focused GameTest without its required fixture fails instead of passing a no-op.'
+    dependsOn ':Fabric:jar', tasks.named('gametestClasses')
+    doLast {
+        // The child might fail before its preparation task; never accept an old negative report.
+        fixtureFileOperations.delete { delete contextGuardReport }
+        def log = fixtureBuildDirectory.file('context-guard/process.log').get().asFile
+        boolean failed = false
+        try {
+            runBoundedGradleTask(':RuntimeTests:Fabric:runMissingGameTestContext', log, 120)
+        } catch (GradleException expected) {
+            failed = expected.message.contains('exited with 1;')
+        }
+        if (!failed || !contextGuardReport.get().asFile.isFile()) {
+            throw new GradleException("Missing-context negative control did not fail as intended; see ${log}")
+        }
+        def parser = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+        parser.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+        def document = parser.newDocumentBuilder().parse(contextGuardReport.get().asFile)
+        def failures = document.getElementsByTagName('failure')
+        if (document.getElementsByTagName('testcase').length != 1 || failures.length != 1
+                || !failures.item(0).getAttribute('message').contains(
+                        'Focused GameTest is missing its required context: mismatchedboots.test.componentRules')) {
+            throw new GradleException("Missing-context run failed for an unexpected reason; see ${log}")
+        }
+        logger.lifecycle('Focused GameTest missing-context guard rejected the invalid run')
+    }
+}
+
 tasks.register('verifyClient') {
     group = 'verification'
     description = 'Runs the unattended Fabric client GameTest suite.'
@@ -1114,7 +1180,53 @@ tasks.named('check') {
 
 tasks.named('runGameTest') {
     systemProperty 'fabric-api.gametest.report-file',
-            layout.buildDirectory.file('reports/gametest/results.xml').get().asFile.absolutePath
+            fixtureBuildDirectory.file('reports/gametest/results.xml').get().asFile.absolutePath
+}
+
+// Fabric's reporter has no skip API. Keep full-suite discovery, but describe
+// context-only no-ops honestly in JUnit XML rather than counting them as passes.
+// Keep these IDs aligned with the requireOrSkip guards; missing IDs fail loudly.
+def contextOnlyTests = [
+        'attribute_rules_game_tests_isolated_server_config_controls_new_composition_and_rejects_configured_attributes',
+        'persistence_game_tests_restart_round_trip_uses_the_dedicated_two_process_harness',
+        'component_rules_config_game_tests_configured_composition_works',
+        'damage_tag_reload_game_tests_existing_stack_tracks_tag_reload',
+        'behavior_tag_reload_game_tests_existing_stack_tracks_piglin_safe_armor_reload',
+        'mismatched_workbench_content_game_tests_recipe_pack_removal_disables_only_data_driven_transformations'
+].collect { "mismatchedboots-test:${it}".toString() }
+['runGameTest': 'results.xml', 'runAttributeRules': 'attribute-rules.xml'].each { taskName, reportName ->
+    def report = fixtureBuildDirectory.file("reports/gametest/${reportName}")
+    def omitted = taskName == 'runAttributeRules' ? contextOnlyTests.drop(1) : contextOnlyTests
+    tasks.named(taskName) {
+        doFirst { fixtureFileOperations.delete { delete report } }
+        doLast {
+            def parser = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+            parser.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+            def document = parser.newDocumentBuilder().parse(report.get().asFile)
+            def cases = document.getElementsByTagName('testcase')
+            omitted.each { id ->
+                def matches = (0..<cases.length).collect { cases.item(it) }
+                        .findAll { it.getAttribute('name') == id }
+                if (matches.size() != 1 || matches[0].hasChildNodes()) {
+                    throw new GradleException("Expected one successful context-only no-op for ${id}")
+                }
+                def skipped = document.createElement('skipped')
+                skipped.setAttribute('message', 'Requires its dedicated fixture; not exercised by this run')
+                matches[0].appendChild(skipped)
+            }
+            def suites = document.getElementsByTagName('testsuite')
+            (0..<suites.length).each { index ->
+                def suite = suites.item(index)
+                suite.setAttribute('tests', suite.getElementsByTagName('testcase').length.toString())
+                suite.setAttribute('skipped', suite.getElementsByTagName('skipped').length.toString())
+            }
+            def transformer = javax.xml.transform.TransformerFactory.newInstance().newTransformer()
+            transformer.transform(new javax.xml.transform.dom.DOMSource(document),
+                    new javax.xml.transform.stream.StreamResult(report.get().asFile))
+            logger.lifecycle("${taskName}: ${cases.length - omitted.size()} exercised (including vanilla control), "
+                    + "${omitted.size()} context-only skipped; ${report.get().asFile}")
+        }
+    }
 }
 
 tasks.named('runClientGameTest') {
@@ -1123,7 +1235,7 @@ tasks.named('runClientGameTest') {
             .getOrElse(false)
     systemProperty 'mismatchedboots.test.hideClientWindow', !showWindow
     doFirst {
-        def runDirectory = layout.buildDirectory.dir('run/clientGameTest').get().asFile
+        def runDirectory = fixtureBuildDirectory.dir('run/clientGameTest').get().asFile
         def optionsFile = new File(runDirectory, 'options.txt')
         optionsFile.parentFile.mkdirs()
         optionsFile.text = 'soundCategory_master:0.0\n'
@@ -1142,12 +1254,14 @@ policy = "minimum"
 }
 
 dependencies {
-    gametestRuntimeOnly files(project(':Fabric').tasks.named('jar').flatMap { it.archiveFile })
+    gametestRuntimeOnly files(productionArchive)
 }
+
+apply from: rootProject.file('gradle/quilt-smoke.gradle')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
-        .getOrElse(layout.buildDirectory.dir('markers').get().asFile.absolutePath)
+        .getOrElse(fixtureBuildDirectory.dir('markers').get().asFile.absolutePath)
 
 loom {
     mods {

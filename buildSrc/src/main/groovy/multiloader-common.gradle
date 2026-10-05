@@ -17,16 +17,16 @@ repositories {
         dirs 'libs'
     }
 
-    mavenLocal()
+    def localRepository = providers.gradleProperty('useMavenLocal').map { it.toBoolean() }.getOrElse(false)
+            ? mavenLocal() : null
     mavenCentral()
     exclusiveContent {
-        forRepositories(
-                mavenLocal(),
-                maven {
-                    name = 'CommonNetworking'
-                    url = 'https://jm.gserv.me/repository/maven-public/'
-                }
-        )
+        def networkingRepository = maven {
+            name = 'CommonNetworking'
+            url = 'https://jm.gserv.me/repository/maven-public/'
+        }
+        forRepositories(*(localRepository == null ? [networkingRepository]
+                : [localRepository, networkingRepository]))
         filter {
             includeGroupAndSubgroups('mysticdrew')
         }
@@ -104,6 +104,7 @@ repositories {
 
 if (project.path in [':Common', ':Fabric', ':NeoForge']) {
     dependencies {
+        // Advanced Netherite 2.4.1 Fabric, exact Modrinth version: https://modrinth.com/mod/CFX9ftUJ/version/vudH2Rjv
         compileOnly('maven.modrinth:CFX9ftUJ:vudH2Rjv') {
             transitive = false
         }
@@ -163,8 +164,10 @@ processResources {
             "mod_license":                          mod_license,
             "mod_logo":                             mod_logo,
             "fabric_api_version":                   fabric_api_version,
+            "fabric_api_min_version":               fabric_api_min_version,
             "fabric_loader_version":                fabric_loader_version,
             "neoforge_version":                     neoforge_version,
+            "neoforge_version_range":               neoforge_version_range,
             "neoforge_loader_version_range":        neoforge_loader_version_range,
             "common_networking_version":            common_networking_version
     ]

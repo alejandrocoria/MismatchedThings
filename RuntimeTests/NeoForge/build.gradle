@@ -7,6 +7,12 @@ base.archivesName = "mismatchedboots-runtime-test-neoforge"
 
 evaluationDependsOn(':NeoForge')
 
+// Resolve project-owned services/providers during configuration, not from Task.project in actions.
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+def fixtureBuildDirectory = layout.buildDirectory
+def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
 dependencies {
     compileOnly files(project(':NeoForge').sourceSets.main.output)
 }
@@ -23,9 +29,11 @@ configurations {
 }
 
 dependencies {
+    // Advanced Netherite 2.4.1 NeoForge; https://modrinth.com/mod/CFX9ftUJ/version/yvbzX6CA
     advancedNetheriteNeoForge('maven.modrinth:CFX9ftUJ:yvbzX6CA') {
         transitive = false
     }
+    // JourneyMap 26.1.2-6.0.4 NeoForge; https://modrinth.com/mod/lfHFW1mp/version/MYF1fYGU
     journeyMapNeoForge('maven.modrinth:lfHFW1mp:MYF1fYGU') {
         transitive = false
     }
@@ -45,13 +53,13 @@ sourceSets.main.java.srcDir rootProject.file('RuntimeTests/Common/src/main/java'
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
-        .getOrElse(layout.buildDirectory.dir('markers').get().asFile.absolutePath)
-def geometryMarkers = layout.buildDirectory.dir('geometry-markers')
-def geometryRunDirectory = layout.buildDirectory.dir('run/geometryClient')
-def tooltipMarkers = layout.buildDirectory.dir('tooltip-markers')
-def tooltipRunDirectory = layout.buildDirectory.dir('run/tooltipClient')
-def advancedNetheriteMarkers = layout.buildDirectory.dir('advanced-netherite-markers')
-def advancedNetheriteRunDirectory = layout.buildDirectory.dir('run/advancedNetheriteCompatibility')
+        .getOrElse(fixtureBuildDirectory.dir('markers').get().asFile.absolutePath)
+def geometryMarkers = fixtureBuildDirectory.dir('geometry-markers')
+def geometryRunDirectory = fixtureBuildDirectory.dir('run/geometryClient')
+def tooltipMarkers = fixtureBuildDirectory.dir('tooltip-markers')
+def tooltipRunDirectory = fixtureBuildDirectory.dir('run/tooltipClient')
+def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-markers')
+def advancedNetheriteRunDirectory = fixtureBuildDirectory.dir('run/advancedNetheriteCompatibility')
 
 neoForge {
     version = neoforge_version
@@ -133,8 +141,8 @@ tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
         def runDirectory = advancedNetheriteRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
-        copy {
-            from(project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile })
+        fixtureFileOperations.copy {
+            from(productionArchive)
             from(advancedNetheriteTestJar.flatMap { it.archiveFile })
             from(configurations.advancedNetheriteNeoForge)
             into(modsDirectory)
@@ -155,9 +163,9 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
     description = 'Runs bounded NeoForge acceptance against Advanced Netherite 2.4.1.'
     dependsOn(':NeoForge:jar', advancedNetheriteTestJar)
     doLast {
-        def processLog = layout.buildDirectory.file(
+        def processLog = fixtureBuildDirectory.file(
                 'reports/advanced-netherite/neoforge-process.log').get().asFile
-        rootProject.ext.runBoundedGradleTask(
+        runBoundedGradleTask(
                 ':RuntimeTests:NeoForge:runAdvancedNetheriteCompatibility', processLog, 240)
         def markerDirectory = advancedNetheriteMarkers.get().asFile
         def failure = new File(markerDirectory, 'advanced-netherite-failure.txt')
@@ -175,14 +183,14 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
 tasks.register('prepareGeometryClient') {
     dependsOn(':NeoForge:jar')
     doLast {
-        delete(geometryMarkers)
-        delete(geometryRunDirectory)
+        fixtureFileOperations.delete { delete geometryMarkers }
+        fixtureFileOperations.delete { delete geometryRunDirectory }
 
         def runDirectory = geometryRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
-        copy {
-            from(project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile })
+        fixtureFileOperations.copy {
+            from(productionArchive)
             into(modsDirectory)
         }
         new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'
@@ -218,14 +226,14 @@ tasks.register('verifyGeometryCharacterization') {
 tasks.register('prepareTooltipClient') {
     dependsOn(':NeoForge:jar')
     doLast {
-        delete(tooltipMarkers)
-        delete(tooltipRunDirectory)
+        fixtureFileOperations.delete { delete tooltipMarkers }
+        fixtureFileOperations.delete { delete tooltipRunDirectory }
 
         def runDirectory = tooltipRunDirectory.get().asFile
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
-        copy {
-            from(project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile })
+        fixtureFileOperations.copy {
+            from(productionArchive)
             into(modsDirectory)
         }
         new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'

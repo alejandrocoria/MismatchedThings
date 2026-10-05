@@ -2,7 +2,9 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
-        mavenLocal()
+        if (providers.gradleProperty('useMavenLocal').map { it.toBoolean() }.getOrElse(false)) {
+            mavenLocal()
+        }
         exclusiveContent {
             forRepository {
                 maven {

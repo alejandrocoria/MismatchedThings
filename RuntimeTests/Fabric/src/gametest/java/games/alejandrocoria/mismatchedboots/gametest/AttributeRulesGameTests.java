@@ -54,8 +54,7 @@ public final class AttributeRulesGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void isolatedServerConfigControlsNewCompositionAndRejectsConfiguredAttributes(GameTestHelper helper) {
-        if (!Boolean.getBoolean(CUSTOM_RULES_PROPERTY)) {
-            helper.succeed();
+        if (!GameTestContexts.requireOrSkip(helper, CUSTOM_RULES_PROPERTY, Boolean.getBoolean(CUSTOM_RULES_PROPERTY))) {
             return;
         }
 

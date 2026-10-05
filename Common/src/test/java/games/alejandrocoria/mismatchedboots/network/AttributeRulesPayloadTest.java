@@ -3,11 +3,16 @@ package games.alejandrocoria.mismatchedboots.network;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.Bootstrap;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -18,6 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AttributeRulesPayloadTest {
+    @BeforeAll
+    static void bootstrap() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
+
     @Test
     void codecIsDeterministicAndPreservesFallbackAndOrderedEntries() {
         AttributeRuleSet rules = rules();
@@ -52,16 +63,53 @@ class AttributeRulesPayloadTest {
         assertMalformed(buffer -> {
             writeHeader(buffer, "separate", 2);
             writeEntry(buffer, "minecraft:armor", "average");
-            writeEntry(buffer, "armor", "combine");
+            writeEntry(buffer, "minecraft:armor", "combine");
         });
     }
 
     @Test
     void codecRejectsInvalidAttributeIds() {
-        assertMalformed(buffer -> {
-            writeHeader(buffer, "separate", 1);
-            writeEntry(buffer, "Invalid Namespace:armor", "average");
-        });
+        for (String id : new String[]{"armor", ":armor", "minecraft:", "a:b:c", "Invalid Namespace:armor"}) {
+            assertMalformed(buffer -> {
+                writeHeader(buffer, "separate", 1);
+                writeEntry(buffer, id, "average");
+            });
+        }
+    }
+
+    @Test
+    void codecPreservesEmptyAndMaximumDormantDeclarations() {
+        for (int count : new int[]{0, 4_096}) {
+            AttributeRuleSet rules = declarations(count);
+            assertEquals(rules, decode(encode(new AttributeRulesPayload(rules))).rules());
+        }
+    }
+
+    @Test
+    void encoderRejectsTooManyDeclarationsBeforeWriting() {
+        RegistryFriendlyByteBuf buffer = buffer();
+        try {
+            assertThrows(EncoderException.class, () -> AttributeRulesPayload.STREAM_CODEC.encode(
+                    buffer, new AttributeRulesPayload(declarations(4_097))));
+            assertEquals(0, buffer.writerIndex(), "Rejected payload must not write a partial header");
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
+    void decoderRejectsOutOfRangeCountsWithoutReadingEntries() {
+        for (int count : new int[]{-1, 4_097, Integer.MAX_VALUE}) {
+            assertMalformed(buffer -> writeHeader(buffer, "separate", count));
+        }
+    }
+
+    private static AttributeRuleSet declarations(int count) {
+        LinkedHashMap<Identifier, AttributePolicy> rules = new LinkedHashMap<>();
+        for (int index = 0; index < count; index++) {
+            rules.put(Identifier.fromNamespaceAndPath("absent_mod", "attribute_" + index), AttributePolicy.COMBINE);
+        }
+        return new AttributeRuleSet(AttributePolicy.SEPARATE, rules);
     }
 
     @Test
@@ -90,7 +138,7 @@ class AttributeRulesPayloadTest {
             AttributeRulesPayload.STREAM_CODEC.encode(buffer, new AttributeRulesPayload(rules()));
             buffer.writeByte(0);
 
-            assertThrows(RuntimeException.class, () -> AttributeRulesPayload.STREAM_CODEC.decode(buffer));
+            assertThrows(DecoderException.class, () -> AttributeRulesPayload.STREAM_CODEC.decode(buffer));
         } finally {
             buffer.release();
         }
@@ -144,7 +192,7 @@ class AttributeRulesPayloadTest {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
             writer.write(buffer);
-            assertThrows(RuntimeException.class, () -> AttributeRulesPayload.STREAM_CODEC.decode(buffer));
+            assertThrows(DecoderException.class, () -> AttributeRulesPayload.STREAM_CODEC.decode(buffer));
         } finally {
             buffer.release();
         }

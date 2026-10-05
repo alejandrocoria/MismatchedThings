@@ -36,8 +36,7 @@ public final class DamageTagReloadGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE, maxTicks = 1200)
     public void existingStackTracksTagReload(GameTestHelper helper) {
-        if (!Boolean.getBoolean(ENABLED_PROPERTY)) {
-            helper.succeed();
+        if (!GameTestContexts.requireOrSkip(helper, ENABLED_PROPERTY, Boolean.getBoolean(ENABLED_PROPERTY))) {
             return;
         }
 

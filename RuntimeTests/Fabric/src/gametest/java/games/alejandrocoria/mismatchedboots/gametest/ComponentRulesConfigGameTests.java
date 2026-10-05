@@ -21,8 +21,7 @@ public final class ComponentRulesConfigGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void configuredCompositionWorks(GameTestHelper helper) {
-        if (!Boolean.getBoolean(CUSTOM_RULES_PROPERTY)) {
-            helper.succeed();
+        if (!GameTestContexts.requireOrSkip(helper, CUSTOM_RULES_PROPERTY, Boolean.getBoolean(CUSTOM_RULES_PROPERTY))) {
             return;
         }
 

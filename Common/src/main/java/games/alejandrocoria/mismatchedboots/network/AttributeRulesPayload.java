@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public record AttributeRulesPayload(AttributeRuleSet rules) implements CustomPacketPayload {
+    private static final int MAX_RULE_COUNT = 4_096;
     private static final int MAX_POLICY_LENGTH = 16;
     private static final int MAX_IDENTIFIER_LENGTH = 32_767;
 
@@ -32,9 +34,14 @@ public record AttributeRulesPayload(AttributeRuleSet rules) implements CustomPac
     }
 
     private static void encode(RegistryFriendlyByteBuf buffer, AttributeRulesPayload payload) {
+        int count = payload.rules.rules().size();
+        if (count > MAX_RULE_COUNT) {
+            throw new EncoderException("Too many attribute rules: " + count);
+        }
         writePolicy(buffer, payload.rules.fallback());
-        buffer.writeVarInt(payload.rules.rules().size());
+        buffer.writeVarInt(count);
         payload.rules.rules().forEach((id, policy) -> {
+            // Identifier.toString() always writes the explicit, validated namespace:path form.
             buffer.writeUtf(id.toString(), MAX_IDENTIFIER_LENGTH);
             writePolicy(buffer, policy);
         });
@@ -43,13 +50,18 @@ public record AttributeRulesPayload(AttributeRuleSet rules) implements CustomPac
     private static AttributeRulesPayload decode(RegistryFriendlyByteBuf buffer) {
         AttributePolicy fallback = readPolicy(buffer);
         int count = buffer.readVarInt();
-        if (count < 0) {
-            throw new DecoderException("Negative attribute-rule count: " + count);
+        if (count < 0 || count > MAX_RULE_COUNT) {
+            throw new DecoderException("Invalid attribute-rule count: " + count);
         }
 
         Map<Identifier, AttributePolicy> rules = new LinkedHashMap<>();
         for (int index = 0; index < count; index++) {
             String serializedId = buffer.readUtf(MAX_IDENTIFIER_LENGTH);
+            int separator = serializedId.indexOf(':');
+            if (separator <= 0 || separator != serializedId.lastIndexOf(':')
+                    || separator == serializedId.length() - 1) {
+                throw new DecoderException("Invalid attribute ID: " + serializedId);
+            }
             Identifier id;
             try {
                 id = Identifier.parse(serializedId);

@@ -208,8 +208,7 @@ public final class MismatchedWorkbenchContentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE, maxTicks = 1200)
     public void recipePackRemovalDisablesOnlyDataDrivenTransformations(GameTestHelper helper) {
-        if (!Boolean.getBoolean(RELOAD_PROPERTY)) {
-            helper.succeed();
+        if (!GameTestContexts.requireOrSkip(helper, RELOAD_PROPERTY, Boolean.getBoolean(RELOAD_PROPERTY))) {
             return;
         }
 

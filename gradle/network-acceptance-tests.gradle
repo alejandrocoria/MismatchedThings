@@ -4,23 +4,39 @@ import java.util.concurrent.TimeUnit
 
 def networkAcceptanceRoot = layout.buildDirectory.dir('network-acceptance')
 def gradleLauncher = rootProject.file('gradlew.bat')
+def acceptanceFileOperations = objects.newInstance(FixtureFileOperations).files
+def acceptanceProjectDirectory = rootProject.projectDir
+def archiveProviders = [:]
+def endpointDirectories = [:]
+def journeyMapConfiguration
+// Forward selected baselines into child Gradle runs; otherwise a minimum-loader
+// acceptance command would silently start the default loader instead.
+def baselineArguments = ['neoforge_version', 'fabric_loader_version', 'fabric_api_version', 'useMavenLocal']
+        .findAll { gradle.startParameter.projectProperties.containsKey(it) }
+        .collect { "-P${it}=${gradle.startParameter.projectProperties[it]}".toString() }
 
-def endpointProject = { String loader ->
-    loader == 'fabric' ? project(':RuntimeTests:Fabric') : project(':RuntimeTests:NeoForge')
+gradle.projectsEvaluated {
+    ['fabric': 'Fabric', 'neoforge': 'NeoForge'].each { loader, name ->
+        archiveProviders[loader] = project(":${name}").tasks.named('jar').flatMap { it.archiveFile }
+        def runtimeProject = project(":RuntimeTests:${name}")
+        endpointDirectories[loader] = ['server', 'client'].collectEntries { endpoint ->
+            [(endpoint): runtimeProject.layout.buildDirectory.dir("run/${endpoint}")]
+        }
+    }
+    journeyMapConfiguration = project(':RuntimeTests:NeoForge').configurations.journeyMapNeoForge
 }
 
 def productionArtifact = { String loader ->
-    def projectPath = loader == 'fabric' ? ':Fabric' : ':NeoForge'
-    project(projectPath).tasks.named('jar').get().archiveFile.get().asFile
+    archiveProviders[loader].get().asFile
 }
 
 def runDirectory = { String loader, String endpoint ->
-    endpointProject(loader).layout.buildDirectory.dir("run/${endpoint}").get().asFile
+    endpointDirectories[loader][endpoint].get().asFile
 }
 
 def prepareEndpoint = { String loader, String endpoint, int port, File extraMod ->
     File directory = runDirectory(loader, endpoint)
-    delete(directory)
+    acceptanceFileOperations.delete { delete directory }
     File mods = new File(directory, 'mods')
     File config = new File(directory, 'config')
     mods.mkdirs()
@@ -81,7 +97,8 @@ narrator:0
 }
 
 def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady ->
-    String taskName = "${endpointProject(loader).path}:runNetworkTest${endpoint.capitalize()}"
+    String projectName = loader == 'fabric' ? 'Fabric' : 'NeoForge'
+    String taskName = ":RuntimeTests:${projectName}:runNetworkTest${endpoint.capitalize()}"
     List<String> gradleArguments = [
             gradleLauncher.absolutePath,
             '--no-daemon',
@@ -91,14 +108,14 @@ def startEndpoint = { String loader, String endpoint, int port, File markers, bo
             "-PnetworkTestMarkers=${markers.absolutePath}",
             "-PnetworkTestStopAfterReady=${stopAfterReady}",
             taskName
-    ]
+    ] + baselineArguments
     List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
             ? ['cmd.exe', '/d', '/c'] + gradleArguments
             : gradleArguments).collect { it.toString() }
     File output = new File(markers, "${endpoint}-process.log")
     println "Starting ${loader} ${endpoint} on port ${port}"
     return new ProcessBuilder(command)
-            .directory(rootProject.projectDir)
+            .directory(acceptanceProjectDirectory)
             .redirectErrorStream(true)
             .redirectOutput(output)
             .start()
@@ -126,11 +143,12 @@ rootProject.ext.runBoundedGradleTask = { String taskPath, File output, long time
             '-Dorg.gradle.jvmargs=-Xmx768m',
             taskPath
     ]
+    gradleArguments.addAll(baselineArguments)
     List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
             ? ['cmd.exe', '/d', '/c'] + gradleArguments
             : gradleArguments).collect { it.toString() }
     Process process = new ProcessBuilder(command)
-            .directory(rootProject.projectDir)
+            .directory(acceptanceProjectDirectory)
             .redirectErrorStream(true)
             .redirectOutput(output)
             .start()
@@ -226,7 +244,7 @@ def assertPairMarkers = { File markers, String serverLoader, String clientLoader
 def runPair = { String serverLoader, String clientLoader, int port ->
     String pairName = "${serverLoader}-server_${clientLoader}-client"
     File markers = networkAcceptanceRoot.get().dir(pairName).asFile
-    delete(markers)
+    acceptanceFileOperations.delete { delete markers }
     markers.mkdirs()
     prepareEndpoint(serverLoader, 'server', port, null)
     prepareEndpoint(clientLoader, 'client', port, null)
@@ -248,8 +266,7 @@ def runPair = { String serverLoader, String clientLoader, int port ->
 }
 
 def journeyMapNeoForge = {
-    def artifact = project(':RuntimeTests:NeoForge')
-            .configurations.journeyMapNeoForge
+    def artifact = journeyMapConfiguration
             .resolvedConfiguration
             .resolvedArtifacts
             .find {
@@ -266,7 +283,7 @@ def journeyMapNeoForge = {
 def runJourneyMapCoexistence = {
     int port = 25578
     File markers = networkAcceptanceRoot.get().dir('neoforge-journeymap').asFile
-    delete(markers)
+    acceptanceFileOperations.delete { delete markers }
     markers.mkdirs()
     File journeyMapArtifact = journeyMapNeoForge()
     def digest = java.security.MessageDigest.getInstance('SHA-256')
@@ -303,7 +320,7 @@ def runJourneyMapCoexistence = {
 
 def runServerStartup = { String loader, int port ->
     File markers = networkAcceptanceRoot.get().dir("${loader}-server-startup").asFile
-    delete(markers)
+    acceptanceFileOperations.delete { delete markers }
     markers.mkdirs()
     prepareEndpoint(loader, 'server', port, null)
     Process server = null

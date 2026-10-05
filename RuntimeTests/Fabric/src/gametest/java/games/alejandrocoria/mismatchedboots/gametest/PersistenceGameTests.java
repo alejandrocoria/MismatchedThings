@@ -129,8 +129,7 @@ public final class PersistenceGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void restartRoundTripUsesTheDedicatedTwoProcessHarness(GameTestHelper helper) {
         String mode = System.getProperty(RESTART_MODE_PROPERTY, "disabled");
-        if (mode.equals("disabled")) {
-            helper.succeed();
+        if (!GameTestContexts.requireOrSkip(helper, RESTART_MODE_PROPERTY, !mode.equals("disabled"))) {
             return;
         }
 

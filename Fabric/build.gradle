@@ -16,9 +16,11 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     implementation 'com.google.code.findbugs:jsr305:3.0.1'
+    // BetterEnd; exact target also used by RuntimeTests: https://modrinth.com/mod/gc8OEnCC/version/tBdZGZeX
     compileOnly('maven.modrinth:gc8OEnCC:tBdZGZeX') {
         transitive = false
     }
+    // Create Fly 6.0.9-4; https://modrinth.com/mod/dKvj0eNn/version/wV5IQLKg
     compileOnly('maven.modrinth:dKvj0eNn:wV5IQLKg') {
         transitive = false
     }
@@ -61,7 +63,8 @@ loom {
 }
 
 // Keep the established validation commands while runtime infrastructure lives separately.
-['verifyGameplay', 'verifyClient', 'verifyPersistenceRestart', 'verifyComponentRulesConfig',
+['verifyGameplay', 'verifyClient', 'verifyQuiltSmoke', 'verifyGameTestContextGuard',
+ 'verifyPersistenceRestart', 'verifyComponentRulesConfig',
  'runGameTest', 'runClientGameTest', 'runPersistenceWrite', 'runPersistenceRead',
  'runAttributeRules', 'runComponentRules', 'compileGametestJava', 'processGametestResources', 'gametestClasses'].each { name ->
     tasks.register(name) {
