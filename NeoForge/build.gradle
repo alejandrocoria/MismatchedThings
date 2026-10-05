@@ -70,6 +70,10 @@ dependencies {
 
 tasks.named('test', Test).configure {
     useJUnitPlatform()
+    def guardArtifact = providers.gradleProperty('iceAndFireGuardJar')
+    if (guardArtifact.isPresent()) {
+        systemProperty 'mismatchedboots.test.iceAndFireGuardJar', rootProject.file(guardArtifact.get()).absolutePath
+    }
 }
 
 idea {

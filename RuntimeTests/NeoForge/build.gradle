@@ -64,6 +64,28 @@ def iceAndFireArtifacts = [
         'uranus-3.0-alpha.1.jar': 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',
         'jupiter-2.4.3-26.1.2-universal.jar': 'fc2f273c02788c5ff6736439de8cef9a7eb2662f768e8ee1ac23c57323ee740c'
 ]
+def verifiedIceAndFireArtifacts = {
+    iceAndFireArtifacts.collect { filename, expectedHash ->
+        def artifact = new File(iceAndFireModsDirectory, filename)
+        if (!artifact.isFile()) {
+            throw new GradleException("Missing optional Ice and Fire fixture: ${artifact}")
+        }
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        artifact.withInputStream { stream ->
+            byte[] buffer = new byte[8192]
+            int count
+            while ((count = stream.read(buffer)) != -1) {
+                digest.update(buffer, 0, count)
+            }
+        }
+        if (digest.digest().encodeHex().toString() != expectedHash) {
+            throw new GradleException("Unexpected optional Ice and Fire artifact: ${artifact}")
+        }
+        artifact
+    }
+}
+def iceAndFireDamageMarkers = fixtureBuildDirectory.dir('ice-and-fire-damage-markers')
+def iceAndFireDamageRunDirectory = fixtureBuildDirectory.dir('run/iceAndFireDamageCompatibility')
 def tooltipMarkers = fixtureBuildDirectory.dir('tooltip-markers')
 def tooltipRunDirectory = fixtureBuildDirectory.dir('run/tooltipClient')
 def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-markers')
@@ -125,6 +147,16 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.markers',
                     advancedNetheriteMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.advancedNetheriteTest', 'true')
+            jvmArgument('-Xmx1G')
+        }
+        iceAndFireDamageCompatibility {
+            server()
+            disableIdeRun()
+            gameDirectory = iceAndFireDamageRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers',
+                    iceAndFireDamageMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.iceAndFireDamageTest', 'true')
             jvmArgument('-Xmx1G')
         }
     }
@@ -194,24 +226,7 @@ tasks.register('prepareGeometryClient') {
     doLast {
         def compatibilityArtifacts = []
         if (iceAndFireTest) {
-            iceAndFireArtifacts.each { filename, expectedHash ->
-                def artifact = new File(iceAndFireModsDirectory, filename)
-                if (!artifact.isFile()) {
-                    throw new GradleException("Missing optional Ice and Fire fixture: ${artifact}")
-                }
-                def digest = java.security.MessageDigest.getInstance('SHA-256')
-                artifact.withInputStream { stream ->
-                    byte[] buffer = new byte[8192]
-                    int count
-                    while ((count = stream.read(buffer)) != -1) {
-                        digest.update(buffer, 0, count)
-                    }
-                }
-                if (digest.digest().encodeHex().toString() != expectedHash) {
-                    throw new GradleException("Unexpected optional Ice and Fire artifact: ${artifact}")
-                }
-                compatibilityArtifacts.add(artifact)
-            }
+            compatibilityArtifacts = verifiedIceAndFireArtifacts()
         }
         fixtureFileOperations.delete { delete geometryMarkers }
         fixtureFileOperations.delete { delete geometryRunDirectory }
@@ -228,6 +243,56 @@ tasks.register('prepareGeometryClient') {
         def configDirectory = new File(runDirectory, 'config')
         configDirectory.mkdirs()
         new File(configDirectory, 'fml.toml').text = 'earlyWindowControl = false\n'
+    }
+}
+
+tasks.register('prepareIceAndFireDamageCompatibility') {
+    dependsOn(':NeoForge:jar')
+    doLast {
+        def compatibilityArtifacts = verifiedIceAndFireArtifacts()
+        fixtureFileOperations.delete { delete iceAndFireDamageMarkers, iceAndFireDamageRunDirectory }
+        def runDirectory = iceAndFireDamageRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        fixtureFileOperations.copy {
+            from(productionArchive)
+            from(compatibilityArtifacts)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"},{"height":2,"block":"minecraft:dirt"},{"height":1,"block":"minecraft:grass_block"}],"structure_overrides":[]}
+server-ip=127.0.0.1
+server-port=0
+spawn-protection=0
+'''
+    }
+}
+
+tasks.named('runIceAndFireDamageCompatibility') {
+    dependsOn('prepareIceAndFireDamageCompatibility')
+}
+
+tasks.register('verifyIceAndFireDamageCompatibility') {
+    group = 'verification'
+    description = 'Runs bounded real Ice and Fire CE dragon-damage acceptance on a dedicated server.'
+    dependsOn(':NeoForge:jar')
+    doLast {
+        def processLog = fixtureBuildDirectory.file('reports/ice-and-fire-damage/neoforge-process.log').get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runIceAndFireDamageCompatibility', processLog, 240)
+        def markerDirectory = iceAndFireDamageMarkers.get().asFile
+        def failure = new File(markerDirectory, 'ice-and-fire-damage-failure.txt')
+        if (failure.isFile()) {
+            throw new GradleException("Ice and Fire dragon-damage acceptance failed:\n${failure.text}")
+        }
+        def success = new File(markerDirectory, 'ice-and-fire-damage-success.txt')
+        def report = new File(markerDirectory, 'ice-and-fire-damage-report.txt')
+        if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Ice and Fire acceptance did not produce its result markers; see ${processLog}")
+        }
+        logger.lifecycle("Ice and Fire dragon-damage acceptance:\n${report.text}")
     }
 }
 

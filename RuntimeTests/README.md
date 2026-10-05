@@ -16,9 +16,9 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 - `Fabric/src/networkTest`: the auxiliary mod for real server/client network
   acceptance. It is separate from `gametest` so its entrypoints and fixtures
   do not run during GameTests, or vice versa. The `main` source set is empty.
-- `NeoForge/src/main`: the auxiliary mod for network acceptance and targeted
-  client geometry and tooltip checks. These use separate run directories and
-  entry paths.
+- `NeoForge/src/main`: the auxiliary mod for network acceptance, targeted
+  client geometry/tooltip checks, and opt-in real Ice and Fire dragon-damage
+  acceptance. These use separate run directories and entry paths.
 
 Runtime tests load the packaged production mod. Production output is available
 only for compilation; test classes, metadata, and fixtures are not included in
@@ -81,6 +81,36 @@ equipment assets, because item defaults are not bound before opening a world.
 It does not validate actual default components, gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
+
+The independent dragon-damage gate opens a real dedicated-server world with the
+same pinned artifacts and does not need a client:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireDamageCompatibility
+.\gradlew.bat :NeoForge:test '-PiceAndFireGuardJar=NeoForge/runs/client/mods/iceandfire-2.2-beta.3.jar'
+```
+
+The first task copies only the three SHA-256-verified mod JARs plus the packaged
+production mod into `NeoForge/build/run/iceAndFireDamageCompatibility`. It uses
+an explicit flat world, localhost binding and an ephemeral port, stops itself,
+and has a 240-second process bound. Source files and development clients are not
+modified. `-PiceAndFireTestModsDirectory=<directory>` also overrides its source
+artifact directory. Markers and the report are under
+`NeoForge/build/ice-and-fire-damage-markers`; the process log is under
+`NeoForge/build/reports/ice-and-fire-damage` (both relative to this directory).
+
+It creates mixed boots through the production factory with real bound item
+defaults and observes, without modifying, the native Pre damage event before
+and after upstream handlers. It checks actual `hurtServer` health loss for 15
+dragon variants and all three damage types, ordinary/inverse/two-source cases,
+all eight combinations of other dragon armor pieces, malformed/bare/spoofed
+roots, and unchanged equipment identity/source snapshots. Negative scope checks
+keep Troll projection and Lightning full-set recognition unimplemented.
+The gate is opt-in, not part of ordinary `build`/`check`; those need no Ice and
+Fire installation. The second command additionally enables the real-JAR
+bytecode guard characterization in NeoForge JUnit. Without that property, only
+that artifact-dependent test is skipped; the synthetic guard regressions run.
+This is dragon-damage acceptance, not full Ice and Fire gameplay/visual approval.
 
 The broad server GameTest XML reports mark context-only no-ops as skipped rather
 than successful coverage. `verifyGameTestContextGuard` deliberately starts one
