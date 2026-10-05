@@ -11,16 +11,16 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Pseudo
 @Mixin(targets = "com.iafenvoy.iceandfire.event.handler.ServerEvents", remap = false)
-abstract class IceAndFireDragonDamageMixin {
+abstract class IceAndFireDamageMixin {
     // Zero is intentional: a late fingerprint mismatch must stay inert even with injector debug validation enabled.
     @WrapOperation(
             method = "onEntityDamage(Lnet/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre;)V",
-            at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireDragonFeetInjectionPoint",
+            at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireDamageFeetInjectionPoint",
                     remap = false),
-            require = 0, expect = 0, allow = 2)
-    private static boolean mismatchedboots$recognizeDragonBootSource(
+            require = 0, expect = 0, allow = 3)
+    private static boolean mismatchedboots$recognizeArmorBootSource(
             Object item, Operation<Boolean> original, LivingDamageEvent.Pre event) {
-        // Each operation retains its actual upstream class check. The enclosing OR counts feet only once.
+        // Preserve each native class operation: one Troll piece and one Scale/Steel piece, not two halves.
         return original.call(item) || MixedBootsSources.anySource(
                 event.getEntity().getItemBySlot(EquipmentSlot.FEET), source -> original.call(source.getItem()));
     }

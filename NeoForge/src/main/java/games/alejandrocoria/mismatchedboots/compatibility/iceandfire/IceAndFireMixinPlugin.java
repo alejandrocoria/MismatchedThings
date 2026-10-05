@@ -11,40 +11,60 @@ import java.util.Set;
 
 public final class IceAndFireMixinPlugin implements IMixinConfigPlugin {
     private static final String OPTIONAL_MIXIN =
-            "games.alejandrocoria.mismatchedboots.mixin.IceAndFireDragonDamageMixin";
+            "games.alejandrocoria.mismatchedboots.mixin.IceAndFireDamageMixin";
+    private static final String LIGHTNING_MIXIN =
+            "games.alejandrocoria.mismatchedboots.mixin.IceAndFireLightningSetMixin";
     private Boolean compatible;
+    private Boolean lightningCompatible;
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return !OPTIONAL_MIXIN.equals(mixinClassName) || isCompatible();
+        if (OPTIONAL_MIXIN.equals(mixinClassName)) {
+            return isCompatible(false);
+        }
+        return !LIGHTNING_MIXIN.equals(mixinClassName) || isCompatible(true);
     }
 
-    private synchronized boolean isCompatible() {
-        if (compatible != null) {
-            return compatible;
+    private synchronized boolean isCompatible(boolean lightning) {
+        Boolean cached = lightning ? lightningCompatible : compatible;
+        if (cached != null) {
+            return cached;
         }
+        boolean result;
+        String integration = lightning ? "lightning-set" : "projectile/dragon";
         boolean handlerPresent = false;
         try {
             var provider = MixinService.getService().getBytecodeProvider();
-            ClassNode handler = provider.getClassNode(IceAndFireDragonDamageShape.HANDLER.replace('/', '.'));
+            ClassNode handler = provider.getClassNode(IceAndFireDamageShape.HANDLER.replace('/', '.'));
             handlerPresent = true;
-            ClassNode scale = provider.getClassNode(IceAndFireDragonDamageShape.SCALE.replace('/', '.'));
-            ClassNode steel = provider.getClassNode(IceAndFireDragonDamageShape.STEEL.replace('/', '.'));
-            compatible = IceAndFireDragonDamageShape.isCompatible(handler, scale, steel);
-            if (!compatible) {
-                Constants.LOG.warn("Ice and Fire dragon-damage handler changed; boot compatibility disabled");
+            if (lightning) {
+                ClassNode items = provider.getClassNode(IceAndFireDamageShape.ITEMS.replace('/', '.'));
+                result = IceAndFireDamageShape.isLightningCompatible(handler, items);
+            } else {
+                ClassNode scale = provider.getClassNode(IceAndFireDamageShape.SCALE.replace('/', '.'));
+                ClassNode steel = provider.getClassNode(IceAndFireDamageShape.STEEL.replace('/', '.'));
+                ClassNode troll = provider.getClassNode(IceAndFireDamageShape.TROLL.replace('/', '.'));
+                result = IceAndFireDamageShape.isCompatible(handler, scale, steel, troll);
+            }
+            if (!result) {
+                Constants.LOG.warn("Ice and Fire {} handler/API changed; its boot compatibility disabled", integration);
             }
         } catch (ClassNotFoundException exception) {
-            compatible = false;
+            result = false;
             if (handlerPresent) {
-                Constants.LOG.warn("Ice and Fire armor API is incomplete; boot compatibility disabled");
+                Constants.LOG.warn("Ice and Fire {} API is incomplete; its boot compatibility disabled", integration);
             }
         } catch (Exception | LinkageError exception) {
-            compatible = false;
-            Constants.LOG.warn("Could not inspect Ice and Fire dragon-damage handler; boot compatibility disabled",
-                    exception);
+            result = false;
+            Constants.LOG.warn("Could not inspect Ice and Fire {} handler; its boot compatibility disabled",
+                    integration, exception);
         }
-        return compatible;
+        if (lightning) {
+            lightningCompatible = result;
+        } else {
+            compatible = result;
+        }
+        return result;
     }
 
     @Override

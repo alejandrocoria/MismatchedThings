@@ -277,7 +277,7 @@ tasks.named('runIceAndFireDamageCompatibility') {
 
 tasks.register('verifyIceAndFireDamageCompatibility') {
     group = 'verification'
-    description = 'Runs bounded real Ice and Fire CE dragon-damage acceptance on a dedicated server.'
+    description = 'Runs bounded real Ice and Fire CE dragon/projectile damage and Lightning-set acceptance.'
     dependsOn(':NeoForge:jar')
     doLast {
         def processLog = fixtureBuildDirectory.file('reports/ice-and-fire-damage/neoforge-process.log').get().asFile
@@ -285,14 +285,14 @@ tasks.register('verifyIceAndFireDamageCompatibility') {
         def markerDirectory = iceAndFireDamageMarkers.get().asFile
         def failure = new File(markerDirectory, 'ice-and-fire-damage-failure.txt')
         if (failure.isFile()) {
-            throw new GradleException("Ice and Fire dragon-damage acceptance failed:\n${failure.text}")
+            throw new GradleException("Ice and Fire damage acceptance failed:\n${failure.text}")
         }
         def success = new File(markerDirectory, 'ice-and-fire-damage-success.txt')
         def report = new File(markerDirectory, 'ice-and-fire-damage-report.txt')
         if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
             throw new GradleException("Ice and Fire acceptance did not produce its result markers; see ${processLog}")
         }
-        logger.lifecycle("Ice and Fire dragon-damage acceptance:\n${report.text}")
+        logger.lifecycle("Ice and Fire damage acceptance:\n${report.text}")
     }
 }
 

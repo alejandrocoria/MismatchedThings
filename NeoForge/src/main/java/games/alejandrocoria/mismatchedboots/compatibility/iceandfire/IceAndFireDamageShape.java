@@ -21,39 +21,68 @@ import java.util.List;
 import java.util.Map;
 
 /** Bytecode-only inspection: inspecting an absent optional mod must not load its classes. */
-public final class IceAndFireDragonDamageShape {
+public final class IceAndFireDamageShape {
     static final String HANDLER = "com/iafenvoy/iceandfire/event/handler/ServerEvents";
     static final String SCALE = "com/iafenvoy/iceandfire/item/armor/DragonScaleArmorItem";
     static final String STEEL = "com/iafenvoy/iceandfire/item/armor/DragonSteelArmorItem";
+    static final String TROLL = "com/iafenvoy/iceandfire/item/armor/TrollArmorItem";
+    static final String ITEMS = "com/iafenvoy/iceandfire/registry/IafItems";
     static final String METHOD = "onEntityDamage";
+    static final String LIGHTNING_METHOD = "onLivingHurt";
     static final String DESCRIPTOR =
             "(Lnet/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre;)V";
     // Installed CE 2.2-beta.3, characterized without debug metadata; re-audit executable changes.
     static final String AUDITED_FINGERPRINT =
             "05b8d47b296aa4ad4de6e3aa9c1a477fc14789d5265617a5c518b1553d1bbdc9";
+    static final String LIGHTNING_FINGERPRINT =
+            "27d4490cc0ac9741b62dcbc4d2e39422cf12dbb8964c82decdf5cf41666f6169";
 
-    private IceAndFireDragonDamageShape() {
+    private IceAndFireDamageShape() {
     }
 
-    static boolean isCompatible(ClassNode handler, ClassNode scale, ClassNode steel) {
-        return isCompatible(handler, scale, steel, AUDITED_FINGERPRINT);
+    static boolean isCompatible(ClassNode handler, ClassNode scale, ClassNode steel, ClassNode troll) {
+        return isCompatible(handler, scale, steel, troll, AUDITED_FINGERPRINT);
     }
 
-    static boolean isCompatible(ClassNode handler, ClassNode scale, ClassNode steel, String expectedFingerprint) {
+    static boolean isCompatible(ClassNode handler, ClassNode scale, ClassNode steel, ClassNode troll,
+                                String expectedFingerprint) {
         if (handler == null || !HANDLER.equals(handler.name)
-                || !isPublicItemClass(scale, SCALE) || !isPublicItemClass(steel, STEEL)) {
+                || !isPublicItemClass(scale, SCALE) || !isPublicItemClass(steel, STEEL)
+                || !isPublicItemClass(troll, TROLL)) {
             return false;
         }
         MethodNode method = handler.methods.stream()
                 .filter(candidate -> METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
                 .findFirst().orElse(null);
-        return method != null
-                && (method.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
-                    == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
-                && (method.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0
-                && method.tryCatchBlocks.isEmpty()
-                && feetChecks(method.instructions).size() == 2
+        return isPublicHandler(method)
+                && feetChecks(method.instructions).size() == 3
                 && expectedFingerprint.equals(fingerprint(method));
+    }
+
+    static boolean isLightningCompatible(ClassNode handler, ClassNode items) {
+        return isLightningCompatible(handler, items, LIGHTNING_FINGERPRINT);
+    }
+
+    static boolean isLightningCompatible(ClassNode handler, ClassNode items, String expectedFingerprint) {
+        if (handler == null || !HANDLER.equals(handler.name) || items == null || !ITEMS.equals(items.name)
+                || items.fields.stream().noneMatch(field -> "DRAGONSTEEL_LIGHTNING_BOOTS".equals(field.name)
+                    && "Lnet/neoforged/neoforge/registries/DeferredItem;".equals(field.desc)
+                    && (field.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
+                        == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))) {
+            return false;
+        }
+        MethodNode method = handler.methods.stream()
+                .filter(candidate -> LIGHTNING_METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
+                .findFirst().orElse(null);
+        return isPublicHandler(method) && lightningFeetChecks(method.instructions).size() == 1
+                && expectedFingerprint.equals(fingerprint(method));
+    }
+
+    private static boolean isPublicHandler(MethodNode method) {
+        return method != null && (method.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
+                == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                && (method.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0
+                && method.tryCatchBlocks.isEmpty();
     }
 
     private static boolean isPublicItemClass(ClassNode node, String name) {
@@ -63,7 +92,7 @@ public final class IceAndFireDragonDamageShape {
                 && (node.access & Opcodes.ACC_INTERFACE) == 0;
     }
 
-    /** Select only the two native FEET class operations, never the preceding Troll/other-slot checks. */
+    /** Select only native FEET class operations: Troll, then Scale/Steel; never other-slot checks. */
     public static List<AbstractInsnNode> feetChecks(InsnList instructions) {
         List<AbstractInsnNode> code = new ArrayList<>();
         for (AbstractInsnNode node : instructions) {
@@ -74,7 +103,7 @@ public final class IceAndFireDragonDamageShape {
         List<AbstractInsnNode> result = new ArrayList<>();
         for (int index = 4; index < code.size(); index++) {
             if (!(code.get(index) instanceof TypeInsnNode check) || check.getOpcode() != Opcodes.INSTANCEOF
-                    || !(SCALE.equals(check.desc) || STEEL.equals(check.desc))) {
+                    || !(TROLL.equals(check.desc) || SCALE.equals(check.desc) || STEEL.equals(check.desc))) {
                 continue;
             }
             if (code.get(index - 4) instanceof VarInsnNode entity && entity.getOpcode() == Opcodes.ALOAD
@@ -90,11 +119,43 @@ public final class IceAndFireDragonDamageShape {
                 result.add(check);
             }
         }
-        if (result.size() != 2 || !SCALE.equals(((TypeInsnNode) result.get(0)).desc)
-                || !STEEL.equals(((TypeInsnNode) result.get(1)).desc)) {
+        if (result.size() != 3 || !TROLL.equals(((TypeInsnNode) result.get(0)).desc)
+                || !SCALE.equals(((TypeInsnNode) result.get(1)).desc)
+                || !STEEL.equals(((TypeInsnNode) result.get(2)).desc)) {
             return List.of();
         }
         return List.copyOf(result);
+    }
+
+    /** Select the native exact-item predicate, not the equipment read or the three other set checks. */
+    public static List<AbstractInsnNode> lightningFeetChecks(InsnList instructions) {
+        List<AbstractInsnNode> code = new ArrayList<>();
+        for (AbstractInsnNode node : instructions) {
+            if (node.getOpcode() >= 0) {
+                code.add(node);
+            }
+        }
+        List<AbstractInsnNode> result = new ArrayList<>();
+        for (int index = 6; index < code.size(); index++) {
+            if (isCall(code.get(index), "net/minecraft/world/item/ItemStack", "is", "(Ljava/lang/Object;)Z")
+                    && code.get(index - 6) instanceof VarInsnNode entity && entity.getOpcode() == Opcodes.ALOAD
+                    && entity.var == 1
+                    && code.get(index - 5) instanceof FieldInsnNode slot && slot.getOpcode() == Opcodes.GETSTATIC
+                    && "net/minecraft/world/entity/EquipmentSlot".equals(slot.owner)
+                    && "FEET".equals(slot.name) && ("L" + slot.owner + ";").equals(slot.desc)
+                    && isCall(code.get(index - 4), "net/minecraft/world/entity/LivingEntity", "getItemBySlot",
+                        "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
+                    && code.get(index - 3) instanceof FieldInsnNode item && item.getOpcode() == Opcodes.GETSTATIC
+                    && ITEMS.equals(item.owner) && "DRAGONSTEEL_LIGHTNING_BOOTS".equals(item.name)
+                    && "Lnet/neoforged/neoforge/registries/DeferredItem;".equals(item.desc)
+                    && isCall(code.get(index - 2), "net/neoforged/neoforge/registries/DeferredItem", "get",
+                        "()Ljava/lang/Object;")
+                    && code.get(index - 1) instanceof TypeInsnNode cast && cast.getOpcode() == Opcodes.CHECKCAST
+                    && "net/minecraft/world/item/Item".equals(cast.desc)) {
+                result.add(code.get(index));
+            }
+        }
+        return result.size() == 1 ? List.copyOf(result) : List.of();
     }
 
     private static boolean isCall(AbstractInsnNode node, String owner, String name, String descriptor) {

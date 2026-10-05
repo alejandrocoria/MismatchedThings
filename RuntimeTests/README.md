@@ -17,7 +17,7 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
   acceptance. It is separate from `gametest` so its entrypoints and fixtures
   do not run during GameTests, or vice versa. The `main` source set is empty.
 - `NeoForge/src/main`: the auxiliary mod for network acceptance, targeted
-  client geometry/tooltip checks, and opt-in real Ice and Fire dragon-damage
+  client geometry/tooltip checks, and opt-in real Ice and Fire damage/set
   acceptance. These use separate run directories and entry paths.
 
 Runtime tests load the packaged production mod. Production output is available
@@ -82,7 +82,7 @@ It does not validate actual default components, gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
-The independent dragon-damage gate opens a real dedicated-server world with the
+The independent damage/set gate opens a real dedicated-server world with the
 same pinned artifacts and does not need a client:
 
 ```powershell
@@ -104,13 +104,19 @@ defaults and observes, without modifying, the native Pre damage event before
 and after upstream handlers. It checks actual `hurtServer` health loss for 15
 dragon variants and all three damage types, ordinary/inverse/two-source cases,
 all eight combinations of other dragon armor pieces, malformed/bare/spoofed
-roots, and unchanged equipment identity/source snapshots. Negative scope checks
-keep Troll projection and Lightning full-set recognition unimplemented.
+roots, and unchanged equipment identity/source snapshots. It also covers all
+three Troll variants and additive other-piece masks, exact Lightning set
+participation with complete/missing/wrong pieces, and ordinary lightning versus
+dragon lightning. Finally it reloads a fixture-only datapack marking dragon fire
+as a projectile, proving native sequential Troll/dragon branch composition.
+The initial matrix uses unmodified native tags; only the overlap cases use this
+explicit tag extension in the disposable server world.
 The gate is opt-in, not part of ordinary `build`/`check`; those need no Ice and
 Fire installation. The second command additionally enables the real-JAR
 bytecode guard characterization in NeoForge JUnit. Without that property, only
-that artifact-dependent test is skipped; the synthetic guard regressions run.
-This is dragon-damage acceptance, not full Ice and Fire gameplay/visual approval.
+the two artifact-dependent tests are skipped; the synthetic guard regressions run.
+This is dragon/projectile damage and Lightning-set acceptance, not Tide effect
+acceptance or full Ice and Fire gameplay/visual approval.
 
 The broad server GameTest XML reports mark context-only no-ops as skipped rather
 than successful coverage. `verifyGameTestContextGuard` deliberately starts one

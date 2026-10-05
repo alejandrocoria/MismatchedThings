@@ -10,37 +10,36 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionPointData;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Local selector for the guarded handler: no global class/slot identity projection. */
-public final class IceAndFireDragonFeetInjectionPoint extends InjectionPoint {
+/** Local selector for the one exact Lightning boot check, with an independent handler guard. */
+public final class IceAndFireLightningFeetInjectionPoint extends InjectionPoint {
     private static final AtomicBoolean WARNED = new AtomicBoolean();
 
-    public IceAndFireDragonFeetInjectionPoint(InjectionPointData data) {
+    public IceAndFireLightningFeetInjectionPoint(InjectionPointData data) {
         super(data);
     }
 
     @Override
     public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
-        // Other mixins can change the method after the plugin inspected it. Disable rather than fail startup.
         if (!matchesAuditedInstructions(descriptor, instructions)) {
             if (WARNED.compareAndSet(false, true)) {
-                Constants.LOG.warn("Ice and Fire dragon-damage handler was transformed; boot compatibility disabled");
+                Constants.LOG.warn("Ice and Fire lightning-set handler was transformed; its boot compatibility disabled");
             }
             return false;
         }
-        var checks = IceAndFireDragonDamageShape.feetChecks(instructions);
+        var checks = IceAndFireDamageShape.lightningFeetChecks(instructions);
         nodes.addAll(checks);
         return !checks.isEmpty();
     }
 
     static boolean matchesAuditedInstructions(String descriptor, InsnList instructions) {
-        if (!IceAndFireDragonDamageShape.DESCRIPTOR.equals(descriptor)) {
+        if (!IceAndFireDamageShape.DESCRIPTOR.equals(descriptor)) {
             return false;
         }
         MethodNode view = new MethodNode();
-        view.name = IceAndFireDragonDamageShape.METHOD;
+        view.name = IceAndFireDamageShape.LIGHTNING_METHOD;
         view.desc = descriptor;
         view.instructions = instructions;
-        return IceAndFireDragonDamageShape.AUDITED_FINGERPRINT.equals(IceAndFireDragonDamageShape.fingerprint(view))
-                && IceAndFireDragonDamageShape.feetChecks(instructions).size() == 2;
+        return IceAndFireDamageShape.LIGHTNING_FINGERPRINT.equals(IceAndFireDamageShape.fingerprint(view))
+                && IceAndFireDamageShape.lightningFeetChecks(instructions).size() == 1;
     }
 }
