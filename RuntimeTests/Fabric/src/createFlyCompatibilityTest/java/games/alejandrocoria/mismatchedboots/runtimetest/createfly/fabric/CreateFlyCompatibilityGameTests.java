@@ -1,9 +1,13 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric;
 
+import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.AllSynchedDatas;
 import com.zurrtum.create.content.equipment.armor.CardboardArmorHandler;
 import com.zurrtum.create.content.equipment.armor.DivingBootsItem;
+import com.zurrtum.create.content.kinetics.belt.BeltBlock;
+import com.zurrtum.create.content.kinetics.belt.BeltBlockEntity;
+import com.zurrtum.create.content.kinetics.belt.BeltSlope;
 import com.zurrtum.create.content.kinetics.belt.transport.BeltMovementHandler;
 import games.alejandrocoria.mismatchedboots.compatibility.createfly.CreateFlyMixinPlugin;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
@@ -30,6 +34,59 @@ import net.minecraft.world.phys.Vec3;
 public final class CreateFlyCompatibilityGameTests {
     private static final String EMPTY_STRUCTURE =
             "mismatchedboots_create_fly_compatibility_test:empty";
+
+    @GameTest(structure = EMPTY_STRUCTURE)
+    public void beltExitStaysLocalWithASecondNativeStackPredicate(GameTestHelper helper) {
+        var state = AllBlocks.BELT.defaultBlockState().setValue(BeltBlock.SLOPE, BeltSlope.HORIZONTAL);
+        BlockPos position = helper.absolutePos(new BlockPos(1, 1, 1));
+        helper.getLevel().setBlockAndUpdate(position, state);
+        var belt = (BeltBlockEntity) helper.getLevel().getBlockEntity(position);
+        require(belt != null, "Real Belt block entity missing");
+        belt.setController(position);
+        belt.passengers = new java.util.HashMap<>();
+        Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
+        player.setShiftKeyDown(true);
+        var pair = MixedBootsFactory.createPair(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
+                Items.IRON_BOOTS.getDefaultInstance());
+        for (ItemStack boots : java.util.List.of(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
+                pair.primary(), pair.inverse(),
+                MixedBootsFactory.createPair(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
+                        AllItems.CARDBOARD_BOOTS.getDefaultInstance()).primary())) {
+            assertBeltExit(helper, player, belt, position, boots, true, false);
+        }
+        assertBeltExit(helper, player, belt, position, Items.IRON_BOOTS.getDefaultInstance(), false, false);
+        assertBeltExit(helper, player, belt, position, pair.primary().copyWithCount(2), false, false);
+        ItemStack spoof = Items.IRON_BOOTS.getDefaultInstance();
+        spoof.set(ModContent.mixedBootsDataType().orElseThrow(),
+                ModContent.getMixedBootsData(pair.primary()).orElseThrow());
+        assertBeltExit(helper, player, belt, position, spoof, false, false);
+        // Deliberately in FEET: proves the fixture observation is a real item predicate, not a fixed false.
+        assertBeltExit(helper, player, belt, position, Items.DIAMOND.getDefaultInstance(), false, true);
+        player.setShiftKeyDown(false);
+        assertBeltExit(helper, player, belt, position, Items.IRON_BOOTS.getDefaultInstance(), true, false);
+        player.setShiftKeyDown(true);
+        player.getAbilities().flying = true;
+        assertBeltExit(helper, player, belt, position, pair.primary().copy(), false, false);
+        player.getAbilities().flying = false;
+        var diving = MixedBootsFactory.createPair(AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
+                Items.IRON_BOOTS.getDefaultInstance());
+        assertBeltExit(helper, player, belt, position, diving.primary(), false, false);
+        helper.succeed();
+    }
+
+    private static void assertBeltExit(GameTestHelper helper, Player player, BeltBlockEntity belt,
+                                       BlockPos position, ItemStack boots, boolean transported, boolean diamond) {
+        belt.passengers.clear();
+        player.setItemSlot(EquipmentSlot.FEET, boots);
+        var before = boots.copy();
+        BeltExtraPredicateFixture.calls = 0;
+        ((BeltBlock) AllBlocks.BELT).entityInside(belt.getBlockState(), helper.getLevel(), position, player, null, true);
+        require(BeltExtraPredicateFixture.calls == 1 && BeltExtraPredicateFixture.result == diamond,
+                "Production adapter changed or skipped the unrelated ItemStack.is(DIAMOND)");
+        require(belt.passengers.containsKey(player) == transported, "Native Belt passenger result changed");
+        require(player.getItemBySlot(EquipmentSlot.FEET) == boots && ItemStack.matches(before, boots),
+                "Belt compatibility replaced or mutated the equipped root");
+    }
 
     @GameTest(structure = EMPTY_STRUCTURE)
     public void productionGameplayGuardsAcceptTheExactArtifact(GameTestHelper helper) {

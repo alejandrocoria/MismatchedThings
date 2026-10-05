@@ -627,6 +627,10 @@ tasks.register('verifyCreateFlyCompatibility') {
                     'mismatchedboots.createfly.mixins.json',
                     'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
                             + 'CreateFlyMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
+                            + 'CreateFlyBeltShape.class',
+                    'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
+                            + 'CreateFlyBeltInjectionPoint.class',
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
                             + 'CreateFlyCardboardArmorHandlerMixin.class',
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'

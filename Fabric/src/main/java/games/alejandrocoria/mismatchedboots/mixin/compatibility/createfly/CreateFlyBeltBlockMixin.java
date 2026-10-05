@@ -1,34 +1,29 @@
 package games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.llamalad7.mixinextras.sugar.Local;
-import com.zurrtum.create.AllItems;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(targets = "com.zurrtum.create.content.kinetics.belt.BeltBlock", remap = false)
 abstract class CreateFlyBeltBlockMixin {
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "entityInside(Lnet/minecraft/world/level/block/state/BlockState;"
                     + "Lnet/minecraft/world/level/Level;"
                     + "Lnet/minecraft/core/BlockPos;"
                     + "Lnet/minecraft/world/entity/Entity;"
                     + "Lnet/minecraft/world/entity/InsideBlockEffectApplier;Z)V",
             at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/item/ItemStack;is(Ljava/lang/Object;)Z"),
-            require = 1)
+                    value = "games.alejandrocoria.mismatchedboots.compatibility.createfly.CreateFlyBeltInjectionPoint",
+                    remap = false),
+            require = 0, expect = 0, allow = 1)
     private boolean mismatchedboots$recognizeCardboardSourceOnBelt(
-            boolean ordinaryCardboard, @Local Player player) {
-        if (ordinaryCardboard) {
-            return true;
-        }
-        ItemStack boots = player.getItemBySlot(EquipmentSlot.FEET);
-        return MixedBootsSources.anySource(
-                boots, source -> source.getItem() == AllItems.CARDBOARD_BOOTS);
+            ItemStack boots, Object exactItem, Operation<Boolean> original) {
+        // The local selector guarantees CARDBOARD_BOOTS. Do not capture a player-local ordinal
+        // or reevaluate another mod's chained predicate on stored source stacks.
+        return original.call(boots, exactItem)
+                || MixedBootsSources.anySource(boots, source -> source.getItem() == exactItem);
     }
 }

@@ -159,6 +159,20 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.iceAndFireDamageTest', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['High', 'Low', 'Incompatible'].each { variant ->
+            register("iceAndFireCoexistence${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = iceAndFireDamageRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers',
+                        iceAndFireDamageMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.iceAndFireDamageTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.iceAndFireCoexistence', variant.toLowerCase(Locale.ROOT))
+                systemProperty('mixin.debug.countInjections', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
     }
 
     mods {
@@ -273,6 +287,40 @@ spawn-protection=0
 
 tasks.named('runIceAndFireDamageCompatibility') {
     dependsOn('prepareIceAndFireDamageCompatibility')
+}
+
+['High', 'Low', 'Incompatible'].each { variant ->
+    tasks.named("runIceAndFireCoexistence${variant}") {
+        dependsOn('prepareIceAndFireDamageCompatibility')
+    }
+}
+
+tasks.register('verifyIceAndFireMixinCoexistence') {
+    group = 'verification'
+    description = 'Exercises real competing Ice and Fire mixins above/below production priority and late fail-closed guards.'
+    dependsOn(':NeoForge:jar')
+    doLast {
+        ['High', 'Low', 'Incompatible'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/ice-and-fire-coexistence/${variant}.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runIceAndFireCoexistence${variant}", log, 240)
+            def warnings = log.readLines().findAll { it.contains('Ice and Fire') && it.contains('boot compatibility disabled') }
+            if (variant == 'Incompatible' ? warnings.size() != 1 || !warnings.first().contains('projectile/dragon local')
+                    : !warnings.isEmpty()) {
+                throw new GradleException("Unexpected Ice and Fire guard warnings in ${variant}: ${warnings}")
+            }
+            def directory = iceAndFireDamageMarkers.get().asFile
+            def failure = new File(directory, 'ice-and-fire-damage-failure.txt')
+            def success = new File(directory, 'ice-and-fire-damage-success.txt')
+            def report = new File(directory, 'ice-and-fire-damage-report.txt')
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || !report.text.contains("coexistence=${variant.toLowerCase(Locale.ROOT)}")) {
+                throw new GradleException("Ice and Fire ${variant} coexistence failed; ${failure.isFile() ? failure.text : log}")
+            }
+            def evidence = fixtureBuildDirectory.file("reports/ice-and-fire-coexistence/${variant}-report.txt").get().asFile
+            evidence.text = report.text + "guard warnings=${warnings.size()}\n"
+            logger.lifecycle(report.text)
+        }
+    }
 }
 
 tasks.register('verifyIceAndFireDamageCompatibility') {

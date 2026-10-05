@@ -3,7 +3,6 @@ package games.alejandrocoria.mismatchedboots.compatibility.iceandfire;
 import games.alejandrocoria.mismatchedboots.Constants;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.struct.InjectionPointData;
 
@@ -21,9 +20,9 @@ public final class IceAndFireDamageFeetInjectionPoint extends InjectionPoint {
     @Override
     public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
         // Other mixins can change the method after the plugin inspected it. Disable rather than fail startup.
-        if (!matchesAuditedInstructions(descriptor, instructions)) {
+        if (!matchesLocalContract(descriptor, instructions)) {
             if (WARNED.compareAndSet(false, true)) {
-                Constants.LOG.warn("Ice and Fire projectile/dragon handler was transformed; boot compatibility disabled");
+                Constants.LOG.warn("Ice and Fire projectile/dragon local contract is incompatible; its boot compatibility disabled");
             }
             return false;
         }
@@ -32,15 +31,8 @@ public final class IceAndFireDamageFeetInjectionPoint extends InjectionPoint {
         return !checks.isEmpty();
     }
 
-    static boolean matchesAuditedInstructions(String descriptor, InsnList instructions) {
-        if (!IceAndFireDamageShape.DESCRIPTOR.equals(descriptor)) {
-            return false;
-        }
-        MethodNode view = new MethodNode();
-        view.name = IceAndFireDamageShape.METHOD;
-        view.desc = descriptor;
-        view.instructions = instructions;
-        return IceAndFireDamageShape.AUDITED_FINGERPRINT.equals(IceAndFireDamageShape.fingerprint(view))
+    static boolean matchesLocalContract(String descriptor, InsnList instructions) {
+        return IceAndFireDamageShape.DESCRIPTOR.equals(descriptor)
                 && IceAndFireDamageShape.feetChecks(instructions).size() == 3;
     }
 }

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Pseudo
 @Mixin(targets = "com.iafenvoy.iceandfire.event.handler.ServerEvents", remap = false)
 abstract class IceAndFireDamageMixin {
-    // Zero is intentional: a late fingerprint mismatch must stay inert even with injector debug validation enabled.
+    // Zero is intentional: a late local-contract mismatch stays inert even with injector debug validation enabled.
     @WrapOperation(
             method = "onEntityDamage(Lnet/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre;)V",
             at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireDamageFeetInjectionPoint",

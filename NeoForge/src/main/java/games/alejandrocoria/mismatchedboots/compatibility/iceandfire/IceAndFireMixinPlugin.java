@@ -47,7 +47,7 @@ public final class IceAndFireMixinPlugin implements IMixinConfigPlugin {
                 result = IceAndFireDamageShape.isCompatible(handler, scale, steel, troll);
             }
             if (!result) {
-                Constants.LOG.warn("Ice and Fire {} handler/API changed; its boot compatibility disabled", integration);
+                Constants.LOG.warn("Ice and Fire {} local contract/API is incompatible; its boot compatibility disabled", integration);
             }
         } catch (ClassNotFoundException exception) {
             result = false;

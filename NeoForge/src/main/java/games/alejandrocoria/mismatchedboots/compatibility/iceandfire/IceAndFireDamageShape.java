@@ -1,24 +1,19 @@
 package games.alejandrocoria.mismatchedboots.compatibility.iceandfire;
 
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.List;
-import java.util.Map;
 
 /** Bytecode-only inspection: inspecting an absent optional mod must not load its classes. */
 public final class IceAndFireDamageShape {
@@ -31,21 +26,11 @@ public final class IceAndFireDamageShape {
     static final String LIGHTNING_METHOD = "onLivingHurt";
     static final String DESCRIPTOR =
             "(Lnet/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre;)V";
-    // Installed CE 2.2-beta.3, characterized without debug metadata; re-audit executable changes.
-    static final String AUDITED_FINGERPRINT =
-            "05b8d47b296aa4ad4de6e3aa9c1a477fc14789d5265617a5c518b1553d1bbdc9";
-    static final String LIGHTNING_FINGERPRINT =
-            "27d4490cc0ac9741b62dcbc4d2e39422cf12dbb8964c82decdf5cf41666f6169";
 
     private IceAndFireDamageShape() {
     }
 
     static boolean isCompatible(ClassNode handler, ClassNode scale, ClassNode steel, ClassNode troll) {
-        return isCompatible(handler, scale, steel, troll, AUDITED_FINGERPRINT);
-    }
-
-    static boolean isCompatible(ClassNode handler, ClassNode scale, ClassNode steel, ClassNode troll,
-                                String expectedFingerprint) {
         if (handler == null || !HANDLER.equals(handler.name)
                 || !isPublicItemClass(scale, SCALE) || !isPublicItemClass(steel, STEEL)
                 || !isPublicItemClass(troll, TROLL)) {
@@ -55,15 +40,10 @@ public final class IceAndFireDamageShape {
                 .filter(candidate -> METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
                 .findFirst().orElse(null);
         return isPublicHandler(method)
-                && feetChecks(method.instructions).size() == 3
-                && expectedFingerprint.equals(fingerprint(method));
+                && feetChecks(method.instructions).size() == 3;
     }
 
     static boolean isLightningCompatible(ClassNode handler, ClassNode items) {
-        return isLightningCompatible(handler, items, LIGHTNING_FINGERPRINT);
-    }
-
-    static boolean isLightningCompatible(ClassNode handler, ClassNode items, String expectedFingerprint) {
         if (handler == null || !HANDLER.equals(handler.name) || items == null || !ITEMS.equals(items.name)
                 || items.fields.stream().noneMatch(field -> "DRAGONSTEEL_LIGHTNING_BOOTS".equals(field.name)
                     && "Lnet/neoforged/neoforge/registries/DeferredItem;".equals(field.desc)
@@ -74,15 +54,13 @@ public final class IceAndFireDamageShape {
         MethodNode method = handler.methods.stream()
                 .filter(candidate -> LIGHTNING_METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
                 .findFirst().orElse(null);
-        return isPublicHandler(method) && lightningFeetChecks(method.instructions).size() == 1
-                && expectedFingerprint.equals(fingerprint(method));
+        return isPublicHandler(method) && lightningFeetChecks(method.instructions).size() == 1;
     }
 
     private static boolean isPublicHandler(MethodNode method) {
         return method != null && (method.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
                 == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
-                && (method.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0
-                && method.tryCatchBlocks.isEmpty();
+                && (method.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0;
     }
 
     private static boolean isPublicItemClass(ClassNode node, String name) {
@@ -92,11 +70,11 @@ public final class IceAndFireDamageShape {
                 && (node.access & Opcodes.ACC_INTERFACE) == 0;
     }
 
-    /** Select only native FEET class operations: Troll, then Scale/Steel; never other-slot checks. */
+    /** Select one native FEET Troll operation and the Scale/Steel OR; never other-slot checks. */
     public static List<AbstractInsnNode> feetChecks(InsnList instructions) {
         List<AbstractInsnNode> code = new ArrayList<>();
         for (AbstractInsnNode node : instructions) {
-            if (node.getOpcode() >= 0) {
+            if (node.getOpcode() >= 0 && node.getOpcode() != Opcodes.NOP) {
                 code.add(node);
             }
         }
@@ -107,7 +85,7 @@ public final class IceAndFireDamageShape {
                 continue;
             }
             if (code.get(index - 4) instanceof VarInsnNode entity && entity.getOpcode() == Opcodes.ALOAD
-                    && entity.var == 1
+                    && isEventEntity(code, index - 4, entity.var)
                     && code.get(index - 3) instanceof FieldInsnNode slot
                     && slot.getOpcode() == Opcodes.GETSTATIC
                     && "net/minecraft/world/entity/EquipmentSlot".equals(slot.owner)
@@ -115,14 +93,20 @@ public final class IceAndFireDamageShape {
                     && isCall(code.get(index - 2), "net/minecraft/world/entity/LivingEntity", "getItemBySlot",
                         "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
                     && isCall(code.get(index - 1), "net/minecraft/world/item/ItemStack", "getItem",
-                        "()Lnet/minecraft/world/item/Item;")) {
+                        "()Lnet/minecraft/world/item/Item;")
+                    && hasArmorContribution(code, index, check.desc)) {
                 result.add(check);
             }
         }
-        if (result.size() != 3 || !TROLL.equals(((TypeInsnNode) result.get(0)).desc)
-                || !SCALE.equals(((TypeInsnNode) result.get(1)).desc)
-                || !STEEL.equals(((TypeInsnNode) result.get(2)).desc)) {
+        if (result.size() != 3
+                || List.of(TROLL, SCALE, STEEL).stream().anyMatch(type -> result.stream()
+                    .filter(node -> type.equals(((TypeInsnNode) node).desc)).count() != 1)) {
             return List.of();
+        }
+        var scale = result.stream().filter(node -> SCALE.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
+        var steel = result.stream().filter(node -> STEEL.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
+        if (nextCode(((JumpInsnNode) nextCode(scale)).label) != nextCode(nextCode(steel))) {
+            return List.of(); // The selected FEET pair itself must share one contribution, not another slot's Steel test.
         }
         return List.copyOf(result);
     }
@@ -131,7 +115,7 @@ public final class IceAndFireDamageShape {
     public static List<AbstractInsnNode> lightningFeetChecks(InsnList instructions) {
         List<AbstractInsnNode> code = new ArrayList<>();
         for (AbstractInsnNode node : instructions) {
-            if (node.getOpcode() >= 0) {
+            if (node.getOpcode() >= 0 && node.getOpcode() != Opcodes.NOP) {
                 code.add(node);
             }
         }
@@ -139,7 +123,7 @@ public final class IceAndFireDamageShape {
         for (int index = 6; index < code.size(); index++) {
             if (isCall(code.get(index), "net/minecraft/world/item/ItemStack", "is", "(Ljava/lang/Object;)Z")
                     && code.get(index - 6) instanceof VarInsnNode entity && entity.getOpcode() == Opcodes.ALOAD
-                    && entity.var == 1
+                    && isEventEntity(code, index - 6, entity.var)
                     && code.get(index - 5) instanceof FieldInsnNode slot && slot.getOpcode() == Opcodes.GETSTATIC
                     && "net/minecraft/world/entity/EquipmentSlot".equals(slot.owner)
                     && "FEET".equals(slot.name) && ("L" + slot.owner + ";").equals(slot.desc)
@@ -151,7 +135,8 @@ public final class IceAndFireDamageShape {
                     && isCall(code.get(index - 2), "net/neoforged/neoforge/registries/DeferredItem", "get",
                         "()Ljava/lang/Object;")
                     && code.get(index - 1) instanceof TypeInsnNode cast && cast.getOpcode() == Opcodes.CHECKCAST
-                    && "net/minecraft/world/item/Item".equals(cast.desc)) {
+                    && "net/minecraft/world/item/Item".equals(cast.desc)
+                    && hasZeroDamageConsumer(code, index)) {
                 result.add(code.get(index));
             }
         }
@@ -163,31 +148,75 @@ public final class IceAndFireDamageShape {
                 && owner.equals(call.owner) && name.equals(call.name) && descriptor.equals(call.desc);
     }
 
-    static String fingerprint(MethodNode method) {
-        ClassWriter writer = new ClassWriter(0);
-        writer.visit(Opcodes.V25, Opcodes.ACC_PUBLIC, "AuditedHandler", null, "java/lang/Object", null);
-        var visitor = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                method.name, method.desc, null, null);
-        visitor.visitCode();
-        // Fresh labels avoid retaining ASM writer offsets. Frame/line/local metadata is not executable.
-        Map<LabelNode, LabelNode> labels = new HashMap<>();
-        for (AbstractInsnNode node : method.instructions) {
-            if (node instanceof LabelNode label) {
-                labels.put(label, new LabelNode());
+    /** Require direct event-entity assignments, not a hardcoded local ordinal or guessed aliases. */
+    private static boolean isEventEntity(List<AbstractInsnNode> code, int read, int local) {
+        boolean assigned = false;
+        for (int index = 0; index < read; index++) {
+            if (code.get(index) instanceof VarInsnNode store && store.getOpcode() == Opcodes.ASTORE && store.var == 0) {
+                return false; // Our wrapper receives the original event parameter.
+            }
+            if (code.get(index) instanceof VarInsnNode store && store.getOpcode() == Opcodes.ASTORE
+                    && store.var == local) {
+                if (index < 2 || !(code.get(index - 2) instanceof VarInsnNode event) || event.getOpcode() != Opcodes.ALOAD
+                        || event.var != 0 || !isCall(code.get(index - 1),
+                        "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre", "getEntity",
+                        "()Lnet/minecraft/world/entity/LivingEntity;")) {
+                    return false;
+                }
+                assigned = true;
             }
         }
-        for (AbstractInsnNode node : method.instructions) {
-            if (node.getOpcode() >= 0 || node instanceof LabelNode) {
-                node.clone(labels).accept(visitor);
+        return assigned;
+    }
+
+    /** Validate only the boolean -> one native coefficient subtraction, not the whole damage algorithm. */
+    private static boolean hasArmorContribution(List<AbstractInsnNode> code, int predicate, String type) {
+        if (predicate + 1 >= code.size() || !(code.get(predicate + 1) instanceof JumpInsnNode branch)) {
+            return false;
+        }
+        int contribution = predicate + 2;
+        if (SCALE.equals(type)) {
+            if (branch.getOpcode() != Opcodes.IFNE) {
+                return false;
             }
+            contribution = code.indexOf(nextCode(branch.label));
+        } else if (branch.getOpcode() != Opcodes.IFEQ) {
+            return false;
         }
-        visitor.visitMaxs(0, 0);
-        visitor.visitEnd();
-        writer.visitEnd();
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(writer.toByteArray()));
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 unavailable", exception);
+        if (contribution < 0 || contribution + 3 >= code.size()
+                || !(code.get(contribution) instanceof VarInsnNode load) || load.getOpcode() != Opcodes.FLOAD
+                || !(code.get(contribution + 1) instanceof LdcInsnNode amount) || !(amount.cst instanceof Float)
+                || code.get(contribution + 2).getOpcode() != Opcodes.FSUB
+                || !(code.get(contribution + 3) instanceof VarInsnNode store) || store.getOpcode() != Opcodes.FSTORE
+                || store.var != load.var) {
+            return false;
         }
+        if (SCALE.equals(type)) {
+            // Scale and Steel must still converge on the same one-piece contribution.
+            return contribution >= 2 && code.get(contribution - 2) instanceof TypeInsnNode steel
+                    && steel.getOpcode() == Opcodes.INSTANCEOF && STEEL.equals(steel.desc)
+                    && code.get(contribution - 1) instanceof JumpInsnNode steelBranch
+                    && steelBranch.getOpcode() == Opcodes.IFEQ
+                    && nextCode(steelBranch.label) == nextCode(code.get(contribution + 3));
+        }
+        return nextCode(branch.label) == nextCode(code.get(contribution + 3));
+    }
+
+    private static boolean hasZeroDamageConsumer(List<AbstractInsnNode> code, int predicate) {
+        return predicate + 4 < code.size()
+                && code.get(predicate + 1) instanceof JumpInsnNode branch && branch.getOpcode() == Opcodes.IFEQ
+                && code.get(predicate + 2) instanceof VarInsnNode event && event.getOpcode() == Opcodes.ALOAD
+                && event.var == 0 && code.get(predicate + 3).getOpcode() == Opcodes.FCONST_0
+                && isCall(code.get(predicate + 4), "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre",
+                    "setNewDamage", "(F)V")
+                && nextCode(branch.label) == nextCode(code.get(predicate + 4));
+    }
+
+    private static AbstractInsnNode nextCode(AbstractInsnNode node) {
+        var next = node.getNext();
+        while (next != null && (next.getOpcode() < 0 || next.getOpcode() == Opcodes.NOP)) {
+            next = next.getNext();
+        }
+        return next;
     }
 }

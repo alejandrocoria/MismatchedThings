@@ -4,10 +4,7 @@ import games.alejandrocoria.mismatchedboots.Constants;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -45,21 +42,6 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
     private static final String ALL_ITEMS_INTERNAL = ALL_ITEMS_CLASS.replace('.', '/');
     private static final String ARMOR_ITEM_DESCRIPTOR = "L" + ARMOR_ITEM_INTERNAL + ";";
     private static final String STACK_PREDICATE = "(Lnet/minecraft/world/item/ItemStack;)Z";
-    private static final String ENTITY_INSIDE =
-            "(Lnet/minecraft/world/level/block/state/BlockState;"
-                    + "Lnet/minecraft/world/level/Level;"
-                    + "Lnet/minecraft/core/BlockPos;"
-                    + "Lnet/minecraft/world/entity/Entity;"
-                    + "Lnet/minecraft/world/entity/InsideBlockEffectApplier;Z)V";
-    private static final String EQUIPMENT_SLOT_INTERNAL =
-            "net/minecraft/world/entity/EquipmentSlot";
-    private static final String EQUIPMENT_SLOT_DESCRIPTOR =
-            "Lnet/minecraft/world/entity/EquipmentSlot;";
-    private static final String PLAYER_INTERNAL = "net/minecraft/world/entity/player/Player";
-    private static final String GET_ITEM_BY_SLOT =
-            "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;";
-    private static final String ITEM_STACK_INTERNAL = "net/minecraft/world/item/ItemStack";
-    private static final String ITEM_STACK_IS = "(Ljava/lang/Object;)Z";
     private static final String DIVING_BOOTS_INTERNAL = DIVING_BOOTS_CLASS.replace('.', '/');
     private static final String DIVING_BOOTS_DESCRIPTOR = "L" + DIVING_BOOTS_INTERNAL + ";";
     private static final String ENTITY_TO_STACK =
@@ -152,7 +134,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
 
         MethodNode entityInside = null;
         for (MethodNode method : beltBlock.methods) {
-            if ("entityInside".equals(method.name) && ENTITY_INSIDE.equals(method.desc)) {
+            if ("entityInside".equals(method.name) && CreateFlyBeltShape.DESCRIPTOR.equals(method.desc)) {
                 if (entityInside != null
                         || (method.access & Opcodes.ACC_PUBLIC) == 0
                         || (method.access & Opcodes.ACC_STATIC) != 0) {
@@ -161,7 +143,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 entityInside = method;
             }
         }
-        return entityInside != null && hasSingleCardboardBeltPredicate(entityInside);
+        return entityInside != null && CreateFlyBeltShape.cardboardChecks(entityInside.instructions).size() == 1;
     }
 
     static boolean hasCompatibleDivingApi(ClassNode divingBoots, ClassNode allItems) {
@@ -235,91 +217,6 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
         return false;
     }
 
-    private static boolean hasSingleCardboardBeltPredicate(MethodNode method) {
-        // The belt mixin modifies ItemStack.is without an ordinal. Require exactly one
-        // call and inspect the shift -> FEET -> CARDBOARD_BOOTS branch so upstream
-        // edits cannot also modify an unrelated predicate; ambiguity disables this hook.
-        int shiftCalls = 0;
-        int feetFields = 0;
-        int cardboardFields = 0;
-        int stackPredicates = 0;
-        int completePatterns = 0;
-        JumpInsnNode shiftBranch = null;
-
-        for (AbstractInsnNode instruction : method.instructions) {
-            if (instruction instanceof MethodInsnNode call
-                    && call.getOpcode() == Opcodes.INVOKEVIRTUAL
-                    && PLAYER_INTERNAL.equals(call.owner)
-                    && "isShiftKeyDown".equals(call.name)
-                    && "()Z".equals(call.desc)) {
-                shiftCalls++;
-                AbstractInsnNode next = nextCodeInstruction(call);
-                if (next instanceof JumpInsnNode jump && jump.getOpcode() == Opcodes.IFEQ) {
-                    shiftBranch = jump;
-                }
-            }
-            if (!(instruction instanceof FieldInsnNode feet)
-                    || feet.getOpcode() != Opcodes.GETSTATIC
-                    || !EQUIPMENT_SLOT_INTERNAL.equals(feet.owner)
-                    || !"FEET".equals(feet.name)
-                    || !EQUIPMENT_SLOT_DESCRIPTOR.equals(feet.desc)) {
-                continue;
-            }
-
-            feetFields++;
-            AbstractInsnNode getItem = nextCodeInstruction(feet);
-            AbstractInsnNode cardboard = nextCodeInstruction(getItem);
-            AbstractInsnNode predicate = nextCodeInstruction(cardboard);
-            AbstractInsnNode branch = nextCodeInstruction(predicate);
-            AbstractInsnNode rejected = nextCodeInstruction(branch);
-
-            if (getItem instanceof MethodInsnNode getItemCall
-                    && getItemCall.getOpcode() == Opcodes.INVOKEVIRTUAL
-                    && PLAYER_INTERNAL.equals(getItemCall.owner)
-                    && "getItemBySlot".equals(getItemCall.name)
-                    && GET_ITEM_BY_SLOT.equals(getItemCall.desc)
-                    && cardboard instanceof FieldInsnNode cardboardField
-                    && cardboardField.getOpcode() == Opcodes.GETSTATIC
-                    && ALL_ITEMS_INTERNAL.equals(cardboardField.owner)
-                    && "CARDBOARD_BOOTS".equals(cardboardField.name)
-                    && ARMOR_ITEM_DESCRIPTOR.equals(cardboardField.desc)
-                    && predicate instanceof MethodInsnNode predicateCall
-                    && predicateCall.getOpcode() == Opcodes.INVOKEVIRTUAL
-                    && ITEM_STACK_INTERNAL.equals(predicateCall.owner)
-                    && "is".equals(predicateCall.name)
-                    && ITEM_STACK_IS.equals(predicateCall.desc)
-                    && branch instanceof JumpInsnNode itemBranch
-                    && itemBranch.getOpcode() == Opcodes.IFNE
-                    && rejected != null
-                    && rejected.getOpcode() == Opcodes.RETURN
-                    && shiftBranch != null
-                    && shiftBranch.label == itemBranch.label) {
-                completePatterns++;
-            }
-        }
-
-        for (AbstractInsnNode instruction : method.instructions) {
-            if (instruction instanceof FieldInsnNode field
-                    && field.getOpcode() == Opcodes.GETSTATIC
-                    && ALL_ITEMS_INTERNAL.equals(field.owner)
-                    && "CARDBOARD_BOOTS".equals(field.name)
-                    && ARMOR_ITEM_DESCRIPTOR.equals(field.desc)) {
-                cardboardFields++;
-            } else if (instruction instanceof MethodInsnNode call
-                    && call.getOpcode() == Opcodes.INVOKEVIRTUAL
-                    && ITEM_STACK_INTERNAL.equals(call.owner)
-                    && "is".equals(call.name)
-                    && ITEM_STACK_IS.equals(call.desc)) {
-                stackPredicates++;
-            }
-        }
-
-        return shiftCalls == 1
-                && feetFields == 1
-                && cardboardFields == 1
-                && stackPredicates == 1
-                && completePatterns == 1;
-    }
 
     private static boolean hasDivingWornItemPredicate(ClassNode divingBoots) {
         for (MethodNode method : divingBoots.methods) {
@@ -340,13 +237,6 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
         return false;
     }
 
-    private static AbstractInsnNode nextCodeInstruction(AbstractInsnNode instruction) {
-        AbstractInsnNode next = instruction == null ? null : instruction.getNext();
-        while (next != null && next.getOpcode() < 0) {
-            next = next.getNext();
-        }
-        return next;
-    }
 
     private static boolean isPublicClass(ClassNode node) {
         return node != null

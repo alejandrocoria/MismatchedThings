@@ -69,6 +69,15 @@ final class NeoForgeIceAndFireDamageTest {
             return;
         }
         try {
+            if (IceAndFireCoexistenceFixture.CASE.equals("incompatible")) {
+                verifyIncompatibleConsumer(server.overworld());
+                NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
+                        "coexistence=incompatible; " + damageCases + " real hurtServer cases; "
+                                + "damage adapter inert; native other slots and independent Lightning adapter preserved\n");
+                NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
+                finished = true;
+                return;
+            }
             if (overlapReload == null) {
                 verifyMatrix(server.overworld());
                 overlapReload = prepareOverlapPack(server);
@@ -79,12 +88,21 @@ final class NeoForgeIceAndFireDamageTest {
             }
             overlapReload.join();
             verifyOverlappingBranches(server.overworld());
+            if (!IceAndFireCoexistenceFixture.CASE.isEmpty()) {
+                verifyCoexistence(server.overworld());
+            }
             NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
                     "15 dragon variants; 3 Troll variants; exact Lightning set; " + damageCases + " real hurtServer cases\n"
                             + "ordinary/mixed/inverse/two-source controls; additive other-slot coefficients; "
                             + "invalid/spoofed roots; complete/missing/wrong Lightning set pieces; "
                             + "native projectile/dragon branch overlap after fixture-only datapack reload; "
-                            + "unchanged equipment identity and source snapshots\n");
+                            + "unchanged equipment identity and source snapshots\n"
+                            + (IceAndFireCoexistenceFixture.CASE.isEmpty() ? "" : "coexistence="
+                                + IceAndFireCoexistenceFixture.CASE + "; high/low FEET wrappers="
+                                + IceAndFireCoexistenceFixture.highFeet + "/" + IceAndFireCoexistenceFixture.lowFeet
+                                + "; high/low Lightning wrappers=" + IceAndFireCoexistenceFixture.highLightning
+                                + "/" + IceAndFireCoexistenceFixture.lowLightning
+                                + "; unrelated calls=" + IceAndFireCoexistenceFixture.logCalls + "\n"));
             NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
             finished = true;
         } catch (Throwable throwable) {
@@ -96,6 +114,63 @@ final class NeoForgeIceAndFireDamageTest {
                 server.halt(false);
             }
         }
+    }
+
+    private static void verifyCoexistence(ServerLevel level) {
+        // The fixture helmet is not an Ice and Fire item. Its own slot wrapper must contribute,
+        // while our boot wrapper still contributes once, with either wrapper above/below production.
+        var head = IceAndFireCoexistenceFixture.helmet(item("armor_red_helmet"));
+        var pair = MixedBootsFactory.createPair(new ItemStack(item("armor_red_boots")), new ItemStack(Items.IRON_BOOTS));
+        for (ItemStack feet : List.of(new ItemStack(item("armor_red_boots")), pair.primary(), pair.inverse())) {
+            hurt(level, damage(level, "dragon_ice"), feet, 0.8F, "independent dragon helmet + boots",
+                    List.of(head, ItemStack.EMPTY, ItemStack.EMPTY));
+        }
+        hurt(level, damage(level, "dragon_ice"), new ItemStack(Items.IRON_BOOTS), 0.9F,
+                "fixture helmet does not also qualify FEET", List.of(head, ItemStack.EMPTY, ItemStack.EMPTY));
+        hurt(level, damage(level, "dragon_ice"), pair.primary().copy(), 0.9F,
+                "missing helmet sources remain negative",
+                List.of(new ItemStack(Items.IRON_HELMET), ItemStack.EMPTY, ItemStack.EMPTY));
+        var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
+                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+        hurt(level, arrow, mixed("forest_troll_leather_boots"), 0.8F, "independent Troll helmet + boots",
+                List.of(IceAndFireCoexistenceFixture.helmet(item("forest_troll_leather_helmet")),
+                        ItemStack.EMPTY, ItemStack.EMPTY));
+        var lightningOthers = lightningArmor(7);
+        lightningOthers.set(0, IceAndFireCoexistenceFixture.helmet(item("dragonsteel_lightning_helmet")));
+        var lightningPair = MixedBootsFactory.createPair(new ItemStack(item("dragonsteel_lightning_boots")),
+                new ItemStack(Items.IRON_BOOTS));
+        for (ItemStack feet : List.of(new ItemStack(item("dragonsteel_lightning_boots")),
+                lightningPair.primary(), lightningPair.inverse())) {
+            hurt(level, level.damageSources().lightningBolt(), feet, 0.0F,
+                    "independent Lightning helmet + boots complete set", lightningOthers);
+        }
+        hurt(level, level.damageSources().lightningBolt(), new ItemStack(Items.IRON_BOOTS), 1.0F,
+                "fixture Lightning helmet cannot substitute missing boots", lightningOthers);
+        lightningOthers.set(0, IceAndFireCoexistenceFixture.helmet(item("dragonsteel_fire_helmet")));
+        hurt(level, level.damageSources().lightningBolt(), lightningPair.primary().copy(), 1.0F,
+                "wrong fixture helmet preserves exact Lightning set requirement", lightningOthers);
+        require(IceAndFireCoexistenceFixture.highFeet > 0 && IceAndFireCoexistenceFixture.lowFeet > 0
+                && IceAndFireCoexistenceFixture.highLightning > 0 && IceAndFireCoexistenceFixture.lowLightning > 0
+                && IceAndFireCoexistenceFixture.logCalls > 0, "Competing mixins did not actually run");
+    }
+
+    private static void verifyIncompatibleConsumer(ServerLevel level) {
+        hurt(level, damage(level, "dragon_fire"), new ItemStack(item("armor_red_boots")), 0.9F,
+                "ordinary dragon recognition still native");
+        hurt(level, damage(level, "dragon_fire"), mixed("armor_red_boots"), 1.0F,
+                "late incompatible damage consumer disables mixed boot adapter");
+        hurt(level, damage(level, "dragon_fire"), mixed("armor_red_boots"), 0.9F,
+                "native other-slot contribution survives",
+                List.of(new ItemStack(item("armor_red_helmet")), ItemStack.EMPTY, ItemStack.EMPTY));
+        var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
+                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+        hurt(level, arrow, mixed("forest_troll_leather_boots"), 1.0F, "changed Troll target stays inert");
+        hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_lightning_boots"), 0.0F,
+                "independent Lightning integration stays active", lightningArmor(7));
+        hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_fire_boots"), 1.0F,
+                "independent Lightning negative control", lightningArmor(7));
+        require(IceAndFireCoexistenceFixture.highLightning > 0 && IceAndFireCoexistenceFixture.lowLightning > 0
+                && IceAndFireCoexistenceFixture.logCalls > 0, "Incompatible fixture was not applied");
     }
 
     private static void verifyMatrix(ServerLevel level) {

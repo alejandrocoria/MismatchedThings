@@ -2,8 +2,10 @@
   "required": true,
   "minVersion": "0.8",
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric.BeltExtraPredicatePlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "BeltExtraPredicateMixin",
     "EntityFluidInteractionInvoker"
   ],
   "injectors": {

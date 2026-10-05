@@ -3,7 +3,6 @@ package games.alejandrocoria.mismatchedboots.compatibility.iceandfire;
 import games.alejandrocoria.mismatchedboots.Constants;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.struct.InjectionPointData;
 
@@ -20,9 +19,9 @@ public final class IceAndFireLightningFeetInjectionPoint extends InjectionPoint 
 
     @Override
     public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
-        if (!matchesAuditedInstructions(descriptor, instructions)) {
+        if (!matchesLocalContract(descriptor, instructions)) {
             if (WARNED.compareAndSet(false, true)) {
-                Constants.LOG.warn("Ice and Fire lightning-set handler was transformed; its boot compatibility disabled");
+                Constants.LOG.warn("Ice and Fire lightning-set local contract is incompatible; its boot compatibility disabled");
             }
             return false;
         }
@@ -31,15 +30,8 @@ public final class IceAndFireLightningFeetInjectionPoint extends InjectionPoint 
         return !checks.isEmpty();
     }
 
-    static boolean matchesAuditedInstructions(String descriptor, InsnList instructions) {
-        if (!IceAndFireDamageShape.DESCRIPTOR.equals(descriptor)) {
-            return false;
-        }
-        MethodNode view = new MethodNode();
-        view.name = IceAndFireDamageShape.LIGHTNING_METHOD;
-        view.desc = descriptor;
-        view.instructions = instructions;
-        return IceAndFireDamageShape.LIGHTNING_FINGERPRINT.equals(IceAndFireDamageShape.fingerprint(view))
+    static boolean matchesLocalContract(String descriptor, InsnList instructions) {
+        return IceAndFireDamageShape.DESCRIPTOR.equals(descriptor)
                 && IceAndFireDamageShape.lightningFeetChecks(instructions).size() == 1;
     }
 }

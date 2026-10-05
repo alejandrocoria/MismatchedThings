@@ -9,7 +9,7 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 - `Common/src/main/java`: shared network acceptance scenarios and helpers.
   This is a shared source directory, not a separate Gradle project.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
-- `Fabric/src/test`: fast loader-local reflection-boundary JUnit regressions
+- `Fabric/src/test`: fast loader-local reflection/bytecode-boundary JUnit regressions
   against the packaged Fabric classes, with fake optional APIs and no game launch.
 - `Fabric/src/viewerCompatibilityTest`: optional real JEI/REI reload and
   repeated-opening probes, separate from the clean core client suite.
@@ -117,6 +117,36 @@ bytecode guard characterization in NeoForge JUnit. Without that property, only
 the two artifact-dependent tests are skipped; the synthetic guard regressions run.
 This is dragon/projectile damage and Lightning-set acceptance, not Tide effect
 acceptance or full Ice and Fire gameplay/visual approval.
+
+The local-guard coexistence gate adds two real fixture mixins around the same
+FEET operations (priorities 1500/500 around production 1000), an independent
+fixture helmet source container, and an unrelated executable call inserted
+before injection preparation:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireMixinCoexistence
+.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireMixinCoexistence '-Pneoforge_version=26.1.2.99'
+```
+
+It runs the 340-case baseline plus 11 helmet/boots composition cases with the
+helmet adapter at each priority. A third run deliberately replaces the native
+FEET Troll target: six real damage cases prove the damage adapter stays inert
+while other-slot native behavior and the independently guarded Lightning adapter
+remain usable. Injector count debugging is enabled, and the verifier checks zero
+guard warnings in compatible cases versus one bounded warning in the negative
+case. Logs and copied reports are in
+`NeoForge/build/reports/ice-and-fire-coexistence`. These mixins are property-gated
+and test-only; they are not actual future mixed-helmet/chestplate/leggings mods
+and do not establish all 16 subsets or Tide activation.
+
+The Create Fly verifier includes a real `BeltBlock.entityInside` passenger-map
+test with a second `ItemStack.is(DIAMOND)` inserted directly into the method by a
+test-only mixin plugin. It proves Cardboard recognition remains local, the
+unrelated predicate retains its own true/false results, both orientations work,
+and ordinary/invalid/spoofed/crouching/flying/Diving controls retain native
+behavior. It does not require a powered belt or claim actual belt movement.
+Run it with `:RuntimeTests:Fabric:verifyCreateFlyCompatibility`; the three local
+shape JUnit regressions are part of `:RuntimeTests:Fabric:test`.
 
 The broad server GameTest XML reports mark context-only no-ops as skipped rather
 than successful coverage. `verifyGameTestContextGuard` deliberately starts one

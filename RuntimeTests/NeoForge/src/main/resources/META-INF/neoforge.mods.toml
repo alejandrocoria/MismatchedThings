@@ -10,6 +10,9 @@ license="MIT"
 [[mixins]]
     config="mismatchedboots-runtime-test.neoforge.mixins.json"
 
+[[mixins]]
+    config="mismatchedboots-ice-and-fire-coexistence.mixins.json"
+
 [[dependencies.mismatchedboots_runtime_test]]
     modId="neoforge"
     type="required"
