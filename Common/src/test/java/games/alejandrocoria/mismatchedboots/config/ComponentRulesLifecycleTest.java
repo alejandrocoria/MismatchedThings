@@ -35,10 +35,14 @@ class ComponentRulesLifecycleTest {
     @AfterEach
     void restoreDefaults() {
         ComponentRulesLifecycle.onServerStopped();
+        ComponentRuleState.restoreDefaults();
     }
 
     @Test
-    void serverLifecycleAtomicallyInstallsAndRestoresTheCompleteSnapshot() throws IOException {
+    void serverLifecycleDoesNotOverwriteClientRules() throws IOException {
+        ComponentRules client = new ComponentRules(DurabilityPolicy.SEPARATE,
+                RepairCostPolicy.AVERAGE, ComponentRuleDefaults.ruleSet());
+        ComponentRuleState.install(client);
         Path path = directory.resolve(ComponentRulesConfig.FILE_NAME);
         Files.writeString(path, """
                 [durability]
@@ -56,7 +60,7 @@ class ComponentRulesLifecycleTest {
 
         ComponentRules loaded = ComponentRulesLifecycle.load(path);
 
-        assertSame(loaded, ComponentRuleState.current());
+        assertSame(client, ComponentRuleState.current());
         assertSame(loaded, ComponentRulesLifecycle.serverRules());
         assertEquals(DurabilityPolicy.SEPARATE, loaded.durability());
         assertEquals(RepairCostPolicy.OWNER, loaded.repairCost());
@@ -65,11 +69,8 @@ class ComponentRulesLifecycleTest {
         assertEquals(ComponentRule.of(ComponentPolicy.SHARE),
                 loaded.declarations().get(Identifier.parse("futuremod:dormant")));
 
-        ComponentRuleState.restoreDefaults();
-        assertSame(loaded, ComponentRulesLifecycle.serverRules());
-
         ComponentRulesLifecycle.onServerStopped();
-        assertSame(ComponentRuleDefaults.state(), ComponentRuleState.current());
+        assertSame(client, ComponentRuleState.current());
         assertSame(ComponentRuleDefaults.state(), ComponentRulesLifecycle.serverRules());
     }
 }

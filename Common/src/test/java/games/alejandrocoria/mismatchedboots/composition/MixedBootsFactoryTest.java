@@ -349,11 +349,12 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void productionFactoryUsesTheCurrentRuleSnapshot() {
+    void factoryUsesTheExplicitAttributeRuleSnapshot() {
         AttributeRuleSet combineArmor = new AttributeRuleSet(
                 AttributePolicy.SEPARATE,
                 Map.of(Identifier.withDefaultNamespace("armor"), AttributePolicy.COMBINE));
-        AttributeRuleState.install(combineArmor);
+        // Explicit composition must not accidentally read the unrelated client snapshot.
+        AttributeRuleState.install(new AttributeRuleSet(AttributePolicy.REJECT, Map.of()));
         try {
             ItemStack iron = boots(Items.IRON_BOOTS);
             iron.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
@@ -370,7 +371,7 @@ class MixedBootsFactoryTest {
                             EquipmentSlotGroup.FEET)
                     .build());
             MixedBootsPair pair = MixedBootsFactory.createPair(
-                    iron, gold, outputItem, mixedDataType);
+                    iron, gold, outputItem, mixedDataType, combineArmor, ComponentRuleDefaults.state());
 
             for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
                 List<ItemAttributeModifiers.Entry> armor = output.getOrDefault(
@@ -388,10 +389,11 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void productionFactoryUsesTheCompleteComponentRuleSnapshot() {
+    void factoryUsesTheExplicitCompleteComponentRuleSnapshot() {
         ComponentRules rules = new ComponentRules(
                 DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER, ComponentRuleDefaults.ruleSet());
-        ComponentRuleState.install(rules);
+        ComponentRuleState.install(new ComponentRules(
+                DurabilityPolicy.AVERAGE, RepairCostPolicy.MAXIMUM, ComponentRuleDefaults.ruleSet()));
         try {
             ItemStack first = boots(Items.IRON_BOOTS);
             ItemStack second = boots(Items.GOLDEN_BOOTS);
@@ -400,7 +402,8 @@ class MixedBootsFactoryTest {
             first.set(DataComponents.REPAIR_COST, 2);
             second.set(DataComponents.REPAIR_COST, 5);
 
-            MixedBootsPair pair = MixedBootsFactory.createPair(first, second, outputItem, mixedDataType);
+            MixedBootsPair pair = MixedBootsFactory.createPair(first, second, outputItem, mixedDataType,
+                    AttributeRuleDefaults.ruleSet(), rules);
 
             assertEquals(100, pair.primary().getMaxDamage());
             assertEquals(10, pair.primary().getDamageValue());

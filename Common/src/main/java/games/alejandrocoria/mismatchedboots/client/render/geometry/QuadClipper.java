@@ -76,6 +76,15 @@ public final class QuadClipper {
         }
 
         Polygon clipped = clipRectangle(input, side, origins);
+        validateFinite(clipped);
+        // A valid rectangle can leave a sub-epsilon sliver. It is an unsupported
+        // cut, not an invariant failure; discard provenance before pair-wide fallback.
+        if (isDegenerateCut(clipped)) {
+            if (origins != null) {
+                origins.clear();
+            }
+            return PolygonResult.incompatible(Incompatibility.DEGENERATE_CUT);
+        }
         validateOutput(input, clipped, side);
         return PolygonResult.split(clipped);
     }
@@ -202,22 +211,26 @@ public final class QuadClipper {
         }
     }
 
-    private static void validateOutput(Quad input, Polygon output, Side side) {
-        validateFinite(output);
-        Point inputNormal = edge(input, 0).cross(edge(input, 1));
-        Point outputNormal = polygonNormal(output);
-        if (outputNormal.lengthSquared() <= GEOMETRY_EPSILON * GEOMETRY_EPSILON
-                || outputNormal.dot(inputNormal) <= 0.0F) {
-            throw new IllegalStateException("A supported cut produced invalid area or winding");
+    private static boolean isDegenerateCut(Polygon output) {
+        if (polygonNormal(output).lengthSquared() <= GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
+            return true;
         }
         for (int first = 0; first < output.vertices().size(); first++) {
             for (int second = first + 1; second < output.vertices().size(); second++) {
                 if (output.vertex(first).clippingPosition()
                         .distanceSquared(output.vertex(second).clippingPosition())
                         <= GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
-                    throw new IllegalStateException("A supported cut produced duplicate vertices");
+                    return true;
                 }
             }
+        }
+        return false;
+    }
+
+    private static void validateOutput(Quad input, Polygon output, Side side) {
+        Point inputNormal = edge(input, 0).cross(edge(input, 1));
+        if (polygonNormal(output).dot(inputNormal) <= 0.0F) {
+            throw new IllegalStateException("A supported cut produced invalid winding");
         }
         for (Vertex vertex : output.vertices()) {
             if (Math.abs(vertex.clippingPosition().x()) > GEOMETRY_EPSILON
@@ -299,7 +312,8 @@ public final class QuadClipper {
 
     public enum Incompatibility {
         NOT_RECTANGLE,
-        UNSUPPORTED_TOPOLOGY
+        UNSUPPORTED_TOPOLOGY,
+        DEGENERATE_CUT
     }
 
     public record Point(float x, float y, float z) {

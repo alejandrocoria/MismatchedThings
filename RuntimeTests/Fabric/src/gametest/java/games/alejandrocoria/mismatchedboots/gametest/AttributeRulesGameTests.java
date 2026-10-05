@@ -1,8 +1,8 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
+import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -59,9 +59,9 @@ public final class AttributeRulesGameTests {
             return;
         }
 
-        helper.assertValueEqual(AttributeRuleState.current().policyFor(Identifier.withDefaultNamespace("movement_speed")),
+        helper.assertValueEqual(AttributeRulesLifecycle.serverRules().policyFor(Identifier.withDefaultNamespace("movement_speed")),
                 AttributePolicy.COMBINE, "loaded movement-speed policy");
-        helper.assertValueEqual(AttributeRuleState.current().policyFor(
+        helper.assertValueEqual(AttributeRulesLifecycle.serverRules().policyFor(
                         Identifier.withDefaultNamespace("waypoint_transmit_range")),
                 AttributePolicy.REJECT, "loaded waypoint-transmit-range policy");
 

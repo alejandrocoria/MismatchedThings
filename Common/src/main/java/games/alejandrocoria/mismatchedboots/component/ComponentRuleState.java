@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.component;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+/** Client preview rules, populated by synchronization; never server authority. */
 public final class ComponentRuleState {
     private static final AtomicReference<ComponentRules> CURRENT =
             new AtomicReference<>(ComponentRuleDefaults.state());

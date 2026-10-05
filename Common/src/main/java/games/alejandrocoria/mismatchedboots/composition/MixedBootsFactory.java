@@ -1,12 +1,12 @@
 package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
+import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
@@ -33,14 +33,21 @@ public final class MixedBootsFactory {
     private MixedBootsFactory() {
     }
 
+    /** Gameplay entrypoint: client reset/packet timing must never change server composition. */
     public static MixedBootsPair createPair(ItemStack first, ItemStack second) {
+        return createPair(first, second, AttributeRulesLifecycle.serverRules(), ComponentRulesLifecycle.serverRules());
+    }
+
+    /** Explicit immutable rules for client previews and other non-server composition. */
+    public static MixedBootsPair createPair(
+            ItemStack first, ItemStack second, AttributeRuleSet attributes, ComponentRules components) {
         Holder<Item> mixedBoots = BuiltInRegistries.ITEM
                 .get(ModContent.MIXED_BOOTS_ID)
                 .filter(holder -> holder.value() instanceof MixedBootsItem)
                 .orElseThrow(() -> new IllegalStateException("MismatchedBoots item is not registered"));
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
                 .orElseThrow(() -> new IllegalStateException("MismatchedBoots data component is not registered"));
-        return createPair(first, second, mixedBoots, dataType);
+        return createPair(first, second, mixedBoots, dataType, attributes, components);
     }
 
     static MixedBootsPair createPair(
@@ -48,8 +55,8 @@ public final class MixedBootsFactory {
             ItemStack second,
             Holder<Item> mixedBoots,
             DataComponentType<MixedBootsData> dataType) {
-        AttributeRuleSet attributeRules = AttributeRuleState.current();
-        ComponentRules componentRules = ComponentRuleState.current();
+        AttributeRuleSet attributeRules = AttributeRulesLifecycle.serverRules();
+        ComponentRules componentRules = ComponentRulesLifecycle.serverRules();
         return createPair(first, second, mixedBoots, dataType, attributeRules, componentRules);
     }
 

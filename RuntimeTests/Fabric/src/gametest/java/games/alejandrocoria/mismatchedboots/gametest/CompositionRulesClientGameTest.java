@@ -13,11 +13,15 @@ import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesConfig;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesConfig;
 import games.alejandrocoria.mismatchedboots.network.AttributeRulesPayload;
 import games.alejandrocoria.mismatchedboots.network.ComponentRulesPayload;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.platform.Services;
+import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
+import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -84,7 +88,9 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
                         .filter(CompositionRulesClientGameTest::isPolicyResult)
                         .findFirst()
                         .orElseThrow();
-                ItemStack preview = createPolicyResult();
+                ItemStack preview = MixedBootsFactory.createPair(
+                        source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0),
+                        AttributeRuleState.current(), ComponentRuleState.current()).primary();
                 if (!serverResult.getOrDefault(
                         DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).equals(
                         preview.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY))) {
@@ -98,7 +104,54 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
                         client, AttributeRuleState.current(), ComponentRuleState.current());
                 assertHandshake(expectedPolicy);
             });
+            assertServerCompositionDuringClientReset(context, singleplayer, expectedPolicy, expectedAmount);
         }
+    }
+
+    private static void assertServerCompositionDuringClientReset(
+            ClientGameTestContext context, TestSingleplayerContext singleplayer,
+            AttributePolicy expectedPolicy, double expectedAmount) {
+        var attributes = AttributeRuleState.current();
+        var components = ComponentRuleState.current();
+        for (int phase = 0; phase < 3; phase++) {
+            int partial = phase;
+            context.runOnClient(client -> {
+                CompositionRulesClientLifecycle.onDisconnected();
+                if (partial == 1) AttributeRuleState.install(attributes);
+                if (partial == 2) ComponentRuleState.install(components);
+                if (CompositionRulesClientLifecycle.areRulesSynchronized()) {
+                    throw new AssertionError("Reset/partial receipt incorrectly reports full readiness");
+                }
+                if (partial == 0) {
+                    var disconnectedPreview = MixedBootsFactory.createPair(
+                            source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0),
+                            AttributeRuleState.current(), ComponentRuleState.current()).primary();
+                    if (attributeAmount(disconnectedPreview) != 3.0) {
+                        throw new AssertionError("Disconnected client preview did not use built-in average");
+                    }
+                }
+            });
+            singleplayer.getServer().runOnServer(server -> {
+                var left = source(Items.LEATHER_BOOTS, 2.0);
+                var right = source(Items.CHAINMAIL_BOOTS, 4.0);
+                var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(left, right));
+                if (!pair.isComplete() || attributeAmount(pair.primary()) != expectedAmount) {
+                    throw new AssertionError("Client reset/partial rules changed integrated-server Workbench output");
+                }
+                assertComponentResult(pair.primary(), pair.primary());
+                ItemStack recomposed = MixedBootsRecomposer.recompose(pair.primary(), left, right);
+                if (attributeAmount(recomposed) != expectedAmount) {
+                    throw new AssertionError("Client reset/partial rules changed integrated-server recomposition");
+                }
+                assertComponentResult(pair.primary(), recomposed);
+            });
+        }
+        // Restore through a real handshake so subsequent tests keep production readiness semantics.
+        NetworkTrafficProbe.reset();
+        context.runOnClient(client -> CompositionRulesClientLifecycle.onConnected());
+        context.waitFor(client -> CompositionRulesClientLifecycle.areRulesSynchronized()
+                && NetworkTrafficProbe.events().size() == 3);
+        context.runOnClient(client -> assertHandshake(expectedPolicy));
     }
 
     private static void assertHandshake(AttributePolicy expectedPolicy) {

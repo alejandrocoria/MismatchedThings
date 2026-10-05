@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
@@ -19,8 +21,6 @@ import java.util.List;
 import java.util.Optional;
 
 final class MismatchedWorkbenchJeiExamples {
-    private static final MismatchedWorkbenchRecipe WORKBENCH_RECIPE = new MixedBootsWorkbenchRecipe();
-
     private MismatchedWorkbenchJeiExamples() {
     }
 
@@ -30,10 +30,12 @@ final class MismatchedWorkbenchJeiExamples {
             return Optional.empty();
         }
 
+        MismatchedWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe(
+                AttributeRuleState.current(), ComponentRuleState.current());
         return MismatchedWorkbenchJeiCycle.create(collectBoots(runtime), (left, right) -> {
             MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
-            return WORKBENCH_RECIPE.matches(input, level)
-                    ? WORKBENCH_RECIPE.assemblePair(input)
+            return recipe.matches(input, level)
+                    ? recipe.assemblePair(input)
                     : MismatchedWorkbenchResult.EMPTY;
         });
     }

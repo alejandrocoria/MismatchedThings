@@ -1,6 +1,8 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchExampleCycle;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
@@ -24,8 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 
 final class MismatchedWorkbenchReiExamples {
-    private static final MismatchedWorkbenchRecipe WORKBENCH_RECIPE = new MixedBootsWorkbenchRecipe();
-
     private MismatchedWorkbenchReiExamples() {
     }
 
@@ -49,12 +49,14 @@ final class MismatchedWorkbenchReiExamples {
             return Optional.empty();
         }
 
+        MismatchedWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe(
+                AttributeRuleState.current(), ComponentRuleState.current());
         return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) -> {
             MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
-            if (!WORKBENCH_RECIPE.matches(input, level)) {
+            if (!recipe.matches(input, level)) {
                 return MismatchedWorkbenchResult.EMPTY;
             }
-            return WORKBENCH_RECIPE.assemblePair(input);
+            return recipe.assemblePair(input);
         }).map(example -> MismatchedWorkbenchReiDisplay.create(
                 example.leftInputs(),
                 example.rightInputs(),

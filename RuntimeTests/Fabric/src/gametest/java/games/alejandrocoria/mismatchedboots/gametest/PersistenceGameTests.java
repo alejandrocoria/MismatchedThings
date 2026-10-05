@@ -1,14 +1,14 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentNumericKind;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
+import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -152,14 +152,14 @@ public final class PersistenceGameTests {
             assertNamedResistancePair(helper, chest.getItem(4), "named primary");
             assertNamedResistancePair(helper, chest.getItem(5), "named inverse");
 
-            helper.assertValueEqual(AttributeRuleState.current().policyFor(
+            helper.assertValueEqual(AttributeRulesLifecycle.serverRules().policyFor(
                             Identifier.withDefaultNamespace("movement_speed")),
                     AttributePolicy.COMBINE, "restart read process movement-speed policy");
-            helper.assertValueEqual(ComponentRuleState.current().durability(),
+            helper.assertValueEqual(ComponentRulesLifecycle.serverRules().durability(),
                     DurabilityPolicy.SEPARATE, "restart read durability policy");
-            helper.assertValueEqual(ComponentRuleState.current().repairCost(),
+            helper.assertValueEqual(ComponentRulesLifecycle.serverRules().repairCost(),
                     RepairCostPolicy.OWNER, "restart read repair-cost policy");
-            helper.assertValueEqual(ComponentRuleState.current().declarations().get(TestContent.NUMERIC_COMPONENT_ID),
+            helper.assertValueEqual(ComponentRulesLifecycle.serverRules().declarations().get(TestContent.NUMERIC_COMPONENT_ID),
                     ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT),
                     "restart read numeric component rule");
 

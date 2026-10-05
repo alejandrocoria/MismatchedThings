@@ -2,7 +2,6 @@ package games.alejandrocoria.mismatchedboots.config;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.platform.Services;
 
@@ -22,7 +21,6 @@ public final class ComponentRulesLifecycle {
 
     public static void onServerStopped() {
         SERVER_RULES.set(ComponentRuleDefaults.state());
-        ComponentRuleState.restoreDefaults();
     }
 
     public static ComponentRules serverRules() {
@@ -32,7 +30,6 @@ public final class ComponentRulesLifecycle {
     static ComponentRules load(Path path) {
         ComponentRules rules = new ComponentRulesConfig(path).load();
         SERVER_RULES.set(rules);
-        ComponentRuleState.install(rules);
         Constants.LOG.info("Loaded {} component composition declarations from {}", rules.declarations().size(), path);
         return rules;
     }

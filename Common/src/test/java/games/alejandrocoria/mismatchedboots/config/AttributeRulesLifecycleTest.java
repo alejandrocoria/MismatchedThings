@@ -23,10 +23,13 @@ class AttributeRulesLifecycleTest {
     @AfterEach
     void restoreDefaults() {
         AttributeRulesLifecycle.onServerStopped();
+        AttributeRuleState.restoreDefaults();
     }
 
     @Test
-    void serverLifecycleInstallsTheDiskSnapshotAndRestoresDefaults() throws IOException {
+    void serverLifecycleDoesNotOverwriteClientRules() throws IOException {
+        AttributeRuleSet client = new AttributeRuleSet(AttributePolicy.MAXIMUM, java.util.Map.of());
+        AttributeRuleState.install(client);
         Path path = directory.resolve(AttributeRulesConfig.FILE_NAME);
         Files.writeString(path, """
                 [attributes]
@@ -38,17 +41,14 @@ class AttributeRulesLifecycleTest {
 
         AttributeRuleSet loaded = AttributeRulesLifecycle.load(path);
 
-        assertSame(loaded, AttributeRuleState.current());
+        assertSame(client, AttributeRuleState.current());
         assertSame(loaded, AttributeRulesLifecycle.serverRules());
         assertEquals(AttributePolicy.COMBINE,
-                AttributeRuleState.current().policyFor(Identifier.withDefaultNamespace("armor")));
+                loaded.policyFor(Identifier.withDefaultNamespace("armor")));
 
-        AttributeRuleState.restoreDefaults();
-
-        assertSame(loaded, AttributeRulesLifecycle.serverRules());
         AttributeRulesLifecycle.onServerStopped();
 
-        assertSame(AttributeRuleDefaults.ruleSet(), AttributeRuleState.current());
+        assertSame(client, AttributeRuleState.current());
         assertSame(AttributeRuleDefaults.ruleSet(), AttributeRulesLifecycle.serverRules());
     }
 }

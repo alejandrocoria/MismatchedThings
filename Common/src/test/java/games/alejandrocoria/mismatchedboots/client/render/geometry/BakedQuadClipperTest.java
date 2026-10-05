@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.client.render.geometry;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -12,8 +13,10 @@ import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.Bootstrap;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -29,6 +32,35 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BakedQuadClipperTest {
     private static final float EPSILON = QuadClipper.GEOMETRY_EPSILON;
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
+
+    @Test
+    void nearPlaneCornerFallsBackBeforeMaterializationOnEitherSide() {
+        try (MaterialFixture fixture = MaterialFixture.animatedTranslucent()) {
+            for (float mirror : new float[]{-1.0F, 1.0F}) {
+                float d = 2.0F * EPSILON;
+                BakedQuad input = new BakedQuad(
+                        new Vector3f(0.5F - d * mirror, 0.5F, 0.5F),
+                        new Vector3f(0.5F + (0.5F - d) * mirror, 1.0F, 0.5F),
+                        new Vector3f(0.5F + (1.0F - d) * mirror, 0.5F, 0.5F),
+                        new Vector3f(0.5F + (0.5F - d) * mirror, 0.0F, 0.5F),
+                        UVPair.pack(0, 0), UVPair.pack(1, 0), UVPair.pack(1, 1), UVPair.pack(0, 1),
+                        Direction.SOUTH, fixture.material());
+                var result = clip(input, new Matrix4f(),
+                        mirror > 0 ? QuadClipper.Side.LEFT : QuadClipper.Side.RIGHT);
+                assertEquals(QuadClipper.Decision.INCOMPATIBLE, result.decision());
+                assertEquals(BakedQuadClipper.Incompatibility.DEGENERATE_CUT, result.incompatibility());
+                assertTrue(result.quads().isEmpty());
+                assertSame(fixture.material(), input.materialInfo());
+                assertEquals(0.5F - d * mirror, input.position0().x());
+            }
+        }
+    }
 
     @Test
     void rebuildsPositionsAndIndependentUvComponentsFromAHandAuthoredOracle() {

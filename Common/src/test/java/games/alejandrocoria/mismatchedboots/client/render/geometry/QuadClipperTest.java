@@ -21,6 +21,33 @@ class QuadClipperTest {
     private static final float EPSILON = QuadClipper.GEOMETRY_EPSILON;
 
     @Test
+    void nearPlaneCornersUseFallbackWithoutLeavingPartialOrigins() {
+        for (float scale : new float[]{0.25F, 1.0F, 4.0F}) {
+            for (float mirror : new float[]{-1.0F, 1.0F}) {
+                float d = 2.0F * EPSILON;
+                QuadClipper.Quad input = new QuadClipper.Quad(
+                        vertex(-d * mirror, 0, 0),
+                        vertex((0.5F * scale - d) * mirror, 0.5F * scale, 0),
+                        vertex((scale - d) * mirror, 0, 0),
+                        vertex((0.5F * scale - d) * mirror, -0.5F * scale, 0));
+                QuadClipper.Side smallSide = mirror > 0 ? QuadClipper.Side.LEFT : QuadClipper.Side.RIGHT;
+                QuadClipper.Side largeSide = mirror > 0 ? QuadClipper.Side.RIGHT : QuadClipper.Side.LEFT;
+
+                var rejected = QuadClipper.clipPolygonWithOrigins(input, smallSide);
+                assertEquals(QuadClipper.Decision.INCOMPATIBLE, rejected.geometry().decision());
+                assertEquals(QuadClipper.Incompatibility.DEGENERATE_CUT, rejected.geometry().incompatibility());
+                assertTrue(rejected.origins().isEmpty());
+                assertNull(rejected.geometry().polygon());
+                assertEquals(QuadClipper.Decision.INCOMPATIBLE, QuadClipper.clip(input, smallSide).decision());
+
+                var retained = QuadClipper.clipPolygonWithOrigins(input, largeSide);
+                assertEquals(QuadClipper.Decision.SPLIT, retained.geometry().decision());
+                assertEquals(5, retained.origins().size());
+            }
+        }
+    }
+
+    @Test
     void keepsAndDropsWhollyOwnedQuadsSymmetrically() {
         QuadClipper.Quad left = rectangle(-2.0F, -1.0F, -1.0F, 1.0F);
         QuadClipper.Quad right = rectangle(1.0F, 2.0F, -1.0F, 1.0F);

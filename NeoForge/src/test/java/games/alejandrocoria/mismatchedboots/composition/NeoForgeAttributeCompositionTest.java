@@ -3,7 +3,7 @@ package games.alejandrocoria.mismatchedboots.composition;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.core.Holder;
@@ -60,7 +60,7 @@ public class NeoForgeAttributeCompositionTest {
             ItemStack firstBefore = first.copy();
             ItemStack secondBefore = second.copy();
 
-            var pair = createPair(first, second);
+            var pair = fixture.createPair(first, second);
 
             assertEquals(primaryAmount, bonus(pair.primary().get(DataComponents.ATTRIBUTE_MODIFIERS)));
             assertEquals(inverseAmount, bonus(pair.inverse().get(DataComponents.ATTRIBUTE_MODIFIERS)));
@@ -124,7 +124,7 @@ public class NeoForgeAttributeCompositionTest {
             ItemStack firstBefore = first.copy();
             ItemStack secondBefore = second.copy();
 
-            var pair = createPair(first, second);
+            var pair = fixture.createPair(first, second);
 
             assertTrue(ItemStack.matches(firstBefore, first));
             assertTrue(ItemStack.matches(secondBefore, second));
@@ -134,7 +134,7 @@ public class NeoForgeAttributeCompositionTest {
             assertFalse(pair.primary().has(DataComponents.CUSTOM_NAME));
             assertEquals(1, bonus(pair.primary().get(DataComponents.ATTRIBUTE_MODIFIERS)));
 
-            ItemStack recomposed = MixedBootsRecomposer.recompose(pair.primary(), first, second);
+            ItemStack recomposed = fixture.recompose(pair.primary(), first, second);
 
             assertTrue(ItemStack.matches(firstBefore, first));
             assertTrue(ItemStack.matches(secondBefore, second));
@@ -152,14 +152,14 @@ public class NeoForgeAttributeCompositionTest {
         try (Fixture fixture = new Fixture(AttributePolicy.SEPARATE)) {
             ItemStack first = boots(Items.IRON_BOOTS);
             ItemStack second = boots(Items.DIAMOND_BOOTS);
-            var pair = createPair(first, second);
+            var pair = fixture.createPair(first, second);
             fixture.listener.firstAmount = 3;
             fixture.listener.secondAmount = 4;
 
             assertEquals(1, bonus(pair.primary().getAttributeModifiers()));
             assertEquals(2, bonus(pair.inverse().getAttributeModifiers()));
-            ItemStack primary = MixedBootsRecomposer.recompose(pair.primary(), first, second);
-            ItemStack inverse = MixedBootsRecomposer.recompose(pair.inverse(), second, first);
+            ItemStack primary = fixture.recompose(pair.primary(), first, second);
+            ItemStack inverse = fixture.recompose(pair.inverse(), second, first);
 
             assertEquals(3, bonus(primary.getAttributeModifiers()));
             assertEquals(4, bonus(inverse.getAttributeModifiers()));
@@ -172,7 +172,7 @@ public class NeoForgeAttributeCompositionTest {
     @Test
     void rejectPolicyAlsoRejectsAnEventOnlyAttribute() {
         try (Fixture fixture = new Fixture(AttributePolicy.REJECT)) {
-            assertThrows(IllegalArgumentException.class, () -> createPair(
+            assertThrows(IllegalArgumentException.class, () -> fixture.createPair(
                     boots(Items.IRON_BOOTS), boots(Items.DIAMOND_BOOTS)));
             assertEquals(2, fixture.listener.queries);
         }
@@ -191,12 +191,12 @@ public class NeoForgeAttributeCompositionTest {
             var rawHash = new TypedDataComponent<>(DataComponents.ATTRIBUTE_MODIFIERS, raw).encodeValue(hashOps);
             assertTrue(rawHash.error().orElseThrow().message().contains("Unregistered holder"));
 
-            var pair = createPair(first, second);
+            var pair = fixture.createPair(first, second);
 
             assertCodecAndHashSafe(pair.primary(), primaryAmount);
             assertCodecAndHashSafe(pair.inverse(), inverseAmount);
-            assertCodecAndHashSafe(MixedBootsRecomposer.recompose(pair.primary(), first, second), primaryAmount);
-            assertCodecAndHashSafe(MixedBootsRecomposer.recompose(pair.inverse(), second, first), inverseAmount);
+            assertCodecAndHashSafe(fixture.recompose(pair.primary(), first, second), primaryAmount);
+            assertCodecAndHashSafe(fixture.recompose(pair.inverse(), second, first), inverseAmount);
             assertFalse(first.has(DataComponents.ATTRIBUTE_MODIFIERS));
             assertFalse(second.has(DataComponents.ATTRIBUTE_MODIFIERS));
         }
@@ -293,12 +293,6 @@ public class NeoForgeAttributeCompositionTest {
                 .build();
     }
 
-    private static MixedBootsPair createPair(ItemStack first, ItemStack second) {
-        Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
-        return MixedBootsFactory.createPair(first, second, Holder.direct(mixedItem, baseComponents()),
-                ModContent.mixedBootsDataType().orElseThrow());
-    }
-
     private static double bonus(ItemAttributeModifiers modifiers) {
         var bonuses = modifiers.modifiers().stream()
                 .filter(entry -> entry.attribute().equals(Attributes.LUCK)
@@ -337,19 +331,29 @@ public class NeoForgeAttributeCompositionTest {
     }
 
     private static final class Fixture implements AutoCloseable {
-        private final AttributeRuleSet previous = AttributeRuleState.current();
+        private final AttributeRuleSet rules;
         private final SourceListener listener = new SourceListener();
 
         private Fixture(AttributePolicy policy) {
-            AttributeRuleState.install(new AttributeRuleSet(AttributePolicy.SEPARATE,
-                    Map.of(Attributes.LUCK.unwrapKey().orElseThrow().identifier(), policy)));
+            rules = new AttributeRuleSet(AttributePolicy.SEPARATE,
+                    Map.of(Attributes.LUCK.unwrapKey().orElseThrow().identifier(), policy));
             NeoForge.EVENT_BUS.register(listener);
+        }
+
+        private MixedBootsPair createPair(ItemStack first, ItemStack second) {
+            Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
+            return MixedBootsFactory.createPair(first, second, Holder.direct(mixedItem, baseComponents()),
+                    ModContent.mixedBootsDataType().orElseThrow(), rules, ComponentRuleDefaults.state());
+        }
+
+        private ItemStack recompose(ItemStack root, ItemStack first, ItemStack second) {
+            return MixedBootsRecomposer.recompose(root, first, second,
+                    ModContent.mixedBootsDataType().orElseThrow(), rules, ComponentRuleDefaults.state());
         }
 
         @Override
         public void close() {
             NeoForge.EVENT_BUS.unregister(listener);
-            AttributeRuleState.install(previous);
         }
     }
 }

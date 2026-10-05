@@ -2,6 +2,8 @@ package games.alejandrocoria.mismatchedboots.recipe;
 
 import com.mojang.serialization.MapCodec;
 import games.alejandrocoria.mismatchedboots.Constants;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
@@ -24,6 +26,13 @@ public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecip
 
     public MixedBootsWorkbenchRecipe() {
         this(MixedBootsFactory::createPair);
+    }
+
+    /** Client examples capture the synchronized rules explicitly, not physical-side inference. */
+    public MixedBootsWorkbenchRecipe(AttributeRuleSet attributes, ComponentRules components) {
+        this((left, right) -> MixedBootsFactory.createPair(left, right, attributes, components));
+        java.util.Objects.requireNonNull(attributes, "attributes");
+        java.util.Objects.requireNonNull(components, "components");
     }
 
     MixedBootsWorkbenchRecipe(PairFactory pairFactory) {

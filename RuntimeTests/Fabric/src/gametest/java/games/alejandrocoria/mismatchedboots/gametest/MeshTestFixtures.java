@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
+import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.client.renderer.v1.render.FabricLayerRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -19,7 +20,7 @@ public final class MeshTestFixtures {
     private MeshTestFixtures() {
     }
 
-    public enum Mode { MESH_ONLY, BOTH, EMPTY, DROP, ANIMATED, INVALID_LATE, INVALID_NORMAL }
+    public enum Mode { MESH_ONLY, BOTH, EMPTY, DROP, ANIMATED, INVALID_LATE, INVALID_NORMAL, DEGENERATE_CUT }
 
     public static void append(Identifier model, ItemStackRenderState.LayerRenderState layer, boolean lastLayer) {
         Mode mode = models.get(model);
@@ -52,6 +53,15 @@ public final class MeshTestFixtures {
                 emitter.normal(0, 0, 0, 0);
             }
             emitter.emit();
+        }
+        if (lastLayer && mode == Mode.DEGENERATE_CUT) {
+            float d = 2.0F * QuadClipper.GEOMETRY_EPSILON;
+            for (float mirror : new float[]{-1.0F, 1.0F}) {
+                emitter.pos(0, 0.5F - d * mirror, 0.5F, 0.5F)
+                        .pos(1, 0.5F + (0.5F - d) * mirror, 1, 0.5F)
+                        .pos(2, 0.5F + (1.0F - d) * mirror, 0.5F, 0.5F)
+                        .pos(3, 0.5F + (0.5F - d) * mirror, 0, 0.5F).emit();
+            }
         }
         if (mode != Mode.BOTH && mode != Mode.INVALID_LATE && mode != Mode.INVALID_NORMAL) {
             accessor.mismatchedboots$getQuads().clear();

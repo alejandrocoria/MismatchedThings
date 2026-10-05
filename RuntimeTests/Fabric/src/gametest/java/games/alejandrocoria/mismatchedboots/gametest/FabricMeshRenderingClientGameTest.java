@@ -178,6 +178,21 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
     }
 
     private static void verifyBoundaries() {
+        for (var side : QuadClipper.Side.values()) {
+            MutableMesh nearPlane = gradient(0, null, false);
+            // A valid earlier face must not be committed when a later cut degenerates.
+            float mirror = side == QuadClipper.Side.LEFT ? 1.0F : -1.0F;
+            float d = 2.0F * QuadClipper.GEOMETRY_EPSILON;
+            nearPlane.emitter()
+                    .pos(0, 0.5F - d * mirror, 0.5F, 0.5F)
+                    .pos(1, 0.5F + (0.5F - d) * mirror, 1, 0.5F)
+                    .pos(2, 0.5F + (1.0F - d) * mirror, 0.5F, 0.5F)
+                    .pos(3, 0.5F + (0.5F - d) * mirror, 0, 0.5F).emit();
+            var before = MeshSubmissionProbe.fingerprint(nearPlane);
+            var plan = FabricMeshClipper.plan(nearPlane, IDENTITY, side);
+            require(!plan.compatible(), "Near-plane sliver was accepted");
+            require(before.equals(MeshSubmissionProbe.fingerprint(nearPlane)), "Degenerate cut partially committed mesh");
+        }
         require(FabricMeshClipper.plan(null, IDENTITY, QuadClipper.Side.LEFT).compatible(), "Absent mesh rejected");
         MutableMesh empty = Renderer.get().mutableMesh();
         FabricMeshClipper.plan(empty, IDENTITY, QuadClipper.Side.LEFT).commit().run();
@@ -286,7 +301,11 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
 
     private static void verifyAtomicFallback(Minecraft client) {
         for (var model : List.of(RED, id("geometry_multi_late_rotated"))) {
-            for (var mode : List.of(MeshTestFixtures.Mode.INVALID_LATE, MeshTestFixtures.Mode.INVALID_NORMAL)) {
+            for (var mode : List.of(MeshTestFixtures.Mode.INVALID_LATE, MeshTestFixtures.Mode.INVALID_NORMAL,
+                    MeshTestFixtures.Mode.DEGENERATE_CUT)) {
+                if (mode == MeshTestFixtures.Mode.DEGENERATE_CUT && !model.equals(RED)) {
+                    continue; // The near-plane fixture is defined in the identity local transform.
+                }
                 MeshTestFixtures.models.put(model, mode);
                 var red = boot(model);
                 var blue = boot(BLUE);

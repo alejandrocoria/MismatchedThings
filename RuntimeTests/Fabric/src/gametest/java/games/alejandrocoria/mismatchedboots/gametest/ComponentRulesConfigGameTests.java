@@ -3,9 +3,9 @@ package games.alejandrocoria.mismatchedboots.gametest;
 import games.alejandrocoria.mismatchedboots.component.ComponentNumericKind;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -26,7 +26,7 @@ public final class ComponentRulesConfigGameTests {
             return;
         }
 
-        var rules = ComponentRuleState.current();
+        var rules = ComponentRulesLifecycle.serverRules();
         helper.assertValueEqual(rules.durability(), DurabilityPolicy.SEPARATE, "loaded durability policy");
         helper.assertValueEqual(rules.repairCost(), RepairCostPolicy.OWNER, "loaded repair-cost policy");
         helper.assertValueEqual(rules.declarations().get(TestContent.NUMERIC_COMPONENT_ID),

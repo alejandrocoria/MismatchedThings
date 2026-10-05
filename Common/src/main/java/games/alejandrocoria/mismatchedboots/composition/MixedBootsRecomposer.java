@@ -1,12 +1,12 @@
 package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentProjection;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
+import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -22,11 +22,12 @@ public final class MixedBootsRecomposer {
     private MixedBootsRecomposer() {
     }
 
+    /** Gameplay entrypoint, independent of integrated-client synchronization state. */
     public static ItemStack recompose(ItemStack root, ItemStack newLeft, ItemStack newRight) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
                 .orElseThrow(() -> new IllegalStateException("MismatchedBoots data component is not registered"));
-        AttributeRuleSet attributeRules = AttributeRuleState.current();
-        ComponentRules componentRules = ComponentRuleState.current();
+        AttributeRuleSet attributeRules = AttributeRulesLifecycle.serverRules();
+        ComponentRules componentRules = ComponentRulesLifecycle.serverRules();
         return recompose(root, newLeft, newRight, dataType, attributeRules, componentRules);
     }
 

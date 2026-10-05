@@ -57,6 +57,7 @@ public final class BakedQuadClipper {
                     Objects.requireNonNull(geometry.incompatibility())) {
                 case NOT_RECTANGLE -> Incompatibility.NOT_RECTANGLE;
                 case UNSUPPORTED_TOPOLOGY -> Incompatibility.UNSUPPORTED_TOPOLOGY;
+                case DEGENERATE_CUT -> Incompatibility.DEGENERATE_CUT;
             });
         };
     }
@@ -73,6 +74,7 @@ public final class BakedQuadClipper {
     public enum Incompatibility {
         NOT_RECTANGLE,
         UNSUPPORTED_TOPOLOGY,
+        DEGENERATE_CUT,
         UNSUPPORTED_EXTENSION_METADATA
     }
 

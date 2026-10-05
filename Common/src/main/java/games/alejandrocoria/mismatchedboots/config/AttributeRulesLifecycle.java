@@ -3,7 +3,6 @@ package games.alejandrocoria.mismatchedboots.config;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.platform.Services;
 
 import java.nio.file.Path;
@@ -22,7 +21,6 @@ public final class AttributeRulesLifecycle {
 
     public static void onServerStopped() {
         SERVER_RULES.set(AttributeRuleDefaults.ruleSet());
-        AttributeRuleState.restoreDefaults();
     }
 
     public static AttributeRuleSet serverRules() {
@@ -32,7 +30,6 @@ public final class AttributeRulesLifecycle {
     static AttributeRuleSet load(Path path) {
         AttributeRuleSet rules = new AttributeRulesConfig(path).load();
         SERVER_RULES.set(rules);
-        AttributeRuleState.install(rules);
         Constants.LOG.info("Loaded {} attribute composition rules from {}", rules.rules().size(), path);
         return rules;
     }

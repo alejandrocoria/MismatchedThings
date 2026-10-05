@@ -77,7 +77,8 @@ public final class NetworkAcceptanceClientTest {
             }
 
             ItemStack preview = MixedBootsFactory.createPair(
-                    NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()).primary();
+                    NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource(),
+                    rules, componentRules).primary();
             if (!preview.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
                             net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY)
                     .equals(received.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
