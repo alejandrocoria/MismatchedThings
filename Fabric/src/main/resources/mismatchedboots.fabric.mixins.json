@@ -8,6 +8,8 @@
     "AnvilMenuEnchantMixin"
   ],
   "client": [
+    "ClientRecipeDisconnectMixin",
+    "ClientRecipeReloadMixin",
     "LayerRenderStateExtensionMixin"
   ],
   "injectors": {

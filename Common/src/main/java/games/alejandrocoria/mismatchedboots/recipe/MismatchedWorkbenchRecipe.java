@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.recipe;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.PlacementInfo;
@@ -17,6 +19,12 @@ public interface MismatchedWorkbenchRecipe extends Recipe<MismatchedWorkbenchInp
     };
 
     MismatchedWorkbenchResult assemblePair(MismatchedWorkbenchInput input);
+
+    /** Loaded custom recipes retain their own assembly; rule-driven recipes can override this. */
+    default MismatchedWorkbenchResult assemblePreview(
+            MismatchedWorkbenchInput input, AttributeRuleSet attributes, ComponentRules components) {
+        return assemblePair(input);
+    }
 
     @Override
     default ItemStack assemble(MismatchedWorkbenchInput input) {

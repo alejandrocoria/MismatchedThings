@@ -5,24 +5,35 @@ mixed pairs on Fabric and NeoForge.
 
 ## Crafting
 
-Place exactly two count-one, feet-equippable boot stacks anywhere in a 2x2 or
-3x3 crafting grid. The first stack in left-to-right, top-to-bottom reading order
-provides the left boot of the primary result; the second provides its right
-boot. Taking that result consumes both inputs and returns the inverse pair as a
-crafting remainder. A Crafter dispenses both results.
+Craft a **Mismatched Workbench** with six planks (any combination), shears, and
+a diamond in this 3x3 arrangement:
 
-Existing MismatchedBoots cannot be used as inputs. The recipe is special and is
-not automatically placed by the recipe book.
+```text
+plank  shears   plank
+plank  diamond  plank
+plank  empty    plank
+```
+
+Place one ordinary, feet-equippable boot stack in each workbench input. The left
+input supplies the left boot of the primary output; the right supplies its right
+boot. Both inverse pairs are visible as separate results. Taking either consumes
+the two inputs once; the other result remains available until taken or returned
+when the screen closes. Existing MismatchedBoots cannot be composition inputs.
+
+Crafting grids and Crafters do not combine boots. They can instead repair an
+existing mixed pair with an ordinary boot matching either stored source.
 
 ## Combined behavior
 
-- Maximum and remaining durability are the conservative average of the two
-  sources, rounded down. Mending and Unbreaking operate normally afterward.
-- Attributes receive half of each source contribution.
+- By default, maximum and remaining durability are the conservative average of
+  the two sources, rounded down. Mending and Unbreaking operate normally afterward.
+- Attributes follow configurable per-attribute policies. Common vanilla bonuses
+  average compatible modifiers; unknown attributes retain the left source's
+  contribution in each orientation by default, rather than being halved.
 - Enchantments from both sources are copied to both results. Equal levels gain
   one level, capped at the enchantment's normal maximum plus one.
-- Unknown components are inherited from the left source of each result rather
-  than guessed or merged.
+- Unknown components are inherited from the left source of each result by
+  default; supported component policies can be configured on the server.
 
 An anvil repairs the live mixed pair with a material or ordinary boot matching
 either source, and supports renaming and compatible enchantments. A grindstone
@@ -48,3 +59,5 @@ generically transferred.
 The bare registry item has no valid source data, so it is intentionally absent
 from creative tabs. Commands that create a bare stack produce an invalid item
 with a diagnostic tooltip rather than inventing source boots.
+Such a bare stack cannot be equipped through ordinary use, armor slots, or a
+dispenser; valid crafted pairs remain equippable.

@@ -1,15 +1,13 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchExampleCycle;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
-import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
@@ -49,15 +47,12 @@ final class MismatchedWorkbenchReiExamples {
             return Optional.empty();
         }
 
-        MismatchedWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe(
-                AttributeRuleState.current(), ComponentRuleState.current());
-        return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) -> {
-            MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
-            if (!recipe.matches(input, level)) {
-                return MismatchedWorkbenchResult.EMPTY;
-            }
-            return recipe.assemblePair(input);
-        }).map(example -> MismatchedWorkbenchReiDisplay.create(
+        var attributes = AttributeRuleState.current();
+        var components = ComponentRuleState.current();
+        return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) ->
+                MismatchedWorkbenchClientRecipes.assemblePair(
+                        new MismatchedWorkbenchInput(left, right), level, attributes, components))
+                .map(example -> MismatchedWorkbenchReiDisplay.create(
                 example.leftInputs(),
                 example.rightInputs(),
                 example.primaryOutputs(),

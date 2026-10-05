@@ -2,13 +2,14 @@ package games.alejandrocoria.mismatchedboots.runtimetest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
-import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
@@ -76,8 +77,14 @@ public final class NetworkAcceptanceClientTest {
                 return;
             }
 
-            ItemStack preview = MixedBootsFactory.createPair(
-                    NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource(),
+            if (!MismatchedWorkbenchClientRecipes.hasRecipes()) {
+                if (ticks > TIMEOUT_TICKS) {
+                    throw new AssertionError("Client did not receive loaded Workbench recipes");
+                }
+                return;
+            }
+            ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
+                    NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()), client.level,
                     rules, componentRules).primary();
             if (!preview.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
                             net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY)

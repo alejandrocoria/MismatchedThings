@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
@@ -52,6 +53,7 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_ID,
                 ModContent.createMixedBootsWorkbenchRecipeSerializer());
+        RecipeSynchronization.synchronizeRecipeSerializer(ModContent.createMixedBootsWorkbenchRecipeSerializer());
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
                 .register(output -> output.accept(workbenchItem));
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {

@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.gametest;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentGetter;
@@ -59,6 +60,8 @@ public final class TestContent implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, id("reversed_workbench"), ReversedWorkbenchRecipe.SERIALIZER);
+        RecipeSynchronization.synchronizeRecipeSerializer(ReversedWorkbenchRecipe.SERIALIZER);
         NUMERIC_COMPONENT = Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, NUMERIC_COMPONENT_ID,
                 DataComponentType.<Integer>builder()
                         .persistent(Codec.intRange(0, 10).validate(value -> value % 2 == 0

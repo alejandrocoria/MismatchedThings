@@ -69,6 +69,12 @@ public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecip
     }
 
     @Override
+    public MismatchedWorkbenchResult assemblePreview(
+            MismatchedWorkbenchInput input, AttributeRuleSet attributes, ComponentRules components) {
+        return new MixedBootsWorkbenchRecipe(attributes, components).assemblePair(input);
+    }
+
+    @Override
     public RecipeSerializer<MixedBootsWorkbenchRecipe> getSerializer() {
         return SERIALIZER;
     }

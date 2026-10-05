@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.component.ComponentNumericKind;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
@@ -77,6 +78,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             context.waitFor(client -> ComponentRuleState.current().durability() == DurabilityPolicy.SEPARATE
                     && ComponentRuleState.current().repairCost() == RepairCostPolicy.OWNER);
             context.waitFor(client -> NetworkTrafficProbe.events().size() == 3);
+            context.waitFor(client -> MismatchedWorkbenchClientRecipes.hasRecipes());
             context.runOnClient(client -> assertHandshake(expectedPolicy));
 
             singleplayer.getServer().runOnServer(server -> server.getPlayerList().getPlayers().getFirst()
@@ -88,8 +90,8 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
                         .filter(CompositionRulesClientGameTest::isPolicyResult)
                         .findFirst()
                         .orElseThrow();
-                ItemStack preview = MixedBootsFactory.createPair(
-                        source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0),
+                ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
+                        source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0)), client.level,
                         AttributeRuleState.current(), ComponentRuleState.current()).primary();
                 if (!serverResult.getOrDefault(
                         DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).equals(
@@ -198,6 +200,9 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             }
             if (ComponentRuleState.current() != ComponentRuleDefaults.state()) {
                 throw new AssertionError("Disconnect did not restore built-in component rules");
+            }
+            if (MismatchedWorkbenchClientRecipes.hasRecipes()) {
+                throw new AssertionError("Disconnect retained the previous world's Workbench recipes");
             }
         });
     }

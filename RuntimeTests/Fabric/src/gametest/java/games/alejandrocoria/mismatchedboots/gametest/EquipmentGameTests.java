@@ -11,6 +11,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Unit;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -36,6 +38,50 @@ import net.minecraft.world.phys.AABB;
 import java.util.List;
 
 public final class EquipmentGameTests {
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void bareMixedShellCannotUseOrEnterTheFeetSlot(GameTestHelper helper) {
+        var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
+        ItemStack bare = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getValue(ModContent.MIXED_BOOTS_ID));
+        player.setItemInHand(InteractionHand.MAIN_HAND, bare.copy());
+        helper.assertValueEqual(bare.getItem().use(helper.getLevel(), player, InteractionHand.MAIN_HAND),
+                InteractionResult.PASS, "bare mixed use result");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).isEmpty(), "Using a bare shell equipped it");
+        InventoryMenu menu = player.inventoryMenu;
+        helper.assertTrue(!menu.getSlot(8).mayPlace(bare), "Feet slot accepts a bare shell");
+        menu.setCarried(bare.copy());
+        menu.clicked(8, 0, ContainerInput.PICKUP, player);
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).isEmpty()
+                && ItemStack.matches(menu.getCarried(), bare), "Armor-slot click equipped or consumed a bare shell");
+        menu.setCarried(ItemStack.EMPTY);
+        player.getInventory().setItem(0, bare.copy());
+        menu.quickMoveStack(player, 36);
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).isEmpty(), "Shift-click equipped a bare shell");
+        ItemStack valid = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        player.setItemInHand(InteractionHand.MAIN_HAND, valid.copy());
+        valid.getItem().use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), valid),
+                "Valid mixed boots lost right-click equipment behavior");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void dispenserEjectsBareShellInsteadOfEquippingIt(GameTestHelper helper) {
+        helper.setBlock(BlockPos.ZERO, Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH));
+        DispenserBlockEntity dispenser = helper.getBlockEntity(BlockPos.ZERO, DispenserBlockEntity.class);
+        ItemStack bare = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getValue(ModContent.MIXED_BOOTS_ID));
+        dispenser.setItem(0, bare.copy());
+        ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, new BlockPos(0, 0, 1));
+        helper.tickBlock(BlockPos.ZERO);
+        helper.assertTrue(stand.getItemBySlot(EquipmentSlot.FEET).isEmpty(), "Dispenser equipped a bare shell");
+        helper.assertTrue(dispenser.isEmpty(), "Dispenser did not eject the bare shell");
+        helper.assertValueEqual(helper.getLevel().getEntitiesOfClass(ItemEntity.class,
+                new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(3.0),
+                entity -> ItemStack.matches(entity.getItem(), bare)).size(), 1, "ejected bare shells");
+        helper.succeed();
+    }
+
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void currentIronGoldCompositionSuppliesOneAndAHalfArmor(GameTestHelper helper) {
         ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, BlockPos.ZERO);

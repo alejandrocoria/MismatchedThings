@@ -1,11 +1,9 @@
 package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
-import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.subtypes.UidContext;
@@ -30,14 +28,11 @@ final class MismatchedWorkbenchJeiExamples {
             return Optional.empty();
         }
 
-        MismatchedWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe(
-                AttributeRuleState.current(), ComponentRuleState.current());
-        return MismatchedWorkbenchJeiCycle.create(collectBoots(runtime), (left, right) -> {
-            MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
-            return recipe.matches(input, level)
-                    ? recipe.assemblePair(input)
-                    : MismatchedWorkbenchResult.EMPTY;
-        });
+        var attributes = AttributeRuleState.current();
+        var components = ComponentRuleState.current();
+        return MismatchedWorkbenchJeiCycle.create(collectBoots(runtime), (left, right) ->
+                MismatchedWorkbenchClientRecipes.assemblePair(
+                        new MismatchedWorkbenchInput(left, right), level, attributes, components));
     }
 
     private static List<ItemStack> collectBoots(IJeiRuntime runtime) {

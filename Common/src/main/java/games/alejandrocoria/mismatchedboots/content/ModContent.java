@@ -13,7 +13,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
@@ -51,7 +50,8 @@ public final class ModContent {
     }
 
     public static Item.Properties mixedBootsProperties() {
-        return new Item.Properties().stacksTo(1).equippable(EquipmentSlot.FEET);
+        // Only valid composition outputs project EQUIPPABLE; a bare registry shell is inert.
+        return new Item.Properties().stacksTo(1);
     }
 
     public static DataComponentType<MixedBootsData> createMixedBootsDataType() {

@@ -103,6 +103,41 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         results.clearContent();
     }
 
+    private boolean revalidatePreview() {
+        if (isCommitted() || !(owner.level() instanceof ServerLevel level)) {
+            return true;
+        }
+        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(inputs.getItem(0), inputs.getItem(1));
+        RecipeHolder<MismatchedWorkbenchRecipe> current = level.recipeAccess()
+                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, level).orElse(null);
+        if (current == null) {
+            clearPreview();
+            this.broadcastChanges();
+            return false;
+        }
+        if (current == results.getRecipeUsed()) {
+            return true;
+        }
+        MismatchedWorkbenchResult refreshed = current.value().assemblePair(input);
+        if (refreshed.isComplete()
+                && ItemStack.matches(results.getItem(0), refreshed.primary())
+                && ItemStack.matches(results.getItem(1), refreshed.inverse())) {
+            // Keep slot object identity: vanilla click handling may already hold its stack.
+            results.setRecipeUsed(current);
+            return true;
+        }
+        if (refreshed.isComplete()) {
+            results.setRecipeUsed(current);
+            results.setItem(0, refreshed.primary());
+            results.setItem(1, refreshed.inverse());
+        } else {
+            clearPreview();
+        }
+        this.broadcastChanges();
+        // Reject the old click before removal/transfer; the next click sees the new preview.
+        return false;
+    }
+
     private void resultTaken(Player player, ItemStack output) {
         if (player.level().isClientSide()) {
             return;
@@ -145,7 +180,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         }
 
         Slot slot = this.slots.get(slotIndex);
-        if (!slot.hasItem()) {
+        if (!slot.mayPickup(player) || !slot.hasItem()) {
             return ItemStack.EMPTY;
         }
 
@@ -272,6 +307,11 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         @Override
         public boolean isFake() {
             return true;
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return revalidatePreview();
         }
 
         @Override

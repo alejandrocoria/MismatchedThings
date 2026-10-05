@@ -10,13 +10,25 @@ import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.entity.DispenserBlockEntity;
+import net.minecraft.world.phys.AABB;
 
 import java.util.Arrays;
 
@@ -132,6 +144,7 @@ public final class NetworkAcceptanceServerTest {
         String description = NetworkAcceptanceStacks.describePrimary(crafted);
         ItemStack inverse = menu.getSlot(MismatchedWorkbenchMenu.RESULT_START + 1).safeTake(1, 1, player);
         NetworkAcceptanceStacks.assertInverse(inverse);
+        assertEquipmentRoutes(player, crafted);
         if (menu.slots.subList(MismatchedWorkbenchMenu.INPUT_START, MismatchedWorkbenchMenu.RESULT_END)
                 .stream().anyMatch(slot -> !slot.getItem().isEmpty())) {
             throw new AssertionError("Workbench transaction retained inputs or outputs after both were taken");
@@ -141,6 +154,72 @@ public final class NetworkAcceptanceServerTest {
         }
         player.inventoryMenu.broadcastChanges();
         NetworkAcceptanceFiles.write("server-result.txt", description);
+    }
+
+    private static void assertEquipmentRoutes(ServerPlayer player, ItemStack valid) {
+        ItemStack bare = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+        ItemStack previousHand = player.getMainHandItem().copy();
+        ItemStack previousFeet = player.getItemBySlot(EquipmentSlot.FEET).copy();
+        ItemStack previousCarried = player.inventoryMenu.getCarried().copy();
+        BlockPos pos = player.blockPosition().offset(4, 1, 0);
+        var previousBlock = player.level().getBlockState(pos);
+        if (player.level().getBlockEntity(pos) != null) {
+            throw new AssertionError("Equipment fixture would replace a block entity");
+        }
+        ArmorStand target = new ArmorStand(player.level(), pos.getX() + 0.5, pos.getY(), pos.getZ() + 1.5);
+        target.setNoGravity(true);
+        player.level().addFreshEntity(target);
+        try {
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+            player.setItemInHand(InteractionHand.MAIN_HAND, bare.copy());
+            if (bare.getItem().use(player.level(), player, InteractionHand.MAIN_HAND) != InteractionResult.PASS
+                    || !player.getItemBySlot(EquipmentSlot.FEET).isEmpty()) {
+                throw new AssertionError("Bare shell equipped through ordinary use");
+            }
+            player.inventoryMenu.setCarried(bare.copy());
+            player.inventoryMenu.clicked(8, 0, ContainerInput.PICKUP, player);
+            if (!player.getItemBySlot(EquipmentSlot.FEET).isEmpty()
+                    || !ItemStack.matches(player.inventoryMenu.getCarried(), bare)) {
+                throw new AssertionError("Bare shell equipped or disappeared through armor-slot placement");
+            }
+            player.inventoryMenu.setCarried(ItemStack.EMPTY);
+            player.inventoryMenu.quickMoveStack(player, 36);
+            if (!player.getItemBySlot(EquipmentSlot.FEET).isEmpty()) {
+                throw new AssertionError("Bare shell equipped through shift-click");
+            }
+            player.setItemInHand(InteractionHand.MAIN_HAND, valid.copy());
+            valid.getItem().use(player.level(), player, InteractionHand.MAIN_HAND);
+            if (!ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), valid)) {
+                throw new AssertionError("Valid mixed boots lost ordinary-use equipment behavior");
+            }
+            // Exercise the actual dispenser selection path, not merely the component predicate.
+            player.level().setBlockAndUpdate(pos, Blocks.DISPENSER.defaultBlockState()
+                    .setValue(DispenserBlock.FACING, Direction.SOUTH));
+            var dispenser = (DispenserBlockEntity) player.level().getBlockEntity(pos);
+            dispenser.setItem(0, bare.copy());
+            player.level().getBlockState(pos).tick(player.level(), pos, player.level().getRandom());
+            var ejected = player.level().getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3),
+                    entity -> ItemStack.matches(entity.getItem(), bare));
+            if (!target.getItemBySlot(EquipmentSlot.FEET).isEmpty() || !dispenser.isEmpty() || ejected.size() != 1) {
+                throw new AssertionError("Dispenser did not eject exactly one unequipped bare shell");
+            }
+            ejected.forEach(ItemEntity::discard);
+            dispenser.setItem(0, valid.copy());
+            player.level().getBlockState(pos).tick(player.level(), pos, player.level().getRandom());
+            if (!ItemStack.matches(target.getItemBySlot(EquipmentSlot.FEET), valid) || !dispenser.isEmpty()) {
+                throw new AssertionError("Dispenser no longer equips valid mixed boots");
+            }
+            NetworkAcceptanceFiles.write("equipment-success.txt", "bareRejected=true\nvalidEquippable=true\n");
+        } finally {
+            target.discard();
+            player.level().setBlockAndUpdate(pos, previousBlock);
+            player.setItemInHand(InteractionHand.MAIN_HAND, previousHand);
+            player.setItemSlot(EquipmentSlot.FEET, previousFeet);
+            player.inventoryMenu.setCarried(previousCarried);
+            // Shift-click can route an unequippable shell into a normal inventory slot.
+            player.getInventory().getNonEquipmentItems().replaceAll(stack -> ItemStack.matches(stack, bare)
+                    ? ItemStack.EMPTY : stack);
+        }
     }
 
     private static void succeedAndStop(MinecraftServer server) {

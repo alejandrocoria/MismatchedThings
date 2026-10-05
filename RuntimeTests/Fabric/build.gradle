@@ -119,6 +119,80 @@ fabricApi {
 // This project's main source set is intentionally empty; only test mods run here.
 sourceSets.gametest.runtimeClasspath -= sourceSets.main.output
 
+// Optional real-viewer regressions are separate from the clean core client suite.
+sourceSets {
+    viewerCompatibilityTest {
+        compileClasspath += sourceSets.gametest.compileClasspath + sourceSets.gametest.output
+    }
+}
+def viewerCompatibilityTestJar = tasks.register('viewerCompatibilityTestJar', Jar) {
+    archiveClassifier = 'viewer-compatibility-test'
+    from sourceSets.viewerCompatibilityTest.output
+}
+def viewerCases = [
+        Jei: [id: 'jei', artifacts: [
+                'jei-26.1.2-fabric-29.43.0.106.jar': '352C594FECC491E30ED96E427E6C0617EA95EC134CB3482FCE0C57FF9E65E739']],
+        Rei: [id: 'rei', artifacts: [
+                'RoughlyEnoughItems-26.1.819 (Fabric).jar': '45D8F488D3C295E97C88A0AD8D0167348F1E3453F22F274F9D7F7C7C97D799CC',
+                'architectury-fabric-20.1.16.jar': 'A6641789CD7DB92D73D3BA7B6B334CC2A2B0FE668475230AB9276BE4EA112A5E',
+                'cloth-config-26.1.154 (Fabric).jar': 'FB7A5D869CE10EAAC2C2FE9AB84B4FC011A1FBFA575A93BE9845A386A7F0C7D3']]
+]
+viewerCases.each { suffix, fixture ->
+    def runDirectory = layout.buildDirectory.dir("run/${fixture.id}RecipeReloadClient")
+    def fixtureFiles = fixture.artifacts.collect { name, hash -> rootProject.file("Fabric/runs/client/mods/${name}") }
+    loom.runs.create("${fixture.id}RecipeReloadClient") {
+        inherit loom.runs.client
+        source('gametest')
+        ideConfigGenerated(false)
+        property('fabric.client.gametest')
+        property('fabric.client.gametest.modid', 'mismatchedboots_viewer_compatibility_test')
+        property('mismatchedboots.test.hideClientWindow', 'true')
+        property('mismatchedboots.test.recipeViewer', fixture.id)
+        runDir("build/run/${fixture.id}RecipeReloadClient")
+        vmArg('-Xmx1G')
+    }
+    def prepare = tasks.register("prepare${suffix}RecipeReloadClient", Delete) {
+        dependsOn viewerCompatibilityTestJar, ':Fabric:jar'
+        delete runDirectory
+        doLast {
+            fixtureFiles.each { artifact ->
+                if (!artifact.isFile()) {
+                    throw new GradleException("Install the exact optional viewer fixture first: ${artifact}")
+                }
+                def actualHash = artifact.withInputStream { input ->
+                    java.security.MessageDigest.getInstance('SHA-256').digest(input.readAllBytes())
+                            .encodeHex().toString().toUpperCase(Locale.ROOT)
+                }
+                if (actualHash != fixture.artifacts[artifact.name]) {
+                    throw new GradleException("Unexpected viewer fixture hash: ${artifact}")
+                }
+            }
+            def directory = runDirectory.get().asFile
+            directory.mkdirs()
+            new File(directory, 'eula.txt').text = 'eula=true\n'
+            new File(directory, 'options.txt').text = 'soundCategory_master:0.0\n'
+            copy {
+                from fixtureFiles, viewerCompatibilityTestJar.flatMap { it.archiveFile }
+                into new File(directory, 'mods')
+            }
+        }
+    }
+    tasks.named("run${suffix}RecipeReloadClient") {
+        dependsOn prepare
+    }
+    tasks.register("verify${suffix}RecipeReload") {
+        group = 'verification'
+        description = "Tests actual ${suffix.toUpperCase(Locale.ROOT)} recipe reload and repeated reopening."
+        dependsOn tasks.named("run${suffix}RecipeReloadClient")
+        doLast {
+            def marker = new File(runDirectory.get().asFile, 'viewer-reload.ok')
+            if (!marker.isFile() || marker.getText('UTF-8') != "${fixture.id}-reload-passed\n") {
+                throw new GradleException("Viewer reload acceptance marker is missing: ${marker}")
+            }
+        }
+    }
+}
+
 tasks.register('acceptGameTestEula') {
     dependsOn tasks.named('deleteGameTestRunDir')
     doLast {
