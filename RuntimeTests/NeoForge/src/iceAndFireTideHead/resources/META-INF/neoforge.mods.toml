@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="tide_head_owner"
+version="1.0.0"
+displayName="Independent Tide HEAD Test Owner"
+
+[[mixins]]
+config="tide-head-owner.mixins.json"
+
+[[dependencies.tide_head_owner]]
+modId="neoforge"
+type="required"
+versionRange="[26.1.2.99,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.tide_head_owner]]
+modId="iceandfire"
+type="optional"
+versionRange="[2.2-beta.3]"
+ordering="AFTER"
+side="BOTH"

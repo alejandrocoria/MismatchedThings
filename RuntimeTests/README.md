@@ -19,6 +19,10 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 - `NeoForge/src/main`: the auxiliary mod for network acceptance, targeted
   client geometry/tooltip checks, and opt-in real Ice and Fire damage/set
   acceptance. These use separate run directories and entry paths.
+- `NeoForge/src/iceAndFireTideTest`: separately packaged counters and competing
+  mixins for opt-in acceptance of the production Tide adapter, not a second owner.
+- `NeoForge/src/iceAndFireTideHead`: an independent test-only HEAD owner with its
+  own data/tick/guard, used for optional composition and rejection checks.
 
 Runtime tests load the packaged production mod. Production output is available
 only for compilation; test classes, metadata, and fixtures are not included in
@@ -113,8 +117,8 @@ The initial matrix uses unmodified native tags; only the overlap cases use this
 explicit tag extension in the disposable server world.
 The gate is opt-in, not part of ordinary `build`/`check`; those need no Ice and
 Fire installation. The second command additionally enables the real-JAR
-bytecode guard characterization in NeoForge JUnit. Without that property, only
-the two artifact-dependent tests are skipped; the synthetic guard regressions run.
+bytecode guard characterization in NeoForge JUnit. Without that property, artifact-dependent
+characterizations are skipped; artifact-independent guard regressions still run.
 This is dragon/projectile damage and Lightning-set acceptance, not Tide effect
 acceptance or full Ice and Fire gameplay/visual approval.
 
@@ -138,6 +142,62 @@ case. Logs and copied reports are in
 `NeoForge/build/reports/ice-and-fire-coexistence`. These mixins are property-gated
 and test-only; they are not actual future mixed-helmet/chestplate/leggings mods
 and do not establish all 16 subsets or Tide activation.
+
+### Production Tide FEET acceptance
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireTideProduction --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireTideProduction '-Pneoforge_version=26.1.2.99' --console=plain
+```
+
+This is the sole maintained Tide runtime gate. The earlier logical-slot spike,
+transformation observer and prototype guard/owner/API suites were retired after
+production acceptance. Their dated findings remain in
+[the Tide record](../local-docs/ICE-AND-FIRE-TIDE-IMPLEMENTATION.md#6-current-validation-record);
+their old task names are historical, not current commands.
+
+Nineteen bounded, sequential processes use the **unmodified production JAR**,
+the three SHA-256-pinned optional artifacts and a test-only adversary/counter JAR.
+There is no prototype FEET owner, dispatcher, item registry or modified production
+copy. Only the production plugin grants FEET readiness. Instrumentation checks
+the fixed blue receiver, one call per qualified tick, fresh unchanged carriers,
+cached bindings and bounded warnings without adding work to the native entry/base.
+
+The Both process retains the full 15-armor-mask, dry/wet, inverse/one/two-source
+matrix and seven colors, real rain, stronger/hidden/infinite effects,
+transitions/expiry, effect veto, mobs and component/native-slot disagreement.
+It also runs all 340 real dragon/Troll/Lightning damage cases in the same JVM.
+Feet proves physical HEAD absence and both source orientations/counts.
+Other processes use four representative armor masks plus native full sets and
+invalid roots, checking exact effect-hook traces/states and immutable equipment.
+Each present-Ice process outside Both adds six damage coexistence controls rather
+than repeating the 340-case matrix.
+
+Distinct processes retain chains above/below production priority, late wrapping,
+base read/mutation, extra work, changed/replaced/ambiguous FEET predicates,
+altered publication, optional API absence/change and each owner's wrong-class/
+linkage receiver failures. Rejections verify that recognition and activation
+are inert together; independently healthy owners and original armor still work.
+The production guard JUnit tests cover missing verification/publication/hooks
+and consumer provenance directly, without keeping a second FEET implementation.
+
+HEAD remains one physically independent test JAR with its own source schema,
+receiver, tick, verifier and API inspection. Its sources are checked in directly;
+there is no generated/relocated guard pipeline or production dependency.
+The gate inspects its archive for forbidden references. It is not a released
+mixed-helmet integration or a claim about four optional armor mods.
+
+Runs use the disposable flat world in `NeoForge/build/run/iceAndFireTideTest`,
+localhost with an ephemeral port, automatic shutdown and a 240-second child bound.
+Markers under `NeoForge/build/tide-production-markers` are cleared per process.
+Logs/copied reports remain under
+`NeoForge/build/reports/tide-production/<loader-version>`.
+ApiField changes only a build-directory copy of the native mod; original
+development JARs, gameplay worlds and production archives are never rewritten.
+This gate is opt-in, not part of ordinary `build`/`check`. Use .114 routinely;
+repeat the supported .99 floor for loader/Mixin-boundary changes and release checks.
+Manual confirmation and limits are tracked in
+[COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
 The Create Fly verifier includes a real `BeltBlock.entityInside` passenger-map
 test with a second `ItemStack.is(DIAMOND)` inserted directly into the method by a

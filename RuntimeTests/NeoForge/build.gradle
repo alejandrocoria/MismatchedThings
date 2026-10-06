@@ -40,6 +40,14 @@ dependencies {
 }
 
 sourceSets {
+    iceAndFireTideHead {
+        // Only its own NeoForge modding dependencies, not main or FEET/production output.
+        runtimeClasspath += output + compileClasspath
+    }
+    iceAndFireTideTest {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += output + compileClasspath
+    }
     advancedNetheriteTest {
         java.srcDir rootProject.file('RuntimeTests/AdvancedNetherite/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
@@ -86,6 +94,10 @@ def verifiedIceAndFireArtifacts = {
 }
 def iceAndFireDamageMarkers = fixtureBuildDirectory.dir('ice-and-fire-damage-markers')
 def iceAndFireDamageRunDirectory = fixtureBuildDirectory.dir('run/iceAndFireDamageCompatibility')
+def tideMarkers = fixtureBuildDirectory.dir('tide-production-markers')
+def tideRunDirectory = fixtureBuildDirectory.dir('run/iceAndFireTideTest')
+def tideOptionalVariants = ['ApiAbsent', 'ApiField', 'HeadReceiverReplaced', 'FeetReceiverReplaced', 'HeadReceiverLinkage', 'FeetReceiverLinkage']
+def tideProductionVariants = ['Feet', 'Both', 'MissingHead', 'ChainHigh', 'ChainLow', 'Late', 'BaseRead', 'BaseMutate', 'ExtraWork', 'PredicateChanged', 'PredicateReplaced', 'PredicateAmbiguous', 'PublicationChanged'] + tideOptionalVariants
 def tooltipMarkers = fixtureBuildDirectory.dir('tooltip-markers')
 def tooltipRunDirectory = fixtureBuildDirectory.dir('run/tooltipClient')
 def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-markers')
@@ -95,6 +107,24 @@ neoForge {
     version = neoforge_version
 
     runs {
+        tideProductionVariants.each { variant ->
+            register("iceAndFireTideProduction${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = tideRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', tideMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.tideOwners', variant.uncapitalize())
+                systemProperty('mismatchedboots.runtimetest.tideDamageCoexistence', (variant != 'ApiAbsent').toString())
+                systemProperty('mismatchedboots.runtimetest.tideDamageSmoke', (variant != 'Both').toString())
+                if (variant.contains('Receiver')) {
+                    systemProperty("mismatchedboots.runtimetest.tide${variant.startsWith('Head') ? 'Head' : 'Feet'}Receiver",
+                            variant.endsWith('Linkage') ? 'linkage' : 'replaced')
+                }
+                systemProperty('mixin.debug.countInjections', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
         networkTestServer {
             server()
             disableIdeRun()
@@ -183,7 +213,123 @@ neoForge {
 }
 
 neoForge.addModdingDependenciesTo(sourceSets.advancedNetheriteTest)
+neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideTest)
+neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideHead)
 
+def tideHeadJar = tasks.register('iceAndFireTideHeadJar', Jar) {
+    archiveClassifier = 'tide-head-owner'
+    from sourceSets.iceAndFireTideHead.output
+}
+
+def tideTestJar = tasks.register('iceAndFireTideTestJar', Jar) {
+    archiveClassifier = 'tide-test'
+    from sourceSets.iceAndFireTideTest.output
+}
+
+tasks.register('prepareIceAndFireTideProduction') {
+    dependsOn(':NeoForge:jar', tideTestJar)
+    doLast {
+        def artifacts = verifiedIceAndFireArtifacts()
+        fixtureFileOperations.delete { delete tideMarkers, tideRunDirectory }
+        def directory = tideRunDirectory.get().asFile
+        fixtureFileOperations.copy {
+            from(productionArchive, tideTestJar.flatMap { it.archiveFile }, artifacts)
+            into(new File(directory, 'mods'))
+        }
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"},{"height":2,"block":"minecraft:dirt"},{"height":1,"block":"minecraft:grass_block"}],"structure_overrides":[]}
+server-ip=127.0.0.1
+server-port=0
+spawn-protection=0
+'''
+    }
+}
+
+def mutatedTideJar = fixtureBuildDirectory.file('tide-api-field/iceandfire-2.2-beta.3.jar')
+def mutateTideApi = tasks.register('mutateTideApi', JavaExec) {
+    dependsOn(tasks.named('iceAndFireTideTestClasses'))
+    classpath = sourceSets.iceAndFireTideTest.runtimeClasspath
+    mainClass = 'games.alejandrocoria.mismatchedboots.runtimetest.tide.TideJarMutation'
+    inputs.file(new File(iceAndFireModsDirectory, 'iceandfire-2.2-beta.3.jar'))
+    outputs.file(mutatedTideJar)
+    doFirst {
+        verifiedIceAndFireArtifacts()
+        setArgs([new File(iceAndFireModsDirectory, 'iceandfire-2.2-beta.3.jar').absolutePath, mutatedTideJar.get().asFile.absolutePath])
+    }
+}
+tideProductionVariants.each { variant ->
+    def prepare = tasks.register("prepareIceAndFireTideProduction${variant}") {
+        dependsOn('prepareIceAndFireTideProduction', tideHeadJar)
+        if (variant == 'ApiField') { dependsOn(mutateTideApi) }
+        doLast {
+            def mods = new File(tideRunDirectory.get().asFile, 'mods')
+            if (variant != 'Feet') {
+                fixtureFileOperations.copy { from(tideHeadJar.flatMap { it.archiveFile }); into(mods) }
+            }
+            if (variant == 'ApiAbsent') {
+                fixtureFileOperations.delete { delete iceAndFireArtifacts.keySet().collect { new File(mods, it) } }
+            } else if (variant == 'ApiField') {
+                fixtureFileOperations.copy { from(mutatedTideJar); into(mods) }
+            }
+        }
+    }
+    tasks.named("runIceAndFireTideProduction${variant}") { dependsOn(prepare) }
+}
+
+tasks.register('verifyIceAndFireTideProduction') {
+    group = 'verification'
+    description = 'Unmodified production FEET adapter: native traces, effects, independent HEAD, real guards and damage regression.'
+    dependsOn(':NeoForge:jar', tideHeadJar, tideTestJar)
+    doLast {
+        def head = new java.util.zip.ZipFile(tideHeadJar.get().archiveFile.get().asFile)
+        try {
+            head.entries().toList().findAll { it.name.endsWith('.class') }.each { entry ->
+                def constants = new String(head.getInputStream(entry).withCloseable { it.readAllBytes() },
+                        java.nio.charset.StandardCharsets.ISO_8859_1)
+                if (constants.contains('runtimetest/tide/') || constants.contains('runtimetest/neoforge/')
+                        || constants.contains('mismatchedboots/compatibility/') || constants.contains('mismatchedboots/composition/')
+                        || constants.contains('mismatchedboots/content/')) {
+                    throw new GradleException("HEAD fixture links to production or its coordinator: ${entry.name}")
+                }
+            }
+            if (head.getInputStream(head.getEntry('META-INF/neoforge.mods.toml')).withCloseable { it.getText('UTF-8') }
+                    .contains('modId="mismatchedboots"')) {
+                throw new GradleException('HEAD fixture metadata depends on production')
+            }
+        } finally { head.close() }
+        tideProductionVariants.each { variant ->
+            def log = fixtureBuildDirectory.file("reports/tide-production/${neoforge_version}/${variant}.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runIceAndFireTideProduction${variant}", log, 240)
+            def directory = tideMarkers.get().asFile
+            def failure = new File(directory, 'tide-owners-failure.txt')
+            def report = new File(directory, 'tide-owners-report.txt')
+            def success = new File(directory, 'tide-owners-success.txt')
+            def warnings = log.readLines().findAll { it.contains('Tide adapter disabled:') }
+            def rejectedBoth = ['Late', 'BaseRead', 'BaseMutate', 'ExtraWork', 'PredicateChanged', 'PredicateReplaced', 'PredicateAmbiguous', 'ApiField'].contains(variant)
+            def expectedWarnings = rejectedBoth ? 2 : variant == 'MissingHead' || variant == 'PublicationChanged' || variant.contains('Receiver') ? 1 : 0
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || !report.text.contains('production FEET=true') || warnings.size() != expectedWarnings) {
+                throw new GradleException("Production Tide ${variant} failed: ${failure.isFile() ? failure.text : log}; warnings=${warnings}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            if (variant != 'ApiAbsent') {
+                def damage = new File(directory, 'ice-and-fire-damage-report.txt')
+                if (new File(directory, 'ice-and-fire-damage-failure.txt').isFile()
+                        || !new File(directory, 'ice-and-fire-damage-success.txt').isFile()
+                        || !damage.isFile() || !damage.text.contains("${variant == 'Both' ? 340 : 6} real hurtServer cases")) {
+                    throw new GradleException("Production Tide ${variant} missing same-JVM damage regression: ${log}")
+                }
+                new File(log.parentFile, "${variant}-damage-report.txt").text = damage.text
+            } else if (log.text.contains('Error loading class: com/iafenvoy/iceandfire/item/armor/SeaSerpentArmorItem')) {
+                throw new GradleException("Absent production Tide target emitted a class-loading warning: ${log}")
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
 def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
     archiveClassifier = 'advanced-netherite-test'
     from sourceSets.advancedNetheriteTest.output

@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="mismatchedboots_tide_test"
+version="1.0.0"
+displayName="Production Tide Test Fixtures"
+
+[[mixins]]
+config="mismatchedboots-tide-test.mixins.json"
+
+[[dependencies.mismatchedboots_tide_test]]
+modId="mismatchedboots"
+type="required"
+versionRange="[1.0.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.mismatchedboots_tide_test]]
+modId="iceandfire"
+type="optional"
+versionRange="[2.2-beta.3]"
+ordering="AFTER"
+side="BOTH"

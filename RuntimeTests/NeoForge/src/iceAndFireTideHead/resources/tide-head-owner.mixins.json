@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.tidehead.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.tidehead.HeadPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ArmorAccess",
+    "BaseMixin",
+    "EntryMixin",
+    "HeadResultMixin"
+  ],
+  "injectors": {"defaultRequire": 0}
+}

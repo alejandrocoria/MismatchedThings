@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "IceAndFireTideArmorAccess",
+    "IceAndFireTideBaseMixin",
+    "IceAndFireTideEntryMixin",
+    "IceAndFireTideFeetMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

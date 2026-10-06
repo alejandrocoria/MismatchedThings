@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /** Opt-in, pinned real-mod gate. No synthetic event posting or replacement damage listener. */
-final class NeoForgeIceAndFireDamageTest {
+public final class NeoForgeIceAndFireDamageTest {
     private static LivingEntity subject;
     private static float damageBefore;
     private static float damageAfter;
@@ -45,7 +45,7 @@ final class NeoForgeIceAndFireDamageTest {
     private NeoForgeIceAndFireDamageTest() {
     }
 
-    static void register() {
+    public static void register() {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, NeoForgeIceAndFireDamageTest::beforeDamage);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, NeoForgeIceAndFireDamageTest::afterDamage);
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
@@ -74,6 +74,14 @@ final class NeoForgeIceAndFireDamageTest {
                 NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
                         "coexistence=incompatible; " + damageCases + " real hurtServer cases; "
                                 + "damage adapter inert; native other slots and independent Lightning adapter preserved\n");
+                NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
+                finished = true;
+                return;
+            }
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.tideDamageSmoke")) {
+                verifyTideCoexistence(server.overworld());
+                NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
+                        damageCases + " real hurtServer cases; Tide coexistence smoke: dragon/Troll/Lightning preserved\n");
                 NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
                 finished = true;
                 return;
@@ -114,6 +122,21 @@ final class NeoForgeIceAndFireDamageTest {
                 server.halt(false);
             }
         }
+    }
+
+    private static void verifyTideCoexistence(ServerLevel level) {
+        for (ItemStack boots : List.of(new ItemStack(item("armor_red_boots")), mixed("armor_red_boots"))) {
+            hurt(level, damage(level, "dragon_fire"), boots, 0.9F, "Tide leaves dragon protection active");
+        }
+        var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
+                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+        for (ItemStack boots : List.of(new ItemStack(item("forest_troll_leather_boots")), mixed("forest_troll_leather_boots"))) {
+            hurt(level, arrow, boots, 0.9F, "Tide leaves Troll protection active");
+        }
+        hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_lightning_boots"), 0.0F,
+                "Tide leaves complete Lightning set active", lightningArmor(7));
+        hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_fire_boots"), 1.0F,
+                "Tide preserves incomplete Lightning set rejection", lightningArmor(7));
     }
 
     private static void verifyCoexistence(ServerLevel level) {

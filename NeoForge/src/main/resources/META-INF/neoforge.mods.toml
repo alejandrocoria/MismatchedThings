@@ -20,6 +20,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.neoforge.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.iceandfire-tide.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.client.mixins.json"
 
 [[dependencies.${mod_id}]]
