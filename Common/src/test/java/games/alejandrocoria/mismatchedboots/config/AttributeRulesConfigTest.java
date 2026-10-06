@@ -135,6 +135,29 @@ class AttributeRulesConfigTest {
     }
 
     @Test
+    void stepHeightInheritsMaximumButPreservesAnExplicitAverageWithoutRewriting() throws IOException {
+        Path path = configPath();
+        String existing = """
+                [attributes]
+                fallback = "separate"
+                """;
+        Files.writeString(path, existing);
+        assertEquals(AttributePolicy.MAXIMUM,
+                new AttributeRulesConfig(path).load().policyFor(id("minecraft:step_height")));
+        assertEquals(existing, Files.readString(path));
+
+        String overridden = existing + """
+
+                [attributes."minecraft:step_height"]
+                policy = "average"
+                """;
+        Files.writeString(path, overridden);
+        assertEquals(AttributePolicy.AVERAGE,
+                new AttributeRulesConfig(path).load().policyFor(id("minecraft:step_height")));
+        assertEquals(overridden, Files.readString(path));
+    }
+
+    @Test
     void missingAndInvalidValuesUseDocumentedInheritance() throws IOException {
         Path path = configPath();
         Files.writeString(path, """

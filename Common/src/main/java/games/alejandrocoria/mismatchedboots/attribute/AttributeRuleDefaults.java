@@ -37,7 +37,6 @@ public final class AttributeRuleDefaults {
             "safe_fall_distance",
             "scale",
             "sneaking_speed",
-            "step_height",
             "submerged_mining_speed",
             "sweeping_damage_ratio",
             "water_movement_efficiency");
@@ -64,6 +63,7 @@ public final class AttributeRuleDefaults {
     private static Map<Identifier, AttributePolicy> createRules() {
         LinkedHashMap<Identifier, AttributePolicy> rules = new LinkedHashMap<>();
         AVERAGED_ATTRIBUTES.forEach(path -> put(rules, "minecraft", path, AttributePolicy.AVERAGE));
+        put(rules, "minecraft", "step_height", AttributePolicy.MAXIMUM);
         SEPARATE_ATTRIBUTES.forEach(path -> put(rules, "minecraft", path, AttributePolicy.SEPARATE));
         put(rules, "neoforge", "swim_speed", AttributePolicy.AVERAGE);
         put(rules, "neoforge", "nametag_distance", AttributePolicy.AVERAGE);

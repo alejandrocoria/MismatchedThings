@@ -70,10 +70,10 @@ class AttributeRuleDefaultsTest {
                 minecraft("safe_fall_distance"),
                 minecraft("scale"),
                 minecraft("sneaking_speed"),
-                minecraft("step_height"),
                 minecraft("submerged_mining_speed"),
                 minecraft("sweeping_damage_ratio"),
                 minecraft("water_movement_efficiency"),
+                minecraft("step_height"),
                 minecraft("follow_range"),
                 minecraft("spawn_reinforcements"),
                 minecraft("tempt_range"),
@@ -96,11 +96,12 @@ class AttributeRuleDefaultsTest {
     }
 
     @Test
-    void defaultsDistinguishContinuousAndContextualAttributes() {
+    void defaultsDistinguishContinuousThresholdAndContextualAttributes() {
         AttributeRuleSet rules = AttributeRuleDefaults.ruleSet();
 
         assertEquals(AttributePolicy.AVERAGE, rules.policyFor(minecraft("armor")));
         assertEquals(AttributePolicy.AVERAGE, rules.policyFor(minecraft("movement_speed")));
+        assertEquals(AttributePolicy.MAXIMUM, rules.policyFor(minecraft("step_height")));
         assertEquals(AttributePolicy.SEPARATE, rules.policyFor(minecraft("follow_range")));
         assertEquals(AttributePolicy.SEPARATE, rules.policyFor(minecraft("waypoint_receive_range")));
         assertEquals(AttributePolicy.SEPARATE, rules.fallback());

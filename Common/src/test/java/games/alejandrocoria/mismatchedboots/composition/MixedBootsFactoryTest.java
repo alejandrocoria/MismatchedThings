@@ -692,6 +692,33 @@ class MixedBootsFactoryTest {
         assertTrue(ItemStack.matches(before, left));
     }
 
+    @ParameterizedTest
+    @CsvSource({"1, 0, 1", "1, 1, 1", "1, 2, 2"})
+    void defaultStepHeightKeepsTheStrongerContributionInBothOrientations(
+            double leftAmount, double rightAmount, double expected) {
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.GOLDEN_BOOTS);
+        Identifier modifierId = Identifier.parse("test:step_assist");
+        for (ItemStack source : List.of(left, right)) {
+            double amount = source == left ? leftAmount : rightAmount;
+            if (amount != 0) {
+                source.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
+                        .add(Attributes.STEP_HEIGHT,
+                                new AttributeModifier(modifierId, amount, AttributeModifier.Operation.ADD_VALUE),
+                                EquipmentSlotGroup.FEET)
+                        .build());
+            }
+        }
+        MixedBootsPair pair = create(left, right);
+        for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
+            var entries = root.get(DataComponents.ATTRIBUTE_MODIFIERS).modifiers();
+            assertEquals(1, entries.size());
+            assertEquals(Attributes.STEP_HEIGHT, entries.getFirst().attribute());
+            assertEquals(modifierId, entries.getFirst().modifier().id());
+            assertEquals(expected, entries.getFirst().modifier().amount());
+        }
+    }
+
     @Test
     void recomposesSymmetricValuesAndPreservesRootAdditionsAndRemovals() {
         ItemStack left = boots(Items.IRON_BOOTS);
