@@ -293,3 +293,33 @@ Structural assertions and tolerant pixel checks do not replace interactive
 review of external models, oblique seams, or GUI ownership. Common unit tests
 cover the pure clipping/provenance and shared tessellation convention; Fabric
 client tests cover the real API's encoding, normals, and mesh submission.
+
+## Just Dire Things passive Jump Boost
+
+These optional gates use the production NeoForge JAR and the locally supplied
+`justdirethings-1.6.11.jar` (SHA-256 verified, no external classes compiled into
+production). Override its location with `-PjustDireThingsTestJar=...` for direct
+run preparation. They are detached from ordinary `build`/`check`:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireJump
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireJumpGuards
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSmithing
+```
+
+The jump gate first runs a bounded server movement/actual-fall-health matrix,
+then a hidden/muted client in a copy of its disposable world. Native originals
+are controls. The small guard gate separately exercises compatible competing
+WrapOperations, a replaced fall read disabling both hooks, and quiet optional
+absence. Smithing retains its independent recipe/menu acceptance.
+Each process is bounded to 240 seconds. Runs/markers reuse the isolated smithing
+fixture directories; do not run these gates concurrently. Logs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-jump/` (smithing has its own report
+directory). A successful marker is required, not merely a zero process exit.
+
+Native-bytecode guard unit checks are opt-in with
+`-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar`.
+The additional final-pair test accepts `-PjustDireTransformedClass=...` pointing
+at an active production/compatible MixinExtras export, not the absent/rejected
+variant. The design, exclusions and manual handoff are maintained in
+local-docs, not inferred from successful installation recipes.

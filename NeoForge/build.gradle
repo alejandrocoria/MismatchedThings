@@ -70,6 +70,14 @@ dependencies {
 
 tasks.named('test', Test).configure {
     useJUnitPlatform()
+    def justDireGuardArtifact = providers.gradleProperty('justDireGuardJar')
+    if (justDireGuardArtifact.isPresent()) {
+        systemProperty 'mismatchedboots.test.justDireGuardJar', rootProject.file(justDireGuardArtifact.get()).absolutePath
+    }
+    def justDireTransformed = providers.gradleProperty('justDireTransformedClass')
+    if (justDireTransformed.isPresent()) {
+        systemProperty 'mismatchedboots.test.justDireTransformedClass', rootProject.file(justDireTransformed.get()).absolutePath
+    }
     def guardArtifact = providers.gradleProperty('iceAndFireGuardJar')
     if (guardArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.iceAndFireGuardJar', rootProject.file(guardArtifact.get()).absolutePath

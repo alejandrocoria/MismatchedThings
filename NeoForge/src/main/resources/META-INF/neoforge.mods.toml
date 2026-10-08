@@ -23,6 +23,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.iceandfire-tide.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.justdirethings.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.client.mixins.json"
 
 [[dependencies.${mod_id}]]

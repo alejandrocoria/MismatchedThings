@@ -104,6 +104,7 @@ def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-mar
 def advancedNetheriteRunDirectory = fixtureBuildDirectory.dir('run/advancedNetheriteCompatibility')
 def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
 def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
+def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
 def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
         .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar'))
@@ -112,6 +113,41 @@ neoForge {
     version = neoforge_version
 
     runs {
+        ['Compatible', 'MissingFall', 'Absent'].each { variant ->
+            register("justDireJump${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireJumpTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireJumpGuard', variant.uncapitalize())
+                systemProperty('mixin.debug.export', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
+        justDireJump {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireJumpTest', 'true')
+            systemProperty('mixin.debug.export', 'true')
+            jvmArgument('-Xmx1G')
+        }
+        justDireJumpClient {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireJumpClientTest', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireSmithing {
             server()
             disableIdeRun()
@@ -267,6 +303,100 @@ spawn-protection=0
 
 tasks.named('runJustDireSmithing') {
     dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+tasks.named('runJustDireJump') { dependsOn tasks.named('prepareJustDireSmithing') }
+
+tasks.register('prepareJustDireJumpClient') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def world = new File(justDireSmithingRunDirectory.get().asFile, 'world')
+        if (!new File(world, 'level.dat').isFile()) {
+            throw new GradleException('Run the passive-jump server gate first to prepare its disposable world')
+        }
+        fixtureFileOperations.delete { delete justDireJumpClientDirectory }
+        def directory = justDireJumpClientDirectory.get().asFile
+        fixtureFileOperations.copy { from(world); into(new File(directory, 'saves/jump')) }
+        fixtureFileOperations.copy {
+            from(productionArchive, justDireSmithingFixtureArchive, justDireSmithingArtifact)
+            into(new File(directory, 'mods'))
+        }
+        new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
+        def config = new File(directory, 'config'); config.mkdirs()
+        new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+    }
+}
+
+tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+
+['Compatible', 'MissingFall', 'Absent'].each { variant ->
+    def prepare = tasks.register("prepareJustDireJump${variant}") {
+        dependsOn('prepareJustDireSmithing')
+        doLast {
+            if (variant == 'Absent') {
+                fixtureFileOperations.delete {
+                    delete new File(justDireSmithingRunDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")
+                }
+            }
+        }
+    }
+    tasks.named("runJustDireJump${variant}") { dependsOn prepare }
+}
+
+tasks.register('verifyJustDireJumpGuards') {
+    group = 'verification'
+    description = 'Runs real compatible wrapper, missing fall companion and quiet optional absence.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Compatible', 'MissingFall', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireJump${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-jump-failure.txt')
+            def success = new File(directory, 'just-dire-jump-success.txt')
+            def warnings = log.readLines().findAll { it.contains('Just Dire Things passive Jump') && it.contains('compatibility disabled') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n'
+                    || warnings.size() != (variant == 'MissingFall' ? 1 : 0)) {
+                throw new GradleException("Just Dire Things ${variant} guard failed: ${failure.isFile() ? failure.text : log}; warnings=${warnings}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent optional target emitted a loading warning: ${log}")
+            }
+            def report = new File(directory, 'just-dire-jump-report.txt')
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireJump') {
+    group = 'verification'
+    description = 'Runs bounded real Just Dire Things passive jump/fall acceptance.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/neoforge-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireJump', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-jump-failure.txt')
+        def report = new File(directory, 'just-dire-jump-report.txt')
+        def success = new File(directory, 'just-dire-jump-success.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Just Dire Things jump failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'server-report.txt').text = report.text
+        logger.lifecycle(report.text)
+        def clientLog = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/client-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireJumpClient', clientLog, 240)
+        def clientFailure = new File(directory, 'just-dire-jump-client-failure.txt')
+        def clientSuccess = new File(directory, 'just-dire-jump-client-success.txt')
+        if (clientFailure.isFile() || !clientSuccess.isFile() || clientSuccess.text != 'neoforge\n') {
+            throw new GradleException("Just Dire Things client jump failed: ${clientFailure.isFile() ? clientFailure.text : clientLog}")
+        }
+        def clientReport = new File(directory, 'just-dire-jump-client-report.txt')
+        if (!clientReport.isFile()) { throw new GradleException("Missing client gameplay report: ${clientLog}") }
+        new File(log.parentFile, 'client-report.txt').text = clientReport.text
+        logger.lifecycle(clientReport.text)
+    }
 }
 
 tasks.register('verifyJustDireSmithing') {

@@ -14,7 +14,11 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireSmithingTest")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
+            // The integrated server belongs to the client gameplay fixture, not network acceptance.
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpTest")) {
+            NeoForgeJustDireJumpTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireSmithingTest")) {
             NeoForgeJustDireSmithingTest.register();
         } else if (!System.getProperty("mismatchedboots.runtimetest.tideOwners", "").isEmpty()) {
             NeoForgeTideTest.register();
@@ -25,7 +29,10 @@ public final class NeoForgeRuntimeTest {
                     (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
         }
         if (FMLEnvironment.getDist().isClient()) {
-            if (Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
+                        NeoForgeJustDireJumpClientTest.tick(Minecraft.getInstance()));
+            } else if (Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {
                 NeoForgeNativeEquipmentClientTest.registerFixtures(eventBus);
                 eventBus.addListener(NeoForgeNativeEquipmentClientTest::registerExtensions);
                 eventBus.addListener(NeoForgeNativeEquipmentClientTest::captureRenderer);

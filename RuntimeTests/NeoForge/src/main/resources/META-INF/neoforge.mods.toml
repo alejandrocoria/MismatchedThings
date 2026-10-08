@@ -13,6 +13,9 @@ license="MIT"
 [[mixins]]
     config="mismatchedboots-ice-and-fire-coexistence.mixins.json"
 
+[[mixins]]
+    config="mismatchedboots-just-dire-jump-guards.mixins.json"
+
 [[dependencies.mismatchedboots_runtime_test]]
     modId="neoforge"
     type="required"
