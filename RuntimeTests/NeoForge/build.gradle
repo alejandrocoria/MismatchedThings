@@ -102,11 +102,25 @@ def tooltipMarkers = fixtureBuildDirectory.dir('tooltip-markers')
 def tooltipRunDirectory = fixtureBuildDirectory.dir('run/tooltipClient')
 def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-markers')
 def advancedNetheriteRunDirectory = fixtureBuildDirectory.dir('run/advancedNetheriteCompatibility')
+def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
+def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
+def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
+def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
+        .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar'))
 
 neoForge {
     version = neoforge_version
 
     runs {
+        justDireSmithing {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireSmithingTest', 'true')
+            jvmArgument('-Xmx1G')
+        }
         tideProductionVariants.each { variant ->
             register("iceAndFireTideProduction${variant}") {
                 server()
@@ -215,6 +229,64 @@ neoForge {
 neoForge.addModdingDependenciesTo(sourceSets.advancedNetheriteTest)
 neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideTest)
 neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideHead)
+
+tasks.register('prepareJustDireSmithing') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!justDireSmithingArtifact.isFile()) {
+            throw new GradleException("Missing optional Just Dire Things fixture: ${justDireSmithingArtifact}")
+        }
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        justDireSmithingArtifact.withInputStream { stream ->
+            byte[] buffer = new byte[8192]
+            int count
+            while ((count = stream.read(buffer)) != -1) {
+                digest.update(buffer, 0, count)
+            }
+        }
+        if (digest.digest().encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
+            throw new GradleException("Unexpected Just Dire Things fixture: ${justDireSmithingArtifact}")
+        }
+        fixtureFileOperations.delete { delete justDireSmithingMarkers, justDireSmithingRunDirectory }
+        def directory = justDireSmithingRunDirectory.get().asFile
+        fixtureFileOperations.copy {
+            from(productionArchive, justDireSmithingFixtureArchive, justDireSmithingArtifact)
+            into(new File(directory, 'mods'))
+        }
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"},{"height":2,"block":"minecraft:dirt"},{"height":1,"block":"minecraft:grass_block"}],"structure_overrides":[]}
+server-ip=127.0.0.1
+server-port=0
+spawn-protection=0
+'''
+    }
+}
+
+tasks.named('runJustDireSmithing') {
+    dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+tasks.register('verifyJustDireSmithing') {
+    group = 'verification'
+    description = 'Runs bounded real Just Dire Things 1.6.11 template-free smithing acceptance.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def processLog = fixtureBuildDirectory.file('reports/just-dire-smithing/neoforge-process.log').get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireSmithing', processLog, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-smithing-failure.txt')
+        def success = new File(directory, 'just-dire-smithing-success.txt')
+        def report = new File(directory, 'just-dire-smithing-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                || !report.text.contains('14 real installation recipes') || !report.text.contains('28 ordinary/shift-click takes')) {
+            throw new GradleException("Just Dire Things smithing failed: ${failure.isFile() ? failure.text : processLog}")
+        }
+        logger.lifecycle(report.text)
+    }
+}
 
 def tideHeadJar = tasks.register('iceAndFireTideHeadJar', Jar) {
     archiveClassifier = 'tide-head-owner'

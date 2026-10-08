@@ -22,7 +22,7 @@ public final class MixedBootsSmithingPolicy {
     public static Optional<Result> evaluate(
             ServerLevel level, ItemStack template, ItemStack root, ItemStack addition) {
         if (!ModContent.MIXED_BOOTS_ID.equals(BuiltInRegistries.ITEM.getKey(root.getItem()))
-                || root.getCount() != 1 || template.isEmpty() || addition.isEmpty()
+                || root.getCount() != 1 || addition.isEmpty()
                 || ItemStack.validateStrict(root).error().isPresent()) {
             return Optional.empty();
         }
@@ -31,6 +31,8 @@ public final class MixedBootsSmithingPolicy {
             return Optional.empty();
         }
 
+        // Template requirements belong to the loaded recipes, including recipes
+        // that require the slot to be empty. Pass the actual input unchanged.
         Side left = evaluateSource(level, template, data.get().left().source(), addition);
         Side right = evaluateSource(level, template, data.get().right().source(), addition);
         if (left.recipe() == null && right.recipe() == null) {

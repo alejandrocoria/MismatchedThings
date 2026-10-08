@@ -31,6 +31,156 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 public final class SmithingUpgradeGameTests {
     private static final ResourceKey<Recipe<?>> COMPONENT_RECIPE = recipe("component_boots_upgrade");
     private static final ResourceKey<Recipe<?>> IRON_RECIPE = recipe("iron_boots_upgrade");
+    private static final ResourceKey<Recipe<?>> TEMPLATE_FREE_COMPONENT_RECIPE = recipe("template_free_component_upgrade");
+    private static final ResourceKey<Recipe<?>> TEMPLATE_FREE_IRON_RECIPE = recipe("template_free_iron_upgrade");
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void templateFreeRecipesChangeOnlyEligibleSourcesInBothOrientations(GameTestHelper helper) {
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
+        for (Item other : new Item[]{Items.IRON_BOOTS, Items.GOLDEN_BOOTS}) {
+            var pair = GameTestStacks.pair(new ItemStack(TestContent.COMPONENT_BOOTS), new ItemStack(other));
+            for (ItemStack mixed : new ItemStack[]{pair.primary(), pair.inverse()}) {
+                mixed.setDamageValue(43);
+                mixed.set(DataComponents.CUSTOM_NAME, Component.literal("Live root"));
+                ItemStack before = mixed.copy();
+                ItemStack output = smithing(helper, player, ItemStack.EMPTY, mixed,
+                        new ItemStack(Items.AMETHYST_SHARD)).getSlot(SmithingMenu.RESULT_SLOT).getItem();
+                helper.assertTrue(!output.isEmpty(), "Template-free recipe produced no mixed result");
+                MixedBootsData original = GameTestStacks.data(before);
+                MixedBootsData changed = GameTestStacks.data(output);
+                assertTemplateFreeSource(helper, original.left().source(), changed.left().source());
+                assertTemplateFreeSource(helper, original.right().source(), changed.right().source());
+                helper.assertValueEqual(output.getDamageValue(), 43, "preserved live root wear");
+                helper.assertValueEqual(output.getHoverName(), mixed.getHoverName(), "preserved root name");
+                helper.assertTrue(ItemStack.matches(before, mixed), "Template-free preview mutated its base");
+
+                SmithingMenu repeated = smithing(helper, player, ItemStack.EMPTY, output.copy(),
+                        new ItemStack(Items.AMETHYST_SHARD));
+                helper.assertTrue(repeated.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
+                        "Already transformed sources produced another template-free result");
+            }
+        }
+        // An already-upgraded side must not prevent a different eligible side changing.
+        ItemStack installed = new ItemStack(TestContent.COMPONENT_BOOTS);
+        installed.set(TestContent.ADDED_COMPONENT, "installed without template");
+        ItemStack output = smithing(helper, player, ItemStack.EMPTY,
+                GameTestStacks.pair(installed, new ItemStack(Items.IRON_BOOTS)).primary(),
+                new ItemStack(Items.AMETHYST_SHARD)).getSlot(SmithingMenu.RESULT_SLOT).getItem();
+        helper.assertValueEqual(GameTestStacks.data(output).right().source().get(TestContent.ADDED_COMPONENT),
+                "installed without template", "remaining eligible side");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void templateFreeMenuInsertionAndBothTakeModesConsumeOnce(GameTestHelper helper) {
+        for (boolean shiftClick : new boolean[]{false, true}) {
+            ServerPlayer player = connectedMockPlayer(helper);
+            SmithingMenu menu = new SmithingMenu(1, player.getInventory(),
+                    ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
+            ItemStack mixed = GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS);
+            ItemStack addition = new ItemStack(Items.AMETHYST_SHARD, 2);
+            helper.assertTrue(menu.getSlot(SmithingMenu.BASE_SLOT).mayPlace(mixed), "Base slot rejected mixed boots");
+            helper.assertTrue(menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).mayPlace(addition), "Addition slot rejected upgrade");
+            if (shiftClick) {
+                menu.getSlot(4).set(mixed);
+                menu.getSlot(5).set(addition);
+                menu.quickMoveStack(player, 4);
+                menu.quickMoveStack(player, 5);
+            } else {
+                menu.setCarried(mixed);
+                menu.clicked(SmithingMenu.BASE_SLOT, 0, ContainerInput.PICKUP, player);
+                menu.setCarried(addition);
+                menu.clicked(SmithingMenu.ADDITIONAL_SLOT, 0, ContainerInput.PICKUP, player);
+            }
+            helper.assertTrue(!menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(), "Insertion produced no preview");
+            helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_COMPONENT_RECIPE), 0,
+                    "preview primary attribution");
+            helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_IRON_RECIPE), 0,
+                    "preview secondary attribution");
+            ItemStack taken;
+            if (shiftClick) {
+                taken = menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT);
+            } else {
+                menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
+                taken = menu.getCarried();
+            }
+            helper.assertTrue(taken.is(ModContent.MIXED_BOOTS_KEY), "Template-free result was not extracted");
+            helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_COMPONENT_RECIPE), 1,
+                    "primary attribution on take");
+            helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_IRON_RECIPE), 1,
+                    "secondary attribution on take");
+            helper.assertTrue(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty(), "Template slot acquired an item");
+            helper.assertTrue(menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty(), "Base was not consumed");
+            helper.assertValueEqual(menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount(), 1,
+                    "single addition payment for two changed sources");
+            helper.assertTrue(menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(), "Taken preview remained available");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void templateFreeRejectionsAndBlockedTakePreserveInputs(GameTestHelper helper) {
+        ServerPlayer player = connectedMockPlayer(helper);
+        ItemStack mixed = GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS);
+        for (ItemStack template : new ItemStack[]{new ItemStack(Items.PAPER), new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE)}) {
+            SmithingMenu rejected = smithing(helper, player, template, mixed.copy(), new ItemStack(Items.AMETHYST_SHARD));
+            helper.assertTrue(rejected.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(), "Populated wrong template was ignored");
+            helper.assertTrue(ItemStack.matches(rejected.getSlot(SmithingMenu.BASE_SLOT).getItem(), mixed), "Rejection changed its base");
+        }
+        for (ItemStack addition : new ItemStack[]{ItemStack.EMPTY, new ItemStack(Items.DIRT)}) {
+            helper.assertTrue(smithing(helper, player, ItemStack.EMPTY, mixed.copy(), addition)
+                    .getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(), "Missing/wrong addition produced an upgrade");
+        }
+        helper.assertTrue(smithing(helper, player, ItemStack.EMPTY,
+                GameTestStacks.mixed(Items.GOLDEN_BOOTS, Items.LEATHER_BOOTS), new ItemStack(Items.AMETHYST_SHARD))
+                .getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(), "Ineligible sources upgraded");
+        helper.assertTrue(smithing(helper, player, ItemStack.EMPTY,
+                GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.IRON_BOOTS), new ItemStack(Items.NETHERITE_INGOT))
+                .getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(), "Required vanilla template became optional");
+
+        SmithingMenu menu = smithing(helper, player, ItemStack.EMPTY, mixed.copy(), new ItemStack(Items.AMETHYST_SHARD, 2));
+        ItemStack preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
+        helper.assertTrue(!preview.isEmpty(), "Blocked-take fixture has no preview");
+        for (int slot = SmithingMenu.RESULT_SLOT + 1; slot < menu.slots.size(); slot++) {
+            menu.getSlot(slot).set(new ItemStack(Items.STONE, 64));
+        }
+        helper.assertTrue(menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT).isEmpty(), "Full inventory accepted output");
+        helper.assertTrue(ItemStack.matches(preview, menu.getSlot(SmithingMenu.RESULT_SLOT).getItem()), "Blocked take lost preview");
+        helper.assertTrue(ItemStack.matches(mixed, menu.getSlot(SmithingMenu.BASE_SLOT).getItem()), "Blocked take consumed base");
+        helper.assertValueEqual(menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount(), 2, "blocked payment");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_COMPONENT_RECIPE), 0, "blocked primary attribution");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_IRON_RECIPE), 0, "blocked secondary attribution");
+        menu.removed(player);
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_COMPONENT_RECIPE), 0, "closed primary attribution");
+        helper.assertValueEqual(RecipeCraftedProbe.count(player, TEMPLATE_FREE_IRON_RECIPE), 0, "closed secondary attribution");
+        helper.succeed();
+    }
+
+    @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
+    public void templateFreeOrdinaryAndForeignMixedRecipesKeepTheirResults(GameTestHelper helper) {
+        var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
+        ItemStack nativeOutput = smithing(helper, player, ItemStack.EMPTY, new ItemStack(Items.IRON_BOOTS),
+                new ItemStack(Items.AMETHYST_SHARD)).getSlot(SmithingMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(nativeOutput.is(Items.IRON_BOOTS), "Non-mixed recipe result changed item");
+        helper.assertValueEqual(nativeOutput.get(TestContent.ADDED_COMPONENT), "installed without template", "ordinary recipe installation");
+        ItemStack foreignOutput = smithing(helper, player, ItemStack.EMPTY,
+                GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS), new ItemStack(Items.COAL))
+                .getSlot(SmithingMenu.RESULT_SLOT).getItem();
+        helper.assertTrue(foreignOutput.is(Items.IRON_BOOTS), "Loaded mixed-base recipe lost its native result");
+        helper.assertValueEqual(foreignOutput.get(TestContent.ADDED_COMPONENT), "foreign template-free result",
+                "native mixed-base recipe component");
+        helper.succeed();
+    }
+
+    private static void assertTemplateFreeSource(GameTestHelper helper, ItemStack original, ItemStack changed) {
+        if (original.is(Items.GOLDEN_BOOTS)) {
+            helper.assertTrue(ItemStack.matches(original, changed), "Ineligible source changed");
+        } else {
+            ItemStack expected = original.copy();
+            expected.set(TestContent.ADDED_COMPONENT, "installed without template");
+            helper.assertTrue(ItemStack.matches(expected, changed), "Eligible source did not match its loaded recipe");
+        }
+    }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void netheriteUpgradeChangesBothSourcesAndPreservesLiveRoot(GameTestHelper helper) {

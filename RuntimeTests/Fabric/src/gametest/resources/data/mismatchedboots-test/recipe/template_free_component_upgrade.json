@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smithing_transform",
+  "base": "mismatchedboots-test:component_boots",
+  "addition": "minecraft:amethyst_shard",
+  "result": {
+    "id": "mismatchedboots-test:component_boots",
+    "components": {
+      "mismatchedboots-test:added": "installed without template"
+    }
+  }
+}
