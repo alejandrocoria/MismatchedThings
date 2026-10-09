@@ -53,6 +53,7 @@ public final class NeoForgeJustDireJumpTest {
         if (finished) { return; }
         finished = true;
         try {
+            require(fall(player(server), 9) == 6, "Unprotected survival control did not take real fall damage");
             String guard = System.getProperty("mismatchedboots.runtimetest.justDireJumpGuard", "");
             if (!guard.equals("absent")) {
                 Class<?> handler = Class.forName("com.direwolf20.justdirethings.common.events.LivingEntityEvents");
@@ -75,7 +76,8 @@ public final class NeoForgeJustDireJumpTest {
                     ? "paired production hooks; native controls; maximum/owner settings; provenance; powered exclusion; live wear; "
                         + "unchanged resources; actual health loss; post-mix installation/tier transitions; save/load; native config; "
                         + "water/gliding flags; Feather Falling; AIRBURST/Negate precedence; non-player control"
-                    : "guard=" + guard + "; native/mixed movement and actual health; expected paired permission and warning count") + "\n");
+                    : "guard=" + guard + "; native/mixed movement and actual health; expected paired permission and warning count")
+                    + "; client-loaded survival control: distance=9 healthLoss=6\n");
             NetworkAcceptanceFiles.write("just-dire-jump-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("just-dire-jump", failure);
@@ -170,8 +172,11 @@ public final class NeoForgeJustDireJumpTest {
         player.setItemSlot(EquipmentSlot.FEET, MixedBootsFactory.createPair(blazegold, iron).primary());
         for (EquipmentSlot hand : List.of(EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
             player.setItemSlot(hand, new ItemStack(item("ferricore_sword")));
+            require(fall(player, 9) == 4, "Non-AIRBURST hand item wrongly protected the Jump pair");
+            player.setItemSlot(hand, new ItemStack(item("blazejet_wand")));
             require(fall(player, 9) == 0, "Native hand AIRBURST early return was lost");
             player.setItemSlot(hand, ItemStack.EMPTY);
+            require(fall(player, 9) == 4, "Removing AIRBURST did not restore the Jump fall companion");
         }
     }
 
@@ -217,6 +222,7 @@ public final class NeoForgeJustDireJumpTest {
             if (boots.has(DataComponents.ENCHANTMENTS)) { controlBoots.set(DataComponents.ENCHANTMENTS, boots.get(DataComponents.ENCHANTMENTS)); }
             control.setItemSlot(EquipmentSlot.FEET, controlBoots);
             float expected = fall(control, distance - value);
+            require(distance != 9 || expected > 0, "Nine-block fall control was immune instead of testing health loss");
             require(loss == expected, "Wrong actual fall health: distance=" + distance + " value=" + value + " loss=" + loss + " expected=" + expected);
         }
         require(ItemStack.matches(before, boots), "Passive query spent resources or mutated root/snapshots");
@@ -237,12 +243,14 @@ public final class NeoForgeJustDireJumpTest {
     private static ServerPlayer player(MinecraftServer server, boolean water, boolean flying) {
         ServerPlayer player = new ServerPlayer(server, server.overworld(),
                 new GameProfile(UUID.randomUUID(), "jump-test"), ClientInformation.createDefault()) {
-            @Override public GameType gameMode() { return GameType.SURVIVAL; }
             @Override public boolean isInWater() { return water; }
             @Override public boolean isFallFlying() { return flying; }
         };
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
                 CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        // ServerPlayer rejects damage while a newly constructed listener is waiting for client loading.
+        player.connection.markClientLoaded();
+        player.setGameMode(GameType.SURVIVAL);
         return player;
     }
 

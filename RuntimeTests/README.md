@@ -312,6 +312,11 @@ then a hidden/muted client in a copy of its disposable world. Native originals
 are controls. The small guard gate separately exercises compatible competing
 WrapOperations, a replaced fall read disabling both hooks, and quiet optional
 absence. Smithing retains its independent recipe/menu acceptance.
+Every server variant marks its fixture connections client-loaded, sets actual
+survival mode and requires a nine-block unprotected control to lose six health
+points. Each scenario's nine-block comparison requires a nonzero ordinary
+control, preventing immune-player zero-versus-zero passes. Hand precedence uses Blazejet Wands,
+contrasted with a non-AIRBURST Ferricore Sword and removal in both hands.
 Each process is bounded to 240 seconds. Runs/markers reuse the isolated smithing
 fixture directories; do not run these gates concurrently. Logs are under
 `RuntimeTests/NeoForge/build/reports/just-dire-jump/` (smithing has its own report
@@ -323,6 +328,40 @@ The additional final-pair test accepts `-PjustDireTransformedClass=...` pointing
 at an active production/compatible MixinExtras export, not the absent/rejected
 variant. The design, exclusions and manual handoff are maintained in
 local-docs, not inferred from successful installation recipes.
+
+## Just Dire Things Negate Fall Damage characterization (8.4 A)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall "-Pneoforge_version=26.1.2.99" --console=plain
+```
+
+This opt-in server gate uses the same hash-pinned native JAR and isolated
+smithing preparation. It does **not** enable mixed Negate Fall Damage or compile
+native classes into production. Its 43 characterization cases exercise original
+Celestigem/Eclipse Alloy boots through the actual fall event bus, FE thresholds,
+fractional distance, full/partial payment, Unbreaking and Unbreakable, Feather
+Falling, tool settings/native config, Jump precedence and both AIRBURST hands.
+Survival cases call actual `causeFallDamage` and require a positive unprotected
+health-loss control. Fixture connections are explicitly marked client-loaded;
+otherwise newly constructed server players reject damage. Creative/spectator
+checks set the actual game mode and post the event on the native bus, because
+physical falls in those modes bypass the LivingFallEvent consumer.
+
+Equipped mixed roots exercise the existing production FE capability, not another
+provider: mapped FEET slot access, rollback and partial commit in both output
+orientations, unchanged wear/provenance/sibling/main inventory, and cursed boots.
+The slot exchange path rejects Curse of Binding; direct access to the actual
+equipped stack transactionally consumes FE without removing armor, as native
+powered boots do. The final mixed control takes actual fall damage and spends
+no FE, proving that this block is characterization only.
+
+The process is bounded to 240 seconds and requires success/report markers.
+Versioned logs and retained reports are under
+`RuntimeTests/NeoForge/build/reports/just-dire-negate-fall/<neoforge-version>/`.
+Preparation shares disposable smithing run/marker directories: run sequentially
+with other JDT gates. Production behavior, selected access boundary, limitations
+and remaining blocks are tracked in local-docs.
 
 ## Just Dire Things production energy storage (8.3 A)
 

@@ -137,6 +137,15 @@ neoForge {
             systemProperty('mixin.debug.export', 'true')
             jvmArgument('-Xmx1G')
         }
+        justDireNegateFall {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireNegateFallTest', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireJumpClient {
             client()
             disableIdeRun()
@@ -364,6 +373,7 @@ tasks.named('runJustDireSmithing') {
 }
 
 tasks.named('runJustDireJump') { dependsOn tasks.named('prepareJustDireSmithing') }
+tasks.named('runJustDireNegateFall') { dependsOn tasks.named('prepareJustDireSmithing') }
 tasks.named('runJustDireResources') { dependsOn tasks.named('prepareJustDireSmithing') }
 // Restart must retain the first process's actual world/markers, never invoke destructive preparation.
 tasks.named('runJustDireResourcesRestart') { dependsOn(':NeoForge:jar', tasks.named('jar')) }
@@ -590,6 +600,25 @@ tasks.register('verifyJustDireJump') {
         if (!clientReport.isFile()) { throw new GradleException("Missing client gameplay report: ${clientLog}") }
         new File(log.parentFile, 'client-report.txt').text = clientReport.text
         logger.lifecycle(clientReport.text)
+    }
+}
+
+tasks.register('verifyJustDireNegateFall') {
+    group = 'verification'
+    description = 'Characterizes native Negate Fall Damage payment and equipped production FE access without enabling mixed Negate.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-negate-fall/${neoforge_version}/neoforge-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireNegateFall', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-negate-fall-failure.txt')
+        def success = new File(directory, 'just-dire-negate-fall-success.txt')
+        def report = new File(directory, 'just-dire-negate-fall-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Just Dire Things Negate characterization failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'server-report.txt').text = report.text
+        logger.lifecycle(report.text)
     }
 }
 

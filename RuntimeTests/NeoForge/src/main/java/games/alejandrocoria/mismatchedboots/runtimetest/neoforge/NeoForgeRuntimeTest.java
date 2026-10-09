@@ -14,7 +14,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributesTest")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireNegateFallTest")) {
+            NeoForgeJustDireNegateFallTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributesTest")) {
             NeoForgeJustDireAttributesTest.register();
         } else if (!System.getProperty("mismatchedboots.runtimetest.justDireResourcesGuard", "").isEmpty()) {
             NeoForgeJustDireResourcesGuardTest.register();
