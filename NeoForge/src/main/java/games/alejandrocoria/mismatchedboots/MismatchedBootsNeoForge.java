@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.client.MismatchedBootsClientNeoForge;
 import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
@@ -20,6 +21,7 @@ public class MismatchedBootsNeoForge {
         MismatchedBoots.init();
         IceAndFireTideCompatibility.initialize();
         JustDireResourcesCompatibility.initialize(eventBus);
+        JustDireAttributesCompatibility.initialize(eventBus);
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();

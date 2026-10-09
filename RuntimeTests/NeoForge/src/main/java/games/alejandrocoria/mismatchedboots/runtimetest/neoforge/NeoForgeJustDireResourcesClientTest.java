@@ -45,7 +45,7 @@ final class NeoForgeJustDireResourcesClientTest {
                         && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                         "Resource client was not hidden and muted");
                 preview = new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(
-                        NeoForgeJustDireResourcesTest.boots("celestigem", 6_000), new ItemStack(Items.IRON_BOOTS)),
+                        poweredBoots(), new ItemStack(Items.IRON_BOOTS)),
                         AttributeRuleState.current(), ComponentRuleState.current());
                 require(preview.isComplete(), "Synchronized client preview failed");
                 var id = player.getUUID();
@@ -54,13 +54,14 @@ final class NeoForgeJustDireResourcesClientTest {
                     require(owner != null, "Actual server player missing");
                     owner.getInventory().clearContent();
                     var menu = new MismatchedWorkbenchMenu(1, owner.getInventory());
-                    menu.getSlot(0).set(NeoForgeJustDireResourcesTest.boots("celestigem", 6_000));
+                    menu.getSlot(0).set(poweredBoots());
                     menu.getSlot(1).set(new ItemStack(Items.IRON_BOOTS));
                     ItemStack first = menu.getSlot(2).safeTake(1, 1, owner);
                     ItemStack second = menu.getSlot(3).safeTake(1, 1, owner);
                     require(!first.isEmpty() && !second.isEmpty() && !menu.isCommitted(), "Actual server Workbench takes failed");
                     owner.getInventory().setItem(0, first);
                     owner.getInventory().setItem(1, second);
+                    owner.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, first.copy());
                     owner.inventoryMenu.broadcastChanges();
                 });
                 phase = 1;
@@ -68,6 +69,7 @@ final class NeoForgeJustDireResourcesClientTest {
                 ItemStack first = player.getInventory().getItem(0);
                 ItemStack second = player.getInventory().getItem(1);
                 if (!ModContent.isMixedBoots(first) || !ModContent.isMixedBoots(second)) { return; }
+                if (!equipmentAgrees(client, first)) { return; }
                 require(ItemStack.matches(preview.primary(), first) && ItemStack.matches(preview.inverse(), second),
                         "Actual server outputs differed from independently assembled client preview");
                 require(JustDireResourceTestSupport.handler(first).getAmountAsInt() == 3_000
@@ -80,6 +82,7 @@ final class NeoForgeJustDireResourcesClientTest {
                         require(energy != null && energy.extract(1_267, transaction) == 1_267, "Server slot FE extraction failed");
                         transaction.commit();
                     }
+                    owner.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, owner.getInventory().getItem(0).copy());
                     owner.inventoryMenu.broadcastChanges();
                 });
                 phase = 2;
@@ -93,17 +96,20 @@ final class NeoForgeJustDireResourcesClientTest {
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id);
                     owner.getInventory().getItem(0).remove(JustDireResourceTestSupport.energyComponent());
+                    owner.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, owner.getInventory().getItem(0).copy());
                     owner.inventoryMenu.broadcastChanges();
                 });
                 phase = 3;
             } else {
                 ItemStack first = player.getInventory().getItem(0);
                 if (first.has(JustDireResourceTestSupport.energyComponent())) { return; }
+                if (!equipmentAgrees(client, first)) { return; }
                 require(JustDireResourceTestSupport.handler(first).getAmountAsInt() == 0
                         && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Absent live FE field was refilled on the real client");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-report.txt", "hidden/muted NeoForge client; actual integrated-server Workbench takes; "
-                        + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; unchanged inverse/provenance\n");
+                        + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
+                        + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance\n");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-success.txt", "neoforge\n");
                 finished = true;
             }
@@ -116,5 +122,25 @@ final class NeoForgeJustDireResourcesClientTest {
 
     private static void require(boolean condition, String message) {
         if (!condition) { throw new IllegalStateException(message); }
+    }
+
+    private static ItemStack poweredBoots() {
+        var stack = NeoForgeJustDireResourcesTest.boots("celestigem", 6_000);
+        JustDireAttributeTestSupport.set(stack, "stepheight_upgrade_installed", true);
+        return stack;
+    }
+
+    private static boolean equipmentAgrees(Minecraft client, ItemStack expected) {
+        var feet = client.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET);
+        if (!ItemStack.matches(feet, expected)) { return false; }
+        var modifiers = expected.getAttributeModifiers();
+        for (var attribute : java.util.List.of(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR,
+                net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT)) {
+            double amount = modifiers.modifiers().stream().filter(entry -> entry.attribute().equals(attribute))
+                    .mapToDouble(entry -> entry.modifier().amount()).sum();
+            double base = client.player.getAttributeBaseValue(attribute);
+            if (Math.abs(client.player.getAttributeValue(attribute) - base - amount) > 1e-7) { return false; }
+        }
+        return true;
     }
 }

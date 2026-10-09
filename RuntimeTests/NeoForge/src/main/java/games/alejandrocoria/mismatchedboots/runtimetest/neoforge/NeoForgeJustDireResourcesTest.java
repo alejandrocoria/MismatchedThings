@@ -76,9 +76,9 @@ public final class NeoForgeJustDireResourcesTest {
                     + "external recharge/source debit; transaction rollback; repeated/partial extraction; "
                     + "native PoweredItem consumption/transmitter primitive; actual player-slot access; "
                     + "retained handler tier/count replacement; live recomposition including projection equality/zero/absence; "
-                    + "save/load; invalid roots/charge; immutable provenance; frozen powered-attribute characterization; "
+                    + "save/load; invalid roots/charge; immutable provenance; live powered-attribute depletion; "
                     + "actual Workbench previews/takes/blocked take/close; loaded native smithing upgrade/takes; "
-                    + "configured rejection/generic FE policy; real world save fixture; production storage; dynamic attributes/abilities deferred\n");
+                    + "configured rejection/generic FE policy; real world save fixture; production storage/attribute lifecycle; powered abilities deferred\n");
             NetworkAcceptanceFiles.write("just-dire-resources-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("just-dire-resources", failure);
@@ -261,16 +261,16 @@ public final class NeoForgeJustDireResourcesTest {
         }
         cases++;
 
-        // Characterize a known missing production boundary, rather than silently certifying it.
+        // Storage transfers must refresh the actual production powered contribution too.
         ItemStack nativeAttributes = boots("celestigem", 50);
         require(!nativeAttributes.getAttributeModifiers().modifiers().isEmpty(), "Charged native armor had no attributes");
         nativeAttributes.set(JustDireResourceTestSupport.energyComponent(), 49);
         require(nativeAttributes.getAttributeModifiers().modifiers().isEmpty(), "Native empty-energy attribute threshold changed");
-        ItemStack frozen = MixedBootsFactory.createPair(boots("celestigem", 6_000), iron).primary();
-        var captured = frozen.getAttributeModifiers();
-        extract(frozen, 3_000);
-        require(!captured.modifiers().isEmpty() && frozen.getAttributeModifiers().equals(captured),
-                "Storage-only integration unexpectedly changed powered attribute behavior");
+        ItemStack dynamicRoot = MixedBootsFactory.createPair(boots("celestigem", 6_000), iron).primary();
+        var captured = dynamicRoot.getAttributeModifiers();
+        extract(dynamicRoot, 3_000);
+        require(!captured.modifiers().isEmpty() && !dynamicRoot.getAttributeModifiers().equals(captured),
+                "Production powered attributes did not respond to depletion");
         cases++;
         workbench(server);
         smithing(server);
@@ -397,6 +397,10 @@ public final class NeoForgeJustDireResourcesTest {
         ItemStack root = MixedBootsFactory.createPair(boots("celestigem", 6_000), new ItemStack(Items.IRON_BOOTS)).primary();
         extract(root, 1_267);
         barrel.setItem(0, root);
+        ItemStack frozenAttributes = MixedBootsFactory.createPair(boots("celestigem", 0), new ItemStack(Items.IRON_BOOTS),
+                new AttributeRuleSet(AttributePolicy.COMBINE, java.util.Map.of()), ComponentRulesLifecycle.serverRules()).primary();
+        frozenAttributes.set(JustDireResourceTestSupport.energyComponent(), 100);
+        barrel.setItem(3, frozenAttributes);
         ItemStack zero = root.copy(); extract(zero, 1_733); barrel.setItem(1, zero);
         ItemStack absent = root.copy(); absent.remove(JustDireResourceTestSupport.energyComponent()); barrel.setItem(2, absent);
         barrel.setChanged();
@@ -408,6 +412,16 @@ public final class NeoForgeJustDireResourcesTest {
     private static void verifyRestart(MinecraftServer server) throws java.io.IOException {
         var barrel = (BarrelBlockEntity) server.overworld().getBlockEntity(new BlockPos(0, 80, 0));
         require(barrel != null, "Actual restart lost world container");
+        ItemStack frozenAttributes = barrel.getItem(3);
+        require(frozenAttributes.has(games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility.projections()),
+                "Actual world restart lost production attribute metadata");
+        var chargedAttributes = frozenAttributes.getAttributeModifiers();
+        require(!chargedAttributes.equals(frozenAttributes.get(DataComponents.ATTRIBUTE_MODIFIERS)), "Restart lost live charged projection");
+        frozenAttributes.remove(JustDireResourceTestSupport.energyComponent());
+        require(frozenAttributes.getAttributeModifiers().equals(frozenAttributes.get(DataComponents.ATTRIBUTE_MODIFIERS)),
+                "Restarted root did not return to its frozen depleted baseline");
+        frozenAttributes.set(JustDireResourceTestSupport.energyComponent(), 100);
+        require(frozenAttributes.getAttributeModifiers().equals(chargedAttributes), "World restart/recharge lost frozen non-default rules");
         var json = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                 System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-resources-saved.json")));
         ItemStack expected = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), json).getOrThrow();
@@ -416,7 +430,7 @@ public final class NeoForgeJustDireResourcesTest {
                 && !barrel.getItem(2).has(JustDireResourceTestSupport.energyComponent()), "World restart restored snapshot charge or lost zero/absence");
         require(extract(barrel.getItem(0), 50) == 50 && energy(barrel.getItem(0)).getAmountAsInt() == 1_683,
                 "Restarted root cannot consume live FE");
-        NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load\n");
+        NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; frozen non-default attributes through depletion/recharge\n");
     }
 
     private static ServerPlayer player(MinecraftServer server) {

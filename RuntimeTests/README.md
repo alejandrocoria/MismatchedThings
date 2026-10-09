@@ -346,8 +346,8 @@ takes in either order, blocked shift-take and committed/uncommitted close verify
 source consumption and pending-inverse independence. Real native smithing recipes
 and output takes preserve spent/zero/absent charge across upgrade and tier changes.
 Configured attribute rejection remains effective, while generic FE `share` cannot
-duplicate this dedicated resource. It also characterizes
-the still-frozen powered attributes; it does not fix them. Native originals
+duplicate this dedicated resource. With block B present, it also checks
+live powered-attribute depletion independently of FE storage. Native originals
 are controls, not substituted formulas.
 
 An actual second server process reloads spent, zero and absent FE from barrels
@@ -371,34 +371,47 @@ Preparation resets the shared disposable smithing run/marker directories;
 do not run these gates concurrently. Repeat with `"-Pneoforge_version=26.1.2.99"`
 to exercise the supported loader floor.
 
-## Just Dire Things live-attribute technical proof (8.3)
+## Just Dire Things production live attributes (8.3 B)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributesSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributesSpike "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributes --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributes "-Pneoforge_version=26.1.2.99" --console=plain
 ```
 
-This separate opt-in gate uses production energy storage and a **test-only**
-pre-event CommonHooks transformation. Nine frozen projections reuse the real
-Common attribute composer through reflection during preparation, not during
-attribute queries. Metadata uses one bounded persistent/network component in
-the fixture namespace; it is not production state or another energy wallet.
+This opt-in gate uses production lifecycle callbacks, component registration and
+the production pre-event CommonHooks transformation. Nine frozen projections
+reuse the public pure Common composer during creation/recomposition, not during
+live queries. Metadata is one bounded NeoForge-owned persistent/network component;
+it is not another energy wallet. The old fixture preparation/dispatch implementation
+has been removed, recoverable from Git. Test support only supplies native controls
+and a competing default-input transformation.
 
 The live run checks empty creation/recharge/depletion, actual entity equipment
 ticks and damage mitigation, both source orders/inverse outputs, native threshold
 queries, root powered Step Assist controls, source-installed provenance, frozen
 policies, source-wise rebuilding, custom display and same-identity ownership.
 A real earlier competing mixin and later attribute event exercise coexistence.
-The second process disables the actual mixins and requires generic fresh-root
+The second process modifies the actual readiness getter; final export denies
+permission and requires generic fresh-root
 fallback. It also loads a charged root saved by the live process and requires
 its persisted depleted-attribute baseline: no permanent powered protection when
-the hook is missing. Both processes require their
+the hook is missing, including a tier rebuild without new dynamic metadata.
+Removing the last powered source still permits ordinary recomposition.
+A third process injects a missing attribute component binding
+without changing native JDT, production storage or the independent passive Jump
+adapter. Each process requires its
 own success marker; each is bounded to 240 seconds.
 
 Reports are under `RuntimeTests/NeoForge/build/reports/just-dire-attributes/`.
 The gate shares disposable smithing preparation, so run it sequentially with
 the other Just Dire Things gates. Storage-only characterization is unchanged
-when the attribute property is disabled. The attribute experiment does not
-establish production dynamic-attribute routing, structural hook guards or live
-client attribute acceptance; those remain block B requirements. Production
-storage Workbench/smithing/restart/client evidence belongs to the separate gate above.
+when the attribute property is disabled. The 19 live scenario groups also cover
+explicit managed edits through tier change/storage removal and actual native
+smithing upgrade/output extraction; each fallback process has two scenario groups.
+Warning counts are asserted. Four local bytecode regression tests exercise native
+entry/final owned flow, earlier transforms, wrong root/defaults, discarded router/
+event results, foreign routing and readiness edits (`:NeoForge:test`).
+The separate resource gate above now includes non-default frozen attribute rules
+through a real world restart and actual client equipped armor/Step Assist at
+charged/depleted FE, in addition to production Workbench and packet agreement.
+Powered abilities, damage-to-FE conversion and manual 8.3 acceptance are not claimed.

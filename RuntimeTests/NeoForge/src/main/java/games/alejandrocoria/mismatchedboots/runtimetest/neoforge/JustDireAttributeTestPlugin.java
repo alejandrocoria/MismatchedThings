@@ -7,10 +7,14 @@ import java.util.List;
 import java.util.Set;
 
 /** No attribute transformations in storage-only, production or unrelated fixture runs. */
-public final class JustDireAttributeSpikePlugin implements IMixinConfigPlugin {
+public final class JustDireAttributeTestPlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
-        return Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeSpike")
-                && !Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeHookAbsent");
+        return Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributesTest")
+                && (mixin.endsWith("JustDireAttributeApiMissingMixin")
+                ? Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeApiMissing")
+                : mixin.endsWith("JustDireAttributeDeniedMixin")
+                ? Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeHookAbsent")
+                : !Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeHookAbsent"));
     }
     @Override public void onLoad(String mixinPackage) {}
     @Override public String getRefMapperConfig() { return null; }

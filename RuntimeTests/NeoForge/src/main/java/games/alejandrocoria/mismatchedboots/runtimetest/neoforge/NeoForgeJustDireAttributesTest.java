@@ -3,6 +3,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributeProjections;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
@@ -33,8 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Real equipped transitions and competing transformations, not production acceptance. */
-public final class NeoForgeJustDireAttributeSpikeTest {
+/** Real equipped transitions and competing transformations, production-JAR acceptance. */
+public final class NeoForgeJustDireAttributesTest {
     private static boolean finished;
     private static boolean later;
     private static int laterReads;
@@ -42,15 +44,15 @@ public final class NeoForgeJustDireAttributeSpikeTest {
     private static final Identifier ARMOR_ID = Identifier.withDefaultNamespace("armor.boots");
     private static final Identifier EXTRA_ID = Identifier.fromNamespaceAndPath("fixture", "extra");
 
-    private NeoForgeJustDireAttributeSpikeTest() {}
+    private NeoForgeJustDireAttributesTest() {}
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, NeoForgeJustDireAttributeSpikeTest::later);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, NeoForgeJustDireAttributesTest::later);
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
     }
 
     private static void later(ItemAttributeModifierEvent event) {
-        if (!later || !event.getItemStack().has(JustDireAttributeSpike.projections())) { return; }
+        if (!later || !event.getItemStack().has(JustDireAttributesCompatibility.projections())) { return; }
         laterReads++;
         event.replaceModifier(Attributes.ARMOR, new AttributeModifier(ARMOR_ID, 23, AttributeModifier.Operation.ADD_VALUE),
                 EquipmentSlotGroup.FEET);
@@ -63,38 +65,52 @@ public final class NeoForgeJustDireAttributeSpikeTest {
     private static void tick(MinecraftServer server) {
         if (finished) { return; }
         finished = true;
-        boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeHookAbsent");
+        boolean missingApi = Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeApiMissing");
+        boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeHookAbsent") || missingApi;
         try {
-            JustDireAttributeSpike.bind();
+
             ItemStack control = root(boots("celestigem", 0, true), new ItemStack(Items.IRON_BOOTS));
             var defaults = control.getAttributeModifiers();
             if (absent) {
-                require(!JustDireAttributeSpike.hookSeen && !JustDireAttributeSpike.prepare(control, rules()), "Absent hook published metadata");
+                require(!control.has(JustDireAttributesCompatibility.projections()), "Absent hook published metadata");
                 control.set(JustDireResourceTestSupport.energyComponent(), 100);
                 require(control.getAttributeModifiers().equals(defaults), "Absent hook altered generic fallback");
                 cases++;
                 var saved = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                         System.getProperty("mismatchedboots.runtimetest.justDireAttributeSavedRoot"))));
                 ItemStack loaded = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), saved).getOrThrow();
-                require(loaded.has(JustDireAttributeSpike.projections())
+                require(loaded.has(JustDireAttributesCompatibility.projections())
                         && loaded.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100,
                         "Previous process fixture lost its projections/live FE");
                 require(loaded.getAttributeModifiers().equals(loaded.get(DataComponents.ATTRIBUTE_MODIFIERS)),
                         "Missing hook did not use serialized fallback");
                 near(2, amount(loaded.getAttributeModifiers(), "armor"), "Missing hook resurrected powered saved armor");
                 near(0, amount(loaded.getAttributeModifiers(), "step_height"), "Missing hook resurrected powered saved Step Assist");
+                require(JustDireResourceTestSupport.handler(loaded).getAmountAsInt() == 100,
+                        "Attribute fallback disabled independent storage");
+                var loadedData = ModContent.getMixedBootsData(loaded).orElseThrow();
+                ItemStack fallbackRebuilt = MixedBootsRecomposer.recompose(loaded, boots("eclipsealloy", 400_000, true), loadedData.right().source());
+                require(!fallbackRebuilt.has(JustDireAttributesCompatibility.projections()), "Missing permission published replacement metadata");
+                near(2, amount(fallbackRebuilt.getAttributeModifiers(), "armor"), "Recomposition without routing resurrected powered source armor");
+                near(0, amount(fallbackRebuilt.getAttributeModifiers(), "step_height"), "Recomposition without routing resurrected Step Assist");
+                require(JustDireResourceTestSupport.handler(fallbackRebuilt).getAmountAsInt() == 100, "Fallback source upgrade refilled FE");
+                ItemStack ordinaryRebuilt = MixedBootsRecomposer.recompose(loaded, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
+                same(MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary().getAttributeModifiers(),
+                        ordinaryRebuilt.getAttributeModifiers(), "Disabled adapter prevented ordinary replacement-source recomposition");
                 cases++;
             } else {
-                require(JustDireAttributeSpike.hookSeen, "Pre-event hook not reached");
+                require(control.has(JustDireAttributesCompatibility.projections()), "Production lifecycle did not publish metadata");
                 matrix(server);
             }
-            NetworkAcceptanceFiles.write("just-dire-attributes-report.txt", cases + " attribute spike scenario groups; "
-                    + (absent ? "real mixins disabled; no new projections published; generic fresh-root fallback; prior-process saved-root safe baseline" :
+            NetworkAcceptanceFiles.write("just-dire-attributes-report.txt", cases + " production attribute scenario groups; "
+                    + (absent ? (missingApi ? "native API binding rejected" : "production hook permission denied")
+                    + "; no new projections published; generic fresh-root fallback; prior-process saved-root safe baseline" :
                     "both source orders/inverse outputs; empty creation/recharge/depletion; native threshold and live root toggles; "
                     + "installed provenance; frozen policies; pre-event identity guards; real earlier competing mixin/later event; "
-                    + "custom display; bounded persistent/network metadata; actual equipment ticks/damage mitigation/player durability")
-                    + "; test-only, no production support\n");
-            NetworkAcceptanceFiles.write("just-dire-attributes-success.txt", (absent ? "Absent" : "Live") + "\n");
+                    + "custom display; bounded persistent/network metadata; explicit managed edits through tier/storage removal; "
+                    + "actual native smithing installation/take; actual equipment ticks/damage mitigation/player durability")
+                    + "; production attributes, no powered abilities or wear conversion\n");
+            NetworkAcceptanceFiles.write("just-dire-attributes-success.txt", (missingApi ? "ApiMissing" : absent ? "Absent" : "Live") + "\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("just-dire-attributes", failure); }
         finally { server.halt(false); }
     }
@@ -105,7 +121,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
             ItemStack powered = boots("celestigem", 0, true);
             var pair = MixedBootsFactory.createPair(reverse ? iron : powered, reverse ? powered : iron);
             for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
-                require(JustDireAttributeSpike.prepare(output, rules()), "Projection preparation failed");
+                require(output.has(JustDireAttributesCompatibility.projections()), "Production preparation failed");
                 var provenance = output.get(ModContent.mixedBootsDataType().orElseThrow());
                 Zombie mob = mob(server);
                 mob.setItemSlot(EquipmentSlot.FEET, output);
@@ -121,11 +137,11 @@ public final class NeoForgeJustDireAttributeSpikeTest {
                             "Attribute query/equipment tick spent FE or changed provenance");
                 }
                 for (String toggle : List.of("tool_enabled", "stepheight_toggle")) {
-                    JustDireAttributeSpike.set(output, toggle, false);
+                    JustDireAttributeTestSupport.set(output, toggle, false);
                     mob.tick();
                     near(.6, mob.getAttributeValue(Attributes.STEP_HEIGHT), "Live root toggle failed: " + toggle);
                     require(amount(output.getAttributeModifiers(), "armor") > 1, "Step toggle incorrectly disabled armor");
-                    JustDireAttributeSpike.set(output, toggle, true);
+                    JustDireAttributeTestSupport.set(output, toggle, true);
                     mob.tick();
                     near(1.6, mob.getAttributeValue(Attributes.STEP_HEIGHT), "Step toggle did not restore installed contribution");
                 }
@@ -136,9 +152,10 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         for (AttributePolicy policy : List.of(AttributePolicy.AVERAGE, AttributePolicy.COMBINE,
                 AttributePolicy.MINIMUM, AttributePolicy.MAXIMUM, AttributePolicy.SEPARATE)) {
             var frozen = new AttributeRuleSet(policy, Map.of());
-            var pair = MixedBootsFactory.createPair(boots("celestigem", 0, true), boots("eclipsealloy", 0, true));
+            var pair = MixedBootsFactory.createPair(boots("celestigem", 0, true), boots("eclipsealloy", 0, true), frozen,
+                    games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle.serverRules());
             for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
-                JustDireAttributeSpike.prepare(output, frozen);
+
                 for (int charge : new int[]{0, 50, 50_000, 0}) {
                     output.set(JustDireResourceTestSupport.energyComponent(), charge);
                     same(expected(output, frozen), output.getAttributeModifiers(), "Frozen policy " + policy);
@@ -146,14 +163,20 @@ public final class NeoForgeJustDireAttributeSpikeTest {
             }
             cases++;
         }
-        ItemStack rejected = root(boots("celestigem", 0, false), iron);
+        ItemStack rejected = boots("celestigem", 0, false);
         ItemStack rejectedBefore = rejected.copy();
         boolean rejectedPreparation = false;
-        try { JustDireAttributeSpike.prepare(rejected, new AttributeRuleSet(AttributePolicy.REJECT, Map.of())); }
-        catch (java.lang.reflect.InvocationTargetException failure) {
-            rejectedPreparation = failure.getCause() instanceof IllegalArgumentException;
-        }
+        try { MixedBootsFactory.createPair(rejected, iron,
+                new AttributeRuleSet(AttributePolicy.REJECT, Map.of()),
+                games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle.serverRules()); }
+        catch (IllegalArgumentException failure) { rejectedPreparation = true; }
         require(rejectedPreparation && ItemStack.matches(rejectedBefore, rejected), "Reject policy partially published projections");
+        boolean latentRejected = false;
+        try { MixedBootsFactory.createPair(rejected, boots("eclipsealloy", 0, false),
+                new AttributeRuleSet(AttributePolicy.REJECT, Map.of()),
+                games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle.serverRules()); }
+        catch (IllegalArgumentException failure) { latentRejected = true; }
+        require(latentRejected && ItemStack.matches(rejectedBefore, rejected), "Empty creation bypassed rejection of its latent powered attributes");
         cases++;
 
         ItemStack customIron = iron.copy();
@@ -163,7 +186,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
                         EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.override(Component.literal("managed custom armor"))))));
         var ambiguous = MixedBootsFactory.createPair(boots("celestigem", 0, false), customIron);
         for (ItemStack output : List.of(ambiguous.primary(), ambiguous.inverse())) {
-            JustDireAttributeSpike.prepare(output, rules());
+
             for (int charge : new int[]{0, 100, 0}) {
                 output.set(JustDireResourceTestSupport.energyComponent(), charge);
                 same(expected(output, rules()), output.getAttributeModifiers(), "Managed operation/display ambiguity");
@@ -172,28 +195,36 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         cases++;
 
         ItemStack forged = root(boots("celestigem", 0, false), iron);
-        JustDireAttributeSpike.prepare(forged, rules());
+
         forged.set(JustDireResourceTestSupport.energyComponent(), 100);
-        JustDireAttributeSpike.set(forged, "stepheight_upgrade_installed", true);
+        JustDireAttributeTestSupport.set(forged, "stepheight_upgrade_installed", true);
         require(amount(forged.getAttributeModifiers(), "step_height") == 0, "Forged root installed an upgrade");
         var data = forged.get(ModContent.mixedBootsDataType().orElseThrow());
         ItemStack installed = data.left().source();
-        JustDireAttributeSpike.set(installed, "stepheight_upgrade_installed", true);
+        JustDireAttributeTestSupport.set(installed, "stepheight_upgrade_installed", true);
         ItemStack recomposed = MixedBootsRecomposer.recompose(forged, installed, data.right().source());
-        JustDireAttributeSpike.prepare(recomposed, rules());
+
         near(1, amount(recomposed.getAttributeModifiers(), "step_height"), "Source-wise installation failed to rebuild metadata");
         require(recomposed.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100, "Preparation refilled FE");
+        var explicit = forged.copy();
+        var defaultsWithAddedStep = new ArrayList<>(explicit.get(DataComponents.ATTRIBUTE_MODIFIERS).modifiers());
+        defaultsWithAddedStep.add(new ItemAttributeModifiers.Entry(Attributes.STEP_HEIGHT,
+                new AttributeModifier(Identifier.fromNamespaceAndPath("justdirethings", "justdirestepassist"), 17,
+                        AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.hidden()));
+        explicit.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(List.copyOf(defaultsWithAddedStep)));
+        var explicitRebuilt = MixedBootsRecomposer.recompose(explicit, installed, data.right().source());
+        near(17, amount(explicitRebuilt.getAttributeModifiers(), "step_height"), "Previously absent managed identity add was lost during installation");
         cases++;
 
         ItemStack nonPowered = MixedBootsFactory.createPair(boots("ferricore", 0, true), iron).primary();
         var nonPoweredBefore = nonPowered.getAttributeModifiers();
-        require(!JustDireAttributeSpike.prepare(nonPowered, rules()), "Unpowered root acquired projection state");
-        JustDireAttributeSpike.set(nonPowered, "tool_enabled", false);
+        require(!nonPowered.has(JustDireAttributesCompatibility.projections()), "Unpowered root acquired projection state");
+        JustDireAttributeTestSupport.set(nonPowered, "tool_enabled", false);
         same(nonPoweredBefore, nonPowered.getAttributeModifiers(), "Unpowered Step Assist behavior changed");
         cases++;
 
         ItemStack editable = root(boots("celestigem", 0, true), iron);
-        JustDireAttributeSpike.prepare(editable, rules());
+
         var extra = new ItemAttributeModifiers.Entry(Attributes.MOVEMENT_SPEED,
                 new AttributeModifier(EXTRA_ID, .03, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET,
                 ItemAttributeModifiers.Display.override(Component.literal("fixture custom display")));
@@ -202,11 +233,11 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         editable.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(List.copyOf(entries)));
         require(editable.getAttributeModifiers().modifiers().contains(extra), "Lost unrelated custom display entry");
         editable.set(JustDireResourceTestSupport.energyComponent(), 100);
-        JustDireAttributeSpike.earlierOverride = true;
+        JustDireAttributeTestSupport.earlierOverride = true;
         try {
             near(17, amount(editable.getAttributeModifiers(), "armor"), "Earlier real mixin identity override lost");
             near(1, amount(editable.getAttributeModifiers(), "step_height"), "Earlier edit disabled unrelated live routing");
-        } finally { JustDireAttributeSpike.earlierOverride = false; }
+        } finally { JustDireAttributeTestSupport.earlierOverride = false; }
         later = true;
         try {
             var finalAttributes = editable.getAttributeModifiers();
@@ -223,11 +254,19 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         near(11, amount(editable.getAttributeModifiers(), "armor"), "Explicit default identity/display edit overwritten");
         require(editable.getAttributeModifiers().modifiers().stream().anyMatch(entry -> entry.attribute().equals(Attributes.ARMOR)
                 && entry.display().equals(ItemAttributeModifiers.Display.hidden())), "Managed edit display lost");
+        var editableData = ModContent.getMixedBootsData(editable).orElseThrow();
+        ItemStack rebuilt = MixedBootsRecomposer.recompose(editable, boots("eclipsealloy", 0, true), editableData.right().source());
+        near(11, amount(rebuilt.getAttributeModifiers(), "armor"), "Source-wise tier rebuild lost explicit managed root override");
+        require(rebuilt.get(JustDireResourceTestSupport.energyComponent()) == 100, "Tier rebuild refilled FE");
+        ItemStack removed = MixedBootsRecomposer.recompose(rebuilt, new ItemStack(Items.GOLDEN_BOOTS), editableData.right().source());
+        require(!removed.has(JustDireAttributesCompatibility.projections()), "Removing the last powered source retained stale projections");
+        near(11, amount(removed.getAttributeModifiers(), "armor"), "Removing storage lost explicit managed root override");
         cases++;
 
         ItemStack persisted = root(boots("celestigem", 0, true), iron);
         var combined = new AttributeRuleSet(AttributePolicy.COMBINE, Map.of());
-        JustDireAttributeSpike.prepare(persisted, combined);
+        persisted = MixedBootsFactory.createPair(boots("celestigem", 0, true), iron, combined,
+                games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle.serverRules()).primary();
         persisted.set(JustDireResourceTestSupport.energyComponent(), 100);
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
         var json = ItemStack.CODEC.encodeStart(ops, persisted).getOrThrow();
@@ -243,12 +282,12 @@ public final class NeoForgeJustDireAttributeSpikeTest {
             require(ItemStack.matches(decoded, transferred), "Network codec lost live charge/projections");
             same(decoded.getAttributeModifiers(), transferred.getAttributeModifiers(), "Network projection dispatch differs");
         } finally { packet.release(); }
-        require(JustDireAttributeSpike.CODEC.encodeStart(ops, List.of()).error().isPresent(), "Unbounded/missing state table accepted");
+        require(JustDireAttributeProjections.CODEC.parse(ops, new com.google.gson.JsonArray()).error().isPresent(), "Unbounded/missing state table accepted");
         cases++;
 
         Zombie dynamic = mob(server);
         ItemStack armor = root(boots("celestigem", 0, false), iron);
-        JustDireAttributeSpike.prepare(armor, rules());
+
         dynamic.setItemSlot(EquipmentSlot.FEET, armor);
         float drainedDamage = damage(dynamic);
         armor.set(JustDireResourceTestSupport.energyComponent(), 100);
@@ -266,7 +305,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         dynamic.discard(); nativeControl.discard(); cases++;
 
         var player = new net.minecraft.server.level.ServerPlayer(server, server.overworld(),
-                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "attribute-spike"),
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "attribute-production"),
                 net.minecraft.server.level.ClientInformation.createDefault()) {
             @Override public net.minecraft.world.level.GameType gameMode() { return net.minecraft.world.level.GameType.SURVIVAL; }
         };
@@ -277,7 +316,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
             @Override public boolean hasClientLoaded() { return true; }
         };
         ItemStack worn = root(boots("celestigem", 0, false), iron);
-        JustDireAttributeSpike.prepare(worn, rules());
+
         worn.set(JustDireResourceTestSupport.energyComponent(), 100);
         player.setItemSlot(EquipmentSlot.FEET, worn);
         player.doTick();
@@ -285,6 +324,34 @@ public final class NeoForgeJustDireAttributeSpikeTest {
                 && worn.getDamageValue() > 0 && worn.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100,
                 "Actual player damage did not retain ordinary wear/free attribute availability boundary");
         cases++;
+        realSmithing(server);
+    }
+
+    private static void realSmithing(MinecraftServer server) {
+        var player = new net.minecraft.server.level.ServerPlayer(server, server.overworld(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "attribute-smithing"),
+                net.minecraft.server.level.ClientInformation.createDefault());
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(server,
+                new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND), player,
+                net.minecraft.server.network.CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        for (boolean inverse : List.of(false, true)) {
+            var pair = MixedBootsFactory.createPair(boots("celestigem", 0, false), new ItemStack(Items.IRON_BOOTS));
+            var menu = new net.minecraft.world.inventory.SmithingMenu(1, player.getInventory(),
+                    net.minecraft.world.inventory.ContainerLevelAccess.create(server.overworld(), net.minecraft.core.BlockPos.ZERO));
+            menu.getSlot(net.minecraft.world.inventory.SmithingMenu.BASE_SLOT).set(inverse ? pair.inverse() : pair.primary());
+            menu.getSlot(net.minecraft.world.inventory.SmithingMenu.ADDITIONAL_SLOT).set(new ItemStack(
+                    BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", "upgrade_stepheight"))));
+            var preview = menu.getSlot(net.minecraft.world.inventory.SmithingMenu.RESULT_SLOT).getItem().copy();
+            require(!preview.isEmpty() && preview.has(JustDireAttributesCompatibility.projections()), "Actual native smithing did not rebuild projections");
+            menu.clicked(net.minecraft.world.inventory.SmithingMenu.RESULT_SLOT, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+            var taken = menu.getCarried();
+            require(ItemStack.matches(preview, taken), "Smithing output take differed from the untouched preview");
+            taken.set(JustDireResourceTestSupport.energyComponent(), 100);
+            near(1, amount(taken.getAttributeModifiers(), "step_height"), "Post-mix native installation could not activate after recharge");
+            taken.set(JustDireResourceTestSupport.energyComponent(), 0);
+            near(0, amount(taken.getAttributeModifiers(), "step_height"), "Post-mix installed Step Assist remained at empty FE");
+            cases++;
+        }
     }
 
     private static float damage(Zombie mob) {
@@ -311,7 +378,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
                         root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)));
             }
         }
-        return JustDireAttributeSpike.composed(left, right, rules);
+        return JustDireAttributeTestSupport.composed(left, right, rules);
     }
 
     private static ItemStack root(ItemStack left, ItemStack right) {
@@ -322,7 +389,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         ItemStack boots = new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", tier + "_boots"))
                 .orElseThrow().value());
         if (tier.equals("celestigem") || tier.equals("eclipsealloy")) { boots.set(JustDireResourceTestSupport.energyComponent(), charge); }
-        if (step) { JustDireAttributeSpike.set(boots, "stepheight_upgrade_installed", true); }
+        if (step) { JustDireAttributeTestSupport.set(boots, "stepheight_upgrade_installed", true); }
         return boots;
     }
 

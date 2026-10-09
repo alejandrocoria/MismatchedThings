@@ -17,7 +17,7 @@ license="MIT"
     config="mismatchedboots-just-dire-jump-guards.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-just-dire-attributes-spike.mixins.json"
+    config="mismatchedboots-just-dire-attributes-tests.mixins.json"
 
 [[mixins]]
     config="mismatchedboots-just-dire-resources-guards.mixins.json"

@@ -15,11 +15,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-final class AttributeComposer {
+public final class AttributeComposer {
     private AttributeComposer() {
     }
 
     static Result compose(ItemStack first, ItemStack second, AttributeRuleSet rules) {
+        return composeModifiers(Services.PLATFORM.getCompositionAttributeModifiers(first),
+                Services.PLATFORM.getCompositionAttributeModifiers(second), rules);
+    }
+
+    /** Pure supplied-input entry for frozen optional-integration projections; no stack queries. */
+    public static ItemAttributeModifiers composePrimary(
+            ItemAttributeModifiers first, ItemAttributeModifiers second, AttributeRuleSet rules) {
+        return composeModifiers(first, second, rules).primary();
+    }
+
+    private static Result composeModifiers(ItemAttributeModifiers first, ItemAttributeModifiers second, AttributeRuleSet rules) {
         Map<Identifier, AttributeGroup> attributes = new TreeMap<>();
         collect(attributes, first, Side.FIRST);
         collect(attributes, second, Side.SECOND);
@@ -32,8 +43,7 @@ final class AttributeComposer {
     }
 
     private static void collect(
-            Map<Identifier, AttributeGroup> attributes, ItemStack source, Side side) {
-        ItemAttributeModifiers modifiers = Services.PLATFORM.getCompositionAttributeModifiers(source);
+            Map<Identifier, AttributeGroup> attributes, ItemAttributeModifiers modifiers, Side side) {
         for (int index = 0; index < modifiers.modifiers().size(); index++) {
             ItemAttributeModifiers.Entry entry = modifiers.modifiers().get(index);
             if (!Double.isFinite(entry.modifier().amount())) {

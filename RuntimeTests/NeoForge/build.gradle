@@ -200,15 +200,16 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
-        ['Live', 'Absent'].each { variant ->
-            register("justDireAttributesSpike${variant}") {
+        ['Live', 'Absent', 'ApiMissing'].each { variant ->
+            register("justDireAttributes${variant}") {
                 server()
                 disableIdeRun()
                 gameDirectory = justDireSmithingRunDirectory.get().asFile
                 programArgument('--nogui')
                 systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
-                systemProperty('mismatchedboots.runtimetest.justDireAttributeSpike', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireAttributesTest', 'true')
                 systemProperty('mismatchedboots.runtimetest.justDireAttributeHookAbsent', (variant == 'Absent').toString())
+                systemProperty('mismatchedboots.runtimetest.justDireAttributeApiMissing', (variant == 'ApiMissing').toString())
                 systemProperty('mismatchedboots.runtimetest.justDireAttributeSavedRoot',
                         fixtureBuildDirectory.file("reports/just-dire-attributes/${neoforge_version}/Live-root.json").get().asFile.absolutePath)
                 jvmArgument('-Xmx1G')
@@ -426,24 +427,29 @@ tasks.register('verifyJustDireResourcesGuards') {
     }
 }
 
-['Live', 'Absent'].each { variant ->
-    tasks.named("runJustDireAttributesSpike${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+['Live', 'Absent', 'ApiMissing'].each { variant ->
+    tasks.named("runJustDireAttributes${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
 }
 
-tasks.register('verifyJustDireAttributesSpike') {
+tasks.register('verifyJustDireAttributes') {
     group = 'verification'
-    description = 'Proves test-only live powered attribute projections and absent-hook fallback with real Just Dire Things.'
+    description = 'Verifies production live powered attribute projections and absent-hook fallback with real Just Dire Things.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
-        ['Live', 'Absent'].each { variant ->
+        ['Live', 'Absent', 'ApiMissing'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-attributes/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireAttributesSpike${variant}", log, 240)
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireAttributes${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-attributes-failure.txt')
             def success = new File(directory, 'just-dire-attributes-success.txt')
             def report = new File(directory, 'just-dire-attributes-report.txt')
             if (failure.isFile() || !success.isFile() || success.text != "${variant}\n" || !report.isFile()) {
-                throw new GradleException("Just Dire Things attribute spike failed: ${failure.isFile() ? failure.text : log}")
+                throw new GradleException("Just Dire Things production attribute acceptance failed: ${failure.isFile() ? failure.text : log}")
+            }
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things attribute API; live attributes disabled') }
+            def flowWarnings = log.readLines().count { it.contains('transformed attribute input flow incompatible; live attributes disabled') }
+            if (bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || flowWarnings != (variant == 'Absent' ? 1 : 0)) {
+                throw new GradleException("Unexpected attribute fallback warnings for ${variant}: binding=${bindingWarnings}, flow=${flowWarnings}")
             }
             new File(log.parentFile, "${variant}-report.txt").text = report.text
             if (variant == 'Live') {
