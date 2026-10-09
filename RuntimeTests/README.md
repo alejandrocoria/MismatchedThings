@@ -324,33 +324,48 @@ at an active production/compatible MixinExtras export, not the absent/rejected
 variant. The design, exclusions and manual handoff are maintained in
 local-docs, not inferred from successful installation recipes.
 
-## Just Dire Things live-resource spike (8.3)
+## Just Dire Things production energy storage (8.3 A)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResourcesSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResourcesGuards --console=plain
 ```
 
-This opt-in dedicated-server experiment uses the same hash-pinned native JAR
-and isolated preparation as the smithing/jump gates. It registers a **test-only**
-mixed-item energy capability when its run property is enabled; no production
-factory, Workbench, smithing menu or capability registration calls the prototype.
-Ordinary build/check and development clients do not enable it.
+These opt-in acceptance gates use the same hash-pinned native JAR and isolated
+preparation as the smithing/jump gates. They exercise the production factory,
+recomposer and energy capability from the real mod JAR. The old fixture storage
+provider and wrappers have been retired; there is no second resource implementation.
+Production storage is active in ordinary NeoForge clients when native binding succeeds.
 
-The candidate uses maximum native source capacity, floor-average initial charge
-and independent live root resources. It exercises real FE transfers, source
-debit, rollback, inventory-slot ItemAccess, retained-handler tier/count changes,
+The adapter uses maximum native source capacity, floor-average initial charge
+and independent live root resources. Its 41 scenario groups exercise real FE
+transfers, source debit, rollback, inventory-slot ItemAccess, retained-handler tier/count changes,
 native static PoweredItem consumption and the EnergyTransmitterBE transfer
-primitive, candidate recomposition and serialization. It also characterizes
+primitive, production recomposition and serialization. Actual Workbench previews,
+takes in either order, blocked shift-take and committed/uncommitted close verify
+source consumption and pending-inverse independence. Real native smithing recipes
+and output takes preserve spent/zero/absent charge across upgrade and tier changes.
+Configured attribute rejection remains effective, while generic FE `share` cannot
+duplicate this dedicated resource. It also characterizes
 the still-frozen powered attributes; it does not fix them. Native originals
 are controls, not substituted formulas.
 
+An actual second server process reloads spent, zero and absent FE from barrels
+in the saved world. A hidden/muted NeoForge client independently assembles its
+synchronized-rule preview, receives actual integrated-server Workbench outputs
+and spent/absent inventory packets, and checks client capability/provenance.
+The guards gate checks absent-mod quiet fallback and an injected missing native
+component binding, with one warning and unchanged native FE/non-powered Jump.
+
 The transfer primitive is not full automatic machine discovery, wireless
 charging, settings or powered ability acceptance. Ability costs, armor wear,
-refunds, bars and active/passive powered consumers remain outside the spike.
+refunds, bars and active/passive powered consumers remain outside block A.
 The selected design, exact evidence and next production decisions are recorded
-in local-docs/JUST-DIRE-THINGS-RESOURCES-SPIKE.md.
+in local-docs/JUST-DIRE-THINGS-RESOURCES-IMPLEMENTATION.md.
 
-The subprocess is bounded to 240 seconds and requires a success marker.
+Each subprocess is bounded to 240 seconds and requires a success marker.
+The main gate runs server, world-restart server and client sequentially; the
+guards gate runs absent and incompatible-API servers separately.
 Versioned reports are under `RuntimeTests/NeoForge/build/reports/just-dire-resources/`.
 Preparation resets the shared disposable smithing run/marker directories;
 do not run these gates concurrently. Repeat with `"-Pneoforge_version=26.1.2.99"`
@@ -363,7 +378,7 @@ to exercise the supported loader floor.
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributesSpike "-Pneoforge_version=26.1.2.99" --console=plain
 ```
 
-This separate opt-in gate enables the resource prototype and a **test-only**
+This separate opt-in gate uses production energy storage and a **test-only**
 pre-event CommonHooks transformation. Nine frozen projections reuse the real
 Common attribute composer through reflection during preparation, not during
 attribute queries. Metadata uses one bounded persistent/network component in
@@ -383,6 +398,7 @@ own success marker; each is bounded to 240 seconds.
 Reports are under `RuntimeTests/NeoForge/build/reports/just-dire-attributes/`.
 The gate shares disposable smithing preparation, so run it sequentially with
 the other Just Dire Things gates. Storage-only characterization is unchanged
-when the attribute property is disabled. This does not establish production
-Workbench/smithing routing, structural hook guards, real restart or client
-gameplay acceptance; those belong to the approved production plan in local-docs.
+when the attribute property is disabled. The attribute experiment does not
+establish production dynamic-attribute routing, structural hook guards or live
+client attribute acceptance; those remain block B requirements. Production
+storage Workbench/smithing/restart/client evidence belongs to the separate gate above.

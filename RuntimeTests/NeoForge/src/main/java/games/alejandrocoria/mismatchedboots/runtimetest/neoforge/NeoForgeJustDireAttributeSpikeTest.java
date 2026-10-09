@@ -3,6 +3,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
@@ -68,14 +70,14 @@ public final class NeoForgeJustDireAttributeSpikeTest {
             var defaults = control.getAttributeModifiers();
             if (absent) {
                 require(!JustDireAttributeSpike.hookSeen && !JustDireAttributeSpike.prepare(control, rules()), "Absent hook published metadata");
-                control.set(JustDireResourceSpike.energyComponent(), 100);
+                control.set(JustDireResourceTestSupport.energyComponent(), 100);
                 require(control.getAttributeModifiers().equals(defaults), "Absent hook altered generic fallback");
                 cases++;
                 var saved = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                         System.getProperty("mismatchedboots.runtimetest.justDireAttributeSavedRoot"))));
                 ItemStack loaded = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), saved).getOrThrow();
                 require(loaded.has(JustDireAttributeSpike.projections())
-                        && loaded.getOrDefault(JustDireResourceSpike.energyComponent(), 0) == 100,
+                        && loaded.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100,
                         "Previous process fixture lost its projections/live FE");
                 require(loaded.getAttributeModifiers().equals(loaded.get(DataComponents.ATTRIBUTE_MODIFIERS)),
                         "Missing hook did not use serialized fallback");
@@ -101,14 +103,14 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         ItemStack iron = new ItemStack(Items.IRON_BOOTS);
         for (boolean reverse : List.of(false, true)) {
             ItemStack powered = boots("celestigem", 0, true);
-            var pair = JustDireResourceSpike.createPair(reverse ? iron : powered, reverse ? powered : iron);
+            var pair = MixedBootsFactory.createPair(reverse ? iron : powered, reverse ? powered : iron);
             for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
                 require(JustDireAttributeSpike.prepare(output, rules()), "Projection preparation failed");
                 var provenance = output.get(ModContent.mixedBootsDataType().orElseThrow());
                 Zombie mob = mob(server);
                 mob.setItemSlot(EquipmentSlot.FEET, output);
                 for (int charge : new int[]{0, 49, 50, 51, 0, 100}) {
-                    output.set(JustDireResourceSpike.energyComponent(), charge);
+                    output.set(JustDireResourceTestSupport.energyComponent(), charge);
                     ItemStack before = output.copy();
                     var expected = expected(output, rules());
                     same(expected, output.getAttributeModifiers(), "native projected threshold " + charge);
@@ -134,11 +136,11 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         for (AttributePolicy policy : List.of(AttributePolicy.AVERAGE, AttributePolicy.COMBINE,
                 AttributePolicy.MINIMUM, AttributePolicy.MAXIMUM, AttributePolicy.SEPARATE)) {
             var frozen = new AttributeRuleSet(policy, Map.of());
-            var pair = JustDireResourceSpike.createPair(boots("celestigem", 0, true), boots("eclipsealloy", 0, true));
+            var pair = MixedBootsFactory.createPair(boots("celestigem", 0, true), boots("eclipsealloy", 0, true));
             for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
                 JustDireAttributeSpike.prepare(output, frozen);
                 for (int charge : new int[]{0, 50, 50_000, 0}) {
-                    output.set(JustDireResourceSpike.energyComponent(), charge);
+                    output.set(JustDireResourceTestSupport.energyComponent(), charge);
                     same(expected(output, frozen), output.getAttributeModifiers(), "Frozen policy " + policy);
                 }
             }
@@ -159,11 +161,11 @@ public final class NeoForgeJustDireAttributeSpikeTest {
                 new ItemAttributeModifiers.Entry(Attributes.ARMOR,
                         new AttributeModifier(ARMOR_ID, .2, AttributeModifier.Operation.ADD_MULTIPLIED_BASE),
                         EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.override(Component.literal("managed custom armor"))))));
-        var ambiguous = JustDireResourceSpike.createPair(boots("celestigem", 0, false), customIron);
+        var ambiguous = MixedBootsFactory.createPair(boots("celestigem", 0, false), customIron);
         for (ItemStack output : List.of(ambiguous.primary(), ambiguous.inverse())) {
             JustDireAttributeSpike.prepare(output, rules());
             for (int charge : new int[]{0, 100, 0}) {
-                output.set(JustDireResourceSpike.energyComponent(), charge);
+                output.set(JustDireResourceTestSupport.energyComponent(), charge);
                 same(expected(output, rules()), output.getAttributeModifiers(), "Managed operation/display ambiguity");
             }
         }
@@ -171,19 +173,19 @@ public final class NeoForgeJustDireAttributeSpikeTest {
 
         ItemStack forged = root(boots("celestigem", 0, false), iron);
         JustDireAttributeSpike.prepare(forged, rules());
-        forged.set(JustDireResourceSpike.energyComponent(), 100);
+        forged.set(JustDireResourceTestSupport.energyComponent(), 100);
         JustDireAttributeSpike.set(forged, "stepheight_upgrade_installed", true);
         require(amount(forged.getAttributeModifiers(), "step_height") == 0, "Forged root installed an upgrade");
         var data = forged.get(ModContent.mixedBootsDataType().orElseThrow());
         ItemStack installed = data.left().source();
         JustDireAttributeSpike.set(installed, "stepheight_upgrade_installed", true);
-        ItemStack recomposed = JustDireResourceSpike.recompose(forged, installed, data.right().source());
+        ItemStack recomposed = MixedBootsRecomposer.recompose(forged, installed, data.right().source());
         JustDireAttributeSpike.prepare(recomposed, rules());
         near(1, amount(recomposed.getAttributeModifiers(), "step_height"), "Source-wise installation failed to rebuild metadata");
-        require(recomposed.getOrDefault(JustDireResourceSpike.energyComponent(), 0) == 100, "Preparation refilled FE");
+        require(recomposed.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100, "Preparation refilled FE");
         cases++;
 
-        ItemStack nonPowered = JustDireResourceSpike.createPair(boots("ferricore", 0, true), iron).primary();
+        ItemStack nonPowered = MixedBootsFactory.createPair(boots("ferricore", 0, true), iron).primary();
         var nonPoweredBefore = nonPowered.getAttributeModifiers();
         require(!JustDireAttributeSpike.prepare(nonPowered, rules()), "Unpowered root acquired projection state");
         JustDireAttributeSpike.set(nonPowered, "tool_enabled", false);
@@ -199,7 +201,7 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         entries.add(extra);
         editable.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(List.copyOf(entries)));
         require(editable.getAttributeModifiers().modifiers().contains(extra), "Lost unrelated custom display entry");
-        editable.set(JustDireResourceSpike.energyComponent(), 100);
+        editable.set(JustDireResourceTestSupport.energyComponent(), 100);
         JustDireAttributeSpike.earlierOverride = true;
         try {
             near(17, amount(editable.getAttributeModifiers(), "armor"), "Earlier real mixin identity override lost");
@@ -226,12 +228,12 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         ItemStack persisted = root(boots("celestigem", 0, true), iron);
         var combined = new AttributeRuleSet(AttributePolicy.COMBINE, Map.of());
         JustDireAttributeSpike.prepare(persisted, combined);
-        persisted.set(JustDireResourceSpike.energyComponent(), 100);
+        persisted.set(JustDireResourceTestSupport.energyComponent(), 100);
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
         var json = ItemStack.CODEC.encodeStart(ops, persisted).getOrThrow();
         NetworkAcceptanceFiles.write("just-dire-attributes-root.json", json.toString());
         ItemStack decoded = ItemStack.CODEC.parse(ops, json).getOrThrow();
-        decoded.set(JustDireResourceSpike.energyComponent(), 100);
+        decoded.set(JustDireResourceTestSupport.energyComponent(), 100);
         same(expected(decoded, combined), decoded.getAttributeModifiers(), "Loaded root lost frozen rules/empty source restoration");
         require(!decoded.getAttributeModifiers().equals(expected(decoded, rules())), "Frozen policy oracle failed to differ from current rules");
         var packet = new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), server.registryAccess());
@@ -249,17 +251,17 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         JustDireAttributeSpike.prepare(armor, rules());
         dynamic.setItemSlot(EquipmentSlot.FEET, armor);
         float drainedDamage = damage(dynamic);
-        armor.set(JustDireResourceSpike.energyComponent(), 100);
+        armor.set(JustDireResourceTestSupport.energyComponent(), 100);
         float chargedDamage = damage(dynamic);
         require(chargedDamage < drainedDamage,
                 "Actual charged armor mitigation failed: " + chargedDamage + "/" + drainedDamage);
-        armor.set(JustDireResourceSpike.energyComponent(), 0);
+        armor.set(JustDireResourceTestSupport.energyComponent(), 0);
         near(drainedDamage, damage(dynamic), "Actual depletion did not restore normal-only mitigation");
         Zombie nativeControl = mob(server);
         ItemStack nativeArmor = boots("celestigem", 0, false);
         nativeControl.setItemSlot(EquipmentSlot.FEET, nativeArmor);
         float emptyNative = damage(nativeControl);
-        nativeArmor.set(JustDireResourceSpike.energyComponent(), 100);
+        nativeArmor.set(JustDireResourceTestSupport.energyComponent(), 100);
         require(damage(nativeControl) < emptyNative, "Native equipment/damage control did not respond to FE");
         dynamic.discard(); nativeControl.discard(); cases++;
 
@@ -276,11 +278,11 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         };
         ItemStack worn = root(boots("celestigem", 0, false), iron);
         JustDireAttributeSpike.prepare(worn, rules());
-        worn.set(JustDireResourceSpike.energyComponent(), 100);
+        worn.set(JustDireResourceTestSupport.energyComponent(), 100);
         player.setItemSlot(EquipmentSlot.FEET, worn);
         player.doTick();
         require(player.hurtServer(server.overworld(), player.damageSources().mobAttack(mob(server)), 10)
-                && worn.getDamageValue() > 0 && worn.getOrDefault(JustDireResourceSpike.energyComponent(), 0) == 100,
+                && worn.getDamageValue() > 0 && worn.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100,
                 "Actual player damage did not retain ordinary wear/free attribute availability boundary");
         cases++;
     }
@@ -304,22 +306,22 @@ public final class NeoForgeJustDireAttributeSpikeTest {
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         for (ItemStack source : List.of(left, right)) {
-            if (JustDireResourceSpike.handler(source) != null) {
-                source.set(JustDireResourceSpike.energyComponent(), Math.min(JustDireResourceSpike.handler(source).getCapacityAsInt(),
-                        root.getOrDefault(JustDireResourceSpike.energyComponent(), 0)));
+            if (JustDireResourceTestSupport.handler(source) != null) {
+                source.set(JustDireResourceTestSupport.energyComponent(), Math.min(JustDireResourceTestSupport.handler(source).getCapacityAsInt(),
+                        root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)));
             }
         }
         return JustDireAttributeSpike.composed(left, right, rules);
     }
 
     private static ItemStack root(ItemStack left, ItemStack right) {
-        return JustDireResourceSpike.createPair(left, right).primary();
+        return MixedBootsFactory.createPair(left, right).primary();
     }
 
     private static ItemStack boots(String tier, int charge, boolean step) {
         ItemStack boots = new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", tier + "_boots"))
                 .orElseThrow().value());
-        if (tier.equals("celestigem") || tier.equals("eclipsealloy")) { boots.set(JustDireResourceSpike.energyComponent(), charge); }
+        if (tier.equals("celestigem") || tier.equals("eclipsealloy")) { boots.set(JustDireResourceTestSupport.energyComponent(), charge); }
         if (step) { JustDireAttributeSpike.set(boots, "stepheight_upgrade_installed", true); }
         return boots;
     }

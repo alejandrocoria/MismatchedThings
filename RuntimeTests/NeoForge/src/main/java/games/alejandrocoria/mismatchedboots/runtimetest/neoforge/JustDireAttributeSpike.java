@@ -129,7 +129,7 @@ public final class JustDireAttributeSpike {
     private static boolean eligible(ItemStack root) {
         return root.getCount() == 1 && root.getItem() instanceof MixedBootsItem
                 && root.has(ModContent.mixedBootsDataType().orElseThrow())
-                && JustDireResourceSpike.handler(root) != null;
+                && JustDireResourceTestSupport.handler(root) != null;
     }
 
     private static boolean powered(ItemStack source) {
@@ -141,7 +141,7 @@ public final class JustDireAttributeSpike {
     private static ItemStack view(ItemStack source, int state) {
         ItemStack view = source.copy();
         if (powered(source)) {
-            view.set(JustDireResourceSpike.energyComponent(), state == 0 ? 0 : JustDireResourceSpike.handler(source).getCapacityAsInt());
+            view.set(JustDireResourceTestSupport.energyComponent(), state == 0 ? 0 : JustDireResourceTestSupport.handler(source).getCapacityAsInt());
             set(view, "tool_enabled", true);
             set(view, "stepheight_toggle", state == 2);
         }
@@ -150,11 +150,11 @@ public final class JustDireAttributeSpike {
 
     private static int current(ItemStack source, ItemStack root) throws ReflectiveOperationException {
         if (!powered(source)) { return 2; }
-        int charge = root.getOrDefault(JustDireResourceSpike.energyComponent(), 0);
+        int charge = root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0);
         if (charge < (int) threshold.invoke(source.getItem())) { return 0; }
         ItemStack view = source.copy();
         // The root can have the larger sibling tier's capacity; native probes remain valid tier stacks.
-        view.set(JustDireResourceSpike.energyComponent(), Math.min(charge, JustDireResourceSpike.handler(source).getCapacityAsInt()));
+        view.set(JustDireResourceTestSupport.energyComponent(), Math.min(charge, JustDireResourceTestSupport.handler(source).getCapacityAsInt()));
         set(view, "tool_enabled", value(root, "tool_enabled", true));
         set(view, "stepheight_toggle", value(root, "stepheight_toggle", true));
         return (boolean) canUse.invoke(source.getItem(), view, step) ? 2 : 1;

@@ -16,12 +16,13 @@ public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeSpike")) {
             JustDireAttributeSpike.register(eventBus);
-            eventBus.addListener(JustDireResourceSpike::registerCapabilities);
             NeoForgeJustDireAttributeSpikeTest.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesSpike")) {
-            eventBus.addListener(JustDireResourceSpike::registerCapabilities);
-            NeoForgeJustDireResourceSpikeTest.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
+        } else if (!System.getProperty("mismatchedboots.runtimetest.justDireResourcesGuard", "").isEmpty()) {
+            NeoForgeJustDireResourcesGuardTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesTest")) {
+            NeoForgeJustDireResourcesTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")
+                || Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
             // The integrated server belongs to the client gameplay fixture, not network acceptance.
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpTest")) {
             NeoForgeJustDireJumpTest.register();
@@ -36,7 +37,10 @@ public final class NeoForgeRuntimeTest {
                     (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
         }
         if (FMLEnvironment.getDist().isClient()) {
-            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
+                        NeoForgeJustDireResourcesClientTest.tick(Minecraft.getInstance()));
+            } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
                         NeoForgeJustDireJumpClientTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {

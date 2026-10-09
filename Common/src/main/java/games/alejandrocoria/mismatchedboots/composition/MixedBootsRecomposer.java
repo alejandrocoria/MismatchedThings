@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -62,6 +63,7 @@ public final class MixedBootsRecomposer {
         Optional<Repairable> repairable = RepairableComposer.compose(leftSource, rightSource);
         repairable.ifPresent(value -> output.set(DataComponents.REPAIRABLE, value));
         output.set(dataType, new MixedBootsData(left, right));
+        Services.PLATFORM.finalizeMixedBootsRecomposition(root, output, rules);
 
         var error = ItemStack.validateStrict(output).error();
         if (error.isPresent()) {

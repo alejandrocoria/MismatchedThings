@@ -9,6 +9,7 @@ import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
@@ -67,10 +68,10 @@ public final class MixedBootsFactory {
 
         ItemStack primary = createOrientation(
                 firstHalf, secondHalf, mixedBoots, dataType, durability.primary(), repairCost.primary(),
-                attributes.primary(), enchantments, repairable, components.primary(), components.managedTypes());
+                attributes.primary(), enchantments, repairable, components.primary(), components.managedTypes(), rules);
         ItemStack inverse = createOrientation(
                 secondHalf, firstHalf, mixedBoots, dataType, durability.inverse(), repairCost.inverse(),
-                attributes.inverse(), enchantments, repairable, components.inverse(), components.managedTypes());
+                attributes.inverse(), enchantments, repairable, components.inverse(), components.managedTypes(), rules);
         return new MixedBootsPair(primary, inverse);
     }
 
@@ -85,7 +86,8 @@ public final class MixedBootsFactory {
             ItemEnchantments enchantments,
             Optional<Repairable> repairable,
             DataComponentMap components,
-            Set<DataComponentType<?>> projectedTypes) {
+            Set<DataComponentType<?>> projectedTypes,
+            AttributeRuleSet rules) {
         ItemStack owner = left.source();
         ItemStack output = new ItemStack(mixedBoots, 1);
 
@@ -118,6 +120,7 @@ public final class MixedBootsFactory {
         projectedTypes.forEach(output::remove);
         output.applyComponents(components);
         output.set(dataType, new MixedBootsData(left, right));
+        Services.PLATFORM.finalizeMixedBootsCreation(output, rules);
 
         Optional<com.mojang.serialization.DataResult.Error<ItemStack>> error = ItemStack.validateStrict(output).error();
         if (error.isPresent()) {

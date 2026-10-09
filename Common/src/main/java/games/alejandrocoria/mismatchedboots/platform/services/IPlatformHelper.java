@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.platform.services;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -21,4 +22,10 @@ public interface IPlatformHelper {
     default ItemAttributeModifiers getCompositionAttributeModifiers(ItemStack source) {
         return source.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
     }
+
+    /** Finalizes only the new root, after generic composition and before strict validation. */
+    default void finalizeMixedBootsCreation(ItemStack output, AttributeRuleSet attributes) {}
+
+    /** Old live state is read-only; resource preservation must not use source snapshots as wallets. */
+    default void finalizeMixedBootsRecomposition(ItemStack previous, ItemStack output, AttributeRuleSet attributes) {}
 }

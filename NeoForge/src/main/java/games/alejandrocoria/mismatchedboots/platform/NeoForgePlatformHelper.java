@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.platform;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.platform.services.IPlatformHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
@@ -9,6 +11,16 @@ import net.neoforged.fml.loading.FMLPaths;
 import java.nio.file.Path;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
+    @Override
+    public void finalizeMixedBootsCreation(ItemStack output, AttributeRuleSet attributes) {
+        JustDireResourcesCompatibility.initializeCharge(output);
+    }
+
+    @Override
+    public void finalizeMixedBootsRecomposition(ItemStack previous, ItemStack output, AttributeRuleSet attributes) {
+        JustDireResourcesCompatibility.preserveCharge(previous, output);
+    }
+
     @Override
     public Path getConfigDirectory() {
         return FMLPaths.CONFIGDIR.get();
