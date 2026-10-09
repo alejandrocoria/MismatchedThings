@@ -6,7 +6,8 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "JustDireNegateApiMissingMixin",
-    "JustDireNegateConsumerMixin"
+    "JustDireNegateConsumerMixin",
+    "JustDireNegateDebitFailureMixin"
   ],
   "injectors": {"defaultRequire": 1}
 }

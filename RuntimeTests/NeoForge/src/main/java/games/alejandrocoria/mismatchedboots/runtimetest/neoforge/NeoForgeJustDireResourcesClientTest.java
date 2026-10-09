@@ -19,12 +19,15 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
@@ -44,6 +47,7 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static MismatchedWorkbenchResult preview;
     private static Boolean tooltipShift;
     private static int generatorCharge;
+    private static int fallCharge;
 
     private NeoForgeJustDireResourcesClientTest() {}
 
@@ -152,18 +156,85 @@ public final class NeoForgeJustDireResourcesClientTest {
                     owner.inventoryMenu.broadcastChanges();
                 });
                 phase = 4;
-            } else {
+            } else if (phase == 4) {
                 ItemStack first = player.getInventory().getItem(0);
                 if (JustDireResourceTestSupport.handler(first).getAmountAsInt() != generatorCharge) { return; }
                 assertTooltip(client, first, generatorCharge, 10_000);
                 require(ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Pocket Generator recharge changed provenance");
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id);
+                    ItemStack root = owner.getInventory().getItem(0);
+                    require(generatorCharge >= 50, "Pocket Generator recharge is below native Negate eligibility");
+                    owner.getInventory().setItem(0, ItemStack.EMPTY);
+                    owner.setItemSlot(EquipmentSlot.FEET, root);
+                    server.overworld().setBlock(owner.blockPosition().below(), Blocks.STONE.defaultBlockState(), 3);
+                    owner.setGameMode(GameType.SURVIVAL);
+                    fallCharge = Math.max(0, generatorCharge - 450);
+                    equippedFall(owner, 9, fallCharge, 0);
+                });
+                phase = 5;
+            } else if (phase == 5) {
+                ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
+                if (!ModContent.isMixedBoots(root) || JustDireResourceTestSupport.handler(root).getAmountAsInt() != fallCharge
+                        || !equipmentAgrees(client, root)) { return; }
+                assertTooltip(client, root, fallCharge, 10_000);
+                require(player.getInventory().getItem(0).isEmpty(), "Equipping retained a duplicate receiver");
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id);
+                    if (fallCharge > 0) {
+                        require(fallCharge >= 50, "Native recharge left an unsupported sub-threshold remainder for depletion control");
+                        equippedFall(owner, 49, 0, 0);
+                    }
+                });
+                phase = 6;
+            } else if (phase == 6) {
+                ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
+                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != 0 || !equipmentAgrees(client, root)) { return; }
+                assertTooltip(client, root, 0, 10_000);
+                require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())), "Actual fall packet changed source charge");
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id);
+                    equippedFall(owner, 9, 0, 6);
+                    // Actual equipped root is the only receiver; no copy or original boot can absorb FE.
+                    ItemStack generator = new ItemStack(BuiltInRegistries.ITEM.get(
+                            Identifier.fromNamespaceAndPath("justdirethings", "pocket_generator")).orElseThrow().value());
+                    generator.set(JustDireResourceTestSupport.energyComponent(), 2_000);
+                    JustDireAttributeTestSupport.set(generator, "tool_enabled", true);
+                    owner.getInventory().setItem(2, generator);
+                    generator.getItem().inventoryTick(generator, server.overworld(), owner, EquipmentSlot.MAINHAND);
+                    generatorCharge = JustDireResourceTestSupport.handler(owner.getItemBySlot(EquipmentSlot.FEET)).getAmountAsInt();
+                    require(generatorCharge >= 50 && generatorCharge + JustDireResourceTestSupport.handler(generator).getAmountAsInt() == 2_000,
+                            "Native generator failed to recharge sole equipped mixed receiver/conserve FE");
+                    owner.getInventory().setItem(2, ItemStack.EMPTY);
+                });
+                phase = 7;
+            } else if (phase == 7) {
+                ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
+                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != generatorCharge || !equipmentAgrees(client, root)) { return; }
+                assertTooltip(client, root, generatorCharge, 10_000);
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    fallCharge = Math.max(0, generatorCharge - 450);
+                    equippedFall(server.getPlayerList().getPlayer(id), 9, fallCharge, 0);
+                });
+                phase = 8;
+            } else {
+                ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
+                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != fallCharge || !equipmentAgrees(client, root)) { return; }
+                assertTooltip(client, root, fallCharge, 10_000);
+                require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())), "Recharge/fall rewrote source provenance");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-report.txt", "hidden/muted NeoForge client; actual integrated-server Workbench takes; "
                         + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
                         + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
                         + "native normal/controlled-Shift tooltip controls; one exact live FE line in both orientations; "
                         + "maximum capacity; neutral labeled source abilities; hidden FE/source details; unchanged vanilla lore; "
-                        + "actual native Pocket Generator inventory transfer with FE conservation and updated client tooltip\n");
+                        + "actual native Pocket Generator inventory/equipped transfers with FE conservation; actual survival Negate debit/depletion; "
+                        + "positive unprotected fall control after depletion; natural equipment/attribute packets and exact live tooltip after debit; "
+                        + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill\n");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-success.txt", "neoforge\n");
                 finished = true;
             }
@@ -181,7 +252,21 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static ItemStack poweredBoots() {
         var stack = NeoForgeJustDireResourcesTest.boots("celestigem", 6_000);
         JustDireAttributeTestSupport.set(stack, "stepheight_upgrade_installed", true);
+        JustDireAttributeTestSupport.set(stack, "negatefalldamage_upgrade_installed", true);
         return stack;
+    }
+
+    private static void equippedFall(net.minecraft.server.level.ServerPlayer owner, double distance, int remaining, float loss) {
+        ItemStack root = owner.getItemBySlot(EquipmentSlot.FEET);
+        ItemStack before = root.copy();
+        owner.setHealth(owner.getMaxHealth()); owner.invulnerableTime = 0;
+        owner.causeFallDamage(distance, 1, owner.damageSources().fall());
+        require(owner.getMaxHealth() - owner.getHealth() == loss
+                        && JustDireResourceTestSupport.handler(root).getAmountAsInt() == remaining,
+                "Actual integrated-server Negate fall health/FE differs: distance=" + distance);
+        before.set(JustDireResourceTestSupport.energyComponent(), remaining);
+        require(owner.getItemBySlot(EquipmentSlot.FEET) == root && ItemStack.matches(before, root), "Negate debit changed equipped identity/non-FE state");
+        // No forced equipment replacement or broadcast: normal ticks must synchronize this in-place debit.
     }
 
     private static void tooltipMatrix(Minecraft client) {

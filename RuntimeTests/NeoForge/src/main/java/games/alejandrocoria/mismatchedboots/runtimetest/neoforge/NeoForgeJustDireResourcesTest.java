@@ -31,6 +31,7 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SmithingMenu;
@@ -78,7 +79,8 @@ public final class NeoForgeJustDireResourcesTest {
                     + "retained handler tier/count replacement; live recomposition including projection equality/zero/absence; "
                     + "save/load; invalid roots/charge; immutable provenance; live powered-attribute depletion; "
                     + "actual Workbench previews/takes/blocked take/close; loaded native smithing upgrade/takes; "
-                    + "configured rejection/generic FE policy; real world save fixture; production storage/attribute lifecycle; powered abilities deferred\n");
+                    + "configured rejection/generic FE policy; real world save fixture; actual Negate debit through Workbench/smithing/save; "
+                    + "production storage/attribute lifecycle; other powered abilities deferred\n");
             NetworkAcceptanceFiles.write("just-dire-resources-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("just-dire-resources", failure);
@@ -403,10 +405,65 @@ public final class NeoForgeJustDireResourcesTest {
         barrel.setItem(3, frozenAttributes);
         ItemStack zero = root.copy(); extract(zero, 1_733); barrel.setItem(1, zero);
         ItemStack absent = root.copy(); absent.remove(JustDireResourceTestSupport.energyComponent()); barrel.setItem(2, absent);
+        saveFallFixture(server, barrel);
         barrel.setChanged();
         var json = ItemStack.CODEC.encodeStart(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), root).getOrThrow();
         NetworkAcceptanceFiles.write("just-dire-resources-saved.json", json.toString());
         cases++;
+    }
+
+    private static void saveFallFixture(MinecraftServer server, BarrelBlockEntity barrel) {
+        var saved = new com.google.gson.JsonArray();
+        var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
+        for (boolean inverse : List.of(false, true)) {
+            ServerPlayer owner = NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL);
+            var bench = workbench(owner, NeoForgeJustDireNegateFallTest.boots("celestigem", 6_000), new ItemStack(Items.IRON_BOOTS));
+            ItemStack root = bench.getSlot(inverse ? 3 : 2).safeTake(1, 1, owner);
+            ItemStack sibling = bench.getSlot(inverse ? 2 : 3).safeTake(1, 1, owner);
+            ItemStack siblingBefore = sibling.copy();
+            require(!root.isEmpty() && !sibling.isEmpty() && energy(root).getAmountAsInt() == 3_000, "Negate Workbench outputs unavailable");
+            root.setDamageValue(31);
+            fallBalance(owner, root, 9, 2_550, 0);
+            require(ItemStack.matches(siblingBefore, sibling), "Actual Negate debit changed inverse Workbench output");
+            // Real loaded recipes/takes must retain spent FE while changing source provenance.
+            for (boolean tierUpgrade : List.of(false, true)) {
+                owner.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                var menu = new SmithingMenu(1, owner.getInventory(), ContainerLevelAccess.create(server.overworld(), BlockPos.ZERO));
+                menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(tierUpgrade ? nativeItem("template_eclipsealloy") : ItemStack.EMPTY);
+                menu.getSlot(SmithingMenu.BASE_SLOT).set(root);
+                menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(nativeItem(tierUpgrade ? "eclipsealloy_ingot" : "upgrade_stepheight"));
+                ItemStack preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
+                require(!preview.isEmpty() && energy(preview).getAmountAsInt() == 2_550
+                        && preview.getDamageValue() == 31, "Negate spent state was refilled/lost by smithing preview");
+                menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, owner);
+                root = menu.getCarried();
+                require(ItemStack.matches(root, preview) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty(), "Negate smithing take lost live FE/payment");
+            }
+            int slot = inverse ? 6 : 4;
+            ItemStack spent = root.copy(); barrel.setItem(slot, spent);
+            saved.add(ItemStack.CODEC.encodeStart(ops, spent).getOrThrow());
+            var charged = root.getAttributeModifiers();
+            fallBalance(owner, root, 60, 0, 0);
+            require(!root.getAttributeModifiers().equals(charged), "Actual Negate depletion did not select depleted live attributes");
+            fallBalance(owner, root, 9, 0, 6);
+            barrel.setItem(slot + 1, root);
+            saved.add(ItemStack.CODEC.encodeStart(ops, root).getOrThrow());
+            cases++;
+        }
+        NetworkAcceptanceFiles.write("just-dire-negate-saved.json", saved.toString());
+    }
+
+    private static void fallBalance(ServerPlayer owner, ItemStack root, double distance, int remaining, float loss) {
+        owner.setItemSlot(EquipmentSlot.FEET, root);
+        owner.setHealth(owner.getMaxHealth()); owner.invulnerableTime = 0;
+        ItemStack before = root.copy();
+        owner.causeFallDamage(distance, 1, owner.damageSources().fall());
+        require(owner.getMaxHealth() - owner.getHealth() == loss && energy(root).getAmountAsInt() == remaining,
+                "Actual resource-lifecycle fall health/FE mismatch: distance=" + distance + " FE=" + energy(root).getAmountAsInt());
+        before.set(JustDireResourceTestSupport.energyComponent(), remaining);
+        require(owner.getItemBySlot(EquipmentSlot.FEET) == root && ItemStack.matches(before, root), "Ability debit changed identity/sources/projections/wear");
     }
 
     private static void verifyRestart(MinecraftServer server) throws java.io.IOException {
@@ -430,7 +487,19 @@ public final class NeoForgeJustDireResourcesTest {
                 && !barrel.getItem(2).has(JustDireResourceTestSupport.energyComponent()), "World restart restored snapshot charge or lost zero/absence");
         require(extract(barrel.getItem(0), 50) == 50 && energy(barrel.getItem(0)).getAmountAsInt() == 1_683,
                 "Restarted root cannot consume live FE");
-        NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; frozen non-default attributes through depletion/recharge\n");
+        var savedFalls = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
+                System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-negate-saved.json"))).getAsJsonArray();
+        require(savedFalls.size() == 4, "Missing independently saved Negate roots");
+        for (int index = 0; index < savedFalls.size(); index++) {
+            ItemStack expectedFall = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), savedFalls.get(index)).getOrThrow();
+            ItemStack loaded = barrel.getItem(index + 4);
+            require(ItemStack.matches(expectedFall, loaded) && energy(loaded).getAmountAsInt() == (index % 2 == 0 ? 2_550 : 0),
+                    "World restart refilled/lost actually spent Negate state");
+            fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9,
+                    index % 2 == 0 ? 2_100 : 0, index % 2 == 0 ? 0 : 6);
+        }
+        NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; "
+                + "frozen non-default attributes through depletion/recharge; four actually spent Negate roots after Workbench/smithing, both orientations; charged/empty actual falls after restart\n");
     }
 
     private static ServerPlayer player(MinecraftServer server) {

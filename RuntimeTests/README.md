@@ -309,7 +309,13 @@ run preparation. They are detached from ordinary `build`/`check`:
 
 The jump gate first runs a bounded server movement/actual-fall-health matrix,
 then a hidden/muted client in a copy of its disposable world. Native originals
-are controls. The small guard gate separately exercises compatible competing
+are controls. Its six direct jump checks are followed by eight actual keyboard
+flights: ordinary/native Ferricore height controls and Eclipse Alloy Negate +
+Ferricore passive Jump, both orientations, charged/depleted/recharged. FE changes
+in place on the equipped server root; normal equipment/attribute packets must
+agree before each flight. The same mixed root must retain the native jump height
+without mutating its stack during ascent. This does not implement powered Jump.
+The small guard gate separately exercises compatible competing
 WrapOperations, a replaced fall read disabling both hooks, and quiet optional
 absence. Smithing retains its independent recipe/menu acceptance.
 Every server variant marks its fixture connections client-loaded, sets actual
@@ -329,7 +335,7 @@ at an active production/compatible MixinExtras export, not the absent/rejected
 variant. The design, exclusions and manual handoff are maintained in
 local-docs, not inferred from successful installation recipes.
 
-## Just Dire Things Negate Fall Damage (8.4 A/B)
+## Just Dire Things Negate Fall Damage (8.4)
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall --console=plain
@@ -340,7 +346,7 @@ local-docs, not inferred from successful installation recipes.
 This opt-in server gate uses the same hash-pinned native JAR and isolated
 smithing preparation. It exercises the actual production mixed adapter, never
 an alternate wallet/ability or native classes compiled into production. Its
-95 native/mixed cases exercise original and mixed Celestigem/Eclipse Alloy
+94 maintained native/mixed cases exercise original and mixed Celestigem/Eclipse Alloy
 boots through the actual fall event bus, FE thresholds,
 fractional distance, full/partial payment, Unbreaking and Unbreakable, Feather
 Falling, tool settings/native config, Jump precedence and both AIRBURST hands.
@@ -350,12 +356,13 @@ otherwise newly constructed server players reject damage. Creative/spectator
 checks set the actual game mode and post the event on the native bus, because
 physical falls in those modes bypass the LivingFallEvent consumer.
 
-Equipped mixed roots exercise the existing production FE capability, not another
-provider: mapped FEET slot access, rollback and partial commit in both output
-orientations, unchanged wear/provenance/sibling/main inventory, and cursed boots.
-The slot exchange path rejects Curse of Binding; direct access to the actual
-equipped stack transactionally consumes FE without removing armor, as native
-powered boots do. Mixed cases additionally check both root orientations,
+Equipped mixed roots use the production FE capability, never another provider.
+Block A's exploratory mapped-slot/direct-access loops were retired: actual
+mixed falls now prove full/partial commit, unchanged non-FE state and cursed-boot
+payment. Two opt-in failure controls alter only the return amount after a real
+production extraction, requiring transactional rollback, unchanged root FE and
+ordinary health/Jump fallback. No alternate extraction or ability implementation
+is retained. Mixed cases additionally check both root orientations,
 non-owner provenance, two sources paying once, live root controls versus frozen
 source toggles, forged installation rejection, Negate-before-passive-Jump and
 hand precedence, root Unbreaking, actual cursed-root depletion/subsequent fall,
@@ -376,11 +383,45 @@ Versioned logs and retained reports are under
 `RuntimeTests/NeoForge/build/reports/just-dire-negate-fall/<neoforge-version>/`.
 Preparation shares disposable smithing run/marker directories: run sequentially
 with other JDT gates. Production behavior, selected access boundary, limitations
-and remaining blocks are tracked in local-docs. Block C still owns spent-root
-restart/recomposition, debit-driven client refresh/recharge and manual handoff;
-these server gates do not claim those outcomes. Guard/native unit checks use
+and remaining manual acceptance are tracked in local-docs. The lifecycle/client
+outcomes belong to the extended resource gate below, not this server-only matrix.
+Guard/native unit checks use
 the same opt-in `justDireGuardJar`/`justDireTransformedClass` properties described
 above, with an active production or compatible export.
+
+## Just Dire Things Negate consolidation and manual handoff (8.4 C)
+
+Run existing gates sequentially; no second lifecycle/client harness is needed:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireNegateGuards :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResourcesGuards :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireNegateFall :NeoForge:test "-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar" "-PjustDireTransformedClass=RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
+```
+
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the ordinary .114
+artifact and run `verifyPackagedDependencies`. The last Negate server process
+supplies an active final export to the opt-in unit cases; an absent/denied export
+must not be used. Source-wise smithing is rechecked because resource fixtures
+now install upgrades and transform tiers on actually spent roots. Shared/Fabric
+gameplay is not broadened when only NeoForge fixture coverage changes.
+
+`verifyJustDireResources` now also checks two real Workbench roots/orientations:
+Negate spends 450 from 3,000 FE; loaded Step Assist/tier smithing preserves 2,550;
+after retaining a spent copy, an actual fall depletes the working root and
+another fall must cause real damage.
+Four charged/empty roots persist in the world barrel, compare against separately
+saved expected stacks after a second process starts, and retain actual protection/
+payment or rejection after restart. Source snapshots, projections and wear remain
+unchanged across each ability debit.
+
+The same hidden/muted client additionally moves the sole receiver to FEET,
+uses survival falls, observes natural equipment/attribute packets and exact live
+FE tooltips after payment/depletion, requires an unprotected positive-health-loss
+control, recharges through a native Pocket Generator and proves protection returns.
+No equipment-copy replacement or forced broadcast is used after ability debits.
+Client armor/Step Assist must agree at charged, depleted and recharged states.
+These are actual integrated-server consumers/packets, not manual visual, physical
+keyboard or walking-off-a-platform acceptance. Ordinary-client review remains
+the owner's separate checklist in local-docs; other powered abilities stay deferred.
 
 ## Just Dire Things production energy storage (8.3 A)
 
@@ -396,7 +437,7 @@ provider and wrappers have been retired; there is no second resource implementat
 Production storage is active in ordinary NeoForge clients when native binding succeeds.
 
 The adapter uses maximum native source capacity, floor-average initial charge
-and independent live root resources. Its 41 scenario groups exercise real FE
+and independent live root resources. Its 43 scenario groups exercise real FE
 transfers, source debit, rollback, inventory-slot ItemAccess, retained-handler tier/count changes,
 native static PoweredItem consumption and the EnergyTransmitterBE transfer
 primitive, production recomposition and serialization. Actual Workbench previews,

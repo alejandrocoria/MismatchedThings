@@ -13,8 +13,13 @@ import java.util.Set;
 
 /** Opt-in competing transformations of the actual consumer/binding, never production switches. */
 public final class JustDireNegateGuardPlugin implements IMixinConfigPlugin, Opcodes {
+    public static boolean rejectDebit;
+    public static int rejectedAmount;
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireNegateGuard", "");
+        if (mixin.endsWith("JustDireNegateDebitFailureMixin")) {
+            return Boolean.getBoolean("mismatchedboots.runtimetest.justDireNegateFallTest") && variant.isEmpty();
+        }
         return mixin.endsWith("JustDireNegateApiMissingMixin") ? variant.equals("apiMissing")
                 : variant.equals("consumerChanged") || variant.equals("publicationChanged");
     }

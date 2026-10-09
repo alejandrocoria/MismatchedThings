@@ -16,20 +16,16 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameType;
 import net.neoforged.bus.api.EventPriority;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 import java.util.List;
 import java.util.Map;
@@ -68,12 +64,12 @@ public final class NeoForgeJustDireNegateFallTest {
             String guard = System.getProperty("mismatchedboots.runtimetest.justDireNegateGuard", "");
             if (guard.isEmpty()) {
                 nativeMatrix(server);
-                equippedTransactions(server);
                 mixedMatrix(server);
+                rejectedDebit(server);
             } else { guarded(server, guard); }
             NetworkAcceptanceFiles.write("just-dire-negate-fall-report.txt", cases
                     + (guard.isEmpty() ? " native/mixed cases; event bus; survival actual health; partial payment; "
-                    + "authoritative game modes; Unbreaking; equipped production FE; sources/wear unchanged\n"
+                    + "authoritative game modes; Unbreaking; equipped production FE; actual debit rollback; sources/wear unchanged\n"
                     : " guard cases; variant=" + guard + "; real final permissions, native original, actual health, warning counts and isolation\n") + report);
             NetworkAcceptanceFiles.write("just-dire-negate-fall-success.txt", "neoforge\n");
         } catch (Throwable failure) {
@@ -186,73 +182,21 @@ public final class NeoForgeJustDireNegateFallTest {
                 + (mode == GameType.SURVIVAL ? " physical fall" : " event-bus mode control, not physical fall"));
     }
 
-    private static void equippedTransactions(MinecraftServer server) {
-        int feetIndex = EquipmentSlot.FEET.getIndex(Inventory.INVENTORY_SIZE);
-        require(Inventory.EQUIPMENT_SLOT_MAPPING.get(feetIndex) == EquipmentSlot.FEET, "FEET inventory mapping changed");
-        for (boolean inverse : new boolean[]{false, true}) {
-            var pair = MixedBootsFactory.createPair(boots("celestigem", 102), new ItemStack(Items.IRON_BOOTS));
-            ItemStack root = inverse ? pair.inverse() : pair.primary();
-            ItemStack sibling = inverse ? pair.primary() : pair.inverse();
-            ItemStack siblingBefore = sibling.copy();
-            root.setDamageValue(19);
-            ServerPlayer player = player(server, GameType.SURVIVAL);
-            player.setItemSlot(EquipmentSlot.FEET, root);
-            player.getInventory().setItem(0, boots("eclipsealloy", 999));
-            ItemStack mainBefore = player.getInventory().getItem(0).copy();
-            ItemAccess slot = ItemAccess.forPlayerSlot(player, feetIndex);
-            require(ItemStack.matches(slot.getResource().toStack(), root) && slot.getAmount() == 1,
-                    "Slot access does not resolve actual equipped root");
-            EnergyHandler handler = slot.getCapability(Capabilities.Energy.ITEM);
-            require(handler != null && handler.getAmountAsInt() == 51, "Equipped production FE capability unavailable");
-            ItemStack before = root.copy();
-            try (var transaction = Transaction.openRoot()) {
-                require(handler.extract(450, transaction) == 51 && handler.getAmountAsInt() == 0, "Partial slot extraction unavailable");
-            }
-            require(ItemStack.matches(before, player.getItemBySlot(EquipmentSlot.FEET)), "Uncommitted FEET debit did not roll back");
-            try (var transaction = Transaction.openRoot()) {
-                require(handler.extract(450, transaction) == 51, "Partial equipped commit unavailable");
-                transaction.commit();
-            }
-            ItemStack equipped = player.getItemBySlot(EquipmentSlot.FEET);
-            require(energy(equipped).getAmountAsInt() == 0, "Slot commit missed actual equipped FE");
-            unchangedExceptEnergy(before, equipped, "FEET slot commit");
-            require(ItemStack.matches(siblingBefore, sibling) && ItemStack.matches(mainBefore, player.getInventory().getItem(0)),
-                    "Equipped debit changed sibling or main inventory receiver");
-            record("FEET slot rollback/partial commit inverse=" + inverse,
-                    "mapped index=" + feetIndex + "; equipped FE=51 -> 0; captured reference FE=" + energy(root).getAmountAsInt()
-                            + "; same equipped reference=" + (equipped == root) + "; damage=19; sources/sibling/main slot unchanged");
-        }
-
-        ItemStack root = MixedBootsFactory.createPair(boots("eclipsealloy", 200), new ItemStack(Items.IRON_BOOTS)).primary();
-        root.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.BINDING_CURSE), 1);
-        root.setDamageValue(23);
-        ServerPlayer player = player(server, GameType.SURVIVAL);
-        player.setItemSlot(EquipmentSlot.FEET, root);
-        ItemStack before = root.copy();
-        EnergyHandler slotHandler = ItemAccess.forPlayerSlot(player, feetIndex)
-                .getCapability(Capabilities.Energy.ITEM);
-        require(slotHandler != null, "Cursed equipped capability unavailable");
-        try (var transaction = Transaction.openRoot()) {
-            require(slotHandler.extract(450, transaction) == 0, "Review curse slot-exchange limitation: expected blocked armor extraction");
-        }
-        require(ItemStack.matches(before, player.getItemBySlot(EquipmentSlot.FEET)), "Blocked cursed slot debit changed equipment");
-        EnergyHandler direct = energy(player.getItemBySlot(EquipmentSlot.FEET));
-        try (var transaction = Transaction.openRoot()) {
-            require(direct.extract(450, transaction) == 100, "Direct equipped partial extraction unavailable");
-        }
-        require(ItemStack.matches(before, root), "Direct equipped rollback changed root");
-        try (var transaction = Transaction.openRoot()) {
-            require(direct.extract(450, transaction) == 100, "Direct equipped debit unexpectedly obeyed armor removal curse");
-            transaction.commit();
-        }
-        require(player.getItemBySlot(EquipmentSlot.FEET) == root && direct.getAmountAsInt() == 0,
-                "Direct equipped commit changed item identity or missed live FE");
-        unchangedExceptEnergy(before, root, "Direct cursed equipped commit");
-        record("cursed equipped access", "slot exchange rejects; direct equipped rollback/partial commit succeeds; same stack; sources/wear/curse unchanged");
-
+    private static void rejectedDebit(MinecraftServer server) {
         ItemStack original = boots("celestigem", 100);
         original.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.BINDING_CURSE), 1);
         nativeFall(server, "native cursed boots still pay", original, 9, 0, 0, GameType.SURVIVAL);
+        try {
+            JustDireNegateGuardPlugin.rejectDebit = true;
+            for (int charge : new int[]{50, 1_000}) {
+                ItemStack jump = NeoForgeJustDireJumpTest.boots("blazegold", true);
+                ItemStack root = MixedBootsFactory.createPair(boots("celestigem", charge * 2), jump).primary();
+                JustDireAttributeTestSupport.set(root, "jumpboost_value", 2);
+                JustDireNegateGuardPlugin.rejectedAmount = 0;
+                nativeFall(server, "unexpected extraction rolls back FE=" + charge, root, 9, 7, charge, GameType.SURVIVAL);
+                require(JustDireNegateGuardPlugin.rejectedAmount == Math.min(450, charge), "Failure control did not execute a real FE extraction");
+            }
+        } finally { JustDireNegateGuardPlugin.rejectDebit = false; }
     }
 
     private static void mixedMatrix(MinecraftServer server) throws ReflectiveOperationException {
@@ -438,7 +382,7 @@ public final class NeoForgeJustDireNegateFallTest {
         } finally { observed = null; }
     }
 
-    private static ServerPlayer player(MinecraftServer server, GameType mode) {
+    static ServerPlayer player(MinecraftServer server, GameType mode) {
         ServerPlayer player = new ServerPlayer(server, server.overworld(),
                 new GameProfile(UUID.randomUUID(), "negate-test"), ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
@@ -450,7 +394,7 @@ public final class NeoForgeJustDireNegateFallTest {
         return player;
     }
 
-    private static ItemStack boots(String tier, int charge) {
+    static ItemStack boots(String tier, int charge) {
         ItemStack boots = NeoForgeJustDireResourcesTest.boots(tier, charge);
         JustDireAttributeTestSupport.set(boots, "negatefalldamage_upgrade_installed", true);
         return boots;
