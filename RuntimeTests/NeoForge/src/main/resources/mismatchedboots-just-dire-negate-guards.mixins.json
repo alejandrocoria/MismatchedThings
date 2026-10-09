@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireNegateGuardPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "JustDireNegateApiMissingMixin",
+    "JustDireNegateConsumerMixin"
+  ],
+  "injectors": {"defaultRequire": 1}
+}

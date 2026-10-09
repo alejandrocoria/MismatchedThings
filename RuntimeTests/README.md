@@ -329,17 +329,19 @@ at an active production/compatible MixinExtras export, not the absent/rejected
 variant. The design, exclusions and manual handoff are maintained in
 local-docs, not inferred from successful installation recipes.
 
-## Just Dire Things Negate Fall Damage characterization (8.4 A)
+## Just Dire Things Negate Fall Damage (8.4 A/B)
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateGuards --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall "-Pneoforge_version=26.1.2.99" --console=plain
 ```
 
 This opt-in server gate uses the same hash-pinned native JAR and isolated
-smithing preparation. It does **not** enable mixed Negate Fall Damage or compile
-native classes into production. Its 43 characterization cases exercise original
-Celestigem/Eclipse Alloy boots through the actual fall event bus, FE thresholds,
+smithing preparation. It exercises the actual production mixed adapter, never
+an alternate wallet/ability or native classes compiled into production. Its
+95 native/mixed cases exercise original and mixed Celestigem/Eclipse Alloy
+boots through the actual fall event bus, FE thresholds,
 fractional distance, full/partial payment, Unbreaking and Unbreakable, Feather
 Falling, tool settings/native config, Jump precedence and both AIRBURST hands.
 Survival cases call actual `causeFallDamage` and require a positive unprotected
@@ -353,15 +355,32 @@ provider: mapped FEET slot access, rollback and partial commit in both output
 orientations, unchanged wear/provenance/sibling/main inventory, and cursed boots.
 The slot exchange path rejects Curse of Binding; direct access to the actual
 equipped stack transactionally consumes FE without removing armor, as native
-powered boots do. The final mixed control takes actual fall damage and spends
-no FE, proving that this block is characterization only.
+powered boots do. Mixed cases additionally check both root orientations,
+non-owner provenance, two sources paying once, live root controls versus frozen
+source toggles, forged installation rejection, Negate-before-passive-Jump and
+hand precedence, root Unbreaking, actual cursed-root depletion/subsequent fall,
+invalid count/data and non-player scope. Whole non-FE state is compared after
+each fall. Exceptional negative/non-finite/overflowing bills leave the event
+and root unchanged, with exactly one diagnostic across repeated cases.
+
+The guard gate runs six small process variants: real compatible MixinExtras
+wrappers, changed late native multiplier, forced final permission, unavailable
+Negate binding, missing shared companion and actual missing production FE
+capability. Native originals, repeated mixed falls with health/FE, final getter
+values, actual Jump movement, independent storage/live armor and bounded warning
+counts are checked without repeating the entire payment matrix. Optional
+absence remains part of the existing `verifyJustDireJumpGuards` gate.
 
 The process is bounded to 240 seconds and requires success/report markers.
 Versioned logs and retained reports are under
 `RuntimeTests/NeoForge/build/reports/just-dire-negate-fall/<neoforge-version>/`.
 Preparation shares disposable smithing run/marker directories: run sequentially
 with other JDT gates. Production behavior, selected access boundary, limitations
-and remaining blocks are tracked in local-docs.
+and remaining blocks are tracked in local-docs. Block C still owns spent-root
+restart/recomposition, debit-driven client refresh/recharge and manual handoff;
+these server gates do not claim those outcomes. Guard/native unit checks use
+the same opt-in `justDireGuardJar`/`justDireTransformedClass` properties described
+above, with an active production or compatible export.
 
 ## Just Dire Things production energy storage (8.3 A)
 

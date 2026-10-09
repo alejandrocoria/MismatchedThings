@@ -14,9 +14,10 @@ import org.spongepowered.asm.service.MixinService;
 import java.util.List;
 import java.util.Set;
 
-/** One paired local permission; no dependency on the independent Ice and Fire integrations. */
+/** Paired Jump routing and independent local Negate spending permission. */
 public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExtension {
     private boolean available;
+    private boolean negateAvailable;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -34,6 +35,16 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
                 extensions.add(this);
             } else { available = false; }
             if (!available) { Constants.LOG.warn("Just Dire Things passive Jump local contract/API incompatible; compatibility disabled"); }
+            if (available) {
+                try {
+                    negateAvailable = JustDireNegateFallShape.flow(handler, false) && JustDireNegateFallShape.api(
+                            provider.getClassNode(JustDireJumpShape.TOOL.replace('/', '.')),
+                            provider.getClassNode(JustDireJumpShape.ABILITY.replace('/', '.')));
+                    if (!negateAvailable) { Constants.LOG.warn("Just Dire Things Negate Fall local contract/API incompatible; compatibility disabled"); }
+                } catch (Exception | LinkageError failure) {
+                    Constants.LOG.warn("Could not inspect Just Dire Things Negate Fall API; compatibility disabled", failure);
+                }
+            }
         } catch (ClassNotFoundException failure) {
             available = false;
             if (present) { Constants.LOG.warn("Just Dire Things passive Jump API incomplete; compatibility disabled", failure); }
@@ -47,8 +58,13 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
-        if (node.name.equals(JustDireJumpShape.HANDLER) && !JustDireJumpShape.publish(node)) {
-            Constants.LOG.warn("Just Dire Things passive Jump transformed paired hooks incompatible; compatibility disabled");
+        if (node.name.equals(JustDireJumpShape.HANDLER)) {
+            boolean jump = JustDireJumpShape.publish(node);
+            if (!jump) { Constants.LOG.warn("Just Dire Things passive Jump transformed paired hooks incompatible; compatibility disabled"); }
+            boolean negate = JustDireNegateFallShape.publish(node, jump && negateAvailable);
+            if (jump && negateAvailable && !negate) {
+                Constants.LOG.warn("Just Dire Things Negate Fall transformed flow incompatible; compatibility disabled");
+            }
         }
     }
 

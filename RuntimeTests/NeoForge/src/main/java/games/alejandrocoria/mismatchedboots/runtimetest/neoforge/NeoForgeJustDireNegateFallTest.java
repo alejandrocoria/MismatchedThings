@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Native fall/payment characterization and production FE access, not a mixed ability prototype. */
+/** Native payment controls and real production mixed falls; no alternate ability or wallet. */
 public final class NeoForgeJustDireNegateFallTest {
     private static boolean finished;
     private static int cases;
@@ -65,11 +65,16 @@ public final class NeoForgeJustDireNegateFallTest {
             Class<?> ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
             Object negate = ability.getField("NEGATEFALLDAMAGE").get(null);
             require((int) ability.getMethod("getFeCost").invoke(negate) == 50, "Native base cost changed; revise characterization");
-            nativeMatrix(server);
-            equippedTransactions(server);
+            String guard = System.getProperty("mismatchedboots.runtimetest.justDireNegateGuard", "");
+            if (guard.isEmpty()) {
+                nativeMatrix(server);
+                equippedTransactions(server);
+                mixedMatrix(server);
+            } else { guarded(server, guard); }
             NetworkAcceptanceFiles.write("just-dire-negate-fall-report.txt", cases
-                    + " characterization cases; native originals through event bus; survival actual health; "
-                    + "partial payment; authoritative game modes; Unbreaking; FEET transactions; no mixed Negate implementation\n" + report);
+                    + (guard.isEmpty() ? " native/mixed cases; event bus; survival actual health; partial payment; "
+                    + "authoritative game modes; Unbreaking; equipped production FE; sources/wear unchanged\n"
+                    : " guard cases; variant=" + guard + "; real final permissions, native original, actual health, warning counts and isolation\n") + report);
             NetworkAcceptanceFiles.write("just-dire-negate-fall-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("just-dire-negate-fall", failure);
@@ -248,9 +253,171 @@ public final class NeoForgeJustDireNegateFallTest {
         ItemStack original = boots("celestigem", 100);
         original.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.BINDING_CURSE), 1);
         nativeFall(server, "native cursed boots still pay", original, 9, 0, 0, GameType.SURVIVAL);
-        // This is a production baseline, not a test-only mixed Negate implementation.
-        root = MixedBootsFactory.createPair(boots("celestigem", 2_000), new ItemStack(Items.IRON_BOOTS)).primary();
-        nativeFall(server, "mixed Negate remains unimplemented", root, 9, 9, 1_000, GameType.SURVIVAL);
+    }
+
+    private static void mixedMatrix(MinecraftServer server) throws ReflectiveOperationException {
+        for (String tier : List.of("celestigem", "eclipsealloy")) {
+            for (boolean inverse : new boolean[]{false, true}) {
+                for (int charge : new int[]{0, 49, 50, 51, 1_000}) {
+                    ItemStack root = mixed(tier, charge, inverse);
+                    nativeFall(server, "mixed " + tier + " inverse=" + inverse + " FE=" + charge, root, 9,
+                            charge >= 50 ? 0 : 9, charge >= 50 ? Math.max(0, charge - 450) : charge, GameType.SURVIVAL);
+                }
+            }
+        }
+        ItemStack two = MixedBootsFactory.createPair(boots("celestigem", 1_000), boots("eclipsealloy", 1_000)).primary();
+        nativeFall(server, "two authorizing sources pay once", two, 9, 0, 550, GameType.SURVIVAL);
+        for (double distance : new double[]{0, .9, 2.5, 4.5}) {
+            nativeFall(server, "mixed fractional " + distance, mixed("celestigem", 1_000, false), distance,
+                    0, 1_000 - 50 * (int) distance, GameType.SURVIVAL);
+        }
+        for (int level : new int[]{1, 3, 10, 12}) {
+            ItemStack root = mixed("celestigem", 1_000, false);
+            root.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.UNBREAKING), level);
+            nativeFall(server, "mixed root Unbreaking " + level, root, 9, 0,
+                    level == 1 ? 595 : level == 3 ? 685 : 1_000, GameType.SURVIVAL);
+        }
+        ItemStack root = mixed("eclipsealloy", 50, true);
+        root.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.BINDING_CURSE), 1);
+        root.setDamageValue(23);
+        nativeFall(server, "mixed cursed root pays without armor removal", root, 9, 0, 0, GameType.SURVIVAL);
+        nativeFall(server, "same depleted root no longer protects", root, 9, 9, 0, GameType.SURVIVAL);
+        for (GameType mode : List.of(GameType.CREATIVE, GameType.SPECTATOR)) {
+            for (int charge : new int[]{49, 50}) {
+                nativeFall(server, "mixed " + mode + " FE=" + charge, mixed("celestigem", charge, false), 9,
+                        charge >= 50 ? 0 : 9, charge, mode);
+            }
+        }
+        for (String control : List.of("tool_enabled", "negatefalldamage_toggle")) {
+            root = mixed("celestigem", 1_000, false);
+            JustDireAttributeTestSupport.set(root, control, false);
+            nativeFall(server, "mixed root " + control + " disabled", root, 9, 9, 1_000, GameType.SURVIVAL);
+        }
+        ItemStack source = boots("celestigem", 2_000);
+        JustDireAttributeTestSupport.set(source, "negatefalldamage_toggle", false);
+        root = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS)).primary();
+        JustDireAttributeTestSupport.set(root, "negatefalldamage_toggle", true);
+        nativeFall(server, "live root toggle overrides frozen source control", root, 9, 0, 550, GameType.SURVIVAL);
+        root = mixed("celestigem", 1_000, false);
+        root.remove(BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", "tool_enabled")).orElseThrow().value());
+        root.remove(BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", "negatefalldamage_toggle")).orElseThrow().value());
+        nativeFall(server, "absent root controls use native enabled defaults", root, 9, 0, 550, GameType.SURVIVAL);
+
+        source = boots("celestigem", 2_000);
+        JustDireAttributeTestSupport.set(source, "negatefalldamage_upgrade_installed", false);
+        root = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS)).primary();
+        JustDireAttributeTestSupport.set(root, "negatefalldamage_upgrade_installed", true);
+        nativeFall(server, "forged root installation has no provenance", root, 9, 9, 1_000, GameType.SURVIVAL);
+        ItemStack forged = new ItemStack(Items.IRON_BOOTS);
+        JustDireAttributeTestSupport.set(forged, "negatefalldamage_upgrade_installed", true);
+        root = MixedBootsFactory.createPair(source, forged).primary();
+        nativeFall(server, "ineligible source installation grants nothing", root, 9, 9, 1_000, GameType.SURVIVAL);
+
+        Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config").getField("AVAILABLE_ABILITY_MAP").get(null);
+        ModConfigSpec.BooleanValue enabled = flags.entrySet().stream().filter(entry -> ((Enum<?>) entry.getKey()).name().equals("NEGATEFALLDAMAGE"))
+                .map(entry -> (ModConfigSpec.BooleanValue) entry.getValue()).findFirst().orElseThrow();
+        boolean previous = enabled.get();
+        try {
+            enabled.set(false);
+            nativeFall(server, "mixed native config veto", mixed("celestigem", 1_000, false), 9, 9, 1_000, GameType.SURVIVAL);
+        } finally { enabled.set(previous); }
+        for (int charge : new int[]{49, 50}) {
+            ItemStack jump = NeoForgeJustDireJumpTest.boots("blazegold", true);
+            JustDireAttributeTestSupport.set(jump, "jumpboost_value", 2);
+            root = MixedBootsFactory.createPair(boots("celestigem", charge * 2), jump).primary();
+            JustDireAttributeTestSupport.set(root, "jumpboost_value", 2);
+            nativeFall(server, "mixed Negate/Jump precedence FE=" + charge, root, 9,
+                    charge == 50 ? 0 : 7, charge == 50 ? 0 : 49, GameType.SURVIVAL);
+        }
+        for (EquipmentSlot hand : List.of(EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
+            ServerPlayer player = player(server, GameType.SURVIVAL);
+            root = mixed("celestigem", 50, false); player.setItemSlot(EquipmentSlot.FEET, root);
+            ItemStack before = root.copy();
+            player.setItemSlot(hand, new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", "blazejet_wand"))));
+            Fall result = fall(player, 9);
+            require(result.distance == 0 && result.loss == 0 && ItemStack.matches(before, root), "Hand precedence charged mixed root " + hand);
+            record("mixed hand precedence " + hand, "distance=0 FE=50; whole equipped root unchanged");
+        }
+        for (double distance : new double[]{-1, Double.NaN, Double.POSITIVE_INFINITY, Integer.MAX_VALUE}) {
+            ServerPlayer player = player(server, GameType.SURVIVAL);
+            root = mixed("celestigem", 1_000, false); player.setItemSlot(EquipmentSlot.FEET, root);
+            ItemStack before = root.copy();
+            LivingFallEvent event = new LivingFallEvent(player, distance, 1);
+            NeoForge.EVENT_BUS.post(event);
+            require(Double.compare(event.getDistance(), distance) == 0 && ItemStack.matches(before, root), "Exceptional distance spent FE or protected " + distance);
+            record("unsupported distance " + distance, "event and whole root unchanged; bounded diagnostic");
+        }
+        for (boolean invalidCount : new boolean[]{false, true}) {
+            root = mixed("celestigem", 1_000, false);
+            if (invalidCount) { root.setCount(2); }
+            else { root.remove(games.alejandrocoria.mismatchedboots.content.ModContent.mixedBootsDataType().orElseThrow()); }
+            ServerPlayer player = player(server, GameType.SURVIVAL); player.setItemSlot(EquipmentSlot.FEET, root);
+            ItemStack before = root.copy(); Fall result = fall(player, 9);
+            require(result.distance == 9 && result.loss == 6 && ItemStack.matches(before, root), "Invalid mixed root protected or changed");
+            record("invalid mixed " + (invalidCount ? "count" : "data"), "distance=9 healthLoss=6; whole root unchanged");
+        }
+        root = mixed("celestigem", 1_000, false);
+        var mob = new net.minecraft.world.entity.monster.zombie.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, server.overworld());
+        mob.setItemSlot(EquipmentSlot.FEET, root); ItemStack before = root.copy();
+        LivingFallEvent event = new LivingFallEvent(mob, 9, 1); NeoForge.EVENT_BUS.post(event);
+        require(event.getDistance() == 9 && ItemStack.matches(before, root), "Non-player acquired mixed Negate");
+        record("non-player scope", "actual native event leaves distance=9 and root unchanged");
+    }
+
+    private static ItemStack mixed(String tier, int charge, boolean inverse) {
+        var pair = MixedBootsFactory.createPair(boots(tier, charge * 2), new ItemStack(Items.IRON_BOOTS));
+        return inverse ? pair.inverse() : pair.primary();
+    }
+
+    private static void guarded(MinecraftServer server, String guard) throws ReflectiveOperationException {
+        boolean jumpReady = !guard.equals("missingFall");
+        boolean negateReady = guard.equals("compatible") || guard.equals("apiMissing") || guard.equals("capabilityMissing");
+        Class<?> handler = Class.forName("com.direwolf20.justdirethings.common.events.LivingEntityEvents");
+        for (String name : List.of("mismatchedboots$justDireJumpReady", "mismatchedboots$justDireNegateFallReady")) {
+            var getter = handler.getDeclaredMethod(name); getter.setAccessible(true);
+            require((boolean) getter.invoke(null) == (name.contains("Jump") ? jumpReady : negateReady), "Unexpected final permission " + guard + " " + name);
+        }
+        nativeFall(server, "guard " + guard + " native original", boots("celestigem", 1_000), 9,
+                0, guard.equals("consumerChanged") ? 500 : 550, GameType.SURVIVAL);
+        ItemStack jump = NeoForgeJustDireJumpTest.boots("blazegold", true);
+        ItemStack root = MixedBootsFactory.createPair(boots("celestigem", 2_000), jump).primary();
+        JustDireAttributeTestSupport.set(root, "jumpboost_value", 2);
+        for (int repeat = 0; repeat < 3; repeat++) {
+            ServerPlayer player = player(server, GameType.SURVIVAL);
+            player.setItemSlot(EquipmentSlot.FEET, root);
+            ItemStack before = root.copy();
+            Fall actual = fall(player, 9);
+            double distance = guard.equals("compatible") ? 0 : jumpReady ? 7 : 9;
+            require(actual.distance == distance && actual.loss == (distance == 0 ? 0 : distance == 7 ? 4 : 6), "Guard actual fall/health " + guard);
+            if (guard.equals("compatible")) {
+                require(energy(root).getAmountAsInt() == 550, "Compatible wrapper double/missed debit");
+                unchangedExceptEnergy(before, root, "guard compatible");
+                // Keep all three repetitions eligible, independently of partial payment.
+                root.set(JustDireResourceTestSupport.energyComponent(), 1_000);
+            } else { require(ItemStack.matches(before, root), "Denied Negate changed root/source/wear " + guard); }
+            record("guard " + guard + " repeat=" + repeat, "distance=" + actual.distance + " healthLoss=" + actual.loss + "; one event; no rejected debit");
+        }
+        ServerPlayer movement = player(server, GameType.SURVIVAL);
+        movement.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.IRON_BOOTS));
+        movement.jumpFromGround(); double ordinaryJump = movement.getDeltaMovement().y;
+        movement.setItemSlot(EquipmentSlot.FEET, jump); movement.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        movement.jumpFromGround(); double nativeJump = movement.getDeltaMovement().y;
+        movement.setItemSlot(EquipmentSlot.FEET, root); movement.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        movement.jumpFromGround();
+        require(Math.abs(movement.getDeltaMovement().y - (jumpReady ? nativeJump : ordinaryJump)) < 1e-7, "Independent Jump movement lost " + guard);
+        if (guard.equals("capabilityMissing")) {
+            require(energy(root) == null, "Capability failure did not affect actual production provider");
+        } else {
+            require(energy(root).getAmountAsInt() == 1_000, "Negate guard disabled independent live storage");
+            var charged = root.getAttributeModifiers();
+            root.set(JustDireResourceTestSupport.energyComponent(), 0);
+            require(!charged.equals(root.getAttributeModifiers()), "Negate guard disabled independent live armor selection");
+        }
+        if (guard.equals("compatible")) {
+            require(JustDireJumpGuardPlugin.jumpReads > 0 && JustDireJumpGuardPlugin.fallReads > 0, "Real compatible wrappers did not execute");
+        }
+        record("guard " + guard + " isolation", "native original; final permissions; paired movement; "
+                + (guard.equals("capabilityMissing") ? "actual missing capability causes no payment/protection" : "production FE and live armor remain available"));
     }
 
     private static Fall fall(ServerPlayer player, double distance) {

@@ -22,6 +22,9 @@ license="MIT"
 [[mixins]]
     config="mismatchedboots-just-dire-resources-guards.mixins.json"
 
+[[mixins]]
+    config="mismatchedboots-just-dire-negate-guards.mixins.json"
+
 [[dependencies.mismatchedboots_runtime_test]]
     modId="neoforge"
     type="required"

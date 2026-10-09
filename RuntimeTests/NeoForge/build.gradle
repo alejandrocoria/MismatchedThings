@@ -144,7 +144,27 @@ neoForge {
             programArgument('--nogui')
             systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.justDireNegateFallTest', 'true')
+            systemProperty('mixin.debug.export', 'true')
             jvmArgument('-Xmx1G')
+        }
+        ['Compatible', 'ConsumerChanged', 'PublicationChanged', 'ApiMissing', 'MissingFall', 'CapabilityMissing'].each { variant ->
+            register("justDireNegate${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireNegateFallTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireNegateGuard', variant.uncapitalize())
+                if (variant in ['Compatible', 'MissingFall']) {
+                    systemProperty('mismatchedboots.runtimetest.justDireJumpGuard', variant.uncapitalize())
+                }
+                if (variant == 'CapabilityMissing') {
+                    systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing')
+                }
+                systemProperty('mixin.debug.export', 'true')
+                jvmArgument('-Xmx1G')
+            }
         }
         justDireJumpClient {
             client()
@@ -374,6 +394,9 @@ tasks.named('runJustDireSmithing') {
 
 tasks.named('runJustDireJump') { dependsOn tasks.named('prepareJustDireSmithing') }
 tasks.named('runJustDireNegateFall') { dependsOn tasks.named('prepareJustDireSmithing') }
+['Compatible', 'ConsumerChanged', 'PublicationChanged', 'ApiMissing', 'MissingFall', 'CapabilityMissing'].each { variant ->
+    tasks.named("runJustDireNegate${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
 tasks.named('runJustDireResources') { dependsOn tasks.named('prepareJustDireSmithing') }
 // Restart must retain the first process's actual world/markers, never invoke destructive preparation.
 tasks.named('runJustDireResourcesRestart') { dependsOn(':NeoForge:jar', tasks.named('jar')) }
@@ -605,7 +628,7 @@ tasks.register('verifyJustDireJump') {
 
 tasks.register('verifyJustDireNegateFall') {
     group = 'verification'
-    description = 'Characterizes native Negate Fall Damage payment and equipped production FE access without enabling mixed Negate.'
+    description = 'Verifies native controls and production mixed Negate Fall Damage with actual equipped FE payment.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-negate-fall/${neoforge_version}/neoforge-process.log").get().asFile
@@ -614,11 +637,41 @@ tasks.register('verifyJustDireNegateFall') {
         def failure = new File(directory, 'just-dire-negate-fall-failure.txt')
         def success = new File(directory, 'just-dire-negate-fall-success.txt')
         def report = new File(directory, 'just-dire-negate-fall-report.txt')
-        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
-            throw new GradleException("Just Dire Things Negate characterization failed: ${failure.isFile() ? failure.text : log}")
+        def rejectedBills = log.readLines().count { it.contains('Negate Fall rejected an unsupported distance/cost') }
+        def disabled = log.readLines().any { it.contains('Just Dire Things') && it.contains('compatibility disabled') }
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                || rejectedBills != 1 || disabled) {
+            throw new GradleException("Just Dire Things Negate acceptance failed: ${failure.isFile() ? failure.text : log}")
         }
         new File(log.parentFile, 'server-report.txt').text = report.text
         logger.lifecycle(report.text)
+    }
+}
+
+tasks.register('verifyJustDireNegateGuards') {
+    group = 'verification'
+    description = 'Checks independent Negate fallback with real compatible/unsafe consumers, publication, binding and capability failures.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Compatible', 'ConsumerChanged', 'PublicationChanged', 'ApiMissing', 'MissingFall', 'CapabilityMissing'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-negate-fall/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireNegate${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-negate-fall-failure.txt')
+            def success = new File(directory, 'just-dire-negate-fall-success.txt')
+            def report = new File(directory, 'just-dire-negate-fall-report.txt')
+            def negateWarnings = log.readLines().findAll { it.contains('Negate Fall') && it.contains('compatibility disabled') }
+            def jumpWarnings = log.readLines().findAll { it.contains('passive Jump') && it.contains('compatibility disabled') }
+            def resourceWarnings = log.readLines().findAll { it.contains('Just Dire Things storage API') && it.contains('compatibility disabled') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || negateWarnings.size() != (variant in ['ConsumerChanged', 'PublicationChanged', 'ApiMissing'] ? 1 : 0)
+                    || jumpWarnings.size() != (variant == 'MissingFall' ? 1 : 0)
+                    || resourceWarnings.size() != (variant == 'CapabilityMissing' ? 1 : 0)) {
+                throw new GradleException("Just Dire Things Negate ${variant} failed: ${failure.isFile() ? failure.text : log}; warnings=${negateWarnings + jumpWarnings + resourceWarnings}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
     }
 }
 

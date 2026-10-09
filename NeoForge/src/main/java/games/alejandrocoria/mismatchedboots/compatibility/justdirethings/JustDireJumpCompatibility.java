@@ -17,7 +17,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-/** Passive queries only: provenance authorizes a tier; root settings and wear stay live. */
+/** Passive Jump queries and one coordinated fall dispatcher; Negate owns its separate FE commit. */
 public final class JustDireJumpCompatibility {
     private static Api api;
     private static boolean attempted;
@@ -31,7 +31,8 @@ public final class JustDireJumpCompatibility {
         }
     }
 
-    public static void fall(LivingFallEvent event, ItemStack root) {
+    public static void fall(LivingFallEvent event, ItemStack root, boolean negateReady) {
+        if (negateReady && JustDireNegateFallCompatibility.tryNegate(event, root)) { return; }
         int value = value(root);
         if (value > 0) { event.setDistance(event.getDistance() - value); }
     }

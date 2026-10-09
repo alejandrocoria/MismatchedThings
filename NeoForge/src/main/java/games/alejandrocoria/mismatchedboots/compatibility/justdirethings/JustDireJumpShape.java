@@ -124,7 +124,7 @@ public final class JustDireJumpShape implements Opcodes {
                 && jumpAction(action);
     }
 
-    private static boolean query(ClassNode owner, String name, String desc, Set<String> allowedCalls) {
+    static boolean query(ClassNode owner, String name, String desc, Set<String> allowedCalls) {
         MethodNode m = method(owner, name, desc);
         if (m == null || (m.access & ACC_PUBLIC) == 0 || (m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0
                 || !m.tryCatchBlocks.isEmpty()) { return false; }
@@ -337,7 +337,7 @@ public final class JustDireJumpShape implements Opcodes {
         return true;
     }
 
-    private static boolean owned(MethodNode m) {
+    static boolean owned(MethodNode m) {
         if (m.visibleAnnotations == null) { return false; }
         return m.visibleAnnotations.stream().anyMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
                 && a.values != null && a.values.contains(MIXIN));

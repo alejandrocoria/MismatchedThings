@@ -20,6 +20,10 @@ abstract class JustDireJumpMixin {
     @Unique
     private static boolean mismatchedboots$justDireJumpReady() { return false; }
 
+    /** Separate final permission to debit FE; a denied Negate contract does not disable safe Jump. */
+    @Unique
+    private static boolean mismatchedboots$justDireNegateFallReady() { return false; }
+
     @WrapOperation(method = "jumpEvent(Lnet/neoforged/neoforge/event/entity/living/LivingEvent$LivingJumpEvent;)V",
             at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireJumpFeetInjectionPoint"),
             require = 0, expect = 0, allow = 1)
@@ -35,7 +39,9 @@ abstract class JustDireJumpMixin {
     private static ItemStack mismatchedboots$justDireFallFeet(ServerPlayer player, EquipmentSlot slot,
                                                             Operation<ItemStack> original, LivingFallEvent event) {
         ItemStack root = original.call(player, slot);
-        if (mismatchedboots$justDireJumpReady()) { JustDireJumpCompatibility.fall(event, root); }
+        if (mismatchedboots$justDireJumpReady()) {
+            JustDireJumpCompatibility.fall(event, root, mismatchedboots$justDireNegateFallReady());
+        }
         return root;
     }
 }
