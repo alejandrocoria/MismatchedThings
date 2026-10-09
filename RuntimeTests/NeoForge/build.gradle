@@ -157,6 +157,29 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.justDireSmithingTest', 'true')
             jvmArgument('-Xmx1G')
         }
+        justDireResourcesSpike {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireResourcesSpike', 'true')
+            jvmArgument('-Xmx1G')
+        }
+        ['Live', 'Absent'].each { variant ->
+            register("justDireAttributesSpike${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireAttributeSpike', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireAttributeHookAbsent', (variant == 'Absent').toString())
+                systemProperty('mismatchedboots.runtimetest.justDireAttributeSavedRoot',
+                        fixtureBuildDirectory.file("reports/just-dire-attributes/${neoforge_version}/Live-root.json").get().asFile.absolutePath)
+                jvmArgument('-Xmx1G')
+            }
+        }
         tideProductionVariants.each { variant ->
             register("iceAndFireTideProduction${variant}") {
                 server()
@@ -306,6 +329,56 @@ tasks.named('runJustDireSmithing') {
 }
 
 tasks.named('runJustDireJump') { dependsOn tasks.named('prepareJustDireSmithing') }
+tasks.named('runJustDireResourcesSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
+
+['Live', 'Absent'].each { variant ->
+    tasks.named("runJustDireAttributesSpike${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+
+tasks.register('verifyJustDireAttributesSpike') {
+    group = 'verification'
+    description = 'Proves test-only live powered attribute projections and absent-hook fallback with real Just Dire Things.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Live', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-attributes/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireAttributesSpike${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-attributes-failure.txt')
+            def success = new File(directory, 'just-dire-attributes-success.txt')
+            def report = new File(directory, 'just-dire-attributes-report.txt')
+            if (failure.isFile() || !success.isFile() || success.text != "${variant}\n" || !report.isFile()) {
+                throw new GradleException("Just Dire Things attribute spike failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            if (variant == 'Live') {
+                def saved = new File(directory, 'just-dire-attributes-root.json')
+                if (!saved.isFile()) { throw new GradleException('Missing live-root fixture for the absent-hook process') }
+                new File(log.parentFile, 'Live-root.json').text = saved.text
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireResourcesSpike') {
+    group = 'verification'
+    description = 'Runs the isolated test-only Just Dire Things maximum-capacity/live-charge storage spike.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-resources/${neoforge_version}/spike-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireResourcesSpike', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-resources-failure.txt')
+        def success = new File(directory, 'just-dire-resources-success.txt')
+        def report = new File(directory, 'just-dire-resources-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Just Dire Things resource spike failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'spike-report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
+}
 
 tasks.register('prepareJustDireJumpClient') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))

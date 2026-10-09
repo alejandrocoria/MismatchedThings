@@ -14,7 +14,14 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireAttributeSpike")) {
+            JustDireAttributeSpike.register(eventBus);
+            eventBus.addListener(JustDireResourceSpike::registerCapabilities);
+            NeoForgeJustDireAttributeSpikeTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesSpike")) {
+            eventBus.addListener(JustDireResourceSpike::registerCapabilities);
+            NeoForgeJustDireResourceSpikeTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
             // The integrated server belongs to the client gameplay fixture, not network acceptance.
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpTest")) {
             NeoForgeJustDireJumpTest.register();
