@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
@@ -9,26 +10,44 @@ import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Future;
 
 /** Real NeoForge integrated-server packets, with independent synchronized client preview rules. */
-final class NeoForgeJustDireResourcesClientTest {
+public final class NeoForgeJustDireResourcesClientTest {
     private static int ticks;
     private static int phase;
     private static boolean finished;
     private static Future<?> job;
     private static MismatchedWorkbenchResult preview;
+    private static Boolean tooltipShift;
+    private static int generatorCharge;
 
     private NeoForgeJustDireResourcesClientTest() {}
+
+    public static Boolean tooltipShift() { return tooltipShift; }
 
     static void tick(Minecraft client) {
         if (finished) { return; }
@@ -44,6 +63,7 @@ final class NeoForgeJustDireResourcesClientTest {
                 require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0
                         && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                         "Resource client was not hidden and muted");
+                tooltipMatrix(client);
                 preview = new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(
                         poweredBoots(), new ItemStack(Items.IRON_BOOTS)),
                         AttributeRuleState.current(), ComponentRuleState.current());
@@ -74,6 +94,8 @@ final class NeoForgeJustDireResourcesClientTest {
                         "Actual server outputs differed from independently assembled client preview");
                 require(JustDireResourceTestSupport.handler(first).getAmountAsInt() == 3_000
                         && JustDireResourceTestSupport.handler(first).getCapacityAsInt() == 10_000, "Client capability initial state differs");
+                assertTooltip(client, first, 3_000, 10_000);
+                assertTooltip(client, second, 3_000, 10_000);
                 var id = player.getUUID();
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id);
@@ -92,6 +114,7 @@ final class NeoForgeJustDireResourcesClientTest {
                 require(ItemStack.matches(preview.inverse(), player.getInventory().getItem(1))
                         && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Actual FE packet changed inverse output or source snapshots");
+                assertTooltip(client, first, 1_733, 10_000);
                 var id = player.getUUID();
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id);
@@ -100,16 +123,47 @@ final class NeoForgeJustDireResourcesClientTest {
                     owner.inventoryMenu.broadcastChanges();
                 });
                 phase = 3;
-            } else {
+            } else if (phase == 3) {
                 ItemStack first = player.getInventory().getItem(0);
                 if (first.has(JustDireResourceTestSupport.energyComponent())) { return; }
                 if (!equipmentAgrees(client, first)) { return; }
                 require(JustDireResourceTestSupport.handler(first).getAmountAsInt() == 0
                         && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Absent live FE field was refilled on the real client");
+                assertTooltip(client, first, 0, 10_000);
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id);
+                    owner.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, ItemStack.EMPTY);
+                    // Keep only one receiver: native boots cannot hide an unsupported mixed receiver.
+                    owner.getInventory().setItem(1, ItemStack.EMPTY);
+                    ItemStack generator = new ItemStack(BuiltInRegistries.ITEM.get(
+                            Identifier.fromNamespaceAndPath("justdirethings", "pocket_generator")).orElseThrow().value());
+                    generator.set(JustDireResourceTestSupport.energyComponent(), 2_000);
+                    JustDireAttributeTestSupport.set(generator, "tool_enabled", true);
+                    owner.getInventory().setItem(2, generator);
+                    generator.getItem().inventoryTick(generator, server.overworld(), owner,
+                            net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    generatorCharge = JustDireResourceTestSupport.handler(owner.getInventory().getItem(0)).getAmountAsInt();
+                    int remainder = JustDireResourceTestSupport.handler(generator).getAmountAsInt();
+                    require(generatorCharge > 0 && generatorCharge + remainder == 2_000,
+                            "Native Pocket Generator transfer lost FE or failed to charge mixed boots");
+                    owner.getInventory().setItem(2, ItemStack.EMPTY);
+                    owner.inventoryMenu.broadcastChanges();
+                });
+                phase = 4;
+            } else {
+                ItemStack first = player.getInventory().getItem(0);
+                if (JustDireResourceTestSupport.handler(first).getAmountAsInt() != generatorCharge) { return; }
+                assertTooltip(client, first, generatorCharge, 10_000);
+                require(ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
+                        "Pocket Generator recharge changed provenance");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-report.txt", "hidden/muted NeoForge client; actual integrated-server Workbench takes; "
                         + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
-                        + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance\n");
+                        + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
+                        + "native normal/controlled-Shift tooltip controls; one exact live FE line in both orientations; "
+                        + "maximum capacity; neutral labeled source abilities; hidden FE/source details; unchanged vanilla lore; "
+                        + "actual native Pocket Generator inventory transfer with FE conservation and updated client tooltip\n");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-success.txt", "neoforge\n");
                 finished = true;
             }
@@ -128,6 +182,107 @@ final class NeoForgeJustDireResourcesClientTest {
         var stack = NeoForgeJustDireResourcesTest.boots("celestigem", 6_000);
         JustDireAttributeTestSupport.set(stack, "stepheight_upgrade_installed", true);
         return stack;
+    }
+
+    private static void tooltipMatrix(Minecraft client) {
+        for (String tier : List.of("ferricore", "blazegold", "celestigem", "eclipsealloy")) {
+            ItemStack source = NeoForgeJustDireResourcesTest.boots(tier, tier.equals("eclipsealloy") ? 20_000 : 6_000);
+            JustDireAttributeTestSupport.set(source, "stepheight_upgrade_installed", true);
+            JustDireAttributeTestSupport.set(source, "jumpboost_upgrade_installed", true);
+            JustDireAttributeTestSupport.set(source, "jumpboost_toggle", false);
+            ItemStack sourceBefore = source.copy();
+            List<Component> nativeLines = capture(client, source, TooltipFlag.NORMAL, true);
+            require(nativeLines.stream().anyMatch(line -> key(line).equals("justdirethings.enabled")),
+                    "Native control did not advertise source enabled/hotkey state");
+            require(nativeLines.stream().anyMatch(line -> key(line).equals("justdirethings.ability.jumpboost")
+                            && TextColor.fromLegacyFormat(ChatFormatting.DARK_RED).equals(line.getStyle().getColor())),
+                    "Native control did not expose disabled source ability coloring");
+            var pair = MixedBootsFactory.createPair(source, new ItemStack(Items.DIAMOND_BOOTS));
+            for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
+                var handler = JustDireResourceTestSupport.handler(root);
+                int amount = handler == null ? 0 : handler.getAmountAsInt();
+                int capacity = handler == null ? 0 : handler.getCapacityAsInt();
+                assertTooltip(client, root, amount, capacity);
+                if (capacity > 0) {
+                    root.set(JustDireResourceTestSupport.energyComponent(), 1);
+                    assertTooltip(client, root, 1, capacity);
+                    root.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT
+                            .withHidden(JustDireResourceTestSupport.energyComponent(), true));
+                    require(capture(client, root, TooltipFlag.NORMAL, true).stream()
+                            .noneMatch(line -> key(line).equals("justdirethings.festored")), "Root hidden FE was displayed");
+                }
+            }
+            require(ItemStack.matches(source, sourceBefore), "Tooltip matrix mutated native input");
+        }
+        var pair = MixedBootsFactory.createPair(NeoForgeJustDireResourcesTest.boots("celestigem", 6_000),
+                NeoForgeJustDireResourcesTest.boots("eclipsealloy", 20_000));
+        assertTooltip(client, pair.primary(), 13_000, 500_000);
+        assertTooltip(client, pair.inverse(), 13_000, 500_000);
+
+        ItemStack hidden = poweredBoots();
+        hidden.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
+        ItemStack root = MixedBootsFactory.createPair(hidden, new ItemStack(Items.IRON_BOOTS)).primary();
+        root.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
+        List<Component> lines = capture(client, root, TooltipFlag.NORMAL, true);
+        require(lines.stream().noneMatch(line -> key(line).equals("tooltip.mismatchedboots.just_dire.source_abilities"))
+                        && lines.stream().noneMatch(line -> key(line).startsWith("justdirethings.ability.")),
+                "Hidden source abilities leaked through the adapter");
+
+        ItemStack vanilla = new ItemStack(Items.IRON_BOOTS);
+        Component lore = Component.translatable("justdirethings.enabled");
+        vanilla.set(DataComponents.LORE, new ItemLore(List.of(lore)));
+        root = MixedBootsFactory.createPair(vanilla, new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        require(capture(client, root, TooltipFlag.NORMAL, false).stream()
+                        .anyMatch(line -> key(line).equals("justdirethings.enabled")),
+                "Just Dire Things adapter filtered unrelated source lore");
+    }
+
+    private static void assertTooltip(Minecraft client, ItemStack root, int amount, int capacity) {
+        ItemStack before = root.copy();
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        long sourceLists = java.util.stream.Stream.of(data.left().source(), data.right().source())
+                .filter(source -> BuiltInRegistries.ITEM.getKey(source.getItem()).getNamespace().equals("justdirethings"))
+                .count();
+        List<Component> nativeAbilities = new ArrayList<>();
+        for (ItemStack source : List.of(data.left().source(), data.right().source())) {
+            capture(client, source, TooltipFlag.NORMAL, true).stream()
+                    .filter(line -> key(line).startsWith("justdirethings.ability."))
+                    .map(line -> line.copy().withStyle(ChatFormatting.GRAY)).forEach(nativeAbilities::add);
+        }
+        for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
+            for (boolean shift : new boolean[]{false, true}) {
+                List<Component> lines = capture(client, root, flag, shift);
+                List<Component> energy = lines.stream().filter(line -> key(line).equals("justdirethings.festored")).toList();
+                require(energy.size() == (capacity > 0 ? 1 : 0), "Historical/duplicate/missing FE lines: " + lines);
+                if (capacity > 0) {
+                    Object[] args = ((TranslatableContents) energy.getFirst().getContents()).getArgs();
+                    require(args.length == 2 && args[0].equals(String.format(Locale.ROOT, "%,d", amount))
+                            && args[1].equals(String.format(Locale.ROOT, "%,d", capacity)), "FE text does not represent root charge/capacity");
+                }
+                require(lines.stream().noneMatch(line -> key(line).equals("justdirethings.enabled")
+                        || key(line).equals("justdirethings.disabled")), "Snapshot enablement/hotkey was advertised");
+                List<Component> abilities = lines.stream().filter(line -> key(line).startsWith("justdirethings.ability.")).toList();
+                require(abilities.equals(shift ? nativeAbilities : List.of()),
+                        "Source ability names/missing-upgrade suffixes were lost or did not follow controlled Shift");
+                require(abilities.stream().allMatch(line -> TextColor.fromLegacyFormat(ChatFormatting.GRAY)
+                        .equals(line.getStyle().getColor())), "Source ability color claimed mixed availability");
+                require(lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.source_abilities"))
+                        .count() == (shift ? sourceLists : 0), "Missing source ability qualifier");
+                require(ItemStack.matches(root, before), "Tooltip generation mutated root/provenance");
+            }
+        }
+    }
+
+    private static List<Component> capture(Minecraft client, ItemStack stack, TooltipFlag flag, boolean shift) {
+        tooltipShift = shift;
+        try {
+            require(client.hasShiftDown() == shift, "Controlled tooltip Shift input was not installed");
+            return stack.getTooltipLines(Item.TooltipContext.of(client.level), client.player, flag);
+        } finally { tooltipShift = null; }
+    }
+
+    private static String key(Component line) {
+        return line.getContents() instanceof TranslatableContents text ? text.getKey() : "";
     }
 
     private static boolean equipmentAgrees(Minecraft client, ItemStack expected) {

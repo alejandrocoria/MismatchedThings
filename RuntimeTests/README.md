@@ -354,6 +354,14 @@ An actual second server process reloads spent, zero and absent FE from barrels
 in the saved world. A hidden/muted NeoForge client independently assembles its
 synchronized-rule preview, receives actual integrated-server Workbench outputs
 and spent/absent inventory packets, and checks client capability/provenance.
+The same client process also captures native normal/controlled-Shift tooltips:
+one exact current root FE line, maximum tier capacity, qualified neutral source
+abilities with retained missing-upgrade details, hidden FE/sources, inverse outputs
+and unchanged vanilla lore/provenance. A test-only `Minecraft.hasShiftDown` mixin
+is active only during capture; it does not emulate physical keyboard input.
+The actual native Pocket Generator inventory tick transfers precharged FE to the
+mixed pair as its sole receiver, checking sender/receiver conservation and the
+updated real client packet/tooltip. Fuel burning/efficiency and Curios are not tested.
 The guards gate checks absent-mod quiet fallback and an injected missing native
 component binding, with one warning and unchanged native FE/non-powered Jump.
 
@@ -404,8 +412,9 @@ own success marker; each is bounded to 240 seconds.
 
 Reports are under `RuntimeTests/NeoForge/build/reports/just-dire-attributes/`.
 The gate shares disposable smithing preparation, so run it sequentially with
-the other Just Dire Things gates. Storage-only characterization is unchanged
-when the attribute property is disabled. The 19 live scenario groups also cover
+the other Just Dire Things gates. The attribute-test property selects only its
+fixture harness; production live attributes do not depend on that property.
+The 19 live scenario groups also cover
 explicit managed edits through tier change/storage removal and actual native
 smithing upgrade/output extraction; each fallback process has two scenario groups.
 Warning counts are asserted. Four local bytecode regression tests exercise native
@@ -415,3 +424,29 @@ The separate resource gate above now includes non-default frozen attribute rules
 through a real world restart and actual client equipped armor/Step Assist at
 charged/depleted FE, in addition to production Workbench and packet agreement.
 Powered abilities, damage-to-FE conversion and manual 8.3 acceptance are not claimed.
+
+## Just Dire Things consolidation and manual handoff (8.3 C)
+
+There is one production FE provider and one production attribute projection
+implementation. The former research providers/wrappers/dispatch have been retired;
+native controls and competing/failure fixtures remain in the maintained gates above.
+No additional production behavior or general resource framework is introduced by C.
+
+Repeat the bounded regression matrix sequentially (never use `--parallel` for
+these gates, which share disposable run/marker directories):
+
+```powershell
+.\gradlew.bat :Common:test :NeoForge:test :Fabric:verifyGameplay :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards verifyPackagedDependencies --console=plain
+.\gradlew.bat :NeoForge:test "-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar" :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :NeoForge:test "-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar" :RuntimeTests:NeoForge:verifyJustDireSmithing verifyPackagedDependencies --console=plain
+```
+
+The last command restores/verifies the normal .114 production artifact and its
+native guard tests after the floor run. Smithing also retains `report.txt` beside
+its process log, independently of later resets of shared markers.
+Native artifacts, versioned reports, coverage and warning limits
+remain owned by the individual gates; a successful matrix is not manual acceptance.
+The ordinary-client checklist and closure criteria are in
+[the block C record](../local-docs/JUST-DIRE-THINGS-RESOURCES-IMPLEMENTATION.md#9-block-c-consolidation-and-manual-acceptance).
+It retains ordinary root durability and excludes powered abilities, wear/payment
+conversion, settings/bars, refunds and broader charging discovery.

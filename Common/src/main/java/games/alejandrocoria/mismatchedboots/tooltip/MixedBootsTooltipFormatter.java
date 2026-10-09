@@ -16,6 +16,7 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public final class MixedBootsTooltipFormatter {
@@ -47,14 +48,25 @@ public final class MixedBootsTooltipFormatter {
             Item.TooltipContext context,
             TooltipFlag flag,
             Consumer<Component> tooltip) {
+        appendSourceSections(data, context, flag, tooltip, (source, output) -> output);
+    }
+
+    /** Adapts only nested source details; identities, separators and root details retain their owners. */
+    public static void appendSourceSections(
+            MixedBootsData data,
+            Item.TooltipContext context,
+            TooltipFlag flag,
+            Consumer<Component> tooltip,
+            BiFunction<ItemStack, Consumer<Component>, Consumer<Component>> sourceTooltips) {
         Objects.requireNonNull(data, "data");
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(flag, "flag");
         Objects.requireNonNull(tooltip, "tooltip");
+        Objects.requireNonNull(sourceTooltips, "sourceTooltips");
 
-        appendSourceSection(LEFT_KEY, data.left(), context, flag, tooltip);
+        appendSourceSection(LEFT_KEY, data.left(), context, flag, tooltip, sourceTooltips);
         tooltip.accept(CommonComponents.EMPTY);
-        appendSourceSection(RIGHT_KEY, data.right(), context, flag, tooltip);
+        appendSourceSection(RIGHT_KEY, data.right(), context, flag, tooltip, sourceTooltips);
         tooltip.accept(CommonComponents.EMPTY);
     }
 
@@ -63,7 +75,8 @@ public final class MixedBootsTooltipFormatter {
             BootHalf half,
             Item.TooltipContext context,
             TooltipFlag flag,
-            Consumer<Component> tooltip) {
+            Consumer<Component> tooltip,
+            BiFunction<ItemStack, Consumer<Component>, Consumer<Component>> sourceTooltips) {
         ItemStack source = half.source();
         tooltip.accept(Component.empty()
                 .withStyle(ChatFormatting.GRAY)
@@ -77,7 +90,8 @@ public final class MixedBootsTooltipFormatter {
             return;
         }
 
-        appendSourceDetails(source, context, hideGameplayComponents(sourceDisplay), flag, tooltip);
+        appendSourceDetails(source, context, hideGameplayComponents(sourceDisplay), flag,
+                sourceTooltips.apply(source, tooltip));
     }
 
     private static Component sourceName(ItemStack source) {

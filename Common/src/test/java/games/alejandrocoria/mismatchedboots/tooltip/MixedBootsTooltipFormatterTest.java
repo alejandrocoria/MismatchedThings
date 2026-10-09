@@ -157,6 +157,37 @@ class MixedBootsTooltipFormatterTest {
     }
 
     @Test
+    void sourceAdaptationIsScopedToVisibleDetailsAndPreservesIdentityAndProvenance() {
+        ItemStack left = boots(Items.LEATHER_BOOTS, 1.0);
+        left.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Left detail"))));
+        ItemStack right = boots(Items.IRON_BOOTS, 2.0);
+        right.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Right detail"))));
+        MixedBootsData data = data(left, right);
+        List<Component> lines = new ArrayList<>();
+        MixedBootsTooltipFormatter.appendSourceSections(data, Item.TooltipContext.EMPTY, TooltipFlag.NORMAL,
+                lines::add, (source, output) -> line -> {
+                    if (source.is(Items.LEATHER_BOOTS)) { output.accept(Component.literal("Adapted detail")); }
+                    else { output.accept(line); }
+                });
+        assertSide(lines.getFirst(), LEFT_KEY, left.getHoverName());
+        assertTrue(lines.contains(Component.literal("Adapted detail")));
+        assertFalse(lines.stream().anyMatch(line -> line.getString().equals("Left detail")));
+        assertTrue(lines.stream().anyMatch(line -> line.getString().equals("Right detail")));
+        assertEquals(data(left, right), data);
+
+        left.set(DataComponents.TOOLTIP_DISPLAY,
+                new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
+        lines.clear();
+        MixedBootsTooltipFormatter.appendSourceSections(data(left, right), Item.TooltipContext.EMPTY,
+                TooltipFlag.NORMAL, lines::add, (source, output) -> {
+                    assertFalse(source.is(Items.LEATHER_BOOTS), "Hidden source reached the detail adapter");
+                    return output;
+                });
+        assertSide(lines.getFirst(), LEFT_KEY, left.getHoverName());
+        assertFalse(lines.contains(Component.literal("Adapted detail")));
+    }
+
+    @Test
     void customSourceIdentityIncludesTheNaturalNameStructurally() {
         ItemStack left = boots(Items.IRON_BOOTS, 2.0);
         Component customName = Component.literal("Traveler's boots");

@@ -9,6 +9,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.GrindstoneMenu;
@@ -20,6 +21,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.storage.TagValueOutput;
 
 public final class WorkstationGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
@@ -536,10 +538,14 @@ public final class WorkstationGameTests {
     }
 
     private static int grindstoneExperience(GameTestHelper helper) {
-        // Orbs may drift outside the one-block test structure after spawning.
+        // Orbs may drift outside the structure; award() can also group equal-value orbs at spawn.
         return helper.getLevel().getEntities(net.minecraft.world.entity.EntityType.EXPERIENCE_ORB,
                         helper.getBounds().inflate(1.0), net.minecraft.world.entity.Entity::isAlive).stream()
-                .mapToInt(net.minecraft.world.entity.ExperienceOrb::getValue).sum();
+                .mapToInt(orb -> {
+                    var saved = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, helper.getLevel().registryAccess());
+                    orb.saveWithoutId(saved);
+                    return orb.getValue() * saved.buildResult().getIntOr("Count", 1);
+                }).sum();
     }
 
     private static int grindstoneExperiencePotential(ItemStack stack) {

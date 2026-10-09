@@ -608,6 +608,8 @@ tasks.register('verifyJustDireSmithing') {
                 || !report.text.contains('14 real installation recipes') || !report.text.contains('28 ordinary/shift-click takes')) {
             throw new GradleException("Just Dire Things smithing failed: ${failure.isFile() ? failure.text : processLog}")
         }
+        // Other JDT gates reset shared markers; retain the accepted report beside its process log.
+        new File(processLog.parentFile, 'report.txt').text = report.text
         logger.lifecycle(report.text)
     }
 }
