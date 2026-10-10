@@ -2,8 +2,8 @@ package games.alejandrocoria.mismatchedboots.platform.services;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 

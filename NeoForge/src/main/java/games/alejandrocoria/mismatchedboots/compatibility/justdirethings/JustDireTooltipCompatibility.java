@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
 
+import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentType;
@@ -7,13 +8,17 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 
-import java.util.Locale;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -24,6 +29,8 @@ public final class JustDireTooltipCompatibility {
     private static final Set<String> SOURCE_STATE = Set.of(
             "justdirethings.festored", "justdirethings.enabled", "justdirethings.disabled");
     private static final List<String> UPGRADES = List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "earthquake");
+    private static boolean intrinsicApiInspected;
+    private static MethodHandle intrinsicDetails;
 
     private JustDireTooltipCompatibility() {}
 
@@ -38,6 +45,7 @@ public final class JustDireTooltipCompatibility {
                 if (line.getContents() instanceof TranslatableContents text) {
                     if (SOURCE_STATE.contains(text.getKey())) { return; }
                     if (UPGRADES.stream().anyMatch(name -> text.getKey().equals("justdirethings.ability." + name))) { return; }
+                    if (text.getKey().equals("justdirethings.shiftmoreinfo") && !hasIntrinsicDetails(source)) { return; }
                     if (text.getKey().equals("justdirethings.ability.lavarepair")) {
                         if (!abilitiesLabel) {
                             tooltip.accept(Component.translatable("tooltip.mismatchedboots.just_dire.source_abilities")
@@ -52,6 +60,26 @@ public final class JustDireTooltipCompatibility {
                 tooltip.accept(line);
             }
         };
+    }
+
+    private static synchronized boolean hasIntrinsicDetails(ItemStack source) {
+        try {
+            if (!intrinsicApiInspected) {
+                intrinsicApiInspected = true;
+                var tool = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
+                var ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
+                var hasAbility = MethodHandles.publicLookup().findVirtual(tool, "hasAbility", MethodType.methodType(boolean.class, ability));
+                intrinsicDetails = MethodHandles.insertArguments(hasAbility, 1, ability.getField("LAVAREPAIR").get(null))
+                        .asType(MethodType.methodType(boolean.class, Item.class));
+            }
+            // Native Shift lore uses the config-filtered inventory, not installed flags or live usability.
+            return intrinsicDetails != null && (boolean) intrinsicDetails.invokeExact(source.getItem());
+        } catch (Throwable failure) {
+            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+            intrinsicDetails = null; // Suppress only the hint, with one warning and no repeated failing query.
+            Constants.LOG.warn("Just Dire Things intrinsic tooltip query failed; source Shift hints suppressed", failure);
+            return false;
+        }
     }
 
     public static void appendRootState(ItemStack root, TooltipDisplay display, Consumer<Component> tooltip) {

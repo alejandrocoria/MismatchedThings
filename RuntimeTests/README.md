@@ -454,8 +454,9 @@ in the saved world. A hidden/muted NeoForge client independently assembles its
 synchronized-rule preview, receives actual integrated-server Workbench outputs
 and spent/absent inventory packets, and checks client capability/provenance.
 The same client process also captures native normal/controlled-Shift tooltips:
-one exact current root FE line, maximum tier capacity, qualified neutral source
-abilities with retained missing-upgrade details, hidden FE/sources, inverse outputs
+one exact current root FE line, maximum tier capacity, one live root upgrade list,
+qualified neutral intrinsic source lore, Shift hints only for retained details
+(including native config-disabled Lava Repair), hidden FE/sources, inverse outputs
 and unchanged vanilla lore/provenance. A test-only `Minecraft.hasShiftDown` mixin
 is active only during capture; it does not emulate physical keyboard input.
 The actual native Pocket Generator inventory tick transfers precharged FE to the

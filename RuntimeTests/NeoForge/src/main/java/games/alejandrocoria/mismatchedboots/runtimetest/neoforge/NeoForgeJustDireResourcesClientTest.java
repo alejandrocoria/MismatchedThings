@@ -30,6 +30,7 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.lwjgl.glfw.GLFW;
@@ -37,6 +38,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /** Real NeoForge integrated-server packets, with independent synchronized client preview rules. */
@@ -271,7 +273,7 @@ public final class NeoForgeJustDireResourcesClientTest {
         // No forced equipment replacement or broadcast: normal ticks must synchronize this in-place debit.
     }
 
-    private static void tooltipMatrix(Minecraft client) {
+    private static void tooltipMatrix(Minecraft client) throws ReflectiveOperationException {
         for (String tier : List.of("ferricore", "blazegold", "celestigem", "eclipsealloy")) {
             ItemStack source = NeoForgeJustDireResourcesTest.boots(tier, tier.equals("eclipsealloy") ? 20_000 : 6_000);
             JustDireAttributeTestSupport.set(source, "stepheight_upgrade_installed", true);
@@ -311,6 +313,27 @@ public final class NeoForgeJustDireResourcesClientTest {
             }
             require(ItemStack.matches(source, sourceBefore), "Tooltip matrix mutated native input");
         }
+        Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config")
+                .getField("AVAILABLE_ABILITY_MAP").get(null);
+        var lavaRepair = (ModConfigSpec.BooleanValue) flags.entrySet().stream()
+                .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("LAVAREPAIR"))
+                .findFirst().orElseThrow().getValue();
+        boolean original = lavaRepair.get();
+        var intrinsicPair = MixedBootsFactory.createPair(NeoForgeJustDireResourcesTest.boots("blazegold", 0),
+                NeoForgeJustDireResourcesTest.boots("blazegold", 0));
+        try {
+            lavaRepair.set(false);
+            assertTooltip(client, intrinsicPair.primary(), 0, 0);
+            assertTooltip(client, intrinsicPair.inverse(), 0, 0);
+            lavaRepair.set(true);
+            assertTooltip(client, intrinsicPair.primary(), 0, 0);
+            assertTooltip(client, intrinsicPair.inverse(), 0, 0);
+        } finally { lavaRepair.set(original); }
+        ItemStack hiddenIntrinsic = NeoForgeJustDireResourcesTest.boots("blazegold", 0);
+        hiddenIntrinsic.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
+        var hiddenIntrinsicRoot = MixedBootsFactory.createPair(hiddenIntrinsic, new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        hiddenIntrinsicRoot.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
+        assertTooltip(client, hiddenIntrinsicRoot, 0, 0);
         var pair = MixedBootsFactory.createPair(NeoForgeJustDireResourcesTest.boots("celestigem", 6_000),
                 NeoForgeJustDireResourcesTest.boots("eclipsealloy", 20_000));
         assertTooltip(client, pair.primary(), 13_000, 500_000);
@@ -331,11 +354,15 @@ public final class NeoForgeJustDireResourcesClientTest {
 
         ItemStack vanilla = new ItemStack(Items.IRON_BOOTS);
         Component lore = Component.translatable("justdirethings.enabled");
-        vanilla.set(DataComponents.LORE, new ItemLore(List.of(lore)));
+        Component hintLore = Component.translatable("justdirethings.shiftmoreinfo");
+        vanilla.set(DataComponents.LORE, new ItemLore(List.of(lore, hintLore)));
         root = MixedBootsFactory.createPair(vanilla, new ItemStack(Items.DIAMOND_BOOTS)).primary();
         require(capture(client, root, TooltipFlag.NORMAL, false).stream()
                         .anyMatch(line -> key(line).equals("justdirethings.enabled")),
                 "Just Dire Things adapter filtered unrelated source lore");
+        require(capture(client, root, TooltipFlag.NORMAL, false).stream()
+                        .anyMatch(line -> key(line).equals("justdirethings.shiftmoreinfo")),
+                "Just Dire Things adapter filtered unrelated Shift lore");
     }
 
     private static void assertTooltip(Minecraft client, ItemStack root, int amount, int capacity) {
@@ -362,6 +389,8 @@ public final class NeoForgeJustDireResourcesClientTest {
                 List<Component> abilities = lines.stream().filter(line -> key(line).startsWith("justdirethings.ability.")).toList();
                 require(abilities.equals(shift ? nativeAbilities : List.of()),
                         "Intrinsic Lava Repair lore did not follow controlled Shift");
+                require(lines.stream().filter(line -> key(line).equals("justdirethings.shiftmoreinfo"))
+                        .count() == (shift ? 0 : nativeAbilities.size()), "Source Shift hint advertised no retained details");
                 require(abilities.stream().allMatch(line -> TextColor.fromLegacyFormat(ChatFormatting.GRAY)
                         .equals(line.getStyle().getColor())), "Source ability color claimed mixed availability");
                 require(lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.source_abilities"))
