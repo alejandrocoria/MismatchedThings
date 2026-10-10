@@ -43,11 +43,9 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
 
     @Override
     public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
-        if (super.supportsEnchantment(stack, enchantment)) {
-            return true;
-        }
+        // NeoForge anvils use this hook: the root's armor tag must not bypass source eligibility.
         MixedBootsData data = ModContent.getMixedBootsData(stack).orElse(null);
-        return data != null
+        return stack.getCount() == 1 && data != null
                 && (data.left().source().supportsEnchantment(enchantment)
                 || data.right().source().supportsEnchantment(enchantment));
     }

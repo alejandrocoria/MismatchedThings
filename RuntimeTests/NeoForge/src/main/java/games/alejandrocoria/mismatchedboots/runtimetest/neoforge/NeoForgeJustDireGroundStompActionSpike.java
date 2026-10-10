@@ -199,9 +199,10 @@ final class NeoForgeJustDireGroundStompActionSpike {
         mixedUse(player, mixed, false, new double[]{});
         require(ordinaryRoot.getDamageValue() == mixed.getDamageValue() && mixed.getDamageValue() > 0 && mixed.getDamageValue() < 25,
                 "Ability bill differs from actual ordinary root Unbreaking wear");
-        require(original.is(ItemTags.ARMOR_ENCHANTABLE) && !mixed.is(ItemTags.ARMOR_ENCHANTABLE), "Recheck observed native/root armor-enchantable tag boundary");
+        require(original.is(ItemTags.ARMOR_ENCHANTABLE) && mixed.is(ItemTags.ARMOR_ENCHANTABLE)
+                && original.getDamageValue() == mixed.getDamageValue(), "Native and mixed armor Unbreaking wear diverged");
         record("seeded Unbreaking III: native Blazegold wear=" + original.getDamageValue() + ", mixed ability/ordinary root wear=" + mixed.getDamageValue()
-                + "; root lacks armor-enchantable tag and uses non-armor Unbreaking branch; pre-existing tag difference recorded, not changed by spike");
+                + "; real root armor tag preserves native armor Unbreaking behavior");
         var observer = new BreakObserver(server);
         var breaking = root("blazegold", 0); breaking.setDamageValue(breaking.getMaxDamage() - 25);
         observer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE));

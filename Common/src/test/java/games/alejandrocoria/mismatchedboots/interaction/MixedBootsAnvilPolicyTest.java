@@ -78,6 +78,16 @@ class MixedBootsAnvilPolicyTest {
         Enchantment unrelated = enchantmentFor(boots(Items.DIAMOND_BOOTS));
 
         assertFalse(MixedBootsAnvilPolicy.canApplyEnchantment(unrelated, mixed, false));
+        assertFalse(MixedBootsAnvilPolicy.canApplyEnchantment(unrelated, mixed, true));
+    }
+
+    @Test
+    void rejectsInvalidMixedCountsEvenWhenVanillaAllowsTheRoot() {
+        ItemStack mixed = mixedBoots(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+        Enchantment supported = enchantmentFor(boots(Items.IRON_BOOTS));
+        mixed.setCount(2);
+
+        assertFalse(MixedBootsAnvilPolicy.canApplyEnchantment(supported, mixed, true));
     }
 
     @Test

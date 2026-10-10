@@ -15,8 +15,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompSpike")
-                || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike")
-                || Boolean.getBoolean("mismatchedboots.runtimetest.vanillaArmorTagProbe")) {
+                || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike")) {
             NeoForgeJustDireGroundStompSpike.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireRootUpgradeTest")) {
             NeoForgeJustDireRootUpgradeTest.register();

@@ -6,7 +6,7 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 
 ## Layout
 
-- `Common/src/main/java`: shared network acceptance scenarios and helpers.
+- `Common/src/main/java`: shared loader-server/network acceptance scenarios and helpers.
   This is a shared source directory, not a separate Gradle project.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
 - `Fabric/src/test`: fast loader-local reflection/bytecode-boundary JUnit regressions
@@ -664,24 +664,28 @@ recomposition preservation is test-only, not actual smithing/restart acceptance.
 Details and the separate armor-tag/Unbreaking finding are in
 [phase B](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#9-spike-phase-b--mixed-server-action-and-cooldown).
 
-## Vanilla armor-tag candidate investigation
+## Vanilla armor classification
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyVanillaArmorTagProbe --console=plain
+.\gradlew.bat verifyLoaderServerStartup --console=plain
 ```
 
-Repeat with `"-Pneoforge_version=26.1.2.99"`; run sequentially. The gate starts
-separate baseline/candidate servers in the existing disposable JDT run directory,
-resetting its world before each variant. Only the candidate receives the external
-test datapack in `VanillaArmorTagCandidate`; it is not a production resource.
-The probe measures actual equipped vanilla/mixed Unbreaking wear, general versus
-slot-specific enchantment eligibility and the current anvil shortcut against
-source-rejecting component-defined FEET controls. It characterizes the proposed
-fix and its policy interaction, not accepted production behavior or real menu UI.
+The existing self-terminating Fabric/NeoForge server gates now also run shared
+production armor regressions without JDT or a candidate datapack. Actual equipped
+Unbreaking wear is compared in both orientations against armor and non-armor
+controls; enchantments and source snapshots remain unchanged. Vanilla table
+candidate selection covers general armor and primary restrictions, preserving
+NeoForge's existing source-support hook rather than asserting identical
+foot-enchantment candidates across loaders; it is not a rendered table screen.
+Real survival anvils preview/take books, pay levels and
+consume inputs only for accepted enchantments: one/two-source support, source
+rejection despite native root-tag admission, bare roots, vanilla
+conflicts and ordinary-item controls. The full Fabric gameplay gate separately
+retains its existing donor, cost, level and workstation regressions.
 
-Versioned reports/logs are under
-`RuntimeTests/NeoForge/build/reports/vanilla-armor-tag-probe/<version>/`.
-Afterward run the normal `verifyJustDireGroundStompActionSpike` to restore the
-default loader and confirm preparation removes candidate tag membership.
-Keep useful regressions, not this comparison forever, after the
-[bounded production correction](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md) is approved and implemented.
+Select one loader with `-PserverStartupLoader=fabric` or `neoforge`; repeat
+NeoForge with `"-Pneoforge_version=26.1.2.99"` and restore the default afterward.
+`vanilla-armor-classification-report.txt` is written alongside the existing
+startup/network markers under `build/network-acceptance/`. The temporary
+baseline/candidate probe/datapack were retired; historical evidence remains in
+[the bounded record](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md).

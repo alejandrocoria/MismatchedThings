@@ -50,6 +50,12 @@ class NeoForgeMixedBootsItemTest {
         assertTrue(mixedItem.supportsEnchantment(eitherSource, enchantment));
         assertTrue(mixedItem.supportsEnchantment(supportingOnRight, enchantment));
         assertFalse(mixedItem.supportsEnchantment(neitherSource, enchantment));
+
+        Holder<Enchantment> rootOnly = Holder.direct(enchantmentFor(neitherSource));
+        assertTrue(rootOnly.value().isSupportedItem(neitherSource), "Native root admission control must admit the item");
+        assertFalse(mixedItem.supportsEnchantment(neitherSource, rootOnly));
+        eitherSource.setCount(2);
+        assertFalse(mixedItem.supportsEnchantment(eitherSource, enchantment));
     }
 
     private static ItemStack mixedStack(

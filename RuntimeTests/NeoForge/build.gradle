@@ -106,7 +106,6 @@ def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-mark
 def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
 def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
 def justDireResourcesClientDirectory = fixtureBuildDirectory.dir('run/justDireResourcesClient')
-def vanillaArmorTagCandidatePack = rootProject.file('RuntimeTests/VanillaArmorTagCandidate')
 def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
         .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar'))
@@ -217,18 +216,6 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.justDireGroundStompActionSpike', 'true')
             jvmArgument('-Xmx1G')
-        }
-        ['Baseline', 'Candidate'].each { variant ->
-            register("vanillaArmorTag${variant}") {
-                server()
-                disableIdeRun()
-                gameDirectory = justDireSmithingRunDirectory.get().asFile
-                programArgument('--nogui')
-                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
-                systemProperty('mismatchedboots.runtimetest.vanillaArmorTagProbe', 'true')
-                systemProperty('mismatchedboots.runtimetest.armorTagCandidate', (variant == 'Candidate').toString())
-                jvmArgument('-Xmx1G')
-            }
         }
         ['ApiMissing', 'RecipeChanged'].each { variant ->
             register("justDireRootUpgrades${variant}") {
@@ -460,40 +447,6 @@ tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireS
 tasks.named('runJustDireGroundStompSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
 tasks.named('runJustDireGroundStompActionSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
 
-tasks.register('prepareVanillaArmorTagCandidate') {
-    dependsOn('prepareJustDireSmithing')
-    doLast {
-        def directory = justDireSmithingRunDirectory.get().asFile
-        fixtureFileOperations.copy {
-            from(vanillaArmorTagCandidatePack)
-            into(new File(directory, 'world/datapacks/mismatchedboots-armor-tag-candidate'))
-        }
-        def properties = new File(directory, 'server.properties')
-        properties.text += 'initial-enabled-packs=vanilla,file/mismatchedboots-armor-tag-candidate\n'
-    }
-}
-tasks.named('runVanillaArmorTagBaseline') { dependsOn tasks.named('prepareJustDireSmithing') }
-tasks.named('runVanillaArmorTagCandidate') { dependsOn tasks.named('prepareVanillaArmorTagCandidate') }
-tasks.register('verifyVanillaArmorTagProbe') {
-    group = 'verification'
-    description = 'Compares real mixed armor membership, Unbreaking and enchantment eligibility with an isolated candidate datapack.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
-    doLast {
-        ['Baseline', 'Candidate'].each { variant ->
-            def log = fixtureBuildDirectory.file("reports/vanilla-armor-tag-probe/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runVanillaArmorTag${variant}", log, 240)
-            def directory = justDireSmithingMarkers.get().asFile
-            def failure = new File(directory, 'vanilla-armor-tag-probe-failure.txt')
-            def success = new File(directory, 'vanilla-armor-tag-probe-success.txt')
-            def report = new File(directory, 'vanilla-armor-tag-probe-report.txt')
-            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
-                throw new GradleException("Armor tag ${variant} probe failed: ${failure.isFile() ? failure.text : log}")
-            }
-            new File(log.parentFile, "${variant}-report.txt").text = report.text
-            logger.lifecycle(report.text)
-        }
-    }
-}
 
 tasks.register('verifyJustDireGroundStompActionSpike') {
     group = 'verification'

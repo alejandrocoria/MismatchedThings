@@ -63,7 +63,6 @@ public final class NeoForgeJustDireGroundStompSpike {
         if (warmup < 200 && !server.overworld().areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(0, 0))) { return; }
         finished = true;
         boolean actionSpike = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike");
-        boolean armorTagProbe = Boolean.getBoolean("mismatchedboots.runtimetest.vanillaArmorTagProbe");
         try {
             require(warmup < 200, "Fixture chunk/entities never became ticking");
             abilityType = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
@@ -77,7 +76,6 @@ public final class NeoForgeJustDireGroundStompSpike {
             tickCooldowns = toolType.getMethod("tickCooldowns", Level.class, ItemStack.class, net.minecraft.world.entity.player.Player.class);
             require((int) abilityType.getMethod("getFeCost").invoke(stomp) == 5_000
                     && (int) abilityType.getMethod("getDurabilityCost").invoke(stomp) == 25, "Native costs changed");
-            if (armorTagProbe) { NeoForgeVanillaArmorTagProbe.run(server); return; }
             if (actionSpike) { NeoForgeJustDireGroundStompActionSpike.start(server); return; }
             nativeControls(server);
             mixedQuotesAndPayments(server);
@@ -87,8 +85,7 @@ public final class NeoForgeJustDireGroundStompSpike {
                     + " server spike groups; native world effects; test-only mixed read-only quotes/payment; no mixed activation/UI acceptance\n" + report);
             NetworkAcceptanceFiles.write("just-dire-ground-stomp-spike-success.txt", "neoforge\n");
         } catch (Throwable failure) {
-            NetworkAcceptanceFiles.failure(armorTagProbe ? "vanilla-armor-tag-probe"
-                    : actionSpike ? "just-dire-ground-stomp-action-spike" : "just-dire-ground-stomp-spike", failure);
+            NetworkAcceptanceFiles.failure(actionSpike ? "just-dire-ground-stomp-action-spike" : "just-dire-ground-stomp-spike", failure);
             if (actionSpike) { NeoForgeJustDireGroundStompActionSpike.abort(server); }
         } finally {
             // Phase B owns the normal-tick lifecycle handoff and releases the same ticket on exit.

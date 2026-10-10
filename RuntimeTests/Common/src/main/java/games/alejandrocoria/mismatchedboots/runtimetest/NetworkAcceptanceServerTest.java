@@ -59,6 +59,7 @@ public final class NetworkAcceptanceServerTest {
                 assertRules();
                 assertBehaviorTagProjection();
                 assertOptionalModAbsent();
+                VanillaArmorClassificationTest.run(server);
                 NetworkAcceptanceFiles.write(
                         "server-snapshot.txt", NetworkAcceptanceFiles.snapshot(
                                 AttributeRulesLifecycle.serverRules(), ComponentRulesLifecycle.serverRules()));

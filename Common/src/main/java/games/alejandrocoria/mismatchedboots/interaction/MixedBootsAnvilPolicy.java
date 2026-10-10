@@ -30,12 +30,13 @@ public final class MixedBootsAnvilPolicy {
             Enchantment enchantment,
             ItemStack input,
             boolean normallyAllowed) {
-        if (normallyAllowed) {
-            return true;
+        if (!ModContent.isMixedBoots(input)) {
+            return normallyAllowed;
         }
 
+        // The root's armor tag must not bypass the stored sources' enchantment eligibility.
         MixedBootsData data = ModContent.getMixedBootsData(input).orElse(null);
-        return data != null
+        return input.getCount() == 1 && data != null
                 && (enchantment.canEnchant(data.left().source())
                 || enchantment.canEnchant(data.right().source()));
     }
