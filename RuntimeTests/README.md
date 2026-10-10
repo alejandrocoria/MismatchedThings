@@ -549,3 +549,43 @@ The ordinary-client checklist and closure criteria are in
 [the block C record](../local-docs/JUST-DIRE-THINGS-RESOURCES-IMPLEMENTATION.md#9-block-c-consolidation-and-manual-acceptance).
 It retains ordinary root durability and excludes powered abilities, wear/payment
 conversion, settings/bars, refunds and broader charging discovery.
+
+## Just Dire Things root-owned upgrade proof
+
+This opt-in research gate tests the ownership candidate in
+[JUST-DIRE-THINGS-ROOT-UPGRADES-EXPLORATION.md](../local-docs/JUST-DIRE-THINGS-ROOT-UPGRADES-EXPLORATION.md),
+not a production conversion. Run sequentially with the other JDT gates:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRootUpgrades --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRootUpgrades "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSmithing --console=plain
+```
+
+The final command restores the normal loader artifact and verifies the unchanged
+production source-wise installation model with the candidate disabled. The proof
+reuses the pinned native JAR/hash and disposable `prepareJustDireSmithing`
+directory; it does not modify the development client's mods, config or world.
+Each child process is bounded to 240 seconds. Versioned process logs/reports are
+under `RuntimeTests/NeoForge/build/reports/just-dire-root-upgrades/`.
+
+Only `mismatchedboots.runtimetest.justDireRootUpgradeTest=true` enables the five
+fixture mixins: root initialization/preservation at platform lifecycle hooks,
+candidate attribute preparation/selection, root-only real-menu installation,
+and installed-flag overlays on the existing Jump/Negate native-query copies.
+Production movement/fall routing, FE capability and Negate transaction remain
+the real implementations. No fixture is packaged in the production mod.
+
+The 13 scenario groups cover 14 actual native recipes/six ineligible combinations,
+both orientations, duplicate/template/config rejection, unchanged snapshots and
+live state, ordinary/shift-click takes and blocked extraction, native tier
+transformation, eligible union and dormant retention, actual equipped Step
+Assist for powered/non-powered tiers, explicit attribute edits, persistent/
+network codecs, cross-tier actual Jump and survival Negate with one root debit.
+
+This does not establish production optional-API/competing-mixin guards, a real
+saved-world restart, client presentation, settings UI, powered Jump, other active
+abilities or refunds. The fixture deliberately replaces attribute queries for
+research; its successful run is not evidence for the future production guards.
+Promote relevant cases and retire the duplicate prototype once production is
+accepted rather than maintaining two ownership implementations.

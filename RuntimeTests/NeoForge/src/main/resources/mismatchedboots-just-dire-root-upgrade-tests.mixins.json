@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireRootUpgradeTestPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "JustDireRootAttributesMixin",
+    "JustDireRootJumpQueryMixin",
+    "JustDireRootLifecycleMixin",
+    "JustDireRootNegateQueryMixin",
+    "JustDireRootSmithingMixin"
+  ],
+  "injectors": {"defaultRequire": 1}
+}

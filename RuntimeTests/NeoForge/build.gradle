@@ -178,6 +178,15 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
+        justDireRootUpgrades {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeTest', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireSmithing {
             server()
             disableIdeRun()
@@ -390,6 +399,27 @@ spawn-protection=0
 
 tasks.named('runJustDireSmithing') {
     dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
+
+tasks.register('verifyJustDireRootUpgrades') {
+    group = 'verification'
+    description = 'Runs the opt-in test-only root-owned JDT upgrade proof; no production ownership change.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-root-upgrades/${neoforge_version}/process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireRootUpgrades', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-root-upgrades-failure.txt')
+        def success = new File(directory, 'just-dire-root-upgrades-success.txt')
+        def report = new File(directory, 'just-dire-root-upgrades-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Just Dire Things root-upgrade proof failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
 }
 
 tasks.named('runJustDireJump') { dependsOn tasks.named('prepareJustDireSmithing') }
