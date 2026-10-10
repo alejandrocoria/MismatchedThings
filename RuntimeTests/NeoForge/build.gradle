@@ -178,6 +178,18 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
+        justDireGroundStompClientSpike {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientSpike', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -185,6 +197,15 @@ neoForge {
             programArgument('--nogui')
             systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeTest', 'true')
+            jvmArgument('-Xmx1G')
+        }
+        justDireGroundStompSpike {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompSpike', 'true')
             jvmArgument('-Xmx1G')
         }
         ['ApiMissing', 'RecipeChanged'].each { variant ->
@@ -414,6 +435,26 @@ tasks.named('runJustDireSmithing') {
 }
 
 tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
+tasks.named('runJustDireGroundStompSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
+
+tasks.register('verifyJustDireGroundStompSpike') {
+    group = 'verification'
+    description = 'Characterizes native Ground Stomp and test-only mixed quotes, payment and state boundaries.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-spike/${neoforge_version}/process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireGroundStompSpike', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-ground-stomp-spike-failure.txt')
+        def success = new File(directory, 'just-dire-ground-stomp-spike-success.txt')
+        def report = new File(directory, 'just-dire-ground-stomp-spike-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Ground Stomp spike failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
+}
 ['ApiMissing', 'RecipeChanged'].each { variant ->
     tasks.named("runJustDireRootUpgrades${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
 }
@@ -607,6 +648,26 @@ tasks.register('prepareJustDireJumpClient') {
 }
 
 tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+tasks.named('runJustDireGroundStompClientSpike') { dependsOn tasks.named('prepareJustDireJumpClient') }
+
+tasks.register('verifyJustDireGroundStompClientSpike') {
+    group = 'verification'
+    description = 'Probes native JDT client input/packet/UI boundaries without enabling mixed active abilities.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-spike/${neoforge_version}/client-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireGroundStompClientSpike', log, 300)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-ground-stomp-client-spike-failure.txt')
+        def success = new File(directory, 'just-dire-ground-stomp-client-spike-success.txt')
+        def report = new File(directory, 'just-dire-ground-stomp-client-spike-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Ground Stomp client spike failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'client-report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
+}
 
 ['Compatible', 'MissingFall', 'Absent'].each { variant ->
     def prepare = tasks.register("prepareJustDireJump${variant}") {
