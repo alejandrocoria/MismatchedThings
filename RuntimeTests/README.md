@@ -641,3 +641,47 @@ No mixed effect dispatcher, UI, packet bridge, production tick hook or new
 fixture mixin is implemented. Explicit active-data preservation is test-only;
 codecs are not a second-world restart. Findings, remaining proof work and
 unselected policies are in [the 8.5 record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#8-spike-phase-a--native-foundation-and-access-boundaries).
+
+## Just Dire Things Ground Stomp server action spike (8.5, phase B)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompActionSpike --console=plain
+```
+
+Repeat with `"-Pneoforge_version=26.1.2.99"`; run Gradle sequentially and restore
+the normal loader afterward. This separate opt-in run reuses phase A's pinned
+artifact, chunk warmup, query/target helpers and disposable preparation. Versioned
+reports are under `RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-action-spike/<version>/`.
+
+Its 13 groups exercise a test-only mixed action against real mobs and native
+controls: one root bill/timer, both candidate provider policies, FE rollback,
+root enchantments/modes, rejection, real FEET break callback and reentrancy.
+The prototype listener proves 200 worn cooldown ticks plus six unequipped
+server ticks; copy-on-write isolates history and unsupported active records.
+No production hook, native tool identity, client/settings bridge or new mixin
+is added. Local snapshot/identity checks are not serialized target validation;
+recomposition preservation is test-only, not actual smithing/restart acceptance.
+Details and the separate armor-tag/Unbreaking finding are in
+[phase B](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#9-spike-phase-b--mixed-server-action-and-cooldown).
+
+## Vanilla armor-tag candidate investigation
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyVanillaArmorTagProbe --console=plain
+```
+
+Repeat with `"-Pneoforge_version=26.1.2.99"`; run sequentially. The gate starts
+separate baseline/candidate servers in the existing disposable JDT run directory,
+resetting its world before each variant. Only the candidate receives the external
+test datapack in `VanillaArmorTagCandidate`; it is not a production resource.
+The probe measures actual equipped vanilla/mixed Unbreaking wear, general versus
+slot-specific enchantment eligibility and the current anvil shortcut against
+source-rejecting component-defined FEET controls. It characterizes the proposed
+fix and its policy interaction, not accepted production behavior or real menu UI.
+
+Versioned reports/logs are under
+`RuntimeTests/NeoForge/build/reports/vanilla-armor-tag-probe/<version>/`.
+Afterward run the normal `verifyJustDireGroundStompActionSpike` to restore the
+default loader and confirm preparation removes candidate tag membership.
+Keep useful regressions, not this comparison forever, after the
+[bounded production correction](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md) is approved and implemented.

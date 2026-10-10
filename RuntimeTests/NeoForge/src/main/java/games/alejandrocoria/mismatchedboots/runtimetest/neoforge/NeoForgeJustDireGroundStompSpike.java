@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Opt-in characterization only. No mixed input dispatcher, world-effect adapter or production tick hook. */
+/** Native characterization/access fixtures, with an opt-in phase B server-action handoff; no production hooks. */
 public final class NeoForgeJustDireGroundStompSpike {
     private static boolean finished;
     private static int warmup;
@@ -50,6 +50,9 @@ public final class NeoForgeJustDireGroundStompSpike {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> run(event.getServer()));
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> NeoForgeJustDireGroundStompActionSpike.tick(event.getServer()));
+        }
     }
 
     private static void run(MinecraftServer server) {
@@ -59,6 +62,8 @@ public final class NeoForgeJustDireGroundStompSpike {
         if (++warmup == 1) { server.overworld().setChunkForced(0, 0, true); }
         if (warmup < 200 && !server.overworld().areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(0, 0))) { return; }
         finished = true;
+        boolean actionSpike = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike");
+        boolean armorTagProbe = Boolean.getBoolean("mismatchedboots.runtimetest.vanillaArmorTagProbe");
         try {
             require(warmup < 200, "Fixture chunk/entities never became ticking");
             abilityType = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
@@ -72,6 +77,8 @@ public final class NeoForgeJustDireGroundStompSpike {
             tickCooldowns = toolType.getMethod("tickCooldowns", Level.class, ItemStack.class, net.minecraft.world.entity.player.Player.class);
             require((int) abilityType.getMethod("getFeCost").invoke(stomp) == 5_000
                     && (int) abilityType.getMethod("getDurabilityCost").invoke(stomp) == 25, "Native costs changed");
+            if (armorTagProbe) { NeoForgeVanillaArmorTagProbe.run(server); return; }
+            if (actionSpike) { NeoForgeJustDireGroundStompActionSpike.start(server); return; }
             nativeControls(server);
             mixedQuotesAndPayments(server);
             stateBoundaries(server);
@@ -79,8 +86,14 @@ public final class NeoForgeJustDireGroundStompSpike {
             NetworkAcceptanceFiles.write("just-dire-ground-stomp-spike-report.txt", groups
                     + " server spike groups; native world effects; test-only mixed read-only quotes/payment; no mixed activation/UI acceptance\n" + report);
             NetworkAcceptanceFiles.write("just-dire-ground-stomp-spike-success.txt", "neoforge\n");
-        } catch (Throwable failure) { NetworkAcceptanceFiles.failure("just-dire-ground-stomp-spike", failure); }
-        finally { server.overworld().setChunkForced(0, 0, false); server.halt(false); }
+        } catch (Throwable failure) {
+            NetworkAcceptanceFiles.failure(armorTagProbe ? "vanilla-armor-tag-probe"
+                    : actionSpike ? "just-dire-ground-stomp-action-spike" : "just-dire-ground-stomp-spike", failure);
+            if (actionSpike) { NeoForgeJustDireGroundStompActionSpike.abort(server); }
+        } finally {
+            // Phase B owns the normal-tick lifecycle handoff and releases the same ticket on exit.
+            if (!actionSpike) { server.overworld().setChunkForced(0, 0, false); server.halt(false); }
+        }
     }
 
     private static void nativeControls(MinecraftServer server) throws ReflectiveOperationException {
@@ -314,7 +327,7 @@ public final class NeoForgeJustDireGroundStompSpike {
                 .invoke(type.getField("INSTANCE").get(null), payload, context);
     }
 
-    private static boolean bindingMatches(ItemStack root, ServerPlayer player, int key, boolean mouse) throws ReflectiveOperationException {
+    static boolean bindingMatches(ItemStack root, ServerPlayer player, int key, boolean mouse) throws ReflectiveOperationException {
         if (root.isEmpty() || root.getCount() != 1 || player.getItemBySlot(EquipmentSlot.FEET) != root
                 || root.getOrDefault(JustDireAttributeTestSupport.<Integer>component("groundstomp_bindingmode"), 0) != 2) { return false; }
         for (Object binding : root.getOrDefault(JustDireAttributeTestSupport.<List<?>>component("ability_bindings"), List.of())) {
@@ -326,7 +339,7 @@ public final class NeoForgeJustDireGroundStompSpike {
         return false;
     }
 
-    private static void preserveActiveSettings(ItemStack previous, ItemStack output) {
+    static void preserveActiveSettings(ItemStack previous, ItemStack output) {
         for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting", "ability_cooldowns")) {
             DataComponentType<Object> type = JustDireAttributeTestSupport.component(path);
             output.remove(type);
@@ -335,7 +348,7 @@ public final class NeoForgeJustDireGroundStompSpike {
     }
 
     /** Query-only native views. The two policies are candidates, not production behavior. */
-    private static Quote quote(ItemStack root, boolean fixedProvider) throws ReflectiveOperationException {
+    static Quote quote(ItemStack root, boolean fixedProvider) throws ReflectiveOperationException {
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         Quote selected = null;
         for (String tier : List.of("eclipsealloy", "celestigem", "blazegold")) {
@@ -379,7 +392,7 @@ public final class NeoForgeJustDireGroundStompSpike {
         return true;
     }
 
-    private static NativeResult nativeUse(ServerPlayer player, ItemStack boot, double[] distances) throws ReflectiveOperationException {
+    static NativeResult nativeUse(ServerPlayer player, ItemStack boot, double[] distances) throws ReflectiveOperationException {
         player.setItemSlot(EquipmentSlot.FEET, boot);
         List<Mob> targets = new ArrayList<>();
         try {
@@ -400,25 +413,25 @@ public final class NeoForgeJustDireGroundStompSpike {
         } finally { targets.forEach(Mob::discard); }
     }
 
-    private static ServerPlayer player(MinecraftServer server, GameType mode) {
+    static ServerPlayer player(MinecraftServer server, GameType mode) {
         var player = NeoForgeJustDireNegateFallTest.player(server, mode);
         server.overworld().getChunk(0, 0);
         player.setPos(8, 100, 8); player.setOnGround(false); player.setDeltaMovement(Vec3.ZERO);
         return player;
     }
 
-    private static ItemStack boots(String tier, int charge) {
+    static ItemStack boots(String tier, int charge) {
         var stack = NeoForgeJustDireResourcesTest.boots(tier, charge);
         set(stack, "groundstomp_upgrade_installed", true);
         return stack;
     }
 
-    private static int timer(ItemStack stack) throws ReflectiveOperationException { return (int) cooldown.invoke(null, stack, stomp); }
+    static int timer(ItemStack stack) throws ReflectiveOperationException { return (int) cooldown.invoke(null, stack, stomp); }
     private static int charge(ItemStack stack) { return stack.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0); }
     private static <T> void set(ItemStack stack, String path, T setting) { JustDireAttributeTestSupport.set(stack, path, setting); }
     private static int discounted(int bill, int level) { return (int) Math.max(0, bill - bill * Math.min(1, level * .1)); }
     private static void record(String text) { groups++; report.append(text).append('\n'); }
     private static void require(boolean condition, String text) { if (!condition) { throw new AssertionError(text); } }
-    private record Quote(int value, boolean powered, int bill) {}
-    private record NativeResult(boolean returned, double motion, List<Double> motions) {}
+    record Quote(int value, boolean powered, int bill) {}
+    record NativeResult(boolean returned, double motion, List<Double> motions) {}
 }
