@@ -405,7 +405,7 @@ tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireS
 
 tasks.register('verifyJustDireRootUpgrades') {
     group = 'verification'
-    description = 'Runs the opt-in test-only root-owned JDT upgrade proof; no production ownership change.'
+    description = 'Verifies production root-owned JDT upgrades against real native recipes and consumers.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-root-upgrades/${neoforge_version}/process.log").get().asFile
@@ -415,7 +415,7 @@ tasks.register('verifyJustDireRootUpgrades') {
         def success = new File(directory, 'just-dire-root-upgrades-success.txt')
         def report = new File(directory, 'just-dire-root-upgrades-report.txt')
         if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
-            throw new GradleException("Just Dire Things root-upgrade proof failed: ${failure.isFile() ? failure.text : log}")
+            throw new GradleException("Just Dire Things root-upgrade acceptance failed: ${failure.isFile() ? failure.text : log}")
         }
         new File(log.parentFile, 'report.txt').text = report.text
         logger.lifecycle(report.text)

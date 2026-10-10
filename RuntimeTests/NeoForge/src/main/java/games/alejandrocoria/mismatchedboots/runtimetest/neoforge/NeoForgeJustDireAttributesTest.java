@@ -75,6 +75,11 @@ public final class NeoForgeJustDireAttributesTest {
                 require(!control.has(JustDireAttributesCompatibility.projections()), "Absent hook published metadata");
                 control.set(JustDireResourceTestSupport.energyComponent(), 100);
                 require(control.getAttributeModifiers().equals(defaults), "Absent hook altered generic fallback");
+                var passiveSource = boots("ferricore", 0, true);
+                var passiveRoot = root(passiveSource, new ItemStack(Items.IRON_BOOTS));
+                require(!passiveRoot.has(JustDireAttributesCompatibility.projections()), "Absent hook published non-powered metadata");
+                near(0, amount(passiveRoot.getAttributeModifiers(), "step_height"), "Fallback left historical non-powered Step permanently active");
+                near(1, amount(passiveSource.getAttributeModifiers(), "step_height"), "Fallback altered native non-powered Step");
                 cases++;
                 var saved = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                         System.getProperty("mismatchedboots.runtimetest.justDireAttributeSavedRoot"))));
@@ -106,7 +111,7 @@ public final class NeoForgeJustDireAttributesTest {
                     + (absent ? (missingApi ? "native API binding rejected" : "production hook permission denied")
                     + "; no new projections published; generic fresh-root fallback; prior-process saved-root safe baseline" :
                     "both source orders/inverse outputs; empty creation/recharge/depletion; native threshold and live root toggles; "
-                    + "installed provenance; frozen policies; pre-event identity guards; real earlier competing mixin/later event; "
+                    + "root installation; frozen policies; pre-event identity guards; real earlier competing mixin/later event; "
                     + "custom display; bounded persistent/network metadata; explicit managed edits through tier/storage removal; "
                     + "actual native smithing installation/take; actual equipment ticks/damage mitigation/player durability")
                     + "; production attributes, no powered abilities or wear conversion\n");
@@ -198,13 +203,13 @@ public final class NeoForgeJustDireAttributesTest {
 
         forged.set(JustDireResourceTestSupport.energyComponent(), 100);
         JustDireAttributeTestSupport.set(forged, "stepheight_upgrade_installed", true);
-        require(amount(forged.getAttributeModifiers(), "step_height") == 0, "Forged root installed an upgrade");
+        require(amount(forged.getAttributeModifiers(), "step_height") == 0, "Manual flag edit unexpectedly rebuilt frozen metadata");
         var data = forged.get(ModContent.mixedBootsDataType().orElseThrow());
         ItemStack installed = data.left().source();
-        JustDireAttributeTestSupport.set(installed, "stepheight_upgrade_installed", true);
         ItemStack recomposed = MixedBootsRecomposer.recompose(forged, installed, data.right().source());
 
-        near(1, amount(recomposed.getAttributeModifiers(), "step_height"), "Source-wise installation failed to rebuild metadata");
+        near(1, amount(recomposed.getAttributeModifiers(), "step_height"), "Root-only installation failed to rebuild metadata");
+        require(ModContent.getMixedBootsData(recomposed).orElseThrow().equals(data), "Rebuild changed source snapshots");
         require(recomposed.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100, "Preparation refilled FE");
         var explicit = forged.copy();
         var defaultsWithAddedStep = new ArrayList<>(explicit.get(DataComponents.ATTRIBUTE_MODIFIERS).modifiers());
@@ -217,10 +222,10 @@ public final class NeoForgeJustDireAttributesTest {
         cases++;
 
         ItemStack nonPowered = MixedBootsFactory.createPair(boots("ferricore", 0, true), iron).primary();
-        var nonPoweredBefore = nonPowered.getAttributeModifiers();
-        require(!nonPowered.has(JustDireAttributesCompatibility.projections()), "Unpowered root acquired projection state");
+        require(nonPowered.has(JustDireAttributesCompatibility.projections()), "Unpowered Step needs live root control projections");
+        near(1, amount(nonPowered.getAttributeModifiers(), "step_height"), "Unpowered Step missing");
         JustDireAttributeTestSupport.set(nonPowered, "tool_enabled", false);
-        same(nonPoweredBefore, nonPowered.getAttributeModifiers(), "Unpowered Step Assist behavior changed");
+        near(0, amount(nonPowered.getAttributeModifiers(), "step_height"), "Unpowered Step ignored root control");
         cases++;
 
         ItemStack editable = root(boots("celestigem", 0, true), iron);
@@ -373,6 +378,15 @@ public final class NeoForgeJustDireAttributesTest {
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         for (ItemStack source : List.of(left, right)) {
+            var id = BuiltInRegistries.ITEM.getKey(source.getItem());
+            if (id.getNamespace().equals("justdirethings")) {
+                JustDireAttributeTestSupport.set(source, "stepheight_upgrade_installed",
+                        root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_upgrade_installed"), false));
+                JustDireAttributeTestSupport.set(source, "tool_enabled",
+                        root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("tool_enabled"), true));
+                JustDireAttributeTestSupport.set(source, "stepheight_toggle",
+                        root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), true));
+            }
             if (JustDireResourceTestSupport.handler(source) != null) {
                 source.set(JustDireResourceTestSupport.energyComponent(), Math.min(JustDireResourceTestSupport.handler(source).getCapacityAsInt(),
                         root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)));

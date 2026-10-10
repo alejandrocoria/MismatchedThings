@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -30,6 +31,9 @@ public final class MixedBootsSmithingPolicy {
         if (data.isEmpty()) {
             return Optional.empty();
         }
+
+        RootAttempt rootAttempt = Services.PLATFORM.tryRootSmithing(level, template, root, addition);
+        if (rootAttempt.handled()) { return Optional.ofNullable(rootAttempt.result()); }
 
         // Template requirements belong to the loaded recipes, including recipes
         // that require the slot to be empty. Pass the actual input unchanged.
@@ -78,5 +82,11 @@ public final class MixedBootsSmithingPolicy {
     }
 
     private record Side(ItemStack source, RecipeHolder<SmithingRecipe> recipe) {
+    }
+
+    /** Null result means handled rejection, not permission to try another ownership model. */
+    public record RootAttempt(boolean handled, Result result) {
+        public static final RootAttempt UNHANDLED = new RootAttempt(false, null);
+        public static final RootAttempt REJECTED = new RootAttempt(true, null);
     }
 }

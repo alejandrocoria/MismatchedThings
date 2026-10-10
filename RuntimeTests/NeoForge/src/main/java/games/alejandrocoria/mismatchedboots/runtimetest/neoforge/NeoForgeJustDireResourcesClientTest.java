@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
@@ -231,7 +232,8 @@ public final class NeoForgeJustDireResourcesClientTest {
                         + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
                         + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
                         + "native normal/controlled-Shift tooltip controls; one exact live FE line in both orientations; "
-                        + "maximum capacity; neutral labeled source abilities; hidden FE/source details; unchanged vanilla lore; "
+                        + "maximum capacity; one root-installed upgrade inventory with live switches/parameters; dormant flags; "
+                        + "neutral intrinsic source lore only; hidden FE/upgrade/source details; unchanged vanilla lore; "
                         + "actual native Pocket Generator inventory/equipped transfers with FE conservation; actual survival Negate debit/depletion; "
                         + "positive unprotected fall control after depletion; natural equipment/attribute packets and exact live tooltip after debit; "
                         + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill\n");
@@ -288,6 +290,16 @@ public final class NeoForgeJustDireResourcesClientTest {
                 int amount = handler == null ? 0 : handler.getAmountAsInt();
                 int capacity = handler == null ? 0 : handler.getCapacityAsInt();
                 assertTooltip(client, root, amount, capacity);
+                JustDireAttributeTestSupport.set(root, "jumpboost_value", 1);
+                JustDireAttributeTestSupport.set(root, "tool_enabled", false);
+                assertTooltip(client, root, amount, capacity);
+                root.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT.withHidden(
+                        JustDireAttributeTestSupport.component("stepheight_upgrade_installed"), true));
+                require(capture(client, root, TooltipFlag.NORMAL, true).stream()
+                        .filter(line -> key(line).startsWith("tooltip.mismatchedboots.just_dire.upgrade"))
+                        .noneMatch(line -> key((Component) ((TranslatableContents) line.getContents()).getArgs()[0])
+                                .equals("justdirethings.ability.stepheight")), "Hidden root upgrade was displayed");
+                root.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
                 if (capacity > 0) {
                     root.set(JustDireResourceTestSupport.energyComponent(), 1);
                     assertTooltip(client, root, 1, capacity);
@@ -312,6 +324,10 @@ public final class NeoForgeJustDireResourcesClientTest {
         require(lines.stream().noneMatch(line -> key(line).equals("tooltip.mismatchedboots.just_dire.source_abilities"))
                         && lines.stream().noneMatch(line -> key(line).startsWith("justdirethings.ability.")),
                 "Hidden source abilities leaked through the adapter");
+        require(lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.installed_upgrades")).count() == 1,
+                "Hidden provenance incorrectly hid root installations");
+        root = MixedBootsRecomposer.recompose(root, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
+        assertTooltip(client, root, 0, 0); // Dormant installations remain visible without an eligible tier/wallet.
 
         ItemStack vanilla = new ItemStack(Items.IRON_BOOTS);
         Component lore = Component.translatable("justdirethings.enabled");
@@ -325,13 +341,10 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static void assertTooltip(Minecraft client, ItemStack root, int amount, int capacity) {
         ItemStack before = root.copy();
         var data = ModContent.getMixedBootsData(root).orElseThrow();
-        long sourceLists = java.util.stream.Stream.of(data.left().source(), data.right().source())
-                .filter(source -> BuiltInRegistries.ITEM.getKey(source.getItem()).getNamespace().equals("justdirethings"))
-                .count();
         List<Component> nativeAbilities = new ArrayList<>();
         for (ItemStack source : List.of(data.left().source(), data.right().source())) {
             capture(client, source, TooltipFlag.NORMAL, true).stream()
-                    .filter(line -> key(line).startsWith("justdirethings.ability."))
+                    .filter(line -> key(line).equals("justdirethings.ability.lavarepair"))
                     .map(line -> line.copy().withStyle(ChatFormatting.GRAY)).forEach(nativeAbilities::add);
         }
         for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
@@ -348,11 +361,33 @@ public final class NeoForgeJustDireResourcesClientTest {
                         || key(line).equals("justdirethings.disabled")), "Snapshot enablement/hotkey was advertised");
                 List<Component> abilities = lines.stream().filter(line -> key(line).startsWith("justdirethings.ability.")).toList();
                 require(abilities.equals(shift ? nativeAbilities : List.of()),
-                        "Source ability names/missing-upgrade suffixes were lost or did not follow controlled Shift");
+                        "Intrinsic Lava Repair lore did not follow controlled Shift");
                 require(abilities.stream().allMatch(line -> TextColor.fromLegacyFormat(ChatFormatting.GRAY)
                         .equals(line.getStyle().getColor())), "Source ability color claimed mixed availability");
                 require(lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.source_abilities"))
-                        .count() == (shift ? sourceLists : 0), "Missing source ability qualifier");
+                        .count() == (shift ? nativeAbilities.size() : 0), "Missing intrinsic-source qualifier");
+                var installed = List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "earthquake").stream()
+                        .filter(name -> root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component(name + "_upgrade_installed"), false)).toList();
+                var inventory = lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.upgrade")
+                        || key(line).equals("tooltip.mismatchedboots.just_dire.upgrade_setting")).toList();
+                require(inventory.size() == installed.size() && lines.stream()
+                        .filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.installed_upgrades")).count()
+                        == (installed.isEmpty() ? 0 : 1), "Root installed inventory is duplicated/missing");
+                for (int index = 0; index < installed.size(); index++) {
+                    String name = installed.get(index);
+                    Object[] args = ((TranslatableContents) inventory.get(index).getContents()).getArgs();
+                    boolean enabled = root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("tool_enabled"), true)
+                            && root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component(name + "_toggle"), true);
+                    require(key((Component) args[0]).equals("justdirethings.ability." + name)
+                            && key((Component) args[1]).equals("tooltip.mismatchedboots.just_dire." + (enabled ? "on" : "off")),
+                            "Root inventory advertised historical name/control");
+                    var setting = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", name + "_value"));
+                    if (setting.isPresent() && root.has(setting.get().value())) {
+                        require(args.length == 3 && args[2].equals(root.get(setting.get().value())), "Root parameter missing/historical");
+                    } else { require(args.length == 2, "Missing root parameter used historical setting"); }
+                    require(TextColor.fromLegacyFormat(ChatFormatting.GRAY).equals(inventory.get(index).getStyle().getColor()),
+                            "Installed inventory claimed active availability");
+                }
                 require(ItemStack.matches(root, before), "Tooltip generation mutated root/provenance");
             }
         }

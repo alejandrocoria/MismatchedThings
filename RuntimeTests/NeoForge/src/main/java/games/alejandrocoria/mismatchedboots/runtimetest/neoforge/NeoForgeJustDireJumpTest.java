@@ -113,7 +113,7 @@ public final class NeoForgeJustDireJumpTest {
         var toggles = MixedBootsFactory.createPair(disabled, iron);
         check(server, toggles.primary(), 0); check(server, toggles.inverse(), 2);
         root = MixedBootsFactory.createPair(boots("ferricore", false), iron).primary();
-        set(root, "jumpboost_upgrade_installed", true); check(server, root, 0);
+        set(root, "jumpboost_upgrade_installed", true); check(server, root, 1);
         check(server, new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)), 0);
         root = MixedBootsFactory.createPair(ferricore, iron).primary();
         root.setCount(2); check(server, root, 0); root.setCount(1);

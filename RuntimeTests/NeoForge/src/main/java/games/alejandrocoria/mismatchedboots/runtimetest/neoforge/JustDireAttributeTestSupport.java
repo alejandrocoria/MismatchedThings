@@ -35,4 +35,8 @@ public final class JustDireAttributeTestSupport {
         stack.set((DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE
                 .get(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow().value(), value);
     }
+    @SuppressWarnings("unchecked") static <T> DataComponentType<T> component(String path) {
+        return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(
+                Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow().value();
+    }
 }

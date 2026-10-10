@@ -24,7 +24,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-/** One live-root payment, authorized by provenance and the final fall-flow permission. */
+/** One live-root payment, authorized by root installation, native tier and final fall-flow permission. */
 final class JustDireNegateFallCompatibility {
     private static Api api;
     private static boolean attempted;
@@ -141,6 +141,7 @@ final class JustDireNegateFallCompatibility {
                        DataComponentType<Boolean> enabled, DataComponentType<Boolean> toggle, Item celestigem, Item eclipsealloy) {
         boolean usable(ItemStack source, ItemStack root) throws Throwable {
             if (source.getItem() != celestigem && source.getItem() != eclipsealloy) { return false; }
+            if (!JustDireUpgradesCompatibility.overlayInstallation(source, root)) { return false; }
             source.set(enabled, root.getOrDefault(enabled, true));
             source.set(toggle, root.getOrDefault(toggle, true));
             return (boolean) canUse.invokeExact((Object) source.getItem(), source, negate);

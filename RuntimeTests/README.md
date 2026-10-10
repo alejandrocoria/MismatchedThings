@@ -495,8 +495,8 @@ and a competing default-input transformation.
 
 The live run checks empty creation/recharge/depletion, actual entity equipment
 ticks and damage mitigation, both source orders/inverse outputs, native threshold
-queries, root powered Step Assist controls, source-installed provenance, frozen
-policies, source-wise rebuilding, custom display and same-identity ownership.
+queries, root Step Assist controls/installation, frozen
+policies, lifecycle rebuilding, custom display and same-identity ownership.
 A real earlier competing mixin and later attribute event exercise coexistence.
 The second process modifies the actual readiness getter; final export denies
 permission and requires generic fresh-root
@@ -550,11 +550,11 @@ The ordinary-client checklist and closure criteria are in
 It retains ordinary root durability and excludes powered abilities, wear/payment
 conversion, settings/bars, refunds and broader charging discovery.
 
-## Just Dire Things root-owned upgrade proof
+## Just Dire Things root-owned upgrades
 
-This opt-in research gate tests the ownership candidate in
+This production acceptance gate tests the root-owned installation contract in
 [JUST-DIRE-THINGS-ROOT-UPGRADES-EXPLORATION.md](../local-docs/JUST-DIRE-THINGS-ROOT-UPGRADES-EXPLORATION.md),
-not a production conversion. Run sequentially with the other JDT gates:
+without replacing production methods. Run sequentially with the other JDT gates:
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRootUpgrades --console=plain
@@ -562,30 +562,31 @@ not a production conversion. Run sequentially with the other JDT gates:
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSmithing --console=plain
 ```
 
-The final command restores the normal loader artifact and verifies the unchanged
-production source-wise installation model with the candidate disabled. The proof
+The final command restores the normal loader artifact and verifies the maintained
+real-menu root-installation matrix. The gate
 reuses the pinned native JAR/hash and disposable `prepareJustDireSmithing`
 directory; it does not modify the development client's mods, config or world.
 Each child process is bounded to 240 seconds. Versioned process logs/reports are
 under `RuntimeTests/NeoForge/build/reports/just-dire-root-upgrades/`.
 
-Only `mismatchedboots.runtimetest.justDireRootUpgradeTest=true` enables the five
-fixture mixins: root initialization/preservation at platform lifecycle hooks,
-candidate attribute preparation/selection, root-only real-menu installation,
-and installed-flag overlays on the existing Jump/Negate native-query copies.
-Production movement/fall routing, FE capability and Negate transaction remain
-the real implementations. No fixture is packaged in the production mod.
+`mismatchedboots.runtimetest.justDireRootUpgradeTest=true` selects only the test
+harness. Block B retired the prototype adapter, its plugin/configuration and
+five replacement mixins; their block A evidence remains recoverable from Git.
+Lifecycle, smithing, attributes, Jump, FE and Negate are production implementations.
+No fixture is packaged in the production mod.
 
-The 13 scenario groups cover 14 actual native recipes/six ineligible combinations,
+The 14 scenario groups cover 14 actual native recipes/six ineligible combinations,
 both orientations, duplicate/template/config rejection, unchanged snapshots and
 live state, ordinary/shift-click takes and blocked extraction, native tier
 transformation, eligible union and dormant retention, actual equipped Step
 Assist for powered/non-powered tiers, explicit attribute edits, persistent/
 network codecs, cross-tier actual Jump and survival Negate with one root debit.
+The added policy case covers conflicting initial switches/parameters, owner
+selection, preservation even when equal to the old projection, explicit absence
+and native tier defaults instead of historical sliders.
 
-This does not establish production optional-API/competing-mixin guards, a real
-saved-world restart, client presentation, settings UI, powered Jump, other active
-abilities or refunds. The fixture deliberately replaces attribute queries for
-research; its successful run is not evidence for the future production guards.
-Promote relevant cases and retire the duplicate prototype once production is
-accepted rather than maintaining two ownership implementations.
+The other existing gates own optional-API/competing-mixin guards, saved-world
+restart and client presentation. Root conversion's block C still owns full
+matrix consolidation and ordinary-client acceptance; this gate alone does not
+establish them. Settings UI, powered Jump, other active abilities and refunds
+remain deferred. Do not maintain a second ownership implementation.

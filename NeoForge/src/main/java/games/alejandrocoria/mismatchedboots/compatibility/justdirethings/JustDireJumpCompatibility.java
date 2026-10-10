@@ -107,10 +107,12 @@ public final class JustDireJumpCompatibility {
                        DataComponentType<Integer> value, Item ferricore, Item blazegold) {
         int value(ItemStack source, ItemStack root) throws Throwable {
             if (source.getItem() != ferricore && source.getItem() != blazegold) { return 0; }
-            // Defensive source copy retains installed provenance and native tier, never source wear as a wallet.
+            // Tier stays native; installation and live controls belong exclusively to root.
+            if (!JustDireUpgradesCompatibility.overlayInstallation(source, root)) { return 0; }
             source.set(enabled, root.getOrDefault(enabled, true));
             source.set(toggle, root.getOrDefault(toggle, true));
-            if (root.has(value)) { source.set(value, root.get(value)); }
+            source.remove(value);
+            if (root.has(value)) { source.set(value, root.get(value)); } // Otherwise use this tier's native default, not historical settings.
             if (!(boolean) usable.invokeExact((Object) source.getItem(), source, jump)) { return 0; }
             return (int) slider.invokeExact(source, "jumpboost");
         }

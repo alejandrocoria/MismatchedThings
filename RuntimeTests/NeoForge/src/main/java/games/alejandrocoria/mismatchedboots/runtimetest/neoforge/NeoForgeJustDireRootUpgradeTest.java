@@ -10,6 +10,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -38,8 +39,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.List;
 import java.util.Map;
 
-/** Bounded real-mod proof, not production or ordinary-client acceptance of the proposed model. */
+/** Production root-ownership acceptance against real recipes and native gameplay consumers. */
 public final class NeoForgeJustDireRootUpgradeTest {
+    private static final List<String> ABILITIES = List.of("stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake");
     private static boolean finished;
     private static int groups;
     private static final StringBuilder report = new StringBuilder();
@@ -58,7 +60,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
             lifecycle(server, player);
             attributes(server, player);
             gameplay(server);
-            NetworkAcceptanceFiles.write("just-dire-root-upgrades-report.txt", groups + " root-upgrade proof groups\n" + report);
+            NetworkAcceptanceFiles.write("just-dire-root-upgrades-report.txt", groups + " root-upgrade production groups\n" + report);
             NetworkAcceptanceFiles.write("just-dire-root-upgrades-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("just-dire-root-upgrades", failure); }
         finally { server.halt(false); }
@@ -67,7 +69,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
     private static void smithing(MinecraftServer server, ServerPlayer player) throws ReflectiveOperationException {
         int nativeRecipes = 0;
         for (String tier : List.of("ferricore", "blazegold", "celestigem", "eclipsealloy")) {
-            for (String ability : JustDireRootUpgradePrototype.ABILITIES) {
+            for (String ability : ABILITIES) {
                 ItemStack source = boots(tier, 2_000);
                 ItemStack addition = item("upgrade_" + ability);
                 var nativeMenu = menu(server, player, ItemStack.EMPTY, source.copy(), addition.copy());
@@ -85,7 +87,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
                     require(!result.isEmpty() == eligible, "Root/native eligibility differs: " + tier + "/" + ability);
                     require(ItemStack.matches(root, before), "Root installation preview mutated input");
                     if (eligible) {
-                        require(JustDireRootUpgradePrototype.installed(result, ability), "Upgrade not installed on root");
+                        require(installed(result, ability), "Upgrade not installed on root");
                         require(data(result).equals(data(before)), "Root installation changed source snapshots");
                         require(result.getDamageValue() == 31 && result.get(DataComponents.REPAIR_COST) == 11
                                 && result.getHoverName().equals(before.getHoverName()) && charge(result) == charge(before), "Installation reset live state");
@@ -130,9 +132,9 @@ public final class NeoForgeJustDireRootUpgradeTest {
             var root = MixedBootsFactory.createPair(boots("ferricore", 0), new ItemStack(Items.DIAMOND_BOOTS)).primary();
             require(output(menu(server, player, ItemStack.EMPTY, root, item("upgrade_jumpboost"))).isEmpty(), "Disabled native ability installed globally");
             var preinstalled = boots("ferricore", 0);
-            preinstalled.set(JustDireRootUpgradePrototype.flag("jumpboost"), true);
+            preinstalled.set(flag("jumpboost"), true);
             configured = MixedBootsFactory.createPair(preinstalled, new ItemStack(Items.DIAMOND_BOOTS)).primary();
-            require(JustDireRootUpgradePrototype.installed(configured, "jumpboost"), "Disabled config destroyed input installation");
+            require(installed(configured, "jumpboost"), "Disabled config destroyed input installation");
             jump(server, configured, 0);
         } finally { flag.set(previous); }
         jump(server, configured, 1);
@@ -143,43 +145,67 @@ public final class NeoForgeJustDireRootUpgradeTest {
 
     private static void lifecycle(MinecraftServer server, ServerPlayer player) {
         var ferricore = boots("ferricore", 0);
-        ferricore.set(JustDireRootUpgradePrototype.flag("stepheight"), true);
-        ferricore.set(JustDireRootUpgradePrototype.flag("negatefalldamage"), true); // Ineligible forged provenance.
+        ferricore.set(flag("stepheight"), true);
+        ferricore.set(flag("negatefalldamage"), true); // Ineligible forged provenance.
         var eclipse = boots("eclipsealloy", 2_000);
-        eclipse.set(JustDireRootUpgradePrototype.flag("jumpboost"), true);
+        eclipse.set(flag("jumpboost"), true);
         var inputs = List.of(ferricore.copy(), eclipse.copy());
         var pair = MixedBootsFactory.createPair(ferricore, eclipse);
         for (var root : List.of(pair.primary(), pair.inverse())) {
-            require(JustDireRootUpgradePrototype.installed(root, "stepheight") && JustDireRootUpgradePrototype.installed(root, "jumpboost")
-                    && !JustDireRootUpgradePrototype.installed(root, "negatefalldamage") && charge(root) == 1_000, "Creation union imported ineligible flag or changed FE policy");
+            require(installed(root, "stepheight") && installed(root, "jumpboost")
+                    && !installed(root, "negatefalldamage") && charge(root) == 1_000, "Creation union imported ineligible flag or changed FE policy");
         }
         require(ItemStack.matches(inputs.getFirst(), ferricore) && ItemStack.matches(inputs.getLast(), eclipse), "Creation changed native inputs");
         record("eligible creation union in both inverse outputs; disjoint upgrades; forged ineligible flag ignored; conservative FE unchanged");
 
         var celestigem = boots("celestigem", 2_000);
-        celestigem.set(JustDireRootUpgradePrototype.flag("stepheight"), true);
+        celestigem.set(flag("stepheight"), true);
         var root = MixedBootsFactory.createPair(celestigem, new ItemStack(Items.DIAMOND_BOOTS)).primary();
         root.set(JustDireResourceTestSupport.energyComponent(), 123);
         root.setDamageValue(31);
         for (Boolean installed : new Boolean[]{true, false, null}) {
-            root.remove(JustDireRootUpgradePrototype.flag("stepheight"));
-            if (installed != null) { root.set(JustDireRootUpgradePrototype.flag("stepheight"), installed); }
+            root.remove(flag("stepheight"));
+            if (installed != null) { root.set(flag("stepheight"), installed); }
             var smith = menu(server, player, item("template_eclipsealloy"), root.copy(), item("eclipsealloy_ingot"));
             var transformed = output(smith).copy();
             require(!transformed.isEmpty() && data(transformed).left().source().is(item("eclipsealloy_boots").getItem()), "Actual native tier transformation failed");
-            require(java.util.Objects.equals(installed, transformed.get(JustDireRootUpgradePrototype.flag("stepheight")))
+            require(java.util.Objects.equals(installed, transformed.get(flag("stepheight")))
                     && charge(transformed) == 123 && transformed.getDamageValue() == 31, "Tier transformation reimported root flag or reset FE/wear");
             require(ItemStack.matches(transformed, take(smith, player)), "Tier take differs from root-preserving preview");
         }
         record("real native tier recipe/take; equality-to-old-projection true plus explicit false/absence survive; FE/wear preserved");
 
-        root.set(JustDireRootUpgradePrototype.flag("jumpboost"), true);
+        root.set(flag("jumpboost"), true);
         var dormant = MixedBootsRecomposer.recompose(root, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
-        require(JustDireRootUpgradePrototype.installed(dormant, "jumpboost"), "Dormant root installation was destroyed");
+        require(installed(dormant, "jumpboost"), "Dormant root installation was destroyed");
         var restored = MixedBootsRecomposer.recompose(dormant, boots("ferricore", 0), new ItemStack(Items.DIAMOND_BOOTS));
-        require(JustDireRootUpgradePrototype.installed(restored, "jumpboost"), "Returning tier lost root installation");
+        require(installed(restored, "jumpboost"), "Returning tier lost root installation");
         jump(server, dormant, 0); jump(server, restored, 1);
         record("dormant installed flag retained through loss/return of eligible tier; gameplay eligibility still enforced");
+
+        var a = boots("ferricore", 0);
+        var b = boots("blazegold", 0);
+        for (ItemStack source : List.of(a, b)) { source.set(flag("jumpboost"), true); }
+        JustDireAttributeTestSupport.set(a, "jumpboost_toggle", true);
+        JustDireAttributeTestSupport.set(a, "jumpboost_value", 1);
+        JustDireAttributeTestSupport.set(b, "jumpboost_toggle", false);
+        JustDireAttributeTestSupport.set(b, "jumpboost_value", 2);
+        var owners = MixedBootsFactory.createPair(a, b);
+        var toggle = JustDireAttributeTestSupport.<Boolean>component("jumpboost_toggle");
+        var value = JustDireAttributeTestSupport.<Integer>component("jumpboost_value");
+        require(owners.primary().get(toggle) && owners.primary().get(value) == 1
+                && !owners.inverse().get(toggle) && owners.inverse().get(value) == 2, "Conflicting initial settings do not follow owner");
+        for (ItemStack output : List.of(owners.primary(), owners.inverse())) {
+            var before = output.copy();
+            var swapped = MixedBootsRecomposer.recompose(output, b, a);
+            require(java.util.Objects.equals(before.get(toggle), swapped.get(toggle))
+                    && java.util.Objects.equals(before.get(value), swapped.get(value)), "Root settings equal to old projection were replaced");
+            output.remove(toggle); output.remove(value);
+            var missing = MixedBootsRecomposer.recompose(output, b, a);
+            require(!missing.has(toggle) && !missing.has(value), "Root setting absence reimported historical controls");
+            jump(server, missing, 2); // Missing slider uses Blazegold default, not source A's historical 1.
+        }
+        record("conflicting switches/parameters use initial owner; equality-to-old-projection and explicit absence survive; missing numeric setting uses native tier default");
     }
 
     private static void attributes(MinecraftServer server, ServerPlayer player) {
@@ -188,8 +214,8 @@ public final class NeoForgeJustDireRootUpgradeTest {
             for (var root : List.of(pair.primary(), pair.inverse())) {
                 var smith = menu(server, player, ItemStack.EMPTY, root, item("upgrade_stepheight"));
                 var installed = take(smith, player);
-                require(!installed.isEmpty() && !JustDireRootUpgradePrototype.installed(data(installed).left().source(), "stepheight")
-                        && !JustDireRootUpgradePrototype.installed(data(installed).right().source(), "stepheight"), "Step installation is not root-only");
+                require(!installed.isEmpty() && !installed(data(installed).left().source(), "stepheight")
+                        && !installed(data(installed).right().source(), "stepheight"), "Step installation is not root-only");
                 var mob = EntityType.ZOMBIE.create(server.overworld(), EntitySpawnReason.COMMAND);
                 require(mob != null, "Could not create equipped Step control");
                 mob.setItemSlot(EquipmentSlot.FEET, installed);
@@ -208,7 +234,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
                     mob.tick(); near(1.6, mob.getAttributeValue(Attributes.STEP_HEIGHT), "Root Step control not restored");
                 }
                 var provenance = data(installed);
-                installed.remove(JustDireRootUpgradePrototype.flag("stepheight"));
+                installed.remove(flag("stepheight"));
                 installed = MixedBootsRecomposer.recompose(installed, provenance.left().source(), provenance.right().source());
                 mob.setItemSlot(EquipmentSlot.FEET, installed);
                 mob.tick(); near(.6, mob.getAttributeValue(Attributes.STEP_HEIGHT), "Metadata rebuild resurrected Step");
@@ -218,9 +244,9 @@ public final class NeoForgeJustDireRootUpgradeTest {
         }
 
         var source = boots("ferricore", 0);
-        source.set(JustDireRootUpgradePrototype.flag("stepheight"), true);
+        source.set(flag("stepheight"), true);
         var denied = MixedBootsFactory.createPair(source, new ItemStack(Items.DIAMOND_BOOTS)).primary();
-        denied.remove(JustDireRootUpgradePrototype.flag("stepheight"));
+        denied.remove(flag("stepheight"));
         require(step(denied) == 0, "Historical source flag bypassed root permission");
         var both = MixedBootsFactory.createPair(source, boots("blazegold", 0),
                 new AttributeRuleSet(AttributePolicy.COMBINE, Map.of()), ComponentRulesLifecycle.serverRules()).primary();
@@ -263,14 +289,14 @@ public final class NeoForgeJustDireRootUpgradeTest {
 
     private static void gameplay(MinecraftServer server) {
         var ferricore = boots("ferricore", 0);
-        ferricore.set(JustDireRootUpgradePrototype.flag("jumpboost"), true);
+        ferricore.set(flag("jumpboost"), true);
         var pair = MixedBootsFactory.createPair(ferricore, boots("blazegold", 0));
         for (var root : List.of(pair.primary(), pair.inverse())) {
             jump(server, root, 2);
-            root.remove(JustDireRootUpgradePrototype.flag("jumpboost")); jump(server, root, 0);
+            root.remove(flag("jumpboost")); jump(server, root, 0);
         }
         var eclipse = boots("eclipsealloy", 2_000);
-        eclipse.set(JustDireRootUpgradePrototype.flag("jumpboost"), true);
+        eclipse.set(flag("jumpboost"), true);
         pair = MixedBootsFactory.createPair(eclipse, boots("ferricore", 0));
         for (var root : List.of(pair.primary(), pair.inverse())) {
             for (int charge : new int[]{1_000, 0, 1_000}) {
@@ -286,11 +312,11 @@ public final class NeoForgeJustDireRootUpgradeTest {
         require(fall(player) == 0 && charge(nativeBoots) == 550, "Native Negate payment control changed");
         pair = MixedBootsFactory.createPair(boots("celestigem", 1_000), boots("eclipsealloy", 1_000));
         for (var root : List.of(pair.primary(), pair.inverse())) {
-            root.set(JustDireRootUpgradePrototype.flag("negatefalldamage"), true);
+            root.set(flag("negatefalldamage"), true);
             var before = data(root);
             player.setItemSlot(EquipmentSlot.FEET, root);
             require(fall(player) == 0 && charge(root) == 550 && data(root).equals(before), "Global Negate did not debit exactly once on actual root");
-            root.remove(JustDireRootUpgradePrototype.flag("negatefalldamage"));
+            root.remove(flag("negatefalldamage"));
             require(fall(player) == 6 && charge(root) == 550, "Absent root Negate still spent/protected");
         }
         record("native and actual survival mixed Negate falls: two eligible tiers, one 450-FE root debit, unchanged sources; root removal denies protection/payment");
@@ -333,6 +359,11 @@ public final class NeoForgeJustDireRootUpgradeTest {
     private static ItemStack item(String path) { return new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow()); }
     private static MixedBootsData data(ItemStack stack) { return ModContent.getMixedBootsData(stack).orElseThrow(); }
     private static int charge(ItemStack stack) { return stack.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0); }
+    @SuppressWarnings("unchecked") private static DataComponentType<Boolean> flag(String ability) {
+        return (DataComponentType<Boolean>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(
+                Identifier.fromNamespaceAndPath("justdirethings", ability + "_upgrade_installed")).orElseThrow().value();
+    }
+    private static boolean installed(ItemStack stack, String ability) { return stack.getOrDefault(flag(ability), false); }
     private static double step(ItemStack stack) {
         return stack.getAttributeModifiers().modifiers().stream().filter(entry -> entry.attribute().is(Attributes.STEP_HEIGHT.unwrapKey().orElseThrow()))
                 .mapToDouble(entry -> entry.modifier().amount()).sum();

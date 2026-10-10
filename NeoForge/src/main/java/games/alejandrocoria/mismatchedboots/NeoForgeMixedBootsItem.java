@@ -27,7 +27,7 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
-        JustDireTooltipCompatibility.appendEnergy(stack, display, tooltip);
+        JustDireTooltipCompatibility.appendRootState(stack, display, tooltip);
     }
 
     @Override

@@ -251,7 +251,7 @@ public final class NeoForgeJustDireNegateFallTest {
         JustDireAttributeTestSupport.set(source, "negatefalldamage_upgrade_installed", false);
         root = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS)).primary();
         JustDireAttributeTestSupport.set(root, "negatefalldamage_upgrade_installed", true);
-        nativeFall(server, "forged root installation has no provenance", root, 9, 9, 1_000, GameType.SURVIVAL);
+        nativeFall(server, "root-only installation authorizes eligible tier", root, 9, 0, 550, GameType.SURVIVAL);
         ItemStack forged = new ItemStack(Items.IRON_BOOTS);
         JustDireAttributeTestSupport.set(forged, "negatefalldamage_upgrade_installed", true);
         root = MixedBootsFactory.createPair(source, forged).primary();

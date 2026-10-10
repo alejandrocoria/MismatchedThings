@@ -80,8 +80,8 @@ public final class JustDireAttributesCompatibility {
     public static void prepare(ItemStack previous, ItemStack output, AttributeRuleSet rules) {
         output.remove(projections()); // Never carry a stale tier/rule table through generic projection.
         Api binding = api;
-        if (binding == null || !ready() || !eligible(output, binding)) {
-            if (binding == null || !ready()) { retainSafeBaseline(previous, output); }
+        if (binding == null || !ready() || !eligible(output)) {
+            if (binding == null || !ready() || !JustDireUpgradesCompatibility.available()) { retainSafeBaseline(previous, output); }
             var baseline = new ArrayList<>(output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers());
             preserveOverrides(previous, baseline);
             output.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(List.copyOf(baseline)));
@@ -93,8 +93,8 @@ public final class JustDireAttributesCompatibility {
         try {
             ItemStack left = data.left().source(), right = data.right().source();
             for (int state = 0; state < 3; state++) {
-                first.add(Services.PLATFORM.getCompositionAttributeModifiers(view(left, state, binding)));
-                second.add(Services.PLATFORM.getCompositionAttributeModifiers(view(right, state, binding)));
+                first.add(Services.PLATFORM.getCompositionAttributeModifiers(view(left, output, state, binding)));
+                second.add(Services.PLATFORM.getCompositionAttributeModifiers(view(right, output, state, binding)));
             }
         } catch (Throwable failure) {
             disable(binding, failure);
@@ -118,13 +118,22 @@ public final class JustDireAttributesCompatibility {
     }
 
     private static void retainSafeBaseline(ItemStack previous, ItemStack output) {
-        if (previous == null || !previous.has(projections())) { return; }
         var data = ModContent.getMixedBootsData(output).orElseThrow();
-        boolean powered = java.util.stream.Stream.of(data.left().source(), data.right().source()).anyMatch(source -> {
+        boolean nativeBoot = java.util.stream.Stream.of(data.left().source(), data.right().source()).anyMatch(source -> {
             String id = BuiltInRegistries.ITEM.getKey(source.getItem()).toString();
-            return id.equals("justdirethings:celestigem_boots") || id.equals("justdirethings:eclipsealloy_boots");
+            return List.of("justdirethings:ferricore_boots", "justdirethings:blazegold_boots",
+                    "justdirethings:celestigem_boots", "justdirethings:eclipsealloy_boots").contains(id);
         });
-        if (!powered) { return; } // Ordinary replacement sources still use ordinary recomposition.
+        if (!nativeBoot) { return; } // Ordinary replacement sources still use ordinary recomposition.
+        if (previous == null || !previous.has(projections())) {
+            // A fresh generic snapshot must not leave Step active when root routing is unavailable.
+            var defaults = output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
+            output.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(defaults.modifiers().stream()
+                    .filter(entry -> !(entry.modifier().id().equals(Identifier.fromNamespaceAndPath("justdirethings", "justdirestepassist"))
+                            && BuiltInRegistries.ATTRIBUTE.getKey(entry.attribute().value()).equals(Identifier.withDefaultNamespace("step_height"))))
+                    .toList()));
+            return;
+        }
         // No optional native calls are required to retain a saved safe baseline after losing routing/API.
         var fallback = new ArrayList<>(output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
                 .modifiers().stream().filter(entry -> !JustDireAttributeProjections.managed(entry)).toList());
@@ -152,7 +161,7 @@ public final class JustDireAttributesCompatibility {
         if (!(root.getItem() instanceof MixedBootsItem)) { return defaults; }
         Api binding = api;
         var table = root.get(projections());
-        if (table == null || binding == null || !ready() || !eligible(root, binding)) { return defaults; }
+        if (table == null || binding == null || !ready() || !eligible(root)) { return defaults; }
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         int state;
         try { state = current(data.left().source(), root, binding) * 3 + current(data.right().source(), root, binding); }
@@ -169,35 +178,41 @@ public final class JustDireAttributesCompatibility {
         return new ItemAttributeModifiers(List.copyOf(result));
     }
 
-    private static boolean eligible(ItemStack root, Api binding) {
+    private static boolean eligible(ItemStack root) {
         if (root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) { return false; }
         var data = ModContent.getMixedBootsData(root).orElse(null);
         if (data == null) { return false; }
-        return (binding.powered(data.left().source()) || binding.powered(data.right().source()))
-                && net.neoforged.neoforge.transfer.access.ItemAccess.forStack(root)
-                .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Energy.ITEM) != null;
+        return JustDireUpgradesCompatibility.nativeBoot(data.left().source())
+                || JustDireUpgradesCompatibility.nativeBoot(data.right().source());
     }
 
-    private static ItemStack view(ItemStack source, int state, Api binding) throws Throwable {
+    private static ItemStack view(ItemStack source, ItemStack root, int state, Api binding) throws Throwable {
+        if (!JustDireUpgradesCompatibility.nativeBoot(source)) { return source; }
+        JustDireUpgradesCompatibility.overlayInstallation(source, root);
+        source.set(binding.enabled, true);
+        source.set(binding.toggle, state == 2);
         if (binding.powered(source)) {
             int capacity = (int) binding.capacity.invokeExact(source.getItem());
             if (capacity <= 0) { throw new IllegalStateException("Invalid native powered capacity"); }
             source.set(binding.energy, state == 0 ? 0 : capacity);
-            source.set(binding.enabled, true);
-            source.set(binding.toggle, state == 2);
         }
         return source;
     }
 
     private static int current(ItemStack source, ItemStack root, Api binding) throws Throwable {
-        if (!binding.powered(source)) { return 2; }
-        int charge = root.getOrDefault(binding.energy, 0);
-        int threshold = (int) binding.threshold.invokeExact(source.getItem());
-        if (threshold < 0) { throw new IllegalStateException("Invalid native availability threshold"); }
-        if (charge < threshold) { return 0; }
-        int capacity = (int) binding.capacity.invokeExact(source.getItem());
-        if (capacity <= 0) { throw new IllegalStateException("Invalid native powered capacity"); }
-        source.set(binding.energy, Math.min(charge, capacity));
+        if (!JustDireUpgradesCompatibility.nativeBoot(source)) { return 1; }
+        if (!JustDireUpgradesCompatibility.overlayInstallation(source, root)) { return 0; }
+        if (binding.powered(source)) {
+            if (net.neoforged.neoforge.transfer.access.ItemAccess.forStack(root)
+                    .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Energy.ITEM) == null) { return 0; }
+            int charge = root.getOrDefault(binding.energy, 0);
+            int threshold = (int) binding.threshold.invokeExact(source.getItem());
+            if (threshold < 0) { throw new IllegalStateException("Invalid native availability threshold"); }
+            if (charge < threshold) { return 0; }
+            int capacity = (int) binding.capacity.invokeExact(source.getItem());
+            if (capacity <= 0) { throw new IllegalStateException("Invalid native powered capacity"); }
+            source.set(binding.energy, Math.min(charge, capacity));
+        }
         source.set(binding.enabled, root.getOrDefault(binding.enabled, true));
         source.set(binding.toggle, root.getOrDefault(binding.toggle, true));
         return (boolean) binding.usable.invokeExact(source.getItem(), source, binding.step) ? 2 : 1;

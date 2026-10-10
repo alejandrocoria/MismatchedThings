@@ -6,5 +6,10 @@
   "tooltip.mismatchedboots.mixed_boots.right": "Right:",
   "tooltip.mismatchedboots.mixed_boots.name_with_natural": "%1$s (%2$s)",
   "tooltip.mismatchedboots.mixed_boots.invalid": "Missing or invalid boot data",
-  "tooltip.mismatchedboots.just_dire.source_abilities": "Source abilities:"
+  "tooltip.mismatchedboots.just_dire.source_abilities": "Intrinsic source abilities:",
+  "tooltip.mismatchedboots.just_dire.installed_upgrades": "Installed upgrades:",
+  "tooltip.mismatchedboots.just_dire.upgrade": "%1$s (%2$s)",
+  "tooltip.mismatchedboots.just_dire.upgrade_setting": "%1$s (%2$s, setting: %3$s)",
+  "tooltip.mismatchedboots.just_dire.on": "On",
+  "tooltip.mismatchedboots.just_dire.off": "Off"
 }
