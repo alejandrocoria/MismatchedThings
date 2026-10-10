@@ -400,7 +400,7 @@ Run existing gates sequentially; no second lifecycle/client harness is needed:
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the ordinary .114
 artifact and run `verifyPackagedDependencies`. The last Negate server process
 supplies an active final export to the opt-in unit cases; an absent/denied export
-must not be used. Source-wise smithing is rechecked because resource fixtures
+must not be used. Root installation and source-wise tier smithing are rechecked because resource fixtures
 now install upgrades and transform tiers on actually spent roots. Shared/Fabric
 gameplay is not broadened when only NeoForge fixture coverage changes.
 
@@ -437,13 +437,15 @@ provider and wrappers have been retired; there is no second resource implementat
 Production storage is active in ordinary NeoForge clients when native binding succeeds.
 
 The adapter uses maximum native source capacity, floor-average initial charge
-and independent live root resources. Its 43 scenario groups exercise real FE
+and independent live root resources. Its 47 scenario groups exercise real FE
 transfers, source debit, rollback, inventory-slot ItemAccess, retained-handler tier/count changes,
 native static PoweredItem consumption and the EnergyTransmitterBE transfer
 primitive, production recomposition and serialization. Actual Workbench previews,
 takes in either order, blocked shift-take and committed/uncommitted close verify
 source consumption and pending-inverse independence. Real native smithing recipes
 and output takes preserve spent/zero/absent charge across upgrade and tier changes.
+Four additional persisted false/absent Step/Negate roots verify live permissions
+survive a real process restart without source reimport or unauthorized FE spending.
 Configured attribute rejection remains effective, while generic FE `share` cannot
 duplicate this dedicated resource. With block B present, it also checks
 live powered-attribute depletion independently of FE storage. Native originals
@@ -576,18 +578,38 @@ five replacement mixins; their block A evidence remains recoverable from Git.
 Lifecycle, smithing, attributes, Jump, FE and Negate are production implementations.
 No fixture is packaged in the production mod.
 
-The 14 scenario groups cover 14 actual native recipes/six ineligible combinations,
-both orientations, duplicate/template/config rejection, unchanged snapshots and
-live state, ordinary/shift-click takes and blocked extraction, native tier
-transformation, eligible union and dormant retention, actual equipped Step
+The 12 live scenario groups cover unchanged snapshots/live state, native tier
+transformation, config-disabled creation/use, eligible union and dormant retention, actual equipped Step
 Assist for powered/non-powered tiers, explicit attribute edits, persistent/
 network codecs, cross-tier actual Jump and survival Negate with one root debit.
 The added policy case covers conflicting initial switches/parameters, owner
 selection, preservation even when equal to the old projection, explicit absence
 and native tier defaults instead of historical sliders.
 
-The other existing gates own optional-API/competing-mixin guards, saved-world
-restart and client presentation. Root conversion's block C still owns full
-matrix consolidation and ordinary-client acceptance; this gate alone does not
-establish them. Settings UI, powered Jump, other active abilities and refunds
-remain deferred. Do not maintain a second ownership implementation.
+The complete 14-native-recipe/six-ineligible installation matrix, recipe identity,
+duplicate/template/config rejection, 28 ordinary/shift-click takes and blocked
+extraction live only in `verifyJustDireSmithing`, with versioned logs/reports under
+`RuntimeTests/NeoForge/build/reports/just-dire-smithing/<version>/`.
+They are not repeated by the root lifecycle gate.
+
+The root gate additionally runs two isolated opt-in failures: missing required
+installed-component binding and a transformed native recipe returning an extra
+component. Each checks both orientations, repeated rejected preview/take without
+source-wise fallback/payment, native assembly controls, preserved stored root
+flags/FE/wear/provenance, safe Jump/Negate permissions and exactly one warning.
+`JustDireRootUpgradeGuardPlugin` enables its two test-only mixins solely for
+these variants; it does not replace ownership or native consumers. Ordinary
+startup, absent-JDT and other fixture processes do not apply them.
+
+The other existing gates own independent optional-API/competing-mixin guards,
+saved-world restart and client presentation. The resource gate now also saves
+root-only Step and false/absent live Step/Negate flags in both orientations,
+then verifies a genuinely new JVM cannot resurrect historical upgrades or spend
+FE through denied Negate. Ordinary-client conversion acceptance remains separate;
+this gate alone does not establish it. Settings UI, powered Jump, other active
+abilities and refunds remain deferred. Do not maintain a second ownership implementation.
+
+The conversion's full .114/.99 matrix and ordinary-client handoff are recorded in
+[block C](../local-docs/JUST-DIRE-THINGS-ROOT-UPGRADES-EXPLORATION.md#9-block-c--consolidation-and-manual-handoff).
+Final-export unit cases must run immediately after a normal
+`verifyJustDireNegateFall` process, before another gate resets its shared run directory.

@@ -187,6 +187,18 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeTest', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['ApiMissing', 'RecipeChanged'].each { variant ->
+            register("justDireRootUpgrades${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeGuard', variant.uncapitalize())
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireSmithing {
             server()
             disableIdeRun()
@@ -402,23 +414,33 @@ tasks.named('runJustDireSmithing') {
 }
 
 tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
+['ApiMissing', 'RecipeChanged'].each { variant ->
+    tasks.named("runJustDireRootUpgrades${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
 
 tasks.register('verifyJustDireRootUpgrades') {
     group = 'verification'
     description = 'Verifies production root-owned JDT upgrades against real native recipes and consumers.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
-        def log = fixtureBuildDirectory.file("reports/just-dire-root-upgrades/${neoforge_version}/process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireRootUpgrades', log, 240)
-        def directory = justDireSmithingMarkers.get().asFile
-        def failure = new File(directory, 'just-dire-root-upgrades-failure.txt')
-        def success = new File(directory, 'just-dire-root-upgrades-success.txt')
-        def report = new File(directory, 'just-dire-root-upgrades-report.txt')
-        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
-            throw new GradleException("Just Dire Things root-upgrade acceptance failed: ${failure.isFile() ? failure.text : log}")
+        ['', 'ApiMissing', 'RecipeChanged'].each { variant ->
+            def prefix = variant ? "${variant}-" : ''
+            def log = fixtureBuildDirectory.file("reports/just-dire-root-upgrades/${neoforge_version}/${prefix}process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireRootUpgrades${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-root-upgrades-failure.txt')
+            def success = new File(directory, 'just-dire-root-upgrades-success.txt')
+            def report = new File(directory, 'just-dire-root-upgrades-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things upgrade API; root upgrade compatibility disabled') }
+            def shapeWarnings = log.readLines().count { it.contains('Just Dire Things upgrade recipe returned an unsupported result; root installation rejected') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0)
+                    || shapeWarnings != (variant == 'RecipeChanged' ? 1 : 0)) {
+                throw new GradleException("Just Dire Things root-upgrade ${variant ?: 'Live'} failed: ${failure.isFile() ? failure.text : log}; binding=${bindingWarnings}, shape=${shapeWarnings}")
+            }
+            new File(log.parentFile, "${prefix}report.txt").text = report.text
+            logger.lifecycle(report.text)
         }
-        new File(log.parentFile, 'report.txt').text = report.text
-        logger.lifecycle(report.text)
     }
 }
 
@@ -710,7 +732,7 @@ tasks.register('verifyJustDireSmithing') {
     description = 'Runs bounded real Just Dire Things 1.6.11 template-free smithing acceptance.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
-        def processLog = fixtureBuildDirectory.file('reports/just-dire-smithing/neoforge-process.log').get().asFile
+        def processLog = fixtureBuildDirectory.file("reports/just-dire-smithing/${neoforge_version}/neoforge-process.log").get().asFile
         runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireSmithing', processLog, 240)
         def directory = justDireSmithingMarkers.get().asFile
         def failure = new File(directory, 'just-dire-smithing-failure.txt')

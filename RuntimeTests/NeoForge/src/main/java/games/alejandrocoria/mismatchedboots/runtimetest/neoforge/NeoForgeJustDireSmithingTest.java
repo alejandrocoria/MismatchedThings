@@ -22,6 +22,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -85,10 +86,11 @@ public final class NeoForgeJustDireSmithingTest {
     private static void verifyMatrix(ServerLevel level, ServerPlayer player) {
         for (int tier = 0; tier < BOOTS.size(); tier++) {
             for (int ability = 0; ability < ABILITIES.size(); ability++) {
-                ItemStack source = new ItemStack(item(BOOTS.get(tier)));
+                ItemStack source = NeoForgeJustDireResourcesTest.boots(BOOTS.get(tier).replace("_boots", ""), 2_000);
                 source.setDamageValue(7);
                 ItemStack addition = new ItemStack(item("upgrade_" + ABILITIES.get(ability)));
-                ItemStack nativeResult = output(menu(level, player, ItemStack.EMPTY, source.copy(), addition.copy())).copy();
+                var nativeMenu = menu(level, player, ItemStack.EMPTY, source.copy(), addition.copy());
+                ItemStack nativeResult = output(nativeMenu).copy();
                 boolean eligible = ability < 2 || ability == 2 && tier >= 1 || ability == 3 && tier >= 2 || ability == 4 && tier == 3;
                 require(!nativeResult.isEmpty() == eligible, "Unexpected native tier/ability recipe: " + BOOTS.get(tier) + "/" + ABILITIES.get(ability));
                 var pair = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS));
@@ -97,7 +99,8 @@ public final class NeoForgeJustDireSmithingTest {
                     root.set(DataComponents.CUSTOM_NAME, Component.literal("Live smithing state"));
                     root.set(DataComponents.REPAIR_COST, 11);
                     ItemStack before = root.copy();
-                    ItemStack result = output(menu(level, player, ItemStack.EMPTY, root, addition.copy()));
+                    var mixedMenu = menu(level, player, ItemStack.EMPTY, root, addition.copy());
+                    ItemStack result = output(mixedMenu);
                     require(!result.isEmpty() == eligible, "Mixed tier/ability eligibility differs from native");
                     require(ItemStack.matches(before, root), "Preview changed its mixed input");
                     if (eligible) {
@@ -105,8 +108,13 @@ public final class NeoForgeJustDireSmithingTest {
                         MixedBootsData changed = data(result);
                         require(changed.equals(original), "Root installation changed historical snapshots");
                         require(result.getOrDefault(flag(ABILITIES.get(ability)), false), "Root installation is missing");
+                        require(((ResultContainer) mixedMenu.getSlot(SmithingMenu.RESULT_SLOT).container).getRecipeUsed().id()
+                                .equals(((ResultContainer) nativeMenu.getSlot(SmithingMenu.RESULT_SLOT).container).getRecipeUsed().id()),
+                                "Root installation credited a fabricated recipe");
                         require(result.getDamageValue() == 31 && result.get(DataComponents.REPAIR_COST) == 11
-                                && result.getHoverName().equals(root.getHoverName()), "Live root state was lost");
+                                && result.getHoverName().equals(root.getHoverName())
+                                && result.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                                .equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)), "Live root state was lost");
                         reject(level, player, ItemStack.EMPTY, result.copy(), addition.copy(), "Repeated installation");
                     }
                     reject(level, player, new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), root.copy(), addition.copy(), "Wrong template");

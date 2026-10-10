@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.mojang.authlib.GameProfile;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,6 +14,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+
 import java.util.UUID;
 
 /** Real startup fallback, independent of the accepted passive Jump adapter. */
@@ -39,6 +41,7 @@ final class NeoForgeJustDireResourcesGuardTest {
                 }
                 require(ItemStack.matches(before, source), "Fallback modified input state");
                 if (variant.equals("absent")) {
+                    require(!JustDireUpgradesCompatibility.available(), "Absent native mod exposed the root-upgrade API");
                     require(BuiltInRegistries.ITEM.getOptional(Identifier.fromNamespaceAndPath("justdirethings", "celestigem_boots")).isEmpty(),
                             "Absent fixture unexpectedly installed native mod");
                 } else {

@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
@@ -14,7 +15,6 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
@@ -25,7 +25,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -41,7 +40,6 @@ import java.util.Map;
 
 /** Production root-ownership acceptance against real recipes and native gameplay consumers. */
 public final class NeoForgeJustDireRootUpgradeTest {
-    private static final List<String> ABILITIES = List.of("stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake");
     private static boolean finished;
     private static int groups;
     private static final StringBuilder report = new StringBuilder();
@@ -56,72 +54,20 @@ public final class NeoForgeJustDireRootUpgradeTest {
         finished = true;
         try {
             var player = NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL);
-            smithing(server, player);
-            lifecycle(server, player);
-            attributes(server, player);
-            gameplay(server);
+            String guard = System.getProperty("mismatchedboots.runtimetest.justDireRootUpgradeGuard", "");
+            if (guard.isEmpty()) {
+                configuredCreation(server);
+                lifecycle(server, player);
+                attributes(server, player);
+                gameplay(server);
+            } else { guard(server, player, guard); }
             NetworkAcceptanceFiles.write("just-dire-root-upgrades-report.txt", groups + " root-upgrade production groups\n" + report);
             NetworkAcceptanceFiles.write("just-dire-root-upgrades-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("just-dire-root-upgrades", failure); }
         finally { server.halt(false); }
     }
 
-    private static void smithing(MinecraftServer server, ServerPlayer player) throws ReflectiveOperationException {
-        int nativeRecipes = 0;
-        for (String tier : List.of("ferricore", "blazegold", "celestigem", "eclipsealloy")) {
-            for (String ability : ABILITIES) {
-                ItemStack source = boots(tier, 2_000);
-                ItemStack addition = item("upgrade_" + ability);
-                var nativeMenu = menu(server, player, ItemStack.EMPTY, source.copy(), addition.copy());
-                var nativeResult = output(nativeMenu).copy();
-                boolean eligible = !nativeResult.isEmpty();
-                if (eligible) { nativeRecipes++; }
-                var pair = MixedBootsFactory.createPair(source, new ItemStack(Items.DIAMOND_BOOTS));
-                for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
-                    root.setDamageValue(31);
-                    root.set(DataComponents.CUSTOM_NAME, Component.literal("Root upgrade proof"));
-                    root.set(DataComponents.REPAIR_COST, 11);
-                    ItemStack before = root.copy();
-                    var smith = menu(server, player, ItemStack.EMPTY, root, addition.copy());
-                    var result = output(smith);
-                    require(!result.isEmpty() == eligible, "Root/native eligibility differs: " + tier + "/" + ability);
-                    require(ItemStack.matches(root, before), "Root installation preview mutated input");
-                    if (eligible) {
-                        require(installed(result, ability), "Upgrade not installed on root");
-                        require(data(result).equals(data(before)), "Root installation changed source snapshots");
-                        require(result.getDamageValue() == 31 && result.get(DataComponents.REPAIR_COST) == 11
-                                && result.getHoverName().equals(before.getHoverName()) && charge(result) == charge(before), "Installation reset live state");
-                        require(((ResultContainer) smith.getSlot(SmithingMenu.RESULT_SLOT).container).getRecipeUsed().id()
-                                .equals(((ResultContainer) nativeMenu.getSlot(SmithingMenu.RESULT_SLOT).container).getRecipeUsed().id()), "Root installation credited a fabricated recipe");
-                        require(output(menu(server, player, ItemStack.EMPTY, result.copy(), addition.copy())).isEmpty(), "Duplicate fell back to source installation");
-                    }
-                    require(output(menu(server, player, new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), root.copy(), addition.copy())).isEmpty(), "Wrong template bypassed native recipe");
-                }
-            }
-        }
-        require(nativeRecipes == 14, "Pinned native eligibility matrix changed");
-        record("14 native recipes / 6 ineligible combinations; both orientations; native recipe identity; read-only preview; unchanged sources/FE/wear; duplicate and wrong-template rejection");
-
-        for (boolean shift : List.of(false, true)) {
-            ItemStack root = MixedBootsFactory.createPair(boots("eclipsealloy", 2_000), new ItemStack(Items.DIAMOND_BOOTS)).primary();
-            player.getInventory().clearContent();
-            var smith = menu(server, player, ItemStack.EMPTY, root, item("upgrade_stepheight"));
-            var preview = output(smith).copy();
-            if (shift) {
-                for (int slot = SmithingMenu.RESULT_SLOT + 1; slot < smith.slots.size(); slot++) {
-                    smith.getSlot(slot).set(new ItemStack(Items.STONE, 64));
-                }
-                require(smith.quickMoveStack(player, SmithingMenu.RESULT_SLOT).isEmpty()
-                        && ItemStack.matches(preview, output(smith)) && !smith.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty(), "Blocked take lost root result/input");
-                player.getInventory().clearContent();
-            }
-            var taken = shift ? smith.quickMoveStack(player, SmithingMenu.RESULT_SLOT) : take(smith, player);
-            require(ItemStack.matches(taken, preview) && output(smith).isEmpty()
-                    && smith.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                    && smith.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Root-only take did not consume one base/addition");
-        }
-        record("ordinary/shift-click root-only takes; full-inventory rejected take; one addition payment");
-
+    private static void configuredCreation(MinecraftServer server) throws ReflectiveOperationException {
         Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config").getField("AVAILABLE_ABILITY_MAP").get(null);
         var flag = (ModConfigSpec.BooleanValue) flags.entrySet().stream()
                 .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("JUMPBOOST")).findFirst().orElseThrow().getValue();
@@ -129,8 +75,6 @@ public final class NeoForgeJustDireRootUpgradeTest {
         ItemStack configured;
         try {
             flag.set(false);
-            var root = MixedBootsFactory.createPair(boots("ferricore", 0), new ItemStack(Items.DIAMOND_BOOTS)).primary();
-            require(output(menu(server, player, ItemStack.EMPTY, root, item("upgrade_jumpboost"))).isEmpty(), "Disabled native ability installed globally");
             var preinstalled = boots("ferricore", 0);
             preinstalled.set(flag("jumpboost"), true);
             configured = MixedBootsFactory.createPair(preinstalled, new ItemStack(Items.DIAMOND_BOOTS)).primary();
@@ -138,9 +82,45 @@ public final class NeoForgeJustDireRootUpgradeTest {
             jump(server, configured, 0);
         } finally { flag.set(previous); }
         jump(server, configured, 1);
-        var bare = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
-        require(output(menu(server, player, ItemStack.EMPTY, bare, item("upgrade_stepheight"))).isEmpty(), "Bare root installed upgrade");
-        record("disabled native config rejects installation/use, retains imported flags, restores Jump when enabled; malformed-root rejection");
+        record("disabled native config retains imported flags without enabling Jump; reenabling restores Jump");
+    }
+
+    private static void guard(MinecraftServer server, ServerPlayer player, String variant) {
+        boolean missing = variant.equals("apiMissing");
+        require(JustDireUpgradesCompatibility.available() != missing, "Root API fixture did not select its intended binding state");
+        var powered = boots("eclipsealloy", 2_000);
+        var passive = boots("ferricore", 0);
+        passive.set(flag("jumpboost"), true);
+        var pair = MixedBootsFactory.createPair(powered, passive);
+        for (var root : List.of(pair.primary(), pair.inverse())) {
+            root.set(flag("jumpboost"), true);
+            root.set(flag("negatefalldamage"), true);
+            root.setDamageValue(31);
+            var before = root.copy();
+            for (int repeat = 0; repeat < 3; repeat++) {
+                var addition = item("upgrade_stepheight");
+                var smith = menu(server, player, ItemStack.EMPTY, root.copy(), addition);
+                require(output(smith).isEmpty() && ItemStack.matches(before, smith.getSlot(SmithingMenu.BASE_SLOT).getItem())
+                        && addition.getCount() == 1, "Failed root installation fell through to source assembly or spent inputs");
+                smith.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
+                require(smith.getCarried().isEmpty() && !smith.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                        && smith.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount() == 1, "Rejected take consumed inputs");
+            }
+            require(ItemStack.matches(before, root) && JustDireResourceTestSupport.handler(root).getAmountAsInt() == 1_000,
+                    "Upgrade failure modified live FE/root state");
+            var nativeResult = output(menu(server, player, ItemStack.EMPTY, powered.copy(), item("upgrade_stepheight")));
+            require(!nativeResult.isEmpty() && installed(nativeResult, "stepheight"), "Root failure disabled native installation");
+            require(nativeResult.has(DataComponents.CUSTOM_NAME) != missing, "Recipe shape fixture did not change its native assembly");
+            var rebuilt = MixedBootsRecomposer.recompose(root, data(root).left().source(), data(root).right().source());
+            require(installed(rebuilt, "jumpboost") && installed(rebuilt, "negatefalldamage")
+                    && charge(rebuilt) == 1_000 && rebuilt.getDamageValue() == 31 && data(rebuilt).equals(data(root)),
+                    "Optional upgrade failure destroyed stored root state on rebuild");
+            jump(server, rebuilt, missing ? 0 : 1);
+            player.setItemSlot(EquipmentSlot.FEET, rebuilt);
+            require(fall(player) == (missing ? 6 : 0) && charge(rebuilt) == (missing ? 1_000 : 550),
+                    "Upgrade failure bypassed native-query permission or broke independent Negate payment");
+        }
+        record(variant + ": both orientations; repeated rejected preview/take; native assembly control; stored flags/FE/wear/provenance preserved; safe Jump/Negate permission; one bounded warning");
     }
 
     private static void lifecycle(MinecraftServer server, ServerPlayer player) {

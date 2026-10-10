@@ -414,6 +414,7 @@ public final class NeoForgeJustDireResourcesTest {
 
     private static void saveFallFixture(MinecraftServer server, BarrelBlockEntity barrel) {
         var saved = new com.google.gson.JsonArray();
+        var rootFlags = new com.google.gson.JsonArray();
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
         for (boolean inverse : List.of(false, true)) {
             ServerPlayer owner = NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL);
@@ -442,6 +443,27 @@ public final class NeoForgeJustDireResourcesTest {
                         && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty(), "Negate smithing take lost live FE/payment");
             }
             int slot = inverse ? 6 : 4;
+            var stepInstalled = JustDireAttributeTestSupport.<Boolean>component("stepheight_upgrade_installed");
+            var negateInstalled = JustDireAttributeTestSupport.<Boolean>component("negatefalldamage_upgrade_installed");
+            require(root.getOrDefault(stepInstalled, false)
+                    && !data(root).left().source().getOrDefault(stepInstalled, false)
+                    && !data(root).right().source().getOrDefault(stepInstalled, false), "Root-only Step installation altered historical source flags");
+            // Save negative live permissions beside genuinely upgraded provenance, then test a new JVM.
+            for (int state = 0; state < 2; state++) {
+                var disabled = root.copy();
+                if (state == 0) {
+                    disabled.set(stepInstalled, false); disabled.set(negateInstalled, false);
+                } else {
+                    disabled.remove(stepInstalled); disabled.remove(negateInstalled);
+                }
+                disabled = MixedBootsRecomposer.recompose(disabled, data(disabled).left().source(), data(disabled).right().source());
+                require(!disabled.getOrDefault(stepInstalled, false) && !disabled.getOrDefault(negateInstalled, false)
+                        && disabled.has(stepInstalled) == (state == 0) && disabled.has(negateInstalled) == (state == 0),
+                        "Rebuilding negative root permission reimported source upgrades");
+                barrel.setItem((inverse ? 10 : 8) + state, disabled);
+                rootFlags.add(ItemStack.CODEC.encodeStart(ops, disabled).getOrThrow());
+                cases++;
+            }
             ItemStack spent = root.copy(); barrel.setItem(slot, spent);
             saved.add(ItemStack.CODEC.encodeStart(ops, spent).getOrThrow());
             var charged = root.getAttributeModifiers();
@@ -453,6 +475,7 @@ public final class NeoForgeJustDireResourcesTest {
             cases++;
         }
         NetworkAcceptanceFiles.write("just-dire-negate-saved.json", saved.toString());
+        NetworkAcceptanceFiles.write("just-dire-root-flags-saved.json", rootFlags.toString());
     }
 
     private static void fallBalance(ServerPlayer owner, ItemStack root, double distance, int remaining, float loss) {
@@ -498,8 +521,21 @@ public final class NeoForgeJustDireResourcesTest {
             fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9,
                     index % 2 == 0 ? 2_100 : 0, index % 2 == 0 ? 0 : 6);
         }
+        var savedFlags = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
+                System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-root-flags-saved.json"))).getAsJsonArray();
+        require(savedFlags.size() == 4, "Missing false/absent root-permission restart fixtures");
+        for (int index = 0; index < savedFlags.size(); index++) {
+            ItemStack expectedFlags = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), savedFlags.get(index)).getOrThrow();
+            ItemStack loaded = barrel.getItem(index + 8);
+            require(ItemStack.matches(expectedFlags, loaded), "World restart changed false/absent root installations");
+            require(loaded.getAttributeModifiers().modifiers().stream().noneMatch(entry -> entry.attribute()
+                    .is(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT.unwrapKey().orElseThrow())),
+                    "Restart restored root-disabled Step from historical sources");
+            fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9, 2_550, 6);
+        }
         NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; "
-                + "frozen non-default attributes through depletion/recharge; four actually spent Negate roots after Workbench/smithing, both orientations; charged/empty actual falls after restart\n");
+                + "frozen non-default attributes through depletion/recharge; four actually spent Negate roots after Workbench/smithing, both orientations; "
+                + "root-only Step retained; four false/absent root Step/Negate fixtures; no historical resurrection or FE spending; charged/empty actual falls after restart\n");
     }
 
     private static ServerPlayer player(MinecraftServer server) {
