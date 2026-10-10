@@ -190,6 +190,21 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['Live', 'ApiMissing', 'UiDisabled', 'Absent'].each { variant ->
+            register("justDireSettings${variant}") {
+                client()
+                disableIdeRun()
+                gameDirectory = justDireJumpClientDirectory.get().asFile
+                programArgument('--quickPlaySingleplayer')
+                programArgument('jump')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireSettingsSpike', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireSettingsVariant', variant.uncapitalize())
+                systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+                systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -679,6 +694,50 @@ tasks.register('prepareJustDireJumpClient') {
 
 tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
 tasks.named('runJustDireGroundStompClientSpike') { dependsOn tasks.named('prepareJustDireJumpClient') }
+
+['Live', 'ApiMissing', 'UiDisabled', 'Absent'].each { variant ->
+    def prepare = tasks.register("prepareJustDireSettings${variant}") {
+        dependsOn('prepareJustDireJumpClient')
+        doLast {
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+            justDireSmithingArtifact.withInputStream { stream ->
+                byte[] buffer = new byte[8192]
+                int count
+                while ((count = stream.read(buffer)) != -1) { digest.update(buffer, 0, count) }
+            }
+            if (digest.digest().encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
+                throw new GradleException("Unexpected Just Dire Things settings fixture: ${justDireSmithingArtifact}")
+            }
+            fixtureFileOperations.delete {
+                ['report', 'success', 'failure'].each { suffix ->
+                    delete new File(justDireSmithingMarkers.get().asFile, "just-dire-settings-spike-${suffix}.txt")
+                }
+                if (variant == 'Absent') {
+                    delete new File(justDireJumpClientDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")
+                }
+            }
+        }
+    }
+    tasks.named("runJustDireSettings${variant}") { dependsOn(prepare) }
+    tasks.register("verifyJustDireSettings${variant == 'Live' ? 'Spike' : variant}") {
+        group = 'verification'
+        description = "Runs test-only native JDT settings-screen ${variant} feasibility with real menu transport."
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            def log = fixtureBuildDirectory.file("reports/just-dire-settings-spike/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireSettings${variant}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-settings-spike-failure.txt')
+            def success = new File(directory, 'just-dire-settings-spike-success.txt')
+            def report = new File(directory, 'just-dire-settings-spike-report.txt')
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+                throw new GradleException("Native settings ${variant} spike failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
 
 tasks.register('verifyJustDireGroundStompClientSpike') {
     group = 'verification'

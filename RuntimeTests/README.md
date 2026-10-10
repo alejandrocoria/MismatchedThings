@@ -664,6 +664,48 @@ recomposition preservation is test-only, not actual smithing/restart acceptance.
 Details and the separate armor-tag/Unbreaking finding are in
 [phase B](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#9-spike-phase-b--mixed-server-action-and-cooldown).
 
+## Just Dire Things native settings-screen spike (8.5 UI proof)
+
+Prepare the existing disposable server world once if it is missing, then run
+the isolated client gates sequentially:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSettingsSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSettingsApiMissing :RuntimeTests:NeoForge:verifyJustDireSettingsUiDisabled :RuntimeTests:NeoForge:verifyJustDireSettingsAbsent --console=plain
+```
+
+Repeat the client gates with `"-Pneoforge_version=26.1.2.99"`, then restore the
+normal loader. Preparation verifies the pinned JDT hash and resets only build
+fixtures/markers, not development-client mods or worlds. The absent variant
+omits JDT from its copied client. Reports and process logs are versioned under
+`RuntimeTests/NeoForge/build/reports/just-dire-settings-spike/<version>/`.
+
+One opt-in client mixin adapts the existing native screen's item/ability/value
+queries and mixed edit callbacks. It neither copies the layout nor adds tool
+interfaces to the mixed item. Native widgets configure root Ground Stomp through
+a fixture-only selection token/menu/root-identity protocol with real transport.
+Both orientations, endpoints, particles, G/Escape binding capture, reopening,
+native originals, zero FE, mixed-tier metadata, false/absent installed flags and
+invalid/obsolete/duplicated edits are checked; source snapshots must stay intact.
+
+`ApiMissing` is an explicit unavailable-query seam; `UiDisabled` disables the
+fixture mixin and mixed route. These are not competing-transformer/ABI guard
+acceptance. `Absent` exercises startup/root creation without the optional mod.
+Input is synthetic mouse movement and native widget/key callbacks in a hidden,
+muted client, not physical input or manual visual acceptance.
+
+The fixture now opens through synthetic native settings-key consumption, with
+empty hands/inventory and then equipped mixed boots without a held item. A small
+independent production mixin returns no internal inventory for an empty stack,
+avoiding the confirmed native `ItemAccess.forStack` failure on both sides.
+Non-empty stacks keep native capability queries; native original controls remain
+the regression control. Client/server refresh checks also retain the Pocket
+Generator's actual internal slots and clear them when refreshed to EMPTY.
+Broader settings/input semantics and active gameplay still need their
+decision/implementation gates. Exact evidence and limits are in the
+[UI proof record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#106-executable-native-screen-proof).
+
 ## Vanilla armor classification
 
 ```powershell
