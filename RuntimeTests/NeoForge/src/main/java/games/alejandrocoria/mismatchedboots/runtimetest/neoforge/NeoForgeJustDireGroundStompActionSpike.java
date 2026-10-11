@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/** Disposable server action prototype. No client protocol, production hook or accepted provider policy. */
+/** Disposable server action prototype, also reused by the input proof; no production hook or accepted provider policy. */
 final class NeoForgeJustDireGroundStompActionSpike {
     private static final String PREFIX = "just-dire-ground-stomp-action-spike";
     private static final Set<ServerPlayer> executing = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -250,6 +250,11 @@ final class NeoForgeJustDireGroundStompActionSpike {
     }
 
     /** Test-only ordering candidate: preflight -> exact FE bill -> cooldown -> wear -> effects, no post-commit catch. */
+    static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key) throws ReflectiveOperationException {
+        // The connection proof has one eligible powered provider; the two candidate policies agree.
+        return activate(player, root, expected, key, false, false, Fault.NONE);
+    }
+
     private static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key, boolean mouse, boolean fixed, Fault fault)
             throws ReflectiveOperationException {
         if (!executing.add(player)) { return false; }
@@ -297,7 +302,7 @@ final class NeoForgeJustDireGroundStompActionSpike {
         } finally { executing.remove(player); }
     }
 
-    private static void tickRoot(ServerPlayer player, ItemStack root) throws ReflectiveOperationException {
+    static void tickRoot(ServerPlayer player, ItemStack root) throws ReflectiveOperationException {
         if (!equipped(player, root)) { return; }
         var next = new ArrayList<Object>();
         boolean changed = false;

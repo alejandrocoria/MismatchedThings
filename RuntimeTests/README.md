@@ -706,6 +706,39 @@ Broader settings/input semantics and active gameplay still need their
 decision/implementation gates. Exact evidence and limits are in the
 [UI proof record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#106-executable-native-screen-proof).
 
+## Just Dire Things UI-to-keyboard action spike (8.5 connection proof)
+
+Reuse the native-screen disposable world preparation above, then run:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompInputSpike --console=plain
+```
+
+Repeat with `"-Pneoforge_version=26.1.2.99"`, sequentially, then restore the normal
+loader. Preparation checks the same pinned JDT hash, copies only build fixtures
+and resets separate connection markers. Reports/process logs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-input-spike/<version>/`.
+
+This opt-in run reuses native widgets to set root Ground Stomp strength and
+capture/remove G in both Eclipse Alloy + diamond orientations. After closing
+the menu, a synthetic NeoForge key event uses real prepare/acknowledge and
+activation/result transport to phase B's existing mixed action and cooldown
+tick. Actual world target motion, exactly one 5,000 FE root bill, cooldown 200,
+normal expiry, client state synchronization and immutable sources are asserted.
+Root replacement, removed bindings, open menus, superseded/duplicate/replayed
+requests, invalid device/key and an explicit unavailable-route seam reject.
+Delayed cases hold genuine prepared packets rather than fabricate permission.
+Native originals retain native input/payment; the independent UI and unadapted
+client gates remain regression controls.
+
+The UUID activation permit is separate from the menu selection token and bound
+to the actual player/equipped root/current snapshot/request. This is test-only,
+keyboard/equipped-only and one-provider evidence, not a production protocol,
+physical/manual UX acceptance or arbitrary ABI/mixin readiness. Restart,
+tier-smithing, conflicting providers and full mouse/inventory semantics remain
+separate gates. See the
+[connection record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#11-native-ui-to-mixed-keyboard-action--bounded-connection-proof).
+
 ## Vanilla armor classification
 
 ```powershell

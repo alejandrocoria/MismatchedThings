@@ -8,7 +8,9 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientResourceLoadFinishedEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @Mod("mismatchedboots_runtime_test")
@@ -16,6 +18,11 @@ public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireSettingsSpike")) {
             eventBus.addListener(JustDireSettingsSpikeNetwork::register);
+        }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompInputSpike")) {
+            eventBus.addListener(JustDireGroundStompSpikeNetwork::register);
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> JustDireGroundStompSpikeNetwork.tick(event.getServer()));
+            NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> JustDireGroundStompSpikeNetwork.clear());
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompSpike")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike")) {
@@ -48,6 +55,9 @@ public final class NeoForgeRuntimeTest {
                     (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
         }
         if (FMLEnvironment.getDist().isClient()) {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompInputSpike")) {
+                NeoForge.EVENT_BUS.addListener((InputEvent.Key event) -> JustDireGroundStompSpikeInput.key(event));
+            }
             if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireSettingsSpike")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
                         NeoForgeJustDireSettingsScreenSpike.tick(Minecraft.getInstance()));

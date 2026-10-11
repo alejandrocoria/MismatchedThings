@@ -205,6 +205,19 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        justDireGroundStompInputSpike {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireSettingsSpike', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompInputSpike', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -736,6 +749,36 @@ tasks.named('runJustDireGroundStompClientSpike') { dependsOn tasks.named('prepar
             new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
             logger.lifecycle(report.text)
         }
+    }
+}
+
+tasks.register('prepareJustDireGroundStompInputSpike') {
+    dependsOn('prepareJustDireSettingsLive')
+    doLast {
+        fixtureFileOperations.delete {
+            ['report', 'success', 'failure'].each { suffix ->
+                delete new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-input-spike-${suffix}.txt")
+            }
+        }
+    }
+}
+tasks.named('runJustDireGroundStompInputSpike') { dependsOn('prepareJustDireGroundStompInputSpike') }
+tasks.register('verifyJustDireGroundStompInputSpike') {
+    group = 'verification'
+    description = 'Connects native JDT widget-assigned mixed keyboard bindings to one-use server action permits.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-input-spike/${neoforge_version}/process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireGroundStompInputSpike', log, 300)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-ground-stomp-input-spike-failure.txt')
+        def success = new File(directory, 'just-dire-ground-stomp-input-spike-success.txt')
+        def report = new File(directory, 'just-dire-ground-stomp-input-spike-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Ground Stomp input spike failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
     }
 }
 

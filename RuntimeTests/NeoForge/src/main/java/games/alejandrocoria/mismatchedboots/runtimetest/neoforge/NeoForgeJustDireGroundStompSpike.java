@@ -65,17 +65,7 @@ public final class NeoForgeJustDireGroundStompSpike {
         boolean actionSpike = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike");
         try {
             require(warmup < 200, "Fixture chunk/entities never became ticking");
-            abilityType = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
-            toolType = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
-            stomp = abilityType.getField("GROUNDSTOMP").get(null);
-            action = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.AbilityMethods")
-                    .getMethod("groundstomp", Level.class, net.minecraft.world.entity.player.Player.class, ItemStack.class);
-            canUse = toolType.getMethod("canUseAbilityAndDurability", ItemStack.class, abilityType);
-            value = toolType.getMethod("getToolValue", ItemStack.class, String.class);
-            cooldown = toolType.getMethod("getAnyCooldown", ItemStack.class, abilityType);
-            tickCooldowns = toolType.getMethod("tickCooldowns", Level.class, ItemStack.class, net.minecraft.world.entity.player.Player.class);
-            require((int) abilityType.getMethod("getFeCost").invoke(stomp) == 5_000
-                    && (int) abilityType.getMethod("getDurabilityCost").invoke(stomp) == 25, "Native costs changed");
+            initializeApi();
             if (actionSpike) { NeoForgeJustDireGroundStompActionSpike.start(server); return; }
             nativeControls(server);
             mixedQuotesAndPayments(server);
@@ -91,6 +81,20 @@ public final class NeoForgeJustDireGroundStompSpike {
             // Phase B owns the normal-tick lifecycle handoff and releases the same ticket on exit.
             if (!actionSpike) { server.overworld().setChunkForced(0, 0, false); server.halt(false); }
         }
+    }
+
+    static void initializeApi() throws ReflectiveOperationException {
+        abilityType = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
+        toolType = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
+        stomp = abilityType.getField("GROUNDSTOMP").get(null);
+        action = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.AbilityMethods")
+                .getMethod("groundstomp", Level.class, net.minecraft.world.entity.player.Player.class, ItemStack.class);
+        canUse = toolType.getMethod("canUseAbilityAndDurability", ItemStack.class, abilityType);
+        value = toolType.getMethod("getToolValue", ItemStack.class, String.class);
+        cooldown = toolType.getMethod("getAnyCooldown", ItemStack.class, abilityType);
+        tickCooldowns = toolType.getMethod("tickCooldowns", Level.class, ItemStack.class, net.minecraft.world.entity.player.Player.class);
+        require((int) abilityType.getMethod("getFeCost").invoke(stomp) == 5_000
+                && (int) abilityType.getMethod("getDurabilityCost").invoke(stomp) == 25, "Native costs changed");
     }
 
     private static void nativeControls(MinecraftServer server) throws ReflectiveOperationException {

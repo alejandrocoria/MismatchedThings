@@ -16,25 +16,34 @@ import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.gui.widget.ExtendedSlider;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-/** Real native screen/widgets and mixed wire edits; no active-ability implementation or manual UX claim. */
+/** Real native screen/widgets, with an optional input/action connection; no production or manual UX claim. */
 final class NeoForgeJustDireSettingsScreenSpike {
+    private static final boolean INPUT = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompInputSpike");
+    private static final String PREFIX = INPUT ? "just-dire-ground-stomp-input-spike" : "just-dire-settings-spike";
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
     private static boolean initialized;
@@ -47,6 +56,10 @@ final class NeoForgeJustDireSettingsScreenSpike {
     private static MixedBootsData sources;
     private static int pending;
     private static JustDireSettingsSpikeNetwork.Request delayed;
+    private static int actionSequence;
+    private static JustDireGroundStompSpikeNetwork.Activate actionPacket;
+    private static JustDireGroundStompSpikeNetwork.Activate heldAction;
+    private static JustDireGroundStompSpikeNetwork.Activate oldAction;
 
     private NeoForgeJustDireSettingsScreenSpike() {}
 
@@ -65,8 +78,10 @@ final class NeoForgeJustDireSettingsScreenSpike {
             }
             var step = steps.peek();
             if (step == null) {
-                NetworkAcceptanceFiles.write("just-dire-settings-spike-report.txt", report + "test-only; native widgets/callbacks, synthetic mouse movement/key events and real packets; no physical/manual acceptance or mixed activation\n");
-                NetworkAcceptanceFiles.write("just-dire-settings-spike-success.txt", "neoforge\n");
+                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + (INPUT
+                        ? "test-only native UI -> synthetic event-bus key -> real mixed permits/action/ticking; no physical/manual, production, restart or smithing acceptance\n"
+                        : "test-only; native widgets/callbacks, synthetic mouse movement/key events and real packets; no physical/manual acceptance or mixed activation\n"));
+                NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
                 finished = true;
             } else if (!started) {
                 step.start.run(); started = true; wait = 0;
@@ -74,7 +89,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
                 report.append(step.name).append('\n'); steps.remove(); started = false;
             } else if (++wait > 600) { throw new AssertionError("Timed out: " + step.name + "; reply=" + JustDireSettingsSpikeClient.lastReply); }
         } catch (Throwable failure) {
-            NetworkAcceptanceFiles.failure("just-dire-settings-spike", new AssertionError("Step: " + (steps.peek() == null ? "finish" : steps.peek().name), failure));
+            NetworkAcceptanceFiles.failure(PREFIX, new AssertionError("Step: " + (steps.peek() == null ? "finish" : steps.peek().name), failure));
             finished = true;
         }
         if (finished) { client.stop(); }
@@ -124,6 +139,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
                     ++JustDireSettingsSpikeClient.selection, ++JustDireSettingsSpikeClient.request, 0, 0, "", 0, -1, false, true));
             close(client); return;
         }
+        if (INPUT) { input(client); return; }
         for (boolean inverse : new boolean[]{false, true}) {
             setup(client, true, inverse); open(client);
             reject(client, "edit without acknowledged selection rejects", () -> new JustDireSettingsSpikeNetwork.Request(
@@ -221,12 +237,210 @@ final class NeoForgeJustDireSettingsScreenSpike {
         close(client);
     }
 
+    private static void input(Minecraft client) {
+        for (boolean inverse : new boolean[]{false, true}) {
+            setup(client, true, inverse, false, 30_000);
+            open(client); select(client, 36);
+            edit(client, "native slider lower endpoint before action strength", () -> slider(client).setValue(1),
+                    () -> rootValue(client, "groundstomp_value") == 1);
+            edit(client, "UI strength 5 becomes the live action parameter", () -> slider(client).setValue(5),
+                    () -> rootValue(client, "groundstomp_value") == 5);
+            reveal(client); assignKey(client, GLFW.GLFW_KEY_G);
+            add("open GUI suppresses the mixed keyboard listener", () -> {
+                int count = JustDireGroundStompSpikeInput.sequence; key(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
+                require(count == JustDireGroundStompSpikeInput.sequence, "GUI dispatched mixed input");
+            });
+            rejectPreparation(client, "server rejects forged preparation while native menu is open",
+                    () -> new JustDireGroundStompSpikeNetwork.Prepare(++JustDireGroundStompSpikeInput.sequence, 71, false));
+            close(client);
+            add("prepare a real visible world target", () -> server(client, () -> {
+                try { NeoForgeJustDireGroundStompSpike.initializeApi(); }
+                catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+                var player = owner(client);
+                var mob = EntityType.ZOMBIE.create(player.level(), EntitySpawnReason.COMMAND);
+                require(mob != null, "Missing input target");
+                mob.setNoAi(true); mob.setNoGravity(true); mob.setInvulnerable(true);
+                mob.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
+                JustDireGroundStompSpikeNetwork.observedTarget = mob;
+                positionTarget(client);
+                require(player.level().addFreshEntity(mob)
+                        && player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, mob.getBoundingBox()).contains(mob),
+                        "Target is not visible to the actual action query");
+            }));
+            add("wrong key, release and repeat emit no mixed request", () -> {
+                int count = JustDireGroundStompSpikeInput.sequence;
+                key(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS); key(GLFW.GLFW_KEY_G, GLFW.GLFW_RELEASE); key(GLFW.GLFW_KEY_G, GLFW.GLFW_REPEAT);
+                require(count == JustDireGroundStompSpikeInput.sequence, "Unsupported input dispatched");
+            });
+            activation(client, "menu selection token is not an action permit", () -> sendAction(
+                    new JustDireGroundStompSpikeNetwork.Activate(JustDireGroundStompSpikeInput.sequence,
+                            new UUID(0, JustDireSettingsSpikeClient.token), 71, false)), false);
+            if (!inverse) {
+                rejectPreparation(client, "wire rejects mouse preparation", () ->
+                        new JustDireGroundStompSpikeNetwork.Prepare(++JustDireGroundStompSpikeInput.sequence, 71, true));
+                rejectPreparation(client, "wire rejects invalid keyboard value", () ->
+                        new JustDireGroundStompSpikeNetwork.Prepare(++JustDireGroundStompSpikeInput.sequence, -2, false));
+                prepareHeld(client, "genuine key preparation held for equal-root replacement");
+                add("replace equipped root with an equal copy", () -> server(client, () -> {
+                    var player = owner(client); player.setItemSlot(EquipmentSlot.FEET, player.getItemBySlot(EquipmentSlot.FEET).copy());
+                    player.inventoryMenu.broadcastChanges();
+                }));
+                activation(client, "equal root replacement rejects held activation", () -> sendAction(heldAction), false);
+                prepareHeld(client, "genuine key preparation held for native UI binding removal");
+                open(client); select(client, 36); reveal(client); assignKey(client, GLFW.GLFW_KEY_ESCAPE);
+                close(client);
+                activation(client, "UI binding removal invalidates the pending activation", () -> sendAction(heldAction), false);
+                add("removed native UI binding stops normal client dispatch", () -> {
+                    int count = JustDireGroundStompSpikeInput.sequence; key(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
+                    require(count == JustDireGroundStompSpikeInput.sequence, "Removed binding dispatched");
+                });
+                rejectPreparation(client, "removed binding rejects forged preparation", () ->
+                        new JustDireGroundStompSpikeNetwork.Prepare(++JustDireGroundStompSpikeInput.sequence, 71, false));
+                open(client); select(client, 36); reveal(client); assignKey(client, GLFW.GLFW_KEY_G); close(client);
+                add("disable only the prototype action route", () -> server(client, () -> JustDireGroundStompSpikeNetwork.available = false));
+                rejectPreparation(client, "unavailable route rejects a genuine configured key", () -> {
+                    press(); return null; // The listener, not the fixture, sends this request.
+                });
+                add("restore the prototype action route", () -> server(client, () -> JustDireGroundStompSpikeNetwork.available = true));
+            }
+            add("enable immediate prepared delivery", () -> JustDireGroundStompSpikeInput.deferActivation = false);
+            activation(client, "mixed " + inverse + ": UI-assigned G causes motion 5, one 5000 FE bill and cooldown 200", NeoForgeJustDireSettingsScreenSpike::press, true);
+            add("retain the exact genuine activation packet", () -> oldAction = actionPacket);
+            activation(client, "immediate duplicate activation rejects unchanged", () -> sendAction(oldAction), false);
+            rejectPreparation(client, "fresh configured key rejects during cooldown", () -> { press(); return null; });
+            add("normal equipped ticks expire the live root cooldown", () -> {},
+                    () -> NeoForgeJustDireGroundStompSpike.timer(client.player.getItemBySlot(EquipmentSlot.FEET)) == -1);
+            activation(client, "replay still rejects after cooldown expiry", () -> sendAction(oldAction), false);
+            rejectPreparation(client, "old preparation sequence cannot mint another permit", () ->
+                    new JustDireGroundStompSpikeNetwork.Prepare(oldAction.sequence(), 71, false));
+            if (!inverse) {
+                prepareHeld(client, "first fresh prepared activation");
+                add("retain superseded prepared activation", () -> oldAction = heldAction);
+                prepareHeld(client, "newer configured key supersedes the old permit");
+                activation(client, "superseded permit rejects before effects/payment", () -> sendAction(oldAction), false);
+                activation(client, "latest genuine permit pays and applies the action once", () -> sendAction(heldAction), true);
+            } else {
+                activation(client, "fresh configured key after expiry pays and applies once", NeoForgeJustDireSettingsScreenSpike::press, true);
+            }
+            add("discard only the disposable effect target", () -> server(client, () -> {
+                JustDireGroundStompSpikeNetwork.observedTarget.discard(); JustDireGroundStompSpikeNetwork.observedTarget = null;
+            }));
+        }
+        add("native original retains its own key/packet path with no mixed prepare", () -> server(client, () -> {
+            var player = owner(client); player.getInventory().clearContent();
+            var boot = NeoForgeJustDireGroundStompSpike.boots("eclipsealloy", 6_000);
+            JustDireAttributeTestSupport.set(boot, "groundstomp_bindingmode", 2);
+            try {
+                var type = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityBinding");
+                JustDireAttributeTestSupport.set(boot, "ability_bindings", java.util.List.of(
+                        type.getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance("groundstomp", 71, false, true)));
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+            player.setItemSlot(EquipmentSlot.FEET, boot); player.inventoryMenu.broadcastChanges();
+        }), () -> !JustDireSettingsSpikeSupport.mixed(client.player.getItemBySlot(EquipmentSlot.FEET))
+                && charge(client.player.getItemBySlot(EquipmentSlot.FEET)) == 6_000);
+        add("native G uses native billing and cooldown without our input channel", () -> {
+            JustDireGroundStompSpikeInput.deferActivation = false;
+            int count = JustDireGroundStompSpikeInput.sequence; key(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
+            require(count == JustDireGroundStompSpikeInput.sequence, "Native original entered mixed channel");
+        }, () -> charge(client.player.getItemBySlot(EquipmentSlot.FEET)) == 1_000
+                && NeoForgeJustDireGroundStompSpike.timer(client.player.getItemBySlot(EquipmentSlot.FEET)) > 0);
+        add("native server original was billed exactly once", () -> server(client, () ->
+                require(charge(owner(client).getItemBySlot(EquipmentSlot.FEET)) == 1_000, "Native original double bill")));
+    }
+
+    private static void assignKey(Minecraft client, int key) {
+        edit(client, key == GLFW.GLFW_KEY_ESCAPE ? "native Escape removes the live binding" : "native capture assigns equipped keyboard G", () -> {
+            click((Button) map(client, "bindingButtons").get(icon(client)), 0);
+            require(client.screen.keyPressed(new KeyEvent(key, 0, 0)), "Native capture ignored key");
+        }, () -> boundKey(client) == (key == GLFW.GLFW_KEY_ESCAPE ? -1 : key));
+    }
+    private static void key(int key, int action) { NeoForge.EVENT_BUS.post(new InputEvent.Key(new KeyEvent(key, 0, 0), action)); }
+    private static void press() {
+        actionSequence = JustDireGroundStompSpikeInput.sequence + 1; key(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
+        require(JustDireGroundStompSpikeInput.sequence == actionSequence, "Configured key did not dispatch preparation");
+    }
+    private static void sendAction(JustDireGroundStompSpikeNetwork.Activate packet) {
+        actionPacket = packet; actionSequence = packet.sequence(); ClientPacketDistributor.sendToServer(packet);
+    }
+    private static void resetTarget(Minecraft client) { add("reset disposable target before the next request", () -> server(client, () -> positionTarget(client))); }
+    private static void positionTarget(Minecraft client) {
+        var target = JustDireGroundStompSpikeNetwork.observedTarget;
+        if (target == null) { return; }
+        var player = owner(client);
+        double offset = (player.getX() - Math.floor(player.getX() / 16) * 16) < 14 ? 2 : -2;
+        target.setPos(player.getX() + offset, player.getY(), player.getZ()); target.setDeltaMovement(Vec3.ZERO);
+    }
+    private static void prepareHeld(Minecraft client, String name) {
+        resetTarget(client);
+        add(name, () -> { JustDireGroundStompSpikeInput.deferActivation = true; press(); }, () -> {
+            var prepared = JustDireGroundStompSpikeInput.lastPrepared;
+            if (prepared == null || prepared.sequence() != actionSequence) { return false; }
+            require(!prepared.nonce().equals(JustDireGroundStompSpikeNetwork.NONE) && JustDireGroundStompSpikeInput.lastActivation != null,
+                    "Actual key did not obtain a permit");
+            heldAction = JustDireGroundStompSpikeInput.lastActivation; return true;
+        });
+    }
+    private static void rejectPreparation(Minecraft client, String name, Supplier<JustDireGroundStompSpikeNetwork.Prepare> request) {
+        resetTarget(client);
+        add(name, () -> {
+            before = client.player.getItemBySlot(EquipmentSlot.FEET).copy(); JustDireGroundStompSpikeInput.lastPrepared = null;
+            var packet = request.get();
+            if (packet != null) { actionSequence = packet.sequence(); ClientPacketDistributor.sendToServer(packet); }
+        }, () -> {
+            var reply = JustDireGroundStompSpikeInput.lastPrepared;
+            if (reply == null || reply.sequence() != actionSequence) { return false; }
+            require(reply.nonce().equals(JustDireGroundStompSpikeNetwork.NONE), "Rejected preparation issued a permit");
+            require(charge(before) == charge(client.player.getItemBySlot(EquipmentSlot.FEET)), "Preparation billed root");
+            server(client, () -> {
+                require(charge(before) == charge(owner(client).getItemBySlot(EquipmentSlot.FEET)), "Rejected preparation billed server root");
+                var target = JustDireGroundStompSpikeNetwork.observedTarget;
+                require(target == null || target.getDeltaMovement().horizontalDistance() == 0, "Rejected preparation applied an effect");
+            });
+            return true;
+        });
+    }
+    private static void activation(Minecraft client, String name, Action trigger, boolean accepted) {
+        resetTarget(client);
+        add(name, () -> {
+            before = client.player.getItemBySlot(EquipmentSlot.FEET).copy();
+            JustDireGroundStompSpikeInput.result = null; actionPacket = null; trigger.run();
+        }, () -> {
+            var result = JustDireGroundStompSpikeInput.result;
+            if (result == null || result.sequence() != actionSequence) { return false; }
+            if (actionPacket == null) { actionPacket = JustDireGroundStompSpikeInput.lastActivation; }
+            var observed = JustDireGroundStompSpikeNetwork.observation;
+            require(actionPacket != null && result.nonce().equals(actionPacket.nonce()) && observed != null
+                    && observed.packet().equals(actionPacket) && observed.accepted() == accepted && result.accepted() == accepted,
+                    "Unexpected action receipt/observation: " + result);
+            require(charge(observed.before()) == charge(before) && observed.before().getDamageValue() == before.getDamageValue(),
+                    "Input/preparation performed an extra bill before activation");
+            if (accepted) {
+                require(charge(observed.after()) == charge(observed.before()) - 5_000 && observed.cooldown() == 200
+                        && observed.motionBefore() == 0 && Math.abs(observed.motionAfter() - 5) < .0001
+                        && observed.before().getDamageValue() == observed.after().getDamageValue(), "Effect/single bill/timer mismatch: " + observed);
+            } else {
+                require(ItemStack.matches(observed.before(), observed.after()) && observed.motionBefore() == observed.motionAfter(),
+                        "Rejected activation changed root or target");
+            }
+            var root = client.player.getItemBySlot(EquipmentSlot.FEET);
+            require(charge(root) == charge(observed.after()) && root.getDamageValue() == observed.after().getDamageValue()
+                    && sources.equals(ModContent.getMixedBootsData(root).orElseThrow())
+                    && sources.equals(ModContent.getMixedBootsData(observed.after()).orElseThrow()), "Client billing/source synchronization mismatch");
+            if (accepted) { require(NeoForgeJustDireGroundStompSpike.timer(root) > 0, "Client did not receive root cooldown"); }
+            return true;
+        });
+    }
+    private static int charge(ItemStack root) { return root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0); }
+
     private static void setup(Minecraft client, boolean mixed, boolean inverse) {
         setup(client, mixed, inverse, false);
     }
     private static void setup(Minecraft client, boolean mixed, boolean inverse, boolean pairedTier) {
+        setup(client, mixed, inverse, pairedTier, 0);
+    }
+    private static void setup(Minecraft client, boolean mixed, boolean inverse, boolean pairedTier, int sourceCharge) {
         add("prepare " + (mixed ? "mixed " + inverse : "native original"), () -> {
-            var boot = NeoForgeJustDireGroundStompSpike.boots("eclipsealloy", 0);
+            var boot = NeoForgeJustDireGroundStompSpike.boots("eclipsealloy", sourceCharge);
             JustDireAttributeTestSupport.set(boot, "groundstomp_value", 3);
             var other = pairedTier ? NeoForgeJustDireGroundStompSpike.boots("blazegold", 0) : new ItemStack(Items.DIAMOND_BOOTS);
             var pair = mixed ? MixedBootsFactory.createPair(boot, other) : null;
