@@ -43,7 +43,9 @@ import java.util.function.Supplier;
 /** Real native screen/widgets, with an optional input/action connection; no production or manual UX claim. */
 final class NeoForgeJustDireSettingsScreenSpike {
     private static final boolean INPUT = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompInputSpike");
-    private static final String PREFIX = INPUT ? "just-dire-ground-stomp-input-spike" : "just-dire-settings-spike";
+    private static final String LIFECYCLE = JustDireGroundStompLifecycleSpike.MODE;
+    private static final String PREFIX = !LIFECYCLE.isEmpty() ? "just-dire-ground-stomp-lifecycle-" + LIFECYCLE
+            : INPUT ? "just-dire-ground-stomp-input-spike" : "just-dire-settings-spike";
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
     private static boolean initialized;
@@ -57,6 +59,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
     private static int pending;
     private static JustDireSettingsSpikeNetwork.Request delayed;
     private static int actionSequence;
+    private static int pauseTick;
     private static JustDireGroundStompSpikeNetwork.Activate actionPacket;
     private static JustDireGroundStompSpikeNetwork.Activate heldAction;
     private static JustDireGroundStompSpikeNetwork.Activate oldAction;
@@ -78,7 +81,8 @@ final class NeoForgeJustDireSettingsScreenSpike {
             }
             var step = steps.peek();
             if (step == null) {
-                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + (INPUT
+                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + (!LIFECYCLE.isEmpty()
+                        ? "test-only real world restart/native tier smithing with explicit preservation seam; synthetic UI/input/real transport; no production/manual acceptance\n" : INPUT
                         ? "test-only native UI -> synthetic event-bus key -> real mixed permits/action/ticking; no physical/manual, production, restart or smithing acceptance\n"
                         : "test-only; native widgets/callbacks, synthetic mouse movement/key events and real packets; no physical/manual acceptance or mixed activation\n"));
                 NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
@@ -110,6 +114,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
             key.setKey(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_O));
             KeyMapping.resetMapping();
         });
+        if (!LIFECYCLE.isEmpty()) { lifecycle(client); return; }
         add("prepare empty hands and inventory without any native or mixed tool", () -> server(client, () -> {
             var player = owner(client); player.getInventory().clearContent(); player.inventoryMenu.broadcastChanges();
         }), () -> client.player.getInventory().isEmpty());
@@ -253,20 +258,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
             rejectPreparation(client, "server rejects forged preparation while native menu is open",
                     () -> new JustDireGroundStompSpikeNetwork.Prepare(++JustDireGroundStompSpikeInput.sequence, 71, false));
             close(client);
-            add("prepare a real visible world target", () -> server(client, () -> {
-                try { NeoForgeJustDireGroundStompSpike.initializeApi(); }
-                catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
-                var player = owner(client);
-                var mob = EntityType.ZOMBIE.create(player.level(), EntitySpawnReason.COMMAND);
-                require(mob != null, "Missing input target");
-                mob.setNoAi(true); mob.setNoGravity(true); mob.setInvulnerable(true);
-                mob.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
-                JustDireGroundStompSpikeNetwork.observedTarget = mob;
-                positionTarget(client);
-                require(player.level().addFreshEntity(mob)
-                        && player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, mob.getBoundingBox()).contains(mob),
-                        "Target is not visible to the actual action query");
-            }));
+            prepareTarget(client);
             add("wrong key, release and repeat emit no mixed request", () -> {
                 int count = JustDireGroundStompSpikeInput.sequence;
                 key(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS); key(GLFW.GLFW_KEY_G, GLFW.GLFW_RELEASE); key(GLFW.GLFW_KEY_G, GLFW.GLFW_REPEAT);
@@ -400,6 +392,9 @@ final class NeoForgeJustDireSettingsScreenSpike {
         });
     }
     private static void activation(Minecraft client, String name, Action trigger, boolean accepted) {
+        activation(client, name, trigger, accepted, 5);
+    }
+    private static void activation(Minecraft client, String name, Action trigger, boolean accepted, double strength) {
         resetTarget(client);
         add(name, () -> {
             before = client.player.getItemBySlot(EquipmentSlot.FEET).copy();
@@ -416,7 +411,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
                     "Input/preparation performed an extra bill before activation");
             if (accepted) {
                 require(charge(observed.after()) == charge(observed.before()) - 5_000 && observed.cooldown() == 200
-                        && observed.motionBefore() == 0 && Math.abs(observed.motionAfter() - 5) < .0001
+                        && observed.motionBefore() == 0 && Math.abs(observed.motionAfter() - strength) < .0001
                         && observed.before().getDamageValue() == observed.after().getDamageValue(), "Effect/single bill/timer mismatch: " + observed);
             } else {
                 require(ItemStack.matches(observed.before(), observed.after()) && observed.motionBefore() == observed.motionAfter(),
@@ -432,6 +427,124 @@ final class NeoForgeJustDireSettingsScreenSpike {
     }
     private static int charge(ItemStack root) { return root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0); }
 
+    private static void prepareTarget(Minecraft client) {
+        add("prepare a real visible world target", () -> server(client, () -> {
+            try { NeoForgeJustDireGroundStompSpike.initializeApi(); }
+            catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+            var player = owner(client);
+            var mob = EntityType.ZOMBIE.create(player.level(), EntitySpawnReason.COMMAND);
+            require(mob != null, "Missing input target");
+            mob.setNoAi(true); mob.setNoGravity(true); mob.setInvulnerable(true);
+            mob.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
+            JustDireGroundStompSpikeNetwork.observedTarget = mob;
+            positionTarget(client);
+            require(player.level().addFreshEntity(mob)
+                    && player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, mob.getBoundingBox()).contains(mob),
+                    "Target is not visible to the actual action query");
+        }));
+    }
+
+    private static void lifecycle(Minecraft client) {
+        if (LIFECYCLE.equals("restart")) {
+            add("load disk roots in a new JVM without rebuilding/replacing the world", () -> server(client, () -> {
+                try {
+                    NeoForgeJustDireGroundStompSpike.initializeApi();
+                    JustDireGroundStompLifecycleSpike.verifyDisk(owner(client));
+                } catch (Exception failure) { throw new AssertionError(failure); }
+            }));
+        } else { require(LIFECYCLE.equals("save"), "Unknown lifecycle mode"); }
+        for (int orientation = 0; orientation < 2; orientation++) {
+            int slot = orientation;
+            if (LIFECYCLE.equals("save")) {
+                setup(client, true, slot == 1, false, 10_000, "celestigem");
+                add("seed full valid root FE and ordinary wear for lifecycle observation", () -> server(client, () -> {
+                    var player = owner(client);
+                    player.getItemBySlot(EquipmentSlot.FEET).set(JustDireResourceTestSupport.energyComponent(), 10_000);
+                    player.getItemBySlot(EquipmentSlot.FEET).setDamageValue(31);
+                    player.inventoryMenu.broadcastChanges();
+                }), () -> charge(client.player.getItemBySlot(EquipmentSlot.FEET)) == 10_000
+                        && client.player.getItemBySlot(EquipmentSlot.FEET).getDamageValue() == 31);
+                open(client); select(client, 36);
+                edit(client, "native UI lower strength before persisted setting", () -> slider(client).setValue(1),
+                        () -> rootValue(client, "groundstomp_value") == 1);
+                edit(client, "native UI strength 3 is the persisted live control", () -> slider(client).setValue(3),
+                        () -> rootValue(client, "groundstomp_value") == 3);
+                reveal(client);
+                edit(client, "native particle control is persisted independently of source history",
+                        () -> click((Button) map(client, "customSettingsButtons").get(icon(client)), 0),
+                        () -> rootValue(client, "groundstomp_custom_setting") == 1);
+                assignKey(client, GLFW.GLFW_KEY_G); close(client);
+                prepareTarget(client);
+                activation(client, "configured Celestigem orientation " + slot + " spends once before world save",
+                        NeoForgeJustDireSettingsScreenSpike::press, true, 3);
+                add("unequip and store the actual spent root/timer in the world", () -> server(client, () -> {
+                    var player = owner(client);
+                    var root = player.getItemBySlot(EquipmentSlot.FEET);
+                    try { require(NeoForgeJustDireGroundStompSpike.timer(root) > 0 && charge(root) == 5_000, "No live spent timer to save"); }
+                    catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+                    player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                    JustDireGroundStompLifecycleSpike.save(player, slot, root, actionPacket);
+                    JustDireGroundStompSpikeNetwork.observedTarget.discard();
+                    JustDireGroundStompSpikeNetwork.observedTarget = null;
+                    player.inventoryMenu.broadcastChanges();
+                }), () -> client.player.getItemBySlot(EquipmentSlot.FEET).isEmpty());
+            } else {
+                add("equip disk-loaded orientation " + slot + " with its remaining timer", () -> {
+                    oldAction = JustDireGroundStompLifecycleSpike.oldPacket(slot);
+                    server(client, () -> {
+                        var player = owner(client); player.getInventory().clearContent();
+                        var root = JustDireGroundStompLifecycleSpike.storage(player, false).removeItemNoUpdate(slot);
+                        sources = ModContent.getMixedBootsData(root).orElseThrow();
+                        player.setItemSlot(EquipmentSlot.FEET, root);
+                        player.inventoryMenu.broadcastChanges();
+                    });
+                }, () -> ModContent.getMixedBootsData(client.player.getItemBySlot(EquipmentSlot.FEET)).isPresent()
+                        && charge(client.player.getItemBySlot(EquipmentSlot.FEET)) == 5_000);
+                prepareTarget(client);
+                rejectPreparation(client, "saved positive cooldown still blocks a genuine configured G", () -> { press(); return null; });
+                add("pause worn cooldown and exercise actual tier preview/take plus preservation boundaries", () -> server(client, () -> {
+                    try {
+                        var player = owner(client); var root = player.getItemBySlot(EquipmentSlot.FEET);
+                        require(NeoForgeJustDireGroundStompSpike.timer(root) > 0, "Timer expired before smithing");
+                        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                        report.append("orientation ").append(slot).append(": ")
+                                .append(JustDireGroundStompLifecycleSpike.boundaryMatrix(player, root)).append('\n');
+                        player.getInventory().clearContent();
+                        var upgraded = JustDireGroundStompLifecycleSpike.smithing(player, root, slot == 1, true);
+                        player.getInventory().clearContent();
+                        sources = ModContent.getMixedBootsData(upgraded).orElseThrow();
+                        player.setItemSlot(EquipmentSlot.FEET, upgraded);
+                        player.inventoryMenu.broadcastChanges();
+                    } catch (Exception failure) { throw new AssertionError(failure); }
+                }), () -> JustDireResourceTestSupport.handler(client.player.getItemBySlot(EquipmentSlot.FEET)).getCapacityAsInt() == 500_000);
+                open(client); select(client, 36);
+                add("native screen displays the preserved binding and strength after tier upgrade", () ->
+                        require(boundKey(client) == 71 && slider(client).getValueInt() == 3, "Tier UI reset live controls"));
+                close(client);
+                activation(client, "old JVM permit cannot activate the upgraded root", () -> sendAction(oldAction), false);
+                add("re-equipped saved cooldown expires naturally instead of resetting", () -> {},
+                        () -> NeoForgeJustDireGroundStompSpike.timer(client.player.getItemBySlot(EquipmentSlot.FEET)) == -1);
+                activation(client, "old JVM replay still rejects after saved cooldown expiry", () -> sendAction(oldAction), false);
+                activation(client, "fresh persisted G uses upgraded boots, unchanged strength and one root bill",
+                        NeoForgeJustDireSettingsScreenSpike::press, true, 3);
+                add("discard only the disposable effect target", () -> server(client, () -> {
+                    JustDireGroundStompSpikeNetwork.observedTarget.discard(); JustDireGroundStompSpikeNetwork.observedTarget = null;
+                }));
+            }
+        }
+        if (LIFECYCLE.equals("save")) {
+            add("stored unequipped cooldowns pause through ten normal server ticks",
+                    () -> server(client, () -> pauseTick = client.getSingleplayerServer().getTickCount()), () -> {
+                if (client.getSingleplayerServer().getTickCount() - pauseTick < 10) { return false; }
+                server(client, () -> {
+                    try { JustDireGroundStompLifecycleSpike.verifyDisk(owner(client)); }
+                    catch (Exception failure) { throw new AssertionError(failure); }
+                });
+                return true;
+            });
+        }
+    }
+
     private static void setup(Minecraft client, boolean mixed, boolean inverse) {
         setup(client, mixed, inverse, false);
     }
@@ -439,8 +552,11 @@ final class NeoForgeJustDireSettingsScreenSpike {
         setup(client, mixed, inverse, pairedTier, 0);
     }
     private static void setup(Minecraft client, boolean mixed, boolean inverse, boolean pairedTier, int sourceCharge) {
+        setup(client, mixed, inverse, pairedTier, sourceCharge, "eclipsealloy");
+    }
+    private static void setup(Minecraft client, boolean mixed, boolean inverse, boolean pairedTier, int sourceCharge, String tier) {
         add("prepare " + (mixed ? "mixed " + inverse : "native original"), () -> {
-            var boot = NeoForgeJustDireGroundStompSpike.boots("eclipsealloy", sourceCharge);
+            var boot = NeoForgeJustDireGroundStompSpike.boots(tier, sourceCharge);
             JustDireAttributeTestSupport.set(boot, "groundstomp_value", 3);
             var other = pairedTier ? NeoForgeJustDireGroundStompSpike.boots("blazegold", 0) : new ItemStack(Items.DIAMOND_BOOTS);
             var pair = mixed ? MixedBootsFactory.createPair(boot, other) : null;

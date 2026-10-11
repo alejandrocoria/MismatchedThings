@@ -734,10 +734,45 @@ client gates remain regression controls.
 The UUID activation permit is separate from the menu selection token and bound
 to the actual player/equipped root/current snapshot/request. This is test-only,
 keyboard/equipped-only and one-provider evidence, not a production protocol,
-physical/manual UX acceptance or arbitrary ABI/mixin readiness. Restart,
-tier-smithing, conflicting providers and full mouse/inventory semantics remain
-separate gates. See the
+physical/manual UX acceptance or arbitrary ABI/mixin readiness. The lifecycle
+gate below separately covers restart/tier-smithing; conflicting providers and
+full mouse/inventory semantics remain owner decisions. See the
 [connection record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#11-native-ui-to-mixed-keyboard-action--bounded-connection-proof).
+
+## Just Dire Things Ground Stomp lifecycle spike (8.5 restart/smithing)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycleSpike --console=plain
+```
+
+Reuse the UI gate's disposable server-world prerequisite. This task runs two
+hidden/muted client JVMs sequentially. Save preparation checks the pinned JDT
+artifact and copies the build-only world; restart opens that exact saved world
+without copying/resetting it. Each fresh full run clears its own markers and
+checks cleanup. Reports/process logs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-lifecycle/<version>/`.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
+
+Native widgets configure both Celestigem + diamond orientations. Real keyboard
+transport spends root FE once and starts cooldowns; the actual spent roots are
+unequipped and stored in a world barrel. A second JVM compares full disk-loaded
+stacks with saved expectations, retains bindings/strength/particles/FE/wear and
+checks the paused cooldowns, then re-equips and upgrades through native
+Celestigem-to-Eclipse recipes using actual smithing previews and ordinary/
+shift-click takes. Inputs, one template/addition/base, the untouched vanilla
+source, changed native source and live root resource balance are checked.
+Normal equipped ticks expire the preserved timers; old-JVM activation packets
+reject before/after expiry, and a fresh persisted G applies strength 3 with one
+5,000 FE bill and a new cooldown.
+
+One opt-in recomposition mixin calls the existing four-component preservation
+candidate only inside explicitly bounded adapted recipe/query cases. Unadapted
+recipe controls are reported separately; current native recipes can retain the
+same fields without the seam. Equal historical values, explicit absence,
+unrelated binding/active timer records and a deliberately changed projection
+exercise root authority. This is not a production preservation hook, general
+recipe/network/UI contract, cooldown-import choice or physical/manual acceptance.
+See the [lifecycle record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#12-restart-and-real-tier-smithing--bounded-lifecycle-proof).
 
 ## Vanilla armor classification
 

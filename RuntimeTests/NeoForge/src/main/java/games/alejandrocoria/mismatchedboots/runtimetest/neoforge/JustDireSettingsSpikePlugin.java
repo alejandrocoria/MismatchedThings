@@ -7,9 +7,12 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
-/** Explicit opt-in, optional client-only experiment. No production mixin is changed. */
+/** Explicit opt-in native-screen/lifecycle experiments. No production mixin is changed. */
 public final class JustDireSettingsSpikePlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("JustDireActivePreservationSpikeMixin")) {
+            return !System.getProperty("mismatchedboots.runtimetest.justDireGroundStompLifecycle", "").isEmpty();
+        }
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireSettingsVariant", "live");
         return Boolean.getBoolean("mismatchedboots.runtimetest.justDireSettingsSpike")
                 && !variant.equals("uiDisabled") && !variant.equals("absent");

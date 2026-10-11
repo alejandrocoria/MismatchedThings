@@ -218,6 +218,22 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['Save', 'Restart'].each { mode ->
+            register("justDireGroundStompLifecycle${mode}") {
+                client()
+                disableIdeRun()
+                gameDirectory = justDireJumpClientDirectory.get().asFile
+                programArgument('--quickPlaySingleplayer')
+                programArgument('jump')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireSettingsSpike', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompInputSpike', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompLifecycle', mode.uncapitalize())
+                systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+                systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -779,6 +795,50 @@ tasks.register('verifyJustDireGroundStompInputSpike') {
         }
         new File(log.parentFile, 'report.txt').text = report.text
         logger.lifecycle(report.text)
+    }
+}
+
+tasks.register('prepareJustDireGroundStompLifecycle') {
+    dependsOn('prepareJustDireSettingsLive')
+    doLast {
+        def lifecycleMarkers = ['save-report.txt', 'save-success.txt', 'save-failure.txt', 'restart-report.txt',
+                'restart-success.txt', 'restart-failure.txt', 'saved.json', 'packet-0.txt', 'packet-1.txt'].collect { suffix ->
+            new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-lifecycle-${suffix}")
+        }
+        fixtureFileOperations.delete { delete lifecycleMarkers }
+        if (lifecycleMarkers.any { it.exists() }) { throw new GradleException('Lifecycle preparation retained stale markers') }
+    }
+}
+tasks.named('runJustDireGroundStompLifecycleSave') { dependsOn('prepareJustDireGroundStompLifecycle') }
+tasks.named('runJustDireGroundStompLifecycleRestart') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doFirst {
+        // No world-copy/reset preparation here: this JVM must open the preceding saved world.
+        if (!new File(justDireJumpClientDirectory.get().asFile, 'saves/jump/level.dat').isFile()
+                || !new File(justDireSmithingMarkers.get().asFile, 'just-dire-ground-stomp-lifecycle-save-success.txt').isFile()) {
+            throw new GradleException('Run the Ground Stomp lifecycle save process before restart')
+        }
+    }
+}
+tasks.register('verifyJustDireGroundStompLifecycleSpike') {
+    group = 'verification'
+    description = 'Proves native-configured Ground Stomp world restart and actual tier smithing with test-only preservation.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Save', 'Restart'].each { mode ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-lifecycle/${neoforge_version}/${mode.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompLifecycle${mode}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = "just-dire-ground-stomp-lifecycle-${mode.uncapitalize()}"
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+                throw new GradleException("Ground Stomp lifecycle ${mode} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${mode.uncapitalize()}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
     }
 }
 

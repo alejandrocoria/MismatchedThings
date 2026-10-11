@@ -4,6 +4,7 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireSettingsSpikePlugin",
   "compatibilityLevel": "JAVA_25",
+  "mixins": ["JustDireActivePreservationSpikeMixin"],
   "client": ["JustDireSettingsScreenSpikeMixin"],
   "injectors": {"defaultRequire": 1}
 }
