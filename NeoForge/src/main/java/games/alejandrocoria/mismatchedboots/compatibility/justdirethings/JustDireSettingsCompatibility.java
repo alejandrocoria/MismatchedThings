@@ -21,6 +21,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -76,13 +77,18 @@ public final class JustDireSettingsCompatibility {
 
     /** Maximum permanently supported configured tier, independent of FE and live toggles. */
     public static Metadata metadata(ItemStack root, String name) {
+        Profile profile = profile(root, name);
+        return profile == null ? null : profile.metadata;
+    }
+
+    private static Profile profile(ItemStack root, String name) {
         Api binding = api;
         if (binding == null || !mixed(root)) { return null; }
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
         if (setting == null || name.equals("groundstomp") && !JustDireGroundStompCompatibility.available()) { return null; }
         try {
             var data = ModContent.getMixedBootsData(root).orElseThrow();
-            Metadata selected = null;
+            Profile selected = null;
             for (ItemStack source : List.of(data.left().source(), data.right().source())) {
                 if (!BootHalf.isValidSource(source)) { return null; }
                 Identifier id = BuiltInRegistries.ITEM.getKey(source.getItem());
@@ -98,18 +104,20 @@ public final class JustDireSettingsCompatibility {
                 if (!toggleOnly && (min < 0 || max < min || increment <= 0 || defaults < min || defaults > max)) {
                     throw new IllegalStateException("Unsupported native mixed settings parameters");
                 }
-                if (selected == null || max > selected.maximum) { selected = new Metadata(min, max, increment, defaults); }
+                if (selected == null || max > selected.metadata.maximum) {
+                    selected = new Profile(source.getItem(), new Metadata(min, max, increment, defaults));
+                }
             }
             return api == binding ? selected : null;
         } catch (Throwable failure) { disable(binding, failure); return null; }
     }
 
-    static boolean mixed(ItemStack root) {
+    public static boolean mixed(ItemStack root) {
         return !root.isEmpty() && root.getCount() == 1 && root.getItem() instanceof MixedBootsItem
                 && ModContent.getMixedBootsData(root).isPresent();
     }
 
-    static boolean keyboardBinding(ItemStack root, int key) {
+    public static boolean keyboardBinding(ItemStack root, int key) {
         Api binding = api;
         if (binding == null || !mixed(root) || key < 32 || key > 348 || root.getOrDefault(binding.mode, 0) != 2) { return false; }
         try {
@@ -122,6 +130,45 @@ public final class JustDireSettingsCompatibility {
     }
 
     static int particles(ItemStack root) { Api binding = api; return binding == null ? -1 : root.getOrDefault(binding.particles, 0); }
+
+    /** UI-only admission identity; never replace the selected inventory stack with this item. */
+    public static Item metadataItem(ItemStack root) {
+        for (String name : List.of("groundstomp", "stepheight", "jumpboost", "negatefalldamage")) {
+            Profile profile = profile(root, name);
+            if (profile != null) { return profile.item; }
+        }
+        return null;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static EnumSet<?> screenAbilities(ItemStack root) {
+        Api binding = api;
+        if (binding == null) { return null; }
+        EnumSet result = EnumSet.noneOf(((Enum) binding.settings.getFirst().ability).getDeclaringClass());
+        for (Setting setting : binding.settings) {
+            if (metadata(root, setting.name) != null) { result.add((Enum) setting.ability); }
+        }
+        return api == binding ? result : null;
+    }
+
+    /** Each native widget needs its own strongest eligible tier, not the admission item's tier. */
+    public static Object screenParameters(ItemStack root, Object ability) {
+        Api binding = api;
+        if (binding == null) { return null; }
+        Setting setting = binding.settings.stream().filter(candidate -> candidate.ability == ability).findFirst().orElse(null);
+        Profile profile = setting == null ? null : profile(root, setting.name);
+        if (profile == null || api != binding) { return null; }
+        try { return binding.params.invokeExact(profile.item, ability); }
+        catch (Throwable failure) { disable(binding, failure); return null; }
+    }
+
+    public static int screenValue(ItemStack root, String name) {
+        Api binding = api;
+        Metadata metadata = metadata(root, name);
+        if (binding == null || metadata == null) { return 0; }
+        Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElseThrow();
+        return Math.clamp(root.getOrDefault(setting.value, metadata.defaultValue), metadata.minimum, metadata.maximum);
+    }
 
     /** Prepare on a copy and publish once only after all optional reads and validation succeed. */
     static boolean edit(ItemStack root, JustDireActiveNetwork.SettingsRequest request) {
@@ -210,6 +257,7 @@ public final class JustDireSettingsCompatibility {
     }
     private record Setting(String name, Object ability, DataComponentType<Boolean> installed,
                            DataComponentType<Boolean> toggle, DataComponentType<Integer> value) {}
+    private record Profile(Item item, Metadata metadata) {}
     private record Api(Class<?> menu, Class<?> tool, List<Setting> settings, MethodHandle abilities, MethodHandle params,
                        MethodHandle minimum, MethodHandle maximum, MethodHandle increment, MethodHandle defaultValue,
                        MethodHandle name, MethodHandle key, MethodHandle mouse, MethodHandle equipped, MethodHandle create,

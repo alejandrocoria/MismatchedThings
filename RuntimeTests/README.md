@@ -616,14 +616,13 @@ Final-export unit cases must run immediately after a normal
 
 ## Just Dire Things Ground Stomp spike (8.5, phase A)
 
-Run sequentially, server first to prepare the disposable world:
+Historical foundation server probe (production gates below supersede mixed behavior):
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompClientSpike --console=plain
 ```
 
-Repeat both with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 The opt-in fixtures reuse pinned-JDT server preparation, shared markers and the
 existing hidden/muted quick-play client preparation. They reset disposable
 fixture worlds, not the owner's client. Reports are versioned under
@@ -633,9 +632,10 @@ The 14 server groups measure native effects/costs/timers and compare test-only
 mixed quotes, FE rollback/stale identity/Binding Curse access, actual FEET
 durability breakage, recomposition equality/absence, codecs and timer writes.
 Native handler calls use a synchronous fixture context, not network transport.
-The client separately probes the actual native key-event/server-packet debit,
-native settings menu transport/controls, and unsupported mixed input/selection.
-Input is posted through the client event bus, not a physical/manual acceptance.
+The old unadapted client fixture was retired in block C: mixed rejection is no
+longer a correct expectation. Its native input/menu controls are covered by the
+production client gate below. Historical reports remain evidence, not a command
+to rerun against the current bridge.
 
 No mixed effect dispatcher, UI, packet bridge, production tick hook or new
 fixture mixin is implemented. Explicit active-data preservation is test-only;
@@ -798,6 +798,34 @@ historical input/lifecycle listener no longer ticks worn roots a second time;
 remaining action/UI prototypes are pending block D consolidation. Three focused
 codec units cover wire identity/preferences, trailing data and bounded strings.
 See [the block B record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#8-block-b--server-action-timers-and-transport).
+
+## Just Dire Things production native screen/input (8.5 block C)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompClient --console=plain
+```
+
+Requires the disposable server world prepared by the B server gate. Six
+sequential hidden/muted client JVMs cover live production, high/low compatible
+native getter wrappers, lost required callbacks, missing settings API and quiet
+absence. Native widgets/capture use production callbacks and transport; no
+prototype listener or replacement reply handler is installed. Both mixed
+orientations cover supported controls and per-ability ranges, rapid edits,
+global Toggle Tool (capture takes priority), particles, keyboard assignment and
+Escape removal, disabled mode/inventory controls, GUI/release/repeat/wrong-key
+and imported unsupported preference denial, fallback/recharge and one action
+bill, unchanged sources, tool switches and selected-slot removal. Originals,
+empty-hand menu and internal-slot refresh remain native controls.
+
+Reports/process logs and the live final screen export are retained under
+`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/`.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
+The final-export unit uses
+`-PjustDireSettingsTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/ToolSettingScreen.class`;
+native entry units use the existing `justDireGuardJar` opt-in.
+Synthetic event-bus input is not a physical/manual acceptance. Block D owns
+consolidated restart/reconnect and the ordinary-client handoff; see
+[the C record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#9-block-c--native-settings-and-equipped-keyboard).
 
 ## Just Dire Things Ground Stomp lifecycle spike (8.5 restart/smithing)
 

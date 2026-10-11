@@ -41,8 +41,8 @@ public final class NeoForgeRuntimeTest {
             NeoForgeJustDireResourcesGuardTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesTest")) {
             NeoForgeJustDireResourcesTest.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")
-                || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientSpike")
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")
+                || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireSettingsSpike")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
@@ -63,14 +63,13 @@ public final class NeoForgeRuntimeTest {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompInputSpike")) {
                 NeoForge.EVENT_BUS.addListener((InputEvent.Key event) -> JustDireGroundStompSpikeInput.key(event));
             }
-            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")) {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompClientTest.tick(Minecraft.getInstance()));
+            } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompTransportTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireSettingsSpike")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
                         NeoForgeJustDireSettingsScreenSpike.tick(Minecraft.getInstance()));
-            } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientSpike")) {
-                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        NeoForgeJustDireGroundStompClientSpike.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
                         NeoForgeJustDireResourcesClientTest.tick(Minecraft.getInstance()));

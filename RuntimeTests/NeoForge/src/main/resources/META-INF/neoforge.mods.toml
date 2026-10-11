@@ -37,6 +37,9 @@ license="MIT"
 [[mixins]]
     config="mismatchedboots-just-dire-ground-stomp-server-tests.mixins.json"
 
+[[mixins]]
+    config="mismatchedboots-just-dire-settings-client-tests.mixins.json"
+
 [[dependencies.mismatchedboots_runtime_test]]
     modId="neoforge"
     type="required"
