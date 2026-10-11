@@ -95,6 +95,10 @@ public final class JustDireUpgradesCompatibility {
             preserve(previous, output, ability + "_value");
         }
         preserve(previous, output, "tool_enabled");
+        // Live active state is never source-owned again, even when equal to an old projection.
+        for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting", "ability_cooldowns")) {
+            preserve(previous, output, path);
+        }
     }
 
     private static void preserve(ItemStack previous, ItemStack output, String path) {

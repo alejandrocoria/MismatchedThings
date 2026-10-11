@@ -258,19 +258,17 @@ public final class NeoForgeJustDireGroundStompSpike {
                 if (!java.util.Objects.equals(root.get(type), replaced.get(type))) { changed.add(path); }
             }
             require(ItemStack.matches(before, root) && data.equals(ModContent.getMixedBootsData(root).orElseThrow()), "Recomposition mutated root or snapshots");
-            preserveActiveSettings(root, replaced);
             for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting", "ability_cooldowns")) {
                 DataComponentType<Object> type = JustDireAttributeTestSupport.component(path);
-                require(java.util.Objects.equals(root.get(type), replaced.get(type)), "Test-only preservation failed " + path);
+                require(java.util.Objects.equals(root.get(type), replaced.get(type)), "Production preservation failed " + path);
                 root.remove(type);
             }
             var absent = MixedBootsRecomposer.recompose(root, other, source);
-            preserveActiveSettings(root, absent);
             for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting", "ability_cooldowns")) {
-                require(!absent.has(JustDireAttributeTestSupport.component(path)), "Test-only preservation reimported absent " + path);
+                require(!absent.has(JustDireAttributeTestSupport.component(path)), "Production preservation reimported absent " + path);
             }
-            record("native require-equipped matcher rejects mixed FEET; local root matcher accepts only actual FEET/key/device; codec roundtrip; current generic recomposition changed="
-                    + changed + "; test-only override preserves current/equal/absent active data");
+            record("native require-equipped matcher rejects mixed FEET; local root matcher accepts only actual FEET/key/device; codec roundtrip; production recomposition changed="
+                    + changed + "; production preserves current/equal/absent active data");
         }
         var nativeTimer = boots("blazegold", 0);
         toolType.getMethod("addCooldown", ItemStack.class, abilityType, int.class, boolean.class).invoke(null, nativeTimer, stomp, 2, false);
@@ -338,14 +336,6 @@ public final class NeoForgeJustDireGroundStompSpike {
                     && (boolean) type.getMethod("isMouse").invoke(binding) == mouse) { return true; }
         }
         return false;
-    }
-
-    static void preserveActiveSettings(ItemStack previous, ItemStack output) {
-        for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting", "ability_cooldowns")) {
-            DataComponentType<Object> type = JustDireAttributeTestSupport.component(path);
-            output.remove(type);
-            if (previous.has(type)) { output.set(type, previous.get(type)); }
-        }
     }
 
     /** Query-only native views. The two policies are candidates, not production behavior. */

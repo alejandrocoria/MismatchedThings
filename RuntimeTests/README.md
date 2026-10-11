@@ -739,6 +739,33 @@ gate below separately covers restart/tier-smithing; conflicting providers and
 full mouse/inventory semantics remain owner decisions. See the
 [connection record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#11-native-ui-to-mixed-keyboard-action--bounded-connection-proof).
 
+## Just Dire Things Ground Stomp production state (8.5 block A)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompState --console=plain
+```
+
+Uses the pinned JDT artifact and disposable server preparation from the smithing
+gate. Runs production state/query acceptance plus opt-in missing-API, failing-
+query and absent-mod variants sequentially; reports and process logs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-state/<version>/`.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
+
+Actual Workbench previews and normal/shift-click inverse takes check maximum
+eligible Ground Stomp cooldown import, independent records and unchanged inputs.
+Both orientations cover strongest-usable effective-value quotes, deterministic
+tier ties, root-only authorization/controls, native defaults, FE/durability
+thresholds, depletion fallback, dormant tiers and config disabling. Real tier
+smithing and changed-projection recomposition retain live equal/absent fields,
+unrelated records, spent FE and wear through production finalization.
+
+Typed active/negative Ground Stomp timers remain stored and deny queries with
+one bounded diagnostic, not conversion/reset. Failure variants deny read-only
+quotes without poisoning installation/storage or registry-only preservation;
+absence is quiet. This gate implements no action, payment, tick, UI or input
+and claims no ordinary-client active-gameplay acceptance. See
+[the block A record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#7-block-a--implementation-and-validation).
+
 ## Just Dire Things Ground Stomp lifecycle spike (8.5 restart/smithing)
 
 ```powershell
@@ -765,13 +792,12 @@ Normal equipped ticks expire the preserved timers; old-JVM activation packets
 reject before/after expiry, and a fresh persisted G applies strength 3 with one
 5,000 FE bill and a new cooldown.
 
-One opt-in recomposition mixin calls the existing four-component preservation
-candidate only inside explicitly bounded adapted recipe/query cases. Unadapted
-recipe controls are reported separately; current native recipes can retain the
-same fields without the seam. Equal historical values, explicit absence,
-unrelated binding/active timer records and a deliberately changed projection
-exercise root authority. This is not a production preservation hook, general
-recipe/network/UI contract, cooldown-import choice or physical/manual acceptance.
+Block A replaced the candidate preservation mixin with production lifecycle
+finalization. Equal historical values, explicit absence, unrelated binding/active
+timer records and deliberately changed projections now exercise production root
+authority without a fixture restoration seam. Action, timer ticking and native
+UI/input remain test-only here, not production or physical/manual acceptance.
+The new production-state gate separately owns timer-import/provider acceptance.
 See the [lifecycle record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#12-restart-and-real-tier-smithing--bounded-lifecycle-proof).
 
 ## Vanilla armor classification

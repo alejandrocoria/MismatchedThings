@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.platform;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
@@ -19,6 +20,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     public void finalizeMixedBootsCreation(ItemStack output, AttributeRuleSet attributes) {
         JustDireUpgradesCompatibility.initializeUpgrades(output);
         JustDireResourcesCompatibility.initializeCharge(output);
+        JustDireGroundStompCompatibility.initializeCooldown(output);
         JustDireAttributesCompatibility.prepare(null, output, attributes);
     }
 

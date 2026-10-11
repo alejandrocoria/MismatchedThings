@@ -23,23 +23,16 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
-/** World/container and native-recipe proof. The preservation seam is never packaged for production. */
+/** World/container and native-recipe proof using production preservation; action/UI remain test-only. */
 public final class JustDireGroundStompLifecycleSpike {
     private static final BlockPos STORAGE = new BlockPos(0, 80, 0);
     private static final List<String> ACTIVE = List.of("ability_bindings", "groundstomp_bindingmode",
             "groundstomp_custom_setting", "ability_cooldowns");
     static final String MODE = System.getProperty("mismatchedboots.runtimetest.justDireGroundStompLifecycle", "");
-    private static boolean preserve;
     private static final JsonArray saved = new JsonArray();
     private static final String PREFIX = "just-dire-ground-stomp-lifecycle";
 
     private JustDireGroundStompLifecycleSpike() {}
-
-    public static void preserve(ItemStack previous, ItemStack output) {
-        if (preserve && ModContent.getMixedBootsData(previous).isPresent()) {
-            NeoForgeJustDireGroundStompSpike.preserveActiveSettings(previous, output);
-        }
-    }
 
     static BarrelBlockEntity storage(ServerPlayer player, boolean create) {
         player.level().getChunk(STORAGE);
@@ -75,51 +68,46 @@ public final class JustDireGroundStompLifecycleSpike {
                 java.util.UUID.fromString(lines.get(1)), 71, false);
     }
 
-    static ItemStack smithing(ServerPlayer player, ItemStack root, boolean quick, boolean adapted) {
-        require(!preserve, "Preservation seam leaked beyond the preceding recipe");
+    static ItemStack smithing(ServerPlayer player, ItemStack root, boolean quick) {
         var before = root.copy();
         var menu = new SmithingMenu(1, player.getInventory(), ContainerLevelAccess.create(player.level(), STORAGE));
         var template = nativeItem("template_eclipsealloy");
         var addition = nativeItem("eclipsealloy_ingot");
-        preserve = adapted;
-        try {
-            menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(template.copy());
-            menu.getSlot(SmithingMenu.BASE_SLOT).set(root.copy());
-            menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(addition.copy());
-            var preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
-            require(!preview.isEmpty(), "Native tier recipe produced no mixed preview");
-            require(ItemStack.matches(before, root) && ItemStack.matches(before, menu.getSlot(SmithingMenu.BASE_SLOT).getItem()),
-                    "Smithing preview mutated input/history");
-            var originalData = ModContent.getMixedBootsData(before).orElseThrow();
-            var outputData = ModContent.getMixedBootsData(preview).orElseThrow();
-            boolean left = originalData.left().source().is(nativeItem("celestigem_boots").getItem());
-            require((left ? outputData.left().source() : outputData.right().source()).is(nativeItem("eclipsealloy_boots").getItem())
-                    && ItemStack.matches(left ? originalData.right().source() : originalData.left().source(),
-                    left ? outputData.right().source() : outputData.left().source()), "Tier recipe transformed the wrong source");
-            require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
-                    .intValue() == before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).intValue()
-                    && preview.getDamageValue() == Math.min(before.getDamageValue(), preview.getMaxDamage()),
-                    "Tier preview refilled root resources/wear: FE " + before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
-                            + " -> " + preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
-                            + ", damage " + before.getDamageValue() + " -> " + preview.getDamageValue()
-                            + ", new maximum " + preview.getMaxDamage());
-            if (adapted) { sameActive(before, preview); }
-            menu.clicked(SmithingMenu.RESULT_SLOT, 0, quick ? ContainerInput.QUICK_MOVE : ContainerInput.PICKUP, player);
-            var taken = quick ? player.getInventory().getNonEquipmentItems().stream()
-                    .filter(stack -> ItemStack.matches(preview, stack)).findFirst().orElseThrow().copy() : menu.getCarried().copy();
-            require(ItemStack.matches(preview, taken) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                    && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
-                    && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Tier take/result/one-input consumption mismatch");
-            require(ItemStack.matches(before, root), "Tier take mutated the old root");
-            return taken;
-        } finally { preserve = false; }
+        menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(template.copy());
+        menu.getSlot(SmithingMenu.BASE_SLOT).set(root.copy());
+        menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(addition.copy());
+        var preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
+        require(!preview.isEmpty(), "Native tier recipe produced no mixed preview");
+        require(ItemStack.matches(before, root) && ItemStack.matches(before, menu.getSlot(SmithingMenu.BASE_SLOT).getItem()),
+                "Smithing preview mutated input/history");
+        var originalData = ModContent.getMixedBootsData(before).orElseThrow();
+        var outputData = ModContent.getMixedBootsData(preview).orElseThrow();
+        boolean left = originalData.left().source().is(nativeItem("celestigem_boots").getItem());
+        require((left ? outputData.left().source() : outputData.right().source()).is(nativeItem("eclipsealloy_boots").getItem())
+                && ItemStack.matches(left ? originalData.right().source() : originalData.left().source(),
+                left ? outputData.right().source() : outputData.left().source()), "Tier recipe transformed the wrong source");
+        require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                .intValue() == before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).intValue()
+                && preview.getDamageValue() == Math.min(before.getDamageValue(), preview.getMaxDamage()),
+                "Tier preview refilled root resources/wear: FE " + before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                        + " -> " + preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                        + ", damage " + before.getDamageValue() + " -> " + preview.getDamageValue()
+                        + ", new maximum " + preview.getMaxDamage());
+        sameActive(before, preview);
+        menu.clicked(SmithingMenu.RESULT_SLOT, 0, quick ? ContainerInput.QUICK_MOVE : ContainerInput.PICKUP, player);
+        var taken = quick ? player.getInventory().getNonEquipmentItems().stream()
+                .filter(stack -> ItemStack.matches(preview, stack)).findFirst().orElseThrow().copy() : menu.getCarried().copy();
+        require(ItemStack.matches(preview, taken) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
+                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Tier take/result/one-input consumption mismatch");
+        require(ItemStack.matches(before, root), "Tier take mutated the old root");
+        return taken;
     }
 
     static String boundaryMatrix(ServerPlayer player, ItemStack live) throws Exception {
-        // The native recipe itself owns whether active source components are carried across tiers.
-        // Compare it without a preservation seam; do not assume every real recipe resets them.
+        // This now exercises production preservation, not the retired candidate RETURN mixin.
         player.getInventory().clearContent();
-        var baseline = smithing(player, live, false, false);
+        var baseline = smithing(player, live, false);
         StringBuilder changed = new StringBuilder();
         for (String name : ACTIVE) {
             var component = JustDireAttributeTestSupport.component(name);
@@ -145,7 +133,7 @@ public final class JustDireGroundStompLifecycleSpike {
                 if (!absent && owner.has(component)) { root.set(component, owner.get(component)); }
             }
             player.getInventory().clearContent();
-            sameActive(root, smithing(player, root, absent, true));
+            sameActive(root, smithing(player, root, absent));
             // Deliberately change the replacement projection; a recipe may happen to retain
             // all fields, which alone would not exercise the root/projection equality hazard.
             var replacement = data.left().source();
@@ -157,13 +145,7 @@ public final class JustDireGroundStompLifecycleSpike {
             replacement.set(JustDireAttributeTestSupport.component("ability_cooldowns"),
                     List.of(Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityCooldown")
                             .getConstructor(String.class, int.class, boolean.class).newInstance("groundstomp", 17, false)));
-            var unadapted = MixedBootsRecomposer.recompose(root, replacement, data.right().source());
-            require(ACTIVE.stream().anyMatch(name -> !Objects.equals(root.get(JustDireAttributeTestSupport.component(name)),
-                    unadapted.get(JustDireAttributeTestSupport.component(name)))), "Changed projection did not exercise the preservation boundary");
-            preserve = true;
-            try {
-                sameActive(root, MixedBootsRecomposer.recompose(root, replacement, data.right().source()));
-            } finally { preserve = false; }
+            sameActive(root, MixedBootsRecomposer.recompose(root, replacement, data.right().source()));
         }
         var unrelated = live.copy();
         var timers = new java.util.ArrayList<>(unrelated.getOrDefault(JustDireAttributeTestSupport.<List<Object>>component("ability_cooldowns"), List.of()));
@@ -175,9 +157,9 @@ public final class JustDireGroundStompLifecycleSpike {
                 .getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance("earthquake", 72, false, true));
         unrelated.set(JustDireAttributeTestSupport.component("ability_bindings"), List.copyOf(bindings));
         player.getInventory().clearContent();
-        sameActive(unrelated, smithing(player, unrelated, true, true));
-        return "native tier recipe changed active components: [" + changed + "]; adapted equal/absent and unrelated records passed; "
-                + "separate changed-projection equal/absent control requires preservation";
+        sameActive(unrelated, smithing(player, unrelated, true));
+        return "production tier recipe changed active components: [" + changed + "]; equal/absent and unrelated records passed; "
+                + "changed-projection equal/absent control preserved by production finalization";
     }
 
     private static void sameActive(ItemStack before, ItemStack after) {

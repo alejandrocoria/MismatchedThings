@@ -1,0 +1,254 @@
+package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+import games.alejandrocoria.mismatchedboots.Constants;
+import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.data.BootHalf;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+/** Creation-only timer import and read-only provider quotes; no activation, payment or tick hook. */
+public final class JustDireGroundStompCompatibility {
+    private static volatile Api api;
+    private static boolean invalidTimerWarned;
+
+    private JustDireGroundStompCompatibility() {}
+
+    public static void initialize(IEventBus bus) {
+        if (ModList.get().isLoaded("justdirethings")) { bus.addListener(JustDireGroundStompCompatibility::bind); }
+    }
+
+    public static boolean available() { return api != null; }
+
+    private static void bind(RegisterCapabilitiesEvent event) {
+        try {
+            var lookup = MethodHandles.publicLookup();
+            var tool = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
+            var ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
+            var params = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.AbilityParams");
+            var timer = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityCooldown");
+            // The native record is immutable; clone its records as well as the mutable list at import.
+            if (!timer.isRecord()) { throw new IllegalStateException("Unsupported native cooldown record"); }
+            var providers = new ArrayList<NativeProvider>();
+            for (Provider provider : Provider.values()) {
+                Item item = BuiltInRegistries.ITEM.get(id(provider.path + "_boots")).orElseThrow().value();
+                if (!tool.isInstance(item)) { throw new IllegalStateException("Unsupported Ground Stomp boot API"); }
+                providers.add(new NativeProvider(provider, item));
+            }
+            Api binding = new Api(ability.getField("GROUNDSTOMP").get(null), List.copyOf(providers),
+                    lookup.findVirtual(tool, "getAllAbilities", MethodType.methodType(java.util.EnumSet.class))
+                            .asType(MethodType.methodType(Set.class, Item.class)),
+                    lookup.findVirtual(tool, "canUseAbility", MethodType.methodType(boolean.class, ItemStack.class, ability))
+                            .asType(MethodType.methodType(boolean.class, Item.class, ItemStack.class, Object.class)),
+                    lookup.findStatic(tool, "getToolValue", MethodType.methodType(int.class, ItemStack.class, String.class)),
+                    lookup.findVirtual(tool, "getAbilityParams", MethodType.methodType(params, ability))
+                            .asType(MethodType.methodType(Object.class, Item.class, Object.class)),
+                    getter(lookup, params, "minSlider", int.class), getter(lookup, params, "maxSlider", int.class),
+                    getter(lookup, params, "defaultValue", int.class), getter(lookup, params, "cooldown", int.class),
+                    lookup.findVirtual(ability, "getFeCost", MethodType.methodType(int.class))
+                            .asType(MethodType.methodType(int.class, Object.class)),
+                    lookup.findVirtual(ability, "getDurabilityCost", MethodType.methodType(int.class))
+                            .asType(MethodType.methodType(int.class, Object.class)),
+                    lookup.findVirtual(timer, "abilityName", MethodType.methodType(String.class))
+                            .asType(MethodType.methodType(String.class, Object.class)),
+                    lookup.findVirtual(timer, "cooldownTicks", MethodType.methodType(int.class))
+                            .asType(MethodType.methodType(int.class, Object.class)),
+                    lookup.findVirtual(timer, "isactive", MethodType.methodType(boolean.class))
+                            .asType(MethodType.methodType(boolean.class, Object.class)),
+                    lookup.findConstructor(timer, MethodType.methodType(void.class, String.class, int.class, boolean.class))
+                            .asType(MethodType.methodType(Object.class, String.class, int.class, boolean.class)),
+                    component("ability_cooldowns"), scalar("groundstomp_upgrade_installed", false),
+                    scalar("tool_enabled", true), scalar("groundstomp_toggle", true), scalar("groundstomp_value", 1));
+            if (binding.timers.codec() == null || binding.timers.streamCodec() == null) {
+                throw new IllegalStateException("Unsupported native cooldown component codec");
+            }
+            Object decoded = binding.timers.codec().parse(JsonOps.INSTANCE, JsonParser.parseString(
+                    "[{\"ability_name\":\"groundstomp\",\"cooldown_ticks\":1,\"is_active\":false}]")).getOrThrow();
+            if (!(decoded instanceof List<?> records) || records.size() != 1 || !timer.isInstance(records.getFirst())) {
+                throw new IllegalStateException("Unsupported native cooldown component value");
+            }
+            api = binding;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            Constants.LOG.warn("Could not bind Just Dire Things Ground Stomp API; active compatibility disabled", failure);
+        }
+    }
+
+    public static void initializeCooldown(ItemStack output) {
+        Api binding = api;
+        if (binding == null) { return; }
+        var data = ModContent.getMixedBootsData(output).orElseThrow();
+        List<Object> imported;
+        try {
+            imported = new ArrayList<>();
+            // Preserve the ordinary owner/config projection for every unrelated ability.
+            for (Object record : output.getOrDefault(binding.timers, List.of())) {
+                if (!binding.groundStomp(record)) { imported.add(binding.copy(record)); }
+            }
+            int maximum = 0;
+            for (var source : List.of(data.left().source(), data.right().source())) {
+                if (binding.provider(source) == null || !binding.permanent(source)) { continue; }
+                for (Object record : source.getOrDefault(binding.timers, List.of())) {
+                    if (!binding.groundStomp(record)) { continue; }
+                    int ticks = (int) binding.ticks.invokeExact(record);
+                    boolean active = (boolean) binding.active.invokeExact(record);
+                    if (active || ticks < 0) {
+                        // Typed native codecs accept these shapes. Retain the lockout, not readiness
+                        // or a fabricated active-to-cooldown transition for this non-active ability.
+                        invalidTimer(); imported.add(binding.copy(record));
+                    } else { maximum = Math.max(maximum, ticks); }
+                }
+            }
+            if (maximum > 0) { imported.add(binding.create.invokeExact("groundstomp", maximum, false)); }
+        } catch (Throwable failure) { disable(binding, failure); return; }
+        if (api != binding) { return; }
+        if (imported.isEmpty() && !output.has(binding.timers)) { return; }
+        output.set(binding.timers, new ArrayList<>(imported));
+    }
+
+    /** A quote is not equipment identity or permission to commit; callers must revalidate live state. */
+    public static Quote quote(ItemStack root) {
+        if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) { return null; }
+        var data = ModContent.getMixedBootsData(root).orElse(null);
+        if (data == null) { return null; }
+        var left = data.left().source();
+        var right = data.right().source();
+        if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) { return null; }
+        Api binding = api;
+        if (binding == null) { return null; }
+        try {
+            if (!root.getOrDefault(binding.installed, false) || !root.getOrDefault(binding.enabled, true)
+                    || !root.getOrDefault(binding.toggle, true)) { return null; }
+            for (Object record : root.getOrDefault(binding.timers, List.of())) {
+                if (binding.groundStomp(record)) {
+                    if ((boolean) binding.active.invokeExact(record) || (int) binding.ticks.invokeExact(record) < 0) { invalidTimer(); }
+                    return null; // Even a zero native record must be removed by the later supported tick, not by a query.
+                }
+            }
+            Quote selected = null;
+            for (ItemStack source : List.of(left, right)) {
+                NativeProvider provider = binding.provider(source);
+                if (provider == null || !binding.permanent(source)) { continue; }
+                source.set(binding.installed, true);
+                source.set(binding.enabled, root.getOrDefault(binding.enabled, true));
+                source.set(binding.toggle, root.getOrDefault(binding.toggle, true));
+                source.remove(binding.value);
+                if (root.has(binding.value)) { source.set(binding.value, root.get(binding.value)); }
+                if (!(boolean) binding.usable.invokeExact(source.getItem(), source, binding.ability)) { continue; }
+                Object params = binding.params.invokeExact(source.getItem(), binding.ability);
+                int min = (int) binding.minimum.invokeExact(params);
+                int max = (int) binding.maximum.invokeExact(params);
+                int defaultValue = (int) binding.defaultValue.invokeExact(params);
+                int cooldown = (int) binding.cooldown.invokeExact(params);
+                int base = provider.kind.powered ? (int) binding.feCost.invokeExact(binding.ability)
+                        : (int) binding.durabilityCost.invokeExact(binding.ability);
+                if (min <= 0 || max < min || defaultValue < min || defaultValue > max || cooldown <= 0 || base <= 0) {
+                    throw new IllegalStateException("Unsupported native Ground Stomp parameters/cost");
+                }
+                if (provider.kind.powered) {
+                    var energy = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
+                    if (energy == null || energy.getAmountAsInt() < base) { continue; }
+                } else {
+                    // Native ability eligibility checks the base budget even for Unbreakable;
+                    // actual hurtAndBreak/payment exemptions belong to the later commit boundary.
+                    if ((long) root.getMaxDamage() - root.getDamageValue() < base) { continue; }
+                }
+                int strength = (int) binding.slider.invokeExact(source, "groundstomp");
+                if (strength < min || strength > max) { throw new IllegalStateException("Unsupported native Ground Stomp value"); }
+                Quote candidate = new Quote(provider.kind, strength, base, cooldown);
+                if (candidate.preferredTo(selected)) { selected = candidate; }
+            }
+            return api == binding ? selected : null;
+        } catch (Throwable failure) { disable(binding, failure); return null; }
+    }
+
+    public enum Provider {
+        ECLIPSE("eclipsealloy", true), CELESTIGEM("celestigem", true), BLAZEGOLD("blazegold", false);
+        private final String path;
+        private final boolean powered;
+        Provider(String path, boolean powered) { this.path = path; this.powered = powered; }
+        public boolean powered() { return powered; }
+    }
+
+    public record Quote(Provider provider, int strength, int baseCost, int cooldownTicks) {
+        boolean preferredTo(Quote other) {
+            return other == null || strength > other.strength
+                    || strength == other.strength && provider.ordinal() < other.provider.ordinal();
+        }
+    }
+
+    private static MethodHandle getter(MethodHandles.Lookup lookup, Class<?> owner, String field, Class<?> type)
+            throws ReflectiveOperationException {
+        return lookup.findGetter(owner, field, type).asType(MethodType.methodType(type, Object.class));
+    }
+
+    private static <T> DataComponentType<T> scalar(String path, T example) {
+        DataComponentType<T> type = component(path);
+        var json = example instanceof Boolean value ? new JsonPrimitive(value) : new JsonPrimitive((Integer) example);
+        if (type.codec() == null || !example.getClass().isInstance(type.codec().parse(JsonOps.INSTANCE, json).getOrThrow())) {
+            throw new IllegalStateException("Unsupported Ground Stomp component: " + path);
+        }
+        return type;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> DataComponentType<T> component(String path) {
+        return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(id(path)).orElseThrow().value();
+    }
+
+    private static Identifier id(String path) { return Identifier.fromNamespaceAndPath("justdirethings", path); }
+
+    private static synchronized void invalidTimer() {
+        if (!invalidTimerWarned) {
+            invalidTimerWarned = true;
+            Constants.LOG.warn("Just Dire Things Ground Stomp retained an unsupported cooldown; activation denied");
+        }
+    }
+
+    private static void disable(Api binding, Throwable failure) {
+        if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+        synchronized (JustDireGroundStompCompatibility.class) {
+            if (api == binding) {
+                api = null;
+                Constants.LOG.warn("Just Dire Things Ground Stomp queries failed; active compatibility disabled", failure);
+            }
+        }
+    }
+
+    private record NativeProvider(Provider kind, Item item) {}
+
+    private record Api(Object ability, List<NativeProvider> providers, MethodHandle allAbilities,
+                       MethodHandle usable, MethodHandle slider, MethodHandle params, MethodHandle minimum,
+                       MethodHandle maximum, MethodHandle defaultValue, MethodHandle cooldown, MethodHandle feCost,
+                       MethodHandle durabilityCost, MethodHandle name, MethodHandle ticks, MethodHandle active,
+                       MethodHandle create, DataComponentType<List<Object>> timers, DataComponentType<Boolean> installed,
+                       DataComponentType<Boolean> enabled, DataComponentType<Boolean> toggle, DataComponentType<Integer> value) {
+        NativeProvider provider(ItemStack source) {
+            return providers.stream().filter(provider -> provider.item == source.getItem()).findFirst().orElse(null);
+        }
+        boolean permanent(ItemStack source) throws Throwable {
+            return ((Set<?>) allAbilities.invokeExact(source.getItem())).contains(ability);
+        }
+        boolean groundStomp(Object record) throws Throwable { return "groundstomp".equals((String) name.invokeExact(record)); }
+        Object copy(Object record) throws Throwable {
+            return create.invokeExact((String) name.invokeExact(record), (int) ticks.invokeExact(record), (boolean) active.invokeExact(record));
+        }
+    }
+}

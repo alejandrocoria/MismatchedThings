@@ -261,6 +261,18 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.justDireGroundStompActionSpike', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            register("justDireGroundStompState${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompStateTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompStateVariant', variant ? variant.uncapitalize() : 'live')
+                jvmArgument('-Xmx1G')
+            }
+        }
         ['ApiMissing', 'RecipeChanged'].each { variant ->
             register("justDireRootUpgrades${variant}") {
                 server()
@@ -490,6 +502,47 @@ tasks.named('runJustDireSmithing') {
 tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
 tasks.named('runJustDireGroundStompSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
 tasks.named('runJustDireGroundStompActionSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
+
+['', 'ApiMissing', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireGroundStompState${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+tasks.register('prepareJustDireGroundStompStateAbsent') {
+    dependsOn tasks.named('prepareJustDireSmithing')
+    doLast {
+        def copiedArtifact = new File(justDireSmithingRunDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")
+        if (!copiedArtifact.isFile()) { throw new GradleException("Missing copied JDT artifact: ${copiedArtifact}") }
+        fixtureFileOperations.delete { delete copiedArtifact }
+    }
+}
+tasks.named('runJustDireGroundStompStateAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+
+tasks.register('verifyJustDireGroundStompState') {
+    group = 'verification'
+    description = 'Verifies production Ground Stomp timer import, root preservation and read-only strongest-usable quotes.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-state/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompState${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-ground-stomp-state-failure.txt')
+            def success = new File(directory, 'just-dire-ground-stomp-state-success.txt')
+            def report = new File(directory, 'just-dire-ground-stomp-state-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Ground Stomp API; active compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp queries failed; active compatibility disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0)
+                    || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Ground Stomp state ${label} failed: ${failure.isFile() ? failure.text : log}; binding=${bindingWarnings}, query=${queryWarnings}, timer=${timerWarnings}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
 
 
 tasks.register('verifyJustDireGroundStompActionSpike') {

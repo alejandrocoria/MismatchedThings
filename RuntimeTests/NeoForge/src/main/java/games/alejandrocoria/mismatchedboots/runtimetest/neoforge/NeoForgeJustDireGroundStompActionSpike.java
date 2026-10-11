@@ -244,8 +244,7 @@ final class NeoForgeJustDireGroundStompActionSpike {
                 && copied.get(cooldowns()).contains(unrelated), "Copy-on-write timer changed shared history or unsupported active timer");
         var sources = ModContent.getMixedBootsData(copied).orElseThrow();
         var recomposed = MixedBootsRecomposer.recompose(copied, sources.left().source(), sources.right().source());
-        NeoForgeJustDireGroundStompSpike.preserveActiveSettings(copied, recomposed);
-        require(recomposed.get(cooldowns()).equals(copied.get(cooldowns())), "Live timer reset across test-only preservation/recomposition");
+        require(recomposed.get(cooldowns()).equals(copied.get(cooldowns())), "Live timer reset across production preservation/recomposition");
         record("native addCooldown on a shallow copy mutates original list; prototype copy-on-write countdown isolates history, keeps unsupported active Earthquake untouched; test-only preservation keeps live timer through recomposition, not actual smithing/restart");
     }
 

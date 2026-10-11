@@ -24,7 +24,9 @@ public final class NeoForgeRuntimeTest {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> JustDireGroundStompSpikeNetwork.tick(event.getServer()));
             NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> JustDireGroundStompSpikeNetwork.clear());
         }
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompSpike")
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompStateTest")) {
+            NeoForgeJustDireGroundStompStateTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompSpike")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompActionSpike")) {
             NeoForgeJustDireGroundStompSpike.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireRootUpgradeTest")) {

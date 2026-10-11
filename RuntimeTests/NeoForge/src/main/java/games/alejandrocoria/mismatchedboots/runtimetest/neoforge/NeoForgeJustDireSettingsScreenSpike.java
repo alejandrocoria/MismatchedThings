@@ -82,7 +82,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
             var step = steps.peek();
             if (step == null) {
                 NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + (!LIFECYCLE.isEmpty()
-                        ? "test-only real world restart/native tier smithing with explicit preservation seam; synthetic UI/input/real transport; no production/manual acceptance\n" : INPUT
+                        ? "test-only real world restart/native tier smithing with production state preservation; synthetic UI/input/real transport; no production action/manual acceptance\n" : INPUT
                         ? "test-only native UI -> synthetic event-bus key -> real mixed permits/action/ticking; no physical/manual, production, restart or smithing acceptance\n"
                         : "test-only; native widgets/callbacks, synthetic mouse movement/key events and real packets; no physical/manual acceptance or mixed activation\n"));
                 NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
@@ -510,7 +510,7 @@ final class NeoForgeJustDireSettingsScreenSpike {
                         report.append("orientation ").append(slot).append(": ")
                                 .append(JustDireGroundStompLifecycleSpike.boundaryMatrix(player, root)).append('\n');
                         player.getInventory().clearContent();
-                        var upgraded = JustDireGroundStompLifecycleSpike.smithing(player, root, slot == 1, true);
+                        var upgraded = JustDireGroundStompLifecycleSpike.smithing(player, root, slot == 1);
                         player.getInventory().clearContent();
                         sources = ModContent.getMixedBootsData(upgraded).orElseThrow();
                         player.setItemSlot(EquipmentSlot.FEET, upgraded);
