@@ -766,6 +766,39 @@ absence is quiet. This gate implements no action, payment, tick, UI or input
 and claims no ordinary-client active-gameplay acceptance. See
 [the block A record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#7-block-a--implementation-and-validation).
 
+## Just Dire Things Ground Stomp production server (8.5 block B)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompServer :RuntimeTests:NeoForge:verifyJustDireGroundStompTransport --console=plain
+```
+
+Run sequentially: the server gate prepares the disposable world needed by the
+hidden/muted transport client. Both reuse the pinned smithing artifact. Reports
+and process logs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-server/<version>/`.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
+
+The server gate calls production permits/action/edits/timers, not the action
+spike. Eleven live groups cover native effects/AABB/multipart filtering, both
+orientations, strongest-usable/tie/fallback selection, one FE or actual durability
+bill, enchantments/exemptions/base eligibility, FEET break/reentry, identity/state/
+mutable-list changes, consumed/superseded/expired/replayed permissions, actual
+native-menu settings/passive edits and supported timer retention. Disposable
+mixins fault the real FE extraction and post-commit effect path; no production
+test switches exist. Four separate JVMs check missing action API, native query
+failure, missing settings API and absence, including exact bounded diagnostics
+and independent storage/installation readiness.
+
+The temporary client driver sends production payloads through bundled
+CommonNetworking and verifies ordinary stack synchronization, one action bill,
+natural worn/paused/disabled/depleted cooldown expiry, replay rejection after
+expiry, actual native menu open/close and token-protected root edits. It installs
+no native widget/input bridge and grants no physical/manual acceptance. The
+historical input/lifecycle listener no longer ticks worn roots a second time;
+remaining action/UI prototypes are pending block D consolidation. Three focused
+codec units cover wire identity/preferences, trailing data and bounded strings.
+See [the block B record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#8-block-b--server-action-timers-and-transport).
+
 ## Just Dire Things Ground Stomp lifecycle spike (8.5 restart/smithing)
 
 ```powershell

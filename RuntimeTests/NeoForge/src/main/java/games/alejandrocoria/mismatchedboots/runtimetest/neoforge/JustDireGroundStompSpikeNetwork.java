@@ -104,15 +104,13 @@ final class JustDireGroundStompSpikeNetwork {
     static void tick(MinecraftServer server) {
         sessions.values().removeIf(session -> server.getPlayerList().getPlayer(session.player.getUUID()) != session.player);
         if (!ModList.get().isLoaded("justdirethings")) { return; }
-        try {
-            for (var player : server.getPlayerList().getPlayers()) {
-                var root = player.getItemBySlot(EquipmentSlot.FEET);
-                var session = sessions.get(player.getUUID());
-                if (session != null && !session.nonce.equals(NONE)
-                        && (root != session.root || !ItemStack.matches(root, session.snapshot))) { session.invalidate(); }
-                if (JustDireSettingsSpikeSupport.mixed(root)) { NeoForgeJustDireGroundStompActionSpike.tickRoot(player, root); }
-            }
-        } catch (ReflectiveOperationException failure) { throw new IllegalStateException("Pinned timer API changed", failure); }
+        for (var player : server.getPlayerList().getPlayers()) {
+            var root = player.getItemBySlot(EquipmentSlot.FEET);
+            var session = sessions.get(player.getUUID());
+            if (session != null && !session.nonce.equals(NONE)
+                    && (root != session.root || !ItemStack.matches(root, session.snapshot))) { session.invalidate(); }
+            // Block B owns the worn timer now; never run the historical prototype a second time.
+        }
     }
 
     static void clear() { sessions.clear(); observedTarget = null; observation = null; initialized = false; }

@@ -1,34 +1,51 @@
 package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
 
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.entity.PartEntity;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
-/** Creation-only timer import and read-only provider quotes; no activation, payment or tick hook. */
+/** One live root owns quotes, payment and supported timers; native query copies never become wallets. */
 public final class JustDireGroundStompCompatibility {
     private static volatile Api api;
     private static boolean invalidTimerWarned;
+    private static final Set<ServerPlayer> executing = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private JustDireGroundStompCompatibility() {}
 
@@ -76,7 +93,7 @@ public final class JustDireGroundStompCompatibility {
                     lookup.findConstructor(timer, MethodType.methodType(void.class, String.class, int.class, boolean.class))
                             .asType(MethodType.methodType(Object.class, String.class, int.class, boolean.class)),
                     component("ability_cooldowns"), scalar("groundstomp_upgrade_installed", false),
-                    scalar("tool_enabled", true), scalar("groundstomp_toggle", true), scalar("groundstomp_value", 1));
+                    scalar("tool_enabled", true), scalar("groundstomp_toggle", true), scalar("groundstomp_value", 1), scalar("forge_energy", 0));
             if (binding.timers.codec() == null || binding.timers.streamCodec() == null) {
                 throw new IllegalStateException("Unsupported native cooldown component codec");
             }
@@ -179,6 +196,101 @@ public final class JustDireGroundStompCompatibility {
         } catch (Throwable failure) { disable(binding, failure); return null; }
     }
 
+    /** Internal server action boundary. Wire callers must first consume their independent activation permit. */
+    static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key) {
+        if (!executing.add(player)) { return false; }
+        try {
+            Api binding = api;
+            if (binding == null || !equipped(player, root) || !ItemStack.matches(root, expected)
+                    || player.containerMenu != player.inventoryMenu
+                    || !JustDireSettingsCompatibility.keyboardBinding(root, key)) { return false; }
+            Action action;
+            try {
+                Quote quote = quote(root);
+                if (quote == null || api != binding) { return false; }
+                int particles = JustDireSettingsCompatibility.particles(root);
+                if (particles < 0 || particles > 1) { return false; }
+                int unbreaking = root.getEnchantmentLevel(player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
+                        .getOrThrow(Enchantments.UNBREAKING));
+                if (unbreaking < 0) { return false; }
+                GameType mode = player.gameMode.getGameModeForPlayer();
+                int bill = mode == GameType.CREATIVE || mode == GameType.SPECTATOR ? 0 : quote.provider.powered
+                        ? (int) Math.max(0, quote.baseCost - quote.baseCost * Math.min(1, unbreaking * .1)) : quote.baseCost;
+                var next = new ArrayList<>(root.getOrDefault(binding.timers, List.of()));
+                next.add(binding.create.invokeExact("groundstomp", quote.cooldownTicks, false));
+                var targets = player.level().getEntitiesOfClass(Mob.class,
+                        new AABB(player.getX() - 3, player.getY() - 3, player.getZ() - 3,
+                                player.getX() + 3, player.getY() + 3, player.getZ() + 3),
+                        JustDireGroundStompCompatibility::validTarget);
+                ItemAccess access = quote.provider.powered ? ItemAccess.forStack(root) : null;
+                EnergyHandler energy = access == null ? null : access.getCapability(Capabilities.Energy.ITEM);
+                var afterDebit = expected.copy();
+                if (quote.provider.powered) {
+                    if (energy == null || energy.getAmountAsInt() < quote.baseCost) { return false; }
+                    afterDebit.set(binding.energy, energy.getAmountAsInt() - bill);
+                }
+                action = new Action(quote, bill, particles, List.copyOf(next), targets, access, energy, afterDebit);
+            } catch (Throwable failure) { disable(binding, failure); return false; }
+            if (api != binding || !equipped(player, root) || !ItemStack.matches(root, expected)) { return false; }
+            // Native groundstomp returns false even after success. It is not a commit receipt:
+            // reuse its read-only queries, but pay this root and mutate the world here exactly once.
+            // No failure catch crosses extraction/commit, break callbacks or world effects.
+            if (action.quote.provider.powered && action.bill > 0) {
+                try (var transaction = Transaction.openRoot()) {
+                    if (action.energy.extract(action.bill, transaction) != action.bill || !equipped(player, root)
+                            // Stack access stages its resource; the actual root changes on root commit.
+                            || !ItemStack.matches(root, expected)
+                            || !ItemStack.matches(action.access.getResource().toStack(), action.afterDebit)) { return false; }
+                    transaction.commit();
+                }
+            }
+            root.set(binding.timers, action.timers);
+            if (!action.quote.provider.powered && action.bill > 0) { root.hurtAndBreak(action.bill, player, EquipmentSlot.FEET); }
+            for (Mob mob : action.targets) {
+                double x = mob.getX() - player.getX(), z = mob.getZ() - player.getZ();
+                double length = Math.sqrt(x * x + z * z);
+                if (length != 0) { mob.knockback(action.quote.strength, -x / length, -z / length); }
+            }
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.MACE_SMASH_GROUND, SoundSource.PLAYERS, .5f, 1);
+            if (action.particles == 0) {
+                player.level().sendParticles(ParticleTypes.DUST_PLUME, player.getX(), player.getY(), player.getZ(), 20, .5, .2, .5, 0);
+            }
+            return true;
+        } finally { executing.remove(player); }
+    }
+
+    static boolean equipped(ServerPlayer player, ItemStack root) {
+        return !root.isEmpty() && root.getCount() == 1 && root.getItem() instanceof MixedBootsItem
+                && player.getItemBySlot(EquipmentSlot.FEET) == root && ModContent.getMixedBootsData(root).isPresent();
+    }
+
+    // Match the native Entity-typed filter even though its world query selects Mob instances.
+    private static boolean validTarget(Entity entity) { return !entity.isMultipartEntity() && !(entity instanceof PartEntity<?>); }
+
+    static void tickEquipped(ServerPlayer player) {
+        ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
+        Api binding = api;
+        if (binding == null || !equipped(player, root)) { return; }
+        List<Object> next = new ArrayList<>();
+        boolean changed = false;
+        try {
+            for (Object record : root.getOrDefault(binding.timers, List.of())) {
+                if (!binding.groundStomp(record)) { next.add(record); continue; }
+                int ticks = (int) binding.ticks.invokeExact(record);
+                if ((boolean) binding.active.invokeExact(record) || ticks < 0) {
+                    invalidTimer(); next.add(record); continue;
+                }
+                changed = true;
+                if (ticks > 1) { next.add(binding.create.invokeExact("groundstomp", ticks - 1, false)); }
+            }
+        } catch (Throwable failure) { disable(binding, failure); return; }
+        if (changed && api == binding && equipped(player, root)) { root.set(binding.timers, List.copyOf(next)); }
+    }
+
+    private record Action(Quote quote, int bill, int particles, List<Object> timers, List<Mob> targets,
+                          ItemAccess access, EnergyHandler energy, ItemStack afterDebit) {}
+
     public enum Provider {
         ECLIPSE("eclipsealloy", true), CELESTIGEM("celestigem", true), BLAZEGOLD("blazegold", false);
         private final String path;
@@ -239,7 +351,8 @@ public final class JustDireGroundStompCompatibility {
                        MethodHandle maximum, MethodHandle defaultValue, MethodHandle cooldown, MethodHandle feCost,
                        MethodHandle durabilityCost, MethodHandle name, MethodHandle ticks, MethodHandle active,
                        MethodHandle create, DataComponentType<List<Object>> timers, DataComponentType<Boolean> installed,
-                       DataComponentType<Boolean> enabled, DataComponentType<Boolean> toggle, DataComponentType<Integer> value) {
+                       DataComponentType<Boolean> enabled, DataComponentType<Boolean> toggle, DataComponentType<Integer> value,
+                       DataComponentType<Integer> energy) {
         NativeProvider provider(ItemStack source) {
             return providers.stream().filter(provider -> provider.item == source.getItem()).findFirst().orElse(null);
         }
