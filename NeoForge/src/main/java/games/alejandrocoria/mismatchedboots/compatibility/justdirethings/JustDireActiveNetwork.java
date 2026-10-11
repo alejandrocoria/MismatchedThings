@@ -75,7 +75,7 @@ public final class JustDireActiveNetwork {
                 State state = states.get(player.getUUID());
                 if (state != null) {
                     if (state.permit != null && (player.getItemBySlot(EquipmentSlot.FEET) != state.permit.root
-                            || !ItemStack.matches(state.permit.root, state.permit.snapshot))) { state.permit = null; }
+                            || !ItemStack.matches(inputSnapshot(state.permit.root, state.permit.stomp), state.permit.snapshot))) { state.permit = null; }
                     // Equipment events also report ordinary component changes, not just slot replacements.
                     if (state.menu != null && (player.getInventory().getItem(state.menu.slot) != state.menu.root
                             || !ItemStack.matches(settingsSnapshot(state.menu.root), state.menu.snapshot))) { state.menu = null; }
@@ -95,12 +95,14 @@ public final class JustDireActiveNetwork {
         if (request.sequence <= state.activationSequence || request.sequence <= 0) { return prepared(request.sequence, NONE); }
         state.activationSequence = request.sequence; state.permit = null;
         ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
+        boolean stomp = JustDireSettingsCompatibility.groundStompBinding(root, request.key, request.mouse)
+                && JustDireGroundStompCompatibility.quote(root) != null;
         if (player.containerMenu != player.inventoryMenu || !JustDireGroundStompCompatibility.equipped(player, root)
-                || !JustDireSettingsCompatibility.groundStompBinding(root, request.key, request.mouse) || JustDireGroundStompCompatibility.quote(root) == null) {
+                || !(stomp || !JustDireSettingsCompatibility.boundPassives(root, request.key, request.mouse).isEmpty())) {
             return prepared(request.sequence, NONE);
         }
         UUID nonce = UUID.randomUUID();
-        state.permit = new Permit(root, snapshot(root), request.key, request.mouse, nonce, player.level().getGameTime() + 40);
+        state.permit = new Permit(root, inputSnapshot(root, stomp), request.key, request.mouse, stomp, nonce, player.level().getGameTime() + 40);
         return prepared(request.sequence, nonce);
     }
 
@@ -111,9 +113,14 @@ public final class JustDireActiveNetwork {
         Permit permit = state.permit;
         state.permit = null; // Consume before validation/commit. No later expiry, failure or equipment can revive it.
         ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-        return request.mouse == permit.mouse && request.key == permit.key && player.level().getGameTime() <= permit.expires
-                && player.containerMenu == player.inventoryMenu && root == permit.root && ItemStack.matches(root, permit.snapshot)
-                && JustDireGroundStompCompatibility.activate(player, root, permit.snapshot, request.key, request.mouse);
+        if (!(request.mouse == permit.mouse && request.key == permit.key && player.level().getGameTime() <= permit.expires
+                && player.containerMenu == player.inventoryMenu && root == permit.root && ItemStack.matches(inputSnapshot(root, permit.stomp), permit.snapshot)
+                && JustDireGroundStompCompatibility.equipped(player, root))) { return false; }
+        // Native useAbility runs active actions before every bound passive switch. A failed quote
+        // (disabled tool, depletion or cooldown) must not prevent re-enabling a passive setting.
+        boolean acted = permit.stomp && JustDireGroundStompCompatibility.activate(player, root, permit.snapshot, request.key, request.mouse);
+        boolean toggled = JustDireSettingsCompatibility.toggleBoundPassives(player, root, request.key, request.mouse);
+        return acted || toggled;
     }
 
     public static SettingsReply edit(ServerPlayer player, SettingsRequest request) {
@@ -159,6 +166,11 @@ public final class JustDireActiveNetwork {
         remove(snapshot, "ability_cooldowns"); remove(snapshot, "forge_energy");
         return snapshot;
     }
+    /** Free passive switches depend on identity/settings, not ordinary charging, wear or timer ticks. */
+    public static ItemStack passiveInputSnapshot(ItemStack root) { return settingsSnapshot(root); }
+    private static ItemStack inputSnapshot(ItemStack root, boolean stomp) {
+        return stomp ? snapshot(root) : passiveInputSnapshot(root);
+    }
     private static ItemStack snapshot(ItemStack root) {
         var snapshot = root.copy();
         // Native records are immutable, but their list components can be mutated in-place by
@@ -193,7 +205,7 @@ public final class JustDireActiveNetwork {
             if (state != null) {
                 if (state.permit != null && (player.containerMenu != player.inventoryMenu
                         || player.getItemBySlot(EquipmentSlot.FEET) != state.permit.root
-                        || !ItemStack.matches(state.permit.root, state.permit.snapshot)
+                        || !ItemStack.matches(inputSnapshot(state.permit.root, state.permit.stomp), state.permit.snapshot)
                         || player.level().getGameTime() > state.permit.expires)) { state.permit = null; }
                 if (state.menu != null && (player.containerMenu != state.menu.menu
                         || player.getInventory().getItem(state.menu.slot) != state.menu.root
@@ -214,7 +226,7 @@ public final class JustDireActiveNetwork {
         MenuSession menu;
         State(ServerPlayer player) { this.player = player; }
     }
-    private record Permit(ItemStack root, ItemStack snapshot, int key, boolean mouse, UUID nonce, long expires) {}
+    private record Permit(ItemStack root, ItemStack snapshot, int key, boolean mouse, boolean stomp, UUID nonce, long expires) {}
     private static final class MenuSession {
         final AbstractContainerMenu menu;
         final ItemStack root;

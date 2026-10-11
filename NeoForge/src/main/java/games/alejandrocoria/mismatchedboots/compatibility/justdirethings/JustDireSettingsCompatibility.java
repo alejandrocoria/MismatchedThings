@@ -9,7 +9,9 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -46,7 +48,8 @@ public final class JustDireSettingsCompatibility {
             var abilities = new ArrayList<Setting>();
             for (String name : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp")) {
                 abilities.add(new Setting(name, ability.getField(name.toUpperCase(Locale.ROOT)).get(null),
-                        scalar(name + "_upgrade_installed", false), scalar(name + "_toggle", true), scalar(name + "_value", 1)));
+                        scalar(name + "_upgrade_installed", false), scalar(name + "_toggle", true), scalar(name + "_value", 1),
+                        scalar(name + "_bindingmode", 0)));
             }
             DataComponentType<List<Object>> bindings = component("ability_bindings");
             if (bindings.codec() == null || bindings.streamCodec() == null) { throw new IllegalStateException("Unsupported binding codecs"); }
@@ -66,7 +69,9 @@ public final class JustDireSettingsCompatibility {
                     accessor(lookup, record, "isMouse", boolean.class), accessor(lookup, record, "requireEquipped", boolean.class),
                     lookup.findConstructor(record, MethodType.methodType(void.class, String.class, int.class, boolean.class, boolean.class))
                             .asType(MethodType.methodType(Object.class, String.class, int.class, boolean.class, boolean.class)),
-                    bindings, scalar("tool_enabled", true), scalar("groundstomp_bindingmode", 0), scalar("groundstomp_custom_setting", 0));
+                    lookup.findVirtual(ability, "getLocalization", MethodType.methodType(String.class))
+                            .asType(MethodType.methodType(String.class, Object.class)),
+                    bindings, scalar("tool_enabled", true), scalar("groundstomp_custom_setting", 0));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things mixed settings API; new settings/input routes disabled", failure);
         }
@@ -123,15 +128,61 @@ public final class JustDireSettingsCompatibility {
     }
 
     public static boolean groundStompBinding(ItemStack root, int key, boolean mouse) {
+        return matchesBinding(root, "groundstomp", key, mouse);
+    }
+
+    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse) {
         Api binding = api;
-        if (binding == null || !mixed(root) || !validBindingInput(key, mouse) || root.getOrDefault(binding.mode, 0) != 2) { return false; }
+        if (binding == null || !mixed(root) || !validBindingInput(key, mouse)) { return false; }
+        Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
+        if (setting == null || root.getOrDefault(setting.mode, 0) != 2) { return false; }
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {
-                if ("groundstomp".equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
+                if (name.equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
                         && (boolean) binding.mouse.invokeExact(record) == mouse && (boolean) binding.equipped.invokeExact(record)) { return true; }
             }
             return false;
         } catch (Throwable failure) { disable(binding, failure); return false; }
+    }
+
+    /** Native passive order, deduplicated by ability, independent of live switches/FE/cooldowns. */
+    public static List<String> boundPassives(ItemStack root, int key, boolean mouse) {
+        Api binding = api;
+        if (binding == null || !mixed(root)) { return List.of(); }
+        var names = new ArrayList<String>();
+        for (Setting setting : binding.settings) {
+            if (!setting.name.equals("groundstomp") && root.getOrDefault(setting.installed, false)
+                    && metadata(root, setting.name) != null && matchesBinding(root, setting.name, key, mouse)) {
+                names.add(setting.name);
+            }
+        }
+        return api == binding ? List.copyOf(names) : List.of();
+    }
+
+    public static boolean inputBinding(ItemStack root, int key, boolean mouse) {
+        return groundStompBinding(root, key, mouse) || !boundPassives(root, key, mouse).isEmpty();
+    }
+
+    static boolean toggleBoundPassives(ServerPlayer player, ItemStack root, int key, boolean mouse) {
+        Api binding = api;
+        var names = boundPassives(root, key, mouse);
+        if (binding == null || names.isEmpty()) { return false; }
+        var messages = new ArrayList<Component>();
+        try {
+            // Resolve optional metadata before publishing any switch, never half-toggle a shared input.
+            for (String name : names) {
+                Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElseThrow();
+                String localization = (String) binding.localization.invokeExact(setting.ability);
+                messages.add(Component.translatable("justdirethings.ability", Component.translatable(localization),
+                        Component.translatable(root.getOrDefault(setting.toggle, true) ? "justdirethings.disabled" : "justdirethings.enabled")));
+            }
+        } catch (Throwable failure) { disable(binding, failure); return false; }
+        if (api != binding || !JustDireGroundStompCompatibility.equipped(player, root)) { return false; }
+        for (Setting setting : binding.settings) {
+            if (names.contains(setting.name)) { root.set(setting.toggle, !root.getOrDefault(setting.toggle, true)); }
+        }
+        messages.forEach(player::sendOverlayMessage);
+        return true;
     }
 
     static int particles(ItemStack root) { Api binding = api; return binding == null ? -1 : root.getOrDefault(binding.particles, 0); }
@@ -201,16 +252,16 @@ public final class JustDireSettingsCompatibility {
                         changed.set(binding.particles, request.value());
                     }
                     case JustDireActiveNetwork.BINDING -> {
-                        if (!setting.name.equals("groundstomp") || (request.value() != 0 && request.value() != 2)
+                        if ((request.value() != 0 && request.value() != 2)
                                 || !request.equipped() || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) { return false; }
                         var next = new ArrayList<Object>();
                         for (Object record : root.getOrDefault(binding.bindings, List.of())) {
-                            if (!"groundstomp".equals((String) binding.name.invokeExact(record))) { next.add(record); }
+                            if (!setting.name.equals((String) binding.name.invokeExact(record))) { next.add(record); }
                         }
                         if (request.value() == 2 && request.key() != -1) {
-                            next.add(binding.create.invokeExact("groundstomp", request.key(), request.mouse(), true));
+                            next.add(binding.create.invokeExact(setting.name, request.key(), request.mouse(), true));
                         }
-                        changed.set(binding.bindings, List.copyOf(next)); changed.set(binding.mode, request.value());
+                        changed.set(binding.bindings, List.copyOf(next)); changed.set(setting.mode, request.value());
                     }
                     default -> { return false; }
                 }
@@ -220,9 +271,10 @@ public final class JustDireSettingsCompatibility {
         // Only the allowed root-owned fields are published. Sources, resources and timers are never edits.
         for (Setting setting : binding.settings) {
             copyField(changed, root, setting.toggle); copyField(changed, root, setting.value);
+            copyField(changed, root, setting.mode);
         }
         copyField(changed, root, binding.enabled); copyField(changed, root, binding.bindings);
-        copyField(changed, root, binding.mode); copyField(changed, root, binding.particles);
+        copyField(changed, root, binding.particles);
         return true;
     }
 
@@ -261,11 +313,11 @@ public final class JustDireSettingsCompatibility {
         public boolean hasSlider() { return minimum >= 0 && increment > 0; }
     }
     private record Setting(String name, Object ability, DataComponentType<Boolean> installed,
-                           DataComponentType<Boolean> toggle, DataComponentType<Integer> value) {}
+                           DataComponentType<Boolean> toggle, DataComponentType<Integer> value, DataComponentType<Integer> mode) {}
     private record Profile(Item item, Metadata metadata) {}
     private record Api(Class<?> menu, Class<?> tool, List<Setting> settings, MethodHandle abilities, MethodHandle params,
                        MethodHandle minimum, MethodHandle maximum, MethodHandle increment, MethodHandle defaultValue,
-                       MethodHandle name, MethodHandle key, MethodHandle mouse, MethodHandle equipped, MethodHandle create,
+                       MethodHandle name, MethodHandle key, MethodHandle mouse, MethodHandle equipped, MethodHandle create, MethodHandle localization,
                        DataComponentType<List<Object>> bindings, DataComponentType<Boolean> enabled,
-                       DataComponentType<Integer> mode, DataComponentType<Integer> particles) {}
+                       DataComponentType<Integer> particles) {}
 }

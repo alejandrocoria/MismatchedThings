@@ -39,7 +39,6 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
     @Shadow protected boolean bindingEnabled;
     @Shadow protected boolean requireEquipped;
     @Shadow @Final protected Map<Button, Button> leftRightClickButtons;
-    @Shadow @Final protected Map<Button, Button> bindingButtons;
     @Shadow @Final protected Map<Button, Button> requireEquippedButtons;
     @Shadow @Final protected Map<Button, Object> buttonToAbilityMap;
     @Shadow public abstract void clearMaps();
@@ -91,13 +90,8 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
     @Inject(method = "refreshButtons", at = @At("TAIL"))
     private void mismatchedboots$jdtRestrictions(CallbackInfo ci) {
         if (!JustDireSettingsCompatibility.mixed(tool)) { return; }
-        for (var entry : buttonToAbilityMap.entrySet()) {
-            Button icon = entry.getKey();
-            if (!((Enum<?>) entry.getValue()).name().equals("GROUNDSTOMP")) {
-                leftRightClickButtons.remove(icon); bindingButtons.remove(icon); requireEquippedButtons.remove(icon);
-            } else {
-                JustDireSettingsClient.restrict(leftRightClickButtons.get(icon), requireEquippedButtons.get(icon));
-            }
+        for (Button icon : buttonToAbilityMap.keySet()) {
+            JustDireSettingsClient.restrict(leftRightClickButtons.get(icon), requireEquippedButtons.get(icon));
         }
         requireEquipped = true;
         if (!mismatchedboots$jdtReady()) { clearWidgets(); clearMaps(); }

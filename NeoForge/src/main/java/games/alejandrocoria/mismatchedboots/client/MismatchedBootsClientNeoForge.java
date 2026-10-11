@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedboots.client;
 
-import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireGroundStompInput;
+import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
@@ -19,11 +19,11 @@ public final class MismatchedBootsClientNeoForge {
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {
-        JustDireActiveNetwork.clientReplies(JustDireGroundStompInput::reply, JustDireSettingsClient::reply);
-        NeoForge.EVENT_BUS.addListener((InputEvent.Key key) -> JustDireGroundStompInput.key(key));
-        NeoForge.EVENT_BUS.addListener((InputEvent.MouseButton.Post mouse) -> JustDireGroundStompInput.mouse(mouse));
+        JustDireActiveNetwork.clientReplies(JustDireAbilityInput::reply, JustDireSettingsClient::reply);
+        NeoForge.EVENT_BUS.addListener((InputEvent.Key key) -> JustDireAbilityInput.key(key));
+        NeoForge.EVENT_BUS.addListener((InputEvent.MouseButton.Post mouse) -> JustDireAbilityInput.mouse(mouse));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> {
-            JustDireSettingsClient.tick(); JustDireGroundStompInput.tick();
+            JustDireSettingsClient.tick(); JustDireAbilityInput.tick();
         });
         NeoForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingIn login) -> CompositionRulesClientLifecycle.onConnected());
@@ -35,7 +35,7 @@ public final class MismatchedBootsClientNeoForge {
                     }
                 });
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> {
-            JustDireSettingsClient.reset(); JustDireGroundStompInput.reset();
+            JustDireSettingsClient.reset(); JustDireAbilityInput.reset();
             CompositionRulesClientLifecycle.onDisconnected();
             MismatchedWorkbenchClientRecipes.reset();
         });

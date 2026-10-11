@@ -779,16 +779,22 @@ and process logs are under
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 
 The server gate calls production permits/action/edits/timers, not the action
-spike. Twelve live groups cover native effects/AABB/multipart filtering, both
+spike. Fifteen live groups cover native effects/AABB/multipart filtering, both
 orientations, strongest-usable/tie/fallback selection, one FE or actual durability
 bill, enchantments/exemptions/base eligibility, FEET break/reentry, identity/state/
 mutable-list changes, consumed/superseded/expired/replayed permissions, actual
 native-menu settings/passive edits and supported timer retention, plus all
-additional mouse buttons with device/invalid/stale/replay rejection. Disposable
+additional mouse buttons with device/invalid/stale/replay rejection. Native
+controls compare shared passive toggle semantics. Supported Step/passive
+Jump/Negate bindings exercise free switches even disabled/depleted, shared input
+with one active bill, live consumer effects and root-only mode/removal preservation.
+Free permits tolerate ordinary wear/charging/ticks but cannot upgrade to a paid
+action; paid permits retain strict resource snapshots. Disposable
 mixins fault the real FE extraction and post-commit effect path; no production
 test switches exist. Four separate JVMs check missing action API, native query
 failure, missing settings API and absence, including exact bounded diagnostics
-and independent storage/installation readiness.
+and independent storage/installation readiness; active-only API/query failure
+does not disable independent passive bindings.
 
 The temporary client driver sends production payloads through bundled
 CommonNetworking and verifies ordinary stack synchronization, one action bill,
@@ -820,6 +826,9 @@ bill, unchanged sources, tool switches and selected-slot removal. D.1 adds
 production mouse-event flights, left/right/out-of-range capture/input rejection,
 native inventory mouse controls and device identity in activation permits. Originals,
 empty-hand menu and internal-slot refresh remain native controls.
+D.2 adds native passive keyboard/mouse capture, independent and shared toggles,
+global-off/depleted eligibility, live equipped Step attributes, shared Ground
+Stomp/cooldown behavior, reopened preferences and per-ability Escape removal.
 
 Reports/process logs and the live final screen export are retained under
 `RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/`.
@@ -828,7 +837,7 @@ The final-export unit uses
 `-PjustDireSettingsTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/ToolSettingScreen.class`;
 native entry units use the existing `justDireGuardJar` opt-in.
 Synthetic event-bus input is not a physical/manual acceptance. D.1 mouse input
-is implemented; D.2 passive-toggle bindings are pending. Block E owns consolidated restart/
+and D.2 passive-toggle bindings are implemented. Block E owns consolidated restart/
 reconnect and the final ordinary-client handoff; see
 [the C record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#9-block-c--native-settings-and-equipped-keyboard).
 

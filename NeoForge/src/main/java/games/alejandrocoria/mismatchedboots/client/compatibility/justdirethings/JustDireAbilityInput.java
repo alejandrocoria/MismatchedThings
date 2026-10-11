@@ -15,11 +15,11 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 
 /** Equipped keyboard/additional-mouse presses only; a reply cannot revive stale client intent. */
-public final class JustDireGroundStompInput {
+public final class JustDireAbilityInput {
     private static int sequence;
     private static Pending pending;
 
-    private JustDireGroundStompInput() {}
+    private JustDireAbilityInput() {}
 
     public static void key(InputEvent.Key event) {
         press(event.getKey(), false, event.getAction());
@@ -34,8 +34,9 @@ public final class JustDireGroundStompInput {
         var client = Minecraft.getInstance();
         if (action != GLFW.GLFW_PRESS || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
-        if (!JustDireSettingsCompatibility.groundStompBinding(root, key, mouse)) { return; }
-        pending = new Pending(root, snapshot(root), key, mouse, ++sequence);
+        if (!JustDireSettingsCompatibility.inputBinding(root, key, mouse)) { return; }
+        boolean passive = !JustDireSettingsCompatibility.boundPassives(root, key, mouse).isEmpty();
+        pending = new Pending(root, snapshot(root, passive), key, mouse, ++sequence, passive);
         Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Prepare(sequence, key, mouse));
     }
 
@@ -45,8 +46,8 @@ public final class JustDireGroundStompInput {
         var client = Minecraft.getInstance();
         if (!reply.accepted() || reply.nonce().equals(JustDireActiveNetwork.NONE) || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
-        if (root != intent.root || !ItemStack.matches(root, intent.snapshot)
-                || !JustDireSettingsCompatibility.groundStompBinding(root, intent.key, intent.mouse)) { return; }
+        if (root != intent.root || !ItemStack.matches(snapshot(root, intent.passive), intent.snapshot)
+                || !JustDireSettingsCompatibility.inputBinding(root, intent.key, intent.mouse)) { return; }
         Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Activate(intent.sequence, reply.nonce(), intent.key, intent.mouse));
     }
 
@@ -54,12 +55,14 @@ public final class JustDireGroundStompInput {
         var client = Minecraft.getInstance();
         if (pending != null && (client.player == null || client.screen != null
                 || client.player.getItemBySlot(EquipmentSlot.FEET) != pending.root
-                || !ItemStack.matches(pending.root, pending.snapshot))) { pending = null; }
+                || !ItemStack.matches(snapshot(pending.root, pending.passive), pending.snapshot))) { pending = null; }
     }
 
     public static void reset() { pending = null; sequence = 0; }
 
-    private static ItemStack snapshot(ItemStack root) {
+    private static ItemStack snapshot(ItemStack root, boolean passive) {
+        // Server independently decides whether an eligible paid action requires its stricter snapshot.
+        if (passive) { return JustDireActiveNetwork.passiveInputSnapshot(root); }
         var snapshot = root.copy();
         // Native immutable records can be held in mutable lists; detach those from the live root.
         for (String path : List.of("ability_bindings", "ability_cooldowns")) { copyList(snapshot, path); }
@@ -71,5 +74,5 @@ public final class JustDireGroundStompInput {
             if (root.has(type)) { root.set(type, List.copyOf(root.get(type))); }
         });
     }
-    private record Pending(ItemStack root, ItemStack snapshot, int key, boolean mouse, int sequence) {}
+    private record Pending(ItemStack root, ItemStack snapshot, int key, boolean mouse, int sequence, boolean passive) {}
 }

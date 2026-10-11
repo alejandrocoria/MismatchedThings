@@ -19,6 +19,7 @@ import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -49,6 +50,7 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static ItemStack expected, before;
     private static Object provenance;
     private static JustDireActiveNetwork.SettingsRequest stale;
+    private static double enabledStep;
 
     private NeoForgeJustDireGroundStompClientTest() {}
 
@@ -118,6 +120,25 @@ final class NeoForgeJustDireGroundStompClientTest {
         }), () -> charge(client.player.getMainHandItem()) == 6_000);
         add("native original inventory mouse retains one native action", () -> mousePress(3, GLFW.GLFW_PRESS),
                 () -> charge(client.player.getMainHandItem()) == 1_000 && timer(client.player.getMainHandItem()) > 0);
+        open(client);
+        for (String name : List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE")) {
+            reveal(client, name);
+            add("native original " + name + " captures a shared passive mouse binding", () -> {
+                click((Button) maps(client, "requireEquippedButtons").get(icon(client, name)), 0);
+                click((Button) maps(client, "bindingButtons").get(icon(client, name)), 0);
+                require(client.screen.mouseClicked(mouse(1, 1, 4), false), "Native passive capture rejected");
+            }, () -> bindingFor(client.player.getMainHandItem(), name.toLowerCase(java.util.Locale.ROOT), 4, true));
+        }
+        close(client);
+        add("native shared passive input remains eligible with tool off and zero FE", () -> server(client, player -> {
+            var root = player.getMainHandItem(); set(root, "tool_enabled", false); set(root, "forge_energy", 0);
+            player.inventoryMenu.broadcastChanges();
+        }), () -> !flag(client.player.getMainHandItem(), "tool_enabled", true) && charge(client.player.getMainHandItem()) == 0);
+        add("native shared input turns all three passives off", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> List.of("stepheight", "jumpboost", "negatefalldamage").stream().allMatch(name -> !flag(client.player.getMainHandItem(), name + "_toggle", true)));
+        add("native shared input re-enables all three without FE or global enable", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> List.of("stepheight", "jumpboost", "negatefalldamage").stream().allMatch(name -> flag(client.player.getMainHandItem(), name + "_toggle", false))
+                        && charge(client.player.getMainHandItem()) == 0 && !flag(client.player.getMainHandItem(), "tool_enabled", true));
         add("empty hands open native menu without internal-slot failure", () -> server(client, player -> {
             player.getInventory().clearContent(); player.inventoryMenu.broadcastChanges();
         }), () -> client.player.getInventory().isEmpty());
@@ -141,7 +162,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 require(names.size() == 4 && names.containsAll(List.of("GROUNDSTOMP", "STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE")), "Unsupported/missing abilities: " + names);
                 require(maps(client, "sliders").size() == 2 && ((Number) field(slider(client, "GROUNDSTOMP"), "maxValue")).doubleValue() == 5
                         && ((Number) field(slider(client, "JUMPBOOST"), "maxValue")).doubleValue() == 2 && charge(feet(client)) == 0, "Per-ability tier ranges wrong");
-                require(maps(client, "bindingButtons").size() == 1, "Passive custom bindings advertised");
+                require(maps(client, "bindingButtons").size() == 4, "Supported custom bindings missing");
             });
             for (String ability : List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "GROUNDSTOMP")) {
                 String path = ability.toLowerCase(java.util.Locale.ROOT) + "_toggle";
@@ -248,6 +269,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
             add("removed mouse binding cannot prepare a fresh action", () -> { before = feet(client).copy(); mousePress(3, GLFW.GLFW_PRESS); },
                     () -> wait > 12 && ItemStack.matches(before, feet(client)));
+            passiveBindings(client);
         }
         setup(client, true, false, 6_000);
         for (String preference : List.of("unbound", "invalidMouse", "inventory", "wrongMode")) {
@@ -303,6 +325,97 @@ final class NeoForgeJustDireGroundStompClientTest {
         close(client);
     }
 
+    private static void passiveBindings(Minecraft client) {
+        var names = List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE");
+        open(client); select(client, 36);
+        for (int index = 0; index < names.size(); index++) {
+            String name = names.get(index), path = name.toLowerCase(java.util.Locale.ROOT);
+            int key = GLFW.GLFW_KEY_J + index;
+            reveal(client, name);
+            add("mixed native " + name + " captures its keyboard binding", () -> {
+                require(!((Button) maps(client, "requireEquippedButtons").get(icon(client, name))).active, "Passive inventory activation advertised");
+                click((Button) maps(client, "bindingButtons").get(icon(client, name)), 0);
+                client.screen.keyPressed(new KeyEvent(key, 0, 0));
+            }, () -> JustDireSettingsCompatibility.boundPassives(feet(client), key, false).equals(List.of(path)));
+        }
+        close(client);
+        add("prepare disabled depleted root without changing native bindings", () -> server(client, player -> {
+            var root = player.getItemBySlot(EquipmentSlot.FEET); set(root, "tool_enabled", false); set(root, "forge_energy", 0);
+            player.inventoryMenu.broadcastChanges(); expected = root.copy();
+        }), () -> ItemStack.matches(expected, feet(client)));
+        for (int index = 0; index < names.size(); index++) {
+            String path = names.get(index).toLowerCase(java.util.Locale.ROOT);
+            int key = GLFW.GLFW_KEY_J + index;
+            add("passive " + path + " ignores release/repeat/wrong device", () -> {
+                before = feet(client).copy(); press(key, GLFW.GLFW_RELEASE); press(key, GLFW.GLFW_REPEAT); mousePress(key, GLFW.GLFW_PRESS);
+            }, () -> wait > 8 && ItemStack.matches(before, feet(client)));
+            add("equipped " + path + " keyboard toggles off at zero FE/global off", () -> {
+                before = feet(client).copy(); press(key, GLFW.GLFW_PRESS);
+            }, () -> !flag(feet(client), path + "_toggle", true) && charge(feet(client)) == 0
+                    && value(feet(client), "jumpboost_value") == 2 && ModContent.getMixedBootsData(feet(client)).orElseThrow().equals(provenance));
+            add("equipped " + path + " keyboard toggles back on without action eligibility", () -> press(key, GLFW.GLFW_PRESS),
+                    () -> flag(feet(client), path + "_toggle", false) && !flag(feet(client), "tool_enabled", true) && charge(feet(client)) == 0);
+        }
+        add("restore live consumers without resetting bindings", () -> server(client, player -> {
+            var root = player.getItemBySlot(EquipmentSlot.FEET); set(root, "tool_enabled", true); set(root, "forge_energy", 6_000);
+            player.inventoryMenu.broadcastChanges();
+        }), () -> flag(feet(client), "tool_enabled", false) && charge(feet(client)) == 6_000
+                && client.player.getAttributeValue(Attributes.STEP_HEIGHT) > client.player.getAttributeBaseValue(Attributes.STEP_HEIGHT));
+        add("Step input immediately lowers equipped client attribute", () -> {
+            enabledStep = client.player.getAttributeValue(Attributes.STEP_HEIGHT); press(GLFW.GLFW_KEY_J, GLFW.GLFW_PRESS);
+        }, () -> !flag(feet(client), "stepheight_toggle", true) && client.player.getAttributeValue(Attributes.STEP_HEIGHT) < enabledStep);
+        add("Step input restores equipped client attribute without payment", () -> press(GLFW.GLFW_KEY_J, GLFW.GLFW_PRESS),
+                () -> flag(feet(client), "stepheight_toggle", false) && client.player.getAttributeValue(Attributes.STEP_HEIGHT) == enabledStep && charge(feet(client)) == 6_000);
+        open(client); select(client, 36);
+        for (String name : names) {
+            String path = name.toLowerCase(java.util.Locale.ROOT);
+            reveal(client, name);
+            add("mixed native " + name + " replaces keyboard with shared mouse binding", () -> {
+                click((Button) maps(client, "bindingButtons").get(icon(client, name)), 0);
+                client.screen.mouseClicked(mouse(1, 1, 4), false);
+            }, () -> JustDireSettingsCompatibility.boundPassives(feet(client), 4, true).contains(path));
+        }
+        add("GUI blocks shared passive gameplay input", () -> { before = feet(client).copy(); mousePress(4, GLFW.GLFW_PRESS); },
+                () -> wait > 8 && ItemStack.matches(before, feet(client)));
+        close(client); open(client); select(client, 36);
+        add("native reopen retains all passive mouse modes/preferences", () -> require(
+                JustDireSettingsCompatibility.boundPassives(feet(client), 4, true).equals(List.of("stepheight", "jumpboost", "negatefalldamage")), "Passive reopen lost preferences"));
+        close(client);
+        add("shared mouse switches all supported passives off without payment", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> List.of("stepheight", "jumpboost", "negatefalldamage").stream().allMatch(name -> !flag(feet(client), name + "_toggle", true)) && charge(feet(client)) == 6_000);
+        add("shared mouse switches all supported passives back on", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> List.of("stepheight", "jumpboost", "negatefalldamage").stream().allMatch(name -> flag(feet(client), name + "_toggle", false)) && charge(feet(client)) == 6_000);
+        open(client); select(client, 36);
+        reveal(client, "GROUNDSTOMP");
+        add("native Ground Stomp capture shares the passive mouse button", () -> {
+            click((Button) maps(client, "bindingButtons").get(icon(client, "GROUNDSTOMP")), 0);
+            client.screen.mouseClicked(mouse(1, 1, 4), false);
+        }, () -> JustDireSettingsCompatibility.groundStompBinding(feet(client), 4, true));
+        close(client);
+        add("shared native mouse input performs one Ground Stomp and all passive switches", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0
+                        && List.of("stepheight", "jumpboost", "negatefalldamage").stream().allMatch(name -> !flag(feet(client), name + "_toggle", true)));
+        add("shared input during active cooldown still re-enables all passives without another bill", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0
+                        && List.of("stepheight", "jumpboost", "negatefalldamage").stream().allMatch(name -> flag(feet(client), name + "_toggle", false)));
+        open(client); select(client, 36);
+        for (String name : List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "GROUNDSTOMP")) {
+            String path = name.toLowerCase(java.util.Locale.ROOT);
+            reveal(client, name);
+            add("native Escape removes " + name + " without removing other records", () -> {
+                click((Button) maps(client, "bindingButtons").get(icon(client, name)), 0);
+                client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
+            }, () -> path.equals("groundstomp") ? !JustDireSettingsCompatibility.groundStompBinding(feet(client), 4, true)
+                    : !JustDireSettingsCompatibility.boundPassives(feet(client), 4, true).contains(path));
+        }
+        close(client);
+        add("removed bindings denial starts with charged root and expired active cooldown", () -> server(client, player -> {
+            set(player.getItemBySlot(EquipmentSlot.FEET), "forge_energy", 6_000); player.inventoryMenu.broadcastChanges();
+        }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
+        add("removed passive bindings do not toggle", () -> { before = feet(client).copy(); mousePress(4, GLFW.GLFW_PRESS); },
+                () -> wait > 8 && ItemStack.matches(before, feet(client)));
+    }
+
     private static void unavailable(Minecraft client) {
         setup(client, true, false, 6_000); open(client);
         add("incomplete UI leaves mixed selection unavailable but empty native menu intact", () -> {
@@ -343,6 +456,12 @@ final class NeoForgeJustDireGroundStompClientTest {
             player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
         }), () -> client.screen == null && ItemStack.matches(expected, feet(client)));
     }
+    private static boolean bindingFor(ItemStack root, String name, int key, boolean mouse) {
+        return root.getOrDefault(JustDireAttributeTestSupport.<List<?>>component("ability_bindings"), List.of()).stream()
+                .anyMatch(record -> fieldAccessor(record, "abilityName").equals(name)
+                        && (int) fieldAccessor(record, "key") == key && (boolean) fieldAccessor(record, "isMouse") == mouse);
+    }
+
     private static void open(Minecraft client) {
         add("wait for native settings key context", () -> {}, () -> client.screen == null && key("toolUI").getKeyConflictContext().isActive());
         add("native settings key opens the native menu", () -> KeyMapping.click(key("toolUI").getKey()),

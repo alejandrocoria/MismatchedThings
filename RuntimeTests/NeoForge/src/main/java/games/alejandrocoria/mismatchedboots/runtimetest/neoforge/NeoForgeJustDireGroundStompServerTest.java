@@ -3,9 +3,11 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.authlib.GameProfile;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireJumpCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.component.DataComponentType;
@@ -34,6 +36,7 @@ import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.entity.PartEntity;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -65,12 +68,172 @@ public final class NeoForgeJustDireGroundStompServerTest {
             else {
                 require(JustDireGroundStompCompatibility.available() && JustDireSettingsCompatibility.available(), "Production APIs unavailable");
                 NeoForgeJustDireGroundStompSpike.initializeApi();
+                nativePassiveBindings(server);
                 effectsAndProviders(server); paymentAndBreak(server); permits(server); mousePermits(server); settings(server); timers(server); faults(server);
+                passiveBindings(server);
             }
             NetworkAcceptanceFiles.write(PREFIX + "-report.txt", groups + " production server groups\n" + report);
             NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(PREFIX, failure); }
         finally { server.overworld().setChunkForced(0, 0, false); server.halt(false); }
+    }
+
+    private static void nativePassiveBindings(MinecraftServer server) throws Exception {
+        var player = player(server, GameType.SURVIVAL);
+        var tool = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
+        var use = tool.getMethod("useAbility", net.minecraft.world.level.Level.class,
+                net.minecraft.world.entity.player.Player.class, ItemStack.class, int.class, boolean.class);
+        for (String tier : List.of("blazegold", "eclipsealloy")) {
+            var nativeBoot = boots(tier, 6_000);
+            var names = tier.equals("blazegold") ? List.of("stepheight", "jumpboost")
+                    : List.of("stepheight", "jumpboost", "negatefalldamage");
+            var records = new ArrayList<Object>();
+            for (String name : names) {
+                set(nativeBoot, name + "_upgrade_installed", true); set(nativeBoot, name + "_toggle", false);
+                set(nativeBoot, name + "_bindingmode", 2); records.add(binding(name, 72, false));
+            }
+            set(nativeBoot, "ability_bindings", records); set(nativeBoot, "tool_enabled", false);
+            set(nativeBoot, "forge_energy", 0); player.setItemSlot(EquipmentSlot.FEET, nativeBoot);
+            var before = nativeBoot.copy();
+            use.invoke(nativeBoot.getItem(), player.level(), player, nativeBoot, 72, false);
+            for (String name : names) { require(nativeBoot.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(name + "_toggle"), false), "Native disabled/depleted toggle failed: " + name); }
+            use.invoke(nativeBoot.getItem(), player.level(), player, nativeBoot, 72, false);
+            require(ItemStack.matches(before, nativeBoot), "Native shared passives charged, cycled values or failed to toggle back");
+            set(nativeBoot, "tool_enabled", true); set(nativeBoot, "forge_energy", 6_000);
+            set(nativeBoot, "groundstomp_toggle", true); set(nativeBoot, "groundstomp_bindingmode", 2);
+            records.add(binding("groundstomp", 72, false)); set(nativeBoot, "ability_bindings", records);
+            use.invoke(nativeBoot.getItem(), player.level(), player, nativeBoot, 72, false);
+            require(timer(nativeBoot) == 200, "Shared native active action did not run");
+            for (String name : names) { require(nativeBoot.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(name + "_toggle"), false), "Shared native active suppressed passive " + name); }
+        }
+        record("native binding audit: all shared Step/Jump/Negate toggle while disabled/depleted, no value/resource changes; shared Ground Stomp still runs before passive dispatch");
+    }
+
+    private static Object binding(String name, int key, boolean mouse) throws ReflectiveOperationException {
+        return Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityBinding")
+                .getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance(name, key, mouse, true);
+    }
+
+    private static void passiveBindings(MinecraftServer server) throws Exception {
+        var player = player(server, GameType.SURVIVAL);
+        var names = List.of("stepheight", "jumpboost", "negatefalldamage");
+        var left = boots("blazegold", 0); var right = boots("eclipsealloy", 12_000);
+        for (var source : List.of(left, right)) {
+            for (String name : names) { set(source, name + "_upgrade_installed", true); }
+        }
+        var pair = MixedBootsFactory.createPair(left, right);
+        for (var initial : List.of(pair.primary(), pair.inverse())) {
+            for (boolean mouse : new boolean[]{false, true}) {
+                int key = mouse ? 4 : 72;
+                for (String name : names) {
+                    var root = initial.copy(); player.setItemSlot(EquipmentSlot.FEET, root);
+                    set(root, name + "_upgrade_installed", true); set(root, name + "_bindingmode", 2);
+                    set(root, name + "_toggle", false); set(root, "tool_enabled", false); set(root, "forge_energy", 0);
+                    // Duplicate imported records still toggle once. Unrelated bindings are retained but inert.
+                    set(root, "ability_bindings", List.of(binding(name, key, mouse), binding(name, key, mouse), binding("earthquake", key, mouse)));
+                    root.set(cooldowns(), List.of(record("groundstomp", 80, false)));
+                    var expected = root.copy(); set(expected, name + "_toggle", true);
+                    require(dispatch(player, key, mouse) && ItemStack.matches(expected, root), "Off/depleted passive input failed: " + name);
+                    require(dispatch(player, key, mouse), "Second passive toggle rejected"); set(expected, name + "_toggle", false);
+                    require(ItemStack.matches(expected, root), "Passive input cycled slider or spent resources/timer/source state");
+                    var freePermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+                    set(root, "forge_energy", 23); root.setDamageValue(root.getDamageValue() + 1);
+                    root.set(cooldowns(), List.of(record("groundstomp", 79, false)));
+                    require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, freePermit.nonce(), key, mouse))
+                            && charge(root) == 23 && timer(root) == 79, "Ordinary charging/wear/ticking invalidated or was overwritten by free toggle");
+                    var before = root.copy();
+                    var permit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+                    require(permit.accepted(), "Passive prepare rejected");
+                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, !mouse))
+                            && !JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse))
+                            && ItemStack.matches(before, root), "Device confusion/replay changed a passive");
+                    permit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+                    set(root, name + "_value", 2);
+                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse)), "Stale passive controls accepted");
+                    permit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+                    player.setItemSlot(EquipmentSlot.FEET, root.copy());
+                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse)), "Equal replacement revived passive permission");
+                    player.setItemSlot(EquipmentSlot.FEET, root);
+                    for (int mode : new int[]{0, 1, 99}) {
+                        set(root, name + "_bindingmode", mode);
+                        require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse)).accepted(), "Unsupported passive mode accepted");
+                    }
+                    root.remove(component(name + "_bindingmode"));
+                    require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse)).accepted(), "Missing passive mode accepted");
+                    set(root, name + "_bindingmode", 2); set(root, name + "_upgrade_installed", false);
+                    require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse)).accepted(), "Uninstalled passive accepted");
+                }
+                var root = initial.copy(); player.setItemSlot(EquipmentSlot.FEET, root);
+                var bindings = new ArrayList<Object>();
+                for (String name : names) {
+                    set(root, name + "_upgrade_installed", true); set(root, name + "_bindingmode", 2); set(root, name + "_toggle", false);
+                    bindings.add(binding(name, key, mouse));
+                }
+                bindings.add(binding("groundstomp", key, mouse)); set(root, "groundstomp_bindingmode", 2);
+                set(root, "ability_bindings", bindings); set(root, "forge_energy", 6_000);
+                var history = ModContent.getMixedBootsData(root);
+                root.set(cooldowns(), List.of(record("groundstomp", 1, false)));
+                var freePermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+                root.remove(cooldowns());
+                require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, freePermit.nonce(), key, mouse))
+                        && charge(root) == 6_000 && timer(root) == -1, "Passive-only permission unexpectedly upgraded to a paid action after timer expiry");
+                for (String name : names) { set(root, name + "_toggle", false); }
+                var paidPermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+                set(root, "forge_energy", 6_001);
+                require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, paidPermit.nonce(), key, mouse))
+                        && names.stream().noneMatch(name -> root.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(name + "_toggle"), true)), "Shared paid permission lost strict resource validation");
+                set(root, "forge_energy", 6_000);
+                require(dispatch(player, key, mouse) && charge(root) == 1_000 && timer(root) == 200, "Shared active/passive input lost single action/bill/timer");
+                for (String name : names) { require(root.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(name + "_toggle"), false), "Shared passive not toggled: " + name); }
+                require(dispatch(player, key, mouse) && charge(root) == 1_000 && timer(root) == 200, "Cooldown suppressed passive input or caused duplicate payment");
+                for (String name : names) { require(!root.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(name + "_toggle"), true), "Shared passive not toggled back: " + name); }
+                require(ModContent.getMixedBootsData(root).equals(history), "Passive controls edited provenance");
+                var data = ModContent.getMixedBootsData(root).orElseThrow();
+                var rebuilt = MixedBootsRecomposer.recompose(root, data.left().source(), data.right().source());
+                for (String name : names) { require(rebuilt.get(component(name + "_bindingmode")).equals(2), "Live binding mode reimported from sources"); }
+                require(rebuilt.get(component("ability_bindings")).equals(bindings), "Shared records lost through recomposition");
+                root.remove(component("jumpboost_bindingmode")); set(root, "stepheight_bindingmode", 0);
+                rebuilt = MixedBootsRecomposer.recompose(root, data.left().source(), data.right().source());
+                require(!rebuilt.has(component("jumpboost_bindingmode")) && rebuilt.get(component("stepheight_bindingmode")).equals(0), "Explicit mode absence/removal lost");
+            }
+        }
+        var unsupported = root("eclipsealloy", 0); player.setItemSlot(EquipmentSlot.FEET, unsupported);
+        set(unsupported, "jumpboost_upgrade_installed", true); set(unsupported, "jumpboost_bindingmode", 2);
+        set(unsupported, "ability_bindings", List.of(binding("jumpboost", 72, false), binding("earthquake", 72, false)));
+        require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 72, false)).accepted(), "Powered Jump/Earthquake binding enabled execution");
+        record("passive keyboard/mouse on both orientations: installed/tier admission, one toggle per ability, off/depleted/global-off eligibility, exact whole-root mutation, stale/device/replay/equipment/mode/installation rejection; shared active first/single bill and cooldown-independent toggles; live mode/removal recomposition");
+        var root = pair.primary().copy(); player.setItemSlot(EquipmentSlot.FEET, root);
+        for (String name : names) { set(root, name + "_upgrade_installed", true); set(root, name + "_bindingmode", 2); }
+        set(root, "ability_bindings", List.of(binding("stepheight", 72, false), binding("jumpboost", 73, false), binding("negatefalldamage", 74, false)));
+        double step = stepAmount(root);
+        require(dispatch(player, 72, false) && stepAmount(root) < step, "Step binding did not change live attribute projection");
+        require(dispatch(player, 72, false) && stepAmount(root) == step, "Step binding did not restore live projection");
+        player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); JustDireJumpCompatibility.jump(player, root);
+        require(player.getDeltaMovement().y > 0, "Enabled passive Jump had no boost");
+        require(dispatch(player, 73, false), "Jump toggle rejected");
+        player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); JustDireJumpCompatibility.jump(player, root);
+        require(player.getDeltaMovement().y == 0, "Jump boost survived binding disable");
+        set(root, "forge_energy", 6_000);
+        var fall = new LivingFallEvent(player, 9, 1); NeoForge.EVENT_BUS.post(fall);
+        require(fall.getDistance() == 0 && charge(root) < 6_000, "Enabled Negate did not protect/pay through actual native event");
+        require(dispatch(player, 74, false), "Negate toggle rejected");
+        set(root, "forge_energy", 6_000); fall = new LivingFallEvent(player, 9, 1); NeoForge.EVENT_BUS.post(fall);
+        require(fall.getDistance() == 9 && charge(root) == 6_000, "Disabled Negate still protected or paid");
+        record("bound root switches immediately affect live Step projection, passive Jump movement and actual Negate fall consumer/payment; toggling itself never pays");
+    }
+
+    private static double stepAmount(ItemStack root) {
+        return root.getAttributeModifiers().modifiers().stream().filter(entry -> entry.attribute().equals(Attributes.STEP_HEIGHT))
+                .mapToDouble(entry -> entry.modifier().amount()).sum();
+    }
+
+    private static boolean dispatch(ServerPlayer player, int key, boolean mouse) {
+        var prepared = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
+        if (!prepared.accepted()) { return false; }
+        var request = new JustDireActiveNetwork.Activate(sequence, prepared.nonce(), key, mouse);
+        boolean accepted = JustDireActiveNetwork.activate(player, request);
+        require(!JustDireActiveNetwork.activate(player, request), "Consumed passive input replayed");
+        return accepted;
     }
 
     private static void effectsAndProviders(MinecraftServer server) throws Exception {
@@ -302,6 +465,15 @@ public final class NeoForgeJustDireGroundStompServerTest {
         for (String ability : List.of("stepheight", "jumpboost", "negatefalldamage")) {
             require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 1, ability, 0, 71, false, true)).accepted()
                     && !combined.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(ability + "_toggle"), true), "Passive toggle rejected: " + ability);
+            require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, 4, true, true)).accepted()
+                    && JustDireSettingsCompatibility.boundPassives(combined, 4, true).contains(ability), "Passive binding edit rejected");
+            for (int button : new int[]{0, 1, 8}) {
+                require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, button, true, true)).accepted(), "Invalid passive mouse edit accepted");
+            }
+            require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 1, 72, false, true)).accepted()
+                    && !JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, 72, false, false)).accepted(), "Passive mode/inventory edit accepted");
+            require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, -1, false, true)).accepted()
+                    && !JustDireSettingsCompatibility.boundPassives(combined, 4, true).contains(ability), "Passive Escape removal rejected");
         }
         require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 2, "jumpboost", 2, 71, false, true)).accepted(), "Passive Jump slider rejected");
         for (String ability : List.of("stepheight", "negatefalldamage")) {
@@ -365,6 +537,15 @@ public final class NeoForgeJustDireGroundStompServerTest {
         if (!variant.equals("absent")) {
             require(JustDireUpgradesCompatibility.available() && JustDireResourceTestSupport.handler(root) != null, "New failure poisoned installation/storage");
             if (variant.equals("settingsMissing")) { require(JustDireGroundStompCompatibility.quote(root) != null, "Settings failure poisoned quotes"); }
+            else {
+                var source = boots("blazegold", 0); set(source, "stepheight_upgrade_installed", true);
+                var passive = MixedBootsFactory.createPair(source, new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                set(passive, "stepheight_bindingmode", 2); set(passive, "stepheight_toggle", false);
+                set(passive, "ability_bindings", List.of(binding("stepheight", 72, false)));
+                player.setItemSlot(EquipmentSlot.FEET, passive);
+                require(dispatch(player, 72, false) && passive.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component("stepheight_toggle"), false),
+                        "Active API failure poisoned an independent supported passive binding");
+            }
         }
         record(variant + ": repeated unavailable activation safe/quiet or bounded, independent installation/storage intact");
     }

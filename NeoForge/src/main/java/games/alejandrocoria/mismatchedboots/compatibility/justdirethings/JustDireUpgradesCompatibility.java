@@ -94,6 +94,9 @@ public final class JustDireUpgradesCompatibility {
             preserve(previous, output, ability + "_toggle");
             preserve(previous, output, ability + "_value");
         }
+        for (String ability : List.of("stepheight", "jumpboost", "negatefalldamage")) {
+            preserve(previous, output, ability + "_bindingmode");
+        }
         preserve(previous, output, "tool_enabled");
         // Live active state is never source-owned again, even when equal to an old projection.
         for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting", "ability_cooldowns")) {
