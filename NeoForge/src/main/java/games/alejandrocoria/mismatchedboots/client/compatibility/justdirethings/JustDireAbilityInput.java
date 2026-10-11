@@ -46,7 +46,9 @@ public final class JustDireAbilityInput {
         var client = Minecraft.getInstance();
         if (!reply.accepted() || reply.nonce().equals(JustDireActiveNetwork.NONE) || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
-        if (root != intent.root || !ItemStack.matches(snapshot(root, intent.passive), intent.snapshot)
+        // Ordinary timer/attribute slot packets recreate the client stack. Free switches can
+        // follow unchanged settings; the server nonce still requires the exact live root identity.
+        if ((!intent.passive && root != intent.root) || !ItemStack.matches(snapshot(root, intent.passive), intent.snapshot)
                 || !JustDireSettingsCompatibility.inputBinding(root, intent.key, intent.mouse)) { return; }
         Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Activate(intent.sequence, reply.nonce(), intent.key, intent.mouse));
     }
@@ -54,8 +56,8 @@ public final class JustDireAbilityInput {
     public static void tick() {
         var client = Minecraft.getInstance();
         if (pending != null && (client.player == null || client.screen != null
-                || client.player.getItemBySlot(EquipmentSlot.FEET) != pending.root
-                || !ItemStack.matches(snapshot(pending.root, pending.passive), pending.snapshot))) { pending = null; }
+                || (!pending.passive && client.player.getItemBySlot(EquipmentSlot.FEET) != pending.root)
+                || !ItemStack.matches(snapshot(client.player.getItemBySlot(EquipmentSlot.FEET), pending.passive), pending.snapshot))) { pending = null; }
     }
 
     public static void reset() { pending = null; sequence = 0; }

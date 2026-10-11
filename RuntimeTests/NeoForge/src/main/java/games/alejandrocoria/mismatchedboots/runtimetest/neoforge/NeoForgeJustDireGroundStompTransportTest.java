@@ -60,11 +60,11 @@ final class NeoForgeJustDireGroundStompTransportTest {
     private static void initialize(Minecraft client) throws Exception {
         require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0
                 && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE, "Client not hidden/muted");
-        NeoForgeJustDireGroundStompSpike.initializeApi();
+        JustDireGroundStompTestSupport.initializeApi();
         JustDireActiveNetwork.clientReplies(reply -> activation = reply, reply -> settings = reply);
         add("real production prepare/action: one bill and positive timer reach ordinary equipment packets", () -> server(client, player -> {
             player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
-            var boot = NeoForgeJustDireGroundStompSpike.boots("eclipsealloy", 12_000);
+            var boot = JustDireGroundStompTestSupport.boots("eclipsealloy", 12_000);
             serverRoot = MixedBootsFactory.createPair(boot, new ItemStack(Items.DIAMOND_BOOTS)).primary();
             configure(serverRoot); player.setItemSlot(EquipmentSlot.FEET, serverRoot); player.inventoryMenu.broadcastChanges();
         }), () -> client.screen == null && charge(feet(client)) == 6_000);
@@ -135,7 +135,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
     private static int value(ItemStack root) { return root.getOrDefault(JustDireAttributeTestSupport.<Integer>component("groundstomp_value"), -1); }
     private static int timer(ItemStack root) {
         if (root.isEmpty()) { return -1; }
-        try { return NeoForgeJustDireGroundStompSpike.timer(root); } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
+        try { return JustDireGroundStompTestSupport.timer(root); } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
     }
     private static <T> void set(ItemStack root, String path, T value) { JustDireAttributeTestSupport.set(root, path, value); }
     private static void add(String name, Runnable start, BooleanSupplier done) { steps.add(new Step(name, start, done)); }

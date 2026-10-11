@@ -102,8 +102,10 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$jdtMouseCaptureGuard(MouseButtonEvent event, boolean doubled, CallbackInfoReturnable<Boolean> ci) {
-        // Valid additional buttons follow native capture/display; ordinary clicks cannot bind or switch tools during capture.
+        // Native capture already excludes left/right. Let ordinary clicks select another tool
+        // and cancel capture through native widget rebuilding; block only invalid extra buttons.
         if (JustDireSettingsCompatibility.mixed(tool) && bindingEnabled
+                && event.button() != 0 && event.button() != 1
                 && !JustDireSettingsCompatibility.validBindingInput(event.button(), true)) { ci.setReturnValue(true); }
     }
 

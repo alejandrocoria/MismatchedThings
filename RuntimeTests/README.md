@@ -614,130 +614,15 @@ The conversion's full .114/.99 matrix and ordinary-client handoff are recorded i
 Final-export unit cases must run immediately after a normal
 `verifyJustDireNegateFall` process, before another gate resets its shared run directory.
 
-## Just Dire Things Ground Stomp spike (8.5, phase A)
+## Retired Just Dire Things active-ability prototypes
 
-Historical foundation server probe (production gates below supersede mixed behavior):
-
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompSpike --console=plain
-```
-
-Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
-The opt-in fixtures reuse pinned-JDT server preparation, shared markers and the
-existing hidden/muted quick-play client preparation. They reset disposable
-fixture worlds, not the owner's client. Reports are versioned under
-`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-spike/<version>/`.
-
-The 14 server groups measure native effects/costs/timers and compare test-only
-mixed quotes, FE rollback/stale identity/Binding Curse access, actual FEET
-durability breakage, recomposition equality/absence, codecs and timer writes.
-Native handler calls use a synchronous fixture context, not network transport.
-The old unadapted client fixture was retired in block C: mixed rejection is no
-longer a correct expectation. Its native input/menu controls are covered by the
-production client gate below. Historical reports remain evidence, not a command
-to rerun against the current bridge.
-
-No mixed effect dispatcher, UI, packet bridge, production tick hook or new
-fixture mixin is implemented. Explicit active-data preservation is test-only;
-codecs are not a second-world restart. Findings, remaining proof work and
-unselected policies are in [the 8.5 record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#8-spike-phase-a--native-foundation-and-access-boundaries).
-
-## Just Dire Things Ground Stomp server action spike (8.5, phase B)
-
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompActionSpike --console=plain
-```
-
-Repeat with `"-Pneoforge_version=26.1.2.99"`; run Gradle sequentially and restore
-the normal loader afterward. This separate opt-in run reuses phase A's pinned
-artifact, chunk warmup, query/target helpers and disposable preparation. Versioned
-reports are under `RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-action-spike/<version>/`.
-
-Its 13 groups exercise a test-only mixed action against real mobs and native
-controls: one root bill/timer, both candidate provider policies, FE rollback,
-root enchantments/modes, rejection, real FEET break callback and reentrancy.
-The prototype listener proves 200 worn cooldown ticks plus six unequipped
-server ticks; copy-on-write isolates history and unsupported active records.
-No production hook, native tool identity, client/settings bridge or new mixin
-is added. Local snapshot/identity checks are not serialized target validation;
-recomposition preservation is test-only, not actual smithing/restart acceptance.
-Details and the separate armor-tag/Unbreaking finding are in
-[phase B](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#9-spike-phase-b--mixed-server-action-and-cooldown).
-
-## Just Dire Things native settings-screen spike (8.5 UI proof)
-
-Prepare the existing disposable server world once if it is missing, then run
-the isolated client gates sequentially:
-
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSettingsSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSettingsApiMissing :RuntimeTests:NeoForge:verifyJustDireSettingsUiDisabled :RuntimeTests:NeoForge:verifyJustDireSettingsAbsent --console=plain
-```
-
-Repeat the client gates with `"-Pneoforge_version=26.1.2.99"`, then restore the
-normal loader. Preparation verifies the pinned JDT hash and resets only build
-fixtures/markers, not development-client mods or worlds. The absent variant
-omits JDT from its copied client. Reports and process logs are versioned under
-`RuntimeTests/NeoForge/build/reports/just-dire-settings-spike/<version>/`.
-
-One opt-in client mixin adapts the existing native screen's item/ability/value
-queries and mixed edit callbacks. It neither copies the layout nor adds tool
-interfaces to the mixed item. Native widgets configure root Ground Stomp through
-a fixture-only selection token/menu/root-identity protocol with real transport.
-Both orientations, endpoints, particles, G/Escape binding capture, reopening,
-native originals, zero FE, mixed-tier metadata, false/absent installed flags and
-invalid/obsolete/duplicated edits are checked; source snapshots must stay intact.
-
-`ApiMissing` is an explicit unavailable-query seam; `UiDisabled` disables the
-fixture mixin and mixed route. These are not competing-transformer/ABI guard
-acceptance. `Absent` exercises startup/root creation without the optional mod.
-Input is synthetic mouse movement and native widget/key callbacks in a hidden,
-muted client, not physical input or manual visual acceptance.
-
-The fixture now opens through synthetic native settings-key consumption, with
-empty hands/inventory and then equipped mixed boots without a held item. A small
-independent production mixin returns no internal inventory for an empty stack,
-avoiding the confirmed native `ItemAccess.forStack` failure on both sides.
-Non-empty stacks keep native capability queries; native original controls remain
-the regression control. Client/server refresh checks also retain the Pocket
-Generator's actual internal slots and clear them when refreshed to EMPTY.
-Broader settings/input semantics and active gameplay still need their
-decision/implementation gates. Exact evidence and limits are in the
-[UI proof record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#106-executable-native-screen-proof).
-
-## Just Dire Things UI-to-keyboard action spike (8.5 connection proof)
-
-Reuse the native-screen disposable world preparation above, then run:
-
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompInputSpike --console=plain
-```
-
-Repeat with `"-Pneoforge_version=26.1.2.99"`, sequentially, then restore the normal
-loader. Preparation checks the same pinned JDT hash, copies only build fixtures
-and resets separate connection markers. Reports/process logs are under
-`RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-input-spike/<version>/`.
-
-This opt-in run reuses native widgets to set root Ground Stomp strength and
-capture/remove G in both Eclipse Alloy + diamond orientations. After closing
-the menu, a synthetic NeoForge key event uses real prepare/acknowledge and
-activation/result transport to phase B's existing mixed action and cooldown
-tick. Actual world target motion, exactly one 5,000 FE root bill, cooldown 200,
-normal expiry, client state synchronization and immutable sources are asserted.
-Root replacement, removed bindings, open menus, superseded/duplicate/replayed
-requests, invalid device/key and an explicit unavailable-route seam reject.
-Delayed cases hold genuine prepared packets rather than fabricate permission.
-Native originals retain native input/payment; the independent UI and unadapted
-client gates remain regression controls.
-
-The UUID activation permit is separate from the menu selection token and bound
-to the actual player/equipped root/current snapshot/request. This is test-only,
-keyboard/equipped-only and one-provider evidence, not a production protocol,
-physical/manual UX acceptance or arbitrary ABI/mixin readiness. The lifecycle
-gate below separately covers restart/tier-smithing; conflicting providers and
-full mouse/inventory semantics remain owner decisions. See the
-[connection record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#11-native-ui-to-mixed-keyboard-action--bounded-connection-proof).
+Block E retired the executable native/action/UI/input prototypes and their
+duplicate packets, listener, screen mixin and task registrations. Their findings
+and original commands remain historical evidence in
+[the exploration](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md).
+Use the production gates below; no old spike task is a maintained entry point.
+Useful native comparison/construction helpers are retained without a second
+mixed quote, payment, timer, screen or permission implementation.
 
 ## Just Dire Things Ground Stomp production state (8.5 block A)
 
@@ -801,9 +686,8 @@ CommonNetworking and verifies ordinary stack synchronization, one action bill,
 natural worn/paused/disabled/depleted cooldown expiry, replay rejection after
 expiry, actual native menu open/close and token-protected root edits. It installs
 no native widget/input bridge and grants no physical/manual acceptance. The
-historical input/lifecycle listener no longer ticks worn roots a second time;
-remaining action/UI prototypes are pending block E consolidation, after D's
-accepted mouse/passive-toggle input extension. Three focused
+retired prototypes no longer register listeners, packets or screen mixins.
+Block E reuses the production client gate for restart/reconnect. Three focused
 codec units cover wire identity/preferences, trailing data and bounded strings.
 See [the block B record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#8-block-b--server-action-timers-and-transport).
 
@@ -826,6 +710,9 @@ bill, unchanged sources, tool switches and selected-slot removal. D.1 adds
 production mouse-event flights, left/right/out-of-range capture/input rejection,
 native inventory mouse controls and device identity in activation permits. Originals,
 empty-hand menu and internal-slot refresh remain native controls.
+During mixed capture, ordinary left/right tool-slot clicks retain native
+selection/capture cancellation without changing either boot's bindings; invalid
+additional buttons remain rejected.
 D.2 adds native passive keyboard/mouse capture, independent and shared toggles,
 global-off/depleted eligibility, live equipped Step attributes, shared Ground
 Stomp/cooldown behavior, reopened preferences and per-ability Escape removal.
@@ -841,39 +728,47 @@ and D.2 passive-toggle bindings are implemented. Block E owns consolidated resta
 reconnect and the final ordinary-client handoff; see
 [the C record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#9-block-c--native-settings-and-equipped-keyboard).
 
-## Just Dire Things Ground Stomp lifecycle spike (8.5 restart/smithing)
+## Just Dire Things Ground Stomp production lifecycle (8.5 E)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycleSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
 ```
 
-Reuse the UI gate's disposable server-world prerequisite. This task runs two
-hidden/muted client JVMs sequentially. Save preparation checks the pinned JDT
-artifact and copies the build-only world; restart opens that exact saved world
-without copying/resetting it. Each fresh full run clears its own markers and
-checks cleanup. Reports/process logs are under
+Requires the disposable server-world prerequisite from the production server gate.
+Two hidden/muted client JVMs reuse one saved world: Save prepares it once; Restart
+opens that exact world without copying/resetting it. Both modes use the existing
+production native-screen/client fixture, not an alternate lifecycle screen or
+action driver. Reports/process logs remain under
 `RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-lifecycle/<version>/`.
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 
-Native widgets configure both Celestigem + diamond orientations. Real keyboard
-transport spends root FE once and starts cooldowns; the actual spent roots are
-unequipped and stored in a world barrel. A second JVM compares full disk-loaded
-stacks with saved expectations, retains bindings/strength/particles/FE/wear and
-checks the paused cooldowns, then re-equips and upgrades through native
-Celestigem-to-Eclipse recipes using actual smithing previews and ordinary/
-shift-click takes. Inputs, one template/addition/base, the untouched vanilla
-source, changed native source and live root resource balance are checked.
-Normal equipped ticks expire the preserved timers; old-JVM activation packets
-reject before/after expiry, and a fresh persisted G applies strength 3 with one
-5,000 FE bill and a new cooldown.
+Native widgets configure both Celestigem + Blazegold orientations, live sliders,
+particles, keyboard Ground Stomp, shared Step/passive Jump mouse bindings and
+Negate binding removal/explicit disabled mode. Production input spends FE and
+moves an actual non-hostile world target; spent roots, wear and positive paused
+timers are stored in a barrel. The second JVM compares whole disk stacks,
+performs real Celestigem-to-Eclipse preview and normal/shift-click take, verifies
+preserved controls/resources/source history and single template/addition/base
+consumption, then exercises shared passive input during cooldown, natural expiry
+and fresh keyboard/mouse action.
 
-Block A replaced the candidate preservation mixin with production lifecycle
-finalization. Equal historical values, explicit absence, unrelated binding/active
-timer records and deliberately changed projections now exercise production root
-authority without a fixture restoration seam. Action, timer ticking and native
-UI/input remain test-only here, not production or physical/manual acceptance.
-The new production-state gate separately owns timer-import/provider acceptance.
-See the [lifecycle record](../local-docs/JUST-DIRE-THINGS-ACTIVE-ABILITIES-EXPLORATION.md#12-restart-and-real-tier-smithing--bounded-lifecycle-proof).
+The fixture only observes production replies or defers a genuine permit; it
+does not implement validation, payment, effects or ticking. Old consumed and
+unconsumed packets reject through real CommonNetworking before/after expiry.
+An actual disconnect and same-world rejoin in the second JVM verifies new
+server/player identity, cleared production client intent/selection, persistent
+FE/controls, rejection of an old free permit and fresh native selection/input.
+Server player-replacement/logout cases remain in the existing server matrix.
+The lifecycle case also defers a genuine free-input reply across an actual timer
+slot packet that recreates the client stack. Production pending intent must
+survive unchanged filtered settings; equal server equipment replacement still
+rejects. Action-only client intent and all paid server checks stay strict.
+
+Equal/absent changed-projection and unrelated record preservation remain owned
+by the existing production state gate, not a duplicated lifecycle matrix.
+Synthetic input and automated disk checks do not establish final manual
+acceptance. Exact executed evidence and the final checklist belong to
+[block E](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#12-block-e--consolidation-lifecycle-and-final-handoff).
 
 ## Vanilla armor classification
 

@@ -67,7 +67,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
             if (!variant.equals("live")) { unavailable(server, variant); }
             else {
                 require(JustDireGroundStompCompatibility.available() && JustDireSettingsCompatibility.available(), "Production APIs unavailable");
-                NeoForgeJustDireGroundStompSpike.initializeApi();
+                JustDireGroundStompTestSupport.initializeApi();
                 nativePassiveBindings(server);
                 effectsAndProviders(server); paymentAndBreak(server); permits(server); mousePermits(server); settings(server); timers(server); faults(server);
                 passiveBindings(server);
@@ -239,7 +239,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
     private static void effectsAndProviders(MinecraftServer server) throws Exception {
         ServerPlayer player = player(server, GameType.SURVIVAL);
         double[] distances = {2, -2, 0, 3.01, 4};
-        var nativeResult = NeoForgeJustDireGroundStompSpike.nativeUse(player, NeoForgeJustDireGroundStompSpike.boots("eclipsealloy", 6_000), distances);
+        var nativeResult = JustDireGroundStompTestSupport.nativeUse(player, JustDireGroundStompTestSupport.boots("eclipsealloy", 6_000), distances);
         var pair = MixedBootsFactory.createPair(boots("blazegold", 0), boots("eclipsealloy", 12_000));
         for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
             configure(root); set(root, "groundstomp_value", 5);
@@ -571,8 +571,8 @@ public final class NeoForgeJustDireGroundStompServerTest {
             attempt(player); return mobs.stream().map(mob -> mob.getDeltaMovement().horizontalDistance()).toList();
         } finally { mobs.forEach(Mob::discard); }
     }
-    private static ServerPlayer player(MinecraftServer server, GameType mode) { return NeoForgeJustDireGroundStompSpike.player(server, mode); }
-    private static ItemStack boots(String tier, int charge) throws Exception { return NeoForgeJustDireGroundStompSpike.boots(tier, charge); }
+    private static ServerPlayer player(MinecraftServer server, GameType mode) { return JustDireGroundStompTestSupport.player(server, mode); }
+    private static ItemStack boots(String tier, int charge) throws Exception { return JustDireGroundStompTestSupport.boots(tier, charge); }
     private static ItemStack root(String tier, int charge) throws Exception {
         var root = MixedBootsFactory.createPair(boots(tier, charge), new ItemStack(Items.DIAMOND_BOOTS)).primary(); configure(root); return root;
     }
@@ -590,7 +590,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
     private static <T> DataComponentType<T> component(String path) { return JustDireAttributeTestSupport.component(path); }
     private static <T> void set(ItemStack stack, String path, T value) { JustDireAttributeTestSupport.set(stack, path, value); }
     private static int charge(ItemStack root) { return root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0); }
-    private static int timer(ItemStack root) throws Exception { return NeoForgeJustDireGroundStompSpike.timer(root); }
+    private static int timer(ItemStack root) throws Exception { return JustDireGroundStompTestSupport.timer(root); }
     private static void record(String text) { groups++; report.append(text).append('\n'); }
     private static void require(boolean condition, String text) { if (!condition) { throw new AssertionError(text); } }
     private static final class BreakObserver extends ServerPlayer {

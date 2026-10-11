@@ -29,9 +29,6 @@ license="MIT"
     config="mismatchedboots-just-dire-root-upgrade-guards.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-just-dire-settings-spike.mixins.json"
-
-[[mixins]]
     config="mismatchedboots-just-dire-ground-stomp-state-guards.mixins.json"
 
 [[mixins]]
