@@ -14,7 +14,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
-/** Only an equipped keyboard press can prepare; a reply cannot revive stale client intent. */
+/** Equipped keyboard/additional-mouse presses only; a reply cannot revive stale client intent. */
 public final class JustDireGroundStompInput {
     private static int sequence;
     private static Pending pending;
@@ -22,12 +22,21 @@ public final class JustDireGroundStompInput {
     private JustDireGroundStompInput() {}
 
     public static void key(InputEvent.Key event) {
+        press(event.getKey(), false, event.getAction());
+    }
+
+    public static void mouse(InputEvent.MouseButton.Post event) {
+        // Native mouse routing stops at inventory slot 35, so it cannot reach worn mixed boots.
+        press(event.getButton(), true, event.getAction());
+    }
+
+    private static void press(int key, boolean mouse, int action) {
         var client = Minecraft.getInstance();
-        if (event.getAction() != GLFW.GLFW_PRESS || client.player == null || client.screen != null) { return; }
+        if (action != GLFW.GLFW_PRESS || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
-        if (!JustDireSettingsCompatibility.keyboardBinding(root, event.getKey())) { return; }
-        pending = new Pending(root, snapshot(root), event.getKey(), ++sequence);
-        Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Prepare(sequence, event.getKey(), false));
+        if (!JustDireSettingsCompatibility.groundStompBinding(root, key, mouse)) { return; }
+        pending = new Pending(root, snapshot(root), key, mouse, ++sequence);
+        Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Prepare(sequence, key, mouse));
     }
 
     public static void reply(JustDireActiveNetwork.ActivationReply reply) {
@@ -37,8 +46,8 @@ public final class JustDireGroundStompInput {
         if (!reply.accepted() || reply.nonce().equals(JustDireActiveNetwork.NONE) || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
         if (root != intent.root || !ItemStack.matches(root, intent.snapshot)
-                || !JustDireSettingsCompatibility.keyboardBinding(root, intent.key)) { return; }
-        Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Activate(intent.sequence, reply.nonce(), intent.key, false));
+                || !JustDireSettingsCompatibility.groundStompBinding(root, intent.key, intent.mouse)) { return; }
+        Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Activate(intent.sequence, reply.nonce(), intent.key, intent.mouse));
     }
 
     public static void tick() {
@@ -62,5 +71,5 @@ public final class JustDireGroundStompInput {
             if (root.has(type)) { root.set(type, List.copyOf(root.get(type))); }
         });
     }
-    private record Pending(ItemStack root, ItemStack snapshot, int key, int sequence) {}
+    private record Pending(ItemStack root, ItemStack snapshot, int key, boolean mouse, int sequence) {}
 }

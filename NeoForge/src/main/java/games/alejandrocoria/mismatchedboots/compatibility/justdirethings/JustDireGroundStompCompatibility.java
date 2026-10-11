@@ -197,13 +197,13 @@ public final class JustDireGroundStompCompatibility {
     }
 
     /** Internal server action boundary. Wire callers must first consume their independent activation permit. */
-    static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key) {
+    static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key, boolean mouse) {
         if (!executing.add(player)) { return false; }
         try {
             Api binding = api;
             if (binding == null || !equipped(player, root) || !ItemStack.matches(root, expected)
                     || player.containerMenu != player.inventoryMenu
-                    || !JustDireSettingsCompatibility.keyboardBinding(root, key)) { return false; }
+                    || !JustDireSettingsCompatibility.groundStompBinding(root, key, mouse)) { return false; }
             Action action;
             try {
                 Quote quote = quote(root);

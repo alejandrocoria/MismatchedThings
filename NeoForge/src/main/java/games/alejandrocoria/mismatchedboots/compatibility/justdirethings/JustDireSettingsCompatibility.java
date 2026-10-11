@@ -117,13 +117,18 @@ public final class JustDireSettingsCompatibility {
                 && ModContent.getMixedBootsData(root).isPresent();
     }
 
-    public static boolean keyboardBinding(ItemStack root, int key) {
+    /** GLFW key/button bounds, excluding the native mouse route's ordinary left/right clicks. */
+    public static boolean validBindingInput(int key, boolean mouse) {
+        return mouse ? key >= 2 && key <= 7 : key >= 32 && key <= 348;
+    }
+
+    public static boolean groundStompBinding(ItemStack root, int key, boolean mouse) {
         Api binding = api;
-        if (binding == null || !mixed(root) || key < 32 || key > 348 || root.getOrDefault(binding.mode, 0) != 2) { return false; }
+        if (binding == null || !mixed(root) || !validBindingInput(key, mouse) || root.getOrDefault(binding.mode, 0) != 2) { return false; }
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                 if ("groundstomp".equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
-                        && !(boolean) binding.mouse.invokeExact(record) && (boolean) binding.equipped.invokeExact(record)) { return true; }
+                        && (boolean) binding.mouse.invokeExact(record) == mouse && (boolean) binding.equipped.invokeExact(record)) { return true; }
             }
             return false;
         } catch (Throwable failure) { disable(binding, failure); return false; }
@@ -197,13 +202,13 @@ public final class JustDireSettingsCompatibility {
                     }
                     case JustDireActiveNetwork.BINDING -> {
                         if (!setting.name.equals("groundstomp") || (request.value() != 0 && request.value() != 2)
-                                || request.mouse() || !request.equipped() || (request.key() != -1 && (request.key() < 32 || request.key() > 348))) { return false; }
+                                || !request.equipped() || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) { return false; }
                         var next = new ArrayList<Object>();
                         for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                             if (!"groundstomp".equals((String) binding.name.invokeExact(record))) { next.add(record); }
                         }
                         if (request.value() == 2 && request.key() != -1) {
-                            next.add(binding.create.invokeExact("groundstomp", request.key(), false, true));
+                            next.add(binding.create.invokeExact("groundstomp", request.key(), request.mouse(), true));
                         }
                         changed.set(binding.bindings, List.copyOf(next)); changed.set(binding.mode, request.value());
                     }

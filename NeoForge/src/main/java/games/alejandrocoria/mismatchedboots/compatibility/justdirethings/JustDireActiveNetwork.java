@@ -95,12 +95,12 @@ public final class JustDireActiveNetwork {
         if (request.sequence <= state.activationSequence || request.sequence <= 0) { return prepared(request.sequence, NONE); }
         state.activationSequence = request.sequence; state.permit = null;
         ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-        if (request.mouse || player.containerMenu != player.inventoryMenu || !JustDireGroundStompCompatibility.equipped(player, root)
-                || !JustDireSettingsCompatibility.keyboardBinding(root, request.key) || JustDireGroundStompCompatibility.quote(root) == null) {
+        if (player.containerMenu != player.inventoryMenu || !JustDireGroundStompCompatibility.equipped(player, root)
+                || !JustDireSettingsCompatibility.groundStompBinding(root, request.key, request.mouse) || JustDireGroundStompCompatibility.quote(root) == null) {
             return prepared(request.sequence, NONE);
         }
         UUID nonce = UUID.randomUUID();
-        state.permit = new Permit(root, snapshot(root), request.key, nonce, player.level().getGameTime() + 40);
+        state.permit = new Permit(root, snapshot(root), request.key, request.mouse, nonce, player.level().getGameTime() + 40);
         return prepared(request.sequence, nonce);
     }
 
@@ -111,9 +111,9 @@ public final class JustDireActiveNetwork {
         Permit permit = state.permit;
         state.permit = null; // Consume before validation/commit. No later expiry, failure or equipment can revive it.
         ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-        return !request.mouse && request.key == permit.key && player.level().getGameTime() <= permit.expires
+        return request.mouse == permit.mouse && request.key == permit.key && player.level().getGameTime() <= permit.expires
                 && player.containerMenu == player.inventoryMenu && root == permit.root && ItemStack.matches(root, permit.snapshot)
-                && JustDireGroundStompCompatibility.activate(player, root, permit.snapshot, request.key);
+                && JustDireGroundStompCompatibility.activate(player, root, permit.snapshot, request.key, request.mouse);
     }
 
     public static SettingsReply edit(ServerPlayer player, SettingsRequest request) {
@@ -214,7 +214,7 @@ public final class JustDireActiveNetwork {
         MenuSession menu;
         State(ServerPlayer player) { this.player = player; }
     }
-    private record Permit(ItemStack root, ItemStack snapshot, int key, UUID nonce, long expires) {}
+    private record Permit(ItemStack root, ItemStack snapshot, int key, boolean mouse, UUID nonce, long expires) {}
     private static final class MenuSession {
         final AbstractContainerMenu menu;
         final ItemStack root;

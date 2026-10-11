@@ -876,7 +876,7 @@ tasks.register('prepareJustDireGroundStompClient') {
 }
 tasks.register('verifyJustDireGroundStompClient') {
     group = 'verification'
-    description = 'Verifies native JDT mixed widgets/capture and production equipped keyboard/action transport.'
+    description = 'Verifies native JDT mixed widgets/capture and production equipped keyboard/mouse action transport.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
       ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'Absent'].each { variant ->

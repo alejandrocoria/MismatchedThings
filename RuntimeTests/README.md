@@ -779,11 +779,12 @@ and process logs are under
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 
 The server gate calls production permits/action/edits/timers, not the action
-spike. Eleven live groups cover native effects/AABB/multipart filtering, both
+spike. Twelve live groups cover native effects/AABB/multipart filtering, both
 orientations, strongest-usable/tie/fallback selection, one FE or actual durability
 bill, enchantments/exemptions/base eligibility, FEET break/reentry, identity/state/
 mutable-list changes, consumed/superseded/expired/replayed permissions, actual
-native-menu settings/passive edits and supported timer retention. Disposable
+native-menu settings/passive edits and supported timer retention, plus all
+additional mouse buttons with device/invalid/stale/replay rejection. Disposable
 mixins fault the real FE extraction and post-commit effect path; no production
 test switches exist. Four separate JVMs check missing action API, native query
 failure, missing settings API and absence, including exact bounded diagnostics
@@ -795,7 +796,8 @@ natural worn/paused/disabled/depleted cooldown expiry, replay rejection after
 expiry, actual native menu open/close and token-protected root edits. It installs
 no native widget/input bridge and grants no physical/manual acceptance. The
 historical input/lifecycle listener no longer ticks worn roots a second time;
-remaining action/UI prototypes are pending block D consolidation. Three focused
+remaining action/UI prototypes are pending block E consolidation, after D's
+accepted mouse/passive-toggle input extension. Three focused
 codec units cover wire identity/preferences, trailing data and bounded strings.
 See [the block B record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#8-block-b--server-action-timers-and-transport).
 
@@ -811,10 +813,12 @@ native getter wrappers, lost required callbacks, missing settings API and quiet
 absence. Native widgets/capture use production callbacks and transport; no
 prototype listener or replacement reply handler is installed. Both mixed
 orientations cover supported controls and per-ability ranges, rapid edits,
-global Toggle Tool (capture takes priority), particles, keyboard assignment and
-Escape removal, disabled mode/inventory controls, GUI/release/repeat/wrong-key
+global Toggle Tool (capture takes priority), particles, keyboard/mouse assignment,
+reopen and Escape removal, disabled mode/inventory controls, GUI/release/repeat/wrong-input
 and imported unsupported preference denial, fallback/recharge and one action
-bill, unchanged sources, tool switches and selected-slot removal. Originals,
+bill, unchanged sources, tool switches and selected-slot removal. D.1 adds
+production mouse-event flights, left/right/out-of-range capture/input rejection,
+native inventory mouse controls and device identity in activation permits. Originals,
 empty-hand menu and internal-slot refresh remain native controls.
 
 Reports/process logs and the live final screen export are retained under
@@ -823,8 +827,9 @@ Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 The final-export unit uses
 `-PjustDireSettingsTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/ToolSettingScreen.class`;
 native entry units use the existing `justDireGuardJar` opt-in.
-Synthetic event-bus input is not a physical/manual acceptance. Block D owns
-consolidated restart/reconnect and the ordinary-client handoff; see
+Synthetic event-bus input is not a physical/manual acceptance. D.1 mouse input
+is implemented; D.2 passive-toggle bindings are pending. Block E owns consolidated restart/
+reconnect and the final ordinary-client handoff; see
 [the C record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#9-block-c--native-settings-and-equipped-keyboard).
 
 ## Just Dire Things Ground Stomp lifecycle spike (8.5 restart/smithing)

@@ -65,7 +65,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
             else {
                 require(JustDireGroundStompCompatibility.available() && JustDireSettingsCompatibility.available(), "Production APIs unavailable");
                 NeoForgeJustDireGroundStompSpike.initializeApi();
-                effectsAndProviders(server); paymentAndBreak(server); permits(server); settings(server); timers(server); faults(server);
+                effectsAndProviders(server); paymentAndBreak(server); permits(server); mousePermits(server); settings(server); timers(server); faults(server);
             }
             NetworkAcceptanceFiles.write(PREFIX + "-report.txt", groups + " production server groups\n" + report);
             NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
@@ -206,6 +206,47 @@ public final class NeoForgeJustDireGroundStompServerTest {
         record("superseded/consumed replay even after lockout removal, equal-component replacement, stale settings, wrong key/device, expired nonce, unsupported mode/unbound and player replacement reject with no bill/timer");
     }
 
+    private static void mousePermits(MinecraftServer server) throws Exception {
+        var player = player(server, GameType.SURVIVAL);
+        var constructor = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityBinding")
+                .getConstructor(String.class, int.class, boolean.class, boolean.class);
+        for (int button = 2; button <= 7; button++) {
+            var root = root("eclipsealloy", 12_000); player.setItemSlot(EquipmentSlot.FEET, root);
+            set(root, "ability_bindings", List.of(constructor.newInstance("groundstomp", button, true, true)));
+            var history = ModContent.getMixedBootsData(root);
+            var issued = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, button, true));
+            require(issued.accepted(), "Additional mouse button rejected: " + button);
+            var packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), button, true);
+            require(JustDireActiveNetwork.activate(player, packet) && charge(root) == 1_000 && timer(root) == 200
+                    && !JustDireActiveNetwork.activate(player, packet) && ModContent.getMixedBootsData(root).equals(history),
+                    "Mouse bill/timer/replay/provenance failed: " + button);
+        }
+        for (int button : new int[]{-1, 0, 1, 8, 71}) {
+            var root = root("eclipsealloy", 12_000); player.setItemSlot(EquipmentSlot.FEET, root);
+            set(root, "ability_bindings", List.of(constructor.newInstance("groundstomp", button, true, true)));
+            var before = root.copy();
+            require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, button, true)).accepted()
+                    && ItemStack.matches(root, before), "Forged mouse code accepted: " + button);
+        }
+        for (int fault = 0; fault < 3; fault++) {
+            var root = root("eclipsealloy", 12_000); player.setItemSlot(EquipmentSlot.FEET, root);
+            set(root, "ability_bindings", List.of(constructor.newInstance("groundstomp", 3, true, true)));
+            require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 3, false)).accepted(), "Mouse code accepted as keyboard");
+            var issued = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 3, true));
+            require(issued.accepted(), "Mouse permit not issued");
+            if (fault == 1) { player.setItemSlot(EquipmentSlot.FEET, root.copy()); }
+            if (fault == 2) { set(root, "groundstomp_value", 1); }
+            var before = root.copy();
+            var rejected = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, fault != 0);
+            var original = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, true);
+            require(!JustDireActiveNetwork.activate(player, rejected) && !JustDireActiveNetwork.activate(player, original)
+                    && ItemStack.matches(root, before), "Mouse device/stale state revived permission: " + fault);
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+            require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 3, true)).accepted(), "Unequipped mouse authorized");
+        }
+        record("mouse buttons 2-7: one bill/timer, consumed replay and provenance; left/right/out-of-range/keyboard confusion, stale root/settings and unequipped rejection");
+    }
+
     private static void settings(MinecraftServer server) throws Exception {
         ServerPlayer player = player(server, GameType.SURVIVAL); var root = root("eclipsealloy", 0); player.setItemSlot(EquipmentSlot.FEET, root);
         AbstractContainerMenu menu = (AbstractContainerMenu) Class.forName("com.direwolf20.justdirethings.common.containers.ToolSettingContainer")
@@ -231,6 +272,12 @@ public final class NeoForgeJustDireGroundStompServerTest {
         root.set(cooldowns(), List.of(record("groundstomp", 80, false))); set(root, "forge_energy", 123); root.setDamageValue(31);
         require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 3, "groundstomp", 1, 71, false, true)).accepted(), "Natural resources/timer invalidated menu settings");
         require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, "groundstomp", 2, 72, false, true)).accepted(), "Keyboard binding edit rejected");
+        for (int button : new int[]{0, 1, 8}) {
+            require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, "groundstomp", 2, button, true, true)).accepted(), "Unsupported mouse edit accepted");
+        }
+        require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, "groundstomp", 2, 7, true, true)).accepted()
+                && JustDireSettingsCompatibility.groundStompBinding(root, 7, true)
+                && !JustDireSettingsCompatibility.groundStompBinding(root, 7, false), "Mouse binding/device edit failed");
         require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, "groundstomp", 0, -1, false, true)).accepted(), "Binding removal rejected");
         require(charge(root) == 123 && timer(root) == 80 && root.getDamageValue() == 31 && ModContent.getMixedBootsData(root).equals(history), "Settings mutated live wallets/timers/sources");
         var before = root.copy(); player.setItemSlot(EquipmentSlot.FEET, root.copy());

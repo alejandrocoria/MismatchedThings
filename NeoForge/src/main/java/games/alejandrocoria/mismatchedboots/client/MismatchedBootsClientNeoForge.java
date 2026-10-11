@@ -21,6 +21,7 @@ public final class MismatchedBootsClientNeoForge {
     public static void onClientSetup(FMLClientSetupEvent event) {
         JustDireActiveNetwork.clientReplies(JustDireGroundStompInput::reply, JustDireSettingsClient::reply);
         NeoForge.EVENT_BUS.addListener((InputEvent.Key key) -> JustDireGroundStompInput.key(key));
+        NeoForge.EVENT_BUS.addListener((InputEvent.MouseButton.Post mouse) -> JustDireGroundStompInput.mouse(mouse));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> {
             JustDireSettingsClient.tick(); JustDireGroundStompInput.tick();
         });

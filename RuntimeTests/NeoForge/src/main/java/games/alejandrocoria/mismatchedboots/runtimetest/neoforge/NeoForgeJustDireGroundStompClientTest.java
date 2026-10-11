@@ -61,11 +61,13 @@ final class NeoForgeJustDireGroundStompClientTest {
             if (step == null) {
                 // Let final close/ordinary slot packets settle before stopping the local channel.
                 if (++wait <= 20) { return; }
-                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + "production native UI/client keyboard/server transport; synthetic events, no physical/manual acceptance\n");
+                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + "production native UI/client keyboard/mouse/server transport; synthetic events, no physical/manual acceptance\n");
                 NetworkAcceptanceFiles.write(PREFIX + "-success.txt", VARIANT + "\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; wait = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; wait = 0; }
-            else if (++wait > 600) { throw new AssertionError("Timed out: " + step.name); }
+            else if (++wait > 600) { throw new AssertionError("Timed out: " + step.name
+                    + "; charge=" + charge(feet(client)) + ", timer=" + timer(feet(client))
+                    + "; changed components=" + changedComponents(before, feet(client))); }
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(PREFIX, new AssertionError("Step: " + (steps.peek() == null ? "finish" : steps.peek().name), failure)); finished = true; }
         if (finished) { client.stop(); }
     }
@@ -78,6 +80,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             add("quiet optional absence leaves keyboard listener safe", () -> {
                 require(!JustDireSettingsCompatibility.available(), "Absent API available");
                 press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
+                mousePress(3, GLFW.GLFW_PRESS);
                 require(client.screen == null, "Absent input opened screen");
             });
             return;
@@ -101,7 +104,20 @@ final class NeoForgeJustDireGroundStompClientTest {
                 && !JustDireSettingsCompatibility.mixed((ItemStack) field(client.screen, "tool")), "Native controls missing"));
         add("native original toggle callback still uses native packet", () -> click(icon(client, "GROUNDSTOMP"), 0),
                 () -> !flag(client.player.getMainHandItem(), "groundstomp_toggle", true));
+        add("native original toggle re-enables before mouse control", () -> click(icon(client, "GROUNDSTOMP"), 0),
+                () -> flag(client.player.getMainHandItem(), "groundstomp_toggle", true));
+        reveal(client, "GROUNDSTOMP");
+        add("native original retains inventory mouse capture", () -> {
+            click((Button) maps(client, "requireEquippedButtons").get(icon(client, "GROUNDSTOMP")), 0);
+            click((Button) maps(client, "bindingButtons").get(icon(client, "GROUNDSTOMP")), 0);
+            require(client.screen.mouseClicked(mouse(1, 1, 3), false), "Native mouse capture rejected");
+        }, () -> bound(client.player.getMainHandItem()) == 3 && mouseBound(client.player.getMainHandItem()));
         close(client);
+        add("recharge native original without changing its mouse route", () -> server(client, player -> {
+            set(player.getMainHandItem(), "forge_energy", 6_000); player.inventoryMenu.broadcastChanges();
+        }), () -> charge(client.player.getMainHandItem()) == 6_000);
+        add("native original inventory mouse retains one native action", () -> mousePress(3, GLFW.GLFW_PRESS),
+                () -> charge(client.player.getMainHandItem()) == 1_000 && timer(client.player.getMainHandItem()) > 0);
         add("empty hands open native menu without internal-slot failure", () -> server(client, player -> {
             player.getInventory().clearContent(); player.inventoryMenu.broadcastChanges();
         }), () -> client.player.getInventory().isEmpty());
@@ -150,9 +166,11 @@ final class NeoForgeJustDireGroundStompClientTest {
             });
             add("native particle control edits live root", () -> click((Button) maps(client, "customSettingsButtons").get(icon(client, "GROUNDSTOMP")), 0),
                     () -> value(feet(client), "groundstomp_custom_setting") == 1);
-            add("mouse capture cannot become a mixed binding", () -> {
+            add("ordinary mouse clicks cannot bind or end native capture", () -> {
                 click((Button) maps(client, "bindingButtons").get(icon(client, "GROUNDSTOMP")), 0);
-                require(client.screen.mouseClicked(mouse(1, 1, 3), false), "Capture mouse was not consumed");
+                require(client.screen.mouseClicked(mouse(1, 1, 0), false)
+                        && client.screen.mouseClicked(mouse(1, 1, 1), false)
+                        && client.screen.mouseClicked(mouse(1, 1, 8), false), "Unsupported capture mouse was not consumed");
                 require((boolean) field(client.screen, "bindingEnabled"), "Mouse ended keyboard capture");
                 require(client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)), "Keyboard capture failed");
             }, () -> bound(feet(client)) == GLFW.GLFW_KEY_H && flag(feet(client), "tool_enabled", true));
@@ -189,12 +207,53 @@ final class NeoForgeJustDireGroundStompClientTest {
                     () -> wait > 12 && charge(feet(client)) == 1_000);
             add("UI and action leave source provenance unchanged", () -> server(client, player -> require(
                     ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "Sources changed")));
+            open(client); select(client, 36); reveal(client, "GROUNDSTOMP");
+            add("native capture assigns additional mouse button without custom widgets", () -> {
+                click((Button) maps(client, "bindingButtons").get(icon(client, "GROUNDSTOMP")), 0);
+                require(client.screen.mouseClicked(mouse(1, 1, 3), false)
+                        && !(boolean) field(client.screen, "bindingEnabled"), "Native mouse capture did not finish");
+            }, () -> JustDireSettingsCompatibility.groundStompBinding(feet(client), 3, true));
+            add("mouse GUI denial starts with sufficient resources and expired cooldown", () -> server(client, player -> {
+                set(player.getItemBySlot(EquipmentSlot.FEET), "forge_energy", 6_000); player.inventoryMenu.broadcastChanges();
+            }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
+            add("GUI rejects assigned mouse input", () -> { before = feet(client).copy(); mousePress(3, GLFW.GLFW_PRESS); },
+                    () -> wait > 12 && ItemStack.matches(before, feet(client)));
+            close(client); open(client); select(client, 36);
+            add("reopen shows the preserved native mouse binding", () -> {
+                var binding = maps(client, "bindingMap").get(maps(client, "leftRightClickButtons").get(icon(client, "GROUNDSTOMP")));
+                require(binding != null && bound(feet(client)) == 3 && mouseBound(feet(client))
+                        && (boolean) fieldAccessor(binding, "isMouse"), "Native mouse preference lost on reopen");
+            });
+            close(client);
+            add("mouse release/repeat/wrong button and keyboard numeric code do not activate", () -> {
+                before = feet(client).copy(); mousePress(3, GLFW.GLFW_RELEASE); mousePress(3, GLFW.GLFW_REPEAT);
+                for (int button : new int[]{0, 1, 2, 8}) { mousePress(button, GLFW.GLFW_PRESS); }
+                press(3, GLFW.GLFW_PRESS);
+            }, () -> wait > 12 && ItemStack.matches(before, feet(client)));
+            add("event-bus mouse reaches production action with one root bill and unchanged sources", () -> {
+                before = feet(client).copy(); mousePress(3, GLFW.GLFW_PRESS);
+            }, () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0
+                    && feet(client).getDamageValue() == before.getDamageValue()
+                    && ModContent.getMixedBootsData(feet(client)).orElseThrow().equals(provenance));
+            add("mouse cooldown rejects a second bill", () -> mousePress(3, GLFW.GLFW_PRESS),
+                    () -> wait > 12 && charge(feet(client)) == 1_000);
+            open(client); select(client, 36); reveal(client, "GROUNDSTOMP");
+            add("native Escape removes a mouse binding", () -> {
+                click((Button) maps(client, "bindingButtons").get(icon(client, "GROUNDSTOMP")), 0);
+                client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
+            }, () -> bound(feet(client)) == -1);
+            close(client);
+            add("removed mouse binding stays inactive with sufficient resources and expired cooldown", () -> server(client, player -> {
+                set(player.getItemBySlot(EquipmentSlot.FEET), "forge_energy", 6_000); player.inventoryMenu.broadcastChanges();
+            }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
+            add("removed mouse binding cannot prepare a fresh action", () -> { before = feet(client).copy(); mousePress(3, GLFW.GLFW_PRESS); },
+                    () -> wait > 12 && ItemStack.matches(before, feet(client)));
         }
         setup(client, true, false, 6_000);
-        for (String preference : List.of("unbound", "mouse", "inventory", "wrongMode")) {
+        for (String preference : List.of("unbound", "invalidMouse", "inventory", "wrongMode")) {
             add("prepare unsupported imported " + preference + " preference", () -> server(client, player -> {
                 var root = player.getItemBySlot(EquipmentSlot.FEET);
-                bind(root, preference.equals("unbound") ? -1 : GLFW.GLFW_KEY_G, preference.equals("mouse"), !preference.equals("inventory"));
+                bind(root, preference.equals("unbound") ? -1 : GLFW.GLFW_KEY_G, preference.equals("invalidMouse"), !preference.equals("inventory"));
                 if (preference.equals("wrongMode")) { set(root, "groundstomp_bindingmode", 1); }
                 player.inventoryMenu.broadcastChanges(); expected = root.copy();
             }), () -> ItemStack.matches(expected, feet(client)));
@@ -278,6 +337,8 @@ final class NeoForgeJustDireGroundStompClientTest {
             var pair = mixed ? MixedBootsFactory.createPair(nativeBoot, boot("blazegold", 0)) : null;
             expected = mixed ? (inverse ? pair.inverse() : pair.primary()) : nativeBoot;
             if (mixed) { provenance = ModContent.getMixedBootsData(expected).orElseThrow(); }
+            // Longer real cooldown flights must not race natural slime attacks/death in the copied flat world.
+            client.getSingleplayerServer().setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
             player.setGameMode(GameType.SURVIVAL); player.getInventory().clearContent();
             player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
         }), () -> client.screen == null && ItemStack.matches(expected, feet(client)));
@@ -337,6 +398,28 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static MouseButtonEvent mouse(double x, double y, int button) { return new MouseButtonEvent(x, y, new MouseButtonInfo(button, 0)); }
     private static void click(Button button, int action) { require(button.mouseClicked(mouse(button.getX() + 8, button.getY() + 8, action), false), "Native button ignored click"); }
     private static void press(int key, int action) { NeoForge.EVENT_BUS.post(new InputEvent.Key(new KeyEvent(key, 0, 0), action)); }
+    private static void mousePress(int button, int action) { NeoForge.EVENT_BUS.post(new InputEvent.MouseButton.Post(new MouseButtonInfo(button, 0), action)); }
+    private static String changedComponents(ItemStack expected, ItemStack actual) {
+        if (expected == null) { return "no snapshot"; }
+        if (expected.getItem() != actual.getItem() || expected.getCount() != actual.getCount()) {
+            return expected + " -> " + actual;
+        }
+        var changes = new StringBuilder();
+        for (var component : expected.getComponents()) {
+            if (!java.util.Objects.equals(component.value(), actual.get(component.type()))) {
+                changes.append(net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(component.type()))
+                        .append(": ").append(component.value()).append(" -> ").append(actual.get(component.type())).append(';');
+            }
+        }
+        for (var component : actual.getComponents()) {
+            if (!expected.has(component.type())) { changes.append(net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(component.type())).append(" added;"); }
+        }
+        return changes.toString();
+    }
+    private static Object fieldAccessor(Object record, String name) {
+        try { return record.getClass().getMethod(name).invoke(record); }
+        catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+    }
     private static Map<?, ?> maps(Minecraft client, String name) { return (Map<?, ?>) field(client.screen, name); }
     private static Button icon(Minecraft client, String name) {
         return (Button) maps(client, "buttonToAbilityMap").entrySet().stream().filter(e -> e.getValue().toString().equals(name)).findFirst().orElseThrow().getKey();
@@ -373,6 +456,10 @@ final class NeoForgeJustDireGroundStompClientTest {
             }
             return -1;
         } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+    }
+    private static boolean mouseBound(ItemStack root) {
+        return root.getOrDefault(JustDireAttributeTestSupport.<List<?>>component("ability_bindings"), List.of()).stream()
+                .anyMatch(record -> fieldAccessor(record, "abilityName").equals("groundstomp") && (boolean) fieldAccessor(record, "isMouse"));
     }
     private static Object fieldStatic(Class<?> type, String name) {
         try { var field = type.getDeclaredField(name); field.setAccessible(true); return field.get(null); }

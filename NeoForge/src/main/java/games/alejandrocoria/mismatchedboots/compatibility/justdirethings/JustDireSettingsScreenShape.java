@@ -32,7 +32,7 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     private static final Map<String, Set<String>> HOOKS = Map.ofEntries(
             Map.entry("<init>", Set.of("Metadata")), Map.entry("init", Set.of("Metadata", "Abilities")),
             Map.entry("refreshButtons", Set.of("Metadata", "Parameters", "Value", "RefreshGuard", "Restrictions")),
-            Map.entry("mouseClicked", Set.of("Metadata", "Abilities", "NoMouse", "Equipped")),
+            Map.entry("mouseClicked", Set.of("Metadata", "Abilities", "MouseCaptureGuard", "Equipped")),
             Map.entry("refreshToolAndSlots", Set.of("Select")), Map.entry("keyPressed", Set.of("ToggleKey")),
             Map.entry("toggleSetting", Set.of("Toggle")), Map.entry("setSetting", Set.of("Set")),
             Map.entry("toggleRender", Set.of("Particles")), Map.entry("sendBinding", Set.of("Binding")),

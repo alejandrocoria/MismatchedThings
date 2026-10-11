@@ -52,6 +52,10 @@ class JustDireSettingsScreenShapeTest implements Opcodes {
         assertFalse(JustDireSettingsScreenShape.publish(node), "A foreign handler cannot satisfy owned interception");
         node = reset(bytes); method(node, "mouseClicked").instructions.insert(new InsnNode(NOP));
         assertTrue(JustDireSettingsScreenShape.publish(node), "Compatible extra work retains all required hooks");
+        node = reset(bytes);
+        node.methods.stream().filter(m -> m.name.contains("mismatchedboots$jdtMouseCaptureGuard"))
+                .forEach(m -> m.visibleAnnotations.clear());
+        assertFalse(JustDireSettingsScreenShape.publish(node), "Lost mouse capture guard must not admit ordinary clicks");
         node = reset(bytes); getter(node).instructions.set(getter(node).instructions.getFirst(), new InsnNode(ICONST_1));
         assertFalse(JustDireSettingsScreenShape.publish(node), "External readiness override fails closed");
         assertEquals(ICONST_0, getter(node).instructions.getFirst().getOpcode());
