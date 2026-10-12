@@ -32,6 +32,9 @@ license="MIT"
     config="mismatchedboots-just-dire-ground-stomp-state-guards.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots-just-dire-earthquake-state-guards.mixins.json"
+
+[[mixins]]
     config="mismatchedboots-just-dire-ground-stomp-server-tests.mixins.json"
 
 [[mixins]]

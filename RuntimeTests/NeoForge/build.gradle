@@ -235,6 +235,18 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.justDireEarthquakeSpike', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            register("justDireEarthquakeState${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', variant ? variant.uncapitalize() : 'live')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -527,6 +539,40 @@ tasks.register('prepareJustDireGroundStompStateAbsent') {
     }
 }
 tasks.named('runJustDireGroundStompStateAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+
+['', 'ApiMissing', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireEarthquakeState${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+tasks.named('runJustDireEarthquakeStateAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+tasks.register('verifyJustDireEarthquakeState') {
+    group = 'verification'
+    description = 'Verifies production Earthquake read-only quotes, phase-aware creation import and root preservation; no action/input.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-state/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireEarthquakeState${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-earthquake-state-failure.txt')
+            def success = new File(directory, 'just-dire-earthquake-state-success.txt')
+            def report = new File(directory, 'just-dire-earthquake-state-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake queries failed; Earthquake compatibility disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Earthquake production state ${label} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT emitted an optional loading warning: ${log}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
 
 ['', 'ApiMissing', 'QueryFailure', 'SettingsMissing'].each { variant ->
     tasks.named("runJustDireGroundStompServer${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }

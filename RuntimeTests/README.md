@@ -649,6 +649,30 @@ still rejected. No new packets, mixins or client listener are installed. This
 is feasibility evidence, not production/visual/manual acceptance; policies and
 limits belong to [the exploration](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-EXPLORATION.md).
 
+## Just Dire Things Earthquake production state (block A)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireEarthquakeState --console=plain
+```
+
+Uses production quotes/creation/preservation, never the research candidate's
+action/ticker. Reuses pinned smithing preparation, Workbench preview/ordinary and
+shift-take assertions, native constructors and real tier-smithing helpers.
+Eleven live groups cover both orientations, one/two Eclipse sources, longest
+total pending lockout with retained phase, deterministic ties/overflow, unrelated
+owner timers and independent state. Forged tiers, native config/root controls,
+live FE rather than charged history, base eligibility despite discounts/exemptions,
+unsupported/duplicate retention and actual tier preview/take are checked.
+
+Missing-API, failing-query and absent-mod variants run sequentially, with bounded
+expected diagnostics and intact Ground Stomp/storage/installation and registry-only
+presence/absence preservation. The gate rejects errors and absent optional-class
+loading warnings. Versioned logs/reports are under
+`RuntimeTests/NeoForge/build/reports/just-dire-earthquake-state/<version>/`.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore .114 artifacts.
+Earthquake settings/input remain rejected; no production action/ticking is added.
+See [the production record](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#7-block-a--implementation-and-validation).
+
 ## Just Dire Things Ground Stomp production state (8.5 block A)
 
 ```powershell

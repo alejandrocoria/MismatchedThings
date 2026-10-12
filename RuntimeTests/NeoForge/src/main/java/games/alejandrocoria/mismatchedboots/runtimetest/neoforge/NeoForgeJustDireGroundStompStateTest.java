@@ -74,7 +74,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
         for (int[] timers : List.of(new int[]{40, 180}, new int[]{90, 90}, new int[]{0, 70}, new int[]{0, 0})) {
             var a = boots("blazegold", 0);
             var b = boots("celestigem", 10_000);
-            if (timers[0] > 0) { a.set(timers(), new ArrayList<>(List.of(timer("groundstomp", timers[0], false), timer("earthquake", 77, true)))); }
+            if (timers[0] > 0) { a.set(timers(), new ArrayList<>(List.of(timer("groundstomp", timers[0], false), timer("other_fixture", 77, true)))); }
             if (timers[1] > 0) { b.set(timers(), new ArrayList<>(List.of(timer("groundstomp", timers[1], false), timer("airburst", 31, false)))); }
             var beforeA = a.copy(); var beforeB = b.copy();
             var outputs = workbench(player, a, b);
@@ -220,7 +220,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
 
     private static void preservation(ServerPlayer player) throws Exception {
         var source = boots("celestigem", 10_000);
-        source.set(timers(), List.of(timer("groundstomp", 45, false), timer("earthquake", 99, true)));
+        source.set(timers(), List.of(timer("groundstomp", 45, false), timer("airburst", 99, true)));
         source.set(JustDireAttributeTestSupport.component("ability_bindings"), List.of(binding("groundstomp", 71), binding("earthquake", 72)));
         JustDireAttributeTestSupport.set(source, "groundstomp_bindingmode", 2);
         JustDireAttributeTestSupport.set(source, "groundstomp_custom_setting", 0);
@@ -278,7 +278,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
         record(variant + ": both orientations; repeated read-only rejection with one diagnostic; installation/storage and registry-only live preservation remain independent");
     }
 
-    private static List<ItemStack> workbench(ServerPlayer player, ItemStack a, ItemStack b) {
+    static List<ItemStack> workbench(ServerPlayer player, ItemStack a, ItemStack b) {
         player.getInventory().clearContent();
         var beforeA = a.copy(); var beforeB = b.copy();
         var menu = new MismatchedWorkbenchMenu(1, player.getInventory(), ContainerLevelAccess.create(player.level(), BlockPos.ZERO));
