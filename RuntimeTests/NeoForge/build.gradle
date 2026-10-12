@@ -226,6 +226,15 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        justDireEarthquakeSpike {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireEarthquakeSpike', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -487,6 +496,25 @@ tasks.named('runJustDireSmithing') {
 }
 
 tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
+tasks.named('runJustDireEarthquakeSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
+tasks.register('verifyJustDireEarthquakeSpike') {
+    group = 'verification'
+    description = 'Explores native/mixed Earthquake per-target FE and two-stage worn cooldowns without production support.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-spike/${neoforge_version}/process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireEarthquakeSpike', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-earthquake-spike-failure.txt')
+        def success = new File(directory, 'just-dire-earthquake-spike-success.txt')
+        def report = new File(directory, 'just-dire-earthquake-spike-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')) {
+            throw new GradleException("Earthquake spike failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
+}
 ['', 'ApiMissing', 'QueryFailure'].each { variant ->
     tasks.named("runJustDireGroundStompState${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
 }

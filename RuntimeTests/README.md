@@ -624,6 +624,31 @@ Use the production gates below; no old spike task is a maintained entry point.
 Useful native comparison/construction helpers are retained without a second
 mixed quote, payment, timer, screen or permission implementation.
 
+## Just Dire Things Earthquake research spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireEarthquakeSpike --console=plain
+```
+
+Reuses the pinned JDT artifact, disposable server preparation and existing native
+lookup/construction helpers. Fourteen test-only groups compare original Eclipse
+boots and a local mixed candidate: per-target FE/Slowness, thresholds/exhaustion,
+Unbreaking/exempt modes, live root controls, actual entity/tag/multipart/immune
+filters, transactional partial-extraction failure and unchanged provenance.
+One integration-boundary case calls production Ground Stomp prepare/activate to
+demonstrate paid-snapshot rejection after only an unrelated Earthquake timer tick.
+The real server clock covers the complete 200-active/800-cooldown timeline,
+unequipped pause, disabled/depleted/removed-upgrade continuation, codec replacement
+in each phase and no repeated effect/debit on a late eligible target.
+
+Reports/process logs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-earthquake-spike/<version>/`.
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore normal .114 artifacts.
+The candidate remains private to RuntimeTests; production Earthquake input is
+still rejected. No new packets, mixins or client listener are installed. This
+is feasibility evidence, not production/visual/manual acceptance; policies and
+limits belong to [the exploration](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-EXPLORATION.md).
+
 ## Just Dire Things Ground Stomp production state (8.5 block A)
 
 ```powershell

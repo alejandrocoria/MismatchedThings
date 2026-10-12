@@ -14,7 +14,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompServerTest")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeSpike")) {
+            NeoForgeJustDireEarthquakeSpike.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompServerTest")) {
             NeoForgeJustDireGroundStompServerTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompStateTest")) {
             NeoForgeJustDireGroundStompStateTest.register();
