@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireEarthquakeServerGuardPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "JustDireEarthquakeDebitFailureMixin",
+    "JustDireEarthquakeFeedbackMixin",
+    "JustDireEarthquakePostCommitMixin",
+    "JustDireEarthquakeSoundMixin"
+  ],
+  "injectors": {"defaultRequire": 1}
+}

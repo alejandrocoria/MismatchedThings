@@ -247,6 +247,18 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            register("justDireEarthquakeServer${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', variant ? variant.uncapitalize() : 'live')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireRootUpgrades {
             server()
             disableIdeRun()
@@ -574,6 +586,40 @@ tasks.register('verifyJustDireEarthquakeState') {
     }
 }
 
+['', 'ApiMissing', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireEarthquakeServer${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+tasks.named('runJustDireEarthquakeServerAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+tasks.register('verifyJustDireEarthquakeServer') {
+    group = 'verification'
+    description = 'Verifies production Earthquake per-target effects/payment, two-phase worn clock, shared paid permits and server settings.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-server/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireEarthquakeServer${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-earthquake-server-failure.txt')
+            def success = new File(directory, 'just-dire-earthquake-server-success.txt')
+            def report = new File(directory, 'just-dire-earthquake-server-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake queries failed; Earthquake compatibility disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Earthquake production server ${label} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT emitted an optional loading warning: ${log}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
 ['', 'ApiMissing', 'QueryFailure', 'SettingsMissing'].each { variant ->
     tasks.named("runJustDireGroundStompServer${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
 }
@@ -833,10 +879,10 @@ tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJum
 tasks.register('prepareJustDireGroundStompTransport') {
     dependsOn tasks.named('prepareJustDireJumpClient')
     doLast {
-        fixtureFileOperations.delete {
-            ['failure', 'success', 'report'].each { suffix ->
-                delete new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-transport-${suffix}.txt")
-            }
+        fixtureFileOperations.delete { spec ->
+            spec.delete(['failure', 'success', 'report'].collect { suffix ->
+                new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-transport-${suffix}.txt")
+            })
         }
     }
 }
@@ -908,7 +954,7 @@ tasks.register('verifyJustDireGroundStompTransport') {
         def failure = new File(directory, 'just-dire-ground-stomp-transport-failure.txt')
         def success = new File(directory, 'just-dire-ground-stomp-transport-success.txt')
         def report = new File(directory, 'just-dire-ground-stomp-transport-report.txt')
-        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')) {
             throw new GradleException("Production Ground Stomp transport failed: ${failure.isFile() ? failure.text : log}")
         }
         new File(log.parentFile, 'transport-report.txt').text = report.text

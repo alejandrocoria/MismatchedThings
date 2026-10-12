@@ -166,9 +166,9 @@ final class NeoForgeJustDireEarthquakeSpike {
                 .newInstance("earthquake", 71, false, true)));
         before = root.copy();
         require(!JustDireSettingsCompatibility.inputBinding(root, 71, false)
-                && !JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false)).accepted()
-                && ItemStack.matches(before, root), "Spike enabled Earthquake production input");
-        record("direct native action cannot execute mixed identity; production Earthquake-only binding/prepare still reject read-only");
+                && JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false)).accepted()
+                && ItemStack.matches(before, root), "B preparation changed root or advertised normal client input");
+        record("direct native action cannot execute mixed identity; B production server can prepare a read-only permit while normal client input remains gated until C");
         root = mixed(COST, false, false); player.setItemSlot(EquipmentSlot.FEET, root);
         JustDireAttributeTestSupport.set(root, "groundstomp_upgrade_installed", true);
         JustDireAttributeTestSupport.set(root, "groundstomp_bindingmode", 2);
@@ -178,9 +178,9 @@ final class NeoForgeJustDireEarthquakeSpike {
         var prepared = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(2, 71, false));
         require(prepared.accepted(), "Unrelated Earthquake cooldown prevented initial Ground Stomp quote");
         candidateTick(player, root); before = root.copy();
-        require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(2, prepared.nonce(), 71, false))
-                && ItemStack.matches(before, root), "Existing paid snapshot tolerated an unrelated ticking clock unexpectedly");
-        record("integration limit: valid production Ground Stomp paid permit is rejected after only the unrelated Earthquake timer ticks; independent action-clock snapshots need a production decision/proof");
+        require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(2, prepared.nonce(), 71, false))
+                && charge(root) == COST - 5_000 && timer(root).equals(timer(before)), "B paid permit did not tolerate an unrelated clock tick");
+        record("production B correction: GS paid permit survives one unrelated Earthquake timer tick with one root bill; historical pre-B rejection remains in the exploration record");
         clockBoundaries(player);
     }
 

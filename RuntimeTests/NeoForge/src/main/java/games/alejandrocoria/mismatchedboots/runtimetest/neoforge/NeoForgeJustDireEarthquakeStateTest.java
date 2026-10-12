@@ -64,9 +64,9 @@ final class NeoForgeJustDireEarthquakeStateTest {
                 var before = root.copy();
                 require(!JustDireSettingsCompatibility.inputBinding(root, 71, false)
                         && JustDireSettingsCompatibility.metadata(root, "earthquake") == null
-                        && !JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false)).accepted()
-                        && ItemStack.matches(before, root), "Block A enabled production Earthquake input/settings");
-                record("Earthquake-only native binding cannot grant settings/input/paid permission; block A remains read-only");
+                        && JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false)).accepted()
+                        && ItemStack.matches(before, root), "Server preparation mutated state or advertised native client input/settings");
+                record("state gate invokes no action/tick; production B can prepare read-only permission, but normal native client metadata/input remains gated until C");
             }
             NetworkAcceptanceFiles.write(PREFIX + "-report.txt", groups + " production Earthquake state groups\n" + report);
             NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");

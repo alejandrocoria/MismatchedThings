@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import commonnetwork.api.Network;
+import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -8,14 +9,21 @@ import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecy
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayDeque;
@@ -26,7 +34,7 @@ import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/** Temporary packet driver only: real production handlers/ticks and normal client stack synchronization. */
+/** Production GS input and shared transport/ticks; Earthquake's driver remains test-only until native client block C. */
 final class NeoForgeJustDireGroundStompTransportTest {
     private static final String PREFIX = "just-dire-ground-stomp-transport";
     private static final Queue<Step> steps = new ArrayDeque<>();
@@ -39,6 +47,10 @@ final class NeoForgeJustDireGroundStompTransportTest {
     private static JustDireActiveNetwork.SettingsReply settings;
     private static JustDireActiveNetwork.Activate consumed;
     private static UUID token;
+    private static boolean inputFlight, holdInput;
+    private static ItemStack inputRoot;
+    private static JustDireActiveNetwork.ActivationReply heldInput;
+    private static Mob earthquakeTarget;
 
     private NeoForgeJustDireGroundStompTransportTest() {}
     static void tick(Minecraft client) {
@@ -48,11 +60,12 @@ final class NeoForgeJustDireGroundStompTransportTest {
             if (job != null) { if (!job.isDone()) { return; } job.get(); job = null; }
             Step step = steps.peek();
             if (step == null) {
-                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + "temporary client packet driver, production handlers/action/tick; no UI/input or ordinary-client acceptance\n");
+                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + "production GS input and shared paid snapshots; Earthquake packet driver/action/automatic clock; no Earthquake UI/input or manual acceptance\n");
                 NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; wait = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; }
-            else if (++wait > 600) { throw new AssertionError("Timed out: " + step.name + "; reply=" + activation + "/" + settings); }
+            else if (++wait > 600) { throw new AssertionError("Timed out: " + step.name + "; charge=" + charge(feet(client))
+                    + "; Earthquake=" + earthquakeClock(feet(client)) + "; reply=" + activation + "/" + settings); }
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(PREFIX, failure); finished = true; }
         if (finished) { JustDireActiveNetwork.clearClientReplies(); client.stop(); }
     }
@@ -61,9 +74,16 @@ final class NeoForgeJustDireGroundStompTransportTest {
         require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0
                 && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE, "Client not hidden/muted");
         JustDireGroundStompTestSupport.initializeApi();
-        JustDireActiveNetwork.clientReplies(reply -> activation = reply, reply -> settings = reply);
+        JustDireEarthquakeTestSupport.bind();
+        JustDireActiveNetwork.clientReplies(reply -> {
+            activation = reply;
+            if (inputFlight && holdInput && reply.prepared() && reply.accepted()) { heldInput = reply; }
+            else if (inputFlight) { JustDireAbilityInput.reply(reply); }
+        }, reply -> settings = reply);
         add("real production prepare/action: one bill and positive timer reach ordinary equipment packets", () -> server(client, player -> {
             player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+            // The joint full lockout keeps this client outdoors longer; incidental slime combat is not an input/clock test.
+            player.setInvulnerable(true);
             var boot = JustDireGroundStompTestSupport.boots("eclipsealloy", 12_000);
             serverRoot = MixedBootsFactory.createPair(boot, new ItemStack(Items.DIAMOND_BOOTS)).primary();
             configure(serverRoot); player.setItemSlot(EquipmentSlot.FEET, serverRoot); player.inventoryMenu.broadcastChanges();
@@ -109,6 +129,98 @@ final class NeoForgeJustDireGroundStompTransportTest {
             require(player.getItemBySlot(EquipmentSlot.FEET) == serverRoot && charge(serverRoot) == 0 && timer(serverRoot) == -1
                     && value(serverRoot) == 5 && ModContent.getMixedBootsData(serverRoot).equals(ModContent.getMixedBootsData(feet(client))), "Live root/state/provenance diverged");
         }), () -> true);
+        earthquake(client);
+    }
+
+    private static void earthquake(Minecraft client) {
+        add("seed a real equipped root with an independently ticking Earthquake clock and paid-only GS binding", () -> server(client, player -> {
+            try {
+                serverRoot = JustDireEarthquakeTestSupport.mixed(150_000, false, false);
+                set(serverRoot, "groundstomp_upgrade_installed", true); set(serverRoot, "groundstomp_bindingmode", 2);
+                set(serverRoot, "stepheight_upgrade_installed", true); set(serverRoot, "stepheight_bindingmode", 2);
+                set(serverRoot, "ability_bindings", List.of(JustDireEarthquakeTestSupport.binding("groundstomp", 71),
+                        JustDireEarthquakeTestSupport.binding("earthquake", 72), JustDireEarthquakeTestSupport.binding("stepheight", 73)));
+                serverRoot.set(JustDireEarthquakeTestSupport.timers(), List.of(JustDireEarthquakeTestSupport.timer("earthquake", 77, true)));
+                player.setItemSlot(EquipmentSlot.FEET, serverRoot); player.inventoryMenu.broadcastChanges();
+            } catch (Exception failure) { throw new IllegalStateException(failure); }
+        }), () -> charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) != null && earthquakeClock(feet(client)).ticks() < 70);
+        add("fixture direct-driver sequence cannot be reused by the production input listener", () -> {
+            inputFlight = true; activation = null; press(71);
+        }, () -> activation != null && activation.prepared() && !activation.accepted());
+        add("hold a real free passive reply while Ground Stomp is ready on a different key", () -> {
+            holdInput = true; heldInput = null; activation = null; press(73);
+        }, () -> heldInput != null);
+        add("ordinary charging/peer-clock packets cannot cancel that unrelated free switch", () -> server(client, player -> {
+            try (var transaction = Transaction.openRoot()) {
+                require(JustDireResourceTestSupport.handler(serverRoot).insert(1_000, transaction) == 1_000, "Fixture recharge failed");
+                transaction.commit();
+            }
+            player.inventoryMenu.broadcastChanges();
+        }), () -> charge(feet(client)) == 151_000 && wait > 5);
+        add("production client forwards the free reply; only its passive toggles despite other ready active bindings", () -> {
+            holdInput = false; activation = null; JustDireAbilityInput.reply(heldInput);
+        }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 151_000
+                && !feet(client).getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), true) && timer(feet(client)) == -1);
+        add("restore funded settings and let ordinary derived-attribute packets settle before the paid flight", () -> server(client, player -> {
+            set(serverRoot, "forge_energy", 150_000); set(serverRoot, "stepheight_toggle", true); player.inventoryMenu.broadcastChanges();
+        }), () -> charge(feet(client)) == 150_000 && feet(client).getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), false) && wait > 5);
+        add("hold a genuine paid-only GS reply while normal Earthquake slot packets recreate the client root", () -> {
+            holdInput = true; heldInput = null; activation = null; inputRoot = feet(client); press(71);
+        }, () -> heldInput != null && feet(client) != inputRoot && wait > 15);
+        add("release the real reply into production client validation; server pays once despite unrelated clock progression", () -> {
+            holdInput = false; activation = null; JustDireAbilityInput.reply(heldInput);
+        }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 145_000 && timer(feet(client)) > 0);
+        add("replay that consumed delayed permit still rejects through bundled transport", () -> {
+            activation = null; send(new JustDireActiveNetwork.Activate(heldInput.sequence(), heldInput.nonce(), 71, false));
+        }, () -> activation != null && !activation.accepted() && charge(feet(client)) == 145_000);
+        add("seed a funded Earthquake root and one actual grounded world target for a packet-driver action", () -> {
+            inputFlight = false;
+            server(client, player -> {
+                try {
+                    player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8)).forEach(Mob::discard);
+                    serverRoot = JustDireEarthquakeTestSupport.mixed(150_000, true, false);
+                    player.setItemSlot(EquipmentSlot.FEET, serverRoot);
+                    earthquakeTarget = EntityType.COW.create(player.level(), EntitySpawnReason.COMMAND);
+                    require(earthquakeTarget != null, "No real target");
+                    // Fix target geometry/grounded state, as in the server comparisons; this gate tests transport, not mob physics.
+                    earthquakeTarget.setNoAi(true); earthquakeTarget.setNoGravity(true); earthquakeTarget.setInvulnerable(true);
+                    earthquakeTarget.setPos(player.getX() + 1, player.getY(), player.getZ());
+                    require(player.level().addFreshEntity(earthquakeTarget), "Target not inserted");
+                    earthquakeTarget.setOnGround(true); player.inventoryMenu.broadcastChanges();
+                } catch (Exception failure) { throw new IllegalStateException(failure); }
+            });
+        }, () -> charge(feet(client)) == 150_000 && client.level.getEntity(earthquakeTarget.getId()) instanceof Mob);
+        add("normal Earthquake client input stays gated before native UI integration", () -> { activation = null; press(72); },
+                () -> wait > 10 && activation == null && charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) == null);
+        add("Earthquake prepare travels through actual CommonNetworking without a client UI substitute", () -> {
+            server(client, player -> require(earthquakeTarget.onGround() && earthquakeTarget.distanceToSqr(player) < 25,
+                    "Transport target not ready: ground=" + earthquakeTarget.onGround() + ", target=" + earthquakeTarget.position()
+                            + ", player=" + player.position() + ", loaded=" + player.level().areEntitiesActuallyLoadedAndTicking(earthquakeTarget.chunkPosition())));
+            activation = null; send(new JustDireActiveNetwork.Prepare(100, 72, false));
+        }, () -> activation != null && activation.prepared() && activation.accepted());
+        add("one production Earthquake debit/clock reaches ordinary equipment packets", () -> {
+            consumed = new JustDireActiveNetwork.Activate(100, activation.nonce(), 72, false); activation = null; send(consumed);
+        }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 100_000
+                && earthquakeClock(feet(client)) != null);
+        add("real world target received Slowness IV on the authoritative server", () -> server(client, player -> {
+            // Vanilla does not synchronize a normal mob's effect map to non-passenger clients.
+            var effect = earthquakeTarget.getEffect(MobEffects.SLOWNESS);
+            require(effect != null && effect.getAmplifier() == 3 && charge(serverRoot) == 100_000, "Missing authoritative effect/debit");
+        }), () -> true);
+        add("real automatic worn ticker transitions active Earthquake to native 800-tick cooldown", () -> {},
+                () -> earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active() && charge(feet(client)) == 100_000);
+        add("automatic inactive clock advances through ordinary slot packets without another debit", () -> {},
+                () -> earthquakeClock(feet(client)) != null && earthquakeClock(feet(client)).ticks() < 400 && charge(feet(client)) == 100_000);
+        add("full automatic Earthquake lockout expires exactly once on the real server player", () -> {},
+                () -> earthquakeClock(feet(client)) == null && charge(feet(client)) == 100_000);
+        add("consumed Earthquake nonce cannot reactivate after natural expiry", () -> { activation = null; send(consumed); },
+                () -> activation != null && !activation.accepted() && earthquakeClock(feet(client)) == null && charge(feet(client)) == 100_000);
+    }
+
+    private static void press(int key) { JustDireAbilityInput.key(new InputEvent.Key(new KeyEvent(key, 0, 0), GLFW.GLFW_PRESS)); }
+    private static JustDireEarthquakeTestSupport.Clock earthquakeClock(ItemStack root) {
+        try { return JustDireEarthquakeTestSupport.clock(root, "earthquake"); }
+        catch (Exception failure) { throw new IllegalStateException(failure); }
     }
     private static void configure(ItemStack root) {
         try {

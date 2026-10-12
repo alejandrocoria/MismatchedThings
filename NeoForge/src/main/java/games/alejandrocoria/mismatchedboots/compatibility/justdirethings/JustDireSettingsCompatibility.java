@@ -131,11 +131,24 @@ public final class JustDireSettingsCompatibility {
         return matchesBinding(root, "groundstomp", key, mouse);
     }
 
+    /** Server binding admission only in B; this is deliberately not part of normal client inputBinding until C. */
+    public static boolean earthquakeBinding(ItemStack root, int key, boolean mouse) {
+        var mode = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", "earthquake_bindingmode"));
+        if (mode.isEmpty()) { return false; }
+        @SuppressWarnings("unchecked") var type = (DataComponentType<Integer>) mode.get().value();
+        return matchesBinding(root, "earthquake", key, mouse, type);
+    }
+
     private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse) {
         Api binding = api;
-        if (binding == null || !mixed(root) || !validBindingInput(key, mouse)) { return false; }
+        if (binding == null) { return false; }
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
-        if (setting == null || root.getOrDefault(setting.mode, 0) != 2) { return false; }
+        return setting != null && matchesBinding(root, name, key, mouse, setting.mode);
+    }
+
+    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, DataComponentType<Integer> mode) {
+        Api binding = api;
+        if (binding == null || !mixed(root) || !validBindingInput(key, mouse) || root.getOrDefault(mode, 0) != 2) { return false; }
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                 if (name.equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
@@ -230,6 +243,7 @@ public final class JustDireSettingsCompatibility {
     static boolean edit(ItemStack root, JustDireActiveNetwork.SettingsRequest request) {
         Api binding = api;
         if (binding == null || !mixed(root)) { return false; }
+        if (request.ability().equals("earthquake")) { return JustDireEarthquakeCompatibility.edit(root, request); }
         ItemStack changed = root.copy();
         try {
             if (request.operation() == JustDireActiveNetwork.TOOL_TOGGLE) {
@@ -280,6 +294,24 @@ public final class JustDireSettingsCompatibility {
 
     private static <T> void copyField(ItemStack from, ItemStack to, DataComponentType<T> type) {
         if (from.has(type)) { to.set(type, from.get(type)); } else { to.remove(type); }
+    }
+
+    static boolean editEarthquakeBinding(ItemStack root, JustDireActiveNetwork.SettingsRequest request, DataComponentType<Integer> mode) {
+        Api binding = api;
+        if (binding == null || (request.value() != 0 && request.value() != 2) || !request.equipped()
+                || request.key() != -1 && !validBindingInput(request.key(), request.mouse())) { return false; }
+        List<Object> next = new ArrayList<>();
+        try {
+            for (Object record : root.getOrDefault(binding.bindings, List.of())) {
+                if (!"earthquake".equals((String) binding.name.invokeExact(record))) { next.add(record); }
+            }
+            if (request.value() == 2 && request.key() != -1) {
+                next.add(binding.create.invokeExact("earthquake", request.key(), request.mouse(), true));
+            }
+        } catch (Throwable failure) { disable(binding, failure); return false; }
+        if (api != binding) { return false; }
+        root.set(binding.bindings, List.copyOf(next)); root.set(mode, request.value());
+        return true;
     }
 
     private static void disable(Api binding, Throwable failure) {

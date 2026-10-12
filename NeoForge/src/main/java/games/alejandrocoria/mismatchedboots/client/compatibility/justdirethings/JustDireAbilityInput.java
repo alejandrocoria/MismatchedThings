@@ -2,17 +2,14 @@ package games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings
 
 import commonnetwork.api.Network;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveState;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.InputEvent;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.List;
 
 /** Equipped keyboard/additional-mouse presses only; a reply cannot revive stale client intent. */
 public final class JustDireAbilityInput {
@@ -34,9 +31,14 @@ public final class JustDireAbilityInput {
         var client = Minecraft.getInstance();
         if (action != GLFW.GLFW_PRESS || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
+        // B's server route is ready, but C still owns native Earthquake UI/input. Retained shared
+        // bindings must not accidentally activate Earthquake through an ordinary Ground Stomp press.
+        if (JustDireSettingsCompatibility.earthquakeBinding(root, key, mouse)) { return; }
         if (!JustDireSettingsCompatibility.inputBinding(root, key, mouse)) { return; }
-        boolean passive = !JustDireSettingsCompatibility.boundPassives(root, key, mouse).isEmpty();
-        pending = new Pending(root, snapshot(root, passive), key, mouse, ++sequence, passive);
+        boolean passive = !JustDireSettingsCompatibility.boundPassives(root, key, mouse).isEmpty()
+                && !(JustDireSettingsCompatibility.groundStompBinding(root, key, mouse)
+                && JustDireGroundStompCompatibility.quote(root) != null);
+        pending = new Pending(snapshot(root, passive), key, mouse, ++sequence, passive);
         Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Prepare(sequence, key, mouse));
     }
 
@@ -46,9 +48,9 @@ public final class JustDireAbilityInput {
         var client = Minecraft.getInstance();
         if (!reply.accepted() || reply.nonce().equals(JustDireActiveNetwork.NONE) || client.player == null || client.screen != null) { return; }
         var root = client.player.getItemBySlot(EquipmentSlot.FEET);
-        // Ordinary timer/attribute slot packets recreate the client stack. Free switches can
-        // follow unchanged settings; the server nonce still requires the exact live root identity.
-        if ((!intent.passive && root != intent.root) || !ItemStack.matches(snapshot(root, intent.passive), intent.snapshot)
+        // Ordinary slot packets recreate the client stack. Paid intent follows only legal peer-clock
+        // progression; free switches keep their settings-only rule. Server root identity stays exact.
+        if (!matches(root, intent.snapshot, intent.passive)
                 || !JustDireSettingsCompatibility.inputBinding(root, intent.key, intent.mouse)) { return; }
         Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.Activate(intent.sequence, reply.nonce(), intent.key, intent.mouse));
     }
@@ -56,25 +58,21 @@ public final class JustDireAbilityInput {
     public static void tick() {
         var client = Minecraft.getInstance();
         if (pending != null && (client.player == null || client.screen != null
-                || (!pending.passive && client.player.getItemBySlot(EquipmentSlot.FEET) != pending.root)
-                || !ItemStack.matches(snapshot(client.player.getItemBySlot(EquipmentSlot.FEET), pending.passive), pending.snapshot))) { pending = null; }
+                || !matches(client.player.getItemBySlot(EquipmentSlot.FEET), pending.snapshot, pending.passive))) { pending = null; }
     }
 
     public static void reset() { pending = null; sequence = 0; }
 
+    private static boolean matches(ItemStack root, ItemStack expected, boolean passive) {
+        // Ordinary slot packets recreate the client object; only the server can attest the live root identity.
+        return passive ? ItemStack.matches(snapshot(root, true), expected)
+                : JustDireActiveState.paidMatches(root, expected, JustDireActiveState.GROUND_STOMP, 41);
+    }
+
     private static ItemStack snapshot(ItemStack root, boolean passive) {
         // Server independently decides whether an eligible paid action requires its stricter snapshot.
         if (passive) { return JustDireActiveNetwork.passiveInputSnapshot(root); }
-        var snapshot = root.copy();
-        // Native immutable records can be held in mutable lists; detach those from the live root.
-        for (String path : List.of("ability_bindings", "ability_cooldowns")) { copyList(snapshot, path); }
-        return snapshot;
+        return JustDireActiveState.snapshot(root);
     }
-    @SuppressWarnings("unchecked") private static void copyList(ItemStack root, String path) {
-        BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", path)).ifPresent(holder -> {
-            var type = (DataComponentType<List<Object>>) holder.value();
-            if (root.has(type)) { root.set(type, List.copyOf(root.get(type))); }
-        });
-    }
-    private record Pending(ItemStack root, ItemStack snapshot, int key, boolean mouse, int sequence, boolean passive) {}
+    private record Pending(ItemStack snapshot, int key, boolean mouse, int sequence, boolean passive) {}
 }

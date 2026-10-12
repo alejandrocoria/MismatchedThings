@@ -246,6 +246,13 @@ public final class JustDireGroundStompCompatibility {
             }
             root.set(binding.timers, action.timers);
             if (!action.quote.provider.powered && action.bill > 0) { root.hurtAndBreak(action.bill, player, EquipmentSlot.FEET); }
+            // The shared dispatcher carries an expected state through both actions. Publish only
+            // our own debit/timer/wear fields; copying live callbacks would authorize unrelated edits.
+            if (action.quote.provider.powered && action.bill > 0) { expected.set(binding.energy, action.afterDebit.get(binding.energy)); }
+            expected.set(binding.timers, action.timers);
+            if (!action.quote.provider.powered) {
+                expected.setDamageValue(root.getDamageValue()); expected.setCount(root.getCount());
+            }
             for (Mob mob : action.targets) {
                 double x = mob.getX() - player.getX(), z = mob.getZ() - player.getZ();
                 double length = Math.sqrt(x * x + z * z);

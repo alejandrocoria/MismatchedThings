@@ -4,7 +4,6 @@ import commonnetwork.api.Network;
 import commonnetwork.networking.data.Side;
 import games.alejandrocoria.mismatchedboots.Constants;
 import io.netty.handler.codec.DecoderException;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -23,8 +22,11 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -33,6 +35,7 @@ public final class JustDireActiveNetwork {
     public static final int SELECT = 0, TOGGLE = 1, VALUE = 2, PARTICLES = 3, BINDING = 4, TOOL_TOGGLE = 5, DESELECT = 6;
     public static final UUID NONE = new UUID(0, 0);
     private static final Map<UUID, State> states = new HashMap<>();
+    private static final Set<ServerPlayer> executing = Collections.newSetFromMap(new IdentityHashMap<>());
     private static Consumer<ActivationReply> activationReplies = ignored -> {};
     private static Consumer<SettingsReply> settingsReplies = ignored -> {};
 
@@ -75,7 +78,7 @@ public final class JustDireActiveNetwork {
                 State state = states.get(player.getUUID());
                 if (state != null) {
                     if (state.permit != null && (player.getItemBySlot(EquipmentSlot.FEET) != state.permit.root
-                            || !ItemStack.matches(inputSnapshot(state.permit.root, state.permit.stomp), state.permit.snapshot))) { state.permit = null; }
+                            || !matches(state.permit, player))) { state.permit = null; }
                     // Equipment events also report ordinary component changes, not just slot replacements.
                     if (state.menu != null && (player.getInventory().getItem(state.menu.slot) != state.menu.root
                             || !ItemStack.matches(settingsSnapshot(state.menu.root), state.menu.snapshot))) { state.menu = null; }
@@ -91,18 +94,23 @@ public final class JustDireActiveNetwork {
     public static void clearClientReplies() { activationReplies = ignored -> {}; settingsReplies = ignored -> {}; }
 
     public static ActivationReply prepare(ServerPlayer player, Prepare request) {
+        if (executing.contains(player)) { return prepared(request.sequence, NONE); }
         State state = state(player);
         if (request.sequence <= state.activationSequence || request.sequence <= 0) { return prepared(request.sequence, NONE); }
         state.activationSequence = request.sequence; state.permit = null;
         ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-        boolean stomp = JustDireSettingsCompatibility.groundStompBinding(root, request.key, request.mouse)
-                && JustDireGroundStompCompatibility.quote(root) != null;
+        int actions = 0;
+        if (JustDireSettingsCompatibility.groundStompBinding(root, request.key, request.mouse)
+                && JustDireGroundStompCompatibility.quote(root) != null) { actions |= JustDireActiveState.GROUND_STOMP; }
+        if (JustDireSettingsCompatibility.earthquakeBinding(root, request.key, request.mouse)
+                && JustDireEarthquakeCompatibility.quote(root) != null) { actions |= JustDireActiveState.EARTHQUAKE; }
         if (player.containerMenu != player.inventoryMenu || !JustDireGroundStompCompatibility.equipped(player, root)
-                || !(stomp || !JustDireSettingsCompatibility.boundPassives(root, request.key, request.mouse).isEmpty())) {
+                || !(actions != 0 || !JustDireSettingsCompatibility.boundPassives(root, request.key, request.mouse).isEmpty())) {
             return prepared(request.sequence, NONE);
         }
         UUID nonce = UUID.randomUUID();
-        state.permit = new Permit(root, inputSnapshot(root, stomp), request.key, request.mouse, stomp, nonce, player.level().getGameTime() + 40);
+        long now = player.level().getGameTime();
+        state.permit = new Permit(root, actions == 0 ? passiveInputSnapshot(root) : snapshot(root), request.key, request.mouse, actions, nonce, now, now + 40);
         return prepared(request.sequence, nonce);
     }
 
@@ -114,13 +122,28 @@ public final class JustDireActiveNetwork {
         state.permit = null; // Consume before validation/commit. No later expiry, failure or equipment can revive it.
         ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
         if (!(request.mouse == permit.mouse && request.key == permit.key && player.level().getGameTime() <= permit.expires
-                && player.containerMenu == player.inventoryMenu && root == permit.root && ItemStack.matches(inputSnapshot(root, permit.stomp), permit.snapshot)
+                && player.containerMenu == player.inventoryMenu && root == permit.root && matches(permit, player)
                 && JustDireGroundStompCompatibility.equipped(player, root))) { return false; }
         // Native useAbility runs active actions before every bound passive switch. A failed quote
         // (disabled tool, depletion or cooldown) must not prevent re-enabling a passive setting.
-        boolean acted = permit.stomp && JustDireGroundStompCompatibility.activate(player, root, permit.snapshot, request.key, request.mouse);
-        boolean toggled = JustDireSettingsCompatibility.toggleBoundPassives(player, root, request.key, request.mouse);
-        return acted || toggled;
+        if (!executing.add(player)) { return false; }
+        try {
+            // The admission mask is fixed at prepare; a newly expired ability cannot join later.
+            // Refresh only after validating that the change was an unrelated owned clock tick.
+            var expected = snapshot(root);
+            boolean acted = false;
+            int first = JustDireEarthquakeCompatibility.groundStompFirst() ? JustDireActiveState.GROUND_STOMP : JustDireActiveState.EARTHQUAKE;
+            for (int action : new int[]{first, first == JustDireActiveState.GROUND_STOMP ? JustDireActiveState.EARTHQUAKE : JustDireActiveState.GROUND_STOMP}) {
+                if ((permit.actions & action) == 0) { continue; }
+                if (!JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)) { return acted; }
+                acted |= action == JustDireActiveState.GROUND_STOMP
+                        ? JustDireGroundStompCompatibility.activate(player, root, expected, request.key, request.mouse)
+                        : JustDireEarthquakeCompatibility.activate(player, root, expected, request.key, request.mouse);
+            }
+            if (!JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)) { return acted; }
+            boolean toggled = JustDireSettingsCompatibility.toggleBoundPassives(player, root, request.key, request.mouse);
+            return acted || toggled;
+        } finally { executing.remove(player); }
     }
 
     public static SettingsReply edit(ServerPlayer player, SettingsRequest request) {
@@ -154,7 +177,7 @@ public final class JustDireActiveNetwork {
     }
 
     private static boolean hasSettings(ItemStack root) {
-        return java.util.List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp").stream()
+        return JustDireEarthquakeCompatibility.hasSettings(root) || java.util.List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp").stream()
                 .anyMatch(name -> JustDireSettingsCompatibility.metadata(root, name) != null);
     }
 
@@ -168,21 +191,13 @@ public final class JustDireActiveNetwork {
     }
     /** Free passive switches depend on identity/settings, not ordinary charging, wear or timer ticks. */
     public static ItemStack passiveInputSnapshot(ItemStack root) { return settingsSnapshot(root); }
-    private static ItemStack inputSnapshot(ItemStack root, boolean stomp) {
-        return stomp ? snapshot(root) : passiveInputSnapshot(root);
+    private static boolean matches(Permit permit, ServerPlayer player) {
+        return permit.actions == 0 ? ItemStack.matches(passiveInputSnapshot(permit.root), permit.snapshot)
+                // Prepare may occur on either side of the same tick's Post listener; allow that one tick, not arbitrary timer removal.
+                : JustDireActiveState.paidMatches(permit.root, permit.snapshot, permit.actions, player.level().getGameTime() - permit.issued + 1);
     }
     private static ItemStack snapshot(ItemStack root) {
-        var snapshot = root.copy();
-        // Native records are immutable, but their list components can be mutated in-place by
-        // native helpers. Stack.copy alone would let a stale permission follow those edits.
-        copyList(snapshot, "ability_bindings"); copyList(snapshot, "ability_cooldowns");
-        return snapshot;
-    }
-    @SuppressWarnings("unchecked") private static void copyList(ItemStack stack, String path) {
-        BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", path)).ifPresent(holder -> {
-            var type = (DataComponentType<java.util.List<Object>>) holder.value();
-            if (stack.has(type)) { stack.set(type, java.util.List.copyOf(stack.get(type))); }
-        });
+        return JustDireActiveState.snapshot(root);
     }
     private static void remove(ItemStack stack, String path) {
         BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", path))
@@ -205,13 +220,14 @@ public final class JustDireActiveNetwork {
             if (state != null) {
                 if (state.permit != null && (player.containerMenu != player.inventoryMenu
                         || player.getItemBySlot(EquipmentSlot.FEET) != state.permit.root
-                        || !ItemStack.matches(inputSnapshot(state.permit.root, state.permit.stomp), state.permit.snapshot)
+                        || !matches(state.permit, player)
                         || player.level().getGameTime() > state.permit.expires)) { state.permit = null; }
                 if (state.menu != null && (player.containerMenu != state.menu.menu
                         || player.getInventory().getItem(state.menu.slot) != state.menu.root
                         || !ItemStack.matches(state.menu.snapshot, settingsSnapshot(state.menu.root)))) { state.menu = null; }
             }
             JustDireGroundStompCompatibility.tickEquipped(player);
+            JustDireEarthquakeCompatibility.tickEquipped(player);
         }
     }
 
@@ -226,7 +242,7 @@ public final class JustDireActiveNetwork {
         MenuSession menu;
         State(ServerPlayer player) { this.player = player; }
     }
-    private record Permit(ItemStack root, ItemStack snapshot, int key, boolean mouse, boolean stomp, UUID nonce, long expires) {}
+    private record Permit(ItemStack root, ItemStack snapshot, int key, boolean mouse, int actions, UUID nonce, long issued, long expires) {}
     private static final class MenuSession {
         final AbstractContainerMenu menu;
         final ItemStack root;

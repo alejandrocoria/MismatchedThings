@@ -635,8 +635,10 @@ lookup/construction helpers. Fourteen test-only groups compare original Eclipse
 boots and a local mixed candidate: per-target FE/Slowness, thresholds/exhaustion,
 Unbreaking/exempt modes, live root controls, actual entity/tag/multipart/immune
 filters, transactional partial-extraction failure and unchanged provenance.
-One integration-boundary case calls production Ground Stomp prepare/activate to
-demonstrate paid-snapshot rejection after only an unrelated Earthquake timer tick.
+The original integration-boundary case demonstrated Ground Stomp rejection after
+an unrelated Earthquake clock tick. After production B, that maintained probe
+expects successful consumed-once activation across legal peer-clock progression;
+the dated pre-B limitation remains in the exploration, not a current restriction.
 The real server clock covers the complete 200-active/800-cooldown timeline,
 unequipped pause, disabled/depleted/removed-upgrade continuation, codec replacement
 in each phase and no repeated effect/debit on a late eligible target.
@@ -644,8 +646,8 @@ in each phase and no repeated effect/debit on a late eligible target.
 Reports/process logs are under
 `RuntimeTests/NeoForge/build/reports/just-dire-earthquake-spike/<version>/`.
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore normal .114 artifacts.
-The candidate remains private to RuntimeTests; production Earthquake input is
-still rejected. No new packets, mixins or client listener are installed. This
+The candidate remains private to RuntimeTests; normal Earthquake client input is
+still gated until C. The spike itself installs no packets, mixins or client listener. This
 is feasibility evidence, not production/visual/manual acceptance; policies and
 limits belong to [the exploration](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-EXPLORATION.md).
 
@@ -670,8 +672,58 @@ presence/absence preservation. The gate rejects errors and absent optional-class
 loading warnings. Versioned logs/reports are under
 `RuntimeTests/NeoForge/build/reports/just-dire-earthquake-state/<version>/`.
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore .114 artifacts.
-Earthquake settings/input remain rejected; no production action/ticking is added.
+The A gate executes no action/ticking. Its maintained boundary now checks B's
+read-only server preparation while normal Earthquake client metadata/input stays
+hidden. B's action/ticker acceptance belongs to the separate gate below.
 See [the production record](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#7-block-a--implementation-and-validation).
+
+## Just Dire Things Earthquake production server (block B)
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireEarthquakeServer --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompTransport --console=plain
+```
+
+Reuses pinned/disposable JDT server preparation and the existing bundled transport
+fixture, not the research candidate. Twelve live server groups compare real native
+Eclipse effects/FE/feedback against production in both orientations, including
+budget/discount/exempt-mode thresholds, actual AABB/ground/tag/multipart and immune
+targets, empty activation and two Eclipse inputs. Fault-only mixins count actual
+sound/particle calls and inject short debit receipts, equipment/control replacement
+and post-commit exceptions; shared reentry, prior committed bills/effects and
+immutable provenance are asserted. PartEntity exclusion is delegated to the actual
+native query/predicate, not a separate spawned PartEntity effect fixture.
+
+The owned production ticker is invoked once per real server Post for observer
+players outside PlayerList, alongside a native original control: full 200/800 phases,
+unequipped pause, dormant/disabled/depleted/uninstalled/config-disabled clocks,
+no late-target repeated effects and independent Ground Stomp expiry. Paid permits
+allow bounded unrelated progression/phase transition/expiry, but reject reset,
+insertion, reorder, premature removal, unsupported/unknown edits, resource/control
+changes and equal-value server equipment replacement. Original native active order
+is proven as Ground Stomp, Earthquake, then supported passive switches. The admitted
+subset cannot grow after preparation. Native-menu tokens validate server Earthquake
+settings at zero FE; no client UI/metadata is enabled.
+
+Independent API-missing/query-failure/absence processes deny only Earthquake and
+retain older routes. Error logs fail the gate; expected unsupported-clock/API/query
+diagnostics are counted, not blanket-ignored. Versioned reports/process logs:
+`RuntimeTests/NeoForge/build/reports/just-dire-earthquake-server/<version>/`.
+
+The joint transport gate additionally holds a genuine paid-only Ground Stomp reply
+while normal Earthquake timer packets recreate the client stack, then feeds it to
+the production input listener and verifies one bill/replay rejection. A separate
+held free-passive reply also survives actual transactional recharge with Ground
+Stomp ready on another key, without acquiring a paid action. The test-only
+Earthquake packet driver exercises real CommonNetworking and the actual registered
+PlayerList ticker through full lockout, normal FE/clock equipment packets and a real
+server-side mob effect. Ordinary mob effect maps are not synchronized to arbitrary
+clients; the authoritative effect assertion is separate from the equipment packets.
+Normal Earthquake input and any imported shared Earthquake button remain temporarily
+gated until C. This is server/wire acceptance, not native Earthquake UI, physical
+keyboard/mouse, rendered feedback or restart acceptance. Repeat gates sequentially
+with `"-Pneoforge_version=26.1.2.99"`, then restore normal .114 artifacts. See
+[the B record](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#8-block-b--server-action-clocks-and-shared-permissions).
 
 ## Just Dire Things Ground Stomp production state (8.5 block A)
 
@@ -730,11 +782,15 @@ failure, missing settings API and absence, including exact bounded diagnostics
 and independent storage/installation readiness; active-only API/query failure
 does not disable independent passive bindings.
 
-The temporary client driver sends production payloads through bundled
+The original temporary client driver sends production payloads through bundled
 CommonNetworking and verifies ordinary stack synchronization, one action bill,
 natural worn/paused/disabled/depleted cooldown expiry, replay rejection after
 expiry, actual native menu open/close and token-protected root edits. It installs
-no native widget/input bridge and grants no physical/manual acceptance. The
+no native widget bridge and grants no physical/manual acceptance. Earthquake B
+extends this same gate with a delayed production GS input flight, Earthquake
+packet-driven action and its automatic two-phase clock; see
+[the joint B coverage](#just-dire-things-earthquake-production-server-block-b).
+The
 retired prototypes no longer register listeners, packets or screen mixins.
 Block E reuses the production client gate for restart/reconnect. Three focused
 codec units cover wire identity/preferences, trailing data and bounded strings.
