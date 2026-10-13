@@ -98,7 +98,8 @@ public final class JustDireTooltipCompatibility {
             Component toggle = Component.translatable("tooltip.mismatchedboots.just_dire." +
                     (enabled(root, "tool_enabled") && enabled(root, name + "_toggle") ? "on" : "off"));
             DataComponentType<Integer> value = component(name + "_value");
-            Component line = value != null && display.shows(value) && root.has(value)
+            // Earthquake's fixed native numeric field is unused by its effect, not a player setting.
+            Component line = !name.equals("earthquake") && value != null && display.shows(value) && root.has(value)
                     ? Component.translatable("tooltip.mismatchedboots.just_dire.upgrade_setting", ability, toggle, root.get(value))
                     : Component.translatable("tooltip.mismatchedboots.just_dire.upgrade", ability, toggle);
             tooltip.accept(line.copy().withStyle(ChatFormatting.GRAY));

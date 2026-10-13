@@ -22,6 +22,8 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -30,8 +32,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.gui.widget.ExtendedSlider;
@@ -40,6 +44,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
@@ -72,6 +77,8 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static int earthquakeKey;
     private static boolean earthquakeMouse;
     private static Button earthquakeWidget;
+    private static JustDireActiveNetwork.Activate savedEarthquakePermit;
+    private static List<String> reconnectPassives;
 
     private NeoForgeJustDireGroundStompClientTest() {}
 
@@ -88,7 +95,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", LIFECYCLE.isEmpty() ? VARIANT + "\n" : "neoforge\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; wait = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; wait = 0; }
-            else if (++wait > 600) { throw new AssertionError("Timed out: " + step.name
+            else if (++wait > step.timeout) { throw new AssertionError("Timed out: " + step.name
                     + "; charge=" + charge(feet(client)) + ", timer=" + timer(feet(client))
                     + "; activation=" + observedActivation + "; pending=" + fieldStatic(JustDireAbilityInput.class, "pending")
                     + "; changed components=" + changedComponents(before, feet(client))); }
@@ -372,7 +379,12 @@ final class NeoForgeJustDireGroundStompClientTest {
     }
 
     private static void earthquake(Minecraft client) {
-        add("observe genuine production Earthquake/GS replies", () -> JustDireActiveNetwork.clientReplies(reply -> {
+        add("observe genuine production Earthquake/GS replies", NeoForgeJustDireGroundStompClientTest::observeActiveReplies);
+        earthquakeCases(client);
+    }
+
+    private static void observeActiveReplies() {
+        JustDireActiveNetwork.clientReplies(reply -> {
             observedActivation = reply;
             if (holdReply && reply.prepared() && reply.accepted()) {
                 held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse);
@@ -380,7 +392,10 @@ final class NeoForgeJustDireGroundStompClientTest {
             if (!reply.prepared() && reply.accepted()) {
                 consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse);
             }
-        }, JustDireSettingsClient::reply));
+        }, JustDireSettingsClient::reply);
+    }
+
+    private static void earthquakeCases(Minecraft client) {
         for (boolean inverse : new boolean[]{false, true}) {
             earthquakeSetup(client, inverse, 0, 0);
             open(client); select(client, 36);
@@ -751,13 +766,155 @@ final class NeoForgeJustDireGroundStompClientTest {
             if (LIFECYCLE.equals("save")) { lifecycleSave(client, slot); }
             else { lifecycleRestart(client, slot); }
         }
+        add("observe genuine joint active replies for Earthquake lifecycle", NeoForgeJustDireGroundStompClientTest::observeActiveReplies);
+        for (int phase = 0; phase < 2; phase++) {
+            if (LIFECYCLE.equals("save")) { earthquakeSave(client, phase); }
+            else { earthquakeRestart(client, phase); }
+        }
         if (LIFECYCLE.equals("save")) {
             add("stored roots retain exact timers through ordinary unequipped ticks", () -> {}, () -> wait > 20);
-            add("verify both stored roots before the real world save", () -> server(client, player -> {
+            add("verify all four stored joint roots before the real world save", () -> server(client, player -> {
                 try { JustDireGroundStompLifecycleTestSupport.verifyDisk(player); }
                 catch (Exception failure) { throw new AssertionError(failure); }
             }));
-        } else { reconnect(client); }
+        } else {
+            add("restore the existing passive reconnect observer", NeoForgeJustDireGroundStompClientTest::observeReplies);
+            reconnect(client);
+        }
+    }
+
+    private static void earthquakeSave(Minecraft client, int phase) {
+        add("create production Eclipse/Celestigem lifecycle orientation " + phase, () -> server(client, player -> {
+            try { JustDireEarthquakeTestSupport.bind(); }
+            catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+            player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+            var pair = MixedBootsFactory.createPair(boot("eclipsealloy", 0), boot("celestigem", 0));
+            expected = phase == 0 ? pair.primary() : pair.inverse(); expected.setDamageValue(31);
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                require(JustDireResourceTestSupport.handler(expected).insert(150_000, transaction) == 150_000, "Lifecycle funding failed"); transaction.commit();
+            }
+            set(expected, "earthquake_value", 123); // Retained, unused native scalar must not appear as a tooltip setting.
+            player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
+            provenance = ModContent.getMixedBootsData(expected).orElseThrow();
+        }), () -> client.screen == null && charge(feet(client)) == 150_000 && wait > 5);
+        open(client); select(client, 36);
+        add("native widgets configure live GS strength and Earthquake particles", () -> {
+            slider(client, "GROUNDSTOMP").setValue(2); slider(client, "GROUNDSTOMP").setValue(1);
+        }, () -> value(feet(client), "groundstomp_value") == 1);
+        reveal(client, "EARTHQUAKE");
+        add("native Earthquake particle switch persists on root", () -> click((Button) maps(client, "customSettingsButtons").get(icon(client, "EARTHQUAKE")), 0),
+                () -> value(feet(client), "earthquake_custom_setting") == 1);
+        assign(client, "EARTHQUAKE", phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
+        assign(client, "GROUNDSTOMP", GLFW.GLFW_KEY_G, false); assign(client, "STEPHEIGHT", 4, true);
+        close(client);
+        earthquakeTarget(client);
+        add("genuine configured Earthquake pays once before phase " + phase + " save", () -> {
+            consumed = null; earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
+        }, () -> consumed != null && charge(feet(client)) == 100_000 && earthquakeClock(feet(client)) != null);
+        add("capture the paid EQ nonce and authoritative effect without changing sources", () -> {
+            savedEarthquakePermit = consumed;
+            server(client, player -> require(target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) != null
+                    && target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS).getAmplifier() == 3
+                    && ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "EQ effect/history missing"));
+        });
+        if (phase == 1) {
+            add("actual worn ticker reaches inactive Earthquake before saving", () -> {},
+                    () -> earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active());
+        }
+        add("GS pays once beside the independent EQ clock before storage", () -> earthquakePress(GLFW.GLFW_KEY_G, false),
+                () -> charge(feet(client)) == 95_000 && timer(feet(client)) > 0 && consumed != null
+                        && observedActivation != null && !observedActivation.prepared() && observedActivation.accepted());
+        add("hold a real unconsumed passive permit before the JVM exits", () -> {
+            holdReply = true; held = null; earthquakePress(4, true);
+        }, () -> held != null);
+        add("store spent root with its native phase, removed installation/disabled controls and both clocks", () -> server(client, player -> {
+            var root = player.getItemBySlot(EquipmentSlot.FEET); var clock = earthquakeClock(root);
+            require(clock != null && clock.active() == (phase == 0) && clock.ticks() > 0
+                    && timer(root) > 0 && charge(root) == 95_000, "Wrong phase/resource state at save");
+            if (phase == 0) { set(root, "earthquake_upgrade_installed", false); set(root, "tool_enabled", false); }
+            else { set(root, "earthquake_toggle", false); }
+            target.discard(); target = null;
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+            JustDireGroundStompLifecycleTestSupport.save(player, phase + 2, root, savedEarthquakePermit, held);
+            player.inventoryMenu.broadcastChanges();
+        }), () -> feet(client).isEmpty());
+        add("release the observer without forwarding the old intent", () -> holdReply = false);
+    }
+
+    private static void earthquakeRestart(Minecraft client, int phase) {
+        add("tier smithing and root reinstallation preserve spent Earthquake phase " + phase, () -> server(client, player -> {
+            try {
+                player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+                var root = JustDireGroundStompLifecycleTestSupport.storage(player, false).removeItemNoUpdate(phase + 2);
+                var clock = earthquakeClock(root);
+                require(clock != null && clock.active() == (phase == 0) && charge(root) == 95_000 && timer(root) > 0, "Saved EQ phase/charge lost");
+                expected = JustDireGroundStompLifecycleTestSupport.smithing(player, root, phase == 1);
+                if (phase == 0) {
+                    require(!flag(expected, "earthquake_upgrade_installed", true) && !flag(expected, "tool_enabled", true), "Tier restored historical installation/controls");
+                    expected = JustDireGroundStompLifecycleTestSupport.installEarthquake(player, expected);
+                } else { require(!flag(expected, "earthquake_toggle", true), "Tier restored historical EQ toggle"); }
+                player.getInventory().clearContent(); provenance = ModContent.getMixedBootsData(expected).orElseThrow();
+                player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
+            } catch (Exception failure) { throw new AssertionError(failure); }
+        }), () -> charge(feet(client)) == 95_000 && ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance)) && wait > 5);
+        replaySaved(client, phase + 2);
+        open(client); select(client, 36);
+        add("native tier inventory shows EQ without a slider or an unused tooltip number", () -> {
+            require(hasIcon(client, "EARTHQUAKE") && slider(client, "EARTHQUAKE") == null
+                    && value(feet(client), "earthquake_custom_setting") == 1
+                    && bindingFor(feet(client), "earthquake", phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0), "Restart/tier UI reset EQ preferences");
+            assertEarthquakeTooltip(client, 95_000);
+        });
+        add("native root controls re-enable the saved pair without resetting its spent clock", () -> {
+            if (phase == 0) { client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)); }
+            else { click(icon(client, "EARTHQUAKE"), 0); }
+        }, () -> flag(feet(client), "tool_enabled", true) && flag(feet(client), "earthquake_toggle", true));
+        close(client); earthquakeTarget(client);
+        add("persisted Earthquake blocks the genuine configured input during lockout", () -> earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0),
+                () -> observedActivation != null && observedActivation.prepared() && !observedActivation.accepted() && charge(feet(client)) == 95_000);
+        if (phase == 0) {
+            add("loaded active phase advances to native inactive cooldown without replay", () -> {},
+                    () -> earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active());
+        }
+        add("loaded remaining EQ lockout expires once through the actual worn ticker", () -> {},
+                () -> earthquakeClock(feet(client)) == null && timer(feet(client)) == -1, 1_200);
+        add("expiry retained FE/provenance and never applied the effect to the later target", () -> server(client, player -> require(
+                charge(player.getItemBySlot(EquipmentSlot.FEET)) == 95_000 && target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) == null
+                        && ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "Restart replayed/refilled EQ")));
+        replaySaved(client, phase + 2);
+        add("fresh persisted binding on two Eclipse halves executes only one EQ action", () -> {
+            consumed = null; earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
+        }, () -> consumed != null && charge(feet(client)) == 45_000 && earthquakeClock(feet(client)) != null);
+        add("actual fresh effect, live-energy tooltip and immutable upgraded sources agree", () -> {
+            assertEarthquakeTooltip(client, 45_000);
+            server(client, player -> require(target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) != null
+                    && ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "Fresh EQ effect/history missing"));
+        });
+    }
+
+    private static void earthquakeTarget(Minecraft client) {
+        add("spawn one real grounded late EQ target in the disposable world", () -> server(client, player -> {
+            player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8)).forEach(Mob::discard);
+            target = EntityType.COW.create(player.level(), EntitySpawnReason.COMMAND); require(target != null, "No EQ target");
+            target.setNoAi(true); target.setNoGravity(true); target.setInvulnerable(true); target.setPos(player.getX() + 1, player.getY(), player.getZ());
+            require(player.level().addFreshEntity(target), "EQ target not added"); target.setOnGround(true);
+        }));
+    }
+
+    private static void assertEarthquakeTooltip(Minecraft client, int charge) {
+        var root = feet(client); var before = root.copy();
+        var lines = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
+        var energy = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text && text.getKey().equals("justdirethings.festored")).toList();
+        int nativeCapacity = JustDireResourceTestSupport.handler(boot("eclipsealloy", 0)).getCapacityAsInt();
+        require(energy.size() == 1 && JustDireResourceTestSupport.handler(root).getCapacityAsInt() == nativeCapacity, "Duplicate/historical FE or doubled capacity");
+        var args = ((TranslatableContents) energy.getFirst().getContents()).getArgs();
+        require(args[0].equals(String.format(Locale.ROOT, "%,d", charge)) && args[1].equals(String.format(Locale.ROOT, "%,d", nativeCapacity)), "Stale root FE tooltip");
+        var earthquake = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
+                && text.getKey().startsWith("tooltip.mismatchedboots.just_dire.upgrade") && text.getArgs().length > 0
+                && text.getArgs()[0] instanceof Component ability && ability.getContents() instanceof TranslatableContents name
+                && name.getKey().equals("justdirethings.ability.earthquake")).toList();
+        require(earthquake.size() == 1 && ((TranslatableContents) earthquake.getFirst().getContents()).getArgs().length == 2
+                && ItemStack.matches(root, before), "EQ inventory duplicated/mutating or advertised unused numeric value");
     }
 
     private static void lifecycleSave(Minecraft client, int slot) {
@@ -896,6 +1053,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         hold(client);
         add("remember actual server/player and live resources before reconnect", () -> server(client, player -> {
             previousServer = client.getSingleplayerServer(); previousPlayer = player; expected = player.getItemBySlot(EquipmentSlot.FEET).copy();
+            reconnectPassives = JustDireSettingsCompatibility.boundPassives(expected, 4, true);
         }));
         add("encode reconnect expectations before releasing the old registry context", () -> snapshotReconnect(client));
         add("disconnect from the real world with a pending passive intent", client::disconnectWithSavingScreen,
@@ -912,6 +1070,10 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("new server/player retain persistent controls/FE but not client intent", () -> {
             holdReply = false; observeReplies();
             require(sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)), "Reconnect changed persistent state");
+            var oldClock = earthquakeClock(expected); var liveClock = earthquakeClock(feet(client));
+            require(oldClock != null && liveClock != null && liveClock.ticks() > 0
+                    && (long) liveClock.ticks() + (liveClock.active() ? 800L : 0L)
+                    <= (long) oldClock.ticks() + (oldClock.active() ? 800L : 0L), "Reconnect lost/reset EQ lockout");
             server(client, player -> require(previousServer != client.getSingleplayerServer() && previousPlayer != player,
                     "Reconnect reused the old actual server/player"));
         });
@@ -920,8 +1082,8 @@ final class NeoForgeJustDireGroundStompClientTest {
         }, () -> observedActivation != null && !observedActivation.accepted() && sameSettings(before, feet(client)) && charge(before) == charge(feet(client)));
         add("fresh mouse after reconnect creates a new session and toggles supported passives", () -> {
             before = feet(client).copy(); mousePress(4, GLFW.GLFW_PRESS);
-        }, () -> flag(feet(client), "stepheight_toggle", true) != flag(before, "stepheight_toggle", true)
-                && flag(feet(client), "jumpboost_toggle", true) != flag(before, "jumpboost_toggle", true) && charge(feet(client)) == charge(before));
+        }, () -> !reconnectPassives.isEmpty() && reconnectPassives.stream().allMatch(name ->
+                flag(feet(client), name + "_toggle", true) != flag(before, name + "_toggle", true)) && charge(feet(client)) == charge(before));
         open(client); select(client, 36);
         add("fresh native settings selection after reconnect still edits the actual root", () -> click(icon(client, "GROUNDSTOMP"), 0),
                 () -> !flag(feet(client), "groundstomp_toggle", true));
@@ -1162,5 +1324,8 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static void add(String name, Runnable start) { add(name, start, () -> true); }
     private static void add(String name, Runnable start, BooleanSupplier done) { steps.add(new Step(name, start, done)); }
     private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
-    private record Step(String name, Runnable start, BooleanSupplier done) {}
+    private record Step(String name, Runnable start, BooleanSupplier done, int timeout) {
+        Step(String name, Runnable start, BooleanSupplier done) { this(name, start, done, 600); }
+    }
+    private static void add(String name, Runnable start, BooleanSupplier done, int timeout) { steps.add(new Step(name, start, done, timeout)); }
 }

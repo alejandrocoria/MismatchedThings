@@ -291,6 +291,10 @@ public final class NeoForgeJustDireResourcesClientTest {
                 var handler = JustDireResourceTestSupport.handler(root);
                 int amount = handler == null ? 0 : handler.getAmountAsInt();
                 int capacity = handler == null ? 0 : handler.getCapacityAsInt();
+                if (tier.equals("eclipsealloy")) {
+                    JustDireAttributeTestSupport.set(root, "earthquake_upgrade_installed", true);
+                    JustDireAttributeTestSupport.set(root, "earthquake_value", 123);
+                }
                 assertTooltip(client, root, amount, capacity);
                 JustDireAttributeTestSupport.set(root, "jumpboost_value", 1);
                 JustDireAttributeTestSupport.set(root, "tool_enabled", false);
@@ -411,7 +415,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                             && key((Component) args[1]).equals("tooltip.mismatchedboots.just_dire." + (enabled ? "on" : "off")),
                             "Root inventory advertised historical name/control");
                     var setting = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", name + "_value"));
-                    if (setting.isPresent() && root.has(setting.get().value())) {
+                    if (!name.equals("earthquake") && setting.isPresent() && root.has(setting.get().value())) {
                         require(args.length == 3 && args[2].equals(root.get(setting.get().value())), "Root parameter missing/historical");
                     } else { require(args.length == 2, "Missing root parameter used historical setting"); }
                     require(TextColor.fromLegacyFormat(ChatFormatting.GRAY).equals(inventory.get(index).getStyle().getColor()),

@@ -33,7 +33,8 @@ final class JustDireGroundStompLifecycleTestSupport {
             "groundstomp_custom_setting", "tool_enabled", "groundstomp_upgrade_installed", "groundstomp_toggle", "groundstomp_value",
             "groundstomp_bindingmode", "stepheight_upgrade_installed", "stepheight_toggle", "stepheight_bindingmode",
             "jumpboost_upgrade_installed", "jumpboost_toggle", "jumpboost_value", "jumpboost_bindingmode",
-            "negatefalldamage_upgrade_installed", "negatefalldamage_toggle", "negatefalldamage_bindingmode");
+            "negatefalldamage_upgrade_installed", "negatefalldamage_toggle", "negatefalldamage_bindingmode",
+            "earthquake_upgrade_installed", "earthquake_toggle", "earthquake_value", "earthquake_bindingmode", "earthquake_custom_setting");
 
     private JustDireGroundStompLifecycleTestSupport() {}
 
@@ -57,13 +58,18 @@ final class JustDireGroundStompLifecycleTestSupport {
 
     static void verifyDisk(ServerPlayer player) throws Exception {
         var expected = JsonParser.parseString(Files.readString(marker("saved.json"))).getAsJsonArray();
-        require(expected.size() == 2, "Incomplete lifecycle expectations");
+        require(expected.size() == 4, "Incomplete joint lifecycle expectations");
         var barrel = storage(player, false);
-        for (int slot = 0; slot < 2; slot++) {
+        JustDireEarthquakeTestSupport.bind();
+        for (int slot = 0; slot < 4; slot++) {
             var root = barrel.getItem(slot);
             var decoded = ItemStack.CODEC.parse(player.registryAccess().createSerializationContext(JsonOps.INSTANCE), expected.get(slot)).getOrThrow();
             require(ItemStack.matches(decoded, root), "Disk-loaded stack differs in orientation " + slot);
             require(JustDireGroundStompTestSupport.timer(root) > 0, "Disk cooldown was lost");
+            if (slot >= 2) {
+                var clock = JustDireEarthquakeTestSupport.clock(root, "earthquake");
+                require(clock != null && clock.ticks() > 0 && clock.active() == (slot == 2), "Disk Earthquake phase was lost/reset");
+            }
         }
     }
 
@@ -127,8 +133,30 @@ final class JustDireGroundStompLifecycleTestSupport {
                     "Live preservation changed " + name);
         }
     }
+
+    /** Real optional-template root installation on a spent/locked pair, not a direct flag edit. */
+    static ItemStack installEarthquake(ServerPlayer player, ItemStack root) {
+        require(!root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("earthquake_upgrade_installed"), false), "Already installed");
+        var before = root.copy();
+        var menu = new SmithingMenu(1, player.getInventory(), ContainerLevelAccess.create(player.level(), STORAGE));
+        menu.getSlot(SmithingMenu.BASE_SLOT).set(root.copy());
+        menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(nativeItem("upgrade_earthquake"));
+        var preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
+        require(!preview.isEmpty() && preview.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("earthquake_upgrade_installed"), false),
+                "Root Earthquake installation produced no preview");
+        var allowed = before.copy(); JustDireAttributeTestSupport.set(allowed, "earthquake_upgrade_installed", true);
+        sameControls(allowed, preview, true);
+        require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0))
+                && preview.getDamageValue() == before.getDamageValue()
+                && ModContent.getMixedBootsData(preview).equals(ModContent.getMixedBootsData(before)), "Upgrade refilled resources or rewrote history");
+        menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
+        var taken = menu.getCarried().copy();
+        require(ItemStack.matches(preview, taken) && ItemStack.matches(before, root)
+                && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Upgrade take/consumption/input preservation mismatch");
+        return taken;
+    }
     private static ItemStack nativeItem(String name) { return new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", name))); }
     private static Path marker(String suffix) { return Path.of(System.getProperty("mismatchedboots.runtimetest.markers"), PREFIX + "-" + suffix); }
     private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
 }
-

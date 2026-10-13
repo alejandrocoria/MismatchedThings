@@ -626,31 +626,14 @@ mixed quote, payment, timer, screen or permission implementation.
 
 ## Just Dire Things Earthquake research spike
 
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireEarthquakeSpike --console=plain
-```
-
-Reuses the pinned JDT artifact, disposable server preparation and existing native
-lookup/construction helpers. Fourteen test-only groups compare original Eclipse
-boots and a local mixed candidate: per-target FE/Slowness, thresholds/exhaustion,
-Unbreaking/exempt modes, live root controls, actual entity/tag/multipart/immune
-filters, transactional partial-extraction failure and unchanged provenance.
-The original integration-boundary case demonstrated Ground Stomp rejection after
-an unrelated Earthquake clock tick. After production B, that maintained probe
-expects successful consumed-once activation across legal peer-clock progression;
-the dated pre-B limitation remains in the exploration, not a current restriction.
-The real server clock covers the complete 200-active/800-cooldown timeline,
-unequipped pause, disabled/depleted/removed-upgrade continuation, codec replacement
-in each phase and no repeated effect/debit on a late eligible target.
-
-Reports/process logs are under
-`RuntimeTests/NeoForge/build/reports/just-dire-earthquake-spike/<version>/`.
-Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore normal .114 artifacts.
-The candidate remains private to RuntimeTests until D consolidation; its maintained
-boundary now expects C's normal Earthquake metadata/input. The spike itself
-installs no packets, mixins or client listener. This
-is feasibility evidence, not production/visual/manual acceptance; policies and
-limits belong to [the exploration](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-EXPLORATION.md).
+The executable candidate, listener, run and verification task were retired during
+Earthquake D consolidation on **2026-10-13**. Its fourteen passing research groups
+remain dated evidence in [the exploration](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-EXPLORATION.md),
+not a maintained task or production acceptance. Per-target native controls,
+payment/failure boundaries, two-phase clocks and paid coexistence are covered by
+the production state/server/client/transport gates below; actual persistence and
+tier/root-upgrade transactions belong to the joint lifecycle gate. Native
+constructors/controls remain shared test helpers, without another mixed action.
 
 ## Just Dire Things Earthquake production state (block A)
 
@@ -877,6 +860,23 @@ preserved controls/resources/source history and single template/addition/base
 consumption, then exercises shared passive input during cooldown, natural expiry
 and fresh keyboard/mouse action.
 
+Earthquake D extends these same two JVMs with Eclipse + Celestigem in both
+orientations, one saved active EQ phase and one inactive phase, spent FE/wear,
+particles, key/mouse bindings and a pending Ground Stomp clock. Removed EQ
+installation/global-off and a disabled EQ toggle remain stored; real tier preview/
+normal and shift takes do not restore historical state. A real optional-template
+root reinstallation preserves the spent lockout/resources. Worn-only automatic
+phase progression/expiry permits one fresh EQ action even after both sources
+become Eclipse; a later grounded mob receives no repeated effect before that
+fresh input. Saved paid consumed EQ and unconsumed passive packets reject in the
+new JVM. The existing reconnect then uses the active EQ root, preserving a
+bounded remaining lockout, FE/controls and rejecting old authorization.
+
+Real tooltips verify one current root FE line/capacity and one EQ inventory entry,
+without showing its unused numeric field. The resource-client gate independently
+checks that presentation in normal/advanced, Shift/non-Shift and both orientations.
+No new source section, support disclaimer or lifecycle gameplay adapter is added.
+
 The fixture only observes production replies or defers a genuine permit; it
 does not implement validation, payment, effects or ticking. Old consumed and
 unconsumed packets reject through real CommonNetworking before/after expiry.
@@ -892,8 +892,10 @@ rejects. Action-only client intent and all paid server checks stay strict.
 Equal/absent changed-projection and unrelated record preservation remain owned
 by the existing production state gate, not a duplicated lifecycle matrix.
 Synthetic input and automated disk checks do not establish final manual
-acceptance. Exact executed evidence and the final checklist belong to
-[block E](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#12-block-e--consolidation-lifecycle-and-final-handoff).
+acceptance. Ground Stomp's original acceptance belongs to
+[block E](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#12-block-e--consolidation-lifecycle-and-final-handoff);
+the Earthquake extension's executed evidence and owner-accepted final checklist belong to
+[block D](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#10-block-d--lifecycle-consolidation-and-final-handoff).
 
 ## Vanilla armor classification
 

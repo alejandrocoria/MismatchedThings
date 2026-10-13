@@ -19,8 +19,6 @@ public final class NeoForgeRuntimeTest {
             NeoForgeJustDireEarthquakeServerTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeStateTest")) {
             NeoForgeJustDireEarthquakeStateTest.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeSpike")) {
-            NeoForgeJustDireEarthquakeSpike.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompServerTest")) {
             NeoForgeJustDireGroundStompServerTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompStateTest")) {
