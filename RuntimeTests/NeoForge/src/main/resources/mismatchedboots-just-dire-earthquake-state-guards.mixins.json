@@ -4,6 +4,6 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireEarthquakeStateGuardPlugin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["JustDireEarthquakeApiMissingMixin", "JustDireEarthquakeQueryFailureMixin"],
+  "mixins": ["JustDireEarthquakeApiMissingMixin", "JustDireEarthquakeQueryFailureMixin", "JustDireEarthquakeSettingsFailureMixin"],
   "injectors": {"defaultRequire": 1}
 }

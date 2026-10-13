@@ -7,12 +7,13 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
-/** Opt-in failures local to the new Earthquake binding/query; other JDT consumers remain native/live. */
+/** Opt-in Earthquake binding/query/settings failures; other JDT consumers remain native/live. */
 public final class JustDireEarthquakeStateGuardPlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireEarthquakeStateVariant", "live");
         return mixin.endsWith("JustDireEarthquakeApiMissingMixin") && variant.equals("apiMissing")
-                || mixin.endsWith("JustDireEarthquakeQueryFailureMixin") && variant.equals("queryFailure");
+                || mixin.endsWith("JustDireEarthquakeQueryFailureMixin") && variant.equals("queryFailure")
+                || mixin.endsWith("JustDireEarthquakeSettingsFailureMixin") && variant.equals("settingsFailure");
     }
     @Override public void onLoad(String mixinPackage) {}
     @Override public String getRefMapperConfig() { return null; }

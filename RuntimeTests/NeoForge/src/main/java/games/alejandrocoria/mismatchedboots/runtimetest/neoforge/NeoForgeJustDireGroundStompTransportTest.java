@@ -34,7 +34,7 @@ import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/** Production GS input and shared transport/ticks; Earthquake's driver remains test-only until native client block C. */
+/** Production input for both actives, shared transport/ticks and normal root synchronization. */
 final class NeoForgeJustDireGroundStompTransportTest {
     private static final String PREFIX = "just-dire-ground-stomp-transport";
     private static final Queue<Step> steps = new ArrayDeque<>();
@@ -50,6 +50,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
     private static boolean inputFlight, holdInput;
     private static ItemStack inputRoot;
     private static JustDireActiveNetwork.ActivationReply heldInput;
+    private static JustDireActiveNetwork.ActivationReply inputPrepared;
     private static Mob earthquakeTarget;
 
     private NeoForgeJustDireGroundStompTransportTest() {}
@@ -60,7 +61,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
             if (job != null) { if (!job.isDone()) { return; } job.get(); job = null; }
             Step step = steps.peek();
             if (step == null) {
-                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + "production GS input and shared paid snapshots; Earthquake packet driver/action/automatic clock; no Earthquake UI/input or manual acceptance\n");
+                NetworkAcceptanceFiles.write(PREFIX + "-report.txt", report + "production GS/Earthquake input, shared paid/free snapshots and automatic clocks; native UI belongs to the client gate, no manual acceptance\n");
                 NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; wait = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; }
@@ -77,6 +78,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
         JustDireEarthquakeTestSupport.bind();
         JustDireActiveNetwork.clientReplies(reply -> {
             activation = reply;
+            if (inputFlight && reply.prepared() && reply.accepted()) { inputPrepared = reply; }
             if (inputFlight && holdInput && reply.prepared() && reply.accepted()) { heldInput = reply; }
             else if (inputFlight) { JustDireAbilityInput.reply(reply); }
         }, reply -> settings = reply);
@@ -173,7 +175,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
         add("replay that consumed delayed permit still rejects through bundled transport", () -> {
             activation = null; send(new JustDireActiveNetwork.Activate(heldInput.sequence(), heldInput.nonce(), 71, false));
         }, () -> activation != null && !activation.accepted() && charge(feet(client)) == 145_000);
-        add("seed a funded Earthquake root and one actual grounded world target for a packet-driver action", () -> {
+        add("seed a funded Earthquake root and one actual grounded world target for production input", () -> {
             inputFlight = false;
             server(client, player -> {
                 try {
@@ -190,19 +192,15 @@ final class NeoForgeJustDireGroundStompTransportTest {
                 } catch (Exception failure) { throw new IllegalStateException(failure); }
             });
         }, () -> charge(feet(client)) == 150_000 && client.level.getEntity(earthquakeTarget.getId()) instanceof Mob);
-        add("normal Earthquake client input stays gated before native UI integration", () -> { activation = null; press(72); },
-                () -> wait > 10 && activation == null && charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) == null);
-        add("Earthquake prepare travels through actual CommonNetworking without a client UI substitute", () -> {
+        add("production Earthquake input prepares/activates through actual CommonNetworking", () -> {
             server(client, player -> require(earthquakeTarget.onGround() && earthquakeTarget.distanceToSqr(player) < 25,
                     "Transport target not ready: ground=" + earthquakeTarget.onGround() + ", target=" + earthquakeTarget.position()
                             + ", player=" + player.position() + ", loaded=" + player.level().areEntitiesActuallyLoadedAndTicking(earthquakeTarget.chunkPosition())));
-            activation = null; send(new JustDireActiveNetwork.Prepare(100, 72, false));
-        }, () -> activation != null && activation.prepared() && activation.accepted());
-        add("one production Earthquake debit/clock reaches ordinary equipment packets", () -> {
-            consumed = new JustDireActiveNetwork.Activate(100, activation.nonce(), 72, false); activation = null; send(consumed);
+            inputFlight = true; inputPrepared = null; activation = null; press(72);
         }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 100_000
                 && earthquakeClock(feet(client)) != null);
         add("real world target received Slowness IV on the authoritative server", () -> server(client, player -> {
+            consumed = new JustDireActiveNetwork.Activate(inputPrepared.sequence(), inputPrepared.nonce(), 72, false);
             // Vanilla does not synchronize a normal mob's effect map to non-passenger clients.
             var effect = earthquakeTarget.getEffect(MobEffects.SLOWNESS);
             require(effect != null && effect.getAmplifier() == 3 && charge(serverRoot) == 100_000, "Missing authoritative effect/debit");

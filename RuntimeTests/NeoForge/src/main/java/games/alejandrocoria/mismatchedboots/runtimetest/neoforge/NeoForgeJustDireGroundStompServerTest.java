@@ -455,8 +455,9 @@ public final class NeoForgeJustDireGroundStompServerTest {
         record("actual native menu: installed root range at zero FE, ordered edits/replay/range/ability/mode/device rejection, live resource/timer coexistence, keyboard capture/removal, identity/generation/close invalidation and unchanged sources");
         require(JustDireSettingsCompatibility.metadata(root("ferricore", 0), "jumpboost") != null
                 && JustDireSettingsCompatibility.metadata(root("eclipsealloy", 0), "jumpboost") == null
-                && JustDireSettingsCompatibility.metadata(root, "earthquake") == null, "Unsupported ability metadata leaked");
-        record("settings inventory excludes powered Jump/Earthquake, retains passive Jump and depleted powered Ground Stomp tier range");
+                && JustDireSettingsCompatibility.metadata(root, "earthquake") != null
+                && JustDireSettingsCompatibility.metadata(root("celestigem", 0), "earthquake") == null, "Ability metadata lost its tier boundaries");
+        record("settings inventory excludes powered Jump and ineligible Earthquake, retains passive Jump, depleted powered Ground Stomp and Eclipse Earthquake ranges");
         var combined = MixedBootsFactory.createPair(boots("blazegold", 0), boots("eclipsealloy", 0)).primary();
         for (String ability : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp")) { set(combined, ability + "_upgrade_installed", true); }
         player.setItemSlot(EquipmentSlot.FEET, combined); player.containerMenu = menu;

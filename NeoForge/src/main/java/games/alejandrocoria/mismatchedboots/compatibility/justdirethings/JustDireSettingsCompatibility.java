@@ -31,6 +31,7 @@ import java.util.Set;
 /** Bounded server settings contract. Native UI hooks/input are a separate readiness boundary. */
 public final class JustDireSettingsCompatibility {
     private static volatile Api api;
+    private static volatile boolean earthquakeSettingsFailed;
     private JustDireSettingsCompatibility() {}
 
     public static void initialize(IEventBus bus) {
@@ -89,6 +90,7 @@ public final class JustDireSettingsCompatibility {
     private static Profile profile(ItemStack root, String name) {
         Api binding = api;
         if (binding == null || !mixed(root)) { return null; }
+        if (name.equals("earthquake")) { return earthquakeProfile(root, binding); }
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
         if (setting == null || name.equals("groundstomp") && !JustDireGroundStompCompatibility.available()) { return null; }
         try {
@@ -102,19 +104,49 @@ public final class JustDireSettingsCompatibility {
                         || name.equals("jumpboost") && !List.of("ferricore_boots", "blazegold_boots").contains(id.getPath())
                         || !((Set<?>) binding.abilities.invokeExact(source.getItem())).contains(setting.ability)) { continue; }
                 Object params = binding.params.invokeExact(source.getItem(), setting.ability);
-                int min = (int) binding.minimum.invokeExact(params), max = (int) binding.maximum.invokeExact(params);
-                int increment = (int) binding.increment.invokeExact(params), defaults = (int) binding.defaultValue.invokeExact(params);
-                boolean toggleOnly = (name.equals("stepheight") || name.equals("negatefalldamage"))
-                        && min == -1 && max == -1 && increment == -1 && defaults == -1;
-                if (!toggleOnly && (min < 0 || max < min || increment <= 0 || defaults < min || defaults > max)) {
-                    throw new IllegalStateException("Unsupported native mixed settings parameters");
-                }
-                if (selected == null || max > selected.metadata.maximum) {
-                    selected = new Profile(source.getItem(), new Metadata(min, max, increment, defaults));
+                Metadata metadata = nativeMetadata(binding, params, name.equals("stepheight") || name.equals("negatefalldamage"));
+                if (selected == null || metadata.maximum > selected.metadata.maximum) {
+                    selected = new Profile(source.getItem(), metadata, params);
                 }
             }
             return api == binding ? selected : null;
         } catch (Throwable failure) { disable(binding, failure); return null; }
+    }
+
+    private static Metadata nativeMetadata(Api binding, Object params, boolean allowToggleOnly) throws Throwable {
+        int min = (int) binding.minimum.invokeExact(params), max = (int) binding.maximum.invokeExact(params);
+        int increment = (int) binding.increment.invokeExact(params), defaults = (int) binding.defaultValue.invokeExact(params);
+        boolean toggleOnly = allowToggleOnly && min == -1 && max == -1 && increment == -1 && defaults == -1;
+        if (!toggleOnly && (min < 0 || max < min || increment <= 0 || defaults < min || defaults > max)) {
+            throw new IllegalStateException("Unsupported native mixed settings parameters");
+        }
+        return new Metadata(min, max, increment, defaults);
+    }
+
+    private static Profile earthquakeProfile(ItemStack root, Api binding) {
+        if (earthquakeSettingsFailed) { return null; }
+        Item item = JustDireEarthquakeCompatibility.settingsItem(root);
+        if (item == null) { return null; }
+        try {
+            Object params = binding.params.invokeExact(item, JustDireEarthquakeCompatibility.settingAbility());
+            Metadata metadata = nativeMetadata(binding, params, false);
+            // Native Earthquake's numeric value is fixed and unused by its effect. A future
+            // variable range needs an actual consumer review, not a dead slider on mixed boots.
+            if (metadata.minimum != metadata.maximum) { throw new IllegalStateException("Unsupported native Earthquake settings range"); }
+            return api == binding ? new Profile(item, metadata, params) : null;
+        } catch (Throwable failure) {
+            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+            earthquakeSettingsFailure(failure);
+            // GUI parameter failures must not disable older settings or freeze a spent Earthquake clock.
+            return null;
+        }
+    }
+
+    private static synchronized void earthquakeSettingsFailure(Throwable failure) {
+        if (!earthquakeSettingsFailed) {
+            earthquakeSettingsFailed = true;
+            Constants.LOG.warn("Just Dire Things Earthquake mixed settings unavailable; Earthquake metadata/input disabled", failure);
+        }
     }
 
     public static boolean mixed(ItemStack root) {
@@ -131,8 +163,9 @@ public final class JustDireSettingsCompatibility {
         return matchesBinding(root, "groundstomp", key, mouse);
     }
 
-    /** Server binding admission only in B; this is deliberately not part of normal client inputBinding until C. */
+    /** Only supported native Earthquake metadata can admit this equipped input, including shared keys. */
     public static boolean earthquakeBinding(ItemStack root, int key, boolean mouse) {
+        if (metadata(root, "earthquake") == null) { return false; }
         var mode = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", "earthquake_bindingmode"));
         if (mode.isEmpty()) { return false; }
         @SuppressWarnings("unchecked") var type = (DataComponentType<Integer>) mode.get().value();
@@ -173,7 +206,7 @@ public final class JustDireSettingsCompatibility {
     }
 
     public static boolean inputBinding(ItemStack root, int key, boolean mouse) {
-        return groundStompBinding(root, key, mouse) || !boundPassives(root, key, mouse).isEmpty();
+        return groundStompBinding(root, key, mouse) || earthquakeBinding(root, key, mouse) || !boundPassives(root, key, mouse).isEmpty();
     }
 
     static boolean toggleBoundPassives(ServerPlayer player, ItemStack root, int key, boolean mouse) {
@@ -202,7 +235,7 @@ public final class JustDireSettingsCompatibility {
 
     /** UI-only admission identity; never replace the selected inventory stack with this item. */
     public static Item metadataItem(ItemStack root) {
-        for (String name : List.of("groundstomp", "stepheight", "jumpboost", "negatefalldamage")) {
+        for (String name : List.of("groundstomp", "stepheight", "jumpboost", "negatefalldamage", "earthquake")) {
             Profile profile = profile(root, name);
             if (profile != null) { return profile.item; }
         }
@@ -217,6 +250,7 @@ public final class JustDireSettingsCompatibility {
         for (Setting setting : binding.settings) {
             if (metadata(root, setting.name) != null) { result.add((Enum) setting.ability); }
         }
+        if (metadata(root, "earthquake") != null) { result.add((Enum) JustDireEarthquakeCompatibility.settingAbility()); }
         return api == binding ? result : null;
     }
 
@@ -225,16 +259,17 @@ public final class JustDireSettingsCompatibility {
         Api binding = api;
         if (binding == null) { return null; }
         Setting setting = binding.settings.stream().filter(candidate -> candidate.ability == ability).findFirst().orElse(null);
-        Profile profile = setting == null ? null : profile(root, setting.name);
+        Profile profile = ability == JustDireEarthquakeCompatibility.settingAbility() ? profile(root, "earthquake")
+                : setting == null ? null : profile(root, setting.name);
         if (profile == null || api != binding) { return null; }
-        try { return binding.params.invokeExact(profile.item, ability); }
-        catch (Throwable failure) { disable(binding, failure); return null; }
+        return profile.parameters;
     }
 
     public static int screenValue(ItemStack root, String name) {
         Api binding = api;
         Metadata metadata = metadata(root, name);
         if (binding == null || metadata == null) { return 0; }
+        if (name.equals("earthquake")) { return metadata.defaultValue; }
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElseThrow();
         return Math.clamp(root.getOrDefault(setting.value, metadata.defaultValue), metadata.minimum, metadata.maximum);
     }
@@ -247,7 +282,7 @@ public final class JustDireSettingsCompatibility {
         ItemStack changed = root.copy();
         try {
             if (request.operation() == JustDireActiveNetwork.TOOL_TOGGLE) {
-                if (!request.ability().isEmpty() || binding.settings.stream().noneMatch(setting -> metadata(root, setting.name) != null)) { return false; }
+                if (!request.ability().isEmpty() || metadataItem(root) == null) { return false; }
                 changed.set(binding.enabled, !root.getOrDefault(binding.enabled, true));
             } else {
                 Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(request.ability())).findFirst().orElse(null);
@@ -342,11 +377,11 @@ public final class JustDireSettingsCompatibility {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow().value();
     }
     public record Metadata(int minimum, int maximum, int increment, int defaultValue) {
-        public boolean hasSlider() { return minimum >= 0 && increment > 0; }
+        public boolean hasSlider() { return minimum >= 0 && maximum > minimum && increment > 0; }
     }
     private record Setting(String name, Object ability, DataComponentType<Boolean> installed,
                            DataComponentType<Boolean> toggle, DataComponentType<Integer> value, DataComponentType<Integer> mode) {}
-    private record Profile(Item item, Metadata metadata) {}
+    private record Profile(Item item, Metadata metadata, Object parameters) {}
     private record Api(Class<?> menu, Class<?> tool, List<Setting> settings, MethodHandle abilities, MethodHandle params,
                        MethodHandle minimum, MethodHandle maximum, MethodHandle increment, MethodHandle defaultValue,
                        MethodHandle name, MethodHandle key, MethodHandle mouse, MethodHandle equipped, MethodHandle create, MethodHandle localization,

@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceClientTest;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceServerTest;
 import net.minecraft.client.Minecraft;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -53,7 +54,8 @@ public final class NeoForgeRuntimeTest {
         }
         if (FMLEnvironment.getDist().isClient()) {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")) {
-                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompClientTest.tick(Minecraft.getInstance()));
+                // Inspect the selected native root after the production Post handlers refresh it.
+                NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompClientTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompTransportTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")) {

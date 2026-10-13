@@ -165,10 +165,10 @@ final class NeoForgeJustDireEarthquakeSpike {
         JustDireAttributeTestSupport.set(root, "ability_bindings", List.of(bindingClass.getConstructor(String.class, int.class, boolean.class, boolean.class)
                 .newInstance("earthquake", 71, false, true)));
         before = root.copy();
-        require(!JustDireSettingsCompatibility.inputBinding(root, 71, false)
+        require(JustDireSettingsCompatibility.inputBinding(root, 71, false)
                 && JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false)).accepted()
-                && ItemStack.matches(before, root), "B preparation changed root or advertised normal client input");
-        record("direct native action cannot execute mixed identity; B production server can prepare a read-only permit while normal client input remains gated until C");
+                && ItemStack.matches(before, root), "C input metadata or B preparation changed root");
+        record("direct native action cannot execute mixed identity; C input metadata and read-only B preparation are supported, while research action/ticker remain test-only");
         root = mixed(COST, false, false); player.setItemSlot(EquipmentSlot.FEET, root);
         JustDireAttributeTestSupport.set(root, "groundstomp_upgrade_installed", true);
         JustDireAttributeTestSupport.set(root, "groundstomp_bindingmode", 2);

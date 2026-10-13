@@ -263,9 +263,11 @@ final class NeoForgeJustDireEarthquakeServerTest {
             require(JustDireActiveNetwork.edit(player, new JustDireActiveNetwork.SettingsRequest(17, 36, 1, 2 + edit[0], token, edit[0], "earthquake", edit[1], 72, false, true)).accepted(), "Valid EQ server edit rejected");
         }
         require(!JustDireActiveNetwork.edit(player, new JustDireActiveNetwork.SettingsRequest(17, 36, 1, 9, token, 2, "earthquake", 1, 72, false, true)).accepted(), "Dead EQ slider admitted");
-        require(JustDireSettingsCompatibility.metadata(root, "earthquake") == null && !JustDireSettingsCompatibility.boundPassives(root, 72, false).contains("earthquake"), "B advertised EQ or classified it as passive");
+        require(JustDireSettingsCompatibility.metadata(root, "earthquake") != null
+                && !JustDireSettingsCompatibility.metadata(root, "earthquake").hasSlider()
+                && !JustDireSettingsCompatibility.boundPassives(root, 72, false).contains("earthquake"), "EQ metadata exposed a dead slider or passive switch");
         player.containerMenu = player.inventoryMenu;
-        record("real native-menu token validates EQ toggle/particles/equipped binding at zero FE, rejects dead numeric slider; native client metadata remains hidden and EQ never joins passive switches");
+        record("real native-menu token validates EQ toggle/particles/equipped binding at zero FE, rejects dead numeric slider; C metadata is fixed/toggle-only and EQ never joins passive switches");
     }
 
     private static void faults(MinecraftServer server) throws Exception {

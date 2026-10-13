@@ -192,7 +192,7 @@ public final class JustDireEarthquakeCompatibility {
         catch (Throwable failure) { disable(binding, failure); return -1; }
     }
 
-    /** Server settings admission, independent of FE/global enablement; native client metadata remains gated until C. */
+    /** Settings admission, independent of FE/global enablement and spent clocks. */
     static boolean hasSettings(ItemStack root) {
         Api binding = api;
         if (binding == null || !JustDireSettingsCompatibility.mixed(root)) { return false; }
@@ -202,6 +202,13 @@ public final class JustDireEarthquakeCompatibility {
                     && ((Set<?>) binding.abilities.invokeExact(binding.eclipse)).contains(binding.ability);
         } catch (Throwable failure) { disable(binding, failure); return false; }
     }
+
+    static Item settingsItem(ItemStack root) {
+        Api binding = api;
+        return binding != null && hasSettings(root) && api == binding ? binding.eclipse : null;
+    }
+
+    static Object settingAbility() { Api binding = api; return binding == null ? null : binding.ability; }
 
     static boolean edit(ItemStack root, JustDireActiveNetwork.SettingsRequest request) {
         Api binding = api;

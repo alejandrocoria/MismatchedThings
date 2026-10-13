@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsScreenAccess;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -68,6 +69,9 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static Object previousServer, previousPlayer;
     private static ItemStack inputRoot;
     private static JsonElement reconnectExpected;
+    private static int earthquakeKey;
+    private static boolean earthquakeMouse;
+    private static Button earthquakeWidget;
 
     private NeoForgeJustDireGroundStompClientTest() {}
 
@@ -113,6 +117,9 @@ final class NeoForgeJustDireGroundStompClientTest {
         if (!LIFECYCLE.isEmpty()) { lifecycle(client); return; }
         if (VARIANT.equals("hooksMissing") || VARIANT.equals("apiMissing")) {
             unavailable(client); return;
+        }
+        if (VARIANT.equals("earthquakeMissing") || VARIANT.equals("earthquakeSettingsFailure")) {
+            earthquakeUnavailable(client); return;
         }
         setup(client, false, false, 6_000);
         add("native original keyboard retains one native action", () -> press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS), () -> charge(feet(client)) == 1_000);
@@ -178,10 +185,10 @@ final class NeoForgeJustDireGroundStompClientTest {
                     require(java.util.Arrays.stream(client.screen.getClass().getDeclaredMethods()).anyMatch(m -> m.getName().contains(hook)), "Competing wrapper was not applied");
                 }
                 var names = maps(client, "buttonToAbilityMap").values().stream().map(Object::toString).toList();
-                require(names.size() == 4 && names.containsAll(List.of("GROUNDSTOMP", "STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE")), "Unsupported/missing abilities: " + names);
+                require(names.size() == 5 && names.containsAll(List.of("GROUNDSTOMP", "STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "EARTHQUAKE")), "Unsupported/missing abilities: " + names);
                 require(maps(client, "sliders").size() == 2 && ((Number) field(slider(client, "GROUNDSTOMP"), "maxValue")).doubleValue() == 5
                         && ((Number) field(slider(client, "JUMPBOOST"), "maxValue")).doubleValue() == 2 && charge(feet(client)) == 0, "Per-ability tier ranges wrong");
-                require(maps(client, "bindingButtons").size() == 4, "Supported custom bindings missing");
+                require(maps(client, "bindingButtons").size() == 5 && slider(client, "EARTHQUAKE") == null, "Custom bindings or fixed Earthquake controls wrong");
             });
             for (String ability : List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "GROUNDSTOMP")) {
                 String path = ability.toLowerCase(java.util.Locale.ROOT) + "_toggle";
@@ -361,6 +368,242 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("fresh native reselection can edit the replacement root", () -> click(icon(client, "GROUNDSTOMP"), 0),
                 () -> !flag(feet(client), "groundstomp_toggle", true));
         close(client);
+        earthquake(client);
+    }
+
+    private static void earthquake(Minecraft client) {
+        add("observe genuine production Earthquake/GS replies", () -> JustDireActiveNetwork.clientReplies(reply -> {
+            observedActivation = reply;
+            if (holdReply && reply.prepared() && reply.accepted()) {
+                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse);
+            } else { JustDireAbilityInput.reply(reply); }
+            if (!reply.prepared() && reply.accepted()) {
+                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse);
+            }
+        }, JustDireSettingsClient::reply));
+        for (boolean inverse : new boolean[]{false, true}) {
+            earthquakeSetup(client, inverse, 0, 0);
+            open(client); select(client, 36);
+            add("native Earthquake toggle-only controls remain available at zero FE", () -> {
+                require(icon(client, "EARTHQUAKE") != null && slider(client, "EARTHQUAKE") == null
+                        && !JustDireSettingsCompatibility.metadata(feet(client), "earthquake").hasSlider(), "Dead Earthquake slider or missing zero-FE controls");
+                before = feet(client).copy();
+            });
+            add("native Earthquake toggle off", () -> click(icon(client, "EARTHQUAKE"), 0), () -> !flag(feet(client), "earthquake_toggle", true));
+            add("native Earthquake toggle on", () -> click(icon(client, "EARTHQUAKE"), 0), () -> flag(feet(client), "earthquake_toggle", false));
+            reveal(client, "EARTHQUAKE");
+            add("native Earthquake particles and equipped-only controls", () -> {
+                var icon = icon(client, "EARTHQUAKE");
+                require(!((Button) maps(client, "leftRightClickButtons").get(icon)).active
+                        && !((Button) maps(client, "requireEquippedButtons").get(icon)).active, "Unsupported Earthquake binding choice");
+                click((Button) maps(client, "customSettingsButtons").get(icon), 0);
+            }, () -> value(feet(client), "earthquake_custom_setting") == 1);
+            add("Earthquake capture rejects ordinary/out-of-range mouse buttons without consuming capture", () -> {
+                before = feet(client).copy(); click((Button) maps(client, "bindingButtons").get(icon(client, "EARTHQUAKE")), 0);
+                for (int button : new int[]{0, 1, 8}) { client.screen.mouseClicked(mouse(1, 1, button), false); }
+                require((boolean) field(client.screen, "bindingEnabled"), "Invalid mouse consumed capture");
+            }, () -> wait > 5 && ItemStack.matches(before, feet(client)));
+            assign(client, "EARTHQUAKE", GLFW.GLFW_KEY_J, false);
+            assign(client, "GROUNDSTOMP", GLFW.GLFW_KEY_G, false);
+            add("Earthquake preferences preserve zero FE and immutable sources", () -> require(charge(feet(client)) == 0
+                    && ModContent.getMixedBootsData(before).equals(ModContent.getMixedBootsData(feet(client))), "Settings spent FE or edited source history"));
+            close(client); open(client); select(client, 36);
+            add("reopened Earthquake controls retain live root preferences", () -> require(value(feet(client), "earthquake_custom_setting") == 1
+                    && bindingFor(feet(client), "earthquake", GLFW.GLFW_KEY_J, false) && slider(client, "EARTHQUAKE") == null, "Reopen lost Earthquake preferences"));
+            add("remove installation without granting a stale native control", () -> server(client, player -> {
+                set(player.getItemBySlot(EquipmentSlot.FEET), "earthquake_upgrade_installed", false); player.inventoryMenu.broadcastChanges();
+            }), () -> !flag(feet(client), "earthquake_upgrade_installed", true));
+            select(client, 36);
+            add("native uninstalled Earthquake stays hidden", () -> require(!hasIcon(client, "EARTHQUAKE"), "Uninstalled ability advertised"));
+            add("restore root installation for native capture", () -> server(client, player -> {
+                set(player.getItemBySlot(EquipmentSlot.FEET), "earthquake_upgrade_installed", true); player.inventoryMenu.broadcastChanges();
+            }), () -> flag(feet(client), "earthquake_upgrade_installed", false));
+            select(client, 36); reveal(client, "EARTHQUAKE");
+            add("prepare an ineligible mixed inventory tool and start Earthquake capture", () -> {
+                click((Button) maps(client, "bindingButtons").get(icon(client, "EARTHQUAKE")), 0);
+                server(client, player -> {
+                    var other = MixedBootsFactory.createPair(boot("celestigem", 0), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                    set(other, "earthquake_upgrade_installed", true); player.getInventory().setItem(9, other); player.inventoryMenu.broadcastChanges();
+                });
+            }, () -> !client.player.getInventory().getItem(9).isEmpty());
+            select(client, 9);
+            add("ordinary tool selection cancels Earthquake capture and excludes forged Celestigem", () -> require(
+                    !(boolean) field(client.screen, "bindingEnabled") && !hasIcon(client, "EARTHQUAKE")
+                            && bindingFor(feet(client), "earthquake", GLFW.GLFW_KEY_J, false), "Capture persisted or forged tier advertised"));
+            select(client, 36);
+            add("GUI input cannot execute Earthquake", () -> { observedActivation = null; press(GLFW.GLFW_KEY_J, GLFW.GLFW_PRESS); },
+                    () -> wait > 6 && observedActivation == null && charge(feet(client)) == 0 && earthquakeClock(feet(client)) == null);
+            close(client);
+            add("recharge the actual equipped wallet before production input", () -> server(client, player -> {
+                try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                    require(JustDireResourceTestSupport.handler(player.getItemBySlot(EquipmentSlot.FEET)).insert(150_000, transaction) == 150_000, "Recharge failed");
+                    transaction.commit();
+                }
+                player.inventoryMenu.broadcastChanges();
+            }), () -> charge(feet(client)) == 150_000 && wait > 5);
+            add("release/repeat/wrong-device input cannot activate Earthquake", () -> {
+                observedActivation = null; press(GLFW.GLFW_KEY_J, GLFW.GLFW_RELEASE); press(GLFW.GLFW_KEY_J, GLFW.GLFW_REPEAT);
+                mousePress(GLFW.GLFW_KEY_J, GLFW.GLFW_PRESS);
+            }, () -> wait > 6 && observedActivation == null && charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) == null);
+            add("native-bound Earthquake keyboard press pays once", () -> earthquakePress(GLFW.GLFW_KEY_J, false),
+                    () -> charge(feet(client)) == 100_000 && earthquakeClock(feet(client)) != null
+                            && observedActivation != null && !observedActivation.prepared() && observedActivation.accepted());
+            add("the real grounded target received Slowness IV", () -> server(client, player -> require(target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) != null
+                    && target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS).getAmplifier() == 3, "No authoritative Earthquake effect")));
+            add("distinct Ground Stomp key works during Earthquake ticking", () -> earthquakePress(GLFW.GLFW_KEY_G, false),
+                    () -> charge(feet(client)) == 95_000 && timer(feet(client)) > 0 && earthquakeClock(feet(client)) != null
+                            && observedActivation != null && !observedActivation.prepared() && observedActivation.accepted());
+            add("consumed production Ground Stomp replay cannot spend again", () -> Network.getNetworkHandler().sendToServer(consumed),
+                    () -> observedActivation != null && !observedActivation.accepted() && charge(feet(client)) == 95_000);
+
+            earthquakeSetup(client, inverse, 150_000, 200);
+            open(client); select(client, 36); reveal(client, "EARTHQUAKE");
+            add("begin Earthquake capture while actual timer packets replace the selected root", () -> {
+                earthquakeWidget = (Button) maps(client, "bindingButtons").get(icon(client, "EARTHQUAKE"));
+                before = feet(client).copy(); click(earthquakeWidget, 0);
+            }, () -> wait > 6 && timer(feet(client)) < timer(before));
+            add("ticking slot packets preserve native capture/widget identity and live selected reference", () -> {
+                require((boolean) field(client.screen, "bindingEnabled") && maps(client, "bindingButtons").get(icon(client, "EARTHQUAKE")) == earthquakeWidget
+                        && ((JustDireSettingsScreenAccess) client.screen).mismatchedboots$jdtTool() == feet(client), "Ordinary clock packets rebuilt capture or retained a stale root");
+                client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_J, 0, 0));
+            }, () -> bindingFor(feet(client), "earthquake", GLFW.GLFW_KEY_J, false));
+            close(client);
+            add("hold a genuine paid-only Earthquake reply while Ground Stomp decrements", () -> {
+                holdReply = true; held = null; before = feet(client).copy(); inputRoot = feet(client); earthquakePress(GLFW.GLFW_KEY_J, false);
+            }, () -> held != null && wait > 10 && feet(client) != inputRoot);
+            add("release the actual Earthquake reply through production paid validation", () -> {
+                require(fieldStatic(JustDireAbilityInput.class, "pending") != null, "Peer-clock packets cancelled paid EQ intent");
+                holdReply = false; JustDireAbilityInput.reply(observedActivation);
+            }, () -> charge(feet(client)) == 100_000 && earthquakeClock(feet(client)) != null
+                    && observedActivation != null && !observedActivation.prepared() && observedActivation.accepted());
+        }
+        for (String change : List.of("charge", "gui", "replacement")) {
+            earthquakeSetup(client, false, 150_000, 200);
+            add("hold a real EQ permit before " + change, () -> {
+                holdReply = true; held = null; earthquakePress(GLFW.GLFW_KEY_J, false);
+            }, () -> held != null);
+            if (change.equals("gui")) { open(client); }
+            else {
+                add("apply actual equipped " + change + " while the paid reply is held", () -> server(client, player -> {
+                    var root = player.getItemBySlot(EquipmentSlot.FEET);
+                    if (change.equals("replacement")) { player.setItemSlot(EquipmentSlot.FEET, root.copy()); }
+                    else {
+                        try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                            require(JustDireResourceTestSupport.handler(root).insert(1_000, transaction) == 1_000, "Stale flight recharge failed"); transaction.commit();
+                        }
+                    }
+                    player.inventoryMenu.broadcastChanges();
+                }), () -> wait > 5 && charge(feet(client)) == (change.equals("charge") ? 151_000 : 150_000));
+            }
+            add("release a genuine reply after " + change + " without authorizing a stale paid action", () -> {
+                var reply = observedActivation; observedActivation = null; holdReply = false; JustDireAbilityInput.reply(reply);
+            }, () -> wait > 6 && earthquakeClock(feet(client)) == null
+                    && charge(feet(client)) == (change.equals("charge") ? 151_000 : 150_000)
+                    && (change.equals("replacement") ? observedActivation != null && !observedActivation.prepared() && !observedActivation.accepted()
+                    : observedActivation == null && fieldStatic(JustDireAbilityInput.class, "pending") == null));
+            if (change.equals("gui")) { close(client); }
+        }
+        for (int button : new int[]{GLFW.GLFW_KEY_K, 2, 7}) {
+            boolean mouse = button != GLFW.GLFW_KEY_K;
+            earthquakeSetup(client, false, 55_000, 0);
+            open(client); select(client, 36);
+            assign(client, "EARTHQUAKE", button, mouse); assign(client, "GROUNDSTOMP", button, mouse);
+            add("install Step's shared free switch on the live root", () -> server(client, player -> {
+                set(player.getItemBySlot(EquipmentSlot.FEET), "stepheight_upgrade_installed", true); player.inventoryMenu.broadcastChanges();
+            }), () -> flag(feet(client), "stepheight_upgrade_installed", false));
+            select(client, 36); assign(client, "STEPHEIGHT", button, mouse);
+            close(client);
+            add("shared native " + (mouse ? "mouse" : "key") + " runs GS then Earthquake then the passive switch once", () -> earthquakePress(button, mouse),
+                    () -> charge(feet(client)) == 0 && timer(feet(client)) > 0 && earthquakeClock(feet(client)) != null
+                            && !flag(feet(client), "stepheight_toggle", true));
+            add("depleted shared binding can still re-enable the passive without another bill", () -> earthquakePress(button, mouse),
+                    () -> flag(feet(client), "stepheight_toggle", false) && charge(feet(client)) == 0);
+            open(client); select(client, 36); assign(client, "EARTHQUAKE", GLFW.GLFW_KEY_ESCAPE, false);
+            add("Earthquake Escape removal leaves the shared GS/passive bindings intact", () -> require(noBinding(feet(client), "earthquake")
+                    && bindingFor(feet(client), "groundstomp", button, mouse) && bindingFor(feet(client), "stepheight", button, mouse), "Removal lost other bindings"));
+            close(client);
+        }
+        earthquakeSetup(client, false, 150_000, 0);
+        add("hold a genuine paid Earthquake permit before disconnect", () -> {
+            holdReply = true; held = null; earthquakePress(GLFW.GLFW_KEY_J, false);
+        }, () -> held != null);
+        add("remember paid-flight resources in the current registry", () -> snapshotReconnect(client));
+        add("disconnect with the genuine paid Earthquake intent pending", client::disconnectWithSavingScreen,
+                () -> client.player == null && client.getSingleplayerServer() == null);
+        add("production disconnect clears paid Earthquake intent", () -> require(
+                fieldStatic(JustDireAbilityInput.class, "pending") == null
+                        && (int) fieldStatic(JustDireAbilityInput.class, "sequence") == 0, "Disconnect retained paid intent"));
+        add("rejoin the same world after the paid-flight disconnect", () -> client.createWorldOpenFlows().openWorld("jump", () -> client.setScreen(new TitleScreen())),
+                () -> joined(client) && client.screen == null);
+        add("decode the unpaid root in the new connection registry", () -> { restoreReconnect(client); holdReply = false; });
+        add("ordinary login packets retain resources without executing the held Earthquake", () -> {},
+                () -> sameSettings(expected, feet(client)) && charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) == null);
+        add("an old unconsumed paid nonce cannot execute after reconnect", () -> {
+            observedActivation = null; Network.getNetworkHandler().sendToServer(held);
+        }, () -> observedActivation != null && !observedActivation.accepted()
+                && charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) == null);
+    }
+
+    private static void earthquakeSetup(Minecraft client, boolean inverse, int energy, int stompTicks) {
+        add("fresh production Earthquake root " + inverse + "/" + energy + "/" + stompTicks, () -> server(client, player -> {
+            try {
+                JustDireEarthquakeTestSupport.bind();
+                player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8)).forEach(Mob::discard);
+                expected = JustDireEarthquakeTestSupport.mixed(energy, inverse, false);
+                set(expected, "groundstomp_upgrade_installed", true); set(expected, "groundstomp_bindingmode", 2);
+                set(expected, "ability_bindings", List.of(JustDireEarthquakeTestSupport.binding("earthquake", GLFW.GLFW_KEY_J),
+                        JustDireEarthquakeTestSupport.binding("groundstomp", GLFW.GLFW_KEY_G)));
+                if (stompTicks > 0) { expected.set(JustDireEarthquakeTestSupport.timers(), List.of(JustDireEarthquakeTestSupport.timer("groundstomp", stompTicks, false))); }
+                player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
+                target = EntityType.COW.create(player.level(), EntitySpawnReason.COMMAND); require(target != null, "No real EQ target");
+                target.setNoAi(true); target.setNoGravity(true); target.setInvulnerable(true); target.setPos(player.getX() + 1, player.getY(), player.getZ());
+                require(player.level().addFreshEntity(target), "Target not inserted"); target.setOnGround(true);
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        }), () -> client.screen == null && charge(feet(client)) == energy && wait > 5);
+    }
+
+    private static void earthquakePress(int key, boolean mouse) {
+        earthquakeKey = key; earthquakeMouse = mouse; observedActivation = null;
+        if (mouse) { mousePress(key, GLFW.GLFW_PRESS); } else { press(key, GLFW.GLFW_PRESS); }
+    }
+
+    private static JustDireEarthquakeTestSupport.Clock earthquakeClock(ItemStack root) {
+        try { return JustDireEarthquakeTestSupport.clock(root, "earthquake"); }
+        catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+    }
+
+    private static boolean hasIcon(Minecraft client, String name) {
+        return maps(client, "buttonToAbilityMap").values().stream().anyMatch(value -> value.toString().equals(name));
+    }
+
+    private static void earthquakeUnavailable(Minecraft client) {
+        setup(client, true, false, 0); open(client); select(client, 36);
+        add("EQ-only failure hides its native widgets without poisoning older settings", () -> require(
+                !hasIcon(client, "EARTHQUAKE") && hasIcon(client, "GROUNDSTOMP") && JustDireSettingsCompatibility.available()
+                        && JustDireSettingsCompatibility.metadata(feet(client), "earthquake") == null, "EQ failure disabled old metadata or advertised partial support"));
+        add("native Ground Stomp editing survives EQ failure", () -> slider(client, "GROUNDSTOMP").setValue(2),
+                () -> value(feet(client), "groundstomp_value") == 2);
+        close(client);
+        add("shared imported bindings cannot smuggle unavailable EQ through GS", () -> server(client, player -> {
+            try {
+                JustDireEarthquakeTestSupport.bind(); var root = player.getItemBySlot(EquipmentSlot.FEET);
+                set(root, "forge_energy", 55_000); set(root, "earthquake_bindingmode", 2);
+                set(root, "ability_bindings", List.of(JustDireEarthquakeTestSupport.binding("groundstomp", GLFW.GLFW_KEY_G),
+                        JustDireEarthquakeTestSupport.binding("earthquake", GLFW.GLFW_KEY_G)));
+                if (VARIANT.equals("earthquakeSettingsFailure")) {
+                    require(JustDireEarthquakeCompatibility.available() && JustDireEarthquakeCompatibility.quote(root) != null, "UI failure poisoned server contract");
+                    root.set(JustDireEarthquakeTestSupport.timers(), List.of(JustDireEarthquakeTestSupport.timer("earthquake", 1, true)));
+                }
+                player.inventoryMenu.broadcastChanges();
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        }), () -> charge(feet(client)) == 55_000 && wait > 5);
+        add("old equipped GS still executes on the shared key", () -> press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS),
+                () -> charge(feet(client)) == 50_000 && timer(feet(client)) > 0);
+        if (VARIANT.equals("earthquakeSettingsFailure")) {
+            add("unsupported GUI metadata does not freeze an already spent EQ clock", () -> require(
+                    earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active() && earthquakeClock(feet(client)).ticks() < 800,
+                    "UI failure froze/reset the owned clock"));
+        } else { add("missing EQ action remains unavailable", () -> require(!JustDireEarthquakeCompatibility.available(), "Failure was not injected")); }
     }
 
     private static void passiveBindings(Minecraft client) {
