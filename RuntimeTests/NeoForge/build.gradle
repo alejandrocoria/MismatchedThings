@@ -179,6 +179,22 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
+        ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
+            register("justDireCooldownFeedback${variant}") {
+                client()
+                disableIdeRun()
+                gameDirectory = justDireJumpClientDirectory.get().asFile
+                programArgument('--quickPlaySingleplayer')
+                programArgument('jump')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireCooldownFeedbackTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireCooldownFeedbackVariant', variant.uncapitalize())
+                systemProperty('mixin.debug.export', 'true')
+                systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+                systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireGroundStompTransport {
             client()
             disableIdeRun()
@@ -854,6 +870,47 @@ tasks.register('prepareJustDireJumpClient') {
 }
 
 tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+
+['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
+    def prepare = tasks.register("prepareJustDireCooldownFeedback${variant}") {
+        dependsOn('prepareJustDireJumpClient')
+        doLast {
+            fixtureFileOperations.delete { spec ->
+                spec.delete(['failure', 'success', 'report'].collect { suffix -> new File(justDireSmithingMarkers.get().asFile, "just-dire-cooldown-feedback-${suffix}.txt") })
+                if (variant == 'Absent') { spec.delete(new File(justDireJumpClientDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")) }
+            }
+        }
+    }
+    tasks.named("runJustDireCooldownFeedback${variant}") { dependsOn prepare }
+}
+
+tasks.register('verifyJustDireCooldownFeedbackSpike') {
+    group = 'verification'
+    description = 'Proves test-only native JDT cooldown HUD views and world feedback around unchanged production tickers.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-cooldown-feedback/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireCooldownFeedback${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-cooldown-feedback-failure.txt')
+            def success = new File(directory, 'just-dire-cooldown-feedback-success.txt')
+            def report = new File(directory, 'just-dire-cooldown-feedback-report.txt')
+            def hudWarnings = log.readLines().count { it.contains('JDT feedback spike: native HUD hook unavailable') }
+            def parameterWarnings = log.readLines().count { it.contains('JDT feedback spike: HUD parameters unavailable') }
+            if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
+                    || log.text.contains('/ERROR]') || hudWarnings != (variant == 'HooksMissing' ? 1 : 0)
+                    || parameterWarnings != (variant == 'ParametersMissing' ? 1 : 0)) {
+                throw new GradleException("JDT feedback spike ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT feedback emitted optional linkage warnings: ${log}")
+            }
+            new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
 tasks.register('prepareJustDireGroundStompTransport') {
     dependsOn tasks.named('prepareJustDireJumpClient')
     doLast {

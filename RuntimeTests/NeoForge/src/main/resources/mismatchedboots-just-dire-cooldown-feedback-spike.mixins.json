@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireCooldownFeedbackPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "JustDireCooldownSoundMixin",
+    "JustDireCooldownTickMixin"
+  ],
+  "client": [
+    "JustDireCooldownDrawMixin",
+    "JustDireCooldownHudHighMixin",
+    "JustDireCooldownHudLowMixin",
+    "JustDireCooldownHudMixin"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}

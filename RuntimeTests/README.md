@@ -897,6 +897,28 @@ acceptance. Ground Stomp's original acceptance belongs to
 the Earthquake extension's executed evidence and owner-accepted final checklist belong to
 [block D](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#10-block-d--lifecycle-consolidation-and-final-handoff).
 
+## Just Dire Things cooldown HUD / sound research spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownFeedbackSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownFeedbackSpike "-Pneoforge_version=26.1.2.99" --console=plain
+```
+
+Uses the existing disposable JDT server-world prerequisite and hidden/muted
+`jump` client preparation. Six independent JVMs exercise the test-only native
+overlay FEET read view, real blit extraction, automatic production/native clock
+boundaries and positional completion events: live, compatible high/low wrappers,
+lost candidate callback, simulated HUD-parameter failure and JDT absence.
+Reports/logs are versioned under
+`RuntimeTests/NeoForge/build/reports/just-dire-cooldown-feedback/<version>/`.
+
+No production mixin, alternate clock/action, source/equipment swap or private sound
+packet is added. Ordinary equipment packets and a real tier preview/take on a
+codec-loaded root verify live presentation; this is not another world restart.
+The same-tick native active-end/ready ordering differs from local GS/EQ emission;
+the [bounded record](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-EXPLORATION.md#8-test-only-native-hud--owned-clock-sound-spike)
+owns that decision, exact validation and remaining physical/production gates.
+
 ## Vanilla armor classification
 
 ```powershell
