@@ -35,7 +35,6 @@ import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -235,7 +234,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                         + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
                         + "native normal/controlled-Shift tooltip controls; one exact live FE line in both orientations; "
                         + "maximum capacity; one root-installed upgrade inventory with live switches/parameters; dormant flags; "
-                        + "neutral intrinsic source lore only; hidden FE/upgrade/source details; unchanged vanilla lore; "
+                        + "one intrinsic root Lava entry with live switches; no source Lava/qualifier/empty Shift hint; hidden FE/upgrade/Lava/source details; unchanged vanilla lore; "
                         + "actual native Pocket Generator inventory/equipped transfers with FE conservation; actual survival Negate debit/depletion; "
                         + "positive unprotected fall control after depletion; natural equipment/attribute packets and exact live tooltip after debit; "
                         + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill\n");
@@ -332,6 +331,11 @@ public final class NeoForgeJustDireResourcesClientTest {
             lavaRepair.set(true);
             assertTooltip(client, intrinsicPair.primary(), 0, 0);
             assertTooltip(client, intrinsicPair.inverse(), 0, 0);
+            JustDireAttributeTestSupport.set(intrinsicPair.primary(), "lavarepair_toggle", false);
+            assertTooltip(client, intrinsicPair.primary(), 0, 0);
+            intrinsicPair.primary().set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT
+                    .withHidden(JustDireAttributeTestSupport.component("lavarepair_toggle"), true));
+            assertTooltip(client, intrinsicPair.primary(), 0, 0);
         } finally { lavaRepair.set(original); }
         ItemStack hiddenIntrinsic = NeoForgeJustDireResourcesTest.boots("blazegold", 0);
         hiddenIntrinsic.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
@@ -369,14 +373,15 @@ public final class NeoForgeJustDireResourcesClientTest {
                 "Just Dire Things adapter filtered unrelated Shift lore");
     }
 
-    private static void assertTooltip(Minecraft client, ItemStack root, int amount, int capacity) {
+    private static void assertTooltip(Minecraft client, ItemStack root, int amount, int capacity) throws ReflectiveOperationException {
         ItemStack before = root.copy();
         var data = ModContent.getMixedBootsData(root).orElseThrow();
-        List<Component> nativeAbilities = new ArrayList<>();
+        boolean lava = false;
         for (ItemStack source : List.of(data.left().source(), data.right().source())) {
-            capture(client, source, TooltipFlag.NORMAL, true).stream()
-                    .filter(line -> key(line).equals("justdirethings.ability.lavarepair"))
-                    .map(line -> line.copy().withStyle(ChatFormatting.GRAY)).forEach(nativeAbilities::add);
+            if (BuiltInRegistries.ITEM.getKey(source.getItem()).equals(Identifier.fromNamespaceAndPath("justdirethings", "blazegold_boots"))) {
+                var abilities = (java.util.Set<?>) source.getItem().getClass().getMethod("getAbilities").invoke(source.getItem());
+                lava |= abilities.stream().anyMatch(ability -> ability.toString().equals("LAVAREPAIR"));
+            }
         }
         for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
             for (boolean shift : new boolean[]{false, true}) {
@@ -391,14 +396,26 @@ public final class NeoForgeJustDireResourcesClientTest {
                 require(lines.stream().noneMatch(line -> key(line).equals("justdirethings.enabled")
                         || key(line).equals("justdirethings.disabled")), "Snapshot enablement/hotkey was advertised");
                 List<Component> abilities = lines.stream().filter(line -> key(line).startsWith("justdirethings.ability.")).toList();
-                require(abilities.equals(shift ? nativeAbilities : List.of()),
-                        "Intrinsic Lava Repair lore did not follow controlled Shift");
+                require(abilities.isEmpty(), "Historical source Lava/upgrade lore remained");
                 require(lines.stream().filter(line -> key(line).equals("justdirethings.shiftmoreinfo"))
-                        .count() == (shift ? 0 : nativeAbilities.size()), "Source Shift hint advertised no retained details");
-                require(abilities.stream().allMatch(line -> TextColor.fromLegacyFormat(ChatFormatting.GRAY)
-                        .equals(line.getStyle().getColor())), "Source ability color claimed mixed availability");
+                        .count() == 0, "Source Shift hint advertised no retained details");
                 require(lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.source_abilities"))
-                        .count() == (shift ? nativeAbilities.size() : 0), "Missing intrinsic-source qualifier");
+                        .count() == 0, "Unused source qualifier remained");
+                var intrinsic = lines.stream().filter(line -> key(line).equals("justdirethings.ability")).toList();
+                boolean showLava = lava && root.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT)
+                        .shows(JustDireAttributeTestSupport.component("lavarepair_toggle"));
+                require(intrinsic.size() == (showLava ? 1 : 0), "Root Lava entry missing/duplicated/historical");
+                if (showLava) {
+                    Object[] args = ((TranslatableContents) intrinsic.getFirst().getContents()).getArgs();
+                    boolean enabled = root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("tool_enabled"), true)
+                            && root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("lavarepair_toggle"), true);
+                    require(args.length == 2 && key((Component) args[0]).equals("justdirethings.ability.lavarepair")
+                            && key((Component) args[1]).equals("justdirethings." + (enabled ? "enabled" : "disabled")),
+                            "Intrinsic entry ignored current root switches");
+                    int label = java.util.stream.IntStream.range(0, lines.size())
+                            .filter(index -> key(lines.get(index)).equals("tooltip.mismatchedboots.just_dire.installed_upgrades")).findFirst().orElse(lines.size());
+                    require(lines.indexOf(intrinsic.getFirst()) < label, "Intrinsic Lava was grouped under Installed upgrades");
+                }
                 var installed = List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "earthquake").stream()
                         .filter(name -> root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component(name + "_upgrade_installed"), false)).toList();
                 var inventory = lines.stream().filter(line -> key(line).equals("tooltip.mismatchedboots.just_dire.upgrade")

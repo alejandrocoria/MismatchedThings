@@ -240,7 +240,7 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
-        ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
+        ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent', 'Lava', 'LavaSettingsFailure'].each { variant ->
           register("justDireGroundStompClient${variant}") {
             client()
             disableIdeRun()
@@ -259,6 +259,9 @@ neoForge {
             }
             if (variant == 'EarthquakeSettingsFailure') {
                 systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'settingsFailure')
+            }
+            if (variant == 'LavaSettingsFailure') {
+                systemProperty('mismatchedboots.runtimetest.justDireLavaRepairSettingsFailure', 'true')
             }
             systemProperty('mismatchedboots.test.hideClientWindow', 'true')
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
@@ -616,6 +619,36 @@ tasks.register('verifyJustDireLavaRepairGuards') {
                 throw new GradleException("Lava Repair ${variant} failed: ${failure.isFile() ? failure.text : log}; warnings=${warnings}")
             }
             new File(log.parentFile, "${variant}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+['Lava', 'LavaSettingsFailure'].each { variant ->
+    tasks.named("runJustDireGroundStompClient${variant}") { dependsOn 'prepareJustDireGroundStompClient' }
+}
+
+tasks.register('verifyJustDireLavaRepairSettings') {
+    group = 'verification'
+    description = 'Verifies intrinsic Lava native widgets/transport, equipped keyboard/mouse and isolated metadata failure.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Lava', 'LavaSettingsFailure', 'ApiMissing'].each { variant ->
+            def label = variant == 'ApiMissing' ? 'CommonSettingsMissing' : variant
+            def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-ground-stomp-client-failure.txt')
+            def report = new File(directory, 'just-dire-ground-stomp-client-report.txt')
+            def success = new File(directory, 'just-dire-ground-stomp-client-success.txt')
+            def warnings = log.readLines().count { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }
+            def commonWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things mixed settings API; new settings/input routes disabled') }
+            if (failure.isFile() || !success.isFile() || success.text != variant.uncapitalize() + '\n' || !report.isFile()
+                    || warnings != (variant == 'LavaSettingsFailure' ? 1 : 0) || commonWarnings != (variant == 'ApiMissing' ? 1 : 0)
+                    || log.text.contains('/ERROR]')) {
+                throw new GradleException("Lava settings ${variant} failed: ${failure.isFile() ? failure.text : log}; warnings=${warnings}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
             logger.lifecycle(report.text)
         }
     }
@@ -1077,9 +1110,10 @@ tasks.register('verifyJustDireGroundStompClient') {
         def warnings = log.readLines().findAll { it.contains('mixed screen bridge disabled') || it.contains('mixed settings API; new settings/input routes disabled') }
         def earthquakeWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled')
                 || it.contains('Just Dire Things Earthquake mixed settings unavailable; Earthquake metadata/input disabled') }
+        def lavaWarnings = log.readLines().count { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }
         if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
                 || warnings.size() != (variant in ['HooksMissing', 'ApiMissing'] ? 1 : 0)
-                || earthquakeWarnings != (variant in ['EarthquakeMissing', 'EarthquakeSettingsFailure'] ? 1 : 0)) {
+                || earthquakeWarnings != (variant in ['EarthquakeMissing', 'EarthquakeSettingsFailure'] ? 1 : 0) || lavaWarnings != 0) {
             throw new GradleException("Production JDT active native client failed: ${failure.isFile() ? failure.text : log}")
         }
         if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {

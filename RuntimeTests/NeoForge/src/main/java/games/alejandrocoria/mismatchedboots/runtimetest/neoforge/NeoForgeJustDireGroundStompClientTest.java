@@ -9,8 +9,10 @@ import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsScreenAccess;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
@@ -22,6 +24,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,12 +34,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.gui.widget.ExtendedSlider;
@@ -124,6 +129,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             KeyMapping.resetMapping();
         });
         if (!LIFECYCLE.isEmpty()) { lifecycle(client); return; }
+        if (VARIANT.equals("lava") || VARIANT.equals("lavaSettingsFailure")) { lavaControls(client); return; }
         if (VARIANT.equals("hooksMissing") || VARIANT.equals("apiMissing")) {
             unavailable(client); return;
         }
@@ -194,10 +200,11 @@ final class NeoForgeJustDireGroundStompClientTest {
                     require(java.util.Arrays.stream(client.screen.getClass().getDeclaredMethods()).anyMatch(m -> m.getName().contains(hook)), "Competing wrapper was not applied");
                 }
                 var names = maps(client, "buttonToAbilityMap").values().stream().map(Object::toString).toList();
-                require(names.size() == 5 && names.containsAll(List.of("GROUNDSTOMP", "STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "EARTHQUAKE")), "Unsupported/missing abilities: " + names);
+                require(names.size() == 6 && names.containsAll(List.of("GROUNDSTOMP", "STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "EARTHQUAKE", "LAVAREPAIR")), "Unsupported/missing abilities: " + names);
                 require(maps(client, "sliders").size() == 2 && ((Number) field(slider(client, "GROUNDSTOMP"), "maxValue")).doubleValue() == 5
                         && ((Number) field(slider(client, "JUMPBOOST"), "maxValue")).doubleValue() == 5 && charge(feet(client)) == 0, "Per-ability tier ranges wrong");
-                require(maps(client, "bindingButtons").size() == 5 && slider(client, "EARTHQUAKE") == null, "Custom bindings or fixed Earthquake controls wrong");
+                require(maps(client, "bindingButtons").size() == 6 && slider(client, "EARTHQUAKE") == null
+                        && slider(client, "LAVAREPAIR") == null, "Custom bindings or intrinsic/fixed controls wrong");
             });
             for (String ability : List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "GROUNDSTOMP")) {
                 String path = ability.toLowerCase(java.util.Locale.ROOT) + "_toggle";
@@ -379,6 +386,134 @@ final class NeoForgeJustDireGroundStompClientTest {
         close(client);
         earthquake(client);
         if (VARIANT.equals("live")) { poweredJump(client); }
+    }
+
+    private static void lavaControls(Minecraft client) {
+        if (VARIANT.equals("lavaSettingsFailure")) {
+            setup(client, true, false, 0); open(client); select(client, 36);
+            add("unsupported Lava metadata hides only Lava controls/input, not gameplay or root tooltip", () -> {
+                require(!hasIcon(client, "LAVAREPAIR") && hasIcon(client, "JUMPBOOST") && hasIcon(client, "EARTHQUAKE")
+                        && JustDireSettingsCompatibility.metadata(feet(client), "lavarepair") == null
+                        && JustDireLavaRepairCompatibility.eligible(feet(client)), "Lava settings fault leaked into unrelated readiness");
+                lavaTooltip(client, true);
+            });
+            add("older native settings still edit after Lava metadata failure", () -> click(icon(client, "JUMPBOOST"), 0),
+                    () -> !flag(feet(client), "jumpboost_toggle", true));
+            close(client);
+            add("Lava settings failure does not disable checked ritual", () -> server(client, player -> lavaDrop(player, true)));
+            return;
+        }
+        for (boolean twice : new boolean[]{false, true}) {
+            for (boolean inverse : new boolean[]{false, true}) {
+                add("prepare intrinsic Lava " + twice + "/" + inverse + " without any installed upgrade", () -> server(client, player -> {
+                    var source = NeoForgeJustDireResourcesTest.boots("blazegold", 0);
+                    set(source, "lavarepair_toggle", false); // Frozen source switches must not govern root.
+                    var pair = MixedBootsFactory.createPair(source, twice ? source.copy() : new ItemStack(Items.DIAMOND_BOOTS));
+                    expected = inverse ? pair.inverse() : pair.primary();
+                    // Initial projection is allowed to import preferences. Exercise live absent-root
+                    // defaults independently of that creation policy and the frozen false sources.
+                    expected.remove(JustDireAttributeTestSupport.component("lavarepair_toggle"));
+                    expected.remove(JustDireAttributeTestSupport.component("tool_enabled"));
+                    provenance = ModContent.getMixedBootsData(expected).orElseThrow();
+                    player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+                    client.getSingleplayerServer().setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
+                    player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
+                }), () -> ItemStack.matches(expected, feet(client)));
+                open(client); select(client, 36);
+                add("native intrinsic widget has no slider/installation requirement; absence defaults on", () -> {
+                    require(maps(client, "buttonToAbilityMap").size() == 1 && hasIcon(client, "LAVAREPAIR")
+                            && slider(client, "LAVAREPAIR") == null && maps(client, "bindingButtons").size() == 1,
+                            "Intrinsic native widget inventory wrong");
+                    require(!feet(client).has(JustDireAttributeTestSupport.component("lavarepair_toggle")), "Native selection materialized absent root preference");
+                    lavaTooltip(client, true);
+                });
+                add("native Lava click writes explicit false at root", () -> click(icon(client, "LAVAREPAIR"), 0),
+                        () -> !flag(feet(client), "lavarepair_toggle", true));
+                add("disabled tooltip follows root while capability stays fireproof", () -> {
+                    lavaTooltip(client, false);
+                    require(JustDireLavaRepairCompatibility.eligible(feet(client)), "Toggle removed intrinsic protection");
+                });
+                assign(client, "LAVAREPAIR", GLFW.GLFW_KEY_V, false);
+                close(client);
+                add("disabled root survives actual lava ticks without consuming source", () -> server(client, player -> lavaDrop(player, false)));
+                add("configured equipped key freely enables intrinsic Lava once", () -> press(GLFW.GLFW_KEY_V, GLFW.GLFW_PRESS),
+                        () -> flag(feet(client), "lavarepair_toggle", false));
+                add("enabled root repairs despite frozen source switches", () -> server(client, player -> lavaDrop(player, true)));
+                open(client); select(client, 36); assign(client, "LAVAREPAIR", 4, true);
+                add("native global toggle disables ritual but not intrinsic capability", () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
+                        () -> !flag(feet(client), "tool_enabled", true));
+                add("global-off tooltip is disabled", () -> lavaTooltip(client, false));
+                close(client);
+                add("global-off root remains protected without ritual", () -> server(client, player -> lavaDrop(player, false)));
+                add("equipped extra mouse toggles Lava even with global tool off and no FE", () -> mousePress(4, GLFW.GLFW_PRESS),
+                        () -> !flag(feet(client), "lavarepair_toggle", true));
+                add("same extra mouse freely re-enables Lava exactly once", () -> mousePress(4, GLFW.GLFW_PRESS),
+                        () -> flag(feet(client), "lavarepair_toggle", false));
+                add("intrinsic controls never mutate provenance or install a sixth upgrade", () -> require(
+                        ModContent.getMixedBootsData(feet(client)).orElseThrow().equals(provenance)
+                                && charge(feet(client)) == 0, "Intrinsic toggles changed history/resources"));
+                open(client); select(client, 36);
+                add("Lava rejects unused numeric/particle and inventory/ordinary-mouse edits", () -> server(client, player -> {
+                    var root = player.getItemBySlot(EquipmentSlot.FEET); var snapshot = root.copy();
+                    int selection = (int) fieldStatic(JustDireSettingsClient.class, "selection");
+                    int request = (int) fieldStatic(JustDireSettingsClient.class, "request") + 100;
+                    UUID token = (UUID) fieldStatic(JustDireSettingsClient.class, "token");
+                    for (int operation : List.of(JustDireActiveNetwork.VALUE, JustDireActiveNetwork.PARTICLES, JustDireActiveNetwork.BINDING)) {
+                        require(!JustDireActiveNetwork.edit(player, new JustDireActiveNetwork.SettingsRequest(player.containerMenu.containerId, 36,
+                                selection, request++, token, operation, "lavarepair", 2, 0, true, false)).accepted(), "Unsupported Lava edit accepted");
+                    }
+                    require(ItemStack.matches(snapshot, root), "Rejected Lava edits mutated root");
+                }));
+                close(client);
+                add("recomposition leaves Lava preferences dormant without eligibility", () -> server(client, player -> {
+                    var root = player.getItemBySlot(EquipmentSlot.FEET);
+                    var dormant = MixedBootsRecomposer.recompose(root, new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.IRON_BOOTS));
+                    require(!JustDireLavaRepairCompatibility.eligible(dormant)
+                            && JustDireSettingsCompatibility.metadata(dormant, "lavarepair") == null
+                            && JustDireSettingsCompatibility.boundPassives(dormant, 4, true).isEmpty(), "Dormant preference granted Lava");
+                    var restored = MixedBootsRecomposer.recompose(dormant, NeoForgeJustDireResourcesTest.boots("blazegold", 0), new ItemStack(Items.DIAMOND_BOOTS));
+                    require(JustDireLavaRepairCompatibility.eligible(restored) && flag(restored, "lavarepair_toggle", false)
+                            && !flag(restored, "tool_enabled", true)
+                            && JustDireSettingsCompatibility.boundPassives(restored, 4, true).equals(List.of("lavarepair")), "Restoring eligibility reset root preferences");
+                }));
+            }
+        }
+        setup(client, true, false, 0); open(client); select(client, 36);
+        assign(client, "STEPHEIGHT", 4, true); assign(client, "JUMPBOOST", 4, true);
+        assign(client, "LAVAREPAIR", 4, true); assign(client, "NEGATEFALLDAMAGE", 4, true);
+        close(client);
+        add("shared mouse has native passive order and no source duplicates", () -> require(
+                JustDireSettingsCompatibility.boundPassives(feet(client), 4, true).equals(List.of("stepheight", "jumpboost", "lavarepair", "negatefalldamage")), "Shared passive order wrong"));
+        add("one shared input switches each supported passive off once without FE", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> List.of("stepheight", "jumpboost", "lavarepair", "negatefalldamage").stream().noneMatch(name -> flag(feet(client), name + "_toggle", true)));
+        add("one shared input re-enables all passives once", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> List.of("stepheight", "jumpboost", "lavarepair", "negatefalldamage").stream().allMatch(name -> flag(feet(client), name + "_toggle", false)));
+    }
+
+    private static void lavaTooltip(Minecraft client, boolean enabled) {
+        var lines = feet(client).getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
+        var intrinsic = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
+                && text.getKey().equals("justdirethings.ability") && text.getArgs()[0] instanceof Component ability
+                && ability.getContents() instanceof TranslatableContents name && name.getKey().equals("justdirethings.ability.lavarepair")).toList();
+        require(intrinsic.size() == 1 && ((Component) ((TranslatableContents) intrinsic.getFirst().getContents()).getArgs()[1]).getContents()
+                instanceof TranslatableContents state && state.getKey().equals("justdirethings." + (enabled ? "enabled" : "disabled")), "Root Lava tooltip missing/current state wrong");
+    }
+
+    private static void lavaDrop(ServerPlayer player, boolean enabled) {
+        var level = player.level(); var source = new BlockPos(5, 80, 5);
+        for (BlockPos pos : BlockPos.betweenClosed(3, 79, 3, 7, 87, 7)) {
+            level.setBlock(pos, (pos.getY() == 79 ? Blocks.STONE : Blocks.AIR).defaultBlockState(), 3);
+        }
+        level.setBlock(source, Blocks.LAVA.defaultBlockState(), 3);
+        var root = player.getItemBySlot(EquipmentSlot.FEET).copy(); root.setDamageValue(100);
+        var beforeDrop = root.copy();
+        var item = new ItemEntity(level, 5.5, 80.2, 5.5, root); item.setDeltaMovement(Vec3.ZERO);
+        require(level.addFreshEntity(item), "Could not drop configured Lava root");
+        for (int i = 0; i < 240; i++) { item.tick(); }
+        require(item.isAlive() && level.getBlockState(source).is(enabled ? Blocks.OBSIDIAN : Blocks.LAVA), "Root controls did not govern drop/fire protection");
+        if (enabled) { beforeDrop.setDamageValue(0); }
+        require(ItemStack.matches(beforeDrop, item.getItem()), "Configured drop changed resources/history/controls or repair failed");
+        item.discard(); JustDireLavaRepairCompatibility.clearEpisodes();
     }
 
     private static void poweredJump(Minecraft client) {
@@ -565,6 +700,17 @@ final class NeoForgeJustDireGroundStompClientTest {
                 observedActivation = null; press(GLFW.GLFW_KEY_J, GLFW.GLFW_RELEASE); press(GLFW.GLFW_KEY_J, GLFW.GLFW_REPEAT);
                 mousePress(GLFW.GLFW_KEY_J, GLFW.GLFW_PRESS);
             }, () -> wait > 6 && observedActivation == null && charge(feet(client)) == 150_000 && earthquakeClock(feet(client)) == null);
+            add("isolate the single paid target after native UI round trips", () -> server(client, player -> {
+                // Chunk-loaded/naturally spawned mobs may arrive after earthquakeSetup's cleanup.
+                // Keep the per-target bill assertion exact instead of accepting an incidental second bill.
+                var extras = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8), mob -> mob != target);
+                if (!extras.isEmpty()) {
+                    games.alejandrocoria.mismatchedboots.Constants.LOG.info("Earthquake fixture removed incidental targets before one-target budget check: {}",
+                            extras.stream().map(mob -> mob.getType() + "#" + mob.getId() + " at " + mob.position()).toList());
+                }
+                extras.forEach(Mob::discard);
+                require(target.isAlive() && target.onGround(), "Expected grounded single target unavailable");
+            }));
             add("native-bound Earthquake keyboard press pays once", () -> earthquakePress(GLFW.GLFW_KEY_J, false),
                     () -> charge(feet(client)) == 100_000 && earthquakeClock(feet(client)) != null
                             && observedActivation != null && !observedActivation.prepared() && observedActivation.accepted());

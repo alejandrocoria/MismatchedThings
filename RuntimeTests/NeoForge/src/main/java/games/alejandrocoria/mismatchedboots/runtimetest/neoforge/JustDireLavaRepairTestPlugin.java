@@ -12,6 +12,9 @@ public final class JustDireLavaRepairTestPlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         boolean enabled = Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairClientTest");
+        if (mixin.endsWith("SettingsFailureMixin")) {
+            return Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairSettingsFailure");
+        }
         if (mixin.endsWith("ApiMixin")) {
             String variant = System.getProperty("mismatchedboots.runtimetest.justDireLavaRepairVariant", "");
             return enabled && (variant.equals("apiMissing") || variant.equals("particlesMissing"));

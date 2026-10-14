@@ -6,7 +6,6 @@
   "tooltip.mismatchedboots.mixed_boots.right": "Derecha:",
   "tooltip.mismatchedboots.mixed_boots.name_with_natural": "%1$s (%2$s)",
   "tooltip.mismatchedboots.mixed_boots.invalid": "Faltan los datos de las botas o no son válidos",
-  "tooltip.mismatchedboots.just_dire.source_abilities": "Habilidades intrínsecas originales:",
   "tooltip.mismatchedboots.just_dire.installed_upgrades": "Mejoras instaladas:",
   "tooltip.mismatchedboots.just_dire.upgrade": "%1$s (%2$s)",
   "tooltip.mismatchedboots.just_dire.upgrade_setting": "%1$s (%2$s, parámetro: %3$s)",

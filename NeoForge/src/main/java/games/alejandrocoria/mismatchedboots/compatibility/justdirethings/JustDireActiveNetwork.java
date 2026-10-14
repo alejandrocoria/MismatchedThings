@@ -177,7 +177,7 @@ public final class JustDireActiveNetwork {
     }
 
     private static boolean hasSettings(ItemStack root) {
-        return JustDireEarthquakeCompatibility.hasSettings(root) || java.util.List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp").stream()
+        return JustDireEarthquakeCompatibility.hasSettings(root) || java.util.List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "lavarepair").stream()
                 .anyMatch(name -> JustDireSettingsCompatibility.metadata(root, name) != null);
     }
 

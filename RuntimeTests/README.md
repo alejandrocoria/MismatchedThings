@@ -1079,8 +1079,32 @@ preservation is registry-only even after optional failure.
 Both gates reuse the pinned JDT artifact and disposable preparation. Reports/logs
 are retained under `RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/<version>/`,
 with `production`, `productionClient` and per-guard files. Full pickup/restart/
-dimension/merge/despawn and native control/tooltip consolidation belong to B/C in
+dimension/merge/despawn consolidation remains C in
 [the plan](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md).
+
+Block B's `:RuntimeTests:NeoForge:verifyJustDireLavaRepairSettings` reuses the native
+settings client harness with focused `Lava`/`LavaSettingsFailure` variants. It
+checks actual original widgets/selection/capture and production packets, one/two
+providers in both orientations without installations, root absent/false switches,
+equipped keyboard/additional-mouse toggles, native shared-passive order, unsupported
+edit rejection, dormant/restored eligibility and configured actual dropped-item
+ticks. The injected unsupported numeric metadata disables only Lava settings;
+older widgets/edits and Lava gameplay/root lore survive. Reports are `Lava*` in
+the same versioned Lava directory. A third process reuses the existing common
+settings-API fault (`CommonSettingsMissing` reports), requiring one common warning
+and no unnecessary Lava binding attempt/diagnostic after the shared API fails.
+Preparation clears this harness's old markers
+before each process; stale results cannot veto or satisfy the current run.
+
+The ordinary `verifyJustDireResources` client matrix now asserts one intrinsic
+root Lava line in normal/advanced and Shift/non-Shift modes, current root controls,
+hidden provenance/root display restrictions, native config exclusion, unchanged
+five-upgrade inventory and no source Lava duplicate/qualifier/empty Shift hint.
+These replace the earlier source-Lava expectations. Synthetic input and tooltip
+structure are not physical/manual screen readability acceptance. The owner
+separately confirmed B's focused controls/bindings/tooltip checklist on 2026-10-14,
+closing [section 9.3](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md#93-focused-owner-checklist--accepted).
+C's full lifecycle/consolidation remains pending.
 
 ## Just Dire Things Lava Repair research spike
 
