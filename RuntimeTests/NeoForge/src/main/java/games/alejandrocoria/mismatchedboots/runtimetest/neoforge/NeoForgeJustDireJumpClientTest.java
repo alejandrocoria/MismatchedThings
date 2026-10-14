@@ -21,6 +21,10 @@ import java.util.concurrent.Future;
 
 /** A real hidden client's local jump, separately from the server's movement/damage gate. */
 final class NeoForgeJustDireJumpClientTest {
+    private static final boolean POWERED_SPIKE = Boolean.getBoolean("mismatchedboots.runtimetest.justDirePoweredJumpSpike");
+    private static final String OUTPUT = POWERED_SPIKE ? "just-dire-powered-jump-client" : "just-dire-jump-client";
+    private static final int[] POWERED_VALUES = {0, 1, 2, 3, 5, 5, 1, 5, 5, 1, 5, 3, 0, 3};
+    private static final double[] nativeHeights = new double[6];
     private static int ticks;
     private static boolean finished;
     private static boolean directChecked;
@@ -58,11 +62,13 @@ final class NeoForgeJustDireJumpClientTest {
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
             double control = player.getDeltaMovement().y;
-            for (String tier : new String[]{"ferricore", "blazegold"}) {
+            for (String tier : POWERED_SPIKE ? new String[]{"ferricore", "blazegold", "celestigem", "eclipsealloy"} : new String[]{"ferricore", "blazegold"}) {
                 ItemStack original = NeoForgeJustDireJumpTest.boots(tier, true);
+                if (POWERED_SPIKE) { NeoForgeJustDirePoweredJumpTest.charge(original, 5); }
                 var pair = MixedBootsFactory.createPair(original, new ItemStack(Items.IRON_BOOTS));
-                int value = tier.equals("ferricore") ? 1 : 2;
+                int value = switch (tier) { case "ferricore" -> 1; case "blazegold" -> 2; case "celestigem" -> 3; default -> 5; };
                 for (ItemStack stack : new ItemStack[]{original, pair.primary(), pair.inverse()}) {
+                    if (POWERED_SPIKE) { NeoForgeJustDirePoweredJumpTest.charge(stack, 5); }
                     ItemStack before = stack.copy();
                     player.setItemSlot(EquipmentSlot.FEET, stack);
                     player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
@@ -78,7 +84,7 @@ final class NeoForgeJustDireJumpClientTest {
             prepareFlight(client);
         } catch (Throwable failure) {
             finished = true;
-            NetworkAcceptanceFiles.failure("just-dire-jump-client", failure);
+            NetworkAcceptanceFiles.failure(OUTPUT, failure);
         }
         if (finished) { client.stop(); }
     }
@@ -121,7 +127,14 @@ final class NeoForgeJustDireJumpClientTest {
         if (flightTicks > 80) { throw new AssertionError("Keyboard did not complete jump case " + flightCase + "; peak=" + peak); }
         if (!apexChecked) {
             if (peak <= 0 || player.getDeltaMovement().y > 0) { return; }
-            if (flightCase == 0) { ordinaryHeight = peak; }
+            if (POWERED_SPIKE) {
+                int value = POWERED_VALUES[flightCase];
+                if (flightCase < 5) { nativeHeights[value] = peak; }
+                else if (Math.abs(peak - nativeHeights[value]) > .03) {
+                    throw new AssertionError("Powered candidate keyboard height differs from native control at " + flightCase
+                            + ": value=" + value + ", height=" + peak + ", control=" + nativeHeights[value]);
+                }
+            } else if (flightCase == 0) { ordinaryHeight = peak; }
             else if (flightCase == 1) {
                 nativeHeight = peak;
                 if (nativeHeight <= ordinaryHeight + 0.2) { throw new AssertionError("Native Ferricore did not boost actual jump height"); }
@@ -137,31 +150,53 @@ final class NeoForgeJustDireJumpClientTest {
         // Finish the real landing before changing FE: Negate can legitimately bill that landing.
         if (!player.onGround()) { settled = 0; return; }
         if (++settled < 10) { return; }
-        if (++flightCase < 8) { prepareFlight(client); return; }
-        NetworkAcceptanceFiles.write("just-dire-jump-client-report.txt", "6 direct native/mixed client jump cases; "
+        if (++flightCase < (POWERED_SPIKE ? POWERED_VALUES.length : 8)) { prepareFlight(client); return; }
+        if (POWERED_SPIKE) {
+            NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", "12 direct native/mixed client jump cases; 14 actual keyboard flights; "
+                    + "native ordinary/Ferricore/Blazegold/Celestigem/Eclipse height controls; both Eclipse+Ferricore orientations; "
+                    + "Celestigem+vanilla; in-place 5/4/5 FE changes through ordinary integrated-server equipment/attribute packets; "
+                    + "native-equivalent height and unchanged ascent state; heights=" + java.util.Arrays.toString(nativeHeights)
+                    + "; test-only query candidate, not physical/manual or production acceptance\n");
+        } else { NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", "6 direct native/mixed client jump cases; "
                 + "8 actual keyboard flights with integrated-server equipment packets and normal movement ticks; "
                 + "ordinary/native Ferricore height controls; Eclipse Alloy Negate + Ferricore passive Jump only; "
                 + "both orientations, in-place depletion/recharge and natural attribute packets; native-equivalent height; "
                 + "ordinaryHeight=" + ordinaryHeight + "; nativeHeight=" + nativeHeight
-                + "; unchanged ascent stacks; hidden/muted client\n");
-        NetworkAcceptanceFiles.write("just-dire-jump-client-success.txt", "neoforge\n");
+                + "; unchanged ascent stacks; hidden/muted client\n"); }
+        NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "neoforge\n");
         finished = true;
     }
 
     private static void prepareFlight(Minecraft client) {
         client.options.keyJump.setDown(false);
         flightTicks = 0; settled = 0; waitingTicks = 0;
-        if (flightCase == 0) { equipped = new ItemStack(Items.IRON_BOOTS); }
-        else if (flightCase == 1) { equipped = NeoForgeJustDireJumpTest.boots("ferricore", true); }
-        else if (flightCase == 2 || flightCase == 5) {
-            var pair = MixedBootsFactory.createPair(NeoForgeJustDireNegateFallTest.boots("eclipsealloy", 6_000),
-                    NeoForgeJustDireJumpTest.boots("ferricore", true));
-            equipped = flightCase < 5 ? pair.primary() : pair.inverse();
-        }
-        boolean balanceChange = flightCase == 3 || flightCase == 4 || flightCase == 6 || flightCase == 7;
-        if (flightCase >= 2) {
-            equipped = equipped.copy();
-            equipped.set(JustDireResourceTestSupport.energyComponent(), (flightCase - 2) % 3 == 1 ? 0 : 3_000);
+        boolean balanceChange;
+        if (POWERED_SPIKE) {
+            if (flightCase == 0) { equipped = new ItemStack(Items.IRON_BOOTS); }
+            else if (flightCase < 5) {
+                equipped = NeoForgeJustDirePoweredJumpTest.boots(new String[]{"", "ferricore", "blazegold", "celestigem", "eclipsealloy"}[flightCase], 5);
+            } else if (flightCase == 5 || flightCase == 8) {
+                var pair = MixedBootsFactory.createPair(NeoForgeJustDirePoweredJumpTest.boots("eclipsealloy", 0), NeoForgeJustDireJumpTest.boots("ferricore", true));
+                equipped = flightCase == 5 ? pair.primary() : pair.inverse();
+            } else if (flightCase == 11) { equipped = NeoForgeJustDirePoweredJumpTest.pair("celestigem", "iron"); }
+            balanceChange = flightCase == 6 || flightCase == 7 || flightCase == 9 || flightCase == 10 || flightCase == 12 || flightCase == 13;
+            if (flightCase >= 5) {
+                equipped = equipped.copy();
+                NeoForgeJustDirePoweredJumpTest.charge(equipped, flightCase == 6 || flightCase == 9 || flightCase == 12 ? 4 : 5);
+            }
+        } else {
+            if (flightCase == 0) { equipped = new ItemStack(Items.IRON_BOOTS); }
+            else if (flightCase == 1) { equipped = NeoForgeJustDireJumpTest.boots("ferricore", true); }
+            else if (flightCase == 2 || flightCase == 5) {
+                var pair = MixedBootsFactory.createPair(NeoForgeJustDireNegateFallTest.boots("eclipsealloy", 6_000),
+                        NeoForgeJustDireJumpTest.boots("ferricore", true));
+                equipped = flightCase < 5 ? pair.primary() : pair.inverse();
+            }
+            balanceChange = flightCase == 3 || flightCase == 4 || flightCase == 6 || flightCase == 7;
+            if (flightCase >= 2) {
+                equipped = equipped.copy();
+                equipped.set(JustDireResourceTestSupport.energyComponent(), (flightCase - 2) % 3 == 1 ? 0 : 3_000);
+            }
         }
         var server = client.getSingleplayerServer();
         var id = client.player.getUUID();
@@ -178,7 +213,7 @@ final class NeoForgeJustDireJumpClientTest {
             for (int x = -2; x <= 2; x++) {
                 for (int z = -2; z <= 2; z++) {
                     server.overworld().setBlock(new BlockPos(x, 80, z), Blocks.STONE.defaultBlockState(), 3);
-                    for (int y = 81; y < 88; y++) {
+                    for (int y = 81; y < (POWERED_SPIKE ? 96 : 88); y++) {
                         server.overworld().setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
                     }
                 }

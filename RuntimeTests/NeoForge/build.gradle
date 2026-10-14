@@ -108,6 +108,7 @@ def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithi
 def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
 def justDireResourcesClientDirectory = fixtureBuildDirectory.dir('run/justDireResourcesClient')
 def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
+def justDirePoweredJumpArchive = fixtureBuildDirectory.file('just-dire-powered-jump-research/MismatchedBoots-powered-jump-research.jar')
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
         .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar'))
 
@@ -115,6 +116,33 @@ neoForge {
     version = neoforge_version
 
     runs {
+        ['Control', 'MissingFall', 'Live'].each { variant ->
+            register("justDirePoweredJump${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDirePoweredJumpTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDirePoweredJumpVariant', variant.uncapitalize())
+                if (variant != 'Control') { systemProperty('mismatchedboots.runtimetest.justDirePoweredJumpSpike', 'true') }
+                if (variant == 'MissingFall') { systemProperty('mismatchedboots.runtimetest.justDireJumpGuard', 'missingFall') }
+                jvmArgument('-Xmx1G')
+            }
+        }
+        justDirePoweredJumpClient {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireJumpClientTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDirePoweredJumpSpike', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
         ['Compatible', 'MissingFall', 'Absent'].each { variant ->
             register("justDireJump${variant}") {
                 server()
@@ -870,6 +898,55 @@ tasks.register('prepareJustDireJumpClient') {
 }
 
 tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+tasks.named('runJustDirePoweredJumpClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+def preparePoweredJumpResearch = tasks.register('prepareJustDirePoweredJumpResearch', JavaExec) {
+    dependsOn(':NeoForge:jar', tasks.named('classes'))
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDirePoweredJumpJarPatcher'
+    doFirst { args = [productionArchive.get().asFile.absolutePath, justDirePoweredJumpArchive.get().asFile.absolutePath] }
+}
+['Control', 'MissingFall', 'Live'].each { variant ->
+    tasks.named("runJustDirePoweredJump${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+['MissingFall', 'Live', 'Client'].each { variant ->
+    tasks.named("runJustDirePoweredJump${variant}") {
+        dependsOn preparePoweredJumpResearch
+        doFirst {
+            def directory = variant == 'Client' ? justDireJumpClientDirectory : justDireSmithingRunDirectory
+            fixtureFileOperations.copy {
+                from(justDirePoweredJumpArchive)
+                into(new File(directory.get().asFile, 'mods'))
+                rename { productionArchive.get().asFile.name }
+            }
+        }
+    }
+}
+
+tasks.register('verifyJustDirePoweredJumpSpike') {
+    group = 'verification'
+    description = 'Proves query-only powered Jump feasibility with native controls, actual fall health and keyboard movement; not production support.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Control', 'MissingFall', 'Live', 'Client'].each { variant ->
+            def label = variant.uncapitalize()
+            def log = fixtureBuildDirectory.file("reports/just-dire-powered-jump/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDirePoweredJump${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = variant == 'Client' ? 'just-dire-powered-jump-client' : 'just-dire-powered-jump'
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            def expected = variant == 'Client' ? 'neoforge\n' : "${label}\n"
+            def warnings = log.readLines().count { it.contains('Just Dire Things passive Jump') && it.contains('compatibility disabled') }
+            if (failure.isFile() || !success.isFile() || success.text != expected || !report.isFile() || log.text.contains('/ERROR]')
+                    || warnings != (variant == 'MissingFall' ? 1 : 0)) {
+                throw new GradleException("Powered Jump spike ${label} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
 
 ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
     def prepare = tasks.register("prepareJustDireCooldownHud${variant}") {

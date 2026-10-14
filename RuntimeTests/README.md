@@ -954,6 +954,40 @@ The [dated bounded record](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-EXPL
 retains its historical commands/evidence and accepted same-tick sound-order
 distinction. Use the maintained HUD and lifecycle gates above for current proof.
 
+## Just Dire Things powered Jump research spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDirePoweredJumpSpike :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards verifyPackagedDependencies --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDirePoweredJumpSpike :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards verifyPackagedDependencies "-Pneoforge_version=26.1.2.99" --console=plain
+```
+
+Four independent research contexts: normal production control, denied paired
+fall hook, live dedicated server and hidden/muted keyboard client. The candidate
+replaces only the value resolver in a generated research **copy** of the production
+JAR. Only Live/MissingFall/Client disposable runs use that copy; Control and the
+existing unflagged passive/guard gates retain the normal JAR. Source/normal archives
+are unchanged. This is not a production powered-Jump implementation.
+
+Native controls test 0/4/5 FE availability, resource preservation, root controls,
+native tier clamps, strongest usable maximum, passive fallback/recharge and
+actual fall health/Negate/AIRBURST ordering. The existing client physics harness
+has twelve direct checks and fourteen keyboard flights with normal movement and
+equipment/attribute packets; both Eclipse+Ferricore orientations and
+Celestigem+vanilla follow in-place 5/4/5 FE changes with native-equivalent heights.
+The ordinary eight-flight passive client suite is unchanged when unflagged.
+
+Reports/logs are under `reports/just-dire-powered-jump/<version>/` in the NeoForge
+fixture build directory. The verifier checks markers, reports, ERROR entries and
+exactly one expected paired-hook warning only in MissingFall. Controls and
+unflagged production regressions must be kept separate from candidate evidence.
+The [bounded record](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-EXPLORATION.md)
+owns the static/native findings, research-copy bootstrap distinction and validation.
+The owner accepted its policies on 2026-10-14. The separate
+[production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md)
+has A resolver/guards, B native settings/input and C lifecycle/consolidation pending;
+production/manual gates are not established by this spike. Future production
+acceptance must use normal archives without the research replacement.
+
 ## Vanilla armor classification
 
 ```powershell

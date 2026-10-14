@@ -205,7 +205,7 @@ public final class NeoForgeJustDireJumpTest {
         check(server, pair.primary(), value); check(server, pair.inverse(), value);
     }
 
-    private static void check(MinecraftServer server, ItemStack boots, int value) {
+    static void check(MinecraftServer server, ItemStack boots, int value) {
         ItemStack before = boots.copy();
         ServerPlayer player = player(server);
         player.jumpFromGround();
@@ -229,18 +229,18 @@ public final class NeoForgeJustDireJumpTest {
         cases++;
     }
 
-    private static float fall(ServerPlayer player, float distance) {
+    static float fall(ServerPlayer player, float distance) {
         player.setHealth(player.getMaxHealth());
         player.invulnerableTime = 0;
         player.causeFallDamage(distance, 1, player.damageSources().fall());
         return player.getMaxHealth() - player.getHealth();
     }
 
-    private static ServerPlayer player(MinecraftServer server) {
+    static ServerPlayer player(MinecraftServer server) {
         return player(server, false, false);
     }
 
-    private static ServerPlayer player(MinecraftServer server, boolean water, boolean flying) {
+    static ServerPlayer player(MinecraftServer server, boolean water, boolean flying) {
         ServerPlayer player = new ServerPlayer(server, server.overworld(),
                 new GameProfile(UUID.randomUUID(), "jump-test"), ClientInformation.createDefault()) {
             @Override public boolean isInWater() { return water; }
