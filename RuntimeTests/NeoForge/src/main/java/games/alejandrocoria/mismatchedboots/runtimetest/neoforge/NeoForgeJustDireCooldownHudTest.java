@@ -1,6 +1,5 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
-import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireCooldownHud;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
@@ -10,8 +9,6 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,7 +20,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,18 +28,15 @@ import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/** Shared native observers/assertions; production HUD runs never enable candidate view/emission patches. */
-final class NeoForgeJustDireCooldownFeedbackTest {
-    private static final boolean PRODUCTION = Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest");
-    private static final String OUTPUT = PRODUCTION ? "just-dire-cooldown-hud" : "just-dire-cooldown-feedback";
-    private static final String VARIANT = JustDireCooldownFeedbackSpike.VARIANT;
+/** Production native HUD, automatic completion boundaries and isolated guard/fault acceptance. */
+final class NeoForgeJustDireCooldownHudTest {
+    private static final String OUTPUT = "just-dire-cooldown-hud";
+    private static final String VARIANT = JustDireCooldownFeedbackTestSupport.VARIANT;
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
     private static Future<?> job;
     private static boolean initialized, started, finished;
     private static int waiting;
-    private static Object overlay;
-    private static Method render;
     private static ItemStack expected;
     private static Object history;
     private static int expectedCharge;
@@ -60,13 +53,11 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 // As in the native-settings fixture, drain final ordinary slot/close packets
                 // before stopping the local channel; a teardown race is not HUD acceptance.
                 if (++waiting <= 20) { return; }
-                NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", report + (PRODUCTION
-                        ? "production HUD and completion sounds; candidate view/tick/audio patches disabled; draw/world-event observation, not physical/audible acceptance\n"
-                        : "test-only native HUD candidate with production completion sounds; not physical/rendered/audible acceptance\n"));
+                NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", report + "production HUD and completion sounds; observation only, not physical/audible acceptance\n");
                 NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", VARIANT + "\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; waiting = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; waiting = 0; }
-            else if (++waiting > 200) { throw new AssertionError("Timed out: " + step.name + "; sounds=" + JustDireCooldownFeedbackSpike.sounds); }
+            else if (++waiting > 200) { throw new AssertionError("Timed out: " + step.name + "; sounds=" + JustDireCooldownFeedbackTestSupport.sounds); }
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(OUTPUT, new AssertionError("Step: " + (steps.peek() == null ? "initialize" : steps.peek().name), failure)); finished = true; }
         if (finished) { client.stop(); }
     }
@@ -75,43 +66,34 @@ final class NeoForgeJustDireCooldownFeedbackTest {
         require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0, "Client was not muted");
         client.options.pauseOnLostFocus = false;
         if (VARIANT.equals("absent")) {
-            add("quiet absence: no candidate HUD or optional settings linkage", () -> {
-                require(!JustDireCooldownFeedbackSpike.hudReady && !JustDireSettingsCompatibility.available(), "Absent native routes available");
+            add("quiet absence: no HUD or optional settings linkage", () -> {
+                require(!JustDireSettingsCompatibility.available(), "Absent native routes available");
                 var ordinary = new ItemStack(Items.DIAMOND_BOOTS);
-                require((PRODUCTION ? JustDireCooldownHud.view(ordinary, EquipmentSlot.FEET)
-                        : JustDireCooldownFeedbackSpike.view(client.player, EquipmentSlot.FEET, ordinary)) == ordinary, "Absent view replaced ordinary boots");
+                require(JustDireCooldownHud.view(ordinary, EquipmentSlot.FEET) == ordinary, "Absent view replaced ordinary boots");
             });
             return;
         }
-        JustDireCooldownFeedbackSpike.bind(); JustDireEarthquakeTestSupport.bind();
+        JustDireCooldownFeedbackTestSupport.bind(); JustDireEarthquakeTestSupport.bind();
         var type = Class.forName("com.direwolf20.justdirethings.client.overlays.AbilityCooldownOverlay");
-        overlay = type.getField("INSTANCE").get(null);
-        render = type.getMethod("render", GuiGraphicsExtractor.class, net.minecraft.client.DeltaTracker.class);
         add("native HUD callbacks publish readiness after real final transforms", () -> {
-            boolean ready = JustDireCooldownFeedbackSpike.hudReady;
-            if (PRODUCTION) {
-                try {
-                    var getter = type.getDeclaredMethod("mismatchedboots$justDireCooldownReady"); getter.setAccessible(true);
-                    ready = (boolean) getter.invoke(null);
-                } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
-                require(!JustDireCooldownFeedbackSpike.hudReady, "Research bridge active during production acceptance");
-            }
+            boolean ready;
+            try {
+                var getter = type.getDeclaredMethod("mismatchedboots$justDireCooldownReady"); getter.setAccessible(true);
+                ready = (boolean) getter.invoke(null);
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
             require(ready == !VARIANT.equals("hooksMissing"), "Wrong final hook readiness");
             require(JustDireSettingsCompatibility.available(), "HUD failure disabled existing settings");
         });
         add("actual native icon extraction and mixed read-view matrix", () -> {
             try { hud(client); } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
         });
-        if (PRODUCTION) {
-            packetView(client);
-        }
+        packetView(client);
         for (int orientation = -1; orientation < 2; orientation++) {
             for (boolean active : new boolean[]{true, false}) { soundCase(client, orientation, active, false); }
         }
         soundCase(client, 0, true, true);
-        if (PRODUCTION && VARIANT.equals("live")) { malformedClocks(client); soundFailure(client); }
-        persistedTierView(client);
-        add("stop observing without altering persisted gameplay state", () -> JustDireCooldownFeedbackSpike.capturingSounds = false);
+        if (VARIANT.equals("live")) { malformedClocks(client); soundFailure(client); }
+        add("stop observing without altering persisted gameplay state", () -> JustDireCooldownFeedbackTestSupport.capturingSounds = false);
     }
 
     private static void hud(Minecraft client) throws ReflectiveOperationException {
@@ -129,7 +111,7 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                         + "; textures=" + control.stream().map(draw -> draw.texture().toString()).distinct().toList()
                         + "; slots=" + java.util.Arrays.stream(EquipmentSlot.values()).map(slot -> slot + ":" + client.player.getItemBySlot(slot)).toList());
                 var expectedDraws = control;
-                if (PRODUCTION && VARIANT.equals("parametersMissing")) {
+                if (VARIANT.equals("parametersMissing")) {
                     var full = nativeRoot.get(JustDireEarthquakeTestSupport.timers());
                     setClocks(nativeRoot, List.of(clock("groundstomp", 100, false)));
                     expectedDraws = extract(client); setClocks(nativeRoot, full);
@@ -142,7 +124,7 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                     JustDireAttributeTestSupport.set(root, "tool_enabled", false);
                     var before = root.copy(); client.player.setItemSlot(EquipmentSlot.FEET, root);
                     var actual = extract(client);
-                    boolean disabled = VARIANT.equals("hooksMissing") || !PRODUCTION && VARIANT.equals("parametersMissing");
+                    boolean disabled = VARIANT.equals("hooksMissing");
                     require(disabled ? actual.size() == 18 : actual.equals(expectedDraws), "Native order/geometry/color mismatch: " + VARIANT);
                     require(ItemStack.matches(root, before) && client.player.getItemBySlot(EquipmentSlot.FEET) == root, "Rendering mutated/swapped actual root");
                     report.append("eleven native cooldown icons; both orientations; EQ phase=").append(phase).append("; root off/uninstalled/zero FE; exact draws or isolated fallback\n");
@@ -161,7 +143,7 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 require(extract(client).isEmpty(), "Ambiguous/unsupported phases reached native renderer");
                 setClocks(root, List.of(clock("groundstomp", 100, false)));
                 var one = extract(client); require(one.size() == 2, "GS-only view missing");
-                client.options.hideGui = true; require(extract(client).isEmpty(), "F1 still drew candidate HUD"); client.options.hideGui = false;
+                client.options.hideGui = true; require(extract(client).isEmpty(), "F1 still drew mixed HUD"); client.options.hideGui = false;
                 var oldPlayer = client.player; client.player = null;
                 try { require(extract(client).isEmpty(), "No-player render unsafe"); } finally { client.player = oldPlayer; }
                 var config = Class.forName("com.direwolf20.justdirethings.setup.Config");
@@ -175,14 +157,12 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                             "Native client offsets not respected");
                 } finally { set.invoke(offsetX, oldX); set.invoke(offsetY, oldY); }
                 report.append("GS-only; safe maximum counters; retained unsupported/duplicate/foreign evidence; F1/no player; actual native config offsets\n");
-                if (PRODUCTION) {
-                    root.setCount(2); require(extract(client).isEmpty(), "Non-count-one root acquired a native HUD identity"); root.setCount(1);
-                    client.player.setItemSlot(EquipmentSlot.FEET, new ItemStack(root.getItem()));
-                    require(extract(client).isEmpty(), "Missing mixed provenance acquired a native HUD identity");
-                    client.player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); client.player.setItemSlot(EquipmentSlot.OFFHAND, root);
-                    require(extract(client).isEmpty(), "Non-FEET mixed clock was projected");
-                    report.append("invalid count/provenance and non-FEET roots keep native rejection\n");
-                }
+                root.setCount(2); require(extract(client).isEmpty(), "Non-count-one root acquired a native HUD identity"); root.setCount(1);
+                client.player.setItemSlot(EquipmentSlot.FEET, new ItemStack(root.getItem()));
+                require(extract(client).isEmpty(), "Missing mixed provenance acquired a native HUD identity");
+                client.player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); client.player.setItemSlot(EquipmentSlot.OFFHAND, root);
+                require(extract(client).isEmpty(), "Non-FEET mixed clock was projected");
+                report.append("invalid count/provenance and non-FEET roots keep native rejection\n");
             }
         } finally {
             client.options.hideGui = hidden;
@@ -202,11 +182,8 @@ final class NeoForgeJustDireCooldownFeedbackTest {
         var stack = new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow().value());
         setClocks(stack, clocks); client.player.setItemSlot(slot, stack);
     }
-    private static List<JustDireCooldownFeedbackSpike.Draw> extract(Minecraft client) throws ReflectiveOperationException {
-        JustDireCooldownFeedbackSpike.draws.clear(); JustDireCooldownFeedbackSpike.capturingDraws = true;
-        try { render.invoke(overlay, new GuiGraphicsExtractor(client, new GuiRenderState(), 0, 0), client.getDeltaTracker()); }
-        finally { JustDireCooldownFeedbackSpike.capturingDraws = false; }
-        return List.copyOf(JustDireCooldownFeedbackSpike.draws);
+    private static List<JustDireCooldownFeedbackTestSupport.Draw> extract(Minecraft client) throws ReflectiveOperationException {
+        return JustDireCooldownFeedbackTestSupport.extract(client);
     }
 
     private static void packetView(Minecraft client) {
@@ -219,11 +196,11 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 JustDireAttributeTestSupport.set(expected, "earthquake_upgrade_installed", false);
                 setClocks(expected, List.of(clock("groundstomp", 150, false), clock("earthquake", 150, true)));
                 history = ModContent.getMixedBootsData(expected).orElseThrow();
-                JustDireCooldownFeedbackSpike.sounds.clear(); JustDireCooldownFeedbackSpike.capturingSounds = true;
+                JustDireCooldownFeedbackTestSupport.sounds.clear(); JustDireCooldownFeedbackTestSupport.capturingSounds = true;
                 player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
             } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
         }));
-        add("actual root clock progression/FE/provenance reaches native draws without candidate ticking", () -> {}, () -> {
+        add("actual root clock progression/FE/provenance reaches native draws without alternate ticking", () -> {}, () -> {
             try {
                 var root = client.player.getItemBySlot(EquipmentSlot.FEET);
                 if (!ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(expected))) { return false; }
@@ -233,7 +210,7 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                         && ModContent.getMixedBootsData(root).orElseThrow().equals(history), "HUD changed resources/history or spent clock");
                 var before = root.copy(); var draws = extract(client);
                 require(draws.size() == (VARIANT.equals("hooksMissing") ? 0 : VARIANT.equals("parametersMissing") ? 2 : 4)
-                        && ItemStack.matches(before, root) && JustDireCooldownFeedbackSpike.sounds.isEmpty(), "Packet HUD mutation or candidate feedback");
+                        && ItemStack.matches(before, root) && JustDireCooldownFeedbackTestSupport.sounds.isEmpty(), "Packet HUD mutation or load-only feedback");
                 return true;
             } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
         });
@@ -259,25 +236,25 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                         soundX = player.getX(); soundY = player.getY(); soundZ = player.getZ();
                         player.setItemSlot(EquipmentSlot.FEET, pause ? ItemStack.EMPTY : expected);
                         if (pause) { player.getInventory().setItem(0, expected); }
-                        JustDireCooldownFeedbackSpike.observedPlayer = player;
-                        JustDireCooldownFeedbackSpike.sounds.clear(); JustDireCooldownFeedbackSpike.capturingSounds = true;
+                        JustDireCooldownFeedbackTestSupport.observedPlayer = player;
+                        JustDireCooldownFeedbackTestSupport.sounds.clear(); JustDireCooldownFeedbackTestSupport.capturingSounds = true;
                     } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
                 }));
         if (pause) {
             add("unequipped real inventory pauses without completion feedback", () -> {}, () -> waiting > 10);
             add("pause retained both spent clocks and emits no sound on re-equip itself", () -> server(client, player -> {
                 try {
-                    require(JustDireCooldownFeedbackSpike.sounds.isEmpty() && JustDireEarthquakeTestSupport.clock(expected, "earthquake").ticks() == 1,
+                    require(JustDireCooldownFeedbackTestSupport.sounds.isEmpty() && JustDireEarthquakeTestSupport.clock(expected, "earthquake").ticks() == 1,
                             "Unequipped root ticked or sounded");
                     player.getInventory().setItem(0, ItemStack.EMPTY); player.setItemSlot(EquipmentSlot.FEET, expected);
                 } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
             }));
         }
         add("automatic ordinary ticks commit the expected two completion events", () -> {},
-                () -> JustDireCooldownFeedbackSpike.sounds.size() >= 2 && waiting > 5);
+                () -> JustDireCooldownFeedbackTestSupport.sounds.size() >= 2 && waiting > 5);
         add("world event kind/position/volume/pitch, no repetition/bill/history mutation", () -> server(client, player -> {
             require(player.getItemBySlot(EquipmentSlot.FEET) == expected, "Actual equipment replaced");
-            var sounds = List.copyOf(JustDireCooldownFeedbackSpike.sounds);
+            var sounds = List.copyOf(JustDireCooldownFeedbackTestSupport.sounds);
             require(sounds.size() == 2 && sounds.stream().filter(sound -> sound.event() == SoundEvents.ENDER_EYE_DEATH).count() == (active ? 1 : 2)
                     && sounds.stream().filter(sound -> sound.event() == SoundEvents.CONDUIT_DEACTIVATE).count() == (active ? 1 : 0), "Completion event order/count differs: " + sounds);
             if (active) {
@@ -338,14 +315,14 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                     }
                     records.add(clock("foreign", 1, false));
                     setClocks(expected, records); player.setItemSlot(EquipmentSlot.FEET, expected);
-                    JustDireCooldownFeedbackSpike.observedPlayer = player;
-                    JustDireCooldownFeedbackSpike.sounds.clear(); JustDireCooldownFeedbackSpike.capturingSounds = true;
+                    JustDireCooldownFeedbackTestSupport.observedPlayer = player;
+                    JustDireCooldownFeedbackTestSupport.sounds.clear(); JustDireCooldownFeedbackTestSupport.capturingSounds = true;
                 } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
             }));
             add("ordinary malformed ticks do not invent a ready cue", () -> {}, () -> waiting > 10);
             add("preserve existing malformed handling without payment/provenance edits", () -> server(client, player -> {
-                var actual = JustDireCooldownFeedbackSpike.before(player);
-                require(JustDireCooldownFeedbackSpike.sounds.isEmpty() && actual.stream().anyMatch(clock -> clock.name().equals("foreign") && clock.ticks() == 1),
+                var actual = JustDireCooldownFeedbackTestSupport.before(player);
+                require(JustDireCooldownFeedbackTestSupport.sounds.isEmpty() && actual.stream().anyMatch(clock -> clock.name().equals("foreign") && clock.ticks() == 1),
                         "Malformed/foreign state emitted feedback or was repaired");
                 require(actual.stream().filter(clock -> clock.name().equals("groundstomp")).count()
                         == (scenario.equals("zero") || scenario.equals("duplicate") ? 0 : 1), "GS malformed handling changed");
@@ -360,21 +337,21 @@ final class NeoForgeJustDireCooldownFeedbackTest {
     private static void soundFailure(Minecraft client) {
         add("inject world-audio failures after actual ticker commits, never return a retryable result", () -> server(client, player -> {
             try {
-                JustDireCooldownFeedbackSpike.sounds.clear();
+                JustDireCooldownFeedbackTestSupport.sounds.clear();
                 for (boolean earthquake : new boolean[]{false, true}) {
                     expected = JustDireEarthquakeTestSupport.mixed(0, false, false);
                     expected.set(JustDireResourceTestSupport.energyComponent(), 13_579);
                     history = ModContent.getMixedBootsData(expected).orElseThrow();
                     setClocks(expected, List.of(clock(earthquake ? "earthquake" : "groundstomp", 1, earthquake)));
-                    player.setItemSlot(EquipmentSlot.FEET, expected); JustDireCooldownFeedbackSpike.observedPlayer = player;
+                    player.setItemSlot(EquipmentSlot.FEET, expected); JustDireCooldownFeedbackTestSupport.observedPlayer = player;
                     var owner = earthquake ? JustDireEarthquakeCompatibility.class : JustDireGroundStompCompatibility.class;
                     var tick = owner.getDeclaredMethod("tickEquipped", ServerPlayer.class); tick.setAccessible(true);
-                    JustDireCooldownFeedbackSpike.failNextSound = true;
+                    JustDireCooldownFeedbackTestSupport.failNextSound = true;
                     try {
                         tick.invoke(null, player); throw new AssertionError("Committed audio failure was swallowed");
                     } catch (InvocationTargetException failure) {
-                        require(failure.getCause() instanceof JustDireCooldownFeedbackSpike.SoundProbeFailure, "Unexpected ticker failure");
-                    } finally { JustDireCooldownFeedbackSpike.failNextSound = false; }
+                        require(failure.getCause() instanceof JustDireCooldownFeedbackTestSupport.SoundProbeFailure, "Unexpected ticker failure");
+                    } finally { JustDireCooldownFeedbackTestSupport.failNextSound = false; }
                     var pending = JustDireEarthquakeTestSupport.clock(expected, earthquake ? "earthquake" : "groundstomp");
                     require(earthquake ? pending != null && !pending.active() && pending.ticks() == 800 : pending == null,
                             "Audio failure rolled back/reset the committed clock");
@@ -386,40 +363,10 @@ final class NeoForgeJustDireCooldownFeedbackTest {
         }));
         add("ordinary later ticks progress without replaying failed completion audio", () -> {}, () -> waiting > 10);
         add("two committed failures remain two attempts, not another activation/payment", () -> server(client, player ->
-                require(JustDireCooldownFeedbackSpike.sounds.size() == 2, "Audio failure was replayed on later ticks")));
+                require(JustDireCooldownFeedbackTestSupport.sounds.size() == 2, "Audio failure was replayed on later ticks")));
     }
 
-    private static void persistedTierView(Minecraft client) {
-        add("real tier preview/take on codec-loaded spent root without old-state restoration", () -> server(client, player -> {
-            try {
-                player.getInventory().clearContent();
-                var root = MixedBootsFactory.createPair(NeoForgeJustDireResourcesTest.boots("celestigem", 0), new ItemStack(Items.DIAMOND_BOOTS)).primary();
-                JustDireAttributeTestSupport.set(root, "tool_enabled", false); root.setDamageValue(31);
-                setClocks(root, List.of(clock("groundstomp", 200, false)));
-                var ops = player.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-                var encoded = ItemStack.CODEC.encodeStart(ops, root).getOrThrow();
-                var decoded = ItemStack.CODEC.parse(ops, encoded).getOrThrow();
-                expected = JustDireGroundStompLifecycleTestSupport.smithing(player, decoded, false);
-                JustDireCooldownFeedbackSpike.sounds.clear();
-                player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
-            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
-        }));
-        add("loaded/smithed root follows packets and native display without a load-only beep", () -> {}, () -> {
-            try {
-                var root = client.player.getItemBySlot(EquipmentSlot.FEET);
-                if (!ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(expected))) { return false; }
-                var clock = JustDireEarthquakeTestSupport.clock(root, "groundstomp");
-                if (clock == null || clock.ticks() <= 0 || clock.ticks() > 200) { return false; }
-                var before = root.copy(); var draws = extract(client);
-                boolean disabled = VARIANT.equals("hooksMissing") || !PRODUCTION && VARIANT.equals("parametersMissing");
-                require(draws.size() == (disabled ? 0 : 2) && ItemStack.matches(root, before)
-                        && JustDireCooldownFeedbackSpike.sounds.isEmpty(), "Load/tier caused stale HUD or a guessed ready sound");
-                return true;
-            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
-        });
-    }
-
-    private static Object clock(String name, int ticks, boolean active) throws ReflectiveOperationException { return JustDireCooldownFeedbackSpike.record(name, ticks, active); }
+    private static Object clock(String name, int ticks, boolean active) throws ReflectiveOperationException { return JustDireCooldownFeedbackTestSupport.record(name, ticks, active); }
     private static void setClocks(ItemStack root, List<Object> records) { root.set(JustDireEarthquakeTestSupport.timers(), records); }
     private static void server(Minecraft client, Consumer<ServerPlayer> action) {
         var id = client.player.getUUID(); var server = client.getSingleplayerServer();

@@ -897,6 +897,16 @@ acceptance. Ground Stomp's original acceptance belongs to
 the Earthquake extension's executed evidence and owner-accepted final checklist belong to
 [block D](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#10-block-d--lifecycle-consolidation-and-final-handoff).
 
+Cooldown-feedback C extends these same Save/Restart processes with observation
+of native draws and committed completion sounds. Exact disk/tier counters reach
+the HUD through ordinary equipment packets; inventory pause retains the complete
+root and emits nothing. Tier/root-upgrade preview/take is silent; natural worn
+GS/EQ boundaries each emit once and remove/advance their indicators. Both actual
+rejoins retain the spent-clock HUD; the final paid EQ finishes once afterward,
+without a load-only cue. Observer-only helpers never replace native rendering,
+production ticking or audio. Its separate final manual acceptance belongs to
+[feedback C](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md#9-block-c--production-lifecycle-and-consolidation).
+
 ## Just Dire Things native cooldown HUD production
 
 ```powershell
@@ -926,41 +936,23 @@ Versioned reports/logs and live/high/low final class exports are under
 `RuntimeTests/NeoForge/build/reports/just-dire-cooldown-hud/<version>/`.
 `justDireCooldownHudTransformedClass` selects the live export for focused NeoForge
 unit characterization, including the adjacent high/low exports. These tests do
-not claim physical/audible acceptance or a new saved-world restart; the real
-tier preview/take case starts from codec-loaded state. Blocks A HUD and B local
-audio are production code; audibility and C's real-process lifecycle remain
-separate gates in [the feedback plan](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md).
+not claim physical/audible acceptance. Real saved-world restart, tier/root-upgrade
+preview/take and reconnect presentation are consolidated into the existing
+`verifyJustDireGroundStompLifecycle` gate, rather than duplicating codec-only
+loading here. Its four spent roots retain native GS/EQ indicators through ordinary
+packets and inventory pause; load/preview/take cannot emit a completion cue, while
+subsequent worn boundaries emit exactly once. Focused owner visual/audible checks
+and the final combined checklist are recorded separately in
+[the feedback plan](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md).
 
 ## Just Dire Things cooldown HUD / sound research spike
 
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownFeedbackSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownFeedbackSpike "-Pneoforge_version=26.1.2.99" --console=plain
-```
-
-Uses the existing disposable JDT server-world prerequisite and hidden/muted
-`jump` client preparation. Six independent JVMs exercise the test-only native
-overlay FEET read view, real blit extraction, automatic production/native clock
-boundaries and positional completion events: live, compatible high/low wrappers,
-lost candidate callback, simulated HUD-parameter failure and JDT absence.
-Reports/logs are versioned under
-`RuntimeTests/NeoForge/build/reports/just-dire-cooldown-feedback/<version>/`.
-
-No production mixin, alternate clock/action, source/equipment swap or private sound
-packet is added by the research candidate. With production HUD now present, this
-isolated legacy run discards its production view result so it cannot mask candidate
-failure; the production guard's bounded refusal is expected in that research mode.
-Use the separate production gate above for current HUD acceptance. Ordinary equipment packets and a real tier preview/take on a
-codec-loaded root verify live presentation; this is not another world restart.
-The same-tick native active-end/ready ordering differs from local GS/EQ emission;
-the [bounded record](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-EXPLORATION.md#8-test-only-native-hud--owned-clock-sound-spike)
-owns that decision, exact validation and remaining physical/production gates.
-
-Since B implements audio directly in the owned tickers, the old research emission
-wrapper is disabled in **all** modes to prevent double sounds. The legacy harness
-can still exercise its test-only HUD view with production audio, but the dated
-pre-production sound-candidate proof belongs to the exploration record; it is
-not re-advertised as current candidate evidence. C retires the obsolete sources.
+The executable spike, candidate view/emission mixins and six research run
+configurations are retired. Native draw/world-sound observers are retained in
+production acceptance only; there is no second feedback implementation.
+The [dated bounded record](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-EXPLORATION.md#8-test-only-native-hud--owned-clock-sound-spike)
+retains its historical commands/evidence and accepted same-tick sound-order
+distinction. Use the maintained HUD and lifecycle gates above for current proof.
 
 ## Vanilla armor classification
 

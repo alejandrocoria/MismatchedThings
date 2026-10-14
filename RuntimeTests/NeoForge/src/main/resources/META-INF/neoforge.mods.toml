@@ -44,7 +44,7 @@ license="MIT"
     config="mismatchedboots-just-dire-settings-client-tests.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-just-dire-cooldown-feedback-spike.mixins.json"
+    config="mismatchedboots-just-dire-cooldown-feedback-tests.mixins.json"
 
 [[dependencies.mismatchedboots_runtime_test]]
     modId="neoforge"

@@ -79,6 +79,7 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static Button earthquakeWidget;
     private static JustDireActiveNetwork.Activate savedEarthquakePermit;
     private static List<String> reconnectPassives;
+    private static ItemStack pausedFeedbackRoot;
 
     private NeoForgeJustDireGroundStompClientTest() {}
 
@@ -754,11 +755,13 @@ final class NeoForgeJustDireGroundStompClientTest {
 
     private static void lifecycle(Minecraft client) {
         require(LIFECYCLE.equals("save") || LIFECYCLE.equals("restart"), "Unknown lifecycle mode");
+        add("observe completion events without replacement ticking or emission", () -> server(client, JustDireCooldownFeedbackTestSupport::begin));
         add("observe production replies without replacing native callbacks or input", NeoForgeJustDireGroundStompClientTest::observeReplies);
         if (LIFECYCLE.equals("restart")) {
             add("new JVM loads the exact disk stacks and paused timers", () -> server(client, player -> {
                 try { JustDireGroundStompTestSupport.initializeApi(); JustDireGroundStompLifecycleTestSupport.verifyDisk(player); }
                 catch (Exception failure) { throw new AssertionError(failure); }
+                JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
             }));
         }
         for (int orientation = 0; orientation < 2; orientation++) {
@@ -776,11 +779,23 @@ final class NeoForgeJustDireGroundStompClientTest {
             add("verify all four stored joint roots before the real world save", () -> server(client, player -> {
                 try { JustDireGroundStompLifecycleTestSupport.verifyDisk(player); }
                 catch (Exception failure) { throw new AssertionError(failure); }
+                JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
             }));
         } else {
             add("restore the existing passive reconnect observer", NeoForgeJustDireGroundStompClientTest::observeReplies);
             reconnect(client);
+            add("reconnected paid Earthquake finishes through ordinary worn progression", () -> {},
+                    () -> earthquakeClock(feet(client)) == null && timer(feet(client)) == -1, 1_200);
+            add("restart/tier/reconnect produced no load-only or repeated completion cue", () -> {
+                // The last root began with two saved inactive lockouts, then paid for one fresh EQ.
+                JustDireCooldownFeedbackTestSupport.assertCompletions(3, 1);
+                JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
+            });
         }
+        add("release world feedback observer after lifecycle acceptance", () -> server(client, player -> {
+            JustDireCooldownFeedbackTestSupport.capturingSounds = false;
+            JustDireCooldownFeedbackTestSupport.observedPlayer = null;
+        }));
     }
 
     private static void earthquakeSave(Minecraft client, int phase) {
@@ -788,6 +803,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             try { JustDireEarthquakeTestSupport.bind(); }
             catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
             player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+            JustDireCooldownFeedbackTestSupport.begin(player);
             var pair = MixedBootsFactory.createPair(boot("eclipsealloy", 0), boot("celestigem", 0));
             expected = phase == 0 ? pair.primary() : pair.inverse(); expected.setDamageValue(31);
             try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
@@ -827,6 +843,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("hold a real unconsumed passive permit before the JVM exits", () -> {
             holdReply = true; held = null; earthquakePress(4, true);
         }, () -> held != null);
+        add("packet-delivered joint spent phase has exact native HUD before save", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, 2));
         add("store spent root with its native phase, removed installation/disabled controls and both clocks", () -> server(client, player -> {
             var root = player.getItemBySlot(EquipmentSlot.FEET); var clock = earthquakeClock(root);
             require(clock != null && clock.active() == (phase == 0) && clock.ticks() > 0
@@ -836,6 +853,8 @@ final class NeoForgeJustDireGroundStompClientTest {
             target.discard(); target = null;
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             JustDireGroundStompLifecycleTestSupport.save(player, phase + 2, root, savedEarthquakePermit, held);
+            // Saving/storage itself must not invent a completion, even after a genuine active-end in phase 1.
+            JustDireCooldownFeedbackTestSupport.begin(player);
             player.inventoryMenu.broadcastChanges();
         }), () -> feet(client).isEmpty());
         add("release the observer without forwarding the old intent", () -> holdReply = false);
@@ -845,6 +864,8 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("tier smithing and root reinstallation preserve spent Earthquake phase " + phase, () -> server(client, player -> {
             try {
                 player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+                player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                JustDireCooldownFeedbackTestSupport.begin(player);
                 var root = JustDireGroundStompLifecycleTestSupport.storage(player, false).removeItemNoUpdate(phase + 2);
                 var clock = earthquakeClock(root);
                 require(clock != null && clock.active() == (phase == 0) && charge(root) == 95_000 && timer(root) > 0, "Saved EQ phase/charge lost");
@@ -853,10 +874,12 @@ final class NeoForgeJustDireGroundStompClientTest {
                     require(!flag(expected, "earthquake_upgrade_installed", true) && !flag(expected, "tool_enabled", true), "Tier restored historical installation/controls");
                     expected = JustDireGroundStompLifecycleTestSupport.installEarthquake(player, expected);
                 } else { require(!flag(expected, "earthquake_toggle", true), "Tier restored historical EQ toggle"); }
+                JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().clearContent(); provenance = ModContent.getMixedBootsData(expected).orElseThrow();
                 player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
             } catch (Exception failure) { throw new AssertionError(failure); }
         }), () -> charge(feet(client)) == 95_000 && ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance)) && wait > 5);
+        feedbackPause(client, 2);
         replaySaved(client, phase + 2);
         open(client); select(client, 36);
         add("native tier inventory shows EQ without a slider or an unused tooltip number", () -> {
@@ -875,12 +898,21 @@ final class NeoForgeJustDireGroundStompClientTest {
         if (phase == 0) {
             add("loaded active phase advances to native inactive cooldown without replay", () -> {},
                     () -> earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active());
+            add("loaded active-end emitted once and inactive phase still uses native draws", () -> {
+                require(JustDireCooldownFeedbackTestSupport.sounds.stream().filter(sound -> sound.event() == net.minecraft.sounds.SoundEvents.CONDUIT_DEACTIVATE).count() == 1,
+                        "Loaded active-end was missing or duplicated");
+                JustDireCooldownFeedbackTestSupport.assertHud(client, timer(feet(client)) > 0 ? 2 : 1);
+            });
         }
         add("loaded remaining EQ lockout expires once through the actual worn ticker", () -> {},
                 () -> earthquakeClock(feet(client)) == null && timer(feet(client)) == -1, 1_200);
         add("expiry retained FE/provenance and never applied the effect to the later target", () -> server(client, player -> require(
                 charge(player.getItemBySlot(EquipmentSlot.FEET)) == 95_000 && target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) == null
                         && ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "Restart replayed/refilled EQ")));
+        add("loaded joint clocks emit exactly once per committed boundary and remove their HUD", () -> {
+            JustDireCooldownFeedbackTestSupport.assertCompletions(2, phase == 0 ? 1 : 0);
+            JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
+        });
         replaySaved(client, phase + 2);
         add("fresh persisted binding on two Eclipse halves executes only one EQ action", () -> {
             consumed = null; earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
@@ -922,6 +954,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             try { JustDireGroundStompTestSupport.initializeApi(); } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
             client.getSingleplayerServer().setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
             player.setGameMode(GameType.SURVIVAL); player.getInventory().clearContent();
+            JustDireCooldownFeedbackTestSupport.begin(player);
             var pair = MixedBootsFactory.createPair(boot("celestigem", 10_000), boot("blazegold", 0));
             expected = slot == 0 ? pair.primary() : pair.inverse();
             expected.setDamageValue(31); set(expected, "forge_energy", 10_000);
@@ -956,6 +989,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             target.discard(); target = null;
         }));
         hold(client);
+        add("packet-delivered spent GS has exact native HUD before save", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, 1));
         add("store actual spent root and consumed/unconsumed production packets", () -> server(client, player -> {
             var root = player.getItemBySlot(EquipmentSlot.FEET);
             require(charge(root) == 5_000 && timer(root) > 0 && !flag(root, "stepheight_toggle", true), "Deferred permit acted before save");
@@ -970,15 +1004,19 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("tier preview and " + (slot == 0 ? "normal" : "shift-click") + " take preserve disk controls/resources", () -> server(client, player -> {
             try {
                 player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+                player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                JustDireCooldownFeedbackTestSupport.begin(player);
                 var root = JustDireGroundStompLifecycleTestSupport.storage(player, false).removeItemNoUpdate(slot);
                 require(charge(root) == 5_000 && root.getDamageValue() == 31 && timer(root) > 0, "Disk resource/wear/timer mismatch");
                 expected = JustDireGroundStompLifecycleTestSupport.smithing(player, root, slot == 1);
+                JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().clearContent();
                 provenance = ModContent.getMixedBootsData(expected).orElseThrow();
                 player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
             } catch (Exception failure) { throw new AssertionError(failure); }
         }), () -> ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance))
                 && charge(feet(client)) == 5_000 && JustDireResourceTestSupport.handler(feet(client)).getCapacityAsInt() == 500_000);
+        feedbackPause(client, 1);
         add("restarted binding modes/removal and switches are still live root controls", () -> require(
                 JustDireSettingsCompatibility.groundStompBinding(feet(client), GLFW.GLFW_KEY_G, false)
                         && JustDireSettingsCompatibility.boundPassives(feet(client), 4, true).equals(List.of("stepheight", "jumpboost"))
@@ -1010,6 +1048,10 @@ final class NeoForgeJustDireGroundStompClientTest {
                 && slider(client, "JUMPBOOST").getValueInt() == 2 && value(feet(client), "groundstomp_custom_setting") == 1, "Tier UI reset controls"));
         close(client);
         add("loaded timer expires naturally instead of being reset by tier smithing", () -> {}, () -> timer(feet(client)) == -1);
+        add("disk/tier GS expired with one ready cue and no lingering HUD", () -> {
+            JustDireCooldownFeedbackTestSupport.assertCompletions(1, 0);
+            JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
+        });
         replaySaved(client, slot);
         target(client);
         add("fresh persisted keyboard executes one upgraded action", () -> { consumed = null; press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS); },
@@ -1025,6 +1067,30 @@ final class NeoForgeJustDireGroundStompClientTest {
         }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
         add("fresh mouse binding uses production listener and one root bill", () -> mousePress(3, GLFW.GLFW_PRESS),
                 () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0);
+    }
+
+    private static void feedbackPause(Minecraft client, int icons) {
+        add("disk/tier equipment packets show exact native HUD without a load-only cue", () -> {
+            JustDireCooldownFeedbackTestSupport.assertHud(client, icons);
+            JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
+        });
+        add("pause the disk/tier root in ordinary inventory", () -> server(client, player -> {
+            var root = player.getItemBySlot(EquipmentSlot.FEET);
+            pausedFeedbackRoot = root.copy();
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+            player.getInventory().setItem(0, root); player.inventoryMenu.broadcastChanges();
+        }), () -> feet(client).isEmpty() && wait > 20);
+        add("unequipped HUD is empty and the exact root remains paused without feedback", () -> {
+            JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
+            server(client, player -> {
+                var root = player.getInventory().getItem(0);
+                require(ItemStack.matches(pausedFeedbackRoot, root), "Inventory pause changed persisted root/clocks");
+                JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
+                player.getInventory().setItem(0, ItemStack.EMPTY);
+                player.setItemSlot(EquipmentSlot.FEET, root); player.inventoryMenu.broadcastChanges();
+            });
+        }, () -> !feet(client).isEmpty() && wait > 5);
+        add("re-equipped disk/tier root resumes the same native indicator", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, icons));
     }
 
     private static void replaySaved(Minecraft client, int slot) {
@@ -1067,6 +1133,10 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("decode expectations in the new connection registry context", () -> restoreReconnect(client));
         add("ordinary login equipment packets restore the saved root", () -> {},
                 () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)));
+        add("first reconnect retains native spent-clock presentation through login packets", () -> {
+            JustDireCooldownFeedbackTestSupport.assertHud(client, (timer(feet(client)) > 0 ? 1 : 0) + (earthquakeClock(feet(client)) != null ? 1 : 0));
+            server(client, player -> JustDireCooldownFeedbackTestSupport.observedPlayer = player);
+        });
         add("new server/player retain persistent controls/FE but not client intent", () -> {
             holdReply = false; observeReplies();
             require(sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)), "Reconnect changed persistent state");
@@ -1106,6 +1176,10 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("decode second reconnect expectations in its registry context", () -> restoreReconnect(client));
         add("second login equipment packets restore the saved root", () -> {},
                 () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)));
+        add("second reconnect retains native spent-clock presentation through login packets", () -> {
+            JustDireCooldownFeedbackTestSupport.assertHud(client, (timer(feet(client)) > 0 ? 1 : 0) + (earthquakeClock(feet(client)) != null ? 1 : 0));
+            server(client, player -> JustDireCooldownFeedbackTestSupport.observedPlayer = player);
+        });
         add("second rejoin retains disabled control and the same resource balance", () -> {
             observeReplies(); require(sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)), "Menu disconnect changed root state");
         });
