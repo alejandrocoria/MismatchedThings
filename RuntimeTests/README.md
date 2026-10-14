@@ -909,6 +909,15 @@ view or completion-emission wrappers: live, compatible high/low equipment-read
 wrappers, discarded bridge output, unavailable Earthquake-only HUD parameters
 and quiet absence. Native blit/world-sound observers do not cancel or emit.
 The parameter fault retains GS icons and native settings/server clock progression.
+The same maintained gate also exercises production completion sounds around
+automatic worn ticks: native controls, both mixed orientations/EQ phases,
+accepted simultaneous-expiry order, disabled/uninstalled/depleted continuation
+and unequipped pause. At-emission snapshots prove root publication precedes audio;
+FE, wear and source history remain unchanged, without repeated activation sounds.
+The live JVM additionally checks zero/negative/duplicate/foreign/unsupported
+records and caught post-commit world-audio faults without clock reset or retry.
+Its two unsupported-timer warnings are expected, once each; the other contexts
+remain quiet except the deliberate HUD/parameter failures.
 Both mixed orientations/phases preserve native cross-slot order/progress; invalid
 display records retain stored evidence, and ordinary packets expose actual live
 root state/FE. F1/no-player/config offsets retain native behavior.
@@ -918,8 +927,9 @@ Versioned reports/logs and live/high/low final class exports are under
 `justDireCooldownHudTransformedClass` selects the live export for focused NeoForge
 unit characterization, including the adjacent high/low exports. These tests do
 not claim physical/audible acceptance or a new saved-world restart; the real
-tier preview/take case starts from codec-loaded state. Sound production remains
-block B of [the feedback plan](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md).
+tier preview/take case starts from codec-loaded state. Blocks A HUD and B local
+audio are production code; audibility and C's real-process lifecycle remain
+separate gates in [the feedback plan](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md).
 
 ## Just Dire Things cooldown HUD / sound research spike
 
@@ -945,6 +955,12 @@ codec-loaded root verify live presentation; this is not another world restart.
 The same-tick native active-end/ready ordering differs from local GS/EQ emission;
 the [bounded record](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-EXPLORATION.md#8-test-only-native-hud--owned-clock-sound-spike)
 owns that decision, exact validation and remaining physical/production gates.
+
+Since B implements audio directly in the owned tickers, the old research emission
+wrapper is disabled in **all** modes to prevent double sounds. The legacy harness
+can still exercise its test-only HUD view with production audio, but the dated
+pre-production sound-candidate proof belongs to the exploration record; it is
+not re-advertised as current candidate evidence. C retires the obsolete sources.
 
 ## Vanilla armor classification
 

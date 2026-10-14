@@ -2,6 +2,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireCooldownHud;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -20,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -58,8 +61,8 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 // before stopping the local channel; a teardown race is not HUD acceptance.
                 if (++waiting <= 20) { return; }
                 NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", report + (PRODUCTION
-                        ? "production HUD only; candidate view/tick/audio patches disabled; draw extraction, not physical/audible acceptance\n"
-                        : "test-only native HUD/sound candidate; synthetic extraction, not physical/rendered/audible acceptance\n"));
+                        ? "production HUD and completion sounds; candidate view/tick/audio patches disabled; draw/world-event observation, not physical/audible acceptance\n"
+                        : "test-only native HUD candidate with production completion sounds; not physical/rendered/audible acceptance\n"));
                 NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", VARIANT + "\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; waiting = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; waiting = 0; }
@@ -101,12 +104,12 @@ final class NeoForgeJustDireCooldownFeedbackTest {
         });
         if (PRODUCTION) {
             packetView(client);
-        } else {
-            for (int orientation = -1; orientation < 2; orientation++) {
-                for (boolean active : new boolean[]{true, false}) { soundCase(client, orientation, active, false); }
-            }
-            soundCase(client, 0, true, true);
         }
+        for (int orientation = -1; orientation < 2; orientation++) {
+            for (boolean active : new boolean[]{true, false}) { soundCase(client, orientation, active, false); }
+        }
+        soundCase(client, 0, true, true);
+        if (PRODUCTION && VARIANT.equals("live")) { malformedClocks(client); soundFailure(client); }
         persistedTierView(client);
         add("stop observing without altering persisted gameplay state", () -> JustDireCooldownFeedbackSpike.capturingSounds = false);
     }
@@ -245,13 +248,18 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                         expected = orientation < 0 ? JustDireEarthquakeTestSupport.original(0) : JustDireEarthquakeTestSupport.mixed(0, orientation == 1, false);
                         expectedCharge = pause ? 0 : 13_579;
                         expected.set(JustDireResourceTestSupport.energyComponent(), expectedCharge);
+                        expected.setDamageValue(37);
                         JustDireAttributeTestSupport.set(expected, "tool_enabled", false);
                         JustDireAttributeTestSupport.set(expected, "earthquake_upgrade_installed", false);
+                        JustDireAttributeTestSupport.set(expected, "groundstomp_upgrade_installed", false);
+                        JustDireAttributeTestSupport.set(expected, "groundstomp_toggle", false);
+                        JustDireAttributeTestSupport.set(expected, "earthquake_toggle", false);
                         setClocks(expected, List.of(clock("groundstomp", 1, false), clock("earthquake", 1, active)));
                         history = ModContent.getMixedBootsData(expected).orElse(null);
                         soundX = player.getX(); soundY = player.getY(); soundZ = player.getZ();
                         player.setItemSlot(EquipmentSlot.FEET, pause ? ItemStack.EMPTY : expected);
                         if (pause) { player.getInventory().setItem(0, expected); }
+                        JustDireCooldownFeedbackSpike.observedPlayer = player;
                         JustDireCooldownFeedbackSpike.sounds.clear(); JustDireCooldownFeedbackSpike.capturingSounds = true;
                     } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
                 }));
@@ -282,7 +290,16 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 require(sound.source() == SoundSource.PLAYERS && sound.volume() == 1 && sound.pitch() == 1 && !sound.excluded()
                         && Math.abs(sound.x() - soundX) < 1e-6 && Math.abs(sound.y() - soundY) < 1e-6 && Math.abs(sound.z() - soundZ) < 1e-6, "Private/wrong-position sound");
             }
-            require(JustDireEarthquakeTestSupport.charge(expected) == expectedCharge && ModContent.getMixedBootsData(expected).orElse(null) == history,
+            if (orientation >= 0) {
+                var first = sounds.getFirst().committedClocks(); var last = sounds.getLast().committedClocks();
+                require(first.stream().noneMatch(clock -> clock.name().equals("groundstomp"))
+                        && first.stream().anyMatch(clock -> clock.name().equals("earthquake") && clock.ticks() == 1 && clock.active() == active),
+                        "GS completion sounded before committed expiry");
+                require(active ? last.stream().anyMatch(clock -> clock.name().equals("earthquake") && clock.ticks() == 800 && !clock.active())
+                        : last.stream().noneMatch(clock -> clock.name().equals("earthquake")), "EQ completion sounded before committed transition");
+            }
+            require(JustDireEarthquakeTestSupport.charge(expected) == expectedCharge && expected.getDamageValue() == 37
+                    && ModContent.getMixedBootsData(expected).orElse(null) == history,
                     "Feedback refilled/billed/rewrote root provenance");
             try {
                 require(JustDireEarthquakeTestSupport.clock(expected, "groundstomp") == null, "GS did not expire");
@@ -302,6 +319,74 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 return true;
             } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
         });
+    }
+
+    private static void malformedClocks(Minecraft client) {
+        for (String scenario : List.of("zero", "negative", "duplicate", "unsupportedPhase")) {
+            add("seed retained/cleared malformed clocks: " + scenario, () -> server(client, player -> {
+                try {
+                    expected = JustDireEarthquakeTestSupport.mixed(0, false, false);
+                    expected.set(JustDireResourceTestSupport.energyComponent(), 13_579);
+                    history = ModContent.getMixedBootsData(expected).orElseThrow();
+                    var records = new ArrayList<Object>();
+                    if (scenario.equals("duplicate")) {
+                        records.add(clock("groundstomp", 1, false)); records.add(clock("groundstomp", 1, false));
+                        records.add(clock("earthquake", 1, true)); records.add(clock("earthquake", 1, false));
+                    } else {
+                        records.add(clock("groundstomp", scenario.equals("zero") ? 0 : scenario.equals("negative") ? -1 : 1, scenario.equals("unsupportedPhase")));
+                        records.add(clock("earthquake", scenario.equals("negative") ? -1 : 0, false));
+                    }
+                    records.add(clock("foreign", 1, false));
+                    setClocks(expected, records); player.setItemSlot(EquipmentSlot.FEET, expected);
+                    JustDireCooldownFeedbackSpike.observedPlayer = player;
+                    JustDireCooldownFeedbackSpike.sounds.clear(); JustDireCooldownFeedbackSpike.capturingSounds = true;
+                } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+            }));
+            add("ordinary malformed ticks do not invent a ready cue", () -> {}, () -> waiting > 10);
+            add("preserve existing malformed handling without payment/provenance edits", () -> server(client, player -> {
+                var actual = JustDireCooldownFeedbackSpike.before(player);
+                require(JustDireCooldownFeedbackSpike.sounds.isEmpty() && actual.stream().anyMatch(clock -> clock.name().equals("foreign") && clock.ticks() == 1),
+                        "Malformed/foreign state emitted feedback or was repaired");
+                require(actual.stream().filter(clock -> clock.name().equals("groundstomp")).count()
+                        == (scenario.equals("zero") || scenario.equals("duplicate") ? 0 : 1), "GS malformed handling changed");
+                require(actual.stream().filter(clock -> clock.name().equals("earthquake")).count() == (scenario.equals("duplicate") ? 2 : 1),
+                        "EQ malformed evidence was cleared");
+                require(JustDireEarthquakeTestSupport.charge(expected) == 13_579 && ModContent.getMixedBootsData(expected).orElseThrow() == history,
+                        "Malformed feedback changed resources/history");
+            }));
+        }
+    }
+
+    private static void soundFailure(Minecraft client) {
+        add("inject world-audio failures after actual ticker commits, never return a retryable result", () -> server(client, player -> {
+            try {
+                JustDireCooldownFeedbackSpike.sounds.clear();
+                for (boolean earthquake : new boolean[]{false, true}) {
+                    expected = JustDireEarthquakeTestSupport.mixed(0, false, false);
+                    expected.set(JustDireResourceTestSupport.energyComponent(), 13_579);
+                    history = ModContent.getMixedBootsData(expected).orElseThrow();
+                    setClocks(expected, List.of(clock(earthquake ? "earthquake" : "groundstomp", 1, earthquake)));
+                    player.setItemSlot(EquipmentSlot.FEET, expected); JustDireCooldownFeedbackSpike.observedPlayer = player;
+                    var owner = earthquake ? JustDireEarthquakeCompatibility.class : JustDireGroundStompCompatibility.class;
+                    var tick = owner.getDeclaredMethod("tickEquipped", ServerPlayer.class); tick.setAccessible(true);
+                    JustDireCooldownFeedbackSpike.failNextSound = true;
+                    try {
+                        tick.invoke(null, player); throw new AssertionError("Committed audio failure was swallowed");
+                    } catch (InvocationTargetException failure) {
+                        require(failure.getCause() instanceof JustDireCooldownFeedbackSpike.SoundProbeFailure, "Unexpected ticker failure");
+                    } finally { JustDireCooldownFeedbackSpike.failNextSound = false; }
+                    var pending = JustDireEarthquakeTestSupport.clock(expected, earthquake ? "earthquake" : "groundstomp");
+                    require(earthquake ? pending != null && !pending.active() && pending.ticks() == 800 : pending == null,
+                            "Audio failure rolled back/reset the committed clock");
+                    require(JustDireGroundStompCompatibility.available() && JustDireEarthquakeCompatibility.available()
+                            && JustDireEarthquakeTestSupport.charge(expected) == 13_579 && ModContent.getMixedBootsData(expected).orElseThrow() == history,
+                            "Post-commit audio failure disabled binding or refunded resources");
+                }
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        }));
+        add("ordinary later ticks progress without replaying failed completion audio", () -> {}, () -> waiting > 10);
+        add("two committed failures remain two attempts, not another activation/payment", () -> server(client, player ->
+                require(JustDireCooldownFeedbackSpike.sounds.size() == 2, "Audio failure was replayed on later ticks")));
     }
 
     private static void persistedTierView(Minecraft client) {

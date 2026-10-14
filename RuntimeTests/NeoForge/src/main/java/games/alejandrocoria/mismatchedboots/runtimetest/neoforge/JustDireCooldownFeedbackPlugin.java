@@ -32,6 +32,9 @@ public final class JustDireCooldownFeedbackPlugin implements IMixinConfigPlugin,
     }
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         if (!enabled) { return false; }
+        // B owns completion feedback now. Keep the old candidate source only until C's retirement,
+        // never layer its emission around the real ticker (including legacy research runs).
+        if (mixin.endsWith("TickMixin")) { return false; }
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireCooldownFeedbackVariant", "live");
         if (mixin.endsWith("HudMissingMixin")) { return production ? variant.equals("hooksMissing") : true; }
         if (mixin.endsWith("MetadataMissingMixin")) { return production && variant.equals("parametersMissing"); }

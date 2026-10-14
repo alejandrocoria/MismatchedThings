@@ -13,6 +13,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -290,6 +291,7 @@ public final class JustDireEarthquakeCompatibility {
         if (binding == null || !JustDireGroundStompCompatibility.equipped(player, root)) { return; }
         var next = new ArrayList<Object>();
         boolean changed = false;
+        SoundEvent completion = null;
         try {
             Object pending = null;
             int count = 0;
@@ -302,12 +304,19 @@ public final class JustDireEarthquakeCompatibility {
             for (Object record : root.get(binding.timers)) {
                 if (!binding.earthquake(record)) { next.add(record); continue; }
                 Pending clock = binding.pending(record);
+                if (clock.ticks == 1) { completion = clock.active ? SoundEvents.CONDUIT_DEACTIVATE : SoundEvents.ENDER_EYE_DEATH; }
                 if (clock.ticks > 1) { next.add(binding.create.invokeExact("earthquake", clock.ticks - 1, clock.active)); }
                 else if (clock.active) { next.add(binding.create.invokeExact("earthquake", cooldown, false)); }
                 changed = true;
             }
         } catch (Throwable failure) { disable(binding, failure); return; }
-        if (changed && api == binding && JustDireGroundStompCompatibility.equipped(player, root)) { root.set(binding.timers, List.copyOf(next)); }
+        if (changed && api == binding && JustDireGroundStompCompatibility.equipped(player, root)) {
+            root.set(binding.timers, List.copyOf(next));
+            // Feedback follows committed state; a world-sound failure must not reset/refund or retry the transition.
+            if (completion != null) {
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), completion, SoundSource.PLAYERS, 1, 1);
+            }
+        }
     }
 
     /** Positive native counters have no codec upper bound; long accounting must not wrap large pending lockouts. */

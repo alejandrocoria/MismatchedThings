@@ -281,18 +281,30 @@ public final class JustDireGroundStompCompatibility {
         if (binding == null || !equipped(player, root)) { return; }
         List<Object> next = new ArrayList<>();
         boolean changed = false;
+        int count = 0;
+        boolean ready = false;
         try {
             for (Object record : root.getOrDefault(binding.timers, List.of())) {
                 if (!binding.groundStomp(record)) { next.add(record); continue; }
+                count++;
                 int ticks = (int) binding.ticks.invokeExact(record);
                 if ((boolean) binding.active.invokeExact(record) || ticks < 0) {
                     invalidTimer(); next.add(record); continue;
                 }
                 changed = true;
+                ready |= ticks == 1;
                 if (ticks > 1) { next.add(binding.create.invokeExact("groundstomp", ticks - 1, false)); }
             }
         } catch (Throwable failure) { disable(binding, failure); return; }
-        if (changed && api == binding && equipped(player, root)) { root.set(binding.timers, List.copyOf(next)); }
+        var completion = count == 1 && ready ? SoundEvents.ENDER_EYE_DEATH : null;
+        if (changed && api == binding && equipped(player, root)) {
+            root.set(binding.timers, List.copyOf(next));
+            // Local GS → EQ ticking intentionally emits ready before a coincident EQ active-end,
+            // unlike native whole-list removal flushing. Never catch/retry across this committed clock.
+            if (completion != null) {
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), completion, SoundSource.PLAYERS, 1, 1);
+            }
+        }
     }
 
     private record Action(Quote quote, int bill, int particles, List<Object> timers, List<Mob> targets,

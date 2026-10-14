@@ -943,7 +943,7 @@ tasks.register('verifyJustDireCooldownFeedbackSpike') {
 
 tasks.register('verifyJustDireCooldownHud') {
     group = 'verification'
-    description = 'Checks production-only native JDT HUD reads, final local guards and ordinary equipment synchronization.'
+    description = 'Checks production-only JDT HUD reads, local guards, committed completion sounds and ordinary equipment synchronization.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
@@ -955,9 +955,13 @@ tasks.register('verifyJustDireCooldownHud') {
             def report = new File(directory, 'just-dire-cooldown-hud-report.txt')
             def hudWarnings = log.readLines().count { it.contains('Just Dire Things cooldown HUD transformed flow incompatible') }
             def parameterWarnings = log.readLines().count { it.contains('Just Dire Things cooldown HUD metadata unavailable') }
+            def groundStompTimerWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp retained an unsupported cooldown; activation denied') }
+            def earthquakeTimerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown; activation denied') }
             if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
                     || log.text.contains('/ERROR]') || hudWarnings != (variant == 'HooksMissing' ? 1 : 0)
-                    || parameterWarnings != (variant == 'ParametersMissing' ? 1 : 0) || log.text.contains('JDT feedback spike:')) {
+                    || parameterWarnings != (variant == 'ParametersMissing' ? 1 : 0)
+                    || groundStompTimerWarnings != (variant == 'Live' ? 1 : 0) || earthquakeTimerWarnings != (variant == 'Live' ? 1 : 0)
+                    || log.text.contains('JDT feedback spike:')) {
                 throw new GradleException("Production JDT HUD ${variant} failed: ${failure.isFile() ? failure.text : log}")
             }
             if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {

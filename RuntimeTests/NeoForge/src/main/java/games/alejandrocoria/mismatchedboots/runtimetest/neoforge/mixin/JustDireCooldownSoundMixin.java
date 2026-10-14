@@ -16,8 +16,15 @@ abstract class JustDireCooldownSoundMixin {
     @Inject(method = "playSound(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("HEAD"))
     private void fixtureSound(Entity excluded, double x, double y, double z, SoundEvent event, SoundSource source, float volume, float pitch, CallbackInfo ci) {
         if (!((Level) (Object) this).isClientSide() && JustDireCooldownFeedbackSpike.capturingSounds
-                && (event == SoundEvents.CONDUIT_DEACTIVATE || event == SoundEvents.ENDER_EYE_DEATH)) {
-            JustDireCooldownFeedbackSpike.sounds.add(new JustDireCooldownFeedbackSpike.Sound(event, source, x, y, z, volume, pitch, excluded != null));
+                && (event == SoundEvents.CONDUIT_DEACTIVATE || event == SoundEvents.ENDER_EYE_DEATH
+                || event == SoundEvents.MACE_SMASH_GROUND || event == SoundEvents.MACE_SMASH_GROUND_HEAVY)) {
+            var player = JustDireCooldownFeedbackSpike.observedPlayer;
+            var clocks = player == null ? java.util.List.<JustDireCooldownFeedbackSpike.Clock>of() : JustDireCooldownFeedbackSpike.before(player);
+            JustDireCooldownFeedbackSpike.sounds.add(new JustDireCooldownFeedbackSpike.Sound(event, source, x, y, z, volume, pitch, excluded != null, clocks));
+            if (JustDireCooldownFeedbackSpike.failNextSound) {
+                JustDireCooldownFeedbackSpike.failNextSound = false;
+                throw new JustDireCooldownFeedbackSpike.SoundProbeFailure();
+            }
         }
     }
 }

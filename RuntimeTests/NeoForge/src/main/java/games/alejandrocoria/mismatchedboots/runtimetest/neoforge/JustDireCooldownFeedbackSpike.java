@@ -22,6 +22,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class JustDireCooldownFeedbackSpike {
     public static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.justDireCooldownFeedbackVariant", "live");
     public static volatile boolean hudReady, capturingDraws, capturingSounds;
+    public static ServerPlayer observedPlayer;
+    public static boolean failNextSound;
+    public static final class SoundProbeFailure extends RuntimeException {}
     public static final List<Draw> draws = new ArrayList<>();
     public static final ConcurrentLinkedQueue<Sound> sounds = new ConcurrentLinkedQueue<>();
     private static Method name, ticks, active, parameters;
@@ -113,5 +116,6 @@ public final class JustDireCooldownFeedbackSpike {
     public record Clock(String name, int ticks, boolean active) {}
     public record Draw(Identifier texture, int x, int y, float u, float v, int width, int height,
                        int srcWidth, int srcHeight, int textureWidth, int textureHeight, int color) {}
-    public record Sound(SoundEvent event, SoundSource source, double x, double y, double z, float volume, float pitch, boolean excluded) {}
+    public record Sound(SoundEvent event, SoundSource source, double x, double y, double z, float volume, float pitch,
+                        boolean excluded, List<Clock> committedClocks) {}
 }
