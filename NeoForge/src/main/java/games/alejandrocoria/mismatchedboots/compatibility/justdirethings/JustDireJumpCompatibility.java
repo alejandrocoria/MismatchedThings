@@ -5,19 +5,22 @@ import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-/** Passive Jump queries and one coordinated fall dispatcher; Negate owns its separate FE commit. */
+/** Read-only Jump queries and one coordinated fall dispatcher; Negate owns its separate FE commit. */
 public final class JustDireJumpCompatibility {
     private static Api api;
     private static boolean attempted;
@@ -47,7 +50,6 @@ public final class JustDireJumpCompatibility {
         Api binding = binding();
         if (binding == null) { return 0; }
         try {
-            if ((int) binding.resource.invokeExact(root, binding.jump) < 0) { return 0; }
             return Math.max(binding.value(left, root), binding.value(right, root));
         } catch (Throwable failure) {
             if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
@@ -56,7 +58,7 @@ public final class JustDireJumpCompatibility {
             synchronized (JustDireJumpCompatibility.class) {
                 if (api != null) {
                     api = null;
-                    Constants.LOG.warn("Just Dire Things passive Jump queries failed; compatibility disabled", failure);
+                    Constants.LOG.warn("Just Dire Things Jump queries failed; compatibility disabled", failure);
                 }
             }
             return 0;
@@ -72,6 +74,7 @@ public final class JustDireJumpCompatibility {
             Object jump = ability.getField("JUMPBOOST").get(null);
             Class<?> tool = Class.forName(JustDireJumpShape.TOOL.replace('/', '.'), true, loader);
             Class<?> helpers = Class.forName(JustDireJumpShape.HELPERS.replace('/', '.'), true, loader);
+            Class<?> powered = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.PoweredItem", true, loader);
             var lookup = MethodHandles.publicLookup();
             api = new Api(jump,
                     lookup.findVirtual(tool, "canUseAbility", MethodType.methodType(boolean.class, ItemStack.class, ability))
@@ -79,14 +82,17 @@ public final class JustDireJumpCompatibility {
                     lookup.findStatic(tool, "getToolValue", MethodType.methodType(int.class, ItemStack.class, String.class)),
                     lookup.findStatic(helpers, "testUseTool", MethodType.methodType(int.class, ItemStack.class, ability))
                             .asType(MethodType.methodType(int.class, ItemStack.class, Object.class)),
-                    component("tool_enabled"), component("jumpboost_toggle"), component("jumpboost_value"),
-                    item("ferricore_boots"), item("blazegold_boots"));
-            if (!tool.isInstance(api.ferricore) || !tool.isInstance(api.blazegold)) {
-                throw new IllegalStateException("Unsupported non-powered boot API");
+                    component("tool_enabled"), component("jumpboost_toggle"), component("jumpboost_value"), component("forge_energy"),
+                    item("ferricore_boots"), item("blazegold_boots"), item("celestigem_boots"), item("eclipsealloy_boots"));
+            if (!tool.isInstance(api.ferricore) || !tool.isInstance(api.blazegold)
+                    || !tool.isInstance(api.celestigem) || !tool.isInstance(api.eclipse)
+                    || powered.isInstance(api.ferricore) || powered.isInstance(api.blazegold)
+                    || !powered.isInstance(api.celestigem) || !powered.isInstance(api.eclipse)) {
+                throw new IllegalStateException("Unsupported native Jump boot API");
             }
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             api = null;
-            Constants.LOG.warn("Could not bind Just Dire Things passive Jump API; compatibility disabled", failure);
+            Constants.LOG.warn("Could not bind Just Dire Things Jump API; compatibility disabled", failure);
         }
         return api;
     }
@@ -104,9 +110,11 @@ public final class JustDireJumpCompatibility {
 
     private record Api(Object jump, MethodHandle usable, MethodHandle slider, MethodHandle resource,
                        DataComponentType<Boolean> enabled, DataComponentType<Boolean> toggle,
-                       DataComponentType<Integer> value, Item ferricore, Item blazegold) {
+                       DataComponentType<Integer> value, DataComponentType<Integer> energy,
+                       Item ferricore, Item blazegold, Item celestigem, Item eclipse) {
         int value(ItemStack source, ItemStack root) throws Throwable {
-            if (source.getItem() != ferricore && source.getItem() != blazegold) { return 0; }
+            boolean powered = source.getItem() == celestigem || source.getItem() == eclipse;
+            if (!powered && source.getItem() != ferricore && source.getItem() != blazegold) { return 0; }
             // Tier stays native; installation and live controls belong exclusively to root.
             if (!JustDireUpgradesCompatibility.overlayInstallation(source, root)) { return 0; }
             source.set(enabled, root.getOrDefault(enabled, true));
@@ -114,6 +122,19 @@ public final class JustDireJumpCompatibility {
             source.remove(value);
             if (root.has(value)) { source.set(value, root.get(value)); } // Otherwise use this tier's native default, not historical settings.
             if (!(boolean) usable.invokeExact((Object) source.getItem(), source, jump)) { return 0; }
+            // Native item identity selects FE or wear. A global mixed-root wear veto would
+            // wrongly reject charged powered providers; frozen source resources are never live.
+            if (powered) {
+                var wallet = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
+                if (wallet == null) { return 0; }
+                source.set(energy, wallet.getAmountAsInt());
+            } else {
+                source.remove(DataComponents.MAX_DAMAGE);
+                source.remove(DataComponents.DAMAGE);
+                if (root.has(DataComponents.MAX_DAMAGE)) { source.set(DataComponents.MAX_DAMAGE, root.get(DataComponents.MAX_DAMAGE)); }
+                if (root.has(DataComponents.DAMAGE)) { source.set(DataComponents.DAMAGE, root.get(DataComponents.DAMAGE)); }
+            }
+            if ((int) resource.invokeExact(source, jump) < 0) { return 0; }
             return (int) slider.invokeExact(source, "jumpboost");
         }
     }

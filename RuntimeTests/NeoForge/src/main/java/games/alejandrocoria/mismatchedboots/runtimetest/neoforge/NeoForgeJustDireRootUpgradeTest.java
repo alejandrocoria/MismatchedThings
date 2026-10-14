@@ -115,7 +115,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
             require(installed(rebuilt, "jumpboost") && installed(rebuilt, "negatefalldamage")
                     && charge(rebuilt) == 1_000 && rebuilt.getDamageValue() == 31 && data(rebuilt).equals(data(root)),
                     "Optional upgrade failure destroyed stored root state on rebuild");
-            jump(server, rebuilt, missing ? 0 : 1);
+            jump(server, rebuilt, missing ? 0 : 5);
             player.setItemSlot(EquipmentSlot.FEET, rebuilt);
             require(fall(player) == (missing ? 6 : 0) && charge(rebuilt) == (missing ? 1_000 : 550),
                     "Upgrade failure bypassed native-query permission or broke independent Negate payment");
@@ -280,10 +280,10 @@ public final class NeoForgeJustDireRootUpgradeTest {
         pair = MixedBootsFactory.createPair(eclipse, boots("ferricore", 0));
         for (var root : List.of(pair.primary(), pair.inverse())) {
             for (int charge : new int[]{1_000, 0, 1_000}) {
-                root.set(JustDireResourceTestSupport.energyComponent(), charge); jump(server, root, 1);
+                root.set(JustDireResourceTestSupport.energyComponent(), charge); jump(server, root, charge >= 5 ? 5 : 1);
             }
         }
-        record("actual jump event: Ferricore installation activates stronger Blazegold once; Eclipse installation activates Ferricore passive with/without FE; root absence denies historical flags");
+        record("actual jump event: Ferricore installation activates stronger Blazegold once; Eclipse/Ferricore uses charged maximum and independent passive fallback/recharge; root absence denies historical flags");
 
         var player = NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL);
         require(fall(player) == 6, "Unprotected survival control is immune");

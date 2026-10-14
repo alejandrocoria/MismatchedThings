@@ -79,6 +79,27 @@ class JustDireJumpShapeTest implements Opcodes {
         }
     }
 
+    @Test
+    void nativePoweredResourceQueryRejectsForeignWalletReadsAndPayments() throws Exception {
+        try (JarFile jar = artifact()) {
+            ClassNode tool = read(jar, JustDireJumpShape.TOOL);
+            ClassNode helper = read(jar, JustDireJumpShape.HELPERS);
+            ClassNode action = read(jar, JustDireJumpShape.ACTION);
+            assertTrue(JustDireJumpShape.api(tool, helper, action));
+            MethodNode resource = JustDireJumpShape.method(helper, "testUseTool",
+                    "(L" + JustDireJumpShape.STACK + ";L" + JustDireJumpShape.ABILITY + ";)I");
+            MethodInsnNode amount = (MethodInsnNode) JustDireJumpShape.code(resource.instructions).stream()
+                    .filter(n -> n instanceof MethodInsnNode c && c.name.equals("getAmountAsInt")).findFirst().orElseThrow();
+            String owner = amount.owner;
+            amount.owner = "foreign/MutableWallet";
+            assertFalse(JustDireJumpShape.api(tool, helper, action));
+            amount.owner = owner;
+            assertTrue(JustDireJumpShape.api(tool, helper, action));
+            amount.name = "extract";
+            assertFalse(JustDireJumpShape.api(tool, helper, action));
+        }
+    }
+
     private static JarFile artifact() throws Exception {
         String path = System.getProperty("mismatchedboots.test.justDireGuardJar");
         assumeTrue(path != null, "Native artifact characterization is opt-in");

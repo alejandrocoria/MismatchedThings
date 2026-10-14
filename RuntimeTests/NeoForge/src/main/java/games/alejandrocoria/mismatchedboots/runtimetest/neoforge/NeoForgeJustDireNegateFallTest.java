@@ -357,11 +357,18 @@ public final class NeoForgeJustDireNegateFallTest {
             root.set(JustDireResourceTestSupport.energyComponent(), 0);
             require(!charged.equals(root.getAttributeModifiers()), "Negate guard disabled independent live armor selection");
         }
+        var poweredOnly = MixedBootsFactory.createPair(NeoForgeJustDireJumpTest.poweredBoots("celestigem", 10), new ItemStack(Items.IRON_BOOTS)).primary();
+        movement.setItemSlot(EquipmentSlot.FEET, poweredOnly); movement.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        var poweredBefore = poweredOnly.copy(); movement.jumpFromGround();
+        int poweredValue = jumpReady && !guard.equals("capabilityMissing") ? 3 : 0;
+        require(Math.abs(movement.getDeltaMovement().y - ordinaryJump - poweredValue / 7.5f) < 1e-7
+                && ItemStack.matches(poweredBefore, poweredOnly), "Independent powered Jump/capability refusal lost " + guard);
         if (guard.equals("compatible")) {
             require(JustDireJumpGuardPlugin.jumpReads > 0 && JustDireJumpGuardPlugin.fallReads > 0, "Real compatible wrappers did not execute");
         }
         record("guard " + guard + " isolation", "native original; final permissions; paired movement; "
-                + (guard.equals("capabilityMissing") ? "actual missing capability causes no payment/protection" : "production FE and live armor remain available"));
+                + (guard.equals("capabilityMissing") ? "actual missing capability denies powered Jump, retains passive Jump and causes no payment/protection"
+                    : "production FE/live armor/powered Jump remain independent"));
     }
 
     private static Fall fall(ServerPlayer player, double distance) {

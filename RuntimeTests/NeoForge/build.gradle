@@ -937,7 +937,7 @@ tasks.register('verifyJustDirePoweredJumpSpike') {
             def success = new File(directory, "${prefix}-success.txt")
             def report = new File(directory, "${prefix}-report.txt")
             def expected = variant == 'Client' ? 'neoforge\n' : "${label}\n"
-            def warnings = log.readLines().count { it.contains('Just Dire Things passive Jump') && it.contains('compatibility disabled') }
+            def warnings = log.readLines().count { it.contains('Just Dire Things Jump') && it.contains('compatibility disabled') }
             if (failure.isFile() || !success.isFile() || success.text != expected || !report.isFile() || log.text.contains('/ERROR]')
                     || warnings != (variant == 'MissingFall' ? 1 : 0)) {
                 throw new GradleException("Powered Jump spike ${label} failed: ${failure.isFile() ? failure.text : log}")
@@ -1161,7 +1161,7 @@ tasks.register('verifyJustDireJumpGuards') {
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-jump-failure.txt')
             def success = new File(directory, 'just-dire-jump-success.txt')
-            def warnings = log.readLines().findAll { it.contains('Just Dire Things passive Jump') && it.contains('compatibility disabled') }
+            def warnings = log.readLines().findAll { it.contains('Just Dire Things Jump') && it.contains('compatibility disabled') }
             if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n'
                     || warnings.size() != (variant == 'MissingFall' ? 1 : 0)) {
                 throw new GradleException("Just Dire Things ${variant} guard failed: ${failure.isFile() ? failure.text : log}; warnings=${warnings}")
@@ -1178,7 +1178,7 @@ tasks.register('verifyJustDireJumpGuards') {
 
 tasks.register('verifyJustDireJump') {
     group = 'verification'
-    description = 'Runs bounded real Just Dire Things passive jump/fall acceptance.'
+    description = 'Runs bounded production Just Dire Things Jump/fall acceptance with native FE/wear controls.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/neoforge-process.log").get().asFile
@@ -1241,7 +1241,7 @@ tasks.register('verifyJustDireNegateGuards') {
             def success = new File(directory, 'just-dire-negate-fall-success.txt')
             def report = new File(directory, 'just-dire-negate-fall-report.txt')
             def negateWarnings = log.readLines().findAll { it.contains('Negate Fall') && it.contains('compatibility disabled') }
-            def jumpWarnings = log.readLines().findAll { it.contains('passive Jump') && it.contains('compatibility disabled') }
+            def jumpWarnings = log.readLines().findAll { it.contains('Just Dire Things Jump') && it.contains('compatibility disabled') }
             def resourceWarnings = log.readLines().findAll { it.contains('Just Dire Things storage API') && it.contains('compatibility disabled') }
             if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
                     || negateWarnings.size() != (variant in ['ConsumerChanged', 'PublicationChanged', 'ApiMissing'] ? 1 : 0)

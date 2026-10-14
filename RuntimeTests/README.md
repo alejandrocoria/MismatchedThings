@@ -309,15 +309,23 @@ run preparation. They are detached from ordinary `build`/`check`:
 
 The jump gate first runs a bounded server movement/actual-fall-health matrix,
 then a hidden/muted client in a copy of its disposable world. Native originals
-are controls. Its six direct jump checks are followed by eight actual keyboard
-flights: ordinary/native Ferricore height controls and Eclipse Alloy Negate +
-Ferricore passive Jump, both orientations, charged/depleted/recharged. FE changes
+are controls. The maintained server has 122 non-powered/powered cases, including
+native 0/4/5-FE thresholds, strongest usable tier, independent passive fallback,
+root controls, actual fall distance/health and no Jump payment. Its twelve direct
+client checks are followed by twenty actual keyboard flights: native ordinary/
+Ferricore/Blazegold/Celestigem/Eclipse height controls, Eclipse + Ferricore in both
+orientations, Celestigem + vanilla, and Eclipse Negate + Ferricore coexistence.
+Charged/depleted/recharged FE changes
 in place on the equipped server root; normal equipment/attribute packets must
-agree before each flight. The same mixed root must retain the native jump height
-without mutating its stack during ascent. This does not implement powered Jump.
+agree before each flight. The same mixed root must follow the currently usable
+native tier height without mutating its stack during ascent. These normal gates
+use the production resolver/archive, never the powered research-copy path.
+Powered Jump native settings/input remain block B of
+[the production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md).
 The small guard gate separately exercises compatible competing
 WrapOperations, a replaced fall read disabling both hooks, and quiet optional
-absence. Smithing retains its independent recipe/menu acceptance.
+absence (9/9/2 movement/fall cases, including powered native/mixed controls).
+Smithing retains its independent recipe/menu acceptance.
 Every server variant marks its fixture connections client-loaded, sets actual
 survival mode and requires a nine-block unprotected control to lose six health
 points. Each scenario's nine-block comparison requires a nonzero ordinary
@@ -332,7 +340,8 @@ Native-bytecode guard unit checks are opt-in with
 `-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar`.
 The additional final-pair test accepts `-PjustDireTransformedClass=...` pointing
 at an active production/compatible MixinExtras export, not the absent/rejected
-variant. The design, exclusions and manual handoff are maintained in
+variant. The API checks include powered wallet read-only dependencies, rejecting
+foreign wallet reads or payments. The design, exclusions and manual handoff are maintained in
 local-docs, not inferred from successful installation recipes.
 
 ## Just Dire Things Negate Fall Damage (8.4)
@@ -966,7 +975,10 @@ fall hook, live dedicated server and hidden/muted keyboard client. The candidate
 replaces only the value resolver in a generated research **copy** of the production
 JAR. Only Live/MissingFall/Client disposable runs use that copy; Control and the
 existing unflagged passive/guard gates retain the normal JAR. Source/normal archives
-are unchanged. This is not a production powered-Jump implementation.
+are not overwritten by research preparation. After production block A, Control
+now expects the normal archive's powered support without candidate queries;
+Live reuses the maintained server assertions rather than a duplicate matrix.
+This historical research route is retained until block C, not the production gate.
 
 Native controls test 0/4/5 FE availability, resource preservation, root controls,
 native tier clamps, strongest usable maximum, passive fallback/recharge and
@@ -974,7 +986,9 @@ actual fall health/Negate/AIRBURST ordering. The existing client physics harness
 has twelve direct checks and fourteen keyboard flights with normal movement and
 equipment/attribute packets; both Eclipse+Ferricore orientations and
 Celestigem+vanilla follow in-place 5/4/5 FE changes with native-equivalent heights.
-The ordinary eight-flight passive client suite is unchanged when unflagged.
+Those twelve/fourteen counts describe the executed 2026-10-14 spike, not a new
+run after production conversion. The current shared client harness has twenty
+flights; its flag selects research output/archive context, not a second physics suite.
 
 Reports/logs are under `reports/just-dire-powered-jump/<version>/` in the NeoForge
 fixture build directory. The verifier checks markers, reports, ERROR entries and
@@ -984,8 +998,9 @@ The [bounded record](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-EXPLORATION.md)
 owns the static/native findings, research-copy bootstrap distinction and validation.
 The owner accepted its policies on 2026-10-14. The separate
 [production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md)
-has A resolver/guards, B native settings/input and C lifecycle/consolidation pending;
-production/manual gates are not established by this spike. Future production
+has A resolver/guards implemented, with production validation recorded there;
+B native settings/input and C lifecycle/consolidation/manual acceptance remain pending.
+Production/manual gates are not established by this spike. Production
 acceptance must use normal archives without the research replacement.
 
 ## Vanilla armor classification

@@ -34,7 +34,7 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
             if (available && transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
                 extensions.add(this);
             } else { available = false; }
-            if (!available) { Constants.LOG.warn("Just Dire Things passive Jump local contract/API incompatible; compatibility disabled"); }
+            if (!available) { Constants.LOG.warn("Just Dire Things Jump local contract/API incompatible; compatibility disabled"); }
             if (available) {
                 try {
                     negateAvailable = JustDireNegateFallShape.flow(handler, false) && JustDireNegateFallShape.api(
@@ -47,10 +47,10 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
             }
         } catch (ClassNotFoundException failure) {
             available = false;
-            if (present) { Constants.LOG.warn("Just Dire Things passive Jump API incomplete; compatibility disabled", failure); }
+            if (present) { Constants.LOG.warn("Just Dire Things Jump API incomplete; compatibility disabled", failure); }
         } catch (Exception | LinkageError failure) {
             available = false;
-            Constants.LOG.warn("Could not inspect Just Dire Things passive Jump API; compatibility disabled", failure);
+            Constants.LOG.warn("Could not inspect Just Dire Things Jump API; compatibility disabled", failure);
         }
     }
 
@@ -60,7 +60,7 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         if (node.name.equals(JustDireJumpShape.HANDLER)) {
             boolean jump = JustDireJumpShape.publish(node);
-            if (!jump) { Constants.LOG.warn("Just Dire Things passive Jump transformed paired hooks incompatible; compatibility disabled"); }
+            if (!jump) { Constants.LOG.warn("Just Dire Things Jump transformed paired hooks incompatible; compatibility disabled"); }
             boolean negate = JustDireNegateFallShape.publish(node, jump && negateAvailable);
             if (jump && negateAvailable && !negate) {
                 Constants.LOG.warn("Just Dire Things Negate Fall transformed flow incompatible; compatibility disabled");
