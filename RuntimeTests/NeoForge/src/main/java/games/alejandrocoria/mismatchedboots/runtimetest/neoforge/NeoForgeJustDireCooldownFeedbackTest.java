@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.mojang.serialization.JsonOps;
+import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireCooldownHud;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -28,9 +29,10 @@ import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/** Real native draw extraction and automatic server ticking, with a test-only presentation candidate. */
+/** Shared native observers/assertions; production HUD runs never enable candidate view/emission patches. */
 final class NeoForgeJustDireCooldownFeedbackTest {
-    private static final String OUTPUT = "just-dire-cooldown-feedback";
+    private static final boolean PRODUCTION = Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest");
+    private static final String OUTPUT = PRODUCTION ? "just-dire-cooldown-hud" : "just-dire-cooldown-feedback";
     private static final String VARIANT = JustDireCooldownFeedbackSpike.VARIANT;
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
@@ -52,7 +54,12 @@ final class NeoForgeJustDireCooldownFeedbackTest {
             if (job != null) { if (!job.isDone()) { return; } job.get(); job = null; }
             Step step = steps.peek();
             if (step == null) {
-                NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", report + "test-only native HUD/sound candidate; synthetic extraction, not physical/rendered/audible acceptance\n");
+                // As in the native-settings fixture, drain final ordinary slot/close packets
+                // before stopping the local channel; a teardown race is not HUD acceptance.
+                if (++waiting <= 20) { return; }
+                NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", report + (PRODUCTION
+                        ? "production HUD only; candidate view/tick/audio patches disabled; draw extraction, not physical/audible acceptance\n"
+                        : "test-only native HUD/sound candidate; synthetic extraction, not physical/rendered/audible acceptance\n"));
                 NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", VARIANT + "\n"); finished = true;
             } else if (!started) { step.start.run(); started = true; waiting = 0; }
             else if (step.done.getAsBoolean()) { report.append(step.name).append('\n'); steps.remove(); started = false; waiting = 0; }
@@ -68,7 +75,8 @@ final class NeoForgeJustDireCooldownFeedbackTest {
             add("quiet absence: no candidate HUD or optional settings linkage", () -> {
                 require(!JustDireCooldownFeedbackSpike.hudReady && !JustDireSettingsCompatibility.available(), "Absent native routes available");
                 var ordinary = new ItemStack(Items.DIAMOND_BOOTS);
-                require(JustDireCooldownFeedbackSpike.view(client.player, EquipmentSlot.FEET, ordinary) == ordinary, "Absent view replaced ordinary boots");
+                require((PRODUCTION ? JustDireCooldownHud.view(ordinary, EquipmentSlot.FEET)
+                        : JustDireCooldownFeedbackSpike.view(client.player, EquipmentSlot.FEET, ordinary)) == ordinary, "Absent view replaced ordinary boots");
             });
             return;
         }
@@ -77,16 +85,28 @@ final class NeoForgeJustDireCooldownFeedbackTest {
         overlay = type.getField("INSTANCE").get(null);
         render = type.getMethod("render", GuiGraphicsExtractor.class, net.minecraft.client.DeltaTracker.class);
         add("native HUD callbacks publish readiness after real final transforms", () -> {
-            require(JustDireCooldownFeedbackSpike.hudReady == !VARIANT.equals("hooksMissing"), "Wrong final hook readiness");
+            boolean ready = JustDireCooldownFeedbackSpike.hudReady;
+            if (PRODUCTION) {
+                try {
+                    var getter = type.getDeclaredMethod("mismatchedboots$justDireCooldownReady"); getter.setAccessible(true);
+                    ready = (boolean) getter.invoke(null);
+                } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+                require(!JustDireCooldownFeedbackSpike.hudReady, "Research bridge active during production acceptance");
+            }
+            require(ready == !VARIANT.equals("hooksMissing"), "Wrong final hook readiness");
             require(JustDireSettingsCompatibility.available(), "HUD failure disabled existing settings");
         });
         add("actual native icon extraction and mixed read-view matrix", () -> {
             try { hud(client); } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
         });
-        for (int orientation = -1; orientation < 2; orientation++) {
-            for (boolean active : new boolean[]{true, false}) { soundCase(client, orientation, active, false); }
+        if (PRODUCTION) {
+            packetView(client);
+        } else {
+            for (int orientation = -1; orientation < 2; orientation++) {
+                for (boolean active : new boolean[]{true, false}) { soundCase(client, orientation, active, false); }
+            }
+            soundCase(client, 0, true, true);
         }
-        soundCase(client, 0, true, true);
         persistedTierView(client);
         add("stop observing without altering persisted gameplay state", () -> JustDireCooldownFeedbackSpike.capturingSounds = false);
     }
@@ -105,6 +125,13 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 require(control.size() == 22, "Native eleven-ability draw control missing: " + control.size()
                         + "; textures=" + control.stream().map(draw -> draw.texture().toString()).distinct().toList()
                         + "; slots=" + java.util.Arrays.stream(EquipmentSlot.values()).map(slot -> slot + ":" + client.player.getItemBySlot(slot)).toList());
+                var expectedDraws = control;
+                if (PRODUCTION && VARIANT.equals("parametersMissing")) {
+                    var full = nativeRoot.get(JustDireEarthquakeTestSupport.timers());
+                    setClocks(nativeRoot, List.of(clock("groundstomp", 100, false)));
+                    expectedDraws = extract(client); setClocks(nativeRoot, full);
+                    require(expectedDraws.size() == 20, "Native GS-only partial-failure control missing");
+                }
                 var pair = MixedBootsFactory.createPair(JustDireEarthquakeTestSupport.original(0), new ItemStack(Items.DIAMOND_BOOTS));
                 for (var root : List.of(pair.primary(), pair.inverse())) {
                     setClocks(root, nativeRoot.get(JustDireEarthquakeTestSupport.timers()));
@@ -112,8 +139,8 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                     JustDireAttributeTestSupport.set(root, "tool_enabled", false);
                     var before = root.copy(); client.player.setItemSlot(EquipmentSlot.FEET, root);
                     var actual = extract(client);
-                    boolean disabled = VARIANT.equals("hooksMissing") || VARIANT.equals("parametersMissing");
-                    require(disabled ? actual.size() == 18 : actual.equals(control), "Native order/geometry/color mismatch: " + VARIANT);
+                    boolean disabled = VARIANT.equals("hooksMissing") || !PRODUCTION && VARIANT.equals("parametersMissing");
+                    require(disabled ? actual.size() == 18 : actual.equals(expectedDraws), "Native order/geometry/color mismatch: " + VARIANT);
                     require(ItemStack.matches(root, before) && client.player.getItemBySlot(EquipmentSlot.FEET) == root, "Rendering mutated/swapped actual root");
                     report.append("eleven native cooldown icons; both orientations; EQ phase=").append(phase).append("; root off/uninstalled/zero FE; exact draws or isolated fallback\n");
                 }
@@ -145,6 +172,14 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                             "Native client offsets not respected");
                 } finally { set.invoke(offsetX, oldX); set.invoke(offsetY, oldY); }
                 report.append("GS-only; safe maximum counters; retained unsupported/duplicate/foreign evidence; F1/no player; actual native config offsets\n");
+                if (PRODUCTION) {
+                    root.setCount(2); require(extract(client).isEmpty(), "Non-count-one root acquired a native HUD identity"); root.setCount(1);
+                    client.player.setItemSlot(EquipmentSlot.FEET, new ItemStack(root.getItem()));
+                    require(extract(client).isEmpty(), "Missing mixed provenance acquired a native HUD identity");
+                    client.player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); client.player.setItemSlot(EquipmentSlot.OFFHAND, root);
+                    require(extract(client).isEmpty(), "Non-FEET mixed clock was projected");
+                    report.append("invalid count/provenance and non-FEET roots keep native rejection\n");
+                }
             }
         } finally {
             client.options.hideGui = hidden;
@@ -169,6 +204,36 @@ final class NeoForgeJustDireCooldownFeedbackTest {
         try { render.invoke(overlay, new GuiGraphicsExtractor(client, new GuiRenderState(), 0, 0), client.getDeltaTracker()); }
         finally { JustDireCooldownFeedbackSpike.capturingDraws = false; }
         return List.copyOf(JustDireCooldownFeedbackSpike.draws);
+    }
+
+    private static void packetView(Minecraft client) {
+        add("seed off/uninstalled charged root for ordinary production equipment packets", () -> server(client, player -> {
+            try {
+                player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
+                expected = JustDireEarthquakeTestSupport.mixed(0, false, false);
+                expected.set(JustDireResourceTestSupport.energyComponent(), 13_579);
+                JustDireAttributeTestSupport.set(expected, "tool_enabled", false);
+                JustDireAttributeTestSupport.set(expected, "earthquake_upgrade_installed", false);
+                setClocks(expected, List.of(clock("groundstomp", 150, false), clock("earthquake", 150, true)));
+                history = ModContent.getMixedBootsData(expected).orElseThrow();
+                JustDireCooldownFeedbackSpike.sounds.clear(); JustDireCooldownFeedbackSpike.capturingSounds = true;
+                player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        }));
+        add("actual root clock progression/FE/provenance reaches native draws without candidate ticking", () -> {}, () -> {
+            try {
+                var root = client.player.getItemBySlot(EquipmentSlot.FEET);
+                if (!ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(expected))) { return false; }
+                var clock = JustDireEarthquakeTestSupport.clock(root, "earthquake");
+                if (clock == null || !clock.active() || clock.ticks() >= 150) { return false; }
+                require(clock.ticks() > 0 && JustDireEarthquakeTestSupport.charge(root) == 13_579
+                        && ModContent.getMixedBootsData(root).orElseThrow().equals(history), "HUD changed resources/history or spent clock");
+                var before = root.copy(); var draws = extract(client);
+                require(draws.size() == (VARIANT.equals("hooksMissing") ? 0 : VARIANT.equals("parametersMissing") ? 2 : 4)
+                        && ItemStack.matches(before, root) && JustDireCooldownFeedbackSpike.sounds.isEmpty(), "Packet HUD mutation or candidate feedback");
+                return true;
+            } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        });
     }
 
     private static void soundCase(Minecraft client, int orientation, boolean active, boolean pause) {
@@ -261,7 +326,7 @@ final class NeoForgeJustDireCooldownFeedbackTest {
                 var clock = JustDireEarthquakeTestSupport.clock(root, "groundstomp");
                 if (clock == null || clock.ticks() <= 0 || clock.ticks() > 200) { return false; }
                 var before = root.copy(); var draws = extract(client);
-                boolean disabled = VARIANT.equals("hooksMissing") || VARIANT.equals("parametersMissing");
+                boolean disabled = VARIANT.equals("hooksMissing") || !PRODUCTION && VARIANT.equals("parametersMissing");
                 require(draws.size() == (disabled ? 0 : 2) && ItemStack.matches(root, before)
                         && JustDireCooldownFeedbackSpike.sounds.isEmpty(), "Load/tier caused stale HUD or a guessed ready sound");
                 return true;

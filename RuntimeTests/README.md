@@ -897,6 +897,30 @@ acceptance. Ground Stomp's original acceptance belongs to
 the Earthquake extension's executed evidence and owner-accepted final checklist belong to
 [block D](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#10-block-d--lifecycle-consolidation-and-final-handoff).
 
+## Just Dire Things native cooldown HUD production
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownHud verifyPackagedDependencies --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownHud verifyPackagedDependencies "-Pneoforge_version=26.1.2.99" --console=plain
+```
+
+Six isolated client JVMs use the **production** HUD bridge, never the research
+view or completion-emission wrappers: live, compatible high/low equipment-read
+wrappers, discarded bridge output, unavailable Earthquake-only HUD parameters
+and quiet absence. Native blit/world-sound observers do not cancel or emit.
+The parameter fault retains GS icons and native settings/server clock progression.
+Both mixed orientations/phases preserve native cross-slot order/progress; invalid
+display records retain stored evidence, and ordinary packets expose actual live
+root state/FE. F1/no-player/config offsets retain native behavior.
+
+Versioned reports/logs and live/high/low final class exports are under
+`RuntimeTests/NeoForge/build/reports/just-dire-cooldown-hud/<version>/`.
+`justDireCooldownHudTransformedClass` selects the live export for focused NeoForge
+unit characterization, including the adjacent high/low exports. These tests do
+not claim physical/audible acceptance or a new saved-world restart; the real
+tier preview/take case starts from codec-loaded state. Sound production remains
+block B of [the feedback plan](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md).
+
 ## Just Dire Things cooldown HUD / sound research spike
 
 ```powershell
@@ -913,7 +937,10 @@ Reports/logs are versioned under
 `RuntimeTests/NeoForge/build/reports/just-dire-cooldown-feedback/<version>/`.
 
 No production mixin, alternate clock/action, source/equipment swap or private sound
-packet is added. Ordinary equipment packets and a real tier preview/take on a
+packet is added by the research candidate. With production HUD now present, this
+isolated legacy run discards its production view result so it cannot mask candidate
+failure; the production guard's bounded refusal is expected in that research mode.
+Use the separate production gate above for current HUD acceptance. Ordinary equipment packets and a real tier preview/take on a
 codec-loaded root verify live presentation; this is not another world restart.
 The same-tick native active-end/ready ordering differs from local GS/EQ emission;
 the [bounded record](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-EXPLORATION.md#8-test-only-native-hud--owned-clock-sound-spike)

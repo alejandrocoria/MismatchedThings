@@ -82,6 +82,10 @@ tasks.named('test', Test).configure {
     if (justDireSettingsTransformed.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireSettingsTransformedClass', rootProject.file(justDireSettingsTransformed.get()).absolutePath
     }
+    def justDireCooldownHudTransformed = providers.gradleProperty('justDireCooldownHudTransformedClass')
+    if (justDireCooldownHudTransformed.isPresent()) {
+        systemProperty 'mismatchedboots.test.justDireCooldownHudTransformedClass', rootProject.file(justDireCooldownHudTransformed.get()).absolutePath
+    }
     def guardArtifact = providers.gradleProperty('iceAndFireGuardJar')
     if (guardArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.iceAndFireGuardJar', rootProject.file(guardArtifact.get()).absolutePath

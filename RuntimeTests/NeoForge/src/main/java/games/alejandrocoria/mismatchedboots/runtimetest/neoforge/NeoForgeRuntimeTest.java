@@ -33,7 +33,8 @@ public final class NeoForgeRuntimeTest {
             NeoForgeJustDireResourcesGuardTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesTest")) {
             NeoForgeJustDireResourcesTest.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownFeedbackTest")
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest")
+                || Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownFeedbackTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")
@@ -52,7 +53,8 @@ public final class NeoForgeRuntimeTest {
                     (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
         }
         if (FMLEnvironment.getDist().isClient()) {
-            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownFeedbackTest")) {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest")
+                    || Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownFeedbackTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireCooldownFeedbackTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")) {
                 // Inspect the selected native root after the production Post handlers refresh it.

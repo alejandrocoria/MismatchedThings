@@ -195,6 +195,22 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
+            register("justDireCooldownHud${variant}") {
+                client()
+                disableIdeRun()
+                gameDirectory = justDireJumpClientDirectory.get().asFile
+                programArgument('--quickPlaySingleplayer')
+                programArgument('jump')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireCooldownHudTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireCooldownFeedbackVariant', variant.uncapitalize())
+                systemProperty('mixin.debug.export', 'true')
+                systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+                systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireGroundStompTransport {
             client()
             disableIdeRun()
@@ -907,6 +923,55 @@ tasks.register('verifyJustDireCooldownFeedbackSpike') {
                 throw new GradleException("Absent JDT feedback emitted optional linkage warnings: ${log}")
             }
             new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
+    def prepare = tasks.register("prepareJustDireCooldownHud${variant}") {
+        dependsOn('prepareJustDireJumpClient')
+        doLast {
+            fixtureFileOperations.delete { spec ->
+                spec.delete(['failure', 'success', 'report'].collect { suffix -> new File(justDireSmithingMarkers.get().asFile, "just-dire-cooldown-hud-${suffix}.txt") })
+                if (variant == 'Absent') { spec.delete(new File(justDireJumpClientDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")) }
+            }
+        }
+    }
+    tasks.named("runJustDireCooldownHud${variant}") { dependsOn prepare }
+}
+
+tasks.register('verifyJustDireCooldownHud') {
+    group = 'verification'
+    description = 'Checks production-only native JDT HUD reads, final local guards and ordinary equipment synchronization.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-cooldown-hud/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireCooldownHud${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-cooldown-hud-failure.txt')
+            def success = new File(directory, 'just-dire-cooldown-hud-success.txt')
+            def report = new File(directory, 'just-dire-cooldown-hud-report.txt')
+            def hudWarnings = log.readLines().count { it.contains('Just Dire Things cooldown HUD transformed flow incompatible') }
+            def parameterWarnings = log.readLines().count { it.contains('Just Dire Things cooldown HUD metadata unavailable') }
+            if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
+                    || log.text.contains('/ERROR]') || hudWarnings != (variant == 'HooksMissing' ? 1 : 0)
+                    || parameterWarnings != (variant == 'ParametersMissing' ? 1 : 0) || log.text.contains('JDT feedback spike:')) {
+                throw new GradleException("Production JDT HUD ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT HUD emitted optional linkage warnings: ${log}")
+            }
+            new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
+            if (variant in ['Live', 'High', 'Low']) {
+                // Retain the actual final class for focused unit characterization.
+                fixtureFileOperations.copy {
+                    from(new File(justDireJumpClientDirectory.get().asFile, '.mixin.out/class/com/direwolf20/justdirethings/client/overlays/AbilityCooldownOverlay.class'))
+                    into(log.parentFile)
+                    rename('AbilityCooldownOverlay.class', "AbilityCooldownOverlay-${variant.uncapitalize()}.class")
+                }
+            }
             logger.lifecycle(report.text)
         }
     }

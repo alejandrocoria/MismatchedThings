@@ -11,6 +11,8 @@
     "JustDireCooldownDrawMixin",
     "JustDireCooldownHudHighMixin",
     "JustDireCooldownHudLowMixin",
+    "JustDireCooldownHudMetadataMissingMixin",
+    "JustDireCooldownHudMissingMixin",
     "JustDireCooldownHudMixin"
   ],
   "injectors": { "defaultRequire": 1 }

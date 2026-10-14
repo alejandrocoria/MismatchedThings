@@ -35,6 +35,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.justdirethings-settings-client.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.justdirethings-cooldown-hud.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.client.mixins.json"
 
 [[dependencies.${mod_id}]]
