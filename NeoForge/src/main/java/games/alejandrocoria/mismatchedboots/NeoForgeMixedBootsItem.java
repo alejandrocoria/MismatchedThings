@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -8,8 +9,11 @@ import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
@@ -20,6 +24,18 @@ import java.util.function.Consumer;
 public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     public NeoForgeMixedBootsItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public boolean canBeHurtBy(ItemStack stack, DamageSource source) {
+        return !(source.is(DamageTypeTags.IS_FIRE) && JustDireLavaRepairCompatibility.eligible(stack))
+                && super.canBeHurtBy(stack, source);
+    }
+
+    @Override
+    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity) {
+        JustDireLavaRepairCompatibility.tick(stack, entity);
+        return false;
     }
 
     @Override

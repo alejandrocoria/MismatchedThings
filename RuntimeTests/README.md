@@ -1039,6 +1039,49 @@ startup/network markers under `build/network-acceptance/`. The temporary
 baseline/candidate probe/datapack were retired; historical evidence remains in
 [the bounded record](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md).
 
+## Just Dire Things Lava Repair production — block A
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepair --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepairGuards --console=plain
+```
+
+Repeat each command with `"-Pneoforge_version=26.1.2.99"`, then restore the default
+.114 artifacts. The production gate uses the normal packaged mod, no research
+item-hook override or candidate call. Its 22 server groups retain native/mixed
+damage, consumption, live FE/history, transient cancellation and actual effect
+observations; it adds creation/recomposition sanitization and false/absent Lava
+preference preservation. Independent component protection remains effective beside
+the extra fire exception. A refused obsidian write awards no repair or sound.
+
+The subsequent hidden/muted client uses actual spawned native/mixed ItemEntities,
+ordinary particle packets and JDT's registered particle factory, not fixture-made
+particles. It observes levitation, source consumption, native visual metadata and
+completion audio emission, plus the repaired mixed stack arriving by ordinary
+entity data synchronization. This proves delivery/factory use, not subjective
+visual/audibility acceptance or the later native settings/tooltip scope.
+After the owner's presentation follow-up, the client runs damaged and healthy
+native/mixed cases. It retains `productionClient-trajectory.csv` and requires all
+eight server/client ascent series to avoid material downward steps/velocities,
+not merely reach a higher point. This rejects the diagnosed gravity/correction
+oscillation. Client-only prediction controls additionally cover recovery,
+cancellation, timeout, stale coordinates and no root/block mutation; see
+[the correction](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md#86-accepted-healthy-ritual-and-client-motion-correction--2026-10-14).
+Healthy roots now consume source lava in the native-style ritual; switched-off
+roots remain fireproof without consuming it. Native particles/rendering stay reused.
+
+The guard gate starts five isolated servers: absent JDT, missing gameplay API,
+throwing read-only capability query, missing particle API and throwing particle
+construction. Optional failures log once; visual failures do not remove item fire
+resistance or repair, and unrelated upgrades remain available. Root preference
+preservation is registry-only even after optional failure.
+
+Both gates reuse the pinned JDT artifact and disposable preparation. Reports/logs
+are retained under `RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/<version>/`,
+with `production`, `productionClient` and per-guard files. Full pickup/restart/
+dimension/merge/despawn and native control/tooltip consolidation belong to B/C in
+[the plan](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md).
+
 ## Just Dire Things Lava Repair research spike
 
 ```powershell
@@ -1056,8 +1099,9 @@ reuse repairs despite that refusal; the local candidate does not.
 
 Reports/logs are versioned under
 `RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/`. Item-hook and refused-
-write mixins are enabled only by this run's property, never in ordinary tests or
-production archives. The test uses detached entities and explicit ticking, not
+write fault are test-only, never in production archives. The candidate item-hook
+override is enabled only for research; the narrowly selected refused-write fault
+is also reused by the production gate above. The test uses detached entities and explicit ticking, not
 automatic scheduler/merge/despawn integration. Real pickup, world/chunk restart,
 dimension transfer, native controls/transport, tooltips and client visuals remain
 production acceptance work. See

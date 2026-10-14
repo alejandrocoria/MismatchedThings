@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
@@ -29,6 +30,7 @@ public class MismatchedBootsNeoForge {
         JustDireUpgradesCompatibility.initialize(eventBus);
         JustDireGroundStompCompatibility.initialize(eventBus);
         JustDireEarthquakeCompatibility.initialize(eventBus);
+        JustDireLavaRepairCompatibility.initialize(eventBus);
         JustDireSettingsCompatibility.initialize(eventBus);
         JustDireActiveNetwork.initialize();
         JustDireAttributesCompatibility.initialize(eventBus);
@@ -37,6 +39,7 @@ public class MismatchedBootsNeoForge {
             ComponentRulesLifecycle.onServerStarting();
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
+            JustDireLavaRepairCompatibility.clearEpisodes();
             AttributeRulesLifecycle.onServerStopped();
             ComponentRulesLifecycle.onServerStopped();
         });

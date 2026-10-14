@@ -7,16 +7,21 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Adds the two inherited NeoForge item hooks to the packaged root, only in the research process. */
+/** Historical candidate override, only in the research process; production runs use the real hooks. */
 @Mixin(value = NeoForgeMixedBootsItem.class, remap = false)
 public abstract class JustDireLavaRepairItemMixin {
-    public boolean canBeHurtBy(ItemStack stack, DamageSource source) {
-        return !source.is(DamageTypeTags.IS_FIRE) || !JustDireLavaRepairCandidate.eligible(stack);
+    @Inject(method = "canBeHurtBy", at = @At("HEAD"), cancellable = true)
+    private void researchDamage(ItemStack stack, DamageSource source, CallbackInfoReturnable<Boolean> result) {
+        result.setReturnValue(!source.is(DamageTypeTags.IS_FIRE) || !JustDireLavaRepairCandidate.eligible(stack));
     }
 
-    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity) {
+    @Inject(method = "onEntityItemUpdate", at = @At("HEAD"), cancellable = true)
+    private void researchTick(ItemStack stack, ItemEntity entity, CallbackInfoReturnable<Boolean> result) {
         JustDireLavaRepairCandidate.tick(stack, entity);
-        return false;
+        result.setReturnValue(false);
     }
 }

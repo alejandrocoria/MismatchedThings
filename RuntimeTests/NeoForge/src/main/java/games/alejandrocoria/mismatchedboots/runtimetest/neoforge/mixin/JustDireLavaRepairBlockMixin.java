@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireLavaRepairCandidate;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireLavaRepairTestSupport;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -16,6 +17,11 @@ public abstract class JustDireLavaRepairBlockMixin {
     @Inject(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z",
             at = @At("HEAD"), cancellable = true)
     private void refuse(BlockPos pos, BlockState state, int flags, int recursion, CallbackInfoReturnable<Boolean> result) {
+        if (pos.equals(JustDireLavaRepairTestSupport.refusedBlock) && state.is(Blocks.OBSIDIAN)) {
+            JustDireLavaRepairTestSupport.refusedWrites++;
+            result.setReturnValue(false);
+            return;
+        }
         if (pos.equals(JustDireLavaRepairCandidate.refusedBlock) && state.is(Blocks.OBSIDIAN)) {
             JustDireLavaRepairCandidate.refusedWrites++;
             result.setReturnValue(false);

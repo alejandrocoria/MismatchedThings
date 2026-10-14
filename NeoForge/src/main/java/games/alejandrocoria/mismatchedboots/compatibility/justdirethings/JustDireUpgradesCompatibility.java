@@ -98,6 +98,9 @@ public final class JustDireUpgradesCompatibility {
             preserve(previous, output, ability + "_bindingmode");
         }
         preserve(previous, output, "tool_enabled");
+        // Lava Repair is intrinsic, not a sixth installation; its live preferences still belong to root.
+        preserve(previous, output, "lavarepair_toggle");
+        preserve(previous, output, "lavarepair_bindingmode");
         // Live active state is never source-owned again, even when equal to an old projection.
         for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting",
                 "earthquake_bindingmode", "earthquake_custom_setting", "ability_cooldowns")) {

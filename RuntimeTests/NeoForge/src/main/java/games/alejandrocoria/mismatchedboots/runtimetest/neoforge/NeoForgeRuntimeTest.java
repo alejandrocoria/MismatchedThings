@@ -15,7 +15,12 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairSpike")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
+            NeoForgeJustDireLavaRepairTest.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairClientTest")) {
+            // The integrated server belongs to the visual transport fixture.
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> NeoForgeJustDireLavaRepairClientTest.observeServer(event.getServer()));
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairSpike")) {
             NeoForgeJustDireLavaRepairSpike.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeServerTest")) {
             NeoForgeJustDireEarthquakeServerTest.register();
@@ -54,7 +59,9 @@ public final class NeoForgeRuntimeTest {
                     (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
         }
         if (FMLEnvironment.getDist().isClient()) {
-            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest")) {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairClientTest")) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireLavaRepairClientTest.tick(Minecraft.getInstance()));
+            } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireCooldownHudTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")) {
                 // Inspect the selected native root after the production Post handlers refresh it.

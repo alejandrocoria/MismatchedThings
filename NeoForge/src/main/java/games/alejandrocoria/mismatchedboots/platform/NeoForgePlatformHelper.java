@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public void finalizeMixedBootsCreation(ItemStack output, AttributeRuleSet attributes) {
+        JustDireLavaRepairCompatibility.sanitizeProgress(output);
         JustDireUpgradesCompatibility.initializeUpgrades(output);
         JustDireResourcesCompatibility.initializeCharge(output);
         JustDireGroundStompCompatibility.initializeCooldown(output);
@@ -28,6 +30,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public void finalizeMixedBootsRecomposition(ItemStack previous, ItemStack output, AttributeRuleSet attributes) {
+        JustDireLavaRepairCompatibility.sanitizeProgress(output);
         JustDireUpgradesCompatibility.preserveState(previous, output);
         JustDireResourcesCompatibility.preserveCharge(previous, output);
         JustDireAttributesCompatibility.prepare(previous, output, attributes);

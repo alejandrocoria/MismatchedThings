@@ -10,6 +10,9 @@ import java.util.Set;
 /** Opt-in research seams; normal runtime/production launches never acquire these methods. */
 public final class JustDireLavaRepairSpikePlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
+            return mixin.endsWith("BlockMixin");
+        }
         return Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairSpike");
     }
     @Override public void onLoad(String name) {}

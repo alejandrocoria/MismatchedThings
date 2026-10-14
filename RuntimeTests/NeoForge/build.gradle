@@ -115,6 +115,30 @@ neoForge {
     version = neoforge_version
 
     runs {
+        ['', 'ApiMissing', 'ParticlesMissing', 'EmissionFailure', 'QueryFailure', 'Absent'].each { variant ->
+            register("justDireLavaRepair${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireLavaRepairTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireLavaRepairVariant', variant.uncapitalize())
+                jvmArgument('-Xmx1G')
+            }
+        }
+        justDireLavaRepairClient {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireLavaRepairClientTest', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireLavaRepairSpike {
             server()
             disableIdeRun()
@@ -542,6 +566,61 @@ tasks.named('runJustDireSmithing') {
 }
 
 tasks.named('runJustDireLavaRepairSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
+['', 'ApiMissing', 'ParticlesMissing', 'EmissionFailure', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireLavaRepair${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+tasks.named('runJustDireLavaRepairAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+tasks.named('runJustDireLavaRepairClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+
+tasks.register('verifyJustDireLavaRepair') {
+    group = 'verification'
+    description = 'Verifies production intrinsic Lava Repair and native particle delivery, not the research candidate.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'Client'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/production${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireLavaRepair${variant}", log, variant ? 300 : 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = variant ? 'just-dire-lava-repair-client' : 'just-dire-lava-repair'
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+                throw new GradleException("Production Lava Repair ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "production${variant}-report.txt").text = report.text
+            if (variant == 'Client') {
+                def trajectory = new File(directory, 'just-dire-lava-repair-trajectory.csv')
+                if (trajectory.isFile()) { new File(log.parentFile, 'productionClient-trajectory.csv').text = trajectory.text }
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireLavaRepairGuards') {
+    group = 'verification'
+    description = 'Verifies isolated Lava API/query/particle failure and quiet JDT absence.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['ApiMissing', 'ParticlesMissing', 'EmissionFailure', 'QueryFailure', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireLavaRepair${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-lava-repair-failure.txt')
+            def report = new File(directory, 'just-dire-lava-repair-report.txt')
+            def success = new File(directory, 'just-dire-lava-repair-success.txt')
+            def warnings = log.readLines().count { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || warnings != (variant == 'Absent' ? 0 : 1)) {
+                throw new GradleException("Lava Repair ${variant} failed: ${failure.isFile() ? failure.text : log}; warnings=${warnings}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
 tasks.register('verifyJustDireLavaRepairSpike') {
     group = 'verification'
     description = 'Research only: real dropped-item Lava Repair, permanent fire immunity and block-commit boundaries.'
