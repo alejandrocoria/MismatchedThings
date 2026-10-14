@@ -21,8 +21,7 @@ import java.util.concurrent.Future;
 
 /** A real hidden client's local jump, separately from the server's movement/damage gate. */
 final class NeoForgeJustDireJumpClientTest {
-    private static final boolean POWERED_SPIKE = Boolean.getBoolean("mismatchedboots.runtimetest.justDirePoweredJumpSpike");
-    private static final String OUTPUT = POWERED_SPIKE ? "just-dire-powered-jump-client" : "just-dire-jump-client";
+    private static final String OUTPUT = "just-dire-jump-client";
     private static final int[] VALUES = {0, 1, 2, 3, 5, 5, 1, 5, 5, 1, 5, 3, 0, 3, 5, 1, 5, 5, 1, 5};
     private static final double[] nativeHeights = new double[6];
     private static int ticks;
@@ -148,7 +147,7 @@ final class NeoForgeJustDireJumpClientTest {
                     + "Celestigem+vanilla; in-place 5/4/5 FE changes through ordinary integrated-server equipment/attribute packets; "
                     + "native-equivalent height and unchanged ascent state; heights=" + java.util.Arrays.toString(nativeHeights)
                     + "; Eclipse Negate + Ferricore coexistence in both orientations; unchanged ascent resources; "
-                    + (POWERED_SPIKE ? "research copy" : "normal production archive") + "; hidden/muted, not physical/manual acceptance\n");
+                    + "normal production archive; hidden/muted, not physical/manual acceptance\n");
         NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "neoforge\n");
         finished = true;
     }

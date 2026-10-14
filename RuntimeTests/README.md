@@ -874,7 +874,7 @@ action driver. Reports/process logs remain under
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 
 Native widgets configure both Celestigem + Blazegold orientations, live sliders,
-particles, keyboard Ground Stomp, shared Step/passive Jump mouse bindings and
+particles, keyboard Ground Stomp, shared Step/Jump mouse bindings and
 Negate binding removal/explicit disabled mode. Production input spends FE and
 moves an actual non-hostile world target; spent roots, wear and positive paused
 timers are stored in a barrel. The second JVM compares whole disk stacks,
@@ -882,6 +882,28 @@ performs real Celestigem-to-Eclipse preview and normal/shift-click take, verifie
 preserved controls/resources/source history and single template/addition/base
 consumption, then exercises shared passive input during cooldown, natural expiry
 and fresh keyboard/mouse action.
+
+Powered Jump C extends these same four roots/two JVMs, not a separate lifecycle
+suite. Celestigem/Blazegold sources deliberately retain a different Jump value;
+the actual spent wallet is depleted to four FE before save. Reload, inventory pause
+and actual Celestigem-to-Eclipse preview/take preserve that balance, wear, root
+installation/value/bindings and history. Real client movement and isolated server
+movement/fall-health checks observe Blazegold fallback, recharge, disabled Jump,
+and the new permanent maximum five through native widgets and ordinary packets.
+Eclipse/Celestigem roots retain explicit false installation or absent scalar/toggle/
+binding mode: tier smithing must not recreate source preferences. The existing
+two reconnects additionally retain depleted pure-powered Jump and an edited mouse
+binding; toggling off, recharging and toggling on must yield zero/zero/five without
+a bill or historical resource recovery. Server Jump checks disable Negate only on
+a defensive test copy to isolate its fall companion; the actual equipped root is
+unchanged. Hidden/synthetic checks do not grant the final owner acceptance in
+[the powered plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md#5-block-c--lifecycle-consolidation-and-manual-handoff).
+The final maintained runtime/package matrix and focused shape units passed on
+.114/.99 on 2026-10-14; normal .114 artifacts/units are restored. Exact execution,
+log audit and the owner's final five-point manual acceptance on 2026-10-14 belong to
+[C's record](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md#9-block-c--production-lifecycle-and-consolidation).
+That separate owner confirmation accepts C and completes the bounded powered-Jump
+A/B/C plan; synthetic/hidden tests alone do not establish it or a manual loader matrix.
 
 Earthquake D extends these same two JVMs with Eclipse + Celestigem in both
 orientations, one saved active EQ phase and one inactive phase, spent FE/wear,
@@ -979,45 +1001,14 @@ distinction. Use the maintained HUD and lifecycle gates above for current proof.
 
 ## Just Dire Things powered Jump research spike
 
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDirePoweredJumpSpike :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards verifyPackagedDependencies --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDirePoweredJumpSpike :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards verifyPackagedDependencies "-Pneoforge_version=26.1.2.99" --console=plain
-```
-
-Four independent research contexts: normal production control, denied paired
-fall hook, live dedicated server and hidden/muted keyboard client. The candidate
-replaces only the value resolver in a generated research **copy** of the production
-JAR. Only Live/MissingFall/Client disposable runs use that copy; Control and the
-existing unflagged passive/guard gates retain the normal JAR. Source/normal archives
-are not overwritten by research preparation. After production block A, Control
-now expects the normal archive's powered support without candidate queries;
-Live reuses the maintained server assertions rather than a duplicate matrix.
-This historical research route is retained until block C, not the production gate.
-
-Native controls test 0/4/5 FE availability, resource preservation, root controls,
-native tier clamps, strongest usable maximum, passive fallback/recharge and
-actual fall health/Negate/AIRBURST ordering. The existing client physics harness
-has twelve direct checks and fourteen keyboard flights with normal movement and
-equipment/attribute packets; both Eclipse+Ferricore orientations and
-Celestigem+vanilla follow in-place 5/4/5 FE changes with native-equivalent heights.
-Those twelve/fourteen counts describe the executed 2026-10-14 spike, not a new
-run after production conversion. The current shared client harness has twenty
-flights; its flag selects research output/archive context, not a second physics suite.
-
-Reports/logs are under `reports/just-dire-powered-jump/<version>/` in the NeoForge
-fixture build directory. The verifier checks markers, reports, ERROR entries and
-exactly one expected paired-hook warning only in MissingFall. Controls and
-unflagged production regressions must be kept separate from candidate evidence.
-The [bounded record](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-EXPLORATION.md)
-owns the static/native findings, research-copy bootstrap distinction and validation.
-The owner accepted its policies on 2026-10-14. The separate
-[production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md)
-has A resolver/guards and B native settings/input implemented, with separate
-production validation and B's owner-confirmed focused manual acceptance on
-2026-10-14 recorded there; C lifecycle/consolidation and final physical/manual
-acceptance remain pending.
-Production/manual gates are not established by this spike. Production
-acceptance must use normal archives without the research replacement.
+The executable resolver, JAR-copy patcher/driver, opt-in flags, preparation/
+verifier tasks and four research run configurations are retired by production C.
+Useful assertions now belong to the maintained Jump, native settings/input and
+real lifecycle gates above; no alternate resolver or duplicated physics suite
+remains. The [dated exploration](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-EXPLORATION.md)
+retains historical commands/results and the research-copy bootstrap distinction.
+Use [the production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md)
+for current automated evidence and the separate final ordinary-client checklist.
 
 ## Vanilla armor classification
 

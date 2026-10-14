@@ -194,8 +194,7 @@ public final class NeoForgeJustDireJumpTest {
         poweredMatrix(server, poweredReport);
     }
 
-    static int poweredMatrix(MinecraftServer server, StringBuilder report) throws ReflectiveOperationException {
-        int beforeCases = cases;
+    private static void poweredMatrix(MinecraftServer server, StringBuilder report) throws ReflectiveOperationException {
         for (String tier : List.of("celestigem", "eclipsealloy")) {
             int value = tier.equals("celestigem") ? 3 : 5;
             for (int energy : new int[]{0, 4, 5}) {
@@ -277,7 +276,6 @@ public final class NeoForgeJustDireJumpTest {
         var before = handRoot.copy(); require(fall(player, 12) == 0 && ItemStack.matches(before, handRoot), "AIRBURST early return changed");
         report.append("actual 12-block health and observed final distance: Negate wins at 50 FE even with partial bill; otherwise 5-FE Jump applies without payment; native hand AIRBURST still returns first\n");
         observed = null;
-        return cases - beforeCases;
     }
 
     static ItemStack poweredBoots(String tier, int energy) { var stack = boots(tier, true); charge(stack, energy); return stack; }

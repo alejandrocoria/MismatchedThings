@@ -909,7 +909,11 @@ final class NeoForgeJustDireGroundStompClientTest {
             catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
             player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
             JustDireCooldownFeedbackTestSupport.begin(player);
-            var pair = MixedBootsFactory.createPair(boot("eclipsealloy", 0), boot("celestigem", 0));
+            var eclipse = boot("eclipsealloy", 0); var celestigem = boot("celestigem", 0);
+            for (var source : List.of(eclipse, celestigem)) {
+                set(source, "jumpboost_value", 1); set(source, "jumpboost_toggle", false); set(source, "jumpboost_bindingmode", 2);
+            }
+            var pair = MixedBootsFactory.createPair(eclipse, celestigem);
             expected = phase == 0 ? pair.primary() : pair.inverse(); expected.setDamageValue(31);
             try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
                 require(JustDireResourceTestSupport.handler(expected).insert(150_000, transaction) == 150_000, "Lifecycle funding failed"); transaction.commit();
@@ -955,6 +959,11 @@ final class NeoForgeJustDireGroundStompClientTest {
                     && timer(root) > 0 && charge(root) == 95_000, "Wrong phase/resource state at save");
             if (phase == 0) { set(root, "earthquake_upgrade_installed", false); set(root, "tool_enabled", false); }
             else { set(root, "earthquake_toggle", false); }
+            // Both sources advertise Jump, but only the live root may retain installation/preferences.
+            set(root, "jumpboost_upgrade_installed", phase != 0);
+            for (String name : List.of("jumpboost_value", "jumpboost_toggle", "jumpboost_bindingmode")) {
+                root.remove(JustDireAttributeTestSupport.component(name));
+            }
             target.discard(); target = null;
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             JustDireGroundStompLifecycleTestSupport.save(player, phase + 2, root, savedEarthquakePermit, held);
@@ -985,6 +994,15 @@ final class NeoForgeJustDireGroundStompClientTest {
             } catch (Exception failure) { throw new AssertionError(failure); }
         }), () -> charge(feet(client)) == 95_000 && ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance)) && wait > 5);
         feedbackPause(client, 2);
+        add("disk/tier preserves absent Jump preferences and explicit installation on two powered halves", () -> {
+            var root = feet(client);
+            require(flag(root, "jumpboost_upgrade_installed", true) == (phase != 0) && noBinding(root, "jumpboost"), "Tier restored historical Jump installation/binding");
+            for (String name : List.of("jumpboost_value", "jumpboost_toggle", "jumpboost_bindingmode")) {
+                require(!root.has(JustDireAttributeTestSupport.component(name)), "Tier materialized absent Jump control: " + name);
+            }
+            assertClientJump(client, phase == 0 ? 0 : 5);
+            serverJump(client, phase == 0 ? 0 : 5);
+        });
         replaySaved(client, phase + 2);
         open(client); select(client, 36);
         add("native tier inventory shows EQ without a slider or an unused tooltip number", () -> {
@@ -997,7 +1015,11 @@ final class NeoForgeJustDireGroundStompClientTest {
             if (phase == 0) { client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)); }
             else { click(icon(client, "EARTHQUAKE"), 0); }
         }, () -> flag(feet(client), "tool_enabled", true) && flag(feet(client), "earthquake_toggle", true));
-        close(client); earthquakeTarget(client);
+        close(client);
+        add("restored whole-tool control cannot resurrect removed Jump or historical disabled preferences", () -> {
+            assertClientJump(client, phase == 0 ? 0 : 5); serverJump(client, phase == 0 ? 0 : 5);
+        });
+        earthquakeTarget(client);
         add("persisted Earthquake blocks the genuine configured input during lockout", () -> earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0),
                 () -> observedActivation != null && observedActivation.prepared() && !observedActivation.accepted() && charge(feet(client)) == 95_000);
         if (phase == 0) {
@@ -1060,18 +1082,20 @@ final class NeoForgeJustDireGroundStompClientTest {
             client.getSingleplayerServer().setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
             player.setGameMode(GameType.SURVIVAL); player.getInventory().clearContent();
             JustDireCooldownFeedbackTestSupport.begin(player);
-            var pair = MixedBootsFactory.createPair(boot("celestigem", 10_000), boot("blazegold", 0));
+            var powered = boot("celestigem", 10_000); var passive = boot("blazegold", 0);
+            set(powered, "jumpboost_value", 1); set(passive, "jumpboost_value", 1);
+            var pair = MixedBootsFactory.createPair(powered, passive);
             expected = slot == 0 ? pair.primary() : pair.inverse();
             expected.setDamageValue(31); set(expected, "forge_energy", 10_000);
             provenance = ModContent.getMixedBootsData(expected).orElseThrow();
             player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
         }), () -> client.screen == null && ItemStack.matches(expected, feet(client)));
         open(client); select(client, 36);
-        add("native widgets set persistent strength and passive Jump value", () -> {
+        add("native widgets set persistent strength and powered Jump value distinct from history", () -> {
             slider(client, "GROUNDSTOMP").setValue(1); slider(client, "GROUNDSTOMP").setValue(3);
-            slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(2);
+            slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(3);
             click(icon(client, "STEPHEIGHT"), 0);
-        }, () -> value(feet(client), "groundstomp_value") == 3 && value(feet(client), "jumpboost_value") == 2
+        }, () -> value(feet(client), "groundstomp_value") == 3 && value(feet(client), "jumpboost_value") == 3
                 && !flag(feet(client), "stepheight_toggle", true));
         reveal(client, "GROUNDSTOMP");
         add("native particle preference is live root state", () -> click((Button) maps(client, "customSettingsButtons").get(icon(client, "GROUNDSTOMP")), 0),
@@ -1095,9 +1119,16 @@ final class NeoForgeJustDireGroundStompClientTest {
         }));
         hold(client);
         add("packet-delivered spent GS has exact native HUD before save", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, 1));
+        add("deplete the spent root through its real wallet before saving powered Jump fallback", () -> server(client, player -> {
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                require(JustDireResourceTestSupport.handler(player.getItemBySlot(EquipmentSlot.FEET)).extract(4_996, transaction) == 4_996, "Lifecycle depletion failed");
+                transaction.commit();
+            }
+        }), () -> charge(feet(client)) == 4);
+        lifecycleJump(client, 3, 2);
         add("store actual spent root and consumed/unconsumed production packets", () -> server(client, player -> {
             var root = player.getItemBySlot(EquipmentSlot.FEET);
-            require(charge(root) == 5_000 && timer(root) > 0 && !flag(root, "stepheight_toggle", true), "Deferred permit acted before save");
+            require(charge(root) == 4 && timer(root) > 0 && !flag(root, "stepheight_toggle", true), "Deferred permit acted before save");
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             JustDireGroundStompLifecycleTestSupport.save(player, slot, root, consumed, held);
             player.inventoryMenu.broadcastChanges();
@@ -1112,7 +1143,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
                 JustDireCooldownFeedbackTestSupport.begin(player);
                 var root = JustDireGroundStompLifecycleTestSupport.storage(player, false).removeItemNoUpdate(slot);
-                require(charge(root) == 5_000 && root.getDamageValue() == 31 && timer(root) > 0, "Disk resource/wear/timer mismatch");
+                require(charge(root) == 4 && root.getDamageValue() == 31 && timer(root) > 0, "Disk resource/wear/timer mismatch");
                 expected = JustDireGroundStompLifecycleTestSupport.smithing(player, root, slot == 1);
                 JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().clearContent();
@@ -1120,8 +1151,13 @@ final class NeoForgeJustDireGroundStompClientTest {
                 player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
             } catch (Exception failure) { throw new AssertionError(failure); }
         }), () -> ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance))
-                && charge(feet(client)) == 5_000 && JustDireResourceTestSupport.handler(feet(client)).getCapacityAsInt() == 500_000);
+                && charge(feet(client)) == 4 && JustDireResourceTestSupport.handler(feet(client)).getCapacityAsInt() == 500_000);
         feedbackPause(client, 1);
+        lifecycleJump(client, 3, 2);
+        lifecycleCharge(client, 5);
+        lifecycleJump(client, 3, 3);
+        // Keep the pre-existing paid cooldown refusal funded: lack of FE must not mask a lost timer.
+        lifecycleCharge(client, 5_000);
         add("restarted binding modes/removal and switches are still live root controls", () -> require(
                 JustDireSettingsCompatibility.groundStompBinding(feet(client), GLFW.GLFW_KEY_G, false)
                         && JustDireSettingsCompatibility.boundPassives(feet(client), 4, true).equals(List.of("stepheight", "jumpboost"))
@@ -1138,6 +1174,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         },
                 () -> flag(feet(client), "stepheight_toggle", false) && !flag(feet(client), "jumpboost_toggle", true)
                         && charge(feet(client)) == 5_000 && timer(feet(client)) > 0);
+        lifecycleJump(client, 3, 0);
         add("defer another genuine passive reply across ordinary timer equipment packets", () -> {
             holdReply = true; held = null; observedActivation = null; inputRoot = feet(client); before = inputRoot.copy(); mousePress(4, GLFW.GLFW_PRESS);
         }, () -> held != null);
@@ -1150,8 +1187,16 @@ final class NeoForgeJustDireGroundStompClientTest {
                 && charge(feet(client)) == 5_000 && timer(feet(client)) > 0);
         open(client); select(client, 36);
         add("native tier-upgraded screen displays preserved controls", () -> require(slider(client, "GROUNDSTOMP").getValueInt() == 3
-                && slider(client, "JUMPBOOST").getValueInt() == 2 && value(feet(client), "groundstomp_custom_setting") == 1, "Tier UI reset controls"));
+                && slider(client, "JUMPBOOST").getValueInt() == 3
+                && ((Number) field(slider(client, "JUMPBOOST"), "maxValue")).intValue() == 5
+                && value(feet(client), "groundstomp_custom_setting") == 1, "Tier UI reset controls/range"));
+        add("new permanent tier admits five without restoring the historical slider", () -> slider(client, "JUMPBOOST").setValue(5),
+                () -> value(feet(client), "jumpboost_value") == 5);
         close(client);
+        lifecycleJump(client, 5, 5);
+        lifecycleCharge(client, 4);
+        lifecycleJump(client, 5, 2);
+        lifecycleCharge(client, 5_000);
         add("loaded timer expires naturally instead of being reset by tier smithing", () -> {}, () -> timer(feet(client)) == -1);
         add("disk/tier GS expired with one ready cue and no lingering HUD", () -> {
             JustDireCooldownFeedbackTestSupport.assertCompletions(1, 0);
@@ -1172,6 +1217,38 @@ final class NeoForgeJustDireGroundStompClientTest {
         }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
         add("fresh mouse binding uses production listener and one root bill", () -> mousePress(3, GLFW.GLFW_PRESS),
                 () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0);
+    }
+
+    private static void lifecycleCharge(Minecraft client, int energy) {
+        add("ordinary lifecycle charge packet reaches powered Jump: " + energy, () -> {
+            before = feet(client).copy();
+            server(client, player -> {
+                set(player.getItemBySlot(EquipmentSlot.FEET), "forge_energy", energy); player.inventoryMenu.broadcastChanges();
+            });
+        }, () -> {
+            if (charge(feet(client)) != energy || wait <= 5) { return false; }
+            JustDireGroundStompLifecycleTestSupport.sameControls(before, feet(client), false);
+            require(before.getDamageValue() == feet(client).getDamageValue()
+                    && ModContent.getMixedBootsData(before).equals(ModContent.getMixedBootsData(feet(client))), "Charge packet changed wear/history");
+            return true;
+        });
+    }
+
+    private static void lifecycleJump(Minecraft client, int configured, int usable) {
+        add("persisted/tier Jump uses live FE and controls: configured=" + configured + ", usable=" + usable, () -> {
+            assertPoweredJump(client, configured, usable);
+            serverJump(client, usable);
+        });
+    }
+
+    private static void serverJump(Minecraft client, int usable) {
+        server(client, player -> {
+            var root = player.getItemBySlot(EquipmentSlot.FEET); var snapshot = root.copy();
+            // Isolate Jump's real server movement/fall-health companion from independently billed Negate.
+            var jumpOnly = root.copy(); set(jumpOnly, "negatefalldamage_upgrade_installed", false);
+            NeoForgeJustDireJumpTest.check(client.getSingleplayerServer(), jumpOnly, usable);
+            require(ItemStack.matches(snapshot, root), "Server Jump observer changed equipped state/history");
+        });
     }
 
     private static void feedbackPause(Minecraft client, int icons) {
@@ -1221,6 +1298,13 @@ final class NeoForgeJustDireGroundStompClientTest {
     }
 
     private static void reconnect(Minecraft client) {
+        open(client); select(client, 36);
+        add("configure powered Jump before reconnect through the native slider", () -> {
+            slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(5);
+        }, () -> value(feet(client), "jumpboost_value") == 5);
+        assign(client, "JUMPBOOST", 4, true); close(client);
+        lifecycleCharge(client, 4);
+        lifecycleJump(client, 5, 0);
         hold(client);
         add("remember actual server/player and live resources before reconnect", () -> server(client, player -> {
             previousServer = client.getSingleplayerServer(); previousPlayer = player; expected = player.getItemBySlot(EquipmentSlot.FEET).copy();
@@ -1238,6 +1322,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("decode expectations in the new connection registry context", () -> restoreReconnect(client));
         add("ordinary login equipment packets restore the saved root", () -> {},
                 () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)));
+        lifecycleJump(client, 5, 0);
         add("first reconnect retains native spent-clock presentation through login packets", () -> {
             JustDireCooldownFeedbackTestSupport.assertHud(client, (timer(feet(client)) > 0 ? 1 : 0) + (earthquakeClock(feet(client)) != null ? 1 : 0));
             server(client, player -> JustDireCooldownFeedbackTestSupport.observedPlayer = player);
@@ -1296,6 +1381,11 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("fresh native token can re-enable the root after old-token rejection", () -> click(icon(client, "GROUNDSTOMP"), 0),
                 () -> flag(feet(client), "groundstomp_toggle", false));
         close(client);
+        lifecycleCharge(client, 5);
+        lifecycleJump(client, 5, 0);
+        add("fresh persisted mouse restores powered Jump after reconnect without a bill", () -> mousePress(4, GLFW.GLFW_PRESS),
+                () -> flag(feet(client), "jumpboost_toggle", false) && charge(feet(client)) == 5);
+        lifecycleJump(client, 5, 5);
     }
 
     private static void snapshotReconnect(Minecraft client) {
