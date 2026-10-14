@@ -69,7 +69,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 require(JustDireGroundStompCompatibility.available() && JustDireSettingsCompatibility.available(), "Production APIs unavailable");
                 JustDireGroundStompTestSupport.initializeApi();
                 nativePassiveBindings(server);
-                effectsAndProviders(server); paymentAndBreak(server); permits(server); mousePermits(server); settings(server); timers(server); faults(server);
+                effectsAndProviders(server); paymentAndBreak(server); permits(server); mousePermits(server); settings(server); poweredJumpSettings(server); timers(server); faults(server);
                 passiveBindings(server);
             }
             NetworkAcceptanceFiles.write(PREFIX + "-report.txt", groups + " production server groups\n" + report);
@@ -197,10 +197,11 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 require(!rebuilt.has(component("jumpboost_bindingmode")) && rebuilt.get(component("stepheight_bindingmode")).equals(0), "Explicit mode absence/removal lost");
             }
         }
-        var unsupported = root("eclipsealloy", 0); player.setItemSlot(EquipmentSlot.FEET, unsupported);
+        var unsupported = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        player.setItemSlot(EquipmentSlot.FEET, unsupported);
         set(unsupported, "jumpboost_upgrade_installed", true); set(unsupported, "jumpboost_bindingmode", 2);
         set(unsupported, "ability_bindings", List.of(binding("jumpboost", 72, false), binding("earthquake", 72, false)));
-        require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 72, false)).accepted(), "Powered Jump/Earthquake binding enabled execution");
+        require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 72, false)).accepted(), "Unsupported tier acquired Jump/Earthquake input");
         record("passive keyboard/mouse on both orientations: installed/tier admission, one toggle per ability, off/depleted/global-off eligibility, exact whole-root mutation, stale/device/replay/equipment/mode/installation rejection; shared active first/single bill and cooldown-independent toggles; live mode/removal recomposition");
         var root = pair.primary().copy(); player.setItemSlot(EquipmentSlot.FEET, root);
         for (String name : names) { set(root, name + "_upgrade_installed", true); set(root, name + "_bindingmode", 2); }
@@ -454,10 +455,10 @@ public final class NeoForgeJustDireGroundStompServerTest {
         player.containerMenu = player.inventoryMenu;
         record("actual native menu: installed root range at zero FE, ordered edits/replay/range/ability/mode/device rejection, live resource/timer coexistence, keyboard capture/removal, identity/generation/close invalidation and unchanged sources");
         require(JustDireSettingsCompatibility.metadata(root("ferricore", 0), "jumpboost") != null
-                && JustDireSettingsCompatibility.metadata(root("eclipsealloy", 0), "jumpboost") == null
+                && JustDireSettingsCompatibility.metadata(root("eclipsealloy", 0), "jumpboost").maximum() == 5
                 && JustDireSettingsCompatibility.metadata(root, "earthquake") != null
                 && JustDireSettingsCompatibility.metadata(root("celestigem", 0), "earthquake") == null, "Ability metadata lost its tier boundaries");
-        record("settings inventory excludes powered Jump and ineligible Earthquake, retains passive Jump, depleted powered Ground Stomp and Eclipse Earthquake ranges");
+        record("settings inventory includes powered Jump's permanent tier range, excludes ineligible Earthquake and retains depleted powered Ground Stomp/Eclipse Earthquake ranges");
         var combined = MixedBootsFactory.createPair(boots("blazegold", 0), boots("eclipsealloy", 0)).primary();
         for (String ability : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp")) { set(combined, ability + "_upgrade_installed", true); }
         player.setItemSlot(EquipmentSlot.FEET, combined); player.containerMenu = menu;
@@ -490,6 +491,56 @@ public final class NeoForgeJustDireGroundStompServerTest {
         require(selected.accepted() && !JustDireActiveNetwork.edit(player, request(menu, selection, 2, selected.token(), 1, "jumpboost", 0, 71, false, true)).accepted(), "Uninstalled passive settings authorized edit");
         player.containerMenu = player.inventoryMenu;
         record("installed supported passive settings: Step/Jump/Negate toggles and Jump slider, tool disable/re-enable, uninstalled rejection; no dead Step/Negate numeric setting");
+    }
+
+    private static void poweredJumpSettings(MinecraftServer server) throws Exception {
+        var player = player(server, GameType.SURVIVAL);
+        var menu = (AbstractContainerMenu) Class.forName("com.direwolf20.justdirethings.common.containers.ToolSettingContainer")
+                .getConstructor(int.class, net.minecraft.world.entity.player.Inventory.class, net.minecraft.world.entity.player.Player.class)
+                .newInstance(10, player.getInventory(), player);
+        for (String tier : List.of("celestigem", "eclipsealloy")) {
+            for (boolean passive : tier.equals("eclipsealloy") ? new boolean[]{false, true} : new boolean[]{false}) {
+                var pair = MixedBootsFactory.createPair(NeoForgeJustDireJumpTest.poweredBoots(tier, 0), passive
+                        ? NeoForgeJustDireJumpTest.boots("ferricore", true) : new ItemStack(Items.DIAMOND_BOOTS));
+                for (var root : List.of(pair.primary(), pair.inverse())) {
+                    int maximum = tier.equals("celestigem") ? 3 : 5;
+                    player.setItemSlot(EquipmentSlot.FEET, root); player.containerMenu = menu;
+                    set(root, "tool_enabled", false); set(root, "jumpboost_toggle", false);
+                    var selected = JustDireActiveNetwork.edit(player, request(menu, ++selection, 1, JustDireActiveNetwork.NONE,
+                            JustDireActiveNetwork.SELECT, "", 0, -1, false, true));
+                    require(selected.accepted(), "Powered Jump selection rejected at zero FE");
+                    int number = 2;
+                    for (int energy : new int[]{0, 4, 5}) {
+                        set(root, "forge_energy", energy); set(root, "tool_enabled", false); set(root, "jumpboost_toggle", false);
+                        var before = root.copy(); set(before, "jumpboost_value", maximum);
+                        require(JustDireSettingsCompatibility.metadata(root, "jumpboost").maximum() == maximum
+                                && JustDireActiveNetwork.edit(player, request(menu, selection, number++, selected.token(),
+                                    JustDireActiveNetwork.VALUE, "jumpboost", maximum, -1, false, true)).accepted()
+                                && ItemStack.matches(before, root), "Live resources/switches changed the permanent range or setting edit");
+                        require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, selected.token(),
+                                    JustDireActiveNetwork.VALUE, "jumpboost", maximum + 1, -1, false, true)).accepted()
+                                && ItemStack.matches(before, root), "Forged powered Jump range changed root state");
+                        set(root, "tool_enabled", true); set(root, "jumpboost_toggle", true);
+                        NeoForgeJustDireJumpTest.check(server, root, energy >= 5 ? maximum : passive ? 1 : 0);
+                        // Restore the selected controls before another request; only live resources
+                        // may drift without a settings edit or reselection.
+                        set(root, "tool_enabled", false); set(root, "jumpboost_toggle", false);
+                    }
+                    var before = root.copy(); root.setDamageValue(root.getMaxDamage());
+                    require(JustDireSettingsCompatibility.metadata(root, "jumpboost").maximum() == maximum, "Wear shrank the permanent Jump range");
+                    root.setDamageValue(before.getDamageValue());
+                    root.remove(component("jumpboost_upgrade_installed")); before = root.copy();
+                    selected = JustDireActiveNetwork.edit(player, request(menu, ++selection, 1, JustDireActiveNetwork.NONE,
+                            JustDireActiveNetwork.SELECT, "", 0, -1, false, true));
+                    require(selected.accepted(), "Uninstalled powered tier lost permanent selection metadata");
+                    require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, selected.token(),
+                                JustDireActiveNetwork.VALUE, "jumpboost", maximum, -1, false, true)).accepted()
+                            && ItemStack.matches(before, root), "Historical powered installation authorized a setting edit");
+                    record(tier + (passive ? "+Ferricore" : "+vanilla") + ": settings bounds at 0/4/5 FE/off/worn; rejected overflow/uninstalled edits; actual movement/fall follows the edited root without payment");
+                }
+            }
+        }
+        player.containerMenu = player.inventoryMenu;
     }
 
     private static void timers(MinecraftServer server) throws Exception {

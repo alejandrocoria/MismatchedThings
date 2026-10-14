@@ -101,7 +101,6 @@ public final class JustDireSettingsCompatibility {
                 Identifier id = BuiltInRegistries.ITEM.getKey(source.getItem());
                 if (!id.getNamespace().equals("justdirethings") || !binding.tool.isInstance(source.getItem())
                         || !List.of("ferricore_boots", "blazegold_boots", "celestigem_boots", "eclipsealloy_boots").contains(id.getPath())
-                        || name.equals("jumpboost") && !List.of("ferricore_boots", "blazegold_boots").contains(id.getPath())
                         || !((Set<?>) binding.abilities.invokeExact(source.getItem())).contains(setting.ability)) { continue; }
                 Object params = binding.params.invokeExact(source.getItem(), setting.ability);
                 Metadata metadata = nativeMetadata(binding, params, name.equals("stepheight") || name.equals("negatefalldamage"));

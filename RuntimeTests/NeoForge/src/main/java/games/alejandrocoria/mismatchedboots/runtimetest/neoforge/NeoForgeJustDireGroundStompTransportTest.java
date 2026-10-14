@@ -140,8 +140,10 @@ final class NeoForgeJustDireGroundStompTransportTest {
                 serverRoot = JustDireEarthquakeTestSupport.mixed(150_000, false, false);
                 set(serverRoot, "groundstomp_upgrade_installed", true); set(serverRoot, "groundstomp_bindingmode", 2);
                 set(serverRoot, "stepheight_upgrade_installed", true); set(serverRoot, "stepheight_bindingmode", 2);
+                set(serverRoot, "jumpboost_upgrade_installed", true); set(serverRoot, "jumpboost_bindingmode", 2);
                 set(serverRoot, "ability_bindings", List.of(JustDireEarthquakeTestSupport.binding("groundstomp", 71),
-                        JustDireEarthquakeTestSupport.binding("earthquake", 72), JustDireEarthquakeTestSupport.binding("stepheight", 73)));
+                        JustDireEarthquakeTestSupport.binding("earthquake", 72), JustDireEarthquakeTestSupport.binding("stepheight", 73),
+                        JustDireEarthquakeTestSupport.binding("jumpboost", 73)));
                 serverRoot.set(JustDireEarthquakeTestSupport.timers(), List.of(JustDireEarthquakeTestSupport.timer("earthquake", 77, true)));
                 player.setItemSlot(EquipmentSlot.FEET, serverRoot); player.inventoryMenu.broadcastChanges();
             } catch (Exception failure) { throw new IllegalStateException(failure); }
@@ -159,10 +161,11 @@ final class NeoForgeJustDireGroundStompTransportTest {
             }
             player.inventoryMenu.broadcastChanges();
         }), () -> charge(feet(client)) == 151_000 && wait > 5);
-        add("production client forwards the free reply; only its passive toggles despite other ready active bindings", () -> {
+        add("production client forwards the free reply; Step/powered Jump toggle once despite charging and other ready active bindings", () -> {
             holdInput = false; activation = null; JustDireAbilityInput.reply(heldInput);
         }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 151_000
-                && !feet(client).getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), true) && timer(feet(client)) == -1);
+                && !feet(client).getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), true)
+                && !feet(client).getOrDefault(JustDireAttributeTestSupport.<Boolean>component("jumpboost_toggle"), true) && timer(feet(client)) == -1);
         add("restore funded settings and let ordinary derived-attribute packets settle before the paid flight", () -> server(client, player -> {
             set(serverRoot, "forge_energy", 150_000); set(serverRoot, "stepheight_toggle", true); player.inventoryMenu.broadcastChanges();
         }), () -> charge(feet(client)) == 150_000 && feet(client).getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), false) && wait > 5);

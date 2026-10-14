@@ -37,6 +37,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.gui.widget.ExtendedSlider;
 import net.neoforged.neoforge.common.NeoForge;
@@ -195,7 +196,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 var names = maps(client, "buttonToAbilityMap").values().stream().map(Object::toString).toList();
                 require(names.size() == 5 && names.containsAll(List.of("GROUNDSTOMP", "STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "EARTHQUAKE")), "Unsupported/missing abilities: " + names);
                 require(maps(client, "sliders").size() == 2 && ((Number) field(slider(client, "GROUNDSTOMP"), "maxValue")).doubleValue() == 5
-                        && ((Number) field(slider(client, "JUMPBOOST"), "maxValue")).doubleValue() == 2 && charge(feet(client)) == 0, "Per-ability tier ranges wrong");
+                        && ((Number) field(slider(client, "JUMPBOOST"), "maxValue")).doubleValue() == 5 && charge(feet(client)) == 0, "Per-ability tier ranges wrong");
                 require(maps(client, "bindingButtons").size() == 5 && slider(client, "EARTHQUAKE") == null, "Custom bindings or fixed Earthquake controls wrong");
             });
             for (String ability : List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "GROUNDSTOMP")) {
@@ -377,6 +378,109 @@ final class NeoForgeJustDireGroundStompClientTest {
                 () -> !flag(feet(client), "groundstomp_toggle", true));
         close(client);
         earthquake(client);
+        if (VARIANT.equals("live")) { poweredJump(client); }
+    }
+
+    private static void poweredJump(Minecraft client) {
+        for (String tier : List.of("celestigem", "eclipsealloy")) {
+            for (boolean passive : tier.equals("eclipsealloy") ? new boolean[]{false, true} : new boolean[]{false}) {
+                for (boolean inverse : new boolean[]{false, true}) {
+                    int maximum = tier.equals("celestigem") ? 3 : 5;
+                    String label = tier + (passive ? "+Ferricore" : "+vanilla") + "/" + inverse;
+                    var widget = new ExtendedSlider[1];
+                    add("prepare powered Jump-only " + label + " at zero FE", () -> server(client, player -> {
+                        var pair = MixedBootsFactory.createPair(NeoForgeJustDireJumpTest.poweredBoots(tier, 0), passive
+                                ? NeoForgeJustDireJumpTest.boots("ferricore", true) : new ItemStack(Items.DIAMOND_BOOTS));
+                        expected = inverse ? pair.inverse() : pair.primary();
+                        provenance = ModContent.getMixedBootsData(expected).orElseThrow();
+                        player.getInventory().clearContent(); player.setItemSlot(EquipmentSlot.FEET, expected);
+                        player.inventoryMenu.broadcastChanges();
+                    }), () -> client.screen == null && ItemStack.matches(expected, feet(client)));
+                    open(client); select(client, 36);
+                    add("native powered Jump slider sets permanent maximum " + label, () -> {
+                        require(((Number) field(slider(client, "JUMPBOOST"), "maxValue")).intValue() == maximum, "Powered range missing");
+                        slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(maximum);
+                    }, () -> value(feet(client), "jumpboost_value") == maximum);
+                    add("global-off keeps powered Jump's native range " + label,
+                            () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
+                            () -> !flag(feet(client), "tool_enabled", true));
+                    reveal(client, "JUMPBOOST");
+                    add("native powered Jump captures keyboard while depleted/off " + label, () -> {
+                        require(((Number) field(slider(client, "JUMPBOOST"), "maxValue")).intValue() == maximum, "Global-off shrank slider");
+                        click((Button) maps(client, "bindingButtons").get(icon(client, "JUMPBOOST")), 0);
+                        client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
+                    }, () -> JustDireSettingsCompatibility.boundPassives(feet(client), GLFW.GLFW_KEY_V, false).equals(List.of("jumpboost")));
+                    close(client);
+                    add("powered Jump keyboard toggles once without FE/global enablement " + label,
+                            () -> press(GLFW.GLFW_KEY_V, GLFW.GLFW_PRESS),
+                            () -> !flag(feet(client), "jumpboost_toggle", true) && charge(feet(client)) == 0
+                                    && value(feet(client), "jumpboost_value") == maximum);
+                    add("powered Jump keyboard restores preference without payment " + label,
+                            () -> press(GLFW.GLFW_KEY_V, GLFW.GLFW_PRESS),
+                            () -> flag(feet(client), "jumpboost_toggle", false) && charge(feet(client)) == 0);
+                    open(client); select(client, 36); reveal(client, "JUMPBOOST");
+                    add("native powered Jump replaces keyboard with mouse " + label, () -> {
+                        click((Button) maps(client, "bindingButtons").get(icon(client, "JUMPBOOST")), 0);
+                        client.screen.mouseClicked(mouse(1, 1, 3), false);
+                    }, () -> JustDireSettingsCompatibility.boundPassives(feet(client), 3, true).equals(List.of("jumpboost")));
+                    close(client);
+                    add("powered Jump mouse toggles once without FE/global enablement " + label,
+                            () -> mousePress(3, GLFW.GLFW_PRESS),
+                            () -> !flag(feet(client), "jumpboost_toggle", true) && charge(feet(client)) == 0);
+                    add("powered Jump mouse restores preference without payment " + label,
+                            () -> mousePress(3, GLFW.GLFW_PRESS),
+                            () -> flag(feet(client), "jumpboost_toggle", false) && charge(feet(client)) == 0);
+                    open(client); select(client, 36);
+                    add("native global shortcut restores powered Jump consumers " + label,
+                            () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
+                            () -> flag(feet(client), "tool_enabled", false));
+                    add("remember native powered slider identity " + label, () -> widget[0] = slider(client, "JUMPBOOST"));
+                    for (int energy : new int[]{4, 5, 0}) {
+                        add("ordinary charge packet reaches selected powered root " + label + "/" + energy, () -> server(client, player -> {
+                            set(player.getItemBySlot(EquipmentSlot.FEET), "forge_energy", energy);
+                            player.inventoryMenu.broadcastChanges();
+                        }), () -> charge(feet(client)) == energy && wait > 5);
+                        add("powered range/tooltip/effect stay rooted across charge " + label + "/" + energy, () -> {
+                            require(slider(client, "JUMPBOOST") == widget[0] && widget[0].getValueInt() == maximum
+                                    && ((Number) field(widget[0], "maxValue")).intValue() == maximum, "Charge rebuilt/shrank/reclamped native slider");
+                            assertPoweredJump(client, maximum, energy >= 5 ? maximum : passive ? 1 : 0);
+                            require(bindingFor(feet(client), "jumpboost", 3, true)
+                                    && ModContent.getMixedBootsData(feet(client)).orElseThrow().equals(provenance), "Charge erased binding or provenance");
+                        });
+                    }
+                    close(client);
+                }
+            }
+        }
+    }
+
+    private static void assertPoweredJump(Minecraft client, int configured, int usable) {
+        var root = feet(client); var before = root.copy();
+        var lines = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
+        var upgrades = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
+                && text.getKey().equals("tooltip.mismatchedboots.just_dire.upgrade_setting")
+                && text.getArgs()[0] instanceof Component ability && ability.getContents() instanceof TranslatableContents name
+                && name.getKey().equals("justdirethings.ability.jumpboost")).toList();
+        require(upgrades.size() == 1 && ((TranslatableContents) upgrades.getFirst().getContents()).getArgs()[2].equals(configured),
+                "Root tooltip lost/duplicated configured Jump value");
+        var energy = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
+                && text.getKey().equals("justdirethings.festored")).toList();
+        require(energy.size() == 1 && ((TranslatableContents) energy.getFirst().getContents()).getArgs()[0]
+                .equals(String.format(Locale.ROOT, "%,d", charge(root))), "Root tooltip retained historical FE");
+        assertClientJump(client, usable);
+        require(ItemStack.matches(before, root), "Presentation/Jump spent FE or changed root/source controls");
+    }
+
+    private static void assertClientJump(Minecraft client, int usable) {
+        var root = feet(client); var before = root.copy();
+        var player = client.player; var movement = player.getDeltaMovement();
+        try {
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
+            double ordinary = player.getDeltaMovement().y;
+            player.setItemSlot(EquipmentSlot.FEET, root); player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
+            require(Math.abs(player.getDeltaMovement().y - ordinary - usable / 7.5f) < 1e-7, "Edited root value did not reach actual client Jump");
+        } finally { player.setItemSlot(EquipmentSlot.FEET, root); player.setDeltaMovement(movement); }
+        require(ItemStack.matches(before, root), "Actual client Jump changed root state/resources");
     }
 
     private static void earthquake(Minecraft client) {
@@ -733,6 +837,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("independent storage and existing consumers remain available", () -> {
             require(JustDireResourceTestSupport.handler(feet(client)) != null, "Storage disabled by UI failure");
             require(games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility.available(), "Ground Stomp API disabled by UI failure");
+            assertClientJump(client, 5);
         });
     }
 

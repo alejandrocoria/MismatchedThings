@@ -320,7 +320,7 @@ in place on the equipped server root; normal equipment/attribute packets must
 agree before each flight. The same mixed root must follow the currently usable
 native tier height without mutating its stack during ascent. These normal gates
 use the production resolver/archive, never the powered research-copy path.
-Powered Jump native settings/input remain block B of
+Powered Jump native settings/input are implemented by block B of
 [the production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md).
 The small guard gate separately exercises compatible competing
 WrapOperations, a replaced fall read disabling both hooks, and quiet optional
@@ -819,6 +819,20 @@ D.2 adds native passive keyboard/mouse capture, independent and shared toggles,
 global-off/depleted eligibility, live equipped Step attributes, shared Ground
 Stomp/cooldown behavior, reopened preferences and per-ability Escape removal.
 
+Powered Jump B extends the same gate/profile, not a new screen or packet.
+The live context adds six Celestigem/vanilla, Eclipse/vanilla and Eclipse/Ferricore
+primary/inverse configurations: permanent 3/5 slider ranges at zero FE/off,
+native keyboard/mouse capture and free equipped toggles, in-place 4/5/0-FE packets,
+unchanged widget/value/bindings, current root tooltip and actual client Jump.
+High/low contexts retain joint controls with Eclipse's permanent Jump maximum;
+lost UI/API contexts additionally check powered Jump's independent operation.
+The companion server gate adds six native-menu edit/range/uninstalled/movement/
+fall-health groups (21 live groups total). The bundled transport gate shares
+Step/powered Jump's free reply across charging/peer clocks with no extra bill.
+Exact per-loader validation and the focused manual checklist accepted by the
+owner on 2026-10-14 belong to
+[the powered plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md#8-block-b--native-configurationinput-implementation-and-validation).
+
 Earthquake C extends this existing gate with fixed-range/no-slider controls,
 zero-FE editing, particles, install/tier exclusion, native capture cancellation,
 distinct/shared keyboard and mouse flights in both orientations, one root bill
@@ -998,8 +1012,10 @@ The [bounded record](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-EXPLORATION.md)
 owns the static/native findings, research-copy bootstrap distinction and validation.
 The owner accepted its policies on 2026-10-14. The separate
 [production plan](../local-docs/JUST-DIRE-THINGS-POWERED-JUMP-IMPLEMENTATION.md)
-has A resolver/guards implemented, with production validation recorded there;
-B native settings/input and C lifecycle/consolidation/manual acceptance remain pending.
+has A resolver/guards and B native settings/input implemented, with separate
+production validation and B's owner-confirmed focused manual acceptance on
+2026-10-14 recorded there; C lifecycle/consolidation and final physical/manual
+acceptance remain pending.
 Production/manual gates are not established by this spike. Production
 acceptance must use normal archives without the research replacement.
 
