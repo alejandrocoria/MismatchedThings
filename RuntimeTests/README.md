@@ -33,6 +33,9 @@ normal indev client/server runs.
 
 Run Gradle tasks sequentially from the repository root:
 
+The opt-in Lava Repair research gate is documented under
+[Just Dire Things Lava Repair research spike](#just-dire-things-lava-repair-research-spike).
+
 ```powershell
 .\gradlew.bat :Common:test
 .\gradlew.bat :RuntimeTests:Fabric:test
@@ -1035,3 +1038,27 @@ NeoForge with `"-Pneoforge_version=26.1.2.99"` and restore the default afterward
 startup/network markers under `build/network-acceptance/`. The temporary
 baseline/candidate probe/datapack were retired; historical evidence remains in
 [the bounded record](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md).
+
+## Just Dire Things Lava Repair research spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepairSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepairSpike "-Pneoforge_version=26.1.2.99" --console=plain
+```
+
+This opt-in dedicated-server research gate uses the same hash-pinned JDT 1.6.11
+and disposable preparation as smithing. It runs 23 bounded groups with actual
+server-thread `ItemEntity.tick()` calls, native controls and a test-only mixed
+candidate: permanent fire immunity, source consumption/root repair, unchanged
+FE/history, disabled/healthy/flowing controls, interruptions, stale native progress,
+two-entity source contention and an injected refused obsidian write. Native helper
+reuse repairs despite that refusal; the local candidate does not.
+
+Reports/logs are versioned under
+`RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/`. Item-hook and refused-
+write mixins are enabled only by this run's property, never in ordinary tests or
+production archives. The test uses detached entities and explicit ticking, not
+automatic scheduler/merge/despawn integration. Real pickup, world/chunk restart,
+dimension transfer, native controls/transport, tooltips and client visuals remain
+production acceptance work. See
+[the exploration and proof boundaries](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-EXPLORATION.md#8-executable-server-spike--2026-10-14).

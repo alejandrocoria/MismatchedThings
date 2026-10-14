@@ -115,6 +115,15 @@ neoForge {
     version = neoforge_version
 
     runs {
+        justDireLavaRepairSpike {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireLavaRepairSpike', 'true')
+            jvmArgument('-Xmx1G')
+        }
         ['Compatible', 'MissingFall', 'Absent'].each { variant ->
             register("justDireJump${variant}") {
                 server()
@@ -530,6 +539,26 @@ spawn-protection=0
 
 tasks.named('runJustDireSmithing') {
     dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+tasks.named('runJustDireLavaRepairSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
+tasks.register('verifyJustDireLavaRepairSpike') {
+    group = 'verification'
+    description = 'Research only: real dropped-item Lava Repair, permanent fire immunity and block-commit boundaries.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireLavaRepairSpike', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-lava-repair-failure.txt')
+        def report = new File(directory, 'just-dire-lava-repair-report.txt')
+        def success = new File(directory, 'just-dire-lava-repair-success.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
+            throw new GradleException("Lava Repair research failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
 }
 
 tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
