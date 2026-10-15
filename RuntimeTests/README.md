@@ -1147,7 +1147,7 @@ The dated 23-group-per-version proof and its limits remain historical evidence i
 [the exploration](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-EXPLORATION.md#8-executable-server-spike--2026-10-14),
 not a substitute for production or manual acceptance.
 
-## Just Dire Things armor wear / FE production (block A)
+## Just Dire Things armor wear / FE production
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWear "-Pneoforge_version=26.1.2.99" --console=plain
@@ -1156,11 +1156,11 @@ not a substitute for production or manual acceptance.
 
 Run sequentially and restore default .114 afterward. The maintained gate uses the
 normal packaged production JAR, real root capability/transactions and pinned JDT
-in disposable servers. No candidate adapter, readiness property or alternate FE
-provider is installed. The final owned production getter must be true in Live
-and false/unavailable in the refusal/absence contexts.
+in disposable servers. No candidate adapter is enabled; no readiness property or
+alternate FE provider is used. The final owned production getter must be true in live/
+transaction/binding-failure contexts and false/unavailable for unsafe flow/absence.
 
-Three JVM variants currently belong to A: Live, Missing and Absent. Select a
+The same maintained gate covers A's Live/Missing/Absent and B's isolated faults. Select a
 bounded subset with, for example, `"-ParmorWearVariants=Live"`. Live records 65
 production observations: actual NORMAL-difficulty player hits/equipment ticks,
 both powered tiers/orientations, full/partial/empty one/two-provider branches,
@@ -1170,15 +1170,42 @@ Direct wear, actual XP Mending, recomposition and existing GS ordinary/powered,
 Negate and free Jump consumers remain separate. Observations are not JUnit tests
 or manual gameplay cases.
 
-Missing uses a test-only earlier transformation to remove the actual injection
-target while preserving its ordinary equivalent. Both mixed orientations retain
-ordinary wear/FE and exactly one wear-flow warning; no hard injector failure.
-Absent omits JDT and keeps ordinary wear without optional-class warnings. These
-are baseline refusal cases, not B's full competing-wrapper/transaction-fault matrix.
+The additional variants are:
+
+- WrapperBefore/WrapperAfter: actual MixinExtras single-forwarding wrappers at
+  priorities 1400/600, an unrelated method and a surrounding callback. Both nesting
+  orders retain one funded bill; counters prove native/ordinary delegation really
+  traverses the competing wrapper. Late cancellation/fractional edits still win.
+- Amount/Entry/Slot/Entity/Cancellation/Association/Router/Publication: real later
+  transformations alter distinct flow/publication invariants. Missing removes the
+  actual target earlier. Both provider counts/orientations retain ordinary wear,
+  unchanged FE and one wear-flow diagnostic without a hard injector failure.
+  Safe storage, actual live armor changes, Jump/Negate/GS and intrinsic Lava
+  eligibility/protection remain independent.
+- Transactions: seven real staged-extraction/commit faults in both orientations:
+  short receipt, extra staged debit, reentry, equipment replacement, independent
+  wallet/component edits and an exception immediately after commit. Aborts roll
+  back staging without overwriting foreign edits; stale roots/replacements are not
+  damaged/retried. Every case is followed by a valid request on the same player.
+  A post-commit exception propagates with exactly one debit and no fallback/refund.
+- QueryFailure/StorageMissing: a wear-only read failure and the existing failed
+  native storage binding, respectively. Repeated hits retain ordinary wear with
+  one scoped query/storage diagnostic, not another wear-flow warning.
+- Absent: JDT omitted, ordinary wear and quiet optional linking.
+- Abilities: the maintained full production Earthquake/shared-GS server matrix,
+  including actual effects/payments/modes/clocks, with an actual funded equipped
+  wear-conversion witness in that same process. No prototype consumer is loaded.
+
+Forwarder acceptance is deliberately bounded to one straight-line wrapper with
+one unchanged four-argument Operation call, inside or outside the owned router.
+It is not a universal wrapper analyzer or a promise to execute callbacks nested
+inside an ordinary operation suppressed by funded conversion. Unknown relevant
+flows refuse wear conversion only. On refusal the owned router is also neutralized:
+an adulterated constant-true argument cannot bypass the false getter.
 
 Reports/logs are retained under
 `RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/<version>/`.
-The Live run also retains the actual final `CommonHooks.class` export for focused
+Live and both wrappers retain actual final `CommonHooks.class` exports for focused
 preflight/final-publication guard tests:
 
 ```powershell
@@ -1186,15 +1213,16 @@ preflight/final-publication guard tests:
 ```
 
 Supply the matching .99 export and loader property for minimum-version validation.
-Without that export property, two final-shape tests are explicitly skipped; such
+Run Live and both Wrapper variants before this command. Without the export property,
+four final-shape tests are explicitly skipped; such
 a run does not establish actual transformed-class acceptance. The existing
 attribute gate's player-hit expectation now follows funded wear conversion rather
 than the superseded ordinary-wear baseline; attribute functionality and prices
 remain owned by their existing adapters.
 
 The [production plan](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-IMPLEMENTATION.md)
-owns A's evidence and pending B/C/manual gates. Future B extends this same
-acceptance rather than keeping a second candidate/payment implementation.
+owns the separate A/B evidence and pending C/manual gates. Lifecycle/consolidation
+and ordinary-client acceptance are not inferred from these isolated server faults.
 
 ### Historical characterization and consumer spike
 

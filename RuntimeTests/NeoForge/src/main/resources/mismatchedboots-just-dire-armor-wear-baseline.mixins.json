@@ -4,6 +4,14 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireArmorWearBaselinePlugin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["JustDireArmorWearBaselineMixin"],
+  "mixins": [
+    "JustDireArmorWearAfterMixin",
+    "JustDireArmorWearBaselineMixin",
+    "JustDireArmorWearBeforeMixin",
+    "JustDireArmorWearCommitMixin",
+    "JustDireArmorWearDebitMixin",
+    "JustDireArmorWearLateMixin",
+    "JustDireArmorWearQueryMixin"
+  ],
   "injectors": {"defaultRequire": 1}
 }

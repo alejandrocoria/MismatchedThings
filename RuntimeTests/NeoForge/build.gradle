@@ -105,6 +105,8 @@ def advancedNetheriteMarkers = fixtureBuildDirectory.dir('advanced-netherite-mar
 def advancedNetheriteRunDirectory = fixtureBuildDirectory.dir('run/advancedNetheriteCompatibility')
 def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
 def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
+def justDireArmorWearVariants = ['Live', 'Missing', 'Absent', 'WrapperBefore', 'WrapperAfter', 'Amount', 'Entry', 'Slot', 'Entity',
+                                'Cancellation', 'Association', 'Router', 'Publication', 'Transactions', 'QueryFailure', 'StorageMissing', 'Abilities']
 def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
 def justDireResourcesClientDirectory = fixtureBuildDirectory.dir('run/justDireResourcesClient')
 def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
@@ -369,7 +371,7 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
-        ['Live', 'Missing', 'Absent'].each { variant ->
+        justDireArmorWearVariants.each { variant ->
             register("justDireArmorWear${variant}") {
                 server()
                 disableIdeRun()
@@ -378,6 +380,8 @@ neoForge {
                 systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
                 systemProperty('mismatchedboots.runtimetest.justDireArmorWearTest', 'true')
                 systemProperty('mismatchedboots.runtimetest.justDireArmorWearVariant', variant.uncapitalize())
+                if (variant == 'StorageMissing') { systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing') }
+                if (variant == 'Abilities') { systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true') }
                 systemProperty('mixin.debug.export', 'true')
                 jvmArgument('-Xmx1G')
             }
@@ -607,7 +611,7 @@ tasks.named('runJustDireSmithing') {
 
 tasks.named('runJustDireArmorWearResearch') { dependsOn 'prepareJustDireSmithing' }
 
-['Live', 'Missing', 'Absent'].each { variant ->
+justDireArmorWearVariants.each { variant ->
     tasks.named("runJustDireArmorWear${variant}") { dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing' }
 }
 tasks.register('verifyJustDireArmorWear') {
@@ -615,25 +619,40 @@ tasks.register('verifyJustDireArmorWear') {
     description = 'Verifies packaged production JDT armor-wear conversion and independent ordinary/ability consumers.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
-        def variants = providers.gradleProperty('armorWearVariants').getOrElse('Live,Missing,Absent').split(',')
-        if (!variants.every { it in ['Live', 'Missing', 'Absent'] }) { throw new GradleException('Unknown production armor-wear variant') }
+        def supported = justDireArmorWearVariants
+        def variants = providers.gradleProperty('armorWearVariants').getOrElse(supported.join(',')).split(',')
+        if (!variants.every { it in supported }) { throw new GradleException('Unknown production armor-wear variant') }
         variants.each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-armor-wear-production/${neoforge_version}/${variant}-process.log").get().asFile
             runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireArmorWear${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
-            def failure = new File(directory, 'just-dire-armor-wear-failure.txt')
-            def success = new File(directory, 'just-dire-armor-wear-success.txt')
-            def report = new File(directory, 'just-dire-armor-wear-report.txt')
+            def prefix = variant == 'Abilities' ? 'just-dire-earthquake-server' : 'just-dire-armor-wear'
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
             def warnings = log.readLines().count { it.contains('Just Dire Things armor wear flow incompatible') }
+            def unsafe = ['Missing', 'Amount', 'Entry', 'Slot', 'Entity', 'Cancellation', 'Association', 'Router', 'Publication'].contains(variant)
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things armor wear query failed') }
+            def storageWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things storage API') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown') }
+            def witnessFailure = new File(directory, 'just-dire-armor-wear-failure.txt')
             if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
-                    || log.text.contains('/ERROR]') || warnings != (variant == 'Missing' ? 1 : 0)) {
-                throw new GradleException("Production armor wear ${variant} failed: ${failure.isFile() ? failure.text : log}")
+                    || log.text.contains('/ERROR]') || warnings != (unsafe ? 1 : 0)
+                    || queryWarnings != (variant == 'QueryFailure' ? 1 : 0) || storageWarnings != (variant == 'StorageMissing' ? 1 : 0)
+                    || timerWarnings != (variant == 'Abilities' ? 1 : 0)
+                    || witnessFailure.isFile()
+                    || variant == 'Abilities' && !new File(directory, 'just-dire-armor-wear-armed.txt').isFile()) {
+                throw new GradleException("Production armor wear ${variant} failed: ${failure.isFile() ? failure.text : witnessFailure.isFile() ? witnessFailure.text : log}")
             }
             new File(log.parentFile, "${variant}-report.txt").text = report.text
+            if (variant == 'Abilities') { new File(log.parentFile, 'Abilities-armed.txt').text = new File(directory, 'just-dire-armor-wear-armed.txt').text }
             def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/neoforged/neoforge/common/CommonHooks.class')
             if (variant == 'Live') {
                 if (!exported.isFile()) { throw new GradleException('Missing final CommonHooks export') }
                 fixtureFileOperations.copy { from exported; into log.parentFile }
+            }
+            if (variant.startsWith('Wrapper')) {
+                fixtureFileOperations.copy { from exported; into log.parentFile; rename { "${variant}-CommonHooks.class" } }
             }
             logger.lifecycle(report.text)
         }

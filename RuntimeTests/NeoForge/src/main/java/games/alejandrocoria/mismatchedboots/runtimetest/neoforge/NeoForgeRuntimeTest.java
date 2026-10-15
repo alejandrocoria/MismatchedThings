@@ -16,7 +16,11 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireArmorWearTest")) {
-            NeoForgeJustDireArmorWearTest.register(); return;
+            if (System.getProperty("mismatchedboots.runtimetest.justDireArmorWearVariant", "").equals("abilities")) {
+                NeoForgeJustDireArmorWearTest.registerAbilityWitness();
+                NeoForgeJustDireEarthquakeServerTest.register();
+            } else { NeoForgeJustDireArmorWearTest.register(); }
+            return;
         }
         String wearSpike = System.getProperty("mismatchedboots.runtimetest.justDireArmorWearSpike", "");
         if (wearSpike.equals("abilities")) { NeoForgeJustDireArmorWearSpike.registerAbilityWitness(); }

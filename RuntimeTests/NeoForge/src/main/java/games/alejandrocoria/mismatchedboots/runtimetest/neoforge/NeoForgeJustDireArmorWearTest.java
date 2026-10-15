@@ -1,12 +1,16 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Unit;
@@ -16,6 +20,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -40,6 +45,17 @@ public final class NeoForgeJustDireArmorWearTest {
     private static int rows;
 
     public static void ordinary(ItemStack root, int amount, LivingEntity entity, EquipmentSlot slot) { root.hurtAndBreak(amount, entity, slot); }
+
+    static void registerAbilityWitness() {
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, (ServerTickEvent.Post event) -> {
+            if (finished) { return; } finished = true;
+            try {
+                event.getServer().setDifficulty(Difficulty.NORMAL, true);
+                hit(event.getServer(), "active wear in EQ/GS process", mixed("celestigem", "diamond", 1_000, false), 800, 0);
+                NetworkAcceptanceFiles.write(PREFIX + "-armed.txt", report.toString());
+            } catch (Throwable failure) { NetworkAcceptanceFiles.failure(PREFIX, failure); event.getServer().halt(false); }
+        });
+    }
 
     static void register() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ArmorHurtEvent event) -> {
@@ -68,17 +84,57 @@ public final class NeoForgeJustDireArmorWearTest {
             var getter = CommonHooks.class.getDeclaredMethod("mismatchedboots$justDireArmorWearReady"); getter.setAccessible(true);
             ready = (boolean) getter.invoke(null);
         } catch (NoSuchMethodException absent) { ready = false; }
-        require(ready == variant.equals("live"), "Wrong final production permission: " + variant);
+        boolean active = List.of("live", "wrapperBefore", "wrapperAfter", "transactions", "queryFailure", "storageMissing").contains(variant);
+        require(ready == active, "Wrong final production permission: " + variant);
         if (variant.equals("absent")) {
             var pair = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
             var root = pair.primary(); var player = player(server); player.setItemSlot(EquipmentSlot.FEET, root);
             require(player.hurtServer(server.overworld(), attack(player), 8) && root.getDamageValue() == 2, "Absent JDT changed ordinary wear");
             record("absent optional JDT", "ordinary wear=2; no native component lookup"); return;
         }
-        if (variant.equals("missing")) {
+        if (variant.equals("transactions")) { transactions(server); return; }
+        if (variant.equals("queryFailure")) { JustDireArmorWearFaults.fault = "query"; }
+        if (!variant.equals("live")) {
+            boolean wrappers = variant.startsWith("wrapper");
+            int hooks = JustDireArmorWearFaults.before;
             for (boolean inverse : new boolean[]{false, true}) {
-                hit(server, "missing consumer inverse=" + inverse, mixed("celestigem", "diamond", 1000, inverse), 1000, 2);
+                for (String partner : List.of("diamond", "eclipsealloy")) {
+                    hit(server, variant + "/" + partner + " inverse=" + inverse, mixed("celestigem", partner, 1_000, inverse), wrappers ? 800 : 1_000, wrappers ? 0 : 2);
+                }
             }
+            if (wrappers) {
+                int ordinary = JustDireArmorWearFaults.before;
+                hit(server, "foreign wrapper ordinary control", new ItemStack(Items.DIAMOND_BOOTS), 0, 2);
+                hit(server, "foreign wrapper native control", boot("celestigem", 1_000), 800, 0);
+                require(JustDireArmorWearFaults.before == ordinary + 2 && JustDireArmorWearFaults.before == JustDireArmorWearFaults.after
+                        && JustDireArmorWearFaults.surrounding >= 6 && JustDireArmorWearFaults.before >= hooks + 2, "Competing wrappers were not actually exercised");
+                record("real forwarding wrapper", "before=" + JustDireArmorWearFaults.before + "; after=" + JustDireArmorWearFaults.after
+                        + "; surrounding=" + JustDireArmorWearFaults.surrounding + "; funded bills paid once; ordinary/native hooks executed");
+                postEvent(server);
+            }
+            if (!variant.equals("storageMissing")) {
+                var wallet = mixed("celestigem", "diamond", 1_000, false);
+                require(JustDireResourceTestSupport.handler(wallet).getAmountAsInt() == 1_000, "Wear refusal disabled safe storage");
+                abilities(server);
+                var live = player(server); live.setItemSlot(EquipmentSlot.FEET, wallet); live.doTick();
+                double chargedArmor = live.getAttributeValue(Attributes.ARMOR);
+                wallet.set(JustDireResourceTestSupport.energyComponent(), 0); live.doTick();
+                require(chargedArmor > live.getAttributeValue(Attributes.ARMOR), "Wear refusal disabled live attributes");
+                JustDireEarthquakeTestSupport.bind();
+                var earthquake = JustDireEarthquakeTestSupport.mixed(50_000, false, false);
+                require(JustDireEarthquakeCompatibility.quote(earthquake) != null
+                        && JustDireSettingsCompatibility.metadata(earthquake, "earthquake") != null,
+                        "Wear refusal disabled independent Earthquake/settings eligibility");
+            } else {
+                require(JustDireResourceTestSupport.handler(mixed("celestigem", "diamond", 1_000, false)) == null, "Storage fault did not affect the actual binding");
+                var passive = mixed("ferricore", "diamond", 0, false); JustDireAttributeTestSupport.set(passive, "jumpboost_upgrade_installed", true);
+                var player = player(server); player.setItemSlot(EquipmentSlot.FEET, passive); player.jumpFromGround();
+                require(player.getDeltaMovement().y > .5, "Storage failure disabled independent Jump");
+            }
+            var lava = mixed("blazegold", "diamond", 0, false);
+            require(JustDireLavaRepairCompatibility.eligible(lava)
+                    && !lava.canBeHurtBy(player(server).damageSources().lava()), "Wear refusal disabled intrinsic Lava protection");
+            record("independent adapters", "storage/attributes/ability controls retained where their own API is available; Lava protection retained");
             return;
         }
         for (String tier : List.of("celestigem", "eclipsealloy")) {
@@ -121,6 +177,35 @@ public final class NeoForgeJustDireArmorWearTest {
         postEvent(server);
         isolation(server);
         abilities(server);
+    }
+
+    private static void transactions(MinecraftServer server) {
+        for (boolean inverse : new boolean[]{false, true}) {
+            for (String fault : List.of("short", "staged", "reenter", "replace", "wallet", "component", "committed")) {
+                var root = mixed("celestigem", "diamond", 1_000, inverse); var before = root.copy();
+                var player = player(server); player.setItemSlot(EquipmentSlot.FEET, root);
+                var replacement = mixed("eclipsealloy", "diamond", 900, false);
+                JustDireArmorWearFaults.player = player; JustDireArmorWearFaults.root = root;
+                JustDireArmorWearFaults.replacement = replacement; JustDireArmorWearFaults.extracted = 0; JustDireArmorWearFaults.fault = fault;
+                boolean failedAfterCommit = false;
+                try { CommonHooks.onArmorHurt(attack(player), new EquipmentSlot[]{EquipmentSlot.FEET}, 2, player); }
+                catch (JustDireArmorWearFaults.CommittedFailure expected) { failedAfterCommit = true; }
+                require(JustDireArmorWearFaults.extracted == 200 && JustDireArmorWearFaults.fault.isEmpty(), "Fault missed real staged extraction: " + fault);
+                require(failedAfterCommit == fault.equals("committed"), "Post-commit failure was swallowed/retried");
+                int expectedFE = fault.equals("wallet") ? 77 : List.of("reenter", "committed").contains(fault) ? 800 : 1_000;
+                int wear = List.of("short", "staged").contains(fault) ? 2 : 0;
+                var expected = before.copy(); expected.set(JustDireResourceTestSupport.energyComponent(), expectedFE); expected.setDamageValue(wear);
+                if (fault.equals("component")) { expected.set(DataComponents.CUSTOM_NAME, Component.literal("independent edit")); }
+                require(ItemStack.matches(expected, root), "Abort overwrote foreign edit or leaked staged payment: " + fault + "; FE=" + charge(root) + "; wear=" + root.getDamageValue());
+                if (fault.equals("replace")) { require(player.getItemBySlot(EquipmentSlot.FEET) == replacement && charge(replacement) == 900 && replacement.getDamageValue() == 0, "Stale fallback damaged/retried replacement"); }
+                record("real staged " + fault + " inverse=" + inverse, "receipt staged=200; final FE=" + expectedFE + "; wear=" + wear + "; unrelated state preserved");
+                // Same player: the finally guard must release after both successful and aborted payments.
+                var next = mixed("celestigem", "diamond", 1_000, inverse); player.setItemSlot(EquipmentSlot.FEET, next);
+                CommonHooks.onArmorHurt(attack(player), new EquipmentSlot[]{EquipmentSlot.FEET}, 2, player);
+                require(charge(next) == 800 && next.getDamageValue() == 0, "Guard leaked after " + fault);
+            }
+        }
+        JustDireArmorWearFaults.player = null; JustDireArmorWearFaults.root = null; JustDireArmorWearFaults.replacement = null;
     }
 
     private static void postEvent(MinecraftServer server) {

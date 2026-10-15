@@ -38,6 +38,7 @@ public final class JustDireArmorWearShape implements Opcodes {
     static final String GETTER = "mismatchedboots$justDireArmorWearReady";
     static final String DAMAGE_DESC = "(I" + ENTITY + SLOT + ")V";
     static final String HANDLER_DESC = "(" + STACK + "I" + ENTITY + SLOT + OPERATION + ENTITY + SLOT + ENTRY + ")V";
+    private static final String FORWARD_DESC = "(" + STACK + "I" + ENTITY + SLOT + OPERATION + ")V";
     static final String ROUTE_DESC = "(Z" + STACK + "I" + ENTITY + SLOT + OPERATION + "F)V";
     private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireArmorWearMixin";
 
@@ -50,17 +51,36 @@ public final class JustDireArmorWearShape implements Opcodes {
 
     static boolean publish(ClassNode node) {
         var getter = method(node, GETTER, "()Z");
-        if (getter == null) { return false; }
+        if (getter == null) { return refuse(node); }
         var code = real(getter);
         boolean intact = owned(getter) && getter.access == (ACC_PRIVATE | ACC_STATIC) && getter.tryCatchBlocks.isEmpty()
                 && code.size() == 2 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN;
         getter.instructions.clear(); getter.instructions.add(new InsnNode(ICONST_0)); getter.instructions.add(new InsnNode(IRETURN));
         getter.tryCatchBlocks.clear(); getter.maxStack = 1;
-        if (!intact) { return false; }
+        if (!intact) { return refuse(node); }
         try {
-            if (!caller(node) || !transformedConsumer(node)) { return false; }
-        } catch (AnalyzerException | RuntimeException incompatible) { return false; }
+            if (!caller(node) || !transformedConsumer(node)) { return refuse(node); }
+        } catch (AnalyzerException | RuntimeException incompatible) { return refuse(node); }
         getter.instructions.set(getter.instructions.getFirst(), new InsnNode(ICONST_1)); return true;
+    }
+
+    private static boolean refuse(ClassNode node) {
+        // A foreign edit can bypass the getter (e.g. constant true). Neutralize only OUR router,
+        // not foreign methods: keep its supplied Operation as ordinary delegation.
+        for (var handler : node.methods) {
+            if (!handler.desc.equals(HANDLER_DESC) || !owned(handler)) { continue; }
+            handler.instructions.clear(); handler.tryCatchBlocks.clear();
+            if (handler.localVariables != null) { handler.localVariables.clear(); }
+            handler.visibleLocalVariableAnnotations = null; handler.invisibleLocalVariableAnnotations = null;
+            handler.instructions.add(new InsnNode(ICONST_0));
+            handler.instructions.add(new VarInsnNode(ALOAD, 0)); handler.instructions.add(new VarInsnNode(ILOAD, 1));
+            handler.instructions.add(new VarInsnNode(ALOAD, 2)); handler.instructions.add(new VarInsnNode(ALOAD, 3));
+            handler.instructions.add(new VarInsnNode(ALOAD, 4)); handler.instructions.add(new InsnNode(FCONST_0));
+            handler.instructions.add(new MethodInsnNode(INVOKESTATIC,
+                    "games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireArmorWearCompatibility", "route", ROUTE_DESC, false));
+            handler.instructions.add(new InsnNode(RETURN)); handler.maxStack = 7;
+        }
+        return false;
     }
 
     private static boolean caller(ClassNode node) throws AnalyzerException {
@@ -117,7 +137,7 @@ public final class JustDireArmorWearShape implements Opcodes {
 
     private static boolean nativeConsumer(ClassNode node) throws AnalyzerException {
         var method = method(node, LAMBDA, "(" + ENTITY + SLOT + ENTRY + ")V");
-        if (method == null || (method.access & ACC_STATIC) == 0) { return false; }
+        if (method == null || (method.access & ACC_STATIC) == 0 || !straight(method)) { return false; }
         var flow = new Flow(node, method); int calls = 0;
         for (var instruction : method.instructions) {
             if (!(instruction instanceof MethodInsnNode call) || !damage(call)) { continue; }
@@ -131,25 +151,104 @@ public final class JustDireArmorWearShape implements Opcodes {
 
     private static boolean transformedConsumer(ClassNode node) throws AnalyzerException {
         var lambda = method(node, LAMBDA, "(" + ENTITY + SLOT + ENTRY + ")V");
-        if (lambda == null) { return false; }
+        if (lambda == null || !straight(lambda)) { return false; }
         var flow = new Flow(node, lambda); int routes = 0;
         for (var instruction : lambda.instructions) {
             if (instruction instanceof MethodInsnNode call && damage(call)) { return false; }
-            if (!(instruction instanceof MethodInsnNode call) || !call.owner.equals(OWNER) || !call.desc.equals(HANDLER_DESC)) { continue; }
+            if (!(instruction instanceof MethodInsnNode call) || !call.owner.equals(OWNER)
+                    || !call.desc.equals(HANDLER_DESC) && !call.desc.equals(FORWARD_DESC)) { continue; }
             var handler = method(node, call.name, call.desc);
-            if (handler == null || !owned(handler) || !router(node, handler)
-                    || !flow.field(flow.argument(call, 0, 8), "armorItemStack", STACK, 2)
-                    || !flow.convertedDamage(flow.argument(call, 1, 8), 2)
-                    || !flow.parameter(flow.argument(call, 2, 8), 0) || !flow.parameter(flow.argument(call, 3, 8), 1)
-                    || !flow.parameter(flow.argument(call, 5, 8), 0) || !flow.parameter(flow.argument(call, 6, 8), 1)
-                    || !flow.parameter(flow.argument(call, 7, 8), 2)
-                    || !operation(node, flow.origin(flow.argument(call, 4, 8)))) { return false; }
+            boolean direct = call.desc.equals(HANDLER_DESC); int count = direct ? 8 : 5;
+            if (handler == null || !flow.field(flow.argument(call, 0, count), "armorItemStack", STACK, 2)
+                    || !flow.convertedDamage(flow.argument(call, 1, count), 2)
+                    || !flow.parameter(flow.argument(call, 2, count), 0) || !flow.parameter(flow.argument(call, 3, count), 1)) { return false; }
+            var producer = flow.origin(flow.argument(call, 4, count));
+            if (direct) {
+                if (!owned(handler) || !router(node, handler)
+                        || !flow.parameter(flow.argument(call, 5, 8), 0) || !flow.parameter(flow.argument(call, 6, 8), 1)
+                        || !flow.parameter(flow.argument(call, 7, 8), 2)
+                        || !operation(node, producer) && !forwardingOperation(node, flow, producer, false)) { return false; }
+            } else if (!forwarder(node, handler) || !forwardingOperation(node, flow, producer, true)) { return false; }
             routes++;
         }
         return routes == 1;
     }
 
+    /** Bounded MixinExtras chain: one unchanged forwarding wrapper, inside OR outside our router. */
+    private static boolean forwardingOperation(ClassNode node, Flow parent, AbstractInsnNode producer, boolean ownedInside) throws AnalyzerException {
+        int captures = ownedInside ? 4 : 1;
+        String captured = OPERATION + (ownedInside ? ENTITY + SLOT + ENTRY : "");
+        if (!(producer instanceof InvokeDynamicInsnNode indy) || !indy.desc.equals("(" + captured + ")" + OPERATION)
+                || !indy.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory")
+                || !operation(node, parent.origin(parent.argument(indy, 0, captures)))) { return false; }
+        if (ownedInside && (!parent.parameter(parent.argument(indy, 1, captures), 0)
+                || !parent.parameter(parent.argument(indy, 2, captures), 1) || !parent.parameter(parent.argument(indy, 3, captures), 2))) { return false; }
+        MethodNode bridge = null;
+        for (Object argument : indy.bsmArgs) {
+            if (!(argument instanceof Handle handle)) { continue; }
+            if (bridge != null || handle.getTag() != H_INVOKESTATIC || !handle.getOwner().equals(OWNER)
+                    || !handle.getDesc().equals("(" + captured + "[Ljava/lang/Object;)Ljava/lang/Void;")) { return false; }
+            bridge = method(node, handle.getName(), handle.getDesc());
+        }
+        if (bridge == null || !straight(bridge)) { return false; }
+        var flow = new Flow(node, bridge); int forwards = 0;
+        for (var instruction : bridge.instructions) {
+            if (instruction.getOpcode() >= IASTORE && instruction.getOpcode() <= SASTORE
+                    || instruction.getOpcode() == PUTFIELD || instruction.getOpcode() == PUTSTATIC) { return false; }
+            if (!(instruction instanceof MethodInsnNode call)) { continue; }
+            if (call.owner.equals("java/lang/Integer") && call.name.equals("intValue") && call.desc.equals("()I")) { continue; }
+            if (call.owner.equals("com/llamalad7/mixinextras/injector/wrapoperation/WrapOperationRuntime") && call.name.equals("checkArgumentCount")) { continue; }
+            String desc = ownedInside ? HANDLER_DESC : FORWARD_DESC; int count = ownedInside ? 8 : 5;
+            var target = method(node, call.name, call.desc);
+            if (call.getOpcode() != INVOKESTATIC || !call.owner.equals(OWNER) || !call.desc.equals(desc) || target == null
+                    || (ownedInside ? !owned(target) || !router(node, target) : !forwarder(node, target))) { return false; }
+            for (int i = 0; i < 4; i++) { if (!flow.arrayElement(flow.argument(call, i, count), i, captures)) { return false; } }
+            for (int i = 0; i < captures; i++) { if (!flow.parameter(flow.argument(call, i + 4, count), i)) { return false; } }
+            forwards++;
+        }
+        return forwards == 1;
+    }
+
+    private static boolean forwarder(ClassNode node, MethodNode handler) throws AnalyzerException {
+        if ((handler.access & ACC_STATIC) == 0 || !straight(handler)) { return false; }
+        var flow = new Flow(node, handler); MethodInsnNode forward = null; AbstractInsnNode array = null;
+        for (var instruction : handler.instructions) {
+            if (instruction.getOpcode() == PUTFIELD || instruction.getOpcode() == PUTSTATIC) { return false; }
+            if (!(instruction instanceof MethodInsnNode call)) { continue; }
+            // Prove argument forwarding only; zero-argument callbacks' external effects are not audited.
+            if (call.getOpcode() == INVOKESTATIC && call.desc.equals("()V")) { continue; }
+            if (call.owner.equals("java/lang/Integer") && call.name.equals("valueOf") && call.desc.equals("(I)Ljava/lang/Integer;")) { continue; }
+            if (!call.owner.equals("com/llamalad7/mixinextras/injector/wrapoperation/Operation") || !call.name.equals("call")
+                    || !call.desc.equals("([Ljava/lang/Object;)Ljava/lang/Object;") || !flow.parameter(flow.receiver(call, 1), 4) || forward != null) { return false; }
+            array = flow.origin(flow.argument(call, 0, 1)); forward = call;
+        }
+        if (!(array instanceof TypeInsnNode allocation) || allocation.getOpcode() != ANEWARRAY || !allocation.desc.equals("java/lang/Object")
+                || flow.constant(flow.top(allocation)) != 4) { return false; }
+        var slots = new HashSet<Integer>();
+        for (var instruction : handler.instructions) {
+            if (instruction.getOpcode() != AASTORE) { continue; }
+            int index = flow.constant(flow.argument(instruction, 1, 3));
+            var value = flow.argument(instruction, 2, 3); var source = flow.origin(value);
+            if (source instanceof MethodInsnNode box && box.owner.equals("java/lang/Integer") && box.name.equals("valueOf")) { value = flow.argument(box, 0, 1); }
+            if (index < 0 || index > 3 || !slots.add(index) || flow.origin(flow.argument(instruction, 0, 3)) != array
+                    || !flow.parameter(value, index) || !reachable(handler, instruction, forward, null)) { return false; }
+        }
+        return slots.size() == 4;
+    }
+
+    private static boolean straight(MethodNode method) {
+        if (!method.tryCatchBlocks.isEmpty()) { return false; }
+        int returns = 0;
+        for (var instruction : method.instructions) {
+            if (instruction instanceof JumpInsnNode || instruction instanceof TableSwitchInsnNode || instruction instanceof LookupSwitchInsnNode
+                    || instruction.getOpcode() == ATHROW) { return false; }
+            if (instruction.getOpcode() >= IRETURN && instruction.getOpcode() <= RETURN) { returns++; }
+        }
+        return returns == 1;
+    }
+
     private static boolean router(ClassNode node, MethodNode handler) throws AnalyzerException {
+        if (!straight(handler)) { return false; }
         var flow = new Flow(node, handler); int routes = 0, getters = 0;
         for (var instruction : handler.instructions) {
             if (!(instruction instanceof MethodInsnNode call)) { continue; }
@@ -180,7 +279,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 callback = method(node, handle.getName(), handle.getDesc());
             }
         }
-        if (callback == null) { return false; }
+        if (callback == null || !straight(callback)) { return false; }
         var flow = new Flow(node, callback); int damage = 0;
         for (var instruction : callback.instructions) {
             int opcode = instruction.getOpcode();
@@ -272,10 +371,16 @@ public final class JustDireArmorWearShape implements Opcodes {
                     && field.name.equals(name) && field.desc.equals(desc) && parameter(top(field), parameter);
         }
         boolean convertedDamage(SourceValue value, int parameter) { var source = origin(value); return source != null && source.getOpcode() == F2I && field(top(source), "newDamage", "F", parameter); }
-        boolean arrayElement(SourceValue value, int index) {
+        int constant(SourceValue value) {
+            var source = origin(value);
+            return source instanceof IntInsnNode constant ? constant.operand
+                    : source != null && source.getOpcode() >= ICONST_M1 && source.getOpcode() <= ICONST_5 ? source.getOpcode() - ICONST_0 : Integer.MIN_VALUE;
+        }
+        boolean arrayElement(SourceValue value, int index) { return arrayElement(value, index, 0); }
+        boolean arrayElement(SourceValue value, int index, int parameter) {
             var source = origin(value);
             if (source instanceof MethodInsnNode unbox && unbox.owner.equals("java/lang/Integer") && unbox.name.equals("intValue")) { source = origin(receiver(unbox, 0)); }
-            if (source == null || source.getOpcode() != AALOAD || !parameter(receiver(source, 1), 0)) { return false; }
+            if (source == null || source.getOpcode() != AALOAD || !parameter(receiver(source, 1), parameter)) { return false; }
             var subscript = origin(top(source));
             return subscript instanceof IntInsnNode constant ? constant.operand == index
                     : subscript != null && subscript.getOpcode() == ICONST_0 + index;
