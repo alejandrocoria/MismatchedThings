@@ -358,6 +358,17 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        ['Live', 'ItemsMissing', 'Absent'].each { variant ->
+            register("justDireRefunds${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireRefunds', variant.uncapitalize())
+                jvmArgument('-Xmx1G')
+            }
+        }
         ['Live', 'Restart', 'Missing'].each { variant ->
             register("justDireRefundSpike${variant}") {
                 server()
@@ -605,6 +616,33 @@ spawn-protection=0
 
 tasks.named('runJustDireSmithing') {
     dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+['Live', 'ItemsMissing', 'Absent'].each { variant ->
+    tasks.named("runJustDireRefunds${variant}") { dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing' }
+}
+tasks.register('verifyJustDireRefunds') {
+    group = 'verification'
+    description = 'Verifies production conserved upgrade credits and real Workbench/smithing lifecycle; block A does not enable drops.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Live', 'ItemsMissing', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-refunds-production/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireRefunds${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-refunds-failure.txt')
+            def success = new File(directory, 'just-dire-refunds-success.txt')
+            def report = new File(directory, 'just-dire-refunds-report.txt')
+            def warnings = log.readLines().count { it.contains('Could not bind Just Dire Things refund items') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || warnings != (variant == 'ItemsMissing' ? 1 : 0)
+                    || variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Production JDT credits ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
 }
 
 ['Live', 'Missing'].each { variant -> tasks.named("runJustDireRefundSpike${variant}") { dependsOn tasks.named('prepareJustDireSmithing') } }

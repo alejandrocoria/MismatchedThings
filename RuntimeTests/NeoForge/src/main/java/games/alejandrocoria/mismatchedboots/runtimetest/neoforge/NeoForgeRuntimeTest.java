@@ -15,6 +15,10 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (!System.getProperty("mismatchedboots.runtimetest.justDireRefunds", "").isEmpty()) {
+            NeoForgeJustDireRefundsTest.register();
+            return;
+        }
         if (!System.getProperty("mismatchedboots.runtimetest.justDireRefundSpike", "").isEmpty()) {
             JustDireRefundSpikeCandidate.register(eventBus);
             NeoForgeJustDireRefundSpike.register();

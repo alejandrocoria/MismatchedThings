@@ -27,7 +27,7 @@ import java.util.Set;
 
 /** Five root-owned installations, not a native tool identity or a second resource wallet. */
 public final class JustDireUpgradesCompatibility {
-    private static final List<String> ABILITIES = List.of("stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake");
+    private static final List<String> ABILITIES = JustDireRefundCredits.NAMES;
     private static final List<String> BOOTS = List.of("ferricore_boots", "blazegold_boots", "celestigem_boots", "eclipsealloy_boots");
     private static volatile Api api;
     private static boolean recipeShapeWarned;
@@ -57,10 +57,16 @@ public final class JustDireUpgradesCompatibility {
                     .asType(MethodType.methodType(Set.class, Item.class)));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things upgrade API; root upgrade compatibility disabled", failure);
+            return;
         }
+        JustDireRefundCompatibility.bindItems();
     }
 
     public static boolean available() { return api != null; }
+
+    static DataComponentType<Boolean> installedFlag(String name) {
+        return api.upgrades.stream().filter(upgrade -> upgrade.name.equals(name)).findFirst().orElseThrow().flag;
+    }
 
     public static boolean nativeBoot(ItemStack source) {
         Api binding = api;
@@ -68,16 +74,23 @@ public final class JustDireUpgradesCompatibility {
     }
 
     public static void initializeUpgrades(ItemStack output) {
+        JustDireRefundCompatibility.initializeCredits(output, List.of());
         Api binding = api;
         if (binding == null) { return; }
         var data = ModContent.getMixedBootsData(output).orElseThrow();
         var imported = new ArrayList<DataComponentType<Boolean>>();
+        var ownerPurchases = new ArrayList<String>();
         try {
-            for (var source : List.of(data.left().source(), data.right().source())) {
+            var sources = List.of(data.left().source(), data.right().source());
+            for (int index = 0; index < sources.size(); index++) {
+                var source = sources.get(index);
                 if (!binding.boots.contains(source.getItem())) { continue; }
                 Set<?> permanent = (Set<?>) binding.allAbilities.invokeExact(source.getItem());
                 for (var upgrade : binding.upgrades) {
-                    if (permanent.contains(upgrade.ability) && source.getOrDefault(upgrade.flag, false)) { imported.add(upgrade.flag); }
+                    if (permanent.contains(upgrade.ability) && source.getOrDefault(upgrade.flag, false)) {
+                        imported.add(upgrade.flag);
+                        if (index == 0) { ownerPurchases.add(upgrade.name); }
+                    }
                 }
             }
         } catch (Throwable failure) { disable(binding, failure); return; }
@@ -85,9 +98,11 @@ public final class JustDireUpgradesCompatibility {
         // Publish only after every optional read succeeds. Config-disabled flags remain installed.
         binding.upgrades.forEach(upgrade -> output.remove(upgrade.flag));
         imported.forEach(flag -> output.set(flag, true));
+        JustDireRefundCompatibility.initializeCredits(output, ownerPurchases);
     }
 
     public static void preserveState(ItemStack previous, ItemStack output) {
+        JustDireRefundCompatibility.preserve(previous, output);
         // Registry-only preservation also works after an optional binding fails. Never reimport sources.
         for (String ability : ABILITIES) {
             preserve(previous, output, ability + "_upgrade_installed");
@@ -159,6 +174,7 @@ public final class JustDireUpgradesCompatibility {
             var changed = root.copy();
             changed.set(upgrade.flag, true);
             try {
+                JustDireRefundCompatibility.addInstallation(changed, name);
                 var output = MixedBootsRecomposer.recompose(changed, data.left().source(), data.right().source());
                 return new MixedBootsSmithingPolicy.RootAttempt(true, new MixedBootsSmithingPolicy.Result(output, recipe.get(), null));
             } catch (IllegalArgumentException rejected) {

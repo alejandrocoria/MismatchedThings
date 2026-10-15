@@ -14,6 +14,9 @@ license="MIT"
     config="mismatchedboots-just-dire-refund-spike.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots-just-dire-refund-binding-tests.mixins.json"
+
+[[mixins]]
     config="mismatchedboots-just-dire-armor-wear-baseline.mixins.json"
 
 [[mixins]]
