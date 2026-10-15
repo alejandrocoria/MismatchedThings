@@ -11,6 +11,9 @@ license="MIT"
     config="mismatchedboots-runtime-test.neoforge.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots-just-dire-armor-wear-spike.mixins.json"
+
+[[mixins]]
     config="mismatchedboots-just-dire-lava-repair-tests.mixins.json"
 
 [[mixins]]

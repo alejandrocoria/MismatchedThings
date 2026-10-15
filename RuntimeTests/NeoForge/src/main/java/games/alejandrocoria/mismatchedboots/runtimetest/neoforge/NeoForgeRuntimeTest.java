@@ -15,7 +15,13 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
+        String wearSpike = System.getProperty("mismatchedboots.runtimetest.justDireArmorWearSpike", "");
+        if (wearSpike.equals("abilities")) { NeoForgeJustDireArmorWearSpike.registerAbilityWitness(); }
+        if (!wearSpike.isEmpty() && !wearSpike.equals("abilities")) {
+            NeoForgeJustDireArmorWearSpike.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireArmorWearResearch")) {
+            NeoForgeJustDireArmorWearResearch.register();
+        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
             NeoForgeJustDireLavaRepairTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairClientTest")) {
             // The integrated server belongs to the visual transport fixture.

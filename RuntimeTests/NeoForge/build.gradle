@@ -356,6 +356,28 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        ['Live', 'FlowChanged', 'ConsumerChanged', 'ApiMissing', 'Absent', 'Abilities'].each { variant ->
+            register("justDireArmorWearSpike${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireArmorWearSpike', variant.uncapitalize())
+                if (variant == 'ApiMissing') { systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing') }
+                if (variant == 'Abilities') { systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true') }
+                jvmArgument('-Xmx1G')
+            }
+        }
+        justDireArmorWearResearch {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireArmorWearResearch', 'true')
+            jvmArgument('-Xmx1G')
+        }
         justDireSmithing {
             server()
             disableIdeRun()
@@ -568,6 +590,68 @@ spawn-protection=0
 
 tasks.named('runJustDireSmithing') {
     dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+tasks.named('runJustDireArmorWearResearch') { dependsOn 'prepareJustDireSmithing' }
+
+['Live', 'FlowChanged', 'ConsumerChanged', 'ApiMissing', 'Absent', 'Abilities'].each { variant ->
+    tasks.named("runJustDireArmorWearSpike${variant}") {
+        dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing'
+    }
+}
+
+tasks.register('verifyJustDireArmorWearSpike') {
+    group = 'verification'
+    description = 'Test-only post-event wear consumer feasibility, guarded fallback and production ability coexistence.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def variants = providers.gradleProperty('armorWearSpikeVariants').getOrElse('Live,FlowChanged,ConsumerChanged,ApiMissing,Absent,Abilities').split(',')
+        if (!variants.every { it in ['Live', 'FlowChanged', 'ConsumerChanged', 'ApiMissing', 'Absent', 'Abilities'] }) {
+            throw new GradleException('Unknown armor-wear spike variant')
+        }
+        variants.each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-armor-wear-spike/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireArmorWearSpike${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = variant == 'Abilities' ? 'just-dire-earthquake-server' : 'just-dire-armor-wear-spike'
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            def storageWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things storage API') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || storageWarnings != (variant == 'ApiMissing' ? 1 : 0)
+                    || timerWarnings != (variant == 'Abilities' ? 1 : 0)
+                    || new File(directory, 'just-dire-armor-wear-spike-failure.txt').isFile()
+                    || variant == 'Abilities' && !new File(directory, 'just-dire-armor-wear-spike-armed.txt').isFile()) {
+                throw new GradleException("Armor wear spike ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            if (variant == 'Abilities') {
+                new File(log.parentFile, 'Abilities-armed.txt').text = new File(directory, 'just-dire-armor-wear-spike-armed.txt').text
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireArmorWearResearch') {
+    group = 'verification'
+    description = 'Characterizes native and current production mixed armor wear/FE without a replacement damage adapter.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-armor-wear/${neoforge_version}/process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireArmorWearResearch', log, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-armor-wear-failure.txt')
+        def report = new File(directory, 'just-dire-armor-wear-report.txt')
+        def success = new File(directory, 'just-dire-armor-wear-success.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')) {
+            throw new GradleException("Armor wear research failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
 }
 
 ['', 'ApiMissing', 'ParticlesMissing', 'EmissionFailure', 'QueryFailure'].each { variant ->
