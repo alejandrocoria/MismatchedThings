@@ -138,6 +138,9 @@ public final class NeoForgeJustDireArmorWearTest {
             return;
         }
         for (String tier : List.of("celestigem", "eclipsealloy")) {
+            for (int charge : new int[]{0, 49, 199, 200, 1_000}) {
+                hit(server, "native " + tier + " FE=" + charge, boot(tier, charge), Math.max(0, charge - 200), 0);
+            }
             for (boolean inverse : new boolean[]{false, true}) {
                 for (int charge : new int[]{0, 49, 199, 200, 1_000}) {
                     hit(server, tier + "/diamond inverse=" + inverse + " FE=" + charge,
@@ -150,7 +153,6 @@ public final class NeoForgeJustDireArmorWearTest {
                 hit(server, "two powered inverse=" + inverse + " FE=" + charge, mixed("celestigem", "eclipsealloy", charge, inverse), Math.max(0, charge - 200), 0);
             }
         }
-        hit(server, "native original", boot("celestigem", 1_000), 800, 0);
         hit(server, "ordinary diamond", new ItemStack(Items.DIAMOND_BOOTS), 0, 2);
         hit(server, "ordinary non-powered mixed", mixed("ferricore", "diamond", 0, false), 0, 2);
         var forged = mixed("ferricore", "diamond", 1_000, false);
@@ -175,8 +177,24 @@ public final class NeoForgeJustDireArmorWearTest {
             hit(server, flag + " off", root, 800, 0);
         }
         postEvent(server);
+        nativeDirectBoundaries(server);
         isolation(server);
         abilities(server);
+    }
+
+    private static void nativeDirectBoundaries(MinecraftServer server) {
+        for (GameType mode : List.of(GameType.SURVIVAL, GameType.CREATIVE, GameType.SPECTATOR)) {
+            var player = NeoForgeJustDireNegateFallTest.player(server, mode);
+            var root = boot("celestigem", 1_000); player.setItemSlot(EquipmentSlot.FEET, root); var before = root.copy();
+            if (mode != GameType.SURVIVAL) {
+                require(!player.hurtServer(server.overworld(), attack(player), 8) && ItemStack.matches(before, root), "Native incoming mode immunity changed");
+            }
+            root.hurtAndBreak(2, player, EquipmentSlot.FEET);
+            require(charge(root) == 998 && root.getDamageValue() == 0, "Native direct request gained armor's x100 or ordinary wear");
+            root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE); root.hurtAndBreak(2, player, EquipmentSlot.FEET);
+            require(charge(root) == 996 && root.getDamageValue() == 0, "Native direct Unbreakable/mode boundary changed");
+            record("native direct " + mode, "incoming immunity unchanged; two direct requests cost 2 FE each, including Unbreakable");
+        }
     }
 
     private static void transactions(MinecraftServer server) {

@@ -22,13 +22,7 @@ public final class NeoForgeRuntimeTest {
             } else { NeoForgeJustDireArmorWearTest.register(); }
             return;
         }
-        String wearSpike = System.getProperty("mismatchedboots.runtimetest.justDireArmorWearSpike", "");
-        if (wearSpike.equals("abilities")) { NeoForgeJustDireArmorWearSpike.registerAbilityWitness(); }
-        if (!wearSpike.isEmpty() && !wearSpike.equals("abilities")) {
-            NeoForgeJustDireArmorWearSpike.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireArmorWearResearch")) {
-            NeoForgeJustDireArmorWearResearch.register();
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
             NeoForgeJustDireLavaRepairTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairClientTest")) {
             // The integrated server belongs to the visual transport fixture.

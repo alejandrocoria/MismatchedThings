@@ -87,6 +87,7 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static List<String> reconnectPassives;
     private static ItemStack pausedFeedbackRoot;
     private static ItemStack lavaBefore;
+    private static double depletedWearArmor;
 
     private NeoForgeJustDireGroundStompClientTest() {}
 
@@ -1275,12 +1276,15 @@ final class NeoForgeJustDireGroundStompClientTest {
         }));
         hold(client);
         add("packet-delivered spent GS has exact native HUD before save", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, 1));
-        add("deplete the spent root through its real wallet before saving powered Jump fallback", () -> server(client, player -> {
-            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
-                require(JustDireResourceTestSupport.handler(player.getItemBySlot(EquipmentSlot.FEET)).extract(4_996, transaction) == 4_996, "Lifecycle depletion failed");
-                transaction.commit();
-            }
-        }), () -> charge(feet(client)) == 4);
+        add("funded incoming hit pays one root bill and normal packets preserve prior wear/history", () -> server(client, player ->
+                JustDireArmorWearTestSupport.hit(player, 4_800, 0)), () -> charge(feet(client)) == 4_800
+                && feet(client).getDamageValue() == 31 && ModContent.getMixedBootsData(feet(client)).orElseThrow().equals(provenance));
+        add("unfunded incoming hit adds ordinary wear without a partial FE debit", () -> server(client, player -> {
+            JustDireArmorWearTestSupport.extract(player, 4_700);
+            JustDireArmorWearTestSupport.hit(player, 100, 2);
+        }), () -> charge(feet(client)) == 100 && feet(client).getDamageValue() == 33);
+        add("deplete the actually combat-spent root before saving powered Jump fallback", () -> server(client, player ->
+                JustDireArmorWearTestSupport.extract(player, 96)), () -> charge(feet(client)) == 4 && feet(client).getDamageValue() == 33);
         lifecycleJump(client, 3, 2);
         add("store actual spent root and consumed/unconsumed production packets", () -> server(client, player -> {
             var root = player.getItemBySlot(EquipmentSlot.FEET);
@@ -1293,13 +1297,23 @@ final class NeoForgeJustDireGroundStompClientTest {
     }
 
     private static void lifecycleRestart(Minecraft client, int slot) {
+        // Rules/equipment can synchronize before Minecraft accepts damage from a newly joined client.
+        boolean[] loaded = {false};
+        add("wait for the actual client-loaded handshake before restart combat", () -> {}, () -> {
+            if (loaded[0]) { return true; }
+            server(client, player -> loaded[0] = player.connection.hasClientLoaded());
+            return false;
+        });
         add("tier preview and " + (slot == 0 ? "normal" : "shift-click") + " take preserve disk controls/resources", () -> server(client, player -> {
             try {
                 player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL);
                 player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
                 JustDireCooldownFeedbackTestSupport.begin(player);
                 var root = JustDireGroundStompLifecycleTestSupport.storage(player, false).removeItemNoUpdate(slot);
-                require(charge(root) == 4 && root.getDamageValue() == 31 && timer(root) > 0, "Disk resource/wear/timer mismatch");
+                require(charge(root) == 4 && root.getDamageValue() == 33 && timer(root) > 0, "Disk resource/wear/timer mismatch");
+                player.setItemSlot(EquipmentSlot.FEET, root);
+                JustDireArmorWearTestSupport.hit(player, 4, 2); // The restored wallet, not the sources' historical 10k FE.
+                player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
                 expected = JustDireGroundStompLifecycleTestSupport.smithing(player, root, slot == 1);
                 JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().clearContent();
@@ -1307,9 +1321,21 @@ final class NeoForgeJustDireGroundStompClientTest {
                 player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
             } catch (Exception failure) { throw new AssertionError(failure); }
         }), () -> ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance))
-                && charge(feet(client)) == 4 && JustDireResourceTestSupport.handler(feet(client)).getCapacityAsInt() == 500_000);
+                && charge(feet(client)) == 4 && feet(client).getDamageValue() == 35
+                && JustDireResourceTestSupport.handler(feet(client)).getCapacityAsInt() == 500_000);
         feedbackPause(client, 1);
         lavaTierLifecycle(client, slot);
+        add("native donor recharge restores powered armor without repairing prior combat wear", () -> {
+            depletedWearArmor = client.player.getAttributeValue(Attributes.ARMOR);
+            server(client, player -> JustDireArmorWearTestSupport.recharge(player, 300));
+        }, () -> charge(feet(client)) == 304 && feet(client).getDamageValue() == 35
+                && client.player.getAttributeValue(Attributes.ARMOR) > depletedWearArmor);
+        add("restored powered availability funds another hit without adding wear", () -> server(client, player ->
+                JustDireArmorWearTestSupport.hit(player, 104, 0)), () -> charge(feet(client)) == 104 && feet(client).getDamageValue() == 35);
+        add("actual XP Mending repairs only durability, not the spent wallet", () -> server(client, player ->
+                JustDireArmorWearTestSupport.mend(player)), () -> charge(feet(client)) == 104 && feet(client).getDamageValue() < 35);
+        add("retain the existing depleted Jump boundary after wear/Mending acceptance", () -> server(client, player ->
+                JustDireArmorWearTestSupport.extract(player, 100)), () -> charge(feet(client)) == 4);
         lifecycleJump(client, 3, 2);
         lifecycleCharge(client, 5);
         lifecycleJump(client, 3, 3);
@@ -1403,6 +1429,13 @@ final class NeoForgeJustDireGroundStompClientTest {
             JustDireGroundStompLifecycleTestSupport.sameControls(lavaBefore, feet(client), false);
         });
         close(client);
+        add("actual Blazegold-to-Celestigem take changes incoming wear to the two-provider partial/empty rule", () -> server(client, player -> {
+            JustDireArmorWearTestSupport.hit(player, 0, 0);
+            JustDireArmorWearTestSupport.hit(player, 0, 0);
+        }), () -> charge(feet(client)) == 0 && feet(client).getDamageValue() == lavaBefore.getDamageValue());
+        add("real donor recharge after partial two-provider payment preserves wear", () -> server(client, player ->
+                JustDireArmorWearTestSupport.recharge(player, 4)), () -> charge(feet(client)) == 4
+                && feet(client).getDamageValue() == lavaBefore.getDamageValue());
         add("restore retained provider through production recomposition, not a fabricated downgrade recipe", () -> server(client, player -> {
             var live = player.getItemBySlot(EquipmentSlot.FEET);
             var retained = ModContent.getMixedBootsData(lavaBefore).orElseThrow();

@@ -97,13 +97,20 @@ final class NeoForgeJustDireLavaLifecycleTest {
     }
 
     private static void save(MinecraftServer server) {
-        add("automatic scheduler, adjacent sources: one pinned source/receipt, FE/history unchanged", () -> {
+        add("automatic Lava repair of combat-spent FE: one pinned source/receipt, no wallet refund", () -> {
             arena(level); level.setBlock(A.east(), Blocks.LAVA.defaultBlockState(), 3);
-            expected = root(); item = drop(level, A, expected.copy());
+            expected = root();
+            var wearer = NeoForgeJustDireNegateFallTest.player(server, net.minecraft.world.level.GameType.SURVIVAL);
+            wearer.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, expected);
+            JustDireArmorWearTestSupport.hit(wearer, 12_145, 0);
+            wearer.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, ItemStack.EMPTY);
+            item = drop(level, A, expected.copy());
         }, () -> repaired(item));
         check("successful root continues normal age and pickup delay; no adjacent-source double consumption", () -> {
             require(level.getBlockState(A).is(Blocks.OBSIDIAN) && source(level, A.east()), "Pinned/adjacent receipt mismatch");
             unchanged(item, expected, true);
+            require(item.getItem().getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 12_145,
+                    "Actual Lava completion refilled combat-spent FE from historical source charge");
         });
         add("healthy completed entity never repeats effects without new contact", () -> {}, () -> wait > 110);
         check("exactly one completion and ordinary age/pickup countdown", () -> {

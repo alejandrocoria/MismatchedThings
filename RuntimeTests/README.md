@@ -886,6 +886,18 @@ preserved controls/resources/source history and single template/addition/base
 consumption, then exercises shared passive input during cooldown, natural expiry
 and fresh keyboard/mouse action.
 
+Armor-wear C extends the same first two roots, not a new restart suite. Funded and
+unfunded actual survival hits arrive through ordinary in-place equipment/slot
+packets before save (5000 -> 4800 -> 100 FE, prior wear 31 -> 33). Four FE and
+combat wear survive the second JVM; another real hit spends no FE and adds two
+wear points instead of consulting historical source charge. Both native
+Celestigem-to-Eclipse and Blazegold-to-Celestigem previews/normal and shift takes
+preserve the live state. The latter changes one provider to two: four FE then
+zero FE suppress further ordinary wear. Actual native-donor recharge restores
+powered availability without repairing wear, while XP Mending repairs durability
+without refilling the wallet. The pre-existing controls/HUD/Jump/EQ/reconnect
+matrix remains in this same driver.
+
 Powered Jump C extends these same four roots/two JVMs, not a separate lifecycle
 suite. Celestigem/Blazegold sources deliberately retain a different Jump value;
 the actual spent wallet is depleted to four FE before save. Reload, inventory pause
@@ -1123,6 +1135,11 @@ not replay a receipt. Reports are `lifecycleSave`/`lifecycleRestart` beside the
 other versioned Lava reports. Despawn age is advanced only to exercise the native
 boundary without waiting five minutes; no fixture manually ticks an entity.
 
+Armor-wear C extends the first scheduled episode with an actual funded survival
+hit before the drop: the root spends 200 FE, then Lava Repair repairs its prior
+wear without refunding that wallet debit. The full-stack comparison permits
+only the expected durability change, not a reset of controls or source history.
+
 The existing native-menu lifecycle gate additionally saves explicit false and
 absent Lava preferences, native keyboard bindings and unrelated spent resources/
 clocks. After restart it uses actual source-wise tier preview/take in both
@@ -1161,7 +1178,7 @@ alternate FE provider is used. The final owned production getter must be true in
 transaction/binding-failure contexts and false/unavailable for unsafe flow/absence.
 
 The same maintained gate covers A's Live/Missing/Absent and B's isolated faults. Select a
-bounded subset with, for example, `"-ParmorWearVariants=Live"`. Live records 65
+bounded subset with, for example, `"-ParmorWearVariants=Live"`. Live records 77
 production observations: actual NORMAL-difficulty player hits/equipment ticks,
 both powered tiers/orientations, full/partial/empty one/two-provider branches,
 Unbreaking/zero bill, late cancellation/effective fractional modifiers, mode and
@@ -1169,6 +1186,9 @@ item immunity, actual breakage, protected-entry revival and unchanged provenance
 Direct wear, actual XP Mending, recomposition and existing GS ordinary/powered,
 Negate and free Jump consumers remain separate. Observations are not JUnit tests
 or manual gameplay cases.
+The consolidated native controls include both tiers' empty/partial/full budgets
+and direct two-FE/Unbreakable/mode behavior; native direct wear must not gain the
+armor-event x100 rate.
 
 The additional variants are:
 
@@ -1221,18 +1241,25 @@ than the superseded ordinary-wear baseline; attribute functionality and prices
 remain owned by their existing adapters.
 
 The [production plan](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-IMPLEMENTATION.md)
-owns the separate A/B evidence and pending C/manual gates. Lifecycle/consolidation
-and ordinary-client acceptance are not inferred from these isolated server faults.
+owns the separate A/B evidence, C's consolidated lifecycle record and accepted
+ordinary-client checklist. The joint native-menu lifecycle and Lava lifecycle
+commands above own real restart/packet/repair evidence, not these isolated faults.
+Final C regression passed on .99 and restored .114, including 11 focal shape
+units/version, both loader builds and packaged-dependency verification. The
+plan's section 10 records exact commands, scoped retry, warnings and exercised/
+skipped/cache boundaries. The owner separately confirmed all final ordinary-client
+checks on 2026-10-15 (section 10.3), accepting C and completing the bounded
+armor-wear/FE A/B/C plan.
 
 ### Historical characterization and consumer spike
 
 The [exploration](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-EXPLORATION.md)
 retains dated native/pre-A mixed characterization (84 observations/version) and
 prototype feasibility (67 live observations plus isolated faults and reused EQ).
-Their old research/spike run and verify tasks now fail explicitly with the
-production entry point: do not layer the prototype over the real adapter or
-expect funded production roots to retain pre-A ordinary wear. Remaining dormant
-prototype source/configuration cleanup belongs to C. Historical reports remain in
+Their executable research driver, candidate adapter/bridge, plugin/configuration,
+old flags/witness and run/verify tasks were removed in C. Useful native controls
+now live in the production gate. Do not layer a historical prototype over the
+real adapter or expect funded roots to retain pre-A ordinary wear. Historical reports remain in
 `build/reports/just-dire-armor-wear/<version>/` and
 `build/reports/just-dire-armor-wear-spike/<version>/`; they are not current
 production or manual acceptance.
