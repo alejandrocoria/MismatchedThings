@@ -33,8 +33,8 @@ normal indev client/server runs.
 
 Run Gradle tasks sequentially from the repository root:
 
-The opt-in Lava Repair research gate is documented under
-[Just Dire Things Lava Repair research spike](#just-dire-things-lava-repair-research-spike).
+The maintained Lava Repair gates and retired research boundary are documented under
+[Just Dire Things Lava Repair production](#just-dire-things-lava-repair-production).
 
 ```powershell
 .\gradlew.bat :Common:test
@@ -1039,7 +1039,7 @@ startup/network markers under `build/network-acceptance/`. The temporary
 baseline/candidate probe/datapack were retired; historical evidence remains in
 [the bounded record](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md).
 
-## Just Dire Things Lava Repair production — block A
+## Just Dire Things Lava Repair production
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepair --console=plain
@@ -1078,9 +1078,8 @@ preservation is registry-only even after optional failure.
 
 Both gates reuse the pinned JDT artifact and disposable preparation. Reports/logs
 are retained under `RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/<version>/`,
-with `production`, `productionClient` and per-guard files. Full pickup/restart/
-dimension/merge/despawn consolidation remains C in
-[the plan](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md).
+with `production`, `productionClient` and per-guard files. The real lifecycle gate
+below complements the focused explicit-tick scenarios; it does not replace them.
 
 Block B's `:RuntimeTests:NeoForge:verifyJustDireLavaRepairSettings` reuses the native
 settings client harness with focused `Lava`/`LavaSettingsFailure` variants. It
@@ -1104,29 +1103,46 @@ These replace the earlier source-Lava expectations. Synthetic input and tooltip
 structure are not physical/manual screen readability acceptance. The owner
 separately confirmed B's focused controls/bindings/tooltip checklist on 2026-10-14,
 closing [section 9.3](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md#93-focused-owner-checklist--accepted).
-C's full lifecycle/consolidation remains pending.
+
+Block C adds a scheduler-owned entity gate:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaLifecycle --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
+```
+
+Repeat on .99 as above. `verifyJustDireLavaLifecycle` runs two dedicated-server
+JVMs against the same disposable world, with no reset between Save and Restart.
+Only the real server scheduler ticks its spawned entities. It covers pinned
+adjacent/deep sources, removal/new contact, native pickup delay/playerTouch/drop,
+ordinary age/despawn, legal vanilla merging beside nonstackable mixed controls,
+actual chunk unload/reload and cross-dimension entity replacement. Actual saved
+entity UUIDs and full independent stack expectations are reopened in the second
+JVM; stale native working fields grant no repair credit and completed roots do
+not replay a receipt. Reports are `lifecycleSave`/`lifecycleRestart` beside the
+other versioned Lava reports. Despawn age is advanced only to exercise the native
+boundary without waiting five minutes; no fixture manually ticks an entity.
+
+The existing native-menu lifecycle gate additionally saves explicit false and
+absent Lava preferences, native keyboard bindings and unrelated spent resources/
+clocks. After restart it uses actual source-wise tier preview/take in both
+orientations, ordinary equipment packets and native widgets/tooltips to check
+dormant eligibility. Provider restoration uses production recomposition with the
+retained source snapshots and current live controls/clocks/resources, not a
+synthetic native downgrade recipe or an older root-state rollback. The older GS/EQ/Jump lifecycle coverage
+remains in that one harness, rather than a second copy of its matrix.
+
+The owner confirmed all final manual tests on 2026-10-14, accepting C and closing
+the bounded Lava Repair A/B/C plan. This separate manual evidence is recorded in
+[section 10.3](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md#103-owner-handoff--accepted);
+it is not inferred from synthetic input or the automated .114/.99 matrix.
 
 ## Just Dire Things Lava Repair research spike
 
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepairSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepairSpike "-Pneoforge_version=26.1.2.99" --console=plain
-```
-
-This opt-in dedicated-server research gate uses the same hash-pinned JDT 1.6.11
-and disposable preparation as smithing. It runs 23 bounded groups with actual
-server-thread `ItemEntity.tick()` calls, native controls and a test-only mixed
-candidate: permanent fire immunity, source consumption/root repair, unchanged
-FE/history, disabled/healthy/flowing controls, interruptions, stale native progress,
-two-entity source contention and an injected refused obsidian write. Native helper
-reuse repairs despite that refusal; the local candidate does not.
-
-Reports/logs are versioned under
-`RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/`. Item-hook and refused-
-write fault are test-only, never in production archives. The candidate item-hook
-override is enabled only for research; the narrowly selected refused-write fault
-is also reused by the production gate above. The test uses detached entities and explicit ticking, not
-automatic scheduler/merge/despawn integration. Real pickup, world/chunk restart,
-dimension transfer, native controls/transport, tooltips and client visuals remain
-production acceptance work. See
-[the exploration and proof boundaries](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-EXPLORATION.md#8-executable-server-spike--2026-10-14).
+The executable candidate, native-reuse driver, research flag/runs/plugin and
+item-hook mixin were retired in production block C. The narrowly gated refused-
+world-write fault remains only in the maintained production server gate, with
+no candidate dependency. No old spike task is a maintained entry point.
+The dated 23-group-per-version proof and its limits remain historical evidence in
+[the exploration](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-EXPLORATION.md#8-executable-server-spike--2026-10-14),
+not a substitute for production or manual acceptance.

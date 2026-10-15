@@ -34,7 +34,8 @@ final class JustDireGroundStompLifecycleTestSupport {
             "groundstomp_bindingmode", "stepheight_upgrade_installed", "stepheight_toggle", "stepheight_bindingmode",
             "jumpboost_upgrade_installed", "jumpboost_toggle", "jumpboost_value", "jumpboost_bindingmode",
             "negatefalldamage_upgrade_installed", "negatefalldamage_toggle", "negatefalldamage_bindingmode",
-            "earthquake_upgrade_installed", "earthquake_toggle", "earthquake_value", "earthquake_bindingmode", "earthquake_custom_setting");
+            "earthquake_upgrade_installed", "earthquake_toggle", "earthquake_value", "earthquake_bindingmode", "earthquake_custom_setting",
+            "lavarepair_toggle", "lavarepair_bindingmode");
 
     private JustDireGroundStompLifecycleTestSupport() {}
 
@@ -89,10 +90,18 @@ final class JustDireGroundStompLifecycleTestSupport {
     }
 
     static ItemStack smithing(ServerPlayer player, ItemStack root, boolean quick) {
+        return smithingTier(player, root, quick, "celestigem", "eclipsealloy", "eclipsealloy_ingot");
+    }
+
+    static ItemStack removeLava(ServerPlayer player, ItemStack root, boolean quick) {
+        return smithingTier(player, root, quick, "blazegold", "celestigem", "celestigem");
+    }
+
+    private static ItemStack smithingTier(ServerPlayer player, ItemStack root, boolean quick, String from, String to, String material) {
         var before = root.copy();
         var menu = new SmithingMenu(1, player.getInventory(), ContainerLevelAccess.create(player.level(), STORAGE));
-        var template = nativeItem("template_eclipsealloy");
-        var addition = nativeItem("eclipsealloy_ingot");
+        var template = nativeItem("template_" + to);
+        var addition = nativeItem(material);
         menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(template.copy());
         menu.getSlot(SmithingMenu.BASE_SLOT).set(root.copy());
         menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(addition.copy());
@@ -102,8 +111,8 @@ final class JustDireGroundStompLifecycleTestSupport {
                 "Smithing preview mutated input/history");
         var originalData = ModContent.getMixedBootsData(before).orElseThrow();
         var outputData = ModContent.getMixedBootsData(preview).orElseThrow();
-        boolean left = originalData.left().source().is(nativeItem("celestigem_boots").getItem());
-        require((left ? outputData.left().source() : outputData.right().source()).is(nativeItem("eclipsealloy_boots").getItem())
+        boolean left = originalData.left().source().is(nativeItem(from + "_boots").getItem());
+        require((left ? outputData.left().source() : outputData.right().source()).is(nativeItem(to + "_boots").getItem())
                 && ItemStack.matches(left ? originalData.right().source() : originalData.left().source(),
                 left ? outputData.right().source() : outputData.left().source()), "Tier recipe transformed the wrong source");
         require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)

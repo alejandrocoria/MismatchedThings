@@ -20,8 +20,8 @@ public final class NeoForgeRuntimeTest {
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairClientTest")) {
             // The integrated server belongs to the visual transport fixture.
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> NeoForgeJustDireLavaRepairClientTest.observeServer(event.getServer()));
-        } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairSpike")) {
-            NeoForgeJustDireLavaRepairSpike.register();
+        } else if (!System.getProperty("mismatchedboots.runtimetest.justDireLavaLifecycle", "").isEmpty()) {
+            NeoForgeJustDireLavaLifecycleTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeServerTest")) {
             NeoForgeJustDireEarthquakeServerTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeStateTest")) {

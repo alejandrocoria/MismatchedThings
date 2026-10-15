@@ -86,6 +86,7 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static JustDireActiveNetwork.Activate savedEarthquakePermit;
     private static List<String> reconnectPassives;
     private static ItemStack pausedFeedbackRoot;
+    private static ItemStack lavaBefore;
 
     private NeoForgeJustDireGroundStompClientTest() {}
 
@@ -1250,6 +1251,15 @@ final class NeoForgeJustDireGroundStompClientTest {
         assign(client, "STEPHEIGHT", 4, true); assign(client, "JUMPBOOST", 4, true);
         assign(client, "NEGATEFALLDAMAGE", GLFW.GLFW_KEY_L, false);
         assign(client, "NEGATEFALLDAMAGE", GLFW.GLFW_KEY_ESCAPE, false);
+        if (slot == 0) {
+            add("native Lava toggle stores explicit false before world save", () -> click(icon(client, "LAVAREPAIR"), 0),
+                    () -> !flag(feet(client), "lavarepair_toggle", true));
+            assign(client, "LAVAREPAIR", GLFW.GLFW_KEY_V, false);
+        } else {
+            add("native Lava selection preserves explicit absence before save", () -> require(
+                    !feet(client).has(JustDireAttributeTestSupport.component("lavarepair_toggle"))
+                            && !feet(client).has(JustDireAttributeTestSupport.component("lavarepair_bindingmode")), "Native selection materialized absent Lava controls"));
+        }
         close(client);
         add("explicit disabled mode/removal is independent of historical input preferences", () -> server(client, player -> {
             set(player.getItemBySlot(EquipmentSlot.FEET), "negatefalldamage_bindingmode", 0); player.inventoryMenu.broadcastChanges();
@@ -1299,6 +1309,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         }), () -> ModContent.getMixedBootsData(feet(client)).equals(java.util.Optional.ofNullable(provenance))
                 && charge(feet(client)) == 4 && JustDireResourceTestSupport.handler(feet(client)).getCapacityAsInt() == 500_000);
         feedbackPause(client, 1);
+        lavaTierLifecycle(client, slot);
         lifecycleJump(client, 3, 2);
         lifecycleCharge(client, 5);
         lifecycleJump(client, 3, 3);
@@ -1363,6 +1374,54 @@ final class NeoForgeJustDireGroundStompClientTest {
         }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
         add("fresh mouse binding uses production listener and one root bill", () -> mousePress(3, GLFW.GLFW_PRESS),
                 () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0);
+    }
+
+    private static void lavaTierLifecycle(Minecraft client, int slot) {
+        add("loaded Lava controls retain false/absence and keyboard binding", () -> {
+            require(slot == 0 ? !flag(feet(client), "lavarepair_toggle", true) && bindingFor(feet(client), "lavarepair", GLFW.GLFW_KEY_V, false)
+                    : !feet(client).has(JustDireAttributeTestSupport.component("lavarepair_toggle"))
+                    && !feet(client).has(JustDireAttributeTestSupport.component("lavarepair_bindingmode")), "Restart/tier lost Lava preference ownership");
+            lavaTooltip(client, slot != 0);
+        });
+        open(client); select(client, 36);
+        add("restarted native Lava widget is intrinsic and has no slider", () -> require(hasIcon(client, "LAVAREPAIR")
+                && slider(client, "LAVAREPAIR") == null, "Restart lost intrinsic native controls"));
+        close(client);
+        add("actual source-wise Blazegold tier preview/take removes Lava without resetting live state", () -> server(client, player -> {
+            lavaBefore = player.getItemBySlot(EquipmentSlot.FEET).copy();
+            var tier = JustDireGroundStompLifecycleTestSupport.removeLava(player, lavaBefore, slot != 0);
+            require(!JustDireLavaRepairCompatibility.eligible(tier)
+                    && JustDireSettingsCompatibility.metadata(tier, "lavarepair") == null, "Tier kept missing source eligibility");
+            player.getInventory().clearContent(); player.setItemSlot(EquipmentSlot.FEET, tier); player.inventoryMenu.broadcastChanges();
+        }), () -> !JustDireLavaRepairCompatibility.eligible(feet(client)));
+        open(client); select(client, 36);
+        add("ordinary tier slot packet removes only the Lava native widget/tooltip", () -> {
+            require(!hasIcon(client, "LAVAREPAIR") && hasIcon(client, "GROUNDSTOMP"), "Client tier eligibility stale");
+            var lines = feet(client).getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
+            require(lines.stream().noneMatch(line -> line.getContents() instanceof TranslatableContents text
+                    && text.getKey().equals("justdirethings.ability")), "Dormant Lava advertised as installed/available");
+            JustDireGroundStompLifecycleTestSupport.sameControls(lavaBefore, feet(client), false);
+        });
+        close(client);
+        add("restore retained provider through production recomposition, not a fabricated downgrade recipe", () -> server(client, player -> {
+            var live = player.getItemBySlot(EquipmentSlot.FEET);
+            var retained = ModContent.getMixedBootsData(lavaBefore).orElseThrow();
+            var restored = MixedBootsRecomposer.recompose(live, retained.left().source(), retained.right().source());
+            JustDireGroundStompLifecycleTestSupport.sameControls(live, restored, true);
+            require(charge(live) == charge(restored) && live.getDamageValue() == restored.getDamageValue(), "Provider restoration reset live resources");
+            lavaBefore = restored.copy();
+            player.setItemSlot(EquipmentSlot.FEET, restored); player.inventoryMenu.broadcastChanges();
+        }), () -> JustDireLavaRepairCompatibility.eligible(feet(client)));
+        add("restoring provider keeps exact Lava false/absence and unrelated state", () -> {
+            JustDireGroundStompLifecycleTestSupport.sameControls(lavaBefore, feet(client), false);
+            require(charge(feet(client)) == charge(lavaBefore), "Tier fixture restored/refilled FE");
+        });
+        if (slot == 0) {
+            add("persisted Lava keyboard toggles after disk/tier synchronization without a bill", () -> press(GLFW.GLFW_KEY_V, GLFW.GLFW_PRESS),
+                    () -> flag(feet(client), "lavarepair_toggle", false) && charge(feet(client)) == charge(lavaBefore));
+            add("return persisted Lava preference to explicit false", () -> press(GLFW.GLFW_KEY_V, GLFW.GLFW_PRESS),
+                    () -> !flag(feet(client), "lavarepair_toggle", true));
+        }
     }
 
     private static void lifecycleCharge(Minecraft client, int energy) {

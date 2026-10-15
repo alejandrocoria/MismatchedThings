@@ -139,14 +139,16 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
         }
-        justDireLavaRepairSpike {
+        ['Save', 'Restart'].each { mode ->
+          register("justDireLavaLifecycle${mode}") {
             server()
             disableIdeRun()
             gameDirectory = justDireSmithingRunDirectory.get().asFile
             programArgument('--nogui')
             systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
-            systemProperty('mismatchedboots.runtimetest.justDireLavaRepairSpike', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireLavaLifecycle', mode.uncapitalize())
             jvmArgument('-Xmx1G')
+          }
         }
         ['Compatible', 'MissingFall', 'Absent'].each { variant ->
             register("justDireJump${variant}") {
@@ -568,12 +570,49 @@ tasks.named('runJustDireSmithing') {
     dependsOn tasks.named('prepareJustDireSmithing')
 }
 
-tasks.named('runJustDireLavaRepairSpike') { dependsOn tasks.named('prepareJustDireSmithing') }
 ['', 'ApiMissing', 'ParticlesMissing', 'EmissionFailure', 'QueryFailure'].each { variant ->
     tasks.named("runJustDireLavaRepair${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
 }
 tasks.named('runJustDireLavaRepairAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
 tasks.named('runJustDireLavaRepairClient') { dependsOn tasks.named('prepareJustDireJumpClient') }
+
+tasks.named('runJustDireLavaLifecycleSave') {
+    dependsOn 'prepareJustDireSmithing'
+    doFirst {
+        // This scheduler-owned scenario intentionally outlives vanilla's empty-server pause.
+        new File(justDireSmithingRunDirectory.get().asFile, 'server.properties').append('pause-when-empty-seconds=0\n')
+    }
+}
+tasks.named('runJustDireLavaLifecycleRestart') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doFirst {
+        if (!new File(justDireSmithingMarkers.get().asFile, 'just-dire-lava-lifecycle-save-success.txt').isFile()) {
+            throw new GradleException('Run Lava lifecycle Save before Restart; its world must not be reset')
+        }
+    }
+}
+tasks.register('verifyJustDireLavaLifecycle') {
+    group = 'verification'
+    description = 'Verifies scheduler-owned Lava entities, chunk unload, pickup/redrop, dimension transfer and actual world restart.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Save', 'Restart'].each { mode ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/lifecycle${mode}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireLavaLifecycle${mode}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = "just-dire-lava-lifecycle-${mode.uncapitalize()}"
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || log.readLines().any { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }) {
+                throw new GradleException("Lava lifecycle ${mode} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "lifecycle${mode}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
 
 tasks.register('verifyJustDireLavaRepair') {
     group = 'verification'
@@ -654,24 +693,6 @@ tasks.register('verifyJustDireLavaRepairSettings') {
     }
 }
 
-tasks.register('verifyJustDireLavaRepairSpike') {
-    group = 'verification'
-    description = 'Research only: real dropped-item Lava Repair, permanent fire immunity and block-commit boundaries.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
-    doLast {
-        def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireLavaRepairSpike', log, 240)
-        def directory = justDireSmithingMarkers.get().asFile
-        def failure = new File(directory, 'just-dire-lava-repair-failure.txt')
-        def report = new File(directory, 'just-dire-lava-repair-report.txt')
-        def success = new File(directory, 'just-dire-lava-repair-success.txt')
-        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()) {
-            throw new GradleException("Lava Repair research failed: ${failure.isFile() ? failure.text : log}")
-        }
-        new File(log.parentFile, 'report.txt').text = report.text
-        logger.lifecycle(report.text)
-    }
-}
 
 tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
 ['', 'ApiMissing', 'QueryFailure'].each { variant ->
@@ -1191,7 +1212,8 @@ tasks.register('verifyJustDireGroundStompLifecycle') {
             if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
                     || log.text.contains('/ERROR]') || log.text.contains('mixed screen bridge disabled')
                     || log.text.contains('mixed settings API; new settings/input routes disabled')
-                    || log.text.contains('Just Dire Things cooldown HUD')) {
+                    || log.text.contains('Just Dire Things cooldown HUD')
+                    || log.readLines().any { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }) {
                 throw new GradleException("Ground Stomp lifecycle ${mode} failed: ${failure.isFile() ? failure.text : log}")
             }
             new File(log.parentFile, "${mode.uncapitalize()}-report.txt").text = report.text

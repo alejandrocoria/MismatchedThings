@@ -6,6 +6,7 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "JustDireLavaRepairApiMixin",
+    "JustDireLavaRepairBlockMixin",
     "JustDireLavaRepairEffectsMixin",
     "JustDireLavaRepairSettingsFailureMixin",
     "JustDireLavaRepairSoundMixin"
