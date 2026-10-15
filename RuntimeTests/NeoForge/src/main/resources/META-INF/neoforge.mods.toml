@@ -11,9 +11,6 @@ license="MIT"
     config="mismatchedboots-runtime-test.neoforge.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-just-dire-refund-spike.mixins.json"
-
-[[mixins]]
     config="mismatchedboots-just-dire-refund-binding-tests.mixins.json"
 
 [[mixins]]

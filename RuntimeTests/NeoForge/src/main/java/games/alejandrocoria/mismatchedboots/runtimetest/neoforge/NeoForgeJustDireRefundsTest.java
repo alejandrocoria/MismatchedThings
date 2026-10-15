@@ -46,7 +46,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Production state/menu acceptance. No candidate helpers, component or actual-break hook. */
+/** Production state/menu/actual-break acceptance. No candidate helpers, component or hook. */
 final class NeoForgeJustDireRefundsTest {
     private static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.justDireRefunds");
     private static final List<String> NAMES = List.of("stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake");
@@ -57,6 +57,7 @@ final class NeoForgeJustDireRefundsTest {
     private NeoForgeJustDireRefundsTest() {}
 
     static void register() {
+        JustDireRefundBreakTest.register();
         NeoForge.EVENT_BUS.addListener((EntityJoinLevelEvent event) -> {
             if (event.getEntity() instanceof ItemEntity item && BuiltInRegistries.ITEM.getKey(item.getItem().getItem())
                     .toString().startsWith("justdirethings:upgrade_")) { upgradeDrops++; }
@@ -66,16 +67,20 @@ final class NeoForgeJustDireRefundsTest {
             try {
                 var server = event.getServer();
                 if (VARIANT.equals("absent")) { absent(); }
-                else {
-                    require(JustDireUpgradesCompatibility.available() && JustDireRefundCompatibility.available() != VARIANT.equals("itemsMissing"), "Unexpected production binding state");
+                else if (!VARIANT.equals("live") && !VARIANT.equals("itemsMissing") && !VARIANT.equals("metadataMissing")) {
+                    for (String result : JustDireRefundFaults.exercise(server, VARIANT)) { record(result); }
+                } else {
+                    boolean bindingMissing = VARIANT.equals("itemsMissing") || VARIANT.equals("metadataMissing");
+                    require(JustDireUpgradesCompatibility.available() && JustDireRefundCompatibility.available() != bindingMissing, "Unexpected production binding state");
                     var player = JustDireGroundStompTestSupport.player(server, GameType.SURVIVAL);
-                    if (VARIANT.equals("itemsMissing")) { bindingFailure(server, player); }
+                    if (bindingMissing) { bindingFailure(server, player); }
                     else { allocation(server, player); installation(server, player); lifecycle(server, player); configured(server); codecs(server); }
                     var root = MixedBootsFactory.createPair(boot("ferricore", "stepheight"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
                     root.setDamageValue(root.getMaxDamage() - 1); player.setItemSlot(EquipmentSlot.FEET, root);
                     root.hurtAndBreak(2, player, EquipmentSlot.FEET);
-                    require(root.isEmpty() && upgradeDrops == 0, "Block A enabled refunds or failed ordinary direct break");
-                    record("actual credited-root break still grants no item: A does not enable refunds");
+                    require(root.isEmpty() && upgradeDrops == (bindingMissing ? 0 : 1), "Wrong actual direct-break refund");
+                    record("actual credited-root break returns one item only with the production binding/hook");
+                    if (VARIANT.equals("live")) { for (String result : JustDireRefundBreakTest.live(server)) { record(result); } }
                 }
                 NetworkAcceptanceFiles.write("just-dire-refunds-report.txt", groups + " production credit groups\n" + report);
                 NetworkAcceptanceFiles.write("just-dire-refunds-success.txt", "neoforge\n");
@@ -228,7 +233,7 @@ final class NeoForgeJustDireRefundsTest {
         require(!purchased.isEmpty() && credits(purchased).equals(List.of("jumpboost", "groundstomp")), "Refund binding failure disabled installation");
         var data = ModContent.getMixedBootsData(purchased).orElseThrow();
         require(credits(MixedBootsRecomposer.recompose(purchased, data.right().source(), data.left().source())).equals(credits(purchased)), "Binding failure erased credit");
-        record("real missing refund-item lookup: one scoped warning; independent installed binding, owner creation, paid root installation, GS quote and live preservation remain functional");
+        record("real missing refund item/metadata lookup: one scoped warning; independent installed binding, owner creation, paid root installation, GS quote and live preservation remain functional");
     }
 
     private static void absent() {

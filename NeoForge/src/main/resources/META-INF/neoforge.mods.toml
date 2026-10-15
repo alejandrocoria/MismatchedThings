@@ -32,6 +32,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.justdirethings-armor-wear.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.justdirethings-refunds.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.justdirethings-settings.mixins.json"
 
 [[mixins]]

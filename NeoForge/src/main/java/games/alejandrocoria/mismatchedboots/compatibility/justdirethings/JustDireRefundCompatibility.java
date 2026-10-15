@@ -1,11 +1,18 @@
 package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import games.alejandrocoria.mismatchedboots.Constants;
+import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
@@ -13,11 +20,14 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-/** Conserved root entitlement. Actual-break observation is deliberately not enabled yet. */
+/** Conserved root entitlement, returned only by the independently guarded actual-break observer. */
 public final class JustDireRefundCompatibility {
     private static final DeferredRegister<DataComponentType<?>> TYPES = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, Constants.MOD_ID);
     private static final DeferredHolder<DataComponentType<?>, DataComponentType<JustDireRefundCredits>> CREDITS =
@@ -25,6 +35,7 @@ public final class JustDireRefundCompatibility {
                     .persistent(JustDireRefundCredits.CODEC)
                     .networkSynchronized(ByteBufCodecs.fromCodec(JustDireRefundCredits.CODEC)).build());
     private static volatile Map<String, Refund> refunds;
+    private static final ThreadLocal<Set<ItemStack>> IN_FLIGHT = ThreadLocal.withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
 
     private JustDireRefundCompatibility() {}
 
@@ -65,5 +76,54 @@ public final class JustDireRefundCompatibility {
         output.set(component(), new JustDireRefundCredits(names));
     }
 
+    public static void route(boolean ready, ItemStack root, int count, LivingEntity owner, Operation<Void> ordinary) {
+        var capture = ready ? capture(root, count, owner) : null;
+        if (capture == null) { ordinary.call(root, count); return; }
+        // A foreign shrink wrapper can reenter before count reaches zero. Ownership lasts only this call.
+        var inFlight = IN_FLIGHT.get();
+        if (!inFlight.add(root)) { ordinary.call(root, count); return; }
+        try {
+            ordinary.call(root, count);
+            complete(capture);
+        } finally {
+            inFlight.remove(root);
+            if (inFlight.isEmpty()) { IN_FLIGHT.remove(); }
+        }
+    }
+
+    private static Capture capture(ItemStack root, int count, LivingEntity owner) {
+        var binding = refunds;
+        if (binding == null || !(owner instanceof ServerPlayer player) || player.hasInfiniteMaterials() || player.isSpectator()
+                || count != 1 || root.getCount() != 1 || player.getItemBySlot(EquipmentSlot.FEET) != root
+                || !(root.getItem() instanceof MixedBootsItem)) { return null; }
+        try {
+            if (ModContent.getMixedBootsData(root).isEmpty() || !root.isDamageableItem() || root.getMaxDamage() <= 0
+                    || root.getDamageValue() < root.getMaxDamage()) { return null; }
+            var credits = root.get(component());
+            if (credits == null || credits.names().isEmpty()) { return null; }
+            var items = new ArrayList<Item>();
+            for (String name : credits.names()) {
+                var refund = binding.get(name);
+                if (refund == null || !root.getOrDefault(refund.installed, false)) { return null; }
+                items.add(refund.item);
+            }
+            // Empty-stack getters hide their components. Retain the live map now, plus detached native lists.
+            return new Capture(root, player, binding, JustDireActiveState.snapshot(root), root.getComponents(), List.copyOf(items));
+        } catch (RuntimeException malformedState) { return null; }
+    }
+
+    private static void complete(Capture capture) {
+        if (refunds != capture.binding || !capture.root.isEmpty()
+                || capture.player.getItemBySlot(EquipmentSlot.FEET) != capture.root) { return; }
+        var shadow = new ItemStack(capture.before.getItem(), 1);
+        List.copyOf(shadow.getComponents().keySet()).forEach(shadow::remove);
+        shadow.applyComponents(capture.live);
+        if (!ItemStack.matches(capture.before, shadow)) { return; }
+        // This local authorization is consumed before world callbacks; never retry a cancelled/throwing drop.
+        for (Item item : capture.items) { capture.player.drop(new ItemStack(item), true); }
+    }
+
     private record Refund(Item item, DataComponentType<Boolean> installed) {}
+    private record Capture(ItemStack root, ServerPlayer player, Map<String, Refund> binding,
+                           ItemStack before, DataComponentMap live, List<Item> items) {}
 }

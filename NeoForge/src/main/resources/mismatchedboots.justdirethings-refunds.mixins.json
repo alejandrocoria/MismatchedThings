@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["JustDireRefundMixin"],
+  "injectors": {"defaultRequire": 1}
+}

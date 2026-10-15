@@ -19,15 +19,6 @@ public final class NeoForgeRuntimeTest {
             NeoForgeJustDireRefundsTest.register();
             return;
         }
-        if (!System.getProperty("mismatchedboots.runtimetest.justDireRefundSpike", "").isEmpty()) {
-            JustDireRefundSpikeCandidate.register(eventBus);
-            NeoForgeJustDireRefundSpike.register();
-            return;
-        }
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireRefundResearch")) {
-            NeoForgeJustDireRefundResearch.register();
-            return;
-        }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireArmorWearTest")) {
             if (System.getProperty("mismatchedboots.runtimetest.justDireArmorWearVariant", "").equals("abilities")) {
                 NeoForgeJustDireArmorWearTest.registerAbilityWitness();

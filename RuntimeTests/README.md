@@ -1251,43 +1251,55 @@ skipped/cache boundaries. The owner separately confirmed all final ordinary-clie
 checks on 2026-10-15 (section 10.3), accepting C and completing the bounded
 armor-wear/FE A/B/C plan.
 
-### Conserved upgrade credits — production block A
+### Conserved upgrade credits and actual-break refunds — production A/B
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefunds --console=plain
-.\gradlew.bat :NeoForge:test --tests '*JustDireRefundCreditsTest' --console=plain
+.\gradlew.bat :NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
 ```
 
 Repeat on .99 and restore default .114. This maintained production gate uses the
 normal NeoForge JAR and `mismatchedboots:jdt_refundable_upgrades`, not the spike's
-component, lifecycle helpers or mixins. **A stores credits but does not return
-items on breakage.** No tooltip changes are made.
+component, lifecycle helpers or mixins. A stores conserved entitlement; B now
+returns its items only after guarded actual equipped-player durability breakage.
+No tooltip changes are made. For .99, also change the export path and supply
+`"-Pneoforge_version=26.1.2.99"` to both commands.
 
 Live checks actual Workbench pair transactions in both orders (single/shared/
 disjoint/no purchases), repeated previews, blocked takes and inverse shift-click;
 all five paid root upgrade takes; inherited duplicate rejection; native tier
 smithing, dormant/empty/absent preservation, disabled-config creation, projection
 override and complete stack persistent/network codecs with invalid credit
-decoders. Network codecs are not actual packet/reconnect acceptance. ItemsMissing
-breaks only the production refund-item lookup, requiring one scoped diagnostic
+decoders. Network codecs are not actual packet/reconnect acceptance. ItemsMissing/
+MetadataMissing break only the production refund binding, requiring one scoped diagnostic
 and working creation/paid installation/GS quote/preservation. Absent omits JDT,
 requiring quiet linking, own component registration and registry-only preservation.
-Live/ItemsMissing also verify actual ordinary breakage still grants no refund.
+Live additionally observes actual combat/direct/adventure/GS drops, inverse
+conservation, cancelled/Unbreaking survival and invalid-context refusal,
+activity-independent credits, existing powered-wear behavior and independent
+vanilla/native controls. Binding failures still break normally without refunds.
+
+Inner/Outer use real forwarding mixins at both chain placements. Inner includes
+late equipment/credit/native-list edits, count restoration, before-consumption
+reentry and foreign exceptions, with local-guard recovery. Missing/Extra/Count/
+Entity/Operation/Publication/Router each require scoped final refusal, actual
+ordinary consumption and its original callback, without speculative items.
+Extra proves multiple injection targets do not hard-fail startup. Absent is quiet.
+Use `"-PrefundVariants=Inner,Extra"` for a focused subset; default runs all 13.
+The full matrix runs only once per version; fault JVMs retain focused controls.
 
 Reports are `build/reports/just-dire-refunds-production/<version>/`, with separate
-Live/ItemsMissing/Absent logs and reports. Block B will extend this same gate for
-actual guarded drops; C owns real restart/packet/manual closure and prototype
-retirement. See [the production plan](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-IMPLEMENTATION.md).
+variant logs/reports and actual exported ItemStack classes. Six focal shape tests
+use Live/Inner/Outer exports, alongside A's three credit units; supply the property
+above to avoid skipping export-dependent checks. C owns real restart/packet/manual
+closure and dormant prototype cleanup. See
+[the production plan](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-IMPLEMENTATION.md).
 
-### Upgrade refund characterization
+### Upgrade refund characterization — retired historical entry point
 
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefundResearch --console=plain
-```
-
-Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore default .114. This is
-native/current-mixed research, **not** a replacement refund adapter, credit ledger
-or production policy. Its 14 groups observe actual spawned upgrade items and
+`verifyJustDireRefundResearch` and its run/dispatch entry point were retired in B;
+the pre-production no-refund assertions are not current acceptance. Historical
+14-group research observed actual spawned upgrade items and
 destroy events: native Ferricore/Blazegold combat, late-cancelled/Unbreaking-
 surviving predictive drops, switches/native config, direct break, native GS at
 exactly 25 durability and empty powered armor. It also covers actual mixed combat
@@ -1300,13 +1312,10 @@ The [investigation](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.m
 owns exact predicates, selected representation and the subsequent isolated spike.
 No candidate mixin/native interface impersonation is loaded by this characterization.
 
-### Upgrade refund actual-break spike
+### Upgrade refund actual-break spike — retired historical entry point
 
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefundSpike --console=plain
-```
-
-Repeat on .99 and restore .114 as above. Live/Restart/Missing are separate JVMs;
+`verifyJustDireRefundSpike`, its runs/dispatch and mixin registration were retired
+in B. Do not layer this candidate over production. Historically, Live/Restart/Missing were separate JVMs;
 only Live/Missing prepare a disposable world. Restart reads Live's actual saved
 barrel and compares independent whole-stack expectations before fresh real hits.
 The opt-in candidate observes the actual shrink in ItemStack's broken-stack
@@ -1320,15 +1329,15 @@ invalid-root refusal, drop reentry, real competing shrink-wrapper faults, actual
 native root installation/tier menu takes and dormant source recomposition.
 Restart and Missing each have one additional group; Missing disables both spike
 mixins and requires ordinary breakage with no speculative refund. The separate
-14-group characterization still passes with the candidate disabled. Production A
-now separately prebinds refund items and integrates credit lifecycle; final-hook
-guards and actual refund acceptance remain B/C work. No refund tooltip is planned.
+14-group characterization passed separately with the candidate disabled before
+production refunds. A/B now implement their own binding/lifecycle/final-hook
+guards and actual drops. C acceptance remains pending; no refund tooltip is planned.
 
 Reports are `build/reports/just-dire-refunds-spike/<version>/`. Exact evidence and
 the chosen representation belong to
 [the spike record](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.md#8-actual-break-and-native-name-list-spike--2026-10-15).
-This opt-in fixture is separate from production credit block A above; its own
-hook still proves candidate drops rather than production refund support.
+The dormant prototype sources/resources remain only until C cleanup; their old
+hook evidence proves candidate drops, not production lifecycle/manual acceptance.
 The spike and separate characterization passed on .99 and restored .114; all
 eight final process logs have zero ERRORs and no own-mod warnings. Packaged-
 dependency and direct production-archive isolation checks passed. The spike
