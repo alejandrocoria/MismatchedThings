@@ -1251,6 +1251,60 @@ skipped/cache boundaries. The owner separately confirmed all final ordinary-clie
 checks on 2026-10-15 (section 10.3), accepting C and completing the bounded
 armor-wear/FE A/B/C plan.
 
+### Upgrade refund characterization
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefundResearch --console=plain
+```
+
+Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore default .114. This is
+native/current-mixed research, **not** a replacement refund adapter, credit ledger
+or production policy. Its 14 groups observe actual spawned upgrade items and
+destroy events: native Ferricore/Blazegold combat, late-cancelled/Unbreaking-
+surviving predictive drops, switches/native config, direct break, native GS at
+exactly 25 durability and empty powered armor. It also covers actual mixed combat
+in both orientations, production mixed GS break and explicit destroy events.
+Synthetic event-only controls are labeled; they do not claim a real call site
+emitted that event. Reports/logs are in
+`build/reports/just-dire-refunds-research/<version>/`.
+
+The [investigation](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.md)
+owns exact predicates, selected representation and the subsequent isolated spike.
+No candidate mixin/native interface impersonation is loaded by this characterization.
+
+### Upgrade refund actual-break spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefundSpike --console=plain
+```
+
+Repeat on .99 and restore .114 as above. Live/Restart/Missing are separate JVMs;
+only Live/Missing prepare a disposable world. Restart reads Live's actual saved
+barrel and compares independent whole-stack expectations before fresh real hits.
+The opt-in candidate observes the actual shrink in ItemStack's broken-stack
+branch, preserving vanilla wear/Unbreaking/callbacks. A bounded immutable native-
+name collection is registered only in the fixture namespace. Credit creation and
+post-installation helpers are explicit fixture calls, not production hooks.
+
+Live has 13 feasibility groups: inverse conservation, persistent/network codecs,
+actual combat/direct/production-GS break refunds, cancellation/Unbreaking/mode/
+invalid-root refusal, drop reentry, real competing shrink-wrapper faults, actual
+native root installation/tier menu takes and dormant source recomposition.
+Restart and Missing each have one additional group; Missing disables both spike
+mixins and requires ordinary breakage with no speculative refund. The separate
+14-group characterization still passes with the candidate disabled. Full native
+binding/final-hook guards and ordinary-client presentation remain future work.
+
+Reports are `build/reports/just-dire-refunds-spike/<version>/`. Exact evidence and
+the chosen representation belong to
+[the spike record](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.md#8-actual-break-and-native-name-list-spike--2026-10-15).
+This opt-in fixture changes no normal production archive or gameplay.
+The spike and separate characterization passed on .99 and restored .114; all
+eight final process logs have zero ERRORs and no own-mod warnings. Packaged-
+dependency and direct production-archive isolation checks passed. The spike
+record distinguishes actual world restart, explicit lifecycle helpers and codec
+roundtrips from production integration or physical client acceptance.
+
 ### Historical characterization and consumer spike
 
 The [exploration](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-EXPLORATION.md)
