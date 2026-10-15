@@ -104,6 +104,22 @@ public final class JustDireResourcesCompatibility {
         } else { output.remove(binding.energy); }
     }
 
+    /** Wear reuses storage's audited identities/schema; it must not bind a second optional wallet. */
+    static WearProfile wearProfile(ItemStack root) {
+        Api binding = api;
+        if (binding == null || rootCapacity(root, binding) <= 0 || api != binding) { return null; }
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        int providers = 0;
+        for (var source : java.util.List.of(data.left().source(), data.right().source())) {
+            if (source.getItem() == binding.celestigem || source.getItem() == binding.eclipsealloy) { providers++; }
+        }
+        return new WearProfile(providers, binding.energy, binding);
+    }
+
+    static boolean current(WearProfile profile) { return api == profile.binding; }
+
+    record WearProfile(int providers, DataComponentType<Integer> energy, Object binding) {}
+
     private static int rootCapacity(ItemStack root, Api binding) {
         if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) { return 0; }
         var data = ModContent.mixedBootsDataType().map(root::get).orElse(null);

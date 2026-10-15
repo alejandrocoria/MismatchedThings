@@ -75,6 +75,10 @@ tasks.named('test', Test).configure {
         systemProperty 'mismatchedboots.test.justDireGuardJar', rootProject.file(justDireGuardArtifact.get()).absolutePath
     }
     def justDireTransformed = providers.gradleProperty('justDireTransformedClass')
+    def justDireArmorWearTransformed = providers.gradleProperty('justDireArmorWearTransformedClass')
+    if (justDireArmorWearTransformed.isPresent()) {
+        systemProperty 'mismatchedboots.test.justDireArmorWearTransformedClass', rootProject.file(justDireArmorWearTransformed.get()).absolutePath
+    }
     if (justDireTransformed.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireTransformedClass', rootProject.file(justDireTransformed.get()).absolutePath
     }

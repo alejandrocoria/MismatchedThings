@@ -369,6 +369,19 @@ neoForge {
                 jvmArgument('-Xmx1G')
             }
         }
+        ['Live', 'Missing', 'Absent'].each { variant ->
+            register("justDireArmorWear${variant}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireArmorWearTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireArmorWearVariant', variant.uncapitalize())
+                systemProperty('mixin.debug.export', 'true')
+                jvmArgument('-Xmx1G')
+            }
+        }
         justDireArmorWearResearch {
             server()
             disableIdeRun()
@@ -594,6 +607,39 @@ tasks.named('runJustDireSmithing') {
 
 tasks.named('runJustDireArmorWearResearch') { dependsOn 'prepareJustDireSmithing' }
 
+['Live', 'Missing', 'Absent'].each { variant ->
+    tasks.named("runJustDireArmorWear${variant}") { dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing' }
+}
+tasks.register('verifyJustDireArmorWear') {
+    group = 'verification'
+    description = 'Verifies packaged production JDT armor-wear conversion and independent ordinary/ability consumers.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def variants = providers.gradleProperty('armorWearVariants').getOrElse('Live,Missing,Absent').split(',')
+        if (!variants.every { it in ['Live', 'Missing', 'Absent'] }) { throw new GradleException('Unknown production armor-wear variant') }
+        variants.each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-armor-wear-production/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireArmorWear${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-armor-wear-failure.txt')
+            def success = new File(directory, 'just-dire-armor-wear-success.txt')
+            def report = new File(directory, 'just-dire-armor-wear-report.txt')
+            def warnings = log.readLines().count { it.contains('Just Dire Things armor wear flow incompatible') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || warnings != (variant == 'Missing' ? 1 : 0)) {
+                throw new GradleException("Production armor wear ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/neoforged/neoforge/common/CommonHooks.class')
+            if (variant == 'Live') {
+                if (!exported.isFile()) { throw new GradleException('Missing final CommonHooks export') }
+                fixtureFileOperations.copy { from exported; into log.parentFile }
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
 ['Live', 'FlowChanged', 'ConsumerChanged', 'ApiMissing', 'Absent', 'Abilities'].each { variant ->
     tasks.named("runJustDireArmorWearSpike${variant}") {
         dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing'
@@ -651,6 +697,14 @@ tasks.register('verifyJustDireArmorWearResearch') {
         }
         new File(log.parentFile, 'report.txt').text = report.text
         logger.lifecycle(report.text)
+    }
+}
+
+// Production conversion supersedes these ordinary-mixed/candidate expectations. Full removal is C.
+(['verifyJustDireArmorWearResearch', 'runJustDireArmorWearResearch', 'verifyJustDireArmorWearSpike']
+        + ['Live', 'FlowChanged', 'ConsumerChanged', 'ApiMissing', 'Absent', 'Abilities'].collect { "runJustDireArmorWearSpike${it}" }).each { oldTask ->
+    tasks.named(oldTask) {
+        doFirst { throw new GradleException('Historical armor-wear research/spike retired from acceptance; use :RuntimeTests:NeoForge:verifyJustDireArmorWear') }
     }
 }
 

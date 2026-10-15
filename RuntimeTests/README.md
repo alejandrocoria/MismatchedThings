@@ -1147,70 +1147,64 @@ The dated 23-group-per-version proof and its limits remain historical evidence i
 [the exploration](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-EXPLORATION.md#8-executable-server-spike--2026-10-14),
 not a substitute for production or manual acceptance.
 
-## Just Dire Things armor wear / FE characterization
+## Just Dire Things armor wear / FE production (block A)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWearResearch --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWearResearch "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWear "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWear --console=plain
 ```
 
-Run sequentially and restore default .114 afterward. This opt-in research gate
-reuses the pinned JDT/disposable server preparation and the **unchanged production
-wear implementation**. Its observer does not modify armor events; no candidate
-damage hook, fixture FE provider or research mixin replaces the code under test.
-Actual player hits run at NORMAL difficulty after `ServerPlayer.doTick` equipment
-updates. Direct item-damage calls, authoritative game modes, Unbreaking batches,
-real capability depletion/recharge, charged root breakage, item fire protection
-and XP-orb Mending callbacks are separate cases. Both inverse outputs and one/two
-powered sources are represented. Artificial direct requests are not claimed as
-ordinary creative/spectator combat.
+Run sequentially and restore default .114 afterward. The maintained gate uses the
+normal packaged production JAR, real root capability/transactions and pinned JDT
+in disposable servers. No candidate adapter, readiness property or alternate FE
+provider is installed. The final owned production getter must be true in Live
+and false/unavailable in the refusal/absence contexts.
 
-The final .114/.99 runs recorded 84 observations each; these are not 84 JUnit tests
-or manual cases. Reports and complete process logs are retained under
-`RuntimeTests/NeoForge/build/reports/just-dire-armor-wear/<version>/` as `report.txt`
-and `process.log`. The [bounded exploration](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-EXPLORATION.md)
-owns current findings and the owner's prospective policy acceptance on 2026-10-15.
-The separate consumer spike below is test-only; the production adapter remains
-unimplemented. A passed characterization gate is not executable acceptance of
-that future adapter.
+Three JVM variants currently belong to A: Live, Missing and Absent. Select a
+bounded subset with, for example, `"-ParmorWearVariants=Live"`. Live records 65
+production observations: actual NORMAL-difficulty player hits/equipment ticks,
+both powered tiers/orientations, full/partial/empty one/two-provider branches,
+Unbreaking/zero bill, late cancellation/effective fractional modifiers, mode and
+item immunity, actual breakage, protected-entry revival and unchanged provenance.
+Direct wear, actual XP Mending, recomposition and existing GS ordinary/powered,
+Negate and free Jump consumers remain separate. Observations are not JUnit tests
+or manual gameplay cases.
 
-## Just Dire Things armor wear / FE consumer spike
+Missing uses a test-only earlier transformation to remove the actual injection
+target while preserving its ordinary equivalent. Both mixed orientations retain
+ordinary wear/FE and exactly one wear-flow warning; no hard injector failure.
+Absent omits JDT and keeps ordinary wear without optional-class warnings. These
+are baseline refusal cases, not B's full competing-wrapper/transaction-fault matrix.
+
+Reports/logs are retained under
+`RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/<version>/`.
+The Live run also retains the actual final `CommonHooks.class` export for focused
+preflight/final-publication guard tests:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWearSpike "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWearSpike :RuntimeTests:NeoForge:verifyJustDireArmorWearResearch :RuntimeTests:NeoForge:verifyJustDireSmithing --console=plain
+.\gradlew.bat :NeoForge:test --tests "*JustDireArmorWearShapeTest" "-PjustDireArmorWearTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/26.1.2.114/CommonHooks.class" --console=plain
 ```
 
-Run sequentially. The second command restores .114 and also checks ordinary
-production with the candidate **off**, not just another candidate matrix.
-`verifyJustDireArmorWearSpike` runs six disposable JVM variants: Live, FlowChanged,
-ConsumerChanged, ApiMissing, Absent and Abilities. To select a bounded subset use,
-for example, `"-ParmorWearSpikeVariants=Live,FlowChanged"`.
+Supply the matching .99 export and loader property for minimum-version validation.
+Without that export property, two final-shape tests are explicitly skipped; such
+a run does not establish actual transformed-class acceptance. The existing
+attribute gate's player-hit expectation now follows funded wear conversion rather
+than the superseded ordinary-wear baseline; attribute functionality and prices
+remain owned by their existing adapters.
 
-Only this opt-in run property enables the fixture consumer mixin/plugin. It wraps
-the effective post-event NeoForge armor consumer, not general `hurtAndBreak`, and
-uses the real production FE handler/transactions. Live combat covers one/two
-audited sources, both orientations, full/partial/empty payment, Unbreaking,
-cancellation/final fractional modifiers, ordinary immunity, breakage, fire-item
-protection and unchanged provenance. Direct calls and real Mending/recomposition
-remain separate. A callback after real staged extraction tests recursive payment,
-equipment replacement and independent wallet edits without a fake FE provider.
+The [production plan](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-IMPLEMENTATION.md)
+owns A's evidence and pending B/C/manual gates. Future B extends this same
+acceptance rather than keeping a second candidate/payment implementation.
 
-Changed real argument flow or a removed injection target must deny conversion;
-failed production storage binding and absent JDT retain ordinary wear. Abilities
-reuses the existing 12-group Earthquake server fixture with the candidate armed:
-a separate actual equipped conversion must write its witness marker first. Live
-also samples existing GS powered/ordinary fallback, Negate and free Jump, rather
-than copying their implementation into the spike.
+### Historical characterization and consumer spike
 
-Versioned process logs/reports and the Abilities witness are under
-`RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-spike/<version>/`.
-Expected mod warnings are exactly one storage-binding warning in ApiMissing and
-one existing unsupported-EQ-timer warning in Abilities. These are technical
-feasibility checks, not production/client/manual acceptance or proof of arbitrary
-third-party wrapper coexistence. The [spike record](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-EXPLORATION.md#8-post-event-consumer-spike--2026-10-15)
-owns the fractional-amount recommendation, final results and production guard limits.
-The [production promotion plan](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-IMPLEMENTATION.md)
-records pending A/B/C gates and prototype retirement. Its proposed maintained
-`verifyJustDireArmorWear` task is not implemented yet; the commands above remain
-research/spike entry points, not production acceptance.
+The [exploration](../local-docs/JUST-DIRE-THINGS-ARMOR-WEAR-EXPLORATION.md)
+retains dated native/pre-A mixed characterization (84 observations/version) and
+prototype feasibility (67 live observations plus isolated faults and reused EQ).
+Their old research/spike run and verify tasks now fail explicitly with the
+production entry point: do not layer the prototype over the real adapter or
+expect funded production roots to retain pre-A ordinary wear. Remaining dormant
+prototype source/configuration cleanup belongs to C. Historical reports remain in
+`build/reports/just-dire-armor-wear/<version>/` and
+`build/reports/just-dire-armor-wear-spike/<version>/`; they are not current
+production or manual acceptance.

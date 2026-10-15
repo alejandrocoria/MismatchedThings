@@ -114,7 +114,7 @@ public final class NeoForgeJustDireAttributesTest {
                     + "root installation; frozen policies; pre-event identity guards; real earlier competing mixin/later event; "
                     + "custom display; bounded persistent/network metadata; explicit managed edits through tier/storage removal; "
                     + "actual native smithing installation/take; actual equipment ticks/damage mitigation/player durability")
-                    + "; production attributes, no powered abilities or wear conversion\n");
+                    + "; production attributes; incoming wear follows the separate production armor-wear policy\n");
             NetworkAcceptanceFiles.write("just-dire-attributes-success.txt", (missingApi ? "ApiMissing" : absent ? "Absent" : "Live") + "\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("just-dire-attributes", failure); }
         finally { server.halt(false); }
@@ -322,12 +322,13 @@ public final class NeoForgeJustDireAttributesTest {
         };
         ItemStack worn = root(boots("celestigem", 0, false), iron);
 
-        worn.set(JustDireResourceTestSupport.energyComponent(), 100);
+        worn.set(JustDireResourceTestSupport.energyComponent(), 1_000);
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         player.setItemSlot(EquipmentSlot.FEET, worn);
         player.doTick();
         require(player.hurtServer(server.overworld(), player.damageSources().mobAttack(mob(server)), 10)
-                && worn.getDamageValue() > 0 && worn.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) == 100,
-                "Actual player damage did not retain ordinary wear/free attribute availability boundary");
+                && worn.getDamageValue() == 0 && worn.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0) < 1_000,
+                "Actual player damage did not retain funded production wear conversion alongside live attributes");
         cases++;
         realSmithing(server);
     }

@@ -15,6 +15,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireArmorWearTest")) {
+            NeoForgeJustDireArmorWearTest.register(); return;
+        }
         String wearSpike = System.getProperty("mismatchedboots.runtimetest.justDireArmorWearSpike", "");
         if (wearSpike.equals("abilities")) { NeoForgeJustDireArmorWearSpike.registerAbilityWitness(); }
         if (!wearSpike.isEmpty() && !wearSpike.equals("abilities")) {
