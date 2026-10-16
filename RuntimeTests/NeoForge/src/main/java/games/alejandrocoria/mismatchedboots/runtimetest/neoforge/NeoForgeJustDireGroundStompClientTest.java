@@ -10,6 +10,8 @@ import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCredits;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
@@ -70,6 +72,7 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static boolean initialized, started, finished;
     private static int wait;
     private static ItemStack expected, before;
+    private static JustDireRefundCredits lifecycleRefundCredits;
     private static Object provenance;
     private static JustDireActiveNetwork.SettingsRequest stale;
     private static double enabledStep;
@@ -1105,7 +1108,15 @@ final class NeoForgeJustDireGroundStompClientTest {
             var root = player.getItemBySlot(EquipmentSlot.FEET); var clock = earthquakeClock(root);
             require(clock != null && clock.active() == (phase == 0) && clock.ticks() > 0
                     && timer(root) > 0 && charge(root) == 95_000, "Wrong phase/resource state at save");
-            if (phase == 0) { set(root, "earthquake_upgrade_installed", false); set(root, "tool_enabled", false); }
+            if (phase == 0) {
+                set(root, "earthquake_upgrade_installed", false); set(root, "tool_enabled", false);
+                // This fixture simulates removal, not a supported uninstall. A later paid
+                // reinstall must not retain an entitlement for the purchase it removed.
+                var credits = root.get(JustDireRefundCompatibility.component());
+                require(credits != null && credits.names().contains("earthquake"), "Missing original EQ purchase control");
+                root.set(JustDireRefundCompatibility.component(), new JustDireRefundCredits(credits.names().stream()
+                        .filter(name -> !name.equals("earthquake")).toList()));
+            }
             else { set(root, "earthquake_toggle", false); }
             // Both sources advertise Jump, but only the live root may retain installation/preferences.
             set(root, "jumpboost_upgrade_installed", phase != 0);
@@ -1234,6 +1245,8 @@ final class NeoForgeJustDireGroundStompClientTest {
             set(powered, "jumpboost_value", 1); set(passive, "jumpboost_value", 1);
             var pair = MixedBootsFactory.createPair(powered, passive);
             expected = slot == 0 ? pair.primary() : pair.inverse();
+            lifecycleRefundCredits = expected.get(JustDireRefundCompatibility.component());
+            require(lifecycleRefundCredits != null && !lifecycleRefundCredits.names().isEmpty(), "Native UI lifecycle lacks purchased credits");
             expected.setDamageValue(31); set(expected, "forge_energy", 10_000);
             provenance = ModContent.getMixedBootsData(expected).orElseThrow();
             player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
@@ -1289,6 +1302,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("store actual spent root and consumed/unconsumed production packets", () -> server(client, player -> {
             var root = player.getItemBySlot(EquipmentSlot.FEET);
             require(charge(root) == 4 && timer(root) > 0 && !flag(root, "stepheight_toggle", true), "Deferred permit acted before save");
+            require(lifecycleRefundCredits.equals(root.get(JustDireRefundCompatibility.component())), "Native widgets/input/wear changed purchase credits");
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             JustDireGroundStompLifecycleTestSupport.save(player, slot, root, consumed, held);
             player.inventoryMenu.broadcastChanges();

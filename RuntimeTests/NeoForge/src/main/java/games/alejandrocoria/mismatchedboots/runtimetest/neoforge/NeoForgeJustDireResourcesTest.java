@@ -59,6 +59,7 @@ public final class NeoForgeJustDireResourcesTest {
     private NeoForgeJustDireResourcesTest() {}
 
     public static void register() {
+        JustDireRefundBreakTest.register();
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
     }
 
@@ -406,6 +407,7 @@ public final class NeoForgeJustDireResourcesTest {
         ItemStack zero = root.copy(); extract(zero, 1_733); barrel.setItem(1, zero);
         ItemStack absent = root.copy(); absent.remove(JustDireResourceTestSupport.energyComponent()); barrel.setItem(2, absent);
         saveFallFixture(server, barrel);
+        JustDireRefundLifecycleTest.save(server, barrel);
         barrel.setChanged();
         var json = ItemStack.CODEC.encodeStart(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), root).getOrThrow();
         NetworkAcceptanceFiles.write("just-dire-resources-saved.json", json.toString());
@@ -533,6 +535,7 @@ public final class NeoForgeJustDireResourcesTest {
                     "Restart restored root-disabled Step from historical sources");
             fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9, 2_550, 6);
         }
+        JustDireRefundLifecycleTest.restart(server, barrel);
         NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; "
                 + "frozen non-default attributes through depletion/recharge; four actually spent Negate roots after Workbench/smithing, both orientations; "
                 + "root-only Step retained; four false/absent root Step/Negate fixtures; no historical resurrection or FE spending; charged/empty actual falls after restart\n");

@@ -1102,6 +1102,9 @@ tasks.register('verifyJustDireResources') {
             throw new GradleException("Just Dire Things production resources failed: ${failure.isFile() ? failure.text : log}")
         }
         new File(log.parentFile, 'production-report.txt').text = report.text
+        def refundSave = new File(directory, 'just-dire-refunds-lifecycle-report.txt')
+        if (!refundSave.isFile()) { throw new GradleException('Missing production refund lifecycle report') }
+        new File(log.parentFile, 'refund-lifecycle-report.txt').text = refundSave.text
         logger.lifecycle(report.text)
         def restartLog = new File(log.parentFile, 'restart-process.log')
         runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireResourcesRestart', restartLog, 240)
@@ -1112,6 +1115,9 @@ tasks.register('verifyJustDireResources') {
         def restartReport = new File(directory, 'just-dire-resources-restart-report.txt')
         if (!restartReport.isFile()) { throw new GradleException('Missing actual restart report') }
         new File(log.parentFile, 'restart-report.txt').text = restartReport.text
+        def refundRestart = new File(directory, 'just-dire-refunds-restart-report.txt')
+        if (!refundRestart.isFile()) { throw new GradleException('Missing actual production refund restart report') }
+        new File(log.parentFile, 'refund-restart-report.txt').text = refundRestart.text
         logger.lifecycle(restartReport.text)
         def clientLog = new File(log.parentFile, 'client-process.log')
         runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireResourcesClient', clientLog, 240)

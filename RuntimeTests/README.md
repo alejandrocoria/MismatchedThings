@@ -1251,10 +1251,11 @@ skipped/cache boundaries. The owner separately confirmed all final ordinary-clie
 checks on 2026-10-15 (section 10.3), accepting C and completing the bounded
 armor-wear/FE A/B/C plan.
 
-### Conserved upgrade credits and actual-break refunds — production A/B
+### Conserved upgrade credits and actual-break refunds — production
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefunds --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources --console=plain
 .\gradlew.bat :NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
 ```
 
@@ -1291,58 +1292,44 @@ The full matrix runs only once per version; fault JVMs retain focused controls.
 Reports are `build/reports/just-dire-refunds-production/<version>/`, with separate
 variant logs/reports and actual exported ItemStack classes. Six focal shape tests
 use Live/Inner/Outer exports, alongside A's three credit units; supply the property
-above to avoid skipping export-dependent checks. C owns real restart/packet/manual
-closure and dormant prototype cleanup. See
+above to avoid skipping export-dependent checks.
+
+The existing resources gate also saves six production credited/empty/absent roots
+from actual Workbench and paid upgrade/tier smithing takes. It checks ordinary
+wear, actual Mending, off controls, unequip, recharge and recomposition without
+early refunds. A second JVM opens the saved barrel, compares independent whole
+roots and observes exact drops from six genuine equipped breaks. A later paid
+Jump credit is absent from both historical sources. Extra refund save/restart
+reports are under `build/reports/just-dire-resources/<version>/`. The hidden/muted
+client checks actual open Workbench menu packets with unequal inverse allocation,
+actual smithing base/result packets and a paid Ground Stomp result equipped through
+ordinary synchronization. Existing recharge/depletion packets also retain credits.
+These are not codec-only assertions and do not add custom transport or tooltips.
+The maintained native-menu lifecycle gate above also snapshots positive credits
+before actual widget/input changes and checks exact credit preservation through
+its existing tier/recharge comparisons. Its manual Earthquake-removal fixture
+discards that purchase credit before a real paid reinstall, which must add it
+exactly once; retaining the removed credit would instead be a duplicate purchase.
+The owner separately confirmed all final ordinary-client checks on 2026-10-16,
+accepting C and completing the bounded upgrade-refund A/B/C plan; this is not
+inferred from these automated gates. See sections 6.1/10.3 of
 [the production plan](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-IMPLEMENTATION.md).
 
-### Upgrade refund characterization — retired historical entry point
+### Upgrade refund research and spike — retired
 
-`verifyJustDireRefundResearch` and its run/dispatch entry point were retired in B;
-the pre-production no-refund assertions are not current acceptance. Historical
-14-group research observed actual spawned upgrade items and
-destroy events: native Ferricore/Blazegold combat, late-cancelled/Unbreaking-
-surviving predictive drops, switches/native config, direct break, native GS at
-exactly 25 durability and empty powered armor. It also covers actual mixed combat
-in both orientations, production mixed GS break and explicit destroy events.
-Synthetic event-only controls are labeled; they do not claim a real call site
-emitted that event. Reports/logs are in
-`build/reports/just-dire-refunds-research/<version>/`.
+`verifyJustDireRefundResearch` and `verifyJustDireRefundSpike`, their runs/dispatch
+and candidate mixin registration were retired in B; C removed the dormant
+sources, fixture component and mixin/config files. Useful native controls and
+bounded foreign-wrapper cases now belong to the production gate above. Do not
+layer the historical candidate over production or use pre-A no-refund expectations
+as current acceptance.
 
-The [investigation](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.md)
-owns exact predicates, selected representation and the subsequent isolated spike.
-No candidate mixin/native interface impersonation is loaded by this characterization.
-
-### Upgrade refund actual-break spike — retired historical entry point
-
-`verifyJustDireRefundSpike`, its runs/dispatch and mixin registration were retired
-in B. Do not layer this candidate over production. Historically, Live/Restart/Missing were separate JVMs;
-only Live/Missing prepare a disposable world. Restart reads Live's actual saved
-barrel and compares independent whole-stack expectations before fresh real hits.
-The opt-in candidate observes the actual shrink in ItemStack's broken-stack
-branch, preserving vanilla wear/Unbreaking/callbacks. A bounded immutable native-
-name collection is registered only in the fixture namespace. Credit creation and
-post-installation helpers are explicit fixture calls, not production hooks.
-
-Live has 13 feasibility groups: inverse conservation, persistent/network codecs,
-actual combat/direct/production-GS break refunds, cancellation/Unbreaking/mode/
-invalid-root refusal, drop reentry, real competing shrink-wrapper faults, actual
-native root installation/tier menu takes and dormant source recomposition.
-Restart and Missing each have one additional group; Missing disables both spike
-mixins and requires ordinary breakage with no speculative refund. The separate
-14-group characterization passed separately with the candidate disabled before
-production refunds. A/B now implement their own binding/lifecycle/final-hook
-guards and actual drops. C acceptance remains pending; no refund tooltip is planned.
-
-Reports are `build/reports/just-dire-refunds-spike/<version>/`. Exact evidence and
-the chosen representation belong to
-[the spike record](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.md#8-actual-break-and-native-name-list-spike--2026-10-15).
-The dormant prototype sources/resources remain only until C cleanup; their old
-hook evidence proves candidate drops, not production lifecycle/manual acceptance.
-The spike and separate characterization passed on .99 and restored .114; all
-eight final process logs have zero ERRORs and no own-mod warnings. Packaged-
-dependency and direct production-archive isolation checks passed. The spike
-record distinguishes actual world restart, explicit lifecycle helpers and codec
-roundtrips from production integration or physical client acceptance.
+The [exploration](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-EXPLORATION.md)
+retains dated native findings, feasibility scenarios, commands, results and their
+limitations. Historical reports remain in
+`build/reports/just-dire-refunds-research/<version>/` and
+`build/reports/just-dire-refunds-spike/<version>/`; they do not prove production
+lifecycle or ordinary-client acceptance.
 
 ### Historical characterization and consumer spike
 

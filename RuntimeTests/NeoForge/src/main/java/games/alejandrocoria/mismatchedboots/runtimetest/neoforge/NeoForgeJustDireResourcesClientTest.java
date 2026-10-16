@@ -20,7 +20,11 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -50,6 +54,7 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static Boolean tooltipShift;
     private static int generatorCharge;
     private static int fallCharge;
+    private static ItemStack refundPurchased;
 
     private NeoForgeJustDireResourcesClientTest() {}
 
@@ -224,11 +229,67 @@ public final class NeoForgeJustDireResourcesClientTest {
                     equippedFall(server.getPlayerList().getPlayer(id), 9, fallCharge, 0);
                 });
                 phase = 8;
-            } else {
+            } else if (phase == 8) {
                 ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
                 if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != fallCharge || !equipmentAgrees(client, root)) { return; }
                 assertTooltip(client, root, fallCharge, 10_000);
                 require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())), "Recharge/fall rewrote source provenance");
+                require(JustDireRefundLifecycleTest.credits(root).equals(List.of("stepheight", "negatefalldamage")),
+                        "Recharge/depletion/equipment packets lost inherited credits");
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id);
+                    owner.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                    owner.getInventory().clearContent();
+                    owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new MismatchedWorkbenchMenu(menuId, inventory), Component.literal("Refund packets")));
+                    var menu = owner.containerMenu;
+                    menu.getSlot(0).set(poweredBoots()); menu.getSlot(1).set(new ItemStack(Items.IRON_BOOTS));
+                    menu.broadcastChanges();
+                });
+                phase = 9;
+            } else if (phase == 9) {
+                if (!(player.containerMenu instanceof MismatchedWorkbenchMenu menu) || menu.getSlot(2).getItem().isEmpty() || menu.getSlot(3).getItem().isEmpty()) { return; }
+                require(ItemStack.matches(menu.getSlot(2).getItem(), preview.primary()) && ItemStack.matches(menu.getSlot(3).getItem(), preview.inverse())
+                        && JustDireRefundLifecycleTest.credits(menu.getSlot(2).getItem()).equals(List.of("stepheight", "negatefalldamage"))
+                        && JustDireRefundLifecycleTest.credits(menu.getSlot(3).getItem()).isEmpty(), "Real Workbench menu packets lost inverse allocation");
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id);
+                    var bench = owner.containerMenu;
+                    var first = bench.getSlot(2).safeTake(1, 1, owner); var second = bench.getSlot(3).safeTake(1, 1, owner);
+                    require(!first.isEmpty() && !second.isEmpty(), "Packet Workbench take failed");
+                    owner.closeContainer(); owner.getInventory().setItem(1, second);
+                    var pos = owner.blockPosition(); server.overworld().setBlock(pos, Blocks.SMITHING_TABLE.defaultBlockState(), 3);
+                    owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new SmithingMenu(menuId, inventory,
+                            ContainerLevelAccess.create(server.overworld(), pos)), Component.literal("Refund installation packets")));
+                    var smith = owner.containerMenu;
+                    smith.getSlot(SmithingMenu.BASE_SLOT).set(first);
+                    smith.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(JustDireRefundLifecycleTest.item("upgrade_groundstomp"));
+                    refundPurchased = smith.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
+                    require(!refundPurchased.isEmpty() && JustDireRefundLifecycleTest.credits(refundPurchased)
+                            .equals(List.of("stepheight", "groundstomp", "negatefalldamage")), "Paid preview lacks new credit");
+                    smith.broadcastChanges();
+                });
+                phase = 10;
+            } else if (phase == 10) {
+                if (!(player.containerMenu instanceof SmithingMenu smith) || smith.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty()) { return; }
+                require(ItemStack.matches(refundPurchased, smith.getSlot(SmithingMenu.RESULT_SLOT).getItem())
+                        && JustDireRefundLifecycleTest.credits(smith.getSlot(SmithingMenu.BASE_SLOT).getItem()).equals(List.of("stepheight", "negatefalldamage")),
+                        "Actual smithing base/result packets lost distinct credit state");
+                var id = player.getUUID();
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id); var menu = owner.containerMenu;
+                    menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, owner);
+                    var taken = menu.getCarried();
+                    require(ItemStack.matches(taken, refundPurchased) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                            && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Real packet installation did not pay once");
+                    menu.setCarried(ItemStack.EMPTY); owner.closeContainer(); owner.setItemSlot(EquipmentSlot.FEET, taken);
+                });
+                phase = 11;
+            } else {
+                if (!ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), refundPurchased)) { return; }
+                require(ItemStack.matches(player.getInventory().getItem(1), preview.inverse())
+                        && JustDireRefundLifecycleTest.credits(player.getInventory().getItem(1)).isEmpty(), "Later paid equipment packet changed inverse sibling");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-report.txt", "hidden/muted NeoForge client; actual integrated-server Workbench takes; "
                         + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
                         + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
@@ -237,7 +298,9 @@ public final class NeoForgeJustDireResourcesClientTest {
                         + "one intrinsic root Lava entry with live switches; no source Lava/qualifier/empty Shift hint; hidden FE/upgrade/Lava/source details; unchanged vanilla lore; "
                         + "actual native Pocket Generator inventory/equipped transfers with FE conservation; actual survival Negate debit/depletion; "
                         + "positive unprotected fall control after depletion; natural equipment/attribute packets and exact live tooltip after debit; "
-                        + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill\n");
+                        + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill; "
+                        + "production refund credits through recharge/depletion; actual open Workbench menu packets with unequal inverse credits; "
+                        + "actual open smithing base/result packets and paid Ground Stomp take; equipped purchased root packet; unchanged uncredited sibling\n");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-success.txt", "neoforge\n");
                 finished = true;
             }

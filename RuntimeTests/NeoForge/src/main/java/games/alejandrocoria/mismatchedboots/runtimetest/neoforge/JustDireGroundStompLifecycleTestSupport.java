@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCredits;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,7 @@ import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -135,6 +138,8 @@ final class JustDireGroundStompLifecycleTestSupport {
 
 
     static void sameControls(ItemStack before, ItemStack after, boolean timer) {
+        require(Objects.equals(before.get(JustDireRefundCompatibility.component()), after.get(JustDireRefundCompatibility.component())),
+                "Live preservation changed purchase credits");
         for (String name : CONTROLS) {
             if (!timer && name.equals("ability_cooldowns")) { continue; }
             var component = JustDireAttributeTestSupport.component(name);
@@ -154,6 +159,9 @@ final class JustDireGroundStompLifecycleTestSupport {
         require(!preview.isEmpty() && preview.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("earthquake_upgrade_installed"), false),
                 "Root Earthquake installation produced no preview");
         var allowed = before.copy(); JustDireAttributeTestSupport.set(allowed, "earthquake_upgrade_installed", true);
+        var credit = before.get(JustDireRefundCompatibility.component());
+        var names = new ArrayList<>(credit == null ? List.<String>of() : credit.names()); names.add("earthquake");
+        allowed.set(JustDireRefundCompatibility.component(), new JustDireRefundCredits(names));
         sameControls(allowed, preview, true);
         require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0))
                 && preview.getDamageValue() == before.getDamageValue()
