@@ -1315,7 +1315,7 @@ accepting C and completing the bounded upgrade-refund A/B/C plan; this is not
 inferred from these automated gates. See sections 6.1/10.3 of
 [the production plan](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-IMPLEMENTATION.md).
 
-### Dynamic JDT FE/durability item bars — production block A
+### Dynamic JDT FE/durability item bars — production
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBars "-Pneoforge_version=26.1.2.99" --console=plain
@@ -1345,12 +1345,28 @@ rectangle bounds/colors and whole-stack preservation. Ten ordinary inventory slo
 packets update charge, damage/repair and Unbreakable with unchanged provenance,
 including full/zero visibility, without a custom rendering payload or cache.
 
-Reports/logs are under `build/reports/just-dire-item-bars-production/<version>/`;
+Live additionally takes six actual GPU framebuffer captures: GUI scales 1/2,
+each with the same displayed root healthy, worn, then repaired. One compact scene
+shows FE alone, both bars, full healthy/worn, empty FE, damaged Unbreakable, native
+and vanilla controls. Each decorated icon is compared pixel-by-pixel (including
+scaled physical subpixels and outer padding) against an undecorated model reference
+with only the expected bars overlaid. A translated/scissored icon and clean
+following control prove inherited pose/scissor and restoration; the transitioning
+root proves old rows do not persist. A count override is shown for visual review,
+not a font-pixel oracle or a promise to avoid arbitrary viewer/decorator overlap.
+No test decorator, replacement item model or extra client JVM is needed.
+
+Reports/logs and `live-scale-{1,2}-{healthy,worn,repaired}.png` are under
+`build/reports/just-dire-item-bars-production/<version>/`;
 worlds/mods/config are disposable in `build/run/justDireItemBarsProduction/<version>/`,
 never the owner's indev run. The pinned JDT artifact is hash-checked. Individual
-client runs need the verifier's server-prepared world. Block A checks production
-deferred extraction, **not GPU pixels or owner ordinary-screen visual acceptance**;
-block B adds the compact production framebuffer/visual handoff.
+client runs need the verifier's server-prepared world. The verifier rejects
+missing/stale captures; screenshots are genuine production rendering in a
+**synthetic screen, not owner ordinary-screen visual acceptance**. The final
+inventory/hotbar/carried/Workbench/smithing/viewer checklist belongs to the A/B plan.
+The owner confirmed that checklist passed on 2026-10-16, completing bounded A/B
+acceptance; [the manual record](../local-docs/JUST-DIRE-THINGS-ITEM-BARS-IMPLEMENTATION.md#83-owner-handoff--accepted)
+is separate from the automated framebuffer evidence.
 
 The former `verifyJustDireItemBarsSpike`, flag, candidate and four-layout comparison
 screen were retired in A to prevent duplicate decoration or stale fixed-row tests.

@@ -630,6 +630,13 @@ justDireItemBarVariants.each { variant ->
             def staleMarkers = ['failure', 'report', 'success'].collect { suffix ->
                 new File(justDireItemBarsMarkers.get().asFile, "just-dire-item-bars-${suffix}.txt")
             }
+            if (variant == 'Live') {
+                staleMarkers += [1, 2].collectMany { scale ->
+                    ['healthy', 'worn', 'repaired'].collect { state ->
+                        new File(justDireItemBarsMarkers.get().asFile, "live-scale-${scale}-${state}.png")
+                    }
+                }
+            }
             fixtureFileOperations.delete { spec ->
                 spec.delete(directory)
                 spec.delete(staleMarkers)
@@ -658,6 +665,7 @@ tasks.register('verifyJustDireItemBars') {
         if (!new File(directory, 'just-dire-item-bars-server-success.txt').isFile()
                 || !classes.isFile() || classes.text.contains('NeoForgeJustDireItemBarsTest')
                 || classes.text.contains('JustDireEnergyBarDecorator')
+                || classes.text.contains('JustDireItemBarRenderingTest')
                 || new File(directory, 'server-process.log').text.contains('/ERROR]')) {
             throw new GradleException('Production item bar dedicated-server/client-class isolation failed')
         }
@@ -676,10 +684,13 @@ tasks.register('verifyJustDireItemBars') {
             def success = new File(directory, 'just-dire-item-bars-success.txt')
             def warnings = log.readLines().count { it.contains('Could not bind Just Dire Things storage API; compatibility disabled') }
             def barWarnings = log.readLines().count { it.contains('Just Dire Things energy bar query failed; FE decoration disabled') }
+            def missingCaptures = variant == 'Live' && [1, 2].any { scale ->
+                ['healthy', 'worn', 'repaired'].any { state -> !new File(directory, "live-scale-${scale}-${state}.png").isFile() }
+            }
             if (failure.isFile() || !report.isFile() || !success.isFile() || success.text != variant.uncapitalize() + '\n'
                     || log.text.contains('/ERROR]') || warnings != (variant == 'StorageMissing' ? 1 : 0)
                     || barWarnings != (['QueryFailure', 'InvalidWidth', 'LinkageFailure'].contains(variant) ? 1 : 0)
-                    || (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings'))) {
+                    || missingCaptures || (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings'))) {
                 throw new GradleException("Item bars ${variant} failed: ${failure.isFile() ? failure.text : log}")
             }
             new File(directory, "${variant}-report.txt").text = report.text

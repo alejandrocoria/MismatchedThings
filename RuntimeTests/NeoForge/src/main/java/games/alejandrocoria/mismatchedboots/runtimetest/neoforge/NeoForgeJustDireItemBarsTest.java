@@ -74,9 +74,13 @@ public final class NeoForgeJustDireItemBarsTest {
                     report.append("10 actual slot packets: charge, damage/repair, Unbreakable on/off, full/zero; no extra transport or stale lane\n");
                     phase = 2;
                 } else { sendPacketState(client); }
+            } else if (VARIANT.equals("live") && !JustDireItemBarRenderingTest.tick(client)) {
+                // Reuse Live's actual production registration; other JVMs retain focused refusals.
             } else if (++waiting > 20) {
                 NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", VARIANT + ": " + checks + " actual decoration checks\n" + report
-                        + "Production deferred GUI extraction, not GPU pixel or owner visual acceptance\n");
+                        + (VARIANT.equals("live") ? JustDireItemBarRenderingTest.report()
+                        : "Production deferred GUI extraction; no GPU proof in this refusal JVM\n")
+                        + "Owner ordinary-screen visual acceptance is separate\n");
                 NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", VARIANT + "\n");
                 finished = true; client.stop();
             }
