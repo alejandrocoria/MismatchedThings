@@ -808,7 +808,7 @@ prototype gameplay listener is installed. A transparent reply observer defers
 selected genuine paid replies, then feeds them back into production validation.
 Both mixed
 orientations cover supported controls and per-ability ranges, rapid edits,
-global Toggle Tool (capture takes priority), particles, keyboard/mouse assignment,
+global-off state, particles, keyboard/mouse assignment,
 reopen and Escape removal, disabled mode/inventory controls, GUI/release/repeat/wrong-input
 and imported unsupported preference denial, fallback/recharge and one action
 bill, unchanged sources, tool switches and selected-slot removal. D.1 adds
@@ -861,6 +861,25 @@ reconnect and the final ordinary-client handoff; see
 Earthquake's current evidence and focused manual retry (owner-confirmed on
 2026-10-13) are in
 [its separate C record](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTATION.md#9-block-c--native-screen-and-equipped-input).
+
+The Live client additionally covers the later
+[held global toggle follow-up](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTATION.md#13-held-global-toggle-tool-follow-up--2026-10-16):
+four native boot tiers without installed upgrades, both mixed orientations/hands,
+actual press/transport/slot updates, preservation outside `tool_enabled`, native
+priority in both hands, two mixed pairs, remapped keyboard/mouse input, wrong-hand/
+menu refusal and Portal Gun V2 priority. This extends the same maintained gate,
+not another client suite; ordinary-client confirmation is separate. Tooltip
+changes are explicitly deferred.
+
+The later screen-only global shortcut is retired: the same gate now requires a
+screen key outside capture to leave the root unchanged and rejects the removed
+server menu operation. Capturing that key still creates an ordinary ability
+binding. Global-off gameplay fixture setup no longer relies on a GUI toggle;
+the held-key cases above own actual global-shortcut input coverage. The owner's
+held confirmation and the separate accepted removal handoff are in sections
+13/14 of the linked record. The owner confirmed the focused removal test passed
+on 2026-10-16 (section 14.2), completing both input follow-ups independently of
+synthetic runtime evidence. General tooltip review remains deferred.
 
 ## Just Dire Things Ground Stomp production lifecycle (8.5 E)
 

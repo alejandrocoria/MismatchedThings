@@ -8,7 +8,6 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -112,15 +111,6 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
     @Inject(method = "mouseClicked", at = @At("TAIL"))
     private void mismatchedboots$jdtEquipped(MouseButtonEvent event, boolean doubled, CallbackInfoReturnable<Boolean> ci) {
         if (JustDireSettingsCompatibility.mixed(tool)) { requireEquipped = true; }
-    }
-
-    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void mismatchedboots$jdtToggleKey(KeyEvent event, CallbackInfoReturnable<Boolean> ci) {
-        if (mismatchedboots$jdtReady() && !bindingEnabled && JustDireSettingsCompatibility.mixed(tool)
-                && JustDireSettingsClient.toggleKey(event.key(), event.scancode(), event.modifiers())) {
-            JustDireSettingsClient.edit(this, "", JustDireActiveNetwork.TOOL_TOGGLE, 0, -1, false, true);
-            ci.setReturnValue(true);
-        }
     }
 
     @Inject(method = "toggleSetting", at = @At("HEAD"), cancellable = true)

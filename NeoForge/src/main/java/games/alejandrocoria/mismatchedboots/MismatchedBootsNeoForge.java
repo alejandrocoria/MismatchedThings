@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireHeldToggleCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
@@ -34,6 +35,7 @@ public class MismatchedBootsNeoForge {
         JustDireEarthquakeCompatibility.initialize(eventBus);
         JustDireLavaRepairCompatibility.initialize(eventBus);
         JustDireSettingsCompatibility.initialize(eventBus);
+        JustDireHeldToggleCompatibility.initialize(eventBus);
         JustDireActiveNetwork.initialize();
         JustDireAttributesCompatibility.initialize(eventBus);
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {

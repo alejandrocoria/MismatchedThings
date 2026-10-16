@@ -12,6 +12,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -30,9 +31,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/** Separate menu edit sessions and consumed-once equipped action permits; server thread only. */
+/** Held toggles, separate menu edit sessions and consumed-once equipped permits; server thread only. */
 public final class JustDireActiveNetwork {
-    public static final int SELECT = 0, TOGGLE = 1, VALUE = 2, PARTICLES = 3, BINDING = 4, TOOL_TOGGLE = 5, DESELECT = 6;
+    public static final int SELECT = 0, TOGGLE = 1, VALUE = 2, PARTICLES = 3, BINDING = 4, DESELECT = 6;
     public static final UUID NONE = new UUID(0, 0);
     private static final Map<UUID, State> states = new HashMap<>();
     private static final Set<ServerPlayer> executing = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -43,6 +44,14 @@ public final class JustDireActiveNetwork {
 
     public static void initialize() {
         // These mod-owned routes register quietly without JDT. Optional lookup never grants access.
+        Network.registerPacket(HeldToggle.TYPE, HeldToggle.class, HeldToggle.CODEC, context -> {
+            if (context.side() != Side.SERVER || context.sender() == null) { return; }
+            var player = context.sender();
+            if (JustDireHeldToggleCompatibility.toggle(player, context.message().hand())) {
+                invalidate(player.getUUID());
+                player.inventoryMenu.broadcastChanges();
+            }
+        });
         Network.registerPacket(Prepare.TYPE, Prepare.class, Prepare.CODEC, context -> {
             if (context.side() != Side.SERVER || context.sender() == null) { return; }
             var player = context.sender();
@@ -261,6 +270,16 @@ public final class JustDireActiveNetwork {
         if (buffer.isReadable()) { throw new DecoderException("Trailing mixed JDT payload bytes"); }
     }
 
+    public record HeldToggle(InteractionHand hand) implements CustomPacketPayload {
+        public static final Type<HeldToggle> TYPE = JustDireActiveNetwork.type("held_toggle");
+        public static final StreamCodec<RegistryFriendlyByteBuf, HeldToggle> CODEC = StreamCodec.of((buffer, packet) -> {
+            buffer.writeEnum(packet.hand);
+        }, buffer -> {
+            var packet = new HeldToggle(buffer.readEnum(InteractionHand.class));
+            exhausted(buffer); return packet;
+        });
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
     public record Prepare(int sequence, int key, boolean mouse) implements CustomPacketPayload {
         public static final Type<Prepare> TYPE = JustDireActiveNetwork.type("prepare");
         public static final StreamCodec<RegistryFriendlyByteBuf, Prepare> CODEC = StreamCodec.of((buffer, packet) -> {

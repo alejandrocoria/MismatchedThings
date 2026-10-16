@@ -40,6 +40,8 @@ class JustDireSettingsScreenShapeTest implements Opcodes {
         assumeTrue(path != null, "Final screen export is opt-in");
         byte[] bytes = Files.readAllBytes(Path.of(path));
         var node = reset(bytes);
+        assertFalse(node.methods.stream().anyMatch(m -> m.name.contains("mismatchedboots$jdtToggleKey")),
+                "Final native screen must not retain the retired mixed global-key injection");
         assertTrue(JustDireSettingsScreenShape.publish(node));
         node = reset(bytes);
         method(node, "setSetting").instructions.clear();

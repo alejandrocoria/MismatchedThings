@@ -74,7 +74,7 @@ public final class JustDireSettingsCompatibility {
                             .asType(MethodType.methodType(Object.class, String.class, int.class, boolean.class, boolean.class)),
                     lookup.findVirtual(ability, "getLocalization", MethodType.methodType(String.class))
                             .asType(MethodType.methodType(String.class, Object.class)),
-                    bindings, scalar("tool_enabled", true), scalar("groundstomp_custom_setting", 0));
+                    bindings, scalar("groundstomp_custom_setting", 0));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things mixed settings API; new settings/input routes disabled", failure);
             return; // No Lava settings can operate without the shared API; avoid a second diagnostic.
@@ -323,39 +323,34 @@ public final class JustDireSettingsCompatibility {
         if (request.ability().equals("earthquake")) { return JustDireEarthquakeCompatibility.edit(root, request); }
         ItemStack changed = root.copy();
         try {
-            if (request.operation() == JustDireActiveNetwork.TOOL_TOGGLE) {
-                if (!request.ability().isEmpty() || metadataItem(root) == null) { return false; }
-                changed.set(binding.enabled, !root.getOrDefault(binding.enabled, true));
-            } else {
-                Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(request.ability())).findFirst().orElse(null);
-                Metadata metadata = metadata(root, request.ability());
-                if (setting == null || metadata == null || setting.installed != null && !root.getOrDefault(setting.installed, false)) { return false; }
-                switch (request.operation()) {
-                    case JustDireActiveNetwork.TOGGLE -> changed.set(setting.toggle, !root.getOrDefault(setting.toggle, true));
-                    case JustDireActiveNetwork.VALUE -> {
-                        // Negate's production consumer has no numeric control; do not offer a dead slider.
-                        if (!metadata.hasSlider() || setting.name.equals("negatefalldamage") || request.value() < metadata.minimum || request.value() > metadata.maximum
-                                || (request.value() - metadata.minimum) % metadata.increment != 0) { return false; }
-                        changed.set(setting.value, request.value());
-                    }
-                    case JustDireActiveNetwork.PARTICLES -> {
-                        if (!setting.name.equals("groundstomp") || request.value() < 0 || request.value() > 1) { return false; }
-                        changed.set(binding.particles, request.value());
-                    }
-                    case JustDireActiveNetwork.BINDING -> {
-                        if ((request.value() != 0 && request.value() != 2)
-                                || !request.equipped() || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) { return false; }
-                        var next = new ArrayList<Object>();
-                        for (Object record : root.getOrDefault(binding.bindings, List.of())) {
-                            if (!setting.name.equals((String) binding.name.invokeExact(record))) { next.add(record); }
-                        }
-                        if (request.value() == 2 && request.key() != -1) {
-                            next.add(binding.create.invokeExact(setting.name, request.key(), request.mouse(), true));
-                        }
-                        changed.set(binding.bindings, List.copyOf(next)); changed.set(setting.mode, request.value());
-                    }
-                    default -> { return false; }
+            Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(request.ability())).findFirst().orElse(null);
+            Metadata metadata = metadata(root, request.ability());
+            if (setting == null || metadata == null || setting.installed != null && !root.getOrDefault(setting.installed, false)) { return false; }
+            switch (request.operation()) {
+                case JustDireActiveNetwork.TOGGLE -> changed.set(setting.toggle, !root.getOrDefault(setting.toggle, true));
+                case JustDireActiveNetwork.VALUE -> {
+                    // Negate's production consumer has no numeric control; do not offer a dead slider.
+                    if (!metadata.hasSlider() || setting.name.equals("negatefalldamage") || request.value() < metadata.minimum || request.value() > metadata.maximum
+                            || (request.value() - metadata.minimum) % metadata.increment != 0) { return false; }
+                    changed.set(setting.value, request.value());
                 }
+                case JustDireActiveNetwork.PARTICLES -> {
+                    if (!setting.name.equals("groundstomp") || request.value() < 0 || request.value() > 1) { return false; }
+                    changed.set(binding.particles, request.value());
+                }
+                case JustDireActiveNetwork.BINDING -> {
+                    if ((request.value() != 0 && request.value() != 2)
+                            || !request.equipped() || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) { return false; }
+                    var next = new ArrayList<Object>();
+                    for (Object record : root.getOrDefault(binding.bindings, List.of())) {
+                        if (!setting.name.equals((String) binding.name.invokeExact(record))) { next.add(record); }
+                    }
+                    if (request.value() == 2 && request.key() != -1) {
+                        next.add(binding.create.invokeExact(setting.name, request.key(), request.mouse(), true));
+                    }
+                    changed.set(binding.bindings, List.copyOf(next)); changed.set(setting.mode, request.value());
+                }
+                default -> { return false; }
             }
         } catch (Throwable failure) { disable(binding, failure); return false; }
         if (api != binding) { return false; }
@@ -365,7 +360,7 @@ public final class JustDireSettingsCompatibility {
             if (setting.value != null) { copyField(changed, root, setting.value); }
             copyField(changed, root, setting.mode);
         }
-        copyField(changed, root, binding.enabled); copyField(changed, root, binding.bindings);
+        copyField(changed, root, binding.bindings);
         copyField(changed, root, binding.particles);
         return true;
     }
@@ -428,6 +423,6 @@ public final class JustDireSettingsCompatibility {
     private record Api(Class<?> menu, Class<?> tool, List<Setting> settings, MethodHandle abilities, MethodHandle params,
                        MethodHandle minimum, MethodHandle maximum, MethodHandle increment, MethodHandle defaultValue,
                        MethodHandle name, MethodHandle key, MethodHandle mouse, MethodHandle equipped, MethodHandle create, MethodHandle localization,
-                       DataComponentType<List<Object>> bindings, DataComponentType<Boolean> enabled,
+                       DataComponentType<List<Object>> bindings,
                        DataComponentType<Integer> particles) {}
 }

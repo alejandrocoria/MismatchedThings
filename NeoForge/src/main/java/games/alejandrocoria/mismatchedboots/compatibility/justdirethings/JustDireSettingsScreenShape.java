@@ -24,7 +24,7 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     private static final Map<String, String> METHODS = Map.ofEntries(
             Map.entry("<init>", "(Lcom/direwolf20/justdirethings/common/containers/ToolSettingContainer;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;)V"),
             Map.entry("init", "()V"), Map.entry("refreshButtons", "()V"), Map.entry("clearMaps", "()V"),
-            Map.entry("refreshToolAndSlots", "()V"), Map.entry("keyPressed", "(Lnet/minecraft/client/input/KeyEvent;)Z"),
+            Map.entry("refreshToolAndSlots", "()V"),
             Map.entry("mouseClicked", "(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z"),
             Map.entry("toggleSetting", "(Ljava/lang/String;)V"), Map.entry("cycleSetting", "(Ljava/lang/String;)V"),
             Map.entry("setSetting", "(Ljava/lang/String;I)V"), Map.entry("toggleRender", "(Ljava/lang/String;I)V"),
@@ -33,7 +33,7 @@ public final class JustDireSettingsScreenShape implements Opcodes {
             Map.entry("<init>", Set.of("Metadata")), Map.entry("init", Set.of("Metadata", "Abilities")),
             Map.entry("refreshButtons", Set.of("Metadata", "Parameters", "Value", "RefreshGuard", "Restrictions")),
             Map.entry("mouseClicked", Set.of("Metadata", "Abilities", "MouseCaptureGuard", "Equipped")),
-            Map.entry("refreshToolAndSlots", Set.of("Select")), Map.entry("keyPressed", Set.of("ToggleKey")),
+            Map.entry("refreshToolAndSlots", Set.of("Select")),
             Map.entry("toggleSetting", Set.of("Toggle")), Map.entry("setSetting", Set.of("Set")),
             Map.entry("toggleRender", Set.of("Particles")), Map.entry("sendBinding", Set.of("Binding")),
             Map.entry("cycleSetting", Set.of("Unsupported")), Map.entry("setCustomSetting2", Set.of("Unsupported")));

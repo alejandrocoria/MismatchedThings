@@ -9,10 +9,12 @@ import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsScreenAccess;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireHeldToggleCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCredits;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -27,10 +29,13 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -141,6 +146,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         if (VARIANT.equals("earthquakeMissing") || VARIANT.equals("earthquakeSettingsFailure")) {
             earthquakeUnavailable(client); return;
         }
+        if (VARIANT.equals("live")) { heldToggles(client); }
         setup(client, false, false, 6_000);
         add("native original keyboard retains one native action", () -> press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS), () -> charge(feet(client)) == 1_000);
         add("move original to main hand for native selection control", () -> server(client, player -> {
@@ -222,10 +228,19 @@ final class NeoForgeJustDireGroundStompClientTest {
                 require(slider(client, "GROUNDSTOMP") == slider, "Slider rebuilt during edit");
                 slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(2);
             }, () -> value(feet(client), "groundstomp_value") == 5 && value(feet(client), "jumpboost_value") == 2);
-            add("native toggle key disables the selected mixed root", () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
-                    () -> !flag(feet(client), "tool_enabled", true));
-            add("native toggle key re-enables selected root", () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
-                    () -> flag(feet(client), "tool_enabled", true));
+            add("global toggle key outside capture leaves selected mixed root unchanged", () -> {
+                before = feet(client).copy(); client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0));
+            }, () -> wait > 12 && ItemStack.matches(before, feet(client)));
+            add("retired global menu operation is refused without changing root", () -> server(client, player -> {
+                var root = player.getItemBySlot(EquipmentSlot.FEET); var snapshot = root.copy();
+                int selection = (int) fieldStatic(JustDireSettingsClient.class, "selection");
+                int request = (int) fieldStatic(JustDireSettingsClient.class, "request") + 1;
+                UUID token = (UUID) fieldStatic(JustDireSettingsClient.class, "token");
+                require(!JustDireActiveNetwork.edit(player, new JustDireActiveNetwork.SettingsRequest(
+                        player.containerMenu.containerId, 36, selection, request, token, 5, "", 0, -1, false, true)).accepted()
+                        && ItemStack.matches(root, snapshot), "Retired screen shortcut still changed root");
+            }));
+            close(client); open(client); select(client, 36);
             reveal(client, "GROUNDSTOMP");
             add("mixed custom-only and equipped-only native controls visibly disabled", () -> {
                 var icon = icon(client, "GROUNDSTOMP");
@@ -445,8 +460,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                         () -> flag(feet(client), "lavarepair_toggle", false));
                 add("enabled root repairs despite frozen source switches", () -> server(client, player -> lavaDrop(player, true)));
                 open(client); select(client, 36); assign(client, "LAVAREPAIR", 4, true);
-                add("native global toggle disables ritual but not intrinsic capability", () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
-                        () -> !flag(feet(client), "tool_enabled", true));
+                globalState(client, false);
                 add("global-off tooltip is disabled", () -> lavaTooltip(client, false));
                 close(client);
                 add("global-off root remains protected without ritual", () -> server(client, player -> lavaDrop(player, false)));
@@ -541,9 +555,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                         require(((Number) field(slider(client, "JUMPBOOST"), "maxValue")).intValue() == maximum, "Powered range missing");
                         slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(maximum);
                     }, () -> value(feet(client), "jumpboost_value") == maximum);
-                    add("global-off keeps powered Jump's native range " + label,
-                            () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
-                            () -> !flag(feet(client), "tool_enabled", true));
+                    globalState(client, false);
                     reveal(client, "JUMPBOOST");
                     add("native powered Jump captures keyboard while depleted/off " + label, () -> {
                         require(((Number) field(slider(client, "JUMPBOOST"), "maxValue")).intValue() == maximum, "Global-off shrank slider");
@@ -571,9 +583,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                             () -> mousePress(3, GLFW.GLFW_PRESS),
                             () -> flag(feet(client), "jumpboost_toggle", false) && charge(feet(client)) == 0);
                     open(client); select(client, 36);
-                    add("native global shortcut restores powered Jump consumers " + label,
-                            () -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)),
-                            () -> flag(feet(client), "tool_enabled", false));
+                    globalState(client, true);
                     add("remember native powered slider identity " + label, () -> widget[0] = slider(client, "JUMPBOOST"));
                     for (int energy : new int[]{4, 5, 0}) {
                         add("ordinary charge packet reaches selected powered root " + label + "/" + energy, () -> server(client, player -> {
@@ -1170,10 +1180,12 @@ final class NeoForgeJustDireGroundStompClientTest {
                     && bindingFor(feet(client), "earthquake", phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0), "Restart/tier UI reset EQ preferences");
             assertEarthquakeTooltip(client, 95_000);
         });
-        add("native root controls re-enable the saved pair without resetting its spent clock", () -> {
-            if (phase == 0) { client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_H, 0, 0)); }
-            else { click(icon(client, "EARTHQUAKE"), 0); }
-        }, () -> flag(feet(client), "tool_enabled", true) && flag(feet(client), "earthquake_toggle", true));
+        if (phase == 0) { globalState(client, true); }
+        else {
+            add("native ability control re-enables the saved pair without resetting its spent clock",
+                    () -> click(icon(client, "EARTHQUAKE"), 0),
+                    () -> flag(feet(client), "tool_enabled", true) && flag(feet(client), "earthquake_toggle", true));
+        }
         close(client);
         add("restored whole-tool control cannot resurrect removed Jump or historical disabled preferences", () -> {
             assertClientJump(client, phase == 0 ? 0 : 5); serverJump(client, phase == 0 ? 0 : 5);
@@ -1678,6 +1690,101 @@ final class NeoForgeJustDireGroundStompClientTest {
         }));
     }
 
+    private static void heldToggles(Minecraft client) {
+        add("wait for ordinary gameplay before held-toggle input", () -> {}, () -> client.screen == null);
+        for (String tier : List.of("ferricore", "blazegold", "celestigem", "eclipsealloy")) {
+            for (InteractionHand hand : InteractionHand.values()) {
+                add("prepare held " + tier + " mixed in " + hand, () -> server(client, player -> {
+                    player.getInventory().clearContent();
+                    var source = NeoForgeJustDireResourcesTest.boots(tier, 0); // No installed upgrades required.
+                    var pair = MixedBootsFactory.createPair(source, new ItemStack(Items.DIAMOND_BOOTS));
+                    expected = hand == InteractionHand.MAIN_HAND ? pair.primary() : pair.inverse();
+                    player.setItemInHand(hand, expected); before = expected.copy();
+                    player.inventoryMenu.broadcastChanges();
+                }), () -> ItemStack.matches(expected, client.player.getItemInHand(hand)));
+                add("configured held key disables " + tier + " " + hand + " through transport", () -> {
+                    require(client.screen == null && JustDireHeldToggleCompatibility.target(client.player) == hand, "Held input target unavailable");
+                    require(!key("toggleTool").getKeyConflictContext().isActive(), "Native context unexpectedly accepted mixed");
+                    press(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS);
+                }, () -> !flag(client.player.getItemInHand(hand), "tool_enabled", true));
+                add("held toggle changes only root tool_enabled; releases/repeats/wrong key are inert", () -> {
+                    var unchanged = client.player.getItemInHand(hand).copy();
+                    unchanged.remove(JustDireAttributeTestSupport.component("tool_enabled"));
+                    require(ItemStack.matches(unchanged, before), "Held toggle changed resources/settings/sources");
+                    press(GLFW.GLFW_KEY_H, GLFW.GLFW_RELEASE); press(GLFW.GLFW_KEY_H, GLFW.GLFW_REPEAT);
+                    press(GLFW.GLFW_KEY_J, GLFW.GLFW_PRESS);
+                });
+                add("configured held key re-enables " + tier + " " + hand,
+                        () -> press(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS),
+                        () -> flag(client.player.getItemInHand(hand), "tool_enabled", false));
+            }
+        }
+        for (InteractionHand mixedHand : InteractionHand.values()) {
+            InteractionHand nativeHand = mixedHand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+            add("prepare native priority over mixed in " + mixedHand, () -> server(client, player -> {
+                player.getInventory().clearContent();
+                expected = MixedBootsFactory.createPair(boot("eclipsealloy", 0), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                player.setItemInHand(mixedHand, expected); player.setItemInHand(nativeHand, boot("ferricore", 0));
+                player.inventoryMenu.broadcastChanges();
+            }), () -> ItemStack.matches(expected, client.player.getItemInHand(mixedHand))
+                    && JustDireUpgradesCompatibility.nativeBoot(client.player.getItemInHand(nativeHand)));
+            add("native priority retains one native toggle", () -> {
+                press(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS);
+                KeyMapping.click(key("toggleTool").getKey()); // Ordinary native tick/packet route.
+                Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.HeldToggle(mixedHand));
+            }, () -> !flag(client.player.getItemInHand(nativeHand), "tool_enabled", true));
+            add("native priority leaves mixed untouched on both client and server", () -> {
+                require(ItemStack.matches(client.player.getItemInHand(mixedHand), expected), "Native priority changed mixed");
+                server(client, player -> require(!JustDireHeldToggleCompatibility.toggle(player, mixedHand), "Server accepted competing native toggle"));
+            });
+        }
+        add("prepare two held mixed pairs", () -> server(client, player -> {
+            player.getInventory().clearContent();
+            var pair = MixedBootsFactory.createPair(boot("eclipsealloy", 0), new ItemStack(Items.DIAMOND_BOOTS));
+            player.setItemInHand(InteractionHand.MAIN_HAND, pair.primary());
+            player.setItemInHand(InteractionHand.OFF_HAND, pair.inverse());
+            player.inventoryMenu.broadcastChanges();
+        }), () -> JustDireSettingsCompatibility.mixed(client.player.getMainHandItem())
+                && JustDireSettingsCompatibility.mixed(client.player.getOffhandItem()));
+        add("two mixed pairs select main hand only", () -> press(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS),
+                () -> !flag(client.player.getMainHandItem(), "tool_enabled", true));
+        add("offhand stays enabled and keyboard remap takes effect immediately", () -> {
+            require(flag(client.player.getOffhandItem(), "tool_enabled", true), "Both mixed pairs toggled");
+            key("toggleTool").setKey(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_V)); KeyMapping.resetMapping();
+            press(GLFW.GLFW_KEY_V, GLFW.GLFW_PRESS);
+        }, () -> flag(client.player.getMainHandItem(), "tool_enabled", false));
+        add("configured extra mouse button also toggles held mixed", () -> {
+            key("toggleTool").setKey(InputConstants.Type.MOUSE.getOrCreate(4)); KeyMapping.resetMapping();
+            mousePress(4, GLFW.GLFW_PRESS);
+        }, () -> !flag(client.player.getMainHandItem(), "tool_enabled", true));
+        add("restore global keyboard binding before existing screen tests", () -> {
+            key("toggleTool").setKey(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_H)); KeyMapping.resetMapping();
+        });
+        add("server rejects a wrong hand, and rapid toggles use live server state", () -> server(client, player -> {
+            require(!JustDireHeldToggleCompatibility.toggle(player, InteractionHand.OFF_HAND), "Wrong hand bypassed main-hand priority");
+            var root = player.getMainHandItem(); var snapshot = root.copy();
+            require(JustDireHeldToggleCompatibility.toggle(player, InteractionHand.MAIN_HAND)
+                    && JustDireHeldToggleCompatibility.toggle(player, InteractionHand.MAIN_HAND)
+                    && ItemStack.matches(root, snapshot), "Rapid toggles did not restore live state");
+            player.inventoryMenu.broadcastChanges();
+        }));
+        open(client);
+        add("gameplay toggle is refused while a menu is open", () -> {
+            before = client.player.getMainHandItem().copy();
+            press(GLFW.GLFW_KEY_H, GLFW.GLFW_PRESS);
+            server(client, player -> require(!JustDireHeldToggleCompatibility.toggle(player, InteractionHand.MAIN_HAND), "Menu accepted held input"));
+        });
+        add("menu refusal preserves held state", () -> require(ItemStack.matches(before, client.player.getMainHandItem()), "GUI input changed held state"));
+        close(client);
+        add("Portal Gun V2 retains priority over held mixed", () -> server(client, player -> {
+            player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(BuiltInRegistries.ITEM.getValue(
+                    Identifier.fromNamespaceAndPath("justdirethings", "portalgun_v2"))));
+            require(JustDireHeldToggleCompatibility.target(player) == null
+                    && !JustDireHeldToggleCompatibility.toggle(player, InteractionHand.MAIN_HAND), "Portal route did not win");
+            player.inventoryMenu.broadcastChanges();
+        }));
+    }
+
     private static ItemStack boot(String tier, int charge) {
         var boot = NeoForgeJustDireResourcesTest.boots(tier, charge);
         for (String name : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "earthquake")) { set(boot, name + "_upgrade_installed", true); }
@@ -1699,6 +1806,17 @@ final class NeoForgeJustDireGroundStompClientTest {
         return root.getOrDefault(JustDireAttributeTestSupport.<List<?>>component("ability_bindings"), List.of()).stream()
                 .anyMatch(record -> fieldAccessor(record, "abilityName").equals(name)
                         && (int) fieldAccessor(record, "key") == key && (boolean) fieldAccessor(record, "isMouse") == mouse);
+    }
+
+    private static void globalState(Minecraft client, boolean enabled) {
+        // Configuration fixture only: heldToggles owns real shortcut coverage. Do not add native
+        // toggle sounds to the independent cooldown-completion witnesses, or revive a GUI edit API.
+        close(client);
+        add("prepare global tool state " + enabled + " without a screen shortcut", () -> server(client, player -> {
+            set(player.getItemBySlot(EquipmentSlot.FEET), "tool_enabled", enabled);
+            player.inventoryMenu.broadcastChanges();
+        }), () -> flag(feet(client), "tool_enabled", !enabled) == enabled);
+        open(client); select(client, 36);
     }
 
     private static void open(Minecraft client) {

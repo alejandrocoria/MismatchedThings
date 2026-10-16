@@ -3,11 +3,18 @@ package games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings
 import commonnetwork.api.Network;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireHeldToggleCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import org.lwjgl.glfw.GLFW;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -16,7 +23,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.UUID;
 
-/** One native selection and a bounded edit queue; ordinary slot packets carry the actual root. */
+/** Native selection/edit queue and held global shortcut; ordinary slot packets carry the root. */
 public final class JustDireSettingsClient {
     private static JustDireSettingsScreenAccess selected;
     private static int selection, request, lastReply, menu, slot;
@@ -123,8 +130,28 @@ public final class JustDireSettingsClient {
         selected = null; token = JustDireActiveNetwork.NONE; queued.clear();
     }
 
-    public static boolean toggleKey(int key, int scanCode, int modifiers) {
-        if (toggleLookupFailed) { return false; }
+    public static void heldKey(InputEvent.Key event) {
+        heldToggle(event.getAction(), mapping -> mapping.matches(new KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers())));
+    }
+
+    public static void heldMouse(InputEvent.MouseButton.Post event) {
+        heldToggle(event.getAction(), mapping -> mapping.matchesMouse(new MouseButtonEvent(0, 0,
+                new MouseButtonInfo(event.getButton(), event.getModifiers()))));
+    }
+
+    private static void heldToggle(int action, java.util.function.Predicate<KeyMapping> matches) {
+        var client = Minecraft.getInstance();
+        if (action != GLFW.GLFW_PRESS || client.player == null || client.screen != null) { return; }
+        var hand = JustDireHeldToggleCompatibility.target(client.player);
+        if (hand == null) { return; } // Also keeps absent JDT quiet and leaves every native click untouched.
+        KeyMapping mapping = toggleMapping();
+        // Native conflict context rejects mixed identity; match its configured key/modifier directly.
+        if (mapping == null || !matches.test(mapping) || !mapping.getKeyModifier().isActive(KeyConflictContext.IN_GAME)) { return; }
+        Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.HeldToggle(hand));
+    }
+
+    private static KeyMapping toggleMapping() {
+        if (toggleLookupFailed) { return null; }
         if (toggleTool == null) {
             try {
                 toggleTool = (KeyMapping) Class.forName("com.direwolf20.justdirethings.client.KeyBindings")
@@ -132,10 +159,10 @@ public final class JustDireSettingsClient {
             } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
                 toggleLookupFailed = true;
                 Constants.LOG.warn("Could not bind Just Dire Things settings toggle key; mixed global shortcut disabled", failure);
-                return false;
+                return null;
             }
         }
-        return toggleTool.matches(new net.minecraft.client.input.KeyEvent(key, scanCode, modifiers));
+        return toggleTool;
     }
 
     public static void reset() {
