@@ -1315,41 +1315,48 @@ accepting C and completing the bounded upgrade-refund A/B/C plan; this is not
 inferred from these automated gates. See sections 6.1/10.3 of
 [the production plan](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-IMPLEMENTATION.md).
 
-### Simultaneous JDT FE/durability item bars — opt-in spike
+### Dynamic JDT FE/durability item bars — production block A
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBarsSpike "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBarsSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBars "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBars --console=plain
 ```
 
-The [bounded exploration](../local-docs/JUST-DIRE-THINGS-ITEM-BARS-EXPLORATION.md)
-owns findings and the remaining visual/production decisions. This is not a
-production bar implementation or part of ordinary gameplay acceptance. No
-production source, capability, component, packet or global rendering mixin is added.
-The flag registers one test decorator on the real mixed item; it delegates public
-FE bar queries to a validated native powered item with the actual root stack.
+The [A/B plan](../local-docs/JUST-DIRE-THINGS-ITEM-BARS-IMPLEMENTATION.md) owns
+production scope and remaining visual/manual gates. Tests use the normal production
+JAR and its actual registration/decorator, never a candidate decorator or second
+capability. Cyan root FE is at y+10 when the unchanged vanilla bar is visible,
+otherwise y+13; full FE hides and zero retains its empty backing.
 
-The task first starts a dedicated server, checks that class-loading output does
-not contain the client spike class, then runs hidden/muted clients in Live,
-Absent and StorageMissing JVMs. The last reuses the existing storage-binding
-failure fixture, not a fake capability. It checks both tiers/orientations, one/two
-powered sources, zero/tiny/partial/full FE, healthy/damaged/Unbreakable roots,
-invalid data/count/charge and native/vanilla controls. Actual `itemDecorations`
-deferred rectangle bounds/colors and whole-stack preservation are checked; real
-inventory slot packets update the queried root. Absence skips native fixtures.
+The task starts a dedicated server and checks that neither the production client
+decorator nor client test class was loaded. It checks production archive isolation,
+then hidden/muted Live, Absent, StorageMissing, QueryFailure, InvalidWidth and
+LinkageFailure JVMs. StorageMissing reuses the existing binding failure witness.
+The last three arm one native Celestigem visibility/width fault on mixed arguments
+only, proving one warning, no partial FE geometry and a presentation-only latch
+with a committed 100 FE debit and intact audited metadata/native original control.
+No production test seam, mixin or failure property is introduced.
 
-Each client renders a synthetic comparison screen and reads actual GPU framebuffer
-pixels at GUI scales 1 and 2. Four candidates compare FE at y+11/y+10 and native
-HSV/fixed cyan, with vanilla durability unchanged at y+13. It includes native
-controls, a caller count override, split models and a transformed/scissored item
-followed by an unclipped control. Screenshots are not interactive inventory/hotbar/
-carried/Workbench acceptance or owner approval of layout/colors/visibility.
+Live/StorageMissing cover both tiers/orientations, one/two powered sources, maximum
+root capacity, healthy/damaged/Unbreakable roots, zero/tiny/partial/full/missing FE,
+invalid count/data/charge, forged passive FE and vanilla/native controls. Same-root
+damage/repair/Unbreakable transitions inspect actual `itemDecorations` deferred
+rectangle bounds/colors and whole-stack preservation. Ten ordinary inventory slot
+packets update charge, damage/repair and Unbreakable with unchanged provenance,
+including full/zero visibility, without a custom rendering payload or cache.
 
-Versioned reports, process logs and six PNGs are under
-`RuntimeTests/NeoForge/build/reports/just-dire-item-bars/<version>/`; worlds/mods/
-config are disposable under `build/run/justDireItemBars/<version>/`, never the
-user's indev run. The pinned JDT artifact is hash-checked. The verifier is the
-supported entry point; individual client runs need its server-prepared world.
+Reports/logs are under `build/reports/just-dire-item-bars-production/<version>/`;
+worlds/mods/config are disposable in `build/run/justDireItemBarsProduction/<version>/`,
+never the owner's indev run. The pinned JDT artifact is hash-checked. Individual
+client runs need the verifier's server-prepared world. Block A checks production
+deferred extraction, **not GPU pixels or owner ordinary-screen visual acceptance**;
+block B adds the compact production framebuffer/visual handoff.
+
+The former `verifyJustDireItemBarsSpike`, flag, candidate and four-layout comparison
+screen were retired in A to prevent duplicate decoration or stale fixed-row tests.
+Historical findings and PNG/report links remain in the
+[exploration](../local-docs/JUST-DIRE-THINGS-ITEM-BARS-EXPLORATION.md#9-opt-in-renderingquery-spike--2026-10-16)
+under `build/reports/just-dire-item-bars/<version>/`, not production acceptance.
 
 ### Upgrade refund research and spike — retired
 

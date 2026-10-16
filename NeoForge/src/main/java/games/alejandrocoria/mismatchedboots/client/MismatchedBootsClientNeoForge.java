@@ -1,17 +1,21 @@
 package games.alejandrocoria.mismatchedboots.client;
 
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
+import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireEnergyBarDecorator;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
+import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -50,5 +54,11 @@ public final class MismatchedBootsClientNeoForge {
     public static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModContent.mismatchedWorkbenchMenuType().orElseThrow(),
                 MismatchedWorkbenchScreen::new);
+    }
+
+    public static void registerItemDecorations(RegisterItemDecorationsEvent event) {
+        if (ModList.get().isLoaded("justdirethings")) {
+            event.register(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID), JustDireEnergyBarDecorator.INSTANCE);
+        }
     }
 }

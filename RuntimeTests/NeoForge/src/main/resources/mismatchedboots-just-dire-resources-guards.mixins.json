@@ -5,5 +5,6 @@
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireResourceFailurePlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": ["JustDireResourceApiMissingMixin"],
+  "client": ["JustDireEnergyBarQueryFaultMixin"],
   "injectors": {"defaultRequire": 1}
 }

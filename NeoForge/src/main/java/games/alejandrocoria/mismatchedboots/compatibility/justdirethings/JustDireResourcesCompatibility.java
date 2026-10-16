@@ -104,6 +104,16 @@ public final class JustDireResourcesCompatibility {
         } else { output.remove(binding.energy); }
     }
 
+    /** Read-only native formatting receiver; the displayed stack remains the actual root wallet. */
+    public static Item energyBarReceiver(ItemStack root) {
+        Api binding = api;
+        int capacity = binding == null ? 0 : rootCapacity(root, binding);
+        if (api != binding || capacity <= 0 || !validCharge(root, binding, capacity)) { return null; }
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        Item left = data.left().source().getItem();
+        return left == binding.celestigem || left == binding.eclipsealloy ? left : data.right().source().getItem();
+    }
+
     /** Wear reuses storage's audited identities/schema; it must not bind a second optional wallet. */
     static WearProfile wearProfile(ItemStack root) {
         Api binding = api;

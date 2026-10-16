@@ -15,9 +15,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireItemBarsSpike")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireItemBarsTest")) {
             if (FMLEnvironment.getDist().isClient()) {
-                NeoForgeJustDireItemBarsSpike.register(eventBus);
+                NeoForgeJustDireItemBarsTest.register();
             } else {
                 NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
                     games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles.write(

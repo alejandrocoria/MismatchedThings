@@ -49,5 +49,6 @@ public class MismatchedBootsNeoForge {
                 event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
         eventBus.addListener(MismatchedBootsClientNeoForge::onClientSetup);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
+        eventBus.addListener(MismatchedBootsClientNeoForge::registerItemDecorations);
     }
 }

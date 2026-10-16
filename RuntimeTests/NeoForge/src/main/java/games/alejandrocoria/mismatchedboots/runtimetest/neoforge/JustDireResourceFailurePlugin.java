@@ -9,6 +9,11 @@ import java.util.Set;
 /** Invalid binding is opt-in; native JDT remains intact and other fixture runs are unaffected. */
 public final class JustDireResourceFailurePlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("JustDireEnergyBarQueryFaultMixin")) {
+            return Boolean.getBoolean("mismatchedboots.runtimetest.justDireItemBarsTest")
+                    && Set.of("queryFailure", "invalidWidth", "linkageFailure").contains(
+                            System.getProperty("mismatchedboots.runtimetest.justDireItemBarsVariant", ""));
+        }
         return System.getProperty("mismatchedboots.runtimetest.justDireResourcesGuard", "").equals("apiMissing");
     }
     @Override public void onLoad(String mixinPackage) {}
