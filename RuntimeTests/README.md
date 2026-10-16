@@ -1315,6 +1315,42 @@ accepting C and completing the bounded upgrade-refund A/B/C plan; this is not
 inferred from these automated gates. See sections 6.1/10.3 of
 [the production plan](../local-docs/JUST-DIRE-THINGS-UPGRADE-REFUNDS-IMPLEMENTATION.md).
 
+### Simultaneous JDT FE/durability item bars — opt-in spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBarsSpike "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBarsSpike --console=plain
+```
+
+The [bounded exploration](../local-docs/JUST-DIRE-THINGS-ITEM-BARS-EXPLORATION.md)
+owns findings and the remaining visual/production decisions. This is not a
+production bar implementation or part of ordinary gameplay acceptance. No
+production source, capability, component, packet or global rendering mixin is added.
+The flag registers one test decorator on the real mixed item; it delegates public
+FE bar queries to a validated native powered item with the actual root stack.
+
+The task first starts a dedicated server, checks that class-loading output does
+not contain the client spike class, then runs hidden/muted clients in Live,
+Absent and StorageMissing JVMs. The last reuses the existing storage-binding
+failure fixture, not a fake capability. It checks both tiers/orientations, one/two
+powered sources, zero/tiny/partial/full FE, healthy/damaged/Unbreakable roots,
+invalid data/count/charge and native/vanilla controls. Actual `itemDecorations`
+deferred rectangle bounds/colors and whole-stack preservation are checked; real
+inventory slot packets update the queried root. Absence skips native fixtures.
+
+Each client renders a synthetic comparison screen and reads actual GPU framebuffer
+pixels at GUI scales 1 and 2. Four candidates compare FE at y+11/y+10 and native
+HSV/fixed cyan, with vanilla durability unchanged at y+13. It includes native
+controls, a caller count override, split models and a transformed/scissored item
+followed by an unclipped control. Screenshots are not interactive inventory/hotbar/
+carried/Workbench acceptance or owner approval of layout/colors/visibility.
+
+Versioned reports, process logs and six PNGs are under
+`RuntimeTests/NeoForge/build/reports/just-dire-item-bars/<version>/`; worlds/mods/
+config are disposable under `build/run/justDireItemBars/<version>/`, never the
+user's indev run. The pinned JDT artifact is hash-checked. The verifier is the
+supported entry point; individual client runs need its server-prepared world.
+
 ### Upgrade refund research and spike — retired
 
 `verifyJustDireRefundResearch` and `verifyJustDireRefundSpike`, their runs/dispatch

@@ -15,6 +15,18 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireItemBarsSpike")) {
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForgeJustDireItemBarsSpike.register(eventBus);
+            } else {
+                NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
+                    games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles.write(
+                            "just-dire-item-bars-server-success.txt", "server\n");
+                    event.getServer().halt(false);
+                });
+            }
+            return;
+        }
         if (!System.getProperty("mismatchedboots.runtimetest.justDireRefunds", "").isEmpty()) {
             NeoForgeJustDireRefundsTest.register();
             return;
