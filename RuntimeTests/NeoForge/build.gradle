@@ -374,7 +374,6 @@ neoForge {
                 programArgument('--nogui')
                 systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
                 systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerTest', 'true')
-                systemProperty('mismatchedboots.runtimetest.justDireInventorySpike', providers.gradleProperty('justDireInventorySpike').getOrElse('false'))
                 systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerVariant', variant ? variant.uncapitalize() : 'live')
                 systemProperty('mismatchedboots.runtimetest.justDireGroundStompStateVariant', variant ? variant.uncapitalize() : 'live')
                 jvmArgument('-Xmx1G')
@@ -1034,27 +1033,6 @@ tasks.register('verifyJustDireEarthquakeServer') {
     tasks.named("runJustDireGroundStompServer${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
 }
 tasks.named('runJustDireGroundStompServerAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
-// Bounded opt-in spike reuses the isolated server run, never the production verifier's result markers.
-if (providers.gradleProperty('justDireInventorySpike').map { it.toBoolean() }.getOrElse(false)) {
-    tasks.named('runJustDireGroundStompServer') {
-        doLast {
-            def markers = justDireSmithingMarkers.get().asFile
-            def failure = new File(markers, 'just-dire-inventory-spike-failure.txt')
-            def success = new File(markers, 'just-dire-inventory-spike-success.txt')
-            def report = new File(markers, 'just-dire-inventory-spike-report.txt')
-            def log = new File(justDireSmithingRunDirectory.get().asFile, 'logs/latest.log')
-            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
-                    || !log.isFile() || log.text.contains('/ERROR]')) {
-                throw new GradleException("JDT inventory spike failed: ${failure.isFile() ? failure.text : markers}")
-            }
-            fixtureFileOperations.copy {
-                from(report, log)
-                into(fixtureBuildDirectory.dir("reports/just-dire-inventory-spike/${neoforge_version}"))
-            }
-            logger.lifecycle(report.text)
-        }
-    }
-}
 
 tasks.register('verifyJustDireGroundStompServer') {
     group = 'verification'
@@ -1400,7 +1378,7 @@ tasks.register('prepareJustDireGroundStompClient') {
 }
 tasks.register('verifyJustDireGroundStompClient') {
     group = 'verification'
-    description = 'Verifies native JDT mixed widgets/capture and production equipped keyboard/mouse action transport.'
+    description = 'Verifies native JDT mixed widgets/capture and production location-aware keyboard/mouse batch transport.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
       ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->

@@ -16,9 +16,6 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import org.lwjgl.glfw.GLFW;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.UUID;
@@ -31,31 +28,14 @@ public final class JustDireSettingsClient {
     private static final Queue<Edit> queued = new ArrayDeque<>();
     private static KeyMapping toggleTool;
     private static boolean toggleLookupFailed;
-    private static MethodHandle texture;
-    private static boolean widgetsFailed;
 
     private JustDireSettingsClient() {}
 
-    public static boolean available() { return !widgetsFailed && JustDireSettingsCompatibility.available(); }
+    public static boolean available() { return JustDireSettingsCompatibility.available(); }
 
-    /** Native custom-only mode is fixed; inventory activation is visibly unavailable. */
-    public static void restrict(Button mode, Button equipped) {
-        try {
-            if (texture == null) {
-                texture = MethodHandles.publicLookup().findVirtual(
-                        Class.forName("com.direwolf20.justdirethings.client.screens.widgets.ToggleButton"),
-                        "setTexturePosition", MethodType.methodType(void.class, int.class))
-                        .asType(MethodType.methodType(void.class, Object.class, int.class));
-            }
-            mode.active = false; equipped.active = false;
-            texture.invokeExact((Object) equipped, 0);
-        } catch (Throwable failure) {
-            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
-            if (!widgetsFailed) {
-                widgetsFailed = true;
-                Constants.LOG.warn("Just Dire Things native mixed widgets unavailable; mixed screen bridge disabled", failure);
-            }
-        }
+    /** Only custom mode is fixed; location and its native presentation remain editable. */
+    public static void restrict(Button mode) {
+        mode.active = false;
     }
 
     public static void select(JustDireSettingsScreenAccess screen) {

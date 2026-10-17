@@ -92,7 +92,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
         }), () -> client.screen == null && charge(feet(client)) == 6_000);
         add("server-issued nonce travels through bundled CommonNetworking", () -> prepare(1), () -> activation != null && activation.sequence() == 1 && activation.prepared() && activation.accepted());
         add("prepared permit activates exactly one live root", () -> {
-            consumed = new JustDireActiveNetwork.Activate(1, activation.nonce(), 71, false); activation = null; send(consumed);
+            consumed = new JustDireActiveNetwork.Activate(1, activation.nonce(), 71, false, java.util.List.of(36)); activation = null; send(consumed);
         }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 1_000 && timer(feet(client)) > 0);
         add("consumed activation replay rejected through real transport while normal timer progresses", () -> { activation = null; send(consumed); },
                 () -> activation != null && !activation.accepted() && charge(feet(client)) == 1_000);
@@ -122,7 +122,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
         add("forged mouse setting rejected without resetting accepted root value/resources", () -> {
             settings = null; send(request(3, token, 4, "groundstomp", 2, 71, true, true));
         }, () -> settings != null && settings.request() == 3 && !settings.accepted() && value(feet(client)) == 5 && charge(feet(client)) == 0);
-        add("selection token cannot authorize action", () -> { activation = null; send(new JustDireActiveNetwork.Activate(1, token, 71, false)); },
+        add("selection token cannot authorize action", () -> { activation = null; send(new JustDireActiveNetwork.Activate(1, token, 71, false, java.util.List.of(36))); },
                 () -> activation != null && !activation.accepted());
         add("ordinary close packet invalidates edit session", () -> client.screen.onClose(), () -> client.screen == null);
         add("stale edit after actual menu close rejects through transport", () -> { settings = null; send(request(4, token, 1, "groundstomp", 0, 71, false, true)); },
@@ -176,7 +176,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
             holdInput = false; activation = null; JustDireAbilityInput.reply(heldInput);
         }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 145_000 && timer(feet(client)) > 0);
         add("replay that consumed delayed permit still rejects through bundled transport", () -> {
-            activation = null; send(new JustDireActiveNetwork.Activate(heldInput.sequence(), heldInput.nonce(), 71, false));
+            activation = null; send(new JustDireActiveNetwork.Activate(heldInput.sequence(), heldInput.nonce(), 71, false, java.util.List.of(36)));
         }, () -> activation != null && !activation.accepted() && charge(feet(client)) == 145_000);
         add("seed a funded Earthquake root and one actual grounded world target for production input", () -> {
             inputFlight = false;
@@ -203,7 +203,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
         }, () -> activation != null && !activation.prepared() && activation.accepted() && charge(feet(client)) == 100_000
                 && earthquakeClock(feet(client)) != null);
         add("real world target received Slowness IV on the authoritative server", () -> server(client, player -> {
-            consumed = new JustDireActiveNetwork.Activate(inputPrepared.sequence(), inputPrepared.nonce(), 72, false);
+            consumed = new JustDireActiveNetwork.Activate(inputPrepared.sequence(), inputPrepared.nonce(), 72, false, java.util.List.of(36));
             // Vanilla does not synchronize a normal mob's effect map to non-passenger clients.
             var effect = earthquakeTarget.getEffect(MobEffects.SLOWNESS);
             require(effect != null && effect.getAmplifier() == 3 && charge(serverRoot) == 100_000, "Missing authoritative effect/debit");

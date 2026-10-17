@@ -140,20 +140,20 @@ public final class NeoForgeJustDireGroundStompServerTest {
                     var freePermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                     set(root, "forge_energy", 23); root.setDamageValue(root.getDamageValue() + 1);
                     root.set(cooldowns(), List.of(record("groundstomp", 79, false)));
-                    require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, freePermit.nonce(), key, mouse))
+                    require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, freePermit.nonce(), key, mouse, java.util.List.of(36)))
                             && charge(root) == 23 && timer(root) == 79, "Ordinary charging/wear/ticking invalidated or was overwritten by free toggle");
                     var before = root.copy();
                     var permit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                     require(permit.accepted(), "Passive prepare rejected");
-                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, !mouse))
-                            && !JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse))
+                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, !mouse, java.util.List.of(36)))
+                            && !JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse, java.util.List.of(36)))
                             && ItemStack.matches(before, root), "Device confusion/replay changed a passive");
                     permit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                     set(root, name + "_value", 2);
-                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse)), "Stale passive controls accepted");
+                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse, java.util.List.of(36))), "Stale passive controls accepted");
                     permit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                     player.setItemSlot(EquipmentSlot.FEET, root.copy());
-                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse)), "Equal replacement revived passive permission");
+                    require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, permit.nonce(), key, mouse, java.util.List.of(36))), "Equal replacement revived passive permission");
                     player.setItemSlot(EquipmentSlot.FEET, root);
                     for (int mode : new int[]{0, 1, 99}) {
                         set(root, name + "_bindingmode", mode);
@@ -176,12 +176,12 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 root.set(cooldowns(), List.of(record("groundstomp", 1, false)));
                 var freePermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                 root.remove(cooldowns());
-                require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, freePermit.nonce(), key, mouse))
+                require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, freePermit.nonce(), key, mouse, java.util.List.of(36)))
                         && charge(root) == 6_000 && timer(root) == -1, "Passive-only permission unexpectedly upgraded to a paid action after timer expiry");
                 for (String name : names) { set(root, name + "_toggle", false); }
                 var paidPermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                 set(root, "forge_energy", 6_001);
-                require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, paidPermit.nonce(), key, mouse))
+                require(!JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(sequence, paidPermit.nonce(), key, mouse, java.util.List.of(36)))
                         && names.stream().noneMatch(name -> root.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component(name + "_toggle"), true)), "Shared paid permission lost strict resource validation");
                 set(root, "forge_energy", 6_000);
                 require(dispatch(player, key, mouse) && charge(root) == 1_000 && timer(root) == 200, "Shared active/passive input lost single action/bill/timer");
@@ -232,7 +232,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
     private static boolean dispatch(ServerPlayer player, int key, boolean mouse) {
         var prepared = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
         if (!prepared.accepted()) { return false; }
-        var request = new JustDireActiveNetwork.Activate(sequence, prepared.nonce(), key, mouse);
+        var request = new JustDireActiveNetwork.Activate(sequence, prepared.nonce(), key, mouse, java.util.List.of(36));
         boolean accepted = JustDireActiveNetwork.activate(player, request);
         require(!JustDireActiveNetwork.activate(player, request), "Consumed passive input replayed");
         return accepted;
@@ -346,8 +346,8 @@ public final class NeoForgeJustDireGroundStompServerTest {
             packet = activatePacket(issued);
             if (fault == 0) { player.setItemSlot(EquipmentSlot.FEET, root.copy()); }
             if (fault == 1) { set(root, "groundstomp_value", 1); }
-            if (fault == 2) { packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 72, false); }
-            if (fault == 3) { packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 71, true); }
+            if (fault == 2) { packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 72, false, java.util.List.of(36)); }
+            if (fault == 3) { packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 71, true, java.util.List.of(36)); }
             if (fault == 4) { server.getWorldData().overworldData().setGameTime(server.overworld().getGameTime() + 41); }
             if (fault == 5) { root.get(NeoForgeJustDireGroundStompServerTest.<List<Object>>component("ability_bindings"))
                     .add(Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityBinding")
@@ -381,7 +381,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
             var history = ModContent.getMixedBootsData(root);
             var issued = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, button, true));
             require(issued.accepted(), "Additional mouse button rejected: " + button);
-            var packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), button, true);
+            var packet = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), button, true, java.util.List.of(36));
             require(JustDireActiveNetwork.activate(player, packet) && charge(root) == 1_000 && timer(root) == 200
                     && !JustDireActiveNetwork.activate(player, packet) && ModContent.getMixedBootsData(root).equals(history),
                     "Mouse bill/timer/replay/provenance failed: " + button);
@@ -402,8 +402,8 @@ public final class NeoForgeJustDireGroundStompServerTest {
             if (fault == 1) { player.setItemSlot(EquipmentSlot.FEET, root.copy()); }
             if (fault == 2) { set(root, "groundstomp_value", 1); }
             var before = root.copy();
-            var rejected = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, fault != 0);
-            var original = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, true);
+            var rejected = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, fault != 0, java.util.List.of(36));
+            var original = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, true, java.util.List.of(36));
             require(!JustDireActiveNetwork.activate(player, rejected) && !JustDireActiveNetwork.activate(player, original)
                     && ItemStack.matches(root, before), "Mouse device/stale state revived permission: " + fault);
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
@@ -429,7 +429,6 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 request(menu, selection, number++, token, 1, "earthquake", 0, 71, false, true),
                 request(menu, selection, number++, token, 4, "groundstomp", 1, 71, false, true),
                 request(menu, selection, number++, token, 4, "groundstomp", 2, 71, true, true),
-                request(menu, selection, number++, token, 4, "groundstomp", 2, 71, false, false),
                 request(menu, selection, number++, token, 99, "groundstomp", 0, 71, false, true),
                 request(menu, selection, number++, token, 3, "groundstomp", -1, 71, false, true))) {
             require(!JustDireActiveNetwork.edit(player, bad).accepted() && ItemStack.matches(root, snapshot), "Forged edit changed root: " + bad);
@@ -473,8 +472,9 @@ public final class NeoForgeJustDireGroundStompServerTest {
             for (int button : new int[]{0, 1, 8}) {
                 require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, button, true, true)).accepted(), "Invalid passive mouse edit accepted");
             }
-            require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 1, 72, false, true)).accepted()
-                    && !JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, 72, false, false)).accepted(), "Passive mode/inventory edit accepted");
+            require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 1, 72, false, true)).accepted(), "Passive ordinary mode accepted");
+            require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, 72, false, false)).accepted()
+                    && JustDireSettingsCompatibility.boundPassives(combined, 72, false, false).contains(ability), "Passive inventory preference refused");
             require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 4, ability, 2, -1, false, true)).accepted()
                     && !JustDireSettingsCompatibility.boundPassives(combined, 4, true).contains(ability), "Passive Escape removal rejected");
         }
@@ -608,7 +608,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
         return new JustDireActiveNetwork.SettingsRequest(menu.containerId, 36, selection, number, token, operation, ability, value, key, mouse, equipped);
     }
     private static JustDireActiveNetwork.ActivationReply prepared(ServerPlayer player) { return JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, 71, false)); }
-    private static JustDireActiveNetwork.Activate activatePacket(JustDireActiveNetwork.ActivationReply reply) { return new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), 71, false); }
+    private static JustDireActiveNetwork.Activate activatePacket(JustDireActiveNetwork.ActivationReply reply) { return new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), 71, false, java.util.List.of(36)); }
     private static boolean attempt(ServerPlayer player) {
         var reply = prepared(player); lastPrepared = reply.accepted();
         return lastAccepted = reply.accepted() && JustDireActiveNetwork.activate(player, activatePacket(reply));

@@ -135,7 +135,7 @@ final class JustDireRefundBreakTest {
                 .getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance("groundstomp", 71, false, true);
         JustDireAttributeTestSupport.set(root, "ability_bindings", List.of(binding));
         var reply = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false));
-        require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(1, reply.nonce(), 71, false)) && root.isEmpty(), "Production GS did not really break at 25 remaining");
+        require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(1, reply.nonce(), 71, false, java.util.List.of(36))) && root.isEmpty(), "Production GS did not really break at 25 remaining");
         refunds("groundstomp"); records.add("production GS permit/action returns credited item after its actual last-25-durability break");
 
         for (int charge : new int[]{200, 199}) {

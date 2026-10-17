@@ -50,8 +50,7 @@ public final class NeoForgeRuntimeTest {
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeStateTest")) {
             NeoForgeJustDireEarthquakeStateTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompServerTest")) {
-            if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireInventorySpike")) { JustDireInventoryActivationSpike.register(); }
-            else { NeoForgeJustDireGroundStompServerTest.register(); }
+            NeoForgeJustDireGroundStompServerTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompStateTest")) {
             NeoForgeJustDireGroundStompStateTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireRootUpgradeTest")) {

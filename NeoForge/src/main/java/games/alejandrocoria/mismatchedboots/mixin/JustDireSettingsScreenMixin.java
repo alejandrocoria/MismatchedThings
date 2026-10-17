@@ -37,9 +37,10 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
     @Shadow private EnumSet<?> abilities;
     @Shadow protected boolean bindingEnabled;
     @Shadow protected boolean requireEquipped;
+    @Shadow protected Button shownAbilityButton;
     @Shadow @Final protected Map<Button, Button> leftRightClickButtons;
-    @Shadow @Final protected Map<Button, Button> requireEquippedButtons;
     @Shadow @Final protected Map<Button, Object> buttonToAbilityMap;
+    @Shadow protected Map<Button, Object> bindingMap;
     @Shadow public abstract void clearMaps();
 
     // Published only after all local metadata/selection/edit/restriction hooks survive transformation.
@@ -90,9 +91,8 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
     private void mismatchedboots$jdtRestrictions(CallbackInfo ci) {
         if (!JustDireSettingsCompatibility.mixed(tool)) { return; }
         for (Button icon : buttonToAbilityMap.keySet()) {
-            JustDireSettingsClient.restrict(leftRightClickButtons.get(icon), requireEquippedButtons.get(icon));
+            JustDireSettingsClient.restrict(leftRightClickButtons.get(icon));
         }
-        requireEquipped = true;
         if (!mismatchedboots$jdtReady()) { clearWidgets(); clearMaps(); }
     }
 
@@ -108,9 +108,13 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
                 && !JustDireSettingsCompatibility.validBindingInput(event.button(), true)) { ci.setReturnValue(true); }
     }
 
-    @Inject(method = "mouseClicked", at = @At("TAIL"))
-    private void mismatchedboots$jdtEquipped(MouseButtonEvent event, boolean doubled, CallbackInfoReturnable<Boolean> ci) {
-        if (JustDireSettingsCompatibility.mixed(tool)) { requireEquipped = true; }
+    @Inject(method = "keyPressed", at = @At("RETURN"))
+    private void mismatchedboots$jdtLocation(CallbackInfoReturnable<Boolean> ci) {
+        // Native Escape's null-record branch resets this field after sendBinding returns.
+        // Keep the new unbound row's preference, rather than leaking that default into its next click.
+        if (mismatchedboots$jdtReady() && JustDireSettingsCompatibility.mixed(tool) && shownAbilityButton != null) {
+            requireEquipped = JustDireSettingsCompatibility.screenEquipped(bindingMap.get(leftRightClickButtons.get(shownAbilityButton)));
+        }
     }
 
     @Inject(method = "toggleSetting", at = @At("HEAD"), cancellable = true)
@@ -127,7 +131,17 @@ abstract class JustDireSettingsScreenMixin extends AbstractContainerScreen<Abstr
     }
     @Inject(method = "sendBinding", at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$jdtBinding(String name, int mode, int key, boolean mouse, CallbackInfo ci) {
-        if (JustDireSettingsClient.edit(this, name, JustDireActiveNetwork.BINDING, mode, key, mouse, true)) { ci.cancel(); }
+        if (JustDireSettingsClient.edit(this, name, JustDireActiveNetwork.BINDING, mode, key, mouse, requireEquipped)) {
+            // The native location callback does not replace bindingMap. Without this local update,
+            // switching rows or capturing a new key could restore its previous location preference.
+            Object record = JustDireSettingsCompatibility.screenBinding(name, key, mouse, requireEquipped);
+            if (record != null) {
+                for (var entry : buttonToAbilityMap.entrySet()) {
+                    if (entry.getValue().toString().equalsIgnoreCase(name)) { bindingMap.put(leftRightClickButtons.get(entry.getKey()), record); }
+                }
+            }
+            ci.cancel();
+        }
     }
     @Inject(method = {"cycleSetting", "setCustomSetting2"}, at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$jdtUnsupported(CallbackInfo ci) {

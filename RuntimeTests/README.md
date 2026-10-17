@@ -539,41 +539,38 @@ through a real world restart and actual client equipped armor/Step Assist at
 charged/depleted FE, in addition to production Workbench and packet agreement.
 Powered abilities, damage-to-FE conversion and manual 8.3 acceptance are not claimed.
 
-## Just Dire Things inventory-activation spike
+## Just Dire Things inventory activation
 
-Opt-in research selected 2026-10-17; production inventory activation is **not**
-enabled. Reuses the isolated Ground Stomp dedicated-server launch and native
-artifact verification, with a separate harness and separate result markers:
+The normal Ground Stomp server and native-screen Live client gates own production
+A/B coverage. The research driver, predicate overrides and `justDireInventorySpike`
+flag are retired; historical findings/results remain in the local exploration.
+Use the existing isolated runs, sequentially (repeat with the .99 property for
+the supported floor):
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer -PjustDireInventorySpike=true "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer -PjustDireInventorySpike=true --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompClientLive --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompTransport --console=plain
 ```
 
-The original five bounded groups compared native location filters/inventory actions, candidate
-multi-root keyboard/mouse dispatch, stale identity and actual extraction rollback,
-worn-only clocks and location-correct durability break callbacks. Actual mixed
-economic/effect logic remains production. Inventory-activation block A retired
-the two predicate/break override mixins and scoped context; the remaining
-in-process batch candidate calls the production explicit-target APIs directly.
-It remains a research batch, not the production packet/UI path, and will retire
-with B. Its old failing-break comparison is now a production preservation check.
-
-The normal unflagged Ground Stomp server gate owns A's production acceptance:
-four location groups extend its existing 21 groups with real effects/FE,
+Four A location groups extend the server's existing 21 groups with real effects/FE,
 staged-move rollback, free passives/worn-only clocks and actual inventory/hand/
 FEET break callbacks, stats/refunds and unrelated Soul Speed/armor preservation.
 The refund gate separately retains native controls and foreign-wrapper faults,
 including detached/unsupported-slot refusal and ordinary refunds with a GUI open.
-See the [A implementation record](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-IMPLEMENTATION.md).
+Three B groups add real server-derived batch admission, slot-subset attenuation,
+independent payment, fixed action masks, stale-slot monotonic invalidation and
+forgery/replay/reentry refusal. Live clicks the six native location rows, captures
+keyboard/mouse bindings and runs the actual listener/Prepare/reply/Activate
+transport over multiple inventory/hotbar/FEET/offhand roots alongside originals.
+It checks independent settings, refresh, delayed replies, client pruning and
+server equal-copy replacement. Payload units check our subset codec bounds.
+The existing transport gate retains ordinary worn clock and snapshot regressions.
 
-The flagged run fails on missing success/report, a failure marker or runtime
-ERROR, and retains its report/latest.log under
-`NeoForge/build/reports/just-dire-inventory-spike/<neoforge_version>/` relative
-to this directory. Preparation resets shared smithing run/markers; run sequentially.
-Do not pass the spike flag to production verifier tasks: its separate markers
-are deliberately not production acceptance. This server-only in-process proof
-does not test physical input, the mixed UI or wire batch transport.
+Preparation resets shared smithing run/markers; inspect actual success/failure
+markers and reports, not only process exit. B's retained reports/logs and the
+separate pending lifecycle/manual C gate are recorded in the
+[implementation plan](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-IMPLEMENTATION.md).
 
 Findings, recommended contract and remaining limits:
 [inventory activation exploration](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-EXPLORATION.md).

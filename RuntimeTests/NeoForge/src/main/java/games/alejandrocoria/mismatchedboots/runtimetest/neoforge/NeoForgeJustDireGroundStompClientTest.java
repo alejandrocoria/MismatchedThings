@@ -115,6 +115,9 @@ final class NeoForgeJustDireGroundStompClientTest {
             else if (++wait > step.timeout) { throw new AssertionError("Timed out: " + step.name
                     + "; charge=" + charge(feet(client)) + ", timer=" + timer(feet(client))
                     + "; activation=" + observedActivation + "; pending=" + fieldStatic(JustDireAbilityInput.class, "pending")
+                    + "; inventory=" + List.of(0, 1, 9, 36, 40).stream().map(slot -> slot + ":FE="
+                            + charge(client.player.getInventory().getItem(slot)) + ",step="
+                            + flag(client.player.getInventory().getItem(slot), "stepheight_toggle", true)).toList()
                     + "; changed components=" + changedComponents(before, feet(client))); }
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(OUTPUT, new AssertionError("Step: " + (steps.peek() == null ? "finish" : steps.peek().name), failure)); finished = true; }
         if (finished) { client.stop(); }
@@ -146,7 +149,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         if (VARIANT.equals("earthquakeMissing") || VARIANT.equals("earthquakeSettingsFailure")) {
             earthquakeUnavailable(client); return;
         }
-        if (VARIANT.equals("live")) { heldToggles(client); }
+        if (VARIANT.equals("live")) { heldToggles(client); inventoryBindings(client); }
         setup(client, false, false, 6_000);
         add("native original keyboard retains one native action", () -> press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS), () -> charge(feet(client)) == 1_000);
         add("move original to main hand for native selection control", () -> server(client, player -> {
@@ -242,10 +245,10 @@ final class NeoForgeJustDireGroundStompClientTest {
             }));
             close(client); open(client); select(client, 36);
             reveal(client, "GROUNDSTOMP");
-            add("mixed custom-only and equipped-only native controls visibly disabled", () -> {
+            add("mixed custom-only mode disabled but native location remains available", () -> {
                 var icon = icon(client, "GROUNDSTOMP");
                 require(!((Button) maps(client, "leftRightClickButtons").get(icon)).active
-                        && !((Button) maps(client, "requireEquippedButtons").get(icon)).active, "Unsupported choices remain active");
+                        && ((Button) maps(client, "requireEquippedButtons").get(icon)).active, "Mode/location availability wrong");
             });
             add("native particle control edits live root", () -> click((Button) maps(client, "customSettingsButtons").get(icon(client, "GROUNDSTOMP")), 0),
                     () -> value(feet(client), "groundstomp_custom_setting") == 1);
@@ -334,7 +337,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             passiveBindings(client);
         }
         setup(client, true, false, 6_000);
-        for (String preference : List.of("unbound", "invalidMouse", "inventory", "wrongMode")) {
+        for (String preference : List.of("unbound", "invalidMouse", "wrongMode")) {
             add("prepare unsupported imported " + preference + " preference", () -> server(client, player -> {
                 var root = player.getItemBySlot(EquipmentSlot.FEET);
                 bind(root, preference.equals("unbound") ? -1 : GLFW.GLFW_KEY_G, preference.equals("invalidMouse"), !preference.equals("inventory"));
@@ -638,14 +641,126 @@ final class NeoForgeJustDireGroundStompClientTest {
         earthquakeCases(client);
     }
 
+    private static void inventoryBindings(Minecraft client) {
+        add("seed native six-row location controls on one production root", () -> server(client, player -> {
+            try {
+                player.getInventory().clearContent(); player.setGameMode(GameType.SURVIVAL); player.setInvulnerable(true);
+                var root = JustDireInventoryActionTest.root(100_000, false);
+                JustDireInventoryActionTest.configure(root, true, false,
+                        List.of("stepheight", "jumpboost", "negatefalldamage", "lavarepair", "groundstomp", "earthquake"));
+                player.setItemSlot(EquipmentSlot.FEET, root); player.inventoryMenu.broadcastChanges();
+            } catch (Exception failure) { throw new AssertionError(failure); }
+        }), () -> client.screen == null && charge(feet(client)) == 100_000);
+        open(client); select(client, 36);
+        var rows = List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "LAVAREPAIR", "GROUNDSTOMP", "EARTHQUAKE");
+        for (String name : rows) {
+            reveal(client, name);
+            add("native " + name + " location changes without a replacement widget", () -> {
+                var button = (Button) maps(client, "requireEquippedButtons").get(icon(client, name));
+                require(button.active, "Location disabled"); click(button, 0);
+            }, () -> location(feet(client), name, false));
+            assign(client, name, name.equals("GROUNDSTOMP") ? 4 : GLFW.GLFW_KEY_J, name.equals("GROUNDSTOMP"));
+            add("native " + name + " capture preserves inventory preference", () -> require(location(feet(client), name, false), "Capture reset location"));
+        }
+        reveal(client, "STEPHEIGHT");
+        add("switching rows restores the row's native location state, not the last row", () -> {
+            require(!(boolean) field(client.screen, "requireEquipped"), "Native row retained stale location record");
+            click((Button) maps(client, "requireEquippedButtons").get(icon(client, "STEPHEIGHT")), 0);
+        }, () -> location(feet(client), "STEPHEIGHT", true) && location(feet(client), "GROUNDSTOMP", false));
+        reveal(client, "GROUNDSTOMP");
+        add("changing location after mouse capture retains key/device and updates native local record", () -> {
+            require(!(boolean) field(client.screen, "requireEquipped"), "Other row contaminated location");
+            click((Button) maps(client, "requireEquippedButtons").get(icon(client, "GROUNDSTOMP")), 0);
+        }, () -> location(feet(client), "GROUNDSTOMP", true) && bindingFor(feet(client), "groundstomp", 4, true));
+        add("native second click restores inventory with the same mouse binding", () -> click((Button) maps(client, "requireEquippedButtons").get(icon(client, "GROUNDSTOMP")), 0),
+                () -> location(feet(client), "GROUNDSTOMP", false) && bindingFor(feet(client), "groundstomp", 4, true));
+        assign(client, "LAVAREPAIR", GLFW.GLFW_KEY_ESCAPE, false);
+        add("unbound native row accepts a location preference before assignment", () -> click((Button) maps(client, "requireEquippedButtons").get(icon(client, "LAVAREPAIR")), 0),
+                () -> location(feet(client), "LAVAREPAIR", true) && bindingFor(feet(client), "lavarepair", -1, false));
+        close(client); open(client); select(client, 36); reveal(client, "LAVAREPAIR");
+        add("unbound preference survives reopening before a key is captured", () -> require(location(feet(client), "LAVAREPAIR", true)
+                && bindingFor(feet(client), "lavarepair", -1, false), "Unbound record discarded on refresh"));
+        assign(client, "LAVAREPAIR", GLFW.GLFW_KEY_J, false);
+        add("assignment retains the preference selected while unbound", () -> require(location(feet(client), "LAVAREPAIR", true), "Unbound location lost on capture"));
+        close(client); open(client); select(client, 36); reveal(client, "GROUNDSTOMP");
+        add("native refresh and ordinary slot synchronization preserve independent locations", () -> require(
+                location(feet(client), "STEPHEIGHT", true) && location(feet(client), "GROUNDSTOMP", false)
+                        && !(boolean) field(client.screen, "requireEquipped"), "Refresh lost locations"));
+        close(client);
+        add("observe actual inventory listener replies without replacing dispatch", NeoForgeJustDireGroundStompClientTest::observeActiveReplies);
+        for (boolean mouse : new boolean[]{false, true}) {
+            inventoryBatchSetup(client, mouse);
+            add("one " + (mouse ? "mouse" : "keyboard") + " event pays all four mixed slots and leaves native routing intact", () -> earthquakePress(mouse ? 4 : 71, mouse),
+                    () -> List.of(0, 9, 36, 40).stream().allMatch(slot -> charge(client.player.getInventory().getItem(slot)) == 1_000
+                            && !flag(client.player.getInventory().getItem(slot), "stepheight_toggle", true))
+                            && charge(client.player.getInventory().getItem(1)) == 1_000);
+            add("duplicate action press cannot double-charge while shared free switches remain available", () -> earthquakePress(mouse ? 4 : 71, mouse),
+                    () -> List.of(0, 9, 36, 40).stream().allMatch(slot -> charge(client.player.getInventory().getItem(slot)) == 1_000
+                            && flag(client.player.getInventory().getItem(slot), "stepheight_toggle", false)));
+        }
+        inventoryBatchSetup(client, false);
+        add("hold one genuine batch reply while client-only slot intent becomes stale", () -> {
+            holdReply = true; held = null; earthquakePress(71, false);
+        }, () -> held != null);
+        add("client monotonic pruning discards one candidate even after its local state is restored", () -> {
+            var root = client.player.getInventory().getItem(9); var saved = root.copy();
+            set(root, "groundstomp_value", 5); JustDireAbilityInput.tick(); client.player.getInventory().setItem(9, saved);
+            holdReply = false; JustDireAbilityInput.reply(observedActivation);
+        }, () -> charge(client.player.getInventory().getItem(9)) == 6_000
+                && List.of(0, 36, 40).stream().allMatch(slot -> charge(client.player.getInventory().getItem(slot)) == 1_000));
+        add("server confirms narrowed slot never paid or toggled despite remaining server-valid", () -> server(client, player -> require(
+                charge(player.getInventory().getItem(9)) == 6_000 && flag(player.getInventory().getItem(9), "stepheight_toggle", false), "Subset widened on server")));
+        inventoryBatchSetup(client, false);
+        add("hold a second genuine batch before equal server replacement", () -> { holdReply = true; held = null; earthquakePress(71, false); }, () -> held != null);
+        add("server equal-copy replacement skips one slot without cancelling the others", () -> server(client, player -> {
+            player.getInventory().setItem(9, player.getInventory().getItem(9).copy()); player.inventoryMenu.broadcastChanges();
+        }), () -> wait > 5);
+        add("release reply after unchanged ordinary client slot synchronization", () -> {
+            holdReply = false; JustDireAbilityInput.reply(observedActivation);
+        }, () -> charge(client.player.getInventory().getItem(9)) == 6_000
+                && List.of(0, 36, 40).stream().allMatch(slot -> charge(client.player.getInventory().getItem(slot)) == 1_000));
+        inventoryBatchSetup(client, false);
+        add("one original client candidate absent at server prepare cannot block admitted peers", () -> {
+            // A stale client-only slot stays locally eligible: the reply's admission slots, not
+            // ordinary client pruning, must prevent it reaching the server's strict subset check.
+            client.player.getInventory().setItem(10, client.player.getInventory().getItem(9).copy());
+            earthquakePress(71, false);
+        }, () -> List.of(0, 9, 36, 40).stream().allMatch(slot -> charge(client.player.getInventory().getItem(slot)) == 1_000));
+        add("discard the fixture-only stale client slot", () -> client.player.getInventory().setItem(10, ItemStack.EMPTY));
+        add("release inventory observer to normal production callbacks", () -> {
+            holdReply = false; JustDireActiveNetwork.clientReplies(JustDireAbilityInput::reply, JustDireSettingsClient::reply);
+        });
+    }
+
+    private static void inventoryBatchSetup(Minecraft client, boolean mouse) {
+        add("prepare funded mixed batch and native inventory control " + mouse, () -> server(client, player -> {
+            try {
+                player.getInventory().clearContent();
+                for (int slot : List.of(0, 9, 36, 40)) {
+                    var root = JustDireInventoryActionTest.root(6_000, slot == 40);
+                    JustDireInventoryActionTest.configure(root, false, mouse, List.of("groundstomp", "stepheight"), 71);
+                    player.getInventory().setItem(slot, root);
+                }
+                var nativeRoot = boot("eclipsealloy", 6_000); bind(nativeRoot, mouse ? 4 : 71, mouse, false);
+                player.getInventory().setItem(1, nativeRoot); player.inventoryMenu.broadcastChanges();
+            } catch (Exception failure) { throw new AssertionError(failure); }
+        }), () -> List.of(0, 9, 36, 40).stream().allMatch(slot -> charge(client.player.getInventory().getItem(slot)) == 6_000) && wait > 5);
+    }
+
+    private static boolean location(ItemStack root, String name, boolean equipped) {
+        return root.getOrDefault(JustDireAttributeTestSupport.<List<?>>component("ability_bindings"), List.of()).stream()
+                .anyMatch(record -> fieldAccessor(record, "abilityName").equals(name.toLowerCase(Locale.ROOT))
+                        && (boolean) fieldAccessor(record, "requireEquipped") == equipped);
+    }
+
     private static void observeActiveReplies() {
         JustDireActiveNetwork.clientReplies(reply -> {
             observedActivation = reply;
             if (holdReply && reply.prepared() && reply.accepted()) {
-                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse);
+                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse, java.util.List.of(36));
             } else { JustDireAbilityInput.reply(reply); }
             if (!reply.prepared() && reply.accepted()) {
-                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse);
+                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse, java.util.List.of(36));
             }
         }, JustDireSettingsClient::reply);
     }
@@ -662,10 +777,10 @@ final class NeoForgeJustDireGroundStompClientTest {
             add("native Earthquake toggle off", () -> click(icon(client, "EARTHQUAKE"), 0), () -> !flag(feet(client), "earthquake_toggle", true));
             add("native Earthquake toggle on", () -> click(icon(client, "EARTHQUAKE"), 0), () -> flag(feet(client), "earthquake_toggle", false));
             reveal(client, "EARTHQUAKE");
-            add("native Earthquake particles and equipped-only controls", () -> {
+            add("native Earthquake particles and editable location controls", () -> {
                 var icon = icon(client, "EARTHQUAKE");
                 require(!((Button) maps(client, "leftRightClickButtons").get(icon)).active
-                        && !((Button) maps(client, "requireEquippedButtons").get(icon)).active, "Unsupported Earthquake binding choice");
+                        && ((Button) maps(client, "requireEquippedButtons").get(icon)).active, "Earthquake mode/location availability wrong");
                 click((Button) maps(client, "customSettingsButtons").get(icon), 0);
             }, () -> value(feet(client), "earthquake_custom_setting") == 1);
             add("Earthquake capture rejects ordinary/out-of-range mouse buttons without consuming capture", () -> {
@@ -800,7 +915,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             add("depleted shared binding can still re-enable the passive without another bill", () -> earthquakePress(button, mouse),
                     () -> flag(feet(client), "stepheight_toggle", false) && charge(feet(client)) == 0);
             open(client); select(client, 36); assign(client, "EARTHQUAKE", GLFW.GLFW_KEY_ESCAPE, false);
-            add("Earthquake Escape removal leaves the shared GS/passive bindings intact", () -> require(noBinding(feet(client), "earthquake")
+            add("Earthquake Escape removal leaves the shared GS/passive bindings intact", () -> require(unbound(feet(client), "earthquake")
                     && bindingFor(feet(client), "groundstomp", button, mouse) && bindingFor(feet(client), "stepheight", button, mouse), "Removal lost other bindings"));
             close(client);
         }
@@ -895,7 +1010,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             int key = GLFW.GLFW_KEY_J + index;
             reveal(client, name);
             add("mixed native " + name + " captures its keyboard binding", () -> {
-                require(!((Button) maps(client, "requireEquippedButtons").get(icon(client, name))).active, "Passive inventory activation advertised");
+                require(((Button) maps(client, "requireEquippedButtons").get(icon(client, name))).active, "Passive location control missing");
                 click((Button) maps(client, "bindingButtons").get(icon(client, name)), 0);
                 client.screen.keyPressed(new KeyEvent(key, 0, 0));
             }, () -> JustDireSettingsCompatibility.boundPassives(feet(client), key, false).equals(List.of(path)));
@@ -1011,10 +1126,10 @@ final class NeoForgeJustDireGroundStompClientTest {
         JustDireActiveNetwork.clientReplies(reply -> {
             observedActivation = reply;
             if (holdReply && reply.prepared() && reply.accepted()) {
-                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), 4, true);
+                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), 4, true, java.util.List.of(36));
             } else { JustDireAbilityInput.reply(reply); }
             if (!reply.prepared() && reply.accepted()) {
-                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), GLFW.GLFW_KEY_G, false);
+                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), GLFW.GLFW_KEY_G, false, java.util.List.of(36));
             }
         }, JustDireSettingsClient::reply);
     }
@@ -1670,13 +1785,17 @@ final class NeoForgeJustDireGroundStompClientTest {
             if (mouse) { client.screen.mouseClicked(mouse(1, 1, code), false); }
             else { client.screen.keyPressed(new KeyEvent(code, 0, 0)); }
             require(!(boolean) field(client.screen, "bindingEnabled"), "Native capture did not end for " + name);
-        }, () -> code == GLFW.GLFW_KEY_ESCAPE ? noBinding(feet(client), name.toLowerCase(java.util.Locale.ROOT))
+        }, () -> code == GLFW.GLFW_KEY_ESCAPE ? unbound(feet(client), name.toLowerCase(java.util.Locale.ROOT))
                 : bindingFor(feet(client), name.toLowerCase(java.util.Locale.ROOT), code, mouse));
     }
 
     private static boolean noBinding(ItemStack root, String name) {
         return root.getOrDefault(JustDireAttributeTestSupport.<List<?>>component("ability_bindings"), List.of()).stream()
                 .noneMatch(record -> fieldAccessor(record, "abilityName").equals(name));
+    }
+
+    private static boolean unbound(ItemStack root, String name) {
+        return noBinding(root, name) || bindingFor(root, name, -1, false);
     }
 
     private static void target(Minecraft client) {

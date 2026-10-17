@@ -298,7 +298,7 @@ public final class NeoForgeJustDireArmorWearTest {
             JustDireAttributeTestSupport.set(root, "ability_bindings", List.of(binding));
             var player = JustDireGroundStompTestSupport.player(server, GameType.SURVIVAL); player.setItemSlot(EquipmentSlot.FEET, root);
             var reply = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, 71, false));
-            require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(1, reply.nonce(), 71, false)), "Production GS activation rejected");
+            require(JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(1, reply.nonce(), 71, false, java.util.List.of(36))), "Production GS activation rejected");
             require(charge(root) == (powered ? 5_000 : 199) && root.getDamageValue() == (powered ? 0 : 25), "GS paid armor-wear price or converted ordinary fallback");
             record("production GS powered=" + powered, "FE=" + charge(root) + "; ordinary wear=" + root.getDamageValue());
         }

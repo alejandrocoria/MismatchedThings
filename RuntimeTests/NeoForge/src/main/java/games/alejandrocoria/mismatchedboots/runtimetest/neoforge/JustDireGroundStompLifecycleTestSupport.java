@@ -80,8 +80,10 @@ final class JustDireGroundStompLifecycleTestSupport {
     static JustDireActiveNetwork.Activate oldPacket(int slot, boolean unconsumed) throws Exception {
         var packet = JsonParser.parseString(Files.readString(marker("packets.json"))).getAsJsonArray()
                 .get(slot).getAsJsonArray().get(unconsumed ? 1 : 0).getAsJsonObject();
+        var slots = new ArrayList<Integer>();
+        for (var value : packet.getAsJsonArray("slots")) { slots.add(value.getAsInt()); }
         return new JustDireActiveNetwork.Activate(packet.get("sequence").getAsInt(), UUID.fromString(packet.get("nonce").getAsString()),
-                packet.get("key").getAsInt(), packet.get("mouse").getAsBoolean());
+                packet.get("key").getAsInt(), packet.get("mouse").getAsBoolean(), slots);
     }
 
     private static JsonObject packet(JustDireActiveNetwork.Activate packet) {
@@ -89,6 +91,7 @@ final class JustDireGroundStompLifecycleTestSupport {
         var json = new JsonObject();
         json.addProperty("sequence", packet.sequence()); json.addProperty("nonce", packet.nonce().toString());
         json.addProperty("key", packet.key()); json.addProperty("mouse", packet.mouse());
+        var slots = new JsonArray(); packet.slots().forEach(slots::add); json.add("slots", slots);
         return json;
     }
 

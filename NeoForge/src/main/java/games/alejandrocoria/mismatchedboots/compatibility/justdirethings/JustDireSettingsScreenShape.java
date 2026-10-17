@@ -26,13 +26,15 @@ public final class JustDireSettingsScreenShape implements Opcodes {
             Map.entry("init", "()V"), Map.entry("refreshButtons", "()V"), Map.entry("clearMaps", "()V"),
             Map.entry("refreshToolAndSlots", "()V"),
             Map.entry("mouseClicked", "(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z"),
+            Map.entry("keyPressed", "(Lnet/minecraft/client/input/KeyEvent;)Z"),
             Map.entry("toggleSetting", "(Ljava/lang/String;)V"), Map.entry("cycleSetting", "(Ljava/lang/String;)V"),
             Map.entry("setSetting", "(Ljava/lang/String;I)V"), Map.entry("toggleRender", "(Ljava/lang/String;I)V"),
             Map.entry("setCustomSetting2", "(Ljava/lang/String;I)V"), Map.entry("sendBinding", "(Ljava/lang/String;IIZ)V"));
     private static final Map<String, Set<String>> HOOKS = Map.ofEntries(
             Map.entry("<init>", Set.of("Metadata")), Map.entry("init", Set.of("Metadata", "Abilities")),
             Map.entry("refreshButtons", Set.of("Metadata", "Parameters", "Value", "RefreshGuard", "Restrictions")),
-            Map.entry("mouseClicked", Set.of("Metadata", "Abilities", "MouseCaptureGuard", "Equipped")),
+            Map.entry("mouseClicked", Set.of("Metadata", "Abilities", "MouseCaptureGuard")),
+            Map.entry("keyPressed", Set.of("Location")),
             Map.entry("refreshToolAndSlots", Set.of("Select")),
             Map.entry("toggleSetting", Set.of("Toggle")), Map.entry("setSetting", Set.of("Set")),
             Map.entry("toggleRender", Set.of("Particles")), Map.entry("sendBinding", Set.of("Binding")),
@@ -43,12 +45,13 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     static boolean entry(ClassNode node) {
         if (!"net/minecraft/client/gui/screens/inventory/AbstractContainerScreen".equals(node.superName)) { return false; }
         for (var field : Map.of("tool", "L" + STACK + ";", "toolSlot", "I", "abilities", "Ljava/util/EnumSet;",
-                "bindingEnabled", "Z", "requireEquipped", "Z").entrySet()) {
+                "bindingEnabled", "Z", "requireEquipped", "Z", "shownAbilityButton", "Lnet/minecraft/client/gui/components/Button;").entrySet()) {
             if (node.fields.stream().noneMatch(f -> f.name.equals(field.getKey()) && f.desc.equals(field.getValue()) && (f.access & ACC_STATIC) == 0)) { return false; }
         }
         for (String field : List.of("leftRightClickButtons", "bindingButtons", "requireEquippedButtons", "buttonToAbilityMap")) {
             if (node.fields.stream().noneMatch(f -> f.name.equals(field) && f.desc.equals("Ljava/util/Map;") && (f.access & (ACC_FINAL | ACC_STATIC)) == ACC_FINAL)) { return false; }
         }
+        if (node.fields.stream().noneMatch(f -> f.name.equals("bindingMap") && f.desc.equals("Ljava/util/Map;") && (f.access & ACC_STATIC) == 0)) { return false; }
         if (METHODS.entrySet().stream().anyMatch(entry -> node.methods.stream().noneMatch(m -> m.name.equals(entry.getKey()) && m.desc.equals(entry.getValue())
                 && (m.access & (ACC_STATIC | ACC_ABSTRACT | ACC_NATIVE)) == 0))) { return false; }
         return calls(node, "init", TOOL, "getAbilities") && calls(node, "mouseClicked", TOOL, "getAbilities")

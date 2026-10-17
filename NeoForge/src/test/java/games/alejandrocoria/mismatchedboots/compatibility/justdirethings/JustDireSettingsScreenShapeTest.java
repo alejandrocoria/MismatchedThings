@@ -58,6 +58,10 @@ class JustDireSettingsScreenShapeTest implements Opcodes {
         node.methods.stream().filter(m -> m.name.contains("mismatchedboots$jdtMouseCaptureGuard"))
                 .forEach(m -> m.visibleAnnotations.clear());
         assertFalse(JustDireSettingsScreenShape.publish(node), "Lost mouse capture guard must not admit invalid additional buttons");
+        node = reset(bytes);
+        node.methods.stream().filter(m -> m.name.contains("mismatchedboots$jdtLocation"))
+                .forEach(m -> m.visibleAnnotations.clear());
+        assertFalse(JustDireSettingsScreenShape.publish(node), "Lost native capture preference repair must disable mixed controls");
         node = reset(bytes); getter(node).instructions.set(getter(node).instructions.getFirst(), new InsnNode(ICONST_1));
         assertFalse(JustDireSettingsScreenShape.publish(node), "External readiness override fails closed");
         assertEquals(ICONST_0, getter(node).instructions.getFirst().getOpcode());

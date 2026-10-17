@@ -201,42 +201,42 @@ public final class JustDireSettingsCompatibility {
     }
 
     public static boolean groundStompBinding(ItemStack root, int key, boolean mouse) {
-        return matchesBinding(root, "groundstomp", key, mouse);
+        return groundStompBinding(root, key, mouse, true);
+    }
+
+    public static boolean groundStompBinding(ItemStack root, int key, boolean mouse, boolean equipped) {
+        return matchesBinding(root, "groundstomp", key, mouse, equipped);
     }
 
     public static boolean groundStompBinding(JustDireAbilityTarget target, int key, boolean mouse) {
-        return target.valid() && matchesBinding(target.root(), "groundstomp", key, mouse, target);
+        return target.valid() && groundStompBinding(target.root(), key, mouse, target.equipped());
     }
 
     /** Only supported native Earthquake metadata can admit this equipped input, including shared keys. */
     public static boolean earthquakeBinding(ItemStack root, int key, boolean mouse) {
-        return earthquakeBinding(root, key, mouse, null);
+        return earthquakeBinding(root, key, mouse, true);
     }
 
     public static boolean earthquakeBinding(JustDireAbilityTarget target, int key, boolean mouse) {
-        return target.valid() && earthquakeBinding(target.root(), key, mouse, target);
+        return target.valid() && earthquakeBinding(target.root(), key, mouse, target.equipped());
     }
 
-    private static boolean earthquakeBinding(ItemStack root, int key, boolean mouse, JustDireAbilityTarget target) {
+    public static boolean earthquakeBinding(ItemStack root, int key, boolean mouse, boolean equipped) {
         if (metadata(root, "earthquake") == null) { return false; }
         var mode = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", "earthquake_bindingmode"));
         if (mode.isEmpty()) { return false; }
         @SuppressWarnings("unchecked") var type = (DataComponentType<Integer>) mode.get().value();
-        return matchesBinding(root, "earthquake", key, mouse, type, target);
+        return matchesBinding(root, "earthquake", key, mouse, type, equipped);
     }
 
-    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse) {
-        return matchesBinding(root, name, key, mouse, (JustDireAbilityTarget) null);
-    }
-
-    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, JustDireAbilityTarget target) {
+    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, boolean equipped) {
         Api binding = api;
         if (binding == null) { return false; }
         Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
-        return setting != null && matchesBinding(root, name, key, mouse, setting.mode, target);
+        return setting != null && matchesBinding(root, name, key, mouse, setting.mode, equipped);
     }
 
-    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, DataComponentType<Integer> mode, JustDireAbilityTarget target) {
+    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, DataComponentType<Integer> mode, boolean equipped) {
         Api binding = api;
         if (binding == null || !mixed(root) || !validBindingInput(key, mouse) || root.getOrDefault(mode, 0) != 2) { return false; }
         try {
@@ -244,9 +244,7 @@ public final class JustDireSettingsCompatibility {
                 if (name.equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
                         && (boolean) binding.mouse.invokeExact(record) == mouse) {
                     boolean requiresEquipment = (boolean) binding.equipped.invokeExact(record);
-                    // Until block B, root-only client/permit discovery retains its equipped-required scope.
-                    // Internal actions have an explicit live target and interpret the native per-binding flag.
-                    if (target == null ? requiresEquipment : !requiresEquipment || target.equipped()) { return true; }
+                    if (!requiresEquipment || equipped) { return true; }
                 }
             }
             return false;
@@ -255,20 +253,20 @@ public final class JustDireSettingsCompatibility {
 
     /** Native passive order, deduplicated by ability, independent of live switches/FE/cooldowns. */
     public static List<String> boundPassives(ItemStack root, int key, boolean mouse) {
-        return boundPassives(root, key, mouse, null);
+        return boundPassives(root, key, mouse, true);
     }
 
     public static List<String> boundPassives(JustDireAbilityTarget target, int key, boolean mouse) {
-        return target.valid() ? boundPassives(target.root(), key, mouse, target) : List.of();
+        return target.valid() ? boundPassives(target.root(), key, mouse, target.equipped()) : List.of();
     }
 
-    private static List<String> boundPassives(ItemStack root, int key, boolean mouse, JustDireAbilityTarget target) {
+    public static List<String> boundPassives(ItemStack root, int key, boolean mouse, boolean equipped) {
         Api binding = api;
         if (binding == null || !mixed(root)) { return List.of(); }
         var names = new ArrayList<String>();
         for (Setting setting : settings(binding)) {
             if (!setting.name.equals("groundstomp") && (setting.installed == null || root.getOrDefault(setting.installed, false))
-                    && metadata(root, setting.name) != null && matchesBinding(root, setting.name, key, mouse, target)) {
+                    && metadata(root, setting.name) != null && matchesBinding(root, setting.name, key, mouse, equipped)) {
                 names.add(setting.name);
             }
         }
@@ -276,7 +274,27 @@ public final class JustDireSettingsCompatibility {
     }
 
     public static boolean inputBinding(ItemStack root, int key, boolean mouse) {
-        return groundStompBinding(root, key, mouse) || earthquakeBinding(root, key, mouse) || !boundPassives(root, key, mouse).isEmpty();
+        return inputBinding(root, key, mouse, true);
+    }
+
+    public static boolean inputBinding(ItemStack root, int key, boolean mouse, boolean equipped) {
+        return groundStompBinding(root, key, mouse, equipped) || earthquakeBinding(root, key, mouse, equipped)
+                || !boundPassives(root, key, mouse, equipped).isEmpty();
+    }
+
+    /** Native callbacks retain a per-row record as well as the live root; keep their local view coherent. */
+    public static Object screenBinding(String name, int key, boolean mouse, boolean equipped) {
+        Api binding = api;
+        if (binding == null) { return null; }
+        try { return binding.create.invokeExact(name, key, mouse, equipped); }
+        catch (Throwable failure) { disable(binding, failure); return null; }
+    }
+
+    public static boolean screenEquipped(Object record) {
+        Api binding = api;
+        if (binding == null || record == null) { return true; }
+        try { return (boolean) binding.equipped.invokeExact(record); }
+        catch (Throwable failure) { disable(binding, failure); return true; }
     }
 
     static boolean toggleBoundPassives(JustDireAbilityTarget target, int key, boolean mouse) {
@@ -370,13 +388,13 @@ public final class JustDireSettingsCompatibility {
                 }
                 case JustDireActiveNetwork.BINDING -> {
                     if ((request.value() != 0 && request.value() != 2)
-                            || !request.equipped() || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) { return false; }
+                            || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) { return false; }
                     var next = new ArrayList<Object>();
                     for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                         if (!setting.name.equals((String) binding.name.invokeExact(record))) { next.add(record); }
                     }
-                    if (request.value() == 2 && request.key() != -1) {
-                        next.add(binding.create.invokeExact(setting.name, request.key(), request.mouse(), true));
+                    if (request.value() == 2) {
+                        next.add(binding.create.invokeExact(setting.name, request.key(), request.mouse(), request.equipped()));
                     }
                     changed.set(binding.bindings, List.copyOf(next)); changed.set(setting.mode, request.value());
                 }
@@ -401,15 +419,15 @@ public final class JustDireSettingsCompatibility {
 
     static boolean editEarthquakeBinding(ItemStack root, JustDireActiveNetwork.SettingsRequest request, DataComponentType<Integer> mode) {
         Api binding = api;
-        if (binding == null || (request.value() != 0 && request.value() != 2) || !request.equipped()
+        if (binding == null || (request.value() != 0 && request.value() != 2)
                 || request.key() != -1 && !validBindingInput(request.key(), request.mouse())) { return false; }
         List<Object> next = new ArrayList<>();
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                 if (!"earthquake".equals((String) binding.name.invokeExact(record))) { next.add(record); }
             }
-            if (request.value() == 2 && request.key() != -1) {
-                next.add(binding.create.invokeExact("earthquake", request.key(), request.mouse(), true));
+            if (request.value() == 2) {
+                next.add(binding.create.invokeExact("earthquake", request.key(), request.mouse(), request.equipped()));
             }
         } catch (Throwable failure) { disable(binding, failure); return false; }
         if (api != binding) { return false; }

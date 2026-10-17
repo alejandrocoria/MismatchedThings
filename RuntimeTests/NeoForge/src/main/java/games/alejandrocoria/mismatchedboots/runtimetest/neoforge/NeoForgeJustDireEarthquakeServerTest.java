@@ -369,7 +369,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
         require(player.level().getEntitiesOfClass(Mob.class, mob.getBoundingBox()).contains(mob), "Target invisible in actual query"); return mob;
     }
     private static JustDireActiveNetwork.ActivationReply prepare(ServerPlayer player, int key) { return JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, false)); }
-    private static boolean activate(ServerPlayer player, JustDireActiveNetwork.ActivationReply reply, int key) { return JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), key, false)); }
+    private static boolean activate(ServerPlayer player, JustDireActiveNetwork.ActivationReply reply, int key) { return JustDireActiveNetwork.activate(player, new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), key, false, java.util.List.of(36))); }
     private static boolean attempt(ServerPlayer player, int key) { var reply = prepare(player, key); return reply.accepted() && activate(player, reply, key); }
     private static void history(ItemStack before, ItemStack after) { require(ModContent.getMixedBootsData(before).equals(ModContent.getMixedBootsData(after)) && before.getDamageValue() == after.getDamageValue(), "Root FE action changed history/wear"); }
     private static <T> void set(ItemStack root, String name, T value) { JustDireAttributeTestSupport.set(root, name, value); }
