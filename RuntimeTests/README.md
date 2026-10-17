@@ -550,12 +550,22 @@ artifact verification, with a separate harness and separate result markers:
 .\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer -PjustDireInventorySpike=true --console=plain
 ```
 
-Five bounded groups compare native location filters/inventory actions, candidate
+The original five bounded groups compared native location filters/inventory actions, candidate
 multi-root keyboard/mouse dispatch, stale identity and actual extraction rollback,
 worn-only clocks and location-correct durability break callbacks. Actual mixed
-economic/effect logic remains production; test-only predicate overrides and the
-break callback candidate apply only inside scoped research calls. The normal
-unflagged production harness remains unchanged.
+economic/effect logic remains production. Inventory-activation block A retired
+the two predicate/break override mixins and scoped context; the remaining
+in-process batch candidate calls the production explicit-target APIs directly.
+It remains a research batch, not the production packet/UI path, and will retire
+with B. Its old failing-break comparison is now a production preservation check.
+
+The normal unflagged Ground Stomp server gate owns A's production acceptance:
+four location groups extend its existing 21 groups with real effects/FE,
+staged-move rollback, free passives/worn-only clocks and actual inventory/hand/
+FEET break callbacks, stats/refunds and unrelated Soul Speed/armor preservation.
+The refund gate separately retains native controls and foreign-wrapper faults,
+including detached/unsupported-slot refusal and ordinary refunds with a GUI open.
+See the [A implementation record](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-IMPLEMENTATION.md).
 
 The flagged run fails on missing success/report, a failure marker or runtime
 ERROR, and retains its report/latest.log under

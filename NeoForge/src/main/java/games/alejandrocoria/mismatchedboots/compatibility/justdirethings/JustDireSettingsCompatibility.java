@@ -11,7 +11,6 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -205,29 +204,50 @@ public final class JustDireSettingsCompatibility {
         return matchesBinding(root, "groundstomp", key, mouse);
     }
 
+    public static boolean groundStompBinding(JustDireAbilityTarget target, int key, boolean mouse) {
+        return target.valid() && matchesBinding(target.root(), "groundstomp", key, mouse, target);
+    }
+
     /** Only supported native Earthquake metadata can admit this equipped input, including shared keys. */
     public static boolean earthquakeBinding(ItemStack root, int key, boolean mouse) {
+        return earthquakeBinding(root, key, mouse, null);
+    }
+
+    public static boolean earthquakeBinding(JustDireAbilityTarget target, int key, boolean mouse) {
+        return target.valid() && earthquakeBinding(target.root(), key, mouse, target);
+    }
+
+    private static boolean earthquakeBinding(ItemStack root, int key, boolean mouse, JustDireAbilityTarget target) {
         if (metadata(root, "earthquake") == null) { return false; }
         var mode = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("justdirethings", "earthquake_bindingmode"));
         if (mode.isEmpty()) { return false; }
         @SuppressWarnings("unchecked") var type = (DataComponentType<Integer>) mode.get().value();
-        return matchesBinding(root, "earthquake", key, mouse, type);
+        return matchesBinding(root, "earthquake", key, mouse, type, target);
     }
 
     private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse) {
+        return matchesBinding(root, name, key, mouse, (JustDireAbilityTarget) null);
+    }
+
+    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, JustDireAbilityTarget target) {
         Api binding = api;
         if (binding == null) { return false; }
         Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
-        return setting != null && matchesBinding(root, name, key, mouse, setting.mode);
+        return setting != null && matchesBinding(root, name, key, mouse, setting.mode, target);
     }
 
-    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, DataComponentType<Integer> mode) {
+    private static boolean matchesBinding(ItemStack root, String name, int key, boolean mouse, DataComponentType<Integer> mode, JustDireAbilityTarget target) {
         Api binding = api;
         if (binding == null || !mixed(root) || !validBindingInput(key, mouse) || root.getOrDefault(mode, 0) != 2) { return false; }
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                 if (name.equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
-                        && (boolean) binding.mouse.invokeExact(record) == mouse && (boolean) binding.equipped.invokeExact(record)) { return true; }
+                        && (boolean) binding.mouse.invokeExact(record) == mouse) {
+                    boolean requiresEquipment = (boolean) binding.equipped.invokeExact(record);
+                    // Until block B, root-only client/permit discovery retains its equipped-required scope.
+                    // Internal actions have an explicit live target and interpret the native per-binding flag.
+                    if (target == null ? requiresEquipment : !requiresEquipment || target.equipped()) { return true; }
+                }
             }
             return false;
         } catch (Throwable failure) { disable(binding, failure); return false; }
@@ -235,12 +255,20 @@ public final class JustDireSettingsCompatibility {
 
     /** Native passive order, deduplicated by ability, independent of live switches/FE/cooldowns. */
     public static List<String> boundPassives(ItemStack root, int key, boolean mouse) {
+        return boundPassives(root, key, mouse, null);
+    }
+
+    public static List<String> boundPassives(JustDireAbilityTarget target, int key, boolean mouse) {
+        return target.valid() ? boundPassives(target.root(), key, mouse, target) : List.of();
+    }
+
+    private static List<String> boundPassives(ItemStack root, int key, boolean mouse, JustDireAbilityTarget target) {
         Api binding = api;
         if (binding == null || !mixed(root)) { return List.of(); }
         var names = new ArrayList<String>();
         for (Setting setting : settings(binding)) {
             if (!setting.name.equals("groundstomp") && (setting.installed == null || root.getOrDefault(setting.installed, false))
-                    && metadata(root, setting.name) != null && matchesBinding(root, setting.name, key, mouse)) {
+                    && metadata(root, setting.name) != null && matchesBinding(root, setting.name, key, mouse, target)) {
                 names.add(setting.name);
             }
         }
@@ -251,9 +279,11 @@ public final class JustDireSettingsCompatibility {
         return groundStompBinding(root, key, mouse) || earthquakeBinding(root, key, mouse) || !boundPassives(root, key, mouse).isEmpty();
     }
 
-    static boolean toggleBoundPassives(ServerPlayer player, ItemStack root, int key, boolean mouse) {
+    static boolean toggleBoundPassives(JustDireAbilityTarget target, int key, boolean mouse) {
+        var player = target.player();
+        var root = target.root();
         Api binding = api;
-        var names = boundPassives(root, key, mouse);
+        var names = boundPassives(target, key, mouse);
         if (binding == null || names.isEmpty()) { return false; }
         var messages = new ArrayList<Component>();
         try {
@@ -265,7 +295,7 @@ public final class JustDireSettingsCompatibility {
                         Component.translatable(root.getOrDefault(setting.toggle, true) ? "justdirethings.disabled" : "justdirethings.enabled")));
             }
         } catch (Throwable failure) { disable(binding, failure); return false; }
-        if (api != binding || !JustDireGroundStompCompatibility.equipped(player, root)) { return false; }
+        if (api != binding || !target.valid()) { return false; }
         for (Setting setting : settings(binding)) {
             if (names.contains(setting.name)) { root.set(setting.toggle, !root.getOrDefault(setting.toggle, true)); }
         }

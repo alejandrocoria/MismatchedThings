@@ -140,17 +140,18 @@ public final class JustDireActiveNetwork {
             // The admission mask is fixed at prepare; a newly expired ability cannot join later.
             // Refresh only after validating that the change was an unrelated owned clock tick.
             var expected = snapshot(root);
+            var target = new JustDireAbilityTarget(player, JustDireAbilityTarget.FEET_SLOT, root);
             boolean acted = false;
             int first = JustDireEarthquakeCompatibility.groundStompFirst() ? JustDireActiveState.GROUND_STOMP : JustDireActiveState.EARTHQUAKE;
             for (int action : new int[]{first, first == JustDireActiveState.GROUND_STOMP ? JustDireActiveState.EARTHQUAKE : JustDireActiveState.GROUND_STOMP}) {
                 if ((permit.actions & action) == 0) { continue; }
                 if (!JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)) { return acted; }
                 acted |= action == JustDireActiveState.GROUND_STOMP
-                        ? JustDireGroundStompCompatibility.activate(player, root, expected, request.key, request.mouse)
-                        : JustDireEarthquakeCompatibility.activate(player, root, expected, request.key, request.mouse);
+                        ? JustDireGroundStompCompatibility.activate(target, expected, request.key, request.mouse)
+                        : JustDireEarthquakeCompatibility.activate(target, expected, request.key, request.mouse);
             }
             if (!JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)) { return acted; }
-            boolean toggled = JustDireSettingsCompatibility.toggleBoundPassives(player, root, request.key, request.mouse);
+            boolean toggled = JustDireSettingsCompatibility.toggleBoundPassives(target, request.key, request.mouse);
             return acted || toggled;
         } finally { executing.remove(player); }
     }

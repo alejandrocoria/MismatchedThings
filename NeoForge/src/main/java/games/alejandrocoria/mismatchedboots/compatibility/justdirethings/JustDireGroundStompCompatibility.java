@@ -197,13 +197,14 @@ public final class JustDireGroundStompCompatibility {
     }
 
     /** Internal server action boundary. Wire callers must first consume their independent activation permit. */
-    static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key, boolean mouse) {
+    static boolean activate(JustDireAbilityTarget target, ItemStack expected, int key, boolean mouse) {
+        ServerPlayer player = target.player();
+        ItemStack root = target.root();
         if (!executing.add(player)) { return false; }
         try {
             Api binding = api;
-            if (binding == null || !equipped(player, root) || !ItemStack.matches(root, expected)
-                    || player.containerMenu != player.inventoryMenu
-                    || !JustDireSettingsCompatibility.groundStompBinding(root, key, mouse)) { return false; }
+            if (binding == null || !target.valid() || !ItemStack.matches(root, expected)
+                    || !JustDireSettingsCompatibility.groundStompBinding(target, key, mouse)) { return false; }
             Action action;
             try {
                 Quote quote = quote(root);
@@ -231,13 +232,13 @@ public final class JustDireGroundStompCompatibility {
                 }
                 action = new Action(quote, bill, particles, List.copyOf(next), targets, access, energy, afterDebit);
             } catch (Throwable failure) { disable(binding, failure); return false; }
-            if (api != binding || !equipped(player, root) || !ItemStack.matches(root, expected)) { return false; }
+            if (api != binding || !target.valid() || !ItemStack.matches(root, expected)) { return false; }
             // Native groundstomp returns false even after success. It is not a commit receipt:
             // reuse its read-only queries, but pay this root and mutate the world here exactly once.
             // No failure catch crosses extraction/commit, break callbacks or world effects.
             if (action.quote.provider.powered && action.bill > 0) {
                 try (var transaction = Transaction.openRoot()) {
-                    if (action.energy.extract(action.bill, transaction) != action.bill || !equipped(player, root)
+                    if (action.energy.extract(action.bill, transaction) != action.bill || !target.valid()
                             // Stack access stages its resource; the actual root changes on root commit.
                             || !ItemStack.matches(root, expected)
                             || !ItemStack.matches(action.access.getResource().toStack(), action.afterDebit)) { return false; }
@@ -245,7 +246,7 @@ public final class JustDireGroundStompCompatibility {
                 }
             }
             root.set(binding.timers, action.timers);
-            if (!action.quote.provider.powered && action.bill > 0) { root.hurtAndBreak(action.bill, player, EquipmentSlot.FEET); }
+            if (!action.quote.provider.powered && action.bill > 0) { target.hurtAndBreak(action.bill); }
             // The shared dispatcher carries an expected state through both actions. Publish only
             // our own debit/timer/wear fields; copying live callbacks would authorize unrelated edits.
             if (action.quote.provider.powered && action.bill > 0) { expected.set(binding.energy, action.afterDebit.get(binding.energy)); }

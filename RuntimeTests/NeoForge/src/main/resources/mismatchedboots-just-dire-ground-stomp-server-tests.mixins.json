@@ -6,8 +6,6 @@
   "mixins": [
     "JustDireGroundStompDebitFailureMixin",
     "JustDireGroundStompPostCommitMixin",
-    "JustDireInventoryBindingMixin",
-    "JustDireInventoryLocationMixin",
     "JustDireSettingsApiMissingMixin"
   ],
   "injectors": { "defaultRequire": 1 }

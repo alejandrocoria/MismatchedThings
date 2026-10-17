@@ -71,6 +71,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 nativePassiveBindings(server);
                 effectsAndProviders(server); paymentAndBreak(server); permits(server); mousePermits(server); settings(server); poweredJumpSettings(server); timers(server); faults(server);
                 passiveBindings(server);
+                for (String result : JustDireInventoryActionTest.exercise(server)) { record(result); }
             }
             NetworkAcceptanceFiles.write(PREFIX + "-report.txt", groups + " production server groups\n" + report);
             NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
@@ -645,7 +646,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
     private static int timer(ItemStack root) throws Exception { return JustDireGroundStompTestSupport.timer(root); }
     private static void record(String text) { groups++; report.append(text).append('\n'); }
     private static void require(boolean condition, String text) { if (!condition) { throw new AssertionError(text); } }
-    private static final class BreakObserver extends ServerPlayer {
+    static final class BreakObserver extends ServerPlayer {
         int callbacks; EquipmentSlot brokenSlot; Runnable callback;
         BreakObserver(MinecraftServer server) {
             super(server, server.overworld(), new GameProfile(UUID.randomUUID(), "stomp-break"), ClientInformation.createDefault());

@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAbilityTarget;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveState;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
@@ -7,10 +8,8 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.stats.Stats;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -28,19 +27,16 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /** Disposable in-process batch/location prototype, NOT a production packet, UI or replacement action implementation. */
 public final class JustDireInventoryActivationSpike {
     private static final String PREFIX = "just-dire-inventory-spike";
     private static final int KEY = 72;
     private static final StringBuilder report = new StringBuilder();
-    private static Target scope;
     private static Batch pending;
     private static int warmup, groups;
     private static boolean finished;
-    private static boolean correctBreakLocation;
-    private static Runnable debitMutation;
     private static Method nativeUse, nativeBindings, stomp, earthquake, passives, stompTick;
 
     private JustDireInventoryActivationSpike() {}
@@ -59,58 +55,19 @@ public final class JustDireInventoryActivationSpike {
             nativeUse = tool.getMethod("useAbility", Level.class, Player.class, ItemStack.class, int.class, boolean.class);
             nativeBindings = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.LeftClickableTool")
                     .getMethod("getCustomBindingListFor", ItemStack.class, int.class, boolean.class, Player.class);
-            stomp = action(JustDireGroundStompCompatibility.class, "activate", ServerPlayer.class, ItemStack.class, ItemStack.class, int.class, boolean.class);
-            earthquake = action(JustDireEarthquakeCompatibility.class, "activate", ServerPlayer.class, ItemStack.class, ItemStack.class, int.class, boolean.class);
-            passives = action(JustDireSettingsCompatibility.class, "toggleBoundPassives", ServerPlayer.class, ItemStack.class, int.class, boolean.class);
+            stomp = action(JustDireGroundStompCompatibility.class, "activate", JustDireAbilityTarget.class, ItemStack.class, int.class, boolean.class);
+            earthquake = action(JustDireEarthquakeCompatibility.class, "activate", JustDireAbilityTarget.class, ItemStack.class, int.class, boolean.class);
+            passives = action(JustDireSettingsCompatibility.class, "toggleBoundPassives", JustDireAbilityTarget.class, int.class, boolean.class);
             stompTick = action(JustDireGroundStompCompatibility.class, "tickEquipped", ServerPlayer.class);
             nativeContract(server); mixedBatch(server); staleTargets(server); clocks(server); durability(server);
             NetworkAcceptanceFiles.write(PREFIX + "-report.txt", groups + " bounded inventory research groups\n" + report);
             NetworkAcceptanceFiles.write(PREFIX + "-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(PREFIX, failure); }
-        finally { scope = null; pending = null; server.overworld().setChunkForced(0, 0, false); server.halt(false); }
+        finally { pending = null; server.overworld().setChunkForced(0, 0, false); server.halt(false); }
     }
 
-    // The two opt-in fixture mixins widen only these read-only predicates during a synchronous candidate call.
-    public static boolean scoped(ItemStack root) { return scope != null && scope.root == root; }
-    public static boolean located(ServerPlayer player, ItemStack root) {
-        return scope != null && scope.player == player && scope.root == root && scope.slot >= 0
-                && scope.slot < player.getInventory().getContainerSize() && player.getInventory().getItem(scope.slot) == root
-                && JustDireSettingsCompatibility.mixed(root) && player.containerMenu == player.inventoryMenu;
-    }
-    public static boolean matches(ItemStack root, String name, int key, boolean mouse, DataComponentType<Integer> mode) {
-        if (!located(scope.player, root) || !JustDireSettingsCompatibility.validBindingInput(key, mouse) || root.getOrDefault(mode, 0) != 2) { return false; }
-        for (Object record : root.getOrDefault(JustDireAttributeTestSupport.<List<Object>>component("ability_bindings"), List.of())) {
-            try {
-                Class<?> type = record.getClass();
-                if (name.equals(type.getMethod("abilityName").invoke(record)) && key == (int) type.getMethod("key").invoke(record)
-                        && mouse == (boolean) type.getMethod("isMouse").invoke(record)
-                        && (!(boolean) type.getMethod("requireEquipped").invoke(record)
-                        || scope.player.getItemBySlot(EquipmentSlot.FEET) == root)) { return true; }
-            } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
-        }
-        return false;
-    }
-
-    public static void afterDebit() {
-        if (debitMutation != null) { var mutation = debitMutation; debitMutation = null; mutation.run(); }
-    }
-
-    /** Reuse real hurtAndBreak (including refunds); only its location-dependent callback changes. */
-    public static boolean breakAtLocation(ItemStack root, int amount) {
-        if (!correctBreakLocation || !scoped(root)) { return false; }
-        var target = scope;
-        root.hurtAndBreak(amount, target.player.level(), target.player, item -> {
-            EquipmentSlot slot = target.slot == 36 ? EquipmentSlot.FEET : target.slot == 40 ? EquipmentSlot.OFFHAND
-                    : target.slot == target.player.getInventory().getSelectedSlot() ? EquipmentSlot.MAINHAND : null;
-            if (slot != null) { target.player.onEquippedItemBroken(item, slot); }
-            else { target.player.awardStat(Stats.ITEM_BROKEN.get(item)); }
-        });
-        return true;
-    }
-
-    private static <T> T within(Target target, Supplier<T> operation) {
-        require(scope == null, "Nested candidate dispatch"); scope = target;
-        try { return operation.get(); } finally { scope = null; }
+    private static <T> T within(Target target, Function<JustDireAbilityTarget, T> operation) {
+        return operation.apply(new JustDireAbilityTarget(target.player, target.slot, target.root));
     }
 
     /** One server-derived batch avoids competing per-slot Prepare requests replacing a single player permit. */
@@ -121,11 +78,11 @@ public final class JustDireInventoryActivationSpike {
                 ItemStack root = player.getInventory().getItem(slot);
                 if (!JustDireSettingsCompatibility.mixed(root)) { continue; }
                 var target = new Target(player, slot, root, JustDireActiveState.snapshot(root), 0);
-                Target eligible = within(target, () -> {
+                Target eligible = within(target, location -> {
                     int actions = 0;
-                    if (JustDireSettingsCompatibility.groundStompBinding(root, key, mouse) && JustDireGroundStompCompatibility.quote(root) != null) { actions |= 1; }
-                    if (JustDireSettingsCompatibility.earthquakeBinding(root, key, mouse) && JustDireEarthquakeCompatibility.quote(root) != null) { actions |= 2; }
-                    return actions == 0 && JustDireSettingsCompatibility.boundPassives(root, key, mouse).isEmpty() ? null
+                    if (JustDireSettingsCompatibility.groundStompBinding(location, key, mouse) && JustDireGroundStompCompatibility.quote(root) != null) { actions |= 1; }
+                    if (JustDireSettingsCompatibility.earthquakeBinding(location, key, mouse) && JustDireEarthquakeCompatibility.quote(root) != null) { actions |= 2; }
+                    return actions == 0 && JustDireSettingsCompatibility.boundPassives(location, key, mouse).isEmpty() ? null
                             : new Target(player, target.slot, root, actions == 0 ? JustDireActiveNetwork.passiveInputSnapshot(root) : target.snapshot, actions);
                 });
                 if (eligible != null) { targets.add(eligible); }
@@ -140,20 +97,20 @@ public final class JustDireInventoryActivationSpike {
         pending = null; // Consume even an invalidated batch; a stale target cannot be retried at its new slot.
         int accepted = 0;
         for (Target target : batch.targets) {
-            boolean result = within(target, () -> {
-                if (!located(batch.player, target.root) || batch.player.level().getGameTime() > batch.issued + 40) { return false; }
+            boolean result = within(target, location -> {
+                if (!location.valid() || batch.player.level().getGameTime() > batch.issued + 40) { return false; }
                 boolean same = target.actions == 0 ? ItemStack.matches(JustDireActiveNetwork.passiveInputSnapshot(target.root), target.snapshot)
                         : JustDireActiveState.paidMatches(target.root, target.snapshot, target.actions, batch.player.level().getGameTime() - batch.issued + 1);
                 if (!same) { return false; }
                 var expected = JustDireActiveState.snapshot(target.root);
                 boolean acted = false;
                 // Current native boot order; production already owns and validates its action ordering separately.
-                if ((target.actions & 1) != 0) { acted = invoke(stomp, batch.player, target.root, expected, batch.key, batch.mouse); }
-                if (located(batch.player, target.root) && ItemStack.matches(target.root, expected) && (target.actions & 2) != 0) {
-                    acted |= invoke(earthquake, batch.player, target.root, expected, batch.key, batch.mouse);
+                if ((target.actions & 1) != 0) { acted = invoke(stomp, location, expected, batch.key, batch.mouse); }
+                if (location.valid() && ItemStack.matches(target.root, expected) && (target.actions & 2) != 0) {
+                    acted |= invoke(earthquake, location, expected, batch.key, batch.mouse);
                 }
-                if (located(batch.player, target.root) && ItemStack.matches(target.root, expected)) {
-                    acted |= invoke(passives, batch.player, target.root, batch.key, batch.mouse);
+                if (location.valid() && ItemStack.matches(target.root, expected)) {
+                    acted |= invoke(passives, location, batch.key, batch.mouse);
                 }
                 return acted;
             });
@@ -241,11 +198,11 @@ public final class JustDireInventoryActivationSpike {
         batch = prepare(player, KEY, false); set(equal, "forge_energy", 21_000);
         require(activate(batch) == 0, "Paid-resource change inherited permission");
         batch = prepare(player, KEY, false);
-        debitMutation = () -> player.getInventory().setItem(9, equal.copy());
-        require(activate(batch) == 0 && debitMutation == null && charge(equal) == 21_000
+        JustDireGroundStompServerGuardPlugin.debitMutation = () -> player.getInventory().setItem(9, equal.copy());
+        require(activate(batch) == 0 && JustDireGroundStompServerGuardPlugin.debitMutation == null && charge(equal) == 21_000
                 && charge(player.getInventory().getItem(9)) == 21_000 && JustDireGroundStompTestSupport.timer(equal) == -1,
                 "Replacement during actual staged extraction did not roll back payment");
-        // Existing production permits still reject inventory: the location override exists only inside the candidate scope.
+        // Existing production permits still reject inventory; only this candidate dispatches inventory targets.
         require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(1, KEY, false)).accepted(), "Production widened outside the candidate");
         var disabled = root(0, KEY, false, false, List.of("stepheight")); set(disabled, "tool_enabled", false);
         player.getInventory().setItem(12, disabled);
@@ -277,22 +234,20 @@ public final class JustDireInventoryActivationSpike {
     private static void durability(MinecraftServer server) throws Exception {
         var player = player(server); var equipped = new ItemStack(Items.NETHERITE_BOOTS); player.setItemSlot(EquipmentSlot.FEET, equipped);
         var beforeFeet = equipped.copy();
-        for (boolean fixed : new boolean[]{false, true}) {
+        {
             equipped.forEachModifier(EquipmentSlot.FEET, (attribute, modifier) -> player.getAttribute(attribute).addOrUpdateTransientModifier(modifier));
             double armor = player.getAttributeValue(Attributes.ARMOR);
             var root = configure(MixedBootsFactory.createPair(JustDireGroundStompTestSupport.boots("blazegold", 0), new ItemStack(Items.DIAMOND_BOOTS)).primary(),
                     KEY, false, false, List.of("groundstomp"));
             root.setDamageValue(root.getMaxDamage() - 25); player.getInventory().setItem(9, root);
-            correctBreakLocation = fixed;
-            try { require(activate(prepare(player, KEY, false)) == 1 && root.isEmpty(), "Inventory durability action did not break the paid root"); }
-            finally { correctBreakLocation = false; }
+            require(activate(prepare(player, KEY, false)) == 1 && root.isEmpty(), "Inventory durability action did not break the paid root");
             require(player.getItemBySlot(EquipmentSlot.FEET) == equipped && ItemStack.matches(equipped, beforeFeet), "Inventory break changed unrelated footwear");
             double afterArmor = player.getAttributeValue(Attributes.ARMOR);
-            require(fixed ? afterArmor == armor : afterArmor < armor, "Break callback location observation changed");
-            report.append("OBSERVATION: ").append(fixed ? "slot-aware candidate" : "existing FEET callback")
+            require(afterArmor == armor, "Production break callback affected worn armor");
+            report.append("OBSERVATION: production callback")
                     .append(" armor ").append(armor).append(" -> ").append(afterArmor).append('\n');
         }
-        record("break finding: existing FEET callback removes unrelated worn armor modifiers despite preserving the item; slot-aware hurtAndBreak callback prototype preserves armor and breaks only the inventory root");
+        record("production callback preserves unrelated armor and breaks only the inventory root; original failing callback is retired");
     }
 
     private static Method action(Class<?> type, String name, Class<?>... args) throws Exception { var method = type.getDeclaredMethod(name, args); method.setAccessible(true); return method; }

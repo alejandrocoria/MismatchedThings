@@ -38,6 +38,7 @@ final class JustDireRefundBreakTest {
     private static ServerPlayer observed;
     private static ItemStack worn, reentrant;
     private static boolean cancel;
+    private static Runnable refundCallback;
 
     private JustDireRefundBreakTest() {}
 
@@ -49,6 +50,7 @@ final class JustDireRefundBreakTest {
             require(item.getItem().getCount() == 1, "Not a whole single-item refund");
             if (worn.getItem() instanceof MixedBootsItem || worn.isEmpty()) { require(worn.isEmpty(), "Mixed refund preceded actual consumption"); }
             drops.add(id.getPath().substring("upgrade_".length()));
+            if (refundCallback != null) { var callback = refundCallback; refundCallback = null; callback.run(); }
             if (reentrant != null) { var root = reentrant; reentrant = null; root.hurtAndBreak(1, observed, EquipmentSlot.FEET); }
         });
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ArmorHurtEvent event) -> { if (cancel && event.getEntity() == observed) { event.setCanceled(true); } });
@@ -91,21 +93,26 @@ final class JustDireRefundBreakTest {
         root.hurtAndBreak(2, player, EquipmentSlot.FEET); require(root.isEmpty(), "Adventure break failed"); refunds("stepheight");
         records.add("creative/spectator direct requests never refund; Unbreakable remains immune and adventure actual break returns credited purchase");
 
-        for (String malformed : List.of("absent", "empty", "uninstalled", "data", "unequipped", "count", "nonplayer")) {
+        for (String malformed : List.of("absent", "empty", "uninstalled", "data", "detached", "unsupportedSlot", "count", "nonplayer")) {
             root = mixed("ferricore", "stepheight"); last(root); player = equip(server, root);
             switch (malformed) {
                 case "absent" -> root.remove(JustDireRefundCompatibility.component());
                 case "empty" -> root.set(JustDireRefundCompatibility.component(), new JustDireRefundCredits(List.of()));
                 case "uninstalled" -> JustDireAttributeTestSupport.set(root, "stepheight_upgrade_installed", false);
                 case "data" -> root.remove(ModContent.mixedBootsDataType().orElseThrow());
-                case "unequipped" -> player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                case "detached" -> player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                case "unsupportedSlot" -> { player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); player.setItemSlot(EquipmentSlot.LEGS, root); }
                 case "count" -> root.setCount(2);
                 case "nonplayer" -> { var zombie = new Zombie(EntityType.ZOMBIE, player.level()); zombie.setItemSlot(EquipmentSlot.FEET, root); root.hurtAndBreak(2, zombie, EquipmentSlot.FEET); }
             }
             if (!malformed.equals("nonplayer")) { root.hurtAndBreak(2, player, EquipmentSlot.FEET); }
             refunds();
         }
-        records.add("absent/empty/inconsistent credits, missing mixed data, unequipped/non-player roots and count-two consumption grant nothing");
+        records.add("absent/empty/inconsistent credits, missing mixed data, detached/unsupported-slot/non-player roots and count-two consumption grant nothing");
+        root = mixed("ferricore", "stepheight"); last(root); player = equip(server, root);
+        player.containerMenu = new net.minecraft.world.inventory.HopperMenu(99, player.getInventory(), new net.minecraft.world.SimpleContainer(5));
+        root.hurtAndBreak(2, player, EquipmentSlot.FEET); refunds("stepheight");
+        records.add("ordinary equipped break still refunds with another menu open; action-menu admission is not a refund rule");
 
         root = mixed("eclipsealloy", "earthquake");
         JustDireAttributeTestSupport.set(root, "tool_enabled", false); JustDireAttributeTestSupport.set(root, "earthquake_toggle", false);
@@ -165,7 +172,10 @@ final class JustDireRefundBreakTest {
         last(root); var player = equip(server, root); root.hurtAndBreak(2, player, EquipmentSlot.FEET);
         require(root.isEmpty(), "Direct break did not consume root"); refunds(expected);
     }
-    static ServerPlayer equip(MinecraftServer server, ItemStack root) { drops.clear(); reentrant = null; observed = JustDireGroundStompTestSupport.player(server, GameType.SURVIVAL); worn = root; observed.setItemSlot(EquipmentSlot.FEET, root); return observed; }
+    static void observe(ServerPlayer player, ItemStack root) { drops.clear(); reentrant = null; refundCallback = null; observed = player; worn = root; }
+    static void onRefund(Runnable callback) { refundCallback = callback; }
+    static void clearObservation() { observed = null; worn = null; refundCallback = null; reentrant = null; drops.clear(); }
+    static ServerPlayer equip(MinecraftServer server, ItemStack root) { var player = JustDireGroundStompTestSupport.player(server, GameType.SURVIVAL); observe(player, root); player.setItemSlot(EquipmentSlot.FEET, root); return player; }
     static ItemStack mixed(String tier, String... names) { return MixedBootsFactory.createPair(boot(tier, names), new ItemStack(Items.DIAMOND_BOOTS)).primary(); }
     private static ItemStack boot(String tier, String... names) { var source = NeoForgeJustDireResourcesTest.boots(tier, 0); for (String name : names) { JustDireAttributeTestSupport.set(source, name + "_upgrade_installed", true); } return source; }
     static void last(ItemStack root) { root.setDamageValue(root.getMaxDamage() - 1); }

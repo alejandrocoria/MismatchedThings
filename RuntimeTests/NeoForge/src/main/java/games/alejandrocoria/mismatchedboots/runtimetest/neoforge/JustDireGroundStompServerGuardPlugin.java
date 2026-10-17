@@ -14,10 +14,13 @@ public final class JustDireGroundStompServerGuardPlugin implements IMixinConfigP
     public static int fault, extracted;
     public static ServerPlayer player;
     public static ItemStack replacement;
+    public static Runnable debitMutation;
+    public static void afterDebit() {
+        if (debitMutation != null) { var mutation = debitMutation; debitMutation = null; mutation.run(); }
+    }
     public static void changeToggle() { JustDireAttributeTestSupport.set(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET), "groundstomp_toggle", false); }
     public static final class PostCommitFailure extends RuntimeException {}
     @Override public boolean shouldApplyMixin(String target, String mixin) {
-        if (mixin.contains("JustDireInventory")) { return Boolean.getBoolean("mismatchedboots.runtimetest.justDireInventorySpike"); }
         boolean server = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompServerTest");
         boolean client = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest");
         if (!server && !client) { return false; }

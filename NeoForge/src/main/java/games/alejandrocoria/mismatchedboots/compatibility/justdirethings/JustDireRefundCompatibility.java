@@ -11,7 +11,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -94,8 +93,17 @@ public final class JustDireRefundCompatibility {
     private static Capture capture(ItemStack root, int count, LivingEntity owner) {
         var binding = refunds;
         if (binding == null || !(owner instanceof ServerPlayer player) || player.hasInfiniteMaterials() || player.isSpectator()
-                || count != 1 || root.getCount() != 1 || player.getItemBySlot(EquipmentSlot.FEET) != root
+                || count != 1 || root.getCount() != 1
                 || !(root.getItem() instanceof MixedBootsItem)) { return null; }
+        // Actual inventory actions may break boots outside FEET. Follow one exact supported slot,
+        // not a menu/action permission: combat/direct breaks also refund while another menu is open.
+        JustDireAbilityTarget target = null;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            if (JustDireAbilityTarget.supportedSlot(slot) && player.getInventory().getItem(slot) == root) {
+                target = new JustDireAbilityTarget(player, slot, root); break;
+            }
+        }
+        if (target == null) { return null; }
         try {
             if (ModContent.getMixedBootsData(root).isEmpty() || !root.isDamageableItem() || root.getMaxDamage() <= 0
                     || root.getDamageValue() < root.getMaxDamage()) { return null; }
@@ -108,13 +116,13 @@ public final class JustDireRefundCompatibility {
                 items.add(refund.item);
             }
             // Empty-stack getters hide their components. Retain the live map now, plus detached native lists.
-            return new Capture(root, player, binding, JustDireActiveState.snapshot(root), root.getComponents(), List.copyOf(items));
+            return new Capture(root, player, target, binding, JustDireActiveState.snapshot(root), root.getComponents(), List.copyOf(items));
         } catch (RuntimeException malformedState) { return null; }
     }
 
     private static void complete(Capture capture) {
         if (refunds != capture.binding || !capture.root.isEmpty()
-                || capture.player.getItemBySlot(EquipmentSlot.FEET) != capture.root) { return; }
+                || !capture.target.present()) { return; }
         var shadow = new ItemStack(capture.before.getItem(), 1);
         List.copyOf(shadow.getComponents().keySet()).forEach(shadow::remove);
         shadow.applyComponents(capture.live);
@@ -124,6 +132,6 @@ public final class JustDireRefundCompatibility {
     }
 
     private record Refund(Item item, DataComponentType<Boolean> installed) {}
-    private record Capture(ItemStack root, ServerPlayer player, Map<String, Refund> binding,
+    private record Capture(ItemStack root, ServerPlayer player, JustDireAbilityTarget target, Map<String, Refund> binding,
                            ItemStack before, DataComponentMap live, List<Item> items) {}
 }

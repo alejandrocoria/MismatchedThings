@@ -229,10 +229,12 @@ public final class JustDireEarthquakeCompatibility {
     }
 
     /** Only the consumed server dispatcher calls this boundary. expected advances by own commits, never by copying callbacks. */
-    static boolean activate(ServerPlayer player, ItemStack root, ItemStack expected, int key, boolean mouse) {
+    static boolean activate(JustDireAbilityTarget target, ItemStack expected, int key, boolean mouse) {
+        ServerPlayer player = target.player();
+        ItemStack root = target.root();
         Api binding = api;
-        if (binding == null || !JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)
-                || player.containerMenu != player.inventoryMenu || !JustDireSettingsCompatibility.earthquakeBinding(root, key, mouse)) { return false; }
+        if (binding == null || !target.valid() || !ItemStack.matches(root, expected)
+                || !JustDireSettingsCompatibility.earthquakeBinding(target, key, mouse)) { return false; }
         Quote initial;
         List<Object> next;
         List<Mob> targets;
@@ -253,13 +255,13 @@ public final class JustDireEarthquakeCompatibility {
                     new AABB(player.getX() - 5, player.getY() - 5, player.getZ() - 5,
                             player.getX() + 5, player.getY() + 5, player.getZ() + 5), binding::validTarget);
         } catch (Throwable failure) { disable(binding, failure); return false; }
-        if (api != binding || !JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)) { return false; }
+        if (api != binding || !target.valid() || !ItemStack.matches(root, expected)) { return false; }
         // Native earthquake returns false even after effects/payment. It is not a commit receipt.
         // Start lockout even for empty targets; no catch below spans payment or world mutation.
         root.set(binding.timers, List.copyOf(next)); expected.set(binding.timers, List.copyOf(next));
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.MACE_SMASH_GROUND_HEAVY, SoundSource.PLAYERS, 1, .5f);
         for (Mob mob : targets) {
-            if (api != binding || !JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)
+            if (api != binding || !target.valid() || !ItemStack.matches(root, expected)
                     || player.gameMode.getGameModeForPlayer() != mode) { break; }
             // Our own new active record is expected; recheck native controls and the full base FE budget, not cooldown admission.
             if (!initial.equals(quote(root, false))) { break; }
@@ -269,13 +271,13 @@ public final class JustDireEarthquakeCompatibility {
                 if (energy == null || energy.getAmountAsInt() < initial.baseCost) { break; }
                 var afterDebit = expected.copy(); afterDebit.set(binding.energy, energy.getAmountAsInt() - bill);
                 try (var transaction = Transaction.openRoot()) {
-                    if (energy.extract(bill, transaction) != bill || !JustDireGroundStompCompatibility.equipped(player, root)
+                    if (energy.extract(bill, transaction) != bill || !target.valid()
                             || !ItemStack.matches(root, expected) || !ItemStack.matches(access.getResource().toStack(), afterDebit)) { break; }
                     transaction.commit();
                 }
                 expected.set(binding.energy, afterDebit.get(binding.energy));
             }
-            if (!JustDireGroundStompCompatibility.equipped(player, root) || !ItemStack.matches(root, expected)) { break; }
+            if (!target.valid() || !ItemStack.matches(root, expected)) { break; }
             mob.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 200, 3), mob);
             if (particles == 0) {
                 player.level().sendParticles(ParticleTypes.END_ROD, mob.getX(), mob.getY(), mob.getZ(), 20, .25, .2, .25, 0);
