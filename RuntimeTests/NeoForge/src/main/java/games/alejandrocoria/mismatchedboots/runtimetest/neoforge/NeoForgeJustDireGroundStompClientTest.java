@@ -83,17 +83,18 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static double enabledStep;
     private static boolean holdReply;
     private static JustDireActiveNetwork.ActivationReply observedActivation;
-    private static JustDireActiveNetwork.Activate consumed, held;
+    private static JustDireActiveNetwork.Activate consumed, held, issuedActivation;
     private static Mob target;
     private static Object previousServer, previousPlayer;
     private static ItemStack inputRoot;
     private static JsonElement reconnectExpected;
-    private static int earthquakeKey;
-    private static boolean earthquakeMouse;
+    private static JsonElement reconnectInventoryExpected;
+    private static ItemStack reconnectInventoryRoot;
     private static Button earthquakeWidget;
     private static JustDireActiveNetwork.Activate savedEarthquakePermit;
     private static List<String> reconnectPassives;
     private static ItemStack pausedFeedbackRoot;
+    private static ItemStack pausedFeedbackIdentity;
     private static ItemStack lavaBefore;
     private static double depletedWearArmor;
 
@@ -754,13 +755,23 @@ final class NeoForgeJustDireGroundStompClientTest {
     }
 
     private static void observeActiveReplies() {
+        issuedActivation = null;
         JustDireActiveNetwork.clientReplies(reply -> {
             observedActivation = reply;
+            if (reply.prepared() && reply.accepted()) {
+                var intent = fieldStatic(JustDireAbilityInput.class, "pending");
+                // Observe the real request/admitted slots, not a second dispatcher. Lifecycle
+                // scenarios have one root; multi-root attenuation itself belongs to production.
+                issuedActivation = intent != null && (int) field(intent, "sequence") == reply.sequence()
+                        ? new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(),
+                        (int) field(intent, "key"), (boolean) field(intent, "mouse"), reply.slots()) : null;
+            }
             if (holdReply && reply.prepared() && reply.accepted()) {
-                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse, java.util.List.of(36));
+                held = issuedActivation;
             } else { JustDireAbilityInput.reply(reply); }
-            if (!reply.prepared() && reply.accepted()) {
-                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), earthquakeKey, earthquakeMouse, java.util.List.of(36));
+            if (!reply.prepared() && reply.accepted() && issuedActivation != null
+                    && reply.sequence() == issuedActivation.sequence() && reply.nonce().equals(issuedActivation.nonce())) {
+                consumed = issuedActivation;
             }
         }, JustDireSettingsClient::reply);
     }
@@ -959,7 +970,7 @@ final class NeoForgeJustDireGroundStompClientTest {
     }
 
     private static void earthquakePress(int key, boolean mouse) {
-        earthquakeKey = key; earthquakeMouse = mouse; observedActivation = null;
+        observedActivation = null;
         if (mouse) { mousePress(key, GLFW.GLFW_PRESS); } else { press(key, GLFW.GLFW_PRESS); }
     }
 
@@ -1121,23 +1132,10 @@ final class NeoForgeJustDireGroundStompClientTest {
         return client.player != null && client.level != null && CompositionRulesClientLifecycle.areRulesSynchronized();
     }
 
-    private static void observeReplies() {
-        // Observe/defer a genuine production permit, not a second transport/action implementation.
-        JustDireActiveNetwork.clientReplies(reply -> {
-            observedActivation = reply;
-            if (holdReply && reply.prepared() && reply.accepted()) {
-                held = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), 4, true, java.util.List.of(36));
-            } else { JustDireAbilityInput.reply(reply); }
-            if (!reply.prepared() && reply.accepted()) {
-                consumed = new JustDireActiveNetwork.Activate(reply.sequence(), reply.nonce(), GLFW.GLFW_KEY_G, false, java.util.List.of(36));
-            }
-        }, JustDireSettingsClient::reply);
-    }
-
     private static void lifecycle(Minecraft client) {
         require(LIFECYCLE.equals("save") || LIFECYCLE.equals("restart"), "Unknown lifecycle mode");
         add("observe completion events without replacement ticking or emission", () -> server(client, JustDireCooldownFeedbackTestSupport::begin));
-        add("observe production replies without replacing native callbacks or input", NeoForgeJustDireGroundStompClientTest::observeReplies);
+        add("observe production replies without replacing native callbacks or input", NeoForgeJustDireGroundStompClientTest::observeActiveReplies);
         if (LIFECYCLE.equals("restart")) {
             add("new JVM loads the exact disk stacks and paused timers", () -> server(client, player -> {
                 try { JustDireGroundStompTestSupport.initializeApi(); JustDireGroundStompLifecycleTestSupport.verifyDisk(player); }
@@ -1163,7 +1161,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
             }));
         } else {
-            add("restore the existing passive reconnect observer", NeoForgeJustDireGroundStompClientTest::observeReplies);
+            add("restore the existing passive reconnect observer", NeoForgeJustDireGroundStompClientTest::observeActiveReplies);
             reconnect(client);
             add("reconnected paid Earthquake finishes through ordinary worn progression", () -> {},
                     () -> earthquakeClock(feet(client)) == null && timer(feet(client)) == -1, 1_200);
@@ -1207,24 +1205,36 @@ final class NeoForgeJustDireGroundStompClientTest {
                 () -> value(feet(client), "earthquake_custom_setting") == 1);
         assign(client, "EARTHQUAKE", phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
         assign(client, "GROUNDSTOMP", GLFW.GLFW_KEY_G, false); assign(client, "STEPHEIGHT", 4, true);
+        if (phase == 0) {
+            locationChoice(client, "EARTHQUAKE", false); locationChoice(client, "GROUNDSTOMP", false);
+            locationChoice(client, "STEPHEIGHT", false);
+            assign(client, "NEGATEFALLDAMAGE", GLFW.GLFW_KEY_L, false);
+            assign(client, "NEGATEFALLDAMAGE", GLFW.GLFW_KEY_ESCAPE, false);
+            locationChoice(client, "NEGATEFALLDAMAGE", false);
+        }
         close(client);
+        if (phase == 0) { moveRoot(client, 36, 9); }
         earthquakeTarget(client);
         add("genuine configured Earthquake pays once before phase " + phase + " save", () -> {
             consumed = null; earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
-        }, () -> consumed != null && charge(feet(client)) == 100_000 && earthquakeClock(feet(client)) != null);
+        }, () -> consumed != null && charge(client.player.getInventory().getItem(phase == 0 ? 9 : 36)) == 100_000
+                && earthquakeClock(client.player.getInventory().getItem(phase == 0 ? 9 : 36)) != null
+                && consumed.slots().equals(List.of(phase == 0 ? 9 : 36)));
         add("capture the paid EQ nonce and authoritative effect without changing sources", () -> {
             savedEarthquakePermit = consumed;
             server(client, player -> require(target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) != null
                     && target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS).getAmplifier() == 3
-                    && ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "EQ effect/history missing"));
+                    && ModContent.getMixedBootsData(player.getInventory().getItem(phase == 0 ? 9 : 36)).orElseThrow().equals(provenance), "EQ effect/history missing"));
         });
         if (phase == 1) {
             add("actual worn ticker reaches inactive Earthquake before saving", () -> {},
                     () -> earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active());
         }
         add("GS pays once beside the independent EQ clock before storage", () -> earthquakePress(GLFW.GLFW_KEY_G, false),
-                () -> charge(feet(client)) == 95_000 && timer(feet(client)) > 0 && consumed != null
+                () -> charge(client.player.getInventory().getItem(phase == 0 ? 9 : 36)) == 95_000
+                        && timer(client.player.getInventory().getItem(phase == 0 ? 9 : 36)) > 0 && consumed != null
                         && observedActivation != null && !observedActivation.prepared() && observedActivation.accepted());
+        if (phase == 0) { inventoryPause(client, 9); moveRoot(client, 9, 36); }
         add("hold a real unconsumed passive permit before the JVM exits", () -> {
             holdReply = true; held = null; earthquakePress(4, true);
         }, () -> held != null);
@@ -1272,6 +1282,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                     require(!flag(expected, "earthquake_upgrade_installed", true) && !flag(expected, "tool_enabled", true), "Tier restored historical installation/controls");
                     expected = JustDireGroundStompLifecycleTestSupport.installEarthquake(player, expected);
                 } else { require(!flag(expected, "earthquake_toggle", true), "Tier restored historical EQ toggle"); }
+                JustDireGroundStompLifecycleTestSupport.inventoryPreferences(expected, phase + 2);
                 JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().clearContent(); provenance = ModContent.getMixedBootsData(expected).orElseThrow();
                 player.setItemSlot(EquipmentSlot.FEET, expected); player.inventoryMenu.broadcastChanges();
@@ -1287,7 +1298,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             assertClientJump(client, phase == 0 ? 0 : 5);
             serverJump(client, phase == 0 ? 0 : 5);
         });
-        replaySaved(client, phase + 2);
+        replaySaved(client, phase + 2, 36);
         open(client); select(client, 36);
         add("native tier inventory shows EQ without a slider or an unused tooltip number", () -> {
             require(hasIcon(client, "EARTHQUAKE") && slider(client, "EARTHQUAKE") == null
@@ -1306,8 +1317,11 @@ final class NeoForgeJustDireGroundStompClientTest {
             assertClientJump(client, phase == 0 ? 0 : 5); serverJump(client, phase == 0 ? 0 : 5);
         });
         earthquakeTarget(client);
-        add("persisted Earthquake blocks the genuine configured input during lockout", () -> earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0),
-                () -> observedActivation != null && observedActivation.prepared() && !observedActivation.accepted() && charge(feet(client)) == 95_000);
+        add("persisted Earthquake blocks the genuine configured input during lockout", () -> {
+            require(earthquakeClock(feet(client)) != null, "Missing loaded EQ lockout");
+            earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
+        }, () -> wait > 8 && observedActivation == null && fieldStatic(JustDireAbilityInput.class, "pending") == null
+                && earthquakeClock(feet(client)) != null && charge(feet(client)) == 95_000);
         if (phase == 0) {
             add("loaded active phase advances to native inactive cooldown without replay", () -> {},
                     () -> earthquakeClock(feet(client)) != null && !earthquakeClock(feet(client)).active());
@@ -1326,10 +1340,14 @@ final class NeoForgeJustDireGroundStompClientTest {
             JustDireCooldownFeedbackTestSupport.assertCompletions(2, phase == 0 ? 1 : 0);
             JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
         });
-        replaySaved(client, phase + 2);
+        if (phase == 0) { moveRoot(client, 36, 9); }
+        replaySaved(client, phase + 2, phase == 0 ? 9 : 36);
         add("fresh persisted binding on two Eclipse halves executes only one EQ action", () -> {
             consumed = null; earthquakePress(phase == 0 ? GLFW.GLFW_KEY_J : 3, phase != 0);
-        }, () -> consumed != null && charge(feet(client)) == 45_000 && earthquakeClock(feet(client)) != null);
+        }, () -> consumed != null && charge(client.player.getInventory().getItem(phase == 0 ? 9 : 36)) == 45_000
+                && earthquakeClock(client.player.getInventory().getItem(phase == 0 ? 9 : 36)) != null
+                && consumed.slots().equals(List.of(phase == 0 ? 9 : 36)));
+        if (phase == 0) { moveRoot(client, 9, 36); }
         add("actual fresh effect, live-energy tooltip and immutable upgraded sources agree", () -> {
             assertEarthquakeTooltip(client, 45_000);
             server(client, player -> require(target.getEffect(net.minecraft.world.effect.MobEffects.SLOWNESS) != null
@@ -1390,30 +1408,36 @@ final class NeoForgeJustDireGroundStompClientTest {
                 () -> value(feet(client), "groundstomp_custom_setting") == 1);
         assign(client, "GROUNDSTOMP", GLFW.GLFW_KEY_G, false);
         assign(client, "STEPHEIGHT", 4, true); assign(client, "JUMPBOOST", 4, true);
+        if (slot == 0) { locationChoice(client, "GROUNDSTOMP", false); locationChoice(client, "STEPHEIGHT", false); }
         assign(client, "NEGATEFALLDAMAGE", GLFW.GLFW_KEY_L, false);
         assign(client, "NEGATEFALLDAMAGE", GLFW.GLFW_KEY_ESCAPE, false);
         if (slot == 0) {
             add("native Lava toggle stores explicit false before world save", () -> click(icon(client, "LAVAREPAIR"), 0),
                     () -> !flag(feet(client), "lavarepair_toggle", true));
             assign(client, "LAVAREPAIR", GLFW.GLFW_KEY_V, false);
+            locationChoice(client, "LAVAREPAIR", false);
         } else {
             add("native Lava selection preserves explicit absence before save", () -> require(
                     !feet(client).has(JustDireAttributeTestSupport.component("lavarepair_toggle"))
                             && !feet(client).has(JustDireAttributeTestSupport.component("lavarepair_bindingmode")), "Native selection materialized absent Lava controls"));
         }
+        add("explicit disabled mode/removal uses the selected-root edit protocol, not only a scalar change", () ->
+                JustDireSettingsClient.edit((JustDireSettingsScreenAccess) client.screen, "negatefalldamage",
+                        JustDireActiveNetwork.BINDING, 0, -1, false, true),
+                () -> value(feet(client), "negatefalldamage_bindingmode") == 0 && noBinding(feet(client), "negatefalldamage"));
         close(client);
-        add("explicit disabled mode/removal is independent of historical input preferences", () -> server(client, player -> {
-            set(player.getItemBySlot(EquipmentSlot.FEET), "negatefalldamage_bindingmode", 0); player.inventoryMenu.broadcastChanges();
-        }), () -> value(feet(client), "negatefalldamage_bindingmode") == 0);
+        if (slot == 0) { moveRoot(client, 36, 9); }
         target(client);
         add("genuine native-configured input spends once before save", () -> {
             consumed = null; observedActivation = null; press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
-        }, () -> consumed != null && charge(feet(client)) == 5_000 && timer(feet(client)) > 0);
+        }, () -> consumed != null && charge(client.player.getInventory().getItem(slot == 0 ? 9 : 36)) == 5_000
+                && timer(client.player.getInventory().getItem(slot == 0 ? 9 : 36)) > 0 && consumed.slots().equals(List.of(slot == 0 ? 9 : 36)));
         add("production action actually moved the world target and left sources untouched", () -> server(client, player -> {
             require(target.getDeltaMovement().horizontalDistance() > 0, "No actual lifecycle world effect");
-            require(ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "Action changed source history");
+            require(ModContent.getMixedBootsData(player.getInventory().getItem(slot == 0 ? 9 : 36)).orElseThrow().equals(provenance), "Action changed source history");
             target.discard(); target = null;
         }));
+        if (slot == 0) { inventoryPause(client, 9); moveRoot(client, 9, 36); }
         hold(client);
         add("packet-delivered spent GS has exact native HUD before save", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, 1));
         add("funded incoming hit pays one root bill and normal packets preserve prior wear/history", () -> server(client, player ->
@@ -1456,6 +1480,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 JustDireArmorWearTestSupport.hit(player, 4, 2); // The restored wallet, not the sources' historical 10k FE.
                 player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
                 expected = JustDireGroundStompLifecycleTestSupport.smithing(player, root, slot == 1);
+                JustDireGroundStompLifecycleTestSupport.inventoryPreferences(expected, slot);
                 JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().clearContent();
                 provenance = ModContent.getMixedBootsData(expected).orElseThrow();
@@ -1488,11 +1513,12 @@ final class NeoForgeJustDireGroundStompClientTest {
                         && value(feet(client), "negatefalldamage_bindingmode") == 0
                         && noBinding(feet(client), "negatefalldamage")
                         && !flag(feet(client), "stepheight_toggle", true), "Restart lost passive modes/removal/preferences"));
-        replaySaved(client, slot);
+        replaySaved(client, slot, 36);
         add("positive persisted timer blocks a genuine configured key", () -> {
+            require(timer(feet(client)) > 0, "Missing loaded GS lockout");
             before = feet(client).copy(); observedActivation = null; press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
-        }, () -> observedActivation != null && observedActivation.prepared() && !observedActivation.accepted()
-                && charge(feet(client)) == charge(before));
+        }, () -> wait > 8 && observedActivation == null && fieldStatic(JustDireAbilityInput.class, "pending") == null
+                && timer(feet(client)) > 0 && charge(feet(client)) == charge(before));
         add("persisted shared passive mouse works during the loaded cooldown without payment", () -> {
             observedActivation = null; before = feet(client).copy(); mousePress(4, GLFW.GLFW_PRESS);
         },
@@ -1526,21 +1552,29 @@ final class NeoForgeJustDireGroundStompClientTest {
             JustDireCooldownFeedbackTestSupport.assertCompletions(1, 0);
             JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
         });
-        replaySaved(client, slot);
+        if (slot == 0) { moveRoot(client, 36, 9); }
+        replaySaved(client, slot, slot == 0 ? 9 : 36);
         target(client);
         add("fresh persisted keyboard executes one upgraded action", () -> { consumed = null; press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS); },
-                () -> consumed != null && charge(feet(client)) == 0 && timer(feet(client)) > 0 && value(feet(client), "groundstomp_value") == 3);
+                () -> consumed != null && charge(client.player.getInventory().getItem(slot == 0 ? 9 : 36)) == 0
+                        && timer(client.player.getInventory().getItem(slot == 0 ? 9 : 36)) > 0
+                        && value(client.player.getInventory().getItem(slot == 0 ? 9 : 36), "groundstomp_value") == 3
+                        && consumed.slots().equals(List.of(slot == 0 ? 9 : 36)));
         add("fresh action effect and source history verified on actual server", () -> server(client, player -> {
             require(target.getDeltaMovement().horizontalDistance() > 0
-                    && ModContent.getMixedBootsData(player.getItemBySlot(EquipmentSlot.FEET)).orElseThrow().equals(provenance), "Restart action effect/provenance mismatch");
+                    && ModContent.getMixedBootsData(player.getInventory().getItem(slot == 0 ? 9 : 36)).orElseThrow().equals(provenance), "Restart action effect/provenance mismatch");
             target.discard(); target = null;
         }));
+        if (slot == 0) { moveRoot(client, 9, 36); }
         open(client); select(client, 36); assign(client, "GROUNDSTOMP", 3, true); close(client);
         add("recharge preserves settings and waits for natural expiry", () -> server(client, player -> {
             set(player.getItemBySlot(EquipmentSlot.FEET), "forge_energy", 6_000); player.inventoryMenu.broadcastChanges();
         }), () -> charge(feet(client)) == 6_000 && timer(feet(client)) == -1);
+        if (slot == 0) { moveRoot(client, 36, 40); }
         add("fresh mouse binding uses production listener and one root bill", () -> mousePress(3, GLFW.GLFW_PRESS),
-                () -> charge(feet(client)) == 1_000 && timer(feet(client)) > 0);
+                () -> charge(client.player.getInventory().getItem(slot == 0 ? 40 : 36)) == 1_000
+                        && timer(client.player.getInventory().getItem(slot == 0 ? 40 : 36)) > 0);
+        if (slot == 0) { moveRoot(client, 40, 36); }
     }
 
     private static void lavaTierLifecycle(Minecraft client, int slot) {
@@ -1638,6 +1672,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("pause the disk/tier root in ordinary inventory", () -> server(client, player -> {
             var root = player.getItemBySlot(EquipmentSlot.FEET);
             pausedFeedbackRoot = root.copy();
+            pausedFeedbackIdentity = root;
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             player.getInventory().setItem(0, root); player.inventoryMenu.broadcastChanges();
         }), () -> feet(client).isEmpty() && wait > 20);
@@ -1645,7 +1680,7 @@ final class NeoForgeJustDireGroundStompClientTest {
             JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
             server(client, player -> {
                 var root = player.getInventory().getItem(0);
-                require(ItemStack.matches(pausedFeedbackRoot, root), "Inventory pause changed persisted root/clocks");
+                require(root == pausedFeedbackIdentity && ItemStack.matches(pausedFeedbackRoot, root), "Inventory pause changed root identity/state/clocks");
                 JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
                 player.getInventory().setItem(0, ItemStack.EMPTY);
                 player.setItemSlot(EquipmentSlot.FEET, root); player.inventoryMenu.broadcastChanges();
@@ -1654,15 +1689,47 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("re-equipped disk/tier root resumes the same native indicator", () -> JustDireCooldownFeedbackTestSupport.assertHud(client, icons));
     }
 
-    private static void replaySaved(Minecraft client, int slot) {
+    private static void moveRoot(Minecraft client, int from, int to) {
+        add("move the same live root " + from + " -> " + to, () -> server(client, player -> {
+            var inventory = player.getInventory(); var root = inventory.getItem(from);
+            require(JustDireSettingsCompatibility.mixed(root) && inventory.getItem(to).isEmpty(), "Invalid lifecycle move");
+            inventory.setItem(from, ItemStack.EMPTY); inventory.setItem(to, root);
+            require(inventory.getItem(to) == root, "Lifecycle move replaced the live root");
+            player.inventoryMenu.broadcastChanges();
+        }), () -> client.player.getInventory().getItem(from).isEmpty()
+                && JustDireSettingsCompatibility.mixed(client.player.getInventory().getItem(to)) && wait > 3);
+    }
+
+    private static void inventoryPause(Minecraft client, int slot) {
+        add("capture actual inventory-paid state without equipped HUD", () -> {
+            JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
+            server(client, player -> {
+                pausedFeedbackIdentity = player.getInventory().getItem(slot);
+                pausedFeedbackRoot = pausedFeedbackIdentity.copy();
+                require(timer(pausedFeedbackRoot) > 0, "No inventory-paid clock to pause");
+            });
+        });
+        add("inventory-paid clocks and resource state remain paused through real ticks", () -> {}, () -> wait > 20);
+        add("inventory action emits no backpack HUD or completion sound", () -> {
+            JustDireCooldownFeedbackTestSupport.assertHud(client, 0);
+            server(client, player -> {
+                var root = player.getInventory().getItem(slot);
+                require(root == pausedFeedbackIdentity && ItemStack.matches(root, pausedFeedbackRoot), "Inventory-paid state advanced/replaced");
+                JustDireCooldownFeedbackTestSupport.assertCompletions(0, 0);
+            });
+        });
+    }
+
+    private static void replaySaved(Minecraft client, int slot, int targetSlot) {
         for (boolean unconsumed : new boolean[]{false, true}) {
             add("old JVM " + (unconsumed ? "unconsumed permit" : "consumed replay") + " rejects through real transport", () -> {
                 try {
-                    before = feet(client).copy(); observedActivation = null;
+                    before = client.player.getInventory().getItem(targetSlot).copy(); observedActivation = null;
                     Network.getNetworkHandler().sendToServer(JustDireGroundStompLifecycleTestSupport.oldPacket(slot, unconsumed));
                 } catch (Exception failure) { throw new AssertionError(failure); }
             }, () -> observedActivation != null && !observedActivation.prepared() && !observedActivation.accepted()
-                    && charge(feet(client)) == charge(before) && sameSettings(before, feet(client)));
+                    && charge(client.player.getInventory().getItem(targetSlot)) == charge(before)
+                    && sameSettings(before, client.player.getInventory().getItem(targetSlot)));
         }
     }
 
@@ -1681,10 +1748,20 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("configure powered Jump before reconnect through the native slider", () -> {
             slider(client, "JUMPBOOST").setValue(1); slider(client, "JUMPBOOST").setValue(5);
         }, () -> value(feet(client), "jumpboost_value") == 5);
-        assign(client, "JUMPBOOST", 4, true); close(client);
+        assign(client, "JUMPBOOST", 4, true); locationChoice(client, "JUMPBOOST", false); close(client);
         lifecycleCharge(client, 4);
         lifecycleJump(client, 5, 0);
+        add("seed independent depleted/disabled inventory passive before actual reconnect", () -> server(client, player -> {
+            try {
+                var root = JustDireInventoryActionTest.root(4, false);
+                JustDireInventoryActionTest.configure(root, false, true, List.of("jumpboost"));
+                set(root, "tool_enabled", false); player.getInventory().setItem(9, root); player.inventoryMenu.broadcastChanges();
+            } catch (Exception failure) { throw new AssertionError(failure); }
+        }), () -> charge(client.player.getInventory().getItem(9)) == 4 && location(client.player.getInventory().getItem(9), "JUMPBOOST", false));
         hold(client);
+        add("disconnect discards a genuine worn/inventory batch, not a FEET-only stand-in", () -> require(
+                held.slots().equals(List.of(9, 36)) && fieldStatic(JustDireAbilityInput.class, "pending") != null,
+                "Reconnect lacks genuine multi-location pending intent"));
         add("remember actual server/player and live resources before reconnect", () -> server(client, player -> {
             previousServer = client.getSingleplayerServer(); previousPlayer = player; expected = player.getItemBySlot(EquipmentSlot.FEET).copy();
             reconnectPassives = JustDireSettingsCompatibility.boundPassives(expected, 4, true);
@@ -1700,14 +1777,15 @@ final class NeoForgeJustDireGroundStompClientTest {
                 () -> joined(client) && client.screen == null);
         add("decode expectations in the new connection registry context", () -> restoreReconnect(client));
         add("ordinary login equipment packets restore the saved root", () -> {},
-                () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)));
+                () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client))
+                        && ItemStack.matches(reconnectInventoryRoot, client.player.getInventory().getItem(9)));
         lifecycleJump(client, 5, 0);
         add("first reconnect retains native spent-clock presentation through login packets", () -> {
             JustDireCooldownFeedbackTestSupport.assertHud(client, (timer(feet(client)) > 0 ? 1 : 0) + (earthquakeClock(feet(client)) != null ? 1 : 0));
             server(client, player -> JustDireCooldownFeedbackTestSupport.observedPlayer = player);
         });
         add("new server/player retain persistent controls/FE but not client intent", () -> {
-            holdReply = false; observeReplies();
+            holdReply = false; observeActiveReplies();
             require(sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)), "Reconnect changed persistent state");
             var oldClock = earthquakeClock(expected); var liveClock = earthquakeClock(feet(client));
             require(oldClock != null && liveClock != null && liveClock.ticks() > 0
@@ -1722,7 +1800,9 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("fresh mouse after reconnect creates a new session and toggles supported passives", () -> {
             before = feet(client).copy(); mousePress(4, GLFW.GLFW_PRESS);
         }, () -> !reconnectPassives.isEmpty() && reconnectPassives.stream().allMatch(name ->
-                flag(feet(client), name + "_toggle", true) != flag(before, name + "_toggle", true)) && charge(feet(client)) == charge(before));
+                flag(feet(client), name + "_toggle", true) != flag(before, name + "_toggle", true)) && charge(feet(client)) == charge(before)
+                && !flag(client.player.getInventory().getItem(9), "jumpboost_toggle", true)
+                && charge(client.player.getInventory().getItem(9)) == 4);
         open(client); select(client, 36);
         add("fresh native settings selection after reconnect still edits the actual root", () -> click(icon(client, "GROUNDSTOMP"), 0),
                 () -> !flag(feet(client), "groundstomp_toggle", true));
@@ -1744,13 +1824,14 @@ final class NeoForgeJustDireGroundStompClientTest {
                 () -> joined(client) && client.screen == null);
         add("decode second reconnect expectations in its registry context", () -> restoreReconnect(client));
         add("second login equipment packets restore the saved root", () -> {},
-                () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)));
+                () -> sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client))
+                        && ItemStack.matches(reconnectInventoryRoot, client.player.getInventory().getItem(9)));
         add("second reconnect retains native spent-clock presentation through login packets", () -> {
             JustDireCooldownFeedbackTestSupport.assertHud(client, (timer(feet(client)) > 0 ? 1 : 0) + (earthquakeClock(feet(client)) != null ? 1 : 0));
             server(client, player -> JustDireCooldownFeedbackTestSupport.observedPlayer = player);
         });
         add("second rejoin retains disabled control and the same resource balance", () -> {
-            observeReplies(); require(sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)), "Menu disconnect changed root state");
+            observeActiveReplies(); require(sameSettings(expected, feet(client)) && charge(expected) == charge(feet(client)), "Menu disconnect changed root state");
         });
         open(client); select(client, 36);
         add("old selection token cannot toggle the new genuine menu/root", () -> {
@@ -1769,12 +1850,26 @@ final class NeoForgeJustDireGroundStompClientTest {
 
     private static void snapshotReconnect(Minecraft client) {
         reconnectExpected = ItemStack.CODEC.encodeStart(client.player.registryAccess().createSerializationContext(JsonOps.INSTANCE), feet(client)).getOrThrow();
+        var inventoryRoot = client.player.getInventory().getItem(9);
+        reconnectInventoryExpected = inventoryRoot.isEmpty() ? null : ItemStack.CODEC.encodeStart(
+                client.player.registryAccess().createSerializationContext(JsonOps.INSTANCE), inventoryRoot).getOrThrow();
     }
 
     private static void restoreReconnect(Minecraft client) {
         // Dynamic tag/holder identity belongs to a connection. Compare decoded values in the
         // current registry, not old-world Java holder instances that happen to print the same ID.
         expected = ItemStack.CODEC.parse(client.player.registryAccess().createSerializationContext(JsonOps.INSTANCE), reconnectExpected).getOrThrow();
+        reconnectInventoryRoot = reconnectInventoryExpected == null ? ItemStack.EMPTY : ItemStack.CODEC.parse(
+                client.player.registryAccess().createSerializationContext(JsonOps.INSTANCE), reconnectInventoryExpected).getOrThrow();
+    }
+
+    private static void locationChoice(Minecraft client, String name, boolean equipped) {
+        reveal(client, name);
+        add("native " + name + " location persists " + equipped, () -> {
+            if (!location(feet(client), name, equipped)) {
+                click((Button) maps(client, "requireEquippedButtons").get(icon(client, name)), 0);
+            }
+        }, () -> location(feet(client), name, equipped));
     }
 
     private static void assign(Minecraft client, String name, int code, boolean mouse) {

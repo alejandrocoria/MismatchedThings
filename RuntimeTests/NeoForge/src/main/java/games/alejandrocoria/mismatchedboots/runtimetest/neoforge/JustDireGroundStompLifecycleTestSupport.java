@@ -69,11 +69,34 @@ final class JustDireGroundStompLifecycleTestSupport {
             var root = barrel.getItem(slot);
             var decoded = ItemStack.CODEC.parse(player.registryAccess().createSerializationContext(JsonOps.INSTANCE), expected.get(slot)).getOrThrow();
             require(ItemStack.matches(decoded, root), "Disk-loaded stack differs in orientation " + slot);
+            inventoryPreferences(root, slot);
             require(JustDireGroundStompTestSupport.timer(root) > 0, "Disk cooldown was lost");
             if (slot >= 2) {
                 var clock = JustDireEarthquakeTestSupport.clock(root, "earthquake");
                 require(clock != null && clock.ticks() > 0 && clock.active() == (slot == 2), "Disk Earthquake phase was lost/reset");
             }
+        }
+    }
+
+    static void inventoryPreferences(ItemStack root, int slot) throws ReflectiveOperationException {
+        JustDireEarthquakeTestSupport.bind();
+        var bindings = root.getOrDefault(JustDireAttributeTestSupport.<List<Object>>component("ability_bindings"), List.of());
+        if (slot == 0 || slot == 2) {
+            require(bindings.contains(JustDireEarthquakeTestSupport.binding("groundstomp", 71, false, false))
+                    && bindings.contains(JustDireEarthquakeTestSupport.binding("stepheight", 4, true, false)),
+                    "Disk/tier lost inventory-enabled active/passive bindings");
+            if (slot == 0) {
+                require(bindings.contains(JustDireEarthquakeTestSupport.binding("jumpboost", 4, true, true))
+                        && bindings.contains(JustDireEarthquakeTestSupport.binding("lavarepair", 86, false, false)),
+                        "Disk/tier conflated per-ability locations");
+            } else {
+                require(bindings.contains(JustDireEarthquakeTestSupport.binding("earthquake", 74, false, false))
+                        && bindings.contains(JustDireEarthquakeTestSupport.binding("negatefalldamage", -1, false, false)),
+                        "Disk/tier lost Earthquake or unbound inventory preference");
+            }
+        } else {
+            require(bindings.contains(JustDireEarthquakeTestSupport.binding("groundstomp", 71, false, true)),
+                    "Disk/tier lost equipped-required control");
         }
     }
 

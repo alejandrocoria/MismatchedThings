@@ -542,8 +542,9 @@ Powered abilities, damage-to-FE conversion and manual 8.3 acceptance are not cla
 ## Just Dire Things inventory activation
 
 The normal Ground Stomp server and native-screen Live client gates own production
-A/B coverage. The research driver, predicate overrides and `justDireInventorySpike`
-flag are retired; historical findings/results remain in the local exploration.
+A/B coverage; C extends the existing Save/Restart lifecycle gate below. The
+research driver, predicate overrides and `justDireInventorySpike` flag are
+retired; historical findings/results remain in the local exploration.
 Use the existing isolated runs, sequentially (repeat with the .99 property for
 the supported floor):
 
@@ -551,6 +552,7 @@ the supported floor):
 .\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompClientLive --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompTransport --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
 ```
 
 Four A location groups extend the server's existing 21 groups with real effects/FE,
@@ -568,9 +570,11 @@ server equal-copy replacement. Payload units check our subset codec bounds.
 The existing transport gate retains ordinary worn clock and snapshot regressions.
 
 Preparation resets shared smithing run/markers; inspect actual success/failure
-markers and reports, not only process exit. B's retained reports/logs and the
-separate pending lifecycle/manual C gate are recorded in the
+markers and reports, not only process exit. Per-block automated evidence and the
+separate owner-reported physical/manual acceptance are recorded in the
 [implementation plan](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-IMPLEMENTATION.md).
+The owner confirmed the full final checklist on 2026-10-17, completing A/B/C;
+automated runs alone are not treated as physical input/presentation acceptance.
 
 Findings, recommended contract and remaining limits:
 [inventory activation exploration](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-EXPLORATION.md).
@@ -1021,6 +1025,20 @@ rejoins retain the spent-clock HUD; the final paid EQ finishes once afterward,
 without a load-only cue. Observer-only helpers never replace native rendering,
 production ticking or audio. Its separate final manual acceptance belongs to
 [feedback C](../local-docs/JUST-DIRE-THINGS-COOLDOWN-FEEDBACK-IMPLEMENTATION.md#9-block-c--production-lifecycle-and-consolidation).
+
+Inventory-activation C reuses these four roots/two JVMs. Actual native widgets
+set distinct per-ability location flags, keyboard/mouse keys and an unbound
+inventory preference. Ground Stomp/Earthquake pay from ordinary inventory before
+save; the same server root pauses there without HUD/sounds and resumes in FEET.
+Disk reload and real native tier preview/take preserve controls, spent resources
+and timers. Fresh persisted bindings act from main inventory/offhand after old
+packets reject. A genuine pending worn/inventory batch is discarded on disconnect;
+both roots survive real rejoins and fresh free input edits each independently.
+One reply observer reads actual production intent/admitted slots, replacing the
+old hardcoded FEET packet observers; it does not dispatch or grant permissions.
+See the [inventory plan](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-IMPLEMENTATION.md)
+for executed version results and the separate physical acceptance checklist,
+confirmed in full by the owner on 2026-10-17.
 
 ## Just Dire Things native cooldown HUD production
 

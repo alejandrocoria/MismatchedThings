@@ -55,7 +55,10 @@ final class JustDireEarthquakeTestSupport {
         JustDireAttributeTestSupport.set(root, "ability_bindings", List.of(binding("earthquake", key)));
     }
 
-    static Object binding(String ability, int key) throws ReflectiveOperationException { return binding.newInstance(ability, key, false, true); }
+    static Object binding(String ability, int key) throws ReflectiveOperationException { return binding(ability, key, false, true); }
+    static Object binding(String ability, int key, boolean mouse, boolean equipped) throws ReflectiveOperationException {
+        return binding.newInstance(ability, key, mouse, equipped);
+    }
     static Object timer(String ability, int count, boolean isActive) throws ReflectiveOperationException { return timer.newInstance(ability, count, isActive); }
     static Clock clock(ItemStack root, String ability) throws ReflectiveOperationException {
         for (Object record : root.getOrDefault(timers(), List.of())) {
