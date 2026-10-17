@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
@@ -37,6 +38,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
@@ -81,7 +83,7 @@ public final class NeoForgeJustDireResourcesTest {
                     + "save/load; invalid roots/charge; immutable provenance; live powered-attribute depletion; "
                     + "actual Workbench previews/takes/blocked take/close; loaded native smithing upgrade/takes; "
                     + "configured rejection/generic FE policy; real world save fixture; actual Negate debit through Workbench/smithing/save; "
-                    + "production storage/attribute lifecycle; other powered abilities deferred\n");
+                    + "production storage/attribute lifecycle; dedicated-server root tooltip client isolation; other powered abilities deferred\n");
             NetworkAcceptanceFiles.write("just-dire-resources-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("just-dire-resources", failure);
@@ -106,6 +108,10 @@ public final class NeoForgeJustDireResourcesTest {
 
         var pair = MixedBootsFactory.createPair(boots("celestigem", 6_000), iron);
         ItemStack root = pair.primary();
+        ItemStack tooltipBefore = root.copy();
+        JustDireTooltipCompatibility.appendRootState(root, TooltipDisplay.DEFAULT,
+                line -> { throw new AssertionError("Dedicated server emitted client-only JDT root details"); });
+        require(ItemStack.matches(root, tooltipBefore), "Dedicated-server tooltip boundary changed root/provenance");
         ItemStack inverseBefore = pair.inverse().copy();
         var provenance = data(root);
         ItemStack source = boots("eclipsealloy", 20_000);

@@ -130,7 +130,7 @@ public final class JustDireSettingsClient {
         Network.getNetworkHandler().sendToServer(new JustDireActiveNetwork.HeldToggle(hand));
     }
 
-    private static KeyMapping toggleMapping() {
+    static KeyMapping toggleMapping() {
         if (toggleLookupFailed) { return null; }
         if (toggleTool == null) {
             try {

@@ -467,11 +467,13 @@ An actual second server process reloads spent, zero and absent FE from barrels
 in the saved world. A hidden/muted NeoForge client independently assembles its
 synchronized-rule preview, receives actual integrated-server Workbench outputs
 and spent/absent inventory packets, and checks client capability/provenance.
-The same client process also captures native normal/controlled-Shift tooltips:
-one exact current root FE line, maximum tier capacity, one live root upgrade list,
-qualified neutral intrinsic source lore, Shift hints only for retained details
-(including native config-disabled Lava Repair), hidden FE/sources, inverse outputs
-and unchanged vanilla lore/provenance. A test-only `Minecraft.hasShiftDown` mixin
+The same client process also captures native normal/advanced/controlled-Shift
+tooltips. The [native-style root-tooltip plan's A block](../local-docs/JUST-DIRE-THINGS-TOOLTIP-IMPLEMENTATION.md)
+now checks abbreviated/full current FE, native global status and rebound/unbound
+Toggle Tool hints, supported missing/installed rows with individual switch colors,
+intrinsic Lava last only with Shift, config-ineligible/dormant omission and empty-
+hint refusal. Root display restrictions, hidden source details, inverse outputs
+and unchanged vanilla lore/provenance remain covered. A test-only `Minecraft.hasShiftDown` mixin
 is active only during capture; it does not emulate physical keyboard input.
 The actual native Pocket Generator inventory tick transfers precharged FE to the
 mixed pair as its sole receiver, checking sender/receiver conservation and the
@@ -919,7 +921,9 @@ the held-key cases above own actual global-shortcut input coverage. The owner's
 held confirmation and the separate accepted removal handoff are in sections
 13/14 of the linked record. The owner confirmed the focused removal test passed
 on 2026-10-16 (section 14.2), completing both input follow-ups independently of
-synthetic runtime evidence. General tooltip review remains deferred.
+synthetic runtime evidence. The later
+[native-style root-tooltip plan](../local-docs/JUST-DIRE-THINGS-TOOLTIP-IMPLEMENTATION.md)
+now owns presentation changes and separate final acceptance.
 
 ## Just Dire Things Ground Stomp production lifecycle (8.5 E)
 
@@ -1180,11 +1184,12 @@ and no unnecessary Lava binding attempt/diagnostic after the shared API fails.
 Preparation clears this harness's old markers
 before each process; stale results cannot veto or satisfy the current run.
 
-The ordinary `verifyJustDireResources` client matrix now asserts one intrinsic
-root Lava line in normal/advanced and Shift/non-Shift modes, current root controls,
-hidden provenance/root display restrictions, native config exclusion, unchanged
-five-upgrade inventory and no source Lava duplicate/qualifier/empty Shift hint.
-These replace the earlier source-Lava expectations. Synthetic input and tooltip
+The ordinary `verifyJustDireResources` client matrix now follows the separate
+[native-style root-tooltip plan](../local-docs/JUST-DIRE-THINGS-TOOLTIP-IMPLEMENTATION.md):
+intrinsic Lava is the last expanded row, colored by its saved switch, without an
+installation requirement or non-Shift ability line. Hidden provenance/root display
+restrictions, native config exclusion and no source duplicates remain covered.
+The preceding standalone-Lava layout is retained only as dated evidence. Synthetic input and tooltip
 structure are not physical/manual screen readability acceptance. The owner
 separately confirmed B's focused controls/bindings/tooltip checklist on 2026-10-14,
 closing [section 9.3](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.md#93-focused-owner-checklist--accepted).
