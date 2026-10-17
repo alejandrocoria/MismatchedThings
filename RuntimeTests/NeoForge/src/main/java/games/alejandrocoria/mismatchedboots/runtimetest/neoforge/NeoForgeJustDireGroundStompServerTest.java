@@ -481,16 +481,16 @@ public final class NeoForgeJustDireGroundStompServerTest {
         for (String ability : List.of("stepheight", "negatefalldamage")) {
             require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 2, ability, 1, 71, false, true)).accepted(), "Dead numeric setting accepted: " + ability);
         }
-        require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 5, "", 0, 71, false, true)).accepted()
-                && !combined.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component("tool_enabled"), true), "Tool disable rejected");
-        require(JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 5, "", 0, 71, false, true)).accepted()
-                && combined.getOrDefault(NeoForgeJustDireGroundStompServerTest.<Boolean>component("tool_enabled"), true), "Tool re-enable rejected");
+        var beforeRetiredToggle = combined.copy();
+        // Global toggling belongs to the held shortcut; retired menu operation 5 must stay inert.
+        require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 5, "", 0, 71, false, true)).accepted()
+                && ItemStack.matches(combined, beforeRetiredToggle), "Retired menu toggle accepted or changed the root");
         var uninstalled = combined.copy(); set(uninstalled, "jumpboost_upgrade_installed", false);
         player.setItemSlot(EquipmentSlot.FEET, uninstalled);
         selected = JustDireActiveNetwork.edit(player, request(menu, ++selection, 1, JustDireActiveNetwork.NONE, 0, "", 0, 71, false, true));
         require(selected.accepted() && !JustDireActiveNetwork.edit(player, request(menu, selection, 2, selected.token(), 1, "jumpboost", 0, 71, false, true)).accepted(), "Uninstalled passive settings authorized edit");
         player.containerMenu = player.inventoryMenu;
-        record("installed supported passive settings: Step/Jump/Negate toggles and Jump slider, tool disable/re-enable, uninstalled rejection; no dead Step/Negate numeric setting");
+        record("installed supported passive settings: Step/Jump/Negate toggles and Jump slider, retired global menu operation rejected without root changes, uninstalled rejection; no dead Step/Negate numeric setting");
     }
 
     private static void poweredJumpSettings(MinecraftServer server) throws Exception {

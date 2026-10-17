@@ -539,6 +539,35 @@ through a real world restart and actual client equipped armor/Step Assist at
 charged/depleted FE, in addition to production Workbench and packet agreement.
 Powered abilities, damage-to-FE conversion and manual 8.3 acceptance are not claimed.
 
+## Just Dire Things inventory-activation spike
+
+Opt-in research selected 2026-10-17; production inventory activation is **not**
+enabled. Reuses the isolated Ground Stomp dedicated-server launch and native
+artifact verification, with a separate harness and separate result markers:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer -PjustDireInventorySpike=true "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer -PjustDireInventorySpike=true --console=plain
+```
+
+Five bounded groups compare native location filters/inventory actions, candidate
+multi-root keyboard/mouse dispatch, stale identity and actual extraction rollback,
+worn-only clocks and location-correct durability break callbacks. Actual mixed
+economic/effect logic remains production; test-only predicate overrides and the
+break callback candidate apply only inside scoped research calls. The normal
+unflagged production harness remains unchanged.
+
+The flagged run fails on missing success/report, a failure marker or runtime
+ERROR, and retains its report/latest.log under
+`NeoForge/build/reports/just-dire-inventory-spike/<neoforge_version>/` relative
+to this directory. Preparation resets shared smithing run/markers; run sequentially.
+Do not pass the spike flag to production verifier tasks: its separate markers
+are deliberately not production acceptance. This server-only in-process proof
+does not test physical input, the mixed UI or wire batch transport.
+
+Findings, recommended contract and remaining limits:
+[inventory activation exploration](../local-docs/JUST-DIRE-THINGS-INVENTORY-ACTIVATION-EXPLORATION.md).
+
 ## Just Dire Things consolidation and manual handoff (8.3 C)
 
 There is one production FE provider and one production attribute projection

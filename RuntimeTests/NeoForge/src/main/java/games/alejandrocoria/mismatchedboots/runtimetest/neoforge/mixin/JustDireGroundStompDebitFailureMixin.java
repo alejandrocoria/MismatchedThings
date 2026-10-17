@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireGroundStompServerGuardPlugin;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireInventoryActivationSpike;
 import net.minecraft.world.entity.EquipmentSlot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 abstract class JustDireGroundStompDebitFailureMixin {
     @ModifyReturnValue(method = "extract", at = @At("RETURN"))
     private int fail(int extracted) {
+        if (extracted > 0 && Boolean.getBoolean("mismatchedboots.runtimetest.justDireInventorySpike")) { JustDireInventoryActivationSpike.afterDebit(); }
         int fault = JustDireGroundStompServerGuardPlugin.fault;
         if (extracted > 0 && fault > 0 && fault < 4) {
             JustDireGroundStompServerGuardPlugin.extracted = extracted;
