@@ -103,7 +103,7 @@ class MixedBootsSourcesTest {
         assertTrue(MixedBootsBehaviorTags.isProjected(betterEndTag("armor_set/crystalite")));
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("sentient_upgrade_set/sentient")));
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("sentient_upgrade_set")));
-        assertFalse(MixedBootsBehaviorTags.isProjected(neoVitaeTag("spiritus_capable")));
+        assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("spiritus_capable")));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.FOOT_ARMOR));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.REPAIRS_IRON_ARMOR));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.IRON_TOOL_MATERIALS));

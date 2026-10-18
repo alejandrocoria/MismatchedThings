@@ -21,11 +21,15 @@ public final class MixedBootsBehaviorTags {
     private static final TagKey<Item> SENTIENT_UPGRADE_SET = TagKey.create(
             Registries.ITEM,
             Identifier.fromNamespaceAndPath("neovitae", "sentient_upgrade_set"));
+    private static final TagKey<Item> SPIRITUS_CAPABLE = TagKey.create(
+            Registries.ITEM,
+            Identifier.fromNamespaceAndPath("neovitae", "spiritus_capable"));
     private static final Set<TagKey<Item>> ANY_SOURCE = Set.of(
             ItemTags.PIGLIN_SAFE_ARMOR,
             CRYSTALITE_SET,
             SENTIENT_SET,
-            SENTIENT_UPGRADE_SET);
+            SENTIENT_UPGRADE_SET,
+            SPIRITUS_CAPABLE);
 
     private MixedBootsBehaviorTags() {
     }
