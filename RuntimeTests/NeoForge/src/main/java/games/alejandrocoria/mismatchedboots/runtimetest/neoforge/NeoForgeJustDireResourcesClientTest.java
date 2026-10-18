@@ -19,7 +19,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleMenuProvider;
@@ -27,7 +26,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SmithingMenu;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
@@ -47,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireTooltipTestSupport.capture;
+import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireTooltipTestSupport.key;
+
 /** Real NeoForge integrated-server packets, with independent synchronized client preview rules. */
 public final class NeoForgeJustDireResourcesClientTest {
     private static int ticks;
@@ -54,14 +55,11 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static boolean finished;
     private static Future<?> job;
     private static MismatchedWorkbenchResult preview;
-    private static Boolean tooltipShift;
     private static int generatorCharge;
     private static int fallCharge;
     private static ItemStack refundPurchased;
 
     private NeoForgeJustDireResourcesClientTest() {}
-
-    public static Boolean tooltipShift() { return tooltipShift; }
 
     static void tick(Minecraft client) {
         if (finished) { return; }
@@ -515,15 +513,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                 boolean showEnergy = capacity > 0 && display.shows(JustDireResourceTestSupport.energyComponent());
                 require(energy.size() == (showEnergy ? 1 : 0), "Historical/duplicate/missing FE lines: " + lines);
                 if (showEnergy) {
-                    Object[] args = ((TranslatableContents) energy.getFirst().getContents()).getArgs();
-                    var magic = Class.forName("com.direwolf20.justdirethings.util.MagicHelpers");
-                    Object expectedAmount = shift ? magic.getMethod("formatted", int.class).invoke(null, amount)
-                            : magic.getMethod("tidyValue", float.class).invoke(null, (float) amount);
-                    Object expectedCapacity = shift ? magic.getMethod("formatted", int.class).invoke(null, capacity)
-                            : magic.getMethod("tidyValue", float.class).invoke(null, (float) capacity);
-                    require(args.length == 2 && args[0].equals(expectedAmount) && args[1].equals(expectedCapacity),
-                            "Live FE differs from native precision/formatting: " + energy);
-                    require(TextColor.fromLegacyFormat(ChatFormatting.GREEN).equals(energy.getFirst().getStyle().getColor()), "FE color differs from native");
+                    JustDireTooltipTestSupport.energy(lines, amount, capacity, shift);
                 }
                 var global = lines.stream().filter(line -> key(line).equals("justdirethings.enabled") || key(line).equals("justdirethings.disabled")).toList();
                 boolean showGlobal = nativeBoot && display.shows(JustDireAttributeTestSupport.component("tool_enabled"));
@@ -550,18 +540,6 @@ public final class NeoForgeJustDireResourcesClientTest {
                 require(ItemStack.matches(root, before), "Tooltip generation mutated root/provenance");
             }
         }
-    }
-
-    private static List<Component> capture(Minecraft client, ItemStack stack, TooltipFlag flag, boolean shift) {
-        tooltipShift = shift;
-        try {
-            require(client.hasShiftDown() == shift, "Controlled tooltip Shift input was not installed");
-            return stack.getTooltipLines(Item.TooltipContext.of(client.level), client.player, flag);
-        } finally { tooltipShift = null; }
-    }
-
-    private static String key(Component line) {
-        return line.getContents() instanceof TranslatableContents text ? text.getKey() : "";
     }
 
     private static boolean equipmentAgrees(Minecraft client, ItemStack expected) {

@@ -475,6 +475,20 @@ intrinsic Lava last only with Shift, config-ineligible/dormant omission and empt
 hint refusal. Root display restrictions, hidden source details, inverse outputs
 and unchanged vanilla lore/provenance remain covered. A test-only `Minecraft.hasShiftDown` mixin
 is active only during capture; it does not emulate physical keyboard input.
+`JustDireTooltipTestSupport` now shares that controlled capture/native FE and
+name-only row observation with the native-screen/Lava/lifecycle client. Jump
+intensity is checked on the root and actual movement, not printed in its row;
+global-off does not repaint individual switches. Tier removal checks expanded
+Lava absence instead of the retired standalone status line. No second driver,
+state projection or replacement ticking is introduced by this consolidation.
+The [tooltip B record](../local-docs/JUST-DIRE-THINGS-TOOLTIP-IMPLEMENTATION.md#8-block-b-implementation--2026-10-17)
+owns its .99/.114 resource/Live/lifecycle/Lava-settings passes and .114 absence,
+storage-fault and packaging checks. The owner separately confirmed all five final
+physical presentation checks on **2026-10-18** (plan section 6), completing the
+bounded A/B plan, not establishing another automated run or manual loader matrix.
+Its warning audit separates expected unknown native item/component
+warnings from the absent client's previously JDT-populated disposable world;
+this is not a tooltip or optional class-loading failure.
 The actual native Pocket Generator inventory tick transfers precharged FE to the
 mixed pair as its sole receiver, checking sender/receiver conservation and the
 updated real client packet/tooltip. Fuel burning/efficiency and Curios are not tested.

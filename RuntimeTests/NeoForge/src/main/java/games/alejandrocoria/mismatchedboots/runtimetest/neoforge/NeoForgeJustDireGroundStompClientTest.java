@@ -30,8 +30,6 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -43,7 +41,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
@@ -134,6 +131,16 @@ final class NeoForgeJustDireGroundStompClientTest {
                 press(GLFW.GLFW_KEY_G, GLFW.GLFW_PRESS);
                 mousePress(3, GLFW.GLFW_PRESS);
                 require(client.screen == null, "Absent input opened screen");
+            });
+            add("quiet optional absence leaves mixed tooltip and provenance intact", () -> {
+                var root = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                require(JustDireSettingsCompatibility.mixed(root), "Absent tooltip lacks an actual mixed root");
+                var snapshot = root.copy();
+                for (boolean shift : new boolean[]{false, true}) {
+                    require(JustDireTooltipTestSupport.capture(client, root, TooltipFlag.NORMAL, shift).stream()
+                            .noneMatch(line -> JustDireTooltipTestSupport.key(line).startsWith("justdirethings.")), "Absent JDT leaked tooltip state");
+                }
+                require(ItemStack.matches(root, snapshot), "Absent tooltip changed provenance");
             });
             return;
         }
@@ -465,7 +472,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 add("enabled root repairs despite frozen source switches", () -> server(client, player -> lavaDrop(player, true)));
                 open(client); select(client, 36); assign(client, "LAVAREPAIR", 4, true);
                 globalState(client, false);
-                add("global-off tooltip is disabled", () -> lavaTooltip(client, false));
+                add("global-off tooltip retains the enabled individual Lava switch", () -> lavaTooltip(client, true));
                 close(client);
                 add("global-off root remains protected without ritual", () -> server(client, player -> lavaDrop(player, false)));
                 add("equipped extra mouse toggles Lava even with global tool off and no FE", () -> mousePress(4, GLFW.GLFW_PRESS),
@@ -514,12 +521,14 @@ final class NeoForgeJustDireGroundStompClientTest {
     }
 
     private static void lavaTooltip(Minecraft client, boolean enabled) {
-        var lines = feet(client).getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
-        var intrinsic = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
-                && text.getKey().equals("justdirethings.ability") && text.getArgs()[0] instanceof Component ability
-                && ability.getContents() instanceof TranslatableContents name && name.getKey().equals("justdirethings.ability.lavarepair")).toList();
-        require(intrinsic.size() == 1 && ((Component) ((TranslatableContents) intrinsic.getFirst().getContents()).getArgs()[1]).getContents()
-                instanceof TranslatableContents state && state.getKey().equals("justdirethings." + (enabled ? "enabled" : "disabled")), "Root Lava tooltip missing/current state wrong");
+        var root = feet(client); var snapshot = root.copy();
+        var lines = JustDireTooltipTestSupport.capture(client, root, TooltipFlag.NORMAL, true);
+        var lava = JustDireTooltipTestSupport.ability(lines, "lavarepair", enabled);
+        var abilities = lines.stream().filter(line -> JustDireTooltipTestSupport.key(line).startsWith("justdirethings.ability.")).toList();
+        require(abilities.getLast() == lava, "Intrinsic Lava must be last");
+        require(JustDireTooltipTestSupport.capture(client, root, TooltipFlag.NORMAL, false).stream()
+                .noneMatch(line -> JustDireTooltipTestSupport.key(line).equals("justdirethings.ability.lavarepair"))
+                && ItemStack.matches(root, snapshot), "Non-Shift Lava row or tooltip mutation");
     }
 
     private static void lavaDrop(ServerPlayer player, boolean enabled) {
@@ -610,17 +619,10 @@ final class NeoForgeJustDireGroundStompClientTest {
 
     private static void assertPoweredJump(Minecraft client, int configured, int usable) {
         var root = feet(client); var before = root.copy();
-        var lines = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
-        var upgrades = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
-                && text.getKey().equals("tooltip.mismatchedboots.just_dire.upgrade_setting")
-                && text.getArgs()[0] instanceof Component ability && ability.getContents() instanceof TranslatableContents name
-                && name.getKey().equals("justdirethings.ability.jumpboost")).toList();
-        require(upgrades.size() == 1 && ((TranslatableContents) upgrades.getFirst().getContents()).getArgs()[2].equals(configured),
-                "Root tooltip lost/duplicated configured Jump value");
-        var energy = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
-                && text.getKey().equals("justdirethings.festored")).toList();
-        require(energy.size() == 1 && ((TranslatableContents) energy.getFirst().getContents()).getArgs()[0]
-                .equals(String.format(Locale.ROOT, "%,d", charge(root))), "Root tooltip retained historical FE");
+        var lines = JustDireTooltipTestSupport.capture(client, root, TooltipFlag.NORMAL, true);
+        JustDireTooltipTestSupport.ability(lines, "jumpboost", flag(root, "jumpboost_toggle", true));
+        require(value(root, "jumpboost_value") == configured, "Root lost configured Jump value");
+        JustDireTooltipTestSupport.energy(lines, charge(root), JustDireResourceTestSupport.handler(root).getCapacityAsInt(), true);
         assertClientJump(client, usable);
         require(ItemStack.matches(before, root), "Presentation/Jump spent FE or changed root/source controls");
     }
@@ -1125,6 +1127,11 @@ final class NeoForgeJustDireGroundStompClientTest {
             require(JustDireResourceTestSupport.handler(feet(client)) != null, "Storage disabled by UI failure");
             require(games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility.available(), "Ground Stomp API disabled by UI failure");
             assertClientJump(client, 5);
+            var root = feet(client); var snapshot = root.copy();
+            var lines = JustDireTooltipTestSupport.capture(client, root, TooltipFlag.NORMAL, true);
+            JustDireTooltipTestSupport.energy(lines, charge(root), JustDireResourceTestSupport.handler(root).getCapacityAsInt(), true);
+            lavaTooltip(client, true);
+            require(ItemStack.matches(root, snapshot), "UI failure tooltip changed live root");
         });
     }
 
@@ -1366,18 +1373,12 @@ final class NeoForgeJustDireGroundStompClientTest {
 
     private static void assertEarthquakeTooltip(Minecraft client, int charge) {
         var root = feet(client); var before = root.copy();
-        var lines = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
-        var energy = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text && text.getKey().equals("justdirethings.festored")).toList();
+        var lines = JustDireTooltipTestSupport.capture(client, root, TooltipFlag.NORMAL, true);
         int nativeCapacity = JustDireResourceTestSupport.handler(boot("eclipsealloy", 0)).getCapacityAsInt();
-        require(energy.size() == 1 && JustDireResourceTestSupport.handler(root).getCapacityAsInt() == nativeCapacity, "Duplicate/historical FE or doubled capacity");
-        var args = ((TranslatableContents) energy.getFirst().getContents()).getArgs();
-        require(args[0].equals(String.format(Locale.ROOT, "%,d", charge)) && args[1].equals(String.format(Locale.ROOT, "%,d", nativeCapacity)), "Stale root FE tooltip");
-        var earthquake = lines.stream().filter(line -> line.getContents() instanceof TranslatableContents text
-                && text.getKey().startsWith("tooltip.mismatchedboots.just_dire.upgrade") && text.getArgs().length > 0
-                && text.getArgs()[0] instanceof Component ability && ability.getContents() instanceof TranslatableContents name
-                && name.getKey().equals("justdirethings.ability.earthquake")).toList();
-        require(earthquake.size() == 1 && ((TranslatableContents) earthquake.getFirst().getContents()).getArgs().length == 2
-                && ItemStack.matches(root, before), "EQ inventory duplicated/mutating or advertised unused numeric value");
+        require(JustDireResourceTestSupport.handler(root).getCapacityAsInt() == nativeCapacity, "Doubled/historical capacity");
+        JustDireTooltipTestSupport.energy(lines, charge, nativeCapacity, true);
+        JustDireTooltipTestSupport.ability(lines, "earthquake", flag(root, "earthquake_toggle", true));
+        require(ItemStack.matches(root, before), "EQ tooltip mutated live state/provenance");
     }
 
     private static void lifecycleSave(Minecraft client, int slot) {
@@ -1598,9 +1599,9 @@ final class NeoForgeJustDireGroundStompClientTest {
         open(client); select(client, 36);
         add("ordinary tier slot packet removes only the Lava native widget/tooltip", () -> {
             require(!hasIcon(client, "LAVAREPAIR") && hasIcon(client, "GROUNDSTOMP"), "Client tier eligibility stale");
-            var lines = feet(client).getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
-            require(lines.stream().noneMatch(line -> line.getContents() instanceof TranslatableContents text
-                    && text.getKey().equals("justdirethings.ability")), "Dormant Lava advertised as installed/available");
+            var lines = JustDireTooltipTestSupport.capture(client, feet(client), TooltipFlag.NORMAL, true);
+            require(lines.stream().noneMatch(line -> JustDireTooltipTestSupport.key(line).equals("justdirethings.ability.lavarepair")),
+                    "Dormant Lava advertised as installed/available");
             JustDireGroundStompLifecycleTestSupport.sameControls(lavaBefore, feet(client), false);
         });
         close(client);
