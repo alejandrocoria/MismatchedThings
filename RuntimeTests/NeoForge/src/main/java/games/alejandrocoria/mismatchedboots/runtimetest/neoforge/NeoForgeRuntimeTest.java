@@ -15,6 +15,10 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.oritechFallTest")) {
+            NeoForgeOritechFallTest.register();
+            return;
+        }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeCompositionTest")) {
             NeoForgeNeoVitaeCompositionTest.register();
             return;

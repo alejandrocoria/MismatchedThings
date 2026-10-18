@@ -362,6 +362,37 @@ owns dated automated evidence and the owner-accepted final manual exit (sections
 7/10.4). The heading/task names are retained
 from A; the existing gate is extended, not duplicated into a second suite.
 
+## Oritech Exo fall recognition
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyOritechFall :RuntimeTests:NeoForge:verifyOritechFallAbsent --console=plain
+```
+
+The opt-in server gate hash-checks the installed Oritech 2.0.0-exp6, GeckoLib 5.5.2
+and Athena 4.7.3 and copies them into isolated versioned build directories. Native
+damage dispatch checks Exo, mixed/inverse/two-Exo roots, repeated falls, non-fall
+damage, wrong slots and malformed/spoofed roots. Native sound-event observation
+checks one servo cue per protected landing with unchanged parameters. Source
+provenance and existing owner equip-sound projection are retained. Absent runs
+without these mods and checks an ordinary inverse mixed pair still takes damage.
+There is no replacement Oritech handler or production damage listener.
+
+Commands can use `-Pneoforge_version=26.1.2.99` for the support floor. Reports and
+markers are under `RuntimeTests/NeoForge/build/reports/oritech-fall/<version>/`;
+disposable runs are under that project's `build/run/oritechFall/<version>/`.
+Both processes are bounded and require report/success markers. The
+[implementation record](../local-docs/ORITECH-COMPATIBILITY-EXPLORATION.md#7-local-fall-predicate-implementation--2026-10-18)
+owns executed results and the accepted ordinary-client checklist: server sound
+events are not client audibility or general sound-composition acceptance.
+Guard units (three each), native damage (15 cases each) and absent controls (two
+each) passed on .114/.99 on 2026-10-18; .114 compilation/assembly and packaging
+were restored and verified. Optional-incompatible instruction controls are units,
+not a separately claimed real competing-mixin run. Upstream Oritech resource
+warnings/data-map error are recorded separately. The owner confirmed all final
+manual checks passed on 2026-10-18, accepting this bounded fall-protection and
+landing-feedback fix (section 7.2). This is separate manual evidence, not an
+inferred .99/.114 manual matrix or acceptance of general equip-sound composition.
+
 ## Item geometry coverage
 
 The Fabric client suite exercises both ordinary baked quads and real Fabric

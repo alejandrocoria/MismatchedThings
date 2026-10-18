@@ -1,0 +1,73 @@
+// Isolated, pinned native/absent checks; never mutate the owner's client mods/worlds.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def reports = layout.buildDirectory.dir("reports/oritech-fall/${neoforge_version}")
+def runs = layout.buildDirectory.dir("run/oritechFall/${neoforge_version}")
+def artifacts = [
+        'oritech-2.0.0-exp6.jar': 'caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b',
+        'geckolib-neoforge-26.1.2-5.5.2.jar': 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d',
+        'athena-4.7.3.jar': 'e0cf1eb366d8ada36c3f03cddae01be2b11b90a6684849e829b89c0ffac15888'
+].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
+
+['Live', 'Absent'].each { variant ->
+    def directory = runs.map { it.dir(variant.toLowerCase(Locale.ROOT)) }
+    def markers = reports.map { it.dir(variant.toLowerCase(Locale.ROOT)) }
+    neoForge.runs.create("oritechFall${variant}") {
+        server()
+        disableIdeRun()
+        gameDirectory = directory.get().asFile
+        programArgument('--nogui')
+        systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.oritechFallTest', 'true')
+        systemProperty('mismatchedboots.runtimetest.oritechAbsent', (variant == 'Absent').toString())
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareOritechFall${variant}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            if (variant == 'Live') {
+                artifacts.each { artifact, hash ->
+                    if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                            .digest(artifact.bytes).encodeHex().toString() != hash) {
+                        throw new GradleException("Missing/unexpected pinned Oritech fixture: ${artifact}")
+                    }
+                }
+            }
+            fixtureFiles.delete { delete directory, markers }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar)
+                if (variant == 'Live') { from(artifacts.keySet()) }
+                into(new File(directory.get().asFile, 'mods'))
+            }
+            new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+            new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+        }
+    }
+    tasks.named("runOritechFall${variant}") { dependsOn prepare }
+    tasks.register("verifyOritechFall${variant == 'Live' ? '' : variant}") {
+        group = 'verification'
+        description = "Native Oritech Exo fall recognition (${variant.toLowerCase(Locale.ROOT)})"
+        doLast {
+            def processLog = new File(reports.get().asFile, "${variant.toLowerCase(Locale.ROOT)}-process.log")
+            runBounded(":RuntimeTests:NeoForge:runOritechFall${variant}", processLog, 240)
+            def result = markers.get().asFile
+            def failure = new File(result, 'oritech-fall-failure.txt')
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            def report = new File(result, 'oritech-fall-report.txt')
+            if (!new File(result, 'oritech-fall-success.txt').isFile() || !report.isFile()) {
+                throw new GradleException("Missing Oritech result; see ${processLog}")
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
