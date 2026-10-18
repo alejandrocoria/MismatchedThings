@@ -306,16 +306,39 @@ state, defaulted fields and present-false marker), repeated production
 recomposition and controlled synthetic source replacement. That replacement
 exposes generic three-way equality mistakes; it is **not a native recipe**.
 Root-only later installation and no-container/no-resurrection controls are
-included. Loaded vanilla trim/tier recipes are separately assembled through the
-real smithing policy; both-source trims and eligible-only netherite transformation
-retain the live native tuple/marker, damage/name/enchantments/prior-work cost.
+included. C replaces B's duplicate positive trim/tier previews with actual menu
+takes; the synthetic equality controls remain because ordinary recipes do not
+expose every three-way merge boundary.
 It installs no fake components or candidate adapter. The Absent gate starts with
 no Neo Vitae/dependencies and checks ordinary composition/provenance/durability
 and the loaded tier recomposition preview.
-These are creation/recomposition and recipe-preview checks, **not** Workbench
-payment, native forge/transfer, menu takes, restart, client synchronization or
-manual acceptance. A's five-test/creation-only report remains historical evidence;
-B's current evidence and archived reports are in plan section 9.
+
+Live now runs **two game JVMs**. Save makes three real Workbench transactions
+(six outputs, one-time input consumption), runs the pinned native Hellfire Forge
+tick for Spiritus infusion and Blood Mending, and checks ingredient/fuel payment.
+Native `SpiritusHelper` performs fill/drain, simulation, conflicting-type rejection,
+depletion and refill with another aspect. Three actual smithing menu takes
+(trim/tier/later-infused tier) preserve root state and appropriate source history.
+Six complete roots (compatible, empty, two conflicting, later-infused and absent)
+are written to a world barrel with independent serialized expectations.
+
+Restart opens that same world in another JVM, checks its different PID and all
+six complete stacks/provenance **before mutation**, then exercises native drain,
+another paid trim, empty-container refill/type switching and direct infusion of
+the previously uninfused inverse. No candidate forge, simulated payment engine,
+source-copy substitute for a menu take or in-memory reload is used.
+The native tick is driven synchronously to completion; this does not test its
+wall-clock timing or rendered effects. The standard NeoForge offline player
+handles native advancement/research notifications without a real connection.
+
+Six vanilla slot-packet codec round trips include the native components and
+mixed provenance. They are **not a connected-client/reconnect test**. C changes
+no production transport path or custom packet. The owner separately confirmed all
+six final manual checks passed on 2026-10-18, including native tooltip/bar
+presentation and ordinary-client behavior, accepting C and closing the bounded
+A/B/C plan. This does not establish a manual .99/.114 matrix.
+A/B's earlier creation-only/preview evidence remains historical; current C results
+and per-phase archived reports are in plan section 10.
 
 Live hash-checks the installed Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
 2.16.0 JARs, copying them read-only from `NeoForge/runs/client/mods` into disposable
@@ -330,10 +353,13 @@ this RuntimeTests directory (process logs are alongside the variant directories)
 worlds/configs/mod copies are in
 `NeoForge/build/run/neoVitaeComposition/<version>/{live,absent}/`.
 The verifiers always run bounded child processes and reject failure/missing
-markers. The new runs/tasks are isolated in
+markers. Live also requires the lifecycle and Restart success reports; standalone
+`runNeoVitaeCompositionRestart` requires a successful Save and must not reset the
+world or markers. The runs/tasks are isolated in
 [neo-vitae-composition-tests.gradle](../gradle/neo-vitae-composition-tests.gradle).
 The [implementation plan](../local-docs/NEO-VITAE-INFUSION-COMPOSITION-IMPLEMENTATION.md)
-owns dated evidence and the pending C exit. The heading/task names are retained
+owns dated automated evidence and the owner-accepted final manual exit (sections
+7/10.4). The heading/task names are retained
 from A; the existing gate is extended, not duplicated into a second suite.
 
 ## Item geometry coverage

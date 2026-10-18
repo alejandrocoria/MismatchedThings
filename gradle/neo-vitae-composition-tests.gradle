@@ -60,7 +60,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     tasks.named("runNeoVitaeComposition${variant}") { dependsOn prepare }
     tasks.register("verifyNeoVitaeComposition${variant == 'Live' ? '' : variant}") {
         group = 'verification'
-        description = "Production Neo Vitae creation/recomposition (${variant.toLowerCase(Locale.ROOT)}); not lifecycle acceptance"
+        description = "Production Neo Vitae composition (${variant.toLowerCase(Locale.ROOT)}); Live includes native lifecycle/restart"
         doLast {
             def processLog = new File(reports.get().asFile, "${variant.toLowerCase(Locale.ROOT)}-process.log")
             runBounded(":RuntimeTests:NeoForge:runNeoVitaeComposition${variant}", processLog, 240)
@@ -72,6 +72,41 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 throw new GradleException("Missing Neo Vitae composition result; see ${processLog}")
             }
             logger.lifecycle(report.text)
+            if (variant == 'Live') {
+                runBounded(':RuntimeTests:NeoForge:runNeoVitaeCompositionRestart',
+                        new File(reports.get().asFile, 'restart-process.log'), 240)
+                def restartFailure = new File(result, 'neo-vitae-composition-restart-failure.txt')
+                if (restartFailure.isFile()) { throw new GradleException(restartFailure.text) }
+                def restartReport = new File(result, 'neo-vitae-composition-restart-report.txt')
+                def lifecycleReport = new File(result, 'neo-vitae-composition-lifecycle-report.txt')
+                if (!new File(result, 'neo-vitae-composition-restart-success.txt').isFile()
+                        || !restartReport.isFile() || !lifecycleReport.isFile()) {
+                    throw new GradleException('Missing native lifecycle/restart evidence')
+                }
+                logger.lifecycle(lifecycleReport.text + restartReport.text)
+            }
+        }
+    }
+}
+
+// Same saved world and pinned mod copies, but another game JVM; never depend on the destructive Save preparation.
+neoForge.runs.create('neoVitaeCompositionRestart') {
+    server()
+    disableIdeRun()
+    gameDirectory = runs.map { it.dir('live') }.get().asFile
+    programArgument('--nogui')
+    systemProperty('mismatchedboots.runtimetest.markers', reports.map { it.dir('live') }.get().asFile.absolutePath)
+    systemProperty('mismatchedboots.runtimetest.neoVitaeCompositionTest', 'true')
+    systemProperty('mismatchedboots.runtimetest.neoVitaeRestart', 'true')
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runNeoVitaeCompositionRestart') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doFirst {
+        def saved = reports.map { it.dir('live') }.get().asFile
+        if (!new File(saved, 'neo-vitae-composition-success.txt').isFile()
+                || !new File(saved, 'neo-vitae-composition-saved.json').isFile()) {
+            throw new GradleException('Run the native Save phase before Restart')
         }
     }
 }

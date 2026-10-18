@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/** Production creation/recomposition and recipe preview; no forge, menu take, transfer or restart acceptance. */
+/** Focused creation/recomposition rules plus native lifecycle acceptance in two game processes. */
 public final class NeoForgeNeoVitaeCompositionTest {
     private static boolean finished;
 
@@ -41,20 +41,29 @@ public final class NeoForgeNeoVitaeCompositionTest {
         if (finished) { return; }
         finished = true;
         try {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeRestart")) {
+                NeoVitaeCompositionLifecycleTest.restart(server);
+                NetworkAcceptanceFiles.write("neo-vitae-composition-restart-success.txt", "neoforge\n");
+                return;
+            }
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeAbsent");
             require(ModList.get().isLoaded("neovitae") != absent, "Wrong optional-mod environment");
             if (absent) { verifyAbsent(server.overworld()); }
-            else { verifyNative(server.overworld()); }
+            else {
+                verifyNative(server.overworld());
+                NeoVitaeCompositionLifecycleTest.save(server);
+            }
             NetworkAcceptanceFiles.write("neo-vitae-composition-report.txt", absent
                     ? "optional absent: production pair, inverse provenance, ordinary durability, immutable inputs, tier recomposition preview\n"
                     : "native components + production creation finalizer: one-sided, same-type, conflicting positive types, "
                     + "empty/defaulted, no container/orphan charge; marker union including false; "
                     + "both orientations, swapped inputs, repeated previews, immutable provenance, malformed rejection; "
                     + "live tuple/marker preservation: 8 states x 2 orientations with synthetic source replacement and repeat; "
-                    + "root-only installation/absence, loaded trim and tier recipe previews, invalid live rejection\n");
+                    + "root-only installation/absence, invalid live rejection; paid native menus covered by lifecycle report\n");
             NetworkAcceptanceFiles.write("neo-vitae-composition-success.txt", "neoforge\n");
         } catch (Throwable failure) {
-            NetworkAcceptanceFiles.failure("neo-vitae-composition", failure);
+            NetworkAcceptanceFiles.failure(Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeRestart")
+                    ? "neo-vitae-composition-restart" : "neo-vitae-composition", failure);
         } finally { server.halt(false); }
     }
 
@@ -191,16 +200,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
         ItemStack live = pair.primary().copy();
         decorate(level, live);
         live.set(capacity, 4096D); live.set(amount, 12.5); live.set(type, ruina); live.set(blood, false);
-        ItemStack trimmed = smithing(level, live, Items.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, Items.AMETHYST_SHARD);
-        sameLiveState(live, trimmed, capacity, amount, type, blood, "loaded trim recipe");
-        var trims = ModContent.getMixedBootsData(trimmed).orElseThrow();
-        require(trims.left().source().has(DataComponents.TRIM) && trims.right().source().has(DataComponents.TRIM),
-                "Loaded trim did not transform both sources");
-        ItemStack upgraded = smithing(level, trimmed, Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Items.NETHERITE_INGOT);
-        sameLiveState(trimmed, upgraded, capacity, amount, type, blood, "loaded tier recipe");
-        var tier = ModContent.getMixedBootsData(upgraded).orElseThrow();
-        require(tier.left().source().is(Items.NETHERITE_BOOTS) && tier.right().source().is(Items.IRON_BOOTS),
-                "Loaded tier did not transform only the eligible source");
+        // C's paid native menu takes replace the former duplicate positive recipe previews.
         live.set(amount, 4097D);
         ItemStack invalidBefore = live.copy();
         boolean rejected = false;
@@ -211,7 +211,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 && ItemStack.matches(invalidBefore, live), "Invalid live tuple was published or mutated");
     }
 
-    private static void decorate(ServerLevel level, ItemStack root) {
+    static void decorate(ServerLevel level, ItemStack root) {
         root.setDamageValue(7);
         root.set(DataComponents.CUSTOM_NAME, Component.literal("Live infusion"));
         root.set(DataComponents.REPAIR_COST, 11);
@@ -226,7 +226,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
         return result;
     }
 
-    private static void sameLiveState(ItemStack previous, ItemStack output, DataComponentType<Double> capacity,
+    static void sameLiveState(ItemStack previous, ItemStack output, DataComponentType<Double> capacity,
                                        DataComponentType<Double> amount, DataComponentType<Object> type,
                                        DataComponentType<Boolean> blood, String context) {
         for (var field : List.of(capacity, amount, type, blood, DataComponents.DAMAGE, DataComponents.CUSTOM_NAME,
@@ -244,7 +244,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> DataComponentType<T> component(String path) {
+    static <T> DataComponentType<T> component(String path) {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE
                 .getOptional(Identifier.fromNamespaceAndPath("neovitae", path)).orElseThrow();
     }
