@@ -290,19 +290,32 @@ directories and old Fabric test reports are not migrated or deleted.
 .\gradlew.bat :NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' :RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
-Five local policy tests cover the seven composition cases, both orientations,
+Seven local policy tests cover the seven composition cases, both orientations,
 presence-based Blood Mending, fractional/overflow/underflow conservation,
-malformed tuple rejection and unchanged inputs/unrelated output state. Their
+malformed tuple rejection and unchanged inputs/unrelated output state, plus
+exact live tuple/marker presence/value preservation and invalid-live rejection. Their
 local component fixture does not claim a real optional binding.
 
 The native gate uses the **packaged production mod**, real Neo Vitae components
 and the public mixed factory; it checks binding/finalizer wiring, one-sided,
 compatible/conflicting and empty containers, orphan charge, marker union,
 swapped inputs/repeated previews, immutable snapshots and malformed pair rejection.
+B extends the same gate with eight live states in both orientations (spent,
+zero, refilled type, equality with old projection, larger container, removed
+state, defaulted fields and present-false marker), repeated production
+recomposition and controlled synthetic source replacement. That replacement
+exposes generic three-way equality mistakes; it is **not a native recipe**.
+Root-only later installation and no-container/no-resurrection controls are
+included. Loaded vanilla trim/tier recipes are separately assembled through the
+real smithing policy; both-source trims and eligible-only netherite transformation
+retain the live native tuple/marker, damage/name/enchantments/prior-work cost.
 It installs no fake components or candidate adapter. The Absent gate starts with
-no Neo Vitae/dependencies and checks ordinary composition/provenance/durability.
-These are creation checks, **not** Workbench payment, native forge/transfer,
-recomposition, restart, client synchronization or manual acceptance.
+no Neo Vitae/dependencies and checks ordinary composition/provenance/durability
+and the loaded tier recomposition preview.
+These are creation/recomposition and recipe-preview checks, **not** Workbench
+payment, native forge/transfer, menu takes, restart, client synchronization or
+manual acceptance. A's five-test/creation-only report remains historical evidence;
+B's current evidence and archived reports are in plan section 9.
 
 Live hash-checks the installed Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
 2.16.0 JARs, copying them read-only from `NeoForge/runs/client/mods` into disposable
@@ -320,7 +333,8 @@ The verifiers always run bounded child processes and reject failure/missing
 markers. The new runs/tasks are isolated in
 [neo-vitae-composition-tests.gradle](../gradle/neo-vitae-composition-tests.gradle).
 The [implementation plan](../local-docs/NEO-VITAE-INFUSION-COMPOSITION-IMPLEMENTATION.md)
-owns dated evidence and the pending B/C exits.
+owns dated evidence and the pending C exit. The heading/task names are retained
+from A; the existing gate is extended, not duplicated into a second suite.
 
 ## Item geometry coverage
 

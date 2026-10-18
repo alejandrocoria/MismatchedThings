@@ -14,7 +14,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 import java.math.BigDecimal;
 
-/** Creation-only native infusion policy; source snapshots are never resource wallets. */
+/** Native infusion creation and live-root preservation; snapshots are never resource wallets. */
 public final class NeoVitaeInfusionCompatibility {
     private static volatile Binding binding;
 
@@ -55,6 +55,30 @@ public final class NeoVitaeInfusionCompatibility {
         if (data != null) { initializeCreation(output, data.left().source(), data.right().source(), api); }
     }
 
+    public static void preserveState(ItemStack previous, ItemStack output) {
+        Binding api = binding;
+        if (api != null) { preserveState(previous, output, api); }
+    }
+
+    static void preserveState(ItemStack previous, ItemStack output, Binding api) {
+        read(previous, api); // Validate an installed container before writing any part of the live state.
+        Double capacity = previous.get(api.capacity);
+        Double amount = previous.get(api.amount);
+        Object type = previous.get(api.type);
+        Boolean bloodMending = previous.get(api.bloodMending);
+
+        // Equality with old projection is not provenance. Keep exact presence; never apply read defaults here.
+        restore(output, api.capacity, capacity);
+        restore(output, api.amount, amount);
+        restore(output, api.type, type);
+        restore(output, api.bloodMending, bloodMending);
+    }
+
+    private static <T> void restore(ItemStack output, DataComponentType<T> type, T value) {
+        if (value == null) { output.remove(type); }
+        else { output.set(type, value); }
+    }
+
     // Owner is the left snapshot in this orientation, not a mutable live wallet.
     static void initializeCreation(ItemStack output, ItemStack owner, ItemStack other, Binding api) {
         Infusion left = read(owner, api);
@@ -86,7 +110,7 @@ public final class NeoVitaeInfusionCompatibility {
         Object type = source.getOrDefault(api.type, api.raw);
         if (!Double.isFinite(capacity) || capacity <= 0 || !Double.isFinite(amount) || amount < 0 || amount > capacity
                 || !(type instanceof Enum<?> value) || value.getDeclaringClass() != api.raw.getDeclaringClass()) {
-            throw new IllegalArgumentException("Invalid Neo Vitae source infusion");
+            throw new IllegalArgumentException("Invalid Neo Vitae infusion");
         }
         return new Infusion(capacity, amount, type);
     }

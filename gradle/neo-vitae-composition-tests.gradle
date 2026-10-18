@@ -60,7 +60,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     tasks.named("runNeoVitaeComposition${variant}") { dependsOn prepare }
     tasks.register("verifyNeoVitaeComposition${variant == 'Live' ? '' : variant}") {
         group = 'verification'
-        description = "Production Neo Vitae creation smoke (${variant.toLowerCase(Locale.ROOT)}); not lifecycle acceptance"
+        description = "Production Neo Vitae creation/recomposition (${variant.toLowerCase(Locale.ROOT)}); not lifecycle acceptance"
         doLast {
             def processLog = new File(reports.get().asFile, "${variant.toLowerCase(Locale.ROOT)}-process.log")
             runBounded(":RuntimeTests:NeoForge:runNeoVitaeComposition${variant}", processLog, 240)

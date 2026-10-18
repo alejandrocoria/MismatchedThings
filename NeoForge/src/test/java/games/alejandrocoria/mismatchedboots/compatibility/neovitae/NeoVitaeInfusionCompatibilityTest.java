@@ -107,10 +107,56 @@ class NeoVitaeInfusionCompatibilityTest {
                 assertTrue(ItemStack.matches(before, output));
                 assertTrue(ItemStack.matches(sourceBefore, invalid));
             }
+            ItemStack output = projectedOutput(), before = output.copy();
+            assertThrows(IllegalArgumentException.class,
+                    () -> NeoVitaeInfusionCompatibility.preserveState(invalid, output, API));
+            assertTrue(ItemStack.matches(before, output));
         }
         ItemStack invalidType = boots(100, 1, Type.RAW);
         invalidType.set(API.type(), "unknown");
         assertThrows(IllegalArgumentException.class, () -> create(invalidType, valid));
+        assertThrows(IllegalArgumentException.class,
+                () -> NeoVitaeInfusionCompatibility.preserveState(invalidType, projectedOutput(), API));
+    }
+
+    @Test
+    void preservationRestoresExactTuplePresenceWithoutDefaultingOrReaveraging() {
+        // Includes installed-but-defaulted, orphan fields and entirely absent storage.
+        for (int fields = 0; fields < 8; fields++) {
+            ItemStack previous = boots(4096, 12.5, Type.RUINA);
+            if ((fields & 1) == 0) { previous.remove(API.capacity()); }
+            if ((fields & 2) == 0) { previous.remove(API.amount()); }
+            if ((fields & 4) == 0) { previous.remove(API.type()); }
+            assertPreserved(previous);
+        }
+        for (double balance : List.of(0D, 7.25, 60D)) {
+            assertPreserved(boots(100, balance, Type.RAW));
+        }
+    }
+
+    @Test
+    void preservationKeepsLiveMarkerValueAndAbsenceWithoutReimportingSources() {
+        ItemStack previous = boots(100, 12.5, Type.RUINA);
+        for (Boolean marker : new Boolean[]{null, false, true}) {
+            if (marker == null) { previous.remove(API.bloodMending()); }
+            else { previous.set(API.bloodMending(), marker); }
+            assertPreserved(previous);
+        }
+    }
+
+    private static void assertPreserved(ItemStack previous) {
+        // An unowned projected field must not be restored wholesale from the previous root.
+        previous.set(DataComponents.REPAIR_COST, 2);
+        ItemStack output = projectedOutput(), before = previous.copy();
+        output.set(DataComponents.REPAIR_COST, 11);
+        NeoVitaeInfusionCompatibility.preserveState(previous, output, API);
+        for (var field : List.of(API.capacity(), API.amount(), API.type(), API.bloodMending())) {
+            assertEquals(previous.has(field), output.has(field));
+            assertEquals(previous.get(field), output.get(field));
+        }
+        assertEquals(11, output.get(DataComponents.REPAIR_COST));
+        assertEquals(Component.literal("unrelated state"), output.get(DataComponents.CUSTOM_NAME));
+        assertTrue(ItemStack.matches(before, previous));
     }
 
     private static ItemStack boots(double capacity, double amount, Type type) {

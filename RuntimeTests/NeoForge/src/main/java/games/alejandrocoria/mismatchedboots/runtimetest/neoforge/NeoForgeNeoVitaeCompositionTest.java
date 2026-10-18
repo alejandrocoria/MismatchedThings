@@ -3,21 +3,31 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
-/** Production factory/native component smoke only; no forge, menu, transfer or restart acceptance. */
+/** Production creation/recomposition and recipe preview; no forge, menu take, transfer or restart acceptance. */
 public final class NeoForgeNeoVitaeCompositionTest {
     private static boolean finished;
 
@@ -33,20 +43,22 @@ public final class NeoForgeNeoVitaeCompositionTest {
         try {
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeAbsent");
             require(ModList.get().isLoaded("neovitae") != absent, "Wrong optional-mod environment");
-            if (absent) { verifyAbsent(); }
-            else { verifyNative(); }
+            if (absent) { verifyAbsent(server.overworld()); }
+            else { verifyNative(server.overworld()); }
             NetworkAcceptanceFiles.write("neo-vitae-composition-report.txt", absent
-                    ? "optional absent: production pair, inverse provenance, ordinary durability, immutable inputs\n"
+                    ? "optional absent: production pair, inverse provenance, ordinary durability, immutable inputs, tier recomposition preview\n"
                     : "native components + production creation finalizer: one-sided, same-type, conflicting positive types, "
                     + "empty/defaulted, no container/orphan charge; marker union including false; "
-                    + "both orientations, swapped inputs, repeated previews, immutable provenance, malformed rejection\n");
+                    + "both orientations, swapped inputs, repeated previews, immutable provenance, malformed rejection; "
+                    + "live tuple/marker preservation: 8 states x 2 orientations with synthetic source replacement and repeat; "
+                    + "root-only installation/absence, loaded trim and tier recipe previews, invalid live rejection\n");
             NetworkAcceptanceFiles.write("neo-vitae-composition-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("neo-vitae-composition", failure);
         } finally { server.halt(false); }
     }
 
-    private static void verifyAbsent() {
+    private static void verifyAbsent(ServerLevel level) {
         ItemStack first = new ItemStack(Items.IRON_BOOTS), second = new ItemStack(Items.DIAMOND_BOOTS);
         ItemStack before = first.copy(), secondBefore = second.copy();
         var pair = MixedBootsFactory.createPair(first, second);
@@ -62,9 +74,12 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 return id != null && id.getNamespace().equals("neovitae");
             }), "Absent integration manufactured components");
         }
+        ItemStack tier = smithing(level, pair.inverse(), Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Items.NETHERITE_INGOT);
+        require(ModContent.getMixedBootsData(tier).orElseThrow().left().source().is(Items.NETHERITE_BOOTS),
+                "Absent tier recomposition failed");
     }
 
-    private static void verifyNative() {
+    private static void verifyNative(ServerLevel level) {
         DataComponentType<Double> capacity = component("spiritus_max"), amount = component("spiritus_amount");
         DataComponentType<Object> type = component("spiritus_type");
         DataComponentType<Boolean> blood = component("blood_mending");
@@ -121,6 +136,104 @@ public final class NeoForgeNeoVitaeCompositionTest {
         catch (IllegalArgumentException expected) { rejected = true; }
         require(rejected && ItemStack.matches(first, invalidBefore) && ItemStack.matches(plain, otherBefore),
                 "Malformed pair was published or consumed inputs");
+        verifyPreservation(level, capacity, amount, type, blood, raw, ruina);
+    }
+
+    private static void verifyPreservation(ServerLevel level, DataComponentType<Double> capacity,
+                                           DataComponentType<Double> amount, DataComponentType<Object> type,
+                                           DataComponentType<Boolean> blood, Object raw, Object ruina) {
+        ItemStack first = new ItemStack(Items.DIAMOND_BOOTS), second = new ItemStack(Items.IRON_BOOTS);
+        first.set(capacity, 100D); first.set(amount, 60D); first.set(type, raw); first.set(blood, false);
+        var pair = MixedBootsFactory.createPair(first, second);
+        record Case(String name, Consumer<ItemStack> change) {}
+        var cases = List.of(
+                new Case("spent", root -> root.set(amount, 7.25)),
+                new Case("depleted", root -> root.set(amount, 0D)),
+                new Case("refilled different type", root -> { root.set(amount, 12.5); root.set(type, ruina); }),
+                new Case("equal old projection", root -> { root.set(amount, 60D); root.set(blood, false); }),
+                new Case("larger live container", root -> { root.set(capacity, 4096D); root.set(amount, 512D); root.set(type, ruina); }),
+                new Case("removed tuple/marker", root -> { root.remove(capacity); root.remove(amount); root.remove(type); root.remove(blood); }),
+                new Case("defaulted fields", root -> { root.remove(amount); root.remove(type); }),
+                new Case("present false marker", root -> root.set(blood, false)));
+        for (ItemStack orientation : List.of(pair.primary(), pair.inverse())) {
+            for (Case example : cases) {
+                ItemStack root = orientation.copy();
+                decorate(level, root);
+                example.change.accept(root);
+                ItemStack before = root.copy();
+                var data = ModContent.getMixedBootsData(root).orElseThrow();
+                ItemStack changed = data.left().source(), unchanged = data.right().source();
+                // Deliberate synthetic source replacement, not a native recipe: expose three-way equality mistakes.
+                changed.set(capacity, 200D); changed.set(amount, 90D); changed.set(type, ruina); changed.set(blood, true);
+                ItemStack changedBefore = changed.copy(), unchangedBefore = unchanged.copy();
+                ItemStack output = MixedBootsRecomposer.recompose(root, changed, unchanged);
+                sameLiveState(root, output, capacity, amount, type, blood, example.name);
+                sameLiveState(root, MixedBootsRecomposer.recompose(output, changed, unchanged),
+                        capacity, amount, type, blood, example.name + " repeated");
+                var projected = ModContent.getMixedBootsData(output).orElseThrow();
+                require(ItemStack.matches(projected.left().source(), changedBefore)
+                        && ItemStack.matches(projected.right().source(), unchangedBefore), "Transformed provenance mismatch");
+                require(ItemStack.matches(before, root) && ItemStack.matches(changedBefore, changed)
+                        && ItemStack.matches(unchangedBefore, unchanged), "Recomposition mutated an input");
+            }
+        }
+        // Neither historical source had storage: preserve a later root-only install, or exact absence.
+        for (boolean installed : List.of(false, true)) {
+            ItemStack root = MixedBootsFactory.createPair(new ItemStack(Items.DIAMOND_BOOTS), second).primary();
+            decorate(level, root);
+            if (installed) {
+                root.set(capacity, 4096D); root.set(amount, 512D); root.set(type, ruina); root.set(blood, true);
+            }
+            sameLiveState(root, MixedBootsRecomposer.recompose(root, first, second),
+                    capacity, amount, type, blood, "root-only installation/absence");
+        }
+
+        ItemStack live = pair.primary().copy();
+        decorate(level, live);
+        live.set(capacity, 4096D); live.set(amount, 12.5); live.set(type, ruina); live.set(blood, false);
+        ItemStack trimmed = smithing(level, live, Items.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, Items.AMETHYST_SHARD);
+        sameLiveState(live, trimmed, capacity, amount, type, blood, "loaded trim recipe");
+        var trims = ModContent.getMixedBootsData(trimmed).orElseThrow();
+        require(trims.left().source().has(DataComponents.TRIM) && trims.right().source().has(DataComponents.TRIM),
+                "Loaded trim did not transform both sources");
+        ItemStack upgraded = smithing(level, trimmed, Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Items.NETHERITE_INGOT);
+        sameLiveState(trimmed, upgraded, capacity, amount, type, blood, "loaded tier recipe");
+        var tier = ModContent.getMixedBootsData(upgraded).orElseThrow();
+        require(tier.left().source().is(Items.NETHERITE_BOOTS) && tier.right().source().is(Items.IRON_BOOTS),
+                "Loaded tier did not transform only the eligible source");
+        live.set(amount, 4097D);
+        ItemStack invalidBefore = live.copy();
+        boolean rejected = false;
+        try { MixedBootsRecomposer.recompose(live, first, second); }
+        catch (IllegalArgumentException expected) { rejected = true; }
+        require(rejected && MixedBootsSmithingPolicy.evaluate(level,
+                new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), live, new ItemStack(Items.NETHERITE_INGOT)).isEmpty()
+                && ItemStack.matches(invalidBefore, live), "Invalid live tuple was published or mutated");
+    }
+
+    private static void decorate(ServerLevel level, ItemStack root) {
+        root.setDamageValue(7);
+        root.set(DataComponents.CUSTOM_NAME, Component.literal("Live infusion"));
+        root.set(DataComponents.REPAIR_COST, 11);
+        root.enchant(level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.MENDING), 1);
+    }
+
+    private static ItemStack smithing(ServerLevel level, ItemStack root, Item template, Item addition) {
+        ItemStack before = root.copy();
+        ItemStack result = MixedBootsSmithingPolicy.evaluate(level, new ItemStack(template), root, new ItemStack(addition))
+                .orElseThrow(() -> new IllegalStateException("Missing loaded smithing preview: " + template)).output();
+        require(ItemStack.matches(before, root), "Recipe preview mutated root/provenance");
+        return result;
+    }
+
+    private static void sameLiveState(ItemStack previous, ItemStack output, DataComponentType<Double> capacity,
+                                       DataComponentType<Double> amount, DataComponentType<Object> type,
+                                       DataComponentType<Boolean> blood, String context) {
+        for (var field : List.of(capacity, amount, type, blood, DataComponents.DAMAGE, DataComponents.CUSTOM_NAME,
+                DataComponents.ENCHANTMENTS, DataComponents.REPAIR_COST)) {
+            require(previous.has(field) == output.has(field) && Objects.equals(previous.get(field), output.get(field)),
+                    "Live state changed during " + context + ": " + BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(field));
+        }
     }
 
     private static void tuple(ItemStack root, DataComponentType<Double> capacity, DataComponentType<Double> amount,

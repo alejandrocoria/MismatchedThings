@@ -36,6 +36,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         JustDireUpgradesCompatibility.preserveState(previous, output);
         JustDireResourcesCompatibility.preserveCharge(previous, output);
         JustDireAttributesCompatibility.prepare(previous, output, attributes);
+        NeoVitaeInfusionCompatibility.preserveState(previous, output);
     }
 
     @Override
