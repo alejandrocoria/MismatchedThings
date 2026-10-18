@@ -15,9 +15,17 @@ public final class MixedBootsBehaviorTags {
     private static final TagKey<Item> CRYSTALITE_SET = TagKey.create(
             Registries.ITEM,
             Identifier.fromNamespaceAndPath("betterend", "armor_set/crystalite"));
+    private static final TagKey<Item> SENTIENT_SET = TagKey.create(
+            Registries.ITEM,
+            Identifier.fromNamespaceAndPath("neovitae", "sentient_upgrade_set/sentient"));
+    private static final TagKey<Item> SENTIENT_UPGRADE_SET = TagKey.create(
+            Registries.ITEM,
+            Identifier.fromNamespaceAndPath("neovitae", "sentient_upgrade_set"));
     private static final Set<TagKey<Item>> ANY_SOURCE = Set.of(
             ItemTags.PIGLIN_SAFE_ARMOR,
-            CRYSTALITE_SET);
+            CRYSTALITE_SET,
+            SENTIENT_SET,
+            SENTIENT_UPGRADE_SET);
 
     private MixedBootsBehaviorTags() {
     }
