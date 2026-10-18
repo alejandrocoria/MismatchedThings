@@ -12,6 +12,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeInfusionCompatibility;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -38,6 +39,7 @@ public class MismatchedBootsNeoForge {
         JustDireHeldToggleCompatibility.initialize(eventBus);
         JustDireActiveNetwork.initialize();
         JustDireAttributesCompatibility.initialize(eventBus);
+        NeoVitaeInfusionCompatibility.initialize(eventBus);
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();

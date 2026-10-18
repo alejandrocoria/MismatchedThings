@@ -1961,3 +1961,5 @@ tasks.register('verifyTooltipCharacterization') {
         logger.lifecycle("NeoForge tooltip characterization:\n${report.text}")
     }
 }
+
+apply from: rootProject.file('gradle/neo-vitae-composition-tests.gradle')

@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeInfusionCompatibility;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.platform.services.IPlatformHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -26,6 +27,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         JustDireGroundStompCompatibility.initializeCooldown(output);
         JustDireEarthquakeCompatibility.initializeCooldown(output);
         JustDireAttributesCompatibility.prepare(null, output, attributes);
+        NeoVitaeInfusionCompatibility.initializeCreation(output);
     }
 
     @Override

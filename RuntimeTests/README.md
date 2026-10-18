@@ -281,6 +281,47 @@ Reports, screenshots, and run directories are under each runtime project's
 under the root `build/network-acceptance` directory. Old `CrossLoader*` build
 directories and old Fabric test reports are not migrated or deleted.
 
+## Neo Vitae infusion composition — production creation gate
+
+```powershell
+.\gradlew.bat :NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyNeoVitaeComposition --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent --console=plain
+.\gradlew.bat :NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' :RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent '-Pneoforge_version=26.1.2.99' --console=plain
+```
+
+Five local policy tests cover the seven composition cases, both orientations,
+presence-based Blood Mending, fractional/overflow/underflow conservation,
+malformed tuple rejection and unchanged inputs/unrelated output state. Their
+local component fixture does not claim a real optional binding.
+
+The native gate uses the **packaged production mod**, real Neo Vitae components
+and the public mixed factory; it checks binding/finalizer wiring, one-sided,
+compatible/conflicting and empty containers, orphan charge, marker union,
+swapped inputs/repeated previews, immutable snapshots and malformed pair rejection.
+It installs no fake components or candidate adapter. The Absent gate starts with
+no Neo Vitae/dependencies and checks ordinary composition/provenance/durability.
+These are creation checks, **not** Workbench payment, native forge/transfer,
+recomposition, restart, client synchronization or manual acceptance.
+
+Live hash-checks the installed Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
+2.16.0 JARs, copying them read-only from `NeoForge/runs/client/mods` into disposable
+fixture directories. Pinned Modonomicon needs NeoForge .109+, so Live is checked
+on .114, **not .99**; Absent and local policy tests run on both .99/.114. Never
+bypass upstream metadata to fill that matrix cell. No new mandatory dependency,
+wrapper, JDK, production configuration or indev world change is required.
+
+Reports/markers/process logs live in
+`NeoForge/build/reports/neo-vitae-composition/<version>/{live,absent}/` relative to
+this RuntimeTests directory (process logs are alongside the variant directories);
+worlds/configs/mod copies are in
+`NeoForge/build/run/neoVitaeComposition/<version>/{live,absent}/`.
+The verifiers always run bounded child processes and reject failure/missing
+markers. The new runs/tasks are isolated in
+[neo-vitae-composition-tests.gradle](../gradle/neo-vitae-composition-tests.gradle).
+The [implementation plan](../local-docs/NEO-VITAE-INFUSION-COMPOSITION-IMPLEMENTATION.md)
+owns dated evidence and the pending B/C exits.
+
 ## Item geometry coverage
 
 The Fabric client suite exercises both ordinary baked quads and real Fabric
