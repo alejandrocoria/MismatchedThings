@@ -101,7 +101,7 @@ public final class MixedBootsFactory {
         output.set(DataComponents.MAX_STACK_SIZE, 1);
         output.set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"));
         output.set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID);
-        output.set(DataComponents.EQUIPPABLE, projectEquippable(owner));
+        output.set(DataComponents.EQUIPPABLE, projectEquippable(owner, right.source()));
 
         output.remove(DataComponents.MAX_DAMAGE);
         output.remove(DataComponents.DAMAGE);
@@ -129,14 +129,21 @@ public final class MixedBootsFactory {
         return output;
     }
 
-    static Equippable projectEquippable(ItemStack owner) {
+    static Equippable projectEquippable(ItemStack owner, ItemStack companion) {
         Equippable source = owner.get(DataComponents.EQUIPPABLE);
-        if (source == null) {
-            throw new IllegalArgumentException("Mixed boots owner is not feet-equippable");
+        Equippable other = companion.get(DataComponents.EQUIPPABLE);
+        if (source == null || other == null) {
+            throw new IllegalArgumentException("Mixed boots sources are not feet-equippable");
+        }
+        var sound = source.equipSound();
+        // Classify the sound, not the item: supports native/inline holders and keeps the chosen holder's range intact.
+        if ("minecraft".equals(sound.value().location().getNamespace())
+                && !"minecraft".equals(other.equipSound().value().location().getNamespace())) {
+            sound = other.equipSound();
         }
         return new Equippable(
                 EquipmentSlot.FEET,
-                source.equipSound(),
+                sound,
                 source.assetId(),
                 Optional.empty(),
                 source.allowedEntities(),

@@ -373,7 +373,8 @@ and Athena 4.7.3 and copies them into isolated versioned build directories. Nati
 damage dispatch checks Exo, mixed/inverse/two-Exo roots, repeated falls, non-fall
 damage, wrong slots and malformed/spoofed roots. Native sound-event observation
 checks one servo cue per protected landing with unchanged parameters. Source
-provenance and existing owner equip-sound projection are retained. Absent runs
+provenance is retained. The later shared equip-sound rule is asserted in both
+Exo + vanilla orientations: both roots select Exo's sole custom sound. Absent runs
 without these mods and checks an ordinary inverse mixed pair still takes damage.
 There is no replacement Oritech handler or production damage listener.
 
@@ -392,6 +393,9 @@ warnings/data-map error are recorded separately. The owner confirmed all final
 manual checks passed on 2026-10-18, accepting this bounded fall-protection and
 landing-feedback fix (section 7.2). This is separate manual evidence, not an
 inferred .99/.114 manual matrix or acceptance of general equip-sound composition.
+The later [shared equip-sound record](../local-docs/EQUIP-SOUND-COMPOSITION.md#5-ordinary-client-handoff--accepted)
+separately records the owner's successful manual confirmation on 2026-10-18,
+closing that bounded change without adding an automated run or manual loader matrix.
 
 ## Item geometry coverage
 

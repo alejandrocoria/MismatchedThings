@@ -55,7 +55,7 @@ public final class MixedBootsRecomposer {
         }
         output.set(DataComponents.ATTRIBUTE_MODIFIERS,
                 AttributeComposer.compose(leftSource, rightSource, rules).primary());
-        output.set(DataComponents.EQUIPPABLE, MixedBootsFactory.projectEquippable(leftSource));
+        output.set(DataComponents.EQUIPPABLE, MixedBootsFactory.projectEquippable(leftSource, rightSource));
         output.set(DataComponents.MAX_STACK_SIZE, 1);
         output.set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"));
         output.set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID);

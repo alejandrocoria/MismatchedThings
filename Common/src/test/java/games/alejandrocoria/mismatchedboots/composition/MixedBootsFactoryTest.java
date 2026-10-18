@@ -35,6 +35,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EntityType;
@@ -105,7 +106,8 @@ class MixedBootsFactoryTest {
                 true,
                 SoundEvents.ARMOR_EQUIP_DIAMOND);
         ItemStack first = boots(Items.IRON_BOOTS, ownerEquippable);
-        ItemStack second = boots(Items.GOLDEN_BOOTS);
+        var customSound = Holder.direct(SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath("test", "equip"), 32));
+        ItemStack second = boots(Items.GOLDEN_BOOTS, Equippable.builder(EquipmentSlot.FEET).setEquipSound(customSound).build());
         first.set(opaqueType, "alpha");
         second.set(opaqueType, "beta");
         second.set(rightOnlyType, "right-only");
@@ -134,7 +136,7 @@ class MixedBootsFactoryTest {
 
         Equippable projected = primary.get(DataComponents.EQUIPPABLE);
         assertEquals(EquipmentSlot.FEET, projected.slot());
-        assertEquals(ownerEquippable.equipSound(), projected.equipSound());
+        assertEquals(customSound, projected.equipSound());
         assertEquals(ownerEquippable.dispensable(), projected.dispensable());
         assertEquals(ownerEquippable.swappable(), projected.swappable());
         assertEquals(ownerEquippable.damageOnHurt(), projected.damageOnHurt());
@@ -150,6 +152,65 @@ class MixedBootsFactoryTest {
         assertEquals("alpha", data.left().source().get(opaqueType));
         assertEquals(Items.GOLDEN_BOOTS, data.right().source().getItem());
         assertEquals("beta", data.right().source().get(opaqueType));
+    }
+
+    @Test
+    void selectsOnlyCustomEquipSoundForBothOutputsOtherwiseKeepsOwner() {
+        var customA = Holder.direct(SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath("test", "equip_a"), 32));
+        var customB = Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("other", "equip_b")));
+        var sameIdDifferentRange = Holder.direct(SoundEvent.createFixedRangeEvent(customA.value().location(), 64));
+        var inlineVanilla = Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.withDefaultNamespace("item.armor.equip_iron")));
+        record Case(Holder<SoundEvent> left, Holder<SoundEvent> right, Holder<SoundEvent> primary, Holder<SoundEvent> inverse) {}
+        for (var example : List.of(
+                new Case(SoundEvents.ARMOR_EQUIP_IRON, SoundEvents.ARMOR_EQUIP_DIAMOND,
+                        SoundEvents.ARMOR_EQUIP_IRON, SoundEvents.ARMOR_EQUIP_DIAMOND),
+                new Case(customA, SoundEvents.ARMOR_EQUIP_DIAMOND, customA, customA),
+                new Case(inlineVanilla, customB, customB, customB),
+                new Case(customA, customB, customA, customB),
+                new Case(customA, customA, customA, customA),
+                new Case(customA, sameIdDifferentRange, customA, sameIdDifferentRange))) {
+            ItemStack left = boots(Items.IRON_BOOTS, Equippable.builder(EquipmentSlot.FEET).setEquipSound(example.left()).build());
+            ItemStack right = boots(Items.DIAMOND_BOOTS, Equippable.builder(EquipmentSlot.FEET).setEquipSound(example.right()).build());
+            ItemStack leftBefore = left.copy(), rightBefore = right.copy();
+            var pair = create(left, right);
+            assertEquals(example.primary(), pair.primary().get(DataComponents.EQUIPPABLE).equipSound());
+            assertEquals(example.inverse(), pair.inverse().get(DataComponents.EQUIPPABLE).equipSound());
+            assertTrue(ItemStack.matches(leftBefore, left));
+            assertTrue(ItemStack.matches(rightBefore, right));
+            assertTrue(ItemStack.matches(leftBefore, pair.primary().get(mixedDataType).left().source()));
+            assertTrue(ItemStack.matches(rightBefore, pair.inverse().get(mixedDataType).left().source()));
+        }
+    }
+
+    @Test
+    void recompositionSelectsSoundFromCurrentSourcesWithoutMutatingRootOrHistory() {
+        var custom = Holder.direct(SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath("test", "equip"), 32));
+        ItemStack left = boots(Items.IRON_BOOTS);
+        ItemStack right = boots(Items.DIAMOND_BOOTS);
+        var initial = create(left, right);
+        for (boolean inverse : List.of(false, true)) {
+            ItemStack root = inverse ? initial.inverse() : initial.primary();
+            ItemStack rootBefore = root.copy();
+            ItemStack changedLeft = (inverse ? right : left).copy();
+            ItemStack changedRight = (inverse ? left : right).copy();
+            changedRight.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).setEquipSound(custom).build());
+            ItemStack changedBefore = changedRight.copy();
+            ItemStack result = MixedBootsRecomposer.recompose(root, changedLeft, changedRight,
+                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+            assertEquals(custom, result.get(DataComponents.EQUIPPABLE).equipSound());
+            assertTrue(ItemStack.matches(rootBefore, root));
+            assertTrue(ItemStack.matches(changedBefore, changedRight));
+            assertTrue(ItemStack.matches(changedBefore, result.get(mixedDataType).right().source()));
+            // Removing a custom sound or changing it to a second custom must use the current sources, not the old root.
+            ItemStack reset = MixedBootsRecomposer.recompose(result, changedLeft, inverse ? left : right,
+                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+            assertEquals(changedLeft.get(DataComponents.EQUIPPABLE).equipSound(), reset.get(DataComponents.EQUIPPABLE).equipSound());
+            changedLeft.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET)
+                    .setEquipSound(Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("other", "equip")))).build());
+            ItemStack twoCustom = MixedBootsRecomposer.recompose(result, changedLeft, changedRight,
+                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+            assertEquals(changedLeft.get(DataComponents.EQUIPPABLE).equipSound(), twoCustom.get(DataComponents.EQUIPPABLE).equipSound());
+        }
     }
 
     @ParameterizedTest

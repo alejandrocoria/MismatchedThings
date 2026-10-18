@@ -63,8 +63,8 @@ public final class NeoForgeOritechFallTest {
                 require(pair.primary().get(DataComponents.EQUIPPABLE).equipSound()
                         .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()), "Left equip sound changed");
                 require(pair.inverse().get(DataComponents.EQUIPPABLE).equipSound()
-                        .equals(Items.DIAMOND_BOOTS.components().get(DataComponents.EQUIPPABLE).equipSound()),
-                        "Right Exo unexpectedly replaced owner equip sound");
+                        .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()),
+                        "Right Exo did not supply the only custom equip sound");
                 for (ItemStack boots : List.of(exo, pair.primary(), pair.inverse(),
                         MixedBootsFactory.createPair(exo, exo).primary())) {
                     check(level, boots, EquipmentSlot.FEET, false, true);
@@ -85,7 +85,7 @@ public final class NeoForgeOritechFallTest {
                     + (absent ? "optional absence, ordinary inverse pair\n"
                     : "native Exo + both mixed orientations + two Exo; repeated falls; non-fall damage; "
                     + "wrong slots, missing data, bad count and spoof rejection; single native servo emission; "
-                    + "owner equip sound and immutable provenance\n"));
+                    + "shared custom equip sound and immutable provenance\n"));
             NetworkAcceptanceFiles.write("oritech-fall-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("oritech-fall", failure);
