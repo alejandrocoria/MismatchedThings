@@ -210,7 +210,7 @@ public final class SilentGearTraitSpike {
     }
 
     /** The sources' already-computed levels are merged by ID using max, only as a research policy. */
-    private static Map<String, Object> view(ItemStack stack) throws Exception {
+    static Map<String, Object> view(ItemStack stack) throws Exception {
         var result = new TreeMap<String, Object>();
         var mixed = ModContent.getMixedBootsData(stack);
         List<ItemStack> sources = mixed.isPresent() ? List.of(mixed.get().left().source(), mixed.get().right().source()) : List.of(stack);
@@ -224,7 +224,7 @@ public final class SilentGearTraitSpike {
     }
 
     @SuppressWarnings("unchecked")
-    private static ItemStack carrier(ItemStack root, Map<String, Object> traits) throws Exception {
+    static ItemStack carrier(ItemStack root, Map<String, Object> traits) throws Exception {
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         ItemStack source = api.gear.isInstance(data.left().source().getItem()) ? data.left().source() : data.right().source();
         require(api.gear.isInstance(source.getItem()), "Missing genuine native carrier");
@@ -237,24 +237,24 @@ public final class SilentGearTraitSpike {
         return carrier;
     }
 
-    private static Object context(Player player, Object instance, ItemStack stack) throws Exception {
+    static Object context(Player player, Object instance, ItemStack stack) throws Exception {
         return CONTEXT.getConstructor(Player.class, INSTANCE, ItemStack.class).newInstance(player, instance, stack);
     }
     private static Object wielder(Object instance) throws Exception {
         return ((List<?>) TRAIT.getMethod("getEffects").invoke(traitOf(instance))).stream()
                 .filter(effect -> effect.getClass().getSimpleName().equals("WielderEffectTraitEffect")).findFirst().orElseThrow();
     }
-    private static Object traitOf(Object instance) {
+    static Object traitOf(Object instance) {
         try { return INSTANCE.getMethod("getTrait").invoke(instance); }
         catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
     }
-    private static int level(Object instance) throws Exception {
+    static int level(Object instance) throws Exception {
         return instance == null ? 0 : (int) INSTANCE.getMethod("getLevel").invoke(instance);
     }
     private static List<ItemStack> pair(ServerPlayer player, ItemStack first, ItemStack second) {
         return NeoForgeSilentGearStatsTest.workbench(player, first, second);
     }
-    private static Class<?> nativeClass(String name) {
+    static Class<?> nativeClass(String name) {
         try { return Class.forName("net.silentchaos512.gear." + name); }
         catch (ClassNotFoundException failure) { throw new AssertionError(failure); }
     }

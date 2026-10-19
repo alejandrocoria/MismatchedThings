@@ -97,6 +97,7 @@ public final class NeoForgeSilentGearStatsTest {
             }
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             SilentGearTraitSpike.run(player, api, report);
+            SilentGearStateSpike.run(player, api, report);
             report.append("\nBaseline: 14 numeric paid output measurements; additional paid trait-spike pairs above; source snapshots unchanged; ")
                     .append("trait/item callback probes are not full gameplay acceptance\n");
             NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
@@ -233,7 +234,7 @@ public final class NeoForgeSilentGearStatsTest {
         }
 
         @SuppressWarnings("unchecked")
-        private static DataComponentType<Object> component(String field) throws ReflectiveOperationException {
+        static DataComponentType<Object> component(String field) throws ReflectiveOperationException {
             Object supplier = Class.forName("net.silentchaos512.gear.setup.SgDataComponents").getField(field).get(null);
             return (DataComponentType<Object>) ((Supplier<?>) supplier).get();
         }

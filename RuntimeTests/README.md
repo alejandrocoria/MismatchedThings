@@ -141,13 +141,43 @@ baseline, using auxiliary-mod-only, explicitly scoped hooks. It measures:
   separately caught ClassCastException, demonstrating why a carrier is needed.
 
 These hooks are feasibility controls, not production guards or general SG item
-recognition. They never replace real worn equipment during callbacks. No mutable
-trait state, unsafe repair forwarding, source edits, production attribute
-normalization, client proof or persistent mixed-trait component is implemented.
+recognition. They never replace real worn equipment during callbacks. No source
+edits, production attribute normalization, client proof or persistent production
+mixed-trait component is implemented.
 The expanded gate passed on .99/.114 on 2026-10-19. The ordinary .114
 `verifyRootsTicksAbsent` gate additionally provided a shared-fixture startup
 control without SG/spike activation, with no SG missing-class warnings. Production
 packaging passed with .114 restored. This is not a full SG absence or manual matrix.
+
+A subsequent **mutable-state phase** in that same server uses real native
+callbacks and disposable native copies, with explicitly scoped repair routing:
+
+- Renew IV / Stellar I seeded repair success/failure, max-level duplicates,
+  inventory/cadence and healthy/creative/Unbreakable controls, only root damage
+  writable.
+- Malleable V / Brittle V native wear return values and actual native controls;
+  four combined activation outcomes, both orientations and one root debit.
+  Native broken survival contrasts with ordinary mixed destruction, retained
+  provisionally rather than importing SG's broken-item lifecycle.
+- Native Chipping/Crushing ordinary wear vs helper wear/repair. The former
+  leaves sampled armor stale; the latter recalculates. Candidate root damage
+  ratios drive native-copy recalculation and selective root attributes, with
+  protected metadata/sources and a calibrated mixed-recalculation refusal.
+- Eight oxidation pairs: vanilla, native gold coating, aligned clocks and
+  unequal source clocks. Temporary root-owned per-source stage/counter lanes
+  continue through a registry-aware item-codec round trip and match independent
+  native copies. Native FEET-selected vs idle controls check ticking eligibility.
+
+This is feasibility, not installed ticking, final state schema, world restart,
+all native stages/traits, foreign root-edit preservation or whole-item-loop
+safety. The native item tick is used only for the inspected copper copies;
+native recalculation never receives the mixed root. Production refresh timing
+and selective projection ownership still need a scoped design.
+The final state-expanded gate passed on .99/.114 on 2026-10-19 with matching
+reports excluding modifier object identities. The shared-fixture absence
+startup and restored-.114 packaging checks passed again; the optional Bonsai
+serializer error remains the only SG resource error. Production JAR inspection
+found no research/SG class leakage.
 Findings, values and pending work belong to the
 [exploration](../local-docs/SILENT-GEAR-COMPATIBILITY-EXPLORATION.md).
 

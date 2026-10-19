@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearStateSpike;
 import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -15,5 +16,6 @@ abstract class SilentGearRecalculationWitnessMixin {
     @Inject(method = "recalculateGearData", at = @At("HEAD"))
     private static void observe(ItemStack stack, Player player, CallbackInfo ci) {
         SilentGearTraitSpike.recalculation(stack);
+        SilentGearStateSpike.recalculation(stack);
     }
 }
