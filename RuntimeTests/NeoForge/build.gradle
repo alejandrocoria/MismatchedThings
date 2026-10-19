@@ -66,7 +66,7 @@ def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
 def geometryMarkers = fixtureBuildDirectory.dir('geometry-markers')
 def geometryRunDirectory = fixtureBuildDirectory.dir('run/geometryClient')
 def iceAndFireTest = providers.gradleProperty('iceAndFireTest').map { it.toBoolean() }.getOrElse(false)
-def rootsRenderingSpike = providers.gradleProperty('rootsRenderingSpike').map { it.toBoolean() }.getOrElse(false)
+def rootsRenderingTest = providers.gradleProperty('rootsRenderingTest').map { it.toBoolean() }.getOrElse(false)
 def rootsRenderingArtifact = rootProject.file('NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar')
 def iceAndFireModsDirectory = providers.gradleProperty('iceAndFireTestModsDirectory')
         .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods'))
@@ -534,7 +534,7 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.markers', geometryMarkers.get().asFile.absolutePath)
             systemProperty('mismatchedboots.runtimetest.geometryTest', 'true')
             systemProperty('mismatchedboots.runtimetest.iceAndFireTest', iceAndFireTest.toString())
-            systemProperty('mismatchedboots.runtimetest.rootsRenderingSpike', rootsRenderingSpike.toString())
+            systemProperty('mismatchedboots.runtimetest.rootsRenderingTest', rootsRenderingTest.toString())
             systemProperty('mismatchedboots.test.hideClientWindow', 'true')
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
             jvmArgument('-Xmx1G')
@@ -1797,7 +1797,7 @@ tasks.register('prepareGeometryClient') {
         if (iceAndFireTest) {
             compatibilityArtifacts = verifiedIceAndFireArtifacts()
         }
-        if (rootsRenderingSpike) {
+        if (rootsRenderingTest) {
             if (!rootsRenderingArtifact.isFile()
                     || java.security.MessageDigest.getInstance('SHA-256').digest(rootsRenderingArtifact.bytes)
                     .encodeHex().toString() != '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d') {
@@ -1925,6 +1925,17 @@ tasks.register('verifyGeometryCharacterization') {
         def report = new File(markerDirectory, 'geometry-report.txt')
         if (!success.exists() || !report.exists()) {
             throw new GradleException('NeoForge geometry characterization did not produce its result markers')
+        }
+        if (rootsRenderingTest) {
+            if (!report.text.contains('equipment.roots.productionOrderedPairs=8\n')
+                    || !report.text.contains('equipment.roots.worldDefaultAssets=true\n')
+                    || !report.text.contains('equipment.roots.resourceReload=true\n')) {
+                throw new GradleException('Roots production equipment checks did not complete')
+            }
+            fixtureFileOperations.copy {
+                from(report, success)
+                into(fixtureBuildDirectory.dir("reports/roots-equipment/${neoforge_version}"))
+            }
         }
         logger.lifecycle("NeoForge geometry characterization:\n${report.text}")
     }

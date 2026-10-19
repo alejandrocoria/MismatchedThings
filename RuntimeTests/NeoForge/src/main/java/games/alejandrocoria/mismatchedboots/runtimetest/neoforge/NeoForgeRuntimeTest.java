@@ -85,7 +85,8 @@ public final class NeoForgeRuntimeTest {
             NeoForgeTideTest.register();
         } else if (Boolean.getBoolean("mismatchedboots.runtimetest.iceAndFireDamageTest")) {
             NeoForgeIceAndFireDamageTest.register();
-        } else if (!Boolean.getBoolean("mismatchedboots.runtimetest.advancedNetheriteTest")) {
+        } else if (!Boolean.getBoolean("mismatchedboots.runtimetest.advancedNetheriteTest")
+                && !Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {
             NeoForge.EVENT_BUS.addListener(
                     (ServerTickEvent.Post event) -> NetworkAcceptanceServerTest.tick(event.getServer()));
         }

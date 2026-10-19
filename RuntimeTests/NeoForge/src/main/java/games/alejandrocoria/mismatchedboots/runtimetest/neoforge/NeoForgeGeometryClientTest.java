@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public final class NeoForgeGeometryClientTest {
     private static final Identifier RED_MODEL = testId("intersecting_red_boots");
@@ -52,6 +53,7 @@ public final class NeoForgeGeometryClientTest {
     private static int ticks;
     private static boolean resourcesLoaded;
     private static boolean finished;
+    private static CompletableFuture<Void> rootsReload;
 
     private NeoForgeGeometryClientTest() {
     }
@@ -75,6 +77,15 @@ public final class NeoForgeGeometryClientTest {
                 return;
             }
 
+            boolean roots = Boolean.getBoolean("mismatchedboots.runtimetest.rootsRenderingTest");
+            if (roots && !RootsEquipmentClientTest.worldReady(client)) {
+                return;
+            }
+            if (rootsReload != null) {
+                if (!rootsReload.isDone()) { return; }
+                rootsReload.join();
+            }
+
             GeometryReport red = characterize(client, modelBoot(Items.IRON_BOOTS, RED_MODEL));
             GeometryReport blue = characterize(client, modelBoot(Items.GOLDEN_BOOTS, BLUE_MODEL));
             assertExpectedTopology(red, "red fixture");
@@ -84,6 +95,11 @@ public final class NeoForgeGeometryClientTest {
             assertGuiClipping(client);
             NeoForgeEquipmentRenderingClientTest.assertStandardRoute();
             String equipmentReport = NeoForgeNativeEquipmentClientTest.assertNativeRoute();
+            if (roots && rootsReload == null) {
+                rootsReload = client.reloadResourcePacks();
+                return;
+            }
+            if (roots) { equipmentReport += "equipment.roots.resourceReload=true\n"; }
 
             NetworkAcceptanceFiles.write("geometry-report.txt", red.describe("red") + blue.describe("blue")
                     + "gui.canonicalOwnership=true\ngui.depthSharing=true\ngui.atomicFallback=true\n"

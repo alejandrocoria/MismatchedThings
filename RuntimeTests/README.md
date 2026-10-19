@@ -89,32 +89,38 @@ It does not validate actual default components, gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
-### Roots Classic rendering research
+### Roots Classic production equipment rendering
 
-The opt-in foot-subtree prototype runs only in the disposable geometry client:
+The opt-in native-model check runs in the disposable geometry client:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingSpike=true -PiceAndFireTest=true --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingSpike=true -PiceAndFireTest=true '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
-`rootsRenderingSpike` verifies the installed `RootsClassic-26.1.2-1.6.7.jar`
+`rootsRenderingTest` verifies the installed `RootsClassic-26.1.2-1.6.7.jar`
 SHA-256 before copying it from the development mods directory; no external
 library is needed. `iceAndFireTest` additionally runs the existing 93 ordered
-Ice and Fire pairs with the candidate active. Neither option edits those JARs
+Ice and Fire pairs through the same production adapter. Neither option edits those JARs
 or the development client. The ordinary geometry command needs neither mod.
 
-The test first reproduces production's invisible Roots leg subtree, then enables
-a test-only late selector for the two exact native Roots model classes. Eight
-ordered pairs exercise separate feet, actual native vertex emission, walking/
-crouching states, queued shared models, unchanged source snapshots and native
-texture/trim/glint submissions. The prototype does not mutate visibility or
-transforms; it delegates native animation. It is **not installed in production**.
-As with the Ice and Fire probe, source equipment assets are controlled vanilla
-assets before world startup. This proves neither actual Roots default material
-appearance, pixel-level trim quality, complete player/armor-stand integration,
-resource reload nor gameplay. Findings and the production recommendation are in
-[the Roots exploration](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-EXPLORATION.md#9-rendering-spike--2026-10-18).
+The client creates its own flat integrated world and waits for synchronized rules.
+Eight ordered pairs use actual default Roots equipment assets and production
+composition/splitting, with native vertex emission, walking/crouching states,
+queued shared models, unchanged source snapshots and texture/trim/glint nodes.
+The entire matrix repeats after an actual resource reload. Focused controls cover
+missing foot roots, unknown models with similarly named children and unmarked
+native models; they do not mutate the extension's cached models. Existing vanilla,
+replacement and Ice and Fire controls run in the same client before/after reload.
+No test adapter or selector mixin remains; the old `rootsRenderingSpike` flag is
+retired. The production code delegates native animation without visibility edits.
+
+These are actual deferred-node and emitted-vertex checks, not GPU screenshots or
+the complete player/armor-stand layer path. Qualitative trim/material alignment,
+entity poses and gameplay acceptance remain separate. Native Roots models may
+legitimately retain their own static cache across reload; no fresh native model
+identity is assumed. Current evidence and manual status belong to
+[Roots block A](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-IMPLEMENTATION.md#7-block-a-execution-record).
 
 ### Ice and Fire damage and set probes
 

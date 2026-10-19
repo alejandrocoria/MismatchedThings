@@ -164,8 +164,8 @@ public final class NeoForgeNativeEquipmentClientTest {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.iceAndFireTest")) {
             report += assertIceAndFire(original);
         }
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.rootsRenderingSpike")) {
-            report += RootsRenderingSpike.assertRoute(original);
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.rootsRenderingTest")) {
+            report += RootsEquipmentClientTest.assertRoute(original);
         }
         return report;
     }

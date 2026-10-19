@@ -2,7 +2,7 @@ package games.alejandrocoria.mismatchedboots.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import games.alejandrocoria.mismatchedboots.client.render.MixedBootsEquipmentRenderer;
+import games.alejandrocoria.mismatchedboots.client.render.RootsEquipmentRendering;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
@@ -30,7 +30,7 @@ abstract class NeoForgeEquipmentLayerRendererMixin {
             Model<? super S> original,
             Operation<Model<? super S>> operation) {
         // NeoForge replaces the Common side view here, before native tint/texture/trim submission.
-        return MixedBootsEquipmentRenderer.preserveSplit(
+        return RootsEquipmentRendering.preserveSplit(
                 original, operation.call(extensions, stack, layerType, original));
     }
 }

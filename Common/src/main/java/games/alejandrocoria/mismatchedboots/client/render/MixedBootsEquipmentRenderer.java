@@ -77,19 +77,28 @@ public final class MixedBootsEquipmentRenderer {
     /** Reapplies our side ownership after a loader extension resolves its final armor model. */
     public static <S> Model<? super S> preserveSplit(
             Model<? super S> original, Model<? super S> resolved) {
+        if (!(resolved instanceof HumanoidModel<?> humanoid)) {
+            return resolved;
+        }
+        return preserveSplit(original, resolved, humanoid.leftLeg, humanoid.rightLeg);
+    }
+
+    /** Explicit part ownership for bounded loader adapters; ordinary models still use legs. */
+    public static <S> Model<? super S> preserveSplit(
+            Model<? super S> original, Model<? super S> resolved, ModelPart left, ModelPart right) {
         if (original == resolved || !(original instanceof SplitModel split)
-                || !(resolved instanceof HumanoidModel<?> humanoid)) {
+                || !(resolved instanceof HumanoidModel<?>)) {
             return resolved;
         }
         // Structural views remain safe when cached models are queued for both feet/entities.
         // Never toggle visibility here: submission and setupAnim happen at different times.
         Side side = split.mismatchedboots$side();
-        return sideModel(resolved, side == Side.LEFT ? humanoid.leftLeg : humanoid.rightLeg, side);
+        return sideModel(resolved, side == Side.LEFT ? left : right, side);
     }
 
     private static <S> Model<? super S> sideModel(
-            Model<? super S> source, ModelPart leg, Side side) {
-        return new SideModel<>(source, leg, side);
+            Model<? super S> source, ModelPart part, Side side) {
+        return new SideModel<>(source, part, side);
     }
 
     enum Side {
@@ -105,8 +114,8 @@ public final class MixedBootsEquipmentRenderer {
         private final Model<? super S> source;
         private final Side side;
 
-        private SideModel(Model<? super S> source, ModelPart leg, Side side) {
-            super(leg, source.renderType());
+        private SideModel(Model<? super S> source, ModelPart part, Side side) {
+            super(part, source.renderType());
             this.source = source;
             this.side = side;
         }
