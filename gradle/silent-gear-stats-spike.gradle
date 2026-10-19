@@ -1,0 +1,68 @@
+// Optional measurement only: native jars are neither compile nor publication dependencies.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def reports = layout.buildDirectory.dir("reports/silent-gear-stats/${neoforge_version}")
+def directory = layout.buildDirectory.dir("run/silentGearStats/${neoforge_version}")
+def artifacts = [
+        'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
+        'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655'
+]
+
+neoForge.runs.create('silentGearStats') {
+    server(); disableIdeRun()
+    gameDirectory = directory.get().asFile
+    programArgument('--nogui')
+    systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+    systemProperty('mismatchedboots.runtimetest.silentGearStatsSpike', 'true')
+    jvmArgument('-Xmx1G')
+}
+
+tasks.register('prepareSilentGearStats') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def jars = artifacts.collect { filename, hash ->
+            def jar = rootProject.file("NeoForge/runs/client/mods/${filename}")
+            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                    .digest(jar.bytes).encodeHex().toString() != hash) {
+                throw new GradleException("Missing/unexpected pinned Silent Gear fixture: ${jar}")
+            }
+            jar
+        }
+        fixtureFiles.delete { delete directory, reports }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar, jars)
+            into(new File(directory.get().asFile, 'mods'))
+        }
+        new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+        new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+    }
+}
+tasks.named('runSilentGearStats') { dependsOn('prepareSilentGearStats') }
+
+tasks.register('verifySilentGearStatsSpike') {
+    group = 'verification'
+    description = 'Measures Silent Gear stats and scoped native trait reuse without a production adapter'
+    doLast {
+        // Keep the child log outside the markers directory cleared by prepare.
+        def log = layout.buildDirectory.file("reports/silent-gear-stats-${neoforge_version}-process.log").get().asFile
+        runBounded(':RuntimeTests:NeoForge:runSilentGearStats', log, 240)
+        def markers = reports.get().asFile
+        def failure = new File(markers, 'silent-gear-stats-failure.txt')
+        if (failure.isFile()) { throw new GradleException(failure.text) }
+        def report = new File(markers, 'silent-gear-stats-report.txt')
+        if (!new File(markers, 'silent-gear-stats-success.txt').isFile() || !report.isFile()) {
+            throw new GradleException("Missing Silent Gear spike results; see ${log}")
+        }
+        logger.lifecycle(report.text)
+    }
+}

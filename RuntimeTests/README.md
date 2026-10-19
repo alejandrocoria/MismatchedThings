@@ -89,6 +89,68 @@ It does not validate actual default components, gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
+### Silent Gear native stat measurement
+
+Test-only diagnostic; no production adapter, compile dependency or native class
+is added to the production JAR. Run sequentially:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat verifyPackagedDependencies --console=plain
+```
+
+The gate verifies SHA-256 pins for installed Silent Gear 4.2.3 and Silent Lib
+11.2.0 from `NeoForge/runs/client/mods`, copies only these and production/test
+JARs to `build/run/silentGearStats/<version>`, and launches a bounded loopback
+offline server. Ordinary clients/configs/worlds stay untouched. Reports live in
+`build/reports/silent-gear-stats/<version>`; the bounded child-process log is the
+sibling `silent-gear-stats-<version>-process.log`. The gate is explicitly opt-in,
+not a new dependency of `build`/`check`.
+
+Five native material/lining profiles use upstream construction APIs, with wool
+installed through native `GearPartSwapRecipe`. Fourteen paid Workbench outputs
+cover both orientations, SG/vanilla, SG/SG and identical controls, complete source
+snapshots, independent additive/default-policy arithmetic and controlled wear.
+Vanilla equipment updates verify available player attributes without manually
+installing them. Native SG properties, trait queries and selected item callbacks
+are reported separately. The native magic-armor attribute is unavailable on the
+player control; no fake attribute is added. Snow Walker's native callback is also
+false despite its trait, whereas Brilliant has a positive native control missing
+on mixed. Recipe rejection and owner-only native component copies are recorded.
+
+Both .114/.99 passed on 2026-10-19 with matching measured results. This is neither
+exhaustive trait/repair/broken-state acceptance nor client rendering/tooltip or
+connected-player testing. An upstream optional `bonsaitrees2:sapling` serializer
+error occurs in both native runs and does not prevent these scoped checks.
+The same opt-in gate now also runs a bounded **trait-reuse spike** after that
+baseline, using auxiliary-mod-only, explicitly scoped hooks. It measures:
+
+- Light/Moonwalker/Flutter on nine actual equipped native/mixed subjects. Native
+  duplicate modifier IDs apply once, but cause current composition to retain the
+  SG owner's full bonus instead of averaging. This is recorded, not fixed here.
+- An effective source trait view with max-level de-duplication (native Malleable
+  I/V), a temporary native carrier for Brilliant, and actual native Moonwalker
+  fall events with mixed FEET added only to the local native query.
+- Fifteen Stellar set cases: callbacks from both a native chest and the mixed
+  carrier, incomplete/native full sets, duplicate sources and selected=false.
+  Native Wielder potion logic is reused; its independent SelfRepair effect is
+  refused. Whole equipment/root/source/carrier snapshots remain unchanged.
+- A calibrated native-recalculation tripwire and zero such entries during the
+  final pure-effect case. Passing a mixed root directly to native Wielder is a
+  separately caught ClassCastException, demonstrating why a carrier is needed.
+
+These hooks are feasibility controls, not production guards or general SG item
+recognition. They never replace real worn equipment during callbacks. No mutable
+trait state, unsafe repair forwarding, source edits, production attribute
+normalization, client proof or persistent mixed-trait component is implemented.
+The expanded gate passed on .99/.114 on 2026-10-19. The ordinary .114
+`verifyRootsTicksAbsent` gate additionally provided a shared-fixture startup
+control without SG/spike activation, with no SG missing-class warnings. Production
+packaging passed with .114 restored. This is not a full SG absence or manual matrix.
+Findings, values and pending work belong to the
+[exploration](../local-docs/SILENT-GEAR-COMPATIBILITY-EXPLORATION.md).
+
 ### Roots Classic production equipment rendering
 
 The opt-in native-model check runs in the disposable geometry client:
