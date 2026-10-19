@@ -10,7 +10,9 @@ import java.util.Set;
 /** Research hooks exist only in the optional exact-artifact server, never production. */
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
-        return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearStatsSpike");
+        return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
+                && (mixin.endsWith("SilentGearRecalculationWitnessMixin")
+                || System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").equals("research"));
     }
     @Override public void onLoad(String name) {}
     @Override public String getRefMapperConfig() { return null; }

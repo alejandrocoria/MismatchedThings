@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 
 /** Research-only native contexts and local consumer hooks; never an installed compatibility adapter. */
 public final class SilentGearTraitSpike {
-    private static NeoForgeSilentGearStatsTest.NativeApi api;
+    private static NeoForgeSilentGearTest.NativeApi api;
     private static boolean active;
     private static int setQueries;
     private static int recalculations;
@@ -38,9 +38,9 @@ public final class SilentGearTraitSpike {
     private SilentGearTraitSpike() {}
 
     /** Share native fixture helpers without requiring execution of the unrelated wearer proof. */
-    static void initialize(NeoForgeSilentGearStatsTest.NativeApi nativeApi) { api = nativeApi; }
+    static void initialize(NeoForgeSilentGearTest.NativeApi nativeApi) { api = nativeApi; }
 
-    static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi nativeApi, StringBuilder report) throws Exception {
+    static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi nativeApi, StringBuilder report) throws Exception {
         initialize(nativeApi);
         report.append("\nTRAIT REUSE SPIKE (scoped research hooks, not production)\n");
         numericControls(player, report);
@@ -255,7 +255,7 @@ public final class SilentGearTraitSpike {
         return instance == null ? 0 : (int) INSTANCE.getMethod("getLevel").invoke(instance);
     }
     private static List<ItemStack> pair(ServerPlayer player, ItemStack first, ItemStack second) {
-        return NeoForgeSilentGearStatsTest.workbench(player, first, second);
+        return NeoForgeSilentGearTest.workbench(player, first, second);
     }
     static Class<?> nativeClass(String name) {
         try { return Class.forName("net.silentchaos512.gear." + name); }
@@ -268,7 +268,7 @@ public final class SilentGearTraitSpike {
         player.tickCount = 20;
     }
 
-    private static void numericControls(ServerPlayer player, StringBuilder report) throws Exception {
+    static void numericControls(ServerPlayer player, StringBuilder report) throws Exception {
         Method update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates"); update.setAccessible(true);
         for (String[] sample : List.of(new String[]{"azure_electrum", "movement_speed"},
                 new String[]{"azure_silver", "gravity"}, new String[]{"feather", "safe_fall_distance"})) {

@@ -29,7 +29,7 @@ public final class SilentGearEffectsTest {
     private static Random random;
     private SilentGearEffectsTest() {}
 
-    static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
+    static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         SilentGearTraitSpike.initialize(api);
         clear(player);
         var field = Class.forName("net.silentchaos512.lib.util.MathUtils").getDeclaredField("RANDOM");
@@ -129,7 +129,7 @@ public final class SilentGearEffectsTest {
         report.append("B mutation witness: zero native recalculations during all production callbacks; sources/metadata immutable\n");
     }
 
-    private static void combined(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
+    private static void combined(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         for (ItemStack root : pair(player, api.boot("iron"), api.boot("diamond"))) {
             for (boolean brittle : List.of(false, true)) {
                 for (boolean malleable : List.of(false, true)) {
@@ -151,7 +151,7 @@ public final class SilentGearEffectsTest {
         report.append("B WEAR combined: four independent seeded outcomes, both orientations, one root debit\n");
     }
 
-    private static void ordering(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
+    private static void ordering(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         ItemStack source = api.boot("iron");
         Object instance = view(source).get("silentgear:malleable"), effect = effect(instance, "DurabilityTraitEffect");
         long seed = seed(chance(effect) * level(instance), true);
@@ -197,7 +197,7 @@ public final class SilentGearEffectsTest {
         report.append("B lifecycle: zero/small wear, vanilla Unbreaking after native adjustment, creative/Unbreakable, normal mixed destruction vs native survival, actual armor hurt dispatch\n");
     }
 
-    private static void refusal(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, String variant, StringBuilder report) throws Exception {
+    private static void refusal(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, String variant, StringBuilder report) throws Exception {
         ItemStack repairSource = api.boot("amethyst"), wearSource = api.boot("iron");
         Object renew = view(repairSource).get("silentgear:renew"), malleable = view(wearSource).get("silentgear:malleable");
         for (int repeat = 0; repeat < 2; repeat++) {
@@ -228,7 +228,7 @@ public final class SilentGearEffectsTest {
         for (long seed = 0; seed < 100_000; seed++) { if ((new Random(seed).nextDouble() < chance) == activate) { return seed; } }
         throw new AssertionError("No bounded native roll control");
     }
-    private static ItemStack bending(ItemStack source, NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
+    private static ItemStack bending(ItemStack source, NeoForgeSilentGearTest.NativeApi api) throws Exception {
         var ref = api.resource.getMethod("trait", String.class).invoke(null, "silentgear:bending");
         Class<?> conditions = nativeClass("api.traits.ITraitCondition");
         Object instance = nativeClass("api.traits.TraitInstance").getMethod("of", api.resource, int.class, Array.newInstance(conditions, 0).getClass())
@@ -236,7 +236,7 @@ public final class SilentGearEffectsTest {
         return only(source, instance, api);
     }
     @SuppressWarnings("unchecked")
-    private static ItemStack only(ItemStack source, Object instance, NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
+    private static ItemStack only(ItemStack source, Object instance, NeoForgeSilentGearTest.NativeApi api) throws Exception {
         ItemStack copy = source.copy(); Object props = copy.get(api.properties);
         var values = new java.util.HashMap<>((java.util.Map<Object, Object>) props.getClass().getMethod("properties").invoke(props));
         Object key = ((java.util.function.Supplier<?>) nativeClass("setup.gear.GearProperties").getField("TRAITS").get(null)).get();
@@ -244,7 +244,7 @@ public final class SilentGearEffectsTest {
         copy.set(api.properties, props.getClass().getConstructor(java.util.Map.class).newInstance(values));
         return copy;
     }
-    private static List<ItemStack> pair(ServerPlayer player, ItemStack first, ItemStack second) { return NeoForgeSilentGearStatsTest.workbench(player, first, second); }
+    private static List<ItemStack> pair(ServerPlayer player, ItemStack first, ItemStack second) { return NeoForgeSilentGearTest.workbench(player, first, second); }
     private static void unchanged(ItemStack before, ItemStack after) {
         var a = before.copy(); var b = after.copy(); a.remove(DataComponents.DAMAGE); b.remove(DataComponents.DAMAGE);
         require(ItemStack.matches(a, b), "Production B changed sources or unrelated root metadata");

@@ -52,7 +52,7 @@ public final class SilentGearLiveStateTest {
         recalculations++;
     }
 
-    static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report, String variant) throws Exception {
+    static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report, String variant) throws Exception {
         player.tickCount = 21;
         if (variant.equals("state")) { refusal(player, api, report); return; }
         if (variant.equals("joint")) { joint(player, api, report); return; }
@@ -60,7 +60,48 @@ public final class SilentGearLiveStateTest {
         oxidation(player, api, report);
     }
 
-    private static void dynamic(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
+    /** Accelerate only the fixture's counters; native ticks/recalculation decide the phase and level. */
+    static void fullNativeOxidation(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
+        ItemStack nativeBoot = api.boot("copper");
+        var stage = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_STAGE");
+        var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
+        for (int step = 0; step < 6; step++) {
+            boolean polished = api.traitLevel(nativeBoot, "polished") > 0;
+            nativeBoot.set(counter, polished ? 1199 : 599);
+            player.tickCount = 20;
+            nativeBoot.inventoryTick(player.level(), player, null);
+            report.append("FULL NATIVE OXIDATION pending step=").append(step)
+                    .append(" stage=").append(nativeBoot.getOrDefault(stage, (byte) 0)).append('\n');
+            player.tickCount = 21;
+            nativeBoot.inventoryTick(player.level(), player, null);
+            report.append("FULL NATIVE OXIDATION step=").append(step)
+                    .append(" polished=").append(api.traitLevel(nativeBoot, "polished"))
+                    .append(" oxidized=").append(api.traitLevel(nativeBoot, "oxidized"))
+                    .append(" stage=").append(nativeBoot.getOrDefault(stage, (byte) 0))
+                    .append(" counter=").append(nativeBoot.getOrDefault(counter, 0)).append('\n');
+        }
+        require(api.traitLevel(nativeBoot, "oxidized") == 1 && nativeBoot.getOrDefault(stage, (byte) 0).equals((byte) 1),
+                "Pinned native oxidation reset changed; revisit the C progression decision");
+        // Independent unseeded timeline rules out the accelerated counters causing the reset.
+        nativeBoot = api.boot("copper");
+        for (int tick = 1; tick <= 50_000; tick++) {
+            player.tickCount = tick;
+            nativeBoot.inventoryTick(player.level(), player, null);
+            if (tick == 24_001 || tick == 36_001 || tick == 48_001 || tick == 50_000) {
+                report.append("NATURAL NATIVE OXIDATION tick=").append(tick)
+                        .append(" polished=").append(api.traitLevel(nativeBoot, "polished"))
+                        .append(" oxidized=").append(api.traitLevel(nativeBoot, "oxidized"))
+                        .append(" stage=").append(nativeBoot.getOrDefault(stage, (byte) 0))
+                        .append(" counter=").append(nativeBoot.getOrDefault(counter, 0)).append('\n');
+            }
+        }
+        require(api.traitLevel(nativeBoot, "oxidized") == 1 && nativeBoot.getOrDefault(stage, (byte) 0).equals((byte) 1)
+                        && nativeBoot.getOrDefault(counter, 0).equals(100),
+                "Unseeded native oxidation differs from the accelerated reset control");
+    }
+
+
+    private static void dynamic(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         for (String material : List.of("bone", "quartz")) {
             ItemStack source = api.boot(material);
             ItemStack direct = source.copy(); double nativeHealthy = armor(direct);
@@ -119,10 +160,10 @@ public final class SilentGearLiveStateTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static void definitionChange(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
+    private static void definitionChange(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api) throws Exception {
         SilentGearTraitSpike.initialize(api);
         ItemStack source = api.boot("bone");
-        ItemStack root = NeoForgeSilentGearStatsTest.workbench(player, source, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        ItemStack root = NeoForgeSilentGearTest.workbench(player, source, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
         root.setDamageValue(root.getMaxDamage() / 2); tick(player, root, 21, null);
         Object trait = SilentGearTraitSpike.traitOf(SilentGearTraitSpike.view(source).get("silentgear:chipping"));
         Object effect = ((List<?>) trait.getClass().getMethod("getEffects").invoke(trait)).getFirst();
@@ -165,8 +206,8 @@ public final class SilentGearLiveStateTest {
                 .anyMatch(entry -> entry.modifier().id().getNamespace().equals("fixture")), "Unrelated metadata/attribute lost");
     }
 
-    private static void oxidation(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
-        var counter = NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_COUNTER");
+    private static void oxidation(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
+        var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
         ItemStack copper = api.boot("copper"); copper.set(counter, 1199);
         ItemStack young = copper.copy(); young.set(counter, 10);
         ItemStack coated = (ItemStack) api.assemble.invoke(api.swapClass.getField("INSTANCE").get(null),
@@ -174,10 +215,10 @@ public final class SilentGearLiveStateTest {
         ItemStack oxidized = copper.copy();
         tick(player, oxidized, 20, null); tick(player, oxidized, 21, null);
         ItemStack pending = copper.copy(); tick(player, pending, 20, null);
-        require(pending.has(NeoForgeSilentGearStatsTest.NativeApi.component("RECALCULATE_FLAG")), "Native pending seed fixture missing");
+        require(pending.has(NeoForgeSilentGearTest.NativeApi.component("RECALCULATE_FLAG")), "Native pending seed fixture missing");
         for (ItemStack other : List.of(young, coated, oxidized, pending, new ItemStack(Items.DIAMOND_BOOTS))) {
-            for (ItemStack root : NeoForgeSilentGearStatsTest.workbench(player, copper, other)) {
-                require(!root.has(NeoForgeSilentGearStatsTest.NativeApi.component("RECALCULATE_FLAG")), "Root retained an ambiguous native pending flag");
+            for (ItemStack root : NeoForgeSilentGearTest.workbench(player, copper, other)) {
+                require(!root.has(NeoForgeSilentGearTest.NativeApi.component("RECALCULATE_FLAG")), "Root retained an ambiguous native pending flag");
                 ItemStack before = root.copy(); var data = ModContent.getMixedBootsData(root).orElseThrow();
                 ItemStack[] refs = {data.left().source(), data.right().source()};
                 for (EquipmentSlot selected : List.of(EquipmentSlot.FEET, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
@@ -203,7 +244,7 @@ public final class SilentGearLiveStateTest {
             }
         }
         ItemStack terminal = terminal(api.boot("copper"), api);
-        for (ItemStack root : NeoForgeSilentGearStatsTest.workbench(player, terminal, new ItemStack(Items.DIAMOND_BOOTS))) {
+        for (ItemStack root : NeoForgeSilentGearTest.workbench(player, terminal, new ItemStack(Items.DIAMOND_BOOTS))) {
             ItemStack before = root.copy();
             tick(player, root, 20, null); tick(player, terminal, 20, null);
             require(ItemStack.matches(before, root), "Explicit terminal native phase advanced");
@@ -212,7 +253,7 @@ public final class SilentGearLiveStateTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static ItemStack terminal(ItemStack source, NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
+    private static ItemStack terminal(ItemStack source, NeoForgeSilentGearTest.NativeApi api) throws Exception {
         Object ref = api.resource.getMethod("trait", String.class).invoke(null, "silentgear:oxidized");
         Object definition = ((java.util.function.Supplier<?>) ref).get();
         Object instance = nativeClass("api.traits.TraitInstance").getMethod("of", nativeClass("gear.trait.Trait"), int.class, java.util.Collection.class)
@@ -222,7 +263,7 @@ public final class SilentGearLiveStateTest {
         Object key = ((java.util.function.Supplier<?>) nativeClass("setup.gear.GearProperties").getField("TRAITS").get(null)).get();
         map.put(key, nativeClass("api.property.TraitListPropertyValue").getConstructor(List.class).newInstance(List.of(instance)));
         source.set(api.properties, props.getClass().getConstructor(Map.class).newInstance(map));
-        source.set(NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_STAGE"), (byte) 3);
+        source.set(NeoForgeSilentGearTest.NativeApi.component("OXIDATION_STAGE"), (byte) 3);
         return source; // Explicit native terminal fixture, not a stock copper acquisition route.
     }
 
@@ -230,10 +271,10 @@ public final class SilentGearLiveStateTest {
         return lane.map(value -> value.phase().equals("oxidized") ? new SilentGearState.Oxidation(value.phase(), value.level(), value.stage(), 599) : value);
     }
 
-    private static void assertLanes(ItemStack root, ItemStack[] refs, NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
+    private static void assertLanes(ItemStack root, ItemStack[] refs, NeoForgeSilentGearTest.NativeApi api) throws Exception {
         var state = root.get(SilentGearCompatibility.state());
-        var stage = NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_STAGE");
-        var counter = NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_COUNTER");
+        var stage = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_STAGE");
+        var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
         var lanes = List.of(state.left(), state.right());
         for (int i = 0; i < 2; i++) {
             if (lanes.get(i).isEmpty()) { continue; }
@@ -244,11 +285,11 @@ public final class SilentGearLiveStateTest {
         }
     }
 
-    private static void joint(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
+    private static void joint(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         ItemStack jdt = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", "eclipsealloy_boots")));
         JustDireAttributeTestSupport.set(jdt, "stepheight_upgrade_installed", true);
         jdt.set(JustDireResourceTestSupport.energyComponent(), 30_000);
-        for (ItemStack root : NeoForgeSilentGearStatsTest.workbench(player, api.boot("bone"), jdt)) {
+        for (ItemStack root : NeoForgeSilentGearTest.workbench(player, api.boot("bone"), jdt)) {
             require(root.has(JustDireAttributesCompatibility.projections()), "Joint root lacks native JDT table");
             ItemStack before = root.copy();
             for (int damage : List.of(root.getMaxDamage() / 2, 0)) {
@@ -301,9 +342,9 @@ public final class SilentGearLiveStateTest {
         report.append("PRODUCTION C joint: both orientations, damaged/repaired bone + powered Eclipse; FE depleted/funded and Step off/on, independent native armor/Step arithmetic, one shared identity, no resource debit or FE-driven SG recalculation\n");
     }
 
-    private static void refusal(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
-        ItemStack copper = api.boot("copper"); copper.set(NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_COUNTER"), 1199);
-        ItemStack root = NeoForgeSilentGearStatsTest.workbench(player, copper, copper.copy()).getFirst();
+    private static void refusal(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
+        ItemStack copper = api.boot("copper"); copper.set(NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER"), 1199);
+        ItemStack root = NeoForgeSilentGearTest.workbench(player, copper, copper.copy()).getFirst();
         var live = root.get(SilentGearCompatibility.state());
         var invalid = new SilentGearState.Oxidation("polished", 1, 0, 1201);
         root.set(SilentGearCompatibility.state(), new SilentGearState(live.left(), Optional.of(invalid), live.rules(), live.projection(), live.overrides(), live.sample()));
@@ -318,7 +359,7 @@ public final class SilentGearLiveStateTest {
         finally { System.setProperty(property, previous); }
     }
 
-    private static double expectedArmor(ItemStack root, NeoForgeSilentGearStatsTest.NativeApi api, ServerPlayer player, AttributePolicy policy) throws Exception {
+    static double expectedArmor(ItemStack root, NeoForgeSilentGearTest.NativeApi api, ServerPlayer player, AttributePolicy policy) throws Exception {
         var data = ModContent.getMixedBootsData(root).orElseThrow(); ItemStack a = data.left().source(), b = data.right().source();
         for (ItemStack source : List.of(a, b)) { if (api.gear.isInstance(source.getItem())) {
             source.setDamageValue((int) ((long) root.getDamageValue() * source.getMaxDamage() / root.getMaxDamage())); recalc(source, player);
@@ -331,7 +372,7 @@ public final class SilentGearLiveStateTest {
         close(player.getAttributeValue(Attributes.ARMOR), player.getAttributeBaseValue(Attributes.ARMOR) + (root.isEmpty() ? 0 : armor(root)),
                 "Ordinary equipment update did not expose live root armor");
     }
-    private static AttributeRuleSet rules(AttributePolicy policy) { var map = new java.util.LinkedHashMap<>(AttributeRulesLifecycle.serverRules().rules()); map.put(ARMOR, policy); return new AttributeRuleSet(AttributeRulesLifecycle.serverRules().fallback(), map); }
+    static AttributeRuleSet rules(AttributePolicy policy) { var map = new java.util.LinkedHashMap<>(AttributeRulesLifecycle.serverRules().rules()); map.put(ARMOR, policy); return new AttributeRuleSet(AttributeRulesLifecycle.serverRules().fallback(), map); }
     private static double armor(ItemStack stack) { return amount(stack.getAttributeModifiers(), "armor"); }
     private static double amount(ItemAttributeModifiers modifiers, String name) { return modifiers.modifiers().stream().filter(entry -> entry.attribute().unwrapKey().orElseThrow().identifier().equals(Identifier.withDefaultNamespace(name))).mapToDouble(entry -> entry.modifier().amount()).sum(); }
     private static void tick(ServerPlayer player, ItemStack stack, int time, EquipmentSlot slot) { player.tickCount = time; observing = true; try { stack.inventoryTick(player.level(), player, slot); } finally { observing = false; } }

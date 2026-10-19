@@ -15,9 +15,18 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearStatsSpike")
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearClient")) {
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SilentGearClientTest.tick(Minecraft.getInstance()));
+            }
+            return;
+        }
+        if (!System.getProperty("mismatchedboots.runtimetest.silentGearLifecycle", "").isEmpty()) {
+            SilentGearLifecycleTest.register(); return;
+        }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearAbsent")) {
-            NeoForgeSilentGearStatsTest.register();
+            NeoForgeSilentGearTest.register();
             return;
         }
         if (!System.getProperty("mismatchedboots.runtimetest.rootsTicks", "").isEmpty()) {

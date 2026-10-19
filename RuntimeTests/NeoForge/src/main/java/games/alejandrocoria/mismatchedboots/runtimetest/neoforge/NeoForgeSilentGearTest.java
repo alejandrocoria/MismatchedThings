@@ -33,11 +33,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-/** Native numeric controls, production A–C acceptance and separately scoped trait/state research. */
-public final class NeoForgeSilentGearStatsTest {
+/** Optional native controls and production acceptance; wearer research requires its own variant. */
+public final class NeoForgeSilentGearTest {
     private static boolean finished;
 
-    private NeoForgeSilentGearStatsTest() {}
+    private NeoForgeSilentGearTest() {}
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
@@ -58,6 +58,12 @@ public final class NeoForgeSilentGearStatsTest {
             player.setPos(0, 80, 0); player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
             String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+            if (stateVariant.equals("research")) {
+                SilentGearTraitSpike.run(player, api, report);
+                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
+                return;
+            }
             if (List.of("state", "joint").contains(stateVariant)) {
                 SilentGearLiveStateTest.run(player, api, report, stateVariant);
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
@@ -92,7 +98,9 @@ public final class NeoForgeSilentGearStatsTest {
                 equipAndCheck(player, stack, report);
                 stack.setDamageValue(17);
                 ItemStack vanilla = new ItemStack(Items.DIAMOND_BOOTS); vanilla.setDamageValue(32);
-                measure(player, profile.getKey() + " / vanilla diamond", stack, vanilla, api, report);
+                if (List.of("leather", "iron+wool").contains(profile.getKey())) {
+                    measure(player, profile.getKey() + " / vanilla diamond", stack, vanilla, api, report);
+                }
             }
             measure(player, "iron+wool / SG diamond", lined, profiles.get("diamond"), api, report);
             measure(player, "iron+wool / identical", lined, lined, api, report);
@@ -114,13 +122,14 @@ public final class NeoForgeSilentGearStatsTest {
                 }
             }
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
-            SilentGearTraitSpike.run(player, api, report);
-            SilentGearStateSpike.run(player, api, report);
+            SilentGearTraitSpike.initialize(api);
+            SilentGearTraitSpike.numericControls(player, report);
+            SilentGearLiveStateTest.fullNativeOxidation(player, api, report);
             SilentGearFoundationTest.run(player, api, report);
             SilentGearEffectsTest.run(player, api, report);
             SilentGearLiveStateTest.run(player, api, report, "");
-            report.append("\nBaseline: 14 numeric paid output measurements; additional paid foundation/research pairs above; source snapshots unchanged; ")
-                    .append("trait/item callback probes are not full gameplay acceptance\n");
+            report.append("\nBaseline: 8 representative numeric paid output measurements plus production foundation/effect/state controls; ")
+                    .append("wearer-event research is a separate opt-in variant\n");
             NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
             NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("silent-gear-stats", failure); }

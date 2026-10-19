@@ -36,7 +36,7 @@ final class SilentGearFoundationTest {
         require(!ModList.get().isLoaded("silentgear"), "SG absence fixture loaded native mod");
         var player = FakePlayerFactory.getMinecraft(server.overworld());
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
-        for (var root : NeoForgeSilentGearStatsTest.workbench(player, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS))) {
+        for (var root : NeoForgeSilentGearTest.workbench(player, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS))) {
             require(!root.has(SilentGearCompatibility.state()) && SilentGearCompatibility.effectiveTraits(root).isEmpty(), "Ordinary pair gained SG behavior");
             var data = ModContent.getMixedBootsData(root).orElseThrow();
             require(!MixedBootsRecomposer.recompose(root, data.left().source(), data.right().source()).has(SilentGearCompatibility.state()),
@@ -53,9 +53,9 @@ final class SilentGearFoundationTest {
         NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", "SG absent: two paid ordinary orientations; production recomposition/trait view neutral; ordinary tick/wear with own state; own state codec independent of SG\n");
     }
 
-    static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {
-        var stage = NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_STAGE");
-        var counter = NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_COUNTER");
+    static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
+        var stage = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_STAGE");
+        var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
         ItemStack copper = api.boot("copper"), younger = copper.copy();
         copper.set(counter, 1199); younger.set(counter, 10);
         var nativeModifiers = copper.getAttributeModifiers();
@@ -64,11 +64,11 @@ final class SilentGearFoundationTest {
         require(SilentGearCompatibility.normalize(new ItemStack(Items.DIAMOND_BOOTS), duplicateModifiers).equals(duplicateModifiers),
                 "Loaded SG binding normalized another mod's source");
         ItemStack forged = new ItemStack(Items.DIAMOND_BOOTS); forged.set(counter, 100);
-        for (ItemStack root : NeoForgeSilentGearStatsTest.workbench(player, forged, new ItemStack(Items.IRON_BOOTS))) {
+        for (ItemStack root : NeoForgeSilentGearTest.workbench(player, forged, new ItemStack(Items.IRON_BOOTS))) {
             require(!root.has(SilentGearCompatibility.state()), "Orphan native counter manufactured an SG lane");
         }
         for (ItemStack other : List.of(younger, new ItemStack(Items.DIAMOND_BOOTS))) {
-            for (ItemStack root : NeoForgeSilentGearStatsTest.workbench(player, copper, other)) {
+            for (ItemStack root : NeoForgeSilentGearTest.workbench(player, copper, other)) {
                 var sources = ModContent.getMixedBootsData(root).orElseThrow();
                 SilentGearState initial = root.get(SilentGearCompatibility.state());
                 require(initial != null, "Production SG state finalizer did not run");
@@ -138,7 +138,7 @@ final class SilentGearFoundationTest {
         require(composed.primary().get(SilentGearCompatibility.state()).rules().stream()
                 .anyMatch(rule -> rule.attribute().equals(Identifier.withDefaultNamespace("armor")) && rule.policy() == AttributePolicy.MAXIMUM),
                 "State did not capture supplied resolved policies");
-        var duplicate = NeoForgeSilentGearStatsTest.workbench(player, api.boot("gold"), api.boot("iron")).getFirst();
+        var duplicate = NeoForgeSilentGearTest.workbench(player, api.boot("gold"), api.boot("iron")).getFirst();
         require(SilentGearCompatibility.effectiveTraits(duplicate).stream().filter(trait -> trait.id().getPath().equals("malleable"))
                 .findFirst().orElseThrow().level() == api.traitLevel(api.boot("iron"), "malleable"), "Production trait view did not select max native level");
 
@@ -157,10 +157,10 @@ final class SilentGearFoundationTest {
     }
 
     private static void assertLane(Optional<SilentGearState.Oxidation> lane, ItemStack source,
-                                   NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
+                                   NeoForgeSilentGearTest.NativeApi api) throws Exception {
         if (!api.gear.isInstance(source.getItem())) { require(lane.isEmpty(), "Vanilla source gained a lane"); return; }
         require(lane.orElseThrow().equals(new SilentGearState.Oxidation("polished", 1, 0,
-                (int) source.getOrDefault(NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_COUNTER"), 0))), "Initial lane differs from its native source");
+                (int) source.getOrDefault(NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER"), 0))), "Initial lane differs from its native source");
     }
 
     private static void require(boolean condition, String message) {
