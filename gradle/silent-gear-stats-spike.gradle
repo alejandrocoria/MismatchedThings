@@ -4,7 +4,7 @@ def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archive
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
-if (!(effectVariant in ['', 'repair', 'wear', 'compatible'])) { throw new GradleException('Unknown SG effect test variant') }
+if (!(effectVariant in ['', 'repair', 'wear', 'compatible', 'state', 'joint'])) { throw new GradleException('Unknown SG effect test variant') }
 def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
@@ -13,6 +13,9 @@ def artifacts = [
         'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
         'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655'
 ]
+if (effectVariant == 'joint') {
+    artifacts['justdirethings-1.6.11.jar'] = '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
+}
 
 neoForge.runs.create('silentGearStats') {
     server(); disableIdeRun()
@@ -56,7 +59,7 @@ tasks.named('runSilentGearStats') { dependsOn('prepareSilentGearStats') }
 
 tasks.register('verifySilentGearStatsSpike') {
     group = 'verification'
-    description = 'Verifies Silent Gear production foundation and remaining scoped trait/state research'
+    description = 'Verifies Silent Gear production attributes/state and remaining scoped trait research'
     doLast {
         // Keep the child log outside the markers directory cleared by prepare.
         def suffix = effectVariant ? "-${effectVariant}" : ''
@@ -72,6 +75,8 @@ tasks.register('verifySilentGearStatsSpike') {
         int warnings = (log.text =~ /Silent Gear mixed (repair|wear) disabled:/).count
         int expected = effectVariant in ['repair', 'wear'] ? 1 : 0
         if (warnings != expected) { throw new GradleException("Unexpected SG effect warnings ${warnings} vs ${expected}: ${log}") }
+        int stateWarnings = (log.text =~ /Silent Gear mixed state disabled:/).count
+        if (stateWarnings != (effectVariant == 'state' ? 1 : 0)) { throw new GradleException("Unexpected SG live-state warnings: ${stateWarnings}: ${log}") }
         logger.lifecycle(report.text)
     }
 }

@@ -33,7 +33,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-/** Native numeric controls, production foundation acceptance and separately scoped trait/state research. */
+/** Native numeric controls, production A–C acceptance and separately scoped trait/state research. */
 public final class NeoForgeSilentGearStatsTest {
     private static boolean finished;
 
@@ -57,6 +57,13 @@ public final class NeoForgeSilentGearStatsTest {
             player.setGameMode(GameType.SURVIVAL);
             player.setPos(0, 80, 0); player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
+            String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+            if (List.of("state", "joint").contains(stateVariant)) {
+                SilentGearLiveStateTest.run(player, api, report, stateVariant);
+                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
+                return;
+            }
             if (!System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").isEmpty()) {
                 SilentGearEffectsTest.run(player, api, report);
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
@@ -111,6 +118,7 @@ public final class NeoForgeSilentGearStatsTest {
             SilentGearStateSpike.run(player, api, report);
             SilentGearFoundationTest.run(player, api, report);
             SilentGearEffectsTest.run(player, api, report);
+            SilentGearLiveStateTest.run(player, api, report, "");
             report.append("\nBaseline: 14 numeric paid output measurements; additional paid foundation/research pairs above; source snapshots unchanged; ")
                     .append("trait/item callback probes are not full gameplay acceptance\n");
             NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());

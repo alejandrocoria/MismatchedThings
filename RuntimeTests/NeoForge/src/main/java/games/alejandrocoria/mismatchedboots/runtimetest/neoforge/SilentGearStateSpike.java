@@ -39,10 +39,51 @@ public final class SilentGearStateSpike {
         report.append("\nSTATE PROJECTION SPIKE: immutable source snapshots; repair/wear now tested through production B\n");
         dynamicProperties(player, report);
         oxidation(player, report);
+        fullNativeOxidation(player, report);
         require(nativeRecalculations > 0 && forbiddenRecalculations == 0, "Missing native projection or mixed-root recalculation entered");
         clear(player);
         report.append("State scope: native recalculation only on disposable native views; no native broken-state inheritance; ")
                 .append("root/source metadata checks and registry-aware item codec; not installed ticking or world restart\n");
+    }
+
+    /** Accelerate only the fixture's counters; native ticks/recalculation decide the phase and level. */
+    private static void fullNativeOxidation(ServerPlayer player, StringBuilder report) throws Exception {
+        ItemStack nativeBoot = api.boot("copper");
+        var stage = component("OXIDATION_STAGE");
+        var counter = component("OXIDATION_COUNTER");
+        for (int step = 0; step < 6; step++) {
+            boolean polished = api.traitLevel(nativeBoot, "polished") > 0;
+            nativeBoot.set(counter, polished ? 1199 : 599);
+            player.tickCount = 20;
+            nativeBoot.inventoryTick(player.level(), player, null);
+            report.append("FULL NATIVE OXIDATION pending step=").append(step)
+                    .append(" stage=").append(nativeBoot.getOrDefault(stage, (byte) 0)).append('\n');
+            player.tickCount = 21;
+            nativeBoot.inventoryTick(player.level(), player, null);
+            report.append("FULL NATIVE OXIDATION step=").append(step)
+                    .append(" polished=").append(api.traitLevel(nativeBoot, "polished"))
+                    .append(" oxidized=").append(api.traitLevel(nativeBoot, "oxidized"))
+                    .append(" stage=").append(nativeBoot.getOrDefault(stage, (byte) 0))
+                    .append(" counter=").append(nativeBoot.getOrDefault(counter, 0)).append('\n');
+        }
+        require(api.traitLevel(nativeBoot, "oxidized") == 1 && nativeBoot.getOrDefault(stage, (byte) 0).equals((byte) 1),
+                "Pinned native oxidation reset changed; revisit the C progression decision");
+        // Independent unseeded timeline rules out the accelerated counters causing the reset.
+        nativeBoot = api.boot("copper");
+        for (int tick = 1; tick <= 50_000; tick++) {
+            player.tickCount = tick;
+            nativeBoot.inventoryTick(player.level(), player, null);
+            if (tick == 24_001 || tick == 36_001 || tick == 48_001 || tick == 50_000) {
+                report.append("NATURAL NATIVE OXIDATION tick=").append(tick)
+                        .append(" polished=").append(api.traitLevel(nativeBoot, "polished"))
+                        .append(" oxidized=").append(api.traitLevel(nativeBoot, "oxidized"))
+                        .append(" stage=").append(nativeBoot.getOrDefault(stage, (byte) 0))
+                        .append(" counter=").append(nativeBoot.getOrDefault(counter, 0)).append('\n');
+            }
+        }
+        require(api.traitLevel(nativeBoot, "oxidized") == 1 && nativeBoot.getOrDefault(stage, (byte) 0).equals((byte) 1)
+                        && nativeBoot.getOrDefault(counter, 0).equals(100),
+                "Unseeded native oxidation differs from the accelerated reset control");
     }
 
 

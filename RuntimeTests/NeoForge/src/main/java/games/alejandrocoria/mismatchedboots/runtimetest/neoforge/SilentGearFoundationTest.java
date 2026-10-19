@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Actual production foundation; mutable-state research remains a separate phase. */
+/** Actual creation/recomposition and codec foundation; live behavior is tested in its own phase. */
 final class SilentGearFoundationTest {
     private SilentGearFoundationTest() {}
 
@@ -76,13 +76,13 @@ final class SilentGearFoundationTest {
                 assertLane(initial.right(), sources.right().source(), api);
                 require(initial.overrides().isEmpty() && !initial.rules().isEmpty(), "Initial projection ownership differs");
                 ItemStack before = root.copy();
-                player.tickCount = 20;
+                player.tickCount = 21;
                 root.inventoryTick(player.level(), player, null);
                 root.getAttributeModifiers();
-                require(ItemStack.matches(before, root), "Foundation tick/query progressed state or wrote components");
+                require(ItemStack.matches(before, root), "Unchanged off-cadence tick/query wrote state");
 
-                var live = new SilentGearState(initial.left().map(value -> new SilentGearState.Oxidation(value.phase(), value.stage(), 77)),
-                        initial.right().map(value -> new SilentGearState.Oxidation(value.phase(), value.stage(), 29)),
+                var live = new SilentGearState(initial.left().map(value -> new SilentGearState.Oxidation(value.phase(), value.level(), value.stage(), 77)),
+                        initial.right().map(value -> new SilentGearState.Oxidation(value.phase(), value.level(), value.stage(), 29)),
                         initial.rules(), initial.projection(), initial.overrides());
                 root.set(SilentGearCompatibility.state(), live);
                 root.set(DataComponents.CUSTOM_NAME, Component.literal("live SG foundation"));
@@ -153,13 +153,13 @@ final class SilentGearFoundationTest {
                     && ItemStack.matches(menu.getSlot(0).getItem(), malformed), "Malformed SG input produced/payable preview: " + invalid);
         }
         report.append("PRODUCTION A: paid one/two-sided inverse state; native defaults and unequal counters; actual loaded trim + repeat preserve live clocks/removal; ")
-                .append("captured supplied policies; item/network codecs; max-level native view; non-SG duplicates/orphan counter unchanged; explicit state/lane absence; three malformed input refusals; no live ticking\n");
+                .append("captured supplied policies; item/network codecs; max-level native view; non-SG duplicates/orphan counter unchanged; explicit state/lane absence; three malformed input refusals; unchanged off-cadence tick/query\n");
     }
 
     private static void assertLane(Optional<SilentGearState.Oxidation> lane, ItemStack source,
                                    NeoForgeSilentGearStatsTest.NativeApi api) throws Exception {
         if (!api.gear.isInstance(source.getItem())) { require(lane.isEmpty(), "Vanilla source gained a lane"); return; }
-        require(lane.orElseThrow().equals(new SilentGearState.Oxidation("polished", 0,
+        require(lane.orElseThrow().equals(new SilentGearState.Oxidation("polished", 1, 0,
                 (int) source.getOrDefault(NeoForgeSilentGearStatsTest.NativeApi.component("OXIDATION_COUNTER"), 0))), "Initial lane differs from its native source");
     }
 

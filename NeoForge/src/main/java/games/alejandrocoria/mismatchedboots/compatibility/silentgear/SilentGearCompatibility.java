@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
-/** Native source reads and root initialization only; no native item tick or gear recalculation. */
+/** Native source reads and lifecycle ownership; live copy computations belong to SilentGearLiveState. */
 public final class SilentGearCompatibility {
     private static final DeferredRegister<DataComponentType<?>> TYPES = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, Constants.MOD_ID);
     private static final Supplier<DataComponentType<SilentGearState>> STATE = TYPES.register("silent_gear_state", () ->
@@ -41,6 +41,13 @@ public final class SilentGearCompatibility {
     private SilentGearCompatibility() {}
 
     public static DataComponentType<SilentGearState> state() { return STATE.get(); }
+    static Api binding() { return api; }
+
+    /** Shared JDT groups must not reclaim a recorded root override through later numerical coincidence. */
+    public static boolean overrides(ItemStack root, Identifier attribute, Identifier modifier) {
+        var state = root.get(state());
+        return state != null && state.overrides().stream().anyMatch(key -> key.attribute().equals(attribute) && key.modifier().equals(modifier));
+    }
 
     static ItemStack carrier(ItemStack root) {
         Api binding = api;
@@ -114,7 +121,7 @@ public final class SilentGearCompatibility {
         if (!binding.boot(left) && !binding.boot(right)) { return; }
         if (previous != null && old == null) { return; } // No migration/reseed of absent live state.
 
-        Optional<SilentGearState.Oxidation> a = binding.oxidation(left), b = binding.oxidation(right);
+        Optional<SilentGearState.Oxidation> a = SilentGearLiveState.seed(left, binding), b = SilentGearLiveState.seed(right, binding);
         var keys = new LinkedHashSet<SilentGearState.Key>();
         for (ItemStack source : List.of(left, right)) {
             if (binding.boot(source)) { Services.PLATFORM.getCompositionAttributeModifiers(source).modifiers()
@@ -137,6 +144,18 @@ public final class SilentGearCompatibility {
                 result.removeIf(entry -> SilentGearState.Key.of(entry).equals(key));
                 result.addAll(entries(current, key));
             }
+            // Recomposition rebuilds source attributes. Keep root-only foreign groups, not historical
+            // source groups that legitimately disappeared through the source transformation.
+            var historical = new LinkedHashSet<SilentGearState.Key>();
+            for (ItemStack source : List.of(originals.left().source(), originals.right().source())) {
+                Services.PLATFORM.getCompositionAttributeModifiers(source).modifiers().forEach(entry -> historical.add(SilentGearState.Key.of(entry)));
+            }
+            historical.addAll(keys);
+            for (var key : current.modifiers().stream().map(SilentGearState.Key::of).distinct().toList()) {
+                if (historical.contains(key)) { continue; }
+                result.removeIf(entry -> SilentGearState.Key.of(entry).equals(key));
+                result.addAll(entries(current, key));
+            }
             baseline = new ItemAttributeModifiers(List.copyOf(result));
         }
         var rules = keys.stream().map(SilentGearState.Key::attribute).distinct().sorted()
@@ -146,6 +165,7 @@ public final class SilentGearCompatibility {
         var next = new SilentGearState(a, b, rules, projection, overrides);
         output.set(DataComponents.ATTRIBUTE_MODIFIERS, baseline);
         output.set(state(), next);
+        SilentGearLiveState.prepare(output);
     }
 
     private static void retain(ItemStack previous, ItemStack output, SilentGearState old) {
@@ -187,14 +207,14 @@ public final class SilentGearCompatibility {
 
     public record Trait(Identifier id, int level, Object nativeInstance) {}
 
-    private static final class Api {
+    static final class Api {
         private final Class<?> armor = nativeClass("api.item.GearArmor");
         private final Class<?> instance = nativeClass("api.traits.TraitInstance");
         private final Class<?> trait = nativeClass("gear.trait.Trait");
         private final Class<?> oxidation = nativeClass("gear.trait.effect.OxidationTraitEffect");
         private final MethodHandle traits, id, level, definition, maxLevel, effects, times;
         private final DataComponentType<Object> construction = component("GEAR_CONSTRUCTION");
-        private final DataComponentType<Object> stage = component("OXIDATION_STAGE"), counter = component("OXIDATION_COUNTER");
+        final DataComponentType<Object> stage = component("OXIDATION_STAGE"), counter = component("OXIDATION_COUNTER");
 
         private Api() throws ReflectiveOperationException {
             if (construction == null || stage == null || counter == null || stage.codec() == null || counter.codec() == null
@@ -214,12 +234,12 @@ public final class SilentGearCompatibility {
                     .findGetter(oxidation, "counterTimesPerLevel", List.class);
         }
 
-        private boolean boot(ItemStack stack) {
+        boolean boot(ItemStack stack) {
             var equippable = stack.get(DataComponents.EQUIPPABLE);
             return armor.isInstance(stack.getItem()) && equippable != null && equippable.slot() == EquipmentSlot.FEET;
         }
 
-        private List<Trait> traits(ItemStack stack) {
+        List<Trait> traits(ItemStack stack) {
             if (!boot(stack)) { return List.of(); }
             try {
                 var result = new ArrayList<Trait>();
@@ -234,7 +254,7 @@ public final class SilentGearCompatibility {
             catch (Throwable failure) { throw new IllegalStateException("Could not read native SG traits", failure); }
         }
 
-        private Optional<SilentGearState.Oxidation> oxidation(ItemStack stack) {
+        Optional<SilentGearState.Oxidation> oxidation(ItemStack stack) {
             var eligible = traits(stack).stream().filter(value -> value.id.equals(Identifier.fromNamespaceAndPath("silentgear", "polished"))
                     || value.id.equals(Identifier.fromNamespaceAndPath("silentgear", "oxidized"))).toList();
             if (eligible.isEmpty()) { return Optional.empty(); }
@@ -243,19 +263,21 @@ public final class SilentGearCompatibility {
             if (!(rawStage instanceof Byte value) || !(rawCounter instanceof Integer count)) {
                 throw new IllegalArgumentException("Invalid native SG oxidation component types");
             }
-            var lane = new SilentGearState.Oxidation(eligible.getFirst().id.getPath(), value, count);
+            var lane = new SilentGearState.Oxidation(eligible.getFirst().id.getPath(), eligible.getFirst().level, value, count);
             validateLane(stack, lane);
             return Optional.of(lane);
         }
 
-        private void validateLane(ItemStack source, SilentGearState.Oxidation lane) {
+        void validateLane(ItemStack source, SilentGearState.Oxidation lane) {
             try {
-                Trait value = traits(source).stream().filter(item -> item.id.getPath().equals(lane.phase())).findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("Unsupported SG oxidation phase replacement"));
-                Object nativeTrait = definition.invoke(value.nativeInstance);
+                if (traits(source).stream().noneMatch(item -> List.of("silentgear:polished", "silentgear:oxidized").contains(item.id.toString()))) {
+                    throw new IllegalArgumentException("Source has no native oxidation phase");
+                }
+                Object resource = nativeClass("api.util.DataResource").getMethod("trait", String.class).invoke(null, "silentgear:" + lane.phase());
+                Object nativeTrait = ((Supplier<?>) resource).get();
                 int limit = (int) maxLevel.invoke(nativeTrait);
                 var nativeEffects = ((List<?>) effects.invoke(nativeTrait)).stream().filter(oxidation::isInstance).toList();
-                if (nativeEffects.size() != 1 || limit < 1 || limit > Byte.MAX_VALUE || lane.stage() > limit) {
+                if (nativeEffects.size() != 1 || limit < 1 || limit > Byte.MAX_VALUE || lane.stage() > limit || lane.level() > limit) {
                     throw new IllegalArgumentException("Unsupported native SG oxidation definition/stage");
                 }
                 var thresholds = (List<?>) times.invoke(nativeEffects.getFirst());
@@ -263,7 +285,8 @@ public final class SilentGearCompatibility {
                         !(item instanceof Integer time) || time < 1 || time == Integer.MAX_VALUE)) {
                     throw new IllegalArgumentException("Invalid native SG oxidation thresholds");
                 }
-                int index = Math.min(value.level - 1, thresholds.size() - 1);
+                int index = lane.level() - 1;
+                if (index >= thresholds.size()) { throw new IllegalArgumentException("Unsupported native SG oxidation level/threshold"); }
                 if (lane.counter() > (int) thresholds.get(index)) { throw new IllegalArgumentException("Invalid native SG oxidation counter"); }
             } catch (IllegalArgumentException | Error failure) { throw failure; }
             catch (Throwable failure) { throw new IllegalStateException("Could not validate native SG oxidation", failure); }

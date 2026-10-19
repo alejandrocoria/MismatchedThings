@@ -19,5 +19,6 @@ abstract class SilentGearRecalculationWitnessMixin {
         SilentGearTraitSpike.recalculation(stack);
         SilentGearStateSpike.recalculation(stack);
         SilentGearEffectsTest.recalculation(stack);
+        games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearLiveStateTest.recalculation(stack);
     }
 }

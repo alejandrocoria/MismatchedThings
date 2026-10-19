@@ -15,7 +15,7 @@ import java.util.Set;
 public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearStatsSpike")
-                && !System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").isEmpty();
+                && List.of("repair", "wear", "compatible").contains(System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", ""));
     }
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant");

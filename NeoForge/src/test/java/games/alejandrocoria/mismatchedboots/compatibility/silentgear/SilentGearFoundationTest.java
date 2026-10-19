@@ -61,7 +61,7 @@ class SilentGearFoundationTest {
         JsonObject base = SilentGearState.CODEC.encodeStart(JsonOps.INSTANCE, empty).getOrThrow().getAsJsonObject();
         for (String phase : List.of("unknown", "polished")) {
             var malformed = base.deepCopy();
-            var lane = new JsonObject(); lane.addProperty("phase", phase); lane.addProperty("stage", 0);
+            var lane = new JsonObject(); lane.addProperty("phase", phase); lane.addProperty("level", 1); lane.addProperty("stage", 0);
             lane.addProperty("counter", phase.equals("polished") ? -1 : 0);
             malformed.add("left", lane);
             assertTrue(SilentGearState.CODEC.parse(JsonOps.INSTANCE, malformed).error().isPresent());
@@ -79,7 +79,20 @@ class SilentGearFoundationTest {
         assertThrows(IllegalArgumentException.class, () -> new SilentGearState(Optional.empty(), Optional.empty(), List.of(rule, rule), ItemAttributeModifiers.EMPTY, List.of()));
         assertThrows(IllegalArgumentException.class, () -> new SilentGearState(Optional.empty(), Optional.empty(), List.of(), new ItemAttributeModifiers(List.of(modifier)), List.of()));
         assertThrows(IllegalArgumentException.class, () -> new SilentGearState(Optional.empty(), Optional.empty(), List.of(), ItemAttributeModifiers.EMPTY, List.of(SilentGearState.Key.of(modifier))));
-        assertThrows(IllegalArgumentException.class, () -> new SilentGearState.Oxidation("oxidized", 128, 0));
+        assertThrows(IllegalArgumentException.class, () -> new SilentGearState.Oxidation("oxidized", 1, 128, 0));
+        assertThrows(IllegalArgumentException.class, () -> new SilentGearState.Oxidation("oxidized", 0, 1, 0));
+        var badSample = base.deepCopy(); var sample = new JsonObject();
+        sample.addProperty("damage", 101); sample.addProperty("maximum", 100); sample.addProperty("definition", ""); badSample.add("sample", sample);
+        assertTrue(SilentGearState.CODEC.parse(JsonOps.INSTANCE, badSample).error().isPresent());
+    }
+
+    @Test void livePhaseLevelAndWearSampleRoundTripIndependentlyOfNativeClasses() {
+        var state = new SilentGearState(Optional.of(new SilentGearState.Oxidation("oxidized", 2, 1, 17)),
+                Optional.empty(), List.of(), ItemAttributeModifiers.EMPTY, List.of(), Optional.of(new SilentGearState.Sample(50, 100)));
+        var encoded = SilentGearState.CODEC.encodeStart(JsonOps.INSTANCE, state).getOrThrow();
+        assertEquals(state, SilentGearState.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow());
+        var malformed = encoded.deepCopy().getAsJsonObject(); malformed.getAsJsonObject("left").addProperty("level", 0);
+        assertTrue(SilentGearState.CODEC.parse(JsonOps.INSTANCE, malformed).error().isPresent());
     }
 
     private static ItemAttributeModifiers.Entry entry(double amount, AttributeModifier.Operation operation,

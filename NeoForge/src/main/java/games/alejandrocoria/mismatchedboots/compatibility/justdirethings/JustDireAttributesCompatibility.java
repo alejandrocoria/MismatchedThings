@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.AttributeComposer;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -142,6 +143,35 @@ public final class JustDireAttributesCompatibility {
         output.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(List.copyOf(fallback)));
     }
 
+    /** SG supplies its already-computed source attributes; JDT still computes its own nine native states.
+     * The caller replaces only shared identities, keeping every unrelated frozen JDT group intact. */
+    public static JustDireAttributeProjections withSourceAttributes(ItemStack root, AttributeRuleSet rules,
+            ItemAttributeModifiers left, ItemAttributeModifiers right) {
+        Api binding = api;
+        if (binding == null || !ready() || !eligible(root)) { throw new IllegalStateException("JDT shared projection unavailable"); }
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        var first = new ArrayList<ItemAttributeModifiers>(3);
+        var second = new ArrayList<ItemAttributeModifiers>(3);
+        try {
+            for (int state = 0; state < 3; state++) {
+                ItemStack a = data.left().source(), b = data.right().source();
+                first.add(JustDireUpgradesCompatibility.nativeBoot(a)
+                        ? Services.PLATFORM.getCompositionAttributeModifiers(view(a, root, state, binding)) : left);
+                second.add(JustDireUpgradesCompatibility.nativeBoot(b)
+                        ? Services.PLATFORM.getCompositionAttributeModifiers(view(b, root, state, binding)) : right);
+            }
+        } catch (Throwable failure) {
+            disable(binding, failure);
+            throw new IllegalStateException("JDT shared native source view failed", failure);
+        }
+        var states = new ArrayList<ItemAttributeModifiers>(9);
+        for (var a : first) { for (var b : second) {
+            states.add(new ItemAttributeModifiers(AttributeComposer.composePrimary(a, b, rules).modifiers()
+                    .stream().filter(JustDireAttributeProjections::managed).toList()));
+        } }
+        return new JustDireAttributeProjections(states);
+    }
+
     private static void preserveOverrides(ItemStack previous, List<ItemAttributeModifiers.Entry> baseline) {
         if (previous != null && previous.has(projections())) {
             var old = previous.get(projections());
@@ -171,7 +201,8 @@ public final class JustDireAttributesCompatibility {
         var live = table.states().get(state);
         var result = new ArrayList<>(defaults.modifiers());
         for (var key : keys(List.of(baseline, live))) {
-            if (!entries(defaults, key).equals(entries(baseline, key))) { continue; }
+            if (!entries(defaults, key).equals(entries(baseline, key))
+                    || SilentGearCompatibility.overrides(root, key.attribute(), key.modifier())) { continue; }
             result.removeIf(entry -> JustDireAttributeProjections.key(entry).equals(key));
             result.addAll(entries(live, key));
         }
