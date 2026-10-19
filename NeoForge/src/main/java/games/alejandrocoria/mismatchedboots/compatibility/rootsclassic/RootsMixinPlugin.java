@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rootsclassic;
 
+import games.alejandrocoria.mismatchedboots.Constants;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -13,8 +14,9 @@ import org.spongepowered.asm.service.MixinService;
 import java.util.List;
 import java.util.Set;
 
-/** Final export runs after MixinExtras; absence or a missing publisher leaves native proofs false. */
-public final class RootsTickMixinPlugin implements IMixinConfigPlugin, IExtension {
+/** Final export checks tick proofs and edits set predicates after competing mixins/MixinExtras. */
+public final class RootsMixinPlugin implements IMixinConfigPlugin, IExtension {
+    private final Set<String> declinedSets = java.util.concurrent.ConcurrentHashMap.newKeySet();
     @Override public void onLoad(String mixinPackage) {
         Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
         if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
@@ -34,6 +36,9 @@ public final class RootsTickMixinPlugin implements IMixinConfigPlugin, IExtensio
             RootsTickShape.publish(node, RootsTickShape.ENTRY_PROOF, false, RootsTickShape.tick(node));
         } else if (node.name.equals(RootsTickShape.UTIL)) {
             RootsTickShape.publish(node, RootsTickShape.REPAIR_PROOF, true, RootsTickShape.repair(node));
+        }
+        if (RootsSetShape.target(node.name) && !RootsSetShape.apply(node) && declinedSets.add(node.name)) {
+            Constants.LOG.warn("Roots Classic mixed set consumer disabled: {} (local FEET predicate unavailable)", node.name);
         }
     }
 

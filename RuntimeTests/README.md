@@ -122,26 +122,31 @@ legitimately retain their own static cache across reload; no fresh native model
 identity is assumed. Current evidence and manual status belong to
 [Roots block A](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-IMPLEMENTATION.md#7-block-a-execution-record).
 
-### Roots Classic intrinsic ticks
+### Roots Classic intrinsic ticks and set consumers
 
-The focused production B gates use the pinned Roots Classic artifact from the
+The focused production B/C gates use the pinned Roots Classic artifact from the
 rendering check, with no external library. They never alter the owner's mods:
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*RootsTickShapeTest' '-ProotsGuardJar=NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar' --console=plain
+.\gradlew.bat :NeoForge:test --tests '*Roots*ShapeTest' '-ProotsGuardJar=NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar' --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyRootsTicks --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyRootsTicksAbsent --console=plain
 ```
 
 Repeat these commands with `'-Pneoforge_version=26.1.2.99'` for the support floor;
 restore the ordinary .114 build afterwards. `verifyRootsTicks` sequentially runs
-Live, Receiver and Helper isolated servers. Their test-only mixins count native
-callbacks and force only the native 80/40 random rolls while explicitly armed.
+Live, Receiver, Helper, Staff, Crystal and Healing isolated servers. Their test-only
+mixins count native callbacks and force only native repair/Terra/healing random
+rolls while explicitly armed.
 The negative processes add a foreign stack consumer via late test mixins in one
 Sylvan callback or the shared repair helper. Final inspection must refuse their
 proofs; native controls must still work and unrelated valid receiver support must
-remain enabled. Absence loads no Roots code and expects no diagnostic. Guards are
-also checked against the real JAR and bounded instruction mutations in units.
+remain enabled. Three set-negative processes insert an identity-preserving but
+unrecognized item consumer into just one final FEET predicate; native equipment,
+the other set consumers and intrinsic ticks must remain functional. One bounded
+set diagnostic is expected in each, none in Live/Absent. Absence loads no Roots
+code and expects no diagnostic. Guards are also checked against the real JAR and
+bounded instruction mutations in units.
 
 Real item dispatch and a NeoForge offline test player's native `aiStep` cover
 worn, selected main hand, offhand and ordinary backpack behavior. Native controls
@@ -150,11 +155,21 @@ Periodic Roots entity-tick regeneration is not posted in these scoped controls,
 so the extra boot Terra delta is measured independently. These are not a connected
 player/client presentation or full natural-world probability measurement.
 
+Set cases cast both real native staffs: Nature's Cure converts poison to native
+regeneration, whose amplifier measures the exact potency, including Crystal's
+independent base bonus. Native Terra payment/staff uses remain asserted. Wildwood
+healing executes through the actual entity-tick event bus with scoped success/
+failure rolls, incomplete sets, both orientations, duplicates, cross-set pairs,
+health/hunger and invalid-root controls. A separate HEAD predicate wrapper accepts
+a diamond helmet without editing FEET. Live additionally round-trips an actually
+repaired root through inventory save/load and the ordinary slot packet codec;
+this is not a new-JVM world restart or connected-client synchronization test.
+
 Reports/logs live under `RuntimeTests/NeoForge/build/reports/roots-ticks/<version>/`
-and worlds/mod copies under `build/run/rootsTicks/<version>/`. B introduces no
-packet or persisted field. It does not implement full-set recognition. Exact
-executed results and pending manual checks belong to
-[the B execution record](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-IMPLEMENTATION.md#8-block-b-execution-record).
+and worlds/mod copies under `build/run/rootsTicks/<version>/`. B/C introduce no
+packet or persisted field. Exact executed results and separate manual acceptance
+belong to the [B record](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-IMPLEMENTATION.md#8-block-b-execution-record)
+and [C record](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-IMPLEMENTATION.md#9-block-c-execution-record).
 
 ### Ice and Fire damage and set probes
 

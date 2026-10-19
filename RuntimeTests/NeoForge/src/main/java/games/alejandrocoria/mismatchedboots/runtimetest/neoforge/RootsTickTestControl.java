@@ -16,6 +16,8 @@ public final class RootsTickTestControl {
     public static void repair() { Scope scope = ACTIVE.get(); if (scope != null) { scope.repairs++; } }
     /** Harmless in the fixture, but not an audited native stack consumer the production guard may trust. */
     public static void foreignStack(Object stack) {}
+    /** Value-preserving, but deliberately outside the audited local set predicate shape. */
+    public static net.minecraft.world.item.Item foreignItem(net.minecraft.world.item.Item item) { return item; }
     public static Integer roll(int bound) {
         Scope scope = ACTIVE.get();
         if (scope == null) { return null; }

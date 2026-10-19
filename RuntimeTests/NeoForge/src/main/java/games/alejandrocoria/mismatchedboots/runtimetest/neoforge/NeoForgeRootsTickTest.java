@@ -100,10 +100,12 @@ public final class NeoForgeRootsTickTest {
                 // A repeated declined candidate must not reenter native code or warn every tick.
                 if (!enabled) { check(player, s.primary(), false, true, 10, 0, 0, EquipmentSlot.FEET, null); }
             }
+            int setCases = absent ? 0 : NeoForgeRootsSetTest.run(player);
             NetworkAcceptanceFiles.write("roots-ticks-report.txt", VARIANT + ": " + cases
                     + (absent ? " ordinary inverse-item tick cases; quiet optional absence; no native Roots loaded\n"
                     : " cases; actual native callbacks/repair/attachment; item and player AI inventory dispatch; "
-                    + "single receiver; immutable sources; no periodic regeneration event posted\n"));
+                    + "single receiver; immutable sources; no periodic regeneration event posted during tick cases\n")
+                    + "Native staff/set cases: " + setCases + "\n");
             NetworkAcceptanceFiles.write("roots-ticks-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("roots-ticks", failure); }
         finally { server.halt(false); }

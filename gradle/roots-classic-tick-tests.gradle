@@ -8,7 +8,7 @@ def runs = layout.buildDirectory.dir("run/rootsTicks/${neoforge_version}")
 def artifact = rootProject.file('NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar')
 def expectedHash = '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d'
 
-['Live', 'Receiver', 'Helper', 'Absent'].each { variant ->
+['Live', 'Receiver', 'Helper', 'Staff', 'Crystal', 'Healing', 'Absent'].each { variant ->
     def name = variant.toLowerCase(Locale.ROOT)
     def directory = runs.map { it.dir(name) }
     def markers = reports.map { it.dir(name) }
@@ -62,12 +62,15 @@ def verify = { String variant ->
     def warnings = (processLog.text =~ /Roots Classic mixed .* tick disabled:/).count
     int expected = variant == 'Receiver' ? 1 : variant == 'Helper' ? 2 : 0
     if (warnings != expected) { throw new GradleException("Unexpected bounded Roots warnings: ${warnings} vs ${expected}") }
+    def setWarnings = (processLog.text =~ /Roots Classic mixed set consumer disabled:/).count
+    int expectedSets = variant in ['Staff', 'Crystal', 'Healing'] ? 1 : 0
+    if (setWarnings != expectedSets) { throw new GradleException("Unexpected bounded Roots set warnings: ${setWarnings} vs ${expectedSets}") }
     logger.lifecycle(report.text)
 }
 tasks.register('verifyRootsTicks') {
     group = 'verification'
-    description = 'Native Roots boot ticks plus independent receiver/helper refusals'
-    doLast { ['Live', 'Receiver', 'Helper'].each { verify(it) } }
+    description = 'Native Roots boot ticks and set consumers plus independent local refusals'
+    doLast { ['Live', 'Receiver', 'Helper', 'Staff', 'Crystal', 'Healing'].each { verify(it) } }
 }
 tasks.register('verifyRootsTicksAbsent') {
     group = 'verification'
