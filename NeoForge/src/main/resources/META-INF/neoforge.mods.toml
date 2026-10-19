@@ -26,6 +26,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.oritech.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.rootsclassic-ticks.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.justdirethings.mixins.json"
 
 [[mixins]]

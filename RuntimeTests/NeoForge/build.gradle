@@ -1986,3 +1986,4 @@ tasks.register('verifyTooltipCharacterization') {
 
 apply from: rootProject.file('gradle/neo-vitae-composition-tests.gradle')
 apply from: rootProject.file('gradle/oritech-fall-tests.gradle')
+apply from: rootProject.file('gradle/roots-classic-tick-tests.gradle')

@@ -1,0 +1,76 @@
+// Pinned, disposable native/absent server checks. Production optional bindings remain unmodified.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def reports = layout.buildDirectory.dir("reports/roots-ticks/${neoforge_version}")
+def runs = layout.buildDirectory.dir("run/rootsTicks/${neoforge_version}")
+def artifact = rootProject.file('NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar')
+def expectedHash = '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d'
+
+['Live', 'Receiver', 'Helper', 'Absent'].each { variant ->
+    def name = variant.toLowerCase(Locale.ROOT)
+    def directory = runs.map { it.dir(name) }
+    def markers = reports.map { it.dir(name) }
+    neoForge.runs.create("rootsTicks${variant}") {
+        server(); disableIdeRun()
+        gameDirectory = directory.get().asFile
+        programArgument('--nogui')
+        systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.rootsTicks', name)
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareRootsTicks${variant}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            if (variant != 'Absent' && (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                    .digest(artifact.bytes).encodeHex().toString() != expectedHash)) {
+                throw new GradleException("Missing/unexpected pinned Roots Classic fixture: ${artifact}")
+            }
+            fixtureFiles.delete { delete directory, markers }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar)
+                if (variant != 'Absent') { from(artifact) }
+                into(new File(directory.get().asFile, 'mods'))
+            }
+            new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+            new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+        }
+    }
+    tasks.named("runRootsTicks${variant}") { dependsOn prepare }
+}
+
+def verify = { String variant ->
+    def name = variant.toLowerCase(Locale.ROOT)
+    def processLog = new File(reports.get().asFile, "${name}-process.log")
+    runBounded(":RuntimeTests:NeoForge:runRootsTicks${variant}", processLog, 240)
+    def markers = reports.get().dir(name).asFile
+    def failure = new File(markers, 'roots-ticks-failure.txt')
+    if (failure.isFile()) { throw new GradleException(failure.text) }
+    def report = new File(markers, 'roots-ticks-report.txt')
+    if (!new File(markers, 'roots-ticks-success.txt').isFile() || !report.isFile()) {
+        throw new GradleException("Missing Roots tick results; see ${processLog}")
+    }
+    def warnings = (processLog.text =~ /Roots Classic mixed .* tick disabled:/).count
+    int expected = variant == 'Receiver' ? 1 : variant == 'Helper' ? 2 : 0
+    if (warnings != expected) { throw new GradleException("Unexpected bounded Roots warnings: ${warnings} vs ${expected}") }
+    logger.lifecycle(report.text)
+}
+tasks.register('verifyRootsTicks') {
+    group = 'verification'
+    description = 'Native Roots boot ticks plus independent receiver/helper refusals'
+    doLast { ['Live', 'Receiver', 'Helper'].each { verify(it) } }
+}
+tasks.register('verifyRootsTicksAbsent') {
+    group = 'verification'
+    description = 'Quiet Roots absence and ordinary mixed tick controls'
+    doLast { verify('Absent') }
+}

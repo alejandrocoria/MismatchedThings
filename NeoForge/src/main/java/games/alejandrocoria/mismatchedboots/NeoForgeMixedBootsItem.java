@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots;
 import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireTooltipCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -55,6 +56,7 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
         super.inventoryTick(stack, level, entity, slot);
         IceAndFireTideCompatibility.activate(stack, level, entity, slot);
+        RootsTickCompatibility.tick(stack, level, entity, slot);
     }
 
     @Override

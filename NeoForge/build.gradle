@@ -102,6 +102,10 @@ tasks.named('test', Test).configure {
     if (oritechArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.oritechGuardJar', rootProject.file(oritechArtifact.get()).absolutePath
     }
+    def rootsArtifact = providers.gradleProperty('rootsGuardJar')
+    if (rootsArtifact.isPresent()) {
+        systemProperty 'mismatchedboots.test.rootsGuardJar', rootProject.file(rootsArtifact.get()).absolutePath
+    }
 }
 
 idea {
