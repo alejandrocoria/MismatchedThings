@@ -9,7 +9,6 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -20,38 +19,24 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.Level;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Random;
 
-import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.carrier;
-import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.context;
-import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.level;
 import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.nativeClass;
-import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.traitOf;
-import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.view;
 
 /** Native state feasibility only. Candidate writes are explicit, not installed item/event support. */
 public final class SilentGearStateSpike {
     private static NeoForgeSilentGearStatsTest.NativeApi api;
-    private static ItemStack activeRoot, repairCarrier;
-    private static int repairCalls, nativeRecalculations, forbiddenRecalculations;
-    private static Random nativeRandom;
-    private static final Class<?> EFFECT = nativeClass("api.traits.TraitEffect");
-    private static final Class<?> CONTEXT = nativeClass("api.traits.TraitActionContext");
+    private static ItemStack activeRoot;
+    private static int nativeRecalculations, forbiddenRecalculations;
 
     private SilentGearStateSpike() {}
 
     static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi nativeApi, StringBuilder report) throws Exception {
         api = nativeApi;
-        var randomField = Class.forName("net.silentchaos512.lib.util.MathUtils").getDeclaredField("RANDOM");
-        randomField.setAccessible(true); nativeRandom = (Random) randomField.get(null);
         clear(player);
-        report.append("\nSTATE SPIKE: provisional ordinary mixed destruction, immutable source snapshots\n");
-        repairs(player, report);
-        wear(player, report);
+        report.append("\nSTATE PROJECTION SPIKE: immutable source snapshots; repair/wear now tested through production B\n");
         dynamicProperties(player, report);
         oxidation(player, report);
         require(nativeRecalculations > 0 && forbiddenRecalculations == 0, "Missing native projection or mixed-root recalculation entered");
@@ -60,17 +45,6 @@ public final class SilentGearStateSpike {
                 .append("root/source metadata checks and registry-aware item codec; not installed ticking or world restart\n");
     }
 
-    /** Intercept only the exact transient carrier, after native repair chance/amount calculation. */
-    public static boolean repair(ItemStack stack, int amount, LivingEntity entity) {
-        if (activeRoot == null || stack != repairCarrier) { return false; }
-        require(amount < 0, "Repair boundary received positive wear");
-        repairCalls++;
-        if (!activeRoot.isEmpty() && !activeRoot.has(DataComponents.UNBREAKABLE)
-                && (!(entity instanceof Player player) || !player.getAbilities().instabuild)) {
-            activeRoot.setDamageValue(Math.max(0, activeRoot.getDamageValue() + amount));
-        }
-        return true;
-    }
 
     /** Native copies may recalculate; no mixed stack is admitted to the native gear recalculator. */
     public static void recalculation(ItemStack stack) {
@@ -82,124 +56,6 @@ public final class SilentGearStateSpike {
         nativeRecalculations++;
     }
 
-    private static void repairs(ServerPlayer player, StringBuilder report) throws Exception {
-        for (String[] sample : List.of(new String[]{"amethyst", "renew"}, new String[]{"refined_iron", "stellar"})) {
-            ItemStack source = api.boot(sample[0]);
-            Object instance = view(source).get("silentgear:" + sample[1]), effect = effect(instance, "SelfRepairTraitEffect");
-            int lvl = level(instance);
-            float chance = chance(effect);
-            for (boolean success : List.of(true, false)) {
-                long seed = seed(chance * lvl, success);
-                ItemStack nativeBoot = source.copy(); nativeBoot.setDamageValue(12);
-                player.tickCount = 20; nativeRandom.setSeed(seed);
-                tickEffect(effect, player, instance, nativeBoot, false);
-                require(nativeBoot.getDamageValue() == (success ? 12 - lvl : 12), "Native repair chance/amount control differs");
-                for (ItemStack root : pair(player, source, new ItemStack(Items.DIAMOND_BOOTS))) {
-                    root.setDamageValue(12);
-                    ItemStack before = root.copy(), proxy = carrier(root, view(root)), proxyBefore = proxy.copy();
-                    activeRoot = root; repairCarrier = proxy; repairCalls = 0;
-                    try {
-                        nativeRandom.setSeed(seed); tickEffect(effect, player, instance, proxy, false);
-                        require(root.getDamageValue() == nativeBoot.getDamageValue() && repairCalls == (success ? 1 : 0), "Root repair differs or ran twice");
-                        unchangedExcept(before, root, DataComponents.DAMAGE);
-                        require(ItemStack.matches(proxyBefore, proxy), "Repair mutated its carrier");
-                    } finally { activeRoot = null; repairCarrier = null; }
-                }
-            }
-            ItemStack root = pair(player, source, source).getFirst();
-            Object merged = view(root).get("silentgear:" + sample[1]);
-            require(level(merged) == lvl, "Duplicate repair trait levels added");
-            Object selectedEffect = effect(merged, "SelfRepairTraitEffect");
-            for (String mode : List.of("duplicate", "healthy", "creative", "unbreakable", "wrong-tick")) {
-                root.setDamageValue(mode.equals("healthy") ? 0 : 12);
-                if (mode.equals("unbreakable")) { root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE); }
-                player.setGameMode(mode.equals("creative") ? GameType.CREATIVE : GameType.SURVIVAL);
-                player.tickCount = mode.equals("wrong-tick") ? 21 : 20;
-                ItemStack before = root.copy(); activeRoot = root; repairCarrier = carrier(root, view(root));
-                try {
-                    nativeRandom.setSeed(seed(chance * lvl, true));
-                    tickEffect(selectedEffect, player, merged, repairCarrier, false);
-                    require(root.getDamageValue() == (mode.equals("duplicate") ? 12 - lvl : before.getDamageValue()), "Repair boundary differs: " + mode);
-                    unchangedExcept(before, root, DataComponents.DAMAGE);
-                } finally { activeRoot = null; repairCarrier = null; root.remove(DataComponents.UNBREAKABLE); }
-            }
-            player.setGameMode(GameType.SURVIVAL);
-            report.append("REPAIR ").append(sample[1]).append(" level=").append(lvl).append(" chance=").append(chance * lvl)
-                    .append(" per 20-player-tick attempt; seeded success/failure, inventory, inverse, duplicate, healthy, creative, Unbreakable and cadence controls\n");
-        }
-    }
-
-    private static void wear(ServerPlayer player, StringBuilder report) throws Exception {
-        for (String[] sample : List.of(new String[]{"iron", "malleable"}, new String[]{"diamond", "brittle"})) {
-            ItemStack source = api.boot(sample[0]);
-            Object instance = view(source).get("silentgear:" + sample[1]), effect = effect(instance, "DurabilityTraitEffect");
-            int lvl = level(instance), scale = sample[1].equals("malleable") ? -1 : 1;
-            float chance = chance(effect);
-            for (boolean success : List.of(true, false)) {
-                long seed = seed(chance * lvl, success);
-                ItemStack nativeBoot = source.copy(); nativeBoot.setDamageValue(10);
-                nativeRandom.setSeed(seed); nativeBoot.hurtAndBreak(3, player, EquipmentSlot.FEET);
-                int expected = 3 + (success ? scale : 0);
-                require(nativeBoot.getDamageValue() == 10 + expected, "Native wear probability/scale differs");
-                for (ItemStack root : pair(player, source, new ItemStack(Items.DIAMOND_BOOTS))) {
-                    root.setDamageValue(10); ItemStack before = root.copy();
-                    activeRoot = root;
-                    try {
-                        nativeRandom.setSeed(seed);
-                        // Native wear contexts intentionally have no player, as in GearHelper.damageItem.
-                        int amount = (int) EFFECT.getMethod("onDurabilityDamage", CONTEXT, int.class)
-                                .invoke(effect, context(null, instance, carrier(root, view(root))), 3);
-                        require(amount == expected, "Candidate native wear account differs");
-                        root.hurtAndBreak(amount, player, EquipmentSlot.FEET);
-                        require(root.getDamageValue() == nativeBoot.getDamageValue(), "Root did not spend native wear exactly once");
-                        unchangedExcept(before, root, DataComponents.DAMAGE);
-                    } finally { activeRoot = null; }
-                }
-            }
-            report.append("WEAR ").append(sample[1]).append(" level=").append(lvl).append(" chance=").append(chance * lvl)
-                    .append("; native hurtAndBreak and callback delta match on both orientations, seeded activation/nonactivation\n");
-        }
-        for (ItemStack root : pair(player, api.boot("iron"), api.boot("diamond"))) {
-            var traits = view(root);
-            for (boolean brittle : List.of(false, true)) {
-                for (boolean malleable : List.of(false, true)) {
-                    long chosen = 0;
-                    for (; chosen < 100_000; chosen++) {
-                        Random oracle = new Random(chosen);
-                        if ((oracle.nextDouble() < 0.5) == brittle && (oracle.nextDouble() < 0.5) == malleable) { break; }
-                    }
-                    require(chosen < 100_000, "Missing combined wear roll control");
-                    ItemStack proxy = carrier(root, traits); proxy.setDamageValue(10);
-                    nativeRandom.setSeed(chosen); proxy.hurtAndBreak(3, player, EquipmentSlot.FEET);
-                    int expected = 3 + (brittle ? 1 : 0) - (malleable ? 1 : 0), amount = 3;
-                    root.setDamageValue(10); ItemStack before = root.copy(); activeRoot = root;
-                    try {
-                        nativeRandom.setSeed(chosen);
-                        for (String id : List.of("silentgear:brittle", "silentgear:malleable")) {
-                            Object instance = traits.get(id);
-                            amount = (int) EFFECT.getMethod("onDurabilityDamage", CONTEXT, int.class)
-                                    .invoke(effect(instance, "DurabilityTraitEffect"), context(null, instance, carrier(root, traits)), amount);
-                        }
-                        require(amount == expected && proxy.getDamageValue() == 10 + expected, "Combined native wear/candidate/oracle differ");
-                        root.hurtAndBreak(amount, player, EquipmentSlot.FEET);
-                        require(root.getDamageValue() == 10 + expected, "Combined root wear paid more than once");
-                        unchangedExcept(before, root, DataComponents.DAMAGE);
-                    } finally { activeRoot = null; }
-                }
-            }
-        }
-        report.append("WEAR mixed iron/diamond: four activation combinations, both orientations; shared native carrier and independent seeded oracle match; stable ID order is research policy\n");
-        ItemStack nativeBoot = api.boot("iron");
-        nativeBoot.setDamageValue(nativeBoot.getMaxDamage() - 2);
-        nativeRandom.setSeed(seed(0.5F, false)); nativeBoot.hurtAndBreak(4, player, EquipmentSlot.FEET);
-        require(!nativeBoot.isEmpty(), "Native non-destructive broken control disappeared");
-        for (ItemStack root : pair(player, api.boot("iron"), new ItemStack(Items.DIAMOND_BOOTS))) {
-            root.setDamageValue(root.getMaxDamage() - 1); activeRoot = root;
-            try { root.hurtAndBreak(4, player, EquipmentSlot.FEET); require(root.isEmpty(), "Mixed inherited native survival at break"); }
-            finally { activeRoot = null; }
-        }
-        report.append("BREAK native iron survives exhaustion; both mixed orientations still disappear through ordinary hurtAndBreak\n");
-    }
 
     private static void dynamicProperties(ServerPlayer player, StringBuilder report) throws Exception {
         for (String[] sample : List.of(new String[]{"bone", "chipping"}, new String[]{"quartz", "crushing"})) {
@@ -329,22 +185,6 @@ public final class SilentGearStateSpike {
     }
     private static void recalculate(ItemStack stack, ServerPlayer player) throws Exception {
         nativeClass("util.GearData").getMethod("recalculateGearData", ItemStack.class, Player.class).invoke(null, stack, player);
-    }
-    private static Object effect(Object instance, String name) throws Exception {
-        require(instance != null, "Missing native trait instance for " + name);
-        return ((List<?>) traitOf(instance).getClass().getMethod("getEffects").invoke(traitOf(instance))).stream()
-                .filter(effect -> effect.getClass().getSimpleName().equals(name)).findFirst().orElseThrow();
-    }
-    private static float chance(Object effect) throws Exception {
-        var field = effect.getClass().getDeclaredField("activationChance"); field.setAccessible(true); return field.getFloat(effect);
-    }
-    private static long seed(float chance, boolean activate) {
-        for (long seed = 0; seed < 100_000; seed++) { if ((new Random(seed).nextDouble() < chance) == activate) { return seed; } }
-        throw new AssertionError("No bounded probability control");
-    }
-    private static void tickEffect(Object effect, ServerPlayer player, Object instance, ItemStack stack, boolean selected) throws Exception {
-        EFFECT.getMethod("inventoryTick", CONTEXT, Level.class, net.minecraft.world.entity.Entity.class, boolean.class)
-                .invoke(effect, context(player, instance, stack), player.level(), player, selected);
     }
     private static List<ItemStack> pair(ServerPlayer player, ItemStack first, ItemStack second) {
         return NeoForgeSilentGearStatsTest.workbench(player, first, second);

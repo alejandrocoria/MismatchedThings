@@ -16,9 +16,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -36,17 +35,22 @@ final class SilentGearFoundationTest {
     static void absent(MinecraftServer server) {
         require(!ModList.get().isLoaded("silentgear"), "SG absence fixture loaded native mod");
         var player = FakePlayerFactory.getMinecraft(server.overworld());
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         for (var root : NeoForgeSilentGearStatsTest.workbench(player, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS))) {
             require(!root.has(SilentGearCompatibility.state()) && SilentGearCompatibility.effectiveTraits(root).isEmpty(), "Ordinary pair gained SG behavior");
             var data = ModContent.getMixedBootsData(root).orElseThrow();
             require(!MixedBootsRecomposer.recompose(root, data.left().source(), data.right().source()).has(SilentGearCompatibility.state()),
                     "Absent recomposition introduced SG state");
             root.set(SilentGearCompatibility.state(), new SilentGearState(Optional.empty(), Optional.empty(), List.of(), ItemAttributeModifiers.EMPTY, List.of()));
+            root.setDamageValue(5);
+            root.inventoryTick(player.level(), player, null);
+            root.hurtAndBreak(3, player, net.minecraft.world.entity.EquipmentSlot.FEET);
+            require(root.getDamageValue() == 8, "Absent SG changed ordinary tick/wear callbacks");
             var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
             require(ItemStack.matches(root, ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, root).getOrThrow()).getOrThrow()),
                     "Our registered state did not decode without native classes");
         }
-        NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", "SG absent: two paid ordinary orientations; production recomposition/trait view neutral; own state codec independent of SG\n");
+        NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", "SG absent: two paid ordinary orientations; production recomposition/trait view neutral; ordinary tick/wear with own state; own state codec independent of SG\n");
     }
 
     static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi api, StringBuilder report) throws Exception {

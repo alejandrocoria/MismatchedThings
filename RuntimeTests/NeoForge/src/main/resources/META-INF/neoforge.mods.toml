@@ -17,6 +17,9 @@ license="MIT"
     config="mismatchedboots-silent-gear-trait-spike.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots-silent-gear-effects-faults.mixins.json"
+
+[[mixins]]
     config="mismatchedboots-just-dire-refund-binding-tests.mixins.json"
 
 [[mixins]]

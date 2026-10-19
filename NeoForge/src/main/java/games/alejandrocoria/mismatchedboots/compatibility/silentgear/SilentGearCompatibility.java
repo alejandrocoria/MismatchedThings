@@ -42,6 +42,14 @@ public final class SilentGearCompatibility {
 
     public static DataComponentType<SilentGearState> state() { return STATE.get(); }
 
+    static ItemStack carrier(ItemStack root) {
+        Api binding = api;
+        var data = ModContent.getMixedBootsData(root).orElse(null);
+        if (binding == null || data == null) { return ItemStack.EMPTY; }
+        ItemStack left = data.left().source(), right = data.right().source();
+        return binding.boot(left) ? left : binding.boot(right) ? right : ItemStack.EMPTY;
+    }
+
     public static void initialize(IEventBus bus) {
         TYPES.register(bus); // Decode our saved state without loading optional native classes.
         if (ModList.get().isLoaded("silentgear")) { bus.addListener(SilentGearCompatibility::bind); }

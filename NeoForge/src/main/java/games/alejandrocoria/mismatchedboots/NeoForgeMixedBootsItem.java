@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireT
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.rootsclassic.RootsTickCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -14,7 +15,9 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
@@ -57,6 +60,12 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
         super.inventoryTick(stack, level, entity, slot);
         IceAndFireTideCompatibility.activate(stack, level, entity, slot);
         RootsTickCompatibility.tick(stack, level, entity, slot);
+        SilentGearEffects.tick(stack, level, entity, slot);
+    }
+
+    @Override
+    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<Item> broken) {
+        return SilentGearEffects.damage(stack, super.damageItem(stack, amount, entity, broken), entity);
     }
 
     @Override

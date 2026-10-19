@@ -29,6 +29,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.rootsclassic-ticks.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.silentgear-effects.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.justdirethings.mixins.json"
 
 [[mixins]]

@@ -3,8 +3,12 @@ def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
-def reports = layout.buildDirectory.dir("reports/silent-gear-stats/${neoforge_version}")
-def directory = layout.buildDirectory.dir("run/silentGearStats/${neoforge_version}")
+def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
+if (!(effectVariant in ['', 'repair', 'wear', 'compatible'])) { throw new GradleException('Unknown SG effect test variant') }
+def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
+        : "reports/silent-gear-stats/${neoforge_version}")
+def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
+        : "run/silentGearStats/${neoforge_version}")
 def artifacts = [
         'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
         'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655'
@@ -16,6 +20,7 @@ neoForge.runs.create('silentGearStats') {
     programArgument('--nogui')
     systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
     systemProperty('mismatchedboots.runtimetest.silentGearStatsSpike', 'true')
+    systemProperty('mismatchedboots.runtimetest.silentGearEffectVariant', effectVariant)
     jvmArgument('-Xmx1G')
 }
 
@@ -54,7 +59,8 @@ tasks.register('verifySilentGearStatsSpike') {
     description = 'Verifies Silent Gear production foundation and remaining scoped trait/state research'
     doLast {
         // Keep the child log outside the markers directory cleared by prepare.
-        def log = layout.buildDirectory.file("reports/silent-gear-stats-${neoforge_version}-process.log").get().asFile
+        def suffix = effectVariant ? "-${effectVariant}" : ''
+        def log = layout.buildDirectory.file("reports/silent-gear-stats-${neoforge_version}${suffix}-process.log").get().asFile
         runBounded(':RuntimeTests:NeoForge:runSilentGearStats', log, 240)
         def markers = reports.get().asFile
         def failure = new File(markers, 'silent-gear-stats-failure.txt')
@@ -63,6 +69,9 @@ tasks.register('verifySilentGearStatsSpike') {
         if (!new File(markers, 'silent-gear-stats-success.txt').isFile() || !report.isFile()) {
             throw new GradleException("Missing Silent Gear spike results; see ${log}")
         }
+        int warnings = (log.text =~ /Silent Gear mixed (repair|wear) disabled:/).count
+        int expected = effectVariant in ['repair', 'wear'] ? 1 : 0
+        if (warnings != expected) { throw new GradleException("Unexpected SG effect warnings ${warnings} vs ${expected}: ${log}") }
         logger.lifecycle(report.text)
     }
 }

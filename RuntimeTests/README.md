@@ -91,7 +91,7 @@ and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.m
 
 ### Silent Gear native stat measurement
 
-Pinned native numeric controls, **production foundation A**, and separately
+Pinned native numeric controls, **production A/B**, and separately
 scoped wearer/mutable-state research. The task retains its original spike name
 until consolidation; a research callback passing is not production gameplay
 acceptance. No SG compile dependency or native class is bundled. Run sequentially:
@@ -152,16 +152,10 @@ The expanded gate passed on .99/.114 on 2026-10-19. The ordinary .114
 control without SG/spike activation, with no SG missing-class warnings. Production
 packaging passed with .114 restored. This is not a full SG absence or manual matrix.
 
-A subsequent **mutable-state phase** in that same server uses real native
-callbacks and disposable native copies, with explicitly scoped repair routing:
+A subsequent **mutable-state phase** originally proved repair/wear candidates;
+those prototypes were retired when B installed production callbacks. The
+remaining test-only state phase uses disposable native copies for C's projections:
 
-- Renew IV / Stellar I seeded repair success/failure, max-level duplicates,
-  inventory/cadence and healthy/creative/Unbreakable controls, only root damage
-  writable.
-- Malleable V / Brittle V native wear return values and actual native controls;
-  four combined activation outcomes, both orientations and one root debit.
-  Native broken survival contrasts with ordinary mixed destruction, retained
-  provisionally rather than importing SG's broken-item lifecycle.
 - Native Chipping/Crushing ordinary wear vs helper wear/repair. The former
   leaves sampled armor stale; the latter recalculates. Candidate root damage
   ratios drive native-copy recalculation and selective root attributes, with
@@ -176,7 +170,7 @@ all native stages/traits, foreign root-edit preservation or whole-item-loop
 safety. The native item tick is used only for the inspected copper copies;
 native recalculation never receives the mixed root. The
 [state plan](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md) defines production
-refresh/projection behavior separately; B–D remain pending.
+refresh/projection behavior separately; C/D remain pending.
 The final state-expanded gate passed on .99/.114 on 2026-10-19 with matching
 reports excluding modifier object identities. The shared-fixture absence
 startup and restored-.114 packaging checks passed again; the optional Bonsai
@@ -192,12 +186,42 @@ round-trip; explicit state/lane absence does not resurrect historical state.
 Non-SG duplicate entries and orphan counters stay outside the adapter. Three
 malformed native stage/counter inputs yield no payable preview or input debit.
 Unchanged inventory ticks/queries perform no A gameplay updates. These checks
-do not establish actual oxidation progression, live repair/wear or world restart.
+alone do not establish actual oxidation progression, live repair/wear or world restart.
+
+The **production B phase** uses actual registered-item ticks and `hurtAndBreak`,
+native Renew/Stellar controls, all admitted durability effects (Flexible,
+Malleable, Sturdy, Bending and Brittle), both paid orientations, independent
+seeded roll oracles, combined traits, Unbreaking, creative/Unbreakable, actual
+player armor hits and ordinary mixed destruction vs native broken survival.
+Bending is an injected native trait instance, not a claimed stock boot recipe.
+Full-stack comparisons permit only damage changes. A calibrated recalculation
+witness first intercepts a native positive control, then observes no native
+recalculation during production callbacks. No live armor/oxidation writer is
+installed by B.
+
+Real competing-mixin controls run separately, sequentially:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike -PsilentGearEffectVariant=repair --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike -PsilentGearEffectVariant=wear --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike -PsilentGearEffectVariant=compatible --console=plain
+```
+
+The same `-Pneoforge_version=26.1.2.99` floor applies. Fixture markers prove the
+native transformation occurred. Repair-consumer replacement and wear sum-to-
+subtraction each require one disabled-feature warning after repeated attempts,
+ordinary fallback and the other feature still working. Harmless NOP edits run
+all B behavior with zero disabled-feature warnings. This proves these concrete
+edits, not general foreign-mixin compatibility. Reports/run trees are separate
+from the default gate: `build/reports/silent-gear-effects/<version>/<variant>`
+and `build/run/silentGearEffects/<version>/<variant>`; process logs are
+`build/reports/silent-gear-stats-<version>-<variant>-process.log`.
 
 `verifySilentGearFoundationAbsent` runs the same fixture without SG, Silent Lib
 or research hooks, in `build/run/silentGearStats/<version>/absent`. It verifies
 two paid ordinary outputs, neutral production recomposition/trait reads and
-decoding our own registered state without native classes. Its reports are in
+decoding our own registered state without native classes, then actual ordinary
+tick/wear with that state present. Its reports are in
 the sibling native-report directory's `absent` subdirectory; process log:
 `build/reports/silent-gear-absent-<version>-process.log`. Native preparation
 clears that version's report/run tree, so run absence after native evidence when
@@ -207,6 +231,12 @@ followed by 32 focused unit regressions and restored-.114 packaging. There are n
 new SG binding/read/class-loading errors; native runs retain the documented
 optional Bonsai serializer error. Exact commands and limits are in the
 [A execution record](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md#7-block-a-execution-record--2026-10-19).
+B's full native, three transformed and extended absent gates also passed on
+.99/.114. Final focused units execute 28 successful cases with four optional
+JDT transformed-class skips; packaging and report comparison passed with .114
+restored. The [B execution record](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md#85-final-executed-validation)
+owns exact validation and warning limits; C/D and final manual acceptance remain
+pending.
 Findings, values and pending work belong to the
 [exploration](../local-docs/SILENT-GEAR-COMPATIBILITY-EXPLORATION.md).
 

@@ -37,8 +37,11 @@ public final class SilentGearTraitSpike {
 
     private SilentGearTraitSpike() {}
 
+    /** Share native fixture helpers without requiring execution of the unrelated wearer proof. */
+    static void initialize(NeoForgeSilentGearStatsTest.NativeApi nativeApi) { api = nativeApi; }
+
     static void run(ServerPlayer player, NeoForgeSilentGearStatsTest.NativeApi nativeApi, StringBuilder report) throws Exception {
-        api = nativeApi;
+        initialize(nativeApi);
         report.append("\nTRAIT REUSE SPIKE (scoped research hooks, not production)\n");
         numericControls(player, report);
         ItemStack gold = api.boot("gold"), stellar = api.boot("refined_iron"), moon = api.boot("azure_silver");

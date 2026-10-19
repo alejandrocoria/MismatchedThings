@@ -7,7 +7,6 @@
   "mixins": [
     "SilentGearFallSpikeMixin",
     "SilentGearRecalculationWitnessMixin",
-    "SilentGearRepairBoundaryMixin",
     "SilentGearSetSpikeMixin"
   ],
   "injectors": {"defaultRequire": 1}
