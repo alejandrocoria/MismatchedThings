@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireResourcesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeInfusionCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.platform.services.IPlatformHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -28,6 +29,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         JustDireEarthquakeCompatibility.initializeCooldown(output);
         JustDireAttributesCompatibility.prepare(null, output, attributes);
         NeoVitaeInfusionCompatibility.initializeCreation(output);
+        SilentGearCompatibility.prepare(null, output, attributes);
     }
 
     @Override
@@ -37,6 +39,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         JustDireResourcesCompatibility.preserveCharge(previous, output);
         JustDireAttributesCompatibility.prepare(previous, output, attributes);
         NeoVitaeInfusionCompatibility.preserveState(previous, output);
+        SilentGearCompatibility.prepare(previous, output, attributes);
     }
 
     @Override
@@ -68,6 +71,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
                     "Attribute modifier uses an unregistered attribute: " + key.identifier()));
             modifiers.add(attribute, entry.modifier(), entry.slot(), entry.display());
         }
-        return modifiers.build();
+        return SilentGearCompatibility.normalize(source, modifiers.build());
     }
 }

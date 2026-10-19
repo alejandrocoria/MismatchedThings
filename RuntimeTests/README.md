@@ -91,12 +91,15 @@ and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.m
 
 ### Silent Gear native stat measurement
 
-Test-only diagnostic; no production adapter, compile dependency or native class
-is added to the production JAR. Run sequentially:
+Pinned native numeric controls, **production foundation A**, and separately
+scoped wearer/mutable-state research. The task retains its original spike name
+until consolidation; a research callback passing is not production gameplay
+acceptance. No SG compile dependency or native class is bundled. Run sequentially:
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearStatsSpike '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearFoundationAbsent --console=plain
 .\gradlew.bat verifyPackagedDependencies --console=plain
 ```
 
@@ -127,8 +130,9 @@ The same opt-in gate now also runs a bounded **trait-reuse spike** after that
 baseline, using auxiliary-mod-only, explicitly scoped hooks. It measures:
 
 - Light/Moonwalker/Flutter on nine actual equipped native/mixed subjects. Native
-  duplicate modifier IDs apply once, but cause current composition to retain the
-  SG owner's full bonus instead of averaging. This is recorded, not fixed here.
+  duplicate modifier IDs still apply once; production A now normalizes exact SG
+  duplicates, so both mixed outputs get the configured average, not an owner-only
+  full effect. Conflicting duplicates remain ambiguous (focused unit controls).
 - An effective source trait view with max-level de-duplication (native Malleable
   I/V), a temporary native carrier for Brilliant, and actual native Moonwalker
   fall events with mixed FEET added only to the local native query.
@@ -142,8 +146,7 @@ baseline, using auxiliary-mod-only, explicitly scoped hooks. It measures:
 
 These hooks are feasibility controls, not production guards or general SG item
 recognition. They never replace real worn equipment during callbacks. No source
-edits, production attribute normalization, client proof or persistent production
-mixed-trait component is implemented.
+edits, production wearer-effect dispatch or connected-client proof is implied.
 The expanded gate passed on .99/.114 on 2026-10-19. The ordinary .114
 `verifyRootsTicksAbsent` gate additionally provided a shared-fixture startup
 control without SG/spike activation, with no SG missing-class warnings. Production
@@ -171,13 +174,39 @@ callbacks and disposable native copies, with explicitly scoped repair routing:
 This is feasibility, not installed ticking, final state schema, world restart,
 all native stages/traits, foreign root-edit preservation or whole-item-loop
 safety. The native item tick is used only for the inspected copper copies;
-native recalculation never receives the mixed root. Production refresh timing
-and selective projection ownership still need a scoped design.
+native recalculation never receives the mixed root. The
+[state plan](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md) defines production
+refresh/projection behavior separately; B–D remain pending.
 The final state-expanded gate passed on .99/.114 on 2026-10-19 with matching
 reports excluding modifier object identities. The shared-fixture absence
 startup and restored-.114 packaging checks passed again; the optional Bonsai
 serializer error remains the only SG resource error. Production JAR inspection
 found no research/SG class leakage.
+
+The final **production A phase** uses the actual creation/recomposition helpers:
+paid one-/two-sided inverse outputs, unequal native oxidation counters, resolved
+supplied policies and native max-level trait view. A loaded vanilla trim recipe
+and repeated recomposition preserve manually advanced live lanes and an explicit
+managed-attribute removal. Registry-aware item and component network codecs
+round-trip; explicit state/lane absence does not resurrect historical state.
+Non-SG duplicate entries and orphan counters stay outside the adapter. Three
+malformed native stage/counter inputs yield no payable preview or input debit.
+Unchanged inventory ticks/queries perform no A gameplay updates. These checks
+do not establish actual oxidation progression, live repair/wear or world restart.
+
+`verifySilentGearFoundationAbsent` runs the same fixture without SG, Silent Lib
+or research hooks, in `build/run/silentGearStats/<version>/absent`. It verifies
+two paid ordinary outputs, neutral production recomposition/trait reads and
+decoding our own registered state without native classes. Its reports are in
+the sibling native-report directory's `absent` subdirectory; process log:
+`build/reports/silent-gear-absent-<version>-process.log`. Native preparation
+clears that version's report/run tree, so run absence after native evidence when
+both reports should remain available. No development client data is touched.
+Production A's final native/absent gates passed on .99/.114 on 2026-10-19,
+followed by 32 focused unit regressions and restored-.114 packaging. There are no
+new SG binding/read/class-loading errors; native runs retain the documented
+optional Bonsai serializer error. Exact commands and limits are in the
+[A execution record](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md#7-block-a-execution-record--2026-10-19).
 Findings, values and pending work belong to the
 [exploration](../local-docs/SILENT-GEAR-COMPATIBILITY-EXPLORATION.md).
 

@@ -51,7 +51,7 @@ tasks.named('runSilentGearStats') { dependsOn('prepareSilentGearStats') }
 
 tasks.register('verifySilentGearStatsSpike') {
     group = 'verification'
-    description = 'Measures Silent Gear stats and scoped native trait reuse without a production adapter'
+    description = 'Verifies Silent Gear production foundation and remaining scoped trait/state research'
     doLast {
         // Keep the child log outside the markers directory cleared by prepare.
         def log = layout.buildDirectory.file("reports/silent-gear-stats-${neoforge_version}-process.log").get().asFile
@@ -64,5 +64,43 @@ tasks.register('verifySilentGearStatsSpike') {
             throw new GradleException("Missing Silent Gear spike results; see ${log}")
         }
         logger.lifecycle(report.text)
+    }
+}
+
+neoForge.runs.create('silentGearStatsAbsent') {
+    server(); disableIdeRun()
+    gameDirectory = directory.get().dir('absent').asFile
+    programArgument('--nogui')
+    systemProperty('mismatchedboots.runtimetest.markers', reports.get().dir('absent').asFile.absolutePath)
+    systemProperty('mismatchedboots.runtimetest.silentGearAbsent', 'true')
+    jvmArgument('-Xmx1G')
+}
+
+tasks.register('prepareSilentGearStatsAbsent') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def absentRun = directory.get().dir('absent').asFile
+        fixtureFiles.delete { delete absentRun, reports.get().dir('absent') }
+        fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(absentRun, 'mods')) }
+        new File(absentRun, 'eula.txt').text = 'eula=true\n'
+        new File(absentRun, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\n'
+    }
+}
+tasks.named('runSilentGearStatsAbsent') { dependsOn('prepareSilentGearStatsAbsent') }
+
+tasks.register('verifySilentGearFoundationAbsent') {
+    group = 'verification'
+    description = 'Quiet SG absence, ordinary production composition and independent state codec'
+    doLast {
+        def log = layout.buildDirectory.file("reports/silent-gear-absent-${neoforge_version}-process.log").get().asFile
+        runBounded(':RuntimeTests:NeoForge:runSilentGearStatsAbsent', log, 240)
+        def markers = reports.get().dir('absent').asFile
+        def failure = new File(markers, 'silent-gear-stats-failure.txt')
+        if (failure.isFile()) { throw new GradleException(failure.text) }
+        if (!new File(markers, 'silent-gear-stats-success.txt').isFile()) { throw new GradleException("Missing SG absence result: ${log}") }
+        if (log.text.contains('Could not bind Silent Gear') || log.text.contains('Error loading class: net/silentchaos512/gear')) {
+            throw new GradleException("SG absence is not quiet: ${log}")
+        }
+        logger.lifecycle(new File(markers, 'silent-gear-stats-report.txt').text)
     }
 }

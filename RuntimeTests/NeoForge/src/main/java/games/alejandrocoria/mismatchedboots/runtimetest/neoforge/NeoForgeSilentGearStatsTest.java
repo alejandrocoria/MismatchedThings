@@ -33,7 +33,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-/** Optional diagnostic, not a production adapter or an exhaustive Silent Gear trait suite. */
+/** Native numeric controls, production foundation acceptance and separately scoped trait/state research. */
 public final class NeoForgeSilentGearStatsTest {
     private static boolean finished;
 
@@ -47,6 +47,11 @@ public final class NeoForgeSilentGearStatsTest {
         if (finished) { return; }
         finished = true;
         try {
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearAbsent")) {
+                SilentGearFoundationTest.absent(server);
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
+                return;
+            }
             var api = new NativeApi();
             var player = FakePlayerFactory.getMinecraft(server.overworld());
             player.setGameMode(GameType.SURVIVAL);
@@ -98,7 +103,8 @@ public final class NeoForgeSilentGearStatsTest {
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             SilentGearTraitSpike.run(player, api, report);
             SilentGearStateSpike.run(player, api, report);
-            report.append("\nBaseline: 14 numeric paid output measurements; additional paid trait-spike pairs above; source snapshots unchanged; ")
+            SilentGearFoundationTest.run(player, api, report);
+            report.append("\nBaseline: 14 numeric paid output measurements; additional paid foundation/research pairs above; source snapshots unchanged; ")
                     .append("trait/item callback probes are not full gameplay acceptance\n");
             NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
             NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");

@@ -283,13 +283,13 @@ public final class SilentGearTraitSpike {
             for (int index = 0; index < subjects.size(); index++) {
                 ItemStack subject = subjects.get(index), before = subject.copy();
                 clear(player); update.invoke(player);
-                double base = player.getAttributeValue(attribute), expectedAmount = index == 2 ? 0 : nativeEntry.modifier().amount();
+                double base = player.getAttributeValue(attribute), expectedAmount = nativeEntry.modifier().amount() / (index == 0 ? 1 : 2);
                 var entries = subject.getAttributeModifiers().modifiers().stream()
                         .filter(entry -> entry.attribute().equals(attribute) && entry.slot().test(EquipmentSlot.FEET)).toList();
-                require(entries.size() == (index == 2 ? 0 : 2), "Current ambiguity fallback/count differs");
+                require(entries.size() == (index == 0 ? 2 : 1), "Normalized production modifier count differs");
                 for (var entry : entries) {
                     require(entry.modifier().operation() == nativeEntry.modifier().operation(), "Modifier operation differs");
-                    close(entry.modifier().amount(), expectedAmount, "Ambiguous trait amount");
+                    close(entry.modifier().amount(), expectedAmount, "Normalized trait amount");
                 }
                 double expected = switch (nativeEntry.modifier().operation()) {
                     case ADD_VALUE -> base + expectedAmount;
@@ -302,7 +302,7 @@ public final class SilentGearTraitSpike {
                 report.append("TRAIT ATTRIBUTE ").append(sample[1]).append(" subject=").append(index)
                         .append(" operation=").append(nativeEntry.modifier().operation()).append(" amount=").append(expectedAmount)
                         .append(" rawFeetEntries=").append(entries.size()).append(" equipped=").append(expected)
-                        .append(" duplicate IDs apply once; ambiguous composition stays owner-owned\n");
+                        .append(" native duplicates apply once; both production outputs compose normalized contributions\n");
             }
         }
         clear(player); update.invoke(player);

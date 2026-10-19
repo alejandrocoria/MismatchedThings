@@ -15,7 +15,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearStatsSpike")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearStatsSpike")
+                || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearAbsent")) {
             NeoForgeSilentGearStatsTest.register();
             return;
         }
