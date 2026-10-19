@@ -89,6 +89,35 @@ It does not validate actual default components, gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
+### Roots Classic rendering research
+
+The opt-in foot-subtree prototype runs only in the disposable geometry client:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingSpike=true -PiceAndFireTest=true --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingSpike=true -PiceAndFireTest=true '-Pneoforge_version=26.1.2.99' --console=plain
+```
+
+`rootsRenderingSpike` verifies the installed `RootsClassic-26.1.2-1.6.7.jar`
+SHA-256 before copying it from the development mods directory; no external
+library is needed. `iceAndFireTest` additionally runs the existing 93 ordered
+Ice and Fire pairs with the candidate active. Neither option edits those JARs
+or the development client. The ordinary geometry command needs neither mod.
+
+The test first reproduces production's invisible Roots leg subtree, then enables
+a test-only late selector for the two exact native Roots model classes. Eight
+ordered pairs exercise separate feet, actual native vertex emission, walking/
+crouching states, queued shared models, unchanged source snapshots and native
+texture/trim/glint submissions. The prototype does not mutate visibility or
+transforms; it delegates native animation. It is **not installed in production**.
+As with the Ice and Fire probe, source equipment assets are controlled vanilla
+assets before world startup. This proves neither actual Roots default material
+appearance, pixel-level trim quality, complete player/armor-stand integration,
+resource reload nor gameplay. Findings and the production recommendation are in
+[the Roots exploration](../local-docs/ROOTS-CLASSIC-COMPATIBILITY-EXPLORATION.md#9-rendering-spike--2026-10-18).
+
+### Ice and Fire damage and set probes
+
 The independent damage/set gate opens a real dedicated-server world with the
 same pinned artifacts and does not need a client:
 

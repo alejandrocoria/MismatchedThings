@@ -7,6 +7,7 @@
     "JustDireTooltipShiftMixin",
     "LoadingErrorScreenMixin",
     "ModelSubmitStorageAccessor",
+    "RootsRenderingSpikeMixin",
     "SubmitNodeStorageProbeMixin",
     "WindowVisibilityMixin"
   ],

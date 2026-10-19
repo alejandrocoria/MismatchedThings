@@ -164,10 +164,13 @@ public final class NeoForgeNativeEquipmentClientTest {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.iceAndFireTest")) {
             report += assertIceAndFire(original);
         }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.rootsRenderingSpike")) {
+            report += RootsRenderingSpike.assertRoute(original);
+        }
         return report;
     }
 
-    private static String assertIceAndFire(HumanoidModel<HumanoidRenderState> original) {
+    static String assertIceAndFire(HumanoidModel<HumanoidRenderState> original) {
         int custom = 0;
         int ordinary = 0;
         for (Item item : BuiltInRegistries.ITEM) {
@@ -207,7 +210,7 @@ public final class NeoForgeNativeEquipmentClientTest {
         return renderPair(stack, original, 0.7F);
     }
 
-    private static List<Node> renderPair(ItemStack stack, HumanoidModel<HumanoidRenderState> original, float phase) {
+    static List<Node> renderPair(ItemStack stack, HumanoidModel<HumanoidRenderState> original, float phase) {
         HumanoidRenderState state = new HumanoidRenderState();
         state.walkAnimationPos = phase;
         SubmitNodeStorage storage = new SubmitNodeStorage();
@@ -322,6 +325,6 @@ public final class NeoForgeNativeEquipmentClientTest {
         }
     }
 
-    private record Node(RenderType type, SubmitNodeStorage.ModelSubmit<?> submit) {
+    record Node(RenderType type, SubmitNodeStorage.ModelSubmit<?> submit) {
     }
 }
