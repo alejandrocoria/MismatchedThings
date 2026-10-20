@@ -7,8 +7,12 @@
   "mixins": [
     "SilentGearBrilliantProofMixin",
     "SilentGearDurabilityProofMixin",
+    "SilentGearGearIdentityProofMixin",
     "SilentGearMoonwalkerMixin",
-    "SilentGearSelfRepairMixin"
+    "SilentGearPotionProofMixin",
+    "SilentGearSelfRepairMixin",
+    "SilentGearSetMixin",
+    "SilentGearWearerQueryProofMixin"
   ],
   "injectors": {"defaultRequire": 1}
 }

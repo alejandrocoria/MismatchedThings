@@ -133,39 +133,43 @@ It additionally verifies:
   not elapsed server ticks. A supplied terminal native phase checks pause,
   not stock copper reachability.
 
-The superseded mutable-state candidate writer and its temporary CUSTOM_DATA
-lanes are removed. Wearer-event research is retained **separately**:
-
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=research --console=plain
-```
-
-This variant now enables only the local Wielder/set research hooks. B's production
-Brilliant/Moonwalker suite replaces their old candidate cases and fall hook.
-The recalculation witness remains independently available to
-production tests, without enabling those recognition hooks.
+The superseded mutable-state writer/CUSTOM_DATA lanes and executable wearer
+`research` variant are retired. Production replaces the old Brilliant/Moonwalker/
+Wielder candidates; independent native helpers and the recalculation witness
+remain available without a test-only recognition engine.
 
 The separate [wearer plan](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md)
-adds A's inert optional binding and paired-predicate proof. The old research
-counter HEAD replacement is removed: both research scopes now retain the native
-loop and modify only its two local predicate results. A alone enables no production
-Wielder dispatch; B adds Brilliant/Moonwalker below, while C/D remain pending.
+introduced A's optional binding and paired-predicate proof. C now promotes the
+same fixture scopes to production Wielder acceptance, retaining the native loop
+and its two local predicate result extensions. B's recognition scopes are below;
+D's connected-client/lifecycle and final manual handoff remain pending.
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-compatible --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-type --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-trait --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-effect --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-definition --console=plain
 ```
 
 `wearer` extends the maintained native fixture with independent Adamant/Aquatic/
 Flame Ward/Stellar definitions, native 0..4-piece controls and both paid output
-orientations. It checks native-chest and carrier callers, hands versus idle,
-ten-tick cadence, real potion expiry, unchanged gear and a calibrated native
-recalculation tripwire. Brilliant/Moonwalker production acceptance is separate;
+orientations. It checks actual mixed item ticks, native-chest callers, direct
+carrier binding controls, hands versus idle, ten-tick cadence, exact potion data,
+natural expiry, unchanged gear and a calibrated native recalculation tripwire.
+Duplicate/different sources and held copies count no imaginary armor members;
+seeded Stellar heal/nonheal occurs once alongside potions. Actual server-player
+ticks check continuous refresh followed by expiry in idle inventory, not a connected
+client/restart. Brilliant/Moonwalker production acceptance is separate;
 their old candidate checks are retired. `wearer-compatible` adds an independent HEAD result
 extension; `wearer-type` / `wearer-trait` alter one native predicate each and
 require the complete pair plus optional dispatch to refuse before actor writes.
+`wearer-effect` preserves native actor behavior through an uninspected alias and
+requires refusal; `wearer-definition` changes an admitted definition and proves
+no publication/retry, retention of an existing potion and revocation of both
+mixed predicates. Each refusal logs once, preserving B and representative prior
+writers; the full previous state matrix stays on the ordinary gate.
 Native callers retain their ordinary behavior under refusal. Native material
 construction without available ingredients is explicitly labeled; an actual
 iron/prismarine coating recipe supplies the obtainable Aquatic control.
@@ -173,8 +177,9 @@ iron/prismarine coating recipe supplies the obtainable Aquatic control.
 Reports: `RuntimeTests/NeoForge/build/reports/silent-gear-effects/<version>/<variant>/`;
 child logs: `RuntimeTests/NeoForge/build/reports/silent-gear-stats-<version>-<variant>-process.log`.
 Append `'-Pneoforge_version=26.1.2.99'` for the supported floor; restore ordinary
-.114 afterward. The [A record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#8-block-a-execution-record--2026-10-19)
-owns exact executed baselines and limits, not continuous production/client acceptance.
+.114 afterward. [C's record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#10-block-c-execution-record--2026-10-20)
+owns current production evidence/limits; A's earlier record is historical foundation
+evidence, not the current scope of these commands.
 
 B's production recognition scopes use the same gate with research recognition off:
 
@@ -195,11 +200,11 @@ runtime acceptance**. The last two scopes replace one native consumer each,
 requiring one bounded diagnostic and independent survival of the other feature,
 seeded repair, native-compared dynamic armor and a copper clock advance. Full old
 state matrices remain on the ordinary gate rather than repeating in each scope.
-Wielder must still remain off in production. Output locations/floor flag are the
+Independent C Wielder remains functional. Output locations/floor flag are the
 same as A; [B's record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#9-block-b-execution-record--2026-10-19)
 owns exact executed technical evidence and the separate owner manual checklist.
 The owner accepted B's Brilliant/Moonwalker smoke on 2026-10-20, including the
-native Moonwalker advancement; C/D remain pending.
+native Moonwalker advancement; D and owner Wielder acceptance remain pending.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

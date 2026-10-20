@@ -33,7 +33,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-/** Optional native controls and production acceptance; wearer research requires its own variant. */
+/** Optional native controls and production acceptance; recognition/wearer scopes have their own variants. */
 public final class NeoForgeSilentGearTest {
     private static boolean finished;
 
@@ -66,12 +66,6 @@ public final class NeoForgeSilentGearTest {
             }
             if (stateVariant.startsWith("wearer")) {
                 SilentGearWearerContracts.run(player, api, report, stateVariant);
-                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
-                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
-                return;
-            }
-            if (stateVariant.equals("research")) {
-                SilentGearTraitSpike.run(player, api, report);
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
                 NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
                 return;
@@ -141,7 +135,7 @@ public final class NeoForgeSilentGearTest {
             SilentGearEffectsTest.run(player, api, report);
             SilentGearLiveStateTest.run(player, api, report, "");
             report.append("\nBaseline: 8 representative numeric paid output measurements plus production foundation/effect/state controls; ")
-                    .append("wearer-event research is a separate opt-in variant\n");
+                    .append("production recognition/wearer acceptance uses separate opt-in variants\n");
             NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
             NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("silent-gear-stats", failure); }

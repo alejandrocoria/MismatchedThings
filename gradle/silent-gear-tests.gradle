@@ -4,8 +4,8 @@ def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archive
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
-if (!(effectVariant in ['', 'repair', 'wear', 'compatible', 'state', 'joint', 'research', 'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait',
-                       'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker'])) { throw new GradleException('Unknown SG effect test variant') }
+if (!(effectVariant in ['', 'repair', 'wear', 'compatible', 'state', 'joint', 'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait',
+                       'wearer-effect', 'wearer-definition', 'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker'])) { throw new GradleException('Unknown SG effect test variant') }
 def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
@@ -60,7 +60,7 @@ tasks.named('runSilentGearStats') { dependsOn('prepareSilentGearStats') }
 
 tasks.register('verifySilentGear') {
     group = 'verification'
-    description = 'Verifies Silent Gear production attributes/state (wearer research is opt-in)'
+    description = 'Verifies Silent Gear production attributes/state and opt-in recognition/wearer scopes'
     doLast {
         // Keep the child log outside the markers directory cleared by prepare.
         def suffix = effectVariant ? "-${effectVariant}" : ''
@@ -81,6 +81,9 @@ tasks.register('verifySilentGear') {
         int recognitionWarnings = (log.text =~ /Silent Gear mixed (brilliant|moonwalker) disabled:/).count
         int expectedRecognition = effectVariant in ['recognition-brilliant', 'recognition-moonwalker'] ? 1 : 0
         if (recognitionWarnings != expectedRecognition) { throw new GradleException("Unexpected SG recognition warnings ${recognitionWarnings} vs ${expectedRecognition}: ${log}") }
+        int wielderWarnings = (log.text =~ /Silent Gear mixed wielder disabled:/).count
+        int expectedWielder = effectVariant in ['wearer-type', 'wearer-trait', 'wearer-effect', 'wearer-definition'] ? 1 : 0
+        if (wielderWarnings != expectedWielder) { throw new GradleException("Unexpected SG Wielder warnings ${wielderWarnings} vs ${expectedWielder}: ${log}") }
         if (log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')) {
             throw new GradleException("Unexpected SG binding/read refusal: ${log}")
         }

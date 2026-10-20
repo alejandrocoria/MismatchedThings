@@ -127,7 +127,7 @@ public final class SilentGearRecognitionTest {
         for (var root : NeoForgeSilentGearTest.workbench(player, api.boot("refined_iron"), diamond)) {
             clear(player); player.tickCount = 20; player.setItemSlot(EquipmentSlot.FEET, root);
             root.inventoryTick(player.level(), player, EquipmentSlot.FEET);
-            require(player.getActiveEffects().isEmpty(), "B accidentally enabled mixed Wielder potions");
+            require(player.hasEffect(net.minecraft.world.effect.MobEffects.JUMP_BOOST), "Independent C Wielder dispatch regressed");
         }
         // Each refused feature leaves the other and the completed repair/live-state paths available.
         SilentGearEffectsTest.smoke(player, api, report);

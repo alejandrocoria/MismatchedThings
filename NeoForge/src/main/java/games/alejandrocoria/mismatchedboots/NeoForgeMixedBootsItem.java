@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.rootsclassic.RootsTick
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearLiveState;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearer;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -69,6 +70,7 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
         RootsTickCompatibility.tick(stack, level, entity, slot);
         SilentGearEffects.tick(stack, level, entity, slot);
         SilentGearLiveState.tick(stack, level, entity, slot);
+        SilentGearWearer.tick(stack, level, entity, slot);
     }
 
     @Override

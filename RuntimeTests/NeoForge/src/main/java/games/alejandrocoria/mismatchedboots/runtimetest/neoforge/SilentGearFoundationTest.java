@@ -44,6 +44,10 @@ final class SilentGearFoundationTest {
             root.set(SilentGearCompatibility.state(), new SilentGearState(Optional.empty(), Optional.empty(), List.of(), ItemAttributeModifiers.EMPTY, List.of()));
             root.setDamageValue(5);
             root.inventoryTick(player.level(), player, null);
+            player.tickCount = 20;
+            player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, root);
+            root.inventoryTick(player.level(), player, net.minecraft.world.entity.EquipmentSlot.FEET);
+            require(player.getActiveEffects().isEmpty(), "Absent SG published wearer potions");
             root.hurtAndBreak(3, player, net.minecraft.world.entity.EquipmentSlot.FEET);
             require(root.getDamageValue() == 8, "Absent SG changed ordinary tick/wear callbacks");
             require(!root.getItem().makesPiglinsNeutral(root, player)

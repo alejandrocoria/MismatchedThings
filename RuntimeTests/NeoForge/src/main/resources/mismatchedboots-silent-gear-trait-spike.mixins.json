@@ -6,8 +6,8 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "SilentGearRecalculationWitnessMixin",
-    "SilentGearSetPeerMixin",
-    "SilentGearSetSpikeMixin"
+    "SilentGearSetFaultMixin",
+    "SilentGearSetPeerMixin"
   ],
   "injectors": {"defaultRequire": 1}
 }
