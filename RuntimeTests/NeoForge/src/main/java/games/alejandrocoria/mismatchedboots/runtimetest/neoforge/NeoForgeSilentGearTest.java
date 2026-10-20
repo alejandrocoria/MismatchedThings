@@ -58,19 +58,22 @@ public final class NeoForgeSilentGearTest {
             player.setPos(0, 80, 0); player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
             String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
-            if (stateVariant.startsWith("defense-") && !stateVariant.equals("defense-spike")) {
-                if (stateVariant.equals("defense-reload")) {
+            if (List.of("defense-bounce", "defense-bounce-compatible").contains(stateVariant)) {
+                if (!SilentGearBounceTest.step(player, api, report)) { finished = false; return; }
+                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n"); return;
+            }
+            if (stateVariant.startsWith("defense-")) {
+                if (stateVariant.equals("defense-joint")) { SilentGearBounceJointTest.run(player, api, report); }
+                else if (stateVariant.equals("defense-reload")) {
                     if (!SilentGearIncomingTest.reloadStep(player, api, report)) { finished = false; return; }
                 } else {
                     if (!List.of("defense-data", "defense-throw").contains(stateVariant)) { SilentGearDefenseTest.run(player, api, report, stateVariant); }
                     if (!List.of("defense-fall", "defense-retaliation").contains(stateVariant)) { SilentGearIncomingTest.run(player, api, report, stateVariant); }
+                    if (List.of("defense-bounce-query", "defense-fall", "defense-retaliation", "defense-incoming", "defense-negate", "defense-data", "defense-throw").contains(stateVariant)) {
+                        SilentGearBounceTest.refusal(player, api, report, stateVariant);
+                    }
                 }
-                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
-                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
-                return;
-            }
-            if (stateVariant.equals("defense-spike")) {
-                if (!SilentGearDefenseSpike.step(player, api, report)) { finished = false; return; }
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
                 NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
                 return;

@@ -20,11 +20,23 @@ public final class SilentGearDefensePeer implements Opcodes {
         for (var m : owner.methods) {
             if (m.name.equals("onLivingFall") || m.name.equals("onEntityIncomingDamage") || m.name.equals("onPlayerHurt")) { m.instructions.insert(new InsnNode(NOP)); }
         }
-        if (variant.equals("defense-compatible")) {
+        if (variant.equals("defense-bounce-query") && !negate) {
+            MethodInsnNode target = null;
             for (var m : owner.methods) {
-                if (!m.name.equals("onLivingFall")) { continue; }
+                if (!m.name.contains("mismatchedboots$sgBounceFallLevel")) { continue; }
+                for (var n : m.instructions) { if (n instanceof MethodInsnNode call && call.name.equals("fallLevel")) { target = call; } }
+            }
+            if (target == null) { throw new IllegalStateException("Owned Bounce recognition route not found"); }
+            var alias = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$unprovedBounceRoute", target.desc, null, null);
+            alias.instructions.add(new VarInsnNode(ILOAD, 0)); alias.instructions.add(new VarInsnNode(ALOAD, 1)); alias.instructions.add(new VarInsnNode(ILOAD, 2));
+            alias.instructions.add(new MethodInsnNode(INVOKESTATIC, target.owner, target.name, target.desc, false)); alias.instructions.add(new InsnNode(IRETURN));
+            alias.maxLocals = 3; alias.maxStack = 3; owner.methods.add(alias); target.owner = owner.name; target.name = alias.name; return;
+        }
+        if (variant.equals("defense-compatible") || variant.equals("defense-bounce-compatible")) {
+            for (var m : owner.methods) {
+                if (!m.name.equals("onLivingFall") && !m.name.equals("onPlayerHurt")) { continue; }
                 for (var n : m.instructions.toArray()) {
-                    if (n instanceof MethodInsnNode call && call.name.equals("getHighestLevelArmorOrCurio")
+                    if (n instanceof MethodInsnNode call && (call.name.equals("getHighestLevelArmorOrCurio") || call.name.equals("getHighestLevelArmor"))
                             && n.getPrevious() instanceof org.objectweb.asm.tree.FieldInsnNode resource && resource.name.equals("BOUNCE")) {
                         m.instructions.insert(n, new MethodInsnNode(INVOKESTATIC, "games/alejandrocoria/mismatchedboots/runtimetest/neoforge/SilentGearDefensePeer", "optionalLevel", "(I)I", false));
                     }

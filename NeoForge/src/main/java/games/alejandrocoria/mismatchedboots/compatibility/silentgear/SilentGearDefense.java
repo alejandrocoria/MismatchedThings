@@ -7,10 +7,12 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
@@ -23,6 +25,7 @@ public final class SilentGearDefense {
     private static volatile boolean fallReady, fallDisabled;
     private static volatile SilentGearDefenseApi api;
     private static volatile boolean incomingDisabled;
+    private static volatile boolean bounceReady, bounceDisabled, retaliationReady, retaliationDisabled;
     private static final Set<String> refusedTraits = new HashSet<>();
     private static final Set<String> INCOMING_TRAITS = Set.of("silentgear:heat_resistant", "silentgear:bounce");
     private SilentGearDefense() {}
@@ -42,6 +45,38 @@ public final class SilentGearDefense {
             SilentGearDefenseApi.require("gear.trait.effect.NegateDamageTraitEffect", "mismatchedboots$sgNegateReady");
             api = new SilentGearDefenseApi();
         } catch (Throwable failure) { disableIncoming(failure); }
+        try {
+            SilentGearDefenseApi.require("event.GearEvents", "mismatchedboots$sgBounceFallReady"); bounceReady = true;
+        } catch (Throwable failure) { disableBounce(false, failure); }
+        try {
+            SilentGearDefenseApi.require("event.GearEvents", "mismatchedboots$sgRetaliationReady"); retaliationReady = true;
+        } catch (Throwable failure) { disableBounce(true, failure); }
+    }
+
+    public static int fallLevel(int original, LivingFallEvent event, boolean proof) {
+        if (!proof || !bounceReady || bounceDisabled || !fallReady || fallDisabled || event.isCanceled()
+                || event.getDistance() <= 0 || !(event.getEntity() instanceof Player)) { return original; }
+        try { return Math.max(original, bounce(event.getEntity())); }
+        catch (Throwable failure) { disableBounce(false, failure); return original; }
+    }
+
+    public static int retaliationLevel(int original, LivingDamageEvent.Post event, boolean proof) {
+        if (!proof || !retaliationReady || retaliationDisabled || !(event.getEntity() instanceof Player)) { return original; }
+        try { return Math.max(original, bounce(event.getEntity())); }
+        catch (Throwable failure) { disableBounce(true, failure); return original; }
+    }
+
+    private static int bounce(LivingEntity actor) {
+        ItemStack root = actor.getItemBySlot(EquipmentSlot.FEET);
+        if (actor.level().isClientSide() || !valid(root)) { return 0; }
+        return SilentGearCompatibility.effectiveTraits(root).stream().filter(trait -> trait.id().toString().equals("silentgear:bounce"))
+                .mapToInt(SilentGearCompatibility.Trait::level).max().orElse(0);
+    }
+
+    private static synchronized void disableBounce(boolean retaliation, Throwable failure) {
+        if (retaliation ? retaliationDisabled : bounceDisabled) { return; }
+        if (retaliation) { retaliationDisabled = true; } else { bounceDisabled = true; }
+        Constants.LOG.warn("Silent Gear mixed {} disabled: native Bounce query contract unavailable", retaliation ? "retaliation" : "bounce recognition", failure);
     }
 
     public static boolean armor(boolean original, LivingIncomingDamageEvent event, EquipmentSlot slot, ItemStack root, boolean proof) {
@@ -103,7 +138,7 @@ public final class SilentGearDefense {
                 && ModContent.getMixedBootsData(root).isPresent() && equipment != null && equipment.slot() == EquipmentSlot.FEET;
     }
 
-    /** A adds no mixed Bounce level. Refused wear must also deny a native peer before any branch effects. */
+    /** Refused wear must also deny a native peer before any branch effects, independently of mixed recognition. */
     public static boolean allowFall(LivingFallEvent event, boolean proof) {
         ItemStack feet = event.getEntity().getItemBySlot(EquipmentSlot.FEET);
         if (!(feet.getItem() instanceof MixedBootsItem)) { return true; }

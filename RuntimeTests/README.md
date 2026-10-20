@@ -198,7 +198,9 @@ B's production recognition scopes use the same gate with research recognition of
 These exercise both paid orientations, actual vanilla/native piglin armor checks,
 the registered native fall event, maximum source/native-armor levels, ordinary
 true results, unequipped/invalid/plain roots, cancellation/short falls and native
-Bounce isolation. Complete gear snapshots and a calibrated native-recalculation
+Bounce isolation (rebound suppressed on the mixed Moonwalker/Bounce pair since
+defensive C; C's own matrix below owns rebound/cost acceptance). Complete gear
+snapshots and a calibrated native-recalculation
 witness protect the read-only calls. `recognition-compatible` adds a real chained
 query-result mixin with controlled optional-query values 2/5, **not actual Curios
 runtime acceptance**. The last two scopes replace one native consumer each,
@@ -258,28 +260,12 @@ below. The owner separately confirmed all five manual groups on 2026-10-20,
 completing this bounded magnet plan; [section 9.4](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md#94-owner-manual-acceptance--2026-10-20)
 records manual acceptance independently from automated evidence.
 
-The bounded test-only [Heat Resistant/Bounce spike](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-EXPLORATION.md)
-uses the same optional native gate:
-
-```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-spike --console=plain
-```
-
-Append `'-Pneoforge_version=26.1.2.99'` for the supported floor. It enables
-candidate event hooks **only in this variant**, not production compatibility.
-Actual native construction/lining and paid Workbench roots test candidate-off
-native positives and pending fall/retaliation mixed negatives, native
-sound, live-root fall costs, ordinary destruction, production Moonwalker and
-real post-hit knockback/projectile negatives. Native scheduled rebound is
-observed across two real server ticks, not manually flushed. A calibrated writer
-tripwire originally intercepted armor-peer Bounce's unsafe mixed-root recalculation
-at a native damage band. A now promotes that portion to **production protective
-wear** and removes the parallel candidate writer/unsafe-baseline expectation;
-the remaining research observes production payments without native recalculation.
-The two old intentional EventBus writer errors are no longer expected. No actual
-connected-client landing, reload/failure admission or JDT fall arbitration is
-claimed. Reports are in `build/reports/silent-gear-effects/<version>/defense-spike`;
-native jar pins and the existing bounded child process runner are reused.
+The bounded [Heat Resistant/Bounce exploration/spike](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-EXPLORATION.md)
+is historical: all candidate gameplay methods/mixins and the `defense-spike`
+entry point are retired. Production A/B/C use the same pinned optional native
+gate and bounded runner. Append `'-Pneoforge_version=26.1.2.99'` for the supported
+floor. Reports remain in `build/reports/silent-gear-effects/<version>/<variant>`.
+The two old deliberate native-writer EventBus errors are not expected results.
 
 Production [A's contracts/native-peer wear](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md#7-block-a-execution-record--2026-10-20)
 use `verifySilentGear -PsilentGearEffectVariant=defense-foundation`, or
@@ -303,8 +289,29 @@ and `defense-reload` variants check independent unsupported Heat refusal vs
 working Bounce, atomic mixed-piece reduction after a controlled post-native
 failure and real asynchronous datapack/scale/tag reloads on existing roots.
 Their expected warnings are bounded by the Gradle gate. Incoming candidate hooks,
-dispatcher, selector and duplicate spike incoming assertions are retired; only fall recognition/retaliation remain
-research. C/D's coexistence, connected gameplay and manual exits are not implied.
+dispatcher, selector and duplicate spike incoming assertions are retired.
+
+C's [production Bounce record](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md#9-block-c-execution-record--2026-10-20)
+uses these scopes (not another runner):
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce-compatible --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce-query --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-joint --console=plain
+```
+
+Primary/compatible scopes check real stock slime lining, paid inverse/duplicate
+sources, native/optional higher query contributions, native sound parameters,
+one root wear bill and actual next-server-pre-tick additive motion. Malleable,
+Unbreaking, zero-bill Moonwalker, exemptions/destruction and actual post-hit
+knockback/projectile/environmental negatives retain their native/ordinary
+owners. No Curios installation or physical connected-client landing is claimed.
+The recognition fault leaves native-peer safe wear available; existing A/B
+refusals also check independent fall/retaliation behavior. `defense-joint` adds
+only pinned JDT, observes real registered handlers and checks exact FE/wear and
+complete root/source/settings/tables, including live JDT controls when Bounce
+is suppressed. D's connected gameplay/rejoin and manual exits remain pending.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

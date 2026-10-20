@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
@@ -12,9 +13,34 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SilentGearDefenseShapeTest implements Opcodes {
+    @Test void bounceSelectionRequiresTheChosenIdAndTheCorrectArmorQueryScope() {
+        String p = SilentGearDefenseShape.P, ref = SilentGearRecognitionShape.RESOURCE;
+        var c = new InsnList(); c.add(new VarInsnNode(ALOAD, 8)); c.add(new FieldInsnNode(GETSTATIC, p + "util/Const$Traits", "MOONWALKER", ref));
+        c.add(new MethodInsnNode(INVOKESTATIC, p + "util/TraitHelper", "getHighestLevelArmorOrCurio", SilentGearRecognitionShape.QUERY, false)); c.add(new InsnNode(POP));
+        c.add(new VarInsnNode(ALOAD, 4)); var id = new FieldInsnNode(GETSTATIC, p + "util/Const$Traits", "BOUNCE", ref); c.add(id);
+        var query = new MethodInsnNode(INVOKESTATIC, p + "util/TraitHelper", "getHighestLevelArmorOrCurio", SilentGearRecognitionShape.QUERY, false); c.add(query);
+        assertSame(query, SilentGearDefenseShape.bounceQuery(c, true)); assertNull(SilentGearDefenseShape.bounceQuery(c, false));
+        query.name = "getHighestLevelArmor"; assertSame(query, SilentGearDefenseShape.bounceQuery(c, false));
+        assertNull(SilentGearDefenseShape.bounceQuery(c, true)); id.name = "FOREIGN"; assertNull(SilentGearDefenseShape.bounceQuery(c, false));
+    }
+
+    @Test void levelRoutingRequiresItsOwnIndependentPermissionAndReadOnlyAdapter() {
+        var owner = new ClassNode(); owner.name = SilentGearDefenseShape.EVENTS;
+        var m = new MethodNode(ACC_PRIVATE | ACC_STATIC, "ownedLevel", "(IL" + SilentGearDefenseShape.EVENT + ";)I", null, null); owner.methods.add(m);
+        m.instructions.add(new VarInsnNode(ILOAD, 0)); m.instructions.add(new VarInsnNode(ALOAD, 1));
+        var proof = new MethodInsnNode(INVOKESTATIC, owner.name, "mismatchedboots$sgBounceFallReady", "()Z", false); m.instructions.add(proof);
+        var route = new MethodInsnNode(INVOKESTATIC, "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearDefense", "fallLevel", "(IL" + SilentGearDefenseShape.EVENT + ";Z)I", false); m.instructions.add(route);
+        m.instructions.add(new InsnNode(IRETURN)); var site = new MethodInsnNode(INVOKESTATIC, owner.name, m.name, m.desc, false);
+        assertTrue(SilentGearDefenseShape.levelRouting(owner, site, true));
+        proof.name = "mismatchedboots$sgSafeFallReady"; assertFalse(SilentGearDefenseShape.levelRouting(owner, site, true));
+        proof.name = "mismatchedboots$sgBounceFallReady"; route.name = "unprovedAlias"; assertFalse(SilentGearDefenseShape.levelRouting(owner, site, true));
+    }
+
     @Test void incomingLambdaRequiresNativeCurrentAndCommonBaseLanes() {
         var owner = new ClassNode(); owner.name = SilentGearDefenseShape.EVENTS;
         var lambda = new MethodNode(ACC_PRIVATE | ACC_STATIC, "renamedLambda",

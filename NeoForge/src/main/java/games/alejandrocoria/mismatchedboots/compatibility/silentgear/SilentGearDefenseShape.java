@@ -37,6 +37,7 @@ final class SilentGearDefenseShape implements Opcodes {
     static final String CONDITION = WEAR.substring(0, WEAR.length() - 1) + "Z";
     static final String NEGATION = "(L" + STACK + ";IL" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;FF)F";
     static final String INCOMING = "(Lnet/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent;)V";
+    static final String POST_EVENT = "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Post", POST = "(L" + POST_EVENT + ";)V";
     private static final String ACTIVATION = "(L" + STACK + ";Ljava/lang/Object;L" + P + "api/traits/TraitFunction;)Ljava/lang/Object;";
     private static final String ARMOR_LAMBDA = "(L" + STACK + ";L" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;F)L" + P + "api/traits/TraitFunction;";
     private static final String ADAPTER = "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearDefense";
@@ -48,6 +49,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (owner.name.equals(SCHEDULER)) { SilentGearEffectShape.publish(owner, "mismatchedboots$sgScheduleReady", scheduler(owner)); }
         if (owner.name.equals(EVENTS)) {
             SilentGearEffectShape.publish(owner, "mismatchedboots$sgSafeFallReady", fall(owner));
+            SilentGearEffectShape.publish(owner, "mismatchedboots$sgBounceFallReady", bounceFall(owner));
             SilentGearEffectShape.publish(owner, "mismatchedboots$sgIncomingReady", incoming(owner));
             SilentGearEffectShape.publish(owner, "mismatchedboots$sgRetaliationReady", retaliation(owner));
         }
@@ -57,6 +59,70 @@ final class SilentGearDefenseShape implements Opcodes {
         var matches = code(instructions).stream().filter(node -> call(node, P + "util/GearHelper", "attemptDamage", WEAR)).toList();
         return matches.size() == 1 ? (MethodInsnNode) matches.getFirst() : null;
     }
+
+    static MethodInsnNode bounceQuery(InsnList instructions, boolean fall) {
+        var c = code(instructions); MethodInsnNode selected = null;
+        for (int i = 1; i < c.size(); i++) {
+            if (resource(c.get(i - 1), "BOUNCE") && call(c.get(i), P + "util/TraitHelper", fall ? "getHighestLevelArmorOrCurio" : "getHighestLevelArmor", SilentGearRecognitionShape.QUERY)) {
+                if (selected != null) { return null; } selected = (MethodInsnNode) c.get(i);
+            }
+        }
+        return selected;
+    }
+
+    static boolean bounceFall(ClassNode owner) {
+        var m = method(owner, "onLivingFall", FALL); if (m == null) { return false; }
+        var query = bounceQuery(m.instructions, true); if (query == null) { return false; }
+        var chain = levelChain(owner, m, query, true); if (chain == null) { return false; }
+        var c = code(m.instructions); int next = chain.next;
+        int rebound = find(c, EVENTS, "bounceEntity", "(L" + ENTITY + ";)V");
+        return positiveLevel(c, next) && rebound > next && c.get(next + 2) instanceof JumpInsnNode skip
+                && !reaches(skip.label, c.get(rebound), null) && queriedPlayer(owner, m, query, EVENT);
+    }
+
+    /** Extend the returned level, admitting independent result peers without assigning permission by their package. */
+    private static LevelChain levelChain(ClassNode owner, MethodNode m, MethodInsnNode query, boolean fall) {
+        var c = code(m.instructions); int at = c.indexOf(query) + 1, own = 0; AbstractInsnNode last = query;
+        var calls = new HashSet<String>(); String event = fall ? EVENT : POST_EVENT, result = "(IL" + event + ";)I";
+        try {
+            var flow = new Flow(owner, m);
+            while (at < c.size()) {
+                MethodInsnNode hook; int count;
+                if (c.get(at) instanceof MethodInsnNode peer && peer.getOpcode() == INVOKESTATIC && peer.desc.equals("(I)I")) { hook = peer; count = 1; at++; }
+                else if (at + 1 < c.size() && load(c.get(at), ALOAD, 0) && c.get(at + 1) instanceof MethodInsnNode peer
+                        && peer.getOpcode() == INVOKESTATIC && peer.desc.equals(result)) { hook = peer; count = 2; at += 2; }
+                else { break; }
+                if (flow.origin(flow.argument(hook, 0, count)) != last || count == 2 && !flow.parameter(flow.argument(hook, 1, count), 0)) { return null; }
+                if (hook.owner.equals(EVENTS) && hook.name.contains(fall ? "mismatchedboots$sgBounceFallLevel" : "mismatchedboots$sgBounceRetaliationLevel")) {
+                    if (!levelRouting(owner, hook, fall)) { return null; } own++;
+                }
+                calls.add(key(hook)); last = hook;
+            }
+        } catch (AnalyzerException | RuntimeException invalid) { return null; }
+        return own == 1 ? new LevelChain(last, at, calls) : null;
+    }
+
+    static boolean levelRouting(ClassNode owner, MethodInsnNode hook, boolean fall) {
+        var body = method(owner, hook.name, hook.desc); if (body == null || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) { return false; }
+        var c = code(body.instructions); String event = fall ? EVENT : POST_EVENT;
+        return c.size() == 5 && load(c.get(0), ILOAD, 0) && load(c.get(1), ALOAD, 1)
+                && call(c.get(2), EVENTS, fall ? "mismatchedboots$sgBounceFallReady" : "mismatchedboots$sgRetaliationReady", "()Z")
+                && call(c.get(3), ADAPTER, fall ? "fallLevel" : "retaliationLevel", "(IL" + event + ";Z)I") && c.get(4).getOpcode() == IRETURN;
+    }
+
+    private static boolean positiveLevel(List<AbstractInsnNode> c, int at) {
+        return at + 2 < c.size() && c.get(at) instanceof VarInsnNode store && store.getOpcode() == ISTORE
+                && load(c.get(at + 1), ILOAD, store.var) && c.get(at + 2) instanceof JumpInsnNode branch && branch.getOpcode() == IFLE;
+    }
+
+    private static boolean queriedPlayer(ClassNode owner, MethodNode m, MethodInsnNode query, String event) {
+        try {
+            var flow = new Flow(owner, m); var actor = flow.origin(flow.argument(query, 0, 2));
+            return call(actor, event, "getEntity", "()L" + ACTOR + ";") && flow.parameter(flow.argument(actor, 0, 1), 0);
+        } catch (AnalyzerException | RuntimeException invalid) { return false; }
+    }
+
+    private record LevelChain(AbstractInsnNode last, int next, Set<String> calls) {}
 
     static boolean negate(ClassNode owner) {
         var m = method(owner, "onEntityIncomingDamage", NEGATION); if (m == null || !m.tryCatchBlocks.isEmpty()) { return false; }
@@ -311,11 +377,13 @@ final class SilentGearDefenseShape implements Opcodes {
     }
 
     static boolean retaliation(ClassNode owner) {
-        String event = "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Post";
-        var m = method(owner, "onPlayerHurt", "(L" + event + ";)V"); if (m == null) { return false; }
-        var c = code(m.instructions); int query = find(c, P + "util/TraitHelper", "getHighestLevelArmor", SilentGearRecognitionShape.QUERY);
+        String event = POST_EVENT;
+        var m = method(owner, "onPlayerHurt", POST); if (m == null) { return false; }
+        var selected = bounceQuery(m.instructions, false); if (selected == null) { return false; }
+        var chain = levelChain(owner, m, selected, false); if (chain == null || !queriedPlayer(owner, m, selected, event)) { return false; }
+        var c = code(m.instructions); int query = c.indexOf(selected);
         int hit = find(c, ACTOR, "knockback", "(DDD)V");
-        if (query <= 1 || hit < 0 || !resource(c.get(query - 1), "BOUNCE") || !(c.get(query + 3) instanceof JumpInsnNode positive) || positive.getOpcode() != IFLE
+        if (query <= 1 || hit < 0 || !positiveLevel(c, chain.next) || !(c.get(chain.next + 2) instanceof JumpInsnNode positive)
                 || reaches(positive.label, c.get(hit), null)) { return false; }
         try {
             var flow = new Flow(owner, m); var direct = flow.origin(flow.argument(c.get(hit), 0, 4));
@@ -324,7 +392,7 @@ final class SilentGearDefenseShape implements Opcodes {
             if (!call(source, event, "getSource", "()Lnet/minecraft/world/damagesource/DamageSource;") || !flow.parameter(flow.argument(source, 0, 1), 0)) { return false; }
             var strength = flow.origin(flow.argument(c.get(hit), 0, 3)); if (strength == null || strength.getOpcode() != I2D) { return false; }
             var product = flow.origin(flow.argument(strength, 0, 1)); if (product == null || product.getOpcode() != IMUL
-                    || flow.origin(flow.argument(product, 0, 2)).getOpcode() != ICONST_2 || flow.origin(flow.argument(product, 1, 2)) != c.get(query)) { return false; }
+                    || flow.origin(flow.argument(product, 0, 2)).getOpcode() != ICONST_2 || flow.origin(flow.argument(product, 1, 2)) != chain.last) { return false; }
             for (var n : c) {
                 if (call(n, ENTITY, "getYRot", "()F") && flow.origin(flow.argument(n, 0, 1)) != direct) { return false; }
             }
@@ -334,10 +402,11 @@ final class SilentGearDefenseShape implements Opcodes {
                 if (!(c.get(at + 1) instanceof JumpInsnNode skip) || skip.getOpcode() != IFEQ || reaches(skip.label, c.get(hit), null)) { return false; }
             }
         } catch (AnalyzerException | RuntimeException invalid) { return false; }
-        return count(c, ACTOR, "knockback", "(DDD)V") == 1
-                && readsOnly(m, Set.of(event + ".getEntity()L" + ACTOR + ";", event + ".getSource()Lnet/minecraft/world/damagesource/DamageSource;",
+        var allowed = new HashSet<>(Set.of(event + ".getEntity()L" + ACTOR + ";", event + ".getSource()Lnet/minecraft/world/damagesource/DamageSource;",
                     "net/minecraft/world/damagesource/DamageSource.getDirectEntity()L" + ENTITY + ";", P + "util/TraitHelper.getHighestLevelArmor" + SilentGearRecognitionShape.QUERY,
                     "org/apache/logging/log4j/Logger.debug(Ljava/lang/String;)V", ENTITY + ".getYRot()F", "net/minecraft/util/Mth.sin(D)F", "net/minecraft/util/Mth.cos(D)F", ACTOR + ".knockback(DDD)V"));
+        allowed.addAll(chain.calls);
+        return count(c, ACTOR, "knockback", "(DDD)V") == 1 && readsOnly(m, allowed);
     }
 
     private static boolean bounce(ClassNode owner) {

@@ -2,7 +2,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearDefenseSpike;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearBounceJointTest;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearBounceTest;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 abstract class SilentGearDefenseWearWitnessMixin {
     @WrapOperation(method = "allowNativeFallWear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;hurtAndBreak(ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;)V"))
     private static void payment(ItemStack root, int amount, LivingEntity actor, EquipmentSlot slot, Operation<Void> original) {
-        SilentGearDefenseSpike.wearCalls++; SilentGearDefenseSpike.requestedWear = amount; original.call(root, amount, actor, slot);
+        SilentGearBounceJointTest.sgWear();
+        SilentGearBounceTest.wearCalls++; SilentGearBounceTest.requestedWear = amount; original.call(root, amount, actor, slot);
     }
 }

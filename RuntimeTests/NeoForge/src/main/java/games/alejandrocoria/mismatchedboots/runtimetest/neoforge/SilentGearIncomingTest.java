@@ -39,7 +39,7 @@ public final class SilentGearIncomingTest {
 
     static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report, String variant) throws Throwable {
         SilentGearTraitSpike.initialize(api); clear(player);
-        var heat = api.boot("crimson_iron"); var bounce = SilentGearDefenseSpike.lined(heat, api, player);
+        var heat = api.boot("crimson_iron"); var bounce = SilentGearBounceTest.lined(heat, api, player);
         var roots = NeoForgeSilentGearTest.workbench(player, bounce, new ItemStack(Items.DIAMOND_BOOTS));
         boolean admitted = !List.of("defense-incoming", "defense-negate").contains(variant);
         for (var root : roots) {
@@ -174,7 +174,7 @@ public final class SilentGearIncomingTest {
         private int phase;
 
         private Reload(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api) throws Throwable {
-            this.player = player; source = SilentGearDefenseSpike.lined(api.boot("crimson_iron"), api, player);
+            this.player = player; source = SilentGearBounceTest.lined(api.boot("crimson_iron"), api, player);
             roots = NeoForgeSilentGearTest.workbench(player, source, new ItemStack(Items.DIAMOND_BOOTS));
             previous = binding.admittedEffect(view(source).get("silentgear:bounce")); future = load("minecraft:generic", .3F);
         }

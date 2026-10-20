@@ -38,10 +38,12 @@ final class SilentGearDefenseTest {
         boolean safe = !variant.equals("defense-fall"), negate = !variant.equals("defense-negate"), incoming = !variant.equals("defense-incoming"), retaliation = !variant.equals("defense-retaliation");
         var proof = new StringBuilder();
         for (String[] pair : List.of(new String[]{"event.GearEvents", "mismatchedboots$sgSafeFallReady"}, new String[]{"event.GearEvents", "mismatchedboots$sgIncomingReady"},
+                new String[]{"event.GearEvents", "mismatchedboots$sgBounceFallReady"},
                 new String[]{"event.GearEvents", "mismatchedboots$sgRetaliationReady"}, new String[]{"gear.trait.effect.NegateDamageTraitEffect", "mismatchedboots$sgNegateReady"})) {
             var method = nativeClass(pair[0]).getDeclaredMethod(pair[1]); method.setAccessible(true); proof.append(pair[1]).append('=').append(method.invoke(null)).append(' ');
         }
         require(ready("event.GearEvents", "mismatchedboots$sgSafeFallReady") == safe, proof.toString());
+        require(ready("event.GearEvents", "mismatchedboots$sgBounceFallReady") == !variant.equals("defense-bounce-query"), proof.toString());
         require(ready("event.GearEvents", "mismatchedboots$sgIncomingReady") == incoming, proof.toString());
         require(ready("event.GearEvents", "mismatchedboots$sgRetaliationReady") == retaliation, proof.toString());
         require(ready("gear.trait.effect.NegateDamageTraitEffect", "mismatchedboots$sgNegateReady") == negate, proof.toString());
@@ -81,12 +83,12 @@ final class SilentGearDefenseTest {
             var breaking = new LivingFallEvent(player, 12, 1); observe(() -> NeoForge.EVENT_BUS.post(breaking));
             require(breaking.isCanceled() == safe && nearBreak.isEmpty() == safe, "Native peer changed ordinary mixed break/refusal");
         }
-        var sourceBounce = SilentGearDefenseSpike.lined(heat, api, player);
+        var sourceBounce = SilentGearBounceTest.lined(heat, api, player);
         require(api.traitLevel(sourceBounce, "bounce") == 1, "Real native slime lining control missing");
         for (var root : NeoForgeSilentGearTest.workbench(player, sourceBounce, new ItemStack(Items.DIAMOND_BOOTS))) {
             clear(player); player.setItemSlot(EquipmentSlot.FEET, root); var fall = new LivingFallEvent(player, 12, 1); NeoForge.EVENT_BUS.post(fall);
             var fire = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 20)); NeoForge.EVENT_BUS.post(fire);
-            require(!fall.isCanceled() && Math.abs(fire.getAmount() - (incoming && negate ? 16.8F : 20)) < .0001,
+            require(fall.isCanceled() == (safe && !variant.equals("defense-bounce-query")) && Math.abs(fire.getAmount() - (incoming && negate ? 16.8F : 20)) < .0001,
                     "Production incoming/refused fall recognition differs");
         }
         for (String invalid : List.of("count", "data", "slot")) {
@@ -115,7 +117,7 @@ final class SilentGearDefenseTest {
             require(!denied.isCanceled() && sounds == 0 && pending.size() == size && ItemStack.matches(snapshot, roots.getFirst()), "Refused fall published side effects");
         }
         clear(player);
-        report.append("A ").append(variant).append(':').append(proof).append("\nGuarded native Heat IV/read-only direct call; live definition admission; calibrated writer witness; four paid SG/non-SG root orientations cross real native damage bands through production wear; native positive and no mixed-source fall activation; independent Moonwalker retained.\n");
+        report.append("A ").append(variant).append(':').append(proof).append("\nGuarded native Heat IV/read-only direct call; live definition admission; calibrated writer witness; four paid SG/non-SG root orientations cross real native damage bands through production wear; independent mixed incoming/fall permissions and native positives; Moonwalker retained.\n");
     }
 
     private static boolean ready(String owner, String name) throws Throwable { try { SilentGearDefenseApi.require(owner, name); return true; } catch (IllegalStateException refused) { return false; } }

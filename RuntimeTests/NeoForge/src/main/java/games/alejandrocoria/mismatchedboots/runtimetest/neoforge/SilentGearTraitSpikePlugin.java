@@ -24,11 +24,11 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
         }
         if (mixin.endsWith("SilentGearDefensePeerMixin")) {
             String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
-            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") && variant.startsWith("defense-") && !List.of("defense-foundation", "defense-spike").contains(variant);
+            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") && variant.startsWith("defense-") && !List.of("defense-foundation", "defense-bounce", "defense-joint").contains(variant);
         }
-        if (mixin.endsWith("SilentGearDefenseSpikeMixin") || mixin.endsWith("SilentGearDefenseWearWitnessMixin")) {
+        if (mixin.endsWith("SilentGearDefenseWearWitnessMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
-                    && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").equals("defense-spike");
+                    && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").startsWith("defense-");
         }
         if (mixin.endsWith("SilentGearMagnetPeerMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")

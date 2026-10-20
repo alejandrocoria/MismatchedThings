@@ -107,10 +107,11 @@ public final class SilentGearRecognitionTest {
         clear(player); player.setItemSlot(EquipmentSlot.FEET, bounce);
         var nativeBounce = new LivingFallEvent(player, 10, 1); NeoForge.EVENT_BUS.post(nativeBounce);
         require(nativeBounce.isCanceled(), "Native Bounce positive control failed");
+        // Bounce now has its own production matrix; isolate Moonwalker without paying for a rebound here.
         for (var root : NeoForgeSilentGearTest.workbench(player, moon, bounce)) {
             clear(player); player.setItemSlot(EquipmentSlot.FEET, root); var before = equipment(player); observing = true;
-            try { fall(player, 10, moonwalker ? 4 : 0, false); unchanged(player, before); }
-            finally { observing = false; }
+            try { player.setShiftKeyDown(true); fall(player, 10, moonwalker ? 4 : 0, false); unchanged(player, before); }
+            finally { observing = false; player.setShiftKeyDown(false); }
         }
         if (variant.equals("recognition-compatible")) {
             var root = NeoForgeSilentGearTest.workbench(player, moon, diamond).getFirst();
@@ -132,7 +133,7 @@ public final class SilentGearRecognitionTest {
         // Each refused feature leaves the other and the completed repair/live-state paths available.
         SilentGearEffectsTest.smoke(player, api, report);
         SilentGearLiveStateTest.smoke(player, api, report);
-        report.append("B Moonwalker: registered native event, one native reduction; native/vanilla, either/duplicate/unequal sources, higher/lower native armor; cancellation/short falls, held/invalid/plain roots; native Bounce remains unrecognized on mixed roots; ready=").append(moonwalker)
+        report.append("B Moonwalker: registered native event, one native reduction; native/vanilla, either/duplicate/unequal sources, higher/lower native armor; cancellation/short falls, held/invalid/plain roots; Moonwalker retained with independently suppressed Bounce; ready=").append(moonwalker)
                 .append("; immutable equipment/sources, zero native recalculations; existing repair/live state pass\n");
     }
 
