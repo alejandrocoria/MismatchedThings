@@ -213,6 +213,30 @@ native Moonwalker advancement. D's automated lifecycle/consolidation and the
 owner Wielder/lifecycle/JDT checklist accepted on 2026-10-20 are in
 [its record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#11-block-d-execution-record--2026-10-20).
 
+The separate [Magnetic/Greedy feasibility spike](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md)
+has an opt-in **test-only** candidate, not production magnet support:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-spike --console=plain
+```
+
+Repeat with `-Pneoforge_version=26.1.2.99` for the floor. It uses native
+installation/Blaze Gold controls, actual native inventory callbacks and real
+server ItemEntities, publishing impulses through the native level-post tracker.
+Both paid inverses cover selected/idle, crouch config, radius/filter/pickup-delay/
+anti-movement controls, duplicate/unequal levels and overlapping held/worn
+copies. A scoped native-call counter catches double dispatch hidden by native
+strongest-vector arbitration; gear snapshots and the calibrated recalculation
+witness protect root/source/carrier/equipment. The callback counter mixin is
+disabled in all other variants. No production guard, connected-client or mixed
+upgrade-editing acceptance is implied. Its report uses the existing
+`silent-gear-effects/<version>/magnet-spike` directory, not another runner.
+The subsequent [A/B/C production plan](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md)
+is written but unimplemented. It will promote/rename this candidate scope during
+production wiring, preserve native controls and add real client motion/pickup;
+the command above remains the current test-only entry point, not future
+production acceptance.
+
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:
 
