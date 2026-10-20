@@ -12,6 +12,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +29,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
@@ -108,6 +110,15 @@ final class SilentGearLifecycleTest {
         roots.addAll(NeoForgeSilentGearTest.workbench(player, api.boot("azure_silver"), wearerCopper));
         SilentGearWearerFixture.manualCommands(player, api);
 
+        ItemStack iron = api.boot("iron");
+        var upgrade = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:magnetic_upgrade")));
+        var input = CraftingInput.of(2, 1, List.of(iron, upgrade));
+        Object recipe = api.swapClass.getField("INSTANCE").get(null);
+        require((boolean) api.matches.invoke(recipe, input, player.level()), "Native Magnetic grid preparation failed");
+        ItemStack magnetic = (ItemStack) api.assemble.invoke(recipe, input);
+        require(api.traitLevel(magnetic, "magnetic") == 5, "Persisted native preparation lacks Magnetic V");
+        roots.add(NeoForgeSilentGearTest.workbench(player, magnetic, new ItemStack(Items.DIAMOND_BOOTS)).getFirst());
+
         server.overworld().setBlock(BARREL, Blocks.BARREL.defaultBlockState(), 3);
         var barrel = barrel(server);
         var saved = new JsonArray();
@@ -118,9 +129,9 @@ final class SilentGearLifecycleTest {
         barrel.setChanged();
         var manifest = new JsonObject(); manifest.addProperty("process", ProcessHandle.current().pid()); manifest.add("roots", saved);
         NetworkAcceptanceFiles.write("silent-gear-saved.json", manifest.toString());
-        NetworkAcceptanceFiles.write("silent-gear-save-report.txt", "World barrel: eight complete paid roots; unequal transitioned copper inverses, "
+        NetworkAcceptanceFiles.write("silent-gear-save-report.txt", "World barrel: nine complete paid roots; unequal transitioned copper inverses, "
                 + "worn quartz inverses with maximum policy/removal/foreign metadata, damaged Stellar+Brilliant and Moonwalker+copper inverses; "
-                + "verified vanilla/native manual commands for missing-ingredient Adamant/Stellar gear\n");
+                + "one native grid-upgraded Magnetic V root for ordinary client motion/pickup; verified vanilla/native manual commands for missing-ingredient Adamant/Stellar gear\n");
     }
 
     private static void restart(MinecraftServer server) throws Exception {
@@ -129,7 +140,7 @@ final class SilentGearLifecycleTest {
         require(manifest.get("process").getAsLong() != ProcessHandle.current().pid(), "Reload reused the save JVM");
         var barrel = barrel(server);
         var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-        var saved = manifest.getAsJsonArray("roots"); require(saved.size() == 8, "Incomplete saved expectations");
+        var saved = manifest.getAsJsonArray("roots"); require(saved.size() == 9, "Incomplete saved expectations");
         for (int index = 0; index < saved.size(); index++) {
             ItemStack expected = ItemStack.CODEC.parse(ops, saved.get(index)).getOrThrow();
             require(ItemStack.matches(expected, barrel.getItem(index)), "World reload changed root/source/projection/clock " + index);
@@ -210,7 +221,9 @@ final class SilentGearLifecycleTest {
         }
         for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
         player.removeAllEffects(); barrel.setChanged();
-        NetworkAcceptanceFiles.write("silent-gear-restart-report.txt", "Different JVM: eight actual world roots compared before callbacks; "
+        require(SilentGearCompatibility.effectiveTraits(barrel.getItem(8)).stream().anyMatch(trait ->
+                trait.id().toString().equals("silentgear:magnetic") && trait.level() == 5), "World restart lost prepared Magnetic V");
+        NetworkAcceptanceFiles.write("silent-gear-restart-report.txt", "Different JVM: nine actual world roots compared before callbacks, including unchanged prepared Magnetic V; "
                 + "no offline progress or reseeding; selected pause/idle continuation, native worn maximum and persistent removal; "
                 + "paid smithing/crafting repair, new average policy only on recomposition; Stellar potions + one seeded heal, Brilliant and Moonwalker resume on both inverses; immutable sources\n");
     }

@@ -252,8 +252,11 @@ No connected-client motion, real-time pickup, lifecycle or mixed
 upgrade-editing acceptance is implied. Reports use the existing
 `silent-gear-effects/<version>/<magnet-variant>` directories, not another runner.
 The subsequent [A/B/C production plan](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md)
-has A/B implemented; C remains pending for real connected motion/pickup,
-save/rejoin, consolidation and separate owner manual acceptance.
+has A/B/C implemented. C's [record](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md#9-block-c-execution-record--2026-10-20)
+owns connected motion/pickup and save/rejoin via the existing lifecycle command
+below. The owner separately confirmed all five manual groups on 2026-10-20,
+completing this bounded magnet plan; [section 9.4](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md#94-owner-manual-acceptance--2026-10-20)
+records manual acceptance independently from automated evidence.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:
@@ -283,11 +286,11 @@ neutral callbacks and our own state codec without native classes.
 Run it after the default gate if both sets of reports should remain.
 
 `verifySilentGearLifecycle` sequentially launches Save, Restart, a hidden/muted
-integrated Client, and a separate Rejoin client JVM. The second JVM compares eight complete actual-world
+integrated Client, and a separate Rejoin client JVM. The second JVM compares nine complete actual-world
 barrel stacks before callbacks: unequal transitioned copper inverses, worn
 quartz inverses with captured maximum policy, one explicit armor removal and
 foreign luck/name, damaged Stellar/Brilliant inverses and Moonwalker/copper
-inverses. It checks no offline progress/reseeding, selected pauses,
+inverses plus one native grid-upgraded Magnetic V + diamond root. It checks no offline progress/reseeding, selected pauses,
 continuation, native worn arithmetic, paid trim/crafting repair and policy
 recapture only on recomposition; wearer effects, one seeded Stellar heal,
 Brilliant recognition and Moonwalker resume on the saved inverses.
@@ -306,6 +309,17 @@ Rejoin retains the actual client world/player save and fixed test username, chec
 different PID/same UUID and complete saved roots/damage/selected copper clocks,
 then resumes effects/one heal and normal idle expiry. It does not recopy the
 original barrel world or recraft the roots.
+The same driver now adds seven ordinary native/mixed Magnetic/Greedy scenarios:
+server and client movement, natural pickup of exactly three diamonds and four
+gold ingots, two rejected dirt, normal 60-tick pickup delay and selected-to-idle
+stop (native and mixed). FEET/main/offhand and both Greedy paid inverses are
+represented; B retains exact vector/radius/duplicate arbitration coverage.
+No fixture queue flush, magnet call, client velocity write, item teleport or
+explicit pickup is used. The actual used Magnetic root is saved in player slot
+11 and compared through its decoded complete ItemStack in Rejoin before ordinary
+attraction/pickup resumes without crafting. Client and Rejoin additionally require
+`silent-gear-magnet-client-report.txt` (seven scenarios) and
+`silent-gear-magnet-rejoin-report.txt` (one), in the same lifecycle reports folder.
 This is integrated transport, not a separate dedicated-server client matrix
 or rendering/tooltip acceptance.
 

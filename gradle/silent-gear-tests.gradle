@@ -226,7 +226,7 @@ tasks.register('prepareSilentGearRejoin') {
 tasks.named('runSilentGearRejoin') { dependsOn('prepareSilentGearRejoin') }
 tasks.register('verifySilentGearLifecycle') {
     group = 'verification'
-    description = 'Real SG world restart, connected wearer/state packets and separate-client player rejoin'
+    description = 'Real SG restart/rejoin, wearer/state packets and ordinary magnet motion/pickup'
     doLast {
         ['Save', 'Restart', 'Client', 'Rejoin'].each { phase ->
             def name = phase.toLowerCase(Locale.ROOT)
@@ -242,6 +242,13 @@ tasks.register('verifySilentGearLifecycle') {
                 throw new GradleException("Missing/refused SG ${phase} evidence; see ${log}")
             }
             logger.lifecycle(new File(result, "silent-gear-${name}-report.txt").text)
+            if (phase in ['Client', 'Rejoin']) {
+                def magnet = new File(result, "silent-gear-magnet-${name}-report.txt")
+                if (!magnet.isFile() || magnet.readLines().size() != (phase == 'Client' ? 7 : 1)) {
+                    throw new GradleException("Incomplete SG magnet ${phase} evidence: ${magnet}")
+                }
+                logger.lifecycle(magnet.text)
+            }
         }
     }
 }

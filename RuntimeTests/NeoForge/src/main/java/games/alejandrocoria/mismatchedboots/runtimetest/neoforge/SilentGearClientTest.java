@@ -62,6 +62,20 @@ final class SilentGearClientTest {
                         "SG fixture client was not hidden and muted");
             }
             if (REJOIN) { rejoin(client); return; }
+            if (phase == 10) {
+                if (!SilentGearMagnetClientTest.advance(client, false)) { return; }
+                job = server.submit(() -> {
+                    var owner = server.getPlayerList().getPlayer(id); var barrel = SilentGearLifecycleTest.barrel(server);
+                    var root = barrel.getItem(5).copy(); root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+                    owner.setItemSlot(EquipmentSlot.FEET, root); owner.setItemSlot(EquipmentSlot.OFFHAND, barrel.getItem(7).copy());
+                    var manifest = new com.google.gson.JsonObject();
+                    manifest.addProperty("process", ProcessHandle.current().pid()); manifest.addProperty("uuid", id.toString());
+                    String state = snapshot(owner); manifest.add("snapshot", JsonParser.parseString(state));
+                    NetworkAcceptanceFiles.write("silent-gear-player-saved.json", manifest.toString());
+                    server.getPlayerList().saveAll(); return state;
+                });
+                phase = 11; return;
+            }
             if (phase == 0) {
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id); require(owner != null, "Connected owner missing");
@@ -209,28 +223,26 @@ final class SilentGearClientTest {
         } else if (phase == 9) {
             if (Math.abs(client.player.getAttributeValue(Attributes.GRAVITY) - client.player.getAttributeBaseValue(Attributes.GRAVITY)) > 1E-6) { return; }
             if (++orientation < 2) { phase = 3; return; }
-            job = server.submit(() -> {
-                var owner = server.getPlayerList().getPlayer(id); var barrel = SilentGearLifecycleTest.barrel(server);
-                var root = barrel.getItem(5).copy(); root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
-                owner.setItemSlot(EquipmentSlot.FEET, root); owner.setItemSlot(EquipmentSlot.OFFHAND, barrel.getItem(7).copy());
-                var manifest = new com.google.gson.JsonObject();
-                manifest.addProperty("process", ProcessHandle.current().pid()); manifest.addProperty("uuid", id.toString());
-                String state = snapshot(owner); manifest.add("snapshot", JsonParser.parseString(state));
-                NetworkAcceptanceFiles.write("silent-gear-player-saved.json", manifest.toString());
-                server.getPlayerList().saveAll(); return state;
-            });
             phase = 10;
         } else {
             if (!jumpEffect(client)) { return; }
             success(client, "Actual integrated connection: existing state/source/armor packets, wear and paid trim/repair; "
                     + "both wearer inverses, native-selected jump control vs real refreshed mixed potion packets/jump, offhand refresh and idle expiry; "
                     + "Moonwalker actual health loss matches native with independent damaging vanilla control, composed gravity and removal packets; "
-                    + "read-only client queries; actual player inventory saved for a separate rejoin JVM\n");
+                    + "native/mixed Magnetic and Greedy ordinary motion, client entity/inventory packets and counted natural pickup, delayed/rejected controls, both hands and selected-to-idle stop; "
+                    + "read-only client queries; actual player inventory including the used magnet root saved for a separate rejoin JVM\n");
         }
     }
 
     private static void rejoin(Minecraft client) throws Exception {
         var server = client.getSingleplayerServer(); var id = client.player.getUUID();
+        if (phase == 3) {
+            if (!SilentGearMagnetClientTest.advance(client, true)) { return; }
+            success(client, "Separate connected-client JVM, same UUID/world: actual player inventory/root/damage/selected copper clocks match saved data; "
+                    + "Brilliant recognition, one seeded Stellar heal with unchanged sources/state, normal resumed potion packets then natural idle expiry; "
+                    + "saved magnet root/source identity matches before use, ordinary attraction/pickup resumes without recrafting, client motion/counts/delay/rejection and idle stop pass\n");
+            return;
+        }
         if (phase == 0) {
             job = server.submit(() -> {
                 var owner = server.getPlayerList().getPlayer(id);
@@ -268,8 +280,7 @@ final class SilentGearClientTest {
         } else {
             if (ticks - phaseStarted < 45) { return; }
             require(!client.player.hasEffect(MobEffects.JUMP_BOOST), "Rejoined idle effect did not expire");
-            success(client, "Separate connected-client JVM, same UUID/world: actual player inventory/root/damage/selected copper clocks match saved data; "
-                    + "Brilliant recognition, one seeded Stellar heal with unchanged sources/state, normal resumed potion packets then natural idle expiry\n");
+            phase = 3;
         }
     }
 
