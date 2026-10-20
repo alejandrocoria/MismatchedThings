@@ -5,7 +5,9 @@
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "SilentGearDefensePeerMixin",
     "SilentGearDefenseSpikeMixin",
+    "SilentGearDefenseWearWitnessMixin",
     "SilentGearMagnetPeerMixin",
     "SilentGearMagnetWitnessMixin",
     "SilentGearRecalculationWitnessMixin",

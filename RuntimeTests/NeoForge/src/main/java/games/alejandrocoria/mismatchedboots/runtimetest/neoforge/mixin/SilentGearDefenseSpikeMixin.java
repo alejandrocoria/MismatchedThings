@@ -6,7 +6,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearDefenseSpike;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
@@ -45,12 +44,4 @@ abstract class SilentGearDefenseSpikeMixin {
         return Math.max(original, SilentGearDefenseSpike.bounce(event.getEntity().getItemBySlot(EquipmentSlot.FEET)));
     }
 
-    @WrapOperation(method = "onLivingFall", at = @At(value = "INVOKE",
-            target = "Lnet/silentchaos512/gear/util/GearHelper;attemptDamage(Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;)V"))
-    private static void sgtest$fallWear(ItemStack stack, int amount, LivingEntity entity, EquipmentSlot slot, Operation<Void> original) {
-        if (SilentGearDefenseSpike.candidate && slot == EquipmentSlot.FEET && SilentGearDefenseSpike.eligible(stack)) {
-            SilentGearDefenseSpike.wearCalls++; SilentGearDefenseSpike.requestedWear = amount;
-            stack.hurtAndBreak(amount, entity, slot);
-        } else { original.call(stack, amount, entity, slot); }
-    }
 }

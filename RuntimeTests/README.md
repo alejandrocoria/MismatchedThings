@@ -272,11 +272,30 @@ native positives/mixed negatives, incoming math/current-base anchoring, native
 sound, live-root fall costs, ordinary destruction, production Moonwalker and
 real post-hit knockback/projectile negatives. Native scheduled rebound is
 observed across two real server ticks, not manually flushed. A calibrated writer
-tripwire intercepts current armor-peer Bounce's unsafe mixed-root recalculation
-at a native damage band and rejects that path in candidate scopes. No actual
+tripwire originally intercepted armor-peer Bounce's unsafe mixed-root recalculation
+at a native damage band. A now promotes that portion to **production protective
+wear** and removes the parallel candidate writer/unsafe-baseline expectation;
+the remaining research observes production payments without native recalculation.
+The two old intentional EventBus writer errors are no longer expected. No actual
 connected-client landing, reload/failure admission or JDT fall arbitration is
 claimed. Reports are in `build/reports/silent-gear-effects/<version>/defense-spike`;
 native jar pins and the existing bounded child process runner are reused.
+
+Production [A's contracts/native-peer wear](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md#7-block-a-execution-record--2026-10-20)
+use `verifySilentGear -PsilentGearEffectVariant=defense-foundation`, or
+`defense-compatible`, `defense-fall`, `defense-incoming`, `defense-negate`,
+`defense-retaliation`. The same .99 floor flag applies. These variants do not
+enable research hooks: they check guarded direct native math/admission, separate
+final transformed proofs and exact production wear on both SG/vanilla and
+entirely vanilla mixed orientations across real native damage bands. Creative,
+Unbreakable, normal breakage and malformed mixed targets retain safe behavior.
+One unproved fall-charge alias refuses before queued motion/sound/payment, with
+exactly one bounded diagnostic; native boots and independent Moonwalker remain
+available. Other aliases/predicate changes refuse only their corresponding
+incoming/negate/retaliation proof. Harmless edits, renamed native lambdas and an
+independent controlled optional-query contribution remain admitted (not an
+installed Curios test). Reports reuse the existing versioned effect directories.
+No production mixed-source defensive activation or B/C/D acceptance is implied.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

@@ -125,17 +125,12 @@ public final class SilentGearDefenseSpike {
             }
             require(crossing >= 0, "No native damage-band boundary found"); root.setDamageValue(crossing);
             clear(owner); owner.setItemSlot(EquipmentSlot.HEAD, peer.copy()); owner.setItemSlot(EquipmentSlot.FEET, root);
-            boolean intercepted = false;
-            try { observe(() -> fall(owner, 12)); }
-            catch (AssertionError expected) { intercepted = expected.getMessage().startsWith("Wearer read-only scope entered native recalculation:"); }
-            require(intercepted, "Current native armor-peer Bounce did not reach the expected unsafe root recalculation boundary");
-            // Stop the baseline at writer entry; do not intentionally let native recalculation corrupt a root.
-            root.setDamageValue(crossing); candidate = true; wearCalls = 0;
-            observe(() -> require(fall(owner, 12).isCanceled(), "Candidate peer Bounce missing at damage band"));
-            require(wearCalls == 1 && root.getDamageValue() == crossing + 3, "Candidate did not bypass unsafe native recalculation at a real damage band");
+            wearCalls = 0;
+            observe(() -> require(fall(owner, 12).isCanceled(), "Production peer Bounce missing at damage band"));
+            require(wearCalls == 1 && root.getDamageValue() == crossing + 3, "Production protection failed at a real damage band");
             candidate = false;
         }
-        details.append("Current production + native Bounce helmet reaches native recalculation on mixed FEET at a damage-band crossing (intercepted at writer entry); candidate bypasses it in both orientations.\n");
+        details.append("Production A protects native Bounce helmet wear at a real mixed damage-band crossing in both orientations; candidate owns no wear path.\n");
         candidate = true;
         var samples = new ArrayList<ItemStack>();
         samples.addAll(NeoForgeSilentGearTest.workbench(owner, bounce, vanilla));
@@ -205,7 +200,7 @@ public final class SilentGearDefenseSpike {
         clear(owner); evidence = details.toString(); return false;
     }
 
-    private static ItemStack lined(ItemStack stack, NeoForgeSilentGearTest.NativeApi api, ServerPlayer owner) throws Exception {
+    static ItemStack lined(ItemStack stack, NeoForgeSilentGearTest.NativeApi api, ServerPlayer owner) throws Exception {
         var lining = api.part("lining", "slime"); var before = stack.copy(); var liningBefore = lining.copy();
         Object swap = api.swapClass.getField("INSTANCE").get(null); var input = CraftingInput.of(2, 1, List.of(stack, lining));
         require((boolean) api.matches.invoke(swap, input, owner.level()), "Stock slime lining recipe rejected");

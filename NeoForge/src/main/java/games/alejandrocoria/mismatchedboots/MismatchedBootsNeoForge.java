@@ -14,6 +14,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeInfusionCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearDefense;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnet;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
@@ -46,6 +47,7 @@ public class MismatchedBootsNeoForge {
         JustDireAttributesCompatibility.initialize(eventBus);
         NeoVitaeInfusionCompatibility.initialize(eventBus);
         SilentGearCompatibility.initialize(eventBus);
+        SilentGearDefense.initialize(eventBus);
         SilentGearEffects.initialize(eventBus);
         SilentGearRecognition.initialize(eventBus);
         SilentGearWearer.initialize(eventBus);

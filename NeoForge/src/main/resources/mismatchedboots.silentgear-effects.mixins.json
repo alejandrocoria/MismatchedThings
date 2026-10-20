@@ -5,13 +5,16 @@
   "plugin": "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffectsMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "SilentGearBounceScheduleProofMixin",
     "SilentGearBrilliantProofMixin",
     "SilentGearDurabilityProofMixin",
     "SilentGearGearIdentityProofMixin",
     "SilentGearMagnetProofMixin",
     "SilentGearMagnetQueueProofMixin",
     "SilentGearMoonwalkerMixin",
+    "SilentGearNegateProofMixin",
     "SilentGearPotionProofMixin",
+    "SilentGearSafeFallMixin",
     "SilentGearSelfRepairMixin",
     "SilentGearSetMixin",
     "SilentGearWearerQueryProofMixin"

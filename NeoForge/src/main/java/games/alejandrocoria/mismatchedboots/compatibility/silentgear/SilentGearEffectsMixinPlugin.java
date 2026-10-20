@@ -23,6 +23,7 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
         catch (Exception | LinkageError absent) { return false; }
     }
     @Override public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+        SilentGearDefenseShape.publish(node);
         SilentGearWielderShape.publish(node);
         SilentGearMagnetShape.publish(node);
         if (node.name.equals(SilentGearEffectShape.REPAIR)) {

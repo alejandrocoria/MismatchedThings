@@ -1,0 +1,55 @@
+package games.alejandrocoria.mismatchedboots.compatibility.silentgear;
+
+import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class SilentGearDefenseShapeTest implements Opcodes {
+    @Test void selectedMathAllowsUnrelatedEditsButRefusesChangedDeltaOrActorAccess() {
+        var owner = negate(); assertTrue(SilentGearDefenseShape.negate(owner));
+        owner.methods.getFirst().instructions.insert(new InsnNode(NOP)); owner.methods.add(new MethodNode(ACC_PRIVATE, "unrelated", "()V", null, null));
+        assertTrue(SilentGearDefenseShape.negate(owner));
+        var method = owner.methods.getFirst();
+        for (var n : method.instructions) { if (n.getOpcode() == FSUB) { method.instructions.set(n, new InsnNode(FADD)); break; } }
+        assertFalse(SilentGearDefenseShape.negate(owner));
+        owner = negate(); owner.methods.getFirst().instructions.insert(new VarInsnNode(ALOAD, 3));
+        assertFalse(SilentGearDefenseShape.negate(owner));
+    }
+
+    @Test void refusesDifferentScaleTagAndClampConsumer() {
+        var owner = negate();
+        for (var n : owner.methods.getFirst().instructions) { if (n instanceof FieldInsnNode f && f.name.equals("damageType")) { f.name = "foreignTag"; } }
+        assertFalse(SilentGearDefenseShape.negate(owner)); owner = negate();
+        for (var n : owner.methods.getFirst().instructions) { if (n instanceof MethodInsnNode c && c.name.equals("clamp")) { c.owner = "foreign/UnprovedMath"; } }
+        assertFalse(SilentGearDefenseShape.negate(owner));
+    }
+
+    @Test void admissionBoundsDerivedReductionWithoutInventingStockBalanceLimits() {
+        assertTrue(SilentGearDefenseApi.parameters(0.04F, 4)); assertTrue(SilentGearDefenseApi.parameters(0, 5)); assertTrue(SilentGearDefenseApi.parameters(2, 1));
+        assertFalse(SilentGearDefenseApi.parameters(-0.1F, 4)); assertFalse(SilentGearDefenseApi.parameters(Float.NaN, 1));
+        assertFalse(SilentGearDefenseApi.parameters(Float.MAX_VALUE, 127)); assertFalse(SilentGearDefenseApi.parameters(0.2F, 0));
+        assertFalse(SilentGearDefenseApi.parameters(0.2F, 128));
+    }
+
+    private static ClassNode negate() {
+        var owner = new ClassNode(); owner.name = SilentGearDefenseShape.NEGATE;
+        var method = new MethodNode(ACC_PUBLIC, "onEntityIncomingDamage", SilentGearDefenseShape.NEGATION, null, null); owner.methods.add(method);
+        var c = method.instructions; var end = new LabelNode();
+        c.add(new VarInsnNode(ALOAD, 4)); c.add(new VarInsnNode(ALOAD, 0)); c.add(new FieldInsnNode(GETFIELD, owner.name, "damageType", "Lnet/minecraft/tags/TagKey;"));
+        c.add(new MethodInsnNode(INVOKEVIRTUAL, "net/minecraft/world/damagesource/DamageSource", "is", "(Lnet/minecraft/tags/TagKey;)Z", false)); c.add(new JumpInsnNode(IFEQ, end));
+        c.add(new VarInsnNode(FLOAD, 6)); c.add(new VarInsnNode(ALOAD, 0)); c.add(new FieldInsnNode(GETFIELD, owner.name, "negatedDamageScale", "F")); c.add(new InsnNode(FMUL));
+        c.add(new VarInsnNode(ILOAD, 2)); c.add(new InsnNode(I2F)); c.add(new InsnNode(FMUL)); c.add(new VarInsnNode(FSTORE, 9));
+        c.add(new VarInsnNode(FLOAD, 5)); c.add(new VarInsnNode(FLOAD, 9)); c.add(new InsnNode(FSUB)); c.add(new InsnNode(FCONST_0)); c.add(new VarInsnNode(FLOAD, 5));
+        c.add(new MethodInsnNode(INVOKESTATIC, "net/minecraft/util/Mth", "clamp", "(FFF)F", false)); c.add(new InsnNode(FRETURN)); c.add(end); c.add(new VarInsnNode(FLOAD, 5)); c.add(new InsnNode(FRETURN)); return owner;
+    }
+}

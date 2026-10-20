@@ -18,7 +18,11 @@ import java.util.Set;
 /** Independent witness, compatible slot peer and controlled faults; no candidate set engine. */
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
-        if (mixin.endsWith("SilentGearDefenseSpikeMixin")) {
+        if (mixin.endsWith("SilentGearDefensePeerMixin")) {
+            String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") && variant.startsWith("defense-") && !List.of("defense-foundation", "defense-spike").contains(variant);
+        }
+        if (mixin.endsWith("SilentGearDefenseSpikeMixin") || mixin.endsWith("SilentGearDefenseWearWitnessMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
                     && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").equals("defense-spike");
         }
@@ -46,6 +50,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
     @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+        if (mixin.endsWith("SilentGearDefensePeerMixin")) { SilentGearDefensePeer.transform(node, variant); return; }
         if (mixin.endsWith("SilentGearMagnetPeerMixin")) { magnet(node, variant); return; }
         if (!mixin.endsWith("SilentGearSetFaultMixin") || variant.equals("wearer-definition")) { return; }
         for (var method : node.methods) {
