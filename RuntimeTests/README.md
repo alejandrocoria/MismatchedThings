@@ -213,18 +213,21 @@ native Moonwalker advancement. D's automated lifecycle/consolidation and the
 owner Wielder/lifecycle/JDT checklist accepted on 2026-10-20 are in
 [its record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#11-block-d-execution-record--2026-10-20).
 
-The separate [Magnetic/Greedy feasibility spike](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md)
-now uses A's production optional binding/proofs through opt-in **direct controls**,
-not an ordinary mixed-item magnet tick:
+The [Magnetic/Greedy production gate](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md#8-block-b-execution-record--2026-10-20)
+uses actual mixed-item inventory ticks against independent native controls.
+The former `magnet-spike` command/candidate is retired:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-spike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-server --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-compatible --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-effect --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-queue --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-definition --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-throw --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-reload --console=plain
 ```
 
-Repeat with `-Pneoforge_version=26.1.2.99` for the floor. It uses native
+Run sequentially; repeat with `'-Pneoforge_version=26.1.2.99'` for the floor. It uses native
 installation/Blaze Gold controls, actual native inventory callbacks and real
 server ItemEntities, publishing impulses through the native level-post tracker.
 Both paid inverses cover selected/idle, crouch config, radius/filter/pickup-delay/
@@ -237,16 +240,20 @@ enabled only in `magnet-*` scopes and never patches the admitted native body.
 `magnet-compatible` adds harmless methods/NOPs and renames real lambda targets;
 `magnet-effect`/`magnet-queue` preserve native behavior through separate unproved
 aliases, requiring one bounded refusal each before guarded calls publish work.
-Native and existing feature controls survive. Changed live definitions are
-checked, including replacement numeric/filter data and stale receiver rejection.
-No ordinary mixed dispatch, connected-client or mixed
-upgrade-editing acceptance is implied. Its report uses the existing
+Native and existing feature controls survive. `magnet-definition` rejects a
+whole batch before its valid first trait runs; `magnet-throw` observes one owned
+call before a post-queue exception, preserving disjoint native-peer/owned requests
+without retry or cleanup. `magnet-reload` completes four asynchronous datapack
+reloads on pre-existing roots: live strength/tag changes, stale receiver rejection,
+invalid definition revocation and no silent rearming after a valid reload.
+Only `magnet-server` additionally loads the pinned JDT artifact for scoped FE/
+master/settings/binding/cooldown/projection coexistence; other variants stay SG-only.
+No connected-client motion, real-time pickup, lifecycle or mixed
+upgrade-editing acceptance is implied. Reports use the existing
 `silent-gear-effects/<version>/<magnet-variant>` directories, not another runner.
 The subsequent [A/B/C production plan](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md)
-has A implemented; B/C remain pending. It will promote/rename this direct-control scope during
-production wiring, preserve native controls and add real client motion/pickup;
-the command above remains the current test-only entry point, not future
-production acceptance.
+has A/B implemented; C remains pending for real connected motion/pickup,
+save/rejoin, consolidation and separate owner manual acceptance.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

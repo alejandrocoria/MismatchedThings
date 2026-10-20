@@ -15,12 +15,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** Narrow optional native magnet binding. No item tick routing or Wielder permission is installed here. */
+/** Narrow optional native magnet binding; item routing and failure revocation belong to SilentGearMagnet. */
 public final class SilentGearMagnetApi {
     public static final Set<String> IDS = Set.of("silentgear:magnetic", "silentgear:greedy");
     private final Class<?> magnet;
     private final MethodHandle context, definition, id, level, effects, tick;
     private final Field strength, range, affected;
+    private final List<MethodHandle> proofs;
     private final SilentGearWearerApi.Carriers carriers = new SilentGearWearerApi.Carriers();
 
     public SilentGearMagnetApi() throws ReflectiveOperationException {
@@ -34,14 +35,14 @@ public final class SilentGearMagnetApi {
         effects = lookup.findVirtual(trait, "getEffects", MethodType.methodType(List.class));
         tick = lookup.findVirtual(magnet, "inventoryTick", MethodType.methodType(void.class, ctx, Level.class, Entity.class, boolean.class));
         strength = field("pullStrength"); range = field("effectRange"); affected = field("affectedItems");
+        proofs = List.of(proof(magnet, "mismatchedboots$sgMagnetReady"),
+                proof(nativeClass("gear.util.MagnetPullTracker"), "mismatchedboots$sgMagnetQueueReady"));
     }
 
     public void requireProof() throws Throwable {
-        for (var gate : List.of(new String[]{"gear.trait.effect.ItemMagnetTraitEffect", "mismatchedboots$sgMagnetReady"},
-                new String[]{"gear.util.MagnetPullTracker", "mismatchedboots$sgMagnetQueueReady"})) {
-            var type = nativeClass(gate[0]);
-            if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup()).findStatic(type, gate[1], MethodType.methodType(boolean.class)).invoke()) {
-                throw new IllegalStateException("Final native magnet proof unavailable: " + gate[0]);
+        for (var gate : proofs) {
+            if (!(boolean) gate.invoke()) {
+                throw new IllegalStateException("Final native magnet proof unavailable");
             }
         }
     }
@@ -75,5 +76,8 @@ public final class SilentGearMagnetApi {
                 && Float.isFinite(1 + range * level);
     }
     private Field field(String name) throws NoSuchFieldException { var field = magnet.getDeclaredField(name); field.setAccessible(true); return field; }
+    private static MethodHandle proof(Class<?> owner, String name) throws ReflectiveOperationException {
+        return MethodHandles.privateLookupIn(owner, MethodHandles.lookup()).findStatic(owner, name, MethodType.methodType(boolean.class));
+    }
     private static Class<?> nativeClass(String name) throws ClassNotFoundException { return Class.forName("net.silentchaos512.gear." + name); }
 }
