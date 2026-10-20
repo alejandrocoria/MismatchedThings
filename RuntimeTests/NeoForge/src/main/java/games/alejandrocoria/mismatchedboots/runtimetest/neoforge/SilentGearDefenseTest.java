@@ -86,7 +86,8 @@ final class SilentGearDefenseTest {
         for (var root : NeoForgeSilentGearTest.workbench(player, sourceBounce, new ItemStack(Items.DIAMOND_BOOTS))) {
             clear(player); player.setItemSlot(EquipmentSlot.FEET, root); var fall = new LivingFallEvent(player, 12, 1); NeoForge.EVENT_BUS.post(fall);
             var fire = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 20)); NeoForge.EVENT_BUS.post(fire);
-            require(!fall.isCanceled() && fire.getAmount() == 20, "A enabled a mixed-source incoming/fall feature");
+            require(!fall.isCanceled() && Math.abs(fire.getAmount() - (incoming && negate ? 16.8F : 20)) < .0001,
+                    "Production incoming/refused fall recognition differs");
         }
         for (String invalid : List.of("count", "data", "slot")) {
             var root = roots.getLast().copy();
@@ -114,7 +115,7 @@ final class SilentGearDefenseTest {
             require(!denied.isCanceled() && sounds == 0 && pending.size() == size && ItemStack.matches(snapshot, roots.getFirst()), "Refused fall published side effects");
         }
         clear(player);
-        report.append("A ").append(variant).append(':').append(proof).append("\nGuarded native Heat IV/read-only direct call; live definition admission; calibrated writer witness; four paid SG/non-SG root orientations cross real native damage bands through production wear; native positive and no mixed activation; independent Moonwalker retained.\n");
+        report.append("A ").append(variant).append(':').append(proof).append("\nGuarded native Heat IV/read-only direct call; live definition admission; calibrated writer witness; four paid SG/non-SG root orientations cross real native damage bands through production wear; native positive and no mixed-source fall activation; independent Moonwalker retained.\n");
     }
 
     private static boolean ready(String owner, String name) throws Throwable { try { SilentGearDefenseApi.require(owner, name); return true; } catch (IllegalStateException refused) { return false; } }

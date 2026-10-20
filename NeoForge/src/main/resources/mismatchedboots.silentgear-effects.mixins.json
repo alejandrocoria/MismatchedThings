@@ -9,6 +9,7 @@
     "SilentGearBrilliantProofMixin",
     "SilentGearDurabilityProofMixin",
     "SilentGearGearIdentityProofMixin",
+    "SilentGearIncomingMixin",
     "SilentGearMagnetProofMixin",
     "SilentGearMagnetQueueProofMixin",
     "SilentGearMoonwalkerMixin",

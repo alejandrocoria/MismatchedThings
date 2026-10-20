@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "net.silentchaos512.gear.event.GearEvents", remap = false)
 abstract class SilentGearSafeFallMixin {
     @Unique private static boolean mismatchedboots$sgSafeFallReady() { return false; }
-    @Unique private static boolean mismatchedboots$sgIncomingReady() { return false; }
     @Unique private static boolean mismatchedboots$sgRetaliationReady() { return false; }
 
     @Inject(method = "onLivingFall", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSuppressingBounce()Z"), cancellable = true, require = 0, expect = 0, allow = 1)

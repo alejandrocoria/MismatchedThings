@@ -15,6 +15,41 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SilentGearDefenseShapeTest implements Opcodes {
+    @Test void incomingLambdaRequiresNativeCurrentAndCommonBaseLanes() {
+        var owner = new ClassNode(); owner.name = SilentGearDefenseShape.EVENTS;
+        var lambda = new MethodNode(ACC_PRIVATE | ACC_STATIC, "renamedLambda",
+                "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;FLnet/silentchaos512/gear/api/traits/TraitInstance;Ljava/lang/Float;)Ljava/lang/Float;", null, null);
+        owner.methods.add(lambda); var c = lambda.instructions; String p = SilentGearDefenseShape.P;
+        c.add(new VarInsnNode(ALOAD, 4)); c.add(new MethodInsnNode(INVOKEVIRTUAL, p + "api/traits/TraitInstance", "getTrait", "()L" + p + "gear/trait/Trait;", false));
+        c.add(new VarInsnNode(ALOAD, 0)); c.add(new VarInsnNode(ALOAD, 4)); c.add(new MethodInsnNode(INVOKEVIRTUAL, p + "api/traits/TraitInstance", "getLevel", "()I", false));
+        c.add(new VarInsnNode(ALOAD, 1)); c.add(new VarInsnNode(ALOAD, 2)); c.add(new VarInsnNode(ALOAD, 5));
+        c.add(new MethodInsnNode(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false));
+        var base = new VarInsnNode(FLOAD, 3); c.add(base);
+        c.add(new MethodInsnNode(INVOKEVIRTUAL, p + "gear/trait/Trait", "onEntityIncomingDamage", SilentGearDefenseShape.NEGATION, false));
+        c.add(new MethodInsnNode(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false)); c.add(new InsnNode(ARETURN));
+        assertTrue(SilentGearDefenseShape.incomingLambda(owner, lambda));
+        c.insert(new InsnNode(NOP)); assertTrue(SilentGearDefenseShape.incomingLambda(owner, lambda));
+        c.set(base, new InsnNode(FCONST_0)); assertFalse(SilentGearDefenseShape.incomingLambda(owner, lambda));
+    }
+
+    @Test void incomingBridgeRequiresReadOnlyCaptureAndGuardedOwnedRouting() {
+        var owner = new ClassNode(); owner.name = SilentGearDefenseShape.EVENTS;
+        String prefix = "(Lnet/minecraft/world/item/ItemStack;Ljava/lang/Object;Ljava/lang/Object;Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;Lnet/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent;";
+        var inner = new MethodNode(ACC_PRIVATE | ACC_STATIC, "ownedIncoming", prefix + "F)Ljava/lang/Object;", null, null); owner.methods.add(inner);
+        for (int i = 0; i < 5; i++) { inner.instructions.add(new VarInsnNode(ALOAD, i)); } inner.instructions.add(new VarInsnNode(FLOAD, 5));
+        inner.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, "mismatchedboots$sgIncomingReady", "()Z", false));
+        var route = new MethodInsnNode(INVOKESTATIC, "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearDefense", "incoming", prefix + "FZ)Ljava/lang/Object;", false);
+        inner.instructions.add(route); inner.instructions.add(new InsnNode(ARETURN));
+        var bridge = new MethodNode(ACC_PRIVATE | ACC_STATIC, "renamedBridge", prefix + "Lcom/llamalad7/mixinextras/sugar/ref/LocalFloatRef;)Ljava/lang/Object;", null, null); owner.methods.add(bridge);
+        for (int i = 0; i < 6; i++) { bridge.instructions.add(new VarInsnNode(ALOAD, i)); }
+        var get = new MethodInsnNode(INVOKEINTERFACE, "com/llamalad7/mixinextras/sugar/ref/LocalFloatRef", "get", "()F", true); bridge.instructions.add(get);
+        bridge.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, inner.name, inner.desc, false)); bridge.instructions.add(new InsnNode(ARETURN));
+        var site = new MethodInsnNode(INVOKESTATIC, owner.name, bridge.name, bridge.desc, false);
+        assertTrue(SilentGearDefenseShape.incomingBridge(owner, site));
+        get.name = "foreignRead"; assertFalse(SilentGearDefenseShape.incomingBridge(owner, site)); get.name = "get";
+        route.name = "unsafeDispatcher"; assertFalse(SilentGearDefenseShape.incomingBridge(owner, site));
+    }
+
     @Test void selectedMathAllowsUnrelatedEditsButRefusesChangedDeltaOrActorAccess() {
         var owner = negate(); assertTrue(SilentGearDefenseShape.negate(owner));
         owner.methods.getFirst().instructions.insert(new InsnNode(NOP)); owner.methods.add(new MethodNode(ACC_PRIVATE, "unrelated", "()V", null, null));

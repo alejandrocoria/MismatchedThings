@@ -8,6 +8,7 @@
     "SilentGearDefensePeerMixin",
     "SilentGearDefenseSpikeMixin",
     "SilentGearDefenseWearWitnessMixin",
+    "SilentGearIncomingWitnessMixin",
     "SilentGearMagnetPeerMixin",
     "SilentGearMagnetWitnessMixin",
     "SilentGearRecalculationWitnessMixin",

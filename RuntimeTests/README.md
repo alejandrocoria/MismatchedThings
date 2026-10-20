@@ -268,7 +268,7 @@ uses the same optional native gate:
 Append `'-Pneoforge_version=26.1.2.99'` for the supported floor. It enables
 candidate event hooks **only in this variant**, not production compatibility.
 Actual native construction/lining and paid Workbench roots test candidate-off
-native positives/mixed negatives, incoming math/current-base anchoring, native
+native positives and pending fall/retaliation mixed negatives, native
 sound, live-root fall costs, ordinary destruction, production Moonwalker and
 real post-hit knockback/projectile negatives. Native scheduled rebound is
 observed across two real server ticks, not manually flushed. A calibrated writer
@@ -295,7 +295,16 @@ available. Other aliases/predicate changes refuse only their corresponding
 incoming/negate/retaliation proof. Harmless edits, renamed native lambdas and an
 independent controlled optional-query contribution remain admitted (not an
 installed Curios test). Reports reuse the existing versioned effect directories.
-No production mixed-source defensive activation or B/C/D acceptance is implied.
+B's [production incoming record](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md#8-block-b-execution-record--2026-10-20)
+extends foundation/compatible and incoming/negate refusals with native attacking-
+tool/common-base arithmetic, max/duplicate traits, real health outcomes, and
+unchanged equipment/source/carrier snapshots. New `defense-data`, `defense-throw`
+and `defense-reload` variants check independent unsupported Heat refusal vs
+working Bounce, atomic mixed-piece reduction after a controlled post-native
+failure and real asynchronous datapack/scale/tag reloads on existing roots.
+Their expected warnings are bounded by the Gradle gate. Incoming candidate hooks,
+dispatcher, selector and duplicate spike incoming assertions are retired; only fall recognition/retaliation remain
+research. C/D's coexistence, connected gameplay and manual exits are not implied.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

@@ -18,6 +18,10 @@ import java.util.Set;
 /** Independent witness, compatible slot peer and controlled faults; no candidate set engine. */
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("SilentGearIncomingWitnessMixin")) {
+            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
+                    && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").startsWith("defense-");
+        }
         if (mixin.endsWith("SilentGearDefensePeerMixin")) {
             String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") && variant.startsWith("defense-") && !List.of("defense-foundation", "defense-spike").contains(variant);

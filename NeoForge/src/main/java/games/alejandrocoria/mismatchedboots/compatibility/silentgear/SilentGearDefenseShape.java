@@ -36,6 +36,9 @@ final class SilentGearDefenseShape implements Opcodes {
     static final String FALL = "(L" + EVENT + ";)V", WEAR = "(L" + STACK + ";IL" + ACTOR + ";L" + SLOT + ";)V";
     static final String CONDITION = WEAR.substring(0, WEAR.length() - 1) + "Z";
     static final String NEGATION = "(L" + STACK + ";IL" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;FF)F";
+    static final String INCOMING = "(Lnet/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent;)V";
+    private static final String ACTIVATION = "(L" + STACK + ";Ljava/lang/Object;L" + P + "api/traits/TraitFunction;)Ljava/lang/Object;";
+    private static final String ARMOR_LAMBDA = "(L" + STACK + ";L" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;F)L" + P + "api/traits/TraitFunction;";
     private static final String ADAPTER = "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearDefense";
     private static final String CALLBACK = "org/spongepowered/asm/mixin/injection/callback/CallbackInfo";
     private SilentGearDefenseShape() {}
@@ -193,31 +196,118 @@ final class SilentGearDefenseShape implements Opcodes {
                 && call(c.get(loads.length + 1), ADAPTER, name, descriptor) && c.getLast().getOpcode() == IRETURN;
     }
 
+    static AbstractInsnNode incomingSite(InsnList instructions, String site) {
+        var c = code(instructions);
+        var predicates = c.stream().filter(n -> n instanceof TypeInsnNode t && t.getOpcode() == INSTANCEOF && t.desc.equals(P + "api/item/GearArmor")).toList();
+        if (predicates.size() != 1) { return null; }
+        if (site.equals("armor")) { return predicates.getFirst(); }
+        if (!site.equals("incoming")) { return null; }
+        var selected = c.subList(c.indexOf(predicates.getFirst()) + 1, c.size()).stream()
+                .filter(n -> call(n, P + "util/TraitHelper", "activateTraits", ACTIVATION)).toList();
+        return selected.size() == 1 ? selected.getFirst() : null;
+    }
+
     static boolean incoming(ClassNode owner) {
         String event = "net/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent";
-        var m = method(owner, "onLivingIncomingDamage", "(L" + event + ";)V"); if (m == null) { return false; }
+        var m = method(owner, "onLivingIncomingDamage", INCOMING); if (m == null || !m.tryCatchBlocks.isEmpty()) { return false; }
         var c = code(m.instructions); int selected = -1;
         for (int i = 0; i < c.size(); i++) { if (c.get(i) instanceof TypeInsnNode type && type.getOpcode() == INSTANCEOF && type.desc.equals(P + "api/item/GearArmor")) { if (selected >= 0) { return false; } selected = i; } }
         if (selected < 3 || selected + 16 >= c.size() || !(c.get(selected - 2) instanceof VarInsnNode stack) || stack.getOpcode() != ALOAD
                 || !call(c.get(selected - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) { return false; }
-        // The local invocation captures this stack, entity/source and a separate common-base lane.
+        var gates = c.stream().filter(n -> n instanceof MethodInsnNode h && h.owner.equals(EVENTS) && h.name.contains("mismatchedboots$sgIncomingArmor")).toList();
+        var hooks = c.stream().filter(n -> n instanceof MethodInsnNode h && h.owner.equals(EVENTS) && h.name.contains("mismatchedboots$sgIncomingCall")).toList();
+        if (gates.size() != 1 || hooks.size() != 1) { return false; }
+        var gate = (MethodInsnNode) gates.getFirst(); var hook = (MethodInsnNode) hooks.getFirst();
+        if (!incomingRouting(owner, gate, "armor", new int[]{ILOAD, ALOAD, ALOAD, ALOAD}, IRETURN)
+                || !incomingBridge(owner, hook)) { return false; }
+        // The actual final wrapper receives the selected stack, event, slot and the lambda's captured common base.
         for (int i = selected + 1; i + 4 < c.size(); i++) {
             if (!(c.get(i) instanceof InvokeDynamicInsnNode dynamic)) { continue; }
-            if (!dynamic.desc.equals("(L" + STACK + ";L" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;F)L" + P + "api/traits/TraitFunction;")) { return false; }
+            if (!dynamic.desc.equals(ARMOR_LAMBDA)) { continue; }
             var lambda = lambda(owner, dynamic); if (lambda == null) { return false; }
             boolean commonBase;
             try {
-                var flow = new Flow(owner, m); var base = flow.origin(flow.argument(dynamic, 3, 4));
-                commonBase = call(base, event, "getAmount", "()F") && flow.parameter(flow.argument(base, 0, 1), 0)
-                        && m.instructions.indexOf(base) < m.instructions.indexOf(c.get(selected))
-                        && flow.origin(flow.argument(dynamic, 0, 4)) == flow.origin(flow.argument(c.get(i + 1), 0, 3));
+                var flow = new Flow(owner, m);
+                var root = flow.origin(flow.argument(hook, 0, 6)); var slot = flow.origin(flow.argument(gate, 2, 4));
+                var item = flow.origin(flow.argument(c.get(selected), 0, 1));
+                commonBase = incomingBase(m, c, dynamic, hook, flow)
+                        && call(item, STACK, "getItem", "()Lnet/minecraft/world/item/Item;") && flow.origin(flow.argument(item, 0, 1)) == root
+                        && flow.origin(flow.argument(dynamic, 0, 4)) == root
+                        && flow.origin(flow.argument(hook, 2, 6)) == dynamic
+                        && flow.origin(flow.argument(gate, 0, 4)) == c.get(selected)
+                        && flow.origin(flow.argument(gate, 3, 4)) == root
+                        && flow.parameter(flow.argument(hook, 4, 6), 0) && flow.parameter(flow.argument(gate, 1, 4), 0)
+                        && call(root, ACTOR, "getItemBySlot", "(L" + SLOT + ";)L" + STACK + ";")
+                        && flow.origin(flow.argument(root, 0, 1)) == slot
+                        && call(flow.origin(flow.argument(root, 0, 2)), event, "getEntity", "()L" + ACTOR + ";")
+                        && flow.parameter(flow.argument(flow.origin(flow.argument(root, 0, 2)), 0, 1), 0)
+                        && flow.origin(flow.argument(dynamic, 1, 4)) == flow.origin(flow.argument(root, 0, 2))
+                        && call(flow.origin(flow.argument(dynamic, 2, 4)), event, "getSource", "()Lnet/minecraft/world/damagesource/DamageSource;")
+                        && flow.parameter(flow.argument(flow.origin(flow.argument(dynamic, 2, 4)), 0, 1), 0)
+                        && !reaches(m.instructions.getFirst(), hook, gate);
             } catch (AnalyzerException | RuntimeException invalid) { return false; }
-            return commonBase && c.get(i - 1) instanceof VarInsnNode base && base.getOpcode() == FLOAD && load(c.get(i - 4), ALOAD, stack.var)
-                    && call(c.get(i + 1), P + "util/TraitHelper", "activateTraits", "(L" + STACK + ";Ljava/lang/Object;L" + P + "api/traits/TraitFunction;)Ljava/lang/Object;")
+            return commonBase && incomingLambda(owner, lambda)
                     && readsOnly(lambda, Set.of(P + "api/traits/TraitInstance.getTrait()L" + P + "gear/trait/Trait;", P + "api/traits/TraitInstance.getLevel()I",
                         "java/lang/Float.floatValue()F", "java/lang/Float.valueOf(F)Ljava/lang/Float;", P + "gear/trait/Trait.onEntityIncomingDamage" + NEGATION));
         }
         return false;
+    }
+
+    static boolean incomingLambda(ClassNode owner, MethodNode lambda) {
+        var selected = code(lambda.instructions).stream().filter(n -> call(n, P + "gear/trait/Trait", "onEntityIncomingDamage", NEGATION)).toList();
+        if (selected.size() != 1) { return false; }
+        var call = selected.getFirst();
+        try {
+            var flow = new Flow(owner, lambda); var receiver = flow.origin(flow.argument(call, 0, 7)); var level = flow.origin(flow.argument(call, 2, 7));
+            var current = flow.origin(flow.argument(call, 5, 7));
+            return call(receiver, P + "api/traits/TraitInstance", "getTrait", "()L" + P + "gear/trait/Trait;") && flow.parameter(flow.argument(receiver, 0, 1), 4)
+                    && call(level, P + "api/traits/TraitInstance", "getLevel", "()I") && flow.parameter(flow.argument(level, 0, 1), 4)
+                    && flow.parameter(flow.argument(call, 1, 7), 0) && flow.parameter(flow.argument(call, 3, 7), 1)
+                    && flow.parameter(flow.argument(call, 4, 7), 2) && flow.parameter(flow.argument(call, 6, 7), 3)
+                    && call(current, "java/lang/Float", "floatValue", "()F") && flow.parameter(flow.argument(current, 0, 1), 5);
+        } catch (AnalyzerException | RuntimeException invalid) { return false; }
+    }
+
+    /** MixinExtras passes a read-only float capture through its generated ref bridge and round-trip store. */
+    static boolean incomingBridge(ClassNode owner, MethodInsnNode hook) {
+        var body = method(owner, hook.name, hook.desc); if (body == null || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) { return false; }
+        var c = code(body.instructions); if (c.size() != 9) { return false; }
+        for (int i = 0; i < 6; i++) { if (!load(c.get(i), ALOAD, i)) { return false; } }
+        if (!call(c.get(6), "com/llamalad7/mixinextras/sugar/ref/LocalFloatRef", "get", "()F")
+                || !(c.get(7) instanceof MethodInsnNode inner) || !inner.owner.equals(EVENTS) || c.get(8).getOpcode() != ARETURN) { return false; }
+        return incomingRouting(owner, inner, "incoming", new int[]{ALOAD, ALOAD, ALOAD, ALOAD, ALOAD, FLOAD}, ARETURN);
+    }
+
+    private static boolean incomingBase(MethodNode m, List<AbstractInsnNode> c, InvokeDynamicInsnNode dynamic, MethodInsnNode hook, Flow flow) {
+        int at = c.indexOf(dynamic); if (!(c.get(at - 1) instanceof VarInsnNode lane) || lane.getOpcode() != FLOAD) { return false; }
+        var ref = flow.origin(flow.argument(hook, 5, 6));
+        String implementation = "com/llamalad7/mixinextras/sugar/impl/ref/generated/LocalFloatRefImpl";
+        if (!(ref instanceof TypeInsnNode type) || type.getOpcode() != NEW || !type.desc.equals(implementation)) { return false; }
+        MethodInsnNode init = null, dispose = null; int initial = 0, roundTrips = 0;
+        for (int i = 0; i < c.size(); i++) {
+            var n = c.get(i);
+            if (call(n, implementation, "init", "(F)V") && flow.origin(flow.argument(n, 0, 2)) == ref) {
+                if (init != null || !load(c.get(i - 1), FLOAD, lane.var)) { return false; } init = (MethodInsnNode) n;
+            }
+            if (n instanceof VarInsnNode store && store.getOpcode() == FSTORE && store.var == lane.var) {
+                if (call(c.get(i - 1), implementation, "dispose", "()F") && flow.origin(flow.argument(c.get(i - 1), 0, 1)) == ref) {
+                    dispose = (MethodInsnNode) c.get(i - 1); roundTrips++;
+                } else if (i < at && call(c.get(i - 1), "net/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent", "getAmount", "()F")
+                        && flow.parameter(flow.argument(c.get(i - 1), 0, 1), 0)) { initial++; }
+                else { return false; }
+            }
+        }
+        return initial == 1 && roundTrips == 1 && init != null && dispose != null
+                && c.indexOf(init) > at && c.indexOf(init) < c.indexOf(hook) && c.indexOf(dispose) > c.indexOf(hook);
+    }
+
+    private static boolean incomingRouting(ClassNode owner, MethodInsnNode hook, String adapter, int[] loads, int result) {
+        var body = method(owner, hook.name, hook.desc); if (body == null || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) { return false; }
+        var c = code(body.instructions); if (c.size() != loads.length + 3) { return false; }
+        for (int i = 0; i < loads.length; i++) { if (!load(c.get(i), loads[i], i)) { return false; } }
+        String descriptor = hook.desc.substring(0, hook.desc.indexOf(')')) + "Z" + hook.desc.substring(hook.desc.indexOf(')'));
+        return call(c.get(loads.length), EVENTS, "mismatchedboots$sgIncomingReady", "()Z")
+                && call(c.get(loads.length + 1), ADAPTER, adapter, descriptor) && c.getLast().getOpcode() == result;
     }
 
     static boolean retaliation(ClassNode owner) {

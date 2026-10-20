@@ -12,6 +12,10 @@ public final class SilentGearDefenseInjectionPoint extends InjectionPoint {
     private final String site;
     public SilentGearDefenseInjectionPoint(InjectionPointData data) { super(data); site = data.get("site", ""); }
     @Override public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
+        if (SilentGearDefenseShape.INCOMING.equals(descriptor)) {
+            var selected = SilentGearDefenseShape.incomingSite(instructions, site);
+            if (selected == null) { return false; } nodes.add(selected); return true;
+        }
         if (!SilentGearDefenseShape.FALL.equals(descriptor)) { return false; }
         var selected = site.equals("wear") ? SilentGearDefenseShape.wearSite(instructions) : null;
         if (selected == null) { return false; } nodes.add(selected); return true;

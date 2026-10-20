@@ -14,7 +14,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 
-/** Optional selected-effect binding. A exposes guarded direct controls, not production incoming dispatch. */
+/** Optional selected read-only effects; definitions and receivers are re-admitted for every hit. */
 public final class SilentGearDefenseApi {
     private final Class<?> negate, fireproof;
     private final MethodHandle definition, effects, id, level, incoming;
@@ -53,9 +53,16 @@ public final class SilentGearDefenseApi {
     public float incoming(Object instance, Object effect, ItemStack context, LivingEntity actor, DamageSource source, float current, float base) throws Throwable {
         require("gear.trait.effect.NegateDamageTraitEffect", "mismatchedboots$sgNegateReady");
         require("event.GearEvents", "mismatchedboots$sgIncomingReady");
-        if (effect != admittedEffect(instance) || !Float.isFinite(current) || !Float.isFinite(base) || current < 0 || base < 0
-                || !Float.isFinite(base * scale.getFloat(effect) * (int) level.invoke(instance))) { throw new IllegalArgumentException("Stale effect/unsupported damage"); }
+        validate(instance, effect, current, base);
         return (float) incoming.invoke(effect, context, (int) level.invoke(instance), actor, source, current, base);
+    }
+
+    /** Admission of the entire piece precedes its first native call, including derived arithmetic. */
+    public void validate(Object instance, Object effect, float current, float base) throws Throwable {
+        if (effect != admittedEffect(instance) || !Float.isFinite(current) || !Float.isFinite(base) || current < 0 || base < 0
+                || !Float.isFinite(base * scale.getFloat(effect) * (int) level.invoke(instance))) {
+            throw new IllegalArgumentException("Stale effect/unsupported damage");
+        }
     }
 
     static boolean parameters(float scale, int level) { return Float.isFinite(scale) && scale >= 0 && level > 0 && level <= Byte.MAX_VALUE && Float.isFinite(scale * level); }

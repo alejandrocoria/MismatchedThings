@@ -11,7 +11,6 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.item.ItemStack;
@@ -20,10 +19,8 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -31,7 +28,6 @@ import java.util.List;
 import java.util.Random;
 
 import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.nativeClass;
-import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpike.traitOf;
 
 /** Opt-in executable candidate, deliberately not production admission, failure recovery or client acceptance. */
 public final class SilentGearDefenseSpike {
@@ -53,26 +49,6 @@ public final class SilentGearDefenseSpike {
     public static int bounce(ItemStack stack) {
         return !candidate || !eligible(stack) ? 0 : SilentGearCompatibility.effectiveTraits(stack).stream()
                 .filter(trait -> trait.id().toString().equals("silentgear:bounce")).mapToInt(SilentGearCompatibility.Trait::level).max().orElse(0);
-    }
-
-    public static float incoming(ItemStack stack, float current, LivingIncomingDamageEvent event) {
-        try {
-            // Only the selected concrete effect runs; native Fireproof and unrelated trait callbacks do not.
-            var before = stack.copy(); var disposable = stack.copy();
-            for (var trait : SilentGearCompatibility.effectiveTraits(stack)) {
-                if (!List.of("silentgear:heat_resistant", "silentgear:bounce").contains(trait.id().toString())) { continue; }
-                Object definition = traitOf(trait.nativeInstance());
-                var effects = ((List<?>) definition.getClass().getMethod("getEffects").invoke(definition)).stream()
-                        .filter(effect -> effect.getClass() == nativeClass("gear.trait.effect.NegateDamageTraitEffect")).toList();
-                require(effects.size() == 1, "Selected native negate effect changed");
-                Object effect = effects.getFirst();
-                current = (float) effect.getClass().getMethod("onEntityIncomingDamage", ItemStack.class, int.class,
-                                LivingEntity.class, DamageSource.class, float.class, float.class)
-                        .invoke(effect, disposable, trait.level(), event.getEntity(), event.getSource(), current, event.getAmount());
-            }
-            require(ItemStack.matches(before, stack) && ItemStack.matches(before, disposable), "Read-only negate effect mutated gear");
-            return current;
-        } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
     }
 
     static boolean step(ServerPlayer owner, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
@@ -101,16 +77,12 @@ public final class SilentGearDefenseSpike {
         details.append("Native crimson iron Heat Resistant=").append(heatLevel).append("; native slime lining Bounce=1; real part swap inputs immutable.\n");
         calibrate(owner, api);
         candidate = false;
-        damage(owner, heat, owner.damageSources().lava(), 20 * (1 - 0.04F * heatLevel));
-        damage(owner, bounce, owner.damageSources().flyIntoWall(), 16);
         for (var root : NeoForgeSilentGearTest.workbench(owner, bounce, vanilla)) {
-            damage(owner, root, owner.damageSources().lava(), 20);
-            damage(owner, root, owner.damageSources().flyIntoWall(), 20);
             clear(owner); owner.setItemSlot(EquipmentSlot.FEET, root);
             require(!fall(owner, 12).isCanceled(), "Current production unexpectedly has Bounce fall support");
             retaliation(owner, root, false);
         }
-        details.append("Candidate OFF: native damage/fall/retaliation controls positive; current mixed heat/collision/rebound/retaliation absent in both orientations.\n");
+        details.append("Candidate OFF: mixed rebound/retaliation remain absent in both orientations; incoming acceptance belongs to production B.\n");
         clear(owner); owner.setItemSlot(EquipmentSlot.FEET, bounce.copy());
         require(fall(owner, 12).isCanceled(), "Native Bounce fall control missing");
         retaliation(owner, bounce, true);
@@ -136,16 +108,6 @@ public final class SilentGearDefenseSpike {
         samples.addAll(NeoForgeSilentGearTest.workbench(owner, bounce, vanilla));
         samples.addAll(NeoForgeSilentGearTest.workbench(owner, bounce, bounce));
         for (var root : samples) {
-            require(root.has(DataComponents.DAMAGE_RESISTANT) == (samples.indexOf(root) >= 2), "Existing BOTH-source fireproof policy changed");
-            damage(owner, root, owner.damageSources().lava(), 20 * (1 - 0.04F * heatLevel));
-            damage(owner, root, owner.damageSources().flyIntoWall(), 16);
-            damage(owner, root, owner.damageSources().fall(), 20);
-            damage(owner, root, owner.damageSources().generic(), 20);
-            clear(owner); owner.setItemSlot(EquipmentSlot.HEAD, api.armor("helmet", "helmet_plates", "crimson_iron"));
-            owner.setItemSlot(EquipmentSlot.FEET, root); incomingEvent(owner, owner.damageSources().lava(), 20 * (1 - 0.08F * heatLevel));
-            var commonBase = new LivingIncomingDamageEvent(owner, new DamageContainer(owner.damageSources().lava(), 20)); commonBase.setAmount(8);
-            observe(() -> NeoForge.EVENT_BUS.post(commonBase));
-            close(commonBase.getAmount(), 8 * (1 - 0.08F * heatLevel), "Native current-base anchor, not original amount or multiplicative remainder");
             clear(owner); var before = root.copy(); root.setDamageValue(10); before.setDamageValue(13);
             owner.setItemSlot(EquipmentSlot.FEET, root); wearCalls = 0;
             observe(() -> require(fall(owner, 12).isCanceled(), "Candidate Bounce fall missing"));
@@ -164,11 +126,7 @@ public final class SilentGearDefenseSpike {
             var invalid = root.copy(); invalid.setCount(2); owner.setItemSlot(EquipmentSlot.FEET, invalid);
             require(!fall(owner, 12).isCanceled(), "Stacked mixed gained Bounce");
         }
-        details.append("Candidate ON: SG/vanilla + duplicate SG, both paid orientations; native negate math, fire/wall tags vs fall/generic negatives; additive native helmet; one root fall debit; short/crouch/flying/held/stacked controls; creative/Unbreakable.\n");
-        // Explicit computed-property source fixtures, not stock recipes for these unequal levels.
-        var low = SilentGearRecognitionTest.trait(heat, api, "heat_resistant", 1);
-        var high = SilentGearRecognitionTest.trait(heat, api, "heat_resistant", 5);
-        for (var root : NeoForgeSilentGearTest.workbench(owner, low, high)) { damage(owner, root, owner.damageSources().lava(), 16); }
+        details.append("Candidate ON: SG/vanilla + duplicate SG, both paid orientations; one root fall debit; short/crouch/flying/held/stacked controls; creative/Unbreakable.\n");
         var moon = lined(api.boot("azure_silver"), api, owner);
         for (var root : NeoForgeSilentGearTest.workbench(owner, moon, vanilla)) {
             clear(owner); owner.setItemSlot(EquipmentSlot.FEET, root); root.setDamageValue(10); wearCalls = 0;
@@ -188,7 +146,7 @@ public final class SilentGearDefenseSpike {
         require(root.isEmpty(), "Mixed inherited SG repairable broken survival");
         var nativeNearBreak = bounce.copy(); nativeNearBreak.setDamageValue(nativeNearBreak.getMaxDamage() - 1);
         clear(owner); owner.setItemSlot(EquipmentSlot.FEET, nativeNearBreak); require(fall(owner, 12).isCanceled() && !nativeNearBreak.isEmpty(), "Native broken-state control changed");
-        details.append("Unequal Heat I/V uses max once; current-base damage anchor and additive armor; unchanged BOTH-source fireproof policy; Moonwalker precedes native Bounce cost; native armor peer charges non-Bounce mixed FEET safely; ordinary mixed destruction vs native repairable survival.\n");
+        details.append("Moonwalker precedes native Bounce cost; native armor peer charges non-Bounce mixed FEET safely; ordinary mixed destruction vs native repairable survival.\n");
         // Only these actors have negative initial Y, avoiding unrelated pending native rebounds.
         var moving = new ArrayList<ItemStack>(); moving.add(bounce.copy()); moving.addAll(samples.subList(0, 3));
         for (var stack : moving) {
@@ -208,15 +166,6 @@ public final class SilentGearDefenseSpike {
         require(!result.isEmpty() && ItemStack.matches(before, stack) && ItemStack.matches(liningBefore, lining), "Part swap changed inputs"); return result;
     }
 
-    private static void damage(ServerPlayer owner, ItemStack feet, DamageSource source, float expected) {
-        clear(owner); owner.setItemSlot(EquipmentSlot.FEET, feet); observe(() -> incomingEvent(owner, source, expected));
-    }
-    private static void incomingEvent(ServerPlayer owner, DamageSource source, float expected) {
-        var before = owner.getItemBySlot(EquipmentSlot.FEET).copy();
-        var event = new LivingIncomingDamageEvent(owner, new DamageContainer(source, 20)); NeoForge.EVENT_BUS.post(event);
-        close(event.getAmount(), expected, "Registered incoming native event math");
-        require(!event.isCanceled() && ItemStack.matches(before, owner.getItemBySlot(EquipmentSlot.FEET)), "Incoming event unexpectedly changed/canceled gear");
-    }
     private static LivingFallEvent fall(ServerPlayer player, double distance) {
         // Crimson Iron also has Malleable: make the existing probabilistic wear hook deterministic.
         nativeRandom.setSeed(0);
