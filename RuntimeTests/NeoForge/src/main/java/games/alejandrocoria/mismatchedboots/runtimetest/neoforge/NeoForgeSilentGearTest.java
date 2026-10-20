@@ -58,6 +58,12 @@ public final class NeoForgeSilentGearTest {
             player.setPos(0, 80, 0); player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
             String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+            if (stateVariant.equals("defense-spike")) {
+                if (!SilentGearDefenseSpike.step(player, api, report)) { finished = false; return; }
+                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
+                return;
+            }
             if (stateVariant.startsWith("magnet-")) {
                 if (stateVariant.equals("magnet-reload")) {
                     if (!SilentGearMagnetTest.reloadStep(player, api, report)) { finished = false; return; }

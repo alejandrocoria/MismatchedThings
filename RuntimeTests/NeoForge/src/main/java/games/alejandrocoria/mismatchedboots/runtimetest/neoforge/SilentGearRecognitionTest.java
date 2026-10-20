@@ -154,7 +154,7 @@ public final class SilentGearRecognitionTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static ItemStack trait(ItemStack stack, NeoForgeSilentGearTest.NativeApi api, String name, int level) throws Exception {
+    static ItemStack trait(ItemStack stack, NeoForgeSilentGearTest.NativeApi api, String name, int level) throws Exception {
         ItemStack copy = stack.copy();
         Object ref = api.resource.getMethod("trait", String.class).invoke(null, "silentgear:" + name);
         Class<?> instance = SilentGearTraitSpike.nativeClass("api.traits.TraitInstance");

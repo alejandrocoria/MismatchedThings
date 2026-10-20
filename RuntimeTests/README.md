@@ -258,6 +258,26 @@ below. The owner separately confirmed all five manual groups on 2026-10-20,
 completing this bounded magnet plan; [section 9.4](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md#94-owner-manual-acceptance--2026-10-20)
 records manual acceptance independently from automated evidence.
 
+The bounded test-only [Heat Resistant/Bounce spike](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-EXPLORATION.md)
+uses the same optional native gate:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-spike --console=plain
+```
+
+Append `'-Pneoforge_version=26.1.2.99'` for the supported floor. It enables
+candidate event hooks **only in this variant**, not production compatibility.
+Actual native construction/lining and paid Workbench roots test candidate-off
+native positives/mixed negatives, incoming math/current-base anchoring, native
+sound, live-root fall costs, ordinary destruction, production Moonwalker and
+real post-hit knockback/projectile negatives. Native scheduled rebound is
+observed across two real server ticks, not manually flushed. A calibrated writer
+tripwire intercepts current armor-peer Bounce's unsafe mixed-root recalculation
+at a native damage band and rejects that path in candidate scopes. No actual
+connected-client landing, reload/failure admission or JDT fall arbitration is
+claimed. Reports are in `build/reports/silent-gear-effects/<version>/defense-spike`;
+native jar pins and the existing bounded child process runner are reused.
+
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:
 
