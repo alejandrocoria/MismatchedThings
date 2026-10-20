@@ -8,6 +8,8 @@
     "SilentGearBrilliantProofMixin",
     "SilentGearDurabilityProofMixin",
     "SilentGearGearIdentityProofMixin",
+    "SilentGearMagnetProofMixin",
+    "SilentGearMagnetQueueProofMixin",
     "SilentGearMoonwalkerMixin",
     "SilentGearPotionProofMixin",
     "SilentGearSelfRepairMixin",

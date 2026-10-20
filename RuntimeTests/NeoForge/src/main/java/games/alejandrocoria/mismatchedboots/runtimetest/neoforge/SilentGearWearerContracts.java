@@ -40,6 +40,7 @@ final class SilentGearWearerContracts {
     private static void contracts(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report, String variant) throws Throwable {
         SilentGearTraitSpike.initialize(api);
         SilentGearWearerFixture.bind();
+        require(games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnet.available(), "Wielder refusal disabled independent magnet binding");
         boolean refused = List.of("wearer-type", "wearer-trait", "wearer-effect").contains(variant);
         ItemStack witness = api.boot("iron");
         SilentGearWearerFixture.active = true;

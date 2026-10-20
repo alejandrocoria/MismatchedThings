@@ -1,8 +1,10 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
@@ -16,9 +18,13 @@ import java.util.Set;
 /** Independent witness, compatible slot peer and controlled faults; no candidate set engine. */
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("SilentGearMagnetPeerMixin")) {
+            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
+                    && List.of("magnet-compatible", "magnet-effect", "magnet-queue").contains(System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", ""));
+        }
         if (mixin.endsWith("SilentGearMagnetWitnessMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
-                    && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").equals("magnet-spike");
+                    && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").startsWith("magnet-");
         }
         if (mixin.endsWith("SilentGearSetPeerMixin") || mixin.endsWith("SilentGearSetFaultMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
@@ -36,6 +42,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
     @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+        if (mixin.endsWith("SilentGearMagnetPeerMixin")) { magnet(node, variant); return; }
         if (!mixin.endsWith("SilentGearSetFaultMixin") || variant.equals("wearer-definition")) { return; }
         for (var method : node.methods) {
             if (!method.name.equals("getSetPieceCount")) { continue; }
@@ -81,5 +88,45 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$modified", "()Z", null, null);
         marker.instructions.add(new InsnNode(ICONST_1));
         marker.instructions.add(new InsnNode(IRETURN)); marker.maxStack = 1; node.methods.add(marker);
+    }
+
+    private static void magnet(ClassNode owner, String variant) {
+        boolean tracker = owner.name.endsWith("MagnetPullTracker");
+        for (var method : owner.methods) {
+            if (method.name.equals("inventoryTick") || method.name.equals("pushItem") || method.name.equals("onLevelTick")) { method.instructions.insert(new InsnNode(NOP)); }
+        }
+        // A lambda's generated spelling is not its contract. Exercise a real renamed target plus an unrelated method.
+        if (variant.equals("magnet-compatible")) {
+            for (var method : owner.methods) {
+                if (!method.name.equals("tickMagnet") && !method.name.equals("onLevelTick")) { continue; }
+                for (var node : method.instructions) {
+                    if (!(node instanceof InvokeDynamicInsnNode dynamic) || dynamic.bsmArgs.length != 3
+                            || !(dynamic.bsmArgs[1] instanceof Handle target) || !target.getOwner().equals(owner.name)) { continue; }
+                    var lambda = owner.methods.stream().filter(value -> value.name.equals(target.getName()) && value.desc.equals(target.getDesc())).findFirst().orElseThrow();
+                    lambda.name = "sgtest$renamedLambda";
+                    dynamic.bsmArgs[1] = new Handle(target.getTag(), target.getOwner(), lambda.name, target.getDesc(), target.isInterface());
+                }
+            }
+        } else if (tracker == variant.equals("magnet-queue")) {
+            String caller = tracker ? "lambda$onLevelTick$0" : "canAffectItem";
+            MethodInsnNode original = null;
+            for (var method : owner.methods) {
+                if (!method.name.equals(caller)) { continue; }
+                for (var node : method.instructions) {
+                    if (node instanceof MethodInsnNode call && call.name.equals(tracker ? "push" : "test")) { original = call; break; }
+                }
+            }
+            if (original == null) { throw new IllegalStateException("Native magnet fault site unavailable"); }
+            String descriptor = tracker ? "(Lnet/minecraft/world/entity/item/ItemEntity;DDD)V"
+                    : "(Lnet/minecraft/world/item/crafting/Ingredient;Lnet/minecraft/world/item/ItemStack;)Z";
+            var alias = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$unprovedAlias", descriptor, null, null);
+            alias.instructions.add(new VarInsnNode(ALOAD, 0));
+            if (tracker) {
+                alias.instructions.add(new VarInsnNode(DLOAD, 1)); alias.instructions.add(new VarInsnNode(DLOAD, 3)); alias.instructions.add(new VarInsnNode(DLOAD, 5));
+            } else { alias.instructions.add(new VarInsnNode(ALOAD, 1)); }
+            alias.instructions.add(new MethodInsnNode(original.getOpcode(), original.owner, original.name, original.desc, original.itf));
+            alias.instructions.add(new InsnNode(tracker ? RETURN : IRETURN)); alias.maxLocals = tracker ? 7 : 2; alias.maxStack = alias.maxLocals;
+            owner.methods.add(alias); original.setOpcode(INVOKESTATIC); original.owner = owner.name; original.name = alias.name; original.desc = descriptor; original.itf = false;
+        }
     }
 }

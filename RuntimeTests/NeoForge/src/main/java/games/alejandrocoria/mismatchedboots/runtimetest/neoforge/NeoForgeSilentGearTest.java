@@ -58,7 +58,7 @@ public final class NeoForgeSilentGearTest {
             player.setPos(0, 80, 0); player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
             String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
-            if (stateVariant.equals("magnet-spike")) {
+            if (stateVariant.startsWith("magnet-")) {
                 SilentGearMagnetSpike.run(player, api, report);
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
                 NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");

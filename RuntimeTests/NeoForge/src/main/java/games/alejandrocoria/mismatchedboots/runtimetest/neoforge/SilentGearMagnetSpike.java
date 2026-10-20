@@ -1,7 +1,8 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
-import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearerApi;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnet;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnetApi;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -36,7 +37,7 @@ public final class SilentGearMagnetSpike {
     private final Class<?> magnet = nativeClass("gear.trait.effect.ItemMagnetTraitEffect");
     private final Method tick = magnet.getMethod("inventoryTick", nativeClass("api.traits.TraitActionContext"),
             Level.class, net.minecraft.world.entity.Entity.class, boolean.class);
-    private final SilentGearWearerApi.Carriers carriers = new SilentGearWearerApi.Carriers();
+    private final SilentGearMagnetApi guarded = new SilentGearMagnetApi();
     private final ModConfigSpec.BooleanValue crouch = (ModConfigSpec.BooleanValue)
             nativeClass("Config$Common").getField("magnetPullDisabledOnCrouch").get(null);
     private final Map<?, ?> pending;
@@ -68,7 +69,7 @@ public final class SilentGearMagnetSpike {
             menu.getSlot(SmithingMenu.BASE_SLOT).set(iron.copy()); menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(upgrade.copy());
             ItemStack smithing = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
             require(!smithing.isEmpty() && ItemStack.matches(smithing, iron), "Pinned native smithing no-op changed; re-examine acquisition");
-            report.append("MAGNET SPIKE: test-only native effect dispatch, not production support\n")
+            report.append("MAGNET A: guarded direct binding; production mixed inventory hook remains absent\n")
                     .append("Acquisition: real native part-swap grid installs Magnetic V; Blaze Gold computes Greedy ")
                     .append(api.traitLevel(greedy, "greedy")).append("; native smithing preview returns unchanged iron boots (upstream copied-result loss)\n");
 
@@ -81,6 +82,14 @@ public final class SilentGearMagnetSpike {
                 require(witnessed, "Magnet read-only witness was not calibrated");
             } finally { SilentGearWearerFixture.active = false; }
 
+            String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant");
+            boolean refused = List.of("magnet-effect", "magnet-queue").contains(variant);
+            require(SilentGearMagnet.available() != refused, "Magnet startup availability differs from final proof");
+            if (refused) {
+                spike.refusal(player, api, magnetic, report); return;
+            }
+            spike.guarded.requireProof();
+
             spike.crouch.set(true);
             for (var sample : List.of(new Sample("magnetic", magnetic), new Sample("greedy", greedy))) {
                 Object instance = SilentGearTraitSpike.view(sample.stack).get("silentgear:" + sample.id);
@@ -90,7 +99,7 @@ public final class SilentGearMagnetSpike {
                 for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, null}) {
                     place(player, sample.stack, slot);
                     var control = spike.measure(radius, () -> sample.stack.inventoryTick(player.level(), player, slot));
-                    require(control.calls == 1, "Native callback observer did not see exactly one magnet invocation");
+                    require(control.calls == 0, "Native control incorrectly passed through our binding");
                     spike.filters(control, sample.id, slot != null);
                     for (ItemStack root : roots) {
                         place(player, root, slot);
@@ -144,7 +153,7 @@ public final class SilentGearMagnetSpike {
                 greedy.inventoryTick(player.level(), player, EquipmentSlot.FEET);
             });
             var magneticOnly = spike.measure(radius, () -> magnetic.inventoryTick(player.level(), player, EquipmentSlot.FEET));
-            same(together, magneticOnly); require(together.calls == 2, "Native overlapping magnets were not both called");
+            same(together, magneticOnly); require(together.calls == 0, "Native peers passed through the optional mixed binding");
             for (ItemStack root : NeoForgeSilentGearTest.workbench(player, magnetic, greedy)) {
                 place(player, root, EquipmentSlot.FEET);
                 var both = spike.measure(radius, () -> spike.candidate(root, EquipmentSlot.FEET));
@@ -158,10 +167,11 @@ public final class SilentGearMagnetSpike {
             Object instance = SilentGearTraitSpike.view(magnetic).get("silentgear:magnetic");
             var noPlayer = spike.measure(radius, () -> spike.tick.invoke(spike.effect(instance),
                     SilentGearTraitSpike.context(null, instance, magnetic.copy()), player.level(), player, true));
-            require(noPlayer.calls == 1 && noPlayer.pushes.stream().allMatch(Vec3.ZERO::equals), "Native null-player control did not exit");
+            require(noPlayer.calls == 0 && noPlayer.pushes.stream().allMatch(Vec3.ZERO::equals), "Native null-player control did not exit");
+            spike.definitions(api, greedy, report);
             report.append("Overlap: two distinct native traits / both mixed inverses / held+worn copies retain native strongest-impulse selection, not summed acceleration\n")
                     .append("Native LevelTickEvent.Post publishes queued impulses; range sphere, item filter, pickup delay and PreventRemoteMovement controls; immutable root/source/carrier/equipment; zero native recalculations\n")
-                    .append("No production routing/guard, client packets, real-time pickup, reload/lifecycle or native mixed-upgrade editing acceptance claimed\n");
+                    .append("No production routing, client packets, real-time pickup, actual reload/lifecycle or native mixed-upgrade editing acceptance claimed\n");
         } finally {
             observing = false; SilentGearWearerFixture.active = false; spike.crouch.set(oldCrouch);
             clear(player); spike.flush();
@@ -183,18 +193,79 @@ public final class SilentGearMagnetSpike {
 
     private void candidate(ItemStack root, EquipmentSlot slot) throws Throwable {
         if (slot == null) { return; }
-        ItemStack before = root.copy(), carrier = carriers.carrier(root), carrierBefore = carrier.copy();
+        ItemStack before = root.copy(), carrier = guarded.carrier(root), carrierBefore = carrier.copy();
         var equipment = new ArrayList<ItemStack>(); for (var value : EquipmentSlot.values()) { equipment.add(player.getItemBySlot(value).copy()); }
         SilentGearWearerFixture.active = true;
         try {
             for (var entry : SilentGearCompatibility.effectiveTraits(root)) {
                 if (!List.of("silentgear:magnetic", "silentgear:greedy").contains(entry.id().toString())) { continue; }
                 Object instance = entry.nativeInstance();
-                tick.invoke(effect(instance), SilentGearTraitSpike.context(player, instance, carrier), player.level(), player, true);
+                guarded.tick(guarded.admittedEffect(instance), player, instance, carrier, true);
             }
         } finally { SilentGearWearerFixture.active = false; }
         require(ItemStack.matches(before, root) && ItemStack.matches(carrierBefore, carrier), "Candidate mutated root/source/carrier");
         int index = 0; for (var value : EquipmentSlot.values()) { require(ItemStack.matches(equipment.get(index++), player.getItemBySlot(value)), "Candidate replaced/changed real equipment"); }
+    }
+
+    private void refusal(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, ItemStack magnetic, StringBuilder report) throws Throwable {
+        var nativeControl = measure(16, () -> magnetic.inventoryTick(player.level(), player, EquipmentSlot.FEET));
+        filters(nativeControl, "magnetic", true);
+        ItemStack greedy = api.boot("blaze_gold");
+        filters(measure(7, () -> greedy.inventoryTick(player.level(), player, EquipmentSlot.FEET)), "greedy", true);
+        for (ItemStack root : NeoForgeSilentGearTest.workbench(player, magnetic, new ItemStack(Items.DIAMOND_BOOTS))) {
+            ItemStack before = root.copy();
+            for (int attempt = 0; attempt < 3; attempt++) {
+                var refused = measure(16, () -> rejected(() -> candidate(root, EquipmentSlot.FEET)));
+                require(refused.calls == 0 && refused.pushes.stream().allMatch(Vec3.ZERO::equals), "Refused binding published native impulses");
+            }
+            require(ItemStack.matches(before, root), "Refused magnet binding changed complete root/sources");
+        }
+        ItemStack stellar = NeoForgeSilentGearTest.workbench(player, api.boot("refined_iron"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        place(player, stellar, EquipmentSlot.FEET); player.tickCount = 20;
+        stellar.inventoryTick(player.level(), player, EquipmentSlot.FEET);
+        require(player.hasEffect(net.minecraft.world.effect.MobEffects.JUMP_BOOST), "Magnet refusal disabled Wielder");
+        ItemStack brilliant = NeoForgeSilentGearTest.workbench(player, greedy, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        place(player, brilliant, EquipmentSlot.FEET);
+        require(net.minecraft.world.entity.monster.piglin.PiglinAi.isWearingSafeArmor(player), "Magnet refusal disabled Brilliant");
+        ItemStack moon = NeoForgeSilentGearTest.workbench(player, api.boot("azure_silver"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        place(player, moon, EquipmentSlot.FEET);
+        var fall = new net.neoforged.neoforge.event.entity.living.LivingFallEvent(player, 10, 1); NeoForge.EVENT_BUS.post(fall);
+        require(fall.getDistance() > 0 && fall.getDistance() < 10, "Magnet refusal disabled Moonwalker");
+        SilentGearEffectsTest.smoke(player, api, report); SilentGearLiveStateTest.smoke(player, api, report);
+        report.append("A magnet refusal: both native traits/tracker still work; both paid inverses refuse guarded calls three times before invocation/queue writes; Wielder/Brilliant/Moonwalker/repair/live state survive\n");
+    }
+
+    private void definitions(NeoForgeSilentGearTest.NativeApi api, ItemStack greedy, StringBuilder report) throws Throwable {
+        Object instance = SilentGearTraitSpike.view(greedy).get("silentgear:greedy"), trait = SilentGearTraitSpike.traitOf(instance);
+        var field = trait.getClass().getDeclaredField("effects"); field.setAccessible(true);
+        var original = (List<?>) field.get(trait); Object old = guarded.admittedEffect(instance);
+        try {
+            field.set(trait, List.of()); rejected(() -> guarded.admittedEffect(instance));
+            field.set(trait, List.of(old, old)); rejected(() -> guarded.admittedEffect(instance));
+            field.set(trait, original.stream().filter(value -> value.getClass() != magnet).toList());
+            rejected(() -> guarded.admittedEffect(instance));
+            Object invalid = magnet.getConstructor(float.class, float.class, java.util.Optional.class, String.class)
+                    .newInstance(Float.NaN, 2F, java.util.Optional.empty(), "invalid fixture");
+            field.set(trait, List.of(invalid)); rejected(() -> guarded.admittedEffect(instance));
+            Object replacement = magnet.getConstructor(float.class, float.class, java.util.Optional.class, String.class)
+                    .newInstance(0.12F, 2F, java.util.Optional.of(net.minecraft.world.item.crafting.Ingredient.of(Items.DIRT)), "fixture dirt");
+            field.set(trait, List.of(replacement));
+            require(guarded.admittedEffect(instance) == replacement, "Definition binding cached its old effect");
+            for (ItemStack root : NeoForgeSilentGearTest.workbench(player, greedy, new ItemStack(Items.DIAMOND_BOOTS))) {
+                var control = measure(7, () -> greedy.inventoryTick(player.level(), player, EquipmentSlot.FEET));
+                require(control.pushes.get(0).equals(Vec3.ZERO) && control.pushes.get(1).lengthSqr() > 0, "Replacement native filter was not exercised");
+                same(control, measure(7, () -> candidate(root, EquipmentSlot.FEET)));
+                var stale = measure(7, () -> rejected(() -> guarded.tick(old, player, instance, guarded.carrier(root), true)));
+                require(stale.calls == 0 && stale.pushes.stream().allMatch(Vec3.ZERO::equals), "Stale native effect dispatched");
+            }
+        } finally { field.set(trait, original); }
+        require(guarded.admittedEffect(instance) == old, "Restored native definition was not reread");
+        report.append("A definitions: missing/duplicate/foreign/non-finite magnet effects refused; replacement strength/filter matches native vectors; stale effect rejected before invocation; restored definition reread\n");
+    }
+
+    private static void rejected(Action call) throws Throwable {
+        try { call.run(); } catch (IllegalArgumentException | IllegalStateException expected) { return; }
+        throw new AssertionError("Unsupported magnet binding/data was admitted");
     }
 
     private Object effect(Object instance) throws Exception {

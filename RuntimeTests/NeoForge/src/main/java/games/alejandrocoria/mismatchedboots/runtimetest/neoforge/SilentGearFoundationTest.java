@@ -34,6 +34,7 @@ final class SilentGearFoundationTest {
 
     static void absent(MinecraftServer server) {
         require(!ModList.get().isLoaded("silentgear"), "SG absence fixture loaded native mod");
+        require(!games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnet.available(), "Absent SG bound magnet API");
         var player = FakePlayerFactory.getMinecraft(server.overworld());
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         for (var root : NeoForgeSilentGearTest.workbench(player, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS))) {

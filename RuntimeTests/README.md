@@ -214,10 +214,14 @@ owner Wielder/lifecycle/JDT checklist accepted on 2026-10-20 are in
 [its record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#11-block-d-execution-record--2026-10-20).
 
 The separate [Magnetic/Greedy feasibility spike](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md)
-has an opt-in **test-only** candidate, not production magnet support:
+now uses A's production optional binding/proofs through opt-in **direct controls**,
+not an ordinary mixed-item magnet tick:
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-spike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-compatible --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-effect --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-queue --console=plain
 ```
 
 Repeat with `-Pneoforge_version=26.1.2.99` for the floor. It uses native
@@ -225,14 +229,21 @@ installation/Blaze Gold controls, actual native inventory callbacks and real
 server ItemEntities, publishing impulses through the native level-post tracker.
 Both paid inverses cover selected/idle, crouch config, radius/filter/pickup-delay/
 anti-movement controls, duplicate/unequal levels and overlapping held/worn
-copies. A scoped native-call counter catches double dispatch hidden by native
+copies. A scoped counter at our binding's private invocation boundary catches
+double dispatch hidden by native
 strongest-vector arbitration; gear snapshots and the calibrated recalculation
 witness protect root/source/carrier/equipment. The callback counter mixin is
-disabled in all other variants. No production guard, connected-client or mixed
+enabled only in `magnet-*` scopes and never patches the admitted native body.
+`magnet-compatible` adds harmless methods/NOPs and renames real lambda targets;
+`magnet-effect`/`magnet-queue` preserve native behavior through separate unproved
+aliases, requiring one bounded refusal each before guarded calls publish work.
+Native and existing feature controls survive. Changed live definitions are
+checked, including replacement numeric/filter data and stale receiver rejection.
+No ordinary mixed dispatch, connected-client or mixed
 upgrade-editing acceptance is implied. Its report uses the existing
-`silent-gear-effects/<version>/magnet-spike` directory, not another runner.
+`silent-gear-effects/<version>/<magnet-variant>` directories, not another runner.
 The subsequent [A/B/C production plan](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md)
-is written but unimplemented. It will promote/rename this candidate scope during
+has A implemented; B/C remain pending. It will promote/rename this direct-control scope during
 production wiring, preserve native controls and add real client motion/pickup;
 the command above remains the current test-only entry point, not future
 production acceptance.
