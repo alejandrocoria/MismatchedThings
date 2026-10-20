@@ -339,7 +339,36 @@ public final class SilentGearLiveStateTest {
             root.set(JustDireResourceTestSupport.energyComponent(), 30_000);
             close(armor(root), baseEntry.modifier().amount(), "JDT reclaimed SG's recorded override through numerical coincidence");
         }
-        report.append("PRODUCTION C joint: both orientations, damaged/repaired bone + powered Eclipse; FE depleted/funded and Step off/on, independent native armor/Step arithmetic, one shared identity, no resource debit or FE-driven SG recalculation\n");
+        for (ItemStack root : NeoForgeSilentGearTest.workbench(player, api.boot("refined_iron"), jdt)) {
+            for (int energy : List.of(0, 30_000)) { for (boolean enabled : List.of(false, true)) {
+                for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
+                player.removeAllEffects(); player.setItemSlot(EquipmentSlot.FEET, root);
+                root.set(JustDireResourceTestSupport.energyComponent(), energy);
+                JustDireAttributeTestSupport.set(root, "tool_enabled", enabled);
+                JustDireAttributeTestSupport.set(root, "stepheight_toggle", true);
+                ItemStack before = root.copy(); int prior = recalculations;
+                tick(player, root, 20, EquipmentSlot.FEET);
+                var jump = player.getEffect(net.minecraft.world.effect.MobEffects.JUMP_BOOST);
+                require(jump != null && jump.getAmplifier() == 0 && jump.getDuration() == 38,
+                        "JDT master/FE incorrectly disabled independent SG Stellar");
+                require(!player.hasEffect(net.minecraft.world.effect.MobEffects.SPEED), "JDT source counted as another SG set piece");
+                require(ItemStack.matches(before, root) && recalculations == prior, "SG wearer spent FE, rewrote JDT tables/state or recalculated gear");
+                var data = ModContent.getMixedBootsData(root).orElseThrow();
+                ItemStack a = data.left().source(), b = data.right().source();
+                for (var source : List.of(a, b)) { if (!api.gear.isInstance(source.getItem())) {
+                    source.set(JustDireResourceTestSupport.energyComponent(), energy);
+                    JustDireAttributeTestSupport.set(source, "tool_enabled", enabled);
+                    JustDireAttributeTestSupport.set(source, "stepheight_toggle", true);
+                } }
+                var nativeExpected = JustDireAttributeTestSupport.composed(a, b, AttributeRulesLifecycle.serverRules());
+                close(amount(root.getAttributeModifiers(), "step_height"), amount(nativeExpected, "step_height"), "SG wearer changed JDT live Step behavior");
+                require(ItemStack.matches(before, root), "Combined attribute query changed SG/JDT root state");
+            } }
+        }
+        for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
+        player.removeAllEffects();
+        report.append("PRODUCTION joint: both orientations, damaged/repaired bone + powered Eclipse; FE depleted/funded and Step off/on, independent native armor/Step arithmetic, one shared identity; "
+                + "Stellar+Eclipse wearer survives JDT global off/on and FE zero/funded with native potion data, no extra set piece, zero FE/table/state/source writes or SG recalculation\n");
     }
 
     private static void refusal(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {

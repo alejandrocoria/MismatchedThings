@@ -64,6 +64,7 @@ final class SilentGearLifecycleTest {
     private static void save(MinecraftServer server) throws Exception {
         var player = player(server);
         var api = new NeoForgeSilentGearTest.NativeApi();
+        SilentGearTraitSpike.initialize(api);
         var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
         ItemStack copper = api.boot("copper"), young = copper.copy();
         copper.set(counter, 1198); young.set(counter, 10);
@@ -100,6 +101,13 @@ final class SilentGearLifecycleTest {
         require(!overridden.get(SilentGearCompatibility.state()).overrides().isEmpty() && armor(overridden) == 0,
                 "Save did not record managed removal");
 
+        for (var root : NeoForgeSilentGearTest.workbench(player, api.boot("refined_iron"), api.boot("gold"))) {
+            root.setDamageValue(12); roots.add(root);
+        }
+        ItemStack wearerCopper = api.boot("copper"); wearerCopper.set(counter, 37);
+        roots.addAll(NeoForgeSilentGearTest.workbench(player, api.boot("azure_silver"), wearerCopper));
+        SilentGearWearerFixture.manualCommands(player, api);
+
         server.overworld().setBlock(BARREL, Blocks.BARREL.defaultBlockState(), 3);
         var barrel = barrel(server);
         var saved = new JsonArray();
@@ -110,8 +118,9 @@ final class SilentGearLifecycleTest {
         barrel.setChanged();
         var manifest = new JsonObject(); manifest.addProperty("process", ProcessHandle.current().pid()); manifest.add("roots", saved);
         NetworkAcceptanceFiles.write("silent-gear-saved.json", manifest.toString());
-        NetworkAcceptanceFiles.write("silent-gear-save-report.txt", "World barrel: four complete roots, paid unequal copper inverses after native transition; "
-                + "worn quartz inverses with supplied maximum policy; recorded armor removal, foreign luck/name, immutable sources\n");
+        NetworkAcceptanceFiles.write("silent-gear-save-report.txt", "World barrel: eight complete paid roots; unequal transitioned copper inverses, "
+                + "worn quartz inverses with maximum policy/removal/foreign metadata, damaged Stellar+Brilliant and Moonwalker+copper inverses; "
+                + "verified vanilla/native manual commands for missing-ingredient Adamant/Stellar gear\n");
     }
 
     private static void restart(MinecraftServer server) throws Exception {
@@ -120,13 +129,14 @@ final class SilentGearLifecycleTest {
         require(manifest.get("process").getAsLong() != ProcessHandle.current().pid(), "Reload reused the save JVM");
         var barrel = barrel(server);
         var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-        var saved = manifest.getAsJsonArray("roots"); require(saved.size() == 4, "Incomplete saved expectations");
+        var saved = manifest.getAsJsonArray("roots"); require(saved.size() == 8, "Incomplete saved expectations");
         for (int index = 0; index < saved.size(); index++) {
             ItemStack expected = ItemStack.CODEC.parse(ops, saved.get(index)).getOrThrow();
             require(ItemStack.matches(expected, barrel.getItem(index)), "World reload changed root/source/projection/clock " + index);
         }
         var player = player(server);
         var api = new NeoForgeSilentGearTest.NativeApi();
+        SilentGearTraitSpike.initialize(api);
         for (int index = 0; index < 4; index++) {
             ItemStack root = barrel.getItem(index);
             var history = ModContent.getMixedBootsData(root);
@@ -170,9 +180,39 @@ final class SilentGearLifecycleTest {
         close(armor(repaired), SilentGearLiveStateTest.expectedArmor(repaired, api, player, AttributePolicy.AVERAGE), "Post-reload repaired armor");
         require(ModContent.getMixedBootsData(repaired).equals(ModContent.getMixedBootsData(trimmed)), "Repair changed source history");
         barrel.setItem(2, repaired); barrel.setChanged();
-        NetworkAcceptanceFiles.write("silent-gear-restart-report.txt", "Different JVM: four actual world roots compared before callbacks; "
+        for (int index = 4; index < 8; index++) {
+            for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
+            player.removeAllEffects(); ItemStack root = barrel.getItem(index), before = root.copy();
+            player.setItemSlot(EquipmentSlot.FEET, root);
+            tick(player, root, 21, EquipmentSlot.FEET);
+            require(ItemStack.matches(before, root), "Reloaded wearer root changed before its native cadence");
+            if (index < 6) {
+                Object stellar = SilentGearCompatibility.effectiveTraits(root).stream().filter(value -> value.id().getPath().equals("stellar")).findFirst().orElseThrow().nativeInstance();
+                SilentGearWearerFixture.seedStellar(stellar, true);
+                tick(player, root, 20, EquipmentSlot.FEET);
+                require(root.getDamageValue() == 12 - SilentGearTraitSpike.level(stellar), "Reloaded Stellar repair doubled or reset damage");
+                before.setDamageValue(root.getDamageValue());
+                require(ItemStack.matches(before, root) && player.hasEffect(net.minecraft.world.effect.MobEffects.JUMP_BOOST), "Reloaded Stellar lost potions or mutated unrelated state");
+                require(net.minecraft.world.entity.monster.piglin.PiglinAi.isWearingSafeArmor(player), "Reloaded Brilliant lost native piglin recognition");
+            } else {
+                var state = root.get(SilentGearCompatibility.state());
+                tick(player, root, 20, EquipmentSlot.FEET);
+                require(ItemStack.matches(before, root), "Equipped Moonwalker advanced copper clock");
+                var fall = new net.neoforged.neoforge.event.entity.living.LivingFallEvent(player, 10, 1);
+                NeoForge.EVENT_BUS.post(fall);
+                close(fall.getDistance(), 10 * (1 + 4 * -0.15F), "Reloaded native Moonwalker reduction");
+                player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); tick(player, root, 20, null);
+                var live = root.get(SilentGearCompatibility.state());
+                require(live.left().equals(state.left()) && live.right().orElseThrow().counter() == 38
+                                || live.right().equals(state.right()) && live.left().orElseThrow().counter() == 38,
+                        "Reloaded wearer/copper root reset or lost one idle clock advance");
+            }
+        }
+        for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
+        player.removeAllEffects(); barrel.setChanged();
+        NetworkAcceptanceFiles.write("silent-gear-restart-report.txt", "Different JVM: eight actual world roots compared before callbacks; "
                 + "no offline progress or reseeding; selected pause/idle continuation, native worn maximum and persistent removal; "
-                + "paid smithing/crafting repair, new average policy only on recomposition; immutable sources\n");
+                + "paid smithing/crafting repair, new average policy only on recomposition; Stellar potions + one seeded heal, Brilliant and Moonwalker resume on both inverses; immutable sources\n");
     }
 
     static BarrelBlockEntity barrel(MinecraftServer server) {

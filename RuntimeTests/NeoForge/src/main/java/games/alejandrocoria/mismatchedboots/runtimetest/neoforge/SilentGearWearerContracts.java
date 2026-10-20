@@ -176,6 +176,49 @@ final class SilentGearWearerContracts {
             SilentGearWearerFixture.active = false;
         }
         if (variant.equals("wearer-definition")) { changedDefinition(player, api, report); }
+        if (variant.equals("wearer-throw")) { partialActorFailure(player, api, report); }
+    }
+
+    private static void partialActorFailure(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Throwable {
+        int[] calls = {0}; boolean[] armed = {false};
+        var actor = new net.neoforged.neoforge.common.util.FakePlayer(player.level(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "wearer-fault")) {
+            @Override public boolean addEffect(MobEffectInstance effect, net.minecraft.world.entity.Entity source) {
+                boolean result = super.addEffect(effect, source);
+                if (armed[0]) {
+                    calls[0]++;
+                    if (effect.getEffect().equals(MobEffects.JUMP_BOOST)) { throw new IllegalStateException("Controlled actor failure after native potion publication"); }
+                }
+                return result;
+            }
+        };
+        var root = NeoForgeSilentGearTest.workbench(player, api.boot("refined_iron"), api.boot("gold")).getFirst();
+        actor.setItemSlot(EquipmentSlot.FEET, root);
+        actor.setItemSlot(EquipmentSlot.CHEST, api.armor("chestplate", "chestplate_plates", "refined_iron"));
+        actor.setItemSlot(EquipmentSlot.HEAD, api.armor("helmet", "helmet_plates", "refined_iron"));
+        actor.setItemSlot(EquipmentSlot.LEGS, api.armor("leggings", "legging_plates", "refined_iron"));
+        var before = snapshots(actor); actor.tickCount = 20;
+        try {
+            armed[0] = true;
+            for (int attempt = 0; attempt < 3; attempt++) { root.inventoryTick(actor.level(), actor, EquipmentSlot.FEET); }
+            require(calls[0] == 2, "Partial actor failure retried native potion work");
+            potion(actor, MobEffects.SPEED, 3); potion(actor, MobEffects.JUMP_BOOST, 4);
+            unchanged(actor, before);
+        } finally { armed[0] = false; }
+        // Runtime revocation applies to native other-slot callers, too, not just the optional dispatcher.
+        actor.removeAllEffects();
+        var chest = actor.getItemBySlot(EquipmentSlot.CHEST); var instance = SilentGearTraitSpike.view(chest).get("silentgear:stellar");
+        var effect = SilentGearWearerFixture.effects(instance).stream().filter(SilentGearWearerFixture::isWielder).findFirst().orElseThrow();
+        nativeTick(effect, actor, instance, chest.copy(), true); check(actor, "stellar", 3, true);
+        require(net.minecraft.world.entity.monster.piglin.PiglinAi.isWearingSafeArmor(actor), "Wielder actor failure disabled Brilliant");
+        equip(player, List.of(), 0);
+        var moon = NeoForgeSilentGearTest.workbench(player, api.boot("azure_silver"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        player.setItemSlot(EquipmentSlot.FEET, moon);
+        var fall = new net.neoforged.neoforge.event.entity.living.LivingFallEvent(player, 10, 1);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(fall);
+        require(Math.abs(fall.getDistance() - 10 * (1 + 4 * -0.15F)) < 1E-6, "Wielder actor failure disabled Moonwalker");
+        SilentGearEffectsTest.smoke(player, api, report); SilentGearLiveStateTest.smoke(player, api, report);
+        report.append("Post-publication actor failure: two actual native potion writes remain, no replay across three root ticks, immutable gear; native-chest count loses only mixed FEET; B/repair/state survive\n");
     }
 
     private static void additionalCases(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report, boolean refused) throws Throwable {
@@ -222,13 +265,8 @@ final class SilentGearWearerContracts {
         var randomField = Class.forName("net.silentchaos512.lib.util.MathUtils").getDeclaredField("RANDOM"); randomField.setAccessible(true);
         var random = (java.util.Random) randomField.get(null);
         Object instance = SilentGearTraitSpike.view(stellar).get("silentgear:stellar");
-        Object repair = SilentGearWearerFixture.effects(instance).stream().filter(value -> value.getClass().getSimpleName().equals("SelfRepairTraitEffect")).findFirst().orElseThrow();
-        Field chanceField = repair.getClass().getDeclaredField("activationChance"); chanceField.setAccessible(true);
-        float chance = chanceField.getFloat(repair) * SilentGearTraitSpike.level(instance);
         for (boolean activate : List.of(true, false)) {
-            long seed = 0;
-            while (seed < 100_000 && (new java.util.Random(seed).nextDouble() < chance) != activate) { seed++; }
-            require(seed < 100_000, "No bounded native Stellar repair seed");
+            long seed = SilentGearWearerFixture.stellarRepairSeed(instance, activate);
             equip(player, List.of(), 0); player.setItemSlot(EquipmentSlot.FEET, root);
             root.setDamageValue(12); var before = root.copy(); random.setSeed(seed);
             SilentGearWearerFixture.active = true;

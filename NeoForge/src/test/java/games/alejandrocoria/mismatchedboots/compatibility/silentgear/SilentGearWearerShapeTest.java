@@ -82,9 +82,9 @@ class SilentGearWearerShapeTest implements Opcodes {
         var owner = owner(method);
         assertFalse(SilentGearWearerShape.set(owner));
         owner = owner(counter(true, true));
-        var getter = new MethodNode(ACC_PUBLIC, "mismatchedboots$sgSetReady", "()Z", null, null);
+        var getter = new MethodNode(ACC_PRIVATE | ACC_STATIC, "mismatchedboots$sgWielderReady", "()Z", null, null);
         getter.instructions.add(new InsnNode(ICONST_1)); getter.instructions.add(new InsnNode(IRETURN)); owner.methods.add(getter);
-        SilentGearWearerShape.publish(owner);
+        SilentGearEffectShape.publish(owner, getter.name, SilentGearWearerShape.set(owner));
         assertTrue(getter.instructions.getFirst().getOpcode() == ICONST_0);
     }
 

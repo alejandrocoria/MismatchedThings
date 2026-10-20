@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Local slot/stack/trait producer-consumer proof, shared by the opt-in candidate and later routing. */
+/** Local slot/stack/trait producer-consumer proof for production paired set recognition. */
 public final class SilentGearWearerShape implements Opcodes {
     static final String OWNER = SilentGearEffectShape.PREFIX + "gear/trait/effect/WielderEffectTraitEffect";
     static final String ARMOR = SilentGearEffectShape.PREFIX + "api/item/GearArmor";
@@ -25,10 +25,6 @@ public final class SilentGearWearerShape implements Opcodes {
     record Pair(AbstractInsnNode type, AbstractInsnNode trait) {}
 
     private SilentGearWearerShape() {}
-
-    public static void publish(ClassNode node) {
-        if (node.name.equals(OWNER)) { SilentGearEffectShape.publish(node, "mismatchedboots$sgSetReady", set(node)); }
-    }
 
     static Pair pair(String descriptor, InsnList instructions) {
         if (!COUNT.equals(descriptor)) { return null; }

@@ -5,7 +5,7 @@ def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
 if (!(effectVariant in ['', 'repair', 'wear', 'compatible', 'state', 'joint', 'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait',
-                       'wearer-effect', 'wearer-definition', 'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker'])) { throw new GradleException('Unknown SG effect test variant') }
+                       'wearer-effect', 'wearer-definition', 'wearer-throw', 'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker'])) { throw new GradleException('Unknown SG effect test variant') }
 def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
@@ -82,7 +82,7 @@ tasks.register('verifySilentGear') {
         int expectedRecognition = effectVariant in ['recognition-brilliant', 'recognition-moonwalker'] ? 1 : 0
         if (recognitionWarnings != expectedRecognition) { throw new GradleException("Unexpected SG recognition warnings ${recognitionWarnings} vs ${expectedRecognition}: ${log}") }
         int wielderWarnings = (log.text =~ /Silent Gear mixed wielder disabled:/).count
-        int expectedWielder = effectVariant in ['wearer-type', 'wearer-trait', 'wearer-effect', 'wearer-definition'] ? 1 : 0
+        int expectedWielder = effectVariant in ['wearer-type', 'wearer-trait', 'wearer-effect', 'wearer-definition', 'wearer-throw'] ? 1 : 0
         if (wielderWarnings != expectedWielder) { throw new GradleException("Unexpected SG Wielder warnings ${wielderWarnings} vs ${expectedWielder}: ${log}") }
         if (log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')) {
             throw new GradleException("Unexpected SG binding/read refusal: ${log}")
@@ -144,15 +144,19 @@ def lifecycleReports = layout.buildDirectory.dir("reports/silent-gear-lifecycle/
         jvmArgument('-Xmx1G')
     }
 }
-neoForge.runs.create('silentGearClient') {
-    client(); disableIdeRun()
-    gameDirectory = clientRun.get().asFile
-    programArgument('--quickPlaySingleplayer'); programArgument('silentgear')
-    systemProperty('mismatchedboots.runtimetest.markers', lifecycleReports.get().asFile.absolutePath)
-    systemProperty('mismatchedboots.runtimetest.silentGearClient', 'true')
-    systemProperty('mismatchedboots.test.hideClientWindow', 'true')
-    systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
-    jvmArgument('-Xmx1G')
+['Client', 'Rejoin'].each { phase ->
+    neoForge.runs.create("silentGear${phase}") {
+        client(); disableIdeRun()
+        gameDirectory = clientRun.get().asFile
+        programArgument('--quickPlaySingleplayer'); programArgument('silentgear')
+        programArgument('--username'); programArgument('SGWearerFixture')
+        systemProperty('mismatchedboots.runtimetest.markers', lifecycleReports.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.silentGearClient', 'true')
+        systemProperty('mismatchedboots.runtimetest.silentGearRejoin', (phase == 'Rejoin').toString())
+        systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+        systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+        jvmArgument('-Xmx1G')
+    }
 }
 tasks.register('prepareSilentGearSave') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
@@ -204,14 +208,26 @@ tasks.register('prepareSilentGearClient') {
     }
 }
 tasks.named('runSilentGearClient') { dependsOn('prepareSilentGearClient') }
+
+tasks.register('prepareSilentGearRejoin') {
+    doLast {
+        if (!new File(lifecycleReports.get().asFile, 'silent-gear-client-success.txt').isFile()
+                || !new File(clientRun.get().asFile, 'saves/silentgear/level.dat').isFile()) {
+            throw new GradleException('SG Rejoin requires the completed connected-client world')
+        }
+        // Reuse the actual player/world save. Do not rerun Client preparation or copy the server barrel world.
+        fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "silent-gear-rejoin-${it}.txt") }) }
+    }
+}
+tasks.named('runSilentGearRejoin') { dependsOn('prepareSilentGearRejoin') }
 tasks.register('verifySilentGearLifecycle') {
     group = 'verification'
-    description = 'Real SG save/restart JVMs and connected client item/state/equipment synchronization'
+    description = 'Real SG world restart, connected wearer/state packets and separate-client player rejoin'
     doLast {
-        ['Save', 'Restart', 'Client'].each { phase ->
+        ['Save', 'Restart', 'Client', 'Rejoin'].each { phase ->
             def name = phase.toLowerCase(Locale.ROOT)
             def log = layout.buildDirectory.file("reports/silent-gear-lifecycle-${neoforge_version}-${name}-process.log").get().asFile
-            runBounded(":RuntimeTests:NeoForge:runSilentGear${phase}", log, phase == 'Client' ? 300 : 240)
+            runBounded(":RuntimeTests:NeoForge:runSilentGear${phase}", log, phase in ['Client', 'Rejoin'] ? 300 : 240)
             def result = lifecycleReports.get().asFile
             def failure = new File(result, "silent-gear-${name}-failure.txt")
             if (failure.isFile()) { throw new GradleException(failure.text) }

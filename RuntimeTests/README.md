@@ -142,7 +142,8 @@ The separate [wearer plan](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md)
 introduced A's optional binding and paired-predicate proof. C now promotes the
 same fixture scopes to production Wielder acceptance, retaining the native loop
 and its two local predicate result extensions. B's recognition scopes are below;
-D's connected-client/lifecycle and final manual handoff remain pending.
+D extends the same lifecycle/coexistence gates below; the owner accepted all
+final manual checks on 2026-10-20, separately from automation.
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer --console=plain
@@ -151,6 +152,7 @@ D's connected-client/lifecycle and final manual handoff remain pending.
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-trait --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-effect --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-definition --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-throw --console=plain
 ```
 
 `wearer` extends the maintained native fixture with independent Adamant/Aquatic/
@@ -170,6 +172,9 @@ requires refusal; `wearer-definition` changes an admitted definition and proves
 no publication/retry, retention of an existing potion and revocation of both
 mixed predicates. Each refusal logs once, preserving B and representative prior
 writers; the full previous state matrix stays on the ordinary gate.
+`wearer-throw` (D) lets a test actor publish native Speed/Jump effects and then
+throw; it checks retained actor effects, no replay across later mixed ticks,
+revoked native-caller mixed set counting and independent B/repair/state behavior.
 Native callers retain their ordinary behavior under refusal. Native material
 construction without available ingredients is explicitly labeled; an actual
 iron/prismarine coating recipe supplies the obtainable Aquatic control.
@@ -204,7 +209,9 @@ Independent C Wielder remains functional. Output locations/floor flag are the
 same as A; [B's record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#9-block-b-execution-record--2026-10-19)
 owns exact executed technical evidence and the separate owner manual checklist.
 The owner accepted B's Brilliant/Moonwalker smoke on 2026-10-20, including the
-native Moonwalker advancement; D and owner Wielder acceptance remain pending.
+native Moonwalker advancement. D's automated lifecycle/consolidation and the
+owner Wielder/lifecycle/JDT checklist accepted on 2026-10-20 are in
+[its record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#11-block-d-execution-record--2026-10-20).
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:
@@ -216,7 +223,10 @@ Additional variants of `verifySilentGear` use
   lane atomically with one diagnostic; B repair/wear still work afterwards.
 - `joint` adds pinned JDT 1.6.11: native armor/Step arithmetic, depleted/funded
   FE, damage/repair and Step off/on, one shared identity, preserved table groups
-  and overrides, no extra FE bill or FE-driven SG recalculation.
+  and overrides, no extra FE bill or FE-driven SG recalculation. D also checks
+  both Stellar/Eclipse orientations under depleted/funded FE and JDT global
+  off/on: native wearer effects remain independent, without writes to FE,
+  controls, tables, SG state or sources, while native Step arithmetic is retained.
   Pure-JDT regressions remain `verifyJustDireAttributes` and
   `verifyJustDireResources`.
 
@@ -230,26 +240,47 @@ The SG-absent task uses the default roots' `absent` subdirectories and a
 neutral callbacks and our own state codec without native classes.
 Run it after the default gate if both sets of reports should remain.
 
-`verifySilentGearLifecycle` sequentially launches Save, Restart and a hidden,
-muted integrated client. The second JVM compares four complete actual-world
+`verifySilentGearLifecycle` sequentially launches Save, Restart, a hidden/muted
+integrated Client, and a separate Rejoin client JVM. The second JVM compares eight complete actual-world
 barrel stacks before callbacks: unequal transitioned copper inverses, worn
 quartz inverses with captured maximum policy, one explicit armor removal and
-foreign luck/name. It checks no offline progress/reseeding, selected pauses,
+foreign luck/name, damaged Stellar/Brilliant inverses and Moonwalker/copper
+inverses. It checks no offline progress/reseeding, selected pauses,
 continuation, native worn arithmetic, paid trim/crafting repair and policy
-recapture only on recomposition. The actual connected client checks complete
+recapture only on recomposition; wearer effects, one seeded Stellar heal,
+Brilliant recognition and Moonwalker resume on the saved inverses.
+The actual connected client checks complete
 item/component/source packets and vanilla equipped attributes, wear refresh,
 hand/offhand/idle moves, paid trim/repair and read-only client queries.
+Both wearer inverses additionally exercise real refreshed potion packets and
+local jump against an independent selected-native-item control, offhand refresh
+and natural idle expiry. Actual server-player tick progression is checked, with
+focus pause disabled. A damaging vanilla fall control calibrates equal native/
+mixed Moonwalker health loss; composed gravity and its removal arrive normally.
+Fixture Unbreakable markers freeze incidental repair during packet comparisons;
+ordinary seeded healing is checked separately, including after player rejoin.
 Only JSON expectations cross threads, not shared ItemStack references.
+Rejoin retains the actual client world/player save and fixed test username, checks
+different PID/same UUID and complete saved roots/damage/selected copper clocks,
+then resumes effects/one heal and normal idle expiry. It does not recopy the
+original barrel world or recraft the roots.
 This is integrated transport, not a separate dedicated-server client matrix
 or rendering/tooltip acceptance.
 
 Lifecycle run/report roots are
 `build/run/silentGearLifecycle/<version>/{server,client}` and
 `build/reports/silent-gear-lifecycle/<version>`; process logs are siblings
-`silent-gear-lifecycle-<version>-{save,restart,client}-process.log`.
+`silent-gear-lifecycle-<version>-{save,restart,client,rejoin}-process.log`.
 Save clears only its server/report tree. Restart reuses that world without
 Save preparation; Client copies the completed world into its own disposable
-save. Markers, manifests and reports record each phase independently.
+save. Rejoin uses that Client save without cleanup/repreparation. Markers,
+world/player manifests and reports record each phase independently.
+Save also emits `silent-gear-wearer-manual.txt`: chat-sized vanilla commands for
+Nickel/Refined Iron plates, with each actual native iron-armor main-part swap
+and resulting Adamant/Stellar trait verified. They are explicit debug fixtures,
+not stock ingredient acquisition or mixed-root part-editing support. The final
+[manual checklist](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#114-ordinary-client-checklist--accepted)
+records the owner's acceptance on 2026-10-20 and explains usable native controls.
 
 Native logs retain the known optional Bonsai recipe-serializer error. Client
 logs also expose SG's own model/texture notices and missing stone-anvil subtitle
