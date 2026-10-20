@@ -15,6 +15,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeInfusionCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffects;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -44,6 +45,7 @@ public class MismatchedBootsNeoForge {
         NeoVitaeInfusionCompatibility.initialize(eventBus);
         SilentGearCompatibility.initialize(eventBus);
         SilentGearEffects.initialize(eventBus);
+        SilentGearRecognition.initialize(eventBus);
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();

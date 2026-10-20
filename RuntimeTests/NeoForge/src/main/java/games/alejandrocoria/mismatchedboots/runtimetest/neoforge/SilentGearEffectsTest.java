@@ -217,6 +217,23 @@ public final class SilentGearEffectsTest {
         if (observing) { recalculations++; throw new AssertionError("Production B entered native gear recalculation"); }
     }
     private static void observe(Runnable action) { observing = true; try { action.run(); } finally { observing = false; } }
+    /** One seeded repair witness for feature-isolation suites; do not repeat this file's complete matrix. */
+    static void smoke(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
+        clear(player); SilentGearTraitSpike.initialize(api);
+        var field = Class.forName("net.silentchaos512.lib.util.MathUtils").getDeclaredField("RANDOM"); field.setAccessible(true);
+        var nativeRandom = (Random) field.get(null);
+        ItemStack source = api.boot("amethyst");
+        Object instance = view(source).get("silentgear:renew");
+        long activation = seed(chance(effect(instance, "SelfRepairTraitEffect")) * level(instance), true);
+        ItemStack control = source.copy(); control.setDamageValue(12);
+        nativeRandom.setSeed(activation); control.inventoryTick(player.level(), player, null);
+        require(control.getDamageValue() < 12, "Native repair smoke did not activate");
+        ItemStack root = pair(player, source, new ItemStack(Items.DIAMOND_BOOTS)).getFirst(); root.setDamageValue(12);
+        ItemStack before = root.copy(); nativeRandom.setSeed(activation); root.inventoryTick(player.level(), player, null);
+        require(root.getDamageValue() == control.getDamageValue(), "Independent repair disabled by recognition refusal"); unchanged(before, root);
+        report.append("Repair isolation: one seeded native Renew heal matches the production root; immutable sources\n");
+    }
+
     private static Object effect(Object instance, String type) throws Exception {
         return ((List<?>) traitOf(instance).getClass().getMethod("getEffects").invoke(traitOf(instance))).stream()
                 .filter(value -> value.getClass().getSimpleName().equals(type)).findFirst().orElseThrow();

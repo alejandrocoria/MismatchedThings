@@ -17,6 +17,7 @@ abstract class SilentGearRecalculationWitnessMixin {
     private static void observe(ItemStack stack, Player player, CallbackInfo ci) {
         SilentGearTraitSpike.recalculation(stack);
         SilentGearEffectsTest.recalculation(stack);
+        games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearRecognitionTest.recalculation(stack);
         games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearLiveStateTest.recalculation(stack);
     }
 }

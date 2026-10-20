@@ -14,7 +14,6 @@ import net.minecraft.world.item.ItemInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -44,40 +43,8 @@ public final class SilentGearTraitSpike {
         SilentGearWearerFixture.bind();
         report.append("\nTRAIT REUSE SPIKE (scoped research hooks, not production)\n");
         numericControls(player, report);
-        ItemStack gold = api.boot("gold"), stellar = api.boot("refined_iron"), moon = api.boot("azure_silver");
-        for (ItemStack root : pair(player, gold, stellar)) {
-            ItemStack before = root.copy();
-            var traits = view(root);
-            require(level(traits.get("silentgear:brilliant")) > 0 && level(traits.get("silentgear:stellar")) > 0,
-                    "Cross-source view lost a native trait");
-            ItemStack carrier = carrier(root, traits);
-            require(carrier.getItem().makesPiglinsNeutral(carrier, player)
-                    && !root.getItem().makesPiglinsNeutral(root, player), "Brilliant reuse/native root control differs");
-            require(ItemStack.matches(before, root), "Brilliant changed root/sources");
-        }
-        report.append("Brilliant: both cross-source orientations; native carrier callback=true, production root=false; unchanged roots/sources\n");
-
-        Method fall = nativeClass("event.GearEvents").getMethod("onLivingFall", LivingFallEvent.class);
-        for (ItemStack root : pair(player, moon, new ItemStack(Items.DIAMOND_BOOTS))) {
-            clear(player); player.setItemSlot(EquipmentSlot.FEET, root);
-            ItemStack before = root.copy();
-            int nativeLevel = api.traitLevel(moon, "moonwalker");
-            var baseline = new LivingFallEvent(player, 10, 1);
-            fall.invoke(null, baseline);
-            close(baseline.getDistance(), 10, "Unadapted mixed fall control");
-            active = true;
-            try {
-                var candidate = new LivingFallEvent(player, 10, 1);
-                fall.invoke(null, candidate);
-                close(candidate.getDistance(), 10 * (1 + nativeLevel * -0.15F), "Native Moonwalker event");
-                require(!candidate.isCanceled() && ItemStack.matches(before, root), "Moonwalker mutated root or ran Bounce");
-                report.append("Moonwalker native event: level=").append(nativeLevel).append(" distance=")
-                        .append(candidate.getDistance()).append("; unadapted=10; native handler reused\n");
-            } finally { active = false; }
-        }
-        clear(player); player.setItemSlot(EquipmentSlot.FEET, moon);
-        var nativeFall = new LivingFallEvent(player, 10, 1); fall.invoke(null, nativeFall);
-        close(nativeFall.getDistance(), 10 * (1 + api.traitLevel(moon, "moonwalker") * -0.15F), "Native fall positive control");
+        // Brilliant/Moonwalker research is superseded by B's production-only recognition suite.
+        ItemStack gold = api.boot("gold"), stellar = api.boot("refined_iron");
         ItemStack iron = api.boot("iron");
         int lowerLevel = api.traitLevel(gold, "malleable"), higherLevel = api.traitLevel(iron, "malleable");
         require(lowerLevel > 0 && lowerLevel < higherLevel, "Native unequal-level control did not differ");
@@ -133,12 +100,6 @@ public final class SilentGearTraitSpike {
         clear(player);
         report.append("Stellar dispatch: native Wielder only; native SelfRepair explicitly refused; no root/carrier/source changes, zero native recalculations\n")
                 .append("Scope does not establish safe Renew/Bounce-wear/oxidation/damage-property mutation or production guards\n");
-    }
-
-    /** Delegate native armor/Curios first; add only mixed FEET's Moonwalker contribution. */
-    public static int fallLevel(Player player, Object resource, int original) throws Exception {
-        if (!active || !resource.getClass().getMethod("getId").invoke(resource).toString().equals("silentgear:moonwalker")) { return original; }
-        return Math.max(original, level(view(player.getItemBySlot(EquipmentSlot.FEET)).get("silentgear:moonwalker")));
     }
 
     public static void recalculation(ItemStack stack) {

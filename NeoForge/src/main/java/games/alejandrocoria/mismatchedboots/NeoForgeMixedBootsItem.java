@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearLiveState;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -29,6 +30,11 @@ import java.util.function.Consumer;
 public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     public NeoForgeMixedBootsItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public boolean makesPiglinsNeutral(ItemStack stack, LivingEntity entity) {
+        return SilentGearRecognition.brilliant(stack, entity, super.makesPiglinsNeutral(stack, entity));
     }
 
     @Override

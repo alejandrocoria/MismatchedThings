@@ -140,16 +140,16 @@ lanes are removed. Wearer-event research is retained **separately**:
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=research --console=plain
 ```
 
-This variant enables the local Moonwalker/set research hooks. Native
-Brilliant/Moonwalker/Stellar carrier/recognition proofs do not install production
-wearer effects. The recalculation witness remains independently available to
+This variant now enables only the local Wielder/set research hooks. B's production
+Brilliant/Moonwalker suite replaces their old candidate cases and fall hook.
+The recalculation witness remains independently available to
 production tests, without enabling those recognition hooks.
 
 The separate [wearer plan](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md)
 adds A's inert optional binding and paired-predicate proof. The old research
 counter HEAD replacement is removed: both research scopes now retain the native
-loop and modify only its two local predicate results. No production item/tick/
-event routing is enabled by A; B–D remain pending.
+loop and modify only its two local predicate results. A alone enables no production
+Wielder dispatch; B adds Brilliant/Moonwalker below, while C/D remain pending.
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer --console=plain
@@ -162,8 +162,8 @@ event routing is enabled by A; B–D remain pending.
 Flame Ward/Stellar definitions, native 0..4-piece controls and both paid output
 orientations. It checks native-chest and carrier callers, hands versus idle,
 ten-tick cadence, real potion expiry, unchanged gear and a calibrated native
-recalculation tripwire. It also rechecks Brilliant/Moonwalker research, not their
-future production routing. `wearer-compatible` adds an independent HEAD result
+recalculation tripwire. Brilliant/Moonwalker production acceptance is separate;
+their old candidate checks are retired. `wearer-compatible` adds an independent HEAD result
 extension; `wearer-type` / `wearer-trait` alter one native predicate each and
 require the complete pair plus optional dispatch to refuse before actor writes.
 Native callers retain their ordinary behavior under refusal. Native material
@@ -175,6 +175,31 @@ child logs: `RuntimeTests/NeoForge/build/reports/silent-gear-stats-<version>-<va
 Append `'-Pneoforge_version=26.1.2.99'` for the supported floor; restore ordinary
 .114 afterward. The [A record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#8-block-a-execution-record--2026-10-19)
 owns exact executed baselines and limits, not continuous production/client acceptance.
+
+B's production recognition scopes use the same gate with research recognition off:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-compatible --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-brilliant --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-moonwalker --console=plain
+```
+
+These exercise both paid orientations, actual vanilla/native piglin armor checks,
+the registered native fall event, maximum source/native-armor levels, ordinary
+true results, unequipped/invalid/plain roots, cancellation/short falls and native
+Bounce isolation. Complete gear snapshots and a calibrated native-recalculation
+witness protect the read-only calls. `recognition-compatible` adds a real chained
+query-result mixin with controlled optional-query values 2/5, **not actual Curios
+runtime acceptance**. The last two scopes replace one native consumer each,
+requiring one bounded diagnostic and independent survival of the other feature,
+seeded repair, native-compared dynamic armor and a copper clock advance. Full old
+state matrices remain on the ordinary gate rather than repeating in each scope.
+Wielder must still remain off in production. Output locations/floor flag are the
+same as A; [B's record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#9-block-b-execution-record--2026-10-19)
+owns exact executed technical evidence and the separate owner manual checklist.
+The owner accepted B's Brilliant/Moonwalker smoke on 2026-10-20, including the
+native Moonwalker advancement; C/D remain pending.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

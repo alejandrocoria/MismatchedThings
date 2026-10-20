@@ -46,11 +46,18 @@ final class SilentGearFoundationTest {
             root.inventoryTick(player.level(), player, null);
             root.hurtAndBreak(3, player, net.minecraft.world.entity.EquipmentSlot.FEET);
             require(root.getDamageValue() == 8, "Absent SG changed ordinary tick/wear callbacks");
+            require(!root.getItem().makesPiglinsNeutral(root, player)
+                    && games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition.brilliant(root, player, true),
+                    "Absent SG recognition changed ordinary item results");
+            player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, root);
+            var fall = new net.neoforged.neoforge.event.entity.living.LivingFallEvent(player, 10, 1);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(fall);
+            require(fall.getDistance() == 10 && !fall.isCanceled(), "Absent SG changed ordinary fall dispatch");
             var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
             require(ItemStack.matches(root, ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, root).getOrThrow()).getOrThrow()),
                     "Our registered state did not decode without native classes");
         }
-        NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", "SG absent: two paid ordinary orientations; production recomposition/trait view neutral; ordinary tick/wear with own state; own state codec independent of SG\n");
+        NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", "SG absent: two paid ordinary orientations; production recomposition/trait view neutral; ordinary tick/wear/recognition/fall with own state; own state codec independent of SG\n");
     }
 
     static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {

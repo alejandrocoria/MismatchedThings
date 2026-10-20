@@ -4,6 +4,10 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearEffectsFaultPlugin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["SilentGearEffectsFaultMixin"],
+  "mixins": [
+    "SilentGearEffectsFaultMixin",
+    "SilentGearMoonQueryPeerMixin",
+    "SilentGearRecognitionFaultMixin"
+  ],
   "injectors": {"defaultRequire": 1}
 }

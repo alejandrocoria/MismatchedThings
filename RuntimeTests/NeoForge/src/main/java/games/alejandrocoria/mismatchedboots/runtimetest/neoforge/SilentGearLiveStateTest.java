@@ -366,6 +366,23 @@ public final class SilentGearLiveStateTest {
         } }
         return switch (policy) { case AVERAGE -> (armor(a) + armor(b)) / 2; case MAXIMUM -> Math.max(armor(a), armor(b)); case SEPARATE -> armor(a); default -> throw new AssertionError(); };
     }
+
+    /** Representative independent writers for another feature's refusal gate, not a second state matrix. */
+    static void smoke(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
+        ItemStack root = NeoForgeSilentGearTest.workbench(player, api.boot("bone"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        root.setDamageValue(root.getMaxDamage() / 2); double stale = armor(root);
+        tick(player, root, 21, EquipmentSlot.FEET);
+        close(armor(root), expectedArmor(root, api, player, AttributePolicy.AVERAGE), "Independent armor refresh");
+        require(Math.abs(stale - armor(root)) > 1E-5, "Armor refresh isolation had no dynamic control");
+        ItemStack copper = api.boot("copper"); copper.set(NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER"), 10);
+        root = NeoForgeSilentGearTest.workbench(player, copper, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        int counter = root.get(SilentGearCompatibility.state()).left().orElseThrow().counter();
+        var sources = ModContent.getMixedBootsData(root).orElseThrow();
+        tick(player, root, 20, null);
+        require(root.get(SilentGearCompatibility.state()).left().orElseThrow().counter() == counter + 1
+                && ModContent.getMixedBootsData(root).orElseThrow().equals(sources), "Independent oxidation clock/source isolation failed");
+        report.append("Live-state isolation: bone armor refresh matches native computation; one copper clock advance, immutable sources\n");
+    }
     private static void recalc(ItemStack source, Player player) throws Exception { nativeClass("util.GearData").getMethod("recalculateGearData", ItemStack.class, Player.class).invoke(null, source, player); }
     private static void equipped(ServerPlayer player, ItemStack root) throws Exception {
         var update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates"); update.setAccessible(true); update.invoke(player);

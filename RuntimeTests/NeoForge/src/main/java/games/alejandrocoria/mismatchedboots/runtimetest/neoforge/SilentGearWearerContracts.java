@@ -50,7 +50,7 @@ final class SilentGearWearerContracts {
             catch (InvocationTargetException expected) { witnessed = expected.getCause() instanceof AssertionError; }
             require(witnessed, "Recalculation observer was not calibrated");
         } finally { SilentGearWearerFixture.active = false; }
-        report.append("\nWEARER A: paired local predicates, optional binding; production routing remains OFF\n");
+        report.append("\nWEARER A: paired local predicates, optional binding; Wielder production routing remains OFF\n");
         for (String ingredient : List.of("ingots/nickel", "ingots/lead", "ingots/refined_iron", "ingots/crimson_steel", "gems/prismarine")) {
             var items = new ArrayList<String>();
             for (var holder : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", ingredient)))) {
@@ -153,14 +153,14 @@ final class SilentGearWearerContracts {
         }
         if (!refused) { obtainableAquatic(player, api, report); }
         if (variant.equals("wearer-compatible")) { compatibleSlot(player, api, report); }
-        // Root remains ordinary outside the explicit research scope.
+        // Wielder research is off; Brilliant now uses B's independently guarded production callback.
         SilentGearWearerFixture.active = false;
         var nativeBrilliant = api.boot("gold");
         for (var root : NeoForgeSilentGearTest.workbench(player, nativeBrilliant, new ItemStack(Items.DIAMOND_BOOTS))) {
             SilentGearWearerFixture.active = true;
             ItemStack before = root.copy(), carrier = SilentGearWearerFixture.carrier(root), carrierBefore = carrier.copy();
             require(carrier.getItem().makesPiglinsNeutral(carrier, player), "Bound native Brilliant receiver lost merged trait view");
-            require(!root.getItem().makesPiglinsNeutral(root, player), "A accidentally enabled production Brilliant");
+            require(root.getItem().makesPiglinsNeutral(root, player), "B production Brilliant regressed");
             require(ItemStack.matches(before, root) && ItemStack.matches(carrierBefore, carrier), "Brilliant carrier mutated gear");
             SilentGearWearerFixture.active = false;
         }
