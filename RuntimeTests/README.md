@@ -140,10 +140,41 @@ lanes are removed. Wearer-event research is retained **separately**:
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=research --console=plain
 ```
 
-Only this variant enables the local Moonwalker/set research hooks. Native
+This variant enables the local Moonwalker/set research hooks. Native
 Brilliant/Moonwalker/Stellar carrier/recognition proofs do not install production
 wearer effects. The recalculation witness remains independently available to
 production tests, without enabling those recognition hooks.
+
+The separate [wearer plan](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md)
+adds A's inert optional binding and paired-predicate proof. The old research
+counter HEAD replacement is removed: both research scopes now retain the native
+loop and modify only its two local predicate results. No production item/tick/
+event routing is enabled by A; B–D remain pending.
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-compatible --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-type --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-trait --console=plain
+```
+
+`wearer` extends the maintained native fixture with independent Adamant/Aquatic/
+Flame Ward/Stellar definitions, native 0..4-piece controls and both paid output
+orientations. It checks native-chest and carrier callers, hands versus idle,
+ten-tick cadence, real potion expiry, unchanged gear and a calibrated native
+recalculation tripwire. It also rechecks Brilliant/Moonwalker research, not their
+future production routing. `wearer-compatible` adds an independent HEAD result
+extension; `wearer-type` / `wearer-trait` alter one native predicate each and
+require the complete pair plus optional dispatch to refuse before actor writes.
+Native callers retain their ordinary behavior under refusal. Native material
+construction without available ingredients is explicitly labeled; an actual
+iron/prismarine coating recipe supplies the obtainable Aquatic control.
+
+Reports: `RuntimeTests/NeoForge/build/reports/silent-gear-effects/<version>/<variant>/`;
+child logs: `RuntimeTests/NeoForge/build/reports/silent-gear-stats-<version>-<variant>-process.log`.
+Append `'-Pneoforge_version=26.1.2.99'` for the supported floor; restore ordinary
+.114 afterward. The [A record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#8-block-a-execution-record--2026-10-19)
+owns exact executed baselines and limits, not continuous production/client acceptance.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

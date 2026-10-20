@@ -4,7 +4,7 @@ def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archive
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
-if (!(effectVariant in ['', 'repair', 'wear', 'compatible', 'state', 'joint', 'research'])) { throw new GradleException('Unknown SG effect test variant') }
+if (!(effectVariant in ['', 'repair', 'wear', 'compatible', 'state', 'joint', 'research', 'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait'])) { throw new GradleException('Unknown SG effect test variant') }
 def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"

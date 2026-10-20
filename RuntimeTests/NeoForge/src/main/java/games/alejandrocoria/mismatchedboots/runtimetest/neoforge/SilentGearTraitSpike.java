@@ -28,7 +28,6 @@ import java.util.function.Supplier;
 public final class SilentGearTraitSpike {
     private static NeoForgeSilentGearTest.NativeApi api;
     private static boolean active;
-    private static int setQueries;
     private static int recalculations;
     private static final Class<?> TRAIT = nativeClass("gear.trait.Trait");
     private static final Class<?> INSTANCE = nativeClass("api.traits.TraitInstance");
@@ -42,6 +41,7 @@ public final class SilentGearTraitSpike {
 
     static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi nativeApi, StringBuilder report) throws Exception {
         initialize(nativeApi);
+        SilentGearWearerFixture.bind();
         report.append("\nTRAIT REUSE SPIKE (scoped research hooks, not production)\n");
         numericControls(player, report);
         ItemStack gold = api.boot("gold"), stellar = api.boot("refined_iron"), moon = api.boot("azure_silver");
@@ -129,31 +129,10 @@ public final class SilentGearTraitSpike {
         } finally { active = false; }
         recalculations = 0;
         setCase(player, root, chest, helmet, legs, true, true, 4, false, report);
-        require(setQueries > 0 && recalculations == 0, "Native consumer was not exercised or recalculated gear");
+        require(recalculations == 0, "Native consumer recalculated gear");
         clear(player);
         report.append("Stellar dispatch: native Wielder only; native SelfRepair explicitly refused; no root/carrier/source changes, zero native recalculations\n")
                 .append("Scope does not establish safe Renew/Bounce-wear/oxidation/damage-property mutation or production guards\n");
-    }
-
-    /** Scoped replacement of this one private native counter, preserving native checks outside FEET. */
-    public static Integer setCount(Object context, Object type, Player player) throws Exception {
-        if (!active || type != ((Supplier<?>) nativeClass("setup.gear.GearTypes").getField("ARMOR").get(null)).get()) { return null; }
-        Object trait = CONTEXT.getMethod("trait").invoke(context);
-        int count = 0;
-        Class<?> armor = nativeClass("api.item.GearArmor");
-        for (EquipmentSlot slot : EquipmentSlotGroup.ARMOR) {
-            ItemStack stack = player.getItemBySlot(slot);
-            boolean has;
-            if (slot == EquipmentSlot.FEET && ModContent.getMixedBootsData(stack).isPresent()) {
-                has = view(stack).values().stream().anyMatch(instance -> traitOf(instance) == trait);
-            } else {
-                has = armor.isInstance(stack.getItem())
-                        && (boolean) api.helper.getMethod("hasTrait", ItemInstance.class, TRAIT).invoke(null, stack, trait);
-            }
-            if (has) { count++; }
-        }
-        setQueries++;
-        return count;
     }
 
     /** Delegate native armor/Curios first; add only mixed FEET's Moonwalker contribution. */
@@ -163,7 +142,7 @@ public final class SilentGearTraitSpike {
     }
 
     public static void recalculation(ItemStack stack) {
-        if (active) {
+        if (active || SilentGearWearerFixture.active) {
             recalculations++;
             throw new AssertionError("Research pure-effect scope entered native recalculation: " + stack.getItem());
         }
@@ -181,6 +160,7 @@ public final class SilentGearTraitSpike {
         ItemStack carrier = mixedContext ? carrier(root, view(root)) : chest.copy();
         ItemStack carrierBefore = carrier.copy();
         active = candidate;
+        SilentGearWearerFixture.active = candidate;
         try {
             int blocked = dispatch(player, mixedContext ? root : chest, instance, carrier, !unselected);
             require(blocked == 1, "Stellar's self-repair was not refused independently");
@@ -195,7 +175,7 @@ public final class SilentGearTraitSpike {
             report.append("Stellar: candidate=").append(candidate).append(" context=").append(mixedContext ? "mixed-view" : "native-chest")
                     .append(" pieces=").append(count).append(" selected=").append(!unselected)
                     .append(" speed=").append(speed).append(" jump=").append(jump).append(" refusedSelfRepair=1\n");
-        } finally { active = false; }
+        } finally { active = false; SilentGearWearerFixture.active = false; }
     }
 
     /** Select concrete proven wearer effects, not the whole trait (Stellar mixes repair and potions). */
