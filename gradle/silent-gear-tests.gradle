@@ -147,6 +147,90 @@ tasks.register('verifySilentGearAbsent') {
 def lifecycleRun = layout.buildDirectory.dir("run/silentGearLifecycle/${neoforge_version}/server")
 def clientRun = layout.buildDirectory.dir("run/silentGearLifecycle/${neoforge_version}/client")
 def lifecycleReports = layout.buildDirectory.dir("reports/silent-gear-lifecycle/${neoforge_version}")
+// Research only: fresh SG-only seed and one connected client, separate from production lifecycle gates.
+def remainingRun = layout.buildDirectory.dir("run/silentGearRemaining/${neoforge_version}")
+def remainingReports = layout.buildDirectory.dir("reports/silent-gear-remaining/${neoforge_version}")
+neoForge.runs.create('silentGearRemainingSeed') {
+    server(); disableIdeRun()
+    gameDirectory = remainingRun.get().dir('server').asFile
+    programArgument('--nogui')
+    systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
+    systemProperty('mismatchedboots.runtimetest.silentGearRemainingSeed', 'true')
+    jvmArgument('-Xmx1G')
+}
+neoForge.runs.create('silentGearRemainingSpike') {
+    client(); disableIdeRun()
+    gameDirectory = remainingRun.get().dir('client').asFile
+    programArgument('--quickPlaySingleplayer'); programArgument('remaining')
+    programArgument('--username'); programArgument('SGRemaining')
+    systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
+    systemProperty('mismatchedboots.runtimetest.silentGearRemainingSpike', 'true')
+    systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+    systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+    jvmArgument('-Xmx1G')
+}
+tasks.register('prepareSilentGearRemainingSeed') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def jars = artifacts.findAll { name, hash -> name.startsWith('silent-') }.collect { name, hash ->
+            def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
+            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
+                throw new GradleException("Missing/unexpected SG remaining fixture: ${jar}")
+            }
+            jar
+        }
+        fixtureFiles.delete { delete remainingRun, remainingReports }
+        def server = remainingRun.get().dir('server').asFile
+        fixtureFiles.copy { from(productionJar, fixtureJar, jars); into(new File(server, 'mods')) }
+        new File(server, 'eula.txt').text = 'eula=true\n'
+        new File(server, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+    }
+}
+tasks.named('runSilentGearRemainingSeed') { dependsOn('prepareSilentGearRemainingSeed') }
+tasks.register('prepareSilentGearRemainingSpike') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!new File(remainingReports.get().asFile, 'silent-gear-remaining-seed-success.txt').isFile()) {
+            throw new GradleException('Remaining spike requires fresh seed')
+        }
+        def client = remainingRun.get().dir('client').asFile
+        fixtureFiles.delete { delete client }
+        fixtureFiles.copy { from(remainingRun.get().dir('server/world')); into(new File(client, 'saves/remaining')) }
+        fixtureFiles.copy { from(remainingRun.get().dir('server/mods')); into(new File(client, 'mods')) }
+        new File(client, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
+        def config = new File(client, 'config'); config.mkdirs()
+        new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+        fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(remainingReports.get().asFile, "silent-gear-remaining-${it}.txt") }) }
+    }
+}
+tasks.named('runSilentGearRemainingSpike') { dependsOn('prepareSilentGearRemainingSpike') }
+tasks.register('verifySilentGearRemainingSpike') {
+    group = 'verification'
+    description = 'Research-only Void Ward, Snow Walker and cure native/mixed connected controls'
+    doLast {
+        ['Seed', 'Spike'].each { phase ->
+            def log = layout.buildDirectory.file("reports/silent-gear-remaining-${neoforge_version}-${phase.toLowerCase(Locale.ROOT)}-process.log").get().asFile
+            runBounded(":RuntimeTests:NeoForge:runSilentGearRemaining${phase}", log, 300)
+            def result = remainingReports.get().asFile
+            def failure = new File(result, 'silent-gear-remaining-failure.txt')
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (!new File(result, "silent-gear-remaining-${phase == 'Seed' ? 'seed-success' : 'success'}.txt").isFile()) {
+                throw new GradleException("Missing remaining ${phase} evidence: ${log}")
+            }
+        }
+        def report = new File(remainingReports.get().asFile, 'silent-gear-remaining-report.txt')
+        if (!report.isFile() || report.readLines().size() != 19) { throw new GradleException("Incomplete remaining-effects evidence: ${report}") }
+        logger.lifecycle(report.text)
+    }
+}
 ['Save', 'Restart'].each { phase ->
     neoForge.runs.create("silentGear${phase}") {
         server(); disableIdeRun()

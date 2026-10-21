@@ -15,6 +15,19 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingSeed")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
+                games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles.write("silent-gear-remaining-seed-success.txt", "fresh flat world\n");
+                event.getServer().halt(false);
+            });
+            return;
+        }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingSpike")) {
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SilentGearRemainingClientSpike.tick(Minecraft.getInstance()));
+            }
+            return;
+        }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearClient")) {
             if (FMLEnvironment.getDist().isClient()) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SilentGearClientTest.tick(Minecraft.getInstance()));

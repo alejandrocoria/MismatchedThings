@@ -11,6 +11,8 @@
     "SilentGearMagnetPeerMixin",
     "SilentGearMagnetWitnessMixin",
     "SilentGearRecalculationWitnessMixin",
+    "SilentGearRemainingItemMixin",
+    "SilentGearRemainingVoidMixin",
     "SilentGearSetFaultMixin",
     "SilentGearSetPeerMixin"
   ],
