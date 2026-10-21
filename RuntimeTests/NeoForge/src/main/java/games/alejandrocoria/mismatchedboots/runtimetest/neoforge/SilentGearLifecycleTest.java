@@ -118,6 +118,7 @@ final class SilentGearLifecycleTest {
         ItemStack magnetic = (ItemStack) api.assemble.invoke(recipe, input);
         require(api.traitLevel(magnetic, "magnetic") == 5, "Persisted native preparation lacks Magnetic V");
         roots.add(NeoForgeSilentGearTest.workbench(player, magnetic, new ItemStack(Items.DIAMOND_BOOTS)).getFirst());
+        roots.addAll(SilentGearRemainingFixture.persisted(player, api));
 
         server.overworld().setBlock(BARREL, Blocks.BARREL.defaultBlockState(), 3);
         var barrel = barrel(server);
@@ -129,9 +130,9 @@ final class SilentGearLifecycleTest {
         barrel.setChanged();
         var manifest = new JsonObject(); manifest.addProperty("process", ProcessHandle.current().pid()); manifest.add("roots", saved);
         NetworkAcceptanceFiles.write("silent-gear-saved.json", manifest.toString());
-        NetworkAcceptanceFiles.write("silent-gear-save-report.txt", "World barrel: nine complete paid roots; unequal transitioned copper inverses, "
+        NetworkAcceptanceFiles.write("silent-gear-save-report.txt", "World barrel: twelve complete paid roots; unequal transitioned copper inverses, "
                 + "worn quartz inverses with maximum policy/removal/foreign metadata, damaged Stellar+Brilliant and Moonwalker+copper inverses; "
-                + "one native grid-upgraded Magnetic V root for ordinary client motion/pickup; verified vanilla/native manual commands for missing-ingredient Adamant/Stellar gear\n");
+                + "one native grid-upgraded Magnetic V root; three used/damaged Void Ward, inverse Snow Walker and distinct synthetic cure roots; verified vanilla/native manual commands including cure sources\n");
     }
 
     private static void restart(MinecraftServer server) throws Exception {
@@ -140,7 +141,7 @@ final class SilentGearLifecycleTest {
         require(manifest.get("process").getAsLong() != ProcessHandle.current().pid(), "Reload reused the save JVM");
         var barrel = barrel(server);
         var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-        var saved = manifest.getAsJsonArray("roots"); require(saved.size() == 9, "Incomplete saved expectations");
+        var saved = manifest.getAsJsonArray("roots"); require(saved.size() == 12, "Incomplete saved expectations");
         for (int index = 0; index < saved.size(); index++) {
             ItemStack expected = ItemStack.CODEC.parse(ops, saved.get(index)).getOrThrow();
             require(ItemStack.matches(expected, barrel.getItem(index)), "World reload changed root/source/projection/clock " + index);
@@ -223,9 +224,11 @@ final class SilentGearLifecycleTest {
         player.removeAllEffects(); barrel.setChanged();
         require(SilentGearCompatibility.effectiveTraits(barrel.getItem(8)).stream().anyMatch(trait ->
                 trait.id().toString().equals("silentgear:magnetic") && trait.level() == 5), "World restart lost prepared Magnetic V");
-        NetworkAcceptanceFiles.write("silent-gear-restart-report.txt", "Different JVM: nine actual world roots compared before callbacks, including unchanged prepared Magnetic V; "
+        SilentGearRemainingFixture.selected(player, List.of(barrel.getItem(9), barrel.getItem(10), barrel.getItem(11)));
+        NetworkAcceptanceFiles.write("silent-gear-restart-report.txt", "Different JVM: twelve actual world roots compared before callbacks, including unchanged prepared Magnetic V and three used remaining-effect roots; "
                 + "no offline progress or reseeding; selected pause/idle continuation, native worn maximum and persistent removal; "
-                + "paid smithing/crafting repair, new average policy only on recomposition; Stellar potions + one seeded heal, Brilliant and Moonwalker resume on both inverses; immutable sources\n");
+                + "paid smithing/crafting repair, new average policy only on recomposition; Stellar potions + one seeded heal, Brilliant and Moonwalker resume on both inverses; "
+                + "Void Ward, inverse Snow Walker and distinct cures resume unchanged; immutable sources\n");
     }
 
     static BarrelBlockEntity barrel(MinecraftServer server) {

@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 
-import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearRemainingSpike;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearRemainingFixture;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -16,7 +16,7 @@ abstract class SilentGearCureWitnessMixin {
     private void called(Object effect, Object instance, ItemStack copy, ServerLevel level, Player player, CallbackInfo ci) {
         try {
             String name = instance.getClass().getMethod("getTraitId").invoke(instance).toString().split(":")[1];
-            SilentGearRemainingSpike.cureCalls.merge(name, 1, Integer::sum);
+            SilentGearRemainingFixture.cureCalls.merge(name, 1, Integer::sum);
         } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
     }
 }

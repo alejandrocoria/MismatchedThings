@@ -22,9 +22,9 @@ public final class NeoForgeRuntimeTest {
             });
             return;
         }
-        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingSpike")) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingTest")) {
             if (FMLEnvironment.getDist().isClient()) {
-                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SilentGearRemainingClientSpike.tick(Minecraft.getInstance()));
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SilentGearRemainingClientTest.tick(Minecraft.getInstance()));
             }
             return;
         }

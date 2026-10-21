@@ -321,10 +321,10 @@ The remaining-effects gate now uses **production Void Ward, Snow Walker and
 Cure Poison/Wither**, with no research gameplay fallback:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike '-Pneoforge_version=26.1.2.99' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike '-PsilentGearVoidVariant=compatible' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike '-PsilentGearVoidVariant=refused' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining '-PsilentGearVoidVariant=compatible' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining '-PsilentGearVoidVariant=refused' --console=plain
 ```
 
 It creates a fresh SG/Silent Lib-only server seed and one hidden/muted integrated
@@ -351,8 +351,35 @@ plus completed Brilliant/Moonwalker. Other adapter warnings are rejected.
 [A's production record](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md#6-block-a-execution-record--2026-10-21)
 owns the executed matrix; the [original spike](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-EXPLORATION.md#9-bounded-connected-spike--2026-10-21)
 is historical. [B's production record](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md#7-block-b-execution-record--2026-10-21)
-owns Snow Walker/cures and their .99/.114 checks. C remains pending and Magic
-Armor is outside this gate. Synthetic cure sources are not stock survival recipes.
+owns Snow Walker/cures and their .99/.114 checks.
+[C's consolidation record](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md#8-block-c--consolidation-lifecycle-and-manual-handoff)
+retires the `*RemainingSpike` class/task/property names without aliases. The
+current driver/helper are `SilentGearRemainingClientTest`/`SilentGearRemainingFixture`;
+only optional witnesses remain. Process logs now end in `-seed`/`-client`, not
+`-spike`. Magic Armor is outside this gate.
+
+The existing `verifySilentGearLifecycle` gate also saves **12** barrel roots:
+the original nine plus three damaged, actually used Ward/Snow Walker/distinct-cure
+pairs. Restart compares their complete data before invoking callbacks. Client
+and separate-JVM Rejoin each reuse the normal driver's observation/Session code
+for only three scenes: native rescue motion/potions, natural powder-snow support/
+descending, and distinct-cure cancellation/effect packets. Player slots 13–15,
+same UUID and complete used roots are compared before other scenes clear the
+test inventory; no recrafting/reseed is allowed. Each phase requires three
+`silent-gear-remaining-{client,rejoin}-report.txt` lines plus the player manifest.
+Existing state/wearer/magnet/defensive lifecycle evidence remains required.
+
+`silent-gear-remaining-manual.txt` in the version-qualified lifecycle report
+directory contains three full `/give @p` source commands, verified through the
+vanilla parser and production Workbench/cure dispatch. Paste into a command
+block in a **test world** (longer than normal chat), activate near the player,
+then combine the supplied original boots. Synthetic cure sources are not stock
+survival recipes; no production debug command or native resource change is added.
+
+The owner confirmed all four ordinary-client manual groups passed on 2026-10-21:
+Void Ward, mixed Snow Walker/descending, single/distinct cure selection and actual
+save/rejoin. This accepts C and completes the bounded remaining-effects plan;
+automated evidence, native limitations and broader SG scope remain separate.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:
@@ -382,11 +409,13 @@ neutral callbacks and our own state codec without native classes.
 Run it after the default gate if both sets of reports should remain.
 
 `verifySilentGearLifecycle` sequentially launches Save, Restart, a hidden/muted
-integrated Client, and a separate Rejoin client JVM. The second JVM compares nine complete actual-world
+integrated Client, and a separate Rejoin client JVM. The second JVM compares twelve complete actual-world
 barrel stacks before callbacks: unequal transitioned copper inverses, worn
 quartz inverses with captured maximum policy, one explicit armor removal and
 foreign luck/name, damaged Stellar/Brilliant inverses and Moonwalker/copper
-inverses plus one native grid-upgraded Magnetic V + diamond root. It checks no offline progress/reseeding, selected pauses,
+inverses plus one native grid-upgraded Magnetic V + diamond root, and three used
+Void Ward/inverse Snow Walker/distinct synthetic-cure roots described above.
+It checks no offline progress/reseeding, selected pauses,
 continuation, native worn arithmetic, paid trim/crafting repair and policy
 recapture only on recomposition; wearer effects, one seeded Stellar heal,
 Brilliant recognition and Moonwalker resume on the saved inverses.

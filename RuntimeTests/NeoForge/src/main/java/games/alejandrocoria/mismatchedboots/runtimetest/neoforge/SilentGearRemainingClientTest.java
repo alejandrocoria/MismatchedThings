@@ -32,7 +32,7 @@ import java.util.concurrent.Future;
 import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearLifecycleTest.require;
 
 /** One real integrated connection; server-owned stacks stay on the server, only JSON crosses threads. */
-final class SilentGearRemainingClientSpike {
+final class SilentGearRemainingClientTest {
     private static final String OUTPUT = "silent-gear-remaining";
     private static final String VOID_VARIANT = System.getProperty("mismatchedboots.runtimetest.silentGearVoidVariant", "");
     private static final boolean VOID_REFUSED = VOID_VARIANT.equals("refused");
@@ -44,8 +44,76 @@ final class SilentGearRemainingClientSpike {
     private static Future<String> job;
     private static JsonObject state;
     private static Session session; // Integrated-server jobs only.
+    private static List<ItemStack> persisted; // Server jobs only; capture before other scenes clear inventory.
+    private static int lifecycleIndex;
+    private static boolean lifecycleFinishing;
+    private static String reportOutput = OUTPUT;
 
-    private SilentGearRemainingClientSpike() {}
+    private SilentGearRemainingClientTest() {}
+
+    static void captureRejoin(ServerPlayer owner) throws Exception {
+        var saved = JsonParser.parseString(java.nio.file.Files.readString(manifest())).getAsJsonObject();
+        require(saved.get("process").getAsLong() != ProcessHandle.current().pid()
+                && saved.get("uuid").getAsString().equals(owner.getUUID().toString()), "Remaining-effects rejoin reused JVM/changed UUID");
+        persisted = List.of(owner.getInventory().getItem(13), owner.getInventory().getItem(14), owner.getInventory().getItem(15));
+        var ops = owner.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+        for (int i = 0; i < 3; i++) {
+            var expected = ItemStack.CODEC.parse(ops, saved.getAsJsonArray("roots").get(i)).getOrThrow();
+            require(ItemStack.matches(expected, persisted.get(i)) && persisted.get(i).getDamageValue() == 3,
+                    "Player rejoin changed used remaining-effect root/source/history " + i);
+        }
+    }
+
+    static void restore(ServerPlayer owner) {
+        for (int i = 0; i < 3; i++) { owner.getInventory().setItem(13 + i, persisted.get(i)); }
+    }
+
+    private static java.nio.file.Path manifest() {
+        return java.nio.file.Path.of(System.getProperty("mismatchedboots.runtimetest.markers"), "silent-gear-remaining-player.json");
+    }
+
+    /** Only three used-root scenes, sharing the normal gate's observation and Session code. */
+    static boolean advanceLifecycle(Minecraft client, boolean rejoin) throws Exception {
+        if (finished) { return true; }
+        reportOutput = "silent-gear-remaining-" + (rejoin ? "rejoin" : "client");
+        if (job != null) {
+            if (!job.isDone()) { return false; }
+            state = JsonParser.parseString(job.get()).getAsJsonObject(); job = null;
+            if (lifecycleFinishing) { finished = true; return true; }
+        }
+        var server = client.getSingleplayerServer(); var uuid = client.player.getUUID();
+        if (state == null || !state.has("root")) {
+            mode = lifecycleIndex; index = mode == 0 ? 1 : mode == 1 ? 6 : 1;
+            int nextMode = mode, nextSample = index;
+            job = server.submit(() -> {
+                try {
+                    var owner = server.getPlayerList().getPlayer(uuid);
+                    if (persisted == null) {
+                        var barrel = SilentGearLifecycleTest.barrel(server);
+                        persisted = List.of(barrel.getItem(9).copy(), barrel.getItem(10).copy(), barrel.getItem(11).copy());
+                    }
+                    session = new Session(owner, nextMode, nextSample, persisted.get(nextMode)); return session.poll();
+                } catch (Exception failure) { throw new IllegalStateException(failure); }
+            }); return false;
+        }
+        if (!observed(client)) { return false; }
+        double clientY = client.player.getY(); boolean last = ++lifecycleIndex == 3;
+        job = server.submit(() -> {
+            session.finish(clientY);
+            if (last) {
+                var owner = server.getPlayerList().getPlayer(uuid); restore(owner);
+                if (!rejoin) {
+                    var saved = new JsonObject(); var roots = new com.google.gson.JsonArray();
+                    var ops = owner.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+                    for (var root : persisted) { roots.add(ItemStack.CODEC.encodeStart(ops, root).getOrThrow()); }
+                    saved.addProperty("process", ProcessHandle.current().pid()); saved.addProperty("uuid", uuid.toString()); saved.add("roots", roots);
+                    NetworkAcceptanceFiles.write("silent-gear-remaining-player.json", saved.toString());
+                }
+            }
+            return "{}";
+        });
+        lifecycleFinishing = last; released = false; return false;
+    }
 
     static void tick(Minecraft client) {
         if (finished) { return; }
@@ -83,34 +151,7 @@ final class SilentGearRemainingClientSpike {
                     catch (Exception failure) { throw new IllegalStateException(failure); }
                 }); return;
             }
-            ItemStack expected = ItemStack.CODEC.parse(client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE), state.get("root")).getOrThrow();
-            ItemStack received = mode == 2 ? held(client.player, index) : client.player.getItemBySlot(EquipmentSlot.FEET);
-            if (!ItemStack.matches(expected, received)) { job = server.submit(() -> session.poll()); return; }
-            if (mode == 0) {
-                if (!state.get("rescued").getAsBoolean() || !client.player.hasEffect(MobEffects.LEVITATION)
-                        || !client.player.hasEffect(MobEffects.SLOW_FALLING) || client.player.getY() < state.get("startY").getAsDouble() + 1
-                        || state.get("y").getAsDouble() < state.get("startY").getAsDouble() + 1) {
-                    job = server.submit(() -> session.poll()); return;
-                }
-            } else if (mode == 1) {
-                if (!released) {
-                    if (Math.abs(client.player.getY() - 82) > .1) { return; }
-                    released = true; job = server.submit(() -> session.release()); return;
-                }
-                if (state.get("age").getAsInt() < 45) { job = server.submit(() -> session.poll()); return; }
-                boolean supported = index == 0 || index >= 5;
-                require((client.player.getY() >= 80.95) == supported && (state.get("y").getAsDouble() >= 80.95) == supported,
-                        "Powder-snow real collision differs index=" + index + " server=" + state + " clientY=" + client.player.getY());
-                require(received.canWalkOnPowderedSnow(client.player) == supported, "Client snow callback differs");
-                if (supported) { descending(client.player); }
-            } else {
-                if (state.get("age").getAsInt() < 10) { job = server.submit(() -> session.poll()); return; }
-                boolean poison = index == 4, wither = index >= 3;
-                require(state.get("poison").getAsBoolean() == poison && state.get("wither").getAsBoolean() == wither
-                        && state.get("night").getAsBoolean(), "Ordinary cure server ticks differ: " + state);
-                if (client.player.hasEffect(MobEffects.POISON) != poison || client.player.hasEffect(MobEffects.WITHER) != wither
-                        || !client.player.hasEffect(MobEffects.NIGHT_VISION)) { job = server.submit(() -> session.poll()); return; }
-            }
+            if (!observed(client)) { return; }
             int doneMode = mode; double clientY = client.player.getY();
             job = server.submit(() -> session.finish(clientY));
             if (VOID_REFUSED) { mode = 4; return; }
@@ -122,6 +163,40 @@ final class SilentGearRemainingClientSpike {
                 mode = 4;
             }
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure(OUTPUT, failure); finished = true; client.stop(); }
+    }
+
+    /** Shared natural movement/collision/effect-packet observation for normal and used-root lifecycle scenes. */
+    private static boolean observed(Minecraft client) {
+        var server = client.getSingleplayerServer();
+        ItemStack expected = ItemStack.CODEC.parse(client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE), state.get("root")).getOrThrow();
+        ItemStack received = mode == 2 ? held(client.player, index) : client.player.getItemBySlot(EquipmentSlot.FEET);
+        if (!ItemStack.matches(expected, received)) { job = server.submit(() -> session.poll()); return false; }
+        if (mode == 0) {
+            if (!state.get("rescued").getAsBoolean() || !client.player.hasEffect(MobEffects.LEVITATION)
+                    || !client.player.hasEffect(MobEffects.SLOW_FALLING) || client.player.getY() < state.get("startY").getAsDouble() + 1
+                    || state.get("y").getAsDouble() < state.get("startY").getAsDouble() + 1) {
+                job = server.submit(() -> session.poll()); return false;
+            }
+        } else if (mode == 1) {
+            if (!released) {
+                if (Math.abs(client.player.getY() - 82) > .1) { return false; }
+                released = true; job = server.submit(() -> session.release()); return false;
+            }
+            if (state.get("age").getAsInt() < 45) { job = server.submit(() -> session.poll()); return false; }
+            boolean supported = index == 0 || index >= 5;
+            require((client.player.getY() >= 80.95) == supported && (state.get("y").getAsDouble() >= 80.95) == supported,
+                    "Powder-snow real collision differs index=" + index + " server=" + state + " clientY=" + client.player.getY());
+            require(received.canWalkOnPowderedSnow(client.player) == supported, "Client snow callback differs");
+            if (supported) { descending(client.player); }
+        } else {
+            if (state.get("age").getAsInt() < 10) { job = server.submit(() -> session.poll()); return false; }
+            boolean poison = index == 4, wither = index >= 3;
+            require(state.get("poison").getAsBoolean() == poison && state.get("wither").getAsBoolean() == wither
+                    && state.get("night").getAsBoolean(), "Ordinary cure server ticks differ: " + state);
+            if (client.player.hasEffect(MobEffects.POISON) != poison || client.player.hasEffect(MobEffects.WITHER) != wither
+                    || !client.player.hasEffect(MobEffects.NIGHT_VISION)) { job = server.submit(() -> session.poll()); return false; }
+        }
+        return true;
     }
 
     private static void complete(Minecraft client) {
@@ -145,8 +220,8 @@ final class SilentGearRemainingClientSpike {
         owner.setGameMode(GameType.SURVIVAL); owner.setHealth(owner.getMaxHealth()); owner.getFoodData().setFoodLevel(20);
         owner.setNoGravity(true); owner.setDeltaMovement(Vec3.ZERO); owner.fallDistance = 0; owner.setShiftKeyDown(false);
         SilentGearBounceTest.protectedRoot = null;
-        SilentGearRemainingSpike.queries = SilentGearRemainingSpike.pushes = SilentGearRemainingSpike.cureTicks = 0;
-        SilentGearRemainingSpike.cureCalls.clear();
+        SilentGearRemainingFixture.queries = SilentGearRemainingFixture.pushes = SilentGearRemainingFixture.cureTicks = 0;
+        SilentGearRemainingFixture.cureCalls.clear();
     }
 
     private static void effects(net.minecraft.world.entity.LivingEntity player) {
@@ -198,7 +273,7 @@ final class SilentGearRemainingClientSpike {
                     handler.invoke(null, new PlayerTickEvent.Pre(owner));
                     boolean expected = below && (sample == 0 || !VOID_REFUSED && sample < 3);
                     require(owner.hasEffect(MobEffects.LEVITATION) == expected && owner.hasEffect(MobEffects.SLOW_FALLING) == expected
-                            && SilentGearRemainingSpike.pushes == (expected ? 1 : 0) && ItemStack.matches(before, root), "Void Ward local threshold/control differs");
+                            && SilentGearRemainingFixture.pushes == (expected ? 1 : 0) && ItemStack.matches(before, root), "Void Ward local threshold/control differs");
                     controls++;
                 }
         }
@@ -207,12 +282,12 @@ final class SilentGearRemainingClientSpike {
             ItemStack root = subjects.get(1).copy();
             if (slot == null) { owner.getInventory().setItem(7, root); } else { owner.setItemSlot(slot, root); }
             owner.setPos(8.5, owner.level().getMinY() - 32.5, 8.5); handler.invoke(null, new PlayerTickEvent.Pre(owner));
-            require(!owner.hasEffect(MobEffects.LEVITATION) && SilentGearRemainingSpike.pushes == 0, "Held/idle Void Ward activated"); controls++;
+            require(!owner.hasEffect(MobEffects.LEVITATION) && SilentGearRemainingFixture.pushes == 0, "Held/idle Void Ward activated"); controls++;
         }
         clean(owner);
         owner.setItemSlot(EquipmentSlot.FEET, subjects.get(3)); owner.setItemSlot(EquipmentSlot.CHEST, api.armor("chestplate", "chestplate_plates", "tyrian_steel"));
         owner.setPos(8.5, owner.level().getMinY() - 32.5, 8.5); handler.invoke(null, new PlayerTickEvent.Pre(owner));
-        require(owner.hasEffect(MobEffects.LEVITATION) && SilentGearRemainingSpike.pushes == 1, "Independent native chest Void Ward lost");
+        require(owner.hasEffect(MobEffects.LEVITATION) && SilentGearRemainingFixture.pushes == 1, "Independent native chest Void Ward lost");
         REPORT.append("VOID production controls=").append(controls + 1).append(" stock acquisition; strict threshold; both orientations; held/idle negative; native chest positive; unchanged stacks\n");
         if (!VOID_VARIANT.isEmpty()) {
             clean(owner);
@@ -232,7 +307,7 @@ final class SilentGearRemainingClientSpike {
 
         int cures = 0;
         for (String name : List.of("cure_poison", "cure_wither")) {
-            var samples = new ArrayList<ItemStack>(); ItemStack source = SilentGearRemainingSpike.injected(api, name); samples.add(source);
+            var samples = new ArrayList<ItemStack>(); ItemStack source = SilentGearRemainingFixture.injected(api, name); samples.add(source);
             samples.addAll(NeoForgeSilentGearTest.workbench(owner, source, new ItemStack(Items.DIAMOND_BOOTS)));
             for (int sample = 0; sample < samples.size(); sample++) {
                 for (EquipmentSlot slot : Arrays.asList(EquipmentSlot.FEET, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, null)) {
@@ -244,13 +319,13 @@ final class SilentGearRemainingClientSpike {
                     require(owner.hasEffect(MobEffects.POISON) == !(slot != null && name.equals("cure_poison"))
                             && owner.hasEffect(MobEffects.WITHER) == !(slot != null && name.equals("cure_wither"))
                             && owner.hasEffect(MobEffects.NIGHT_VISION) && ItemStack.matches(before, root), "Cure selected/native control differs");
-                    if (sample > 0 && slot != null) { require(SilentGearRemainingSpike.cureCalls.get(name) == 1, "Duplicate cure call"); }
+                    if (sample > 0 && slot != null) { require(SilentGearRemainingFixture.cureCalls.get(name) == 1, "Duplicate cure call"); }
                     cures++;
                 }
             }
         }
         clean(owner);
-        ItemStack mixed = NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingSpike.injected(api, "cure_poison"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+        ItemStack mixed = NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingFixture.injected(api, "cure_poison"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
         var nonPlayer = new net.minecraft.world.entity.animal.pig.Pig(net.minecraft.world.entity.EntityType.PIG, owner.level());
         effects(nonPlayer); mixed.inventoryTick(owner.level(), nonPlayer, EquipmentSlot.FEET);
         require(nonPlayer.hasEffect(MobEffects.POISON) && nonPlayer.hasEffect(MobEffects.WITHER)
@@ -271,7 +346,7 @@ final class SilentGearRemainingClientSpike {
     private static void reloadControl(ServerPlayer owner) throws Exception {
         var api = new NeoForgeSilentGearTest.NativeApi();
         require(cureEffect(api, "cure_poison") != oldPoisonEffect, "Actual reload retained the old cure receiver");
-        ItemStack source = SilentGearRemainingSpike.injected(api, "cure_poison");
+        ItemStack source = SilentGearRemainingFixture.injected(api, "cure_poison");
         for (ItemStack root : NeoForgeSilentGearTest.workbench(owner, source, new ItemStack(Items.DIAMOND_BOOTS))) {
             ItemStack before = root.copy(); effects(owner); root.inventoryTick(owner.level(), owner, EquipmentSlot.MAINHAND);
             require(!owner.hasEffect(MobEffects.POISON) && owner.hasEffect(MobEffects.WITHER) && owner.hasEffect(MobEffects.NIGHT_VISION)
@@ -284,8 +359,8 @@ final class SilentGearRemainingClientSpike {
     private static void definitionControl(ServerPlayer owner) throws Exception {
         clean(owner);
         var api = new NeoForgeSilentGearTest.NativeApi();
-        ItemStack root = NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingSpike.injected(api, "cure_poison"),
-                SilentGearRemainingSpike.injected(api, "cure_wither")).getFirst(), before = root.copy();
+        ItemStack root = NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingFixture.injected(api, "cure_poison"),
+                SilentGearRemainingFixture.injected(api, "cure_wither")).getFirst(), before = root.copy();
         Object effect = cureEffect(api, "cure_poison");
         var targets = effect.getClass().getDeclaredField("effects"); targets.setAccessible(true); Object original = targets.get(effect);
         try {
@@ -313,15 +388,18 @@ final class SilentGearRemainingClientSpike {
         private final double startY;
         private int started;
 
-        Session(ServerPlayer owner, int mode, int sample) throws Exception {
+        Session(ServerPlayer owner, int mode, int sample) throws Exception { this(owner, mode, sample, null); }
+
+        Session(ServerPlayer owner, int mode, int sample, ItemStack existing) throws Exception {
             this.owner = owner; this.mode = mode; this.sample = sample; clean(owner);
             var api = new NeoForgeSilentGearTest.NativeApi();
             if (mode == 0) {
-                ItemStack source = api.boot("tyrian_steel");
-                root = sample == 0 ? source : NeoForgeSilentGearTest.workbench(owner, source, new ItemStack(Items.DIAMOND_BOOTS)).get(sample - 1);
+                ItemStack source = existing == null ? api.boot("tyrian_steel") : ItemStack.EMPTY;
+                root = existing != null ? existing : sample == 0 ? source : NeoForgeSilentGearTest.workbench(owner, source, new ItemStack(Items.DIAMOND_BOOTS)).get(sample - 1);
                 startY = owner.level().getMinY() - 32.5;
             } else if (mode == 1) {
-                if (sample < 2) { root = new ItemStack(sample == 0 ? Items.LEATHER_BOOTS : Items.DIAMOND_BOOTS); }
+                if (existing != null) { root = existing; }
+                else if (sample < 2) { root = new ItemStack(sample == 0 ? Items.LEATHER_BOOTS : Items.DIAMOND_BOOTS); }
                 else if (sample < 5) { root = api.boot(List.of("leather", "wool", "fine_silk_cloth").get(sample - 2)); }
                 else { root = NeoForgeSilentGearTest.workbench(owner, api.boot(List.of("leather", "wool", "fine_silk_cloth").get((sample - 5) / 2)), new ItemStack(Items.DIAMOND_BOOTS)).get((sample - 5) % 2); }
                 for (int x = 5; x <= 11; x++) { for (int z = 5; z <= 11; z++) {
@@ -330,10 +408,10 @@ final class SilentGearRemainingClientSpike {
                 } }
                 startY = 82;
             } else {
-                ItemStack both = SilentGearRemainingSpike.injected(api, "cure_poison", "cure_wither");
-                root = sample == 0 ? both : sample == 3
-                        ? NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingSpike.injected(api, "cure_poison"), SilentGearRemainingSpike.injected(api, "cure_poison")).getFirst()
-                        : NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingSpike.injected(api, "cure_poison"), SilentGearRemainingSpike.injected(api, "cure_wither")).get(sample == 2 ? 1 : 0);
+                ItemStack both = existing == null ? SilentGearRemainingFixture.injected(api, "cure_poison", "cure_wither") : ItemStack.EMPTY;
+                root = existing != null ? existing : sample == 0 ? both : sample == 3
+                        ? NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingFixture.injected(api, "cure_poison"), SilentGearRemainingFixture.injected(api, "cure_poison")).getFirst()
+                        : NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingFixture.injected(api, "cure_poison"), SilentGearRemainingFixture.injected(api, "cure_wither")).get(sample == 2 ? 1 : 0);
                 startY = 85;
             }
             before = root.copy();
@@ -364,8 +442,8 @@ final class SilentGearRemainingClientSpike {
         String finish(double clientY) {
             require(ItemStack.matches(before, root), "Completion changed root/source/state");
             if (mode == 0) {
-                require(SilentGearRemainingSpike.pushes > 0 && SilentGearRemainingSpike.pushes == SilentGearRemainingSpike.queries, "Void rescue duplicated native pushes");
-                REPORT.append("VOID connected ").append(sample).append(" native pushes/eligible ticks=").append(SilentGearRemainingSpike.pushes)
+                require(SilentGearRemainingFixture.pushes > 0 && SilentGearRemainingFixture.pushes == SilentGearRemainingFixture.queries, "Void rescue duplicated native pushes");
+                REPORT.append("VOID connected ").append(sample).append(" native pushes/eligible ticks=").append(SilentGearRemainingFixture.pushes)
                         .append(" serverY=").append(owner.getY()).append(" clientY=").append(clientY).append("; native motion/potions and unchanged stack\n");
             } else if (mode == 1) {
                 if (sample == 0 || sample >= 5) { descending(owner); }
@@ -373,16 +451,18 @@ final class SilentGearRemainingClientSpike {
                         .append(" serverY=").append(owner.getY()).append(" clientY=").append(clientY).append("; natural gravity/collision, callback and descending controls\n");
             } else {
                 if (sample > 0 && sample < 4) {
-                    require(SilentGearRemainingSpike.cureTicks > 0 && SilentGearRemainingSpike.cureCalls.values().stream().allMatch(value -> value == SilentGearRemainingSpike.cureTicks), "Duplicate/missing per-ID cure dispatch");
+                    var expectedIds = sample == 3 ? java.util.Set.of("cure_poison") : java.util.Set.of("cure_poison", "cure_wither");
+                    require(SilentGearRemainingFixture.cureCalls.keySet().equals(expectedIds) && SilentGearRemainingFixture.cureTicks > 0
+                            && SilentGearRemainingFixture.cureCalls.values().stream().allMatch(value -> value == SilentGearRemainingFixture.cureTicks), "Duplicate/missing per-ID cure dispatch");
                 }
                 REPORT.append("CURE connected ").append(sample).append(" ordinary ticks=").append(owner.tickCount - started)
-                        .append(" production calls=").append(SilentGearRemainingSpike.cureCalls).append("; real inventory selection/effect packets; unchanged root/sources\n");
+                        .append(" production calls=").append(SilentGearRemainingFixture.cureCalls).append("; real inventory selection/effect packets; unchanged root/sources\n");
                 if (sample == 4) {
                     try { definitionControl(owner); }
                     catch (Exception failure) { throw new IllegalStateException(failure); }
                 }
             }
-            NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", REPORT.toString());
+            NetworkAcceptanceFiles.write(reportOutput + "-report.txt", REPORT.toString());
             clean(owner); owner.connection.teleport(8.5, 85, 8.5, 0, 0); return "{}";
         }
     }

@@ -32,7 +32,7 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** Real integrated connection: only immutable JSON expectations cross threads; items/attributes arrive by vanilla packets. */
 final class SilentGearClientTest {
     private static int ticks, phase;
-    private static boolean finished, magnetComplete;
+    private static boolean finished, magnetComplete, remainingComplete;
     private static Future<String> job;
     private static String expected;
     private static int orientation, phaseStarted;
@@ -63,6 +63,10 @@ final class SilentGearClientTest {
             }
             if (REJOIN) { rejoin(client); return; }
             if (phase == 10) {
+                if (!remainingComplete) {
+                    if (!SilentGearRemainingClientTest.advanceLifecycle(client, false)) { return; }
+                    remainingComplete = true;
+                }
                 if (!magnetComplete) {
                     if (!SilentGearMagnetClientTest.advance(client, false)) { return; }
                     magnetComplete = true;
@@ -72,6 +76,7 @@ final class SilentGearClientTest {
                     var owner = server.getPlayerList().getPlayer(id); var barrel = SilentGearLifecycleTest.barrel(server);
                     var root = barrel.getItem(5).copy(); root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
                     owner.setItemSlot(EquipmentSlot.FEET, root); owner.setItemSlot(EquipmentSlot.OFFHAND, barrel.getItem(7).copy());
+                    SilentGearRemainingClientTest.restore(owner);
                     var manifest = new com.google.gson.JsonObject();
                     manifest.addProperty("process", ProcessHandle.current().pid()); manifest.addProperty("uuid", id.toString());
                     String state = snapshot(owner); manifest.add("snapshot", JsonParser.parseString(state));
@@ -246,6 +251,11 @@ final class SilentGearClientTest {
                 if (!SilentGearMagnetClientTest.advance(client, true)) { return; }
                 magnetComplete = true;
             }
+            // Magnet captures its saved object on entry; the other roots were captured before any cleanup.
+            if (!remainingComplete) {
+                if (!SilentGearRemainingClientTest.advanceLifecycle(client, true)) { return; }
+                remainingComplete = true;
+            }
             if (!SilentGearDefenseClientTest.advance(client, true)) { return; }
             success(client, "Separate connected-client JVM, same UUID/world: actual player inventory/root/damage/selected copper clocks match saved data; "
                     + "Brilliant recognition, one seeded Stellar heal with unchanged sources/state, normal resumed potion packets then natural idle expiry; "
@@ -263,6 +273,7 @@ final class SilentGearClientTest {
                             "Rejoin reused JVM or changed player identity");
                     require(manifest.get("snapshot").equals(JsonParser.parseString(snapshot(owner))), "Actual player save/rejoin changed frozen roots, damage or clocks");
                     SilentGearDefenseClientTest.captureRejoin(owner);
+                    SilentGearRemainingClientTest.captureRejoin(owner);
                     require(net.minecraft.world.entity.monster.piglin.PiglinAi.isWearingSafeArmor(owner), "Rejoined Brilliant missing");
                     var root = owner.getItemBySlot(EquipmentSlot.FEET); var before = root.copy();
                     Object stellar = SilentGearCompatibility.effectiveTraits(root).stream().filter(value -> value.id().getPath().equals("stellar")).findFirst().orElseThrow().nativeInstance();

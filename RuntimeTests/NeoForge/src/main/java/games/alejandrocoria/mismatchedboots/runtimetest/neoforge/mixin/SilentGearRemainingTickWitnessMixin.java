@@ -2,7 +2,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 
 import games.alejandrocoria.mismatchedboots.NeoForgeMixedBootsItem;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
-import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearRemainingSpike;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearRemainingFixture;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -20,7 +20,7 @@ abstract class SilentGearRemainingTickWitnessMixin {
     private void selected(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot, CallbackInfo ci) {
         if (slot != null && entity instanceof Player && SilentGearCompatibility.effectiveTraits(stack).stream()
                 .anyMatch(trait -> java.util.List.of("silentgear:cure_poison", "silentgear:cure_wither").contains(trait.id().toString()))) {
-            SilentGearRemainingSpike.cureTicks++;
+            SilentGearRemainingFixture.cureTicks++;
         }
     }
 }
