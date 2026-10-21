@@ -317,27 +317,37 @@ The owner accepted all five ordinary-client groups on 2026-10-20, completing the
 bounded Heat Resistant/Bounce plan; this is separate from the .99/.114 automated
 matrix and does not close broader Silent Gear compatibility.
 
-The separate research-only remaining-effects gate is:
+The remaining-effects gate now uses **production Void Ward** and the still-
+research-only Snow Walker/cure candidates:
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike '-PsilentGearVoidVariant=compatible' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemainingSpike '-PsilentGearVoidVariant=refused' --console=plain
 ```
 
 It creates a fresh SG/Silent Lib-only server seed and one hidden/muted integrated
 client under `build/run/silentGearRemaining/<version>`, not owner worlds or the
 production lifecycle world. The gate requires seed/success markers, no failure
 marker and 19 report lines under `build/reports/silent-gear-remaining/<version>`:
-20 synchronous Void Ward plus 25 cure controls, then 3 connected rescues,
+12 synchronous production Void Ward plus 25 cure controls, then 3 connected rescues,
 9 natural powder-snow collision scenes and 5 ordinary inventory-cancellation
 scenes. Sources/complete stacks are checked, native mixed-root recalculation is
 guarded by a calibrated witness, and cure acquisition is explicitly synthetic.
-Candidate mixins apply only with the run's explicit research flag; production
-Void Ward/Snow Walker/cures are not installed by this gate. The
-[execution record](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-EXPLORATION.md#9-bounded-connected-spike--2026-10-21)
-owns .114/.99 results, native Snow Walker failure, test corrections and limits;
-the [A/B/C plan](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md)
-is prospective, not production acceptance. Magic Armor is outside this gate.
+The former Void Ward query candidate is removed; only native invocation/push
+witnesses remain. Production Void Ward does not depend on the fixture's research
+switch. Snow Walker/cure candidate mixins still apply only with that explicit
+flag. The `compatible`/`refused` variants run **Void-only** matrices in sibling
+`<version>-void-compatible`/`<version>-void-refused` directories and require 5/3
+lines, respectively. Repeat them with `-Pneoforge_version=26.1.2.99` for the floor.
+The first preserves proof through a same-result identity peer and unrelated
+edits; the second aliases the native query without changing its result, declines
+only mixed Void Ward, requires one bounded warning and verifies native rescue
+plus completed Brilliant/Moonwalker. Other adapter warnings are rejected.
+[A's production record](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md#6-block-a-execution-record--2026-10-21)
+owns the executed matrix; the [original spike](../local-docs/SILENT-GEAR-REMAINING-EFFECTS-EXPLORATION.md#9-bounded-connected-spike--2026-10-21)
+is historical. B/C remain pending and Magic Armor is outside this gate.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:

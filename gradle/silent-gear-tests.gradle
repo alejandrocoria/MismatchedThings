@@ -147,9 +147,13 @@ tasks.register('verifySilentGearAbsent') {
 def lifecycleRun = layout.buildDirectory.dir("run/silentGearLifecycle/${neoforge_version}/server")
 def clientRun = layout.buildDirectory.dir("run/silentGearLifecycle/${neoforge_version}/client")
 def lifecycleReports = layout.buildDirectory.dir("reports/silent-gear-lifecycle/${neoforge_version}")
-// Research only: fresh SG-only seed and one connected client, separate from production lifecycle gates.
-def remainingRun = layout.buildDirectory.dir("run/silentGearRemaining/${neoforge_version}")
-def remainingReports = layout.buildDirectory.dir("reports/silent-gear-remaining/${neoforge_version}")
+// Production Void Ward plus remaining research candidates, separate from lifecycle gates.
+def voidVariant = providers.gradleProperty('silentGearVoidVariant').getOrElse('')
+if (!(voidVariant in ['', 'compatible', 'refused'])) { throw new GradleException('Unknown Void Ward test variant') }
+def voidPath = voidVariant ? "-void-${voidVariant}" : ''
+def voidLog = voidVariant ? "-void-${voidVariant}" : ''
+def remainingRun = layout.buildDirectory.dir("run/silentGearRemaining/${neoforge_version}${voidPath}")
+def remainingReports = layout.buildDirectory.dir("reports/silent-gear-remaining/${neoforge_version}${voidPath}")
 neoForge.runs.create('silentGearRemainingSeed') {
     server(); disableIdeRun()
     gameDirectory = remainingRun.get().dir('server').asFile
@@ -165,6 +169,7 @@ neoForge.runs.create('silentGearRemainingSpike') {
     programArgument('--username'); programArgument('SGRemaining')
     systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
     systemProperty('mismatchedboots.runtimetest.silentGearRemainingSpike', 'true')
+    systemProperty('mismatchedboots.runtimetest.silentGearVoidVariant', voidVariant)
     systemProperty('mismatchedboots.test.hideClientWindow', 'true')
     systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
     jvmArgument('-Xmx1G')
@@ -214,10 +219,10 @@ tasks.register('prepareSilentGearRemainingSpike') {
 tasks.named('runSilentGearRemainingSpike') { dependsOn('prepareSilentGearRemainingSpike') }
 tasks.register('verifySilentGearRemainingSpike') {
     group = 'verification'
-    description = 'Research-only Void Ward, Snow Walker and cure native/mixed connected controls'
+    description = 'Production Void Ward and remaining Snow Walker/cure research connected controls'
     doLast {
         ['Seed', 'Spike'].each { phase ->
-            def log = layout.buildDirectory.file("reports/silent-gear-remaining-${neoforge_version}-${phase.toLowerCase(Locale.ROOT)}-process.log").get().asFile
+            def log = layout.buildDirectory.file("reports/silent-gear-remaining-${neoforge_version}${voidLog}-${phase.toLowerCase(Locale.ROOT)}-process.log").get().asFile
             runBounded(":RuntimeTests:NeoForge:runSilentGearRemaining${phase}", log, 300)
             def result = remainingReports.get().asFile
             def failure = new File(result, 'silent-gear-remaining-failure.txt')
@@ -225,9 +230,15 @@ tasks.register('verifySilentGearRemainingSpike') {
             if (!new File(result, "silent-gear-remaining-${phase == 'Seed' ? 'seed-success' : 'success'}.txt").isFile()) {
                 throw new GradleException("Missing remaining ${phase} evidence: ${log}")
             }
+            int warnings = (log.text =~ /Silent Gear mixed void ward disabled:/).count
+            int expected = phase == 'Spike' && voidVariant == 'refused' ? 1 : 0
+            if (warnings != expected || (log.text =~ /Silent Gear mixed .*disabled:/).count != expected
+                    || log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')) {
+                throw new GradleException("Unexpected Void Ward/dependent warning count: ${log}")
+            }
         }
         def report = new File(remainingReports.get().asFile, 'silent-gear-remaining-report.txt')
-        if (!report.isFile() || report.readLines().size() != 19) { throw new GradleException("Incomplete remaining-effects evidence: ${report}") }
+        if (!report.isFile() || report.readLines().size() != (voidVariant == 'refused' ? 3 : voidVariant == 'compatible' ? 5 : 19)) { throw new GradleException("Incomplete remaining-effects evidence: ${report}") }
         logger.lifecycle(report.text)
     }
 }

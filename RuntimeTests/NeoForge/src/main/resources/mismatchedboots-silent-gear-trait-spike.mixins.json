@@ -12,9 +12,9 @@
     "SilentGearMagnetWitnessMixin",
     "SilentGearRecalculationWitnessMixin",
     "SilentGearRemainingItemMixin",
-    "SilentGearRemainingVoidMixin",
     "SilentGearSetFaultMixin",
-    "SilentGearSetPeerMixin"
+    "SilentGearSetPeerMixin",
+    "SilentGearVoidWardWitnessMixin"
   ],
   "injectors": {"defaultRequire": 1}
 }

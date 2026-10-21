@@ -3,6 +3,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -18,7 +20,7 @@ import java.util.Set;
 /** Independent witness, compatible slot peer and controlled faults; no candidate set engine. */
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
-        if (mixin.endsWith("SilentGearRemainingVoidMixin") || mixin.endsWith("SilentGearRemainingItemMixin")) {
+        if (mixin.endsWith("SilentGearVoidWardWitnessMixin") || mixin.endsWith("SilentGearRemainingItemMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingSpike");
         }
         if (mixin.endsWith("SilentGearIncomingWitnessMixin")) {
@@ -58,6 +60,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
     @Override public List<String> getMixins() { return null; }
     @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.endsWith("SilentGearVoidWardWitnessMixin")) { voidWard(node); return; }
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
         if (mixin.endsWith("SilentGearDefensePeerMixin")) { SilentGearDefensePeer.transform(node, variant); return; }
         if (mixin.endsWith("SilentGearMagnetPeerMixin")) { magnet(node, variant); return; }
@@ -106,6 +109,37 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$modified", "()Z", null, null);
         marker.instructions.add(new InsnNode(ICONST_1));
         marker.instructions.add(new InsnNode(IRETURN)); marker.maxStack = 1; node.methods.add(marker);
+    }
+
+    private static void voidWard(ClassNode owner) {
+        String variant = System.getProperty("mismatchedboots.runtimetest.silentGearVoidVariant", "");
+        if (variant.isEmpty()) { return; }
+        var method = owner.methods.stream().filter(value -> value.name.equals("onPlayerTick")).findFirst().orElseThrow();
+        MethodInsnNode query = null;
+        for (var node : method.instructions) {
+            if (node instanceof MethodInsnNode call && call.name.equals("hasTraitArmor")
+                    && call.getPrevious() instanceof FieldInsnNode field && field.name.equals("VOID_WARD")) { query = call; break; }
+        }
+        if (query == null) { throw new IllegalStateException("Void Ward peer query unavailable"); }
+        if (variant.equals("refused")) {
+            // Preserve every native result, but remove the exact proved query behind our injected hook.
+            var alias = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$voidAlias", query.desc, null, null);
+            alias.instructions.add(new VarInsnNode(ALOAD, 0)); alias.instructions.add(new VarInsnNode(ALOAD, 1));
+            alias.instructions.add(new MethodInsnNode(INVOKESTATIC, query.owner, query.name, query.desc, false));
+            alias.instructions.add(new InsnNode(IRETURN)); alias.maxLocals = alias.maxStack = 2; owner.methods.add(alias);
+            query.owner = owner.name; query.name = alias.name;
+        } else {
+            method.instructions.insert(new InsnNode(NOP));
+            var extra = new InsnList(); extra.add(new VarInsnNode(ALOAD, 0)); extra.add(new InsnNode(POP));
+            method.instructions.insert(extra);
+            var identity = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$voidIdentity",
+                    "(ZLnet/neoforged/neoforge/event/tick/PlayerTickEvent$Pre;)Z", null, null);
+            identity.instructions.add(new VarInsnNode(ILOAD, 0)); identity.instructions.add(new InsnNode(IRETURN));
+            identity.maxLocals = 2; identity.maxStack = 1; owner.methods.add(identity);
+            var chain = new InsnList(); chain.add(new VarInsnNode(ALOAD, 0));
+            chain.add(new MethodInsnNode(INVOKESTATIC, owner.name, identity.name, identity.desc, false));
+            method.instructions.insert(query, chain);
+        }
     }
 
     private static void magnet(ClassNode owner, String variant) {

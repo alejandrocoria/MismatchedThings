@@ -54,6 +54,10 @@ final class SilentGearFoundationTest {
             require(!root.getItem().makesPiglinsNeutral(root, player)
                     && games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition.brilliant(root, player, true),
                     "Absent SG recognition changed ordinary item results");
+            var tick = new net.neoforged.neoforge.event.tick.PlayerTickEvent.Pre(player);
+            require(!games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition.voidWard(false, tick, true)
+                    && games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition.voidWard(true, tick, false),
+                    "Absent SG changed ordinary Void Ward query results");
             player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, root);
             var fall = new net.neoforged.neoforge.event.entity.living.LivingFallEvent(player, 10, 1);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(fall);

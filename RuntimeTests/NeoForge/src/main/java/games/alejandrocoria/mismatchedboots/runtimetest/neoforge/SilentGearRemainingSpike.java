@@ -14,16 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/** Feasibility only: no production readiness/guard contract or full native trait dispatch. */
+/** Remaining Snow Walker/cure feasibility plus independent production Void Ward counters. */
 public final class SilentGearRemainingSpike {
     public static volatile boolean enabled;
     public static int queries, pushes, cureTicks;
     public static final Map<String, Integer> cureCalls = new HashMap<>(); // Integrated-server thread only.
     private SilentGearRemainingSpike() {}
-
-    public static boolean voidWard(Player player) {
-        return enabled && has(player.getItemBySlot(EquipmentSlot.FEET), "void_ward");
-    }
 
     public static boolean snow(ItemStack root) { return enabled && has(root, "snow_walker"); }
 

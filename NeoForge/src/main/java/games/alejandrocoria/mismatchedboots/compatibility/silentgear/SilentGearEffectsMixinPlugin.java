@@ -34,6 +34,7 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
             SilentGearEffectShape.publish(node, "mismatchedboots$sgBrilliantReady", SilentGearRecognitionShape.brilliant(node));
         } else if (node.name.equals(SilentGearRecognitionShape.EVENTS)) {
             SilentGearEffectShape.publish(node, "mismatchedboots$sgMoonReady", SilentGearRecognitionShape.moonwalker(node));
+            SilentGearEffectShape.publish(node, "mismatchedboots$sgVoidReady", SilentGearRecognitionShape.voidWard(node));
         }
     }
     @Override public boolean checkActive(MixinEnvironment environment) { return true; }

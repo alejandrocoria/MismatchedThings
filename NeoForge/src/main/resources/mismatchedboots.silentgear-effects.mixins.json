@@ -19,6 +19,7 @@
     "SilentGearSafeFallMixin",
     "SilentGearSelfRepairMixin",
     "SilentGearSetMixin",
+    "SilentGearVoidWardMixin",
     "SilentGearWearerQueryProofMixin"
   ],
   "injectors": {"defaultRequire": 1}

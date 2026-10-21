@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
@@ -33,6 +34,8 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** One real integrated connection; server-owned stacks stay on the server, only JSON crosses threads. */
 final class SilentGearRemainingClientSpike {
     private static final String OUTPUT = "silent-gear-remaining";
+    private static final String VOID_VARIANT = System.getProperty("mismatchedboots.runtimetest.silentGearVoidVariant", "");
+    private static final boolean VOID_REFUSED = VOID_VARIANT.equals("refused");
     private static final BlockPos SNOW = new BlockPos(8, 80, 8);
     private static final StringBuilder REPORT = new StringBuilder();
     private static int ticks, mode, index;
@@ -100,7 +103,9 @@ final class SilentGearRemainingClientSpike {
             }
             int doneMode = mode; double clientY = client.player.getY();
             job = server.submit(() -> session.finish(clientY));
+            if (VOID_REFUSED) { mode = 4; return; }
             if (++index == (doneMode == 0 ? 3 : doneMode == 1 ? 9 : 5)) { mode++; index = 0; }
+            if (!VOID_VARIANT.isEmpty() && mode == 1) { mode = 4; }
             released = false;
             if (mode == 3) {
                 // Finish the final server assertion before declaring success/stopping the client.
@@ -172,20 +177,22 @@ final class SilentGearRemainingClientSpike {
         subjects.add(new ItemStack(Items.DIAMOND_BOOTS));
         var handler = SilentGearTraitSpike.nativeClass("event.GearEvents").getMethod("onPlayerTick", PlayerTickEvent.Pre.class);
         int controls = 0;
-        for (boolean enabled : List.of(false, true)) {
-            for (int sample = 0; sample < subjects.size(); sample++) {
+        var ready = SilentGearTraitSpike.nativeClass("event.GearEvents").getDeclaredMethod("mismatchedboots$sgVoidReady"); ready.setAccessible(true);
+        require((boolean) ready.invoke(null) != VOID_REFUSED, "Final production Void Ward proof differs");
+        // Void Ward no longer depends on the remaining Snow Walker/cure candidate switch.
+        SilentGearRemainingSpike.enabled = false;
+        for (int sample = 0; sample < subjects.size(); sample++) {
                 for (boolean below : List.of(false, true)) {
-                    clean(owner); SilentGearRemainingSpike.enabled = enabled;
+                    clean(owner);
                     ItemStack root = subjects.get(sample).copy(), before = root.copy(); owner.setItemSlot(EquipmentSlot.FEET, root);
                     owner.setPos(8.5, owner.level().getMinY() - 32 - (below ? .5 : 0), 8.5);
                     if (ModContent.getMixedBootsData(root).isPresent()) { SilentGearBounceTest.protectedRoot = root; }
                     handler.invoke(null, new PlayerTickEvent.Pre(owner));
-                    boolean expected = below && (sample == 0 || enabled && sample < 3);
+                    boolean expected = below && (sample == 0 || !VOID_REFUSED && sample < 3);
                     require(owner.hasEffect(MobEffects.LEVITATION) == expected && owner.hasEffect(MobEffects.SLOW_FALLING) == expected
                             && SilentGearRemainingSpike.pushes == (expected ? 1 : 0) && ItemStack.matches(before, root), "Void Ward local threshold/control differs");
                     controls++;
                 }
-            }
         }
         for (EquipmentSlot slot : Arrays.asList(EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, null)) {
             clean(owner); SilentGearRemainingSpike.enabled = true;
@@ -198,7 +205,22 @@ final class SilentGearRemainingClientSpike {
         owner.setItemSlot(EquipmentSlot.FEET, subjects.get(3)); owner.setItemSlot(EquipmentSlot.CHEST, api.armor("chestplate", "chestplate_plates", "tyrian_steel"));
         owner.setPos(8.5, owner.level().getMinY() - 32.5, 8.5); handler.invoke(null, new PlayerTickEvent.Pre(owner));
         require(owner.hasEffect(MobEffects.LEVITATION) && SilentGearRemainingSpike.pushes == 1, "Independent native chest Void Ward lost");
-        REPORT.append("VOID controls=").append(controls + 1).append(" stock acquisition; strict threshold; native/off/on mixed; held/idle negative; native chest positive; unchanged stacks\n");
+        REPORT.append("VOID production controls=").append(controls + 1).append(" stock acquisition; strict threshold; both orientations; held/idle negative; native chest positive; unchanged stacks\n");
+        if (!VOID_VARIANT.isEmpty()) {
+            clean(owner);
+            ItemStack gold = NeoForgeSilentGearTest.workbench(owner, api.boot("gold"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+            require(gold.getItem().makesPiglinsNeutral(gold, owner), "Void variant disabled independent Brilliant");
+            ItemStack moonSource = api.boot("azure_silver");
+            ItemStack moon = NeoForgeSilentGearTest.workbench(owner, moonSource, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+            owner.setItemSlot(EquipmentSlot.FEET, moon);
+            var fall = new net.neoforged.neoforge.event.entity.living.LivingFallEvent(owner, 12, 1);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(fall);
+            require(Math.abs(fall.getDistance() - 12 * (1 - .15F * api.traitLevel(moonSource, "moonwalker"))) < 1E-5,
+                    "Void variant disabled independent Moonwalker");
+            require(SilentGearRecognition.voidWard(true, new PlayerTickEvent.Pre(owner), false), "Void refusal discarded an original true result");
+            REPORT.append("VOID ").append(VOID_VARIANT).append(": native rescue/predicates and production Brilliant/Moonwalker remain; original true preserved\n");
+            clean(owner); owner.connection.teleport(8.5, 85, 8.5, 0, 0); return;
+        }
 
         int cures = 0;
         for (String name : List.of("cure_poison", "cure_wither")) {

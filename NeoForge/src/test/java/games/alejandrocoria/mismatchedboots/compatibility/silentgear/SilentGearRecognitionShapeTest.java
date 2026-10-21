@@ -90,6 +90,71 @@ class SilentGearRecognitionShapeTest implements Opcodes {
         assertFalse(SilentGearRecognitionShape.moonwalker(owner));
     }
 
+    @Test void voidSelectionRejectsAnotherTraitPlayerOriginAndAmbiguousQueries() {
+        var owner = tick(true, false); var method = owner.methods.getFirst();
+        assertNotNull(SilentGearRecognitionShape.voidQuery(method.desc, method.instructions));
+        for (var node : method.instructions) { if (node instanceof FieldInsnNode field) { field.name = "BRILLIANT"; } }
+        assertNull(SilentGearRecognitionShape.voidQuery(method.desc, method.instructions));
+        owner = tick(true, false); method = owner.methods.getFirst();
+        for (var node : method.instructions) { if (node instanceof MethodInsnNode call && call.name.equals("getEntity")) { call.name = "anotherPlayer"; } }
+        assertNull(SilentGearRecognitionShape.voidQuery(method.desc, method.instructions));
+        owner = tick(true, false); method = owner.methods.getFirst(); voidQuery(method, "VOID_WARD");
+        assertNull(SilentGearRecognitionShape.voidQuery(method.desc, method.instructions));
+    }
+
+    @Test void voidProofAcceptsCompatibleHookChainsAndIgnoresUnrelatedQueries() {
+        assertFalse(SilentGearRecognitionShape.voidWard(tick(false, false)));
+        var owner = tick(true, true); var method = owner.methods.getFirst();
+        method.instructions.insert(new InsnNode(NOP));
+        // An extra unrelated lookup does not make the specifically selected query ambiguous.
+        var extra = new MethodNode(); voidQuery(extra, "BRILLIANT"); extra.instructions.add(new InsnNode(POP));
+        method.instructions.insertBefore(SilentGearRecognitionShape.voidQuery(method.desc, method.instructions).getPrevious().getPrevious(), extra.instructions);
+        owner.methods.add(new MethodNode(ACC_PUBLIC, "unrelated", "()V", null, null));
+        assertTrue(SilentGearRecognitionShape.voidWard(owner));
+    }
+
+    @Test void voidProofRejectsReplacedRoutingAndDiscardedQueryResults() {
+        var owner = tick(true, false);
+        for (var node : owner.methods.get(1).instructions) {
+            if (node instanceof MethodInsnNode call && call.name.equals("voidWard")) { call.name = "unprovedRouting"; }
+        }
+        assertFalse(SilentGearRecognitionShape.voidWard(owner));
+        owner = tick(true, false);
+        for (var node : owner.methods.getFirst().instructions) {
+            if (node instanceof JumpInsnNode) { owner.methods.getFirst().instructions.set(node, new InsnNode(POP)); break; }
+        }
+        assertFalse(SilentGearRecognitionShape.voidWard(owner));
+    }
+
+    private static ClassNode tick(boolean own, boolean peer) {
+        var owner = new ClassNode(); owner.name = SilentGearRecognitionShape.EVENTS;
+        var method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "onPlayerTick", SilentGearRecognitionShape.TICK, null, null); owner.methods.add(method);
+        method.instructions.add(new VarInsnNode(ALOAD, 0));
+        method.instructions.add(new MethodInsnNode(INVOKEVIRTUAL, SilentGearRecognitionShape.PLAYER_PRE, "getEntity", "()Lnet/minecraft/world/entity/player/Player;", false));
+        method.instructions.add(new VarInsnNode(ASTORE, 1)); voidQuery(method, "VOID_WARD");
+        for (String name : own ? peer ? new String[]{"peer$query", "mismatchedboots$sgVoidWard"} : new String[]{"mismatchedboots$sgVoidWard"} : new String[]{}) {
+            method.instructions.add(new VarInsnNode(ALOAD, 0));
+            method.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, name, SilentGearRecognitionShape.VOID_RESULT, false));
+        }
+        var end = new LabelNode(); method.instructions.add(new JumpInsnNode(IFEQ, end));
+        method.instructions.add(end); method.instructions.add(new InsnNode(RETURN));
+        if (own) {
+            var route = new MethodNode(ACC_PRIVATE | ACC_STATIC, "mismatchedboots$sgVoidWard", SilentGearRecognitionShape.VOID_RESULT, null, null);
+            route.instructions.add(new VarInsnNode(ILOAD, 0)); route.instructions.add(new VarInsnNode(ALOAD, 1));
+            route.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, "mismatchedboots$sgVoidReady", "()Z", false));
+            route.instructions.add(new MethodInsnNode(INVOKESTATIC, "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearRecognition",
+                    "voidWard", "(ZL" + SilentGearRecognitionShape.PLAYER_PRE + ";Z)Z", false));
+            route.instructions.add(new InsnNode(IRETURN)); owner.methods.add(route);
+        }
+        return owner;
+    }
+
+    private static void voidQuery(MethodNode method, String trait) {
+        method.instructions.add(new VarInsnNode(ALOAD, 1));
+        method.instructions.add(new FieldInsnNode(GETSTATIC, SilentGearRecognitionShape.PREFIX + "util/Const$Traits", trait, SilentGearRecognitionShape.RESOURCE));
+        method.instructions.add(new MethodInsnNode(INVOKESTATIC, SilentGearRecognitionShape.PREFIX + "util/TraitHelper", "hasTraitArmor", SilentGearRecognitionShape.VOID_QUERY, false));
+    }
+
     private static ClassNode brilliant() {
         var owner = new ClassNode(); owner.name = SilentGearRecognitionShape.ARMOR;
         var method = new MethodNode(ACC_PUBLIC, "makesPiglinsNeutral", SilentGearRecognitionShape.BRILLIANT, null, null); owner.methods.add(method);

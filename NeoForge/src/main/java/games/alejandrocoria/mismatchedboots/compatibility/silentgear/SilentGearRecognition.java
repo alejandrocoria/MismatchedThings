@@ -9,14 +9,15 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-/** Two independent read-only features: no full trait dispatch, equipment swaps or new saved state. */
+/** Independent read-only recognition: no full trait dispatch, equipment swaps or new saved state. */
 public final class SilentGearRecognition {
     private static volatile SilentGearWearerApi.Carriers carriers;
-    private static volatile boolean moonReady, brilliantDisabled, moonDisabled;
+    private static volatile boolean moonReady, voidReady, brilliantDisabled, moonDisabled, voidDisabled;
 
     private SilentGearRecognition() {}
 
@@ -33,6 +34,10 @@ public final class SilentGearRecognition {
             requireProof("event.GearEvents", "mismatchedboots$sgMoonReady");
             moonReady = true;
         } catch (Throwable failure) { disable(false, failure); }
+        try {
+            requireProof("event.GearEvents", "mismatchedboots$sgVoidReady");
+            voidReady = true;
+        } catch (Throwable failure) { disableVoid(failure); }
     }
 
     private static void requireProof(String owner, String getter) throws Throwable {
@@ -62,6 +67,21 @@ public final class SilentGearRecognition {
                     .filter(trait -> trait.id().toString().equals("silentgear:moonwalker")).mapToInt(SilentGearCompatibility.Trait::level).max().orElse(0);
             return Math.max(original, level);
         } catch (Throwable failure) { disable(false, failure); return original; }
+    }
+
+    /** SG owns the height gate, repeated rescue, motion and potions; only its armor-query result is extended. */
+    public static boolean voidWard(boolean original, PlayerTickEvent.Pre event, boolean proof) {
+        if (original || !proof || !voidReady || voidDisabled || event.getEntity().level().isClientSide()) { return original; }
+        try {
+            return SilentGearCompatibility.effectiveTraits(event.getEntity().getItemBySlot(EquipmentSlot.FEET)).stream()
+                    .anyMatch(trait -> trait.id().toString().equals("silentgear:void_ward"));
+        } catch (Throwable failure) { disableVoid(failure); return original; }
+    }
+
+    private static synchronized void disableVoid(Throwable failure) {
+        if (voidDisabled) { return; }
+        voidDisabled = true;
+        Constants.LOG.warn("Silent Gear mixed void ward disabled: recognition contract unavailable", failure);
     }
 
     private static synchronized void disable(boolean brilliant, Throwable failure) {

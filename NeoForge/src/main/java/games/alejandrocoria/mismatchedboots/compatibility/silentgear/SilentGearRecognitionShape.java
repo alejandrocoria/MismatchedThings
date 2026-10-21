@@ -14,7 +14,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Returned native query and local distance consumer boundaries, not complete event/class fingerprints. */
+/** Local native query/result consumers, not complete event/class fingerprints. */
 final class SilentGearRecognitionShape implements Opcodes {
     static final String PREFIX = SilentGearEffectShape.PREFIX;
     static final String ARMOR = PREFIX + "item/gear/GearArmorItem", EVENTS = PREFIX + "event/GearEvents";
@@ -23,6 +23,9 @@ final class SilentGearRecognitionShape implements Opcodes {
     static final String QUERY = "(Lnet/minecraft/world/entity/player/Player;" + RESOURCE + ")I";
     static final String FALL = "(L" + EVENT + ";)V", RESULT = "(IL" + EVENT + ";)I";
     static final String BRILLIANT = "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)Z";
+    static final String PLAYER_PRE = "net/neoforged/neoforge/event/tick/PlayerTickEvent$Pre";
+    static final String TICK = "(L" + PLAYER_PRE + ";)V", VOID_RESULT = "(ZL" + PLAYER_PRE + ";)Z";
+    static final String VOID_QUERY = "(Lnet/minecraft/world/entity/player/Player;" + RESOURCE + ")Z";
 
     private SilentGearRecognitionShape() {}
 
@@ -77,6 +80,50 @@ final class SilentGearRecognitionShape implements Opcodes {
                 && code.get(index + 14).getOpcode() == F2D && code.get(index + 15).getOpcode() == DMUL
                 && call(code.get(index + 16), EVENT, "setDistance", "(D)V")
                 && method.instructions.indexOf(skip.label) > method.instructions.indexOf(code.get(index + 16));
+    }
+
+    /** Select the VOID_WARD argument producer, not unrelated armor queries or a complete native tick fingerprint. */
+    static MethodInsnNode voidQuery(String descriptor, InsnList instructions) {
+        if (!TICK.equals(descriptor)) { return null; }
+        var code = code(instructions); MethodInsnNode found = null;
+        for (int i = 2; i < code.size(); i++) {
+            if (!(code.get(i - 2) instanceof VarInsnNode player) || player.getOpcode() != ALOAD
+                    || !resource(code.get(i - 1), "VOID_WARD")
+                    || !call(code.get(i), PREFIX + "util/TraitHelper", "hasTraitArmor", VOID_QUERY)) { continue; }
+            // The most recent definition of this lane must be the player from this event.
+            int definition = i - 3;
+            while (definition >= 0 && !load(code.get(definition), ASTORE, player.var)) { definition--; }
+            if (definition < 2 || !load(code.get(definition - 2), ALOAD, 0)
+                    || !call(code.get(definition - 1), PLAYER_PRE, "getEntity", "()Lnet/minecraft/world/entity/player/Player;")) { return null; }
+            if (found != null) { return null; }
+            found = (MethodInsnNode) code.get(i);
+        }
+        return found;
+    }
+
+    static boolean voidWard(ClassNode owner) {
+        MethodNode method = method(owner, "onPlayerTick", TICK);
+        if (method == null) { return false; }
+        MethodInsnNode query = voidQuery(method.desc, method.instructions);
+        if (query == null) { return false; }
+        var code = code(method.instructions); int index = code.indexOf(query) + 1, own = 0;
+        while (index + 1 < code.size() && load(code.get(index), ALOAD, 0)
+                && code.get(index + 1) instanceof MethodInsnNode hook && hook.getOpcode() == INVOKESTATIC
+                && hook.owner.equals(EVENTS) && hook.desc.equals(VOID_RESULT)) {
+            if (hook.name.contains("mismatchedboots$sgVoidWard")) {
+                MethodNode route = method(owner, hook.name, hook.desc);
+                if (route == null || !route.tryCatchBlocks.isEmpty()) { return false; }
+                var body = code(route.instructions);
+                if (body.size() != 5 || !load(body.get(0), ILOAD, 0) || !load(body.get(1), ALOAD, 1)
+                        || !call(body.get(2), EVENTS, "mismatchedboots$sgVoidReady", "()Z")
+                        || !call(body.get(3), "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearRecognition",
+                        "voidWard", "(ZL" + PLAYER_PRE + ";Z)Z") || body.get(4).getOpcode() != IRETURN) { return false; }
+                own++;
+            }
+            index += 2;
+        }
+        return own == 1 && index < code.size() && code.get(index) instanceof JumpInsnNode branch
+                && (branch.getOpcode() == IFEQ || branch.getOpcode() == IFNE);
     }
 
     private static boolean routing(ClassNode owner, MethodInsnNode hook) {
