@@ -99,6 +99,10 @@ tasks.named('test', Test).configure {
         systemProperty 'mismatchedboots.test.iceAndFireGuardJar', rootProject.file(guardArtifact.get()).absolutePath
     }
     def oritechArtifact = providers.gradleProperty('oritechGuardJar')
+    def aetherArtifact = providers.gradleProperty('aetherGuardJar')
+    if (aetherArtifact.isPresent()) {
+        systemProperty 'mismatchedboots.test.aetherGuardJar', rootProject.file(aetherArtifact.get()).absolutePath
+    }
     if (oritechArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.oritechGuardJar', rootProject.file(oritechArtifact.get()).absolutePath
     }

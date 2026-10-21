@@ -2,11 +2,11 @@
   "required": true,
   "minVersion": "0.8",
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
-  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherIISpikePlugin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherRecognitionTestPlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "AetherSentrySpikeMixin",
-    "AetherSetSpikeMixin"
+    "AetherSentryResultControlMixin",
+    "AetherSetResultControlMixin"
   ],
   "injectors": {"defaultRequire": 1}
 }

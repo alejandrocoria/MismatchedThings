@@ -14,7 +14,7 @@ license="MIT"
     config="mismatchedboots-roots-tick-tests.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-aether-ii-spike.mixins.json"
+    config="mismatchedboots-aether-recognition-tests.mixins.json"
 
 [[mixins]]
     config="mismatchedboots-silent-gear-trait-spike.mixins.json"

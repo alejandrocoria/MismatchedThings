@@ -1,7 +1,6 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.mojang.serialization.JsonOps;
-import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
@@ -47,13 +46,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
 
-/** Production charm controls and, separately, opt-in set/Sentry research candidates. */
+/** Native controls and independently scoped production charm/recognition acceptance. */
 public final class AetherIICompatibilityTest {
     private static boolean finished;
-    private static boolean candidate;
     private static DataComponentType<TagKey<Item>> armorSet;
-    private static int setExtensions;
-    private static int sentryExtensions;
+    private static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.aetherRecognitionVariant", "live");
+    private static final boolean SETS = !VARIANT.equals("setchanged");
+    private static final boolean SENTRY = !VARIANT.equals("sentrychanged");
 
     private AetherIICompatibilityTest() {}
 
@@ -61,25 +60,13 @@ public final class AetherIICompatibilityTest {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> run(event.getServer()));
     }
 
-    public static boolean recognizesSet(ItemStack root, TagKey<Item> requested) {
-        boolean found = candidate && MixedBootsSources.anySource(root, source -> source.get(armorSet) == requested);
-        if (found) { setExtensions++; }
-        return found;
-    }
-
-    public static boolean recognizesItem(ItemStack root, Holder<Item> item) {
-        boolean found = candidate && MixedBootsSources.anySource(root, source -> source.is(item));
-        if (found) { sentryExtensions++; }
-        return found;
-    }
-
     private static void run(MinecraftServer server) {
         if (finished) { return; }
         finished = true;
         boolean charmsOnly = Boolean.getBoolean("mismatchedboots.runtimetest.aetherIICharms");
-        String prefix = charmsOnly ? "aether-ii-charms" : "aether-ii-spike";
+        String prefix = charmsOnly ? "aether-ii-charms" : "aether-ii-recognition";
         var report = new StringBuilder(charmsOnly ? "Aether II alpha.4.1; production installed charm composition\n"
-                : "Aether II alpha.4.1; test-only set/Sentry query candidates\n");
+                : "Aether II alpha.4.1; production recognition; variant=" + VARIANT + "\n");
         try {
             armorSet = component("armor_set");
             var api = new NativeApi();
@@ -87,22 +74,29 @@ public final class AetherIICompatibilityTest {
             player.setGameMode(GameType.SURVIVAL);
             player.setPos(0, 80, 0); player.setNoGravity(true);
             if (charmsOnly) {
-                require(!Boolean.getBoolean("mismatchedboots.runtimetest.aetherIISpike"), "Production gate enabled candidate mixins");
                 charms(server, player, api, report);
-                require(setExtensions == 0 && sentryExtensions == 0, "Production charms invoked a query candidate");
                 report.append("production charms=passed\n");
             } else {
                 sets(server, player, api, report);
                 sentry(server, player, api, report);
-                require(setExtensions > 0 && sentryExtensions > 0, "Candidate hooks were not exercised");
-                report.append("sets=passed; sentry=passed\n");
+                damage(server, player, report);
+                var charmed = install(player, api, item("neptune_boots"), "health", 0, true);
+                for (var root : paidPair(player, charmed, new ItemStack(Items.DIAMOND_BOOTS))) {
+                    require(!root.has(component("charms")), "Recognition refusal/peer restored live charm holders");
+                    measure(player, root, Attributes.MAX_HEALTH, 1, "independent charm baseline", report);
+                }
+                if (!VARIANT.equals("live")) {
+                    require(AetherRecognitionTestControl.setReads > 0 && AetherRecognitionTestControl.sentryReads > 0,
+                            "Real peer result chains were not exercised");
+                }
+                report.append("production recognition=passed; sets=").append(SETS).append("; sentry=").append(SENTRY).append('\n');
             }
             NetworkAcceptanceFiles.write(prefix + "-report.txt", report.toString());
             NetworkAcceptanceFiles.write(prefix + "-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.write(prefix + "-report.txt", report.toString());
             NetworkAcceptanceFiles.failure(prefix, failure);
-        } finally { candidate = false; server.halt(false); }
+        } finally { server.halt(false); }
     }
 
     private static void sets(MinecraftServer server, ServerPlayer player, NativeApi api, StringBuilder report) throws Exception {
@@ -117,7 +111,7 @@ public final class AetherIICompatibilityTest {
                 var pair = paidPair(player, boots, new ItemStack(Items.DIAMOND_BOOTS));
                 var duplicate = MixedBootsFactory.createPair(boots, boots).primary();
                 var gloves = api.accessories(subject);
-                clear(subject); gloves.clearContent(); candidate = false;
+                clear(subject); gloves.clearContent();
                 subject.setItemSlot(EquipmentSlot.HEAD, item(material + "_helmet"));
                 subject.setItemSlot(EquipmentSlot.CHEST, item(material + "_chestplate"));
                 count(api, subject, tag, 2);
@@ -130,9 +124,8 @@ public final class AetherIICompatibilityTest {
                     var root = pair.get(index);
                     String before = snapshot(server, root);
                     subject.setItemSlot(EquipmentSlot.FEET, root);
-                    candidate = false; count(api, subject, tag, index == 0 ? 3 : 2);
-                    candidate = true; count(api, subject, tag, 3);
-                    require(api.ability(subject, tag), "Candidate failed threshold " + material);
+                    count(api, subject, tag, SETS || index == 0 ? 3 : 2);
+                    require(api.ability(subject, tag) == (SETS || index == 0), "Wrong production threshold " + material);
                     require(before.equals(snapshot(server, root)), "Set query mutated root/history");
                 }
                 subject.setItemSlot(EquipmentSlot.FEET, duplicate); count(api, subject, tag, 3);
@@ -144,16 +137,15 @@ public final class AetherIICompatibilityTest {
             var zanite = item("zanite_boots").get(armorSet);
             var neptune = item("neptune_boots").get(armorSet);
             for (var root : List.of(dual.primary(), dual.inverse())) {
-                subject.setItemSlot(EquipmentSlot.FEET, root); candidate = false;
+                subject.setItemSlot(EquipmentSlot.FEET, root);
                 count(api, subject, root.get(armorSet), 1);
-                count(api, subject, root.get(armorSet) == zanite ? neptune : zanite, 0);
-                candidate = true; count(api, subject, zanite, 1); count(api, subject, neptune, 1);
+                count(api, subject, root.get(armorSet) == zanite ? neptune : zanite, SETS ? 1 : 0);
             }
             subject.setItemSlot(EquipmentSlot.HEAD, item("zanite_helmet"));
             subject.setItemSlot(EquipmentSlot.CHEST, item("zanite_chestplate"));
             subject.setItemSlot(EquipmentSlot.LEGS, item("neptune_leggings"));
             api.accessories(subject).setItem(api.handwearIndex, item("neptune_gloves"));
-            count(api, subject, zanite, 3); count(api, subject, neptune, 3);
+            count(api, subject, zanite, SETS ? 3 : 2); count(api, subject, neptune, 3);
             clear(player);
             player.setItemSlot(EquipmentSlot.HEAD, item("zanite_helmet"));
             player.setItemSlot(EquipmentSlot.CHEST, item("zanite_chestplate"));
@@ -161,12 +153,10 @@ public final class AetherIICompatibilityTest {
             String before = snapshot(server, inverse);
             player.setItemSlot(EquipmentSlot.FEET, inverse);
             var speedId = Identifier.parse("aether_ii:armor_set.ability.zanite.attack_speed");
-            candidate = false; NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(player));
-            require(!player.getAttribute(Attributes.ATTACK_SPEED).hasModifier(speedId), "Baseline unexpectedly has set effect");
-            candidate = true; NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(player));
-            close(player.getAttribute(Attributes.ATTACK_SPEED).getModifier(speedId).amount(), .15, "Native Zanite activation");
             NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(player));
-            close(player.getAttribute(Attributes.ATTACK_SPEED).getModifier(speedId).amount(), .15, "Repeated native activation");
+            require(player.getAttribute(Attributes.ATTACK_SPEED).hasModifier(speedId) == SETS, "Wrong native Zanite activation/refusal");
+            NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(player));
+            if (SETS) { close(player.getAttribute(Attributes.ATTACK_SPEED).getModifier(speedId).amount(), .15, "Repeated native activation"); }
             require(before.equals(snapshot(server, inverse)), "Native tick modified source/root");
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(player));
@@ -175,9 +165,17 @@ public final class AetherIICompatibilityTest {
             clear(player); player.setItemSlot(EquipmentSlot.MAINHAND, inverse); count(api, player, zanite, 0);
             var missing = inverse.copy(); missing.remove(ModContent.mixedBootsDataType().orElseThrow());
             player.setItemSlot(EquipmentSlot.FEET, missing); count(api, player, zanite, 0);
+            var countTwo = inverse.copy(); countTwo.setCount(2);
+            player.setItemSlot(EquipmentSlot.FEET, countTwo); count(api, player, zanite, 0);
+            var spoof = new ItemStack(Items.STICK);
+            spoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(inverse).orElseThrow());
+            player.setItemSlot(EquipmentSlot.FEET, spoof); count(api, player, zanite, 0);
+            clear(player); player.getInventory().setItem(0, inverse); count(api, player, zanite, 0);
+            player.getInventory().setItem(0, ItemStack.EMPTY);
             report.append("SETS six complete families: native 2/3 + gloves; owner/inverse; duplicate once; unequal sets both queries; ")
-                    .append("candidate can complete two sets simultaneously; native Zanite tick activation/repeat/removal; immutable roots/history\n");
-        } finally { clear(player); subject.discard(); candidate = false; }
+                    .append("production two-set coexistence or independent refusal; native Zanite tick activation/repeat/removal; ")
+                    .append("held/idle/missing-data/bad-count/spoof negatives; immutable roots/history\n");
+        } finally { clear(player); subject.discard(); }
     }
 
     private static void charms(MinecraftServer server, ServerPlayer player, NativeApi api, StringBuilder report) throws Exception {
@@ -315,22 +313,24 @@ public final class AetherIICompatibilityTest {
         for (var root : pair) {
             close(amount(root.getAttributeModifiers(), Attributes.FALL_DAMAGE_MULTIPLIER), -.375, "Mixed Sentry average");
             String before = snapshot(server, root);
-            for (boolean enabled : List.of(false, true)) {
-                candidate = enabled;
-                fall(player, source, 7.99, true); fall(player, source, 8, false);
-                fall(player, root, 7.99, enabled); fall(player, root, 8, false);
-                fall(player, new ItemStack(Items.DIAMOND_BOOTS), 7.99, false);
-            }
+            fall(player, source, 7.99, true); fall(player, source, 8, false);
+            fall(player, root, 7.99, SENTRY); fall(player, root, 8, false);
+            fall(player, new ItemStack(Items.DIAMOND_BOOTS), 7.99, false);
             require(before.equals(snapshot(server, root)), "Fall modified root/history");
         }
-        candidate = true;
         var duplicate = MixedBootsFactory.createPair(source, source).primary();
         player.setItemSlot(EquipmentSlot.FEET, duplicate); count(api, player, source.get(armorSet), 1);
         close(amount(duplicate.getAttributeModifiers(), Attributes.FALL_DAMAGE_MULTIPLIER), -.75, "Two Sentry numeric");
-        fall(player, duplicate, 7.99, true);
+        fall(player, duplicate, 7.99, SENTRY);
+        var missing = pair.get(1).copy(); missing.remove(ModContent.mixedBootsDataType().orElseThrow());
+        fall(player, missing, 7.99, false);
+        var countTwo = pair.get(1).copy(); countTwo.setCount(2); fall(player, countTwo, 7.99, false);
+        var spoof = new ItemStack(Items.STICK);
+        spoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(pair.get(1)).orElseThrow());
+        fall(player, spoof, 7.99, false);
         clear(player); player.setItemSlot(EquipmentSlot.MAINHAND, pair.get(0));
         fall(player, ItemStack.EMPTY, 7.99, false);
-        report.append("SENTRY native/owner/inverse/duplicate event dispatch at 7.99 and 8; candidate restores only short-fall predicate; ")
+        report.append("SENTRY native/owner/inverse/duplicate event dispatch at 7.99 and 8; production local short-fall predicate/refusal; ")
                 .append("stored average -.375 is unchanged; no equipment/source mutation\n");
     }
 
@@ -338,7 +338,51 @@ public final class AetherIICompatibilityTest {
         player.setItemSlot(EquipmentSlot.FEET, boots); player.fallDistance = distance;
         var event = new LivingFallEvent(player, distance, 1);
         NeoForge.EVENT_BUS.post(event);
-        close(event.getDistance(), suppressed ? 0 : distance, "Sentry short-fall boundary, candidate=" + candidate);
+        close(event.getDistance(), suppressed ? 0 : distance, "Sentry short-fall boundary, variant=" + VARIANT);
+    }
+
+    private static void damage(MinecraftServer server, ServerPlayer player, StringBuilder report) throws Exception {
+        clear(player);
+        var diamond = new ItemStack(Items.DIAMOND_BOOTS);
+        close(actualFall(server, item("sentry_boots"), 7.99, false), 0, "Native Sentry real short fall");
+        require(actualFall(server, item("sentry_boots"), 8, false) > 0, "Native Sentry acquired long-fall immunity");
+        double ordinary = actualFall(server, diamond, 8, false);
+        require(ordinary > 0, "Real fall control did not hurt");
+        for (var root : paidPair(player, item("sentry_boots"), diamond)) {
+            double shortFall = actualFall(server, root, 7.99, false);
+            require(SENTRY ? shortFall == 0 : shortFall > 0, "Wrong real Sentry mixed fall/refusal");
+            double longFall = actualFall(server, root, 8, false);
+            require(longFall > 0 && longFall < ordinary, "Composed Sentry reduction was lost or became immunity");
+        }
+        close(actualFall(server, item("gravitite_boots"), 7.99, true), 0, "Native Gravitite real set fall");
+        for (var root : paidPair(player, item("gravitite_boots"), diamond)) {
+            double result = actualFall(server, root, 7.99, true);
+            require(SETS || root.get(armorSet) != null ? result == 0 : result > 0,
+                    "Native Gravitite fall consumer did not follow production set admission");
+        }
+        report.append("DAMAGE actual causeFallDamage/hurtServer: native/vanilla controls; both Sentry inverses at 7.99/8; ")
+                .append("composed long-fall reduction; native Gravitite set-fall consumer and both inverses; immutable roots/history\n");
+    }
+
+    private static double actualFall(MinecraftServer server, ItemStack input, double distance, boolean gravitite) throws Exception {
+        var subject = EntityType.ZOMBIE.create(server.overworld(), EntitySpawnReason.COMMAND);
+        require(subject != null, "Could not create actual fall subject");
+        try {
+            subject.setNoAi(true);
+            var boots = input.copy();
+            String before = snapshot(server, boots);
+            subject.setItemSlot(EquipmentSlot.FEET, boots);
+            if (gravitite) {
+                subject.setItemSlot(EquipmentSlot.HEAD, item("gravitite_helmet"));
+                subject.setItemSlot(EquipmentSlot.CHEST, item("gravitite_chestplate"));
+            }
+            Method update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates"); update.setAccessible(true); update.invoke(subject);
+            double health = subject.getHealth(); subject.fallDistance = distance;
+            subject.causeFallDamage(distance, 1, server.overworld().damageSources().fall());
+            require(subject.getItemBySlot(EquipmentSlot.FEET) == boots && before.equals(snapshot(server, boots)),
+                    "Actual fall substituted equipment or changed root/history");
+            return health - subject.getHealth();
+        } finally { subject.discard(); }
     }
 
     private static List<ItemStack> paidPair(ServerPlayer player, ItemStack first, ItemStack second) {
@@ -358,7 +402,7 @@ public final class AetherIICompatibilityTest {
                 EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) { entity.setItemSlot(slot, ItemStack.EMPTY); }
     }
     private static void count(NativeApi api, LivingEntity entity, TagKey<Item> tag, int expected) throws Exception {
-        require(api.count(entity, tag) == expected, "Wrong set count " + tag + "; candidate=" + candidate + "; expected=" + expected);
+        require(api.count(entity, tag) == expected, "Wrong set count " + tag + "; variant=" + VARIANT + "; expected=" + expected);
     }
     private static double amount(ItemAttributeModifiers modifiers, Holder<Attribute> attribute) {
         return modifiers.modifiers().stream().filter(entry -> entry.attribute().equals(attribute) && entry.slot().test(EquipmentSlot.FEET))
