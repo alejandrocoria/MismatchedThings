@@ -110,6 +110,44 @@ Silent Gear 4.2.3 and Silent Lib 11.2.0 SHA-256 pins from
 are cleared; development clients/mods/configs/worlds stay untouched.
 No new dependency of `build`/`check` is installed.
 
+For the separate **diagnostic-only** parts/recipes investigation (no candidate
+adapter), run:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear '-PsilentGearEffectVariant=parts-audit' --console=plain
+```
+
+Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. This scope records
+27 report lines: real paid native lining, nine native/mixed crafting controls,
+two paid native unchanged-output smithing controls, four safe mixed smithing
+refusals, iron/copper production recomposition, ordinary donor flags, six
+anvil **preview observations** (including native material/upgrades and mixed
+rejections), and raw native/root tag memberships. Reports are under
+`build/reports/silent-gear-effects/<version>/parts-audit/`. It does not implement
+part editing, execute paid refunds/salvaging or claim manual/connected acceptance.
+Details and proposed boundaries belong to the
+[parts/recipes exploration](../local-docs/SILENT-GEAR-PARTS-AND-RECIPES-EXPLORATION.md).
+
+The separate **test-only source-tooltip spike**, without extra source headings:
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltipSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltipSpike '-Pneoforge_version=26.1.2.99' --console=plain
+```
+
+It reuses the disposable remaining-effects flat-world seed/preparation and its
+versioned run/report directories, but a different client driver and own
+`silent-gear-tooltip-spike-*` markers/logs. Run sequentially, not concurrently
+with `verifySilentGearRemaining`; preparation replaces those build-owned paths.
+The hidden/muted connected client adds the pinned JDT artifact for coexistence
+and compares native structured components against source insertion on ten paid
+Workbench roots. Controlled window polling exercises actual SG keybindings,
+both native tooltip styles, rebinding, advanced mode, compact/expanded visibility,
+Broken/missing-cache/refusal, root/JDT preservation and a recalculation witness.
+This is not a production adapter, physical OS input, screenshot/visual acceptance
+or a general native guard test. Scope, boundary finding and results belong to the
+[tooltip exploration](../local-docs/SILENT-GEAR-TOOLTIP-EXPLORATION.md#7-bounded-client-spike--2026-10-21).
+
 The default server gate retains native construction/lining and equipment
 controls for five material profiles, with eight representative paid output
 measurements (lined/vanilla, leather/vanilla, SG/SG and identical).

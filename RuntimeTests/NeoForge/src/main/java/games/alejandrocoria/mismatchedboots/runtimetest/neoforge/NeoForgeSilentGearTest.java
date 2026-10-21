@@ -58,6 +58,12 @@ public final class NeoForgeSilentGearTest {
             player.setPos(0, 80, 0); player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
             String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
+            if (stateVariant.equals("parts-audit")) {
+                SilentGearPartsAudit.run(player, api, report);
+                NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
+                return;
+            }
             if (List.of("defense-bounce", "defense-bounce-compatible").contains(stateVariant)) {
                 if (!SilentGearBounceTest.step(player, api, report)) { finished = false; return; }
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
