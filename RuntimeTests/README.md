@@ -311,7 +311,11 @@ The recognition fault leaves native-peer safe wear available; existing A/B
 refusals also check independent fall/retaliation behavior. `defense-joint` adds
 only pinned JDT, observes real registered handlers and checks exact FE/wear and
 complete root/source/settings/tables, including live JDT controls when Bounce
-is suppressed. D's connected gameplay/rejoin and manual exits remain pending.
+is suppressed. [D's record](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md#10-block-d-execution-record--2026-10-20)
+owns connected gameplay/rejoin and its separately recorded automated/manual exits.
+The owner accepted all five ordinary-client groups on 2026-10-20, completing the
+bounded Heat Resistant/Bounce plan; this is separate from the .99/.114 automated
+matrix and does not close broader Silent Gear compatibility.
 
 Additional variants of `verifySilentGear` use
 `-PsilentGearEffectVariant=repair`, `wear`, `compatible`, `state` or `joint`:
@@ -375,6 +379,25 @@ explicit pickup is used. The actual used Magnetic root is saved in player slot
 attraction/pickup resumes without crafting. Client and Rejoin additionally require
 `silent-gear-magnet-client-report.txt` (seven scenarios) and
 `silent-gear-magnet-rejoin-report.txt` (one), in the same lifecycle reports folder.
+The driver also includes the pinned JDT 1.6.11 fixture for four defensive
+landings: native slime-lined Crimson Iron, both mixed/diamond orientations and
+an SG/Eclipse Alloy mixed pair with funded Negate and Ground Stomp/binding.
+Initial positioning above a stone platform is followed by ordinary gravity and
+registered native handlers: actual client/server rise, native sound-engine
+dispatch, one authoritative server bill, complete used-root packets and immutable
+histories are checked. No synthetic fall, manual queue drain, client velocity
+write or teleport-as-rebound proof is used. Native local-client recognition is
+enabled; client payment is not. Four further hurt/packet controls compare plain,
+native and both mixed outputs for fire/wall damage and real zombie retaliation,
+temporarily neutralizing actor numeric armor and freezing incidental item wear.
+Goal-free attackers keep normal travel/tracking, unlike NoAI entities.
+The actually worn SG/JDT root is saved in player slot 12 after its live state
+settles. Another JVM compares its decoded full stack/same UUID before unrelated
+magnet test cleanup, retains that actual loaded object and repeats ordinary
+landing/rebound/sound/wear. It never substitutes a barrel copy or recrafts it.
+The gate additionally requires `silent-gear-defense-client-report.txt` (four),
+`silent-gear-defense-health-report.txt` (four),
+`silent-gear-defense-rejoin-report.txt` (one) and `silent-gear-defense-player.json`.
 This is integrated transport, not a separate dedicated-server client matrix
 or rendering/tooltip acceptance.
 

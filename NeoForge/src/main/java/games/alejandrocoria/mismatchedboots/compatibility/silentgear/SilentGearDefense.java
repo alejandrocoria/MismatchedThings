@@ -61,14 +61,17 @@ public final class SilentGearDefense {
     }
 
     public static int retaliationLevel(int original, LivingDamageEvent.Post event, boolean proof) {
-        if (!proof || !retaliationReady || retaliationDisabled || !(event.getEntity() instanceof Player)) { return original; }
+        if (!proof || !retaliationReady || retaliationDisabled || event.getEntity().level().isClientSide()
+                || !(event.getEntity() instanceof Player)) { return original; }
         try { return Math.max(original, bounce(event.getEntity())); }
         catch (Throwable failure) { disableBounce(true, failure); return original; }
     }
 
     private static int bounce(LivingEntity actor) {
         ItemStack root = actor.getItemBySlot(EquipmentSlot.FEET);
-        if (actor.level().isClientSide() || !valid(root)) { return 0; }
+        // Native local falls own client rebound/sound too. Recognition is read-only on both sides;
+        // allowNativeFallWear still rejects client payments, so only the server wears the live root.
+        if (!valid(root)) { return 0; }
         return SilentGearCompatibility.effectiveTraits(root).stream().filter(trait -> trait.id().toString().equals("silentgear:bounce"))
                 .mapToInt(SilentGearCompatibility.Trait::level).max().orElse(0);
     }

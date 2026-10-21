@@ -32,7 +32,7 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** Real integrated connection: only immutable JSON expectations cross threads; items/attributes arrive by vanilla packets. */
 final class SilentGearClientTest {
     private static int ticks, phase;
-    private static boolean finished;
+    private static boolean finished, magnetComplete;
     private static Future<String> job;
     private static String expected;
     private static int orientation, phaseStarted;
@@ -63,7 +63,11 @@ final class SilentGearClientTest {
             }
             if (REJOIN) { rejoin(client); return; }
             if (phase == 10) {
-                if (!SilentGearMagnetClientTest.advance(client, false)) { return; }
+                if (!magnetComplete) {
+                    if (!SilentGearMagnetClientTest.advance(client, false)) { return; }
+                    magnetComplete = true;
+                }
+                if (!SilentGearDefenseClientTest.advance(client, false)) { return; }
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id); var barrel = SilentGearLifecycleTest.barrel(server);
                     var root = barrel.getItem(5).copy(); root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
@@ -230,17 +234,23 @@ final class SilentGearClientTest {
                     + "both wearer inverses, native-selected jump control vs real refreshed mixed potion packets/jump, offhand refresh and idle expiry; "
                     + "Moonwalker actual health loss matches native with independent damaging vanilla control, composed gravity and removal packets; "
                     + "native/mixed Magnetic and Greedy ordinary motion, client entity/inventory packets and counted natural pickup, delayed/rejected controls, both hands and selected-to-idle stop; "
-                    + "read-only client queries; actual player inventory including the used magnet root saved for a separate rejoin JVM\n");
+                    + "native/mixed ordinary defensive landings, client rebound/sound, health packets and real attacker motion; "
+                    + "read-only client queries; actual player inventory including used magnet and SG/JDT defensive roots saved for a separate rejoin JVM\n");
         }
     }
 
     private static void rejoin(Minecraft client) throws Exception {
         var server = client.getSingleplayerServer(); var id = client.player.getUUID();
         if (phase == 3) {
-            if (!SilentGearMagnetClientTest.advance(client, true)) { return; }
+            if (!magnetComplete) {
+                if (!SilentGearMagnetClientTest.advance(client, true)) { return; }
+                magnetComplete = true;
+            }
+            if (!SilentGearDefenseClientTest.advance(client, true)) { return; }
             success(client, "Separate connected-client JVM, same UUID/world: actual player inventory/root/damage/selected copper clocks match saved data; "
                     + "Brilliant recognition, one seeded Stellar heal with unchanged sources/state, normal resumed potion packets then natural idle expiry; "
-                    + "saved magnet root/source identity matches before use, ordinary attraction/pickup resumes without recrafting, client motion/counts/delay/rejection and idle stop pass\n");
+                    + "saved magnet root/source identity matches before use, ordinary attraction/pickup resumes without recrafting, client motion/counts/delay/rejection and idle stop pass; "
+                    + "actual used defensive root matched before unrelated inventory cleanup, then repeats ordinary rebound/sound with one root bill and unchanged source/FE histories\n");
             return;
         }
         if (phase == 0) {
@@ -252,6 +262,7 @@ final class SilentGearClientTest {
                     require(manifest.get("process").getAsLong() != ProcessHandle.current().pid() && manifest.get("uuid").getAsString().equals(id.toString()),
                             "Rejoin reused JVM or changed player identity");
                     require(manifest.get("snapshot").equals(JsonParser.parseString(snapshot(owner))), "Actual player save/rejoin changed frozen roots, damage or clocks");
+                    SilentGearDefenseClientTest.captureRejoin(owner);
                     require(net.minecraft.world.entity.monster.piglin.PiglinAi.isWearingSafeArmor(owner), "Rejoined Brilliant missing");
                     var root = owner.getItemBySlot(EquipmentSlot.FEET); var before = root.copy();
                     Object stellar = SilentGearCompatibility.effectiveTraits(root).stream().filter(value -> value.id().getPath().equals("stellar")).findFirst().orElseThrow().nativeInstance();

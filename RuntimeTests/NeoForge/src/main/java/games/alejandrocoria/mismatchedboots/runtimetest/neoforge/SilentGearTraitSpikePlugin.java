@@ -27,7 +27,8 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") && variant.startsWith("defense-") && !List.of("defense-foundation", "defense-bounce", "defense-joint").contains(variant);
         }
         if (mixin.endsWith("SilentGearDefenseWearWitnessMixin")) {
-            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
+            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearClient")
+                    || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
                     && System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").startsWith("defense-");
         }
         if (mixin.endsWith("SilentGearMagnetPeerMixin")) {
@@ -44,7 +45,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
                     ? System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").equals("wearer-compatible")
                     : System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").startsWith("wearer-"));
         }
-        return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
+        return (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearClient"))
                 && mixin.endsWith("SilentGearRecalculationWitnessMixin");
     }
     @Override public void onLoad(String name) {}

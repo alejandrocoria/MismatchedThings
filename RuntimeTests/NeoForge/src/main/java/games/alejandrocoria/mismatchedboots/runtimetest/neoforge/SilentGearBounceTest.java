@@ -32,6 +32,11 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** Production Bounce only; native motion runs through the ordinary next-server-pre-tick scheduler. */
 public final class SilentGearBounceTest {
     public static int wearCalls, requestedWear;
+    public static ItemStack protectedRoot;
+
+    public static void recalculation(ItemStack stack) {
+        if (protectedRoot != null && stack == protectedRoot) { throw new AssertionError("Defensive landing entered native recalculation of the observed root"); }
+    }
     private static final List<ServerPlayer> pending = new ArrayList<>();
     private static String evidence;
     private static Random nativeRandom;

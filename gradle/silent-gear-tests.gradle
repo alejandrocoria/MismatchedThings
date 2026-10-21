@@ -14,8 +14,9 @@ def artifacts = [
         'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
         'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655'
 ]
+def justDireArtifact = ['justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436']
 if (effectVariant in ['joint', 'magnet-server', 'defense-joint']) {
-    artifacts['justdirethings-1.6.11.jar'] = '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
+    artifacts.putAll(justDireArtifact)
 }
 
 neoForge.runs.create('silentGearStats') {
@@ -173,7 +174,7 @@ def lifecycleReports = layout.buildDirectory.dir("reports/silent-gear-lifecycle/
 tasks.register('prepareSilentGearSave') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
-        def jars = artifacts.findAll { name, hash -> !name.startsWith('justdirethings') }.collect { name, hash ->
+        def jars = (artifacts + justDireArtifact).collect { name, hash ->
             def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected pinned SG lifecycle artifact: ${jar}")
@@ -213,10 +214,12 @@ tasks.register('prepareSilentGearClient') {
         fixtureFiles.delete { delete clientRun }
         fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'world')); into(new File(clientRun.get().asFile, 'saves/silentgear')) }
         fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'mods')); into(new File(clientRun.get().asFile, 'mods')) }
+        fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(clientRun.get().asFile, 'mods')) }
         new File(clientRun.get().asFile, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
         def config = new File(clientRun.get().asFile, 'config'); config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
         fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "silent-gear-client-${it}.txt") }) }
+        fixtureFiles.delete { delete(['client-report.txt', 'health-report.txt', 'player.json'].collect { new File(lifecycleReports.get().asFile, "silent-gear-defense-${it}") }) }
     }
 }
 tasks.named('runSilentGearClient') { dependsOn('prepareSilentGearClient') }
@@ -229,12 +232,13 @@ tasks.register('prepareSilentGearRejoin') {
         }
         // Reuse the actual player/world save. Do not rerun Client preparation or copy the server barrel world.
         fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "silent-gear-rejoin-${it}.txt") }) }
+        fixtureFiles.delete { delete new File(lifecycleReports.get().asFile, 'silent-gear-defense-rejoin-report.txt') }
     }
 }
 tasks.named('runSilentGearRejoin') { dependsOn('prepareSilentGearRejoin') }
 tasks.register('verifySilentGearLifecycle') {
     group = 'verification'
-    description = 'Real SG restart/rejoin, wearer/state packets and ordinary magnet motion/pickup'
+    description = 'Real SG restart/rejoin, wearer/state, magnets and native defensive landing/sound/health'
     doLast {
         ['Save', 'Restart', 'Client', 'Rejoin'].each { phase ->
             def name = phase.toLowerCase(Locale.ROOT)
@@ -256,6 +260,19 @@ tasks.register('verifySilentGearLifecycle') {
                     throw new GradleException("Incomplete SG magnet ${phase} evidence: ${magnet}")
                 }
                 logger.lifecycle(magnet.text)
+                def defense = new File(result, "silent-gear-defense-${name}-report.txt")
+                if (!defense.isFile() || defense.readLines().size() != (phase == 'Client' ? 4 : 1)) {
+                    throw new GradleException("Incomplete SG defensive ${phase} evidence: ${defense}")
+                }
+                logger.lifecycle(defense.text)
+                if (phase == 'Client') {
+                    def health = new File(result, 'silent-gear-defense-health-report.txt')
+                    if (!health.isFile() || health.readLines().size() != 4
+                            || !new File(result, 'silent-gear-defense-player.json').isFile()) {
+                        throw new GradleException("Incomplete SG defensive health/player evidence: ${health}")
+                    }
+                    logger.lifecycle(health.text)
+                }
             }
         }
     }
