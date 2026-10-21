@@ -66,7 +66,8 @@ class ComponentProjectionTest {
         assertEquals(ComponentPolicy.OMIT, defaults.ruleFor(minecraft("trim")).policy());
         assertEquals(ComponentPolicy.OWNER, defaults.ruleFor(minecraft("custom_data")).policy());
         assertEquals(ComponentPolicy.OWNER, defaults.ruleFor(testId("unknown")).policy());
-        defaults.rules().keySet().forEach(id ->
+        assertEquals(ComponentPolicy.OMIT, defaults.ruleFor(Identifier.parse("aether_ii:charms")).policy());
+        defaults.rules().keySet().stream().filter(id -> id.getNamespace().equals("minecraft")).forEach(id ->
                 assertTrue(BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(id).isPresent(), id.toString()));
 
         Map<Identifier, ComponentRule> source = new LinkedHashMap<>();

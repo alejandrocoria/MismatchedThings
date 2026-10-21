@@ -40,6 +40,9 @@ public final class ComponentRuleDefaults {
         put(rules, "trim", ComponentPolicy.OMIT);
         put(rules, "dyed_color", ComponentPolicy.OMIT);
         put(rules, "custom_model_data", ComponentPolicy.OMIT);
+        // Installed charm bonuses are already baked from effective source attributes.
+        // Live root holders would apply them again under the mixed item's modifier IDs.
+        rules.put(Identifier.fromNamespaceAndPath("aether_ii", "charms"), ComponentRule.of(ComponentPolicy.OMIT));
         return Collections.unmodifiableMap(rules);
     }
 

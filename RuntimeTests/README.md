@@ -89,43 +89,46 @@ It does not validate actual default components, gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
-### Aether II bounded compatibility spike
+### Aether II installed charms — production block A
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIISpike '-Pneoforge_version=26.1.2.99' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIISpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIICharms '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIICharms --console=plain
 ```
 
 For an optional-free fixture control, reuse `:RuntimeTests:NeoForge:verifyOritechFallAbsent`
-with the spike disabled; no duplicate Aether absence driver is needed. Both
-production archives must remain free of the six spike class/config entries.
+with recognition research disabled; no duplicate Aether absence driver is needed.
+Both production archives must remain free of native Aether classes, fixture
+drivers and experimental query mixins/config. The identifier-only Common default
+is intentionally part of production, not a native dependency leak.
 
 The opt-in server fixture hash-checks the installed alpha.4.1 JAR (including its
 bundled Cumulus/Nitrogen) from `NeoForge/runs/client/mods`, without modifying it.
-Ordinary compilation has no Aether dependency. Two optional test-only mixins
-extend native per-stack set and Sentry FEET queries only while the spike's local
-candidate flag is enabled; normal fixture runs do not apply them. No production
-adapter/default is added.
+Ordinary compilation has no Aether dependency. This run uses **normal server
+rules**, no per-creation omission candidate, and never enables the set/Sentry
+research mixins. `aether_ii:charms=omit` is now the configurable production
+default; explicit overrides remain supported outside the snapshot-only contract.
 
-Coverage: six complete set families at two/three pieces including real native
-accessory gloves (native lookup excludes FakePlayers); current owner/inverse,
-unequal and duplicate sources; actual native Zanite event modifier lifecycle;
-Health charm baked/effective/equipped values; paid production Workbench outputs;
-actual native server Forge cursor/slot/apply/locked/take paths; per-creation
-`charms=omit` candidate; Sentry's 7.99/8 fall-event boundary independently of its
-stored numeric average. Registry-aware whole-root/source serialization guards
-against native mutable-payload changes. Candidate charm construction uses the
-factory with explicit rules, not a production config/reload/menu claim.
+Coverage: all five shipped armor charms, native and empty-holder baselines,
+paid Workbench inverse outputs, identical charmed sources, two Health holders,
+normal-default baked/effective/equipped contributions, native server Forge
+cursor/slot/Apply/locked/take and mixed rejection without charm consumption.
+Vanilla equipment updates measure real player attributes, not manually installed
+expected modifiers. Repeat generic source-wise recomposition changes an ordinary
+source name and checks complete histories/no bonus accumulation. Native config
+controls verify registered missing-default completion and explicit-owner
+retention; Common tests cover the dormant declaration and payload without Aether.
+Registry-aware root/source serialization detects mutable-payload changes.
 
 Reports, markers and raw process logs are under
-`RuntimeTests/NeoForge/build/reports/aether-ii-spike/<version>/`; disposable
-worlds/mods/config use `build/run/aetherIISpike/<version>/` within the NeoForge
-fixture module. Each run refreshes its world and markers. Initial .99/.114
-results and decisions are in the
-[exploration](../local-docs/AETHER-II-COMPATIBILITY-EXPLORATION.md#8-native-measurements-and-local-candidate--2026-10-21).
-This is not a client-screen/packet, all-effect/all-charm, save/restart or manual
-acceptance gate. It does not implement native reinforcement, Altar/Hourglass
-transactions, presentation or broken-item lifecycle.
+`RuntimeTests/NeoForge/build/reports/aether-ii-charms/<version>/`; disposable
+worlds/mods/config use `build/run/aetherIICharms/<version>/` within the NeoForge
+fixture module. Each run refreshes its world and markers.
+[A's execution record](../local-docs/AETHER-II-COMPATIBILITY-IMPLEMENTATION.md#71-block-a--installed-charm-composition--2026-10-21)
+owns actual results/limits. This is not connected client-screen/packet,
+native editing-recipe, all-effect, save/restart or owner manual acceptance.
+It does not implement set/Sentry fixes, reinforcement, Altar/Hourglass,
+presentation or broken-item lifecycle.
 
 The pinned native server emits two client-only `Toast` loading ERRORs during
 startup before driver execution; they remain visible and are not treated as
@@ -133,11 +136,23 @@ clean logs. Section 8.5 records native guidebook bytecode evidence and the limit
 of that diagnosis. The verifier checks scoped reports/assertions, not a blanket
 error-free native-mod environment.
 
-The owner subsequently accepted the
-[bounded A/B/C gameplay plan](../local-docs/AETHER-II-COMPATIBILITY-IMPLEMENTATION.md).
-Production work is pending; this task still runs the research candidate. The
-plan promotes useful native controls and retires candidate wiring as production
-lands, rather than layering the spike over the real adapter.
+### Aether II remaining set/Sentry spike — not production acceptance
+
+`verifyAetherIISpike` remains opt-in research for B's local recognition only.
+It covers six complete families at two/three pieces with real native gloves
+(accessory lookup excludes FakePlayers), both inverse orientations, unequal and
+duplicate sets, native Zanite activation/removal and Sentry's separate 7.99/8
+event versus numeric modifier. Two experimental mixins extend local queries
+only in that run. Its path is `build/reports/aether-ii-spike/<version>/`, with
+worlds in `build/run/aetherIISpike/<version>/` within the fixture module.
+
+The renamed shared `AetherIICompatibilityTest` driver keeps independent run flags
+and reports. The old explicit per-creation charm omission implementation is
+removed, not retained as fallback. Dated pre-A +3/+1/current-root-installation
+observations remain historical in
+[the exploration](../local-docs/AETHER-II-COMPATIBILITY-EXPLORATION.md#8-native-measurements-and-local-candidate--2026-10-21),
+not current production expectations. B/C remain pending; neither the query spike
+nor A's charm gate closes the broader native integration or client presentation.
 
 ### Silent Gear native stat measurement
 

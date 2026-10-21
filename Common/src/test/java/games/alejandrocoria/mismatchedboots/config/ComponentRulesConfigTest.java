@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,7 +49,14 @@ class ComponentRulesConfigTest {
         ComponentRules second = new ComponentRulesConfig(path).load();
 
         assertSame(ComponentRuleDefaults.state(), first);
-        assertEquals(first, second);
+        assertEquals(first.declarations(), second.declarations());
+        // Fresh in-memory defaults include dormant IDs; loading filters their effective rules.
+        assertEquals(first.components().rules().entrySet().stream()
+                .filter(entry -> BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(entry.getKey()).isPresent())
+                .collect(Collectors.toMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue)),
+                second.components().rules());
+        assertEquals(ComponentRule.of(ComponentPolicy.OMIT), second.declarations().get(id("aether_ii:charms")));
+        assertFalse(second.components().rules().containsKey(id("aether_ii:charms")));
         assertEquals(generated, Files.readString(path));
         assertOrdered(generated, "[durability]", "[repair_cost]", "[components]",
                 "[components.\"minecraft:damage_resistant\"]",
@@ -81,6 +89,9 @@ class ComponentRulesConfigTest {
                 policy = "maximum"
                 number = "long"
 
+                [components."aether_ii:charms"]
+                policy = "owner"
+
                 [components."%s"]
                 policy = "share"
                 """.formatted(dottedId));
@@ -95,6 +106,8 @@ class ComponentRulesConfigTest {
                 rules.components().ruleFor(id("minecraft:custom_data")));
         assertTrue(rules.declarations().containsKey(id("absentmod:dormant_energy")));
         assertFalse(rules.components().rules().containsKey(id("absentmod:dormant_energy")));
+        assertEquals(ComponentRule.of(ComponentPolicy.OWNER), rules.declarations().get(id("aether_ii:charms")));
+        assertFalse(rules.components().rules().containsKey(id("aether_ii:charms")));
         assertTrue(saved.contains("[components.\"" + dottedId + "\"]"));
         assertOrdered(saved,
                 "[components.\"minecraft:custom_model_data\"]",
@@ -123,8 +136,10 @@ class ComponentRulesConfigTest {
                 rules.declarations().get(id("minecraft:rarity")));
         assertEquals(ComponentRule.of(ComponentPolicy.INTERSECTION),
                 rules.declarations().get(id("minecraft:damage_resistant")));
+        assertEquals(ComponentRule.of(ComponentPolicy.OMIT), rules.declarations().get(id("aether_ii:charms")));
         String saved = Files.readString(path);
         assertTrue(saved.contains("[components.\"minecraft:damage_resistant\"]"));
+        assertTrue(saved.contains("[components.\"aether_ii:charms\"]"));
         int rarity = saved.indexOf("[components.\"minecraft:rarity\"]");
         assertTrue(rarity >= 0 && saved.indexOf("policy = \"owner\"", rarity) > rarity);
     }

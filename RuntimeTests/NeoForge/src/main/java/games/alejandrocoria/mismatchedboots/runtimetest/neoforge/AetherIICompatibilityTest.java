@@ -3,11 +3,9 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
-import games.alejandrocoria.mismatchedboots.component.ComponentRule;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
-import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
-import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
+import games.alejandrocoria.mismatchedboots.config.ComponentRulesConfig;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
@@ -16,6 +14,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,19 +42,20 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
 
-/** Opt-in native measurements and disposable candidates, not a production adapter. */
-public final class AetherIICompatibilitySpike {
+/** Production charm controls and, separately, opt-in set/Sentry research candidates. */
+public final class AetherIICompatibilityTest {
     private static boolean finished;
     private static boolean candidate;
     private static DataComponentType<TagKey<Item>> armorSet;
     private static int setExtensions;
     private static int sentryExtensions;
 
-    private AetherIICompatibilitySpike() {}
+    private AetherIICompatibilityTest() {}
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> run(event.getServer()));
@@ -76,23 +76,32 @@ public final class AetherIICompatibilitySpike {
     private static void run(MinecraftServer server) {
         if (finished) { return; }
         finished = true;
-        var report = new StringBuilder("Aether II alpha.4.1; test-only native query candidates\n");
+        boolean charmsOnly = Boolean.getBoolean("mismatchedboots.runtimetest.aetherIICharms");
+        String prefix = charmsOnly ? "aether-ii-charms" : "aether-ii-spike";
+        var report = new StringBuilder(charmsOnly ? "Aether II alpha.4.1; production installed charm composition\n"
+                : "Aether II alpha.4.1; test-only set/Sentry query candidates\n");
         try {
             armorSet = component("armor_set");
             var api = new NativeApi();
             var player = FakePlayerFactory.getMinecraft(server.overworld());
             player.setGameMode(GameType.SURVIVAL);
             player.setPos(0, 80, 0); player.setNoGravity(true);
-            sets(server, player, api, report);
-            charms(server, player, api, report);
-            sentry(server, player, api, report);
-            require(setExtensions > 0 && sentryExtensions > 0, "Candidate hooks were not exercised");
-            report.append("sets=passed; charms=passed; sentry=passed\n");
-            NetworkAcceptanceFiles.write("aether-ii-spike-report.txt", report.toString());
-            NetworkAcceptanceFiles.write("aether-ii-spike-success.txt", "neoforge\n");
+            if (charmsOnly) {
+                require(!Boolean.getBoolean("mismatchedboots.runtimetest.aetherIISpike"), "Production gate enabled candidate mixins");
+                charms(server, player, api, report);
+                require(setExtensions == 0 && sentryExtensions == 0, "Production charms invoked a query candidate");
+                report.append("production charms=passed\n");
+            } else {
+                sets(server, player, api, report);
+                sentry(server, player, api, report);
+                require(setExtensions > 0 && sentryExtensions > 0, "Candidate hooks were not exercised");
+                report.append("sets=passed; sentry=passed\n");
+            }
+            NetworkAcceptanceFiles.write(prefix + "-report.txt", report.toString());
+            NetworkAcceptanceFiles.write(prefix + "-success.txt", "neoforge\n");
         } catch (Throwable failure) {
-            NetworkAcceptanceFiles.write("aether-ii-spike-report.txt", report.toString());
-            NetworkAcceptanceFiles.failure("aether-ii-spike", failure);
+            NetworkAcceptanceFiles.write(prefix + "-report.txt", report.toString());
+            NetworkAcceptanceFiles.failure(prefix, failure);
         } finally { candidate = false; server.halt(false); }
     }
 
@@ -173,83 +182,128 @@ public final class AetherIICompatibilitySpike {
 
     private static void charms(MinecraftServer server, ServerPlayer player, NativeApi api, StringBuilder report) throws Exception {
         clear(player);
-        ItemStack source = install(player, api, item("neptune_boots"), true);
-        close(amount(source.getAttributeModifiers(), Attributes.MAX_HEALTH), 2, "Native Health charm");
-        String before = snapshot(server, source);
+        var charmsId = Identifier.parse("aether_ii:charms");
+        require(ComponentRulesLifecycle.serverRules().components().ruleFor(charmsId).policy() == ComponentPolicy.OMIT,
+                "Normal registered server rules did not select charm omission");
+        Path configControl = Path.of(System.getProperty("mismatchedboots.runtimetest.markers")).resolve("component-config-control.toml");
+        Files.writeString(configControl, "[components.\"minecraft:rarity\"]\npolicy=\"owner\"\n");
+        var completed = new ComponentRulesConfig(configControl).load();
+        require(completed.components().ruleFor(charmsId).policy() == ComponentPolicy.OMIT,
+                "Existing config did not gain registered charm default");
+        Files.writeString(configControl, "[components.\"aether_ii:charms\"]\npolicy=\"owner\"\n");
+        require(new ComponentRulesConfig(configControl).load().components().ruleFor(charmsId).policy() == ComponentPolicy.OWNER,
+                "Explicit registered charm override was replaced");
         var vanilla = new ItemStack(Items.DIAMOND_BOOTS);
-        var pair = paidPair(player, source, vanilla);
-        report.append("HEALTH native IDs=").append(healthIds(source)).append("; owner effective IDs=")
-                .append(healthIds(pair.get(0))).append('\n');
-        measureHealth(player, pair.get(0), 1, 3, "current owner", report);
-        measureHealth(player, pair.get(1), 1, 1, "current inverse", report);
-        var two = paidPair(player, source, source);
-        for (var root : two) { measureHealth(player, root, 2, 4, "current two charmed sources", report); }
-        var emptyPair = paidPair(player, item("neptune_boots"), vanilla);
-        measureHealth(player, emptyPair.get(0), 0, 0, "empty holders", report);
-        ItemStack later = install(player, api, emptyPair.get(0), true);
-        measureHealth(player, later, 0, 2, "current later root installation", report);
-        install(player, api, emptyPair.get(1), false);
-
-        var current = ComponentRulesLifecycle.serverRules();
-        var rules = new LinkedHashMap<>(current.components().rules());
-        rules.put(Identifier.parse("aether_ii:charms"), ComponentRule.of(ComponentPolicy.OMIT));
-        var snapshotOnly = new ComponentRules(current.durability(), current.repairCost(), new ComponentRuleSet(rules));
-        var candidatePair = MixedBootsFactory.createPair(source, vanilla, AttributeRulesLifecycle.serverRules(), snapshotOnly);
-        for (var root : List.of(candidatePair.primary(), candidatePair.inverse())) {
-            require(!root.has(component("charms")), "Snapshot candidate retained live root holders");
-            measureHealth(player, root, 1, 1, "snapshot-only candidate", report);
-            install(player, api, root, false);
+        var nativeEmpty = item("neptune_boots");
+        var emptyPair = paidPair(player, nativeEmpty, vanilla);
+        for (var root : emptyPair) {
+            require(!root.has(component("charms")), "Empty root holders survived default omission");
+            measure(player, root, Attributes.MAX_HEALTH, 0, "empty holders", report);
+            install(player, api, root, "health", 0, false);
         }
-        var candidateTwo = MixedBootsFactory.createPair(source, source, AttributeRulesLifecycle.serverRules(), snapshotOnly);
-        measureHealth(player, candidateTwo.primary(), 2, 2, "snapshot-only two sources", report);
-        measureHealth(player, candidateTwo.inverse(), 2, 2, "snapshot-only two sources inverse", report);
-        require(before.equals(snapshot(server, source)), "Composition or Forge mutated original charmed source");
-        report.append("CHARMS native server menu cursor/slot/apply/locked/take paths conserve one purchased charm; inverse admission rejected; ")
-                .append("root edits do not rebuild baked history. Snapshot-only OMIT is supplied per creation, not a production default\n");
+        for (var profile : List.of(new CharmProfile("health", Attributes.MAX_HEALTH, 2),
+                new CharmProfile("defense", Attributes.ARMOR, 2),
+                new CharmProfile("toughness", Attributes.ARMOR_TOUGHNESS, 1),
+                new CharmProfile("resistance", Attributes.KNOCKBACK_RESISTANCE, .1),
+                new CharmProfile("agility", Attributes.MOVEMENT_SPEED, .0025))) {
+            ItemStack source = install(player, api, nativeEmpty, profile.name(), 0, true);
+            String before = snapshot(server, source);
+            double base = amount(nativeEmpty.getAttributeModifiers(), profile.attribute());
+            measure(player, source, profile.attribute(), base + profile.bonus(), "native " + profile.name(), report);
+            var pair = paidPair(player, source, vanilla);
+            var two = paidPair(player, source, source);
+            for (int index = 0; index < 2; index++) {
+                ItemStack root = pair.get(index);
+                double expected = amount(emptyPair.get(index).getAttributeModifiers(), profile.attribute()) + profile.bonus() / 2;
+                require(!root.has(component("charms")), "Production root retained live holders");
+                measure(player, root, profile.attribute(), expected, profile.name() + " mixed " + index, report);
+                measure(player, two.get(index), profile.attribute(), base + profile.bonus(), profile.name() + " two sources " + index, report);
+                var actualIds = root.getAttributeModifiers().modifiers().stream().map(entry -> entry.modifier().id()).toList();
+                require(actualIds.stream().noneMatch(id -> id.getNamespace().equals("mismatchedboots") && id.getPath().contains("charm.")),
+                        "Native event appended a live root charm modifier");
+                install(player, api, root, profile.name(), 0, false);
+                var data = ModContent.getMixedBootsData(root).orElseThrow();
+                var left = data.left().source(); var right = data.right().source();
+                left.set(DataComponents.CUSTOM_NAME, Component.literal("source recomposition control"));
+                String original = snapshot(server, root);
+                var recomposed = MixedBootsRecomposer.recompose(root, left, right);
+                var repeated = MixedBootsRecomposer.recompose(recomposed, left, right);
+                require(original.equals(snapshot(server, root)) && !repeated.has(component("charms")), "Recomposition mutated input or restored holders");
+                require(ItemStack.matches(repeated, recomposed), "Recomposition accumulated state");
+                var newData = ModContent.getMixedBootsData(repeated).orElseThrow();
+                require(ItemStack.matches(left, newData.left().source()) && ItemStack.matches(right, newData.right().source()),
+                        "Recomposition changed supplied source history");
+                measure(player, repeated, profile.attribute(), expected, profile.name() + " recomposed " + index, report);
+            }
+            if (profile.name().equals("health")) {
+                var doubleInstalled = install(player, api, source, "health", 1, true);
+                measure(player, doubleInstalled, Attributes.MAX_HEALTH, 4, "native two Health holders", report);
+                for (var root : paidPair(player, doubleInstalled, vanilla)) {
+                    measure(player, root, Attributes.MAX_HEALTH, 2, "two Health holders mixed", report);
+                }
+            }
+            require(before.equals(snapshot(server, source)), "Composition/Forge/attributes mutated original source");
+        }
+        for (var root : paidPair(player, item("sentry_boots"), vanilla)) {
+            require(!root.has(component("charms")), "Sentry empty holders survived omission");
+            install(player, api, root, "health", 0, false);
+        }
+        report.append("CHARMS five native armor charms; normal server defaults; paid Workbench inverse outputs; baked/effective/equipped values; ")
+                .append("duplicate sources and two Health holders; empty Neptune/Sentry holders; native Forge paid apply/lock/take; ")
+                .append("mixed installation rejected without consumption; repeat source-wise recomposition; immutable sources/root; ")
+                .append("existing registered config completed and explicit owner override preserved\n");
     }
 
-    private static ItemStack install(ServerPlayer player, NativeApi api, ItemStack input, boolean accepted) throws Exception {
+    private record CharmProfile(String name, Holder<Attribute> attribute, double bonus) {}
+
+    private static ItemStack install(ServerPlayer player, NativeApi api, ItemStack input, String name, int holder, boolean accepted) throws Exception {
         var server = player.level().getServer();
         String history = history(server, input);
         String inputBefore = snapshot(server, input);
         AbstractContainerMenu menu = api.forge(player);
         menu.setCarried(input.copy()); menu.clicked(0, 0, ContainerInput.PICKUP, player);
         require(menu.getCarried().isEmpty(), "Forge input placement failed");
-        var charm = item("charm_of_health_1");
-        require(menu.getSlot(3).mayPlace(charm) == accepted, "Wrong native charm admission");
-        menu.setCarried(charm); menu.clicked(3, 0, ContainerInput.PICKUP, player);
+        var charm = item("charm_of_" + name + "_1");
+        int slot = 3 + holder;
+        require(menu.getSlot(slot).mayPlace(charm) == accepted, "Wrong native charm admission: " + name);
+        int previous = accepted ? api.installed(input) : 0;
+        menu.setCarried(charm); menu.clicked(slot, 0, ContainerInput.PICKUP, player);
         if (!accepted) {
-            require(menu.getCarried().getCount() == 1 && menu.getSlot(3).getItem().isEmpty(), "Rejected charm was consumed");
+            require(menu.getCarried().getCount() == 1 && ItemStack.matches(charm, menu.getCarried())
+                    && menu.getSlot(slot).getItem().isEmpty(), "Rejected charm was consumed");
             require(inputBefore.equals(snapshot(server, menu.getSlot(0).getItem())), "Rejected installation changed input");
             return input;
         }
         require(menu.getCarried().isEmpty(), "Charm did not leave paid cursor");
         require(api.apply(menu, player), "Native Apply rejected holders");
-        require(!menu.getSlot(3).mayPickup(player), "Installed charm did not lock");
+        require(!menu.getSlot(slot).mayPickup(player), "Installed charm did not lock");
         require(api.apply(menu, player), "Repeated native Apply failed");
         menu.clicked(0, 0, ContainerInput.PICKUP, player);
         ItemStack result = menu.getCarried().copy();
-        require(!result.isEmpty() && menu.getSlot(0).getItem().isEmpty() && menu.getSlot(3).getItem().isEmpty(),
+        require(!result.isEmpty() && menu.getSlot(0).getItem().isEmpty() && menu.getSlot(slot).getItem().isEmpty(),
                 "Native take retained paid item/charm display");
-        require(api.installed(result) == 1, "Native installation duplicated or lost charm");
+        require(api.installed(result) == previous + 1, "Native installation duplicated or lost charm");
         require(history.equals(history(server, result)) && inputBefore.equals(snapshot(server, input)),
                 "Native installation mutated original input or frozen source history");
         return result;
     }
 
-    private static void measureHealth(ServerPlayer player, ItemStack root, double baked, double effective,
-                                      String label, StringBuilder report) throws Exception {
+    private static void measure(ServerPlayer player, ItemStack root, Holder<Attribute> attribute, double expected,
+                                String label, StringBuilder report) throws Exception {
         String before = snapshot(player.level().getServer(), root);
-        close(amount(root.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY), Attributes.MAX_HEALTH), baked, label + " baked");
-        close(amount(root.getAttributeModifiers(), Attributes.MAX_HEALTH), effective, label + " effective");
+        double baked = amount(root.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY), attribute);
+        double effective = amount(root.getAttributeModifiers(), attribute);
+        // Native controls are event-backed, while mixed snapshots must already contain the whole result.
+        if (ModContent.isMixedBoots(root)) { close(baked, expected, label + " baked"); }
+        close(effective, expected, label + " effective");
         Method update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates"); update.setAccessible(true);
         player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); update.invoke(player);
-        double base = player.getAttributeValue(Attributes.MAX_HEALTH);
+        double base = player.getAttributeValue(attribute);
         player.setItemSlot(EquipmentSlot.FEET, root); update.invoke(player);
-        close(player.getAttributeValue(Attributes.MAX_HEALTH) - base, effective, label + " equipped");
+        close(player.getAttributeValue(attribute) - base, expected, label + " equipped");
         player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); update.invoke(player);
         require(before.equals(snapshot(player.level().getServer(), root)), "Attribute/equipment query mutated root/history");
-        report.append("HEALTH ").append(label).append(": baked=").append(baked)
+        report.append("ATTRIBUTE ").append(label).append(": baked=").append(baked)
                 .append(" effective/equipped=").append(effective).append('\n');
     }
 
@@ -323,10 +377,6 @@ public final class AetherIICompatibilitySpike {
     private static String history(MinecraftServer server, ItemStack stack) {
         return ModContent.getMixedBootsData(stack).map(data -> snapshot(server, data.left().source())
                 + "|" + snapshot(server, data.right().source())).orElse("");
-    }
-    private static List<Identifier> healthIds(ItemStack stack) {
-        return stack.getAttributeModifiers().modifiers().stream().filter(entry -> entry.attribute().equals(Attributes.MAX_HEALTH))
-                .map(entry -> entry.modifier().id()).toList();
     }
     private static void close(double actual, double expected, String label) {
         require(Math.abs(actual - expected) < 1E-6, label + ": " + actual + " != " + expected);

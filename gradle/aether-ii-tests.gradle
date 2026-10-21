@@ -1,34 +1,36 @@
-// Opt-in research only. The owner's client installation is read, never changed.
+// Independent production charm acceptance and remaining opt-in set/Sentry research.
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
-def reports = layout.buildDirectory.dir("reports/aether-ii-spike/${neoforge_version}")
-def directory = layout.buildDirectory.dir("run/aetherIISpike/${neoforge_version}")
 def artifact = rootProject.file('NeoForge/runs/client/mods/aether_ii-26.1.2-alpha.4.1-neoforge.jar')
 
-neoForge.runs.create('aetherIISpike') {
+['Spike', 'Charms'].each { scope ->
+def prefix = scope == 'Spike' ? 'aether-ii-spike' : 'aether-ii-charms'
+def reports = layout.buildDirectory.dir("reports/${prefix}/${neoforge_version}")
+def directory = layout.buildDirectory.dir("run/aetherII${scope}/${neoforge_version}")
+neoForge.runs.create("aetherII${scope}") {
     server()
     disableIdeRun()
     gameDirectory = directory.get().asFile
     programArgument('--nogui')
     systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
-    systemProperty('mismatchedboots.runtimetest.aetherIISpike', 'true')
+    systemProperty("mismatchedboots.runtimetest.aetherII${scope}", 'true')
     jvmArgument('-Xmx1G')
 }
-def prepare = tasks.register('prepareAetherIISpike') {
+def prepare = tasks.register("prepareAetherII${scope}") {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                 .digest(artifact.bytes).encodeHex().toString() !=
                 '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6') {
-            throw new GradleException('Missing/unexpected pinned Aether II spike artifact')
+            throw new GradleException('Missing/unexpected pinned Aether II fixture artifact')
         }
         fixtureFiles.delete { delete directory }
         fixtureFiles.delete {
-            delete new File(reports.get().asFile, 'aether-ii-spike-success.txt'),
-                    new File(reports.get().asFile, 'aether-ii-spike-failure.txt'),
-                    new File(reports.get().asFile, 'aether-ii-spike-report.txt')
+            delete new File(reports.get().asFile, "${prefix}-success.txt"),
+                    new File(reports.get().asFile, "${prefix}-failure.txt"),
+                    new File(reports.get().asFile, "${prefix}-report.txt")
         }
         fixtureFiles.copy {
             from(productionJar, fixtureJar, artifact)
@@ -46,21 +48,23 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 '''
     }
 }
-tasks.named('runAetherIISpike') { dependsOn prepare }
-tasks.register('verifyAetherIISpike') {
+tasks.named("runAetherII${scope}") { dependsOn prepare }
+tasks.register("verifyAetherII${scope}") {
     group = 'verification'
-    description = 'Measures native Aether II sets, charm ownership and a test-only local recognition candidate'
+    description = scope == 'Spike' ? 'Test-only native Aether II set/Sentry recognition candidate'
+            : 'Production Aether II pre-installed charm composition and native Forge rejection'
     doLast {
         def processLog = new File(reports.get().asFile, 'process.log')
-        runBounded(':RuntimeTests:NeoForge:runAetherIISpike', processLog, 240)
-        def failure = new File(reports.get().asFile, 'aether-ii-spike-failure.txt')
-        def report = new File(reports.get().asFile, 'aether-ii-spike-report.txt')
-        def success = new File(reports.get().asFile, 'aether-ii-spike-success.txt')
+        runBounded(":RuntimeTests:NeoForge:runAetherII${scope}", processLog, 240)
+        def failure = new File(reports.get().asFile, "${prefix}-failure.txt")
+        def report = new File(reports.get().asFile, "${prefix}-report.txt")
+        def success = new File(reports.get().asFile, "${prefix}-success.txt")
         if (failure.isFile()) { throw new GradleException(failure.text) }
         if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()
-                || !report.text.contains('sets=passed; charms=passed; sentry=passed')) {
-            throw new GradleException("Incomplete Aether II spike; see ${processLog}")
+                || !report.text.contains(scope == 'Spike' ? 'sets=passed; sentry=passed' : 'production charms=passed')) {
+            throw new GradleException("Incomplete Aether II ${scope}; see ${processLog}")
         }
         logger.lifecycle(report.text)
     }
+}
 }

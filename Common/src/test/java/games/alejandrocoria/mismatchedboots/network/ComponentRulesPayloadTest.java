@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.network;
 import games.alejandrocoria.mismatchedboots.component.ComponentNumericKind;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
@@ -58,6 +59,14 @@ class ComponentRulesPayloadTest {
         assertEquals(ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG),
                 decoded.declarations().get(DORMANT));
         assertFalse(decoded.components().rules().containsKey(DORMANT));
+    }
+
+    @Test
+    void optionalCharmDefaultSurvivesSynchronizationAsADormantDeclaration() {
+        ComponentRules decoded = decode(encode(new ComponentRulesPayload(ComponentRuleDefaults.state()))).rules();
+        Identifier charms = Identifier.parse("aether_ii:charms");
+        assertEquals(ComponentRule.of(ComponentPolicy.OMIT), decoded.declarations().get(charms));
+        assertFalse(decoded.components().rules().containsKey(charms));
     }
 
     @Test

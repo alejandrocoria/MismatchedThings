@@ -3,7 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherIICompatibilitySpike;
+import games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherIICompatibilityTest;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +21,6 @@ abstract class AetherSetSpikeMixin {
     private static Object recognize(ItemStack stack, Supplier<?> type, Operation<Object> original,
                                     @Local(argsOnly = true) TagKey<Item> requested) {
         Object nativeSet = original.call(stack, type);
-        return AetherIICompatibilitySpike.recognizesSet(stack, requested) ? requested : nativeSet;
+        return AetherIICompatibilityTest.recognizesSet(stack, requested) ? requested : nativeSet;
     }
 }
