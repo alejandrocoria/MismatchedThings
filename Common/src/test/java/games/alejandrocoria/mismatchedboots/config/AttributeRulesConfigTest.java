@@ -98,13 +98,14 @@ class AttributeRulesConfigTest {
                 "[attributes.\"neoforge:swim_speed\"]",
                 "[attributes.\"neoforge:nametag_distance\"]",
                 "[attributes.\"neoforge:creative_flight\"]",
+                "[attributes.\"silentgear:magic_armor\"]",
                 "[attributes.\"alpha:first\"]",
                 "[attributes.\"zeta:last\"]");
         assertFalse(saved.contains("unknown"));
     }
 
     @Test
-    void existingConfigsInheritNeoForgeDefaultsWithoutRewritingAndCanOverrideThem() throws IOException {
+    void existingConfigsInheritOptionalModDefaultsWithoutRewritingAndCanOverrideThem() throws IOException {
         Path path = configPath();
         String existing = """
                 [attributes]
@@ -117,11 +118,15 @@ class AttributeRulesConfigTest {
         assertEquals(AttributePolicy.AVERAGE, inherited.policyFor(id("neoforge:swim_speed")));
         assertEquals(AttributePolicy.AVERAGE, inherited.policyFor(id("neoforge:nametag_distance")));
         assertEquals(AttributePolicy.SEPARATE, inherited.policyFor(id("neoforge:creative_flight")));
+        assertEquals(AttributePolicy.AVERAGE, inherited.policyFor(id("silentgear:magic_armor")));
         assertEquals(existing, Files.readString(path));
 
         String overridden = existing + """
 
                 [attributes."neoforge:swim_speed"]
+                policy = "separate"
+
+                [attributes."silentgear:magic_armor"]
                 policy = "separate"
                 """;
         Files.writeString(path, overridden);
@@ -131,6 +136,7 @@ class AttributeRulesConfigTest {
         assertEquals(AttributePolicy.SEPARATE, rules.policyFor(id("neoforge:swim_speed")));
         assertEquals(AttributePolicy.AVERAGE, rules.policyFor(id("neoforge:nametag_distance")));
         assertEquals(AttributePolicy.SEPARATE, rules.policyFor(id("neoforge:creative_flight")));
+        assertEquals(AttributePolicy.SEPARATE, rules.policyFor(id("silentgear:magic_armor")));
         assertEquals(overridden, Files.readString(path));
     }
 

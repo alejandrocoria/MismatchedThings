@@ -83,16 +83,17 @@ class AttributeRuleDefaultsTest {
     }
 
     @Test
-    void neoForgeDefaultsAreExplicitAndDoNotRequireRegisteredAttributes() {
-        Map<Identifier, AttributePolicy> neoForgeRules = AttributeRuleDefaults.rules().entrySet().stream()
+    void optionalModDefaultsAreExplicitAndDoNotRequireRegisteredAttributes() {
+        Map<Identifier, AttributePolicy> optionalRules = AttributeRuleDefaults.rules().entrySet().stream()
                 .filter(entry -> !entry.getKey().getNamespace().equals("minecraft"))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         assertEquals(Map.of(
                 Identifier.parse("neoforge:swim_speed"), AttributePolicy.AVERAGE,
                 Identifier.parse("neoforge:nametag_distance"), AttributePolicy.AVERAGE,
-                Identifier.parse("neoforge:creative_flight"), AttributePolicy.SEPARATE), neoForgeRules);
-        neoForgeRules.keySet().forEach(id -> assertFalse(BuiltInRegistries.ATTRIBUTE.containsKey(id)));
+                Identifier.parse("neoforge:creative_flight"), AttributePolicy.SEPARATE,
+                Identifier.parse("silentgear:magic_armor"), AttributePolicy.AVERAGE), optionalRules);
+        optionalRules.keySet().forEach(id -> assertFalse(BuiltInRegistries.ATTRIBUTE.containsKey(id)));
     }
 
     @Test

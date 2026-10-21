@@ -68,6 +68,7 @@ public final class AttributeRuleDefaults {
         put(rules, "neoforge", "swim_speed", AttributePolicy.AVERAGE);
         put(rules, "neoforge", "nametag_distance", AttributePolicy.AVERAGE);
         put(rules, "neoforge", "creative_flight", AttributePolicy.SEPARATE);
+        put(rules, "silentgear", "magic_armor", AttributePolicy.AVERAGE);
         return Collections.unmodifiableMap(rules);
     }
 
