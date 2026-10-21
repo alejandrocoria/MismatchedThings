@@ -26,6 +26,9 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
         SilentGearDefenseShape.publish(node);
         SilentGearWielderShape.publish(node);
         SilentGearMagnetShape.publish(node);
+        if (node.name.equals(SilentGearCureShape.OWNER)) {
+            SilentGearEffectShape.publish(node, "mismatchedboots$sgCureReady", SilentGearCureShape.admitted(node));
+        }
         if (node.name.equals(SilentGearEffectShape.REPAIR)) {
             SilentGearEffectShape.publish(node, "mismatchedboots$sgRepairReady", SilentGearEffectShape.repair(node));
         } else if (node.name.equals(SilentGearEffectShape.WEAR)) {

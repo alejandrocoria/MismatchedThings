@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireT
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.rootsclassic.RootsTickCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCures;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearLiveState;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnet;
@@ -40,6 +41,12 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     }
 
     @Override
+    public boolean canWalkOnPowderedSnow(ItemStack stack, LivingEntity wearer) {
+        // SG's optional slot override is broken for its own boots; use our resolved FEET source view.
+        return super.canWalkOnPowderedSnow(stack, wearer) || SilentGearRecognition.snowWalker(stack);
+    }
+
+    @Override
     public boolean canBeHurtBy(ItemStack stack, DamageSource source) {
         return !(source.is(DamageTypeTags.IS_FIRE) && JustDireLavaRepairCompatibility.eligible(stack))
                 && super.canBeHurtBy(stack, source);
@@ -73,6 +80,7 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
         SilentGearLiveState.tick(stack, level, entity, slot);
         SilentGearWearer.tick(stack, level, entity, slot);
         SilentGearMagnet.tick(stack, level, entity, slot);
+        SilentGearCures.tick(stack, level, entity, slot);
     }
 
     @Override

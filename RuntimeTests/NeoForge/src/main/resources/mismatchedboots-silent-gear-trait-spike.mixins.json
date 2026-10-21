@@ -5,13 +5,14 @@
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "SilentGearCureWitnessMixin",
     "SilentGearDefensePeerMixin",
     "SilentGearDefenseWearWitnessMixin",
     "SilentGearIncomingWitnessMixin",
     "SilentGearMagnetPeerMixin",
     "SilentGearMagnetWitnessMixin",
     "SilentGearRecalculationWitnessMixin",
-    "SilentGearRemainingItemMixin",
+    "SilentGearRemainingTickWitnessMixin",
     "SilentGearSetFaultMixin",
     "SilentGearSetPeerMixin",
     "SilentGearVoidWardWitnessMixin"

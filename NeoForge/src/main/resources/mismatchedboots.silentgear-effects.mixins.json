@@ -8,6 +8,7 @@
     "SilentGearBounceMixin",
     "SilentGearBounceScheduleProofMixin",
     "SilentGearBrilliantProofMixin",
+    "SilentGearCureProofMixin",
     "SilentGearDurabilityProofMixin",
     "SilentGearGearIdentityProofMixin",
     "SilentGearIncomingMixin",

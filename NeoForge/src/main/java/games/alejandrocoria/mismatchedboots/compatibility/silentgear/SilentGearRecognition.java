@@ -16,6 +16,10 @@ import java.lang.invoke.MethodType;
 
 /** Independent read-only recognition: no full trait dispatch, equipment swaps or new saved state. */
 public final class SilentGearRecognition {
+    public static boolean snowWalker(ItemStack root) {
+        return SilentGearCompatibility.effectiveTraits(root).stream()
+                .anyMatch(trait -> trait.id().toString().equals("silentgear:snow_walker"));
+    }
     private static volatile SilentGearWearerApi.Carriers carriers;
     private static volatile boolean moonReady, voidReady, brilliantDisabled, moonDisabled, voidDisabled;
 

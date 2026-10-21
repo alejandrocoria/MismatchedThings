@@ -49,6 +49,11 @@ final class SilentGearFoundationTest {
             player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, root);
             root.inventoryTick(player.level(), player, net.minecraft.world.entity.EquipmentSlot.FEET);
             require(player.getActiveEffects().isEmpty(), "Absent SG published wearer potions");
+            require(!root.canWalkOnPowderedSnow(player), "Absent SG published Snow Walker");
+            player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON, 200));
+            root.inventoryTick(player.level(), player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+            require(player.hasEffect(net.minecraft.world.effect.MobEffects.POISON), "Absent SG canceled poison");
+            player.removeAllEffects();
             root.hurtAndBreak(3, player, net.minecraft.world.entity.EquipmentSlot.FEET);
             require(root.getDamageValue() == 8, "Absent SG changed ordinary tick/wear callbacks");
             require(!root.getItem().makesPiglinsNeutral(root, player)

@@ -20,7 +20,7 @@ import java.util.Set;
 /** Independent witness, compatible slot peer and controlled faults; no candidate set engine. */
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
-        if (mixin.endsWith("SilentGearVoidWardWitnessMixin") || mixin.endsWith("SilentGearRemainingItemMixin")) {
+        if (mixin.endsWith("SilentGearVoidWardWitnessMixin") || mixin.endsWith("SilentGearRemainingTickWitnessMixin") || mixin.endsWith("SilentGearCureWitnessMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingSpike");
         }
         if (mixin.endsWith("SilentGearIncomingWitnessMixin")) {
