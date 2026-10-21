@@ -217,7 +217,8 @@ tasks.register('prepareSilentGearRemaining') {
     }
 }
 tasks.named('runSilentGearRemaining') { dependsOn('prepareSilentGearRemaining') }
-// Research-only client, reusing the disposable flat-world seed/preparation, not the gameplay driver.
+// Production tooltip proof; historical spike names remain until block B consolidation.
+// Reuses the disposable flat-world seed/preparation, not the gameplay driver.
 neoForge.runs.create('silentGearTooltipSpike') {
     client(); disableIdeRun()
     gameDirectory = remainingRun.get().dir('client').asFile
@@ -247,7 +248,7 @@ tasks.register('prepareSilentGearTooltipSpike') {
 tasks.named('runSilentGearTooltipSpike') { dependsOn('prepareSilentGearTooltipSpike') }
 tasks.register('verifySilentGearTooltipSpike') {
     group = 'verification'
-    description = 'Test-only SG native-style source details, keys, visibility and immutable connected roots'
+    description = 'Production SG native-style source details, keys, visibility and immutable connected roots'
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = layout.buildDirectory.file("reports/silent-gear-tooltip-spike-${neoforge_version}-${phase.toLowerCase(Locale.ROOT)}-process.log").get().asFile
@@ -257,7 +258,8 @@ tasks.register('verifySilentGearTooltipSpike') {
             def marker = phase == 'Seed' ? 'silent-gear-remaining-seed-success.txt' : 'silent-gear-tooltip-spike-success.txt'
             if (failure.isFile()) { throw new GradleException(failure.text) }
             if (!new File(result, marker).isFile() || log.text.contains('Silent Gear mixed ')
-                    || log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')) {
+                    || log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')
+                    || log.text.contains('Silent Gear source tooltip')) {
                 throw new GradleException("Missing/refused SG tooltip spike ${phase}: ${log}")
             }
         }

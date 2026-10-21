@@ -4,6 +4,6 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
   "compatibilityLevel": "JAVA_25",
-  "client": ["SilentGearTooltipInputMixin", "SilentGearTooltipSourceMixin"],
+  "client": ["SilentGearTooltipInputMixin", "SilentGearTooltipProductionControlMixin"],
   "injectors": {"defaultRequire": 1}
 }

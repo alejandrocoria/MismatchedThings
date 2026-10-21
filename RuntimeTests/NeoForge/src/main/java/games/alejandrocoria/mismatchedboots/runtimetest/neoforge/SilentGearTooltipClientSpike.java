@@ -43,7 +43,7 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** Actual integrated connection/menu packets; deterministic window polling is restricted to capture scopes. */
 public final class SilentGearTooltipClientSpike {
     private static Set<Integer> pressed;
-    private static boolean capturing, finished;
+    private static boolean capturing, finished, presentation = true, refused;
     private static int ticks, events, captures, comparisons, maxLines, maxNativeLines, maxWidth;
     private static Future<String> seed;
     private static JsonArray manifest;
@@ -61,6 +61,7 @@ public final class SilentGearTooltipClientSpike {
     }
 
     public static Boolean key(int code) { return pressed == null ? null : pressed.contains(code); }
+    public static boolean omitPresentation() { return !presentation || refused; }
 
     private static void tick(Minecraft client) {
         if (finished) { return; }
@@ -139,7 +140,7 @@ public final class SilentGearTooltipClientSpike {
         vanilla = Class.forName("net.silentchaos512.gear.Config$Client").getField("vanillaStyleTooltips").get(null);
         var oldKeys = List.of(properties.getKey(), traits.getKey(), construction.getKey());
         boolean oldVanilla = (boolean) vanilla.getClass().getMethod("get").invoke(vanilla);
-        var report = new StringBuilder("Client candidate only; no extra source heading; no root SG stat table\n");
+        var report = new StringBuilder("Production source details; independent native event control; no extra source heading/root SG table\n");
         try {
             for (boolean simple : List.of(false, true)) {
                 vanilla.getClass().getMethod("set", Object.class).invoke(vanilla, simple);
@@ -175,8 +176,7 @@ public final class SilentGearTooltipClientSpike {
             var data = ModContent.getMixedBootsData(normal).orElseThrow();
             var props = NeoForgeSilentGearTest.NativeApi.component("GEAR_PROPERTIES");
             var parts = NeoForgeSilentGearTest.NativeApi.component("GEAR_CONSTRUCTION");
-            SilentGearTooltipCandidate.captureFlag(TooltipFlag.NORMAL);
-            var visible = SilentGearTooltipCandidate.details(data.left().source());
+            var visible = SilentGearNativeTooltipControl.details(client, data.left().source(), TooltipFlag.NORMAL);
             require(visible.size() >= 2, "Visibility control lacks native hints/traits");
             for (int hidden = 1; hidden <= 4; hidden++) {
                 ItemStack source = data.left().source();
@@ -185,41 +185,39 @@ public final class SilentGearTooltipClientSpike {
                 if ((hidden & 2) != 0) { display = display.withHidden(parts, true); }
                 if (hidden == 4) { display = new TooltipDisplay(true, display.hiddenComponents()); }
                 source.set(DataComponents.TOOLTIP_DISPLAY, display);
-                var selected = SilentGearTooltipCandidate.details(source);
+                var selected = SilentGearNativeTooltipControl.details(client, source, TooltipFlag.NORMAL);
                 List<Component> expected = hidden == 1 ? visible.subList(visible.size() - 1, visible.size())
                         : hidden == 2 ? visible.subList(0, visible.size() - 1) : List.of();
                 require(selected.equals(expected), "Hidden native group leaked or left a dangling hint: " + hidden);
                 ItemStack probe = replace(normal, source);
                 compare(client, probe, TooltipFlag.NORMAL, false);
                 input(true, true, true, false);
-                SilentGearTooltipCandidate.captureFlag(TooltipFlag.ADVANCED);
-                var expanded = SilentGearTooltipCandidate.details(source);
+                var expanded = SilentGearNativeTooltipControl.details(client, source, TooltipFlag.ADVANCED);
                 require(expanded.stream().anyMatch(line -> translation(line, "misc.silentgear.tooltip.properties")) == (hidden == 2)
                         && expanded.stream().anyMatch(line -> translation(line, "misc.silentgear.tooltip.construction")) == (hidden == 1),
                         "Expanded hidden native group visibility differs: " + hidden);
                 compare(client, probe, TooltipFlag.ADVANCED, false);
                 input(false, false, false, false);
-                SilentGearTooltipCandidate.captureFlag(TooltipFlag.NORMAL);
             }
             ItemStack absent = data.left().source(); absent.remove(props);
-            require(SilentGearTooltipCandidate.details(absent).isEmpty(), "Missing native cache reached formatters");
+            require(SilentGearNativeTooltipControl.details(client, absent, TooltipFlag.NORMAL).isEmpty(), "Missing native cache reached formatters");
             compare(client, replace(normal, absent), TooltipFlag.NORMAL, false);
             ItemStack broken = data.left().source(); broken.setDamageValue(broken.getMaxDamage());
             require(capture(client, broken, TooltipFlag.NORMAL, false).stream().anyMatch(line -> translation(line, "misc.silentgear.broken")),
                     "Native Broken diagnostic control missing");
             compare(client, replace(normal, broken), TooltipFlag.NORMAL, false);
-            require(SilentGearTooltipCandidate.details(broken).stream().noneMatch(line -> translation(line, "misc.silentgear.broken")),
-                    "Candidate imported native Broken diagnostic");
-            SilentGearTooltipCandidate.refused = true;
+            require(SilentGearNativeTooltipControl.details(client, broken, TooltipFlag.NORMAL).stream().noneMatch(line -> translation(line, "misc.silentgear.broken")),
+                    "Control imported native Broken diagnostic");
+            refused = true;
             compare(client, normal, TooltipFlag.NORMAL, false);
-            SilentGearTooltipCandidate.refused = false;
+            refused = false;
             ItemStack hiddenRoot = normal.copy();
             hiddenRoot.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
             require(capture(client, hiddenRoot, TooltipFlag.NORMAL, false).equals(capture(client, hiddenRoot, TooltipFlag.NORMAL, true)),
-                    "Hidden root leaked candidate details");
+                    "Hidden root leaked production details");
             report.append("compact/expanded visibility, missing-cache, Broken/refused: no leaked groups or native recalculation; unrelated details retained\n");
             report.append("full captures=").append(captures).append(" structured mixed comparisons=").append(comparisons)
-                    .append(" recalculations=").append(SilentGearTooltipCandidate.recalculations).append('\n');
+                    .append(" recalculations=").append(SilentGearTraitSpike.tooltipRecalculations).append('\n');
             report.append("layout measurement: maxLines=").append(maxLines).append(" nativeMaxLines=").append(maxNativeLines).append(" maxWidth=").append(maxWidth)
                     .append(" scaledWindow=").append(client.getWindow().getGuiScaledWidth()).append('x')
                     .append(client.getWindow().getGuiScaledHeight()).append("; no manual visual acceptance\n");
@@ -227,15 +225,15 @@ public final class SilentGearTooltipClientSpike {
             NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "neoforge\n");
         } finally {
             properties.setKey(oldKeys.get(0)); traits.setKey(oldKeys.get(1)); construction.setKey(oldKeys.get(2));
-            traits.setDown(false); pressed = null; SilentGearTooltipCandidate.enabled = false;
-            SilentGearTooltipCandidate.refused = false; SilentGearTooltipCandidate.observing = null;
+            traits.setDown(false); pressed = null; presentation = true;
+            refused = false; SilentGearTraitSpike.tooltipObservation = null;
             vanilla.getClass().getMethod("set", Object.class).invoke(vanilla, oldVanilla);
         }
     }
 
     private static void compare(Minecraft client, ItemStack root, TooltipFlag flag, boolean nativeControl) throws Exception {
         ItemStack before = root.copy();
-        SilentGearTooltipCandidate.observing = Thread.currentThread();
+        SilentGearTraitSpike.tooltipObservation = Thread.currentThread();
         try {
             var baseline = capture(client, root, flag, false);
             var expected = new ArrayList<>(baseline);
@@ -243,12 +241,11 @@ public final class SilentGearTooltipClientSpike {
             var sources = List.of(data.left().source(), data.right().source());
             for (int side = 0; side < 2; side++) {
                 ItemStack source = sources.get(side);
-                SilentGearTooltipCandidate.captureFlag(flag);
-                List<Component> block = SilentGearTooltipCandidate.details(source);
+                List<Component> block = refused ? List.of() : SilentGearNativeTooltipControl.details(client, source, flag);
                 if (!block.isEmpty() && nativeControl) {
                     var nativeLines = capture(client, source, flag, false);
                     require(nativeLines.size() > block.size() && nativeLines.subList(1, 1 + block.size()).equals(block),
-                            "Candidate differs from independent native event output: " + source.getHoverName().getString());
+                            "Native control differs from complete native event output: " + source.getHoverName().getString());
                 }
                 int header = side(expected, side == 0 ? "left" : "right");
                 require(header >= 0, "Existing side identity disappeared");
@@ -268,11 +265,11 @@ public final class SilentGearTooltipClientSpike {
             maxLines = Math.max(maxLines, actual.size());
             for (Component line : actual) { maxWidth = Math.max(maxWidth, client.font.width(line)); }
             comparisons++;
-        } finally { SilentGearTooltipCandidate.observing = null; }
+        } finally { SilentGearTraitSpike.tooltipObservation = null; }
     }
 
-    private static List<Component> capture(Minecraft client, ItemStack stack, TooltipFlag flag, boolean candidate) {
-        SilentGearTooltipCandidate.enabled = candidate; events = 0; capturing = true;
+    private static List<Component> capture(Minecraft client, ItemStack stack, TooltipFlag flag, boolean production) {
+        presentation = production; events = 0; capturing = true;
         try {
             var lines = stack.getTooltipLines(Item.TooltipContext.of(client.level), client.player, flag);
             require(events <= 1 && (stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT).hideTooltip() || events == 1),

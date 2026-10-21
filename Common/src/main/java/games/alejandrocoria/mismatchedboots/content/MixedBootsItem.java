@@ -31,11 +31,12 @@ public class MixedBootsItem extends Item {
             return;
         }
 
-        MixedBootsTooltipFormatter.appendSourceSections(data, context, flag, tooltip, this::sourceTooltip);
+        MixedBootsTooltipFormatter.appendSourceSections(data, context, flag, tooltip,
+                (source, output) -> sourceTooltip(source, flag, output));
     }
 
     /** Optional item-local adaptation of source information; stored sources remain read-only provenance. */
-    protected Consumer<Component> sourceTooltip(ItemStack source, Consumer<Component> tooltip) {
+    protected Consumer<Component> sourceTooltip(ItemStack source, TooltipFlag flag, Consumer<Component> tooltip) {
         return tooltip;
     }
 }

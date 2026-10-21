@@ -22,6 +22,8 @@ public final class SilentGearTraitSpike {
     private static NeoForgeSilentGearTest.NativeApi api;
     private static final Class<?> INSTANCE = nativeClass("api.traits.TraitInstance");
     private static final Class<?> CONTEXT = nativeClass("api.traits.TraitActionContext");
+    static Thread tooltipObservation;
+    static int tooltipRecalculations;
 
     private SilentGearTraitSpike() {}
 
@@ -29,6 +31,10 @@ public final class SilentGearTraitSpike {
     static void initialize(NeoForgeSilentGearTest.NativeApi nativeApi) { api = nativeApi; }
 
     public static void recalculation(ItemStack stack) {
+        if (Thread.currentThread() == tooltipObservation) {
+            tooltipRecalculations++;
+            throw new AssertionError("Read-only production tooltip entered native recalculation");
+        }
         if (SilentGearWearerFixture.active) {
             throw new AssertionError("Wearer read-only scope entered native recalculation: " + stack.getItem());
         }

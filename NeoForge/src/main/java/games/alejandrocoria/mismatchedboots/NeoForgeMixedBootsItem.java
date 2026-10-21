@@ -9,6 +9,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearE
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearLiveState;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearMagnet;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
+import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearer;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -67,7 +68,8 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     }
 
     @Override
-    protected Consumer<Component> sourceTooltip(ItemStack source, Consumer<Component> tooltip) {
+    protected Consumer<Component> sourceTooltip(ItemStack source, TooltipFlag flag, Consumer<Component> tooltip) {
+        SilentGearTooltipCompatibility.appendSource(source, flag, tooltip);
         return JustDireTooltipCompatibility.sourceTooltip(source, tooltip);
     }
 

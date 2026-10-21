@@ -128,7 +128,8 @@ part editing, execute paid refunds/salvaging or claim manual/connected acceptanc
 Details and proposed boundaries belong to the
 [parts/recipes exploration](../local-docs/SILENT-GEAR-PARTS-AND-RECIPES-EXPLORATION.md).
 
-The separate **test-only source-tooltip spike**, without extra source headings:
+The separate **production source-tooltip A proof**, without extra source
+headings, temporarily retains the historical spike task name (renaming is B):
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltipSpike --console=plain
@@ -141,12 +142,20 @@ versioned run/report directories, but a different client driver and own
 with `verifySilentGearRemaining`; preparation replaces those build-owned paths.
 The hidden/muted connected client adds the pinned JDT artifact for coexistence
 and compares native structured components against source insertion on ten paid
-Workbench roots. Controlled window polling exercises actual SG keybindings,
+Workbench roots. The research source appender and mutable flag bridge no longer
+execute. A fixture-only suppression hook supplies the no-SG-block baseline;
+an independent native gear-event control supplies expected components, not a
+second candidate renderer. Production itself never replays the native event.
+Controlled window polling exercises actual SG keybindings,
 both native tooltip styles, rebinding, advanced mode, compact/expanded visibility,
 Broken/missing-cache/refusal, root/JDT preservation and a recalculation witness.
-This is not a production adapter, physical OS input, screenshot/visual acceptance
-or a general native guard test. Scope, boundary finding and results belong to the
-[tooltip exploration](../local-docs/SILENT-GEAR-TOOLTIP-EXPLORATION.md#7-bounded-client-spike--2026-10-21).
+The refusal probe is baseline suppression, not a native binding/formatter fault.
+Normal runs reject production source-tooltip diagnostics. This is not physical
+OS input, screenshot/visual acceptance or a general native guard test. A results
+and pending B failure/consolidation/owner handoff belong to the
+[implementation record](../local-docs/SILENT-GEAR-TOOLTIP-IMPLEMENTATION.md#7-block-a-execution--2026-10-21);
+the preceding [spike evidence](../local-docs/SILENT-GEAR-TOOLTIP-EXPLORATION.md#7-bounded-client-spike--2026-10-21)
+remains historical. Restore habitual .114 artifacts after a .99 run.
 
 The default server gate retains native construction/lining and equipment
 controls for five material profiles, with eight representative paid output

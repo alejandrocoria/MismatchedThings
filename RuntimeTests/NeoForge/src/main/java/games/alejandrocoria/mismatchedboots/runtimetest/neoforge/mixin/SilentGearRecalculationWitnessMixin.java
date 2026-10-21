@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class SilentGearRecalculationWitnessMixin {
     @Inject(method = "recalculateGearData", at = @At("HEAD"))
     private static void observe(ItemStack stack, Player player, CallbackInfo ci) {
-        games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTooltipCandidate.recalculation();
         SilentGearTraitSpike.recalculation(stack);
         games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearBounceTest.recalculation(stack);
         SilentGearEffectsTest.recalculation(stack);

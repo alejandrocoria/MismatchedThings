@@ -188,6 +188,26 @@ class MixedBootsTooltipFormatterTest {
     }
 
     @Test
+    void sourceBlockCanBeAppendedBeforeDetailsEvenWhenBothSourcesHaveNoOrdinaryLines() {
+        ItemStack left = boots(Items.IRON_BOOTS, 2), right = boots(Items.GOLDEN_BOOTS, 1);
+        for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
+            List<Component> lines = new ArrayList<>();
+            MixedBootsTooltipFormatter.appendSourceSections(data(left, right), Item.TooltipContext.EMPTY, flag,
+                    lines::add, (source, output) -> {
+                        output.accept(Component.literal(source.is(Items.IRON_BOOTS) ? "Left block" : "Right block"));
+                        return output;
+                    });
+            assertEquals(6, lines.size());
+            assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
+            assertEquals(Component.literal("Left block"), lines.get(1));
+            assertEquals(CommonComponents.EMPTY, lines.get(2));
+            assertSide(lines.get(3), RIGHT_KEY, right.getHoverName());
+            assertEquals(Component.literal("Right block"), lines.get(4));
+            assertEquals(CommonComponents.EMPTY, lines.get(5));
+        }
+    }
+
+    @Test
     void customSourceIdentityIncludesTheNaturalNameStructurally() {
         ItemStack left = boots(Items.IRON_BOOTS, 2.0);
         Component customName = Component.literal("Traveler's boots");
