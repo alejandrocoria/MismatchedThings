@@ -15,6 +15,10 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIISpike")) {
+            AetherIICompatibilitySpike.register();
+            return;
+        }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipTest")) {
             if (FMLEnvironment.getDist().isClient()) { SilentGearTooltipClientTest.register(); }
             return;
