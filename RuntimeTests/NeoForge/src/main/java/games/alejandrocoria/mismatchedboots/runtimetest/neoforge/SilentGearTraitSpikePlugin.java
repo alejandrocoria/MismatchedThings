@@ -21,7 +21,7 @@ import java.util.Set;
 public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opcodes {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         if (mixin.contains("SilentGearTooltip")) {
-            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipSpike");
+            return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipTest");
         }
         if (mixin.endsWith("SilentGearVoidWardWitnessMixin") || mixin.endsWith("SilentGearRemainingTickWitnessMixin") || mixin.endsWith("SilentGearCureWitnessMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingTest")
@@ -56,7 +56,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
         }
         return (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearClient")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingTest")
-                || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipSpike"))
+                || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipTest"))
                 && mixin.endsWith("SilentGearRecalculationWitnessMixin");
     }
     @Override public void onLoad(String name) {}

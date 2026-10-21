@@ -38,7 +38,7 @@ public final class SilentGearTooltipClient {
                 failure = invocation.getCause();
             }
             if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
-            if (bindings != null && (failure instanceof IllegalArgumentException || failure instanceof ClassCastException)) {
+            if (failure instanceof SourceDataException) {
                 if (!warnedData) {
                     warnedData = true;
                     Constants.LOG.warn("Silent Gear source tooltip data unavailable; affected source details omitted", failure);
@@ -55,6 +55,11 @@ public final class SilentGearTooltipClient {
 
     private static Class<?> nativeClass(String name) throws ClassNotFoundException {
         return Class.forName("net.silentchaos512.gear." + name);
+    }
+
+    /** Only explicit source validation failures are local; formatter/API exceptions revoke presentation. */
+    private static final class SourceDataException extends RuntimeException {
+        private SourceDataException(String message) { super(message); }
     }
 
     @SuppressWarnings("unchecked")
@@ -100,14 +105,15 @@ public final class SilentGearTooltipClient {
             ItemStack source = input.copy();
             if (((java.util.Map<?, ?>) propertyValues.invoke(source.get(properties))).isEmpty()) { return List.of(); }
             Object parts = getParts.invoke(source.get(construction));
-            if (!partListType.isInstance(parts)) { throw new IllegalArgumentException("Invalid SG construction part list"); }
-            if (((Collection<?>) mains.invoke(parts)).isEmpty()) { return List.of(); }
-            var ordered = (Collection<?>) sorted.invoke(parts);
-            for (Object part : ordered) {
+            if (!partListType.isInstance(parts)) { throw new SourceDataException("Invalid SG construction part list"); }
+            // Native sorting filters invalid references out. Validate raw provenance before that lossy view.
+            for (Object part : (Collection<?>) parts) {
                 if (!partType.isInstance(part) || !(boolean) validPart.invoke(part)) {
-                    throw new IllegalArgumentException("Invalid SG source part");
+                    throw new SourceDataException("Invalid SG source part");
                 }
             }
+            if (((Collection<?>) mains.invoke(parts)).isEmpty()) { return List.of(); }
+            var ordered = (Collection<?>) sorted.invoke(parts);
             Object nativeFlag = flags.invoke(null, flag.isAdvanced(), showProperties, showParts);
             var result = new ArrayList<Component>();
             if (!(boolean) vanillaValue.invoke(vanilla)) {

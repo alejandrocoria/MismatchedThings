@@ -128,34 +128,48 @@ part editing, execute paid refunds/salvaging or claim manual/connected acceptanc
 Details and proposed boundaries belong to the
 [parts/recipes exploration](../local-docs/SILENT-GEAR-PARTS-AND-RECIPES-EXPLORATION.md).
 
-The separate **production source-tooltip A proof**, without extra source
-headings, temporarily retains the historical spike task name (renaming is B):
+The separate **production source-tooltip acceptance**, without extra source
+headings, has three isolated scopes:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltipSpike --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltipSpike '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltip --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltip '-PsilentGearTooltipVariant=binding' --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltip '-PsilentGearTooltipVariant=formatter' --console=plain
 ```
 
 It reuses the disposable remaining-effects flat-world seed/preparation and its
-versioned run/report directories, but a different client driver and own
-`silent-gear-tooltip-spike-*` markers/logs. Run sequentially, not concurrently
+versioned run directories, but a different client driver. Repeat all three with
+`'-Pneoforge_version=26.1.2.99'`. Durable logs/reports are under
+`build/reports/silent-gear-tooltip/<version>/<scope>-*`; transient markers are
+`silent-gear-tooltip-<scope>-*` in the remaining-effects report directory.
+Run sequentially, not concurrently
 with `verifySilentGearRemaining`; preparation replaces those build-owned paths.
 The hidden/muted connected client adds the pinned JDT artifact for coexistence
 and compares native structured components against source insertion on ten paid
-Workbench roots. The research source appender and mutable flag bridge no longer
-execute. A fixture-only suppression hook supplies the no-SG-block baseline;
+Workbench roots. The research source appender, mutable flag bridge, candidate
+and old spike task alias are removed. A fixture-only suppression hook supplies the no-SG-block baseline;
 an independent native gear-event control supplies expected components, not a
 second candidate renderer. Production itself never replays the native event.
 Controlled window polling exercises actual SG keybindings,
 both native tooltip styles, rebinding, advanced mode, compact/expanded visibility,
-Broken/missing-cache/refusal, root/JDT preservation and a recalculation witness.
-The refusal probe is baseline suppression, not a native binding/formatter fault.
-Normal runs reject production source-tooltip diagnostics. This is not physical
-OS input, screenshot/visual acceptance or a general native guard test. A results
-and pending B failure/consolidation/owner handoff belong to the
-[implementation record](../local-docs/SILENT-GEAR-TOOLTIP-IMPLEMENTATION.md#7-block-a-execution--2026-10-21);
+Broken/missing/malformed cache, root/JDT preservation and a recalculation witness.
+JDT's shared controlled Shift support separately proves actual compact/expanded
+root energy precision, hint/ability output and source suppression. The normal
+scope expects exactly one bounded malformed-source diagnostic and continued
+healthy-source presentation. Binding and post-population formatter faults each
+expect exactly one presentation-disable diagnostic, no partial block or repeated
+attempt, and intact root/JDT details and an independent completed SG trait query.
+These are narrow tooltip faults, not gameplay guard compatibility or transaction
+rollback tests. No physical OS input or screenshot/visual acceptance is claimed.
+Results and owner handoff belong to the
+[implementation record](../local-docs/SILENT-GEAR-TOOLTIP-IMPLEMENTATION.md#8-block-b-execution--2026-10-21);
 the preceding [spike evidence](../local-docs/SILENT-GEAR-TOOLTIP-EXPLORATION.md#7-bounded-client-spike--2026-10-21)
 remains historical. Restore habitual .114 artifacts after a .99 run.
+
+The owner separately accepted all manual groups on **2026-10-21**, including tall
+tooltips readable at **1080p with GUI scale 2**, completing the bounded tooltip
+plan. That report does not turn these automated gates into pixel/physical-input
+tests or certify every scale/resolution.
 
 The default server gate retains native construction/lining and equipment
 controls for five material profiles, with eight representative paid output

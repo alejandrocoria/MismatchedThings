@@ -217,20 +217,25 @@ tasks.register('prepareSilentGearRemaining') {
     }
 }
 tasks.named('runSilentGearRemaining') { dependsOn('prepareSilentGearRemaining') }
-// Production tooltip proof; historical spike names remain until block B consolidation.
+// Production tooltip proof, including isolated presentation-only faults.
 // Reuses the disposable flat-world seed/preparation, not the gameplay driver.
-neoForge.runs.create('silentGearTooltipSpike') {
+def tooltipVariant = providers.gradleProperty('silentGearTooltipVariant').getOrElse('normal')
+if (!(tooltipVariant in ['normal', 'binding', 'formatter'])) { throw new GradleException('Unknown SG tooltip test variant') }
+def tooltipPrefix = "silent-gear-tooltip-${tooltipVariant}"
+def tooltipReports = layout.buildDirectory.dir("reports/silent-gear-tooltip/${neoforge_version}")
+neoForge.runs.create('silentGearTooltip') {
     client(); disableIdeRun()
     gameDirectory = remainingRun.get().dir('client').asFile
     programArgument('--quickPlaySingleplayer'); programArgument('remaining')
-    programArgument('--username'); programArgument('SGTooltipSpike')
+    programArgument('--username'); programArgument('SGTooltipTest')
     systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
-    systemProperty('mismatchedboots.runtimetest.silentGearTooltipSpike', 'true')
+    systemProperty('mismatchedboots.runtimetest.silentGearTooltipTest', 'true')
+    systemProperty('mismatchedboots.runtimetest.silentGearTooltipVariant', tooltipVariant)
     systemProperty('mismatchedboots.test.hideClientWindow', 'true')
     systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
     jvmArgument('-Xmx1G')
 }
-tasks.register('prepareSilentGearTooltipSpike') {
+tasks.register('prepareSilentGearTooltip') {
     dependsOn('prepareSilentGearRemaining')
     doLast {
         justDireArtifact.each { name, hash ->
@@ -241,29 +246,34 @@ tasks.register('prepareSilentGearTooltipSpike') {
             fixtureFiles.copy { from(jar); into(remainingRun.get().dir('client/mods')) }
         }
         fixtureFiles.delete { delete(['success', 'failure', 'report', 'compact'].collect {
-            new File(remainingReports.get().asFile, "silent-gear-tooltip-spike-${it}.txt")
+            new File(remainingReports.get().asFile, "${tooltipPrefix}-${it}.txt")
         }) }
     }
 }
-tasks.named('runSilentGearTooltipSpike') { dependsOn('prepareSilentGearTooltipSpike') }
-tasks.register('verifySilentGearTooltipSpike') {
+tasks.named('runSilentGearTooltip') { dependsOn('prepareSilentGearTooltip') }
+tasks.register('verifySilentGearTooltip') {
     group = 'verification'
-    description = 'Production SG native-style source details, keys, visibility and immutable connected roots'
+    description = 'Production SG source details, key/visibility/JDT coexistence and bounded presentation failures'
     doLast {
         ['Seed', 'Client'].each { phase ->
-            def log = layout.buildDirectory.file("reports/silent-gear-tooltip-spike-${neoforge_version}-${phase.toLowerCase(Locale.ROOT)}-process.log").get().asFile
-            runBounded(phase == 'Seed' ? ':RuntimeTests:NeoForge:runSilentGearRemainingSeed' : ':RuntimeTests:NeoForge:runSilentGearTooltipSpike', log, 300)
+            def log = new File(tooltipReports.get().asFile, "${tooltipVariant}-${phase.toLowerCase(Locale.ROOT)}-process.log")
+            runBounded(phase == 'Seed' ? ':RuntimeTests:NeoForge:runSilentGearRemainingSeed' : ':RuntimeTests:NeoForge:runSilentGearTooltip', log, 300)
             def result = remainingReports.get().asFile
-            def failure = new File(result, 'silent-gear-tooltip-spike-failure.txt')
-            def marker = phase == 'Seed' ? 'silent-gear-remaining-seed-success.txt' : 'silent-gear-tooltip-spike-success.txt'
+            def failure = new File(result, "${tooltipPrefix}-failure.txt")
+            def marker = phase == 'Seed' ? 'silent-gear-remaining-seed-success.txt' : "${tooltipPrefix}-success.txt"
             if (failure.isFile()) { throw new GradleException(failure.text) }
+            int expectedData = phase == 'Client' && tooltipVariant == 'normal' ? 1 : 0
+            int expectedDisabled = phase == 'Client' && tooltipVariant != 'normal' ? 1 : 0
             if (!new File(result, marker).isFile() || log.text.contains('Silent Gear mixed ')
                     || log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')
-                    || log.text.contains('Silent Gear source tooltip')) {
-                throw new GradleException("Missing/refused SG tooltip spike ${phase}: ${log}")
+                    || (log.text =~ /Silent Gear source tooltip data unavailable;/).count != expectedData
+                    || (log.text =~ /Silent Gear source tooltips disabled:/).count != expectedDisabled) {
+                throw new GradleException("Missing/unexpected SG tooltip ${tooltipVariant} ${phase}: ${log}")
             }
         }
-        logger.lifecycle(new File(remainingReports.get().asFile, 'silent-gear-tooltip-spike-report.txt').text)
+        def report = new File(remainingReports.get().asFile, "${tooltipPrefix}-report.txt").text
+        new File(tooltipReports.get().asFile, "${tooltipVariant}-report.txt").text = report
+        logger.lifecycle(report)
     }
 }
 tasks.register('verifySilentGearRemaining') {

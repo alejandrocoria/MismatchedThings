@@ -65,7 +65,7 @@ license="MIT"
     config="mismatchedboots-just-dire-cooldown-feedback-tests.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-silent-gear-tooltip-spike.mixins.json"
+    config="mismatchedboots-silent-gear-tooltip-test.mixins.json"
 
 [[dependencies.mismatchedboots_runtime_test]]
     modId="neoforge"
