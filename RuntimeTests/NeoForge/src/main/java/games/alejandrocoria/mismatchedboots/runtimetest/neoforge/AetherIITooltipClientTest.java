@@ -33,7 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
-import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.lwjgl.glfw.GLFW;
@@ -75,6 +75,7 @@ final class AetherIITooltipClientTest {
 
     static void register() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> tick(Minecraft.getInstance()));
+        if (!ABSENT) { NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, AetherSourceCharmTest::observe); }
     }
 
     private static void tick(Minecraft client) {
@@ -136,9 +137,15 @@ final class AetherIITooltipClientTest {
                     screen = new Scene(sample(client, 5), false); client.setScreen(screen); return;
                 }
                 if (screenshots == 2) {
-                    screen = new Scene(dualRoot, true); screen.frozen = dualActive; client.setScreen(screen); return;
+                    screen = new Scene(sample(client, 30), false); client.setScreen(screen); return;
                 }
                 if (screenshots == 3) {
+                    screen = new Scene(sample(client, 31), true); client.setScreen(screen); return;
+                }
+                if (screenshots == 4) {
+                    screen = new Scene(dualRoot, true); screen.frozen = dualActive; client.setScreen(screen); return;
+                }
+                if (screenshots == 5) {
                     GLFW.glfwSetWindowSize(client.getWindow().handle(), 1280, 720);
                     screen = new Scene(dualRoot, true); screen.frozen = dualActive; client.setScreen(screen); return;
                 }
@@ -148,7 +155,7 @@ final class AetherIITooltipClientTest {
             if (phase == 3 && reload.isDone()) {
                 reload.get();
                 details(client);
-                REPORT.append("Resource reload es_es: native fallback and repeated immutable production text retained; source graphics pending B\n");
+                REPORT.append("Resource reload es_es: native fallback and repeated immutable production text/source graphics retained\n");
                 complete(client);
             }
         } catch (Throwable failure) {
@@ -178,10 +185,13 @@ final class AetherIITooltipClientTest {
             var jdt = new ItemStack(BuiltInRegistries.ITEM.get(Identifier.parse("justdirethings:eclipsealloy_boots")).orElseThrow());
             serverSamples.addAll(paidPair(owner, first, jdt)); // 26,27
             serverSamples.addAll(paidPair(owner, first, new NeoForgeSilentGearTest.NativeApi().boot("iron"))); // 28,29
+            var reinforced = AetherSourceCharmTest.reinforced(owner, api);
+            serverSamples.add(reinforced); // 30: native paid reinforcement, not synthetic presentation metadata.
+            serverSamples.addAll(paidPair(owner, reinforced, new ItemStack(Items.DIAMOND_BOOTS))); // 31,32
         }
         var container = new SimpleContainer(54);
         for (int i = 0; i < serverSamples.size(); i++) { container.setItem(i, serverSamples.get(i)); }
-        owner.openMenu(new SimpleMenuProvider((id, inventory, player) -> ChestMenu.sixRows(id, inventory, container), Component.literal("Aether tooltip spike")));
+        owner.openMenu(new SimpleMenuProvider((id, inventory, player) -> ChestMenu.sixRows(id, inventory, container), Component.literal("Production Aether tooltips")));
         return prepare(owner);
     }
 
@@ -374,16 +384,17 @@ final class AetherIITooltipClientTest {
     }
 
     private static void details(Minecraft client) throws Exception {
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 33; i++) {
             ItemStack target = sample(client, i);
             for (var flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
                 var compact = capture(client, target, flag, false);
                 var expanded = capture(client, target, flag, true);
-                if (i < 26 || i > 27) { require(compact.lines().equals(expanded.lines()), "Unexpected Aether/SG Shift-only presentation"); }
-                var components = ClientHooks.gatherTooltipComponents(target, compact.lines(), 20,
-                        client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight(), client.font);
-                long rich = components.stream().filter(value -> value.getClass().getName().endsWith("ClientCharmTooltip")).count();
-                require(rich == (!ModContent.isMixedBoots(target) && target.has(component("charms")) ? 1 : 0), "Block A unexpectedly adds source graphics/removes native originals");
+                if (i < 26 || i > 27) {
+                    require(compact.lines().stream().map(Component::copy).toList().equals(expanded.lines().stream().map(Component::copy).toList()),
+                            "Unexpected Aether/SG Shift-only presentation");
+                }
+                AetherSourceCharmTest.verify(client, target, compact.lines());
+                AetherSourceCharmTest.verify(client, target, expanded.lines());
                 if (i == 24) {
                     var tiers = compact.lines().stream().filter(line -> translated(line, "aether_ii.tooltip.item.reinforcement")).toList();
                     require(tiers.size() == (tierReplacement() ? 2 : 1), "Wrong independent original tier placement/refusal");
@@ -394,7 +405,7 @@ final class AetherIITooltipClientTest {
                                 && compact.lines().indexOf(tiers.getLast()) > right, "Tier lost its original side");
                     }
                 }
-                if (i >= 26) {
+                if (i >= 26 && i < 30) {
                     String partner = i < 28 ? "justdirethings." : "item.silentgear.";
                     require(compact.lines().stream().anyMatch(line -> translated(line, partner)), "Existing JDT/SG sections missing");
                     if (i < 28) {
@@ -411,12 +422,17 @@ final class AetherIITooltipClientTest {
                         : TooltipDisplay.DEFAULT.withHidden(component("reinforcement_tier"), true));
             }
             var modified = root.copy(); modified.set(ModContent.mixedBootsDataType().orElseThrow(), new MixedBootsData(new BootHalf(left), new BootHalf(right)));
-            require(capture(client, modified, TooltipFlag.ADVANCED, true).lines().stream()
+            var hiddenLines = capture(client, modified, TooltipFlag.ADVANCED, true).lines();
+            AetherSourceCharmTest.verify(client, modified, hiddenLines);
+            require(hiddenLines.stream()
                     .noneMatch(line -> translated(line, "aether_ii.tooltip.item.reinforcement")) || !tierReplacement(), "Hidden source tiers still published");
         }
         var hidden = root.copy(); hidden.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new java.util.LinkedHashSet<>()));
-        require(capture(client, hidden, TooltipFlag.NORMAL, false).lines().stream().noneMatch(line -> translated(line, "item.aether_ii.")), "Hidden root published capabilities");
-        REPORT.append("DETAILS 30 native/mixed samples, four key/flag modes, independent tiers/visibility, JDT/SG, no source graphics; serialized root/history equality\n");
+        var hiddenRootLines = capture(client, hidden, TooltipFlag.NORMAL, false).lines();
+        require(hiddenRootLines.stream().noneMatch(line -> translated(line, "item.aether_ii.")), "Hidden root published capabilities");
+        AetherSourceCharmTest.verify(client, hidden, hiddenRootLines);
+        AetherSourceCharmTest.run(client, java.util.stream.IntStream.range(0, 33).mapToObj(i -> sample(client, i)).toList(), REPORT);
+        REPORT.append("DETAILS 33 native/mixed samples, four key/flag modes, independent tiers/visibility, JDT/SG and native source graphics; serialized root/history equality\n");
     }
 
     private static AetherTooltipTestControl.Capture capture(Minecraft client, ItemStack stack, TooltipFlag flag, boolean shift) throws Exception {
@@ -473,7 +489,7 @@ final class AetherIITooltipClientTest {
         @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             frames++;
             graphics.text(font, frozen != null ? "Frozen equipped production Zanite/Neptune tooltip" : mixed
-                    ? "Production Aether mixed text" : "Native original control", 20, 12, 0xFFFFFFFF, false);
+                    ? "Production Aether mixed text / source charms" : "Native original control", 20, 12, 0xFFFFFFFF, false);
             try {
                 var captured = frozen != null ? frozen : capture(Minecraft.getInstance(), root, TooltipFlag.ADVANCED, false);
                 graphics.setTooltipForNextFrame(font, captured.lines(), Optional.empty(), root, 20, 40);
@@ -484,7 +500,7 @@ final class AetherIITooltipClientTest {
     private static void complete(Minecraft client) {
         REPORT.append("captures=").append(captureCount).append(" absent=").append(ABSENT)
                 .append(" variant=").append(AetherTooltipTestControl.VARIANT)
-                .append("; production text, immutable root/history/player state; source graphics pending B\n");
+                .append("; production text/source graphics, immutable root/history/player state\n");
         NetworkAcceptanceFiles.write(OUTPUT + "-captures.json", CAPTURES.toString());
         NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", REPORT.toString());
         NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "neoforge\n"); finished = true; client.stop();

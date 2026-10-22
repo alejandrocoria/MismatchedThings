@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.aether;
 
+import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherSourceCharms;
 import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherTooltipClient;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -15,7 +16,10 @@ public final class AetherTooltipCompatibility {
     private AetherTooltipCompatibility() {}
     private static boolean available() { return FMLEnvironment.getDist().isClient() && ModList.get().isLoaded("aether_ii"); }
     public static void source(ItemStack source, TooltipFlag flag, Consumer<Component> output) {
-        if (available()) { AetherTooltipClient.sourceTier(source, flag, output); }
+        if (available()) {
+            AetherTooltipClient.sourceTier(source, flag, output);
+            AetherSourceCharms.source(source, output);
+        }
     }
     public static void root(ItemStack root, TooltipDisplay display, TooltipFlag flag, Consumer<Component> output) {
         if (available()) { AetherTooltipClient.root(root, display, flag, output); }

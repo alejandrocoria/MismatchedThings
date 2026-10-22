@@ -5,7 +5,7 @@ def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
 def variant = providers.gradleProperty('aetherTooltipVariant').getOrElse('live')
-if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged'])) { throw new GradleException('Unknown Aether tooltip variant') }
+if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged', 'charmfactorymissing', 'charmfactoryfailure', 'charmpopulatedfailure'])) { throw new GradleException('Unknown Aether tooltip variant') }
 def reports = layout.buildDirectory.dir("reports/aether-ii-tooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def directory = layout.buildDirectory.dir("run/aetherIITooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def artifacts = absent ? [:] : [
@@ -80,7 +80,7 @@ tasks.register('prepareAetherTooltipClient') {
 tasks.named('runAetherTooltipClient') { dependsOn('prepareAetherTooltipClient') }
 tasks.register('verifyAetherIITooltips') {
     group = 'verification'
-    description = 'Production Aether text/tiers, connected identity, exact-source isolation and independent native containment'
+    description = 'Production Aether text/tiers/source charm graphics, connected identity and bounded local presentation failures'
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = new File(reports.get().asFile, "${phase.toLowerCase(Locale.ROOT)}-process.log")
@@ -105,6 +105,12 @@ tasks.register('verifyAetherIITooltips') {
             if (refusals.size() != (refusedDomain == null ? 0 : 1)
                     || refusedDomain != null && !refusals.first().contains("Aether II ${refusedDomain} tooltip containment")) {
                 throw new GradleException("Unexpected Aether tooltip refusal domains/count: ${refusals}")
+            }
+            def charmFailures = log.readLines().findAll { it.contains('Aether II source charm') && it.contains('disabled:') }
+            def charmDomain = !absent && phase == 'Client' ? variant.startsWith('charmfactory') ? 'graphics' : variant == 'charmpopulatedfailure' ? 'provenance' : null : null
+            if (charmFailures.size() != (charmDomain == null ? 0 : 1)
+                    || charmDomain != null && !charmFailures.first().contains(charmDomain == 'graphics' ? 'graphics disabled:' : 'charms disabled:')) {
+                throw new GradleException("Unexpected Aether source charm diagnostics: ${charmFailures}")
             }
             if (phase == 'Client' && nativeAssetErrors.size() != (absent ? 0 : 5)) {
                 throw new GradleException("Changed pinned SG resource diagnostics: ${nativeAssetErrors}")

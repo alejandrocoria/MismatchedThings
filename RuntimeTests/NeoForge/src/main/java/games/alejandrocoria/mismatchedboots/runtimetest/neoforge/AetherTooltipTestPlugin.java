@@ -19,7 +19,9 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
         if (!Boolean.getBoolean("mismatchedboots.runtimetest.aetherIITooltip")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.aetherTooltipAbsent")) { return List.of(); }
         var result = new ArrayList<>(List.of("AetherTooltipNativeProbeMixin", "AetherTooltipDetailsProbeMixin"));
-        if (!variant.equals("live")) { result.add("AetherTooltipPeerMixin"); }
+        if (List.of("chains", "attributechanged", "tierchanged").contains(variant)) { result.add("AetherTooltipPeerMixin"); }
+        if (variant.startsWith("charmfactory")) { result.add("AetherCharmFactoryFaultMixin"); }
+        if (variant.equals("charmpopulatedfailure")) { result.add("AetherCharmSourceFaultMixin"); }
         return result;
     }
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {

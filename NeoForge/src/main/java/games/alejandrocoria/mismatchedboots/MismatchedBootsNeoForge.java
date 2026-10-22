@@ -68,5 +68,6 @@ public class MismatchedBootsNeoForge {
         eventBus.addListener(MismatchedBootsClientNeoForge::onClientSetup);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerItemDecorations);
+        eventBus.addListener(MismatchedBootsClientNeoForge::registerTooltipFactories);
     }
 }

@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.client;
 
+import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherSourceCharms;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireEnergyBarDecorator;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
@@ -15,6 +16,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
+import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -25,6 +27,7 @@ public final class MismatchedBootsClientNeoForge {
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {
+        if (ModList.get().isLoaded("aether_ii")) { NeoForge.EVENT_BUS.addListener(AetherSourceCharms::gather); }
         JustDireActiveNetwork.clientReplies(JustDireAbilityInput::reply, JustDireSettingsClient::reply);
         NeoForge.EVENT_BUS.addListener((InputEvent.Key key) -> {
             JustDireSettingsClient.heldKey(key); JustDireAbilityInput.key(key);
@@ -53,6 +56,10 @@ public final class MismatchedBootsClientNeoForge {
         NeoForge.EVENT_BUS.addListener((LevelEvent.Unload unload) -> {
             if (unload.getLevel().isClientSide()) { JustDireLavaRepairCompatibility.clearClientEpisodes(); }
         });
+    }
+
+    public static void registerTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
+        if (ModList.get().isLoaded("aether_ii")) { AetherSourceCharms.registerFactory(event); }
     }
 
     public static void registerScreens(RegisterMenuScreensEvent event) {
