@@ -20,7 +20,7 @@ public final class NeoForgeRuntimeTest {
             return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIITooltip")) {
-            if (FMLEnvironment.getDist().isClient()) { AetherTooltipClientTest.register(); }
+            if (FMLEnvironment.getDist().isClient()) { AetherIITooltipClientTest.register(); }
             return;
         }
         if (!System.getProperty("mismatchedboots.runtimetest.aetherIILifecycle", "").isEmpty()) {

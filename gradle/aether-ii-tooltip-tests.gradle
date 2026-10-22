@@ -1,11 +1,13 @@
-// Disposable presentation candidate. Never adds native artifacts to production dependencies or owner runs.
+// Production presentation acceptance. Native artifacts are isolated fixtures, not publication dependencies.
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
-def reports = layout.buildDirectory.dir("reports/aether-ii-tooltip/${neoforge_version}/${absent ? 'absent' : 'native'}")
-def directory = layout.buildDirectory.dir("run/aetherIITooltip/${neoforge_version}/${absent ? 'absent' : 'native'}")
+def variant = providers.gradleProperty('aetherTooltipVariant').getOrElse('live')
+if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged'])) { throw new GradleException('Unknown Aether tooltip variant') }
+def reports = layout.buildDirectory.dir("reports/aether-ii-tooltips/${neoforge_version}/${absent ? 'absent' : variant}")
+def directory = layout.buildDirectory.dir("run/aetherIITooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def artifacts = absent ? [:] : [
         'aether_ii-26.1.2-alpha.4.1-neoforge.jar': '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6',
         'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
@@ -27,6 +29,7 @@ def artifacts = absent ? [:] : [
             programArgument('--width'); programArgument('1920'); programArgument('--height'); programArgument('1080')
             systemProperty('mismatchedboots.runtimetest.aetherIITooltip', 'true')
             systemProperty('mismatchedboots.runtimetest.aetherTooltipAbsent', absent.toString())
+            systemProperty('mismatchedboots.runtimetest.aetherTooltipVariant', variant)
             systemProperty('mismatchedboots.test.hideClientWindow', 'true')
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
         }
@@ -58,7 +61,7 @@ tasks.register('prepareAetherTooltipClient') {
     doLast {
         def seed = directory.get().dir('seed').asFile
         def client = directory.get().dir('client').asFile
-        if (!new File(seed, 'world/level.dat').isFile()) { throw new GradleException('Tooltip spike requires its disposable seed world') }
+        if (!new File(seed, 'world/level.dat').isFile()) { throw new GradleException('Aether tooltip acceptance requires its disposable seed world') }
         def jars = artifacts.collect { name, hash ->
             def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
@@ -75,9 +78,9 @@ tasks.register('prepareAetherTooltipClient') {
     }
 }
 tasks.named('runAetherTooltipClient') { dependsOn('prepareAetherTooltipClient') }
-tasks.register('verifyAetherIITooltipSpike') {
+tasks.register('verifyAetherIITooltips') {
     group = 'verification'
-    description = 'Opt-in Aether tooltip baseline/candidate, native source grids, connected identity and framebuffer measurements'
+    description = 'Production Aether text/tiers, connected identity, exact-source isolation and independent native containment'
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = new File(reports.get().asFile, "${phase.toLowerCase(Locale.ROOT)}-process.log")
@@ -86,7 +89,7 @@ tasks.register('verifyAetherIITooltipSpike') {
                 def failure = new File(reports.get().asFile, 'aether-ii-tooltip-failure.txt')
                 if (failure.isFile()) { throw new GradleException(failure.text) }
                 if (!new File(reports.get().asFile, 'aether-ii-tooltip-success.txt').isFile()) {
-                    throw new GradleException("Incomplete tooltip spike: ${log}")
+                    throw new GradleException("Incomplete production Aether tooltip acceptance: ${log}")
                 }
             }
             // Pinned SG assets, not our presentation: two subtitle keys on each resource load,
@@ -97,6 +100,12 @@ tasks.register('verifyAetherIITooltipSpike') {
                     || it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
                     && it.contains('bonsaitrees2:sapling')) }
             def errors = log.readLines().findAll { it.contains('/ERROR]') && !(it in nativeAssetErrors) }
+            def refusals = log.readLines().findAll { it.contains('Aether II ') && it.contains('tooltip containment unavailable:') }
+            def refusedDomain = !absent && phase == 'Client' ? variant == 'attributechanged' ? 'set' : variant == 'tierchanged' ? 'tier' : null : null
+            if (refusals.size() != (refusedDomain == null ? 0 : 1)
+                    || refusedDomain != null && !refusals.first().contains("Aether II ${refusedDomain} tooltip containment")) {
+                throw new GradleException("Unexpected Aether tooltip refusal domains/count: ${refusals}")
+            }
             if (phase == 'Client' && nativeAssetErrors.size() != (absent ? 0 : 5)) {
                 throw new GradleException("Changed pinned SG resource diagnostics: ${nativeAssetErrors}")
             }

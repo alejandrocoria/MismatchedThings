@@ -17,7 +17,7 @@ license="MIT"
     config="mismatchedboots-aether-recognition-tests.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-aether-tooltip-spike.mixins.json"
+    config="mismatchedboots-aether-tooltip-tests.mixins.json"
 
 [[mixins]]
     config="mismatchedboots-silent-gear-trait-spike.mixins.json"
