@@ -11,7 +11,7 @@ def endpointDirectories = [:]
 def journeyMapConfiguration
 // Forward selected baselines/scopes: otherwise a minimum-loader or SG fault
 // acceptance command would silently start the default loader or ordinary run.
-def baselineArguments = ['neoforge_version', 'fabric_loader_version', 'fabric_api_version', 'useMavenLocal', 'silentGearEffectVariant', 'silentGearVoidVariant', 'silentGearTooltipVariant']
+def baselineArguments = ['neoforge_version', 'fabric_loader_version', 'fabric_api_version', 'useMavenLocal', 'silentGearEffectVariant', 'silentGearVoidVariant', 'silentGearTooltipVariant', 'aetherTooltipAbsent']
         .findAll { gradle.startParameter.projectProperties.containsKey(it) }
         .collect { "-P${it}=${gradle.startParameter.projectProperties[it]}".toString() }
 

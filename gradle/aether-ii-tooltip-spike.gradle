@@ -1,0 +1,110 @@
+// Disposable presentation candidate. Never adds native artifacts to production dependencies or owner runs.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
+def reports = layout.buildDirectory.dir("reports/aether-ii-tooltip/${neoforge_version}/${absent ? 'absent' : 'native'}")
+def directory = layout.buildDirectory.dir("run/aetherIITooltip/${neoforge_version}/${absent ? 'absent' : 'native'}")
+def artifacts = absent ? [:] : [
+        'aether_ii-26.1.2-alpha.4.1-neoforge.jar': '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6',
+        'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
+        'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655',
+        'justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
+]
+['Seed', 'Client'].each { phase ->
+    neoForge.runs.create("aetherTooltip${phase}") {
+        disableIdeRun()
+        gameDirectory = directory.get().dir(phase.toLowerCase(Locale.ROOT)).asFile
+        systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+        if (phase == 'Seed') {
+            server(); programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.aetherTooltipSeed', 'true')
+        } else {
+            client()
+            programArgument('--quickPlaySingleplayer'); programArgument('tooltip')
+            programArgument('--username'); programArgument('AetherTooltip')
+            programArgument('--width'); programArgument('1920'); programArgument('--height'); programArgument('1080')
+            systemProperty('mismatchedboots.runtimetest.aetherIITooltip', 'true')
+            systemProperty('mismatchedboots.runtimetest.aetherTooltipAbsent', absent.toString())
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+        }
+        jvmArgument('-Xmx1G')
+    }
+}
+tasks.register('prepareAetherTooltipSeed') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def seed = directory.get().dir('seed').asFile
+        fixtureFiles.delete { delete seed }
+        fixtureFiles.delete { delete fileTree(reports) { include '*.txt', '*.json', '*.png' } }
+        fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(seed, 'mods')) }
+        new File(seed, 'eula.txt').text = 'eula=true\n'
+        new File(seed, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+    }
+}
+tasks.named('runAetherTooltipSeed') { dependsOn('prepareAetherTooltipSeed') }
+tasks.register('prepareAetherTooltipClient') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def seed = directory.get().dir('seed').asFile
+        def client = directory.get().dir('client').asFile
+        if (!new File(seed, 'world/level.dat').isFile()) { throw new GradleException('Tooltip spike requires its disposable seed world') }
+        def jars = artifacts.collect { name, hash ->
+            def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
+            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
+                throw new GradleException("Missing/unexpected tooltip fixture: ${jar}")
+            }
+            jar
+        }
+        fixtureFiles.delete { delete client }
+        fixtureFiles.copy { from(new File(seed, 'world')); into(new File(client, 'saves/tooltip')) }
+        fixtureFiles.copy { from(productionJar, fixtureJar, jars); into(new File(client, 'mods')) }
+        new File(client, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\nguiScale:2\n'
+        def config = new File(client, 'config'); config.mkdirs()
+        new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+    }
+}
+tasks.named('runAetherTooltipClient') { dependsOn('prepareAetherTooltipClient') }
+tasks.register('verifyAetherIITooltipSpike') {
+    group = 'verification'
+    description = 'Opt-in Aether tooltip baseline/candidate, native source grids, connected identity and framebuffer measurements'
+    doLast {
+        ['Seed', 'Client'].each { phase ->
+            def log = new File(reports.get().asFile, "${phase.toLowerCase(Locale.ROOT)}-process.log")
+            runBounded(":RuntimeTests:NeoForge:runAetherTooltip${phase}", log, 300)
+            if (phase == 'Client') {
+                def failure = new File(reports.get().asFile, 'aether-ii-tooltip-failure.txt')
+                if (failure.isFile()) { throw new GradleException(failure.text) }
+                if (!new File(reports.get().asFile, 'aether-ii-tooltip-success.txt').isFile()) {
+                    throw new GradleException("Incomplete tooltip spike: ${log}")
+                }
+            }
+            // Pinned SG assets, not our presentation: two subtitle keys on each resource load,
+            // and one optional Bonsai recipe serializer on integrated-server data load.
+            def nativeAssetErrors = log.readLines().findAll { it.contains('/ERROR]') && (
+                    it.contains("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.hammer'")
+                    || it.contains("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.knife'")
+                    || it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                    && it.contains('bonsaitrees2:sapling')) }
+            def errors = log.readLines().findAll { it.contains('/ERROR]') && !(it in nativeAssetErrors) }
+            if (phase == 'Client' && nativeAssetErrors.size() != (absent ? 0 : 5)) {
+                throw new GradleException("Changed pinned SG resource diagnostics: ${nativeAssetErrors}")
+            }
+            if (!errors.isEmpty() || log.text.contains('recognition disabled:')
+                    || absent && log.text.contains('Error loading class: com/aetherteam/aetherii')) {
+                throw new GradleException("Unexpected tooltip errors/refusals: ${errors}; see ${log}")
+            }
+        }
+        logger.lifecycle(new File(reports.get().asFile, 'aether-ii-tooltip-report.txt').text)
+    }
+}

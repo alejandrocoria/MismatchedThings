@@ -15,6 +15,14 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherTooltipSeed")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> event.getServer().halt(false));
+            return;
+        }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIITooltip")) {
+            if (FMLEnvironment.getDist().isClient()) { AetherTooltipClientTest.register(); }
+            return;
+        }
         if (!System.getProperty("mismatchedboots.runtimetest.aetherIILifecycle", "").isEmpty()) {
             AetherIILifecycleTest.register(); return;
         }
