@@ -15,6 +15,16 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (!System.getProperty("mismatchedboots.runtimetest.aetherIILifecycle", "").isEmpty()) {
+            AetherIILifecycleTest.register(); return;
+        }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIIClient")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> AetherIIClientTest.observeServer());
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> AetherIIClientTest.tick(Minecraft.getInstance()));
+            }
+            return;
+        }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIIRecognition")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.aetherIICharms")) {
             AetherIICompatibilityTest.register();

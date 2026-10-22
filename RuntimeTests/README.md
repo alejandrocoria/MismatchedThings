@@ -181,8 +181,8 @@ rejects ERRORs except the documented two native Toast startup diagnostics.
 [B's execution record](../local-docs/AETHER-II-COMPATIBILITY-IMPLEMENTATION.md#72-block-b--local-production-recognition--2026-10-21)
 owns actual versions/results and limits. This is server/query/damage evidence,
 not physical client falling, jump input, all effect bodies, save/rejoin or owner
-manual acceptance. C remains pending; native styles/tooltips/transactions remain
-separate decisions.
+manual acceptance. C's separate lifecycle/connected gate is below; native
+styles/tooltips/transactions remain separate decisions.
 
 The shared driver keeps independent production scopes. Both the per-creation
 charm candidate and the two query-recognition candidates/plugin/config/flag are
@@ -190,6 +190,53 @@ removed. `verifyAetherIISpike` is retired without an alias. Dated pre-A +3/+1 an
 pre-B asymmetric/query-candidate observations remain historical in
 [the exploration](../local-docs/AETHER-II-COMPATIBILITY-EXPLORATION.md#8-native-measurements-and-local-candidate--2026-10-21),
 not current production expectations or an executable fallback.
+
+### Aether II lifecycle and connected smoke — production block C
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIILifecycle --console=plain
+```
+
+Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. This follows the
+existing SG barrel/separate-JVM/integrated-client/rejoin pattern, with no new
+generic lifecycle framework. Four sequential phases: Save, Restart, Client,
+Rejoin. Save alone refreshes the disposable server world; Client copies that
+completed world into its own save; Rejoin reuses the actual connected player's
+save without rerunning preparation. The native artifact is hash-checked; it and
+the generated production/fixture JARs are copied into fixture-only directories,
+not the owner's client installation. The fixture uses the native skip-backup/
+join button if Minecraft asks to confirm its disposable world copy.
+
+Six paid used/named roots cover both orientations of Health-charmed Neptune,
+Sentry and Gravitite with diamond. Registry-aware whole-stack comparisons check
+root wear, projected attributes and complete source/charm histories before
+callbacks in a different JVM. Shared production probes repeat Health +1,
+no live holders/root Forge installation, Sentry -.375 and short-fall boundary,
+Gravitite threshold/fall and immutable root state.
+
+The hidden/muted integrated client receives normal equipment/attribute packets:
+both Health/Neptune inverses grant Health +1 and native Neptune oxygen, then
+lose only the set effect when another matching piece is removed. Four actual
+keyboard flights compare native Gravitite, both used mixed orientations and a
+missing-third-piece control. Only normal key presses initiate jumping; native
+attachment consumption/ground reset, actual apex and server-received movement
+are observed without attachment/velocity/equipment substitution. A second client
+JVM matches the same UUID's six actual saved player roots, then repeats these
+small scenes. Only immutable JSON expectations cross game threads; no custom
+item sync packet or production dependency is added.
+
+Reports/manifests/raw logs: `build/reports/aether-ii-lifecycle/<version>/`;
+disposable server/client runs: `build/run/aetherIILifecycle/<version>/`, within
+the NeoForge fixture module. The verifier requires all phase markers/reports,
+four packet/four flight observations per connection, and no own refusal or
+unexpected ERROR. The known dedicated-server Toast errors remain visible.
+[C's execution record](../local-docs/AETHER-II-COMPATIBILITY-IMPLEMENTATION.md#73-block-c--lifecycle-connected-smoke-and-handoff--2026-10-21)
+owns actual results and the separate owner-confirmed gameplay acceptance on
+2026-10-21. The bounded A/B/C plan is complete; the reported missing active
+set-attribute tooltip lines (notably Burrukai) remain separate presentation work.
+This smoke
+does not certify every native effect body, physical input, multiplayer server
+topologies, native Forge screen UX or deferred presentation/transactions.
 
 ### Silent Gear native stat measurement
 

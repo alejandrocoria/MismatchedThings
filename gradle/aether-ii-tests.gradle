@@ -94,3 +94,117 @@ tasks.register('verifyAetherIIRecognition') {
     description = 'Runs native Aether set/Sentry behavior, actual fall damage, peer chains and independent local refusals'
     dependsOn recognitionVariants.collect { "verifyAetherIIRecognition${it}" }
 }
+
+// Same barrel -> separate server JVM -> integrated connection -> same-player JVM rejoin pattern as SG.
+def lifecycleReports = layout.buildDirectory.dir("reports/aether-ii-lifecycle/${neoforge_version}")
+def lifecycleServer = layout.buildDirectory.dir("run/aetherIILifecycle/${neoforge_version}/server")
+def lifecycleClient = layout.buildDirectory.dir("run/aetherIILifecycle/${neoforge_version}/client")
+['Save', 'Restart', 'Client', 'Rejoin'].each { phase ->
+    def connected = phase in ['Client', 'Rejoin']
+    neoForge.runs.create("aetherII${phase}") {
+        if (connected) {
+            client()
+            gameDirectory = lifecycleClient.get().asFile
+            programArgument('--quickPlaySingleplayer'); programArgument('aether')
+            programArgument('--username'); programArgument('AetherFixture')
+            systemProperty('mismatchedboots.runtimetest.aetherIIClient', 'true')
+            systemProperty('mismatchedboots.runtimetest.aetherIIRejoin', (phase == 'Rejoin').toString())
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+        } else {
+            server(); gameDirectory = lifecycleServer.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.aetherIILifecycle', phase.toLowerCase(Locale.ROOT))
+        }
+        disableIdeRun()
+        systemProperty('mismatchedboots.runtimetest.markers', lifecycleReports.get().asFile.absolutePath)
+        jvmArgument('-Xmx1G')
+    }
+}
+tasks.register('prepareAetherIISave') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+                != '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6') {
+            throw new GradleException('Missing/unexpected pinned Aether II lifecycle artifact')
+        }
+        fixtureFiles.delete { delete lifecycleServer }
+        // Keep the outer task's raw process log intact while resetting only marker/manifest evidence.
+        fixtureFiles.delete { delete fileTree(lifecycleReports) { include '*.txt', '*.json' } }
+        fixtureFiles.copy { from(productionJar, fixtureJar, artifact); into(new File(lifecycleServer.get().asFile, 'mods')) }
+        new File(lifecycleServer.get().asFile, 'eula.txt').text = 'eula=true\n'
+        new File(lifecycleServer.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+    }
+}
+tasks.named('runAetherIISave') { dependsOn('prepareAetherIISave') }
+tasks.named('runAetherIIRestart') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doFirst {
+        if (!new File(lifecycleReports.get().asFile, 'aether-ii-save-success.txt').isFile()
+                || !new File(lifecycleServer.get().asFile, 'world/level.dat').isFile()) {
+            throw new GradleException('Aether Restart requires the completed Save world')
+        }
+    }
+}
+tasks.register('prepareAetherIIClient') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!new File(lifecycleReports.get().asFile, 'aether-ii-restart-success.txt').isFile()) {
+            throw new GradleException('Aether Client requires the completed Restart world')
+        }
+        fixtureFiles.delete { delete lifecycleClient }
+        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'world')); into(new File(lifecycleClient.get().asFile, 'saves/aether')) }
+        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'mods')); into(new File(lifecycleClient.get().asFile, 'mods')) }
+        new File(lifecycleClient.get().asFile, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
+        def config = new File(lifecycleClient.get().asFile, 'config'); config.mkdirs()
+        new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+        fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "aether-ii-client-${it}.txt") }) }
+    }
+}
+tasks.named('runAetherIIClient') { dependsOn('prepareAetherIIClient') }
+tasks.register('prepareAetherIIRejoin') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!new File(lifecycleReports.get().asFile, 'aether-ii-client-success.txt').isFile()
+                || !new File(lifecycleClient.get().asFile, 'saves/aether/level.dat').isFile()) {
+            throw new GradleException('Aether Rejoin requires the completed connected player/world save')
+        }
+        fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "aether-ii-rejoin-${it}.txt") }) }
+    }
+}
+tasks.named('runAetherIIRejoin') { dependsOn('prepareAetherIIRejoin') }
+tasks.register('verifyAetherIILifecycle') {
+    group = 'verification'
+    description = 'Aether production world restart, connected attributes/native keyboard double jump and same-player rejoin'
+    doLast {
+        ['Save', 'Restart', 'Client', 'Rejoin'].each { phase ->
+            def name = phase.toLowerCase(Locale.ROOT)
+            def log = new File(lifecycleReports.get().asFile, "${name}-process.log")
+            runBounded(":RuntimeTests:NeoForge:runAetherII${phase}", log, phase in ['Client', 'Rejoin'] ? 300 : 240)
+            def result = lifecycleReports.get().asFile
+            def failure = new File(result, "aether-ii-${name}-failure.txt")
+            def report = new File(result, "aether-ii-${name}-report.txt")
+            def success = new File(result, "aether-ii-${name}-success.txt")
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            def errors = log.readLines().findAll { it.contains('/ERROR]')
+                    && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
+            if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('recognition disabled:') || !errors.isEmpty()) {
+                throw new GradleException("Incomplete/refused Aether ${phase}: ${log}; unexpected errors=${errors}")
+            }
+            if (phase in ['Client', 'Rejoin'] && (report.readLines().count { it.startsWith('FLIGHT ') } != 4
+                    || report.readLines().count { it.startsWith('PACKET ') } != 4)) {
+                throw new GradleException("Incomplete connected Aether evidence: ${report}")
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}

@@ -254,7 +254,7 @@ public final class AetherIICompatibilityTest {
 
     private record CharmProfile(String name, Holder<Attribute> attribute, double bonus) {}
 
-    private static ItemStack install(ServerPlayer player, NativeApi api, ItemStack input, String name, int holder, boolean accepted) throws Exception {
+    static ItemStack install(ServerPlayer player, NativeApi api, ItemStack input, String name, int holder, boolean accepted) throws Exception {
         var server = player.level().getServer();
         String history = history(server, input);
         String inputBefore = snapshot(server, input);
@@ -286,7 +286,7 @@ public final class AetherIICompatibilityTest {
         return result;
     }
 
-    private static void measure(ServerPlayer player, ItemStack root, Holder<Attribute> attribute, double expected,
+    static void measure(ServerPlayer player, ItemStack root, Holder<Attribute> attribute, double expected,
                                 String label, StringBuilder report) throws Exception {
         String before = snapshot(player.level().getServer(), root);
         double baked = amount(root.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY), attribute);
@@ -334,7 +334,7 @@ public final class AetherIICompatibilityTest {
                 .append("stored average -.375 is unchanged; no equipment/source mutation\n");
     }
 
-    private static void fall(ServerPlayer player, ItemStack boots, double distance, boolean suppressed) {
+    static void fall(ServerPlayer player, ItemStack boots, double distance, boolean suppressed) {
         player.setItemSlot(EquipmentSlot.FEET, boots); player.fallDistance = distance;
         var event = new LivingFallEvent(player, distance, 1);
         NeoForge.EVENT_BUS.post(event);
@@ -385,7 +385,7 @@ public final class AetherIICompatibilityTest {
         } finally { subject.discard(); }
     }
 
-    private static List<ItemStack> paidPair(ServerPlayer player, ItemStack first, ItemStack second) {
+    static List<ItemStack> paidPair(ServerPlayer player, ItemStack first, ItemStack second) {
         var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
         menu.getSlot(0).set(first.copy()); menu.getSlot(1).set(second.copy());
         var firstPreview = menu.getSlot(2).getItem().copy(); var secondPreview = menu.getSlot(3).getItem().copy();
@@ -397,7 +397,7 @@ public final class AetherIICompatibilityTest {
         return List.of(primary, inverse);
     }
 
-    private static void clear(LivingEntity entity) {
+    static void clear(LivingEntity entity) {
         for (var slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
                 EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) { entity.setItemSlot(slot, ItemStack.EMPTY); }
     }
@@ -408,29 +408,29 @@ public final class AetherIICompatibilityTest {
         return modifiers.modifiers().stream().filter(entry -> entry.attribute().equals(attribute) && entry.slot().test(EquipmentSlot.FEET))
                 .mapToDouble(entry -> entry.modifier().amount()).sum();
     }
-    private static ItemStack item(String path) {
+    static ItemStack item(String path) {
         return new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("aether_ii", path)).orElseThrow());
     }
     @SuppressWarnings("unchecked")
-    private static <T> DataComponentType<T> component(String path) {
+    static <T> DataComponentType<T> component(String path) {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("aether_ii", path)).orElseThrow().value();
     }
-    private static String snapshot(MinecraftServer server, ItemStack stack) {
+    static String snapshot(MinecraftServer server, ItemStack stack) {
         return ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(JsonOps.INSTANCE), stack).getOrThrow().toString();
     }
     private static String history(MinecraftServer server, ItemStack stack) {
         return ModContent.getMixedBootsData(stack).map(data -> snapshot(server, data.left().source())
                 + "|" + snapshot(server, data.right().source())).orElse("");
     }
-    private static void close(double actual, double expected, String label) {
+    static void close(double actual, double expected, String label) {
         require(Math.abs(actual - expected) < 1E-6, label + ": " + actual + " != " + expected);
     }
-    private static void require(boolean condition, String message) {
+    static void require(boolean condition, String message) {
         if (!condition) { throw new AssertionError(message); }
     }
 
     /** Reflection keeps the optional alpha artifact off normal compilation/runtime dependencies. */
-    private static final class NativeApi {
+    static final class NativeApi {
         private final Class<?> equipment = Class.forName("com.aetherteam.aetherii.item.equipment.EquipmentUtil");
         private final Class<?> forge = Class.forName("com.aetherteam.aetherii.inventory.menu.ArkeniumForgeMenu");
         private final Supplier<?> accessories = (Supplier<?>) Class.forName("com.aetherteam.aetherii.attachment.AetherIIDataAttachments").getField("ACCESSORIES").get(null);
