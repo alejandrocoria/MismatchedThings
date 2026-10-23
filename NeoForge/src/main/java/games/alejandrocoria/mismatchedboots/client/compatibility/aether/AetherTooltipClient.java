@@ -23,11 +23,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.component.TooltipProvider;
+import net.neoforged.neoforge.event.AddAttributeTooltipsEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -42,19 +43,35 @@ public final class AetherTooltipClient {
 
     private AetherTooltipClient() {}
 
-    public static void root(ItemStack root, TooltipDisplay display, TooltipFlag flag, Consumer<Component> output) {
-        if (setsDisabled || !AetherTooltipState.attributesReady() || display.hideTooltip() || !AetherTooltipState.managed(root)) { return; }
+    public static void sourceSet(ItemStack source, Consumer<Component> output) {
+        if (setsDisabled || !AetherTooltipState.attributesReady() || !BootHalf.isValidSource(source)) { return; }
+        List<Component> lines;
+        try {
+            if (sets == null) { sets = new SetBindings(); }
+            var display = source.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
+            if (display.hideTooltip() || !display.shows(sets.armorSet)) { return; }
+            lines = sourceLines(source);
+        } catch (Throwable failure) {
+            disableSets(failure); return;
+        }
+        // Keep native containment active after formatting failure: falling back would borrow another pair's bonuses.
+        lines.forEach(output);
+    }
+
+    public static void attributes(AddAttributeTooltipsEvent event) {
+        var display = event.getContext().tooltipDisplay(); var root = event.getStack();
+        if (setsDisabled || !AetherTooltipState.attributesReady() || display.hideTooltip() || !event.shouldShow()
+                || !AetherTooltipState.managed(root)) { return; }
         List<Component> lines;
         try {
             if (sets == null) { sets = new SetBindings(); }
             if (!display.shows(sets.armorSet)) { return; }
-            lines = rootLines(root, display, flag);
+            lines = attributeLines(root, event.getContext().flag());
         } catch (Throwable failure) {
-            failure = unwrap(failure); setsDisabled = true;
-            Constants.LOG.warn("Aether II set tooltips disabled: native presentation unavailable", failure); return;
+            disableSets(failure); return;
         }
-        // Keep native containment active after formatting failure: falling back would borrow another pair's bonuses.
-        lines.forEach(output);
+        // This event is after ordinary attributes, including for the nested source path; only real FEET qualify.
+        lines.forEach(line -> event.addTooltipLines(line));
     }
 
     public static void sourceTier(ItemStack source, TooltipFlag flag, Consumer<Component> output) {
@@ -84,33 +101,46 @@ public final class AetherTooltipClient {
         lines.forEach(output);
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Component> rootLines(ItemStack root, TooltipDisplay display, TooltipFlag flag) throws ReflectiveOperationException {
-        var data = ModContent.getMixedBootsData(root).orElseThrow();
-        Map<String, ItemStack> families = new LinkedHashMap<>();
-        for (var source : List.of(data.left().source(), data.right().source())) {
-            for (var family : FAMILIES) {
-                if (source.getItem() == BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("aether_ii", family + "_boots"))
-                        && TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("aether_ii", "armor/" + family)).equals(source.get(sets.armorSet))) {
-                    families.putIfAbsent(family, source);
-                }
+    private static String family(ItemStack source) {
+        for (var family : FAMILIES) {
+            if (source.getItem() == BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("aether_ii", family + "_boots"))
+                    && TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("aether_ii", "armor/" + family)).equals(source.get(sets.armorSet))) {
+                return family;
             }
         }
-        var client = Minecraft.getInstance(); var player = client.player;
-        // Value-identical menu/recipe copies must remain neutral; no persistent identity is justified by a tooltip.
-        boolean worn = player != null && client.level != null && root == player.getItemBySlot(EquipmentSlot.FEET);
+        return null;
+    }
+
+    private static List<Component> sourceLines(ItemStack source) throws ReflectiveOperationException {
+        String family = family(source);
         var lines = new ArrayList<Component>();
-        for (var entry : families.entrySet()) {
-            String family = entry.getKey(); ItemStack source = entry.getValue();
-            String key = source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.";
-            lines.add(Component.empty()); lines.add(source.getItemName().copy().withStyle(ChatFormatting.GRAY));
-            if (!family.equals("arkenium")) { lines.add(Component.translatable(key + "1")); }
-            if (family.equals("sentry")) { continue; }
-            int count = worn ? Math.min(3, (int) sets.count.invoke(null, player, source.get(sets.armorSet))) : -1;
-            lines.add(Component.translatable(key + "2", Component.literal(count < 0 ? "–/3" : count + "/3")
+        if (family == null) { return lines; }
+        String key = source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.";
+        if (!family.equals("arkenium")) { lines.add(Component.translatable(key + "1")); }
+        var client = Minecraft.getInstance();
+        // Set progress describes the player's current equipment, even when this source is only being previewed.
+        if (!family.equals("sentry") && client.player != null && client.level != null) {
+            int count = Math.min(3, (int) sets.count.invoke(null, client.player, source.get(sets.armorSet)));
+            lines.add(Component.translatable(key + "2", Component.literal(count + "/3")
                     .withStyle(count == 3 ? ChatFormatting.WHITE : ChatFormatting.GRAY)));
-            if (!worn || !display.shows(DataComponents.ATTRIBUTE_MODIFIERS)) { continue; }
-            var attributes = (Map<Holder<Attribute>, AttributeInstance>) sets.attributes.invoke(player.getAttributes());
+        }
+        return lines;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Component> attributeLines(ItemStack root, TooltipFlag flag) throws ReflectiveOperationException {
+        var client = Minecraft.getInstance(); var player = client.player;
+        var lines = new ArrayList<Component>();
+        // A current equipment count is not proof that a hovered copy contributes the player's active modifiers.
+        if (player == null || client.level == null || root != player.getItemBySlot(EquipmentSlot.FEET)) { return lines; }
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        var families = new LinkedHashSet<String>();
+        for (var source : List.of(data.left().source(), data.right().source())) {
+            String family = family(source);
+            if (family != null && !family.equals("sentry")) { families.add(family); }
+        }
+        var attributes = (Map<Holder<Attribute>, AttributeInstance>) sets.attributes.invoke(player.getAttributes());
+        for (var family : families) {
             for (var attribute : attributes.entrySet()) {
                 for (var modifier : attribute.getValue().getModifiers()) {
                     if (modifier.id().getNamespace().equals("aether_ii")
@@ -121,6 +151,11 @@ public final class AetherTooltipClient {
             }
         }
         return lines;
+    }
+
+    private static void disableSets(Throwable failure) {
+        failure = unwrap(failure); setsDisabled = true;
+        Constants.LOG.warn("Aether II set tooltips disabled: native presentation unavailable", failure);
     }
 
     private static Throwable unwrap(Throwable failure) {

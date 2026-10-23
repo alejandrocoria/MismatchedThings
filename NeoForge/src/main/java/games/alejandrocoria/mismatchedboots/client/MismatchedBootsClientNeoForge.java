@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.client;
 
 import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherSourceCharms;
+import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherTooltipClient;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireEnergyBarDecorator;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
@@ -27,7 +28,10 @@ public final class MismatchedBootsClientNeoForge {
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {
-        if (ModList.get().isLoaded("aether_ii")) { NeoForge.EVENT_BUS.addListener(AetherSourceCharms::gather); }
+        if (ModList.get().isLoaded("aether_ii")) {
+            NeoForge.EVENT_BUS.addListener(AetherSourceCharms::gather);
+            NeoForge.EVENT_BUS.addListener(AetherTooltipClient::attributes);
+        }
         JustDireActiveNetwork.clientReplies(JustDireAbilityInput::reply, JustDireSettingsClient::reply);
         NeoForge.EVENT_BUS.addListener((InputEvent.Key key) -> {
             JustDireSettingsClient.heldKey(key); JustDireAbilityInput.key(key);

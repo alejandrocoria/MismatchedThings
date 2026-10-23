@@ -66,7 +66,6 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
                                 Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
         JustDireTooltipCompatibility.appendRootState(stack, display, tooltip);
-        AetherTooltipCompatibility.root(stack, display, flag, tooltip);
     }
 
     @Override

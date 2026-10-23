@@ -5,7 +5,8 @@ def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
 def variant = providers.gradleProperty('aetherTooltipVariant').getOrElse('live')
-if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged', 'charmfactorymissing', 'charmfactoryfailure', 'charmpopulatedfailure'])) { throw new GradleException('Unknown Aether tooltip variant') }
+if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged', 'charmfactorymissing', 'charmfactoryfailure', 'charmpopulatedfailure',
+                  'setbindingfailure', 'tierbindingfailure', 'charmbindingfailure', 'setpopulatedfailure', 'tierpopulatedfailure'])) { throw new GradleException('Unknown Aether tooltip variant') }
 def reports = layout.buildDirectory.dir("reports/aether-ii-tooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def directory = layout.buildDirectory.dir("run/aetherIITooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def artifacts = absent ? [:] : [
@@ -107,13 +108,25 @@ tasks.register('verifyAetherIITooltips') {
                 throw new GradleException("Unexpected Aether tooltip refusal domains/count: ${refusals}")
             }
             def charmFailures = log.readLines().findAll { it.contains('Aether II source charm') && it.contains('disabled:') }
-            def charmDomain = !absent && phase == 'Client' ? variant.startsWith('charmfactory') ? 'graphics' : variant == 'charmpopulatedfailure' ? 'provenance' : null : null
+            def charmDomain = !absent && phase == 'Client' ? variant.startsWith('charmfactory') || variant == 'charmbindingfailure' ? 'graphics' : variant == 'charmpopulatedfailure' ? 'provenance' : null : null
             if (charmFailures.size() != (charmDomain == null ? 0 : 1)
                     || charmDomain != null && !charmFailures.first().contains(charmDomain == 'graphics' ? 'graphics disabled:' : 'charms disabled:')) {
                 throw new GradleException("Unexpected Aether source charm diagnostics: ${charmFailures}")
             }
-            if (phase == 'Client' && nativeAssetErrors.size() != (absent ? 0 : 5)) {
+            def textFailures = log.readLines().findAll { it.contains('Aether II ') && it.contains('tooltips disabled:') }
+            def textDomain = !absent && phase == 'Client' ? variant.startsWith('set') ? 'set' : variant.startsWith('tier') && variant != 'tierchanged' ? 'tier' : null : null
+            if (textFailures.size() != (textDomain == null ? 0 : 1)
+                    || textDomain != null && !textFailures.first().contains("Aether II ${textDomain} tooltips disabled:")) {
+                throw new GradleException("Unexpected Aether text formatter diagnostics: ${textFailures}")
+            }
+            // Live reconnect reloads server datapacks: one more known Bonsai recipe error, not another sound reload.
+            if (phase == 'Client' && nativeAssetErrors.size() != (absent ? 0 : variant == 'live' ? 6 : 5)) {
                 throw new GradleException("Changed pinned SG resource diagnostics: ${nativeAssetErrors}")
+            }
+            if (phase == 'Client' && !absent && (nativeAssetErrors.count { it.contains('stone_anvil.hammer') } != 2
+                    || nativeAssetErrors.count { it.contains('stone_anvil.knife') } != 2
+                    || nativeAssetErrors.count { it.contains('bonsaitrees2:sapling') } != (variant == 'live' ? 2 : 1))) {
+                throw new GradleException("Changed pinned SG diagnostic categories: ${nativeAssetErrors}")
             }
             if (!errors.isEmpty() || log.text.contains('recognition disabled:')
                     || absent && log.text.contains('Error loading class: com/aetherteam/aetherii')) {

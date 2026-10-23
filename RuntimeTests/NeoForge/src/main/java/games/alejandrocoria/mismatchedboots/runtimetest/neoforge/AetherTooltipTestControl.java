@@ -18,6 +18,10 @@ public final class AetherTooltipTestControl {
     static final List<String> FAMILIES = List.of("beast_pelt", "burrukai_plate", "zanite", "arkenium", "gravitite", "neptune", "sentry");
     static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.aetherTooltipVariant", "live");
     public static final Component PEER = Component.literal("Compatible native listener peer");
+    public static final Component TIER_SCRATCH = Component.literal("Controlled source tier scratch witness");
+    private static List<Component> rejectedSetScratch;
+    static boolean setScratchChecked;
+    public static int tierScratchCalls;
     static boolean capturing, nested, throwing, inProbe;
     static int calls, added, start, peers;
     static ItemStack failedSource;
@@ -30,6 +34,7 @@ public final class AetherTooltipTestControl {
     public static ItemStack identity(ItemStack stack) { peers++; return stack; }
     public static ItemStack opaqueStack(AddAttributeTooltipsEvent event) { return event.getStack(); }
     public static Item.TooltipContext opaqueContext(ItemTooltipEvent event) { return event.getContext(); }
+    public static void rejectedSet(List<?> lines) { rejectedSetScratch = lines.stream().map(Component.class::cast).toList(); }
 
     public static void sourceProbe(ItemStack source, TooltipDisplay display, TooltipFlag flag) {
         if (inProbe || !nested && !throwing || display.shows(DataComponents.ATTRIBUTE_MODIFIERS)) { return; }
@@ -50,6 +55,12 @@ public final class AetherTooltipTestControl {
         String before = encoded(client, stack);
         try {
             var lines = JustDireTooltipTestSupport.capture(client, stack, flag, shift);
+            if (rejectedSetScratch != null && !setScratchChecked) {
+                AetherIICompatibilityTest.require(rejectedSetScratch.stream().filter(line -> !line.getString().isEmpty()).noneMatch(lines::contains),
+                        "The first failing populated set formatter published part of its scratch block");
+                setScratchChecked = true; rejectedSetScratch = null;
+            }
+            AetherIICompatibilityTest.require(!lines.contains(TIER_SCRATCH), "The first failing tier provider published its populated scratch group");
             AetherIICompatibilityTest.require(before.equals(encoded(client, stack)), "Production tooltip changed full root/history");
             return new Capture(lines, calls, added);
         } finally { capturing = false; }

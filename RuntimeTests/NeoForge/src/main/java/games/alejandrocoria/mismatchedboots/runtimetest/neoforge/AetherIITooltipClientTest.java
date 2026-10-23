@@ -61,7 +61,7 @@ final class AetherIITooltipClientTest {
     private static List<ItemStack> serverSamples;
     private static Future<String> job;
     private static JsonObject expected;
-    private static int ticks, scene, phase, settled, screenshots;
+    private static int ticks, scene = AetherTooltipFaultTest.active() ? 3 : 0, phase, settled, screenshots;
     private static boolean finished, backupConfirmed, screenshotPending, screenshotDone;
     private static Throwable screenshotFailure;
     private static CompletableFuture<Void> reload;
@@ -76,6 +76,7 @@ final class AetherIITooltipClientTest {
     static void register() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> tick(Minecraft.getInstance()));
         if (!ABSENT) { NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, AetherSourceCharmTest::observe); }
+        if (!ABSENT && AetherTooltipTestControl.VARIANT.equals("live")) { NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, AetherTooltipLifecycleTest::observe); }
     }
 
     private static void tick(Minecraft client) {
@@ -89,6 +90,11 @@ final class AetherIITooltipClientTest {
                             && button.getMessage().equals(Component.translatable("selectWorld.backupJoinSkipButton")))
                             .map(Button.class::cast).findFirst().orElseThrow().onPress(new KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
                 }
+                return;
+            }
+            if (phase == 4) {
+                if (client.screen instanceof net.minecraft.client.gui.screens.PauseScreen) { client.setScreen(null); }
+                if (AetherTooltipLifecycleTest.tick(client, REPORT)) { complete(client); }
                 return;
             }
             if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) { return; }
@@ -123,6 +129,10 @@ final class AetherIITooltipClientTest {
                     require(lines.stream().noneMatch(line -> translated(line, "item.aether_ii.")), "Absent presentation emitted Aether text");
                     complete(client); return;
                 }
+                if (AetherTooltipFaultTest.active() && scene == 4) {
+                    AetherTooltipFaultTest.verify(client, java.util.stream.IntStream.range(0, 33).mapToObj(i -> sample(client, i)).toList(), REPORT);
+                    client.getLanguageManager().setSelected("es_es"); reload = client.reloadResourcePacks(); phase = 5; return;
+                }
                 runScene(client);
                 if (++scene < 27) { configure(client); return; }
                 details(client); phase = 2;
@@ -156,6 +166,14 @@ final class AetherIITooltipClientTest {
                 reload.get();
                 details(client);
                 REPORT.append("Resource reload es_es: native fallback and repeated immutable production text/source graphics retained\n");
+                if (AetherTooltipTestControl.VARIANT.equals("live")) {
+                    AetherTooltipLifecycleTest.begin(java.util.stream.IntStream.range(0, 33).mapToObj(i -> sample(client, i).copy()).toList());
+                    backupConfirmed = false; phase = 4;
+                } else { complete(client); }
+            }
+            if (phase == 5 && reload.isDone()) {
+                reload.get();
+                AetherTooltipFaultTest.verify(client, java.util.stream.IntStream.range(0, 33).mapToObj(i -> sample(client, i)).toList(), REPORT);
                 complete(client);
             }
         } catch (Throwable failure) {
@@ -281,15 +299,35 @@ final class AetherIITooltipClientTest {
                 int count = Math.min(3, new AetherIICompatibilityTest.NativeApi().count(client.player, tag));
                 require(actual.lines().contains(Component.translatable(key, Component.literal(count + "/3")
                         .withStyle(count == 3 ? net.minecraft.ChatFormatting.WHITE : net.minecraft.ChatFormatting.GRAY))), "Live native count/style missing");
-                require(copied.lines().contains(Component.translatable(key, Component.literal("–/3").withStyle(net.minecraft.ChatFormatting.GRAY))),
-                        "Copied preview did not use native neutral argument");
+                require(copied.lines().contains(Component.translatable(key, Component.literal(count + "/3")
+                        .withStyle(count == 3 ? net.minecraft.ChatFormatting.WHITE : net.minecraft.ChatFormatting.GRAY))),
+                        "Copied preview lost the player's actual native equipment count");
+            }
+            verifySourceSets(client, worn, actual.lines());
+            verifySourceSets(client, worn.copy(), copied.lines());
+            if (!nativeRows.isEmpty()) {
+                int ordinary = index(actual.lines(), "item.modifiers.feet");
+                int firstSet = actual.lines().size();
+                int lastSet = -1;
+                for (var row : nativeRows) {
+                    int position = actual.lines().indexOf(row);
+                    firstSet = Math.min(firstSet, position); lastSet = Math.max(lastSet, position);
+                }
+                require(ordinary >= 0 && firstSet > ordinary + 1 && lastSet - firstSet + 1 == nativeRows.size(),
+                        "Active set attributes are not together after ordinary root attributes");
+                require(actual.lines().subList(ordinary + 1, firstSet).stream().allMatch(line -> translated(line, "attribute.modifier")
+                                || translated(line, "neoforge.modifier.") || line.equals(AetherTooltipTestControl.PEER)),
+                        "Non-attribute text separates ordinary attributes and active set attributes: " + actual.lines().subList(ordinary + 1, firstSet));
             }
             if (!nativeRows.isEmpty()) {
                 var oldDisplay = worn.get(DataComponents.TOOLTIP_DISPLAY);
                 try {
                     for (var hidden : List.of(component("armor_set"), DataComponents.ATTRIBUTE_MODIFIERS)) {
                         worn.set(DataComponents.TOOLTIP_DISPLAY, AetherTooltipTestControl.display(worn).withHidden(hidden, true));
-                        requireRows(capture(client, worn, TooltipFlag.NORMAL, false).lines(), nativeRows, false);
+                        var hiddenLines = capture(client, worn, TooltipFlag.NORMAL, false).lines();
+                        requireRows(hiddenLines, nativeRows, false);
+                        // Source descriptions do not inherit the root's hidden set/attribute flags.
+                        if (hidden == component("armor_set")) { verifySourceSets(client, worn, hiddenLines); }
                         if (oldDisplay == null) { worn.remove(DataComponents.TOOLTIP_DISPLAY); } else { worn.set(DataComponents.TOOLTIP_DISPLAY, oldDisplay); }
                     }
                 } finally {
@@ -312,8 +350,8 @@ final class AetherIITooltipClientTest {
                         "Sentry lost its standalone ability or gained a set counter");
             }
             if (scene == 21) {
-                require(actual.lines().stream().filter(line -> translated(line, "item.aether_ii.burrukai_plate_boots.nitrogen_internals.ability.tooltip.1")).count() == 1,
-                        "Duplicate sources duplicated the set block");
+                require(actual.lines().stream().filter(line -> translated(line, "item.aether_ii.burrukai_plate_boots.nitrogen_internals.ability.tooltip.1")).count() == 2,
+                        "Each duplicate source should retain its own ability, without duplicating root bonuses");
             }
         }
         if (scene == 22) { dualRoot = worn.copy(); dualActive = capture(client, worn, TooltipFlag.ADVANCED, false); }
@@ -323,6 +361,8 @@ final class AetherIITooltipClientTest {
             if (attributeReplacement()) {
                 require(idle.nativeAttributes() == 0, "Idle pair borrowed native source/root additions");
                 requireRows(idle.lines(), nativeRows, false);
+                // Focused fault variants verify their intentional text omissions in the next actual mixed scene.
+                if (!AetherTooltipFaultTest.active()) { verifySourceSets(client, sample(client, index), idle.lines()); }
             }
         }
         if (scene == 3 && attributeReplacement()) { scopeProbes(client, nativeRows); }
@@ -362,7 +402,7 @@ final class AetherIITooltipClientTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Component> nativeSetRows(Minecraft client, TooltipFlag flag) throws Exception {
+    static List<Component> nativeSetRows(Minecraft client, TooltipFlag flag) throws Exception {
         var type = Class.forName("com.aetherteam.aetherii.mixin.mixins.common.accessor.AttributeMapAccessor");
         var map = (java.util.Map<net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>,
                 net.minecraft.world.entity.ai.attributes.AttributeInstance>) type.getMethod("aether_ii$getAttributes").invoke(client.player.getAttributes());
@@ -380,6 +420,30 @@ final class AetherIITooltipClientTest {
     private static void requireRows(List<Component> lines, List<Component> expected, boolean present) {
         for (Component row : expected) {
             require(lines.stream().filter(row::equals).count() == (present ? 1 : 0), "Wrong actual native player row ownership/duplication: " + row);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void verifySourceSets(Minecraft client, ItemStack root, List<Component> lines) throws Exception {
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        int left = index(lines, "tooltip.mismatchedboots.mixed_boots.left");
+        int right = index(lines, "tooltip.mismatchedboots.mixed_boots.right");
+        int rootAttributes = index(lines, "item.modifiers.feet");
+        for (int side = 0; side < 2; side++) {
+            var source = side == 0 ? data.left().source() : data.right().source();
+            if (!AetherTooltipTestControl.FAMILIES.stream().anyMatch(family -> source.is(item(family + "_boots").getItem()))) { continue; }
+            var section = lines.subList((side == 0 ? left : right) + 1, side == 0 ? right : rootAttributes);
+            String prefix = source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.";
+            var set = (net.minecraft.tags.TagKey<net.minecraft.world.item.Item>) source.get(component("armor_set"));
+            if (!source.is(item("arkenium_boots").getItem())) {
+                require(section.stream().filter(line -> translated(line, prefix + "1")).count() == 1, "Ability missing from its own source");
+            }
+            if (!source.is(item("sentry_boots").getItem())) {
+                int count = Math.min(3, new AetherIICompatibilityTest.NativeApi().count(client.player, set));
+                require(section.contains(Component.translatable(prefix + "2", Component.literal(count + "/3")
+                        .withStyle(count == 3 ? net.minecraft.ChatFormatting.WHITE : net.minecraft.ChatFormatting.GRAY))), "Source count is not actual current native progress");
+            }
+            require(lines.stream().noneMatch(line -> line.equals(source.getItemName())), "Redundant root source-name heading remains");
         }
     }
 
@@ -412,9 +476,21 @@ final class AetherIITooltipClientTest {
                         require(compact.lines().stream().filter(line -> translated(line, "justdirethings.festored")).count() == 1, "JDT root FE duplicated/lost");
                     }
                 }
+                if (attributeReplacement() && ModContent.isMixedBoots(target)) { verifySourceSets(client, target, compact.lines()); }
             }
         }
         var root = sample(client, 24); var data = ModContent.getMixedBootsData(root).orElseThrow();
+        if (attributeReplacement()) {
+            var left = data.left().source();
+            left.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT.withHidden(component("armor_set"), true));
+            var hidden = root.copy(); hidden.set(ModContent.mixedBootsDataType().orElseThrow(),
+                    new MixedBootsData(new BootHalf(left), data.right()));
+            var lines = capture(client, hidden, TooltipFlag.NORMAL, false).lines();
+            int right = index(lines, "tooltip.mismatchedboots.mixed_boots.right");
+            require(lines.subList(0, right).stream().noneMatch(line -> translated(line, "item.aether_ii.neptune_boots.nitrogen_internals.ability.tooltip."))
+                    && lines.subList(right, lines.size()).stream().filter(line -> translated(line, "item.aether_ii.neptune_boots.nitrogen_internals.ability.tooltip.")).count() == 2,
+                    "Source armor-set visibility hid the healthy other source or leaked its own ability/count");
+        }
         for (boolean all : List.of(false, true)) {
             var left = data.left().source(); var right = data.right().source();
             for (var source : List.of(left, right)) {
@@ -498,7 +574,7 @@ final class AetherIITooltipClientTest {
     }
 
     private static void complete(Minecraft client) {
-        REPORT.append("captures=").append(captureCount).append(" absent=").append(ABSENT)
+        REPORT.append("structuredCaptures=").append(captureCount).append(" absent=").append(ABSENT)
                 .append(" variant=").append(AetherTooltipTestControl.VARIANT)
                 .append("; production text/source graphics, immutable root/history/player state\n");
         NetworkAcceptanceFiles.write(OUTPUT + "-captures.json", CAPTURES.toString());

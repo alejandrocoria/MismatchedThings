@@ -22,6 +22,10 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
         if (List.of("chains", "attributechanged", "tierchanged").contains(variant)) { result.add("AetherTooltipPeerMixin"); }
         if (variant.startsWith("charmfactory")) { result.add("AetherCharmFactoryFaultMixin"); }
         if (variant.equals("charmpopulatedfailure")) { result.add("AetherCharmSourceFaultMixin"); }
+        if (List.of("setbindingfailure", "tierbindingfailure", "setpopulatedfailure").contains(variant)) { result.add("AetherTextFaultMixin"); }
+        if (variant.equals("tierpopulatedfailure")) { result.add("AetherTierFaultMixin"); }
+        if (variant.equals("charmbindingfailure")) { result.add("AetherCharmBindingFaultMixin"); }
+        if (variant.equals("live")) { result.add("AetherTooltipMouseMixin"); }
         return result;
     }
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
