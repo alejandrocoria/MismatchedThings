@@ -16,7 +16,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (!System.getProperty("mismatchedboots.runtimetest.aetherAlkahest", "").isEmpty()) {
-            AetherAlkahestSpike.register(); return;
+            AetherAlkahestTest.register(); return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherTooltipSeed")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> event.getServer().halt(false));

@@ -238,36 +238,45 @@ This smoke
 does not certify every native effect body, physical input, multiplayer server
 topologies, native Forge screen UX or deferred presentation/transactions.
 
-### Aether II Alkahest tags — production block A
+### Aether II Alkahest — production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahestTags --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahestAbsent --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahest --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahestGuards --console=plain
 ```
 
-Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. Tags uses the
-packaged production mod and the hash-pinned Aether artifact in a disposable
-dedicated server. It enables **no research mixins**. Native dropped lifespan/
-expiry, both-hand wear, real armor/health damage and complete source histories
-are compared on paid native/Workbench inputs. Two completed asynchronous reloads
-replace the resistance tag with diamond boots, then restore native membership;
-the same existing roots must gain/lose item protection without gaining the
-tier-only worn-armor exemption. Absence uses an ordinary paid pair with no Aether.
+Repeat the normal aggregate with `'-Pneoforge_version=26.1.2.99'`, then restore
+.114; focused competing/failure variants normally run on habitual .114. The normal
+aggregate runs Live/Absent sequentially with the packaged production mod and a
+hash-pinned Aether artifact only in Live. It enables **no research or peer mixins**.
+Native dropped lifespan/expiry, both-hand wear, actual armor/health damage and
+full histories use paid Forge/Workbench inputs. Either reinforced source protects
+both outputs without copying tiers. Tag-only Arkenium protects items, not armor
+wear. Two completed asynchronous tag reloads exercise membership changes on the
+same existing roots; absence uses a normal paid pair without Aether.
 
-The former `verifyAetherIIAlkahestBaseline` task is retired: production now
-projects the resistance tag, so the untouched pre-A baseline is historical.
-`verifyAetherIIAlkahestCandidate` still enables **only** the two research tier
-mixins for pending block B; the tag candidate was removed. The temporary
-`verifyAetherIIAlkahestSpike` aggregate runs Tags/Candidate/Absent sequentially,
-and is not full production reinforcement or manual acceptance.
+Guards runs Chains, FluidReceiver, FluidSupplier, ArmorReceiver, ArmorSupplier,
+FluidBinding and ArmorBinding; append those suffixes to `verifyAetherIIAlkahest`
+for an individual verifier. Chains adds actual local receiver/supplier/result
+wrappers. Opaque-operand variants preserve native values but must independently
+refuse the unprovable domain. Binding variants throw once inside the selected
+production binding read. Each small profile set checks native positives, repeated
+inverse queries, tag-only outputs, the other domain and full histories. The gate
+requires one warning only for a selected refusal, none in Live/Chains/Absent.
 
-Reports: `NeoForge/build/reports/aether-ii-alkahest-spike/<version>/<mode>/`,
+Reports: `NeoForge/build/reports/aether-ii-alkahest/<version>/<mode>/`,
 relative to this directory. The known two native dedicated Toast ERRORs remain
 visible and narrowly allowed; unexpected errors fail, absence is quiet. Direct
 native contact calls are not automated movement/collision proof. Aether's measured
 previous-damage-source timing defect is preserved, not fixed. Scope, execution
-records and the pending B/C checks belong to
+records and pending C/manual acceptance belong to
 [the Alkahest plan](../local-docs/AETHER-II-ALKAHEST-IMPLEMENTATION.md).
+
+The executable Baseline/Tags/Candidate/Spike tasks and all protection prototypes
+are retired without aliases. Historical results remain in the exploration and
+`aether-ii-alkahest-spike` reports; do not expect pre-B owner-only tier behavior
+or layer old candidate hooks over production. The driver/script are now
+`AetherAlkahestTest` / `aether-ii-alkahest-tests.gradle`.
 
 ### Silent Gear native stat measurement
 

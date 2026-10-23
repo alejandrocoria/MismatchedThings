@@ -1,14 +1,15 @@
-// Tags uses production only; Candidate additionally enables the disposable tier prototype.
+// Production only: optional peers/failures never implement another protection path.
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def artifact = rootProject.file('NeoForge/runs/client/mods/aether_ii-26.1.2-alpha.4.1-neoforge.jar')
 
-['Tags', 'Candidate', 'Absent'].each { name ->
+def variants = ['Live', 'Chains', 'FluidReceiver', 'FluidSupplier', 'ArmorReceiver', 'ArmorSupplier', 'FluidBinding', 'ArmorBinding', 'Absent']
+variants.each { name ->
     def mode = name.toLowerCase(Locale.ROOT)
-    def reports = layout.buildDirectory.dir("reports/aether-ii-alkahest-spike/${neoforge_version}/${mode}")
-    def directory = layout.buildDirectory.dir("run/aetherIIAlkahestSpike/${neoforge_version}/${mode}")
+    def reports = layout.buildDirectory.dir("reports/aether-ii-alkahest/${neoforge_version}/${mode}")
+    def directory = layout.buildDirectory.dir("run/aetherIIAlkahest/${neoforge_version}/${mode}")
     neoForge.runs.create("aetherIIAlkahest${name}") {
         server(); disableIdeRun(); programArgument('--nogui')
         gameDirectory = directory.get().asFile
@@ -45,7 +46,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     tasks.named("runAetherIIAlkahest${name}") { dependsOn prepare }
     tasks.register("verifyAetherIIAlkahest${name}") {
         group = 'verification'
-        description = "Alkahest production tags / research tier protection (${mode})"
+        description = "Production Alkahest protection (${mode})"
         doLast {
             def log = new File(reports.get().asFile, 'process.log')
             runBounded(":RuntimeTests:NeoForge:runAetherIIAlkahest${name}", log, 240)
@@ -55,8 +56,12 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             def report = new File(reports.get().asFile, 'aether-alkahest-report.txt')
             def nativeErrors = log.readLines().findAll { it.contains('/ERROR]') && it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
             def errors = log.readLines().findAll { it.contains('/ERROR]') && !(it in nativeErrors) }
+            def refusals = log.readLines().findAll { it.contains('Aether II mixed Alkahest ') && it.contains('protection disabled:') }
+            def domain = mode.startsWith('fluid') ? 'fluid' : mode.startsWith('armor') ? 'armor' : null
             if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile() || !errors.isEmpty()
                     || nativeErrors.size() != (mode == 'absent' ? 0 : 2)
+                    || refusals.size() != (domain == null ? 0 : 1)
+                    || domain != null && !refusals.first().contains("Alkahest ${domain} protection disabled:")
                     || mode == 'absent' && log.text.contains('Error loading class: com/aetherteam/aetherii')) {
                 throw new GradleException("Incomplete/unexpected Alkahest diagnostics: ${errors}; native=${nativeErrors.size()}; see ${log}")
             }
@@ -64,10 +69,17 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         }
     }
 }
-tasks.register('verifyAetherIIAlkahestSpike') {
+tasks.register('verifyAetherIIAlkahest') {
     group = 'verification'
-    description = 'Sequential production tag gate, research tier candidate and quiet optional absence'
-    dependsOn('verifyAetherIIAlkahestTags', 'verifyAetherIIAlkahestCandidate', 'verifyAetherIIAlkahestAbsent')
+    description = 'Production native Alkahest, live tag reload and quiet optional absence'
+    dependsOn('verifyAetherIIAlkahestLive', 'verifyAetherIIAlkahestAbsent')
 }
-tasks.named('verifyAetherIIAlkahestCandidate') { mustRunAfter('verifyAetherIIAlkahestTags') }
-tasks.named('verifyAetherIIAlkahestAbsent') { mustRunAfter('verifyAetherIIAlkahestCandidate') }
+tasks.register('verifyAetherIIAlkahestGuards') {
+    group = 'verification'
+    description = 'Production Alkahest compatible operand/result peers and independent structural/binding refusals'
+    dependsOn variants.findAll { !(it in ['Live', 'Absent']) }.collect { "verifyAetherIIAlkahest${it}" }
+}
+tasks.named('verifyAetherIIAlkahestAbsent') { mustRunAfter('verifyAetherIIAlkahestLive') }
+variants.eachWithIndex { name, index ->
+    if (index > 0) { tasks.named("verifyAetherIIAlkahest${name}") { mustRunAfter("verifyAetherIIAlkahest${variants[index - 1]}") } }
+}

@@ -20,7 +20,7 @@ license="MIT"
     config="mismatchedboots-aether-tooltip-tests.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-aether-alkahest-spike.mixins.json"
+    config="mismatchedboots-aether-alkahest-tests.mixins.json"
 
 [[mixins]]
     config="mismatchedboots-silent-gear-trait-spike.mixins.json"

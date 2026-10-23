@@ -45,10 +45,9 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherII
 import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherIICompatibilityTest.snapshot;
 
 /** Native contact bodies on real server ItemEntities/players; no replacement damage, event or expiry engine. */
-public final class AetherAlkahestSpike {
+public final class AetherAlkahestTest {
     private static final String MODE = System.getProperty("mismatchedboots.runtimetest.aetherAlkahest", "");
-    private static final boolean CANDIDATE = MODE.equals("candidate");
-    private static final StringBuilder REPORT = new StringBuilder("Alkahest production tags / research tiers; mode=" + MODE + "\n");
+    private static final StringBuilder REPORT = new StringBuilder("Alkahest production; mode=" + MODE + "\n");
     private static final BlockPos CONTACT = new BlockPos(0, 80, 0);
     private static final TagKey<Item> LOOT = TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:unbreakable_loot"));
     private static final TagKey<Item> RESISTANCE = TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:alkahest_resistant_item"));
@@ -60,7 +59,7 @@ public final class AetherAlkahestSpike {
     private static FakePlayer observed;
     private static final List<String> armorEvents = new ArrayList<>();
 
-    private AetherAlkahestSpike() {}
+    private AetherAlkahestTest() {}
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ArmorHurtEvent event) -> {
@@ -87,19 +86,8 @@ public final class AetherAlkahestSpike {
                 fluidState = BuiltInRegistries.BLOCK.getValue(Identifier.parse("aether_ii:alkahest")).defaultBlockState();
                 fluid = fluidState.getFluidState().getType();
                 inside = fluid.getClass().getMethod("entityInside", BlockState.class, ServerLevel.class, BlockPos.class, Entity.class);
-                matrix(server);
-                if (CANDIDATE) {
-                    require(AetherAlkahestSpikeControl.fluidExtensions > 0 && AetherAlkahestSpikeControl.armorExtensions > 0,
-                            "Tier candidate did not exercise both actual protection seams");
-                } else {
-                    require(AetherAlkahestSpikeControl.fluidReads == 0 && AetherAlkahestSpikeControl.armorReads == 0,
-                            "Production tag gate accidentally used research tier hooks");
-                }
-                REPORT.append("SEAMS fluid reads=").append(AetherAlkahestSpikeControl.fluidReads)
-                        .append(" extensions=").append(AetherAlkahestSpikeControl.fluidExtensions)
-                        .append("; armor reads=").append(AetherAlkahestSpikeControl.armorReads)
-                        .append(" extensions=").append(AetherAlkahestSpikeControl.armorExtensions).append('\n');
-                if (MODE.equals("tags")) { reload = new TagReload(server); return; }
+                if (MODE.equals("live")) { matrix(server); reload = new TagReload(server); return; }
+                focused(server);
             }
             NetworkAcceptanceFiles.write("aether-alkahest-success.txt", "neoforge\n");
             finished = true;
@@ -135,10 +123,10 @@ public final class AetherAlkahestSpike {
             var roots = paidPair(owner, original, new ItemStack(Items.DIAMOND_BOOTS));
             for (int index = 0; index < roots.size(); index++) {
                 var root = roots.get(index);
-                // Keep the actual owner tier different: the candidate must protect, not fabricate upgrade metadata.
+                // Boolean protection must not fabricate the inverse owner's upgrade metadata.
                 require(root.has(component("reinforcement_tier")) == (profile.tier() && index == 0), "Owner tier policy changed");
                 verify(server, profile.name() + "/mixed-" + index, root,
-                        profile.tag(), profile.tier() && (CANDIDATE || index == 0));
+                        profile.tag(), profile.tier());
             }
             require(before.equals(snapshot(server, original)), "Measurements changed original input/defaults");
         }
@@ -170,9 +158,13 @@ public final class AetherAlkahestSpike {
     }
 
     private static void verify(MinecraftServer server, String label, ItemStack input, boolean tag, boolean tier) throws Exception {
-        boolean itemProtection = tag || tier;
+        verify(server, label, input, tag, tier, tier);
+    }
+
+    private static void verify(MinecraftServer server, String label, ItemStack input, boolean tag, boolean fluidTier, boolean armorTier) throws Exception {
+        boolean itemProtection = tag || fluidTier;
         require(input.is(RESISTANCE) == tag, "Wrong production resistance tag: " + label);
-        if (ModContent.isMixedBoots(input)) { require(!input.is(LOOT), "Candidate inherited broken-loot lifecycle"); }
+        if (ModContent.isMixedBoots(input)) { require(!input.is(LOOT), "Mixed root inherited broken-loot lifecycle"); }
         dropped(server, label, input, itemProtection);
         for (var hand : List.of(EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
             var subject = player(server.overworld()); var stack = input.copy(); subject.setItemSlot(hand, stack);
@@ -187,7 +179,7 @@ public final class AetherAlkahestSpike {
         subject.tickCount = 20; contact(server, subject); int first = worn.getDamageValue();
         subject.invulnerableTime = 0; subject.tickCount = 40; contact(server, subject); int second = worn.getDamageValue() - first;
         // Measure native timing honestly: the event reads LAST damage, which may not be this contact's source yet.
-        require(first == 1 && second == (tier ? 0 : 1), "Unexpected native armor timing: " + label + " first=" + first + " next=" + second + " events=" + armorEvents);
+        require(first == 1 && second == (armorTier ? 0 : 1), "Unexpected native armor timing: " + label + " first=" + first + " next=" + second + " events=" + armorEvents);
         require(armorEvents.size() == 2 && subject.getHealth() < subject.getMaxHealth(), "Worn path did not traverse actual damage/events");
         var attacker = EntityType.ZOMBIE.create(server.overworld(), EntitySpawnReason.COMMAND);
         require(attacker != null, "Missing physical damage control");
@@ -195,9 +187,9 @@ public final class AetherAlkahestSpike {
         try { subject.hurtServer(server.overworld(), subject.damageSources().mobAttack(attacker), 4); }
         finally { attacker.discard(); }
         int afterPhysical = worn.getDamageValue() - first - second;
-        require(afterPhysical == (tier ? 0 : 1), "Native last-source carryover changed: " + label + " wear=" + afterPhysical + " events=" + armorEvents);
+        require(afterPhysical == (armorTier ? 0 : 1), "Native last-source carryover changed: " + label + " wear=" + afterPhysical + " events=" + armorEvents);
         unchangedExceptWear(server, input, worn); observed = null;
-        REPORT.append("CASE ").append(label).append(" tag=").append(tag).append(" tier-protection=").append(tier)
+        REPORT.append("CASE ").append(label).append(" tag=").append(tag).append(" fluid-tier=").append(fluidTier).append(" armor-tier=").append(armorTier)
                 .append(" drop/hand-protected=").append(itemProtection).append(" worn first/next/physical=")
                 .append(first).append('/').append(second).append('/').append(afterPhysical).append("; ").append(armorEvents).append('\n');
     }
@@ -236,6 +228,28 @@ public final class AetherAlkahestSpike {
     private static void unchangedExceptWear(MinecraftServer server, ItemStack before, ItemStack after) {
         var normalized = after.copy(); normalized.setDamageValue(before.getDamageValue());
         require(snapshot(server, before).equals(snapshot(server, normalized)), "Native wear changed other root/history data");
+    }
+
+    private static void focused(MinecraftServer server) throws Exception {
+        var owner = player(server.overworld());
+        var nativeBoots = reinforced(owner, new AetherIICompatibilityTest.NativeApi(), "beast_pelt", 1);
+        var roots = paidPair(owner, nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
+        verify(server, "native-positive", nativeBoots, false, true);
+        verify(server, "root-native-positive", roots.getFirst(), false, true);
+        boolean fluid = !MODE.startsWith("fluid"), armor = !MODE.startsWith("armor");
+        for (int repeat = 0; repeat < 3; repeat++) {
+            require(!roots.get(1).has(component("reinforcement_tier")), "Inverse unexpectedly has root tier");
+            verify(server, "inverse/" + repeat, roots.get(1), false, fluid, armor);
+        }
+        var tagged = paidPair(owner, item("arkenium_boots"), new ItemStack(Items.DIAMOND_BOOTS));
+        for (int index = 0; index < tagged.size(); index++) { verify(server, "tag-only/" + index, tagged.get(index), true, false); }
+        verify(server, "vanilla-negative", new ItemStack(Items.DIAMOND_BOOTS), false, false);
+        if (MODE.equals("chains")) {
+            require(AetherAlkahestTestControl.observations > 0, "Real peer chains were not exercised");
+        }
+        if (MODE.endsWith("binding")) { require(AetherAlkahestTestControl.bindingFailures == 1, "Optional failure retried instead of latching once"); }
+        REPORT.append("Independent production domains/native positives/tag isolation/history: passed; peer observations=")
+                .append(AetherAlkahestTestControl.observations).append("; binding failures=").append(AetherAlkahestTestControl.bindingFailures).append('\n');
     }
 
     /** Real asynchronous tag replacement/restoration on the same already-paid roots. */
@@ -293,7 +307,7 @@ public final class AetherAlkahestSpike {
     }
 
     private static FakePlayer player(ServerLevel level) {
-        var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "AlkahestSpike"));
+        var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "AlkahestTest"));
         player.setGameMode(GameType.SURVIVAL); player.setInvulnerable(false); player.setNoGravity(true); player.setPos(0, 80, 0);
         // FakePlayers otherwise retain the native login-load grace period, independently of setInvulnerable(false).
         player.connection.markClientLoaded();
