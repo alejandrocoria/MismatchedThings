@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherTo
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireEnergyBarDecorator;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
+import games.alejandrocoria.mismatchedboots.client.tooltip.NeoForgeTooltipSeparators;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
@@ -28,6 +29,7 @@ public final class MismatchedBootsClientNeoForge {
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {
+        NeoForge.EVENT_BUS.addListener(NeoForgeTooltipSeparators::gather);
         if (ModList.get().isLoaded("aether_ii")) {
             NeoForge.EVENT_BUS.addListener(AetherSourceCharms::gather);
             NeoForge.EVENT_BUS.addListener(AetherTooltipClient::attributes);
@@ -63,6 +65,7 @@ public final class MismatchedBootsClientNeoForge {
     }
 
     public static void registerTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
+        NeoForgeTooltipSeparators.registerFactory(event);
         if (ModList.get().isLoaded("aether_ii")) { AetherSourceCharms.registerFactory(event); }
     }
 

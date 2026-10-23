@@ -1,16 +1,17 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.fabric;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceServerTest;
-import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorMarker;
+import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorObservations;
+import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorServerProbe;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 public final class FabricNetworkAcceptanceServer implements ModInitializer {
     @Override
     public void onInitialize() {
-        if (SeparatorMarker.enabled()) {
+        if (SeparatorObservations.enabled()) {
             if (Boolean.getBoolean("mismatchedboots.test.separatorSeed")) {
-                ServerTickEvents.END_SERVER_TICK.register(server -> server.halt(false));
+                ServerTickEvents.END_SERVER_TICK.register(SeparatorServerProbe::run);
             }
             return;
         }

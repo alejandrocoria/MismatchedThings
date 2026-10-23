@@ -1,5 +1,6 @@
-package games.alejandrocoria.mismatchedboots.runtimetest.separator;
+package games.alejandrocoria.mismatchedboots.tooltip;
 
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.Style;
@@ -9,15 +10,14 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 
 import java.util.List;
 
-/** Empty text fallback: losing marker identity loses decoration, not tooltip content. */
-public final class SeparatorMarker implements Component, TooltipComponent {
-    private static final Component EMPTY = Component.empty();
-    public static boolean inserting = true;
+/** Transient section boundary with an ordinary blank-line fallback; safe for server tooltip collection. */
+public final class TooltipSeparator implements Component, TooltipComponent {
+    public static final TooltipSeparator INSTANCE = new TooltipSeparator();
 
-    public static boolean enabled() { return Boolean.getBoolean("mismatchedboots.test.separatorSpike"); }
+    private TooltipSeparator() {}
 
     @Override public Style getStyle() { return Style.EMPTY; }
-    @Override public ComponentContents getContents() { return EMPTY.getContents(); }
+    @Override public ComponentContents getContents() { return CommonComponents.EMPTY.getContents(); }
     @Override public List<Component> getSiblings() { return List.of(); }
     @Override public FormattedCharSequence getVisualOrderText() { return Sequence.INSTANCE; }
 

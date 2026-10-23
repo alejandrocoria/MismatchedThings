@@ -1,4 +1,4 @@
-// Test-only shared presentation experiment. Production source sets and archives are unchanged.
+// Isolated fixture observing production separators; legacy spike task names are consolidated in block B.
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def fixtureSources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -99,7 +99,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 }
 tasks.register('verifyTooltipSeparatorSpike') {
     group = 'verification'
-    description = 'Runs a disposable solid-line tooltip spike with and without Legendary Tooltips'
+    description = 'Observes production tooltip separators with and without Legendary Tooltips'
     doLast {
         ['Seed', 'Plain', 'Legendary'].each { phase ->
             def log = reports.get().file("${phase.toLowerCase(Locale.ROOT)}.log").asFile
@@ -107,6 +107,9 @@ tasks.register('verifyTooltipSeparatorSpike') {
             def markerDirectory = reports.get().dir(phase.toLowerCase(Locale.ROOT)).asFile
             def failure = new File(markerDirectory, 'separator-failure.txt')
             if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (phase == 'Seed' && !new File(markerDirectory, 'separator-server-success.txt').isFile()) {
+                throw new GradleException("Incomplete dedicated-server separator collection: ${log}")
+            }
             if (phase != 'Seed' && !new File(markerDirectory, 'separator-success.txt').isFile()) {
                 throw new GradleException("Incomplete separator spike: ${log}")
             }

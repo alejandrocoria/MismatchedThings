@@ -65,9 +65,9 @@ public final class MixedBootsTooltipFormatter {
         Objects.requireNonNull(sourceTooltips, "sourceTooltips");
 
         appendSourceSection(LEFT_KEY, data.left(), context, flag, tooltip, sourceTooltips);
-        tooltip.accept(CommonComponents.EMPTY);
+        tooltip.accept(TooltipSeparator.INSTANCE);
         appendSourceSection(RIGHT_KEY, data.right(), context, flag, tooltip, sourceTooltips);
-        tooltip.accept(CommonComponents.EMPTY);
+        tooltip.accept(TooltipSeparator.INSTANCE);
     }
 
     private static void appendSourceSection(

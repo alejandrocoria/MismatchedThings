@@ -8,8 +8,8 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 
 - `Common/src/main/java`: shared loader-server/network acceptance scenarios and helpers.
   This is a shared source directory, not a separate Gradle project.
-- `TooltipSeparator/src/main`: shared opt-in solid-separator presentation spike;
-  compiled only into runtime fixtures, never production.
+- `TooltipSeparator/src/main`: shared production-separator scenarios and read-only
+  probes, with legacy spike names until consolidation; never packaged in production.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
 - `Fabric/src/test`: fast loader-local reflection/bytecode-boundary JUnit regressions
   against the packaged Fabric classes, with fake optional APIs and no game launch.
@@ -1191,25 +1191,29 @@ checks, all 12 corrupted-artifact negatives and production archive isolation pas
 .\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipSeparatorSpike :RuntimeTests:Fabric:verifyTooltipSeparatorSpike --console=plain
 ```
 
-The [bounded experiment](../local-docs/TOOLTIP-SEPARATORS-EXPLORATION.md) replaces
-the formatter's two existing section gaps only in test clients. Its shared solid
-row uses the renderer's final width; NeoForge converts markers through native
-gather/factory events, while Fabric preserves them through text conversion and
-wrapping. No production rendering/dependency changes. Each task generates an
-isolated seed world and runs Plain and Legendary clients, hidden and muted.
+These legacy-named commands now observe
+[production A](../local-docs/TOOLTIP-SEPARATORS-IMPLEMENTATION.md#71-block-a--2026-10-23),
+not the [earlier experiment](../local-docs/TOOLTIP-SEPARATORS-EXPLORATION.md).
+The formatter, shared solid row and loader conversions belong to production;
+the fixture contains only scenarios and a read-only `extractImage` observer.
+Test marker insertion, drawing, gather/factory and conversion replacements were
+removed. Each task generates an isolated seed world and runs Plain and Legendary
+clients, hidden and muted. The dedicated seed server must also collect real
+production mixed tooltips and emit its own success marker.
 The three optional presentation JARs are hash-pinned from the corresponding
 loader's indev mod directory, read-only; no owner config/world is copied or edited.
 
-On 2026-10-23, four scenes per client checked primary/inverse/advanced/ordinary
+On 2026-10-23, production A passed four scenes per client: primary/inverse/advanced/ordinary
 controls, content/resizing widths and unchanged text/root/history. Real Iceberg
 wrapping retains both Fabric markers. Plain Fabric's overlong unwrapped-lore
 overflow is retained and documented, not turned into a new layout policy.
 Reports, strict ERROR gates and one relevant screenshot per client are under
 `<loader>/build/reports/tooltip-separator-spike/{plain,legendary}/`, with wrapper
 logs beside those directories. Runs/worlds stay under
-`<loader>/build/run/tooltipSeparatorSpike/`. This is technical spike evidence,
-not production or owner manual acceptance; the exploration owns measured widths
-and the limited baseline/version scope.
+`<loader>/build/run/tooltipSeparatorSpike/`. A's record owns production results
+(Fabric Loader 0.19.5 / API 0.155.0+26.1.2 and NeoForge .114), 23 Common tooltip
+tests, archive isolation and the two server probes. B will consolidate names and
+supported-floor coverage; owner visual acceptance remains pending.
 
 ## Item geometry coverage
 

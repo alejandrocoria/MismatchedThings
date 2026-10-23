@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecy
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,7 +25,7 @@ import org.lwjgl.glfw.GLFW;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Isolated presentation experiment: recipe outputs, not evidence of paid gameplay. */
+/** Production presentation checks with a read-only rendering witness, not paid gameplay coverage. */
 public final class SeparatorClientSpike {
     private static final StringBuilder REPORT = new StringBuilder();
     private static Scene scene;
@@ -80,24 +81,27 @@ public final class SeparatorClientSpike {
                 return;
             }
             require(ItemStack.matches(scene.before, scene.root), "Tooltip changed root/history");
-            if (phase == 2) { require(SeparatorLine.WIDTHS.isEmpty(), "Native control acquired a separator"); }
+            require(scene.text.equals(scene.root.getTooltipLines(Item.TooltipContext.of(client.level), client.player,
+                    client.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL)
+                    .stream().map(Component::getString).toList()), "Rendering changed tooltip text/order");
+            if (phase == 2) { require(SeparatorObservations.WIDTHS.isEmpty(), "Native control acquired a separator"); }
             else {
-                require(SeparatorLine.WIDTHS.size() >= 2, "Graphical separator lost during conversion/wrapping");
-                require(SeparatorLine.WIDTHS.size() % 2 == 0, "One of the two separator rows was lost");
-                require(SeparatorLine.WIDTHS.stream().distinct().count() == 1, "Rows received different tooltip widths");
-                int width = SeparatorLine.WIDTHS.getFirst();
+                require(SeparatorObservations.WIDTHS.size() >= 2, "Graphical separator lost during conversion/wrapping");
+                require(SeparatorObservations.WIDTHS.size() % 2 == 0, "One of the two separator rows was lost");
+                require(SeparatorObservations.WIDTHS.stream().distinct().count() == 1, "Rows received different tooltip widths");
+                int width = SeparatorObservations.WIDTHS.getFirst();
+                require(width > 0, "No production tooltip width");
                 if (phase == 0) { compactWidth = width; }
                 if (phase == 1) { wideWidth = width; require(width > compactWidth, "Separator width did not adapt to content"); }
                 if (phase == 3 && !plainFabric) { require(width < wideWidth, "Separator width did not adapt after wrapping/resizing"); }
             }
             REPORT.append("phase=").append(phase).append(" width=")
-                    .append(SeparatorLine.WIDTHS.stream().findFirst().orElse(0))
-                    .append(" rowsDrawn=").append(SeparatorLine.WIDTHS.size())
-                    .append(" preservedWraps=").append(SeparatorLine.preservedSplits)
+                    .append(SeparatorObservations.WIDTHS.stream().findFirst().orElse(0))
+                    .append(" productionRowsObserved=").append(SeparatorObservations.WIDTHS.size())
                     .append(" gui=").append(client.getWindow().getGuiScaledWidth()).append('x')
                     .append(client.getWindow().getGuiScaledHeight()).append('\n');
             if (++phase < roots.size()) { configure(client); return; }
-            REPORT.append("normal/inverse/advanced/native-control; renderer-owned width; text unchanged; root/history immutable; color=FF707070; thickness=1\n");
+            REPORT.append("PRODUCTION normal/inverse/advanced/native-control; read-only witness; renderer-owned width; text unchanged; root/history immutable\n");
             if (plainFabric) { REPORT.append("Stock Fabric retains its over-wide unwrapped lore; compact screenshot only, no native overflow fix\n"); }
             NetworkAcceptanceFiles.write("separator-report.txt", REPORT.toString());
             NetworkAcceptanceFiles.write("separator-success.txt", "passed\n");
@@ -111,20 +115,12 @@ public final class SeparatorClientSpike {
     private static void configure(Minecraft client) {
         client.options.advancedItemTooltips = phase == 1 || phase == 3;
         var root = roots.get(phase);
-        // Compare the real formatter's marker path with its untouched text output.
-        SeparatorMarker.inserting = false;
-        List<Component> baseline;
-        try { baseline = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player,
-                client.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL); }
-        finally { SeparatorMarker.inserting = true; }
         var marked = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player,
                 client.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
-        require(baseline.stream().map(Component::getString).toList().equals(marked.stream().map(Component::getString).toList()),
-                "Marker changed tooltip text/order");
-        require(marked.stream().filter(SeparatorMarker.class::isInstance).count() == (phase == 2 ? 0 : 2), "Wrong source boundaries");
-        SeparatorLine.WIDTHS.clear(); SeparatorLine.preservedSplits = 0;
+        require(marked.stream().filter(TooltipSeparator.class::isInstance).count() == (phase == 2 ? 0 : 2), "Wrong production source boundaries");
+        SeparatorObservations.WIDTHS.clear();
         if (phase == 3) { GLFW.glfwSetWindowSize(client.getWindow().handle(), 1280, 720); }
-        scene = new Scene(root); client.setScreen(scene);
+        scene = new Scene(root, marked.stream().map(Component::getString).toList()); client.setScreen(scene);
     }
 
     private static void require(boolean condition, String message) {
@@ -133,13 +129,14 @@ public final class SeparatorClientSpike {
 
     private static final class Scene extends Screen {
         private final ItemStack root, before;
+        private final List<String> text;
         private int frames;
-        private Scene(ItemStack root) { super(Component.literal("Separator spike")); this.root = root; before = root.copy(); }
+        private Scene(ItemStack root, List<String> text) { super(Component.literal("Production separators")); this.root = root; before = root.copy(); this.text = text; }
         @Override public boolean isPauseScreen() { return false; }
         @Override public void extractBackground(GuiGraphicsExtractor g, int x, int y, float delta) { g.fill(0, 0, width, height, 0xFF202020); }
         @Override public void extractRenderState(GuiGraphicsExtractor g, int x, int y, float delta) {
             frames++;
-            g.text(font, "Test-only solid separator / native tooltip pipeline", 14, 10, 0xFFFFFFFF, false);
+            g.text(font, "Production solid separators / native tooltip pipeline", 14, 10, 0xFFFFFFFF, false);
             g.setTooltipForNextFrame(font, root, 18, 45);
         }
     }

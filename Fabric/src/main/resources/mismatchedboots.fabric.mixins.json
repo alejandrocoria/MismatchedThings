@@ -10,7 +10,9 @@
   "client": [
     "ClientRecipeDisconnectMixin",
     "ClientRecipeReloadMixin",
-    "LayerRenderStateExtensionMixin"
+    "LayerRenderStateExtensionMixin",
+    "TooltipSeparatorFactoryMixin",
+    "TooltipSeparatorWrapMixin"
   ],
   "injectors": {
     "defaultRequire": 1

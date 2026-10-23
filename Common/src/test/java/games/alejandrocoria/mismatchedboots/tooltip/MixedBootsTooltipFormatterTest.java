@@ -69,9 +69,11 @@ class MixedBootsTooltipFormatterTest {
 
         assertEquals(4, lines.size());
         assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
-        assertEquals(CommonComponents.EMPTY, lines.get(1));
+        assertInstanceOf(TooltipSeparator.class, lines.get(1));
+        assertEquals("", lines.get(1).getString());
+        assertEquals("", lines.get(1).copy().getString());
         assertSide(lines.get(2), RIGHT_KEY, right.getHoverName());
-        assertEquals(CommonComponents.EMPTY, lines.get(3));
+        assertInstanceOf(TooltipSeparator.class, lines.get(3));
     }
 
     @Test
@@ -82,14 +84,30 @@ class MixedBootsTooltipFormatterTest {
         right.set(DataComponents.TRIM, trim("Right Pattern", "Right Material"));
 
         List<Component> lines = format(left, right);
-        int firstSeparator = lines.indexOf(CommonComponents.EMPTY);
-        int secondSeparator = lines.lastIndexOf(CommonComponents.EMPTY);
+        int firstSeparator = lines.indexOf(TooltipSeparator.INSTANCE);
+        int secondSeparator = lines.lastIndexOf(TooltipSeparator.INSTANCE);
 
         assertEquals(componentDetails(left, DataComponents.TRIM), lines.subList(1, firstSeparator));
         assertEquals(componentDetails(right, DataComponents.TRIM),
                 lines.subList(firstSeparator + 2, secondSeparator));
         assertEquals(2, countTranslation(lines, TRIM_TITLE));
         assertTrue(indexContaining(lines, "Left Pattern") < indexContaining(lines, "Right Pattern"));
+    }
+
+    @Test
+    void ordinarySourceBlankLinesAreNotStructuralSeparators() {
+        ItemStack left = boots(Items.LEATHER_BOOTS, 1.0);
+        left.set(DataComponents.LORE, new ItemLore(List.of(
+                Component.literal("Before blank"), CommonComponents.EMPTY, Component.literal("After blank"))));
+        List<Component> lines = format(left, boots(Items.IRON_BOOTS, 2.0));
+
+        int before = indexContaining(lines, "Before blank");
+        int after = indexContaining(lines, "After blank");
+        assertEquals(before + 2, after);
+        assertEquals("", lines.get(before + 1).getString());
+        assertFalse(lines.get(before + 1) instanceof TooltipSeparator);
+        assertEquals(2, lines.stream().filter(TooltipSeparator.class::isInstance).count());
+        assertTrue(after < lines.indexOf(TooltipSeparator.INSTANCE));
     }
 
     @Test
@@ -152,7 +170,7 @@ class MixedBootsTooltipFormatterTest {
         List<Component> lines = format(left, boots(Items.GOLDEN_BOOTS, 1.0));
 
         assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
-        assertEquals(CommonComponents.EMPTY, lines.get(1));
+        assertInstanceOf(TooltipSeparator.class, lines.get(1));
         assertFalse(hasTranslation(lines, TRIM_TITLE));
     }
 
@@ -200,10 +218,10 @@ class MixedBootsTooltipFormatterTest {
             assertEquals(6, lines.size());
             assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
             assertEquals(Component.literal("Left block"), lines.get(1));
-            assertEquals(CommonComponents.EMPTY, lines.get(2));
+            assertInstanceOf(TooltipSeparator.class, lines.get(2));
             assertSide(lines.get(3), RIGHT_KEY, right.getHoverName());
             assertEquals(Component.literal("Right block"), lines.get(4));
-            assertEquals(CommonComponents.EMPTY, lines.get(5));
+            assertInstanceOf(TooltipSeparator.class, lines.get(5));
         }
     }
 
