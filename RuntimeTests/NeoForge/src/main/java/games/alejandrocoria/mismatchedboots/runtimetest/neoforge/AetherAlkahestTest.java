@@ -184,14 +184,26 @@ public final class AetherAlkahestTest {
         var attacker = EntityType.ZOMBIE.create(server.overworld(), EntitySpawnReason.COMMAND);
         require(attacker != null, "Missing physical damage control");
         subject.invulnerableTime = 0;
-        try { subject.hurtServer(server.overworld(), subject.damageSources().mobAttack(attacker), 4); }
+        try {
+            subject.hurtServer(server.overworld(), subject.damageSources().mobAttack(attacker), 4);
+            // Contrast native last-Alkahest carryover with ordinary combat, not permanent armor immunity.
+            var dry = player(server.overworld()); var dryBoots = input.copy(); dry.setItemSlot(EquipmentSlot.FEET, dryBoots);
+            for (int hit = 1; hit <= 2; hit++) {
+                dry.invulnerableTime = 0;
+                dry.hurtServer(server.overworld(), dry.damageSources().mobAttack(attacker), 4);
+                require(dryBoots.getDamageValue() == input.getDamageValue() + hit, "Ordinary combat wear changed: " + label + "/" + hit);
+            }
+            require(dry.getHealth() < dry.getMaxHealth(), "Ordinary combat control did not damage health");
+            unchangedExceptWear(server, input, dryBoots);
+        }
         finally { attacker.discard(); }
         int afterPhysical = worn.getDamageValue() - first - second;
         require(afterPhysical == (armorTier ? 0 : 1), "Native last-source carryover changed: " + label + " wear=" + afterPhysical + " events=" + armorEvents);
         unchangedExceptWear(server, input, worn); observed = null;
         REPORT.append("CASE ").append(label).append(" tag=").append(tag).append(" fluid-tier=").append(fluidTier).append(" armor-tier=").append(armorTier)
                 .append(" drop/hand-protected=").append(itemProtection).append(" worn first/next/physical=")
-                .append(first).append('/').append(second).append('/').append(afterPhysical).append("; ").append(armorEvents).append('\n');
+                .append(first).append('/').append(second).append('/').append(afterPhysical)
+                .append("; no-prior-Alkahest physical=1/1; ").append(armorEvents).append('\n');
     }
 
     private static void dropped(MinecraftServer server, String label, ItemStack input, boolean protectedItem) throws Exception {

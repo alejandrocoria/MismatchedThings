@@ -252,7 +252,10 @@ hash-pinned Aether artifact only in Live. It enables **no research or peer mixin
 Native dropped lifespan/expiry, both-hand wear, actual armor/health damage and
 full histories use paid Forge/Workbench inputs. Either reinforced source protects
 both outputs without copying tiers. Tag-only Arkenium protects items, not armor
-wear. Two completed asynchronous tag reloads exercise membership changes on the
+wear. Each native/mixed profile also takes two actual physical hits on a fresh
+subject without prior Alkahest contact: ordinary armor wear must remain 1/1,
+contrasting the measured last-Alkahest carryover, with full history preservation.
+Two completed asynchronous tag reloads exercise membership changes on the
 same existing roots; absence uses a normal paid pair without Aether.
 
 Guards runs Chains, FluidReceiver, FluidSupplier, ArmorReceiver, ArmorSupplier,
@@ -269,8 +272,13 @@ relative to this directory. The known two native dedicated Toast ERRORs remain
 visible and narrowly allowed; unexpected errors fail, absence is quiet. Direct
 native contact calls are not automated movement/collision proof. Aether's measured
 previous-damage-source timing defect is preserved, not fixed. Scope, execution
-records and pending C/manual acceptance belong to
+records and owner ordinary-client acceptance belong to
 [the Alkahest plan](../local-docs/AETHER-II-ALKAHEST-IMPLEMENTATION.md).
+C's automated closure passed with the existing gates; its real-contact checklist
+is separate from these direct native-body/event tests.
+The owner confirmed all real-contact checks passed on 2026-10-23, completing
+the bounded Alkahest plan. That manual evidence does not add another automated
+run or manual loader matrix; the native timing defect and explicit deferrals remain.
 
 The executable Baseline/Tags/Candidate/Spike tasks and all protection prototypes
 are retired without aliases. Historical results remain in the exploration and
