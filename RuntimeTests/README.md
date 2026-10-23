@@ -10,6 +10,8 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
   This is a shared source directory, not a separate Gradle project.
 - `TooltipSeparator/src/main`: shared production-separator scenarios and read-only
   probes, with legacy spike names until consolidation; never packaged in production.
+- `MysticalAugments/src/main`: opt-in research-only MA effect bridge and shared
+  native/mixed server probes; never packaged in production.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
 - `Fabric/src/test`: fast loader-local reflection/bytecode-boundary JUnit regressions
   against the packaged Fabric classes, with fake optional APIs and no game launch.
@@ -30,6 +32,68 @@ Runtime tests load the packaged production mod. Production output is available
 only for compilation; test classes, metadata, and fixtures are not included in
 the production artifacts. No runtime test infrastructure is installed in the
 normal indev client/server runs.
+
+## Mystical Agriculture augment spike
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsSpike
+.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsSpike
+```
+
+These explicit research tasks run live and optional-absent dedicated servers,
+using the exact installed MA/Cucumber artifacts pinned in
+[mystical-augments-spike.gradle](../gradle/mystical-augments-spike.gradle).
+Runs/reports are isolated under each runtime project's
+`build/run/mysticalAugments/<baseline>/` and
+`build/reports/mystical-augments/<baseline>/`.
+
+Only the fixture enables the two candidate mixins: one native equipment-augment
+view extension and one mixed armor-tick dispatcher. The candidate uses any
+source/strongest family to investigate feasibility, not an accepted production
+policy. Native general augment lookup, Tinkering Table admission and physical
+refund eligibility remain unchanged. The suite includes an unmodified mixed
+negative control, native effects, both orientations, family deduplication,
+native Health/Step cache cleanup, fall damage, timed Absorption, table rejection
+and actual native-only break refunds.
+
+Lifecycle probes dispatch registered native loader callbacks on disconnected
+server players, save/load player NBT for reconnect-state evidence, and construct
+a fresh player after a death callback. They are not connected-client login,
+network synchronization or actual respawn acceptance. See the
+[exploration and dated results](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-EXPLORATION.md#8-runtime-spike--2026-10-23)
+before extending the scope or treating the candidate as production support.
+
+### Owner-side refund follow-up
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsRefundSpike
+.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsRefundSpike
+```
+
+The separate `refund` candidate gives only MA's native break consumer a view of
+the mixed root's left source. Native MA still delivers the augment items;
+general lookup and the Tinkering Table remain unchanged. This is not installed
+in the earlier `live` effect run or the normal client. Each gate runs `Refund`
+and quiet `Absent` servers using the same pins and report root above.
+
+The eight pair scenarios cover one/two MA inputs, different/identical augments,
+four installed physical augments including a weaker family variant, duplicate
+occupied slots, empty/vanilla controls and full inventory. Both orientations
+round-trip through NBT before actual breaks, with per-owner and total physical
+counts, no early/sequential repeat refunds and immutable input checks. A
+read-only accepted-spawn witness verifies native overflow delivery independently
+of immediate world-index visibility.
+
+See [the dated refund results and limits](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-EXPLORATION.md#10-owner-side-refund-spike--2026-10-23).
+This preserves native pre-shrink event timing; it is not a reentrancy or general
+post-consumption protocol proof.
+
+The [prospective production plan](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md)
+is written, with A/B/C not started. Its proposed production commands are not yet
+implemented. In particular, B will validate confirmed post-consumption delivery
+with transient identity/reentry protection instead of promoting the refund
+spike's pre-shrink native-handler substitution unchanged. Retire candidate
+registrations as production routes replace them; do not layer both owners.
 
 ## Commands
 

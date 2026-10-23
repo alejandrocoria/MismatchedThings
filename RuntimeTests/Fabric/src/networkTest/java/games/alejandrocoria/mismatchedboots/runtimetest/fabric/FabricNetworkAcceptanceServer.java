@@ -9,6 +9,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 public final class FabricNetworkAcceptanceServer implements ModInitializer {
     @Override
     public void onInitialize() {
+        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalAugmentsBridge.enabled()) {
+            MysticalAugmentsServer.register(); return;
+        }
         if (SeparatorObservations.enabled()) {
             if (Boolean.getBoolean("mismatchedboots.test.separatorSeed")) {
                 ServerTickEvents.END_SERVER_TICK.register(SeparatorServerProbe::run);

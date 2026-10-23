@@ -14,6 +14,9 @@ license="MIT"
     config="mismatchedboots-separator-tests.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots-mystical-augments-spike.mixins.json"
+
+[[mixins]]
     config="mismatchedboots-undergarden-tests.mixins.json"
 
 [[mixins]]
