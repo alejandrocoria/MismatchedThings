@@ -24,12 +24,16 @@ public final class MixedBootsBehaviorTags {
     private static final TagKey<Item> SPIRITUS_CAPABLE = TagKey.create(
             Registries.ITEM,
             Identifier.fromNamespaceAndPath("neovitae", "spiritus_capable"));
+    private static final TagKey<Item> ALKAHEST_RESISTANT = TagKey.create(
+            Registries.ITEM,
+            Identifier.fromNamespaceAndPath("aether_ii", "alkahest_resistant_item"));
     private static final Set<TagKey<Item>> ANY_SOURCE = Set.of(
             ItemTags.PIGLIN_SAFE_ARMOR,
             CRYSTALITE_SET,
             SENTIENT_SET,
             SENTIENT_UPGRADE_SET,
-            SPIRITUS_CAPABLE);
+            SPIRITUS_CAPABLE,
+            ALKAHEST_RESISTANT);
 
     private MixedBootsBehaviorTags() {
     }

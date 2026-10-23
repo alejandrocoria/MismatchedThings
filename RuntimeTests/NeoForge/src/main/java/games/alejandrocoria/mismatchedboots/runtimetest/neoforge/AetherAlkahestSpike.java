@@ -3,12 +3,14 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import com.mojang.authlib.GameProfile;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -20,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.ModList;
@@ -29,9 +32,11 @@ import net.neoforged.neoforge.event.entity.living.ArmorHurtEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherIICompatibilityTest.component;
 import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherIICompatibilityTest.item;
@@ -43,10 +48,12 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherII
 public final class AetherAlkahestSpike {
     private static final String MODE = System.getProperty("mismatchedboots.runtimetest.aetherAlkahest", "");
     private static final boolean CANDIDATE = MODE.equals("candidate");
-    private static final StringBuilder REPORT = new StringBuilder("Alkahest research; mode=" + MODE + "\n");
+    private static final StringBuilder REPORT = new StringBuilder("Alkahest production tags / research tiers; mode=" + MODE + "\n");
     private static final BlockPos CONTACT = new BlockPos(0, 80, 0);
     private static final TagKey<Item> LOOT = TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:unbreakable_loot"));
+    private static final TagKey<Item> RESISTANCE = TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:alkahest_resistant_item"));
     private static boolean finished;
+    private static TagReload reload;
     private static Object fluid;
     private static BlockState fluidState;
     private static Method inside;
@@ -67,12 +74,14 @@ public final class AetherAlkahestSpike {
     }
 
     private static void run(MinecraftServer server) {
-        if (finished) { return; } finished = true;
+        if (finished) { return; }
         try {
-            if (MODE.equals("absent")) {
+            if (reload != null) {
+                if (!reload.advance(server)) { return; }
+            } else if (MODE.equals("absent")) {
                 require(!ModList.get().isLoaded("aether_ii"), "Absent control contains Aether");
                 var pair = paidPair(player(server.overworld()), new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
-                require(pair.stream().noneMatch(root -> root.is(AetherAlkahestSpikeControl.RESISTANCE)), "Absent candidate projected resistance");
+                require(pair.stream().noneMatch(root -> root.is(RESISTANCE)), "Dormant tag projected resistance without a qualifying source");
                 REPORT.append("Quiet absence: ordinary paid Workbench pair, no native target requested\n");
             } else {
                 fluidState = BuiltInRegistries.BLOCK.getValue(Identifier.parse("aether_ii:alkahest")).defaultBlockState();
@@ -80,21 +89,28 @@ public final class AetherAlkahestSpike {
                 inside = fluid.getClass().getMethod("entityInside", BlockState.class, ServerLevel.class, BlockPos.class, Entity.class);
                 matrix(server);
                 if (CANDIDATE) {
-                    require(AetherAlkahestSpikeControl.fluidExtensions > 0 && AetherAlkahestSpikeControl.armorExtensions > 0
-                            && AetherAlkahestSpikeControl.tagExtensions > 0, "Candidate did not exercise all actual protection seams");
+                    require(AetherAlkahestSpikeControl.fluidExtensions > 0 && AetherAlkahestSpikeControl.armorExtensions > 0,
+                            "Tier candidate did not exercise both actual protection seams");
+                } else {
+                    require(AetherAlkahestSpikeControl.fluidReads == 0 && AetherAlkahestSpikeControl.armorReads == 0,
+                            "Production tag gate accidentally used research tier hooks");
                 }
                 REPORT.append("SEAMS fluid reads=").append(AetherAlkahestSpikeControl.fluidReads)
                         .append(" extensions=").append(AetherAlkahestSpikeControl.fluidExtensions)
                         .append("; armor reads=").append(AetherAlkahestSpikeControl.armorReads)
-                        .append(" extensions=").append(AetherAlkahestSpikeControl.armorExtensions)
-                        .append("; tag extensions=").append(AetherAlkahestSpikeControl.tagExtensions).append('\n');
+                        .append(" extensions=").append(AetherAlkahestSpikeControl.armorExtensions).append('\n');
+                if (MODE.equals("tags")) { reload = new TagReload(server); return; }
             }
             NetworkAcceptanceFiles.write("aether-alkahest-success.txt", "neoforge\n");
+            finished = true;
         } catch (Throwable failure) {
+            finished = true;
             NetworkAcceptanceFiles.failure("aether-alkahest", failure);
         } finally {
-            NetworkAcceptanceFiles.write("aether-alkahest-report.txt", REPORT.toString());
-            server.halt(false);
+            if (finished) {
+                NetworkAcceptanceFiles.write("aether-alkahest-report.txt", REPORT.toString());
+                server.halt(false);
+            }
         }
     }
 
@@ -122,7 +138,7 @@ public final class AetherAlkahestSpike {
                 // Keep the actual owner tier different: the candidate must protect, not fabricate upgrade metadata.
                 require(root.has(component("reinforcement_tier")) == (profile.tier() && index == 0), "Owner tier policy changed");
                 verify(server, profile.name() + "/mixed-" + index, root,
-                        CANDIDATE && profile.tag(), profile.tier() && (CANDIDATE || index == 0));
+                        profile.tag(), profile.tier() && (CANDIDATE || index == 0));
             }
             require(before.equals(snapshot(server, original)), "Measurements changed original input/defaults");
         }
@@ -130,7 +146,7 @@ public final class AetherAlkahestSpike {
         for (int index = 0; index < unequal.size(); index++) {
             require(unequal.get(index).get(component("reinforcement_tier"))
                     == Class.forName("com.aetherteam.aetherii.item.components.ReinforcementTier").getField(index == 0 ? "FIRST" : "SECOND").get(null), "Unequal native tiers were shared/normalized");
-            verify(server, "unequal-I-II/" + index, unequal.get(index), CANDIDATE, true);
+            verify(server, "unequal-I-II/" + index, unequal.get(index), true, true);
         }
         var inverse = paidPair(owner, reinforced(owner, api, "beast_pelt", 1), new ItemStack(Items.DIAMOND_BOOTS)).get(1);
         var missing = inverse.copy(); missing.remove(ModContent.mixedBootsDataType().orElseThrow());
@@ -140,12 +156,22 @@ public final class AetherAlkahestSpike {
         var spoof = new ItemStack(Items.DIAMOND_BOOTS);
         spoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(inverse).orElseThrow());
         verify(server, "invalid/foreign-item", spoof, false, false);
+        // Exercise strict admission with a genuinely tagged source, not only a tiered one.
+        var tagged = paidPair(owner, item("arkenium_boots"), new ItemStack(Items.DIAMOND_BOOTS)).get(1);
+        var bareTagged = tagged.copy(); bareTagged.remove(ModContent.mixedBootsDataType().orElseThrow());
+        verify(server, "invalid/tag-missing", bareTagged, false, false);
+        var taggedCount = tagged.copy(); taggedCount.setCount(2);
+        require(!taggedCount.is(RESISTANCE), "Count-two root gained tag protection");
+        dropped(server, "invalid/tag-count-two", taggedCount, false);
+        var taggedSpoof = new ItemStack(Items.DIAMOND_BOOTS);
+        taggedSpoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(tagged).orElseThrow());
+        verify(server, "invalid/tag-foreign-item", taggedSpoof, false, false);
         REPORT.append("All five paid native reinforcement paths, all seven base boots; owner/inverse; unequal tiers; malformed/foreign controls; full state/history retained apart from measured native wear\n");
     }
 
     private static void verify(MinecraftServer server, String label, ItemStack input, boolean tag, boolean tier) throws Exception {
         boolean itemProtection = tag || tier;
-        require(input.is(AetherAlkahestSpikeControl.RESISTANCE) == tag, "Wrong native/candidate resistance tag: " + label);
+        require(input.is(RESISTANCE) == tag, "Wrong production resistance tag: " + label);
         if (ModContent.isMixedBoots(input)) { require(!input.is(LOOT), "Candidate inherited broken-loot lifecycle"); }
         dropped(server, label, input, itemProtection);
         for (var hand : List.of(EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
@@ -210,6 +236,60 @@ public final class AetherAlkahestSpike {
     private static void unchangedExceptWear(MinecraftServer server, ItemStack before, ItemStack after) {
         var normalized = after.copy(); normalized.setDamageValue(before.getDamageValue());
         require(snapshot(server, before).equals(snapshot(server, normalized)), "Native wear changed other root/history data");
+    }
+
+    /** Real asynchronous tag replacement/restoration on the same already-paid roots. */
+    private static final class TagReload {
+        private static final String PACK = "file/mismatchedboots-alkahest-tag-reload";
+        private final List<Profile> profiles = new ArrayList<>();
+        private final List<String> snapshots;
+        private CompletableFuture<Void> future;
+        private boolean restoring;
+
+        private TagReload(MinecraftServer server) throws Exception {
+            var owner = player(server.overworld());
+            var arkenium = item("arkenium_boots"); var diamond = new ItemStack(Items.DIAMOND_BOOTS);
+            profiles.add(new Profile("arkenium", arkenium, true, false));
+            profiles.add(new Profile("diamond", diamond, false, false));
+            for (var original : List.of(arkenium, diamond)) {
+                var pair = paidPair(owner, original, new ItemStack(Items.IRON_BOOTS));
+                for (int index = 0; index < pair.size(); index++) {
+                    profiles.add(new Profile((original == arkenium ? "arkenium" : "diamond") + "/mixed-" + index,
+                            pair.get(index), original == arkenium, false));
+                }
+            }
+            for (var profile : profiles) { require(profile.boots().is(RESISTANCE) == profile.tag(), "Wrong pre-reload membership"); }
+            snapshots = profiles.stream().map(profile -> snapshot(server, profile.boots())).toList();
+            var pack = server.getWorldPath(LevelResource.DATAPACK_DIR).resolve("mismatchedboots-alkahest-tag-reload");
+            Files.createDirectories(pack); var format = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
+            Files.writeString(pack.resolve("pack.mcmeta"), """
+                    {"pack":{"description":"Fixture-only Alkahest tag reload","min_format":[%d,%d],"max_format":[%d,%d]}}
+                    """.formatted(format.major(), format.minor(), format.major(), format.minor()));
+            var tag = pack.resolve("data/aether_ii/tags/item/alkahest_resistant_item.json");
+            Files.createDirectories(tag.getParent());
+            Files.writeString(tag, "{\"replace\":true,\"values\":[\"minecraft:diamond_boots\"]}");
+            server.getPackRepository().reload();
+            require(server.getPackRepository().isAvailable(PACK), "Alkahest tag datapack not discovered");
+            var selected = new ArrayList<>(server.getPackRepository().getSelectedIds()); selected.add(PACK);
+            future = server.reloadResources(selected);
+        }
+
+        private boolean advance(MinecraftServer server) throws Exception {
+            if (!future.isDone()) { return false; } future.join();
+            for (int index = 0; index < profiles.size(); index++) {
+                var profile = profiles.get(index);
+                verify(server, "reload/" + (restoring ? "restored/" : "replaced/") + profile.name(),
+                        profile.boots(), restoring == profile.tag(), false);
+                require(snapshots.get(index).equals(snapshot(server, profile.boots())), "Tag reload changed existing root/history");
+            }
+            if (!restoring) {
+                restoring = true;
+                var selected = new ArrayList<>(server.getPackRepository().getSelectedIds()); selected.remove(PACK);
+                future = server.reloadResources(selected); return false;
+            }
+            REPORT.append("PRODUCTION TAG RELOAD: two completed asynchronous reloads replace/restore source membership; same paid inverses gain/lose dropped and both-hand protection, never tier armor protection; full histories unchanged\n");
+            return true;
+        }
     }
 
     private static FakePlayer player(ServerLevel level) {

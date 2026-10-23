@@ -104,6 +104,8 @@ class MixedBootsSourcesTest {
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("sentient_upgrade_set/sentient")));
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("sentient_upgrade_set")));
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("spiritus_capable")));
+        assertTrue(MixedBootsBehaviorTags.isProjected(aetherTag("alkahest_resistant_item")));
+        assertFalse(MixedBootsBehaviorTags.isProjected(aetherTag("unbreakable_loot")));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.FOOT_ARMOR));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.REPAIRS_IRON_ARMOR));
         assertFalse(MixedBootsBehaviorTags.isProjected(ItemTags.IRON_TOOL_MATERIALS));
@@ -136,5 +138,9 @@ class MixedBootsSourcesTest {
 
     private static TagKey<Item> neoVitaeTag(String path) {
         return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("neovitae", path));
+    }
+
+    private static TagKey<Item> aetherTag(String path) {
+        return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("aether_ii", path));
     }
 }

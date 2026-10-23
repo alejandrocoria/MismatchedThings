@@ -238,6 +238,37 @@ This smoke
 does not certify every native effect body, physical input, multiplayer server
 topologies, native Forge screen UX or deferred presentation/transactions.
 
+### Aether II Alkahest tags — production block A
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahestTags --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahestAbsent --console=plain
+```
+
+Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. Tags uses the
+packaged production mod and the hash-pinned Aether artifact in a disposable
+dedicated server. It enables **no research mixins**. Native dropped lifespan/
+expiry, both-hand wear, real armor/health damage and complete source histories
+are compared on paid native/Workbench inputs. Two completed asynchronous reloads
+replace the resistance tag with diamond boots, then restore native membership;
+the same existing roots must gain/lose item protection without gaining the
+tier-only worn-armor exemption. Absence uses an ordinary paid pair with no Aether.
+
+The former `verifyAetherIIAlkahestBaseline` task is retired: production now
+projects the resistance tag, so the untouched pre-A baseline is historical.
+`verifyAetherIIAlkahestCandidate` still enables **only** the two research tier
+mixins for pending block B; the tag candidate was removed. The temporary
+`verifyAetherIIAlkahestSpike` aggregate runs Tags/Candidate/Absent sequentially,
+and is not full production reinforcement or manual acceptance.
+
+Reports: `NeoForge/build/reports/aether-ii-alkahest-spike/<version>/<mode>/`,
+relative to this directory. The known two native dedicated Toast ERRORs remain
+visible and narrowly allowed; unexpected errors fail, absence is quiet. Direct
+native contact calls are not automated movement/collision proof. Aether's measured
+previous-damage-source timing defect is preserved, not fixed. Scope, execution
+records and the pending B/C checks belong to
+[the Alkahest plan](../local-docs/AETHER-II-ALKAHEST-IMPLEMENTATION.md).
+
 ### Silent Gear native stat measurement
 
 Opt-in native controls and **production attributes/state** acceptance, not full

@@ -11,7 +11,7 @@ import java.util.Set;
 public final class AetherAlkahestSpikePlugin implements IMixinConfigPlugin {
     @Override public List<String> getMixins() {
         return System.getProperty("mismatchedboots.runtimetest.aetherAlkahest", "").equals("candidate")
-                ? List.of("AetherAlkahestFluidSpikeMixin", "AetherAlkahestArmorSpikeMixin", "AetherAlkahestTagSpikeMixin") : List.of();
+                ? List.of("AetherAlkahestFluidSpikeMixin", "AetherAlkahestArmorSpikeMixin") : List.of();
     }
     @Override public boolean shouldApplyMixin(String target, String mixin) { return true; }
     @Override public void onLoad(String name) {}
