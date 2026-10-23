@@ -13,7 +13,8 @@
     ]
   },
   "mixins": [
-    "mismatchedboots-runtime-test.fabric.mixins.json"
+    "mismatchedboots-runtime-test.fabric.mixins.json",
+    "mismatchedboots-separator-spike.mixins.json"
   ],
   "depends": {
     "fabricloader": "*",

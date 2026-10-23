@@ -1,12 +1,18 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.fabric;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceClientTest;
+import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorClientSpike;
+import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorMarker;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 public final class FabricNetworkAcceptanceClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        if (SeparatorMarker.enabled()) {
+            ClientTickEvents.END_CLIENT_TICK.register(SeparatorClientSpike::tick);
+            return;
+        }
         ClientTickEvents.END_CLIENT_TICK.register(NetworkAcceptanceClientTest::tick);
     }
 }

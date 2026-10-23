@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.separator.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "SeparatorFactoryMixin",
+    "SeparatorWrapMixin",
+    "SourceSeparatorMixin"
+  ],
+  "injectors": {"defaultRequire": 1}
+}
