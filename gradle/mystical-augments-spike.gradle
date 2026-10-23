@@ -1,4 +1,4 @@
-// Research-only bridges and probes. Never included in either production artifact.
+// Production effect gates and the separately retained refund experiment; never packaged in production.
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -21,7 +21,7 @@ def pins = fabric ? [
         'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
         'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821'
 ]
-['Live', 'Refund', 'Absent'].each { variant ->
+['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Refund', 'Absent'].each { variant ->
     def name = variant.toLowerCase(Locale.ROOT)
     def directory = runs.map { it.dir(name) }
     def markers = reports.map { it.dir(name) }
@@ -91,6 +91,10 @@ def verifyVariants = { variants ->
             }) {
                 throw new GradleException("Optional absence emitted a MA/Cucumber diagnostic; see ${log}")
             }
+            int expectedRefusals = variant == 'NoEquipment' ? 3 : variant == 'NoJump' ? 1 : 0
+            if ((log.text =~ /Mystical Agriculture mixed augment disabled:/).count != expectedRefusals) {
+                throw new GradleException("Unexpected MA feature refusal count; see ${log}")
+            }
             def markers = reports.get().dir(name).asFile
             def failure = new File(markers, 'mystical-augments-failure.txt')
             if (failure.isFile()) { throw new GradleException(failure.text) }
@@ -101,10 +105,10 @@ def verifyVariants = { variants ->
             logger.lifecycle(report.text)
         }
 }
-tasks.register('verifyMysticalAugmentsSpike') {
+tasks.register('verifyMysticalAugments') {
     group = 'verification'
-    description = 'Research-only MA native/mixed effects and lifecycle with a quiet optional-absence control'
-    doLast { verifyVariants(['Live', 'Absent']) }
+    description = 'Production MA effects, compatible peers, independent local refusals and optional absence'
+    doLast { verifyVariants(['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Absent']) }
 }
 tasks.register('verifyMysticalAugmentsRefundSpike') {
     group = 'verification'

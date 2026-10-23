@@ -67,6 +67,9 @@ issueTrackerURL="${mod_issues}"
 [[mixins]]
     config="mismatchedboots.client.mixins.json"
 
+[[mixins]]
+    config="mismatchedboots.mysticalagriculture.mixins.json"
+
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"

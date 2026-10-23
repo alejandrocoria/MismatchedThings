@@ -2,7 +2,6 @@ package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
-import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
@@ -23,7 +22,7 @@ public class MismatchedBootsFabric implements ModInitializer {
         Registry.register(
                 BuiltInRegistries.ITEM,
                 ModContent.MIXED_BOOTS_ID,
-                new MixedBootsItem(ModContent.mixedBootsProperties().setId(ModContent.MIXED_BOOTS_KEY)));
+                new FabricMixedBootsItem(ModContent.mixedBootsProperties().setId(ModContent.MIXED_BOOTS_KEY)));
         var workbench = Registry.register(
                 BuiltInRegistries.BLOCK,
                 ModContent.MISMATCHED_WORKBENCH_ID,

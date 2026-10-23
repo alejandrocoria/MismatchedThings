@@ -1,6 +1,8 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.mystical;
 
 import com.mojang.authlib.GameProfile;
+import games.alejandrocoria.mismatchedboots.compatibility.mysticalagriculture.MysticalAugments;
+import games.alejandrocoria.mismatchedboots.compatibility.mysticalagriculture.MysticalAugmentsCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
@@ -63,16 +65,18 @@ public final class MysticalAugmentsProbe {
                 var pair = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
                 for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
                     player.setItemSlot(EquipmentSlot.FEET, root); player.aiStep();
-                    require(MysticalAugmentsBridge.resolve(root).isEmpty(), "Absent mod produced augments");
+                    require(MysticalAugmentsCompatibility.selectedIds(root).isEmpty(), "Absent mod produced augments");
                 }
                 require(MysticalAugmentsProbe.class.getClassLoader().getResource(
                         "com/blakebr0/mysticalagriculture/api/util/AugmentUtils.class") == null, "Absence fixture includes MA");
                 observations.append("Optional absence: ordinary mixed AI ticks, no MA class loaded.\n");
             } else if (System.getProperty("mismatchedboots.test.mysticalAugments").equals("refund")) {
                 refunds(server);
+            } else if (System.getProperty("mismatchedboots.test.mysticalAugments").startsWith("no")) {
+                refusals(server, platform);
             } else { live(server, platform); }
             NetworkAcceptanceFiles.write("mystical-augments-report.txt", observations + "Assertions: " + assertions + "\n");
-            NetworkAcceptanceFiles.write("mystical-augments-success.txt", "research-only\n");
+            NetworkAcceptanceFiles.write("mystical-augments-success.txt", "server-cases-passed\n");
         } catch (Throwable failure) { NetworkAcceptanceFiles.failure("mystical-augments", failure); }
         finally { server.halt(false); }
     }
@@ -82,11 +86,7 @@ public final class MysticalAugmentsProbe {
         var pair = MixedBootsFactory.createPair(jump, new ItemStack(Items.DIAMOND_BOOTS));
         var player = player(server);
         player.setItemSlot(EquipmentSlot.FEET, pair.primary());
-        MysticalAugmentsBridge.active = false;
-        player.aiStep(); platform.update(player);
-        require(!player.hasEffect(MobEffects.JUMP_BOOST), "Unmodified mixed unexpectedly runs Jump");
         require(MysticalAugmentsBridge.nativeAugments(pair.primary()).isEmpty(), "Native lookup recognizes mixed");
-        MysticalAugmentsBridge.active = true;
         for (ItemStack stack : List.of(jump, pair.primary(), pair.inverse())) {
             player.removeAllEffects(); player.setItemSlot(EquipmentSlot.FEET, stack);
             var history = ModContent.getMixedBootsData(stack);
@@ -102,11 +102,11 @@ public final class MysticalAugmentsProbe {
         var levels = MixedBootsFactory.createPair(item("awakened_supremium_boots", "JUMP_BOOST_I"), jump);
         var duplicates = MixedBootsFactory.createPair(jump, jump);
         for (ItemStack stack : List.of(levels.primary(), levels.inverse(), duplicates.primary(), duplicates.inverse())) {
-            require(MysticalAugmentsBridge.resolve(stack).size() == 1, "Family not deduplicated");
+            require(MysticalAugmentsCompatibility.selectedIds(stack).size() == 1, "Family not deduplicated");
             player.removeAllEffects(); player.setItemSlot(EquipmentSlot.FEET, stack); player.aiStep();
             require(player.getEffect(MobEffects.JUMP_BOOST).getAmplifier() == 2, "Family strongest tier not selected");
         }
-        observations.append("Baseline missing effect reproduced; native and both mixed orientations run Jump III; held gate, family dedup/strongest and immutable sources pass.\n");
+        observations.append("Production native/mixed Jump III; held gate, family dedup/strongest and immutable sources pass.\n");
 
         for (boolean mixed : List.of(false, true)) {
             var subject = player(server);
@@ -152,7 +152,112 @@ public final class MysticalAugmentsProbe {
         }
         observations.append("Actual causeFallDamage: native/mixed protection and vanilla damage control pass.\n");
         absorption(server, platform.loader().equals("Fabric"));
+        selectionAndFamilies(server);
+        absorptionOrder(server);
         resources(server);
+        if (System.getProperty("mismatchedboots.test.mysticalAugments").equals("compatible")) {
+            require(MysticalGuardControl.equipmentCalls > 0 && MysticalGuardControl.armorCalls > 0, "Compatible wrappers did not execute");
+        }
+    }
+
+    private static void refusals(MinecraftServer server, Platform platform) throws Exception {
+        boolean query = !System.getProperty("mismatchedboots.test.mysticalAugments").equals("noequipment");
+        var nativeBoots = item("awakened_supremium_boots", "JUMP_BOOST_III", "NO_FALL_DAMAGE");
+        var nativePlayer = player(server); nativePlayer.setItemSlot(EquipmentSlot.FEET, nativeBoots);
+        nativePlayer.setItemSlot(EquipmentSlot.HEAD, item("awakened_supremium_helmet", "HEALTH_BOOST_III"));
+        nativePlayer.aiStep(); platform.update(nativePlayer);
+        require(nativePlayer.hasEffect(MobEffects.JUMP_BOOST) && nativePlayer.getMaxHealth() == 32, "Native control lost its own effects");
+        var pair = MixedBootsFactory.createPair(item("awakened_supremium_boots", "JUMP_BOOST_III", "HEALTH_BOOST_III"),
+                item("awakened_supremium_boots", "STEP_ASSIST", "NO_FALL_DAMAGE"));
+        for (var root : List.of(pair.primary(), pair.inverse())) {
+            var subject = player(server); subject.setItemSlot(EquipmentSlot.FEET, root);
+            double step = subject.getAttributeValue(Attributes.STEP_HEIGHT);
+            subject.aiStep(); platform.update(subject);
+            require(subject.hasEffect(MobEffects.JUMP_BOOST) == !query, "Independent armor route failed");
+            require(subject.getMaxHealth() == (query ? 32 : 20), "Independent native Health route failed");
+            require(subject.getAttributeValue(Attributes.STEP_HEIGHT) == step + (query ? 1 : 0), "Independent Step route failed");
+            require(root.getDamageValue() == 0, "Declined Jump mutated live mixed durability");
+            float before = subject.getHealth(); subject.causeFallDamage(9, 1, subject.damageSources().fall());
+            require((subject.getHealth() == before) == query, "Independent fall route failed");
+        }
+        observations.append("Independent local refusal; native controls intact, both inverse roots retain unaffected channels.\n");
+    }
+
+    private static void selectionAndFamilies(MinecraftServer server) throws Exception {
+        for (var spec : MysticalAugments.CATALOG.values()) {
+            var nativeBoots = item("awakened_supremium_boots", spec.id().getPath().toUpperCase(java.util.Locale.ROOT));
+            var pair = MixedBootsFactory.createPair(nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
+            for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
+                require(MysticalAugmentsCompatibility.selectedIds(root).equals(List.of(spec.id())), "Native catalog selection differs: " + spec.id());
+            }
+        }
+        for (var family : List.of("FIRE_RESISTANCE", "LUCK_III", "MINING_FATIGUE_RESISTANCE", "POISON_RESISTANCE", "SLOW_FALLING", "WITHER_RESISTANCE")) {
+            var nativeBoots = item("awakened_supremium_boots", family);
+            var pair = MixedBootsFactory.createPair(nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
+            for (ItemStack stack : List.of(nativeBoots, pair.primary(), pair.inverse())) {
+                var subject = player(server); subject.setItemSlot(EquipmentSlot.FEET, stack);
+                subject.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.POISON, 200));
+                subject.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.WITHER, 200));
+                subject.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.MINING_FATIGUE, 200));
+                subject.setRemainingFireTicks(100); subject.aiStep();
+                boolean works = switch (family) {
+                    case "FIRE_RESISTANCE" -> subject.hasEffect(MobEffects.FIRE_RESISTANCE) && !subject.isOnFire();
+                    case "LUCK_III" -> subject.getEffect(MobEffects.LUCK) != null && subject.getEffect(MobEffects.LUCK).getAmplifier() == 2;
+                    case "MINING_FATIGUE_RESISTANCE" -> !subject.hasEffect(MobEffects.MINING_FATIGUE);
+                    case "POISON_RESISTANCE" -> !subject.hasEffect(MobEffects.POISON);
+                    case "WITHER_RESISTANCE" -> !subject.hasEffect(MobEffects.WITHER);
+                    default -> subject.hasEffect(MobEffects.SLOW_FALLING);
+                };
+                require(works, "Native/mixed family failed: " + family + "/" + stack);
+                if (family.equals("SLOW_FALLING")) {
+                    subject.removeEffect(MobEffects.SLOW_FALLING); subject.setShiftKeyDown(true); subject.aiStep();
+                    require(!subject.hasEffect(MobEffects.SLOW_FALLING), "Sneaking retained Slow Falling");
+                }
+            }
+        }
+        var good = item("awakened_supremium_boots", "JUMP_BOOST_III");
+        @SuppressWarnings("unchecked") var component = (net.minecraft.core.component.DataComponentType<List<Object>>) BuiltInRegistries.DATA_COMPONENT_TYPE
+                .get(Identifier.parse("mysticalagriculture:equipped_augments")).orElseThrow().value();
+        var constructor = Class.forName("com.blakebr0.mysticalagriculture.api.components.AugmentComponent").getConstructor(Identifier.class, int.class);
+        Identifier jump = Identifier.parse("mysticalagriculture:jump_boost_iii");
+        for (List<Object> invalid : List.of(List.of(constructor.newInstance(jump, -1)), List.of(constructor.newInstance(jump, 2)),
+                List.of(constructor.newInstance(jump, 0), constructor.newInstance(jump, 0)),
+                List.of(constructor.newInstance(jump, 0), constructor.newInstance(jump, 1), constructor.newInstance(jump, 1)))) {
+            var bad = good.copy(); bad.set(component, invalid);
+            var pair = MixedBootsFactory.createPair(bad, new ItemStack(Items.DIAMOND_BOOTS));
+            require(MysticalAugmentsCompatibility.selectedIds(pair.primary()).isEmpty()
+                    && MysticalAugmentsCompatibility.selectedIds(pair.inverse()).isEmpty(), "Malformed native slots granted an effect");
+        }
+        var weak = item("inferium_boots"); weak.set(component, List.of(constructor.newInstance(jump, 0)));
+        require(MysticalAugmentsCompatibility.selectedIds(MixedBootsFactory.createPair(weak, new ItemStack(Items.DIAMOND_BOOTS)).primary()).isEmpty(),
+                "Source tier restriction bypassed");
+        var valid = MixedBootsFactory.createPair(good, new ItemStack(Items.DIAMOND_BOOTS)).primary();
+        var badCount = valid.copy(); badCount.setCount(2);
+        var missing = valid.copy(); missing.remove(ModContent.mixedBootsDataType().orElseThrow());
+        var spoof = new ItemStack(Items.STICK); spoof.applyComponents(valid.getComponents());
+        for (var bad : List.of(badCount, missing, spoof)) { require(MysticalAugmentsCompatibility.selectedIds(bad).isEmpty(), "Invalid root granted augments"); }
+        observations.append("All 23 native IDs selected in both orientations; all 11 families exercised; malformed slots/tier/roots rejected.\n");
+    }
+
+    private static void absorptionOrder(MinecraftServer server) throws Exception {
+        long time = server.overworld().getGameTime();
+        try {
+            server.getWorldData().overworldData().setGameTime(30_000);
+            var nativeBoots = item("awakened_supremium_boots", "ABSORPTION_V");
+            var pair = MixedBootsFactory.createPair(nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
+            List<Identifier> expected = null; int amplifier = -1;
+            for (var boots : List.of(nativeBoots, pair.primary(), pair.inverse())) {
+                var subject = player(server); subject.setItemSlot(EquipmentSlot.FEET, boots);
+                subject.setItemSlot(EquipmentSlot.HEAD, item("awakened_supremium_helmet", "ABSORPTION_I"));
+                @SuppressWarnings("unchecked") var augments = (List<Object>) MysticalAugmentsBridge.call(
+                        "com.blakebr0.mysticalagriculture.api.util.AugmentUtils", "getArmorAugments", new Class<?>[]{Player.class}, subject);
+                var ids = augments.stream().map(a -> (Identifier) MysticalAugmentsBridge.invoke(a, "getId", new Class<?>[]{})).toList();
+                subject.aiStep(); int actual = subject.getEffect(MobEffects.ABSORPTION).getAmplifier();
+                if (expected == null) { expected = ids; amplifier = actual; }
+                require(expected.equals(ids) && actual == amplifier, "Mixed FEET changed native cross-piece Absorption ordering");
+            }
+        } finally { server.getWorldData().overworldData().setGameTime(time); }
+        observations.append("Native equipment iteration and shared-timestamp Absorption winner preserved with native helmet.\n");
     }
 
     private static void lifecycle(MinecraftServer server, Platform platform, boolean mixed, boolean death) throws Exception {

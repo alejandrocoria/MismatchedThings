@@ -4,6 +4,6 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.mystical.mixin",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalAugmentsPlugin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["AugmentItemTickMixin"],
+  "mixins": [],
   "injectors": {"defaultRequire": 1}
 }
