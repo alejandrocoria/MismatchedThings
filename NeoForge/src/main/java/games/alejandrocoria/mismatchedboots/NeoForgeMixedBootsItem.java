@@ -12,6 +12,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearM
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRecognition;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearer;
+import games.alejandrocoria.mismatchedboots.compatibility.undergarden.UndergardenBoots;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
@@ -45,7 +46,8 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     @Override
     public boolean canWalkOnPowderedSnow(ItemStack stack, LivingEntity wearer) {
         // SG's optional slot override is broken for its own boots; use our resolved FEET source view.
-        return super.canWalkOnPowderedSnow(stack, wearer) || SilentGearRecognition.snowWalker(stack);
+        return super.canWalkOnPowderedSnow(stack, wearer) || SilentGearRecognition.snowWalker(stack)
+                || UndergardenBoots.snow(stack);
     }
 
     @Override

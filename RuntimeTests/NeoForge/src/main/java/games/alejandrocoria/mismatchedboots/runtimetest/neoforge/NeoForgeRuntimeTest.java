@@ -15,6 +15,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (!System.getProperty("mismatchedboots.runtimetest.undergarden", "").isEmpty()) {
+            UndergardenTest.register(); return;
+        }
         if (!System.getProperty("mismatchedboots.runtimetest.aetherAlkahest", "").isEmpty()) {
             AetherAlkahestTest.register(); return;
         }

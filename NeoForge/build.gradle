@@ -110,6 +110,10 @@ tasks.named('test', Test).configure {
     if (rootsArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.rootsGuardJar', rootProject.file(rootsArtifact.get()).absolutePath
     }
+    def undergardenArtifact = providers.gradleProperty('undergardenGuardJar')
+    if (undergardenArtifact.isPresent()) {
+        systemProperty 'mismatchedboots.test.undergardenGuardJar', rootProject.file(undergardenArtifact.get()).absolutePath
+    }
 }
 
 idea {

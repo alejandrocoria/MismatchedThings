@@ -1,0 +1,88 @@
+// Pinned native handlers, real competing transformations and quiet absence in disposable servers.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def artifacts = [
+        'The_Undergarden-26.1.2-0.9.8.jar': '5a9c449b01327b8f368bfd8a70e5dd5707362a3e3211ea7735e751dff4c258dc',
+        'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
+        'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655'
+].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
+
+['Live', 'Chains', 'Refused', 'Absent'].each { variant ->
+    def mode = variant.toLowerCase(Locale.ROOT)
+    def reports = layout.buildDirectory.dir("reports/undergarden/${neoforge_version}/${mode}")
+    def directory = layout.buildDirectory.dir("run/undergarden/${neoforge_version}/${mode}")
+    neoForge.runs.create("undergarden${variant}") {
+        server(); disableIdeRun(); programArgument('--nogui')
+        gameDirectory = directory.get().asFile
+        systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.undergarden', mode)
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareUndergarden${variant}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            if (mode != 'absent') {
+                artifacts.each { artifact, hash ->
+                    if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
+                        throw new GradleException("Missing/unexpected pinned Undergarden fixture: ${artifact}")
+                    }
+                }
+            }
+            fixtureFiles.delete { delete directory }
+            fixtureFiles.delete { delete fileTree(reports) { include '*.txt' } }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar)
+                if (mode != 'absent') { from artifacts.keySet() }
+                into(new File(directory.get().asFile, 'mods'))
+            }
+            new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+            new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+        }
+    }
+    tasks.named("runUndergarden${variant}") { dependsOn prepare }
+    tasks.register("verifyUndergarden${variant}") {
+        group = 'verification'
+        description = "Native Undergarden boots (${mode})"
+        doLast {
+            def log = new File(reports.get().asFile, 'process.log')
+            runBounded(":RuntimeTests:NeoForge:runUndergarden${variant}", log, 240)
+            def result = reports.get().asFile
+            def failure = new File(result, 'undergarden-failure.txt')
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            def report = new File(result, 'undergarden-report.txt')
+            def lines = log.readLines()
+            // SG ships this optional Bonsai recipe without a usable serializer when Bonsai is absent.
+            // Keep the exact unrelated resource diagnostic visible; no other ERROR is permitted.
+            def nativeErrors = lines.findAll { it.contains('/ERROR]') && it.endsWith("[minecraft/SimpleJsonResourceReloadListener]: Couldn't parse data file 'silentgear:sapling/netherwood': DataResult.Error['Unknown registry key in ResourceKey[minecraft:root / minecraft:recipe_serializer]: bonsaitrees2:sapling']") }
+            def errors = lines.findAll { it.contains('/ERROR]') && !(it in nativeErrors) }
+            def refusals = log.readLines().findAll { it.contains('Undergarden mixed goo protection disabled:') }
+            if (!new File(result, 'undergarden-success.txt').isFile() || !report.isFile() || !errors.isEmpty()
+                    || nativeErrors.size() != (mode == 'absent' ? 0 : 1)
+                    || refusals.size() != (mode == 'refused' ? 1 : 0)
+                    || mode == 'absent' && log.text.contains('Error loading class: quek/undergarden')) {
+                throw new GradleException("Incomplete/unexpected Undergarden diagnostics: ${errors}; see ${log}")
+            }
+            logger.lifecycle(report.text.trim() + "; report: ${report}")
+        }
+    }
+}
+tasks.register('verifyUndergarden') {
+    group = 'verification'
+    dependsOn('verifyUndergardenLive', 'verifyUndergardenAbsent')
+}
+tasks.register('verifyUndergardenGuards') {
+    group = 'verification'
+    dependsOn('verifyUndergardenChains', 'verifyUndergardenRefused')
+}
+tasks.named('verifyUndergardenAbsent') { mustRunAfter('verifyUndergardenLive') }
+tasks.named('verifyUndergardenRefused') { mustRunAfter('verifyUndergardenChains') }

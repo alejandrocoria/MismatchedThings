@@ -1143,6 +1143,46 @@ The later [shared equip-sound record](../local-docs/EQUIP-SOUND-COMPOSITION.md#5
 separately records the owner's successful manual confirmation on 2026-10-18,
 closing that bounded change without adding an automated run or manual loader matrix.
 
+## Undergarden boot recognition
+
+```powershell
+.\gradlew.bat :NeoForge:test --tests '*UndergardenGooShapeTest' '-PundergardenGuardJar=NeoForge/runs/client/mods/The_Undergarden-26.1.2-0.9.8.jar' :RuntimeTests:NeoForge:verifyUndergarden --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyUndergardenGuards --console=plain
+```
+
+Use `-Pneoforge_version=26.1.2.99` for the support floor. The native/absent
+aggregate uses disposable versioned servers; the guard aggregate runs actual
+compatible result peers and a changed native holder predicate. Live variants
+hash-check Undergarden 0.9.8 and Silent Gear 4.2.3/Silent Lib 11.2.0, the latter
+for a real Snow Walker regression at the shared hook. Absent loads none of them.
+
+The fixture pays through the Workbench for both orientations, checks strict
+root boundaries and unchanged whole stacks/history, invokes real thin/full goo
+handlers on players and a non-player control, and observes the resulting native
+stuck multiplier. Gooey and airborne/wrong-slot controls remain native. Real
+powder-snow decisions and surface/crouch collision checks cover Froststeel,
+ordinary/leather controls and SG Snow Walker. This is native-handler/collision
+evidence, not natural client movement, tooltip or visual acceptance.
+
+Reports and logs are under `RuntimeTests/NeoForge/build/reports/undergarden/<version>/<mode>/`;
+disposable worlds/mods are under that project's `build/run/undergarden/`.
+Each native process retains exactly one known upstream SG ERROR for
+`silentgear:sapling/netherwood` referencing absent `bonsaitrees2:sapling`;
+it also occurs in pre-existing SG-only logs. The gate admits only that exact
+diagnostic, no other ERROR; Absent requires zero. Refused requires exactly one
+own goo warning and verifies independent Froststeel/SG snow behavior and native
+positives. Normal/Chains/Absent require no own goo refusal; Absent also rejects
+missing optional-target warnings. The
+[integrated implementation record](../local-docs/UNDERGARDEN-COMPATIBILITY-EXPLORATION.md#8-production-execution-record--2026-10-23)
+owns executed matrix results and the separate manual checklist.
+On 2026-10-23, four pinned guard units and Live 117/Absent 3 cases passed on
+.99/.114; .114 also passed Chains/Refused 117 cases each. The owner separately
+[confirmed all five manual checks](../local-docs/UNDERGARDEN-COMPATIBILITY-EXPLORATION.md#84-owner-manual-acceptance-and-closure--2026-10-23)
+on 2026-10-23, including movement, source description and visual presentation,
+closing the reviewed scope without a new automated run or manual loader matrix.
+Default .114 compilation/tests and loader assemblies were restored; dependency
+checks, all 12 corrupted-artifact negatives and production archive isolation passed.
+
 ## Item geometry coverage
 
 The Fabric client suite exercises both ordinary baked quads and real Fabric
