@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherAlkahestSpikePlugin",
+  "compatibilityLevel": "JAVA_25",
+  "injectors": {"defaultRequire": 1}
+}

@@ -1,0 +1,73 @@
+// Opt-in research only. Candidate predicates are in the disposable runtime fixture, not production.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def artifact = rootProject.file('NeoForge/runs/client/mods/aether_ii-26.1.2-alpha.4.1-neoforge.jar')
+
+['Baseline', 'Candidate', 'Absent'].each { name ->
+    def mode = name.toLowerCase(Locale.ROOT)
+    def reports = layout.buildDirectory.dir("reports/aether-ii-alkahest-spike/${neoforge_version}/${mode}")
+    def directory = layout.buildDirectory.dir("run/aetherIIAlkahestSpike/${neoforge_version}/${mode}")
+    neoForge.runs.create("aetherIIAlkahest${name}") {
+        server(); disableIdeRun(); programArgument('--nogui')
+        gameDirectory = directory.get().asFile
+        systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.aetherAlkahest', mode)
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareAetherIIAlkahest${name}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            if (mode != 'absent' && (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                    .digest(artifact.bytes).encodeHex().toString() != '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6')) {
+                throw new GradleException('Missing/unexpected pinned Aether II Alkahest fixture')
+            }
+            fixtureFiles.delete { delete directory }
+            fixtureFiles.delete { delete fileTree(reports) { include '*.txt' } }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar)
+                if (mode != 'absent') { from artifact }
+                into(new File(directory.get().asFile, 'mods'))
+            }
+            new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+            new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+        }
+    }
+    tasks.named("runAetherIIAlkahest${name}") { dependsOn prepare }
+    tasks.register("verifyAetherIIAlkahest${name}") {
+        group = 'verification'
+        description = "Research-only native Alkahest protection (${mode})"
+        doLast {
+            def log = new File(reports.get().asFile, 'process.log')
+            runBounded(":RuntimeTests:NeoForge:runAetherIIAlkahest${name}", log, 240)
+            def failure = new File(reports.get().asFile, 'aether-alkahest-failure.txt')
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            def success = new File(reports.get().asFile, 'aether-alkahest-success.txt')
+            def report = new File(reports.get().asFile, 'aether-alkahest-report.txt')
+            def nativeErrors = log.readLines().findAll { it.contains('/ERROR]') && it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
+            def errors = log.readLines().findAll { it.contains('/ERROR]') && !(it in nativeErrors) }
+            if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile() || !errors.isEmpty()
+                    || nativeErrors.size() != (mode == 'absent' ? 0 : 2)
+                    || mode == 'absent' && log.text.contains('Error loading class: com/aetherteam/aetherii')) {
+                throw new GradleException("Incomplete/unexpected Alkahest spike diagnostics: ${errors}; native=${nativeErrors.size()}; see ${log}")
+            }
+            logger.lifecycle("Alkahest ${mode}: ${report.readLines().count { it.startsWith('CASE ') }} cases passed; ${report.readLines().last()}; report: ${report}")
+        }
+    }
+}
+tasks.register('verifyAetherIIAlkahestSpike') {
+    group = 'verification'
+    description = 'Sequential native baseline, local any-source Alkahest candidate and quiet optional absence'
+    dependsOn('verifyAetherIIAlkahestBaseline', 'verifyAetherIIAlkahestCandidate', 'verifyAetherIIAlkahestAbsent')
+}
+tasks.named('verifyAetherIIAlkahestCandidate') { mustRunAfter('verifyAetherIIAlkahestBaseline') }
+tasks.named('verifyAetherIIAlkahestAbsent') { mustRunAfter('verifyAetherIIAlkahestCandidate') }
