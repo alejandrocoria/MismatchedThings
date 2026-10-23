@@ -11,7 +11,7 @@ license="MIT"
     config="mismatchedboots-runtime-test.neoforge.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots-separator-spike.mixins.json"
+    config="mismatchedboots-separator-tests.mixins.json"
 
 [[mixins]]
     config="mismatchedboots-undergarden-tests.mixins.json"

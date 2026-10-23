@@ -1271,7 +1271,7 @@ dependencies {
 }
 
 apply from: rootProject.file('gradle/quilt-smoke.gradle')
-apply from: rootProject.file('gradle/tooltip-separator-spike.gradle')
+apply from: rootProject.file('gradle/tooltip-separator-tests.gradle')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')

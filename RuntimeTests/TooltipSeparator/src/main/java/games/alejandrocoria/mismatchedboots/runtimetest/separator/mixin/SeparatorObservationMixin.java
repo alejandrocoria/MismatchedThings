@@ -13,6 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class SeparatorObservationMixin {
     @Inject(method = "extractImage", at = @At("RETURN"))
     private void observe(Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics, CallbackInfo callback) {
-        if (SeparatorObservations.enabled()) { SeparatorObservations.WIDTHS.add(width); }
+        if (SeparatorObservations.enabled()) {
+            SeparatorObservations.WIDTHS.add(width);
+            SeparatorObservations.DRAWS.add(new SeparatorObservations.Draw(true, y,
+                    ((TooltipSeparatorComponent) (Object) this).getHeight(font)));
+        }
     }
 }

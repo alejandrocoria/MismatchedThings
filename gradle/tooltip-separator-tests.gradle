@@ -1,4 +1,4 @@
-// Isolated fixture observing production separators; legacy spike task names are consolidated in block B.
+// Isolated production presentation checks. No test-owned separator producer, factory or renderer.
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def fixtureSources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -6,12 +6,14 @@ fixtureSources.java.srcDir rootProject.file('RuntimeTests/TooltipSeparator/src/m
 fixtureSources.resources.srcDir rootProject.file('RuntimeTests/TooltipSeparator/src/main/resources')
 def filesService = objects.newInstance(FixtureFileOperations).files
 def production = project(":${loader}").tasks.named('jar').flatMap { it.archiveFile }
-def fixture = fabric ? tasks.register('separatorSpikeJar', Jar) {
-    archiveClassifier = 'separator-spike'
+def fixture = fabric ? tasks.register('tooltipSeparatorTestJar', Jar) {
+    archiveClassifier = 'tooltip-separator-tests'
     from fixtureSources.output
 } : tasks.named('jar')
-def reports = layout.buildDirectory.dir('reports/tooltip-separator-spike')
-def runs = layout.buildDirectory.dir('run/tooltipSeparatorSpike')
+def baseline = fabric ? minecraft_version : neoforge_version
+def reports = layout.buildDirectory.dir("reports/tooltip-separators/${baseline}")
+def runs = layout.buildDirectory.dir("run/tooltipSeparators/${baseline}")
+def plainOnly = providers.gradleProperty('tooltipSeparatorPlainOnly').map { it.toBoolean() }.getOrElse(false)
 def bounded = rootProject.ext.runBoundedGradleTask
 def artifacts = fabric ? [
         'LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar': '1f464710ca16c7dd069aa0c54088ddd1b72c1fff33609c13fce547f1ae444d41',
@@ -26,36 +28,37 @@ def artifacts = fabric ? [
     def directory = runs.map { it.dir(phase.toLowerCase(Locale.ROOT)) }
     def markers = reports.map { it.dir(phase.toLowerCase(Locale.ROOT)) }
     def properties = [
-            'mismatchedboots.test.separatorSpike': 'true',
+            'mismatchedboots.test.separatorTest': 'true',
             'mismatchedboots.test.separatorSeed': (phase == 'Seed').toString(),
             'mismatchedboots.test.separatorLoader': loader,
             'mismatchedboots.test.separatorDecorated': (phase == 'Legendary').toString(),
+            'mismatchedboots.test.separatorCapture': (!plainOnly).toString(),
             'mismatchedboots.test.hideClientWindow': 'true',
             'mismatchedboots.runtimetest.markers': markers.get().asFile.absolutePath
     ]
     if (fabric) {
-        loom.runs.create("separatorSpike${phase}") {
+        loom.runs.create("tooltipSeparator${phase}") {
             inherit phase == 'Seed' ? loom.runs.server : loom.runs.client
             source('networkTest'); ideConfigGenerated(false)
-            runDir("build/run/tooltipSeparatorSpike/${phase.toLowerCase(Locale.ROOT)}")
+            runDir("build/run/tooltipSeparators/${baseline}/${phase.toLowerCase(Locale.ROOT)}")
             properties.each { key, value -> property(key, value) }
             if (phase == 'Seed') { programArgs('--nogui') }
-            else { programArgs('--quickPlaySingleplayer', 'tooltip', '--username', 'SeparatorSpike', '--width', '1920', '--height', '1080') }
+            else { programArgs('--quickPlaySingleplayer', 'tooltip', '--username', 'SeparatorTest', '--width', '1920', '--height', '1080') }
             vmArg('-Xmx1G')
         }
     } else {
-        neoForge.runs.create("separatorSpike${phase}") {
+        neoForge.runs.create("tooltipSeparator${phase}") {
             disableIdeRun(); gameDirectory = directory.get().asFile
             properties.each { key, value -> systemProperty(key, value) }
             if (phase == 'Seed') { server(); programArgument('--nogui') }
             else {
                 client()
-                ['--quickPlaySingleplayer', 'tooltip', '--username', 'SeparatorSpike', '--width', '1920', '--height', '1080'].each { programArgument(it) }
+                ['--quickPlaySingleplayer', 'tooltip', '--username', 'SeparatorTest', '--width', '1920', '--height', '1080'].each { programArgument(it) }
             }
             jvmArgument('-Xmx1G')
         }
     }
-    def prepare = tasks.register("prepareSeparatorSpike${phase}") {
+    def prepare = tasks.register("prepareTooltipSeparator${phase}") {
         dependsOn production, fixture
         doLast {
             def target = directory.get().asFile
@@ -95,15 +98,15 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             }
         }
     }
-    tasks.named("runSeparatorSpike${phase}") { dependsOn prepare }
+    tasks.named("runTooltipSeparator${phase}") { dependsOn prepare }
 }
-tasks.register('verifyTooltipSeparatorSpike') {
+tasks.register('verifyTooltipSeparators') {
     group = 'verification'
     description = 'Observes production tooltip separators with and without Legendary Tooltips'
     doLast {
-        ['Seed', 'Plain', 'Legendary'].each { phase ->
+        (plainOnly ? ['Seed', 'Plain'] : ['Seed', 'Plain', 'Legendary']).each { phase ->
             def log = reports.get().file("${phase.toLowerCase(Locale.ROOT)}.log").asFile
-            bounded(":RuntimeTests:${loader}:runSeparatorSpike${phase}", log, 240)
+            bounded(":RuntimeTests:${loader}:runTooltipSeparator${phase}", log, 240)
             def markerDirectory = reports.get().dir(phase.toLowerCase(Locale.ROOT)).asFile
             def failure = new File(markerDirectory, 'separator-failure.txt')
             if (failure.isFile()) { throw new GradleException(failure.text) }
@@ -111,7 +114,7 @@ tasks.register('verifyTooltipSeparatorSpike') {
                 throw new GradleException("Incomplete dedicated-server separator collection: ${log}")
             }
             if (phase != 'Seed' && !new File(markerDirectory, 'separator-success.txt').isFile()) {
-                throw new GradleException("Incomplete separator spike: ${log}")
+                throw new GradleException("Incomplete production separator checks: ${log}")
             }
             def errors = log.readLines().findAll { it.contains('/ERROR]') }
             if (!errors.isEmpty()) { throw new GradleException("Unexpected separator errors: ${errors}") }

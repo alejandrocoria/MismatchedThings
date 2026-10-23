@@ -1185,17 +1185,24 @@ closing the reviewed scope without a new automated run or manual loader matrix.
 Default .114 compilation/tests and loader assemblies were restored; dependency
 checks, all 12 corrupted-artifact negatives and production archive isolation passed.
 
-## Shared tooltip separator spike
+## Shared tooltip separators
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipSeparatorSpike :RuntimeTests:Fabric:verifyTooltipSeparatorSpike --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipSeparators :RuntimeTests:Fabric:verifyTooltipSeparators --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipSeparators '-Pneoforge_version=26.1.2.99' '-PtooltipSeparatorPlainOnly=true' --console=plain
 ```
 
-These legacy-named commands now observe
-[production A](../local-docs/TOOLTIP-SEPARATORS-IMPLEMENTATION.md#71-block-a--2026-10-23),
-not the [earlier experiment](../local-docs/TOOLTIP-SEPARATORS-EXPLORATION.md).
+These maintained commands observe production, not the
+[earlier experiment](../local-docs/TOOLTIP-SEPARATORS-EXPLORATION.md). The
+[implementation record](../local-docs/TOOLTIP-SEPARATORS-IMPLEMENTATION.md) owns dated
+technical results and the separate owner checklist. No executable spike aliases
+remain. `tooltipSeparatorPlainOnly` restricts the gate to Seed/Plain and disables
+screenshots; the property is forwarded to its bounded child Gradle processes.
 The formatter, shared solid row and loader conversions belong to production;
-the fixture contains only scenarios and a read-only `extractImage` observer.
+the fixture contains scenarios and read-only `extractImage` observers. Two narrow
+scenario input hooks emulate another mod copying all tooltip text or supplying
+the actual native `BundleContents` image from a bundle. No test-owned separator
+marker, factory or renderer is present; bundle drawing also remains native.
 Test marker insertion, drawing, gather/factory and conversion replacements were
 removed. Each task generates an isolated seed world and runs Plain and Legendary
 clients, hidden and muted. The dedicated seed server must also collect real
@@ -1203,17 +1210,23 @@ production mixed tooltips and emit its own success marker.
 The three optional presentation JARs are hash-pinned from the corresponding
 loader's indev mod directory, read-only; no owner config/world is copied or edited.
 
-On 2026-10-23, production A passed four scenes per client: primary/inverse/advanced/ordinary
-controls, content/resizing widths and unchanged text/root/history. Real Iceberg
-wrapping retains both Fabric markers. Plain Fabric's overlong unwrapped-lore
-overflow is retained and documented, not turned into a new layout policy.
+Six scenes per client check primary/inverse/advanced/ordinary controls, width
+changes/resizing, unchanged text/root/history, multiline source boundaries,
+blank-gap fallback after text copying and coexistence/order/non-overlap with
+the native bundle image. Real Iceberg wrapping retains both Fabric markers.
+Plain Fabric's overlong unwrapped-lore overflow is retained, not fixed.
 Reports, strict ERROR gates and one relevant screenshot per client are under
-`<loader>/build/reports/tooltip-separator-spike/{plain,legendary}/`, with wrapper
+`<loader>/build/reports/tooltip-separators/<baseline>/{plain,legendary}/`, with wrapper
 logs beside those directories. Runs/worlds stay under
-`<loader>/build/run/tooltipSeparatorSpike/`. A's record owns production results
-(Fabric Loader 0.19.5 / API 0.155.0+26.1.2 and NeoForge .114), 23 Common tooltip
-tests, archive isolation and the two server probes. B will consolidate names and
-supported-floor coverage; owner visual acceptance remains pending.
+`<loader>/build/run/tooltipSeparators/<baseline>/`. The baseline is `26.1.2` on
+Fabric and the full NeoForge version on NeoForge, preserving floor/default
+evidence separately. One focused baseline capture combines multiline spacing
+and graphical coexistence; the .99 plain-only smoke makes no screenshots.
+Historical spike/A commands and paths in dated records are not current entry
+points. Owner visual acceptance is separate from this technical gate.
+The owner [approved that visual handoff on 2026-10-23](../local-docs/TOOLTIP-SEPARATORS-IMPLEMENTATION.md#73-owner-visual-acceptance--2026-10-23),
+retaining the implemented spacing/tone and closing the bounded plan. Recording
+that confirmation did not require another automatic run or screenshot suite.
 
 ## Item geometry coverage
 

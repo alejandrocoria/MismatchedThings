@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceClientTest;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceServerTest;
+import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorClientTest;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorObservations;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorServerProbe;
 import net.minecraft.client.Minecraft;
@@ -18,7 +19,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (SeparatorObservations.enabled()) {
-            if (FMLEnvironment.getDist().isClient()) { SeparatorNeoForgeSpike.register(); }
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SeparatorClientTest.tick(Minecraft.getInstance()));
+            }
             else { NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> SeparatorServerProbe.run(event.getServer())); }
             return;
         }

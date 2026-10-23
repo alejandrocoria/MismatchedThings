@@ -3,7 +3,9 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.separator.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "SeparatorObservationMixin"
+    "BundleObservationMixin",
+    "SeparatorObservationMixin",
+    "TooltipInputsMixin"
   ],
   "injectors": {"defaultRequire": 1}
 }

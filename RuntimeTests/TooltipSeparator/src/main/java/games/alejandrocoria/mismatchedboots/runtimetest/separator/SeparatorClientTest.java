@@ -17,25 +17,29 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.ItemLore;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 /** Production presentation checks with a read-only rendering witness, not paid gameplay coverage. */
-public final class SeparatorClientSpike {
+public final class SeparatorClientTest {
     private static final StringBuilder REPORT = new StringBuilder();
     private static Scene scene;
     private static List<ItemStack> roots;
+    private static ItemStack bundle, bundleBefore;
     private static int ticks, phase;
     private static int compactWidth, wideWidth;
     private static boolean finished, screenshotPending, screenshotDone;
     private static Throwable screenshotFailure;
 
-    private SeparatorClientSpike() {}
+    private SeparatorClientTest() {}
 
     public static void tick(Minecraft client) {
         if (finished) { return; }
@@ -51,7 +55,7 @@ public final class SeparatorClientSpike {
             if (roots == null) {
                 require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0
                         && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
-                        "Spike must be hidden and muted");
+                        "Separator acceptance must be hidden and muted");
                 client.options.pauseOnLostFocus = false;
                 client.options.guiScale().set(2); client.resizeGui();
                 var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(
@@ -61,14 +65,28 @@ public final class SeparatorClientSpike {
                 wide.set(DataComponents.CUSTOM_NAME, Component.literal("Separator width and wrapping probe"));
                 wide.set(DataComponents.LORE, new ItemLore(List.of(Component.literal(
                         "Wrapped root details preserve their native layout. ".repeat(7)))));
-                roots = List.of(pair.primary(), wide, new ItemStack(Items.DIAMOND_BOOTS), wide);
+                var left = new ItemStack(Items.LEATHER_BOOTS);
+                left.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Left source detail 1"),
+                        Component.literal("Left source detail 2"), Component.literal("Left source detail 3"))));
+                var right = new ItemStack(Items.IRON_BOOTS);
+                right.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Right source detail 1"),
+                        Component.literal("Right source detail 2"))));
+                var multilinePair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(left, right));
+                require(multilinePair.isComplete(), "Multiline source fixture rejected");
+                var multiline = multilinePair.primary();
+                multiline.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Root details survive after sources"))));
+                bundle = new ItemStack(Items.BUNDLE);
+                bundle.set(DataComponents.BUNDLE_CONTENTS, new BundleContents(List.of(new ItemStackTemplate(Items.APPLE, 12),
+                        new ItemStackTemplate(Items.DIAMOND, 3))));
+                bundleBefore = bundle.copy();
+                roots = List.of(pair.primary(), wide, new ItemStack(Items.DIAMOND_BOOTS), wide, multiline, multiline);
                 configure(client); return;
             }
             if (screenshotFailure != null) { throw new AssertionError("Screenshot failed", screenshotFailure); }
             if (scene.frames < 8) { return; }
             boolean plainFabric = System.getProperty("mismatchedboots.test.separatorLoader", "").equals("Fabric")
                     && !Boolean.getBoolean("mismatchedboots.test.separatorDecorated");
-            if (phase == (plainFabric ? 0 : 3) && !screenshotDone) {
+            if (phase == 5 && Boolean.getBoolean("mismatchedboots.test.separatorCapture") && !screenshotDone) {
                 if (!screenshotPending) {
                     screenshotPending = true;
                     Screenshot.takeScreenshot(client.getMainRenderTarget(), image -> {
@@ -81,10 +99,13 @@ public final class SeparatorClientSpike {
                 return;
             }
             require(ItemStack.matches(scene.before, scene.root), "Tooltip changed root/history");
+            require(ItemStack.matches(bundleBefore, bundle), "Native graphic changed its bundle input");
             require(scene.text.equals(scene.root.getTooltipLines(Item.TooltipContext.of(client.level), client.player,
                     client.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL)
                     .stream().map(Component::getString).toList()), "Rendering changed tooltip text/order");
-            if (phase == 2) { require(SeparatorObservations.WIDTHS.isEmpty(), "Native control acquired a separator"); }
+            if (phase == 2 || phase == 4) {
+                require(SeparatorObservations.WIDTHS.isEmpty(), "Ordinary item/copied-text fallback acquired a separator");
+            }
             else {
                 require(SeparatorObservations.WIDTHS.size() >= 2, "Graphical separator lost during conversion/wrapping");
                 require(SeparatorObservations.WIDTHS.size() % 2 == 0, "One of the two separator rows was lost");
@@ -95,14 +116,24 @@ public final class SeparatorClientSpike {
                 if (phase == 1) { wideWidth = width; require(width > compactWidth, "Separator width did not adapt to content"); }
                 if (phase == 3 && !plainFabric) { require(width < wideWidth, "Separator width did not adapt after wrapping/resizing"); }
             }
+            if (phase == 5) {
+                var draws = SeparatorObservations.DRAWS;
+                require(draws.size() >= 3, "Native bundle graphic was lost");
+                var last = draws.subList(draws.size() - 3, draws.size());
+                require(!last.get(0).separator() && last.get(1).separator() && last.get(2).separator(),
+                        "Native graphic/separator order changed");
+                require(last.get(0).y() + last.get(0).height() <= last.get(1).y()
+                        && last.get(1).y() + last.get(1).height() <= last.get(2).y(),
+                        "Native graphic and source separator rows overlap");
+            } else { require(SeparatorObservations.DRAWS.stream().allMatch(SeparatorObservations.Draw::separator), "Unexpected native graphic"); }
             REPORT.append("phase=").append(phase).append(" width=")
                     .append(SeparatorObservations.WIDTHS.stream().findFirst().orElse(0))
                     .append(" productionRowsObserved=").append(SeparatorObservations.WIDTHS.size())
                     .append(" gui=").append(client.getWindow().getGuiScaledWidth()).append('x')
                     .append(client.getWindow().getGuiScaledHeight()).append('\n');
             if (++phase < roots.size()) { configure(client); return; }
-            REPORT.append("PRODUCTION normal/inverse/advanced/native-control; read-only witness; renderer-owned width; text unchanged; root/history immutable\n");
-            if (plainFabric) { REPORT.append("Stock Fabric retains its over-wide unwrapped lore; compact screenshot only, no native overflow fix\n"); }
+            REPORT.append("PRODUCTION normal/inverse/advanced/native-control; multiline source boundaries; copied-text fallback; native bundle order/non-overlap; immutable root/history/bundle\n");
+            if (plainFabric) { REPORT.append("Stock Fabric retains its over-wide unwrapped stress lore; final multiline screenshot fits without changing native layout\n"); }
             NetworkAcceptanceFiles.write("separator-report.txt", REPORT.toString());
             NetworkAcceptanceFiles.write("separator-success.txt", "passed\n");
             finished = true; client.stop();
@@ -113,14 +144,39 @@ public final class SeparatorClientSpike {
     }
 
     private static void configure(Minecraft client) {
-        client.options.advancedItemTooltips = phase == 1 || phase == 3;
+        client.options.advancedItemTooltips = phase == 1 || phase == 3 || phase == 5;
         var root = roots.get(phase);
+        SeparatorObservations.input = root;
+        SeparatorObservations.copyText = false;
+        SeparatorObservations.image = Optional.empty();
         var marked = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player,
                 client.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
         require(marked.stream().filter(TooltipSeparator.class::isInstance).count() == (phase == 2 ? 0 : 2), "Wrong production source boundaries");
+        if (phase >= 4) {
+            int first = marked.indexOf(TooltipSeparator.INSTANCE), second = marked.lastIndexOf(TooltipSeparator.INSTANCE);
+            require(index(marked, "Left source detail 3") < first && first < index(marked, "Right source detail 1")
+                    && index(marked, "Right source detail 2") < second && second < index(marked, "Root details survive after sources"),
+                    "Multiline source/root boundaries changed");
+        }
+        if (phase == 4) {
+            SeparatorObservations.copyText = true;
+            var copied = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
+            require(copied.stream().noneMatch(TooltipSeparator.class::isInstance), "External text copy retained marker identity");
+            require(marked.stream().map(Component::getString).toList().equals(copied.stream().map(Component::getString).toList()),
+                    "Copied-text fallback lost/reordered source or root information");
+            marked = copied;
+        }
+        if (phase == 5) { SeparatorObservations.image = Optional.of(bundle.getTooltipImage().orElseThrow()); }
         SeparatorObservations.WIDTHS.clear();
+        SeparatorObservations.DRAWS.clear();
         if (phase == 3) { GLFW.glfwSetWindowSize(client.getWindow().handle(), 1280, 720); }
+        if (phase == 5) { GLFW.glfwSetWindowSize(client.getWindow().handle(), 1920, 1080); }
         scene = new Scene(root, marked.stream().map(Component::getString).toList()); client.setScreen(scene);
+    }
+
+    private static int index(List<Component> lines, String text) {
+        for (int i = 0; i < lines.size(); i++) { if (lines.get(i).getString().equals(text)) { return i; } }
+        throw new AssertionError("Missing source/root detail: " + text);
     }
 
     private static void require(boolean condition, String message) {
