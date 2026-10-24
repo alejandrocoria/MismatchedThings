@@ -90,8 +90,16 @@ public final class MixedBootsTooltipFormatter {
             return;
         }
 
+        if (flag.isAdvanced()) {
+            tooltip.accept(sourceId(source));
+        }
         appendSourceDetails(source, context, hideGameplayComponents(sourceDisplay), flag,
                 sourceTooltips.apply(source, tooltip));
+    }
+
+    private static Component sourceId(ItemStack source) {
+        return Component.literal(BuiltInRegistries.ITEM.getKey(source.getItem()).toString())
+                .withStyle(ChatFormatting.DARK_GRAY);
     }
 
     private static Component sourceName(ItemStack source) {
@@ -134,8 +142,7 @@ public final class MixedBootsTooltipFormatter {
     }
 
     private static void removeAdvancedStackDiagnostics(ItemStack source, List<Component> details) {
-        Component itemId = Component.literal(BuiltInRegistries.ITEM.getKey(source.getItem()).toString())
-                .withStyle(ChatFormatting.DARK_GRAY);
+        Component itemId = sourceId(source);
         int componentCount = source.getComponents().size();
         if (componentCount > 0) {
             Component countLine = Component.translatable("item.components", componentCount)

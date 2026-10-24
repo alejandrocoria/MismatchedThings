@@ -1,10 +1,12 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.separator;
 
+import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -13,6 +15,7 @@ import net.minecraft.client.gui.screens.BackupConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Item;
@@ -132,7 +135,7 @@ public final class SeparatorClientTest {
                     .append(" gui=").append(client.getWindow().getGuiScaledWidth()).append('x')
                     .append(client.getWindow().getGuiScaledHeight()).append('\n');
             if (++phase < roots.size()) { configure(client); return; }
-            REPORT.append("PRODUCTION normal/inverse/advanced/native-control; multiline source boundaries; copied-text fallback; native bundle order/non-overlap; immutable root/history/bundle\n");
+            REPORT.append("PRODUCTION normal/inverse/advanced/native-control; advanced-only dark-gray source IDs below names, no duplicates; multiline source boundaries; copied-text fallback; native bundle order/non-overlap; immutable root/history/bundle\n");
             if (plainFabric) { REPORT.append("Stock Fabric retains its over-wide unwrapped stress lore; final multiline screenshot fits without changing native layout\n"); }
             NetworkAcceptanceFiles.write("separator-report.txt", REPORT.toString());
             NetworkAcceptanceFiles.write("separator-success.txt", "passed\n");
@@ -152,6 +155,20 @@ public final class SeparatorClientTest {
         var marked = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player,
                 client.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
         require(marked.stream().filter(TooltipSeparator.class::isInstance).count() == (phase == 2 ? 0 : 2), "Wrong production source boundaries");
+        if (phase != 2) {
+            var data = ModContent.getMixedBootsData(root).orElseThrow();
+            var sources = List.of(data.left().source(), data.right().source());
+            int[] headers = {1, marked.indexOf(TooltipSeparator.INSTANCE) + 1};
+            for (int side = 0; side < sources.size(); side++) {
+                Component id = Component.literal(BuiltInRegistries.ITEM.getKey(sources.get(side).getItem()).toString())
+                        .withStyle(ChatFormatting.DARK_GRAY);
+                require(marked.stream().filter(id::equals).count() == (client.options.advancedItemTooltips ? 1 : 0),
+                        "Missing, duplicated or non-advanced source ID: " + id.getString());
+                if (client.options.advancedItemTooltips) {
+                    require(marked.get(headers[side] + 1).equals(id), "Source ID not directly below its name");
+                }
+            }
+        }
         if (phase >= 4) {
             int first = marked.indexOf(TooltipSeparator.INSTANCE), second = marked.lastIndexOf(TooltipSeparator.INSTANCE);
             require(index(marked, "Left source detail 3") < first && first < index(marked, "Right source detail 1")

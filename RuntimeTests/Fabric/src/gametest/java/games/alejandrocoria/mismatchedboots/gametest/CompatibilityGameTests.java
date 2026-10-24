@@ -213,9 +213,12 @@ public final class CompatibilityGameTests {
                 "advanced source dyed-marker lines");
         helper.assertTrue(indexOfText(primaryAdvanced, ModContent.MIXED_BOOTS_ID.toString()) >= 0,
                 "Advanced tooltip omitted the registered root item ID: " + primaryAdvanced);
-        helper.assertTrue(indexOfText(primaryAdvanced, "minecraft:leather_boots") < 0
-                        && indexOfText(primaryAdvanced, "minecraft:golden_boots") < 0,
-                "Advanced tooltip exposed historical source diagnostics: " + primaryAdvanced);
+        for (String sourceId : List.of("minecraft:leather_boots", "minecraft:golden_boots")) {
+            helper.assertValueEqual(primaryAdvanced.stream().filter(line -> line.getString().equals(sourceId)).count(),
+                    1L, "advanced source ID count: " + sourceId);
+            helper.assertTrue(indexOfText(primaryNormal, sourceId) < 0,
+                    "Normal tooltip exposed an advanced source ID: " + sourceId);
+        }
 
         helper.assertTrue(ItemStack.matches(leftBefore, left) && ItemStack.matches(rightBefore, right),
                 "Workbench tooltip fixture inputs were mutated");

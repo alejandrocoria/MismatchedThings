@@ -284,7 +284,7 @@ public final class SilentGearTooltipClientTest {
                 }
                 int header = side(expected, side == 0 ? "left" : "right");
                 require(header >= 0, "Existing side identity disappeared");
-                expected.addAll(header + 1, block);
+                expected.addAll(header + 1 + (flag.isAdvanced() ? 1 : 0), block);
             }
             var actual = capture(client, root, flag, true);
             require(expected.equals(actual), "Mixed order/style/root text differs from isolated native source insertion");

@@ -1388,7 +1388,9 @@ loader's indev mod directory, read-only; no owner config/world is copied or edit
 Six scenes per client check primary/inverse/advanced/ordinary controls, width
 changes/resizing, unchanged text/root/history, multiline source boundaries,
 blank-gap fallback after text copying and coexistence/order/non-overlap with
-the native bundle image. Real Iceberg wrapping retains both Fabric markers.
+the native bundle image. They also require advanced-only dark-gray source IDs
+directly below their names, exactly once per source. Real Iceberg wrapping
+retains both Fabric markers.
 Plain Fabric's overlong unwrapped-lore overflow is retained, not fixed.
 Reports, strict ERROR gates and one relevant screenshot per client are under
 `<loader>/build/reports/tooltip-separators/<baseline>/{plain,legendary}/`, with wrapper

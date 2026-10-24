@@ -167,11 +167,13 @@ class MixedBootsTooltipFormatterTest {
         left.set(DataComponents.TOOLTIP_DISPLAY,
                 new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
 
-        List<Component> lines = format(left, boots(Items.GOLDEN_BOOTS, 1.0));
+        for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
+            List<Component> lines = format(left, boots(Items.GOLDEN_BOOTS, 1.0), flag);
 
-        assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
-        assertInstanceOf(TooltipSeparator.class, lines.get(1));
-        assertFalse(hasTranslation(lines, TRIM_TITLE));
+            assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
+            assertInstanceOf(TooltipSeparator.class, lines.get(1));
+            assertFalse(hasTranslation(lines, TRIM_TITLE));
+        }
     }
 
     @Test
@@ -215,13 +217,20 @@ class MixedBootsTooltipFormatterTest {
                         output.accept(Component.literal(source.is(Items.IRON_BOOTS) ? "Left block" : "Right block"));
                         return output;
                     });
-            assertEquals(6, lines.size());
+            int idLines = flag.isAdvanced() ? 1 : 0;
+            assertEquals(6 + 2 * idLines, lines.size());
             assertSide(lines.get(0), LEFT_KEY, left.getHoverName());
-            assertEquals(Component.literal("Left block"), lines.get(1));
-            assertInstanceOf(TooltipSeparator.class, lines.get(2));
-            assertSide(lines.get(3), RIGHT_KEY, right.getHoverName());
-            assertEquals(Component.literal("Right block"), lines.get(4));
-            assertInstanceOf(TooltipSeparator.class, lines.get(5));
+            assertEquals(Component.literal("Left block"), lines.get(1 + idLines));
+            assertInstanceOf(TooltipSeparator.class, lines.get(2 + idLines));
+            assertSide(lines.get(3 + idLines), RIGHT_KEY, right.getHoverName());
+            assertEquals(Component.literal("Right block"), lines.get(4 + 2 * idLines));
+            assertInstanceOf(TooltipSeparator.class, lines.get(5 + 2 * idLines));
+            if (flag.isAdvanced()) {
+                assertEquals(Component.literal("minecraft:iron_boots").withStyle(ChatFormatting.DARK_GRAY),
+                        lines.get(1));
+                assertEquals(Component.literal("minecraft:golden_boots").withStyle(ChatFormatting.DARK_GRAY),
+                        lines.get(5));
+            }
         }
     }
 
@@ -253,11 +262,12 @@ class MixedBootsTooltipFormatterTest {
     }
 
     @Test
-    void advancedTooltipUsesAdvancedSourceComponentsWithoutStackDiagnostics() {
+    void advancedTooltipPlacesSourceIdsBelowNamesWithoutDuplicatingNativeDiagnostics() {
         ItemStack left = boots(Items.LEATHER_BOOTS, 1.0);
         left.set(DataComponents.DYED_COLOR, new DyedItemColor(0x123456));
         left.setDamageValue(7);
         ItemStack right = boots(Items.IRON_BOOTS, 2.0);
+        right.set(DataComponents.CUSTOM_NAME, Component.literal("Traveler's boots"));
         ItemStack root = boots(Items.DIAMOND_BOOTS, 3.0);
         root.setDamageValue(11);
 
@@ -268,8 +278,15 @@ class MixedBootsTooltipFormatterTest {
         assertTrue(hasTranslation(lines, "item.color"));
         assertEquals(1, countTranslation(lines, "item.durability"));
         assertEquals(1, countTranslation(lines, "item.components"));
-        assertFalse(lines.contains(
-                Component.literal("minecraft:leather_boots").withStyle(ChatFormatting.DARK_GRAY)));
+        Component leftId = Component.literal("minecraft:leather_boots").withStyle(ChatFormatting.DARK_GRAY);
+        Component rightId = Component.literal("minecraft:iron_boots").withStyle(ChatFormatting.DARK_GRAY);
+        assertEquals(leftId, lines.get(1));
+        assertEquals(rightId, lines.get(lines.indexOf(TooltipSeparator.INSTANCE) + 2));
+        assertEquals(1, lines.stream().filter(leftId::equals).count());
+        assertEquals(1, lines.stream().filter(rightId::equals).count());
+        List<Component> normal = format(left, right);
+        assertFalse(normal.contains(leftId));
+        assertFalse(normal.contains(rightId));
         assertTrue(lines.contains(
                 Component.literal("minecraft:diamond_boots").withStyle(ChatFormatting.DARK_GRAY)));
     }
