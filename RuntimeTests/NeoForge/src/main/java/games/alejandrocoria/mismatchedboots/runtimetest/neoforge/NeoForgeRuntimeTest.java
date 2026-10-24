@@ -18,6 +18,12 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.enabled()) {
+            games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.initialize(eventBus);
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
+                    games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.tick(event.getServer()));
+            return;
+        }
         if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.enabled()) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.tick(event.getServer()));
             if (FMLEnvironment.getDist().isClient()) {

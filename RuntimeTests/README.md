@@ -36,6 +36,30 @@ only for compilation; test classes, metadata, and fixtures are not included in
 the production artifacts. No runtime test infrastructure is installed in the
 normal indev client/server runs.
 
+## Missing-mod complete recovery — research only
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsSpike
+```
+
+Two disposable worlds each cross three independent servers: write with pinned
+MA/Cucumber and JDT, save with them removed, then restore the same versions.
+The native control demonstrates loss; an opt-in fixture-only ItemStack codec
+archives entire unreadable component values. Eight barrel slots compare complete
+encoded stacks, current edits, typed NBT, paid-root FE, unknown attribute/equip
+sound references, vanilla controls and a non-equippable bare shell. Candidate
+stacks also exercise the real network codec while absent and restored.
+
+The archive component and codec are not packaged in production. The candidate
+is not a production recovery implementation: suspension, payload bounds, conflict
+handling and cross-loader/client lifecycle acceptance are still required. Runs
+and reports are under `NeoForge/build/{run,reports}/missing-mods/<baseline>/`.
+Artifact pins and the bounded runner are in
+[missing-mods-spike.gradle](../gradle/missing-mods-spike.gradle).
+Optional `-PmissingModsCases=candidate` and
+`-PmissingModsStages=write,absent,restore` select research phases; later phases
+require their earlier world/baseline. `write` resets only that disposable run.
+
 ## Mystical Agriculture augments — production effects
 
 ```powershell

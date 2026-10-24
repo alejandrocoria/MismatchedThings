@@ -1,0 +1,101 @@
+// Research only: the same disposable world crosses three independent JVMs.
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = rootProject.ext.runBoundedGradleTask
+def artifacts = [
+        'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
+        'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821',
+        'justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
+].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
+
+['Control', 'Candidate'].each { variant ->
+    def mode = variant.toLowerCase(Locale.ROOT)
+    def directory = layout.buildDirectory.dir("run/missing-mods/${neoforge_version}/${mode}")
+    def reports = layout.buildDirectory.dir("reports/missing-mods/${neoforge_version}/${mode}")
+    ['Write', 'Absent', 'Restore'].each { phase ->
+        def stage = phase.toLowerCase(Locale.ROOT)
+        def markers = reports.map { it.dir(stage) }
+        neoForge.runs.create("missingMods${variant}${phase}") {
+            server(); disableIdeRun(); programArgument('--nogui')
+            gameDirectory = directory.get().asFile
+            systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.test.missingModsCase', mode)
+            systemProperty('mismatchedboots.test.missingModsStage', stage)
+            systemProperty('mismatchedboots.test.missingModsBaseline', new File(reports.get().asFile, 'baseline.nbt').absolutePath)
+            jvmArgument('-Xmx1G')
+        }
+        def prepare = tasks.register("prepareMissingMods${variant}${phase}") {
+            dependsOn(':NeoForge:jar', tasks.named('jar'))
+            doLast {
+                if (stage != 'absent') {
+                    artifacts.each { artifact, hash ->
+                        if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
+                            throw new GradleException("Missing/unexpected pinned missing-mod fixture: ${artifact}")
+                        }
+                    }
+                }
+                def safeDelete = { File target ->
+                    if (!target.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+                        throw new GradleException("Refusing fixture cleanup outside build: ${target}")
+                    }
+                    fixtureFiles.delete { delete target }
+                }
+                if (stage == 'write') {
+                    safeDelete(directory.get().asFile)
+                    // Do not delete process.log: the bounded parent already opened it.
+                    safeDelete(new File(reports.get().asFile, 'baseline.nbt'))
+                } else if (!new File(directory.get().asFile, 'world/level.dat').isFile()) {
+                    throw new GradleException('Missing previous missing-mod world; run write, absent and restore in order')
+                }
+                safeDelete(new File(directory.get().asFile, 'mods'))
+                fixtureFiles.delete { delete fileTree(markers) { include 'missing-mods-*.txt' } }
+                markers.get().asFile.mkdirs()
+                fixtureFiles.copy {
+                    from(productionJar, fixtureJar)
+                    if (stage != 'absent') { from artifacts.keySet() }
+                    into(new File(directory.get().asFile, 'mods'))
+                }
+                new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+                new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+            }
+        }
+        tasks.named("runMissingMods${variant}${phase}") { dependsOn prepare }
+    }
+}
+
+tasks.register('verifyMissingModsSpike') {
+    group = 'verification'
+    description = 'Researches complete missing-mod persistence against an unmodified codec control'
+    doLast {
+        def selectedCases = providers.gradleProperty('missingModsCases').getOrElse('control,candidate').split(',')
+        def selectedStages = providers.gradleProperty('missingModsStages').getOrElse('write,absent,restore').split(',')
+        selectedCases.each { mode ->
+            if (!(mode in ['control', 'candidate'])) { throw new GradleException("Unknown case ${mode}") }
+            selectedStages.each { stage ->
+                if (!(stage in ['write', 'absent', 'restore'])) { throw new GradleException("Unknown stage ${stage}") }
+                def markers = layout.buildDirectory.dir("reports/missing-mods/${neoforge_version}/${mode}/${stage}").get().asFile
+                def log = new File(markers, 'process.log')
+                runBounded(":RuntimeTests:NeoForge:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
+                def failure = new File(markers, 'missing-mods-failure.txt')
+                if (failure.isFile()) { throw new GradleException(failure.text) }
+                def report = new File(markers, 'missing-mods-report.txt')
+                if (!new File(markers, 'missing-mods-success.txt').isFile() || !report.isFile()) {
+                    throw new GradleException("Missing spike result; see ${log}")
+                }
+                if (log.readLines().any { it.contains('/ERROR]') || mode == 'candidate' && it.contains('Failed to decode value') }) {
+                    throw new GradleException("Unexpected spike decoding/runtime diagnostic; see ${log}")
+                }
+                logger.lifecycle("${mode}/${stage}: ${report.text.trim()}; report: ${report}")
+            }
+        }
+    }
+}
