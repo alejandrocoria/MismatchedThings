@@ -28,7 +28,7 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
         catch (Exception | LinkageError failure) {
             Constants.LOG.warn("Could not inspect Mystical Agriculture augment API", failure); return List.of();
         }
-        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin"));
+        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin"));
         try {
             ClassNode stack = MixinService.getService().getBytecodeProvider().getClassNode("net.minecraft.world.item.ItemStack");
             // NeoForge retains vanilla's ServerPlayer delegator as well as the real LivingEntity body.
@@ -49,6 +49,9 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
         } else if (node.name.equals(MysticalAugmentsShape.UTILS)) {
             MysticalAugmentsShape.publish(node, MysticalAugmentsCompatibility.EQUIPMENT_PROOF, MysticalAugmentsShape.equipment(node));
         } else {
+            if (node.name.equals(MysticalAugments.Family.HEALTH_BOOST.nativeClass().replace('.', '/'))) {
+                MysticalAugmentsShape.publish(node, MysticalAugmentsCompatibility.HEALTH_PROOF, MysticalAugmentsShape.healthCleanup(node));
+            }
             for (var family : MysticalAugments.Family.values()) {
                 if (family.route == MysticalAugments.Route.ARMOR && node.name.equals(family.nativeClass().replace('.', '/'))) {
                     MysticalAugmentsShape.publish(node, MysticalAugmentsCompatibility.TICK_PROOF, MysticalAugmentsShape.armorTick(node));

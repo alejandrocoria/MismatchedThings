@@ -6,9 +6,9 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /** Native test API helpers; no candidate effect or refund owner remains. */
-public final class MysticalAugmentsBridge {
+public final class MysticalNativeTestApi {
 
-    private MysticalAugmentsBridge() {}
+    private MysticalNativeTestApi() {}
 
     public static boolean enabled() {
         return !System.getProperty("mismatchedboots.test.mysticalAugments", "").isEmpty();

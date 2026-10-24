@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** In-process native event probes, not a connected client or a production integration. */
+/** Packaged production scenarios and native controls; connected acceptance is a separate shared fixture. */
 public final class MysticalAugmentsProbe {
     public interface Platform {
         String loader();
@@ -89,7 +89,7 @@ public final class MysticalAugmentsProbe {
         var pair = MixedBootsFactory.createPair(jump, new ItemStack(Items.DIAMOND_BOOTS));
         var player = player(server);
         player.setItemSlot(EquipmentSlot.FEET, pair.primary());
-        require(MysticalAugmentsBridge.nativeAugments(pair.primary()).isEmpty(), "Native lookup recognizes mixed");
+        require(MysticalNativeTestApi.nativeAugments(pair.primary()).isEmpty(), "Native lookup recognizes mixed");
         for (ItemStack stack : List.of(jump, pair.primary(), pair.inverse())) {
             player.removeAllEffects(); player.setItemSlot(EquipmentSlot.FEET, stack);
             var history = ModContent.getMixedBootsData(stack);
@@ -252,9 +252,9 @@ public final class MysticalAugmentsProbe {
             for (var boots : List.of(nativeBoots, pair.primary(), pair.inverse())) {
                 var subject = player(server); subject.setItemSlot(EquipmentSlot.FEET, boots);
                 subject.setItemSlot(EquipmentSlot.HEAD, item("awakened_supremium_helmet", "ABSORPTION_I"));
-                @SuppressWarnings("unchecked") var augments = (List<Object>) MysticalAugmentsBridge.call(
+                @SuppressWarnings("unchecked") var augments = (List<Object>) MysticalNativeTestApi.call(
                         "com.blakebr0.mysticalagriculture.api.util.AugmentUtils", "getArmorAugments", new Class<?>[]{Player.class}, subject);
-                var ids = augments.stream().map(a -> (Identifier) MysticalAugmentsBridge.invoke(a, "getId", new Class<?>[]{})).toList();
+                var ids = augments.stream().map(a -> (Identifier) MysticalNativeTestApi.invoke(a, "getId", new Class<?>[]{})).toList();
                 subject.aiStep(); int actual = subject.getEffect(MobEffects.ABSORPTION).getAmplifier();
                 if (expected == null) { expected = ids; amplifier = actual; }
                 require(expected.equals(ids) && actual == amplifier, "Mixed FEET changed native cross-piece Absorption ordering");
@@ -272,7 +272,7 @@ public final class MysticalAugmentsProbe {
         if (death) { platform.death(subject); } else { platform.logout(subject); }
         var cacheField = Class.forName("com.blakebr0.mysticalagriculture.handler.AugmentHandler").getDeclaredField("ABILITY_CACHE");
         cacheField.setAccessible(true);
-        require(((java.util.Set<?>) MysticalAugmentsBridge.invoke(cacheField.get(null), "getCachedAbilities",
+        require(((java.util.Set<?>) MysticalNativeTestApi.invoke(cacheField.get(null), "getCachedAbilities",
                 new Class<?>[]{Player.class}, subject)).isEmpty(), "Lifecycle left native cache entries");
         var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, server.registryAccess());
         subject.saveWithoutId(output);
@@ -334,8 +334,8 @@ public final class MysticalAugmentsProbe {
         var menu = table(player);
         require(menu.getSlot(0).mayPlace(nativeBoots), "Native table positive control rejected");
         for (ItemStack root : List.of(roots.primary(), roots.inverse())) {
-            require(!menu.getSlot(0).mayPlace(root), "Spike enabled mixed table admission");
-            require(MysticalAugmentsBridge.nativeAugments(root).isEmpty(), "General native lookup was broadened");
+            require(!menu.getSlot(0).mayPlace(root), "Mixed table admission enabled unexpectedly");
+            require(MysticalNativeTestApi.nativeAugments(root).isEmpty(), "General native lookup was broadened");
         }
         for (ItemStack stack : List.of(nativeBoots.copy(), roots.primary(), roots.inverse())) {
             boolean nativeSubject = stack.getItem() == nativeBoots.getItem();
@@ -357,7 +357,7 @@ public final class MysticalAugmentsProbe {
     }
 
     private static AbstractContainerMenu table(ServerPlayer player) throws Exception {
-        Object inventory = MysticalAugmentsBridge.call("com.blakebr0.mysticalagriculture.tileentity.TinkeringTableTileEntity",
+        Object inventory = MysticalNativeTestApi.call("com.blakebr0.mysticalagriculture.tileentity.TinkeringTableTileEntity",
                 "createInventoryHandler", new Class<?>[]{});
         var type = Class.forName("com.blakebr0.mysticalagriculture.container.TinkeringTableContainer");
         return (AbstractContainerMenu) type.getConstructor(int.class, Inventory.class, inventory.getClass(), BlockPos.class)
@@ -426,8 +426,8 @@ public final class MysticalAugmentsProbe {
             player.setItemSlot(EquipmentSlot.FEET, root);
             MysticalRefundControl.reset(root, player);
             var menu = table(player);
-            require(!menu.getSlot(0).mayPlace(root) && MysticalAugmentsBridge.nativeAugments(root).isEmpty(),
-                    "Refund candidate opened table/general lookup: " + label);
+            require(!menu.getSlot(0).mayPlace(root) && MysticalNativeTestApi.nativeAugments(root).isEmpty(),
+                    "Refund adapter broadened table/general lookup: " + label);
             // Force a damageable fixture even when both native Supremium inputs carry UNBREAKABLE.
             root.remove(DataComponents.UNBREAKABLE); root.hurtAndBreak(1, player, EquipmentSlot.FEET);
             require(!root.isEmpty() && root.getDamageValue() == 1 && delivered(player).isEmpty(), "Nonbreaking wear refunded: " + label);
@@ -562,16 +562,16 @@ public final class MysticalAugmentsProbe {
         observations.append("Production consumption/delivery timing, prevented/creative/direct deletion, outside-FEET identity, cancellation/failure and nested independent roots pass; peer=").append(peer).append('.').append('\n');
     }
 
-    private static Map<Identifier, Integer> physicalAugments(ItemStack source) {
+    static Map<Identifier, Integer> physicalAugments(ItemStack source) {
         var result = new LinkedHashMap<Identifier, Integer>();
-        for (Object augment : MysticalAugmentsBridge.nativeAugments(source)) {
-            var item = (net.minecraft.world.item.Item) MysticalAugmentsBridge.invoke(augment, "getItem", new Class<?>[]{});
+        for (Object augment : MysticalNativeTestApi.nativeAugments(source)) {
+            var item = (net.minecraft.world.item.Item) MysticalNativeTestApi.invoke(augment, "getItem", new Class<?>[]{});
             result.merge(BuiltInRegistries.ITEM.getKey(item), 1, Integer::sum);
         }
         return result;
     }
 
-    private static Map<Identifier, Integer> delivered(ServerPlayer player) {
+    static Map<Identifier, Integer> delivered(ServerPlayer player) {
         var result = new LinkedHashMap<Identifier, Integer>();
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             addAugmentItem(result, player.getInventory().getItem(slot));
@@ -594,7 +594,7 @@ public final class MysticalAugmentsProbe {
     }
 
     public static ServerPlayer player(MinecraftServer server) {
-        return player(server, new GameProfile(UUID.randomUUID(), "ma-spike-" + ++playerSequence));
+        return player(server, new GameProfile(UUID.randomUUID(), "ma-test-" + ++playerSequence));
     }
 
     private static ServerPlayer player(MinecraftServer server, GameProfile profile) {
@@ -610,15 +610,15 @@ public final class MysticalAugmentsProbe {
         return player;
     }
 
-    private static ItemStack item(String name, String... augments) throws Exception {
+    static ItemStack item(String name, String... augments) throws Exception {
         var stack = new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("mysticalagriculture", name)).orElseThrow());
         var augmentType = Class.forName("com.blakebr0.mysticalagriculture.api.tinkering.Augment");
         for (int slot = 0; slot < augments.length; slot++) {
             Object augment = Class.forName("com.blakebr0.mysticalagriculture.lib.ModAugments").getField(augments[slot]).get(null);
-            MysticalAugmentsBridge.call("com.blakebr0.mysticalagriculture.api.util.AugmentUtils", "addAugment",
+            MysticalNativeTestApi.call("com.blakebr0.mysticalagriculture.api.util.AugmentUtils", "addAugment",
                     new Class<?>[]{ItemStack.class, augmentType, int.class}, stack, augment, slot);
         }
-        require(MysticalAugmentsBridge.nativeAugments(stack).size() == augments.length, "Native augment setup failed");
+        require(MysticalNativeTestApi.nativeAugments(stack).size() == augments.length, "Native augment setup failed");
         return stack;
     }
 

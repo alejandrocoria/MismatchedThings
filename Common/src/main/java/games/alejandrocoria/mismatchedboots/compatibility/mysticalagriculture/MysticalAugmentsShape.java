@@ -55,6 +55,37 @@ public final class MysticalAugmentsShape implements Opcodes {
         owner.methods.stream().filter(m -> m.name.equals(name) && m.desc.equals(descriptor)).forEach(pending::add);
     }
 
+    public static boolean healthCleanup(ClassNode owner) {
+        var roots = owner.methods.stream().filter(m -> m.name.equals("onPlayerTick")
+                && m.desc.equals("(Lnet/minecraft/world/level/Level;" + PLAYER
+                + "Lcom/blakebr0/mysticalagriculture/api/lib/AbilityCache;)V") && (m.access & ACC_STATIC) == 0).toList();
+        if (roots.size() != 1) { return false; }
+        var pending = new ArrayDeque<MethodNode>(); pending.add(roots.getFirst());
+        var seen = new HashSet<MethodNode>();
+        int registrations = 0, bridges = 0;
+        while (!pending.isEmpty()) {
+            var method = pending.removeFirst();
+            if (!seen.add(method)) { continue; }
+            for (var instruction : method.instructions) {
+                if (instruction instanceof MethodInsnNode call) {
+                    if (call.owner.equals("com/blakebr0/mysticalagriculture/api/lib/AbilityCache") && call.name.equals("add")
+                            && call.desc.equals("(Lcom/blakebr0/mysticalagriculture/api/tinkering/Augment;" + PLAYER + "Ljava/lang/Runnable;)V")) { registrations++; }
+                    if (call.owner.equals(ADAPTER) && call.name.equals("refreshHealthCleanup")
+                            && call.desc.equals("(Ljava/lang/Object;Ljava/lang/Object;" + PLAYER + ")V")) { bridges++; }
+                    if (call.owner.equals(owner.name)) { enqueue(owner, pending, call.name, call.desc); }
+                } else if (instruction instanceof InvokeDynamicInsnNode dynamic) {
+                    for (Object argument : dynamic.bsmArgs) {
+                        if (argument instanceof Handle handle && handle.getOwner().equals(owner.name)) {
+                            enqueue(owner, pending, handle.getName(), handle.getDesc());
+                        }
+                    }
+                }
+            }
+        }
+        // Only the local registration seam, not MA's whole tick body or balance constants.
+        return registrations == 1 && bridges == 1;
+    }
+
     public static boolean armorTick(ClassNode owner) {
         var methods = owner.methods.stream().filter(m -> m.name.equals("onArmorTick") && m.desc.equals("(" + STACK
                 + "Lnet/minecraft/server/level/ServerLevel;" + PLAYER + ")V") && (m.access & ACC_STATIC) == 0).toList();

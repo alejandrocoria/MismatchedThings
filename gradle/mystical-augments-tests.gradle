@@ -1,0 +1,263 @@
+// Targeted production effect/refund gates; fixture code is never packaged in production.
+def fabric = project.name == 'Fabric'
+def loader = fabric ? 'Fabric' : 'NeoForge'
+def sources = fabric ? sourceSets.networkTest : sourceSets.main
+sources.java.srcDir rootProject.file('RuntimeTests/MysticalAugments/src/main/java')
+sources.resources.srcDir rootProject.file('RuntimeTests/MysticalAugments/src/main/resources')
+def filesService = objects.newInstance(FixtureFileOperations).files
+def production = project(":${loader}").tasks.named('jar')
+def fixture = fabric ? tasks.register('mysticalAugmentsTestJar', Jar) {
+    archiveClassifier = 'mystical-augments-tests'
+    from sources.output
+} : tasks.named('jar')
+def baseline = fabric ? minecraft_version : neoforge_version
+def runs = layout.buildDirectory.dir("run/mysticalAugments/${baseline}")
+def reports = layout.buildDirectory.dir("reports/mystical-augments/${baseline}")
+def bounded = rootProject.ext.runBoundedGradleTask
+def pins = fabric ? [
+        'MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar': '58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278',
+        'Cucumber-Fabric-26.1.2-9.0.6.2.jar': '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
+] : [
+        'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
+        'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821'
+]
+def effectVariants = ['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Absent']
+def refundVariants = ['Refunds', 'RefundInner', 'RefundOuter', 'RefundMissing', 'RefundExtra']
+if (!fabric) { refundVariants.add('RefundCoexist') }
+(effectVariants + refundVariants).each { variant ->
+    def name = variant.toLowerCase(Locale.ROOT)
+    def directory = runs.map { it.dir(name) }
+    def markers = reports.map { it.dir(name) }
+    if (fabric) {
+        loom.runs.create("mysticalAugments${variant}") {
+            inherit loom.runs.server
+            source('networkTest'); ideConfigGenerated(false)
+            runDir("build/run/mysticalAugments/${baseline}/${name}")
+            property('mismatchedboots.test.mysticalAugments', name)
+            property('mixin.debug.export', 'true')
+            property('mixin.debug.export.filter', 'net.minecraft.world.item.ItemStack')
+            property('fabric-tag-conventions-v2.missingTagTranslationWarning', 'VERBOSE')
+            property('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
+            programArgs('--nogui'); vmArg('-Xmx1G')
+        }
+    } else {
+        neoForge.runs.create("mysticalAugments${variant}") {
+            server(); disableIdeRun()
+            gameDirectory = directory.get().asFile
+            systemProperty('mismatchedboots.test.mysticalAugments', name)
+            systemProperty('mixin.debug.export', 'true')
+            systemProperty('mixin.debug.export.filter', 'net.minecraft.world.item.ItemStack')
+            systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
+            programArgument('--nogui'); jvmArgument('-Xmx1G')
+        }
+    }
+    def prepare = tasks.register("prepareMysticalAugments${variant}") {
+        dependsOn production, fixture
+        doLast {
+            def buildRoot = layout.buildDirectory.get().asFile.canonicalFile.toPath()
+            [directory.get().asFile, markers.get().asFile].each { target ->
+                if (!target.canonicalFile.toPath().startsWith(buildRoot)) {
+                    throw new GradleException('MA test paths must remain inside the runtime build directory')
+                }
+            }
+            def artifacts = variant == 'Absent' ? [] : pins.collect { namePinned, hash ->
+                def artifact = rootProject.file("${loader}/runs/client/mods/${namePinned}")
+                if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                        .digest(artifact.bytes).encodeHex().toString() != hash) {
+                    throw new GradleException("Missing/unexpected MA test fixture: ${artifact}")
+                }
+                artifact
+            }
+            if (variant == 'RefundCoexist') {
+                def peer = rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar')
+                if (!peer.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(peer.bytes).encodeHex().toString()
+                        != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
+                    throw new GradleException('Missing/unexpected JDT coexistence fixture')
+                }
+                artifacts.add(peer)
+            }
+            filesService.delete { delete directory, markers }
+            def target = directory.get().asFile
+            filesService.copy {
+                from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts
+                into new File(target, 'mods')
+            }
+            new File(target, 'eula.txt').text = 'eula=true\n'
+            new File(target, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+        }
+    }
+    tasks.named("runMysticalAugments${variant}") { dependsOn prepare }
+}
+def verifyVariants = { variants ->
+        variants.each { variant ->
+            def name = variant.toLowerCase(Locale.ROOT)
+            def log = new File(reports.get().asFile, "${name}-process.log")
+            bounded(":RuntimeTests:${loader}:runMysticalAugments${variant}", log, 240)
+            if (variant == 'Absent' && log.text.readLines().any {
+                it =~ /(?i)(WARN|ERROR|Exception)/ && it =~ /(?i)(mysticalagriculture|cucumber)/
+            }) {
+                throw new GradleException("Optional absence emitted a MA/Cucumber diagnostic; see ${log}")
+            }
+            int expectedRefusals = variant == 'NoEquipment' ? 3 : variant == 'NoJump' ? 1 : 0
+            if ((log.text =~ /Mystical Agriculture mixed augment disabled:/).count != expectedRefusals) {
+                throw new GradleException("Unexpected MA feature refusal count; see ${log}")
+            }
+            int expectedRefundRefusals = variant in ['RefundMissing', 'RefundExtra'] ? 1 : 0
+            if ((log.text =~ /Mystical Agriculture refund flow incompatible/).count != expectedRefundRefusals
+                    || log.text.contains('Just Dire Things refund flow incompatible')) {
+                throw new GradleException("Unexpected refund readiness diagnostic; see ${log}")
+            }
+            def markers = reports.get().dir(name).asFile
+            def failure = new File(markers, 'mystical-augments-failure.txt')
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            def report = new File(markers, 'mystical-augments-report.txt')
+            if (!new File(markers, 'mystical-augments-success.txt').isFile() || !report.isFile()) {
+                throw new GradleException("Missing MA test evidence; see ${log}")
+            }
+            logger.lifecycle(report.text)
+        }
+}
+tasks.register('verifyMysticalAugments') {
+    group = 'verification'
+    description = 'Production MA effects, compatible peers, independent local refusals and optional absence'
+    doLast {
+        def selected = providers.gradleProperty('mysticalEffectVariants').getOrElse(effectVariants.join(',')).split(',').toList()
+        if (!selected.every { it in effectVariants }) { throw new GradleException('Unknown MA effect variant') }
+        verifyVariants(selected)
+    }
+}
+tasks.register('verifyMysticalAugmentsRefunds') {
+    group = 'verification'
+    description = 'Production conserved owner refunds after consumption, reentry, local refusals and optional absence'
+    doLast {
+        def selected = providers.gradleProperty('mysticalRefundVariants').getOrElse((refundVariants + ['Absent']).join(',')).split(',').toList()
+        if (!selected.every { it in refundVariants + ['Absent'] }) { throw new GradleException('Unknown MA refund variant') }
+        verifyVariants(selected)
+    }
+}
+
+// C shares the same pinned artifacts and scenarios on both loaders; no optional client in normal tests.
+def lifecycleReports = layout.buildDirectory.dir("reports/mystical-lifecycle/${baseline}")
+def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}")
+['Seed', 'Client', 'Rejoin', 'HealthBreak'].each { phase ->
+    def connected = phase != 'Seed'
+    def directory = lifecycleRuns.map { it.dir(connected ? 'client' : 'seed') }
+    def properties = [
+            'mismatchedboots.test.mysticalLifecycle': phase.toLowerCase(Locale.ROOT),
+            'mismatchedboots.test.mysticalClientCache': fabric ? 'false' : 'true',
+            'mismatchedboots.test.hideClientWindow': 'true',
+            'mismatchedboots.runtimetest.dismissWarnings': 'true',
+            'mismatchedboots.runtimetest.markers': lifecycleReports.get().asFile.absolutePath
+    ]
+    if (fabric) {
+        loom.runs.create("mysticalLifecycle${phase}") {
+            inherit connected ? loom.runs.client : loom.runs.server
+            source('networkTest'); ideConfigGenerated(false)
+            runDir("build/run/mysticalLifecycle/${baseline}/${connected ? 'client' : 'seed'}")
+            properties.each { key, value -> property(key, value) }
+            if (connected) { programArgs('--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080') }
+            else { programArgs('--nogui') }
+            vmArg('-Xmx1G')
+        }
+    } else {
+        neoForge.runs.create("mysticalLifecycle${phase}") {
+            disableIdeRun(); gameDirectory = directory.get().asFile
+            properties.each { key, value -> systemProperty(key, value) }
+            if (connected) {
+                client(); ['--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080'].each { programArgument(it) }
+            } else { server(); programArgument('--nogui') }
+            jvmArgument('-Xmx1G')
+        }
+    }
+    def prepare = tasks.register("prepareMysticalLifecycle${phase}") {
+        dependsOn production, fixture
+        doLast {
+            def buildRoot = layout.buildDirectory.get().asFile.canonicalFile.toPath()
+            [directory.get().asFile, lifecycleReports.get().asFile].each { target ->
+                if (!target.canonicalFile.toPath().startsWith(buildRoot)) { throw new GradleException('MA lifecycle paths must remain in runtime build') }
+            }
+            def target = directory.get().asFile
+            if (phase == 'Seed') {
+                filesService.delete { delete lifecycleRuns, lifecycleReports }
+                def artifacts = pins.collect { name, hash ->
+                    def artifact = rootProject.file("${loader}/runs/client/mods/${name}")
+                    if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
+                        throw new GradleException("Missing/unexpected MA lifecycle artifact: ${artifact}")
+                    }
+                    artifact
+                }
+                filesService.copy { from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts; into new File(target, 'mods') }
+                new File(target, 'eula.txt').text = 'eula=true\n'
+                new File(target, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+            } else if (phase in ['Client', 'HealthBreak']) {
+                def seed = lifecycleRuns.get().dir('seed').asFile
+                if (!new File(seed, 'world/level.dat').isFile() || !new File(lifecycleReports.get().asFile, 'mystical-seed-success.txt').isFile()) {
+                    throw new GradleException('MA Client requires saved Seed world')
+                }
+                filesService.delete { delete directory }
+                filesService.copy { from new File(seed, 'world'); into new File(target, 'saves/mystical') }
+                filesService.copy { from new File(seed, 'mods'); into new File(target, 'mods') }
+                new File(target, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
+                def config = new File(target, 'config'); config.mkdirs()
+                new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+            } else if (!new File(lifecycleReports.get().asFile, 'mystical-client-success.txt').isFile()) {
+                throw new GradleException('MA Rejoin requires saved real connected player')
+            }
+        }
+    }
+    tasks.named("runMysticalLifecycle${phase}") { dependsOn prepare }
+}
+tasks.register('diagnoseMysticalAugmentsHealthBreak') {
+    group = 'verification'
+    description = 'Compare native/mixed Health V armor breakage and reproduce controlled client attribute-order failure'
+    doLast {
+        ['Seed', 'HealthBreak'].each { phase ->
+            def log = layout.buildDirectory.file("reports/mystical-health-break-${baseline}-${phase}-process.log").get().asFile
+            bounded(":RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, 240)
+            def output = phase == 'Seed' ? 'mystical-seed' : 'mystical-health-break'
+            def directory = lifecycleReports.get().asFile
+            def failure = new File(directory, "${output}-failure.txt")
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (!new File(directory, "${output}-success.txt").isFile()) { throw new GradleException("Incomplete MA Health V diagnostic: ${log}") }
+            logger.lifecycle(new File(directory, "${output}-report.txt").text)
+        }
+    }
+}
+tasks.register('verifyMysticalAugmentsLifecycle') {
+    group = 'verification'
+    description = 'MA native-style tooltips, real connected equip/jump/respawn and different-JVM ownership/refunds'
+    doLast {
+        def selected = providers.gradleProperty('mysticalLifecyclePhases').getOrElse('Seed,Client,Rejoin').split(',').toList()
+        if (!selected.every { it in ['Seed', 'Client', 'Rejoin'] }) { throw new GradleException('Unknown MA lifecycle phase') }
+        selected.each { phase ->
+            def name = phase.toLowerCase(Locale.ROOT)
+            // Keep process logs outside the report directory reset by Seed.
+            def log = layout.buildDirectory.file("reports/mystical-lifecycle-${baseline}-${name}-process.log").get().asFile
+            bounded(":RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, phase == 'Seed' ? 240 : 360)
+            def directory = lifecycleReports.get().asFile
+            def failure = new File(directory, "mystical-${name}-failure.txt")
+            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (!new File(directory, "mystical-${name}-success.txt").isFile()
+                    || log.text.contains('Mystical Agriculture mixed augment disabled:') || log.text.contains('Mystical Agriculture refund flow incompatible')) {
+                throw new GradleException("Incomplete/refused MA lifecycle ${name}: ${log}")
+            }
+            logger.lifecycle(new File(directory, "mystical-${name}-report.txt").text)
+        }
+    }
+}

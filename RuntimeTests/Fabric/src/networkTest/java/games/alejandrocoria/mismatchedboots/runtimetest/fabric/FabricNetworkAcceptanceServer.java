@@ -9,7 +9,10 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 public final class FabricNetworkAcceptanceServer implements ModInitializer {
     @Override
     public void onInitialize() {
-        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalAugmentsBridge.enabled()) {
+        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.enabled()) {
+            ServerTickEvents.END_SERVER_TICK.register(games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle::tick); return;
+        }
+        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalNativeTestApi.enabled()) {
             MysticalAugmentsServer.register(); return;
         }
         if (SeparatorObservations.enabled()) {

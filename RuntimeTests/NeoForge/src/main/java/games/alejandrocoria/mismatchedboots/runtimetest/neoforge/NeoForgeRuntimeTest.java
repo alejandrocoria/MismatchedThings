@@ -18,7 +18,14 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
-        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalAugmentsBridge.enabled()) {
+        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.enabled()) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.tick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycleClient.tick(Minecraft.getInstance()));
+            }
+            return;
+        }
+        if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalNativeTestApi.enabled()) {
             MysticalAugmentsServer.register(); return;
         }
         if (SeparatorObservations.enabled()) {

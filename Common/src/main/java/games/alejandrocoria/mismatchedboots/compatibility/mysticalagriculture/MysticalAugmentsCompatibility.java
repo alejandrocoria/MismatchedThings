@@ -9,6 +9,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,6 +28,7 @@ public final class MysticalAugmentsCompatibility {
     static final String PREFIX = "com.blakebr0.mysticalagriculture.";
     static final String TICK_PROOF = "mismatchedboots$maArmorTickReady";
     static final String EQUIPMENT_PROOF = "mismatchedboots$maEquipmentReady";
+    static final String HEALTH_PROOF = "mismatchedboots$maHealthCleanupReady";
     private static final Set<MysticalAugments.Family> DISABLED = ConcurrentHashMap.newKeySet();
     private static volatile Binding binding;
     private static volatile boolean attempted;
@@ -117,6 +119,31 @@ public final class MysticalAugmentsCompatibility {
         return result;
     }
 
+    /** Capture authorization while equipped: by removal time the root may already be broken/absent. */
+    public static void refreshHealthCleanup(Object cache, Object augment, Player player) {
+        var specs = selected(player.getItemBySlot(EquipmentSlot.FEET));
+        Binding api = binding;
+        if (api == null || api.health == null || specs.stream().noneMatch(spec ->
+                spec.family() == MysticalAugments.Family.HEALTH_BOOST && api.augments.get(spec.id()) == augment)) { return; }
+        try {
+            if (!Boolean.TRUE.equals(api.health.cached.invoke(cache, augment, player))) { return; }
+            // Also refresh an existing native entry: swapping native -> mixed with the same
+            // augment does not recreate MA's cache entry or rerun its registration branch.
+            Runnable cleanup = () -> {
+                var health = player.getAttribute(Attributes.MAX_HEALTH);
+                if (health == null) { return; }
+                // A synced client may already lack the bonus. Subtracting it again can
+                // cause a client-only death that the server cannot respawn.
+                health.removeModifier(api.health.attribute);
+                float maximum = player.getMaxHealth();
+                if (player.getHealth() > maximum) { player.setHealth(maximum); }
+            };
+            api.health.add.invoke(cache, augment, player, cleanup);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            decline(MysticalAugments.Family.HEALTH_BOOST, failure);
+        }
+    }
+
     public static void tick(ItemStack root, ServerLevel level, Entity entity, EquipmentSlot slot) {
         if (slot != EquipmentSlot.FEET || !(entity instanceof Player player) || player.getItemBySlot(slot) != root) { return; }
         for (var spec : selected(root)) {
@@ -131,7 +158,8 @@ public final class MysticalAugmentsCompatibility {
     }
 
     private static boolean available(MysticalAugments.Family family, Binding api) {
-        return !DISABLED.contains(family) && (family.route == MysticalAugments.Route.ARMOR
+        return !DISABLED.contains(family) && (family != MysticalAugments.Family.HEALTH_BOOST || api.health != null)
+                && (family.route == MysticalAugments.Route.ARMOR
                 ? api.tickReady.contains(family) : api.equipmentReady);
     }
 
@@ -167,7 +195,7 @@ public final class MysticalAugmentsCompatibility {
                         tinkerable.getMethod("getAugmentSlots"), tinkerable.getMethod("getTinkerableTier"),
                         tinkerable.getMethod("canApplyAugment", augment), entry.getMethod("slot"), entry.getMethod("id"),
                         augment.getMethod("onArmorTick", ItemStack.class, ServerLevel.class, Player.class),
-                        Map.copyOf(augments), Set.copyOf(ready), equipment);
+                        Map.copyOf(augments), Set.copyOf(ready), equipment, healthBinding());
                 for (var family : MysticalAugments.Family.values()) {
                     if (!available(family, binding)) { decline(family, null); }
                 }
@@ -186,7 +214,22 @@ public final class MysticalAugmentsCompatibility {
         catch (ReflectiveOperationException | RuntimeException | LinkageError incompatible) { return false; }
     }
 
+    private static HealthBinding healthBinding() {
+        try {
+            Class<?> health = Class.forName(MysticalAugments.Family.HEALTH_BOOST.nativeClass());
+            if (!proof(health, HEALTH_PROOF)) { return null; }
+            var field = health.getDeclaredField("ATTRIBUTE_ID"); field.setAccessible(true);
+            if (!(field.get(null) instanceof Identifier id)) { return null; }
+            Class<?> cache = Class.forName(PREFIX + "api.lib.AbilityCache");
+            Class<?> augment = Class.forName(PREFIX + "api.tinkering.Augment");
+            return new HealthBinding(id, cache.getMethod("isCached", augment, Player.class),
+                    cache.getMethod("add", augment, Player.class, Runnable.class));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError unavailable) { return null; }
+    }
+
     private record Binding(Class<?> bootType, Class<?> entryType, DataComponentType<?> component,
                            Method slots, Method tier, Method canApply, Method slot, Method id, Method armorTick,
-                           Map<Identifier, Object> augments, Set<MysticalAugments.Family> tickReady, boolean equipmentReady) {}
+                           Map<Identifier, Object> augments, Set<MysticalAugments.Family> tickReady, boolean equipmentReady,
+                           HealthBinding health) {}
+    private record HealthBinding(Identifier attribute, Method cached, Method add) {}
 }

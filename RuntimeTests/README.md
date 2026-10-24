@@ -43,7 +43,7 @@ normal indev client/server runs.
 
 These targeted tasks run five isolated dedicated servers per loader/baseline,
 using the exact installed MA/Cucumber artifacts pinned in
-[mystical-augments-spike.gradle](../gradle/mystical-augments-spike.gradle).
+[mystical-augments-tests.gradle](../gradle/mystical-augments-tests.gradle).
 Runs/reports are isolated under each runtime project's
 `build/run/mysticalAugments/<baseline>/` and
 `build/reports/mystical-augments/<baseline>/`.
@@ -55,6 +55,9 @@ Health/Step/fall support declines; `NoJump` introduces an unsafe native stack
 write and verifies only Jump declines. Both retain native controls and unaffected
 mixed channels. `Absent` checks quiet optional absence. Expected bounded refusal
 warnings are checked separately from behavior assertions.
+
+Optional `'-PmysticalEffectVariants=Production,Absent'` selects a focused subset
+without weakening the complete default gate. B has its separate refund selector.
 
 Coverage includes all 23 built-in IDs in both orientations, all 11 family
 behaviors, strongest/union selection, held rejection, malformed sources/roots,
@@ -69,7 +72,7 @@ server players, save/load player NBT for reconnect-state evidence, and construct
 a fresh player after a death callback. They are not connected-client login,
 network synchronization or actual respawn acceptance. See the
 [implementation record](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md#8-execution-record)
-for results and the remaining C acceptance boundaries. Historical effect/refund
+for results and the remaining owner acceptance boundary. Historical effect/refund
 candidate registrations have been retired rather than layered over production.
 
 ### Owner-side refunds — production consumption gate
@@ -115,11 +118,90 @@ root before shrink and during delivery. External cancellation/failure is not a
 rollback guarantee; a dispatched purchase is never retried.
 
 The [production plan](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md)
-records separate A/B production evidence; C presentation/connected/manual
-acceptance remains pending. The old `verifyMysticalAugmentsRefundSpike`, its
+records separate A/B/C production evidence. The owner confirmed the NeoForge
+checklist and final Health V correction retest on 2026-10-24; separate Fabric
+manual acceptance remains unconfirmed. The old `verifyMysticalAugmentsRefundSpike`, its
 `Refund` run, `AugmentRefundMixin` and candidate ownership flag/helper are retired.
 Historical allocation/native-delivery research remains in the exploration;
 it is not substituted for the new consumption/reentry proof.
+
+### Presentation and connected lifecycle — C
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsLifecycle
+.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsLifecycle
+```
+
+Use NeoForge `.114` for this client gate; `.99` A/B server evidence remains
+separate. Each loader runs three bounded JVMs with the same exact MA/Cucumber
+pins: `Seed` writes four recipe-produced named/damaged roots to a world barrel;
+`Client` opens that world with a real integrated connection; `Rejoin` restarts
+the saved client world with the same player UUID. Reports and manifests live in
+`RuntimeTests/<loader>/build/reports/mystical-lifecycle/<baseline>/`; process logs
+are adjacent `mystical-lifecycle-<baseline>-<phase>-process.log` files. Runs are
+under `build/run/mysticalLifecycle/<baseline>/`. Neither normal indev mods nor
+worlds are changed. Seed resets only these disposable run/report directories.
+
+For diagnosis, `'-PmysticalLifecyclePhases=Client,Rejoin'` reuses the existing
+successful Seed world. Client starts from a fresh disposable copy; Rejoin must
+follow a successful Client save. The full default still runs all three phases.
+
+The shared client compares native Health III/Step with both inverses, then checks
+actual client/server attribute packets and unequip cleanup. Normal keyboard Jump
+III/No Fall movement is measured on both connected actors against native boots.
+After Health/Step have activated on both actors, lethal damage plus the client's
+real respawn packet replaces both player objects;
+complete kept roots/purchase data must match before/after, with no stale modifiers.
+The production recomposer preserves used/name state and the two purchase sources.
+Rejoin checks full player inventory data against the previous JVM's manifest
+before new actions, repeats connected effects and actually breaks all four roots:
+exactly five original physical purchases, owned per left source, must be returned.
+This is integrated networking, not a dedicated-network/cross-loader matrix.
+
+Real client tooltips compare native translated heading/indent/components in the
+existing source sections, including weaker/stronger original purchases, and
+require no duplicate augment list at root. Normal/advanced flags, both orientations,
+names, separators, empty unions, hidden component/root/source and read-only
+history are checked. Only `mystical-native.png` and `mystical-mixed.png` are
+captured per loader at 1920×1080 / GUI scale 2. Clients are hidden and muted.
+No unrelated screenshot/mod suite is run. The owner's final checklist remains
+in section 7.2 of the implementation plan, separate from automated acceptance.
+
+The maintained shared fixture uses `MysticalNativeTestApi`, not a candidate
+bridge. Its small Gradle script, fixture JAR and test mixin config no longer have
+spike names. Adversarial production A/B controls remain; historical candidate
+producers/owners do not. Dated spike evidence stays in the exploration.
+
+#### Health Boost V breakage — controlled regression, manual acceptance separate
+
+```powershell
+.\gradlew.bat :RuntimeTests:NeoForge:diagnoseMysticalAugmentsHealthBreak
+.\gradlew.bat :RuntimeTests:Fabric:diagnoseMysticalAugmentsHealthBreak
+```
+
+This explicit hidden/muted client regression resets the disposable MA lifecycle
+Seed/client fixture and reports, not development saves/mods. It is not part of
+the ordinary C gate and captures no screenshots. Actual physical damage breaks
+native boots and both mixed inverses at one remaining durability with Health V
+active. Reports compare server/client health, minimum client health and death
+screen appearance. It separately emulates an attribute snapshot lacking the
+bonus before equipment/cache cleanup; **controlled ordering is not evidence
+that ordinary packets arrived in that order**. Mixed controls assert no zero
+health/death screen and agreement with the server, at full and partial boosted
+health, including a direct native-to-mixed transfer of the same cached augment.
+On NeoForge, a final native-only control at 20/40 health still reproduces the
+upstream client-only death and ineffective respawn request, proving the fix is
+not global. Fabric's native handler only runs server-side: that control must
+remain alive, not manufacture a client cache. Completion is automated regression
+evidence, not owner acceptance of the original development-modpack incident.
+The owner subsequently confirmed that original NeoForge case on 2026-10-24;
+that manual acceptance is separate from the automated marker and does not
+establish a separate Fabric manual run. The later approved source-only tooltip
+simplification is implemented; current tooltip checks assert no duplicate root
+list, independently of these gameplay regressions.
+The owner confirmed the source-only layout's final visual check on 2026-10-24
+(plan 8.7); this does not extend the separate Fabric manual acceptance scope.
+See the [correction record](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md#85-mixed-health-boost-cleanup-correction--2026-10-24).
 
 ## Commands
 
