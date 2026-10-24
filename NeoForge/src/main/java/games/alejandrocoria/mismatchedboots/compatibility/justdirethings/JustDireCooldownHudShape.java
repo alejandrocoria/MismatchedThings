@@ -30,7 +30,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
     private static final String TOOL = "com/direwolf20/justdirethings/common/items/interfaces/ToggleableTool";
     private static final String PARAMS = "com/direwolf20/justdirethings/common/items/interfaces/AbilityParams";
     private static final String RENDER = "(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireCooldownHudMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireCooldownHudMixin";
     private static final String READY = "mismatchedboots$justDireCooldownReady";
     private static final String VIEW = "games/alejandrocoria/mismatchedboots/client/compatibility/justdirethings/JustDireCooldownHud";
 

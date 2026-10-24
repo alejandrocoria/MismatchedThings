@@ -4,11 +4,11 @@
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "JustDireTooltipShiftMixin",
     "LoadingErrorScreenMixin",
     "ModelSubmitStorageAccessor",
     "SubmitNodeStorageProbeMixin",
-    "WindowVisibilityMixin"
+    "WindowVisibilityMixin",
+    "compatibility.justdirethings.JustDireTooltipShiftMixin"
   ],
   "injectors": {
     "defaultRequire": 1

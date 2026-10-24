@@ -106,7 +106,7 @@ class JustDireAttributesShapeTest implements Opcodes {
     }
     private static void owned(MethodNode method) {
         var annotation = new AnnotationNode("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;");
-        annotation.values = List.of("mixin", "games.alejandrocoria.mismatchedboots.mixin.JustDireAttributesMixin");
+        annotation.values = List.of("mixin", "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireAttributesMixin");
         method.visibleAnnotations = new java.util.ArrayList<>(List.of(annotation));
     }
     private static MethodNode entry(ClassNode node) { return node.methods.stream().filter(m -> m.name.equals("computeModifiedAttributes")).findFirst().orElseThrow(); }

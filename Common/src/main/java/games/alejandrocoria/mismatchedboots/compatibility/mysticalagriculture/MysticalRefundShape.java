@@ -145,7 +145,7 @@ public final class MysticalRefundShape implements Opcodes {
     private boolean observer(MethodNode handler) {
         if (owned(handler)) { return router(handler); }
         // Same-mod peer, not shared eligibility: JDT retains its own readiness/credits/delivery.
-        String peer = "games.alejandrocoria.mismatchedboots.mixin.JustDireRefundMixin";
+        String peer = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireRefundMixin";
         if (ENTITY.contains("ServerPlayer") || handler.visibleAnnotations == null || handler.visibleAnnotations.stream()
                 .noneMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
                         && a.values != null && a.values.contains(peer))) { return false; }

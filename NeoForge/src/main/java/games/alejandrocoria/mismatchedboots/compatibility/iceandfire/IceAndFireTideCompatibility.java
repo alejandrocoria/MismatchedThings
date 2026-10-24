@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.iceandfire;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
-import games.alejandrocoria.mismatchedboots.mixin.IceAndFireTideArmorAccess;
+import games.alejandrocoria.mismatchedboots.mixin.compatibility.iceandfire.IceAndFireTideArmorAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;

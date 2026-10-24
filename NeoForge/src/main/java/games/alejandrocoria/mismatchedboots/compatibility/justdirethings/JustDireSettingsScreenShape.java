@@ -19,7 +19,7 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     public static final String SCREEN = "com/direwolf20/justdirethings/client/screens/ToolSettingScreen";
     private static final String TOOL = "com/direwolf20/justdirethings/common/items/interfaces/ToggleableTool";
     private static final String STACK = "net/minecraft/world/item/ItemStack";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireSettingsScreenMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireSettingsScreenMixin";
     private static final String READY = "mismatchedboots$jdtSettingsReady";
     private static final Map<String, String> METHODS = Map.ofEntries(
             Map.entry("<init>", "(Lcom/direwolf20/justdirethings/common/containers/ToolSettingContainer;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;)V"),

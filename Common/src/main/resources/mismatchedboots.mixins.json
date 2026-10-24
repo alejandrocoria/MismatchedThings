@@ -11,7 +11,7 @@
     "RepairItemRecipeMixin",
     "SmithingMenuMixin",
     "TypedInstanceMixin",
-    "compatibility.AdvancedNetheriteHooksMixin"
+    "compatibility.advancednetherite.AdvancedNetheriteHooksMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -11,9 +11,9 @@ import java.util.Set;
 
 public final class IceAndFireMixinPlugin implements IMixinConfigPlugin {
     private static final String OPTIONAL_MIXIN =
-            "games.alejandrocoria.mismatchedboots.mixin.IceAndFireDamageMixin";
+            "games.alejandrocoria.mismatchedboots.mixin.compatibility.iceandfire.IceAndFireDamageMixin";
     private static final String LIGHTNING_MIXIN =
-            "games.alejandrocoria.mismatchedboots.mixin.IceAndFireLightningSetMixin";
+            "games.alejandrocoria.mismatchedboots.mixin.compatibility.iceandfire.IceAndFireLightningSetMixin";
     private Boolean compatible;
     private Boolean lightningCompatible;
 

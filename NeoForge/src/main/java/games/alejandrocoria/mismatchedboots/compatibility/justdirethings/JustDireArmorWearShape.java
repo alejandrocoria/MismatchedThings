@@ -40,7 +40,7 @@ public final class JustDireArmorWearShape implements Opcodes {
     static final String HANDLER_DESC = "(" + STACK + "I" + ENTITY + SLOT + OPERATION + ENTITY + SLOT + ENTRY + ")V";
     private static final String FORWARD_DESC = "(" + STACK + "I" + ENTITY + SLOT + OPERATION + ")V";
     static final String ROUTE_DESC = "(Z" + STACK + "I" + ENTITY + SLOT + OPERATION + "F)V";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireArmorWearMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireArmorWearMixin";
 
     private JustDireArmorWearShape() {}
 

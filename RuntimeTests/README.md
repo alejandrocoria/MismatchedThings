@@ -23,6 +23,9 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 - `NeoForge/src/main`: the auxiliary mod for network acceptance, targeted
   client geometry/tooltip checks, and opt-in real Ice and Fire damage/set
   acceptance. These use separate run directories and entry paths.
+  Mod-specific mixins are grouped under `runtimetest/neoforge/mixin/compatibility/<mod>`;
+  general instrumentation stays directly in `mixin`. Dedicated shared suites
+  already scoped by mod/purpose keep their own local `mixin` package.
 - `NeoForge/src/iceAndFireTideTest`: separately packaged counters and competing
   mixins for opt-in acceptance of the production Tide adapter, not a second owner.
 - `NeoForge/src/iceAndFireTideHead`: an independent test-only HEAD owner with its

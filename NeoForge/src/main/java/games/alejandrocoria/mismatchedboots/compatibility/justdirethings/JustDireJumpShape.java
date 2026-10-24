@@ -35,7 +35,7 @@ public final class JustDireJumpShape implements Opcodes {
     static final String JUMP = "(Lnet/neoforged/neoforge/event/entity/living/LivingEvent$LivingJumpEvent;)V";
     static final String FALL = "(Lnet/neoforged/neoforge/event/entity/living/LivingFallEvent;)V";
     private static final String GETTER = "mismatchedboots$justDireJumpReady";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireJumpMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireJumpMixin";
     private static final String ADAPTER = JustDireJumpCompatibility.class.getName().replace('.', '/');
 
     private JustDireJumpShape() {}

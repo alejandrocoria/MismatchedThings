@@ -13,7 +13,7 @@ import java.util.Set;
 
 public final class AdvancedNetheriteMixinPlugin implements IMixinConfigPlugin {
     private static final String OPTIONAL_MIXIN =
-            "games.alejandrocoria.mismatchedboots.mixin.compatibility.AdvancedNetheriteHooksMixin";
+            "games.alejandrocoria.mismatchedboots.mixin.compatibility.advancednetherite.AdvancedNetheriteHooksMixin";
     private static final String HOOKS_CLASS = "com.autovw.advancednetherite.api.impl.IAdvancedHooks";
     private static final String ARMOR_CLASS = "com.autovw.advancednetherite.common.item.AdvancedArmorItem";
     private static final String STACK_PREDICATE = "(Lnet/minecraft/world/item/ItemStack;)Z";

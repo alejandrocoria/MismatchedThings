@@ -26,7 +26,7 @@ public final class JustDireAttributesShape implements Opcodes {
     private static final String DESC = "(" + STACK + MODIFIERS + ")" + MODIFIERS;
     private static final String EVENT = "net/neoforged/neoforge/event/ItemAttributeModifierEvent";
     private static final String GETTER = "mismatchedboots$justDireAttributesReady";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireAttributesMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireAttributesMixin";
 
     private JustDireAttributesShape() {}
 

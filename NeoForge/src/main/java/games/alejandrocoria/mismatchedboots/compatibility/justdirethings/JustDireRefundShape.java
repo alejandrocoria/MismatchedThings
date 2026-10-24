@@ -38,7 +38,7 @@ public final class JustDireRefundShape implements Opcodes {
     static final String READY = "mismatchedboots$justDireRefundReady";
     private static final String COMPAT = "games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireRefundCompatibility";
     private static final String ROUTE = "(Z" + STACK + "I" + ENTITY + OP + ")V";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.JustDireRefundMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireRefundMixin";
 
     private JustDireRefundShape() {}
 

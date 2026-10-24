@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.mixin",
+  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings",
   "plugin": "games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireCooldownHudMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "client": ["JustDireCooldownHudMixin"],

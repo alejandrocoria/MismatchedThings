@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.justdirethings",
   "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireSettingsClientGuardPlugin",
   "compatibilityLevel": "JAVA_25",
   "client": ["JustDireSettingsClientHighMixin", "JustDireSettingsClientLowMixin", "JustDireSettingsClientMissingMixin"],

@@ -5,9 +5,9 @@
   "plugin": "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "IceAndFireDamageMixin",
-    "IceAndFireLightningSetMixin",
-    "NeoForgeAnvilMenuDonorMixin"
+    "NeoForgeAnvilMenuDonorMixin",
+    "compatibility.iceandfire.IceAndFireDamageMixin",
+    "compatibility.iceandfire.IceAndFireLightningSetMixin"
   ],
   "client": [
     "NeoForgeEquipmentLayerRendererMixin"

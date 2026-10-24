@@ -193,7 +193,7 @@ class IceAndFireTideShapeTest implements Opcodes {
     private static MethodNode compiledGetter(String mixinName, String getterName) throws Exception {
         ClassNode mixin = new ClassNode();
         try (var stream = IceAndFireTideShapeTest.class.getResourceAsStream(
-                "/games/alejandrocoria/mismatchedboots/mixin/" + mixinName + ".class")) {
+                "/games/alejandrocoria/mismatchedboots/mixin/compatibility/iceandfire/" + mixinName + ".class")) {
             new ClassReader(stream).accept(mixin, 0);
         }
         return IceAndFireTideShape.method(mixin, getterName, "()Z");
@@ -236,7 +236,7 @@ class IceAndFireTideShapeTest implements Opcodes {
     }
 
     private static java.io.InputStream getClassResource() {
-        return IceAndFireTideShapeTest.class.getResourceAsStream("/games/alejandrocoria/mismatchedboots/mixin/IceAndFireTideFeetMixin.class");
+        return IceAndFireTideShapeTest.class.getResourceAsStream("/games/alejandrocoria/mismatchedboots/mixin/compatibility/iceandfire/IceAndFireTideFeetMixin.class");
     }
     private static ClassNode copy(ClassNode node) { ClassNode copy = new ClassNode(); node.accept(copy); return copy; }
     private static MethodNode entry(ClassNode node) { return IceAndFireTideShape.method(node, "inventoryTick", IceAndFireTideShape.TICK); }
