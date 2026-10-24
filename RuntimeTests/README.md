@@ -1425,6 +1425,13 @@ the declarative item fallback in every display context and both held slots,
 with and without foil; they appear as the extra GUI column. This separate path
 must not be inferred to work from the valid-pair fallback checks alone.
 
+Item source identities remain anatomical: source left owns the canonical/viewer
+right half and source right owns the left half in the front-view convention.
+This mapping also applies to screen scissors and whole-model yaw, while stored
+source/submission order and equipped legs remain unchanged. Item-level ownership
+and pixel assertions test that mapping; pure clipping algorithms retain ordinary
+negative-X LEFT / positive-X RIGHT semantics.
+
 The Fabric client suite exercises both ordinary baked quads and real Fabric
 Renderer API meshes. Synthetic fixtures check full-scale clipping, rotated
 triangle/pentagon cuts, per-vertex attributes, quad properties, layer tint and

@@ -65,8 +65,9 @@ abstract class GuiGraphicsExtractorMixin {
         if (prepared.clipped() || !mismatchedboots$supportsRectangularClipping(graphics.pose())) {
             mismatchedboots$submitItem(graphics, prepared.compose(), x, y);
         } else {
-            mismatchedboots$renderHalf(graphics, prepared.left(), x, y, x, x + HALF_ITEM_SIZE);
-            mismatchedboots$renderHalf(graphics, prepared.right(), x, y, x + HALF_ITEM_SIZE, x + ITEM_SIZE);
+            // Source sides are anatomical; screen halves are viewed from the front.
+            mismatchedboots$renderHalf(graphics, prepared.left(), x, y, x + HALF_ITEM_SIZE, x + ITEM_SIZE);
+            mismatchedboots$renderHalf(graphics, prepared.right(), x, y, x, x + HALF_ITEM_SIZE);
         }
         callback.cancel();
     }

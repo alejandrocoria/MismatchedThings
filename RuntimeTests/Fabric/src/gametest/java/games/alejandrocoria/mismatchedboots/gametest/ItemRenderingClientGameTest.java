@@ -144,7 +144,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
                 for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                     float x = quad.position(vertex).x();
-                    if ((side == 0 && x > 0.5F + EPSILON) || (side == 1 && x < 0.5F - EPSILON)) {
+                    if ((side == 0 && x < 0.5F - EPSILON) || (side == 1 && x > 0.5F + EPSILON)) {
                         throw new AssertionError("GUI geometry retained the other source's half");
                     }
                 }
@@ -181,13 +181,13 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         }
 
         int minimumSourcePixels = 20 * guiScale * guiScale;
-        if (leftRed < minimumSourcePixels || rightBlue < minimumSourcePixels) {
+        if (rightRed < minimumSourcePixels || leftBlue < minimumSourcePixels) {
             throw new AssertionError("GUI clipping did not preserve both source halves: "
-                    + leftRed + " red pixels, " + rightBlue + " blue pixels");
+                    + rightRed + " red pixels on the right, " + leftBlue + " blue pixels on the left");
         }
-        if (leftBlue != 0 || rightRed != 0) {
+        if (leftRed != 0 || rightBlue != 0) {
             throw new AssertionError("GUI clipping leaked pixels across the center: "
-                    + leftBlue + " blue pixels on the left, " + rightRed + " red pixels on the right");
+                    + leftRed + " red pixels on the left, " + rightBlue + " blue pixels on the right");
         }
     }
 
@@ -419,8 +419,8 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
                 for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                     float canonicalX = transform.transformPosition(
                             quad.position(vertex), new org.joml.Vector3f()).x - 0.5F;
-                    if ((index == 0 && canonicalX > EPSILON)
-                            || (index == 1 && canonicalX < -EPSILON)) {
+                    if ((index == 0 && canonicalX < -EPSILON)
+                            || (index == 1 && canonicalX > EPSILON)) {
                         throw new AssertionError(scenario + " crossed the center on layer " + index);
                     }
                 }

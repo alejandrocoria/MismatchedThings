@@ -453,12 +453,12 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         boolean left = snapshot.submissions().stream().anyMatch(submission ->
                 submission.displayContext() == context
                         && submission.sprite().equals(leftSprite)
-                        && submission.maxX() <= 0.5F + EPSILON
+                        && submission.minX() >= 0.5F - EPSILON
                         && hasFoil(submission) == foil);
         boolean right = snapshot.submissions().stream().anyMatch(submission ->
                 submission.displayContext() == context
                         && submission.sprite().equals(rightSprite)
-                        && submission.minX() >= 0.5F - EPSILON
+                        && submission.maxX() <= 0.5F + EPSILON
                         && hasFoil(submission) == foil);
         if (!left || !right) {
             throw new AssertionError(scenario + " did not submit complementary full-scale halves");
@@ -480,7 +480,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         boolean ordinary = snapshot.submissions().stream().anyMatch(submission ->
                 submission.displayContext() == context
                         && submission.sprite().equals(ordinarySprite)
-                        && submission.minX() >= 0.5F - EPSILON
+                        && submission.maxX() <= 0.5F + EPSILON
                         && hasFoil(submission) == foil);
         if (!rotated || !ordinary) {
             throw new AssertionError(scenario + " did not submit the tessellated rotated half");
@@ -646,7 +646,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                     for (int vertex = 0; vertex < 4; vertex++) {
                         float x = layer.mismatchedboots$getLocalTransform()
                                 .transformPosition(quad.copyPos(vertex, null)).x - 0.5F;
-                        if ((side == 0 && x > EPSILON) || (side == 1 && x < -EPSILON)) {
+                        if ((side == 0 && x < -EPSILON) || (side == 1 && x > EPSILON)) {
                             throw new AssertionError(scenario + " mesh crossed the canonical center");
                         }
                     }
@@ -656,7 +656,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                 for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                     float x = layer.mismatchedboots$getLocalTransform()
                             .transformPosition(quad.position(vertex), new org.joml.Vector3f()).x - 0.5F;
-                    if ((index == 0 && x > EPSILON) || (index == 1 && x < -EPSILON)) {
+                    if ((index == 0 && x < -EPSILON) || (index == 1 && x > EPSILON)) {
                         throw new AssertionError(scenario + " crossed the canonical center");
                     }
                 }

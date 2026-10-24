@@ -282,7 +282,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                                     && mesh(output, meshLayer).size() == 12,
                             "Both-collection fixture lost vanilla or mesh geometry");
                 }
-                if (mode == MeshTestFixtures.Mode.EMPTY || (mode == MeshTestFixtures.Mode.DROP && meshLayer == 0)) {
+                if (mode == MeshTestFixtures.Mode.EMPTY || (mode == MeshTestFixtures.Mode.DROP && meshLayer == 1)) {
                     require(mesh(output, meshLayer).size() == 0 && access(output, meshLayer).mismatchedboots$getQuads().isEmpty(),
                             "Discarded mesh retained geometry");
                     require(testAccess(output, meshLayer).mismatchedboots$getExtents().get().length == 0,
@@ -324,7 +324,9 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                                             + "/swap=" + swap + "/layer=" + outputIndex);
                             require(access(baseline, index).mismatchedboots$getQuads().equals(access(output, outputIndex).mismatchedboots$getQuads()),
                                     "Late incompatibility partially changed vanilla geometry");
-                            var expected = new Matrix4f().translation(baseline == firstBase ? -0.15F : 0.15F, 0, 0).scale(0.8F, 0.8F, 1)
+                            float angle = (float) Math.toRadians(baseline == firstBase ? -1.0 : 1.0);
+                            var expected = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
+                                    .rotateY(angle).translate(-0.5F, -0.5F, -0.5F)
                                     .mul(access(baseline, index).mismatchedboots$getLocalTransform());
                             require(expected.equals(access(output, outputIndex).mismatchedboots$getLocalTransform(), 0.000001F), "Fallback transform changed");
                         }
@@ -405,13 +407,13 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         for (var face : MeshSubmissionProbe.fingerprint(mesh(state, layer))) {
             for (var vertex : face.vertices()) {
                 float x = transform.transformPosition(vertex.position(), new Vector3f()).x - 0.5F;
-                require(layer == 0 ? x <= 0.000001F : x >= -0.000001F, "Mesh vertex crossed the owned side");
+                require(layer == 0 ? x >= -0.000001F : x <= 0.000001F, "Mesh vertex crossed the front-view owned side");
             }
         }
         for (var quad : access(state, layer).mismatchedboots$getQuads()) {
             for (int vertex = 0; vertex < 4; vertex++) {
                 float x = transform.transformPosition(quad.position(vertex), new Vector3f()).x - 0.5F;
-                require(layer == 0 ? x <= 0.000001F : x >= -0.000001F, "Vanilla vertex crossed the owned side");
+                require(layer == 0 ? x >= -0.000001F : x <= 0.000001F, "Vanilla vertex crossed the front-view owned side");
             }
         }
     }

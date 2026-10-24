@@ -46,11 +46,12 @@ public final class MixedBootsItemRenderer {
         }
 
         boolean foil = stack.hasFoil();
+        // Item artwork is front-facing: the wearer's left appears on the viewer's right.
         LayerRange left = appendSource(output, sourceView(data.left().source(), foil), resolver,
-                displayContext, level, owner, seed, QuadClipper.Side.LEFT);
+                displayContext, level, owner, seed, QuadClipper.Side.RIGHT);
         boolean oversized = output.isOversizedInGui();
         LayerRange right = appendSource(output, sourceView(data.right().source(), foil), resolver,
-                displayContext, level, owner, seed, QuadClipper.Side.RIGHT);
+                displayContext, level, owner, seed, QuadClipper.Side.LEFT);
 
         oversized |= output.isOversizedInGui();
         if (!clipAtomically(output, left, output, right)) {
@@ -76,8 +77,8 @@ public final class MixedBootsItemRenderer {
         resolver.updateForTopItem(right, sourceView(data.right().source(), foil),
                 ItemDisplayContext.GUI, level, owner, seed);
         return new GuiPreparation(left, right,
-                clipAtomically(left, wholeSource(left, QuadClipper.Side.LEFT),
-                        right, wholeSource(right, QuadClipper.Side.RIGHT)));
+                clipAtomically(left, wholeSource(left, QuadClipper.Side.RIGHT),
+                        right, wholeSource(right, QuadClipper.Side.LEFT)));
     }
 
     private static LayerRange wholeSource(ItemStackRenderState state, QuadClipper.Side side) {
@@ -91,8 +92,8 @@ public final class MixedBootsItemRenderer {
             boolean clipped) {
         public MixedBootsGuiRenderState compose() {
             if (!clipped) {
-                applyOverlappingFallback(left, wholeSource(left, QuadClipper.Side.LEFT));
-                applyOverlappingFallback(right, wholeSource(right, QuadClipper.Side.RIGHT));
+                applyOverlappingFallback(left, wholeSource(left, QuadClipper.Side.RIGHT));
+                applyOverlappingFallback(right, wholeSource(right, QuadClipper.Side.LEFT));
             }
             return new MixedBootsGuiRenderState(left, right, clipped);
         }

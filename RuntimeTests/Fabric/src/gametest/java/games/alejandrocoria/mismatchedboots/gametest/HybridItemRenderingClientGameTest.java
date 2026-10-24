@@ -33,7 +33,7 @@ import java.util.Set;
 
 public final class HybridItemRenderingClientGameTest implements FabricClientGameTest {
     private static final float EPSILON = 0.000001F;
-    private static final float FALLBACK_ANGLE = (float) Math.toRadians(1.0);
+    private static final float FALLBACK_ANGLE = (float) Math.toRadians(-1.0);
     private static final Identifier FULL_MODEL = testId("geometry_full");
     private static final Identifier ROTATED_MODEL = testId("geometry_rotated");
     private static final Identifier EXTENSION_MODEL = ItemLayerResolutionProbe.NONPLANAR_EXTENSION_MODEL;
@@ -128,11 +128,11 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (layerCount(leftBaseline) != 2 || layerCount(rightBaseline) != 1 || layerCount(output) != 3) {
             throw new AssertionError("The multi-layer rotated fixture resolved unexpected layer counts");
         }
-        assertClippedLayer(output, 0, QuadClipper.Side.LEFT, false,
+        assertClippedLayer(output, 0, QuadClipper.Side.RIGHT, false,
                 "ordinary layer before rotated layer");
-        assertClippedLayer(output, 1, QuadClipper.Side.LEFT, false,
+        assertClippedLayer(output, 1, QuadClipper.Side.RIGHT, false,
                 "rotated layer");
-        assertClippedLayer(output, 2, QuadClipper.Side.RIGHT, false,
+        assertClippedLayer(output, 2, QuadClipper.Side.LEFT, false,
                 "opposite source after rotated layer");
         assertMatrix(layer(output, 0).mismatchedboots$getLocalTransform(),
                 layer(leftBaseline, 0).mismatchedboots$getLocalTransform(),
@@ -200,7 +200,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
 
         if (!(rawLayer(output, 0) instanceof LayerGeometryExtension metadata)
                 || metadata.mismatchedboots$planGeometry(
-                        layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.LEFT).compatible()) {
+                        layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.RIGHT).compatible()) {
             throw new AssertionError("The unsupported nonplanar Fabric mesh was not retained for fallback");
         }
         assertFallbackLayer(layer(extendedBaseline, 0), layer(output, 0), FALLBACK_ANGLE,
@@ -218,21 +218,21 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (layerCount(oneSided) != 1) {
             throw new AssertionError("A model-less source produced unexpected layers: " + layerCount(oneSided));
         }
-        assertClippedLayer(oneSided, 0, QuadClipper.Side.RIGHT, false, "model-less left source");
+        assertClippedLayer(oneSided, 0, QuadClipper.Side.LEFT, false, "model-less left source");
 
-        ItemStack rightOnlyLeft = modelBoot(Items.IRON_BOOTS, RIGHT_ONLY_MODEL);
+        ItemStack rightOnlyRight = modelBoot(Items.IRON_BOOTS, RIGHT_ONLY_MODEL);
         ItemStackRenderState discarded = resolve(client,
-                MixedBootsFactory.createPair(rightOnlyLeft, right).primary(), ItemDisplayContext.FIXED);
-        if (layerCount(discarded) != 2 || !layer(discarded, 0).mismatchedboots$getQuads().isEmpty()) {
+                MixedBootsFactory.createPair(right, rightOnlyRight).primary(), ItemDisplayContext.FIXED);
+        if (layerCount(discarded) != 2 || !layer(discarded, 1).mismatchedboots$getQuads().isEmpty()) {
             throw new AssertionError("A completely discarded source layer was not retained as empty");
         }
-        if (testLayer(discarded, 0).mismatchedboots$getExtents().get().length != 0) {
+        if (testLayer(discarded, 1).mismatchedboots$getExtents().get().length != 0) {
             throw new AssertionError("A completely discarded layer retained stale extents");
         }
-        assertClippedLayer(discarded, 1, QuadClipper.Side.RIGHT, false, "discarded left source");
+        assertClippedLayer(discarded, 0, QuadClipper.Side.RIGHT, false, "discarded right source");
 
         ItemStackRenderState repeated = resolve(client,
-                MixedBootsFactory.createPair(rightOnlyLeft, right).primary(), ItemDisplayContext.FIXED);
+                MixedBootsFactory.createPair(right, rightOnlyRight).primary(), ItemDisplayContext.FIXED);
         if (!layer(discarded, 0).mismatchedboots$getQuads()
                 .equals(layer(repeated, 0).mismatchedboots$getQuads())
                 || !layer(discarded, 1).mismatchedboots$getQuads()
@@ -269,8 +269,8 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (layerCount(state) != 2) {
             throw new AssertionError(scenario + " expected two layers but got " + layerCount(state));
         }
-        assertClippedLayer(state, 0, QuadClipper.Side.LEFT, false, scenario + " left");
-        assertClippedLayer(state, 1, QuadClipper.Side.RIGHT, false, scenario + " right");
+        assertClippedLayer(state, 0, QuadClipper.Side.RIGHT, false, scenario + " left source / visual right");
+        assertClippedLayer(state, 1, QuadClipper.Side.LEFT, false, scenario + " right source / visual left");
         assertSprite(layer(state, 0).mismatchedboots$getQuads(), expectedLeftSprite, scenario + " left");
         assertSprite(layer(state, 1).mismatchedboots$getQuads(), expectedRightSprite, scenario + " right");
         var bounds = state.getModelBoundingBox();

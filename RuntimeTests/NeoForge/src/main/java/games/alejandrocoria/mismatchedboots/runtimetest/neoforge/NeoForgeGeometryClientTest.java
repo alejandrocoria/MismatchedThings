@@ -362,8 +362,8 @@ public final class NeoForgeGeometryClientTest {
         if (accessor.mismatchedboots$getActiveLayerCount() != 2) {
             throw new AssertionError("Mixed synthetic fixture did not resolve two source layers");
         }
-        assertProductionLayer(accessor.mismatchedboots$getLayers()[0], QuadClipper.Side.LEFT);
-        assertProductionLayer(accessor.mismatchedboots$getLayers()[1], QuadClipper.Side.RIGHT);
+        assertProductionLayer(accessor.mismatchedboots$getLayers()[0], QuadClipper.Side.RIGHT);
+        assertProductionLayer(accessor.mismatchedboots$getLayers()[1], QuadClipper.Side.LEFT);
 
         int[] extents = {0};
         state.visitExtents(position -> {
@@ -399,8 +399,8 @@ public final class NeoForgeGeometryClientTest {
                 accessor.mismatchedboots$getLayers()[0]).mismatchedboots$getLocalTransform());
         Matrix4f right = new Matrix4f(((LayerRenderStateAccessor) (Object)
                 accessor.mismatchedboots$getLayers()[1]).mismatchedboots$getLocalTransform());
-        assertFallbackRotation(left, 1.0F, "left incompatible fallback");
-        assertFallbackRotation(right, -1.0F, "right incompatible fallback");
+        assertFallbackRotation(left, -1.0F, "left source / visual right incompatible fallback");
+        assertFallbackRotation(right, 1.0F, "right source / visual left incompatible fallback");
     }
 
     private static void assertInvalidStackFallback(Minecraft client) {
@@ -414,7 +414,7 @@ public final class NeoForgeGeometryClientTest {
         for (int side = 0; side < 2; side++) {
             Matrix4f transform = ((LayerRenderStateAccessor) (Object) state.mismatchedboots$getLayers()[side])
                     .mismatchedboots$getLocalTransform();
-            assertFallbackRotation(transform, side == 0 ? 1.0F : -1.0F, "give-style JSON fallback side=" + side);
+            assertFallbackRotation(transform, side == 0 ? -1.0F : 1.0F, "give-style JSON fallback source=" + side);
         }
     }
 
@@ -450,7 +450,7 @@ public final class NeoForgeGeometryClientTest {
             ItemStackRenderState source = combined.sources().get(side);
             ItemStackRenderState.LayerRenderState layer = ((ItemStackRenderStateAccessor) (Object) source)
                     .mismatchedboots$getLayers()[0];
-            assertProductionLayer(layer, side == 0 ? QuadClipper.Side.LEFT : QuadClipper.Side.RIGHT);
+            assertProductionLayer(layer, side == 0 ? QuadClipper.Side.RIGHT : QuadClipper.Side.LEFT);
         }
         NeoForgeGeometrySubmissionProbe.arm(2);
         combined.submit(new PoseStack(), new SubmitNodeStorage(), 0x00F000F0, 0, 0);
@@ -487,10 +487,10 @@ public final class NeoForgeGeometryClientTest {
                 Matrix4f transform = ((LayerRenderStateAccessor) (Object)
                         ((ItemStackRenderStateAccessor) (Object) fallback.sources().getFirst())
                                 .mismatchedboots$getLayers()[0]).mismatchedboots$getLocalTransform();
-                assertFallbackRotation(transform, 1.0F, "GUI overlapping fallback");
+                assertFallbackRotation(transform, -1.0F, "GUI overlapping fallback left source / visual right");
             } else {
-                if (!new ScreenRectangle(42, 40, 6, 16).equals(items.get(0).scissorArea())
-                        || !new ScreenRectangle(48, 40, 6, 16).equals(items.get(1).scissorArea())) {
+                if (!new ScreenRectangle(48, 40, 6, 16).equals(items.get(0).scissorArea())
+                        || !new ScreenRectangle(42, 40, 6, 16).equals(items.get(1).scissorArea())) {
                     throw new AssertionError("GUI fallback lost native parent-scissor intersection");
                 }
                 ItemStackRenderState ordinary = items.getFirst().itemStackRenderState();

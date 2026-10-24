@@ -218,8 +218,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                 modelBoot(Items.IRON_BOOTS, Identifier.withDefaultNamespace("chest")),
                 modelBoot(Items.GOLDEN_BOOTS, BLUE_MODEL)).primary();
         GuiItemSubmissionProbe.Snapshot specialSnapshot = showPair(context, special, 2);
-        assertScissor(specialSnapshot.submissions().get(0), ITEM_X, ITEM_X + ITEM_HALF, "special left");
-        assertScissor(specialSnapshot.submissions().get(1), ITEM_X + ITEM_HALF, ITEM_X + ITEM_SIZE, "special right");
+        assertScissor(specialSnapshot.submissions().get(0), ITEM_X + ITEM_HALF, ITEM_X + ITEM_SIZE, "special left source");
+        assertScissor(specialSnapshot.submissions().get(1), ITEM_X, ITEM_X + ITEM_HALF, "special right source");
         if (testLayer(specialSnapshot.submissions().get(0).itemStackRenderState(), 0)
                 .mismatchedboots$getSpecialRenderer() == null) {
             throw new AssertionError("The special source did not reach a SpecialModelRenderer layer");
@@ -399,7 +399,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     for (var face : faces) {
                         for (var vertex : face.vertices()) {
                             float x = vertex.position().x;
-                            if ((side == 0 && x > 0.5F + EPSILON) || (side == 1 && x < 0.5F - EPSILON)) {
+                            if ((side == 0 && x < 0.5F - EPSILON) || (side == 1 && x > 0.5F + EPSILON)) {
                                 throw new AssertionError("GUI mesh retained the other source's half");
                             }
                         }
@@ -470,8 +470,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             if (items.size() != 3 || items.getLast().scissorArea() != null) {
                 throw new AssertionError("Nonplanar GUI mesh did not use two atomic scissors or leaked the parent");
             }
-            assertScissor(items.get(0), ITEM_X + 2, ITEM_X + ITEM_HALF, "nonplanar left");
-            assertScissor(items.get(1), ITEM_X + ITEM_HALF, ITEM_X + 14, "nonplanar right");
+            assertScissor(items.get(0), ITEM_X + ITEM_HALF, ITEM_X + 14, "nonplanar left source");
+            assertScissor(items.get(1), ITEM_X + 2, ITEM_X + ITEM_HALF, "nonplanar right source");
             for (int side = 0; side < 2; side++) {
                 TrackingItemStackRenderState baseline = new TrackingItemStackRenderState();
                 client.getItemModelResolver().updateForTopItem(baseline,
@@ -677,8 +677,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
     }
 
     private static void assertColoredHalves(Path screenshot, int scale, int xOrigin, int yOrigin, int padding) {
-        int leftRed = 0;
-        int rightBlue = 0;
+        int rightRed = 0;
+        int leftBlue = 0;
         int misplacedRed = 0;
         int misplacedBlue = 0;
         try (NativeImage image = NativeImage.read(Files.newInputStream(screenshot))) {
@@ -697,19 +697,19 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     int blue = color & 0xFF;
                     boolean redPixel = red > green + 30 && red > blue + 30;
                     boolean bluePixel = blue > red + 30 && blue > green + 30;
-                    leftRed += redPixel && x >= clipLeft && x < center ? 1 : 0;
-                    rightBlue += bluePixel && x >= center && x < clipRight ? 1 : 0;
-                    misplacedRed += redPixel && (x < clipLeft || x >= center) ? 1 : 0;
-                    misplacedBlue += bluePixel && (x < center || x >= clipRight) ? 1 : 0;
+                    rightRed += redPixel && x >= center && x < clipRight ? 1 : 0;
+                    leftBlue += bluePixel && x >= clipLeft && x < center ? 1 : 0;
+                    misplacedRed += redPixel && (x < center || x >= clipRight) ? 1 : 0;
+                    misplacedBlue += bluePixel && (x < clipLeft || x >= center) ? 1 : 0;
                 }
             }
         } catch (IOException exception) {
             throw new AssertionError("Could not inspect GUI composition colored screenshot", exception);
         }
         int minimum = 20 * scale * scale;
-        if (leftRed < minimum || rightBlue < minimum || misplacedRed != 0 || misplacedBlue != 0) {
-            throw new AssertionError("GUI composition colored pixels violated its clipping bounds: left red="
-                    + leftRed + ", right blue=" + rightBlue + ", misplaced red=" + misplacedRed
+        if (rightRed < minimum || leftBlue < minimum || misplacedRed != 0 || misplacedBlue != 0) {
+            throw new AssertionError("GUI composition colored pixels violated its front-view bounds: right red="
+                    + rightRed + ", left blue=" + leftBlue + ", misplaced red=" + misplacedRed
                     + ", misplaced blue=" + misplacedBlue);
         }
     }
@@ -720,7 +720,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
         return scale.get();
     }
 
-    private static void assertAtlasPixels(Path screenshot, int scale, int xOrigin, boolean blueThenRed) {
+    private static void assertAtlasPixels(Path screenshot, int scale, int xOrigin, boolean splitColors) {
         int left = 0;
         int right = 0;
         try (NativeImage image = NativeImage.read(Files.newInputStream(screenshot))) {
@@ -732,8 +732,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     int blue = color & 0xFF;
                     boolean redPixel = red > green + 30 && red > blue + 30;
                     boolean bluePixel = blue > red + 30 && blue > green + 30;
-                    if (x < (xOrigin + ITEM_HALF) * scale) left += (blueThenRed ? bluePixel : redPixel) ? 1 : 0;
-                    else right += redPixel ? 1 : 0;
+                    if (x < (xOrigin + ITEM_HALF) * scale) left += redPixel ? 1 : 0;
+                    else right += (splitColors ? bluePixel : redPixel) ? 1 : 0;
                 }
             }
         } catch (IOException exception) {
@@ -809,7 +809,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                 for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
                     for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                         float x = quad.position(vertex).x();
-                        if ((side == 0 && x > 0.5F + EPSILON) || (side == 1 && x < 0.5F - EPSILON)) {
+                        if ((side == 0 && x < 0.5F - EPSILON) || (side == 1 && x > 0.5F + EPSILON)) {
                             throw new AssertionError("GUI geometry retained the other source's canonical half");
                         }
                     }
