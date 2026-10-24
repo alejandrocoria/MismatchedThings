@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IExtension {
+    private MysticalRefundShape refundShape;
+    private boolean refundWarned;
     @Override public void onLoad(String name) {
         Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
         if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) { extensions.add(this); }
@@ -22,14 +24,29 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
     @Override public List<String> getMixins() {
         try {
             MixinService.getService().getBytecodeProvider().getClassNode(MysticalAugmentsShape.UTILS);
-            return List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin");
         } catch (ClassNotFoundException absent) { return List.of(); }
         catch (Exception | LinkageError failure) {
             Constants.LOG.warn("Could not inspect Mystical Agriculture augment API", failure); return List.of();
         }
+        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin"));
+        try {
+            ClassNode stack = MixinService.getService().getBytecodeProvider().getClassNode("net.minecraft.world.item.ItemStack");
+            // NeoForge retains vanilla's ServerPlayer delegator as well as the real LivingEntity body.
+            refundShape = new MysticalRefundShape(stack.methods.stream().noneMatch(m -> m.name.equals("applyDamage")
+                    && m.desc.equals("(ILnet/minecraft/world/entity/LivingEntity;Ljava/util/function/Consumer;)V")));
+            selected.add("MysticalRefundMixin");
+        } catch (Exception | LinkageError failure) {
+            Constants.LOG.warn("Could not inspect Mystical Agriculture refund boundary; augment effects retained", failure);
+        }
+        return selected;
     }
     @Override public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
-        if (node.name.equals(MysticalAugmentsShape.UTILS)) {
+        if (node.name.equals("net/minecraft/world/item/ItemStack")) {
+            if (refundShape != null && !refundShape.publish(node) && !refundWarned) {
+                refundWarned = true;
+                Constants.LOG.warn("Mystical Agriculture refund flow incompatible; ordinary breakage retained without augment refunds");
+            }
+        } else if (node.name.equals(MysticalAugmentsShape.UTILS)) {
             MysticalAugmentsShape.publish(node, MysticalAugmentsCompatibility.EQUIPMENT_PROOF, MysticalAugmentsShape.equipment(node));
         } else {
             for (var family : MysticalAugments.Family.values()) {

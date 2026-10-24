@@ -99,12 +99,13 @@ public final class JustDireRefundShape implements Opcodes {
                 site = call;
             } else if (call.owner.equals(OWNER) && call.desc.equals(HANDLER)) {
                 var handler = method(node, call.name, call.desc);
-                if (!transformed || site != null || handler == null || !owned(handler) || !router(handler)
+                if (!transformed || site != null || handler == null || !observer(handler)
                         || !flow.parameter(flow.receiver(call, 6), 0) || !flow.parameter(flow.argument(call, 0, 6), 0)
                         || flow.constant(flow.argument(call, 1, 6)) != 1 || !flow.parameter(flow.argument(call, 3, 6), 1)
                         || !flow.parameter(flow.argument(call, 4, 6), 2) || !flow.parameter(flow.argument(call, 5, 6), 3)
                         || !operation(node, flow.origin(flow.argument(call, 2, 6)))
-                        && !forwardingOperation(node, flow, flow.origin(flow.argument(call, 2, 6)), false)) { return false; }
+                        && !forwardingOperation(node, flow, flow.origin(flow.argument(call, 2, 6)), false)
+                        && !forwardingOperation(node, flow, flow.origin(flow.argument(call, 2, 6)), true)) { return false; }
                 site = call;
             } else if (call.owner.equals(OWNER) && call.desc.equals(FORWARD)) {
                 var handler = method(node, call.name, call.desc);
@@ -136,13 +137,26 @@ public final class JustDireRefundShape implements Opcodes {
         return false;
     }
 
-    private static boolean router(MethodNode handler) {
+    private static boolean observer(MethodNode handler) {
+        if (owned(handler)) { return router(handler); }
+        // Recognize our independent MA consumption observer, not its eligibility or refund items.
+        String peer = "games.alejandrocoria.mismatchedboots.mixin.compatibility.mysticalagriculture.MysticalRefundMixin";
+        if (handler.visibleAnnotations == null || handler.visibleAnnotations.stream()
+                .noneMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                        && a.values != null && a.values.contains(peer))) { return false; }
+        return routerCode(handler, "mismatchedboots$maRefundReady",
+                "games/alejandrocoria/mismatchedboots/compatibility/mysticalagriculture/MysticalRefundCompatibility");
+    }
+
+    private static boolean router(MethodNode handler) { return routerCode(handler, READY, COMPAT); }
+
+    private static boolean routerCode(MethodNode handler, String marker, String adapter) {
         if ((handler.access & ACC_STATIC) != 0 || !handler.tryCatchBlocks.isEmpty()) { return false; }
         var code = real(handler);
         return code.size() == 7 && code.get(0) instanceof MethodInsnNode ready && ready.getOpcode() == INVOKESTATIC
-                && ready.owner.equals(OWNER) && ready.name.equals(READY) && ready.desc.equals("()Z")
+                && ready.owner.equals(OWNER) && ready.name.equals(marker) && ready.desc.equals("()Z")
                 && load(code.get(1), ALOAD, 1) && load(code.get(2), ILOAD, 2) && load(code.get(3), ALOAD, 5) && load(code.get(4), ALOAD, 3)
-                && code.get(5) instanceof MethodInsnNode route && route.getOpcode() == INVOKESTATIC && route.owner.equals(COMPAT)
+                && code.get(5) instanceof MethodInsnNode route && route.getOpcode() == INVOKESTATIC && route.owner.equals(adapter)
                 && route.name.equals("route") && route.desc.equals(ROUTE) && code.get(6).getOpcode() == RETURN;
     }
 
@@ -209,7 +223,7 @@ public final class JustDireRefundShape implements Opcodes {
                     || !flow.arrayElement(flow.argument(call, 0, arguments), 0, captures)
                     || !flow.arrayElement(flow.argument(call, 1, arguments), 1, captures)
                     || !flow.parameter(flow.argument(call, 2, arguments), 1)
-                    || (ownedInside ? !owned(handler) || !router(handler) : !forwarder(node, handler))) { return false; }
+                    || (ownedInside ? !observer(handler) : !forwarder(node, handler))) { return false; }
             if (ownedInside) { for (int i = 3; i < 6; i++) { if (!flow.parameter(flow.argument(call, i, arguments), i - 1)) { return false; } } }
             calls++;
         }
@@ -246,7 +260,7 @@ public final class JustDireRefundShape implements Opcodes {
     private static boolean shrink(MethodInsnNode call) { return call.getOpcode() == INVOKEVIRTUAL && call.owner.equals(OWNER) && call.name.equals("shrink") && call.desc.equals("(I)V"); }
     private static boolean load(AbstractInsnNode node, int opcode, int slot) { return node instanceof VarInsnNode local && local.getOpcode() == opcode && local.var == slot; }
     private static MethodNode method(ClassNode node, String name, String desc) { return node.methods.stream().filter(m -> m.name.equals(name) && m.desc.equals(desc)).findFirst().orElse(null); }
-    private static List<AbstractInsnNode> real(MethodNode method) { var result = new ArrayList<AbstractInsnNode>(); for (var instruction : method.instructions) { if (instruction.getOpcode() >= 0) { result.add(instruction); } } return result; }
+    private static List<AbstractInsnNode> real(MethodNode method) { var result = new ArrayList<AbstractInsnNode>(); for (var instruction : method.instructions) { if (instruction.getOpcode() >= 0 && instruction.getOpcode() != NOP) { result.add(instruction); } } return result; }
     private static boolean owned(MethodNode method) { return method.visibleAnnotations != null && method.visibleAnnotations.stream().anyMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(MIXIN)); }
     private static boolean straight(MethodNode method) { return method.tryCatchBlocks.isEmpty() && real(method).stream().noneMatch(n -> n instanceof JumpInsnNode || n instanceof TableSwitchInsnNode || n instanceof LookupSwitchInsnNode || n.getOpcode() == ATHROW) && real(method).stream().filter(n -> n.getOpcode() >= IRETURN && n.getOpcode() <= RETURN).count() == 1; }
 

@@ -10,7 +10,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -52,7 +54,7 @@ public final class MysticalAugmentsCompatibility {
                 .stream().filter(spec -> available(spec.family(), api)).toList();
     }
 
-    /** Physical occupied entries are not deduplicated here; B can use this view independently. */
+    /** Physical occupied entries are not deduplicated here, independently of effect readiness. */
     private static List<MysticalAugments.Spec> installed(ItemStack source, Binding api) {
         if (!nativeBoot(source) || source.getItem().getClass() != api.bootType) { return List.of(); }
         try {
@@ -79,6 +81,32 @@ public final class MysticalAugmentsCompatibility {
             return List.of(); // A malformed/foreign source is not authorization; never repair its data here.
         }
     }
+
+    /** Only left-source purchases belong to this output; never consult the effective union/root copy. */
+    static RefundView refunds(ItemStack root) {
+        if (root == null || !root.is(ModContent.MIXED_BOOTS_KEY)
+                || !MixedBootsSources.anySource(root, MysticalAugmentsCompatibility::nativeBoot)) { return null; }
+        Binding api = bindings();
+        if (api == null) { return null; }
+        ItemStack source = ModContent.getMixedBootsData(root).orElseThrow().left().source();
+        List<MysticalAugments.Spec> purchases = installed(source, api);
+        if (purchases.isEmpty()) { return null; }
+        try {
+            Method getItem = Class.forName(PREFIX + "api.tinkering.Augment").getMethod("getItem");
+            var items = new ArrayList<Item>();
+            for (var spec : purchases) {
+                Object value = getItem.invoke(api.augments.get(spec.id()));
+                if (!(value instanceof Item item) || item == Items.AIR
+                        || BuiltInRegistries.ITEM.get(BuiltInRegistries.ITEM.getKey(item)).orElseThrow().value() != item) { return null; }
+                items.add(item);
+            }
+            return new RefundView(api, source.getItem(), List.copyOf((List<?>) source.get(api.component)), List.copyOf(items));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            MysticalRefundCompatibility.unavailable(failure); return null;
+        }
+    }
+
+    record RefundView(Object binding, Item sourceItem, List<?> installed, List<Item> items) {}
 
     public static List<Object> equipment(Player player, ItemStack stack, List<Object> ordinary) {
         if (player.getItemBySlot(EquipmentSlot.FEET) != stack) { return ordinary; }

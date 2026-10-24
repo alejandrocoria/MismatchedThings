@@ -1,4 +1,4 @@
-// Production effect gates and the separately retained refund experiment; never packaged in production.
+// Targeted production effect/refund gates; fixture code is never packaged in production.
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -21,7 +21,9 @@ def pins = fabric ? [
         'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
         'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821'
 ]
-['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Refund', 'Absent'].each { variant ->
+def refundVariants = ['Refunds', 'RefundInner', 'RefundOuter', 'RefundMissing', 'RefundExtra']
+if (!fabric) { refundVariants.add('RefundCoexist') }
+(['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Absent'] + refundVariants).each { variant ->
     def name = variant.toLowerCase(Locale.ROOT)
     def directory = runs.map { it.dir(name) }
     def markers = reports.map { it.dir(name) }
@@ -31,6 +33,8 @@ def pins = fabric ? [
             source('networkTest'); ideConfigGenerated(false)
             runDir("build/run/mysticalAugments/${baseline}/${name}")
             property('mismatchedboots.test.mysticalAugments', name)
+            property('mixin.debug.export', 'true')
+            property('mixin.debug.export.filter', 'net.minecraft.world.item.ItemStack')
             property('fabric-tag-conventions-v2.missingTagTranslationWarning', 'VERBOSE')
             property('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
             programArgs('--nogui'); vmArg('-Xmx1G')
@@ -40,6 +44,8 @@ def pins = fabric ? [
             server(); disableIdeRun()
             gameDirectory = directory.get().asFile
             systemProperty('mismatchedboots.test.mysticalAugments', name)
+            systemProperty('mixin.debug.export', 'true')
+            systemProperty('mixin.debug.export.filter', 'net.minecraft.world.item.ItemStack')
             systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
             programArgument('--nogui'); jvmArgument('-Xmx1G')
         }
@@ -60,6 +66,14 @@ def pins = fabric ? [
                     throw new GradleException("Missing/unexpected Mystical spike fixture: ${artifact}")
                 }
                 artifact
+            }
+            if (variant == 'RefundCoexist') {
+                def peer = rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar')
+                if (!peer.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(peer.bytes).encodeHex().toString()
+                        != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
+                    throw new GradleException('Missing/unexpected JDT coexistence fixture')
+                }
+                artifacts.add(peer)
             }
             filesService.delete { delete directory, markers }
             def target = directory.get().asFile
@@ -95,6 +109,11 @@ def verifyVariants = { variants ->
             if ((log.text =~ /Mystical Agriculture mixed augment disabled:/).count != expectedRefusals) {
                 throw new GradleException("Unexpected MA feature refusal count; see ${log}")
             }
+            int expectedRefundRefusals = variant in ['RefundMissing', 'RefundExtra'] ? 1 : 0
+            if ((log.text =~ /Mystical Agriculture refund flow incompatible/).count != expectedRefundRefusals
+                    || log.text.contains('Just Dire Things refund flow incompatible')) {
+                throw new GradleException("Unexpected refund readiness diagnostic; see ${log}")
+            }
             def markers = reports.get().dir(name).asFile
             def failure = new File(markers, 'mystical-augments-failure.txt')
             if (failure.isFile()) { throw new GradleException(failure.text) }
@@ -110,8 +129,12 @@ tasks.register('verifyMysticalAugments') {
     description = 'Production MA effects, compatible peers, independent local refusals and optional absence'
     doLast { verifyVariants(['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Absent']) }
 }
-tasks.register('verifyMysticalAugmentsRefundSpike') {
+tasks.register('verifyMysticalAugmentsRefunds') {
     group = 'verification'
-    description = 'Research-only native break refunds using each mixed output\'s left source, without table admission'
-    doLast { verifyVariants(['Refund', 'Absent']) }
+    description = 'Production conserved owner refunds after consumption, reentry, local refusals and optional absence'
+    doLast {
+        def selected = providers.gradleProperty('mysticalRefundVariants').getOrElse((refundVariants + ['Absent']).join(',')).split(',').toList()
+        if (!selected.every { it in refundVariants + ['Absent'] }) { throw new GradleException('Unknown MA refund variant') }
+        verifyVariants(selected)
+    }
 }

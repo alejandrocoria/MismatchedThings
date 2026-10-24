@@ -21,8 +21,14 @@ public final class MysticalAugmentsPlugin implements IMixinConfigPlugin {
     @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
     @Override public List<String> getMixins() {
         // Do not register even a @Pseudo target in the absent run: Fabric logs its class lookup.
-        return switch (System.getProperty("mismatchedboots.test.mysticalAugments", "")) {
-            case "refund" -> List.of("AugmentRefundMixin", "AugmentDropWitnessMixin");
+        String variant = System.getProperty("mismatchedboots.test.mysticalAugments", "");
+        if (variant.startsWith("refund")) {
+            var selected = new java.util.ArrayList<>(List.of("AugmentDropWitnessMixin", "MysticalRefundWitnessMixin", "MysticalShrinkControlMixin"));
+            if (variant.equals("refundinner") || variant.equals("refundmissing") || variant.equals("refundextra")) { selected.add("MysticalRefundInnerMixin"); }
+            if (variant.equals("refundouter")) { selected.add("MysticalRefundOuterMixin"); }
+            return selected;
+        }
+        return switch (variant) {
             case "compatible" -> List.of("MysticalEquipmentPeerMixin", "MysticalJumpPeerMixin");
             case "noequipment" -> List.of("MysticalEquipmentPeerMixin");
             case "nojump" -> List.of("MysticalJumpPeerMixin");
@@ -33,7 +39,20 @@ public final class MysticalAugmentsPlugin implements IMixinConfigPlugin {
     @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
         String variant = System.getProperty("mismatchedboots.test.mysticalAugments", "");
         for (var method : node.methods) {
-            if (variant.equals("noequipment") && method.name.equals("getArmorAugments")) {
+            if (variant.equals("refundmissing") && method.name.equals("applyDamage")) {
+                for (var instruction : method.instructions) {
+                    if (instruction instanceof MethodInsnNode call && call.name.equals("isBroken")) {
+                        call.setOpcode(Opcodes.INVOKESTATIC);
+                        call.owner = "games/alejandrocoria/mismatchedboots/runtimetest/mystical/MysticalRefundControl";
+                        call.name = "opaqueBroken"; call.desc = "(Lnet/minecraft/world/item/ItemStack;)Z";
+                    }
+                }
+            } else if (variant.equals("refundextra") && method.name.equals("applyDamage")) {
+                // A second harmless consumption call makes the local proof ambiguous.
+                var extra = new InsnList(); extra.add(new VarInsnNode(Opcodes.ALOAD, 0)); extra.add(new InsnNode(Opcodes.ICONST_0));
+                extra.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/item/ItemStack", "shrink", "(I)V", false));
+                method.instructions.insert(extra);
+            } else if (variant.equals("noequipment") && method.name.equals("getArmorAugments")) {
                 for (var instruction : method.instructions) {
                     if (instruction instanceof MethodInsnNode call && call.name.equals("getItemBySlot")) {
                         call.setOpcode(Opcodes.INVOKESTATIC);

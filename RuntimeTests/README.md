@@ -10,8 +10,8 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
   This is a shared source directory, not a separate Gradle project.
 - `TooltipSeparator/src/main`: shared production-separator scenarios and read-only
   probes, with legacy spike names until consolidation; never packaged in production.
-- `MysticalAugments/src/main`: production MA augment probes and competing-mixin
-  controls, plus the separate refund research candidate; never packaged in production.
+- `MysticalAugments/src/main`: production MA effect/refund probes, competing-mixin
+  controls and read-only delivery witnesses; never packaged in production.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
 - `Fabric/src/test`: fast loader-local reflection/bytecode-boundary JUnit regressions
   against the packaged Fabric classes, with fake optional APIs and no game launch.
@@ -60,29 +60,43 @@ Coverage includes all 23 built-in IDs in both orientations, all 11 family
 behaviors, strongest/union selection, held rejection, malformed sources/roots,
 Health/Step cache cleanup, native armor coexistence, actual fall damage and
 timed Absorption. Native equipment order and the shared-timestamp winner are
-compared with original boots. General augment lookup, Tinkering Table admission
-and actual break refunds remain native-only at block A's boundary.
+compared with original boots. General augment lookup and Tinkering Table admission
+remain unchanged. Since B, actual mixed breaks return only valid left-source
+purchases after consumption; effect-union selection never determines refunds.
 
 Lifecycle probes dispatch registered native loader callbacks on disconnected
 server players, save/load player NBT for reconnect-state evidence, and construct
 a fresh player after a death callback. They are not connected-client login,
 network synchronization or actual respawn acceptance. See the
 [implementation record](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md#8-execution-record)
-for results and the remaining B/C acceptance boundaries. Historical effect
+for results and the remaining C acceptance boundaries. Historical effect/refund
 candidate registrations have been retired rather than layered over production.
 
-### Owner-side refund follow-up
+### Owner-side refunds — production consumption gate
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsRefundSpike
-.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsRefundSpike
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsRefunds
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsRefunds '-Pneoforge_version=26.1.2.99'
+.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsRefunds
 ```
 
-The separate `refund` candidate gives only MA's native break consumer a view of
-the mixed root's left source. Native MA still delivers the augment items;
-general lookup and the Tinkering Table remain unchanged. This is not installed
-in the production effect runs or the normal client. Each gate runs `Refund`
-and quiet `Absent` servers using the same pins and report root above.
+The production adapter observes the one-item `ItemStack.applyDamage` consumption,
+not MA/Cucumber's earlier break event. Capture retains only the left-source
+purchase entitlement and original player/inventory/root identity. After confirmed
+consumption and validation it inserts native-bound augment items through
+`Inventory.placeItemBackInInventory`, including native overflow dropping.
+Transient root-identity guards cover shrink and delivery reentry; no persistent
+credit, synthetic event, native handler replay or retry is introduced.
+
+Variants: `Refunds`, `RefundInner`, `RefundOuter`, `RefundMissing`, `RefundExtra`,
+quiet `Absent`, plus NeoForge `RefundCoexist`. The inner/outer peers exercise
+unchanged forwarding and nested calls. Missing/ambiguous final local proofs
+refuse only MA refunds, retaining ordinary consumption and armor effects.
+The NeoForge coexistence run pins JDT `1.6.11` by SHA-256 in the Gradle fixture,
+checks both production observer markers and actually breaks a credited JDT root.
+Optional `'-PmysticalRefundVariants=RefundInner,RefundOuter'` restricts diagnosis
+to named variants; omit it for the complete gate. Class export is limited to
+`ItemStack` under each isolated run's `.mixin.out/class/` for local-proof diagnosis.
 
 The eight pair scenarios cover one/two MA inputs, different/identical augments,
 four installed physical augments including a weaker family variant, duplicate
@@ -92,16 +106,20 @@ counts, no early/sequential repeat refunds and immutable input checks. A
 read-only accepted-spawn witness verifies native overflow delivery independently
 of immediate world-index visibility.
 
-See [the dated refund results and limits](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-EXPLORATION.md#10-owner-side-refund-spike--2026-10-23).
-This preserves native pre-shrink event timing; it is not a reentrancy or general
-post-consumption protocol proof.
+Additional controls observe every mixed inventory delivery after consumption,
+nonbreaking wear/repair, prevented shrink, direct deletion, malformed/missing
+data, unbreakable/creative/spectator/detached/count-two stacks, inventory/offhand
+breaks, ownership/entitlement edits, unrelated names, throwing shrink and
+cancelled/throwing delivery. Reentry covers the same root and a different valid
+root before shrink and during delivery. External cancellation/failure is not a
+rollback guarantee; a dispatched purchase is never retried.
 
 The [production plan](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md)
-has A effects implemented; B refunds and C presentation/lifecycle remain pending.
-B will validate confirmed post-consumption delivery
-with transient identity/reentry protection instead of promoting the refund
-spike's pre-shrink native-handler substitution unchanged. Retire candidate
-registrations as production routes replace them; do not layer both owners.
+records separate A/B production evidence; C presentation/connected/manual
+acceptance remains pending. The old `verifyMysticalAugmentsRefundSpike`, its
+`Refund` run, `AugmentRefundMixin` and candidate ownership flag/helper are retired.
+Historical allocation/native-delivery research remains in the exploration;
+it is not substituted for the new consumption/reentry proof.
 
 ## Commands
 

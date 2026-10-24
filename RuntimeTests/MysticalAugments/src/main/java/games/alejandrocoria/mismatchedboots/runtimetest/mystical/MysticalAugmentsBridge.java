@@ -1,29 +1,17 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.mystical;
 
-import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.world.item.ItemStack;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
-/** Native test API helpers plus the retained, separately gated pre-B refund experiment. */
+/** Native test API helpers; no candidate effect or refund owner remains. */
 public final class MysticalAugmentsBridge {
-    public static boolean refundsActive;
 
     private MysticalAugmentsBridge() {}
 
     public static boolean enabled() {
         return !System.getProperty("mismatchedboots.test.mysticalAugments", "").isEmpty();
-    }
-
-    /** Refund ownership is per original input, not the deduplicated/strongest effective list. */
-    public static ItemStack refundSource(ItemStack root) {
-        if (!refundsActive || !ModContent.isMixedBoots(root) || root.getCount() != 1) { return null; }
-        var data = ModContent.getMixedBootsData(root).orElse(null);
-        if (data == null) { return null; }
-        ItemStack owner = data.left().source();
-        return owner.getItem().getClass().getName().equals(
-                "com.blakebr0.mysticalagriculture.item.armor.EssenceBootsItem") ? owner : null;
     }
 
     @SuppressWarnings("unchecked")

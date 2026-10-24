@@ -29,6 +29,7 @@ tasks.named('test', Test).configure {
 
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
+    compileOnly 'org.ow2.asm:asm-analysis:9.9.1'
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
     compileOnly 'io.github.llamalad7:mixinextras-common:0.3.5'
     annotationProcessor 'io.github.llamalad7:mixinextras-common:0.3.5'
@@ -48,6 +49,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.spongepowered:mixin:0.8.5'
     testImplementation 'org.ow2.asm:asm-tree:9.9.1'
+    testImplementation 'org.ow2.asm:asm-analysis:9.9.1'
     testImplementation("mysticdrew:common-networking-common:${common_networking_version}") {
         transitive = false
     }

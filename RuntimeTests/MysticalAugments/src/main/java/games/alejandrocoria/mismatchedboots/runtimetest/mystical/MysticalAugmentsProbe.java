@@ -46,6 +46,7 @@ public final class MysticalAugmentsProbe {
         void update(ServerPlayer player);
         void logout(ServerPlayer player);
         void death(ServerPlayer player);
+        default void coexist(MinecraftServer server) throws Exception { throw new AssertionError("Unexpected coexist loader"); }
     }
     private static boolean finished;
     private static int assertions;
@@ -66,12 +67,14 @@ public final class MysticalAugmentsProbe {
                 for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
                     player.setItemSlot(EquipmentSlot.FEET, root); player.aiStep();
                     require(MysticalAugmentsCompatibility.selectedIds(root).isEmpty(), "Absent mod produced augments");
+                    root.hurtAndBreak(root.getMaxDamage() + 1, player, EquipmentSlot.FEET);
+                    require(root.isEmpty(), "Optional absence changed ordinary mixed breakage");
                 }
                 require(MysticalAugmentsProbe.class.getClassLoader().getResource(
                         "com/blakebr0/mysticalagriculture/api/util/AugmentUtils.class") == null, "Absence fixture includes MA");
-                observations.append("Optional absence: ordinary mixed AI ticks, no MA class loaded.\n");
-            } else if (System.getProperty("mismatchedboots.test.mysticalAugments").equals("refund")) {
-                refunds(server);
+                observations.append("Optional absence: ordinary mixed AI ticks/breaks, no MA class loaded.\n");
+            } else if (System.getProperty("mismatchedboots.test.mysticalAugments").startsWith("refund")) {
+                refunds(server, platform);
             } else if (System.getProperty("mismatchedboots.test.mysticalAugments").startsWith("no")) {
                 refusals(server, platform);
             } else { live(server, platform); }
@@ -324,6 +327,7 @@ public final class MysticalAugmentsProbe {
     }
 
     private static void resources(MinecraftServer server) throws Exception {
+        MysticalRefundControl.reset(null, null);
         var player = player(server);
         var nativeBoots = item("inferium_boots", "HEALTH_BOOST_I");
         var roots = MixedBootsFactory.createPair(nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
@@ -346,9 +350,10 @@ public final class MysticalAugmentsProbe {
                     refunds += item.getCount();
                 }
             }
-            require(refunds == (nativeSubject ? 1 : 0), "Unexpected physical refund: " + refunds);
+            boolean refused = System.getProperty("mismatchedboots.test.mysticalAugments").matches("refund(missing|extra)");
+            require(refunds == (nativeSubject || stack == roots.primary() && !refused ? 1 : 0), "Unexpected physical refund: " + refunds);
         }
-        observations.append("Native table accepts native/rejects both mixed; actual break refunds remain native-only.\n");
+        observations.append("Native table/general lookup unchanged; actual breaks honor left-source refund ownership/readiness.\n");
     }
 
     private static AbstractContainerMenu table(ServerPlayer player) throws Exception {
@@ -359,10 +364,22 @@ public final class MysticalAugmentsProbe {
                 .newInstance(1, player.getInventory(), inventory, BlockPos.ZERO);
     }
 
-    private static void refunds(MinecraftServer server) throws Exception {
-        resources(server); // Native positive control and mixed negative control with the new bridge disabled.
-        MysticalAugmentsBridge.refundsActive = true;
-        try {
+    private static void refunds(MinecraftServer server, Platform platform) throws Exception {
+        resources(server);
+        String variant = System.getProperty("mismatchedboots.test.mysticalAugments");
+        boolean refused = variant.matches("refund(missing|extra)");
+        if (refused) {
+            var player = player(server);
+            var pair = MixedBootsFactory.createPair(item("awakened_supremium_boots", "JUMP_BOOST_I"), new ItemStack(Items.DIAMOND_BOOTS));
+            for (var root : List.of(pair.primary(), pair.inverse())) {
+                player.setItemSlot(EquipmentSlot.FEET, root); player.removeAllEffects(); player.aiStep();
+                require(player.hasEffect(MobEffects.JUMP_BOOST), "Refund refusal disabled independent armor effect");
+                breakRoot(root, player);
+                require(root.isEmpty() && delivered(player).isEmpty(), "Refused boundary refunded or suppressed ordinary consumption");
+            }
+            observations.append("Missing/ambiguous final consumption proof: only MA refunds refused, native controls/Jump intact.\n");
+            return;
+        }
             var nativePlayer = player(server);
             for (int slot = 0; slot < 36; slot++) { nativePlayer.getInventory().setItem(slot, new ItemStack(Items.COBBLESTONE, 64)); }
             var nativeBoots = item("inferium_boots", "HEALTH_BOOST_I");
@@ -385,7 +402,12 @@ public final class MysticalAugmentsProbe {
             refundPair(server, new ItemStack(Items.IRON_BOOTS), diamond, "ordinary mixed", false);
             refundPair(server, item("inferium_boots", "HEALTH_BOOST_I"), item("prudentium_boots", "LUCK_I"),
                     "full inventory native drop fallback", true);
-        } finally { MysticalAugmentsBridge.refundsActive = false; }
+        refundFailures(server, variant);
+        if (variant.equals("refundcoexist")) {
+            platform.coexist(server);
+            observations.append("JDT and MA native shrink observers remain ready and independently return their own purchases.\n");
+        }
+        MysticalRefundControl.reset(null, null);
     }
 
     private static void refundPair(MinecraftServer server, ItemStack left, ItemStack right, String label, boolean full) throws Exception {
@@ -402,6 +424,7 @@ public final class MysticalAugmentsProbe {
             var player = player(server);
             if (full) { for (int slot = 0; slot < 36; slot++) { player.getInventory().setItem(slot, new ItemStack(Items.COBBLESTONE, 64)); } }
             player.setItemSlot(EquipmentSlot.FEET, root);
+            MysticalRefundControl.reset(root, player);
             var menu = table(player);
             require(!menu.getSlot(0).mayPlace(root) && MysticalAugmentsBridge.nativeAugments(root).isEmpty(),
                     "Refund candidate opened table/general lookup: " + label);
@@ -412,6 +435,8 @@ public final class MysticalAugmentsProbe {
             require(delivered(player).isEmpty(), "Repair refunded: " + label);
             root.setDamageValue(root.getMaxDamage() - 1); root.hurtAndBreak(2, player, EquipmentSlot.FEET);
             require(root.isEmpty(), "Refund fixture did not actually break: " + label);
+            require(MysticalRefundControl.deliveries == expectedOwners.get(i).values().stream().mapToInt(Integer::intValue).sum(),
+                    "Delivery count/timing wrong: " + label);
             var received = delivered(player);
             require(received.equals(expectedOwners.get(i)), "Wrong owner refund: " + label + " orientation " + i
                     + " expected=" + expectedOwners.get(i) + " received=" + received);
@@ -425,6 +450,116 @@ public final class MysticalAugmentsProbe {
         require(ItemStack.matches(left, leftBefore) && ItemStack.matches(right, rightBefore), "Refund changed original inputs: " + label);
         observations.append("Refund ").append(label).append(": per-left-source allocation, pair conservation, NBT ownership, no early/repeated refund; ")
                 .append(actualTotal).append('\n');
+        MysticalRefundControl.reset(null, null);
+    }
+
+    private static void breakRoot(ItemStack root, ServerPlayer player) {
+        root.remove(DataComponents.UNBREAKABLE); root.setDamageValue(root.getMaxDamage() - 1);
+        // Keep the original inventory identity observable through nested tests, without equipment cleanup.
+        root.hurtAndBreak(2, player.level(), player, item -> {});
+    }
+
+    private static void breakOther(ItemStack another, ServerPlayer player) {
+        var previous = MysticalRefundControl.root;
+        MysticalRefundControl.root = another;
+        try { breakRoot(another, player); }
+        finally { MysticalRefundControl.root = previous; }
+    }
+
+    private static void refundFailures(MinecraftServer server, String variant) throws Exception {
+        boolean peer = variant.equals("refundinner") || variant.equals("refundouter");
+        for (String fault : List.of("ordinary", "prevent", "cancel", "throw", "deliverySame", "deliveryOther",
+                "command", "detached", "count", "data", "malformed", "unbreakable", "creative", "spectator", "inventory", "offhand")) {
+            var player = player(server);
+            var root = MixedBootsFactory.createPair(item("inferium_boots", "HEALTH_BOOST_I"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+            player.setItemSlot(EquipmentSlot.FEET, root);
+            MysticalRefundControl.reset(root, player);
+            var expected = physicalAugments(ModContent.getMixedBootsData(root).orElseThrow().left().source());
+            boolean expect = List.of("ordinary", "deliverySame", "deliveryOther", "inventory", "offhand").contains(fault);
+            switch (fault) {
+                case "prevent" -> MysticalRefundControl.prevent = true;
+                case "cancel" -> MysticalRefundControl.cancelDelivery = true;
+                case "throw" -> MysticalRefundControl.throwDelivery = true;
+                case "deliverySame" -> MysticalRefundControl.duringDelivery = () -> root.hurtAndBreak(2, player.level(), player, item -> {});
+                case "deliveryOther" -> {
+                    var another = MixedBootsFactory.createPair(item("prudentium_boots", "LUCK_I"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                    player.getInventory().setItem(12, another);
+                    expected.putAll(physicalAugments(ModContent.getMixedBootsData(another).orElseThrow().left().source()));
+                    MysticalRefundControl.duringDelivery = () -> breakOther(another, player);
+                }
+                case "detached" -> player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                case "count" -> root.setCount(2);
+                case "data" -> root.remove(ModContent.mixedBootsDataType().orElseThrow());
+                case "malformed" -> {
+                    var source = item("inferium_boots", "HEALTH_BOOST_I");
+                    var type = (net.minecraft.core.component.DataComponentType<List<Object>>) BuiltInRegistries.DATA_COMPONENT_TYPE
+                            .get(Identifier.parse("mysticalagriculture:equipped_augments")).orElseThrow().value();
+                    Object entry = Class.forName("com.blakebr0.mysticalagriculture.api.components.AugmentComponent")
+                            .getConstructor(Identifier.class, int.class).newInstance(Identifier.parse("mysticalagriculture:health_boost_i"), 2);
+                    source.set(type, List.of(entry));
+                    root.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(
+                            MixedBootsFactory.createPair(source, new ItemStack(Items.DIAMOND_BOOTS)).primary()).orElseThrow());
+                }
+                case "creative" -> player.setGameMode(GameType.CREATIVE);
+                case "spectator" -> player.setGameMode(GameType.SPECTATOR);
+                case "inventory", "offhand" -> {
+                    player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                    player.getInventory().setItem(fault.equals("inventory") ? 14 : Inventory.SLOT_OFFHAND, root);
+                }
+            }
+            boolean threw = false;
+            try {
+                if (fault.equals("command")) { root.shrink(1); }
+                else if (fault.equals("unbreakable")) {
+                    root.set(DataComponents.UNBREAKABLE, net.minecraft.util.Unit.INSTANCE);
+                    root.hurtAndBreak(root.getMaxDamage() + 1, player.level(), player, item -> {});
+                } else { breakRoot(root, player); }
+            }
+            catch (IllegalStateException failure) { if (!fault.equals("throw") || !failure.getMessage().equals("MA controlled delivery failure")) { throw failure; } threw = true; }
+            require(threw == fault.equals("throw"), "Throwing-delivery control was not exercised");
+            require(delivered(player).equals(expect ? expected : Map.of()), "Wrong refund under " + fault + ": " + delivered(player));
+            if (fault.equals("prevent")) { require(!root.isEmpty(), "No-consumption peer actually consumed root"); }
+            if (fault.equals("cancel") || fault.equals("throw")) {
+                require(root.isEmpty() && MysticalRefundControl.deliveries == 1, "Cancelled/throwing dispatch timing/count wrong");
+                MysticalRefundControl.throwDelivery = false; root.hurtAndBreak(2, player.level(), player, item -> {});
+                require(MysticalRefundControl.deliveries == 1, "Cancelled/throwing delivery retried");
+            }
+            MysticalRefundControl.reset(null, null);
+        }
+        if (peer) {
+            for (String fault : variant.equals("refundinner")
+                    ? List.of("reenter", "other", "replace", "move", "entitlement", "lore", "throwShrink")
+                    : List.of("reenter", "other", "lore")) {
+                var player = player(server);
+                var root = MixedBootsFactory.createPair(item("inferium_boots", "HEALTH_BOOST_I"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                player.setItemSlot(EquipmentSlot.FEET, root); MysticalRefundControl.reset(root, player);
+                var expected = physicalAugments(ModContent.getMixedBootsData(root).orElseThrow().left().source());
+                switch (fault) {
+                    case "reenter" -> MysticalRefundControl.before = () -> root.hurtAndBreak(1, player.level(), player, item -> {});
+                    case "other" -> {
+                        var another = MixedBootsFactory.createPair(item("prudentium_boots", "LUCK_I"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                        player.getInventory().setItem(12, another);
+                        expected.putAll(physicalAugments(ModContent.getMixedBootsData(another).orElseThrow().left().source()));
+                        MysticalRefundControl.before = () -> breakOther(another, player);
+                    }
+                    case "replace" -> MysticalRefundControl.after = () -> player.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.DIAMOND_BOOTS));
+                    case "move" -> MysticalRefundControl.after = () -> { player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); player.getInventory().setItem(13, root); };
+                    case "entitlement" -> {
+                        var replacement = MixedBootsFactory.createPair(item("awakened_supremium_boots", "JUMP_BOOST_I"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
+                        MysticalRefundControl.after = () -> root.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(replacement).orElseThrow());
+                    }
+                    case "lore" -> MysticalRefundControl.after = () -> root.set(DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("unrelated name"));
+                    case "throwShrink" -> MysticalRefundControl.after = () -> { throw new IllegalStateException("MA controlled shrink failure"); };
+                }
+                try { breakRoot(root, player); }
+                catch (IllegalStateException failure) { if (!fault.equals("throwShrink") || !failure.getMessage().equals("MA controlled shrink failure")) { throw failure; } }
+                boolean declined = List.of("replace", "move", "entitlement", "throwShrink").contains(fault);
+                require(delivered(player).equals(declined ? Map.of() : expected), "Foreign shrink callback failed " + variant + "/" + fault + ": " + delivered(player));
+                require(MysticalRefundControl.peerCalls > 0, "Compatible shrink peer never ran");
+                MysticalRefundControl.reset(null, null);
+            }
+        }
+        observations.append("Production consumption/delivery timing, prevented/creative/direct deletion, outside-FEET identity, cancellation/failure and nested independent roots pass; peer=").append(peer).append('.').append('\n');
     }
 
     private static Map<Identifier, Integer> physicalAugments(ItemStack source) {
