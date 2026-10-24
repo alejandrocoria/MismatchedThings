@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -32,8 +33,7 @@ import java.util.Set;
 
 public final class HybridItemRenderingClientGameTest implements FabricClientGameTest {
     private static final float EPSILON = 0.000001F;
-    private static final float FALLBACK_SCALE = 0.8F;
-    private static final float FALLBACK_OFFSET = 0.15F;
+    private static final float FALLBACK_ANGLE = (float) Math.toRadians(1.0);
     private static final Identifier FULL_MODEL = testId("geometry_full");
     private static final Identifier ROTATED_MODEL = testId("geometry_rotated");
     private static final Identifier EXTENSION_MODEL = ItemLayerResolutionProbe.NONPLANAR_EXTENSION_MODEL;
@@ -50,6 +50,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 verifyMetadataAndSingleResolution(client);
                 verifyMultiLayerRotatedClipping(client);
                 verifySpecialRendererFallback(client);
+                verifyInvalidStackFallback(client);
                 verifyFabricExtensionFallback(client);
                 verifyEmptyAndDiscardedSides(client);
                 verifyMissingAndRecursiveModelsStayBounded(client);
@@ -147,19 +148,46 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     private static void verifySpecialRendererFallback(Minecraft client) {
         ItemStack special = modelBoot(Items.IRON_BOOTS, Identifier.withDefaultNamespace("chest"));
         ItemStack ordinary = modelBoot(Items.GOLDEN_BOOTS, FULL_MODEL);
-        ItemStackRenderState specialBaseline = resolve(client, special, ItemDisplayContext.FIXED);
-        ItemStackRenderState ordinaryBaseline = resolve(client, ordinary, ItemDisplayContext.FIXED);
-        ItemStackRenderState output = resolve(client,
-                MixedBootsFactory.createPair(special, ordinary).primary(), ItemDisplayContext.FIXED);
+        for (ItemDisplayContext displayContext : ItemDisplayContext.values()) {
+            ItemStackRenderState specialBaseline = resolve(client, special, displayContext);
+            ItemStackRenderState ordinaryBaseline = resolve(client, ordinary, displayContext);
+            MixedBootsPair pair = MixedBootsFactory.createPair(special, ordinary);
+            ItemStackRenderState output = resolve(client, pair.primary(), displayContext);
 
-        if (layerCount(output) != 2
-                || testLayer(output, 0).mismatchedboots$getSpecialRenderer() == null) {
-            throw new AssertionError("The special-renderer fixture did not reach atomic fallback");
+            if (layerCount(output) != 2
+                    || testLayer(output, 0).mismatchedboots$getSpecialRenderer() == null) {
+                throw new AssertionError("The special-renderer fixture did not reach atomic fallback");
+            }
+            assertFallbackLayer(layer(specialBaseline, 0), layer(output, 0), FALLBACK_ANGLE,
+                    "special renderer " + displayContext);
+            assertFallbackLayer(layer(ordinaryBaseline, 0), layer(output, 1), -FALLBACK_ANGLE,
+                    "ordinary layer paired with special renderer " + displayContext);
+            ItemStackRenderState inverse = resolve(client, pair.inverse(), displayContext);
+            assertFallbackLayer(layer(ordinaryBaseline, 0), layer(inverse, 0), FALLBACK_ANGLE,
+                    "inverse ordinary layer " + displayContext);
+            assertFallbackLayer(layer(specialBaseline, 0), layer(inverse, 1), -FALLBACK_ANGLE,
+                    "inverse special renderer " + displayContext);
         }
-        assertFallbackLayer(layer(specialBaseline, 0), layer(output, 0), -FALLBACK_OFFSET,
-                "special renderer");
-        assertFallbackLayer(layer(ordinaryBaseline, 0), layer(output, 1), FALLBACK_OFFSET,
-                "ordinary layer paired with special renderer");
+    }
+
+    private static void verifyInvalidStackFallback(Minecraft client) {
+        ItemStack invalid = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+        if (ModContent.getMixedBootsData(invalid).isPresent()) {
+            throw new AssertionError("Give-style fallback fixture unexpectedly has source data");
+        }
+        List<ItemStack> sources = List.of(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
+        for (ItemDisplayContext displayContext : ItemDisplayContext.values()) {
+            ItemStackRenderState output = resolve(client, invalid, displayContext);
+            if (layerCount(output) != 2) {
+                throw new AssertionError("Invalid stack did not resolve its two JSON fallback layers");
+            }
+            for (int side = 0; side < 2; side++) {
+                LayerRenderStateAccessor baseline = layer(resolve(client, sources.get(side), displayContext), 0);
+                LayerRenderStateAccessor actual = layer(output, side);
+                float angle = side == 0 ? FALLBACK_ANGLE : -FALLBACK_ANGLE;
+                assertFallbackLayer(baseline, actual, angle, "Give-style JSON fallback " + displayContext + " side=" + side);
+            }
+        }
     }
 
     private static void verifyFabricExtensionFallback(Minecraft client) {
@@ -175,9 +203,9 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                         layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.LEFT).compatible()) {
             throw new AssertionError("The unsupported nonplanar Fabric mesh was not retained for fallback");
         }
-        assertFallbackLayer(layer(extendedBaseline, 0), layer(output, 0), -FALLBACK_OFFSET,
+        assertFallbackLayer(layer(extendedBaseline, 0), layer(output, 0), FALLBACK_ANGLE,
                 "Fabric extension layer");
-        assertFallbackLayer(layer(ordinaryBaseline, 0), layer(output, 1), FALLBACK_OFFSET,
+        assertFallbackLayer(layer(ordinaryBaseline, 0), layer(output, 1), -FALLBACK_ANGLE,
                 "ordinary layer paired with Fabric extension");
     }
 
@@ -359,10 +387,10 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     private static void assertFallbackLayer(
             LayerRenderStateAccessor baseline,
             LayerRenderStateAccessor actual,
-            float offset,
+            float angle,
             String scenario) {
-        Matrix4f expectedTransform = new Matrix4f().translation(offset, 0.0F, 0.0F)
-                .scale(FALLBACK_SCALE, FALLBACK_SCALE, 1.0F)
+        Matrix4f expectedTransform = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
+                .rotateY(angle).translate(-0.5F, -0.5F, -0.5F)
                 .mul(baseline.mismatchedboots$getLocalTransform());
         assertMatrix(actual.mismatchedboots$getLocalTransform(), expectedTransform,
                 scenario + " transform");

@@ -326,8 +326,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             }
             if (layerCount(submission.itemStackRenderState()) != 2
                     || Math.abs(layer(submission.itemStackRenderState(), 0)
-                    .mismatchedboots$getLocalTransform().m00() - 0.8F) > EPSILON) {
-                throw new AssertionError("Unsupported rotated GUI pose did not use side-by-side rendering");
+                    .mismatchedboots$getLocalTransform().m00() - (float) Math.cos(Math.toRadians(1.0))) > EPSILON) {
+                throw new AssertionError("Unsupported rotated GUI pose did not use overlapping rendering");
             }
         });
         closeScreen(context);

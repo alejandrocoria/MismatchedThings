@@ -12,12 +12,16 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.fabricmc.fabric.impl.client.renderer.LayerRenderStateExtension;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class HybridItemRenderingRuntimeClientGameTest implements FabricClientGameTest {
+    public static boolean forceVisualFallback;
     private static final float EPSILON = 0.0001F;
     private static final int REPEATED_RESOLUTIONS = 32;
     private static final Identifier RED_MODEL = testId("clipping_red");
@@ -78,6 +83,10 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.player != null && client.level != null);
 
+            if (Boolean.getBoolean("mismatchedboots.test.fallbackVisualOnly")) {
+                verifyOverlappingFallback(context, singleplayer);
+                return;
+            }
             context.runOnClient(HybridItemRenderingRuntimeClientGameTest::verifyBoundedRepeatedPlanning);
             verifyHandContexts(context, singleplayer);
             AtomicInteger primaryDrop = createWorldFixtures(context, singleplayer);
@@ -86,11 +95,105 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             verifySimultaneousWorldContexts(context);
             verifyResourceReloadWithWorldItems(context);
         } finally {
+            forceVisualFallback = false;
             context.runOnClient(client -> client.options.setCameraType(originalCamera.get()));
             ItemLayerResolutionProbe.clear();
             QuadPlanningProbe.clear();
             RuntimeItemSubmissionProbe.clear();
             MeshTestFixtures.clear();
+        }
+    }
+
+    private static void verifyOverlappingFallback(
+            ClientGameTestContext context, TestSingleplayerContext singleplayer) {
+        // Keep native boot artwork, but declare clipping unsupported to exercise the real fallback.
+        context.runOnClient(client -> {
+            forceVisualFallback = true;
+            client.options.setCameraType(CameraType.FIRST_PERSON);
+            client.options.guiScale().set(2);
+            client.resizeGui();
+        });
+        for (boolean invalid : List.of(false, true)) {
+            context.runOnClient(client -> forceVisualFallback = !invalid);
+            for (boolean foil : List.of(false, true)) {
+                singleplayer.getServer().runOnServer(server -> {
+                    ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
+                    MixedBootsPair pair = MixedBootsFactory.createPair(
+                            new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
+                    ItemStack main = invalid ? invalidMixed() : pair.primary();
+                    ItemStack off = invalid ? invalidMixed() : pair.inverse();
+                    main.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+                    off.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+                    player.getInventory().setItem(0, main);
+                    player.getInventory().setSelectedSlot(0);
+                    player.setItemSlot(EquipmentSlot.OFFHAND, off);
+                });
+                int[] settle = {0};
+                context.waitFor(client -> ++settle[0] > 30);
+                context.runOnClient(client -> RuntimeItemSubmissionProbe.arm("iron_boots", "golden_boots"));
+                context.waitFor(client -> RuntimeItemSubmissionProbe.hasAtLeast(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, 2)
+                        && RuntimeItemSubmissionProbe.hasAtLeast(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, 2));
+                var snapshot = takeSubmissions(context);
+                for (ItemDisplayContext hand : List.of(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
+                        ItemDisplayContext.FIRST_PERSON_LEFT_HAND)) {
+                    for (String sprite : List.of("iron_boots", "golden_boots")) {
+                        requireFullFallback(snapshot, hand, sprite, foil);
+                    }
+                }
+                context.takeScreenshot("overlapping-fallback-" + (invalid ? "invalid-" : "")
+                        + "both-hands-" + (foil ? "foil" : "plain"));
+            }
+        }
+        context.runOnClient(client -> forceVisualFallback = true);
+        context.setScreen(FallbackScreen::new);
+        context.waitFor(client -> client.screen instanceof FallbackScreen screen && screen.frames >= 8);
+        context.takeScreenshot("overlapping-fallback-gui");
+        context.setScreen(() -> null);
+    }
+
+    private static ItemStack invalidMixed() {
+        return new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+    }
+
+    private static void requireFullFallback(RuntimeItemSubmissionProbe.Snapshot snapshot,
+            ItemDisplayContext hand, String sprite, boolean foil) {
+        if (snapshot.submissions().stream().noneMatch(submission -> submission.displayContext() == hand
+                && submission.sprite().equals(sprite) && submission.minX() < 0.5F - EPSILON
+                && submission.maxX() > 0.5F + EPSILON && hasFoil(submission) == foil)) {
+            throw new AssertionError("Fallback lost a complete source or its foil in " + hand + ": " + sprite);
+        }
+    }
+
+    private static final class FallbackScreen extends Screen {
+        private final MixedBootsPair pair = MixedBootsFactory.createPair(
+                new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
+        private int frames;
+
+        private FallbackScreen() { super(Component.literal("Overlapping fallback")); }
+
+        @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float delta) {
+            graphics.fill(0, 0, width, height, 0xFF202020);
+        }
+
+        @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float delta) {
+            frames++;
+            String[] labels = {"Iron / gold", "Gold / iron", "Native iron", "Native gold", "No data"};
+            List<ItemStack> items = List.of(pair.primary(), pair.inverse(),
+                    new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS), invalidMixed());
+            for (int row = 0; row < 2; row++) {
+                for (int column = 0; column < items.size(); column++) {
+                    ItemStack item = items.get(column).copy();
+                    item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, row == 1);
+                    graphics.text(font, labels[column], 20 + column * 80, 20 + row * 110, -1, false);
+                    graphics.pose().pushMatrix();
+                    graphics.pose().translate(20 + column * 80, 40 + row * 110);
+                    // An imperceptible GUI rotation makes screen-scissor fallback unavailable.
+                    if (column != 4) graphics.pose().rotate(0.001F);
+                    graphics.pose().scale(4, 4);
+                    graphics.item(item, 0, 0);
+                    graphics.pose().popMatrix();
+                }
+            }
         }
     }
 

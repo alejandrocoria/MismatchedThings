@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public final class MixedBootsItemRenderer {
-    static final float SOURCE_SCALE = 0.8F;
-    static final float SOURCE_OFFSET = 0.15F;
+    // The data-less item model in items/mixed_boots.json encodes the same centered rotations.
+    static final float FALLBACK_ANGLE = (float) Math.toRadians(1.0);
 
     private MixedBootsItemRenderer() {
     }
@@ -47,15 +47,15 @@ public final class MixedBootsItemRenderer {
 
         boolean foil = stack.hasFoil();
         LayerRange left = appendSource(output, sourceView(data.left().source(), foil), resolver,
-                displayContext, level, owner, seed, QuadClipper.Side.LEFT, -SOURCE_OFFSET);
+                displayContext, level, owner, seed, QuadClipper.Side.LEFT);
         boolean oversized = output.isOversizedInGui();
         LayerRange right = appendSource(output, sourceView(data.right().source(), foil), resolver,
-                displayContext, level, owner, seed, QuadClipper.Side.RIGHT, SOURCE_OFFSET);
+                displayContext, level, owner, seed, QuadClipper.Side.RIGHT);
 
         oversized |= output.isOversizedInGui();
         if (!clipAtomically(output, left, output, right)) {
-            applySideBySideFallback(output, left);
-            applySideBySideFallback(output, right);
+            applyOverlappingFallback(output, left);
+            applyOverlappingFallback(output, right);
         }
         ((ItemStackRenderStateAccessor) (Object) output).mismatchedboots$setCachedModelBoundingBox(null);
         output.setOversizedInGui(displayContext == ItemDisplayContext.GUI && oversized);
@@ -76,13 +76,13 @@ public final class MixedBootsItemRenderer {
         resolver.updateForTopItem(right, sourceView(data.right().source(), foil),
                 ItemDisplayContext.GUI, level, owner, seed);
         return new GuiPreparation(left, right,
-                clipAtomically(left, wholeSource(left, QuadClipper.Side.LEFT, -SOURCE_OFFSET),
-                        right, wholeSource(right, QuadClipper.Side.RIGHT, SOURCE_OFFSET)));
+                clipAtomically(left, wholeSource(left, QuadClipper.Side.LEFT),
+                        right, wholeSource(right, QuadClipper.Side.RIGHT)));
     }
 
-    private static LayerRange wholeSource(ItemStackRenderState state, QuadClipper.Side side, float offset) {
+    private static LayerRange wholeSource(ItemStackRenderState state, QuadClipper.Side side) {
         return new LayerRange(0, ((ItemStackRenderStateAccessor) (Object) state)
-                .mismatchedboots$getActiveLayerCount(), side, offset);
+                .mismatchedboots$getActiveLayerCount(), side);
     }
 
     public record GuiPreparation(
@@ -91,8 +91,8 @@ public final class MixedBootsItemRenderer {
             boolean clipped) {
         public MixedBootsGuiRenderState compose() {
             if (!clipped) {
-                applySideBySideFallback(left, wholeSource(left, QuadClipper.Side.LEFT, -SOURCE_OFFSET));
-                applySideBySideFallback(right, wholeSource(right, QuadClipper.Side.RIGHT, SOURCE_OFFSET));
+                applyOverlappingFallback(left, wholeSource(left, QuadClipper.Side.LEFT));
+                applyOverlappingFallback(right, wholeSource(right, QuadClipper.Side.RIGHT));
             }
             return new MixedBootsGuiRenderState(left, right, clipped);
         }
@@ -112,16 +112,14 @@ public final class MixedBootsItemRenderer {
             @Nullable Level level,
             @Nullable ItemOwner owner,
             int seed,
-            QuadClipper.Side side,
-            float fallbackOffset) {
+            QuadClipper.Side side) {
         ItemStackRenderStateAccessor state = (ItemStackRenderStateAccessor) (Object) output;
         int firstLayer = state.mismatchedboots$getActiveLayerCount();
         resolver.appendItemLayers(output, source, displayContext, level, owner, seed);
         return new LayerRange(
                 firstLayer,
                 state.mismatchedboots$getActiveLayerCount(),
-                side,
-                fallbackOffset);
+                side);
     }
 
     private static boolean clipAtomically(
@@ -219,10 +217,12 @@ public final class MixedBootsItemRenderer {
         return () -> result;
     }
 
-    private static void applySideBySideFallback(ItemStackRenderState output, LayerRange range) {
+    private static void applyOverlappingFallback(ItemStackRenderState output, LayerRange range) {
         ItemStackRenderStateAccessor state = (ItemStackRenderStateAccessor) (Object) output;
-        Matrix4f sideTransform = new Matrix4f().translation(range.fallbackOffset(), 0.0F, 0.0F)
-                .scale(SOURCE_SCALE, SOURCE_SCALE, 1.0F);
+        // Rotate complete sources about the same item center, without shrinking or separating them.
+        float angle = range.side() == QuadClipper.Side.LEFT ? FALLBACK_ANGLE : -FALLBACK_ANGLE;
+        Matrix4f sideTransform = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
+                .rotateY(angle).translate(-0.5F, -0.5F, -0.5F);
         for (int index = range.firstLayer(); index < range.lastLayer(); index++) {
             ItemStackRenderState.LayerRenderState layer = state.mismatchedboots$getLayers()[index];
             Matrix4f localTransform = ((LayerRenderStateAccessor) (Object) layer)
@@ -234,8 +234,7 @@ public final class MixedBootsItemRenderer {
     private record LayerRange(
             int firstLayer,
             int lastLayer,
-            QuadClipper.Side side,
-            float fallbackOffset) {
+            QuadClipper.Side side) {
         int size() {
             return lastLayer - firstLayer;
         }

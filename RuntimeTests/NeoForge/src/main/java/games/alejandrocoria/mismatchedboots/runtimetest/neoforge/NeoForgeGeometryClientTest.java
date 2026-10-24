@@ -92,6 +92,7 @@ public final class NeoForgeGeometryClientTest {
             assertExpectedTopology(blue, "blue fixture");
             assertProductionClipping(client);
             assertGenuinelyIncompatibleFallback(client);
+            assertInvalidStackFallback(client);
             assertGuiClipping(client);
             NeoForgeEquipmentRenderingClientTest.assertStandardRoute();
             String equipmentReport = NeoForgeNativeEquipmentClientTest.assertNativeRoute();
@@ -398,10 +399,31 @@ public final class NeoForgeGeometryClientTest {
                 accessor.mismatchedboots$getLayers()[0]).mismatchedboots$getLocalTransform());
         Matrix4f right = new Matrix4f(((LayerRenderStateAccessor) (Object)
                 accessor.mismatchedboots$getLayers()[1]).mismatchedboots$getLocalTransform());
-        assertNear(left.m00(), 0.8F, "left incompatible fallback scale");
-        assertNear(right.m00(), 0.8F, "right incompatible fallback scale");
-        assertNear(left.m30(), -0.15F, "left incompatible fallback offset");
-        assertNear(right.m30(), 0.15F, "right incompatible fallback offset");
+        assertFallbackRotation(left, 1.0F, "left incompatible fallback");
+        assertFallbackRotation(right, -1.0F, "right incompatible fallback");
+    }
+
+    private static void assertInvalidStackFallback(Minecraft client) {
+        ItemStack invalid = modelBoot(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID),
+                ModContent.MIXED_BOOTS_ID);
+        if (ModContent.getMixedBootsData(invalid).isPresent()) {
+            throw new AssertionError("Give-style fixture unexpectedly has source data");
+        }
+        ItemStackRenderStateAccessor state = (ItemStackRenderStateAccessor) (Object) resolve(client, invalid);
+        assertCount(state.mismatchedboots$getActiveLayerCount(), 2, "give-style JSON fallback layers");
+        for (int side = 0; side < 2; side++) {
+            Matrix4f transform = ((LayerRenderStateAccessor) (Object) state.mismatchedboots$getLayers()[side])
+                    .mismatchedboots$getLocalTransform();
+            assertFallbackRotation(transform, side == 0 ? 1.0F : -1.0F, "give-style JSON fallback side=" + side);
+        }
+    }
+
+    private static void assertFallbackRotation(Matrix4f transform, float degrees, String scenario) {
+        Matrix4f expected = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
+                .rotateY((float) Math.toRadians(degrees)).translate(-0.5F, -0.5F, -0.5F);
+        if (!transform.equals(expected, EPSILON)) {
+            throw new AssertionError(scenario + " did not retain full scale and rotate about the shared center");
+        }
     }
 
     private static void assertGuiClipping(Minecraft client) {
@@ -460,13 +482,12 @@ public final class NeoForgeGeometryClientTest {
             }
             if (rotated) {
                 if (!(items.getFirst().itemStackRenderState() instanceof MixedBootsGuiRenderState fallback)) {
-                    throw new AssertionError("Unsafe GUI pose did not select side-by-side fallback");
+                    throw new AssertionError("Unsafe GUI pose did not select overlapping fallback");
                 }
                 Matrix4f transform = ((LayerRenderStateAccessor) (Object)
                         ((ItemStackRenderStateAccessor) (Object) fallback.sources().getFirst())
                                 .mismatchedboots$getLayers()[0]).mismatchedboots$getLocalTransform();
-                assertNear(transform.m00(), 0.8F, "GUI side-by-side scale");
-                assertNear(transform.m30(), -0.15F, "GUI side-by-side offset");
+                assertFallbackRotation(transform, 1.0F, "GUI overlapping fallback");
             } else {
                 if (!new ScreenRectangle(42, 40, 6, 16).equals(items.get(0).scissorArea())
                         || !new ScreenRectangle(48, 40, 6, 16).equals(items.get(1).scissorArea())) {

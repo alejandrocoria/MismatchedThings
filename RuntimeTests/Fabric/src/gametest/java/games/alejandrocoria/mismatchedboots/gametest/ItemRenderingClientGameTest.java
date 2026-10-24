@@ -413,7 +413,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             LayerRenderStateAccessor layer = layer(stateAccess, index);
             Matrix4f transform = layer.mismatchedboots$getLocalTransform();
             if (!transform.equals(new Matrix4f(), EPSILON)) {
-                throw new AssertionError(scenario + " retained a side-by-side transform on layer " + index);
+                throw new AssertionError(scenario + " retained a fallback transform on layer " + index);
             }
             for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
                 for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {

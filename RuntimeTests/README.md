@@ -1407,6 +1407,24 @@ that confirmation did not require another automatic run or screenshot suite.
 
 ## Item geometry coverage
 
+The opt-in [whole-model fallback visual trial](../local-docs/ITEM-FALLBACK-ROTATION-EXPLORATION.md)
+runs only the hybrid structural suite and five task-specific fallback captures:
+
+```powershell
+.\gradlew.bat :RuntimeTests:Fabric:runClientGameTest -I RuntimeTests/Fabric/item-fallback-visual.init.gradle --console=plain
+```
+
+It declares otherwise ordinary boot geometry unsupported through the test probe,
+then exercises production fallback in both hands and an unsafe GUI pose, plain
+and enchanted. Native boots are GUI size controls. Generated metadata is restored
+by a finalizer; the normal client suite does not run these opt-in visual scenes.
+Genuine special-renderer fallback is checked in every display context and both
+orientations independently of that visual forcing.
+Actual data-less mixed stacks (plain `/give`, no forced failure) also exercise
+the declarative item fallback in every display context and both held slots,
+with and without foil; they appear as the extra GUI column. This separate path
+must not be inferred to work from the valid-pair fallback checks alone.
+
 The Fabric client suite exercises both ordinary baked quads and real Fabric
 Renderer API meshes. Synthetic fixtures check full-scale clipping, rotated
 triangle/pentagon cuts, per-vertex attributes, quad properties, layer tint and
