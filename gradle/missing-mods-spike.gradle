@@ -1,32 +1,60 @@
-// Research only: the same disposable world crosses three independent JVMs.
+// Block A: the shared owned model is connected only through this opt-in fixture.
+def fabric = project.name == 'Fabric'
+def loader = fabric ? 'Fabric' : 'NeoForge'
+def baseline = fabric ? minecraft_version : neoforge_version
+def sources = fabric ? sourceSets.networkTest : sourceSets.main
+sources.java.srcDir rootProject.file('RuntimeTests/MissingMods/src/main/java')
+sources.resources.srcDir rootProject.file('RuntimeTests/MissingMods/src/main/resources')
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
-def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project(":${loader}").tasks.named('jar').flatMap { it.archiveFile }
+def fixtureTask = fabric ? tasks.register('missingModsTestJar', Jar) {
+    archiveClassifier = 'missing-mods-tests'
+    from sources.output
+} : tasks.named('jar')
+def fixtureJar = fixtureTask.flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
-def artifacts = [
+def artifacts = (fabric ? [
+        'MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar': '58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278',
+        'Cucumber-Fabric-26.1.2-9.0.6.2.jar': '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
+] : [
         'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
         'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821',
         'justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
-].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
+]).collectEntries { name, hash -> [(rootProject.file("${loader}/runs/client/mods/${name}")): hash] }
 
-['Control', 'Candidate'].each { variant ->
+['Control', 'Candidate', 'Refused'].each { variant ->
     def mode = variant.toLowerCase(Locale.ROOT)
-    def directory = layout.buildDirectory.dir("run/missing-mods/${neoforge_version}/${mode}")
-    def reports = layout.buildDirectory.dir("reports/missing-mods/${neoforge_version}/${mode}")
-    ['Write', 'Absent', 'Restore'].each { phase ->
+    def directory = layout.buildDirectory.dir("run/missing-mods/${baseline}/${mode}")
+    def reports = layout.buildDirectory.dir("reports/missing-mods/${baseline}/${mode}")
+    (mode == 'refused' ? ['Write'] : ['Write', 'Absent', 'Restore']).each { phase ->
         def stage = phase.toLowerCase(Locale.ROOT)
         def markers = reports.map { it.dir(stage) }
-        neoForge.runs.create("missingMods${variant}${phase}") {
-            server(); disableIdeRun(); programArgument('--nogui')
-            gameDirectory = directory.get().asFile
-            systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
-            systemProperty('mismatchedboots.test.missingModsCase', mode)
-            systemProperty('mismatchedboots.test.missingModsStage', stage)
-            systemProperty('mismatchedboots.test.missingModsBaseline', new File(reports.get().asFile, 'baseline.nbt').absolutePath)
-            jvmArgument('-Xmx1G')
+        def properties = [
+                'mismatchedboots.runtimetest.markers': markers.get().asFile.absolutePath,
+                'mismatchedboots.runtimetest.loader': loader.toLowerCase(Locale.ROOT),
+                'mismatchedboots.test.missingModsCase': mode == 'refused' ? 'candidate' : mode,
+                'mismatchedboots.test.missingModsRefuse': (mode == 'refused').toString(),
+                'mismatchedboots.test.missingModsStage': stage,
+                'mismatchedboots.test.missingModsBaseline': new File(reports.get().asFile, 'baseline.nbt').absolutePath
+        ]
+        if (fabric) {
+            loom.runs.create("missingMods${variant}${phase}") {
+                inherit loom.runs.server
+                source('networkTest'); ideConfigGenerated(false)
+                runDir("build/run/missing-mods/${baseline}/${mode}")
+                properties.each { key, value -> property(key, value) }
+                programArgs('--nogui'); vmArg('-Xmx1G')
+            }
+        } else {
+            neoForge.runs.create("missingMods${variant}${phase}") {
+                server(); disableIdeRun(); programArgument('--nogui')
+                gameDirectory = directory.get().asFile
+                properties.each { key, value -> systemProperty(key, value) }
+                jvmArgument('-Xmx1G')
+            }
         }
         def prepare = tasks.register("prepareMissingMods${variant}${phase}") {
-            dependsOn(':NeoForge:jar', tasks.named('jar'))
+            dependsOn(":${loader}:jar", fixtureTask)
             doLast {
                 if (stage != 'absent') {
                     artifacts.each { artifact, hash ->
@@ -74,17 +102,33 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 
 tasks.register('verifyMissingModsSpike') {
     group = 'verification'
-    description = 'Researches complete missing-mod persistence against an unmodified codec control'
+    description = 'Proves the safe recovery model without enabling production capture'
     doLast {
-        def selectedCases = providers.gradleProperty('missingModsCases').getOrElse('control,candidate').split(',')
+        def selectedCases = providers.gradleProperty('missingModsCases').getOrElse('control,candidate,refused').split(',')
         def selectedStages = providers.gradleProperty('missingModsStages').getOrElse('write,absent,restore').split(',')
         selectedCases.each { mode ->
-            if (!(mode in ['control', 'candidate'])) { throw new GradleException("Unknown case ${mode}") }
-            selectedStages.each { stage ->
+            if (!(mode in ['control', 'candidate', 'refused'])) { throw new GradleException("Unknown case ${mode}") }
+            (mode == 'refused' ? ['write'] : selectedStages).each { stage ->
                 if (!(stage in ['write', 'absent', 'restore'])) { throw new GradleException("Unknown stage ${stage}") }
-                def markers = layout.buildDirectory.dir("reports/missing-mods/${neoforge_version}/${mode}/${stage}").get().asFile
+                def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/${mode}/${stage}").get().asFile
                 def log = new File(markers, 'process.log')
-                runBounded(":RuntimeTests:NeoForge:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
+                boolean failed = false
+                try {
+                    runBounded(":RuntimeTests:${loader}:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
+                } catch (GradleException failure) {
+                    if (mode != 'refused') { throw failure }
+                    failed = true
+                }
+                if (mode == 'refused') {
+                    // Loom's launcher can report exit 0 after a bootstrap exception; verify the actual refusal/world boundary.
+                    if ((!failed && !fabric) || !log.text.contains('Cannot safely install mixed-boots capture: native item fields unavailable')
+                            || new File(markers, 'missing-mods-success.txt').exists()
+                            || new File(layout.buildDirectory.get().asFile, "run/missing-mods/${baseline}/refused/world/level.dat").exists()) {
+                        throw new GradleException("Unsafe or unexpected capture refusal; see ${log}")
+                    }
+                    logger.lifecycle("Required capture refusal passed before world open: ${log}")
+                    return
+                }
                 def failure = new File(markers, 'missing-mods-failure.txt')
                 if (failure.isFile()) { throw new GradleException(failure.text) }
                 def report = new File(markers, 'missing-mods-report.txt')

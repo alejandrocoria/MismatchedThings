@@ -1311,3 +1311,5 @@ loom {
         }
     }
 }
+
+apply from: rootProject.file('gradle/missing-mods-spike.gradle')

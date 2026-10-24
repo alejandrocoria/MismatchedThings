@@ -35,6 +35,7 @@ final class ModRegistries {
         ITEMS.registerItem(ModContent.MIXED_BOOTS_NAME, NeoForgeMixedBootsItem::new, ModContent::mixedBootsProperties);
         MENU_TYPES.register(ModContent.MISMATCHED_WORKBENCH_NAME, ModContent::createMismatchedWorkbenchMenuType);
         DATA_COMPONENT_TYPES.register(ModContent.MIXED_BOOTS_DATA_NAME, ModContent::createMixedBootsDataType);
+        DATA_COMPONENT_TYPES.register(ModContent.SUSPENDED_BOOTS_NAME, ModContent::createSuspendedBootsType);
         RECIPE_TYPES.register(ModContent.MISMATCHED_WORKBENCH_NAME, ModContent::mismatchedWorkbenchRecipeType);
         RECIPE_SERIALIZERS.register(ModContent.SMITHING_BASE_RECIPE_NAME, ModContent::createSmithingBaseRecipeSerializer);
         RECIPE_SERIALIZERS.register(

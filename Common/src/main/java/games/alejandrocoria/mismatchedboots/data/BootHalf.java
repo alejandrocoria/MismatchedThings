@@ -80,8 +80,8 @@ public record BootHalf(ItemStack source) {
             return "Mixed boots cannot contain another pair of mixed boots";
         }
         for (TypedDataComponent<?> component : source.getComponents()) {
-            if (component.value() instanceof MixedBootsData) {
-                return "Mixed boots data cannot be nested";
+            if (component.value() instanceof MixedBootsData || component.value() instanceof SuspendedBootsData) {
+                return "Mixed boots source/recovery data cannot be nested";
             }
         }
 

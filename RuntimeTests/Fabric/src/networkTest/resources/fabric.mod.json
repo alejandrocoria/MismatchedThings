@@ -15,7 +15,8 @@
   "mixins": [
     "mismatchedboots-runtime-test.fabric.mixins.json",
     "mismatchedboots-separator-tests.mixins.json",
-    "mismatchedboots-mystical-augments-tests.mixins.json"
+    "mismatchedboots-mystical-augments-tests.mixins.json",
+    "mismatchedboots-missing-mods-tests.mixins.json"
   ],
   "depends": {
     "fabricloader": "*",

@@ -29,7 +29,8 @@ public final class ComponentRuleSupport {
 
     public static boolean isManaged(DataComponentType<?> type) {
         Objects.requireNonNull(type, "type");
-        return !FIXED_TYPES.contains(type) && ModContent.mixedBootsDataType().filter(type::equals).isEmpty();
+        return !FIXED_TYPES.contains(type) && ModContent.mixedBootsDataType().filter(type::equals).isEmpty()
+                && !ModContent.SUSPENDED_BOOTS_ID.equals(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type));
     }
 
     /** Empty means a fixed/dedicated field; unsupported rules resolve to the component's default. */

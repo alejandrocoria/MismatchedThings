@@ -15,6 +15,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 public class MismatchedBootsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, ModContent.SUSPENDED_BOOTS_ID, ModContent.createSuspendedBootsType());
         Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
                 ModContent.MIXED_BOOTS_DATA_ID,

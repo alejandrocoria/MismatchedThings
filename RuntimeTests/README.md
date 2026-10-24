@@ -12,6 +12,8 @@ repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
   probes, with legacy spike names until consolidation; never packaged in production.
 - `MysticalAugments/src/main`: production MA effect/refund probes, competing-mixin
   controls and read-only delivery witnesses; never packaged in production.
+- `MissingMods/src/main`: shared opt-in recovery-model proof and compatible/
+  incompatible codec wrappers; production capture remains disconnected in A.
 - `Fabric/src/gametest`: server and client GameTests, fixtures, and probes.
 - `Fabric/src/test`: fast loader-local reflection/bytecode-boundary JUnit regressions
   against the packaged Fabric classes, with fake optional APIs and no game launch.
@@ -36,29 +38,40 @@ only for compilation; test classes, metadata, and fixtures are not included in
 the production artifacts. No runtime test infrastructure is installed in the
 normal indev client/server runs.
 
-## Missing-mod complete recovery — research only
+## Missing-mod recovery — block A model proof, production capture disconnected
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsSpike
+.\gradlew.bat :RuntimeTests:Fabric:verifyMissingModsSpike
 ```
 
 Two disposable worlds each cross three independent servers: write with pinned
 MA/Cucumber and JDT, save with them removed, then restore the same versions.
-The native control demonstrates loss; an opt-in fixture-only ItemStack codec
-archives entire unreadable component values. Eight barrel slots compare complete
+The native control demonstrates loss; an opt-in fixture-only ItemStack hook uses
+the owned model to park complete gameplay state atomically. Eight slots compare complete
 encoded stacks, current edits, typed NBT, paid-root FE, unknown attribute/equip
 sound references, vanilla controls and a non-equippable bare shell. Candidate
 stacks also exercise the real network codec while absent and restored.
 
-The archive component and codec are not packaged in production. The candidate
-is not a production recovery implementation: suspension, payload bounds, conflict
-handling and cross-loader/client lifecycle acceptance are still required. Runs
-and reports are under `NeoForge/build/{run,reports}/missing-mods/<baseline>/`.
+The owned `suspended_boots` component and pure helpers are shipped but unused by
+production capture until B. Only the fixture installs the hook. The model uses
+defensive binary NBT, complete-state readiness, original/current conflict
+retention and a non-wearing feet shell. Bounded malformed archive values stay
+opaque in quarantine; real native barrel loading must preserve both the affected
+item and adjacent slot. Foreign throwing/lossy codecs and repeated loads are
+checked separately. An actual compatible operation wrapper participates in
+decode; an altered factory must refuse startup before world creation. Loom can
+exit 0 after that bootstrap exception, so the refusal checks the exact diagnostic
+and absent world/result rather than exit code alone. Runs and reports are under
+`<loader>/build/{run,reports}/missing-mods/<baseline>/`.
 Artifact pins and the bounded runner are in
 [missing-mods-spike.gradle](../gradle/missing-mods-spike.gradle).
-Optional `-PmissingModsCases=candidate` and
-`-PmissingModsStages=write,absent,restore` select research phases; later phases
+Optional `'-PmissingModsCases=candidate,refused'` and
+`'-PmissingModsStages=write,absent,restore'` select proof phases; later phases
 require their earlier world/baseline. `write` resets only that disposable run.
+Fabric uses the separate MA port plus a temporary unavailable integer counter;
+native JDT FE is NeoForge-only. Real worn-player, client/death-drop, staged
+returns and full production acceptance remain later blocks, not claims of A.
 
 ## Mystical Agriculture augments — production effects
 

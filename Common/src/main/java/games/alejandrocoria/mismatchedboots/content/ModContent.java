@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.content;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.data.SuspendedBootsData;
 import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRepairRecipe;
@@ -30,6 +31,8 @@ import java.util.Optional;
 public final class ModContent {
     public static final String MIXED_BOOTS_NAME = "mixed_boots";
     public static final String MIXED_BOOTS_DATA_NAME = "mixed_boots_data";
+    public static final String SUSPENDED_BOOTS_NAME = "suspended_boots";
+    public static final Identifier SUSPENDED_BOOTS_ID = id(SUSPENDED_BOOTS_NAME);
     public static final String SMITHING_BASE_RECIPE_NAME = "smithing_base";
     public static final String MISMATCHED_WORKBENCH_NAME = "mismatched_workbench";
     public static final String MIXED_BOOTS_REPAIR_RECIPE_NAME = "mixed_boots_repair";
@@ -60,6 +63,12 @@ public final class ModContent {
                 .networkSynchronized(MixedBootsData.STREAM_CODEC)
                 .cacheEncoding()
                 .build();
+    }
+
+    /** Registered but not populated by production until the recovery integration block. */
+    public static DataComponentType<SuspendedBootsData> createSuspendedBootsType() {
+        return DataComponentType.<SuspendedBootsData>builder().persistent(SuspendedBootsData.CODEC)
+                .networkSynchronized(SuspendedBootsData.STREAM_CODEC).build();
     }
 
     public static RecipeSerializer<MixedBootsSmithingBaseRecipe> createSmithingBaseRecipeSerializer() {
