@@ -40,6 +40,14 @@ normal indev client/server runs.
 
 ## Missing-mod recovery — production capture
 
+**Current implementation: block B (`3f49261`), strict baseline.** The commands
+below still enforce foreign round-trip equality. An accepted but unimplemented
+block C replaces that readiness criterion with raw source-item registration plus
+a full successful native read and root/source validation. It must preserve the
+existing temporary-removal cases while accepting native conversions/filtering.
+Do not describe the current lossy-codec rejection checks as acceptance of that
+new behavior. Real lifecycle/manual consolidation moves from the former C to D.
+
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsSpike
 .\gradlew.bat :RuntimeTests:Fabric:verifyMissingModsSpike
@@ -74,7 +82,8 @@ Optional `'-PmissingModsCases=candidate,refused,bypassed'` and
 require their earlier world/baseline. `write` resets only that disposable run.
 Fabric uses the separate MA port plus a temporary unavailable integer counter;
 native JDT FE is NeoForge-only. Real worn-player, client/death-drop, staged
-returns and full production acceptance remain C, not claims of focused B checks.
+returns and full production acceptance remain D, after revised C, not claims of
+focused B checks.
 
 The write phase additionally checks actual production anvil rename with a
 conflict-free persistent reload, denied donor/material/book operations, smithing,
@@ -83,10 +92,18 @@ unprotected damage without combat wear, and actual Mending XP remains XP rather
 than repairing the parked enchantment. NeoForge checks a real active FE capability,
 its disappearance after suspension and retained-handler insert/extract refusal
 with no archived-state mutation. These are focused server checks, not the real
-client/worn-across-restart/death-drop acceptance reserved for C.
+client/worn-across-restart/death-drop acceptance reserved for D.
 Explicit direct-wear destruction must not refund parked MA/JDT upgrades; normal
 combat must not wear the shell. Known readable non-boots, malformed component
 shapes and roots without an original feet projection cannot gain equipability.
+
+C will adapt the equality-specific checks and exercise successful native
+normalization/conversion on initially active and returning roots, plus a controlled
+successful filtering case. Native read errors, missing source IDs/root component
+types and invalid roots/sources must still suspend. Ordinary same-version
+absent/reinstall cases retain exact-state comparisons; conversion cases compare
+against native interpretation, not historical encoding. No per-mod recovery
+implementation or general reference scanner is planned.
 
 ## Mystical Agriculture augments — production effects
 
