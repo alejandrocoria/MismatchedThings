@@ -3,6 +3,10 @@
   "minVersion": "0.8",
   "package": "games.alejandrocoria.mismatchedboots.runtimetest.missingmods.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["NativeControlMixin", "CapturePeerMixin", "CaptureIncompatibleMixin"],
+  "mixins": [
+    "CaptureIncompatibleMixin",
+    "CapturePeerMixin",
+    "NativeControlMixin"
+  ],
   "injectors": {"defaultRequire": 1}
 }

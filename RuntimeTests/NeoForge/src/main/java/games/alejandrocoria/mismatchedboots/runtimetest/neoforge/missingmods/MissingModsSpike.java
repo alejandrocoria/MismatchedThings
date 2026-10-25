@@ -1,23 +1,24 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods;
 
-import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsProof;
-import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsInteractionChecks;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ClientInformation;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.transfer.access.ItemAccess;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
-import java.util.UUID;
-import net.minecraft.core.registries.Registries;
+import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsInteractionChecks;
+import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsProof;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+
+import java.util.UUID;
 
 /** Loader registration only; all recovery behavior lives in the shared proof/model. */
 public final class MissingModsSpike {

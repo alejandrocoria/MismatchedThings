@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.data;
 
-import com.mojang.serialization.Codec;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import net.minecraft.nbt.ByteArrayTag;

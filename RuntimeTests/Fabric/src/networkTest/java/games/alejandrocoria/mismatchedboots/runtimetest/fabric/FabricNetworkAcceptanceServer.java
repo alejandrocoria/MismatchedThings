@@ -1,12 +1,12 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.fabric;
 
+import com.mojang.serialization.Codec;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceServerTest;
 import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsProof;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorObservations;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorServerProbe;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import com.mojang.serialization.Codec;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;

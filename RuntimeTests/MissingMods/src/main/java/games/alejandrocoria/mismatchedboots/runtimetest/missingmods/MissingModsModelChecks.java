@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.missingmods;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsData;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsItemCodec;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.FloatTag;
@@ -12,11 +13,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
-import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.storage.TagValueInput;
 
 /** Focused actual-codec checks, with real registries instead of a fake successful decoder. */
 final class MissingModsModelChecks {
