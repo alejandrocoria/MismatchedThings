@@ -7,18 +7,23 @@ import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.equipment.Equippable;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Lossless persistent capture for our roots; never accepts a native partial result as restored state. */
+/** Preserves unavailable roots before native decoding; never activates a native partial result. */
 public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
     public static final String ARCHIVE = "mismatchedboots:suspended_boots";
     private static final String SOURCES = "mismatchedboots:mixed_boots_data";
@@ -53,15 +58,16 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         SuspendedBootsData.validateBudget(patch, SuspendedBootsData.MAX_BYTES, Tag.MAX_DEPTH);
         T count = input.get("count");
         boolean oneItem = count == null || ops.getNumberValue(count).result().map(number -> number.doubleValue() == 1).orElse(false);
-        if (!patch.contains(ARCHIVE)) {
+        boolean restoring = patch.contains(ARCHIVE);
+        if (!restoring && oneItem && sourcesPresent(patch.get(SOURCES))) {
             DataResult<ItemStack> active = read(ops, input, patch);
-            if (oneItem && ready(ops, active, patch)) { return active; }
+            if (ready(active)) { return active; }
         }
         CompoundTag original;
         CompoundTag passive = new CompoundTag();
         CompoundTag conflicts = new CompoundTag();
         boolean quarantined = false;
-        if (patch.contains(ARCHIVE)) {
+        if (restoring) {
             var archive = SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE, patch.get(ARCHIVE)).getOrThrow();
             quarantined = archive.quarantined();
             original = archive.original();
@@ -75,7 +81,7 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
                 if (prior != null) {
                     if (!key.equals(prior) || !value.equals(original.get(prior))) { conflicts.put(key, value.copy()); }
                 } else if (PASSIVE.contains(type(key))) {
-                    if (complete(ops, key, value)) { passive.put(key, value.copy()); }
+                    if (readablePassive(ops, key, value)) { passive.put(key, value.copy()); }
                     else { original.put(key, value.copy()); }
                 } else { conflicts.put(key, value.copy()); }
             }
@@ -85,16 +91,16 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         } else {
             original = new CompoundTag();
             for (String key : patch.keySet()) {
-                if (PASSIVE.contains(type(key)) && complete(ops, key, patch.get(key))) {
+                if (PASSIVE.contains(type(key)) && readablePassive(ops, key, patch.get(key))) {
                     passive.put(key, patch.get(key).copy());
                 } else { original.put(key, patch.get(key).copy()); }
             }
         }
         CompoundTag restored = passive.copy();
         original.keySet().forEach(key -> restored.put(key, original.get(key).copy()));
-        if (!quarantined && conflicts.isEmpty() && allComplete(ops, restored)) {
+        if (restoring && !quarantined && conflicts.isEmpty() && oneItem && sourcesPresent(restored.get(SOURCES))) {
             DataResult<ItemStack> decoded = read(ops, input, restored);
-            if (oneItem && ready(ops, decoded, restored)) {
+            if (ready(decoded)) {
                 return decoded;
             }
         }
@@ -107,8 +113,7 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         projection.keySet().forEach(key -> suspended.put(key, projection.get(key).copy()));
         suspended.put(ARCHIVE, SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, archive).getOrThrow());
         DataResult<ItemStack> result = read(ops, input, suspended);
-        if (result.result().isEmpty() || ItemStack.validateStrict(result.getOrThrow()).result().isEmpty()
-                || !samePatch(ops, result.getOrThrow(), suspended)) {
+        if (!safeShell(result, archive) || ItemStack.validateStrict(result.getOrThrow()).result().isEmpty()) {
             // Individually readable passive values can still be invalid in combination (e.g. stack size + durability).
             // Retain those values too, rather than letting the outer block-entity loader discard the container.
             passive.keySet().forEach(key -> original.put(key, passive.get(key).copy()));
@@ -116,7 +121,7 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
             CompoundTag inert = new CompoundTag();
             inert.put(ARCHIVE, SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, opaque).getOrThrow());
             result = read(ops, input, inert);
-            if (result.result().isEmpty() || !samePatch(ops, result.getOrThrow(), inert)) {
+            if (!safeShell(result, opaque)) {
                 throw new RecoveryRefusalException("Native item decoder cannot preserve an inert mixed root");
             }
         }
@@ -138,11 +143,23 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         return true;
     }
 
+    private static boolean sourceRegistered(Tag raw) {
+        if (!(raw instanceof CompoundTag source)) { return false; }
+        Identifier id = Identifier.tryParse(source.getStringOr("id", ""));
+        // The item registry's default (air) must not stand in for an absent source.
+        return id != null && BuiltInRegistries.ITEM.containsKey(id);
+    }
+
+    private static boolean sourcesPresent(Tag raw) {
+        return raw instanceof CompoundTag data && sourceRegistered(data.get("left")) && sourceRegistered(data.get("right"));
+    }
+
     private static <T> boolean admittedHistory(DynamicOps<T> ops, CompoundTag original) {
         if (!admittedSources(original.get(SOURCES))
                 || !original.getCompoundOrEmpty(EQUIPPABLE).getStringOr("slot", "").equals("feet")) { return false; }
         var sources = original.getCompoundOrEmpty(SOURCES);
         for (String side : Set.of("left", "right")) {
+            if (!sourceRegistered(sources.get(side))) { continue; }
             try {
                 var readable = ItemStack.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, sources.get(side))).result();
                 // Missing registrations cannot prove gameplay readiness. Fully readable non-boots,
@@ -158,30 +175,30 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         String type = type(key);
         return map.contains(type) ? type : map.contains("!" + type) ? "!" + type : null;
     }
-    private static <T> boolean allComplete(DynamicOps<T> ops, CompoundTag patch) {
-        for (String key : patch.keySet()) { if (!complete(ops, key, patch.get(key))) { return false; } }
-        return true;
-    }
-    private <T> boolean samePatch(DynamicOps<T> ops, ItemStack value, CompoundTag expected) {
-        try {
-            var encoded = delegate.codec().encodeStart(ops, value).result();
-            return encoded.isPresent() && ops.convertTo(NbtOps.INSTANCE, encoded.get()) instanceof CompoundTag root
-                    && root.getCompoundOrEmpty("components").equals(expected);
-        } catch (RuntimeException unreadable) { return false; }
-    }
-    private <T> boolean ready(DynamicOps<T> ops, DataResult<ItemStack> decoded, CompoundTag expected) {
+    private static boolean ready(DataResult<ItemStack> decoded) {
         var result = decoded.result();
         return result.isPresent() && ItemStack.validateStrict(result.get()).result().isPresent()
-                && samePatch(ops, result.get(), expected) && ModContent.getMixedBootsData(result.get()).filter(data ->
+                && ModContent.getMixedBootsData(result.get()).filter(data ->
                 BootHalf.isValidSource(data.left().source()) && BootHalf.isValidSource(data.right().source())).isPresent();
     }
-    private static <T> boolean complete(DynamicOps<T> ops, String key, Tag value) {
+    private static boolean safeShell(DataResult<ItemStack> decoded, SuspendedBootsData expected) {
+        var result = decoded.result();
+        if (result.isEmpty() || ModContent.suspendedBootsData(result.get()).filter(expected::equals).isEmpty()) { return false; }
+        var root = result.get();
+        Equippable equipment = expected.projection().isEmpty() ? null
+                : Equippable.builder(EquipmentSlot.FEET).setDamageOnHurt(false).build();
+        if (!Objects.equals(root.get(DataComponents.EQUIPPABLE), equipment)) { return false; }
+        // Only our inert shell is checked here, not a foreign codec's migration or re-encoding.
+        return root.getComponentsPatch().entrySet().stream().allMatch(entry -> {
+            Identifier id = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(entry.getKey());
+            return id != null && (id.toString().equals(ARCHIVE) || id.toString().equals(EQUIPPABLE) || PASSIVE.contains(id.toString()));
+        });
+    }
+    private static <T> boolean readablePassive(DynamicOps<T> ops, String key, Tag value) {
         CompoundTag singleton = new CompoundTag();
         singleton.put(key, value.copy());
         try {
-            var decoded = DataComponentPatch.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, singleton)).result();
-            return decoded.isPresent() && DataComponentPatch.CODEC.encodeStart(ops, decoded.get()).result()
-                    .map(encoded -> ops.convertTo(NbtOps.INSTANCE, encoded).equals(singleton)).orElse(false);
+            return DataComponentPatch.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, singleton)).result().isPresent();
         } catch (RuntimeException unreadable) { return false; }
     }
     private <T> DataResult<ItemStack> read(DynamicOps<T> ops, MapLike<T> input, CompoundTag patch) {

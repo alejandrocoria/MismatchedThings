@@ -28,6 +28,8 @@ public final class FabricNetworkAcceptanceServer implements ModInitializer {
                         DataComponentType.<Integer>builder().persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT).build());
                 Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse(MissingModsProof.MOD + ":throwing_property"),
                         MissingModsProof.throwingProperty());
+                Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse(MissingModsProof.MOD + ":converting_property"),
+                        MissingModsProof.convertingProperty());
             }
             ServerTickEvents.END_SERVER_TICK.register(MissingModsProof::tick); return;
         }

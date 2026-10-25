@@ -43,6 +43,8 @@ public final class MissingModsProof {
     private static final BlockPos STORAGE = new BlockPos(0, 80, 0);
     private static boolean finished;
     private static int ticks;
+    static int convertingReads;
+    static boolean legacyReadable = true;
 
     private MissingModsProof() {}
 
@@ -52,6 +54,18 @@ public final class MissingModsProof {
             if (value == 13) { throw new IllegalArgumentException("Unreadable foreign property fixture"); }
             return value;
         }, value -> value)).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build();
+    }
+    public static DataComponentType<Integer> convertingProperty() {
+        var codec = com.mojang.serialization.Codec.either(com.mojang.serialization.Codec.INT,
+                com.mojang.serialization.Codec.INT.fieldOf("legacy").codec()).flatXmap(value -> {
+            convertingReads++;
+            if (value.right().isPresent() && !legacyReadable) {
+                return com.mojang.serialization.DataResult.<Integer>error(() -> "Unsupported legacy fixture value");
+            }
+            return com.mojang.serialization.DataResult.success(value.map(number -> number, number -> number));
+        }, value -> com.mojang.serialization.DataResult.success(com.mojang.datafixers.util.Either.left(value)));
+        return DataComponentType.<Integer>builder().persistent(codec)
+                .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build();
     }
     public static String stage() { return System.getProperty("mismatchedboots.test.missingModsStage"); }
     private static boolean candidate() { return System.getProperty("mismatchedboots.test.missingModsCase").equals("candidate"); }
@@ -141,7 +155,7 @@ public final class MissingModsProof {
         NetworkAcceptanceFiles.write("missing-mods-report.txt", "seeded eight real barrel slots; "
                 + (fabric() ? "native MA Fabric augments and temporary foreign counter" : "native MA NeoForge augments and paid-root JDT charge")
                 + "; attribute/equip sound, typed arrays, vanilla/bare controls"
-                + (candidate() ? "; conflict/removal/lossy/throwing-codec/native-container/invalid-equip checks; real rename/workstation/wear/XP/refund checks passed"
+                + (candidate() ? "; conflict/removal/native-normalization/conversion/filtering/source-presence/throwing-codec/native-container/invalid-equip checks; real rename/workstation/wear/XP/refund checks passed"
                         + (fabric() ? "" : "; actual FE and retained-handler denial passed") : "") + "\n");
     }
 

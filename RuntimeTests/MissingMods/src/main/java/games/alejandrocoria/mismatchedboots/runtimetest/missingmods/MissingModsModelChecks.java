@@ -65,12 +65,7 @@ final class MissingModsModelChecks {
         var removedShell = archive(server, ItemStack.CODEC.parse(ops, missingProjection).getOrThrow());
         require(removedShell.conflicts().contains("!minecraft:equippable"), "Removal of protected equip projection was ignored");
 
-        // Native integer decoding normalizes this float: preserve the original rather than accepting that loss.
-        var lossy = encoded.copy();
-        lossy.getCompoundOrEmpty("components").put("minecraft:damage", FloatTag.valueOf(3.5f));
-        var lossyRoot = ItemStack.CODEC.parse(ops, lossy).getOrThrow();
-        require(archive(server, lossyRoot).original().get("minecraft:damage").equals(FloatTag.valueOf(3.5f)), "Lossy decode accepted");
-        require(ModContent.getMixedBootsData(lossyRoot).isEmpty(), "Lossy root reactivated");
+        nativeReadiness(server, encoded);
         var notBoots = changed.copy();
         notBoots.getCompoundOrEmpty("components").getCompoundOrEmpty("mismatchedboots:mixed_boots_data")
                 .getCompoundOrEmpty("left").putString("id", "minecraft:stick");
@@ -110,6 +105,63 @@ final class MissingModsModelChecks {
         var barrel = (BarrelBlockEntity) loaded;
         require(!barrel.getItem(0).isEmpty() && archive(server, barrel.getItem(0)).quarantined(), "Native container lost quarantined root");
         require(ItemStack.matches(active, barrel.getItem(1)), "Quarantine damaged an unrelated container slot");
+    }
+
+    private static void nativeReadiness(MinecraftServer server, CompoundTag encoded) {
+        var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
+        var nativeInput = new CompoundTag(); nativeInput.putString("id", "minecraft:diamond_boots");
+        var nativePatch = new CompoundTag(); nativePatch.put("minecraft:damage", FloatTag.valueOf(3.5f));
+        nativeInput.put("components", nativePatch);
+        int nativeDamage = ItemStack.CODEC.parse(ops, nativeInput).getOrThrow().getDamageValue();
+        var normalized = encoded.copy();
+        normalized.getCompoundOrEmpty("components").put("minecraft:damage", FloatTag.valueOf(3.5f));
+        var normalizedRoot = ItemStack.CODEC.parse(ops, normalized).getOrThrow();
+        require(ModContent.getMixedBootsData(normalizedRoot).isPresent() && normalizedRoot.getDamageValue() == nativeDamage,
+                "Successful native normalization suspended an active root");
+
+        String property = MissingModsProof.MOD + ":converting_property";
+        for (boolean filtersUnknown : new boolean[]{false, true}) {
+            var legacy = new CompoundTag(); legacy.putInt("legacy", 42);
+            if (filtersUnknown) { legacy.putString("unrecognized_reference", "future:removed"); }
+            var input = normalized.copy();
+            var patch = input.getCompoundOrEmpty("components");
+            patch.put(property, legacy.copy());
+            var source = patch.getCompoundOrEmpty("mismatchedboots:mixed_boots_data").getCompoundOrEmpty("left");
+            var sourcePatch = source.getCompoundOrEmpty("components"); source.put("components", sourcePatch);
+            sourcePatch.put(property, legacy.copy());
+            nativePatch.put(property, legacy.copy());
+            var nativeRoot = ItemStack.CODEC.parse(ops, nativeInput).getOrThrow();
+            var nativeEncoded = (CompoundTag) ItemStack.CODEC.encodeStart(ops, nativeRoot).getOrThrow();
+            var active = ItemStack.CODEC.parse(ops, input).getOrThrow();
+            require(ModContent.getMixedBootsData(active).isPresent(), "Successful native conversion suspended an active root");
+
+            // Model an unreadable old schema followed by a fully successful newer native reader.
+            // This is a controlled codec transition, not evidence of an actual third-party upgrade.
+            ItemStack suspended;
+            MissingModsProof.legacyReadable = false;
+            try { suspended = ItemStack.CODEC.parse(ops, input).getOrThrow(); }
+            finally { MissingModsProof.legacyReadable = true; }
+            var retained = archive(server, suspended);
+            require(legacy.equals(retained.original().get(property)), "Failed full read discarded original foreign data");
+            require(legacy.equals(retained.original().getCompoundOrEmpty("mismatchedboots:mixed_boots_data")
+                    .getCompoundOrEmpty("left").getCompoundOrEmpty("components").get(property)), "Failed full read discarded source data");
+            require(suspended.getDamageValue() == nativeDamage && !retained.quarantined(), "Passive normalization quarantined a safe shell");
+            var restored = ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, suspended).getOrThrow()).getOrThrow();
+            require(ModContent.getMixedBootsData(restored).isPresent() && ModContent.suspendedBootsData(restored).isEmpty(),
+                    "Successful native conversion did not restore the whole root");
+            var canonical = (CompoundTag) ItemStack.CODEC.encodeStart(ops, restored).getOrThrow();
+            require(canonical.getCompoundOrEmpty("components").get(property)
+                    .equals(nativeEncoded.getCompoundOrEmpty("components").get(property)), "Conversion differs from native item semantics");
+            require(ItemStack.matches(active, restored), "Converted active and restored states differ");
+            require(ItemStack.matches(restored, ItemStack.CODEC.parse(ops, canonical).getOrThrow()), "Converted root is unstable on reload");
+
+            source.putString("id", "future:temporarily_missing_boots");
+            int before = MissingModsProof.convertingReads;
+            var missing = ItemStack.CODEC.parse(ops, input).getOrThrow();
+            require(MissingModsProof.convertingReads == before, "Missing source reached foreign decoding before suspension");
+            require(archive(server, missing).original().get(property).equals(legacy)
+                    && ModContent.getMixedBootsData(missing).isEmpty(), "Missing source did not preserve the complete root");
+        }
     }
 
     private static SuspendedBootsData archive(MinecraftServer server, ItemStack root) {

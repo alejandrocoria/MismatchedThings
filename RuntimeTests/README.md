@@ -40,13 +40,13 @@ normal indev client/server runs.
 
 ## Missing-mod recovery — production capture
 
-**Current implementation: block B (`3f49261`), strict baseline.** The commands
-below still enforce foreign round-trip equality. An accepted but unimplemented
-block C replaces that readiness criterion with raw source-item registration plus
-a full successful native read and root/source validation. It must preserve the
-existing temporary-removal cases while accepting native conversions/filtering.
-Do not describe the current lossy-codec rejection checks as acceptance of that
-new behavior. Real lifecycle/manual consolidation moves from the former C to D.
+**Current implementation: block C, native readiness.** Check raw source-item
+registration before native decoding; otherwise accept a complete native success
+with strict root/source validation. Missing sources and failed/partial reads
+remain inactive with their protected source/root state. Successful native
+normalization/conversion/filtering is accepted, without foreign round-trip
+equality or a generic reference audit. Historical strict A/B evidence is separate;
+real lifecycle/manual consolidation remains D.
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsSpike
@@ -68,8 +68,9 @@ disable switch. The model uses
 defensive binary NBT, complete-state readiness, original/current conflict
 retention and a non-wearing feet shell. Bounded malformed archive values stay
 opaque in quarantine; real native barrel loading must preserve both the affected
-item and adjacent slot. Foreign throwing/lossy codecs and repeated loads are
-checked separately. An actual compatible operation wrapper participates in
+item and adjacent slot. Foreign throwing/read-error codecs remain suspended;
+successful native conversions/filtering and stable reload are checked separately.
+An actual compatible operation wrapper participates in
 decode; an altered factory or competing wrapper which bypasses capture must
 refuse startup before world creation. Loom can
 exit 0 after that bootstrap exception, so the refusal checks the exact diagnostic
@@ -82,8 +83,8 @@ Optional `'-PmissingModsCases=candidate,refused,bypassed'` and
 require their earlier world/baseline. `write` resets only that disposable run.
 Fabric uses the separate MA port plus a temporary unavailable integer counter;
 native JDT FE is NeoForge-only. Real worn-player, client/death-drop, staged
-returns and full production acceptance remain D, after revised C, not claims of
-focused B checks.
+returns and full production acceptance remain D, not claims of these focused
+server checks.
 
 The write phase additionally checks actual production anvil rename with a
 conflict-free persistent reload, denied donor/material/book operations, smithing,
@@ -97,13 +98,18 @@ Explicit direct-wear destruction must not refund parked MA/JDT upgrades; normal
 combat must not wear the shell. Known readable non-boots, malformed component
 shapes and roots without an original feet projection cannot gain equipability.
 
-C will adapt the equality-specific checks and exercise successful native
-normalization/conversion on initially active and returning roots, plus a controlled
-successful filtering case. Native read errors, missing source IDs/root component
-types and invalid roots/sources must still suspend. Ordinary same-version
+C replaces equality-specific assertions with successful native normalization,
+root/source conversion on initially active and returning roots, and a controlled
+successful filtering case. A decoder counter checks that a missing source skips
+foreign root/source decoding. Native read errors, missing source IDs/root component
+types and invalid roots/sources still suspend. Ordinary same-version
 absent/reinstall cases retain exact-state comparisons; conversion cases compare
 against native interpretation, not historical encoding. No per-mod recovery
-implementation or general reference scanner is planned.
+implementation or general reference scanner is needed. The bounded check and full
+production/control/refused/bypassed matrices passed on Fabric and NeoForge .114,
+as did 325 Common tests, ordinary startup and packaging. These are controlled
+codec transitions, not a particular third-party version-upgrade guarantee. See
+[C's record](../local-docs/MISSING-MOD-PERSISTENCE-IMPLEMENTATION.md#103-block-c--source-presence-and-native-readiness--2026-10-24).
 
 ## Mystical Agriculture augments — production effects
 

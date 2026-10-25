@@ -54,6 +54,7 @@ public final class MissingModsSpike {
         sounds.register(bus);
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MissingModsProof.MOD);
         components.register("throwing_property", MissingModsProof::throwingProperty);
+        components.register("converting_property", MissingModsProof::convertingProperty);
         components.register(bus);
     }
 }
