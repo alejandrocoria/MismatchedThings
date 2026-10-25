@@ -35,7 +35,8 @@ final class JustDireNegateFallCompatibility {
     static boolean tryNegate(LivingFallEvent event, ItemStack root) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !equipped(player, root)
                 || !(root.getItem() instanceof MixedBootsItem)) { return false; }
-        var data = ModContent.mixedBootsDataType().map(root::get).orElse(null);
+        var data = ModContent.suspendedBootsData(root).isPresent() ? null
+                : ModContent.mixedBootsDataType().map(root::get).orElse(null);
         if (data == null) { return false; }
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();

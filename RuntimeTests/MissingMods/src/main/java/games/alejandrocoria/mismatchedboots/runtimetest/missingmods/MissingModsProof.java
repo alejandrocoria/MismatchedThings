@@ -129,11 +129,20 @@ public final class MissingModsProof {
         }
         barrel.setChanged();
         NbtIo.writeCompressed(baseline, baselineFile());
-        if (candidate()) { MissingModsModelChecks.run(server, roots.get(5)); }
+        if (candidate()) {
+            MissingModsModelChecks.run(server, roots.get(5));
+            MissingModsInteractionChecks.run(server, roots.get(2));
+            MissingModsInteractionChecks.breakDoesNotRefund(server, MissingModsInteractionChecks.suspend(server, roots.get(0)));
+            if (!fabric()) {
+                Class.forName("games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike")
+                        .getMethod("checkResources", MinecraftServer.class, ItemStack.class).invoke(null, server, roots.get(2));
+            }
+        }
         NetworkAcceptanceFiles.write("missing-mods-report.txt", "seeded eight real barrel slots; "
                 + (fabric() ? "native MA Fabric augments and temporary foreign counter" : "native MA NeoForge augments and paid-root JDT charge")
                 + "; attribute/equip sound, typed arrays, vanilla/bare controls"
-                + (candidate() ? "; conflict/removal/lossy/throwing-codec/native-container model checks passed" : "") + "\n");
+                + (candidate() ? "; conflict/removal/lossy/throwing-codec/native-container/invalid-equip checks; real rename/workstation/wear/XP/refund checks passed"
+                        + (fabric() ? "" : "; actual FE and retained-handler denial passed") : "") + "\n");
     }
 
     private static void absent(MinecraftServer server) {

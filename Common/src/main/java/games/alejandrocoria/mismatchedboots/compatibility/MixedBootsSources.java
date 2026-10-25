@@ -23,7 +23,8 @@ public final class MixedBootsSources {
             return false;
         }
 
-        MixedBootsData data = ModContent.mixedBootsDataType().map(stack::get).orElse(null);
+        MixedBootsData data = ModContent.suspendedBootsData(stack).isPresent() ? null
+                : ModContent.mixedBootsDataType().map(stack::get).orElse(null);
         return anySource(data, predicate);
     }
 

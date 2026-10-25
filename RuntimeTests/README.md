@@ -38,7 +38,7 @@ only for compilation; test classes, metadata, and fixtures are not included in
 the production artifacts. No runtime test infrastructure is installed in the
 normal indev client/server runs.
 
-## Missing-mod recovery — block A model proof, production capture disconnected
+## Missing-mod recovery — production capture
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsSpike
@@ -47,31 +47,46 @@ normal indev client/server runs.
 
 Two disposable worlds each cross three independent servers: write with pinned
 MA/Cucumber and JDT, save with them removed, then restore the same versions.
-The native control demonstrates loss; an opt-in fixture-only ItemStack hook uses
-the owned model to park complete gameplay state atomically. Eight slots compare complete
+The explicit native control demonstrates loss; the candidate uses only the
+packaged production ItemStack hook and owned model. Eight slots compare complete
 encoded stacks, current edits, typed NBT, paid-root FE, unknown attribute/equip
 sound references, vanilla controls and a non-equippable bare shell. Candidate
 stacks also exercise the real network codec while absent and restored.
 
-The owned `suspended_boots` component and pure helpers are shipped but unused by
-production capture until B. Only the fixture installs the hook. The model uses
+The required capture is installed independently of optional mods on both loaders.
+No fixture supplies a candidate decoder or archive registration. Only the
+fixture's explicit control bypasses production decoding; production has no
+disable switch. The model uses
 defensive binary NBT, complete-state readiness, original/current conflict
 retention and a non-wearing feet shell. Bounded malformed archive values stay
 opaque in quarantine; real native barrel loading must preserve both the affected
 item and adjacent slot. Foreign throwing/lossy codecs and repeated loads are
 checked separately. An actual compatible operation wrapper participates in
-decode; an altered factory must refuse startup before world creation. Loom can
+decode; an altered factory or competing wrapper which bypasses capture must
+refuse startup before world creation. Loom can
 exit 0 after that bootstrap exception, so the refusal checks the exact diagnostic
 and absent world/result rather than exit code alone. Runs and reports are under
 `<loader>/build/{run,reports}/missing-mods/<baseline>/`.
 Artifact pins and the bounded runner are in
 [missing-mods-spike.gradle](../gradle/missing-mods-spike.gradle).
-Optional `'-PmissingModsCases=candidate,refused'` and
+Optional `'-PmissingModsCases=candidate,refused,bypassed'` and
 `'-PmissingModsStages=write,absent,restore'` select proof phases; later phases
 require their earlier world/baseline. `write` resets only that disposable run.
 Fabric uses the separate MA port plus a temporary unavailable integer counter;
 native JDT FE is NeoForge-only. Real worn-player, client/death-drop, staged
-returns and full production acceptance remain later blocks, not claims of A.
+returns and full production acceptance remain C, not claims of focused B checks.
+
+The write phase additionally checks actual production anvil rename with a
+conflict-free persistent reload, denied donor/material/book operations, smithing,
+grindstone, source predicates and recomposition; a connected test wearer receives
+unprotected damage without combat wear, and actual Mending XP remains XP rather
+than repairing the parked enchantment. NeoForge checks a real active FE capability,
+its disappearance after suspension and retained-handler insert/extract refusal
+with no archived-state mutation. These are focused server checks, not the real
+client/worn-across-restart/death-drop acceptance reserved for C.
+Explicit direct-wear destruction must not refund parked MA/JDT upgrades; normal
+combat must not wear the shell. Known readable non-boots, malformed component
+shapes and roots without an original feet projection cannot gain equipability.
 
 ## Mystical Agriculture augments — production effects
 

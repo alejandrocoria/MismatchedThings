@@ -65,7 +65,7 @@ public final class ModContent {
                 .build();
     }
 
-    /** Registered but not populated by production until the recovery integration block. */
+    /** Opaque owned archive, independent of foreign component registrations. */
     public static DataComponentType<SuspendedBootsData> createSuspendedBootsType() {
         return DataComponentType.<SuspendedBootsData>builder().persistent(SuspendedBootsData.CODEC)
                 .networkSynchronized(SuspendedBootsData.STREAM_CODEC).build();
@@ -130,6 +130,7 @@ public final class ModContent {
      * Not proof of a valid gameplay item: consumers must validate item identity and sources.
      */
     public static Optional<MixedBootsData> getMixedBootsData(ItemStack stack) {
+        if (suspendedBootsData(stack).isPresent()) { return Optional.empty(); }
         Optional<MixedBootsData> registeredData = mixedBootsDataType().map(stack::get);
         if (registeredData.isPresent()) {
             return registeredData;
@@ -138,6 +139,13 @@ public final class ModContent {
             if (component.value() instanceof MixedBootsData data) {
                 return Optional.of(data);
             }
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<SuspendedBootsData> suspendedBootsData(ItemStack stack) {
+        for (TypedDataComponent<?> component : stack.getComponents()) {
+            if (component.value() instanceof SuspendedBootsData data) { return Optional.of(data); }
         }
         return Optional.empty();
     }

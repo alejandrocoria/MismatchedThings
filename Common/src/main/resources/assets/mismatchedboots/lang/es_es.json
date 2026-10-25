@@ -5,5 +5,8 @@
   "tooltip.mismatchedboots.mixed_boots.left": "Izquierda:",
   "tooltip.mismatchedboots.mixed_boots.right": "Derecha:",
   "tooltip.mismatchedboots.mixed_boots.name_with_natural": "%1$s (%2$s)",
-  "tooltip.mismatchedboots.mixed_boots.invalid": "Faltan los datos de las botas o no son válidos"
+  "tooltip.mismatchedboots.mixed_boots.invalid": "Faltan los datos de las botas o no son válidos",
+  "tooltip.mismatchedboots.mixed_boots.suspended": "Botas inactivas: datos guardados no disponibles o incompatibles",
+  "tooltip.mismatchedboots.mixed_boots.conflicted": "Botas inactivas: conflicto en los datos guardados",
+  "tooltip.mismatchedboots.mixed_boots.quarantined": "Botas inactivas: datos ilegibles conservados"
 }

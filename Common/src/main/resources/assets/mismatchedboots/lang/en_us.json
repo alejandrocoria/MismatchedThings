@@ -5,5 +5,8 @@
   "tooltip.mismatchedboots.mixed_boots.left": "Left:",
   "tooltip.mismatchedboots.mixed_boots.right": "Right:",
   "tooltip.mismatchedboots.mixed_boots.name_with_natural": "%1$s (%2$s)",
-  "tooltip.mismatchedboots.mixed_boots.invalid": "Missing or invalid boot data"
+  "tooltip.mismatchedboots.mixed_boots.invalid": "Missing or invalid boot data",
+  "tooltip.mismatchedboots.mixed_boots.suspended": "Boots inactive: stored data is unavailable or incompatible",
+  "tooltip.mismatchedboots.mixed_boots.conflicted": "Boots inactive: conflicting stored data",
+  "tooltip.mismatchedboots.mixed_boots.quarantined": "Boots inactive: unreadable data preserved"
 }

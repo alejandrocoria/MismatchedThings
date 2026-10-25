@@ -71,6 +71,16 @@ final class MissingModsModelChecks {
         var lossyRoot = ItemStack.CODEC.parse(ops, lossy).getOrThrow();
         require(archive(server, lossyRoot).original().get("minecraft:damage").equals(FloatTag.valueOf(3.5f)), "Lossy decode accepted");
         require(ModContent.getMixedBootsData(lossyRoot).isEmpty(), "Lossy root reactivated");
+        var notBoots = changed.copy();
+        notBoots.getCompoundOrEmpty("components").getCompoundOrEmpty("mismatchedboots:mixed_boots_data")
+                .getCompoundOrEmpty("left").putString("id", "minecraft:stick");
+        // Remove the original boot's component patch too: the readable source must really be a stick.
+        notBoots.getCompoundOrEmpty("components").getCompoundOrEmpty("mismatchedboots:mixed_boots_data")
+                .getCompoundOrEmpty("left").remove("components");
+        require(!ItemStack.CODEC.parse(ops, notBoots).getOrThrow().has(DataComponents.EQUIPPABLE), "Known non-boots acquired equipability");
+        var unequippable = changed.copy();
+        unequippable.getCompoundOrEmpty("components").remove("minecraft:equippable");
+        require(!ItemStack.CODEC.parse(ops, unequippable).getOrThrow().has(DataComponents.EQUIPPABLE), "Missing original equip slot was invented");
         var throwing = encoded.copy();
         throwing.getCompoundOrEmpty("components").putInt(MissingModsProof.MOD + ":throwing_property", 13);
         var throwingRoot = ItemStack.CODEC.parse(ops, throwing).getOrThrow();

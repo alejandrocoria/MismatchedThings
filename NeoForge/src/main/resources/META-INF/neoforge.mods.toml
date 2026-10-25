@@ -17,6 +17,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.recovery.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.neoforge.mixins.json"
 
 [[mixins]]

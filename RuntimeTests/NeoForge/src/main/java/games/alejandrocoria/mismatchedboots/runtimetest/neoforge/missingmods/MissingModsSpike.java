@@ -1,6 +1,15 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsProof;
+import games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsInteractionChecks;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import java.util.UUID;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -14,6 +23,27 @@ public final class MissingModsSpike {
     private MissingModsSpike() {}
     public static boolean enabled() { return MissingModsProof.enabled(); }
     public static void tick(MinecraftServer server) { MissingModsProof.tick(server); }
+
+    public static void checkResources(MinecraftServer server, ItemStack active) {
+        var player = new ServerPlayer(server, server.overworld(), new GameProfile(UUID.randomUUID(), "recovery-energy"), ClientInformation.createDefault());
+        player.getInventory().setItem(0, active.copy());
+        var access = ItemAccess.forPlayerSlot(player, 0);
+        var retained = access.getCapability(Capabilities.Energy.ITEM);
+        if (retained == null || retained.getAmountAsLong() != 12_347) { throw new AssertionError("Active production FE capability unavailable"); }
+        var suspended = MissingModsInteractionChecks.suspend(server, active);
+        player.getInventory().setItem(0, suspended);
+        if (access.getCapability(Capabilities.Energy.ITEM) != null || retained.getCapacityAsLong() != 0 || retained.getAmountAsLong() != 0) {
+            throw new AssertionError("Suspended production root exposes FE capability/wallet");
+        }
+        var before = suspended.copy();
+        try (var transaction = Transaction.openRoot()) {
+            if (retained.insert(5_000, transaction) != 0 || retained.extract(5_000, transaction) != 0) {
+                throw new AssertionError("Retained charger handler paid a suspended root");
+            }
+            transaction.commit();
+        }
+        if (!ItemStack.matches(before, player.getInventory().getItem(0))) { throw new AssertionError("Refused FE transfer mutated archived state"); }
+    }
     public static void initialize(IEventBus bus) {
         if (MissingModsProof.stage().equals("absent")) { return; }
         var attributes = DeferredRegister.create(Registries.ATTRIBUTE, MissingModsProof.MOD);

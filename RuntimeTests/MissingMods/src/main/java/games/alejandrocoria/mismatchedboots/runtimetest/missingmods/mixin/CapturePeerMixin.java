@@ -22,6 +22,8 @@ abstract class CapturePeerMixin {
             "Lcom/mojang/serialization/MapCodec;recursive(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;"))
     private static MapCodec<ItemStack> peer(String name, Function<Codec<ItemStack>, MapCodec<ItemStack>> factory,
             Operation<MapCodec<ItemStack>> original) {
+        // A real competing wrapper which skips its operation must trigger production's independent startup witness.
+        if (Boolean.getBoolean("mismatchedboots.test.missingModsBypass")) { return MapCodec.unit(() -> ItemStack.EMPTY); }
         Function<Codec<ItemStack>, MapCodec<ItemStack>> wrapped = self -> {
             var delegate = factory.apply(self);
             return new MapCodec<>() {

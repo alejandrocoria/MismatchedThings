@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.interaction.SmithingMenuRecipeState;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -33,9 +34,19 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
     @Unique private ItemStack mismatchedboots$preview;
     @Unique private List<ItemStack> mismatchedboots$matchedInputs;
 
-    @Inject(method = "createResult", at = @At("HEAD"))
+    @Inject(method = "createResult", at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$clearAdditionalRecipe(CallbackInfo callback) {
         mismatchedboots$clearAdditionalRecipe();
+        SmithingMenu menu = (SmithingMenu) (Object) this;
+        for (int slot : new int[]{SmithingMenu.TEMPLATE_SLOT, SmithingMenu.BASE_SLOT, SmithingMenu.ADDITIONAL_SLOT}) {
+            if (ModContent.suspendedBootsData(menu.getSlot(slot).getItem()).isPresent()) {
+                ResultContainer result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
+                result.setRecipeUsed(null);
+                result.setItem(0, ItemStack.EMPTY);
+                callback.cancel();
+                return;
+            }
+        }
     }
 
     @Inject(method = "createResult", at = @At("RETURN"))

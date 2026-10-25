@@ -36,6 +36,7 @@
 
     "mixins": [
         "mismatchedboots.mixins.json",
+        "mismatchedboots.recovery.mixins.json",
         "mismatchedboots.fabric.mixins.json",
         "mismatchedboots.mysticalagriculture.mixins.json",
         "mismatchedboots.betterx.mixins.json",

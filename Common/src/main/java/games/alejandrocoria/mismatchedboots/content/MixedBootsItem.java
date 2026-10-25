@@ -24,6 +24,13 @@ public class MixedBootsItem extends Item {
             TooltipDisplay display,
             Consumer<Component> tooltip,
             TooltipFlag flag) {
+        var recovery = ModContent.suspendedBootsData(stack).orElse(null);
+        if (recovery != null) {
+            String state = recovery.quarantined() ? "quarantined" : recovery.conflicted() ? "conflicted" : "suspended";
+            tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots." + state)
+                    .withStyle(ChatFormatting.RED));
+            return;
+        }
         MixedBootsData data = ModContent.getMixedBootsData(stack).orElse(null);
         if (data == null) {
             tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots.invalid")

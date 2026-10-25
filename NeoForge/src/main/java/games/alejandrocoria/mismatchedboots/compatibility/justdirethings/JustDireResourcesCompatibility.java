@@ -132,7 +132,8 @@ public final class JustDireResourcesCompatibility {
 
     private static int rootCapacity(ItemStack root, Api binding) {
         if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) { return 0; }
-        var data = ModContent.mixedBootsDataType().map(root::get).orElse(null);
+        var data = ModContent.suspendedBootsData(root).isPresent() ? null
+                : ModContent.mixedBootsDataType().map(root::get).orElse(null);
         if (data == null) { return 0; }
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();

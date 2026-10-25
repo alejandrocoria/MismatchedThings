@@ -101,6 +101,9 @@ class SuspendedBootsDataTest {
         var source = new CompoundTag(); source.putString("id", "future:boots"); source.putInt("count", 1);
         data.put("left", source); data.put("right", source.copy());
         assertTrue(SuspendedBootsItemCodec.admittedSources(data));
+        source.putInt("components", 7);
+        assertFalse(SuspendedBootsItemCodec.admittedSources(data));
+        source.remove("components");
         source.putString("id", "mismatchedboots:mixed_boots");
         assertFalse(SuspendedBootsItemCodec.admittedSources(data));
     }

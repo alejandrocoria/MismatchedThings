@@ -33,6 +33,9 @@ public final class MixedBootsRecomposer {
     static ItemStack recompose(
             ItemStack root, ItemStack newLeft, ItemStack newRight,
             DataComponentType<MixedBootsData> dataType, AttributeRuleSet rules, ComponentRules componentRules) {
+        if (ModContent.suspendedBootsData(root).isPresent()) {
+            throw new IllegalArgumentException("Suspended mixed boots cannot be recomposed");
+        }
         MixedBootsData previous = Optional.ofNullable(root.get(dataType))
                 .orElseThrow(() -> new IllegalArgumentException("Missing mixed boots data"));
         BootHalf left = new BootHalf(newLeft);

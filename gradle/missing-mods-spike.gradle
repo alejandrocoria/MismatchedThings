@@ -1,4 +1,4 @@
-// Block A: the shared owned model is connected only through this opt-in fixture.
+// Packaged production capture; fixtures supply scenarios, peers and an explicit native-loss control only.
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def baseline = fabric ? minecraft_version : neoforge_version
@@ -22,18 +22,20 @@ def artifacts = (fabric ? [
         'justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
 ]).collectEntries { name, hash -> [(rootProject.file("${loader}/runs/client/mods/${name}")): hash] }
 
-['Control', 'Candidate', 'Refused'].each { variant ->
+['Control', 'Candidate', 'Refused', 'Bypassed'].each { variant ->
     def mode = variant.toLowerCase(Locale.ROOT)
+    def refusal = mode in ['refused', 'bypassed']
     def directory = layout.buildDirectory.dir("run/missing-mods/${baseline}/${mode}")
     def reports = layout.buildDirectory.dir("reports/missing-mods/${baseline}/${mode}")
-    (mode == 'refused' ? ['Write'] : ['Write', 'Absent', 'Restore']).each { phase ->
+    (refusal ? ['Write'] : ['Write', 'Absent', 'Restore']).each { phase ->
         def stage = phase.toLowerCase(Locale.ROOT)
         def markers = reports.map { it.dir(stage) }
         def properties = [
                 'mismatchedboots.runtimetest.markers': markers.get().asFile.absolutePath,
                 'mismatchedboots.runtimetest.loader': loader.toLowerCase(Locale.ROOT),
-                'mismatchedboots.test.missingModsCase': mode == 'refused' ? 'candidate' : mode,
+                'mismatchedboots.test.missingModsCase': refusal ? 'candidate' : mode,
                 'mismatchedboots.test.missingModsRefuse': (mode == 'refused').toString(),
+                'mismatchedboots.test.missingModsBypass': (mode == 'bypassed').toString(),
                 'mismatchedboots.test.missingModsStage': stage,
                 'mismatchedboots.test.missingModsBaseline': new File(reports.get().asFile, 'baseline.nbt').absolutePath
         ]
@@ -102,13 +104,14 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 
 tasks.register('verifyMissingModsSpike') {
     group = 'verification'
-    description = 'Proves the safe recovery model without enabling production capture'
+    description = 'Verifies packaged missing-mod recovery and its explicit native-loss/refusal controls'
     doLast {
-        def selectedCases = providers.gradleProperty('missingModsCases').getOrElse('control,candidate,refused').split(',')
+        def selectedCases = providers.gradleProperty('missingModsCases').getOrElse('control,candidate,refused,bypassed').split(',')
         def selectedStages = providers.gradleProperty('missingModsStages').getOrElse('write,absent,restore').split(',')
         selectedCases.each { mode ->
-            if (!(mode in ['control', 'candidate', 'refused'])) { throw new GradleException("Unknown case ${mode}") }
-            (mode == 'refused' ? ['write'] : selectedStages).each { stage ->
+            if (!(mode in ['control', 'candidate', 'refused', 'bypassed'])) { throw new GradleException("Unknown case ${mode}") }
+            def refusal = mode in ['refused', 'bypassed']
+            (refusal ? ['write'] : selectedStages).each { stage ->
                 if (!(stage in ['write', 'absent', 'restore'])) { throw new GradleException("Unknown stage ${stage}") }
                 def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/${mode}/${stage}").get().asFile
                 def log = new File(markers, 'process.log')
@@ -116,14 +119,15 @@ tasks.register('verifyMissingModsSpike') {
                 try {
                     runBounded(":RuntimeTests:${loader}:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
                 } catch (GradleException failure) {
-                    if (mode != 'refused') { throw failure }
+                    if (!refusal) { throw failure }
                     failed = true
                 }
-                if (mode == 'refused') {
+                if (refusal) {
                     // Loom's launcher can report exit 0 after a bootstrap exception; verify the actual refusal/world boundary.
-                    if ((!failed && !fabric) || !log.text.contains('Cannot safely install mixed-boots capture: native item fields unavailable')
+                    def reason = mode == 'refused' ? 'native item fields unavailable' : 'required wrapper was bypassed'
+                    if ((!failed && !fabric) || !log.text.contains("Cannot safely install mixed-boots capture: ${reason}")
                             || new File(markers, 'missing-mods-success.txt').exists()
-                            || new File(layout.buildDirectory.get().asFile, "run/missing-mods/${baseline}/refused/world/level.dat").exists()) {
+                            || new File(layout.buildDirectory.get().asFile, "run/missing-mods/${baseline}/${mode}/world/level.dat").exists()) {
                         throw new GradleException("Unsafe or unexpected capture refusal; see ${log}")
                     }
                     logger.lifecycle("Required capture refusal passed before world open: ${log}")

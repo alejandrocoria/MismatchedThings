@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Block A's pure capture/suspend/restore helper. No production mixin installs this codec yet. */
+/** Lossless persistent capture for our roots; never accepts a native partial result as restored state. */
 public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
     public static final String ARCHIVE = "mismatchedboots:suspended_boots";
     private static final String SOURCES = "mismatchedboots:mixed_boots_data";
@@ -99,7 +99,7 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
             }
         }
         // The complete gameplay patch is parked even when only one foreign value was unreadable.
-        CompoundTag projection = !quarantined && oneItem && admittedSources(original.get(SOURCES))
+        CompoundTag projection = !quarantined && oneItem && admittedHistory(ops, original)
                 ? SuspendedBootsData.equipmentProjection() : new CompoundTag();
         var archive = quarantined ? SuspendedBootsData.quarantined(original, conflicts)
                 : SuspendedBootsData.of(original, projection, conflicts);
@@ -130,9 +130,25 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
                     || Identifier.tryParse(source.getStringOr("id", "")) == null
                     || source.getStringOr("id", "").equals(ITEM) || source.getStringOr("id", "").equals("minecraft:air")
                     || source.contains("count") && !(source.get("count") instanceof IntTag)
-                    || source.getIntOr("count", 1) != 1) { return false; }
+                    || source.getIntOr("count", 1) != 1
+                    || source.contains("components") && !(source.get("components") instanceof CompoundTag)) { return false; }
             var components = source.getCompoundOrEmpty("components");
             if (components.contains(SOURCES) || components.contains(ARCHIVE)) { return false; }
+        }
+        return true;
+    }
+
+    private static <T> boolean admittedHistory(DynamicOps<T> ops, CompoundTag original) {
+        if (!admittedSources(original.get(SOURCES))
+                || !original.getCompoundOrEmpty(EQUIPPABLE).getStringOr("slot", "").equals("feet")) { return false; }
+        var sources = original.getCompoundOrEmpty(SOURCES);
+        for (String side : Set.of("left", "right")) {
+            try {
+                var readable = ItemStack.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, sources.get(side))).result();
+                // Missing registrations cannot prove gameplay readiness. Fully readable non-boots,
+                // however, are known invalid history and must not acquire an invented feet slot.
+                if (readable.isPresent() && !BootHalf.isValidSource(readable.get())) { return false; }
+            } catch (RuntimeException unreadable) { /* Keep structurally admitted unavailable history opaque. */ }
         }
         return true;
     }

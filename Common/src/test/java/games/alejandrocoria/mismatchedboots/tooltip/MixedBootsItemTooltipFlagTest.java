@@ -30,7 +30,9 @@ class MixedBootsItemTooltipFlagTest {
         MethodNode outer = owner.methods.stream().filter(method -> method.name.equals("appendHoverText")).findFirst().orElseThrow();
         var code = code(outer);
         InvokeDynamicInsnNode lambda = code.stream().filter(InvokeDynamicInsnNode.class::isInstance)
-                .map(InvokeDynamicInsnNode.class::cast).findFirst().orElseThrow();
+                .map(InvokeDynamicInsnNode.class::cast)
+                .filter(site -> site.bsmArgs.length > 1 && site.bsmArgs[1] instanceof Handle target
+                        && target.getOwner().equals(owner.name)).findFirst().orElseThrow();
         int site = code.indexOf(lambda);
         assertEquals(0, assertInstanceOf(VarInsnNode.class, code.get(site - 2)).var);
         assertEquals(5, assertInstanceOf(VarInsnNode.class, code.get(site - 1)).var, "Capture the actual flag, not a default/global value");
