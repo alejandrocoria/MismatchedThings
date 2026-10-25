@@ -11,6 +11,7 @@ import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import java.util.UUID;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
@@ -45,7 +46,7 @@ public final class MissingModsSpike {
         if (!ItemStack.matches(before, player.getInventory().getItem(0))) { throw new AssertionError("Refused FE transfer mutated archived state"); }
     }
     public static void initialize(IEventBus bus) {
-        if (MissingModsProof.stage().equals("absent")) { return; }
+        if (!MissingModsProof.fixturesPresent()) { return; }
         var attributes = DeferredRegister.create(Registries.ATTRIBUTE, MissingModsProof.MOD);
         attributes.register("temporary_attribute", () -> new RangedAttribute("missing-mod-proof", 0, -1024, 1024));
         attributes.register(bus);
@@ -53,6 +54,9 @@ public final class MissingModsSpike {
         sounds.register("temporary_equip", () -> SoundEvent.createVariableRangeEvent(Identifier.parse(MissingModsProof.MOD + ":temporary_equip")));
         sounds.register(bus);
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MissingModsProof.MOD);
+        components.register("temporary_energy", () -> DataComponentType.<Integer>builder()
+                .persistent(com.mojang.serialization.Codec.INT)
+                .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build());
         components.register("throwing_property", MissingModsProof::throwingProperty);
         components.register("converting_property", MissingModsProof::convertingProperty);
         components.register(bus);

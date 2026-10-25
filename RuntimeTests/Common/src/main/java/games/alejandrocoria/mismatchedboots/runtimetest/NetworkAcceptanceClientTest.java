@@ -98,6 +98,13 @@ public final class NetworkAcceptanceClientTest {
                 throw new AssertionError("Client preview description differs from server result");
             }
 
+            if (!games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsWireChecks.receive(
+                    client.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET),
+                    client.player.getInventory().getItem(1), client.level.registryAccess())) {
+                if (ticks > TIMEOUT_TICKS) { throw new AssertionError("TCP suspended-root equipment/inventory packets absent"); }
+                return;
+            }
+            if (client.player.getArmorValue() != 0) { throw new AssertionError("TCP suspended boots grant armor"); }
             NetworkAcceptanceFiles.write(
                     "client-snapshot.txt", NetworkAcceptanceFiles.snapshot(rules, componentRules));
             NetworkAcceptanceFiles.write("client-result.txt", receivedDescription);

@@ -20,6 +20,10 @@ public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
         if (games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.enabled()) {
             games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.initialize(eventBus);
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
+                        games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsClient.tick(Minecraft.getInstance()));
+            }
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.tick(event.getServer()));
             return;

@@ -19,7 +19,11 @@ public final class FabricNetworkAcceptanceServer implements ModInitializer {
     @Override
     public void onInitialize() {
         if (MissingModsProof.enabled()) {
-            if (!MissingModsProof.stage().equals("absent")) {
+            if (MissingModsProof.secondaryPresent()) {
+                var id = Identifier.parse(MissingModsProof.MOD + ":temporary_boots");
+                Registry.register(BuiltInRegistries.ITEM, id, MissingModsProof.temporaryBoots());
+            }
+            if (MissingModsProof.fixturesPresent()) {
                 Registry.register(BuiltInRegistries.ATTRIBUTE, Identifier.parse(MissingModsProof.MOD + ":temporary_attribute"),
                         new RangedAttribute("missing-mod-proof", 0, -1024, 1024));
                 Registry.register(BuiltInRegistries.SOUND_EVENT, Identifier.parse(MissingModsProof.MOD + ":temporary_equip"),

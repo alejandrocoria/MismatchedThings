@@ -153,6 +153,7 @@ public final class NetworkAcceptanceServerTest {
         if (!player.getInventory().add(crafted.copy())) {
             throw new AssertionError("Could not deliver the crafted stack to the client");
         }
+        games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsWireChecks.deliver(player, crafted);
         player.inventoryMenu.broadcastChanges();
         NetworkAcceptanceFiles.write("server-result.txt", description);
     }

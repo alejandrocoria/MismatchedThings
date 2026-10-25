@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -19,12 +20,14 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -35,11 +38,12 @@ import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.ArrayList;
 
-/** Six disposable-world processes, never an indev world or production recovery implementation. */
+/** Separate disposable-world processes; production owns all capture and recovery. */
 public final class MissingModsProof {
     public static final String MOD = "mismatchedboots_runtime_test";
-    private static final int ROOTS = 8;
+    private static final int ROOTS = 11;
     private static final BlockPos STORAGE = new BlockPos(0, 80, 0);
     private static boolean finished;
     private static int ticks;
@@ -68,19 +72,28 @@ public final class MissingModsProof {
                 .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build();
     }
     public static String stage() { return System.getProperty("mismatchedboots.test.missingModsStage"); }
+    public static boolean connected() { return stage().startsWith("client"); }
+    public static boolean fixturesPresent() { return List.of("write", "restore", "reloaded", "clientwrite", "clientrestore").contains(stage()); }
+    public static boolean secondaryPresent() { return fixturesPresent() || stage().equals("sources"); }
+    public static Item temporaryBoots() {
+        return new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, Identifier.parse(MOD + ":temporary_boots")))
+                .durability(500).component(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build()));
+    }
     private static boolean candidate() { return System.getProperty("mismatchedboots.test.missingModsCase").equals("candidate"); }
     private static boolean fabric() { return System.getProperty("mismatchedboots.runtimetest.loader").equals("fabric"); }
     private static String energyId() { return fabric() ? MOD + ":temporary_energy" : "justdirethings:forge_energy"; }
     private static DataComponentType<SuspendedBootsData> archiveType() { return component(SuspendedBootsItemCodec.ARCHIVE); }
 
     public static void tick(MinecraftServer server) {
+        if (connected()) { return; }
         if (finished || ++ticks < 5) { return; }
         finished = true;
         try {
             switch (stage()) {
                 case "write" -> seed(server);
                 case "absent" -> absent(server);
-                case "restore" -> restore(server);
+                case "absentagain", "partial", "sources" -> repeated(server);
+                case "restore", "reloaded" -> restore(server);
                 default -> throw new AssertionError("Unknown missing-mod spike stage");
             }
             require(!candidate() || CaptureWitness.peerDecodes > 0, "Compatible peer did not participate in native decoding");
@@ -106,20 +119,48 @@ public final class MissingModsProof {
         ma.set(DataComponents.CUSTOM_DATA, CustomData.of(opaque));
         var jdt = fabric() ? ma.copy() : nativeBoot("justdirethings:eclipsealloy_boots");
         jdt.set(MissingModsProof.<Integer>component(energyId()), 200_000);
-        if (!fabric()) { jdt.set(MissingModsProof.<Boolean>component("justdirethings:stepheight_upgrade_installed"), true); }
+        if (!fabric()) {
+            for (String upgrade : List.of("stepheight_upgrade_installed", "groundstomp_upgrade_installed")) {
+                jdt.set(MissingModsProof.<Boolean>component("justdirethings:" + upgrade), true);
+            }
+        }
         var recipe = new MixedBootsWorkbenchRecipe();
         var maPair = recipe.assemblePair(new MismatchedWorkbenchInput(ma, new ItemStack(Items.DIAMOND_BOOTS)));
         var jdtPair = recipe.assemblePair(new MismatchedWorkbenchInput(jdt, new ItemStack(Items.DIAMOND_BOOTS)));
         var vanillaPair = recipe.assemblePair(new MismatchedWorkbenchInput(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
         require(maPair.isComplete() && jdtPair.isComplete() && vanillaPair.isComplete(), "Native recipe fixture rejected");
-        var roots = List.of(maPair.primary(), maPair.inverse(), jdtPair.primary(), jdtPair.inverse(),
+        var roots = new ArrayList<>(List.of(maPair.primary(), maPair.inverse(), jdtPair.primary(), jdtPair.inverse(),
                 vanillaPair.primary(), vanillaPair.inverse(), new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
-                vanillaPair.primary().copy());
+                vanillaPair.primary().copy()));
+        var dual = recipe.assemblePair(new MismatchedWorkbenchInput(ma,
+                fabric() ? nativeBoot(MOD + ":temporary_boots") : jdt));
+        require(dual.isComplete(), "Two-dependency fixture rejected");
+        roots.add(dual.primary()); roots.add(dual.inverse());
+        for (int i = 8; i < 10; i++) {
+            roots.get(i).set(MissingModsProof.<Integer>component(MOD + ":temporary_energy"), 1_987_654_321);
+        }
+        var enchantmentRoot = vanillaPair.primary().copy();
+        enchantmentRoot.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
+                .get(Identifier.parse("mysticalagriculture:soul_siphoner")).orElseThrow(), 1);
+        roots.add(enchantmentRoot);
         roots.get(7).set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).setEquipSound(
                 BuiltInRegistries.SOUND_EVENT.get(Identifier.parse(MOD + ":temporary_equip")).orElseThrow()).build());
         for (int i = 2; i < 4; i++) {
             // Paid-root charge is deliberately different from the immutable source's charge.
             roots.get(i).set(MissingModsProof.<Integer>component(energyId()), 12_345 + i);
+            if (!fabric()) { roots.get(i).set(MissingModsProof.<Boolean>component("justdirethings:tool_enabled"), false); }
+        }
+        if (!fabric()) {
+            Object binding = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityBinding")
+                    .getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance("groundstomp", 86, false, false);
+            Object cooldown = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToolRecords$AbilityCooldown")
+                    .getConstructor(String.class, int.class, boolean.class).newInstance("groundstomp", 37, false);
+            for (int i = 8; i < 10; i++) {
+                var root = roots.get(i);
+                root.set(MissingModsProof.<List<Object>>component("justdirethings:ability_bindings"), List.of(binding));
+                root.set(MissingModsProof.<List<Object>>component("justdirethings:ability_cooldowns"), List.of(cooldown));
+                root.set(MissingModsProof.<Boolean>component("justdirethings:tool_enabled"), false);
+            }
         }
         ItemStack attributeRoot = roots.get(4);
         var attributes = ItemAttributeModifiers.builder();
@@ -152,7 +193,7 @@ public final class MissingModsProof {
                         .getMethod("checkResources", MinecraftServer.class, ItemStack.class).invoke(null, server, roots.get(2));
             }
         }
-        NetworkAcceptanceFiles.write("missing-mods-report.txt", "seeded eight real barrel slots; "
+        NetworkAcceptanceFiles.write("missing-mods-report.txt", "seeded eleven real barrel slots; "
                 + (fabric() ? "native MA Fabric augments and temporary foreign counter" : "native MA NeoForge augments and paid-root JDT charge")
                 + "; attribute/equip sound, typed arrays, vanilla/bare controls"
                 + (candidate() ? "; conflict/removal/native-normalization/conversion/filtering/source-presence/throwing-codec/native-container/invalid-equip checks; real rename/workstation/wear/XP/refund checks passed"
@@ -168,7 +209,7 @@ public final class MissingModsProof {
             ItemStack root = barrel.getItem(i);
             if (candidate()) {
                 require(!root.isEmpty(), "Candidate lost root " + i);
-                boolean protectedRoot = i < 5 || i == 7;
+                boolean protectedRoot = i < 5 || i >= 7;
                 require(root.has(archiveType()) == protectedRoot, "Wrong archive presence at " + i);
                 require(i == 6 || root.get(DataComponents.EQUIPPABLE).slot() == EquipmentSlot.FEET, "Existing equip slot lost");
                 require(i != 6 || !root.has(DataComponents.EQUIPPABLE), "Bare /give acquired equip semantics");
@@ -192,7 +233,49 @@ public final class MissingModsProof {
             if (!root.isEmpty()) { mutateWhileAbsent(root, i); }
         }
         barrel.setChanged();
+        if (candidate()) {
+            var baseline = readBaseline(); var snapshot = new CompoundTag();
+            for (int i = 0; i < ROOTS; i++) { snapshot.put("root" + i, encode(server, barrel.getItem(i))); }
+            baseline.put("absent", snapshot);
+            try { NbtIo.writeCompressed(baseline, baselineFile()); }
+            catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
+        }
         NetworkAcceptanceFiles.write("missing-mods-report.txt", report.toString());
+    }
+
+    private static void repeated(MinecraftServer server) {
+        var snapshot = readBaseline().getCompoundOrEmpty("absent");
+        var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
+        for (int i = 0; i < ROOTS; i++) {
+            var root = storage(server).getItem(i);
+            var raw = snapshot.getCompoundOrEmpty("root" + i);
+            var expected = ItemStack.CODEC.parse(ops, raw).getOrThrow();
+            require(encode(server, root).equals(encode(server, expected)), "Repeated/staged save changed root " + i);
+            var retained = ModContent.suspendedBootsData(root);
+            if (retained.isPresent()) {
+                var previous = SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE, raw.getCompoundOrEmpty("components")
+                        .get(SuspendedBootsItemCodec.ARCHIVE)).getOrThrow();
+                require(previous.equals(retained.get()) && previous.encodedSize() == retained.get().encodedSize(), "Archive grew during staged return " + i);
+            }
+            if (i == 8 || i == 9) {
+                require(retained.isPresent() && ModContent.getMixedBootsData(root).isEmpty(), "Dual-dependency root partially activated");
+                if (stage().equals("sources")) {
+                    require(ModContent.suspendedBootsData(root).orElseThrow().original().getIntOr(MOD + ":temporary_energy", 0) == 1_987_654_321,
+                            "Root-only unavailable component was lost after both sources returned");
+                    require(BuiltInRegistries.ITEM.containsKey(Identifier.parse("mysticalagriculture:awakened_supremium_boots"))
+                            && BuiltInRegistries.ITEM.containsKey(Identifier.parse(fabric() ? MOD + ":temporary_boots" : "justdirethings:eclipsealloy_boots")),
+                            "Root-only failure stage lacks a source registration");
+                }
+            }
+            networkRoundTrip(server, root);
+        }
+        NetworkAcceptanceFiles.write("missing-mods-report.txt", "eleven roots stable across " + stage()
+                + "; no archive growth or partial dual-source/root-component activation\n");
+    }
+
+    static CompoundTag readBaseline() {
+        try { return NbtIo.readCompressed(baselineFile(), NbtAccounter.unlimitedHeap()); }
+        catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
     }
 
     private static void restore(MinecraftServer server) throws Exception {
@@ -218,7 +301,7 @@ public final class MissingModsProof {
         NetworkAcceptanceFiles.write("missing-mods-report.txt", report.toString());
     }
 
-    private static void mutateWhileAbsent(ItemStack root, int index) {
+    static void mutateWhileAbsent(ItemStack root, int index) {
         if (index != 6 && root.has(DataComponents.MAX_DAMAGE)) { root.setDamageValue(root.getDamageValue() + 7); }
         root.set(DataComponents.CUSTOM_NAME, Component.literal("changed while absent " + index));
         root.remove(DataComponents.CUSTOM_DATA); // An explicit removal must not be undone by restoration.
@@ -233,11 +316,11 @@ public final class MissingModsProof {
         } finally { buffer.release(); }
     }
 
-    private static CompoundTag encode(MinecraftServer server, ItemStack root) {
+    static CompoundTag encode(MinecraftServer server, ItemStack root) {
         return (CompoundTag) ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(NbtOps.INSTANCE), root).getOrThrow();
     }
     private static Path baselineFile() { return Path.of(System.getProperty("mismatchedboots.test.missingModsBaseline")); }
-    private static BarrelBlockEntity storage(MinecraftServer server) {
+    static BarrelBlockEntity storage(MinecraftServer server) {
         var barrel = (BarrelBlockEntity) server.overworld().getBlockEntity(STORAGE);
         require(barrel != null, "World lost its real barrel"); return barrel;
     }

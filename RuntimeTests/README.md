@@ -40,25 +40,29 @@ normal indev client/server runs.
 
 ## Missing-mod recovery — production capture
 
-**Current implementation: block C, native readiness.** Check raw source-item
+**Current implementation: C native readiness, with D lifecycle coverage.** Check raw source-item
 registration before native decoding; otherwise accept a complete native success
 with strict root/source validation. Missing sources and failed/partial reads
 remain inactive with their protected source/root state. Successful native
 normalization/conversion/filtering is accepted, without foreign round-trip
-equality or a generic reference audit. Historical strict A/B evidence is separate;
-real lifecycle/manual consolidation remains D.
+equality or a generic reference audit. Historical strict A/B evidence is separate.
+The owner confirmed manual acceptance on Fabric and NeoForge on 2026-10-25; see
+[D's record](../local-docs/MISSING-MOD-PERSISTENCE-IMPLEMENTATION.md#104-block-d--lifecycle-and-network-consolidation--2026-10-24).
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsSpike
-.\gradlew.bat :RuntimeTests:Fabric:verifyMissingModsSpike
+.\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsRecovery :RuntimeTests:NeoForge:verifyMissingModsClients
+.\gradlew.bat :RuntimeTests:Fabric:verifyMissingModsRecovery :RuntimeTests:Fabric:verifyMissingModsClients
 ```
 
-Two disposable worlds each cross three independent servers: write with pinned
-MA/Cucumber and JDT, save with them removed, then restore the same versions.
+Each disposable candidate world crosses seven independent servers: `write`,
+`absent`, `absentagain`, `partial`, `sources`, `restore`, `reloaded`. The original
+native-loss control retains its three phases; required-hook refusals stop before
+world creation. Use `-Pneoforge_version=26.1.2.99` for the supported floor and rerun
+without that override to restore habitual .114 artifacts.
 The explicit native control demonstrates loss; the candidate uses only the
-packaged production ItemStack hook and owned model. Eight slots compare complete
+packaged production ItemStack hook and owned model. Eleven slots compare complete
 encoded stacks, current edits, typed NBT, paid-root FE, unknown attribute/equip
-sound references, vanilla controls and a non-equippable bare shell. Candidate
+sound/enchantment references, vanilla controls and a non-equippable bare shell. Candidate
 stacks also exercise the real network codec while absent and restored.
 
 The required capture is installed independently of optional mods on both loaders.
@@ -79,12 +83,37 @@ and absent world/result rather than exit code alone. Runs and reports are under
 Artifact pins and the bounded runner are in
 [missing-mods-spike.gradle](../gradle/missing-mods-spike.gradle).
 Optional `'-PmissingModsCases=candidate,refused,bypassed'` and
-`'-PmissingModsStages=write,absent,restore'` select proof phases; later phases
+`'-PmissingModsStages=write,absent,absentagain,partial,sources,restore,reloaded'` select proof phases; later phases
 require their earlier world/baseline. `write` resets only that disposable run.
-Fabric uses the separate MA port plus a temporary unavailable integer counter;
-native JDT FE is NeoForge-only. Real worn-player, client/death-drop, staged
-returns and full production acceptance remain D, not claims of these focused
-server checks.
+Fabric uses the separate MA port plus a controlled temporary boot registration
+and foreign counter. Its second dependency is a registry fixture, not another
+third-party Fabric distribution. NeoForge combines real MA and JDT sources.
+`partial` returns MA/Cucumber only; `sources` returns both source registrations
+while the foreign root counter remains absent. Neither may activate a dual-source
+root. The unchanged versions must restore all eleven stacks completely, without
+archive growth, duplicate resources or reset controls/cooldowns/refund credits.
+Native JDT FE and controls are NeoForge-only. `verifyMissingModsSpike` is a
+compatibility command alias, not an executable old recovery candidate.
+
+The connected gate requires that completed candidate server matrix and copies
+its world under the runtime build directory. Three hidden/muted, independent
+client JVMs (`Clientwrite`, `Clientabsent`, `Clientrestore`) move a primary/inverse
+pair from the real barrel into player equipment/inventory, reload with mods
+absent, edit it, die/respawn through native packets and pick up/re-equip the
+inverse. The primary stays as a real saved item entity. After reinstatement and
+reconnect, both complete used roots must recover, with current edits and paid-root
+FE intact and no refund/duplication. Native death creates the drops; only then
+does the fixture pin their position/delay to avoid random throws escaping its
+small test platform. These integrated connections prove lifecycle/packet handling,
+not independent wire serialization. Select phases with
+`-PmissingModsClientStages=Clientwrite,Clientabsent,Clientrestore`.
+
+The existing `verifyLoaderNetworking` now also sends production-suspended boots
+through real separate-process TCP inventory/equipment packets. Server/client
+compare the entire persisted shell/archive, including opaque long arrays and a
+paid counter above double's exact integer range, and check inactive armor/source
+behavior. Use `-PnetworkAcceptanceCase=fabric-fabric` or
+`-PnetworkAcceptanceCase=neoforge-neoforge`, optionally with the .99 override.
 
 The write phase additionally checks actual production anvil rename with a
 conflict-free persistent reload, denied donor/material/book operations, smithing,
@@ -92,8 +121,8 @@ grindstone, source predicates and recomposition; a connected test wearer receive
 unprotected damage without combat wear, and actual Mending XP remains XP rather
 than repairing the parked enchantment. NeoForge checks a real active FE capability,
 its disappearance after suspension and retained-handler insert/extract refusal
-with no archived-state mutation. These are focused server checks, not the real
-client/worn-across-restart/death-drop acceptance reserved for D.
+with no archived-state mutation. These remain separate focused checks in addition
+to D's real-player lifecycle and independent TCP gate.
 Explicit direct-wear destruction must not refund parked MA/JDT upgrades; normal
 combat must not wear the shell. Known readable non-boots, malformed component
 shapes and roots without an original feet projection cannot gain equipability.
@@ -110,6 +139,13 @@ production/control/refused/bypassed matrices passed on Fabric and NeoForge .114,
 as did 325 Common tests, ordinary startup and packaging. These are controlled
 codec transitions, not a particular third-party version-upgrade guarantee. See
 [C's record](../local-docs/MISSING-MOD-PERSISTENCE-IMPLEMENTATION.md#103-block-c--source-presence-and-native-readiness--2026-10-24).
+
+D's final process/control/refusal, connected-client and TCP gates passed on Fabric
+and NeoForge .99/.114. All eleven candidate roots recover; native controls lose
+the nine affected slots. Common retains 325 passing tests; startup/packaging
+passed and habitual .114 artifacts were restored. Separately, owner normal-play/
+presentation acceptance passed on Fabric and NeoForge on 2026-10-25, completing D.
+No actual newer-third-party-release upgrade is claimed.
 
 ## Mystical Agriculture augments — production effects
 
