@@ -18,7 +18,9 @@ import java.util.function.Consumer;
 abstract class SilentGearTooltipProductionControlMixin {
     @Inject(method = "appendSource", at = @At("HEAD"), cancellable = true)
     private static void baseline(ItemStack source, TooltipFlag flag, Consumer<Component> output, CallbackInfo callback) {
-        if (SilentGearTooltipClientTest.omitPresentation()) { callback.cancel(); }
+        if (SilentGearTooltipClientTest.omitPresentation()) {
+            callback.cancel();
+        }
     }
 
     @Inject(method = "nativeClass", at = @At("HEAD"))

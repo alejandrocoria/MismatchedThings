@@ -55,9 +55,14 @@ public final class RootsEquipmentClientTest {
             worldRequested = true;
             client.options.pauseOnLostFocus = false;
             client.createWorldOpenFlows().createFreshLevel("roots-rendering",
-                    new LevelSettings("Roots rendering", GameType.CREATIVE,
-                            LevelSettings.DifficultySettings.DEFAULT, true, WorldDataConfiguration.DEFAULT),
-                    new WorldOptions(123L, false, false), WorldPresets::createFlatWorldDimensions, new TitleScreen());
+                                                           new LevelSettings("Roots rendering",
+                                                                             GameType.CREATIVE,
+                                                                             LevelSettings.DifficultySettings.DEFAULT,
+                                                                             true,
+                                                                             WorldDataConfiguration.DEFAULT),
+                                                           new WorldOptions(123L, false, false),
+                                                           WorldPresets::createFlatWorldDimensions,
+                                                           new TitleScreen());
         }
         return client.player != null && client.level != null && CompositionRulesClientLifecycle.areRulesSynchronized();
     }
@@ -106,7 +111,7 @@ public final class RootsEquipmentClientTest {
         boot.set(DataComponents.TRIM, new ArmorTrim(
                 Holder.direct(new TrimMaterial(MaterialAssetGroup.IRON, Component.literal("iron"))),
                 Holder.direct(new TrimPattern(Identifier.withDefaultNamespace("sentry"),
-                        Component.literal("sentry"), false))));
+                                              Component.literal("sentry"), false))));
         return boot;
     }
 
@@ -128,17 +133,18 @@ public final class RootsEquipmentClientTest {
             ModelPart baked = layer.bakeRoot();
             Map<String, ModelPart> children = new HashMap<>();
             for (String name : List.of("head", "body", "left_arm", "right_arm", "left_leg", "right_leg",
-                    "left_foot", "right_foot")) {
+                                       "left_foot", "right_foot")) {
                 children.put(name, baked.getChild(name));
             }
             HumanoidModel<?> malformed = (HumanoidModel<?>) nativeModel.getClass()
-                    .getConstructor(ModelPart.class, ArmorType.class)
-                    .newInstance(new ModelPart(List.of(), children), ArmorType.BOOTS);
+                                                                       .getConstructor(ModelPart.class, ArmorType.class)
+                                                                       .newInstance(new ModelPart(List.of(), children), ArmorType.BOOTS);
             var pair = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS),
-                    new ItemStack(Items.GOLDEN_BOOTS), AttributeRuleState.current(), ComponentRuleState.current()).primary();
+                                                    new ItemStack(Items.GOLDEN_BOOTS), AttributeRuleState.current(), ComponentRuleState.current())
+                                        .primary();
             var marked = renderPair(pair, original, 0.3F).stream()
-                    .filter(node -> node.submit().model().root() == original.leftLeg)
-                    .findFirst().orElseThrow().submit().model();
+                                                         .filter(node -> node.submit().model().root() == original.leftLeg)
+                                                         .findFirst().orElseThrow().submit().model();
             assertFallback(marked, malformed, children, "left_foot");
             assertFallback(marked, malformed, children, "right_foot");
             // A humanoid with similarly named parts but an unknown class must still use legs.
@@ -173,7 +179,7 @@ public final class RootsEquipmentClientTest {
         ItemStack leftBefore = left.copy();
         ItemStack rightBefore = right.copy();
         ItemStack pair = MixedBootsFactory.createPair(left, right,
-                AttributeRuleState.current(), ComponentRuleState.current()).primary();
+                                                      AttributeRuleState.current(), ComponentRuleState.current()).primary();
         pair.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
         HumanoidModel<?> leftModel = resolve(left, original);
         HumanoidModel<?> rightModel = resolve(right, original);
@@ -197,12 +203,12 @@ public final class RootsEquipmentClientTest {
 
     private static ModelPart part(HumanoidModel<?> model, boolean left) {
         return isRootsModel(model) ? model.root().getChild(left ? "left_foot" : "right_foot")
-                : left ? model.leftLeg : model.rightLeg;
+                                   : left ? model.leftLeg : model.rightLeg;
     }
 
     private static List<Float> assertNodes(List<NeoForgeNativeEquipmentClientTest.Node> nodes,
-                                          ModelPart left, ModelPart right,
-                                          HumanoidModel<?> leftModel, HumanoidModel<?> rightModel) {
+                                           ModelPart left, ModelPart right,
+                                           HumanoidModel<?> leftModel, HumanoidModel<?> rightModel) {
         boolean foundLeft = false;
         boolean foundRight = false;
         int trims = 0;
@@ -276,15 +282,47 @@ public final class RootsEquipmentClientTest {
     private static final class Vertices implements VertexConsumer {
         private final List<Float> positions = new ArrayList<>();
 
-        @Override public VertexConsumer addVertex(float x, float y, float z) {
-            positions.add(x); positions.add(y); positions.add(z); return this;
+        @Override
+        public VertexConsumer addVertex(float x, float y, float z) {
+            positions.add(x);
+            positions.add(y);
+            positions.add(z);
+            return this;
         }
-        @Override public VertexConsumer setColor(int r, int g, int b, int a) { return this; }
-        @Override public VertexConsumer setColor(int color) { return this; }
-        @Override public VertexConsumer setUv(float u, float v) { return this; }
-        @Override public VertexConsumer setUv1(int u, int v) { return this; }
-        @Override public VertexConsumer setUv2(int u, int v) { return this; }
-        @Override public VertexConsumer setNormal(float x, float y, float z) { return this; }
-        @Override public VertexConsumer setLineWidth(float width) { return this; }
+
+        @Override
+        public VertexConsumer setColor(int r, int g, int b, int a) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setColor(int color) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv(float u, float v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv1(int u, int v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv2(int u, int v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setNormal(float x, float y, float z) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setLineWidth(float width) {
+            return this;
+        }
     }
 }

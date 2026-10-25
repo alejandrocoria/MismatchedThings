@@ -11,13 +11,23 @@ public final class TooltipSeparatorComponent implements ClientTooltipComponent {
     private static final int OFFSET = 4;
     private static final int COLOR = 0xFF707070;
 
-    private TooltipSeparatorComponent() {}
+    private TooltipSeparatorComponent() {
+    }
 
-    @Override public int getHeight(Font font) { return HEIGHT; }
-    @Override public int getWidth(Font font) { return 0; }
+    @Override
+    public int getHeight(Font font) {
+        return HEIGHT;
+    }
+
+    @Override
+    public int getWidth(Font font) {
+        return 0;
+    }
 
     @Override
     public void extractImage(Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics) {
-        if (width > 0) { graphics.fill(x, y + OFFSET, x + width, y + OFFSET + 1, COLOR); }
+        if (width > 0) {
+            graphics.fill(x, y + OFFSET, x + width, y + OFFSET + 1, COLOR);
+        }
     }
 }

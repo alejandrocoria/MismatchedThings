@@ -52,19 +52,19 @@ class ComponentRulesConfigTest {
         assertEquals(first.declarations(), second.declarations());
         // Fresh in-memory defaults include dormant IDs; loading filters their effective rules.
         assertEquals(first.components().rules().entrySet().stream()
-                .filter(entry -> BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(entry.getKey()).isPresent())
-                .collect(Collectors.toMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue)),
-                second.components().rules());
+                          .filter(entry -> BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(entry.getKey()).isPresent())
+                          .collect(Collectors.toMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue)),
+                     second.components().rules());
         assertEquals(ComponentRule.of(ComponentPolicy.OMIT), second.declarations().get(id("aether_ii:charms")));
         assertFalse(second.components().rules().containsKey(id("aether_ii:charms")));
         assertEquals(generated, Files.readString(path));
         assertOrdered(generated, "[durability]", "[repair_cost]", "[components]",
-                "[components.\"minecraft:damage_resistant\"]",
-                "[components.\"minecraft:custom_model_data\"]");
+                      "[components.\"minecraft:damage_resistant\"]",
+                      "[components.\"minecraft:custom_model_data\"]");
         assertFalse(generated.toLowerCase().contains("version"));
         assertFalse(generated.toLowerCase().contains("migration"));
         assertThrows(UnsupportedOperationException.class,
-                () -> first.declarations().put(id("example:mutate"), ComponentRule.of(ComponentPolicy.OWNER)));
+                     () -> first.declarations().put(id("example:mutate"), ComponentRule.of(ComponentPolicy.OWNER)));
     }
 
     @Test
@@ -74,24 +74,24 @@ class ComponentRulesConfigTest {
         Files.writeString(path, """
                 [durability]
                 policy = "separate"
-
+                
                 [repair_cost]
                 policy = "owner"
-
+                
                 [components."minecraft:rarity"]
                 policy = "owner"
-
+                
                 [components."minecraft:custom_data"]
                 policy = "average"
                 number = "int"
-
+                
                 [components."absentmod:dormant_energy"]
                 policy = "maximum"
                 number = "long"
-
+                
                 [components."aether_ii:charms"]
                 policy = "owner"
-
+                
                 [components."%s"]
                 policy = "share"
                 """.formatted(dottedId));
@@ -103,17 +103,17 @@ class ComponentRulesConfigTest {
         assertEquals(RepairCostPolicy.OWNER, rules.repairCost());
         assertEquals(ComponentRule.of(ComponentPolicy.OWNER), rules.declarations().get(id("minecraft:rarity")));
         assertEquals(ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT),
-                rules.components().ruleFor(id("minecraft:custom_data")));
+                     rules.components().ruleFor(id("minecraft:custom_data")));
         assertTrue(rules.declarations().containsKey(id("absentmod:dormant_energy")));
         assertFalse(rules.components().rules().containsKey(id("absentmod:dormant_energy")));
         assertEquals(ComponentRule.of(ComponentPolicy.OWNER), rules.declarations().get(id("aether_ii:charms")));
         assertFalse(rules.components().rules().containsKey(id("aether_ii:charms")));
         assertTrue(saved.contains("[components.\"" + dottedId + "\"]"));
         assertOrdered(saved,
-                "[components.\"minecraft:custom_model_data\"]",
-                "[components.\"absentmod:dormant_energy\"]",
-                "[components.\"example.mod:heat/resistance-test_value\"]",
-                "[components.\"minecraft:custom_data\"]");
+                      "[components.\"minecraft:custom_model_data\"]",
+                      "[components.\"absentmod:dormant_energy\"]",
+                      "[components.\"example.mod:heat/resistance-test_value\"]",
+                      "[components.\"minecraft:custom_data\"]");
     }
 
     @Test
@@ -122,10 +122,10 @@ class ComponentRulesConfigTest {
         Files.writeString(path, """
                 [durability]
                 policy = "average"
-
+                
                 [repair_cost]
                 policy = "maximum"
-
+                
                 [components."minecraft:rarity"]
                 policy = "owner"
                 """);
@@ -133,9 +133,9 @@ class ComponentRulesConfigTest {
         ComponentRules rules = new ComponentRulesConfig(path).load();
 
         assertEquals(ComponentRule.of(ComponentPolicy.OWNER),
-                rules.declarations().get(id("minecraft:rarity")));
+                     rules.declarations().get(id("minecraft:rarity")));
         assertEquals(ComponentRule.of(ComponentPolicy.INTERSECTION),
-                rules.declarations().get(id("minecraft:damage_resistant")));
+                     rules.declarations().get(id("minecraft:damage_resistant")));
         assertEquals(ComponentRule.of(ComponentPolicy.OMIT), rules.declarations().get(id("aether_ii:charms")));
         String saved = Files.readString(path);
         assertTrue(saved.contains("[components.\"minecraft:damage_resistant\"]"));
@@ -165,31 +165,31 @@ class ComponentRulesConfigTest {
         Path path = configPath();
         Files.writeString(path, """
                 root_unknown = true
-
+                
                 [durability]
                 policy = "Average"
-
+                
                 [repair_cost]
                 policy = "unknown"
-
+                
                 [components."minecraft:enchantable"]
                 policy = "average"
                 number = "int"
-
+                
                 [components."minecraft:rarity"]
                 policy = "average"
                 number = "int"
-
+                
                 [components."minecraft:repair_cost"]
                 policy = "owner"
-
+                
                 [components."example:invalid"]
                 policy = "average"
-
+                
                 [components."example:unknown_field"]
                 policy = "same"
                 extra = true
-
+                
                 [components."missing_namespace"]
                 policy = "same"
                 """);
@@ -200,13 +200,13 @@ class ComponentRulesConfigTest {
         assertEquals(DurabilityPolicy.AVERAGE, rules.durability());
         assertEquals(RepairCostPolicy.MAXIMUM, rules.repairCost());
         assertEquals(ComponentRule.of(ComponentPolicy.MINIMUM),
-                rules.declarations().get(id("minecraft:enchantable")));
+                     rules.declarations().get(id("minecraft:enchantable")));
         assertEquals(ComponentRule.of(ComponentPolicy.SAME),
-                rules.declarations().get(id("minecraft:rarity")));
+                     rules.declarations().get(id("minecraft:rarity")));
         assertEquals(ComponentRule.of(ComponentPolicy.OWNER),
-                rules.declarations().get(id("example:invalid")));
+                     rules.declarations().get(id("example:invalid")));
         assertEquals(ComponentRule.of(ComponentPolicy.OWNER),
-                rules.declarations().get(id("example:unknown_field")));
+                     rules.declarations().get(id("example:unknown_field")));
         assertFalse(rules.declarations().containsKey(id("minecraft:repair_cost")));
         assertFalse(saved.contains("root_unknown"));
         assertFalse(saved.contains("missing_namespace"));
@@ -218,12 +218,12 @@ class ComponentRulesConfigTest {
     void malformedAndDuplicateTablesAreBackedUpAndReset() throws IOException {
         assertMalformedRecovery("[components\n");
         assertMalformedRecovery("""
-                [components."minecraft:rarity"]
-                policy = "same"
-
-                [components."minecraft:rarity"]
-                policy = "owner"
-                """);
+                                        [components."minecraft:rarity"]
+                                        policy = "same"
+                                        
+                                        [components."minecraft:rarity"]
+                                        policy = "owner"
+                                        """);
     }
 
     @Test
@@ -248,10 +248,10 @@ class ComponentRulesConfigTest {
         Files.writeString(path, """
                 [durability]
                 policy = "average"
-
+                
                 [repair_cost]
                 policy = "maximum"
-
+                
                 [components."%s"]
                 policy = "maximum"
                 number = "long"
@@ -260,7 +260,7 @@ class ComponentRulesConfigTest {
         ComponentRules rules = new ComponentRulesConfig(path).load();
 
         assertEquals(ComponentRule.numeric(ComponentPolicy.MAXIMUM, ComponentNumericKind.LONG),
-                rules.components().ruleFor(customData));
+                     rules.components().ruleFor(customData));
     }
 
     private void assertMalformedRecovery(String malformed) throws IOException {

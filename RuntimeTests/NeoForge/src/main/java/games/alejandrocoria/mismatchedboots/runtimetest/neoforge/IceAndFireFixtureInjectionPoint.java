@@ -26,7 +26,7 @@ public final class IceAndFireFixtureInjectionPoint extends InjectionPoint {
             int offset;
             if (instruction instanceof TypeInsnNode type && type.getOpcode() == Opcodes.INSTANCEOF
                     && (type.desc.endsWith("/TrollArmorItem") || type.desc.endsWith("/DragonScaleArmorItem")
-                        || type.desc.endsWith("/DragonSteelArmorItem"))) {
+                    || type.desc.endsWith("/DragonSteelArmorItem"))) {
                 offset = 3;
             } else if (instruction instanceof MethodInsnNode call
                     && call.owner.equals("net/minecraft/world/item/ItemStack") && call.name.equals("is")

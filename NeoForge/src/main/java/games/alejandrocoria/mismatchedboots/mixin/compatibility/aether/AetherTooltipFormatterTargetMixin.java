@@ -5,4 +5,5 @@ import org.spongepowered.asm.mixin.Mixin;
 
 /** The optional client plugin scopes the two owned source-detail calls without changing Common code. */
 @Mixin(MixedBootsTooltipFormatter.class)
-abstract class AetherTooltipFormatterTargetMixin {}
+abstract class AetherTooltipFormatterTargetMixin {
+}

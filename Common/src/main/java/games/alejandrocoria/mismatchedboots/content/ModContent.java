@@ -59,16 +59,16 @@ public final class ModContent {
 
     public static DataComponentType<MixedBootsData> createMixedBootsDataType() {
         return DataComponentType.<MixedBootsData>builder()
-                .persistent(MixedBootsData.CODEC)
-                .networkSynchronized(MixedBootsData.STREAM_CODEC)
-                .cacheEncoding()
-                .build();
+                                .persistent(MixedBootsData.CODEC)
+                                .networkSynchronized(MixedBootsData.STREAM_CODEC)
+                                .cacheEncoding()
+                                .build();
     }
 
     /** Opaque owned archive, independent of foreign component registrations. */
     public static DataComponentType<SuspendedBootsData> createSuspendedBootsType() {
         return DataComponentType.<SuspendedBootsData>builder().persistent(SuspendedBootsData.CODEC)
-                .networkSynchronized(SuspendedBootsData.STREAM_CODEC).build();
+                                .networkSynchronized(SuspendedBootsData.STREAM_CODEC).build();
     }
 
     public static RecipeSerializer<MixedBootsSmithingBaseRecipe> createSmithingBaseRecipeSerializer() {
@@ -89,12 +89,12 @@ public final class ModContent {
 
     public static MismatchedWorkbenchBlock createMismatchedWorkbenchBlock() {
         BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
-                .mapColor(MapColor.WOOD)
-                .instrument(NoteBlockInstrument.BASS)
-                .strength(2.5F)
-                .sound(SoundType.WOOD)
-                .ignitedByLava()
-                .setId(MISMATCHED_WORKBENCH_KEY);
+                                                                        .mapColor(MapColor.WOOD)
+                                                                        .instrument(NoteBlockInstrument.BASS)
+                                                                        .strength(2.5F)
+                                                                        .sound(SoundType.WOOD)
+                                                                        .ignitedByLava()
+                                                                        .setId(MISMATCHED_WORKBENCH_KEY);
         return new MismatchedWorkbenchBlock(properties);
     }
 
@@ -117,20 +117,23 @@ public final class ModContent {
     @SuppressWarnings("unchecked")
     public static Optional<MenuType<MismatchedWorkbenchMenu>> mismatchedWorkbenchMenuType() {
         return Optional.ofNullable((MenuType<MismatchedWorkbenchMenu>)
-                BuiltInRegistries.MENU.getValue(MISMATCHED_WORKBENCH_ID));
+                                           BuiltInRegistries.MENU.getValue(MISMATCHED_WORKBENCH_ID));
     }
 
     @SuppressWarnings("unchecked")
     public static Optional<DataComponentType<MixedBootsData>> mixedBootsDataType() {
         return Optional.ofNullable((DataComponentType<MixedBootsData>)
-                BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(MIXED_BOOTS_DATA_ID));
+                                           BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(MIXED_BOOTS_DATA_ID));
     }
 
-    /** Broad data discovery, including unregistered component types used by fixtures.
+    /**
+     * Broad data discovery, including unregistered component types used by fixtures.
      * Not proof of a valid gameplay item: consumers must validate item identity and sources.
      */
     public static Optional<MixedBootsData> getMixedBootsData(ItemStack stack) {
-        if (suspendedBootsData(stack).isPresent()) { return Optional.empty(); }
+        if (suspendedBootsData(stack).isPresent()) {
+            return Optional.empty();
+        }
         Optional<MixedBootsData> registeredData = mixedBootsDataType().map(stack::get);
         if (registeredData.isPresent()) {
             return registeredData;
@@ -145,7 +148,9 @@ public final class ModContent {
 
     public static Optional<SuspendedBootsData> suspendedBootsData(ItemStack stack) {
         for (TypedDataComponent<?> component : stack.getComponents()) {
-            if (component.value() instanceof SuspendedBootsData data) { return Optional.of(data); }
+            if (component.value() instanceof SuspendedBootsData data) {
+                return Optional.of(data);
+            }
         }
         return Optional.empty();
     }

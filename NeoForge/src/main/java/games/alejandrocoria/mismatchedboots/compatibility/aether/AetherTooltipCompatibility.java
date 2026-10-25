@@ -12,8 +12,13 @@ import java.util.function.Consumer;
 
 /** The registered item also runs on dedicated servers; resolve client bindings only behind both gates. */
 public final class AetherTooltipCompatibility {
-    private AetherTooltipCompatibility() {}
-    private static boolean available() { return FMLEnvironment.getDist().isClient() && ModList.get().isLoaded("aether_ii"); }
+    private AetherTooltipCompatibility() {
+    }
+
+    private static boolean available() {
+        return FMLEnvironment.getDist().isClient() && ModList.get().isLoaded("aether_ii");
+    }
+
     public static void source(ItemStack source, TooltipFlag flag, Consumer<Component> output) {
         if (available()) {
             AetherTooltipClient.sourceSet(source, output);

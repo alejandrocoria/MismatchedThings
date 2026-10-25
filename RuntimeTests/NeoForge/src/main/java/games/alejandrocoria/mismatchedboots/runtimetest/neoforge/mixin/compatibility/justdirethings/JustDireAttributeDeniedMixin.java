@@ -9,5 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(value = CommonHooks.class, priority = 500)
 abstract class JustDireAttributeDeniedMixin {
     @ModifyReturnValue(method = "mismatchedboots$justDireAttributesReady", at = @At("RETURN"))
-    private static boolean deny(boolean original) { return false; }
+    private static boolean deny(boolean original) {
+        return false;
+    }
 }

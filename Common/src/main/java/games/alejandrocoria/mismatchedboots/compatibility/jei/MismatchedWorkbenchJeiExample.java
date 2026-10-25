@@ -48,8 +48,8 @@ record MismatchedWorkbenchJeiExample(
             throw new IllegalArgumentException(name + " cannot be empty");
         }
         return stacks.stream()
-                .map(stack -> copyStack(stack, name))
-                .toList();
+                     .map(stack -> copyStack(stack, name))
+                     .toList();
     }
 
     private static ItemStack copyStack(ItemStack stack, String listName) {

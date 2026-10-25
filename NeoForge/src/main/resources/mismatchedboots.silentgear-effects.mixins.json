@@ -1,27 +1,29 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.silentgear",
-  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffectsMixinPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "SilentGearBounceMixin",
-    "SilentGearBounceScheduleProofMixin",
-    "SilentGearBrilliantProofMixin",
-    "SilentGearCureProofMixin",
-    "SilentGearDurabilityProofMixin",
-    "SilentGearGearIdentityProofMixin",
-    "SilentGearIncomingMixin",
-    "SilentGearMagnetProofMixin",
-    "SilentGearMagnetQueueProofMixin",
-    "SilentGearMoonwalkerMixin",
-    "SilentGearNegateProofMixin",
-    "SilentGearPotionProofMixin",
-    "SilentGearSafeFallMixin",
-    "SilentGearSelfRepairMixin",
-    "SilentGearSetMixin",
-    "SilentGearVoidWardMixin",
-    "SilentGearWearerQueryProofMixin"
-  ],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.silentgear",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearEffectsMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "SilentGearBounceMixin",
+        "SilentGearBounceScheduleProofMixin",
+        "SilentGearBrilliantProofMixin",
+        "SilentGearCureProofMixin",
+        "SilentGearDurabilityProofMixin",
+        "SilentGearGearIdentityProofMixin",
+        "SilentGearIncomingMixin",
+        "SilentGearMagnetProofMixin",
+        "SilentGearMagnetQueueProofMixin",
+        "SilentGearMoonwalkerMixin",
+        "SilentGearNegateProofMixin",
+        "SilentGearPotionProofMixin",
+        "SilentGearSafeFallMixin",
+        "SilentGearSelfRepairMixin",
+        "SilentGearSetMixin",
+        "SilentGearVoidWardMixin",
+        "SilentGearWearerQueryProofMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

@@ -36,19 +36,19 @@ public final class NetworkAcceptanceFiles {
                 .append(rules.fallback().serializedName())
                 .append('\n');
         rules.rules().forEach((id, policy) -> result.append(id)
-                .append('=')
-                .append(policy.serializedName())
-                .append('\n'));
+                                                    .append('=')
+                                                    .append(policy.serializedName())
+                                                    .append('\n'));
         result.append("durability=")
-                .append(componentRules.durability().serializedName())
-                .append('\n')
-                .append("repair_cost=")
-                .append(componentRules.repairCost().serializedName())
-                .append('\n');
+              .append(componentRules.durability().serializedName())
+              .append('\n')
+              .append("repair_cost=")
+              .append(componentRules.repairCost().serializedName())
+              .append('\n');
         componentRules.declarations().forEach((id, rule) -> {
             result.append(id)
-                    .append('=')
-                    .append(rule.policy().serializedName());
+                  .append('=')
+                  .append(rule.policy().serializedName());
             if (rule.number() != null) {
                 result.append(':').append(rule.number().serializedName());
             }

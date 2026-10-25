@@ -6,7 +6,8 @@ import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactori
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 
 public final class NeoForgeTooltipSeparators {
-    private NeoForgeTooltipSeparators() {}
+    private NeoForgeTooltipSeparators() {
+    }
 
     public static void registerFactory(RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(TooltipSeparator.class, marker -> TooltipSeparatorComponent.INSTANCE);

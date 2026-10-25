@@ -1,21 +1,23 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.silentgear",
-  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "SilentGearCureWitnessMixin",
-    "SilentGearDefensePeerMixin",
-    "SilentGearDefenseWearWitnessMixin",
-    "SilentGearIncomingWitnessMixin",
-    "SilentGearMagnetPeerMixin",
-    "SilentGearMagnetWitnessMixin",
-    "SilentGearRecalculationWitnessMixin",
-    "SilentGearRemainingTickWitnessMixin",
-    "SilentGearSetFaultMixin",
-    "SilentGearSetPeerMixin",
-    "SilentGearVoidWardWitnessMixin"
-  ],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.silentgear",
+    "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "SilentGearCureWitnessMixin",
+        "SilentGearDefensePeerMixin",
+        "SilentGearDefenseWearWitnessMixin",
+        "SilentGearIncomingWitnessMixin",
+        "SilentGearMagnetPeerMixin",
+        "SilentGearMagnetWitnessMixin",
+        "SilentGearRecalculationWitnessMixin",
+        "SilentGearRemainingTickWitnessMixin",
+        "SilentGearSetFaultMixin",
+        "SilentGearSetPeerMixin",
+        "SilentGearVoidWardWitnessMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

@@ -42,8 +42,8 @@ public final class MismatchedWorkbenchExampleCycle {
         }
 
         return leftInputs.isEmpty()
-                ? Optional.empty()
-                : Optional.of(new Example(leftInputs, rightInputs, primaryOutputs, inverseOutputs));
+               ? Optional.empty()
+               : Optional.of(new Example(leftInputs, rightInputs, primaryOutputs, inverseOutputs));
     }
 
     public record Example(
@@ -89,8 +89,8 @@ public final class MismatchedWorkbenchExampleCycle {
                 throw new IllegalArgumentException(name + " cannot be empty");
             }
             return stacks.stream()
-                    .map(stack -> copyStack(stack, name))
-                    .toList();
+                         .map(stack -> copyStack(stack, name))
+                         .toList();
         }
 
         private static ItemStack copyStack(ItemStack stack, String listName) {

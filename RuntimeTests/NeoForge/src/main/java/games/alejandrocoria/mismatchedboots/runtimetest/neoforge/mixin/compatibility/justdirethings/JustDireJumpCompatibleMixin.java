@@ -19,6 +19,7 @@ abstract class JustDireJumpCompatibleMixin {
         JustDireJumpGuardPlugin.jumpReads++;
         return original.call(player, slot);
     }
+
     @WrapOperation(method = "LivingFallDamage", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;getItemBySlot(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;"))
     private static ItemStack fall(ServerPlayer player, EquipmentSlot slot, Operation<ItemStack> original) {
         JustDireJumpGuardPlugin.fallReads++;

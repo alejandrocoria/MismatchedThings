@@ -36,20 +36,27 @@ import java.util.function.Supplier;
 /** One copy/validate/publish transaction for SG clocks, armor and shared JDT projections. */
 public final class SilentGearLiveState {
     private static final SilentGearState.Key ARMOR = new SilentGearState.Key(Identifier.withDefaultNamespace("armor"),
-            Identifier.withDefaultNamespace("armor.boots"), EquipmentSlotGroup.FEET);
+                                                                             Identifier.withDefaultNamespace("armor.boots"), EquipmentSlotGroup.FEET);
     private static Native api;
     private static boolean disabled;
 
-    private SilentGearLiveState() {}
+    private SilentGearLiveState() {
+    }
 
-    static void prepare(ItemStack root) { update(root, null, null, null, true); }
+    static void prepare(ItemStack root) {
+        update(root, null, null, null, true);
+    }
 
     static Optional<SilentGearState.Oxidation> seed(ItemStack source, SilentGearCompatibility.Api binding) {
         var lane = binding.oxidation(source);
-        if (lane.isEmpty() || disabled) { return lane; }
+        if (lane.isEmpty() || disabled) {
+            return lane;
+        }
         try {
             Native nativeApi = nativeApi();
-            if (!source.has(nativeApi.flag)) { return lane; }
+            if (!source.has(nativeApi.flag)) {
+                return lane;
+            }
             ItemStack copy = source.copy();
             nativeApi.recalculate.invoke(null, copy, null);
             return Optional.of(binding.oxidation(copy).orElseThrow(() -> new IllegalStateException("Pending native oxidation lost phase")));
@@ -69,14 +76,19 @@ public final class SilentGearLiveState {
         var data = ModContent.getMixedBootsData(root).orElse(null);
         var equipment = root.get(DataComponents.EQUIPPABLE);
         if (disabled || binding == null || old == null || data == null || root.getCount() != 1
-                || !(root.getItem() instanceof MixedBootsItem) || equipment == null || equipment.slot() != EquipmentSlot.FEET) { return; }
+                || !(root.getItem() instanceof MixedBootsItem) || equipment == null || equipment.slot() != EquipmentSlot.FEET) {
+            return;
+        }
         try {
             Native nativeApi = nativeApi();
             ItemStack left = data.left().source(), right = data.right().source();
             String firstDefinition = nativeApi.profile(left, binding), secondDefinition = nativeApi.profile(right, binding);
             boolean dynamic = !firstDefinition.isEmpty() || !secondDefinition.isEmpty();
             Optional<SilentGearState.Sample> sample = dynamic
-                    ? Optional.of(new SilentGearState.Sample(root.getDamageValue(), root.getMaxDamage(), firstDefinition + "|" + secondDefinition)) : Optional.empty();
+                                                      ? Optional.of(new SilentGearState.Sample(root.getDamageValue(),
+                                                                                               root.getMaxDamage(),
+                                                                                               firstDefinition + "|" + secondDefinition))
+                                                      : Optional.empty();
             boolean refresh = initial || !old.sample().equals(sample);
             Optional<SilentGearState.Oxidation> a = old.left(), b = old.right();
             if (!initial && slot == null && entity != null && entity.tickCount % 20 == 0) {
@@ -87,11 +99,15 @@ public final class SilentGearLiveState {
             var keys = new LinkedHashSet<SilentGearState.Key>();
             old.projection().modifiers().forEach(entry -> keys.add(SilentGearState.Key.of(entry)));
             keys.addAll(old.overrides());
-            if (dynamic) { keys.add(ARMOR); }
+            if (dynamic) {
+                keys.add(ARMOR);
+            }
             var current = root.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
             var overrides = new LinkedHashSet<>(old.overrides());
             for (var key : keys) {
-                if (!entries(current, key).equals(entries(old.projection(), key))) { overrides.add(key); }
+                if (!entries(current, key).equals(entries(old.projection(), key))) {
+                    overrides.add(key);
+                }
             }
             ItemAttributeModifiers projection = old.projection();
             JustDireAttributeProjections table = root.get(JustDireAttributesCompatibility.projections());
@@ -104,28 +120,45 @@ public final class SilentGearLiveState {
                 if (table != null) {
                     var rebuilt = JustDireAttributesCompatibility.withSourceAttributes(root, rules, first, second);
                     var states = new ArrayList<ItemAttributeModifiers>(9);
-                    for (int i = 0; i < 9; i++) { states.add(replace(table.states().get(i), ARMOR, entries(rebuilt.states().get(i), ARMOR))); }
+                    for (int i = 0; i < 9; i++) {
+                        states.add(replace(table.states().get(i), ARMOR, entries(rebuilt.states().get(i), ARMOR)));
+                    }
                     table = new JustDireAttributeProjections(states);
                     calculated = replace(calculated, ARMOR, entries(table.states().getFirst(), ARMOR));
                 }
                 projection = replace(projection, ARMOR, entries(calculated, ARMOR));
             }
             var attributes = current;
-            if (refresh && dynamic && !overrides.contains(ARMOR)) { attributes = replace(current, ARMOR, entries(projection, ARMOR)); }
+            if (refresh && dynamic && !overrides.contains(ARMOR)) {
+                attributes = replace(current, ARMOR, entries(projection, ARMOR));
+            }
             var next = new SilentGearState(a, b, old.rules(), projection, List.copyOf(overrides), sample);
             // Nothing touches the real root until every source and all nine shared states validate.
-            if (initial) { root.remove(nativeApi.flag); } // Native pending work was settled on seed copies, never by the root.
-            if (!attributes.equals(current)) { root.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes); }
+            if (initial) {
+                root.remove(nativeApi.flag);
+            } // Native pending work was settled on seed copies, never by the root.
+            if (!attributes.equals(current)) {
+                root.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes);
+            }
             if (table != null && !table.equals(root.get(JustDireAttributesCompatibility.projections()))) {
                 root.set(JustDireAttributesCompatibility.projections(), table);
             }
-            if (!next.equals(old)) { root.set(SilentGearCompatibility.state(), next); }
-        } catch (Throwable failure) { disable(failure); }
+            if (!next.equals(old)) {
+                root.set(SilentGearCompatibility.state(), next);
+            }
+        } catch (Throwable failure) {
+            disable(failure);
+        }
     }
 
     private static synchronized void disable(Throwable failure) {
-        if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
-        if (!disabled) { disabled = true; Constants.LOG.warn("Silent Gear mixed state disabled: native projection/oxidation contract unavailable", failure); }
+        if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
+            throw fatal;
+        }
+        if (!disabled) {
+            disabled = true;
+            Constants.LOG.warn("Silent Gear mixed state disabled: native projection/oxidation contract unavailable", failure);
+        }
     }
 
     private static boolean phaseChanged(Optional<SilentGearState.Oxidation> before, Optional<SilentGearState.Oxidation> after) {
@@ -144,20 +177,25 @@ public final class SilentGearLiveState {
         return attributes.modifiers().stream().filter(entry -> SilentGearState.Key.of(entry).equals(key)).toList();
     }
 
-    private static ItemAttributeModifiers replace(ItemAttributeModifiers attributes, SilentGearState.Key key, List<ItemAttributeModifiers.Entry> values) {
+    private static ItemAttributeModifiers replace(ItemAttributeModifiers attributes,
+                                                  SilentGearState.Key key,
+                                                  List<ItemAttributeModifiers.Entry> values) {
         var result = new ArrayList<>(attributes.modifiers().stream().filter(entry -> !SilentGearState.Key.of(entry).equals(key)).toList());
         result.addAll(values);
         return new ItemAttributeModifiers(List.copyOf(result));
     }
 
     private static synchronized Native nativeApi() throws ReflectiveOperationException {
-        if (api == null) { api = new Native(); }
+        if (api == null) {
+            api = new Native();
+        }
         return api;
     }
 
     private static final class Native {
         private final Class<?> trait = type("gear.trait.Trait"), instance = type("api.traits.TraitInstance"), resource = type("api.util.DataResource");
-        private final Class<?> oxidation = type("gear.trait.effect.OxidationTraitEffect"), number = type("gear.trait.effect.NumberPropertyModifierTraitEffect");
+        private final Class<?> oxidation = type("gear.trait.effect.OxidationTraitEffect"), number = type(
+                "gear.trait.effect.NumberPropertyModifierTraitEffect");
         private final Method recalculate = type("util.GearData").getMethod("recalculateGearData", ItemStack.class, Player.class);
         private final Method traits = type("core.component.GearPropertiesData").getMethod("properties");
         private final Method effects = trait.getMethod("getEffects"), definition = instance.getMethod("getTrait");
@@ -176,14 +214,19 @@ public final class SilentGearLiveState {
         private final Object armor = ((Supplier<?>) type("setup.gear.GearProperties").getField("ARMOR").get(null)).get();
         private final DataComponentType<Object> propertyComponent = component("GEAR_PROPERTIES"), flag = component("RECALCULATE_FLAG");
 
-        private Native() throws ReflectiveOperationException {}
+        private Native() throws ReflectiveOperationException {
+        }
 
         private String profile(ItemStack source, SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
             var found = new ArrayList<String>();
             for (var value : binding.traits(source)) {
-                if (!List.of("silentgear:chipping", "silentgear:crushing").contains(value.id().toString())) { continue; }
+                if (!List.of("silentgear:chipping", "silentgear:crushing").contains(value.id().toString())) {
+                    continue;
+                }
                 var list = (List<?>) effects.invoke(definition.invoke(value.nativeInstance()));
-                if (list.size() != 1 || !number.isInstance(list.getFirst())) { throw new IllegalStateException("Unsupported SG dynamic trait effect"); }
+                if (list.size() != 1 || !number.isInstance(list.getFirst())) {
+                    throw new IllegalStateException("Unsupported SG dynamic trait effect");
+                }
                 Object modifier = ((Map<?, ?>) mods.get(list.getFirst())).get(armor);
                 if (modifier == null || !(boolean) damageRatio.invoke(modifier)
                         || !(boolean) originalValue.invoke(modifier) || !Float.isFinite((float) multiplier.invoke(modifier))) {
@@ -196,37 +239,66 @@ public final class SilentGearLiveState {
         }
 
         @SuppressWarnings("unchecked")
-        private ItemStack restore(ItemStack source, SilentGearState.Oxidation lane, SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
+        private ItemStack restore(ItemStack source,
+                                  SilentGearState.Oxidation lane,
+                                  SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
             binding.validateLane(source, lane);
             ItemStack copy = source.copy();
             Object phase = ((Supplier<?>) reference.invoke(null, "silentgear:" + lane.phase())).get();
             var values = new ArrayList<Object>();
             for (var value : binding.traits(copy)) {
-                if (!List.of("polished", "oxidized").contains(value.id().getPath())) { values.add(value.nativeInstance()); }
+                if (!List.of("polished", "oxidized").contains(value.id().getPath())) {
+                    values.add(value.nativeInstance());
+                }
             }
             values.add(of.invoke(null, phase, lane.level(), List.of()));
             var map = new LinkedHashMap<>((Map<Object, Object>) traits.invoke(copy.get(propertyComponent)));
             map.put(traitKey, traitList.newInstance(values));
             copy.set(propertyComponent, properties.newInstance(map));
-            copy.set(binding.stage, (byte) lane.stage()); copy.set(binding.counter, lane.counter()); copy.remove(flag);
+            copy.set(binding.stage, (byte) lane.stage());
+            copy.set(binding.counter, lane.counter());
+            copy.remove(flag);
             return copy;
         }
 
-        private Optional<SilentGearState.Oxidation> advance(ItemStack source, Optional<SilentGearState.Oxidation> lane,
-                ServerLevel level, Entity entity, SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
-            if (lane.isEmpty()) { return lane; }
+        private Optional<SilentGearState.Oxidation> advance(ItemStack source,
+                                                            Optional<SilentGearState.Oxidation> lane,
+                                                            ServerLevel level,
+                                                            Entity entity,
+                                                            SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
+            if (lane.isEmpty()) {
+                return lane;
+            }
             ItemStack copy = restore(source, lane.get(), binding), before = copy.copy();
-            Object value = binding.traits(copy).stream().filter(item -> item.id().getPath().equals(lane.get().phase())).findFirst().orElseThrow().nativeInstance();
+            Object value = binding.traits(copy)
+                                  .stream()
+                                  .filter(item -> item.id().getPath().equals(lane.get().phase()))
+                                  .findFirst()
+                                  .orElseThrow()
+                                  .nativeInstance();
             var candidates = ((List<?>) effects.invoke(definition.invoke(value))).stream().filter(oxidation::isInstance).toList();
-            if (candidates.size() != 1 || candidates.getFirst().getClass() != oxidation) { throw new IllegalStateException("Unsupported SG oxidation effect"); }
+            if (candidates.size() != 1 || candidates.getFirst().getClass() != oxidation) {
+                throw new IllegalStateException("Unsupported SG oxidation effect");
+            }
             var following = (Optional<?>) next.get(candidates.getFirst());
-            if (following.isPresent() && !((Supplier<?>) following.get()).get().equals(((Supplier<?>) reference.invoke(null, "silentgear:oxidized")).get())) {
+            if (following.isPresent() && !((Supplier<?>) following.get()).get()
+                                                                         .equals(((Supplier<?>) reference.invoke(null,
+                                                                                                                 "silentgear:oxidized")).get())) {
                 throw new IllegalStateException("Unsupported SG oxidation successor");
             }
-            tick.invoke(candidates.getFirst(), context.newInstance(entity instanceof Player player ? player : null, value, copy), level, entity, false);
+            tick.invoke(candidates.getFirst(),
+                        context.newInstance(entity instanceof Player player ? player : null, value, copy),
+                        level,
+                        entity,
+                        false);
             ItemStack protectedCopy = copy.copy();
-            for (var component : List.of(binding.stage, binding.counter, flag)) { before.remove(component); protectedCopy.remove(component); }
-            if (!ItemStack.matches(before, protectedCopy)) { throw new IllegalStateException("Native oxidation escaped its state boundary"); }
+            for (var component : List.of(binding.stage, binding.counter, flag)) {
+                before.remove(component);
+                protectedCopy.remove(component);
+            }
+            if (!ItemStack.matches(before, protectedCopy)) {
+                throw new IllegalStateException("Native oxidation escaped its state boundary");
+            }
             int stage = ((Number) copy.getOrDefault(binding.stage, (byte) 0)).intValue();
             int counter = (int) copy.getOrDefault(binding.counter, 0);
             if (stage < lane.get().stage() || stage > lane.get().stage() + 1
@@ -243,8 +315,10 @@ public final class SilentGearLiveState {
         }
 
         private ItemAttributeModifiers attributes(ItemStack source, ItemStack root, Optional<SilentGearState.Oxidation> lane,
-                Player player, SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
-            if (profile(source, binding).isEmpty()) { return Services.PLATFORM.getCompositionAttributeModifiers(source); }
+                                                  Player player, SilentGearCompatibility.Api binding) throws ReflectiveOperationException {
+            if (profile(source, binding).isEmpty()) {
+                return Services.PLATFORM.getCompositionAttributeModifiers(source);
+            }
             ItemStack copy = lane.isPresent() ? restore(source, lane.get(), binding) : source.copy();
             int maximum = copy.getMaxDamage();
             if (maximum < 1 || root.getMaxDamage() < 1 || root.getDamageValue() < 0 || root.getDamageValue() > root.getMaxDamage()) {
@@ -262,10 +336,17 @@ public final class SilentGearLiveState {
         }
 
         private static Field field(Class<?> owner, String name) throws NoSuchFieldException {
-            Field field = owner.getDeclaredField(name); field.setAccessible(true); return field;
+            Field field = owner.getDeclaredField(name);
+            field.setAccessible(true);
+            return field;
         }
-        private static Class<?> type(String name) throws ClassNotFoundException { return Class.forName("net.silentchaos512.gear." + name); }
-        @SuppressWarnings("unchecked") private static DataComponentType<Object> component(String name) throws ReflectiveOperationException {
+
+        private static Class<?> type(String name) throws ClassNotFoundException {
+            return Class.forName("net.silentchaos512.gear." + name);
+        }
+
+        @SuppressWarnings("unchecked")
+        private static DataComponentType<Object> component(String name) throws ReflectiveOperationException {
             return (DataComponentType<Object>) ((Supplier<?>) type("setup.SgDataComponents").getField(name).get(null)).get();
         }
     }

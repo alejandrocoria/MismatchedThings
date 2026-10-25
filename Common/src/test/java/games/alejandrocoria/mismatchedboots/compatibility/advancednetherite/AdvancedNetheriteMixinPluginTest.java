@@ -126,9 +126,9 @@ class AdvancedNetheriteMixinPluginTest {
 
     private static MethodNode method(ClassNode owner, String name) {
         return owner.methods.stream()
-                .filter(method -> method.name.equals(name))
-                .findFirst()
-                .orElseThrow();
+                            .filter(method -> method.name.equals(name))
+                            .findFirst()
+                            .orElseThrow();
     }
 
     private static ClassVisitor symbolicReferenceVisitor(AtomicBoolean found) {

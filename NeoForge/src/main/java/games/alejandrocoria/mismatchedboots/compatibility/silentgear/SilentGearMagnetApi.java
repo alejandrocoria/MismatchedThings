@@ -27,16 +27,19 @@ public final class SilentGearMagnetApi {
     public SilentGearMagnetApi() throws ReflectiveOperationException {
         var lookup = MethodHandles.publicLookup();
         magnet = nativeClass("gear.trait.effect.ItemMagnetTraitEffect");
-        Class<?> instance = nativeClass("api.traits.TraitInstance"), ctx = nativeClass("api.traits.TraitActionContext"), trait = nativeClass("gear.trait.Trait");
+        Class<?> instance = nativeClass("api.traits.TraitInstance"), ctx = nativeClass("api.traits.TraitActionContext"), trait = nativeClass(
+                "gear.trait.Trait");
         context = lookup.findConstructor(ctx, MethodType.methodType(void.class, Player.class, instance, ItemStack.class));
         definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));
         id = lookup.findVirtual(instance, "getTraitId", MethodType.methodType(Identifier.class));
         level = lookup.findVirtual(instance, "getLevel", MethodType.methodType(int.class));
         effects = lookup.findVirtual(trait, "getEffects", MethodType.methodType(List.class));
         tick = lookup.findVirtual(magnet, "inventoryTick", MethodType.methodType(void.class, ctx, Level.class, Entity.class, boolean.class));
-        strength = field("pullStrength"); range = field("effectRange"); affected = field("affectedItems");
+        strength = field("pullStrength");
+        range = field("effectRange");
+        affected = field("affectedItems");
         proofs = List.of(proof(magnet, "mismatchedboots$sgMagnetReady"),
-                proof(nativeClass("gear.util.MagnetPullTracker"), "mismatchedboots$sgMagnetQueueReady"));
+                         proof(nativeClass("gear.util.MagnetPullTracker"), "mismatchedboots$sgMagnetQueueReady"));
     }
 
     public void requireProof() throws Throwable {
@@ -47,12 +50,18 @@ public final class SilentGearMagnetApi {
         }
     }
 
-    public ItemStack carrier(ItemStack root) throws Throwable { return carriers.carrier(root); }
+    public ItemStack carrier(ItemStack root) throws Throwable {
+        return carriers.carrier(root);
+    }
 
     public Object admittedEffect(Object instance) throws Throwable {
-        if (!IDS.contains(id.invoke(instance).toString())) { throw new IllegalArgumentException("Unaudited magnet trait"); }
+        if (!IDS.contains(id.invoke(instance).toString())) {
+            throw new IllegalArgumentException("Unaudited magnet trait");
+        }
         var matches = ((List<?>) effects.invoke(definition.invoke(instance))).stream().filter(magnet::isInstance).toList();
-        if (matches.size() != 1 || matches.getFirst().getClass() != magnet) { throw new IllegalStateException("Changed native magnet effect count/class"); }
+        if (matches.size() != 1 || matches.getFirst().getClass() != magnet) {
+            throw new IllegalStateException("Changed native magnet effect count/class");
+        }
         Object effect = matches.getFirst();
         if (!parameters(strength.getFloat(effect), range.getFloat(effect), (int) level.invoke(instance))
                 || !(affected.get(effect) instanceof Optional<?> filter) || filter.isPresent() && !(filter.get() instanceof Ingredient)) {
@@ -63,21 +72,36 @@ public final class SilentGearMagnetApi {
 
     public void tick(Object effect, Player player, Object instance, ItemStack carrier, boolean selected) throws Throwable {
         requireProof();
-        if (effect != admittedEffect(instance)) { throw new IllegalArgumentException("Stale/foreign magnet definition"); }
-        if (player == null || player.level().isClientSide() || !selected) { return; }
+        if (effect != admittedEffect(instance)) {
+            throw new IllegalArgumentException("Stale/foreign magnet definition");
+        }
+        if (player == null || player.level().isClientSide() || !selected) {
+            return;
+        }
         invoke(effect, context.invoke(player, instance, carrier), player);
     }
 
     // The test-only counter observes this mod-owned invocation boundary, never modifies admitted native code.
-    private void invoke(Object effect, Object ctx, Player player) throws Throwable { tick.invoke(effect, ctx, player.level(), player, true); }
+    private void invoke(Object effect, Object ctx, Player player) throws Throwable {
+        tick.invoke(effect, ctx, player.level(), player, true);
+    }
 
     static boolean parameters(float strength, float range, int level) {
         return Float.isFinite(strength) && Float.isFinite(range) && level > 0 && level <= Byte.MAX_VALUE
                 && Float.isFinite(1 + range * level);
     }
-    private Field field(String name) throws NoSuchFieldException { var field = magnet.getDeclaredField(name); field.setAccessible(true); return field; }
+
+    private Field field(String name) throws NoSuchFieldException {
+        var field = magnet.getDeclaredField(name);
+        field.setAccessible(true);
+        return field;
+    }
+
     private static MethodHandle proof(Class<?> owner, String name) throws ReflectiveOperationException {
         return MethodHandles.privateLookupIn(owner, MethodHandles.lookup()).findStatic(owner, name, MethodType.methodType(boolean.class));
     }
-    private static Class<?> nativeClass(String name) throws ClassNotFoundException { return Class.forName("net.silentchaos512.gear." + name); }
+
+    private static Class<?> nativeClass(String name) throws ClassNotFoundException {
+        return Class.forName("net.silentchaos512.gear." + name);
+    }
 }

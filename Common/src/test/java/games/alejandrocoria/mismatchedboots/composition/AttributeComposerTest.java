@@ -178,7 +178,7 @@ class AttributeComposerTest {
         ItemStack secondBefore = second.copy();
 
         assertThrows(IllegalArgumentException.class,
-                () -> AttributeComposer.compose(first, second, rules(AttributePolicy.AVERAGE)));
+                     () -> AttributeComposer.compose(first, second, rules(AttributePolicy.AVERAGE)));
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
     }
@@ -205,7 +205,7 @@ class AttributeComposerTest {
                 SHARED_ID, Double.NaN, AttributeModifier.Operation.ADD_VALUE));
         for (AttributePolicy policy : List.of(AttributePolicy.SEPARATE, AttributePolicy.REJECT)) {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> AttributeComposer.compose(invalid, stack(), rules(policy)));
+                                                              () -> AttributeComposer.compose(invalid, stack(), rules(policy)));
             assertTrue(exception.getMessage().contains("Non-finite"));
         }
     }
@@ -219,7 +219,7 @@ class AttributeComposerTest {
                 EquipmentSlotGroup.FEET, defaultDisplay()));
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> AttributeComposer.compose(source, stack(), rules(AttributePolicy.AVERAGE)));
+                                                          () -> AttributeComposer.compose(source, stack(), rules(AttributePolicy.AVERAGE)));
         assertTrue(exception.getMessage().contains("unregistered attribute"));
     }
 
@@ -253,9 +253,9 @@ class AttributeComposerTest {
         assertEquals(List.of(additiveId, totalId), modifierIds(result.primary()));
         assertEquals(List.of(3.0D, 0.75D), amounts(result.primary()));
         assertEquals(List.of(
-                        AttributeModifier.Operation.ADD_VALUE,
-                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
-                result.primary().modifiers().stream().map(entry -> entry.modifier().operation()).toList());
+                             AttributeModifier.Operation.ADD_VALUE,
+                             AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                     result.primary().modifiers().stream().map(entry -> entry.modifier().operation()).toList());
     }
 
     @Test
@@ -284,15 +284,19 @@ class AttributeComposerTest {
     @Test
     void readsTheEffectiveStackComponentInsteadOfCombiningItWithThePrototype() {
         ItemStack first = stack(Items.IRON_BOOTS, ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR,
-                        new AttributeModifier(SHARED_ID, 10.0D, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                        .add(Attributes.ARMOR,
+                                                                             new AttributeModifier(SHARED_ID,
+                                                                                                   10.0D,
+                                                                                                   AttributeModifier.Operation.ADD_VALUE),
+                                                                             EquipmentSlotGroup.FEET)
+                                                                        .build());
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR,
-                        new AttributeModifier(SHARED_ID, 2.0D, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(Attributes.ARMOR,
+                                                                                 new AttributeModifier(SHARED_ID,
+                                                                                                       2.0D,
+                                                                                                       AttributeModifier.Operation.ADD_VALUE),
+                                                                                 EquipmentSlotGroup.FEET)
+                                                                            .build());
         ItemStack second = stack(entry(SHARED_ID, 4.0D, AttributeModifier.Operation.ADD_VALUE));
 
         AttributeComposer.Result result = AttributeComposer.compose(first, second, rules(AttributePolicy.AVERAGE));
@@ -335,9 +339,9 @@ class AttributeComposerTest {
                 entry(SHARED_ID, 2.0D, AttributeModifier.Operation.ADD_VALUE, EquipmentSlotGroup.ANY, defaultDisplay()));
         assertOwnerDivergence(
                 entry(SHARED_ID, 4.0D, AttributeModifier.Operation.ADD_VALUE,
-                        EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.hidden()),
+                      EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.hidden()),
                 entry(SHARED_ID, 2.0D, AttributeModifier.Operation.ADD_VALUE,
-                        EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.override(Component.literal("custom"))));
+                      EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.override(Component.literal("custom"))));
     }
 
     @Test
@@ -417,8 +421,8 @@ class AttributeComposerTest {
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
         assertTrue(Stream.concat(
-                        result.primary().modifiers().stream(), result.inverse().modifiers().stream())
-                .noneMatch(entry -> entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+                                 result.primary().modifiers().stream(), result.inverse().modifiers().stream())
+                         .noneMatch(entry -> entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
 
         RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, builtInRegistryAccess());
         JsonElement encoded = ItemAttributeModifiers.CODEC.encodeStart(ops, result.primary()).getOrThrow();
@@ -479,21 +483,21 @@ class AttributeComposerTest {
 
     private static ItemStack vanillaBoots(Item item, double armor) {
         ItemAttributeModifiers modifiers = ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.ARMOR,
-                        new AttributeModifier(
-                                Identifier.withDefaultNamespace("armor.boots"),
-                                armor,
-                                AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build();
+                                                                 .add(
+                                                                         Attributes.ARMOR,
+                                                                         new AttributeModifier(
+                                                                                 Identifier.withDefaultNamespace("armor.boots"),
+                                                                                 armor,
+                                                                                 AttributeModifier.Operation.ADD_VALUE),
+                                                                         EquipmentSlotGroup.FEET)
+                                                                 .build();
         return stack(item, modifiers);
     }
 
     private static ItemStack stack(Item item, ItemAttributeModifiers modifiers) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.ATTRIBUTE_MODIFIERS, modifiers)
-                .build();
+                                                      .set(DataComponents.ATTRIBUTE_MODIFIERS, modifiers)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 
@@ -519,20 +523,20 @@ class AttributeComposerTest {
             EquipmentSlotGroup slot,
             ItemAttributeModifiers.Display display) {
         ItemAttributeModifiers modifiers = ItemAttributeModifiers.builder()
-                .add(attribute, new AttributeModifier(modifierId, amount, operation), slot, display)
-                .build();
+                                                                 .add(attribute, new AttributeModifier(modifierId, amount, operation), slot, display)
+                                                                 .build();
         return modifiers.modifiers().getFirst();
     }
 
     private static ItemAttributeModifiers.Display defaultDisplay() {
         return ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR,
-                        new AttributeModifier(id("display_probe"), 1.0D, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build()
-                .modifiers()
-                .getFirst()
-                .display();
+                                     .add(Attributes.ARMOR,
+                                          new AttributeModifier(id("display_probe"), 1.0D, AttributeModifier.Operation.ADD_VALUE),
+                                          EquipmentSlotGroup.FEET)
+                                     .build()
+                                     .modifiers()
+                                     .getFirst()
+                                     .display();
     }
 
     private static ItemAttributeModifiers modifiers(ItemStack stack) {

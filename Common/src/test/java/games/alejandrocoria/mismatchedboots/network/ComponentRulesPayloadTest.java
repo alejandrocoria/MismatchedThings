@@ -55,9 +55,9 @@ class ComponentRulesPayloadTest {
         assertArrayEquals(first, second);
         assertEquals(rules, decoded);
         assertEquals(rules.declarations().keySet().stream().toList(),
-                decoded.declarations().keySet().stream().toList());
+                     decoded.declarations().keySet().stream().toList());
         assertEquals(ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG),
-                decoded.declarations().get(DORMANT));
+                     decoded.declarations().get(DORMANT));
         assertFalse(decoded.components().rules().containsKey(DORMANT));
     }
 
@@ -152,7 +152,7 @@ class ComponentRulesPayloadTest {
     void codecRejectsTruncationAndTrailingData() {
         byte[] complete = encode(new ComponentRulesPayload(rules()));
         assertThrows(RuntimeException.class,
-                () -> decode(Arrays.copyOf(complete, complete.length - 1)));
+                     () -> decode(Arrays.copyOf(complete, complete.length - 1)));
 
         RegistryFriendlyByteBuf buffer = buffer();
         try {
@@ -184,18 +184,18 @@ class ComponentRulesPayloadTest {
     private static ComponentRules rules() {
         LinkedHashMap<Identifier, ComponentRule> declarations = new LinkedHashMap<>();
         declarations.put(Identifier.withDefaultNamespace("enchantable"),
-                ComponentRule.of(ComponentPolicy.MAXIMUM));
+                         ComponentRule.of(ComponentPolicy.MAXIMUM));
         declarations.put(Identifier.withDefaultNamespace("rarity"),
-                ComponentRule.of(ComponentPolicy.OWNER));
+                         ComponentRule.of(ComponentPolicy.OWNER));
         declarations.put(DORMANT, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG));
 
         LinkedHashMap<Identifier, ComponentRule> effective = new LinkedHashMap<>();
         effective.put(Identifier.withDefaultNamespace("enchantable"),
-                ComponentRule.of(ComponentPolicy.MAXIMUM));
+                      ComponentRule.of(ComponentPolicy.MAXIMUM));
         effective.put(Identifier.withDefaultNamespace("rarity"),
-                ComponentRule.of(ComponentPolicy.OWNER));
+                      ComponentRule.of(ComponentPolicy.OWNER));
         return new ComponentRules(DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER,
-                declarations, new ComponentRuleSet(effective));
+                                  declarations, new ComponentRuleSet(effective));
     }
 
     private static byte[] encode(ComponentRulesPayload payload) {

@@ -15,6 +15,7 @@ abstract class MysticalJumpPeerMixin {
     @WrapOperation(method = "onArmorTick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/entity/player/Player;addEffect(Lnet/minecraft/world/effect/MobEffectInstance;)Z"))
     private boolean peer(Player player, MobEffectInstance effect, Operation<Boolean> original) {
-        MysticalGuardControl.armorCalls++; return original.call(player, effect);
+        MysticalGuardControl.armorCalls++;
+        return original.call(player, effect);
     }
 }

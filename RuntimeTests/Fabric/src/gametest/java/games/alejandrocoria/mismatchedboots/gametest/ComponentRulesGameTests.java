@@ -28,7 +28,7 @@ public final class ComponentRulesGameTests {
             assertDamage(helper, root, false, false);
         }
         helper.assertTrue(GameTestStacks.data(pair.primary()).left().source().has(DataComponents.DAMAGE_RESISTANT),
-                "Projection modified the netherite snapshot");
+                          "Projection modified the netherite snapshot");
         helper.succeed();
     }
 
@@ -37,7 +37,7 @@ public final class ComponentRulesGameTests {
         var pair = GameTestStacks.pair(Items.NETHERITE_BOOTS, Items.NETHERITE_BOOTS);
         for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
             helper.assertTrue(root.get(DataComponents.DAMAGE_RESISTANT).types().unwrapKey().isPresent(),
-                    "Shared tag became a frozen list");
+                              "Shared tag became a frozen list");
             assertDamage(helper, root, true, false);
         }
         var registry = helper.getLevel().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE);
@@ -52,7 +52,7 @@ public final class ComponentRulesGameTests {
             assertDamage(helper, root, false, true);
         }
         right.set(DataComponents.DAMAGE_RESISTANT,
-                new ItemStack(Items.NETHERITE_BOOTS).get(DataComponents.DAMAGE_RESISTANT));
+                  new ItemStack(Items.NETHERITE_BOOTS).get(DataComponents.DAMAGE_RESISTANT));
         pair = GameTestStacks.pair(left, right);
         assertDamage(helper, pair.primary(), false, false);
         assertDamage(helper, pair.inverse(), false, false);
@@ -94,13 +94,13 @@ public final class ComponentRulesGameTests {
         var pair = GameTestStacks.pair(left, right);
         for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
             helper.assertTrue(!root.has(DataComponents.UNBREAKABLE) && !root.has(DataComponents.GLIDER),
-                    "One-sided capability survived");
+                              "One-sided capability survived");
             helper.assertTrue(root.isDamageableItem(), "One-sided unbreakable prevents damage");
         }
         right.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
         pair = GameTestStacks.pair(left, right);
         helper.assertTrue(!pair.primary().isDamageableItem() && !pair.inverse().isDamageableItem(),
-                "Shared unbreakable was not retained");
+                          "Shared unbreakable was not retained");
         helper.succeed();
     }
 
@@ -120,12 +120,12 @@ public final class ComponentRulesGameTests {
             helper.assertValueEqual(root.getMaxDamage(), 150, "average maximum durability");
             helper.assertValueEqual(root.getDamageValue(), 35, "average remaining durability");
             helper.assertValueEqual(root.getOrDefault(DataComponents.REPAIR_COST, 0), 7,
-                    "maximum prior-work cost");
+                                    "maximum prior-work cost");
         }
         helper.assertValueEqual(GameTestStacks.data(pair.primary()).left().source()
-                .getOrDefault(DataComponents.REPAIR_COST, 0), 2, "left snapshot prior-work cost");
+                                              .getOrDefault(DataComponents.REPAIR_COST, 0), 2, "left snapshot prior-work cost");
         helper.assertValueEqual(GameTestStacks.data(pair.primary()).right().source()
-                .getOrDefault(DataComponents.REPAIR_COST, 0), 7, "right snapshot prior-work cost");
+                                              .getOrDefault(DataComponents.REPAIR_COST, 0), 7, "right snapshot prior-work cost");
         helper.succeed();
     }
 
@@ -138,6 +138,6 @@ public final class ComponentRulesGameTests {
         helper.assertValueEqual(fireEntity.hurtServer(level, level.damageSources().lava(), 1), !fire, "lava entity damage");
         ItemEntity cactusEntity = new ItemEntity(level, 0, 0, 0, root.copy());
         helper.assertValueEqual(cactusEntity.hurtServer(level, level.damageSources().cactus(), 1), !cactus,
-                "cactus entity damage");
+                                "cactus entity damage");
     }
 }

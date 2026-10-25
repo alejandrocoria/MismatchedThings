@@ -56,9 +56,9 @@ final class MismatchedWorkbenchReiCategory implements DisplayCategory<Mismatched
         // Input/output semantics live in the display. Marking parallel slot lists makes REI pin
         // one focused value into unrelated slots instead of preserving their shared index.
         widgets.add(Widgets.createSlot(new Point(leftSlotX, inputY))
-                .entries(display.getInputEntries().get(0)));
+                           .entries(display.getInputEntries().get(0)));
         widgets.add(Widgets.createSlot(new Point(rightSlotX, inputY))
-                .entries(display.getInputEntries().get(1)));
+                           .entries(display.getInputEntries().get(1)));
         widgets.add(Widgets.createTexturedWidget(
                 ARROWS_TEXTURE,
                 new Rectangle(bounds.getCenterX() - ARROWS_SIZE / 2, arrowsY, ARROWS_SIZE, ARROWS_SIZE),
@@ -67,9 +67,9 @@ final class MismatchedWorkbenchReiCategory implements DisplayCategory<Mismatched
                 ARROWS_SIZE,
                 ARROWS_SIZE));
         widgets.add(Widgets.createSlot(new Point(leftSlotX, outputY))
-                .entries(display.getOutputEntries().get(0)));
+                           .entries(display.getOutputEntries().get(0)));
         widgets.add(Widgets.createSlot(new Point(rightSlotX, outputY))
-                .entries(display.getOutputEntries().get(1)));
+                           .entries(display.getOutputEntries().get(1)));
         return List.copyOf(widgets);
     }
 

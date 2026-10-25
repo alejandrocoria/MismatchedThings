@@ -68,7 +68,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         assertSame(stack, item.stack(), "item callback stack");
         assertSame(tooltipContext, item.context(), "item callback context");
         assertSame(stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT),
-                item.display(), "item callback display");
+                   item.display(), "item callback display");
         if (item.flag() != TooltipFlag.NORMAL) {
             throw new AssertionError("Fabric item callback lost the tooltip flag");
         }
@@ -111,28 +111,28 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         MismatchedWorkbenchResult pair = pair(source, new ItemStack(Items.GOLDEN_BOOTS));
 
         assertProductionOutput(client, pair.primary(), source, true,
-                TooltipFlag.NORMAL, false, "root-primary");
+                               TooltipFlag.NORMAL, false, "root-primary");
         assertProductionOutput(client, pair.inverse(), source, false,
-                TooltipFlag.ADVANCED, true, "root-inverse");
+                               TooltipFlag.ADVANCED, true, "root-inverse");
         if (!ItemStack.matches(sourceBefore, source)) {
             throw new AssertionError("Workbench tooltip fixture mutated its source input");
         }
 
         ItemStack hiddenComponent = new ItemStack(TestContent.requireTooltipProbeItem());
         hiddenComponent.set(TestContent.requireTooltipProbeComponent(),
-                new TestContent.TooltipProbe("source-hidden-component"));
+                            new TestContent.TooltipProbe("source-hidden-component"));
         hiddenComponent.set(DataComponents.TOOLTIP_DISPLAY,
-                TooltipDisplay.DEFAULT.withHidden(TestContent.requireTooltipProbeComponent(), true));
+                            TooltipDisplay.DEFAULT.withHidden(TestContent.requireTooltipProbeComponent(), true));
         assertHiddenSourceCase(client, pair(hiddenComponent, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                "source-hidden-component", "root-hidden-component", false);
+                               "source-hidden-component", "root-hidden-component", false);
 
         ItemStack hiddenTooltip = new ItemStack(TestContent.requireTooltipProbeItem());
         hiddenTooltip.set(TestContent.requireTooltipProbeComponent(),
-                new TestContent.TooltipProbe("source-hidden-tooltip"));
+                          new TestContent.TooltipProbe("source-hidden-tooltip"));
         hiddenTooltip.set(DataComponents.TOOLTIP_DISPLAY,
-                new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
+                          new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
         assertHiddenSourceCase(client, pair(hiddenTooltip, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                "source-hidden-tooltip", "root-hidden-tooltip", true);
+                               "source-hidden-tooltip", "root-hidden-tooltip", true);
     }
 
     private static void assertProductionOutput(
@@ -180,7 +180,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         if (item.flag() != rootFlag
                 || !item.display().hiddenComponents().contains(DataComponents.ENCHANTMENTS)) {
             throw new AssertionError("Source item callback did not receive the root flag and filtered details: "
-                    + item);
+                                             + item);
         }
 
         List<TestContent.ComponentTooltipObservation> componentObservations =
@@ -242,7 +242,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         if (TestContent.componentTooltipObservations().size() != 1
                 || !TestContent.componentTooltipObservations().getFirst().value().equals(rootValue)) {
             throw new AssertionError("Hidden source component provider was invoked: "
-                    + TestContent.componentTooltipObservations());
+                                             + TestContent.componentTooltipObservations());
         }
         if (hideWholeTooltip) {
             if (!TestContent.itemTooltipObservations().isEmpty()
@@ -350,7 +350,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
             }
         }
         return component.getSiblings().stream()
-                .anyMatch(sibling -> containsTranslation(sibling, key, argument));
+                        .anyMatch(sibling -> containsTranslation(sibling, key, argument));
     }
 
     private static void assertSame(Object expected, Object actual, String description) {

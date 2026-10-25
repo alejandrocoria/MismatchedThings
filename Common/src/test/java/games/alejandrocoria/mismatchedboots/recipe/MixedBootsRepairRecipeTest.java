@@ -147,9 +147,9 @@ class MixedBootsRepairRecipeTest {
         assertEquals(200, result.getMaxDamage());
         assertEquals(130, result.getDamageValue());
         assertEquals(2, result.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .getLevel(curse));
+                              .getLevel(curse));
         assertEquals(0, result.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .getLevel(ordinary));
+                              .getLevel(ordinary));
         assertFalse(result.has(DataComponents.CUSTOM_NAME));
         assertFalse(result.has(DataComponents.REPAIR_COST));
         assertEquals(customData("preserved"), result.get(DataComponents.CUSTOM_DATA));
@@ -182,9 +182,9 @@ class MixedBootsRepairRecipeTest {
         MixedBootsRepairRecipe recipe = recipe(stack -> true, enchantment -> false);
         RecipeSerializer<MixedBootsRepairRecipe> serializer = MixedBootsRepairRecipe.SERIALIZER;
         JsonElement encoded = serializer.codec().codec()
-                .encodeStart(JsonOps.INSTANCE, new MixedBootsRepairRecipe()).getOrThrow();
+                                        .encodeStart(JsonOps.INSTANCE, new MixedBootsRepairRecipe()).getOrThrow();
         MixedBootsRepairRecipe persistent = serializer.codec().codec()
-                .parse(JsonOps.INSTANCE, encoded).getOrThrow();
+                                                      .parse(JsonOps.INSTANCE, encoded).getOrThrow();
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
                 Unpooled.buffer(), builtInRegistryAccess());
 
@@ -234,12 +234,12 @@ class MixedBootsRepairRecipeTest {
 
     private static ItemStack stack(Item item, int maximumDamage) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.MAX_DAMAGE, maximumDamage)
-                .set(DataComponents.DAMAGE, 0)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.MAX_DAMAGE, maximumDamage)
+                                                      .set(DataComponents.DAMAGE, 0)
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                      .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 

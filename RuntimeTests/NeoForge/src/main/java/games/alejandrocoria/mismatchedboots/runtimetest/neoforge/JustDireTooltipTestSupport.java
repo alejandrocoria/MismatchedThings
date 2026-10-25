@@ -15,16 +15,22 @@ import java.util.List;
 public final class JustDireTooltipTestSupport {
     private static Boolean shift;
 
-    private JustDireTooltipTestSupport() {}
+    private JustDireTooltipTestSupport() {
+    }
 
-    public static Boolean shift() { return shift; }
+    public static Boolean shift() {
+        return shift;
+    }
 
     static List<Component> capture(Minecraft client, ItemStack stack, TooltipFlag flag, boolean expanded) {
-        Boolean previous = shift; shift = expanded;
+        Boolean previous = shift;
+        shift = expanded;
         try {
             require(client.hasShiftDown() == expanded, "Controlled tooltip Shift input was not installed");
             return stack.getTooltipLines(Item.TooltipContext.of(client.level), client.player, flag);
-        } finally { shift = previous; }
+        } finally {
+            shift = previous;
+        }
     }
 
     static String key(Component line) {
@@ -38,12 +44,14 @@ public final class JustDireTooltipTestSupport {
         try {
             var magic = Class.forName("com.direwolf20.justdirethings.util.MagicHelpers");
             Object expectedAmount = expanded ? magic.getMethod("formatted", int.class).invoke(null, amount)
-                    : magic.getMethod("tidyValue", float.class).invoke(null, (float) amount);
+                                             : magic.getMethod("tidyValue", float.class).invoke(null, (float) amount);
             Object expectedCapacity = expanded ? magic.getMethod("formatted", int.class).invoke(null, capacity)
-                    : magic.getMethod("tidyValue", float.class).invoke(null, (float) capacity);
+                                               : magic.getMethod("tidyValue", float.class).invoke(null, (float) capacity);
             require(args.length == 2 && args[0].equals(expectedAmount) && args[1].equals(expectedCapacity),
                     "Live root FE differs from native precision/formatting: " + energy);
-        } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError(failure);
+        }
         require(TextColor.fromLegacyFormat(ChatFormatting.GREEN).equals(energy.getFirst().getStyle().getColor()), "FE color differs from native");
     }
 
@@ -52,12 +60,14 @@ public final class JustDireTooltipTestSupport {
         require(rows.size() == 1, "Missing/duplicate root ability " + name);
         var row = rows.getFirst();
         require(((TranslatableContents) row.getContents()).getArgs().length == 0 && row.getSiblings().isEmpty()
-                && TextColor.fromLegacyFormat(enabled ? ChatFormatting.GREEN : ChatFormatting.DARK_RED).equals(row.getStyle().getColor()),
+                        && TextColor.fromLegacyFormat(enabled ? ChatFormatting.GREEN : ChatFormatting.DARK_RED).equals(row.getStyle().getColor()),
                 "Installed/intrinsic ability has stale numeric/status text or wrong individual color: " + row);
         return row;
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new AssertionError(message); }
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 }

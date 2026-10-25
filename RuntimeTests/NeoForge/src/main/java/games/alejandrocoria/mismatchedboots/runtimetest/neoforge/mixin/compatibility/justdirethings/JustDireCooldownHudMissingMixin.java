@@ -11,5 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "com.direwolf20.justdirethings.client.overlays.AbilityCooldownOverlay", priority = 500, remap = false)
 abstract class JustDireCooldownHudMissingMixin {
     @Inject(method = "render", at = @At("HEAD"))
-    private void fixtureLateVisit(net.minecraft.client.gui.GuiGraphicsExtractor graphics, net.minecraft.client.DeltaTracker delta, CallbackInfo ci) {}
+    private void fixtureLateVisit(net.minecraft.client.gui.GuiGraphicsExtractor graphics, net.minecraft.client.DeltaTracker delta, CallbackInfo ci) {
+    }
 }

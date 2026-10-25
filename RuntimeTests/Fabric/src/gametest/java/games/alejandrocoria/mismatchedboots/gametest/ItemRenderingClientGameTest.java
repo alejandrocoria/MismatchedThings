@@ -90,7 +90,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             GuiItemRenderState control = GuiItemSubmissionProbe.take().getFirst();
             if (control.scissorArea() != null) {
                 throw new AssertionError("GUI clipping leaked its scissor to a later vanilla item: "
-                        + control.scissorArea());
+                                                 + control.scissorArea());
             }
         });
 
@@ -112,10 +112,10 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
     private static ItemStack createClippingPair(boolean foil) {
         ItemStack left = new ItemStack(Items.IRON_BOOTS);
         left.set(DataComponents.ITEM_MODEL,
-                Identifier.fromNamespaceAndPath("mismatchedboots-test", "clipping_red"));
+                 Identifier.fromNamespaceAndPath("mismatchedboots-test", "clipping_red"));
         ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
         right.set(DataComponents.ITEM_MODEL,
-                Identifier.fromNamespaceAndPath("mismatchedboots-test", "clipping_blue"));
+                  Identifier.fromNamespaceAndPath("mismatchedboots-test", "clipping_blue"));
         ItemStack mixed = MixedBootsFactory.createPair(left, right).primary();
         mixed.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
         return mixed;
@@ -129,7 +129,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         }
         GuiItemRenderState item = submissions.getFirst();
         ScreenRectangle expectedScissor = nested
-                ? new ScreenRectangle(CLIPPING_X + 2, CLIPPING_Y, 12, 16) : null;
+                                          ? new ScreenRectangle(CLIPPING_X + 2, CLIPPING_Y, 12, 16) : null;
         if (!java.util.Objects.equals(item.scissorArea(), expectedScissor)
                 || item.x() != CLIPPING_X || item.y() != CLIPPING_Y) {
             throw new AssertionError("GUI geometry changed caller coordinates or parent scissor");
@@ -183,11 +183,11 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         int minimumSourcePixels = 20 * guiScale * guiScale;
         if (rightRed < minimumSourcePixels || leftBlue < minimumSourcePixels) {
             throw new AssertionError("GUI clipping did not preserve both source halves: "
-                    + rightRed + " red pixels on the right, " + leftBlue + " blue pixels on the left");
+                                             + rightRed + " red pixels on the right, " + leftBlue + " blue pixels on the left");
         }
         if (leftRed != 0 || rightBlue != 0) {
             throw new AssertionError("GUI clipping leaked pixels across the center: "
-                    + leftRed + " red pixels on the left, " + rightBlue + " blue pixels on the right");
+                                             + leftRed + " red pixels on the left, " + rightBlue + " blue pixels on the right");
         }
     }
 
@@ -196,7 +196,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         ItemStackRenderStateAccessor stateAccess = access(state);
         if (stateAccess.mismatchedboots$getActiveLayerCount() != 1) {
             throw new AssertionError(scenario + " expected one source layer but got "
-                    + stateAccess.mismatchedboots$getActiveLayerCount());
+                                             + stateAccess.mismatchedboots$getActiveLayerCount());
         }
         assertSprite(layer(stateAccess, 0).mismatchedboots$getQuads(), expectedSprite, scenario);
     }
@@ -260,33 +260,33 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         noGlint.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
         assertFoil(resolve(client, noGlint, ItemDisplayContext.GUI), false, "root glint override");
         if (!sourceGlint.hasFoil() || !ModContent.getMixedBootsData(noGlint).orElseThrow()
-                .left().source().hasFoil()) {
+                                                 .left().source().hasFoil()) {
             throw new AssertionError("Rendering mutated a source stack or its stored snapshot");
         }
 
         ItemStack alternateModelSource = new ItemStack(Items.IRON_BOOTS);
         alternateModelSource.set(DataComponents.ITEM_MODEL,
-                Identifier.withDefaultNamespace("diamond_boots"));
+                                 Identifier.withDefaultNamespace("diamond_boots"));
         ItemStackRenderState alternateModel = resolve(client,
-                MixedBootsFactory.createPair(alternateModelSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                ItemDisplayContext.GUI);
+                                                      MixedBootsFactory.createPair(alternateModelSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
+                                                      ItemDisplayContext.GUI);
         assertSourceOrder(alternateModel, "diamond_boots", "golden_boots", "source item-model override");
 
         ItemStack missingSource = new ItemStack(Items.IRON_BOOTS);
         missingSource.set(DataComponents.ITEM_MODEL,
-                Identifier.fromNamespaceAndPath("mismatchedboots", "missing_phase5_source"));
+                          Identifier.fromNamespaceAndPath("mismatchedboots", "missing_phase5_source"));
         ItemStackRenderState missing = resolve(client,
-                MixedBootsFactory.createPair(missingSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                ItemDisplayContext.GUI);
+                                               MixedBootsFactory.createPair(missingSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
+                                               ItemDisplayContext.GUI);
         assertClipped(missing, "missing-model geometry");
         assertSprite(layer(access(missing), 1).mismatchedboots$getQuads(),
-                "golden_boots", "missing-model fallback right source");
+                     "golden_boots", "missing-model fallback right source");
 
         ItemStack recursiveModelSource = new ItemStack(Items.IRON_BOOTS);
         recursiveModelSource.set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID);
         ItemStackRenderState recursiveModel = resolve(client,
-                MixedBootsFactory.createPair(recursiveModelSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                ItemDisplayContext.GUI);
+                                                      MixedBootsFactory.createPair(recursiveModelSource, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
+                                                      ItemDisplayContext.GUI);
         int recursiveLayers = access(recursiveModel).mismatchedboots$getActiveLayerCount();
         if (recursiveLayers < 2 || recursiveLayers > 4) {
             throw new AssertionError("Recursive model fallback produced an unbounded layer count: " + recursiveLayers);
@@ -323,10 +323,10 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             ItemStack mixed = MixedBootsFactory.createPair(
                     new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
             ItemEntity dropped = new ItemEntity(level,
-                    player.getX() + look.x * 3.0,
-                    player.getEyeY() - 0.6,
-                    player.getZ() + look.z * 3.0,
-                    mixed);
+                                                player.getX() + look.x * 3.0,
+                                                player.getEyeY() - 0.6,
+                                                player.getZ() + look.z * 3.0,
+                                                mixed);
             dropped.setNoGravity(true);
             dropped.setDeltaMovement(Vec3.ZERO);
             level.addFreshEntity(dropped);
@@ -407,7 +407,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
         ItemStackRenderStateAccessor stateAccess = access(state);
         if (stateAccess.mismatchedboots$getActiveLayerCount() != 2) {
             throw new AssertionError(scenario + " expected two clipped layers but got "
-                    + stateAccess.mismatchedboots$getActiveLayerCount());
+                                             + stateAccess.mismatchedboots$getActiveLayerCount());
         }
         for (int index = 0; index < 2; index++) {
             LayerRenderStateAccessor layer = layer(stateAccess, index);
@@ -437,8 +437,8 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
 
     private static void assertSprite(List<BakedQuad> quads, String expectedPathPart, String scenario) {
         boolean found = quads.stream()
-                .map(quad -> quad.materialInfo().sprite().contents().name().getPath())
-                .anyMatch(path -> path.contains(expectedPathPart));
+                             .map(quad -> quad.materialInfo().sprite().contents().name().getPath())
+                             .anyMatch(path -> path.contains(expectedPathPart));
         if (!found) {
             throw new AssertionError(scenario + " did not use " + expectedPathPart);
         }
@@ -476,8 +476,8 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
     private static boolean isOrientation(
             ItemStack stack, net.minecraft.world.item.Item left, net.minecraft.world.item.Item right) {
         return ModContent.getMixedBootsData(stack)
-                .filter(data -> data.left().source().is(left) && data.right().source().is(right))
-                .isPresent();
+                         .filter(data -> data.left().source().is(left) && data.right().source().is(right))
+                         .isPresent();
     }
 
     private static final class ClippingTestScreen extends Screen {

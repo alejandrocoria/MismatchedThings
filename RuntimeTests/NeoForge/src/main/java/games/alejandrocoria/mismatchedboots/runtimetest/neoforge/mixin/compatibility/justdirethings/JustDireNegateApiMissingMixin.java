@@ -8,5 +8,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(targets = "games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireNegateFallCompatibility", remap = false)
 abstract class JustDireNegateApiMissingMixin {
     @ModifyVariable(method = "component", at = @At("HEAD"), argsOnly = true)
-    private static String missing(String path) { return "missing_negate_fixture_component"; }
+    private static String missing(String path) {
+        return "missing_negate_fixture_component";
+    }
 }

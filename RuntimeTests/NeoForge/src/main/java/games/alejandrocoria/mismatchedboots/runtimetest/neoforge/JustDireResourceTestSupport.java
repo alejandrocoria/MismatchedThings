@@ -10,7 +10,8 @@ import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 
 /** Native test lookups only: no fixture capability, composition wrapper or resource implementation. */
 final class JustDireResourceTestSupport {
-    private JustDireResourceTestSupport() {}
+    private JustDireResourceTestSupport() {
+    }
 
     static EnergyHandler handler(ItemStack stack) {
         return ItemAccess.forStack(stack).getCapability(Capabilities.Energy.ITEM);

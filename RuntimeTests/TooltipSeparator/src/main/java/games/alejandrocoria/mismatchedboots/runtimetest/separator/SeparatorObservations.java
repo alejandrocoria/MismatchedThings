@@ -15,9 +15,13 @@ public final class SeparatorObservations {
     public static boolean copyText;
     public static Optional<TooltipComponent> image = Optional.empty();
 
-    private SeparatorObservations() {}
+    private SeparatorObservations() {
+    }
 
-    public static boolean enabled() { return Boolean.getBoolean("mismatchedboots.test.separatorTest"); }
+    public static boolean enabled() {
+        return Boolean.getBoolean("mismatchedboots.test.separatorTest");
+    }
 
-    public record Draw(boolean separator, int y, int height) {}
+    public record Draw(boolean separator, int y, int height) {
+    }
 }

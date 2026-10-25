@@ -14,13 +14,17 @@ import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 /** Real incoming hits, resource transfers and XP pickup; no substitute wear/payment implementation. */
 final class JustDireArmorWearTestSupport {
-    private JustDireArmorWearTestSupport() {}
+    private JustDireArmorWearTestSupport() {
+    }
 
     static void hit(ServerPlayer player, int remaining, int addedWear) {
-        var root = player.getItemBySlot(EquipmentSlot.FEET); var before = root.copy();
-        var server = player.level().getServer(); var difficulty = player.level().getDifficulty();
+        var root = player.getItemBySlot(EquipmentSlot.FEET);
+        var before = root.copy();
+        var server = player.level().getServer();
+        var difficulty = player.level().getDifficulty();
         var motion = player.getDeltaMovement();
-        player.setHealth(player.getMaxHealth()); player.invulnerableTime = 0;
+        player.setHealth(player.getMaxHealth());
+        player.invulnerableTime = 0;
         server.setDifficulty(Difficulty.NORMAL, true);
         try {
             require(player.hurtServer(player.level(), player.damageSources().mobAttack(new Zombie(EntityType.ZOMBIE, player.level())), 8),
@@ -30,22 +34,25 @@ final class JustDireArmorWearTestSupport {
             state(before, root, remaining, before.getDamageValue() + addedWear);
         } finally {
             server.setDifficulty(difficulty, true);
-            player.setHealth(player.getMaxHealth()); player.invulnerableTime = 0;
+            player.setHealth(player.getMaxHealth());
+            player.invulnerableTime = 0;
             player.setDeltaMovement(motion);
         }
         // Do not replace equipment or force a broadcast: normal slot/equipment ticks must deliver the debit.
     }
 
     static void recharge(ServerPlayer player, int amount) {
-        var root = player.getItemBySlot(EquipmentSlot.FEET); var before = root.copy();
+        var root = player.getItemBySlot(EquipmentSlot.FEET);
+        var before = root.copy();
         var donor = NeoForgeJustDireResourcesTest.boots("eclipsealloy", amount);
         require(EnergyHandlerUtil.move(JustDireResourceTestSupport.handler(donor), JustDireResourceTestSupport.handler(root), amount, null) == amount
-                && charge(donor) == 0, "Native donor transfer did not conserve FE");
+                        && charge(donor) == 0, "Native donor transfer did not conserve FE");
         state(before, root, charge(before) + amount, before.getDamageValue());
     }
 
     static void extract(ServerPlayer player, int amount) {
-        var root = player.getItemBySlot(EquipmentSlot.FEET); var before = root.copy();
+        var root = player.getItemBySlot(EquipmentSlot.FEET);
+        var before = root.copy();
         try (var transaction = Transaction.openRoot()) {
             require(JustDireResourceTestSupport.handler(root).extract(amount, transaction) == amount, "Lifecycle extraction failed");
             transaction.commit();
@@ -57,15 +64,28 @@ final class JustDireArmorWearTestSupport {
         var root = player.getItemBySlot(EquipmentSlot.FEET);
         root.enchant(player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.MENDING), 1);
         var before = root.copy();
-        var orb = new ExperienceOrb(EntityType.EXPERIENCE_ORB, player.level()); orb.setValue(5); orb.playerTouch(player);
+        var orb = new ExperienceOrb(EntityType.EXPERIENCE_ORB, player.level());
+        orb.setValue(5);
+        orb.playerTouch(player);
         require(root.getDamageValue() < before.getDamageValue(), "Actual XP pickup did not repair prior root wear");
         state(before, root, charge(before), root.getDamageValue());
     }
 
-    private static int charge(ItemStack root) { return root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0); }
-    private static void state(ItemStack before, ItemStack root, int energy, int damage) {
-        var allowed = before.copy(); allowed.set(JustDireResourceTestSupport.energyComponent(), energy); allowed.setDamageValue(damage);
-        require(ItemStack.matches(allowed, root), "Lifecycle FE/wear/history/control mismatch: FE=" + charge(root) + ", wear=" + root.getDamageValue());
+    private static int charge(ItemStack root) {
+        return root.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0);
     }
-    private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+
+    private static void state(ItemStack before, ItemStack root, int energy, int damage) {
+        var allowed = before.copy();
+        allowed.set(JustDireResourceTestSupport.energyComponent(), energy);
+        allowed.setDamageValue(damage);
+        require(ItemStack.matches(allowed, root),
+                "Lifecycle FE/wear/history/control mismatch: FE=" + charge(root) + ", wear=" + root.getDamageValue());
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

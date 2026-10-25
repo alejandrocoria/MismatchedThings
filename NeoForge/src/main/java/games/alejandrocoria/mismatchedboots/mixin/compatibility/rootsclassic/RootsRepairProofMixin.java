@@ -6,5 +6,7 @@ import org.spongepowered.asm.mixin.Pseudo;
 @Pseudo
 @Mixin(targets = "elucent.rootsclassic.util.RootsUtil", remap = false)
 abstract class RootsRepairProofMixin {
-    private static boolean mismatchedboots$rootsRepairReady() { return false; }
+    private static boolean mismatchedboots$rootsRepairReady() {
+        return false;
+    }
 }

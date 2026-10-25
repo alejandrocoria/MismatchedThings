@@ -20,25 +20,30 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** Independent native equipment event only, not another implementation of the production source adapter. */
 final class SilentGearNativeTooltipControl {
     private static final Set<String> DIAGNOSTICS = Set.of("misc.silentgear.broken", "misc.silentgear.exampleOutput1",
-            "misc.silentgear.exampleOutput2", "misc.silentgear.invalidParts");
+                                                          "misc.silentgear.exampleOutput2", "misc.silentgear.invalidParts");
 
-    private SilentGearNativeTooltipControl() {}
+    private SilentGearNativeTooltipControl() {
+    }
 
     static List<Component> details(Minecraft client, ItemStack source, TooltipFlag flag) throws Exception {
         var props = NeoForgeSilentGearTest.NativeApi.component("GEAR_PROPERTIES");
         var construction = NeoForgeSilentGearTest.NativeApi.component("GEAR_CONSTRUCTION");
         Class<?> gear = Class.forName("net.silentchaos512.gear.api.item.GearItem");
         var display = source.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
-        if (!gear.isInstance(source.getItem()) || !source.has(props) || !source.has(construction) || display.hideTooltip()) { return List.of(); }
+        if (!gear.isInstance(source.getItem()) || !source.has(props) || !source.has(construction) || display.hideTooltip()) {
+            return List.of();
+        }
         boolean showProps = display.shows(props), showParts = display.shows(construction);
-        if (!showProps && !showParts) { return List.of(); }
+        if (!showProps && !showParts) {
+            return List.of();
+        }
         Class<?> flags = Class.forName("net.silentchaos512.gear.client.util.GearTooltipFlag");
         Object nativeFlag = flags.getMethod("withModifierKeys", boolean.class, boolean.class, boolean.class)
-                .invoke(null, flag.isAdvanced(), showProps, showParts);
+                                 .invoke(null, flag.isAdvanced(), showProps, showParts);
         var lines = new ArrayList<Component>();
         var event = new ItemTooltipEvent(source.copy(), client.player, lines, (TooltipFlag) nativeFlag, Item.TooltipContext.of(client.level));
         Class.forName("net.silentchaos512.gear.client.tooltips.GearItemTooltips")
-                .getMethod("onTooltip", ItemTooltipEvent.class).invoke(null, event);
+             .getMethod("onTooltip", ItemTooltipEvent.class).invoke(null, event);
         lines.removeIf(line -> line.getContents() instanceof TranslatableContents text && DIAGNOSTICS.contains(text.getKey()));
         if (!showProps || !showParts) {
             // Hidden-group probes deliberately use plain main+lining, whose native part summaries are empty.
@@ -49,7 +54,7 @@ final class SilentGearNativeTooltipControl {
             Class<?> partClass = Class.forName("net.silentchaos512.gear.gear.part.PartInstance");
             for (Object part : (Collection<?>) parts.getClass().getMethod("toSortedList").invoke(parts)) {
                 partClass.getMethod("addInformation", ItemStack.class, List.class, TooltipFlag.class)
-                        .invoke(part, source.copy(), summaries, nativeFlag);
+                         .invoke(part, source.copy(), summaries, nativeFlag);
             }
             require(summaries.isEmpty(), "Hidden-group oracle requires an explicit summary-free native control");
             Class<?> keys = Class.forName("net.silentchaos512.gear.client.KeyTracker");

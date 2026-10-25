@@ -25,23 +25,26 @@ public final class FabricNetworkAcceptanceServer implements ModInitializer {
             }
             if (MissingModsProof.fixturesPresent()) {
                 Registry.register(BuiltInRegistries.ATTRIBUTE, Identifier.parse(MissingModsProof.MOD + ":temporary_attribute"),
-                        new RangedAttribute("missing-mod-proof", 0, -1024, 1024));
+                                  new RangedAttribute("missing-mod-proof", 0, -1024, 1024));
                 Registry.register(BuiltInRegistries.SOUND_EVENT, Identifier.parse(MissingModsProof.MOD + ":temporary_equip"),
-                        SoundEvent.createVariableRangeEvent(Identifier.parse(MissingModsProof.MOD + ":temporary_equip")));
+                                  SoundEvent.createVariableRangeEvent(Identifier.parse(MissingModsProof.MOD + ":temporary_equip")));
                 Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse(MissingModsProof.MOD + ":temporary_energy"),
-                        DataComponentType.<Integer>builder().persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT).build());
+                                  DataComponentType.<Integer>builder().persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT).build());
                 Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse(MissingModsProof.MOD + ":throwing_property"),
-                        MissingModsProof.throwingProperty());
+                                  MissingModsProof.throwingProperty());
                 Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse(MissingModsProof.MOD + ":converting_property"),
-                        MissingModsProof.convertingProperty());
+                                  MissingModsProof.convertingProperty());
             }
-            ServerTickEvents.END_SERVER_TICK.register(MissingModsProof::tick); return;
+            ServerTickEvents.END_SERVER_TICK.register(MissingModsProof::tick);
+            return;
         }
         if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.enabled()) {
-            ServerTickEvents.END_SERVER_TICK.register(games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle::tick); return;
+            ServerTickEvents.END_SERVER_TICK.register(games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle::tick);
+            return;
         }
         if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalNativeTestApi.enabled()) {
-            MysticalAugmentsServer.register(); return;
+            MysticalAugmentsServer.register();
+            return;
         }
         if (SeparatorObservations.enabled()) {
             if (Boolean.getBoolean("mismatchedboots.test.separatorSeed")) {

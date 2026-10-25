@@ -14,6 +14,8 @@ abstract class SilentGearTooltipInputMixin {
     @Inject(method = "isKeyDown", at = @At("HEAD"), cancellable = true)
     private static void captureKey(Window window, int key, CallbackInfoReturnable<Boolean> callback) {
         Boolean pressed = SilentGearTooltipClientTest.key(key);
-        if (pressed != null) { callback.setReturnValue(pressed); }
+        if (pressed != null) {
+            callback.setReturnValue(pressed);
+        }
     }
 }

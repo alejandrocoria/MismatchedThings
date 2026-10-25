@@ -40,8 +40,13 @@ public final class FabricMeshClipper {
                 QuadClipper.TracedPolygonResult result = clip(quad, localTransform, side);
                 switch (result.geometry().decision()) {
                     case KEEP -> emitter.copyFrom(quad).emit();
-                    case DROP -> { return; }
-                    case INCOMPATIBLE -> { compatible[0] = false; return; }
+                    case DROP -> {
+                        return;
+                    }
+                    case INCOMPATIBLE -> {
+                        compatible[0] = false;
+                        return;
+                    }
                     case SPLIT -> emitSplit(quad, result, emitter);
                 }
                 animated[0] |= quad.animated() || (quad.foilType() != null
@@ -76,7 +81,7 @@ public final class FabricMeshClipper {
                 validateNormal(source.copyNormal(index, null));
             }
             vertices.add(new QuadClipper.Vertex(point(raw),
-                    new QuadClipper.Uv(source.u(index), source.v(index)), point(canonical)));
+                                                new QuadClipper.Uv(source.u(index), source.v(index)), point(canonical)));
         }
         return QuadClipper.clipPolygonWithOrigins(new QuadClipper.Quad(vertices), side);
     }
@@ -103,9 +108,11 @@ public final class FabricMeshClipper {
                 normal.normalize();
             }
             vertices.add(new VertexData(vertex,
-                    origin.retained() ? source.color(first) : interpolateColor(source.color(first), source.color(second), t),
-                    origin.retained() ? source.lightmap(first) : interpolateLight(source.lightmap(first), source.lightmap(second), t),
-                    normal));
+                                        origin.retained() ? source.color(first) : interpolateColor(source.color(first), source.color(second), t),
+                                        origin.retained()
+                                        ? source.lightmap(first)
+                                        : interpolateLight(source.lightmap(first), source.lightmap(second), t),
+                                        normal));
         }
         for (PolygonTessellator.Primitive primitive : PolygonTessellator.tessellate(polygon)) {
             emitter.clear();
@@ -114,8 +121,8 @@ public final class FabricMeshClipper {
                 VertexData data = vertices.get(primitive.vertex(index));
                 QuadClipper.Point raw = data.geometry().position();
                 emitter.pos(index, raw.x(), raw.y(), raw.z())
-                        .uv(index, data.geometry().uv().u(), data.geometry().uv().v())
-                        .color(index, data.color()).lightmap(index, data.lightmap());
+                       .uv(index, data.geometry().uv().u(), data.geometry().uv().v())
+                       .color(index, data.color()).lightmap(index, data.lightmap());
                 if (data.normal() != null) {
                     emitter.normal(index, data.normal());
                 }
@@ -126,10 +133,10 @@ public final class FabricMeshClipper {
 
     private static void copyProperties(QuadView source, QuadEmitter target) {
         target.cullFace(source.cullFace()).nominalFace(source.nominalFace())
-                .atlas(source.atlas()).itemRenderType(source.itemRenderType()).chunkLayer(source.chunkLayer())
-                .emissive(source.emissive()).diffuseShade(source.diffuseShade())
-                .ambientOcclusion(source.ambientOcclusion()).shadeMode(source.shadeMode())
-                .foilType(source.foilType()).animated(source.animated()).tintIndex(source.tintIndex()).tag(source.tag());
+              .atlas(source.atlas()).itemRenderType(source.itemRenderType()).chunkLayer(source.chunkLayer())
+              .emissive(source.emissive()).diffuseShade(source.diffuseShade())
+              .ambientOcclusion(source.ambientOcclusion()).shadeMode(source.shadeMode())
+              .foilType(source.foilType()).animated(source.animated()).tintIndex(source.tintIndex()).tag(source.tag());
     }
 
     private static Vector3f effectiveNormal(QuadView source, int index) {

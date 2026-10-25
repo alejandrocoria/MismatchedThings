@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Pseudo;
 @Pseudo
 @Mixin(targets = {"elucent.rootsclassic.item.SylvanArmorItem", "elucent.rootsclassic.item.WildwoodArmorItem"}, remap = false)
 abstract class RootsTickEntryMixin implements RootsTickReadiness {
-    @Override public boolean mismatchedboots$rootsTickReady() { return false; }
+    @Override
+    public boolean mismatchedboots$rootsTickReady() {
+        return false;
+    }
 }

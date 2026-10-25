@@ -5,4 +5,5 @@ import org.spongepowered.asm.mixin.Pseudo;
 
 @Pseudo
 @Mixin(targets = "com.aetherteam.aetherii.block.fluid.AlkahestFluid", remap = false)
-abstract class AetherAlkahestFluidTargetMixin {}
+abstract class AetherAlkahestFluidTargetMixin {
+}

@@ -87,19 +87,19 @@ class MismatchedWorkbenchClientRecipesTest {
 
     private static MismatchedWorkbenchResult preview() {
         return MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
-                        stack(Items.IRON_BOOTS), stack(Items.GOLDEN_BOOTS)),
-                null, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                                     stack(Items.IRON_BOOTS), stack(Items.GOLDEN_BOOTS)),
+                                                             null, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
     }
 
     private static ItemStack stack(Item item) {
         // Bootstrap-only JUnit does not bind data-driven item prototypes.
         return new ItemStack(Holder.direct(item, DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1).build()));
+                                                                 .set(DataComponents.MAX_STACK_SIZE, 1).build()));
     }
 
     private static RecipeHolder<MismatchedWorkbenchRecipe> holder(String id, Item expected, Item output) {
         return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.parse("test:" + id)),
-                new LoadedRecipe(expected, output));
+                                  new LoadedRecipe(expected, output));
     }
 
     private record LoadedRecipe(Item expected, Item output) implements MismatchedWorkbenchRecipe {

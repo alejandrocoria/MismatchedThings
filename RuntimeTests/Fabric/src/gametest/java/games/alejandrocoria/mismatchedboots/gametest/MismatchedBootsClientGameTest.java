@@ -55,8 +55,8 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                     MismatchedBootsClientGameTest::hasExpectedSynchronizedData));
             context.runOnClient(client -> {
                 List<ItemStack> mixedStacks = client.player.getInventory().getNonEquipmentItems().stream()
-                        .filter(ModContent::isMixedBoots)
-                        .toList();
+                                                           .filter(ModContent::isMixedBoots)
+                                                           .toList();
                 if (mixedStacks.size() != 1 || mixedStacks.getFirst().getCount() != 1) {
                     throw new AssertionError("Expected exactly one synchronized mixed stack: " + mixedStacks);
                 }
@@ -72,9 +72,9 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
     private static boolean hasExpectedSynchronizedData(ItemStack stack) {
         return stack.is(ModContent.MIXED_BOOTS_KEY)
                 && ModContent.getMixedBootsData(stack)
-                        .filter(data -> data.left().source().is(Items.IRON_BOOTS)
-                                && data.right().source().is(Items.GOLDEN_BOOTS))
-                        .isPresent();
+                             .filter(data -> data.left().source().is(Items.IRON_BOOTS)
+                                     && data.right().source().is(Items.GOLDEN_BOOTS))
+                             .isPresent();
     }
 
     private static void assertIronGoldAttributeTooltip(
@@ -83,10 +83,10 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
                 Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
         String armorTranslation = Attributes.ARMOR.value().getDescriptionId();
         List<Component> armorModifierLines = tooltip.stream()
-                .filter(line -> line.getContents() instanceof TranslatableContents contents
-                        && contents.getKey().startsWith("attribute.modifier."))
-                .filter(line -> containsTranslation(line, armorTranslation))
-                .toList();
+                                                    .filter(line -> line.getContents() instanceof TranslatableContents contents
+                                                            && contents.getKey().startsWith("attribute.modifier."))
+                                                    .filter(line -> containsTranslation(line, armorTranslation))
+                                                    .toList();
         if (armorModifierLines.size() != 1) {
             throw new AssertionError(
                     "Iron/gold tooltip did not contain one structured armor modifier line: " + tooltip);
@@ -105,6 +105,6 @@ public final class MismatchedBootsClientGameTest implements FabricClientGameTest
             }
         }
         return component.getSiblings().stream()
-                .anyMatch(sibling -> containsTranslation(sibling, translationKey));
+                        .anyMatch(sibling -> containsTranslation(sibling, translationKey));
     }
 }

@@ -13,6 +13,8 @@ abstract class JustDireTooltipShiftMixin {
     @Inject(method = "hasShiftDown", at = @At("HEAD"), cancellable = true)
     private void tooltipShift(CallbackInfoReturnable<Boolean> callback) {
         Boolean shift = JustDireTooltipTestSupport.shift();
-        if (shift != null) { callback.setReturnValue(shift); }
+        if (shift != null) {
+            callback.setReturnValue(shift);
+        }
     }
 }

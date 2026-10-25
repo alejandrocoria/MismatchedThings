@@ -44,8 +44,8 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
     private static final float OBSERVED_ERROR_LIMIT = GEOMETRY_EPSILON / 10.0F;
     private static final float MAXIMUM_CENTER_SPAN = 0.0F;
     private static final List<ItemDisplayContext> NON_GUI_CONTEXTS = Arrays.stream(ItemDisplayContext.values())
-            .filter(context -> context != ItemDisplayContext.GUI)
-            .toList();
+                                                                           .filter(context -> context != ItemDisplayContext.GUI)
+                                                                           .toList();
     private static final List<Item> VANILLA_BOOTS = List.of(
             Items.LEATHER_BOOTS,
             Items.IRON_BOOTS,
@@ -80,7 +80,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
             int expectedFrontBackCrossings = item == Items.LEATHER_BOOTS ? 4 : 2;
             int expectedQuadCount = item == Items.LEATHER_BOOTS ? 92 : 66;
             assertCounts(baseline, expectedQuadCount, expectedFrontBackCrossings, 0,
-                    expectedFrontBackCrossings, item.toString());
+                         expectedFrontBackCrossings, item.toString());
             int expectedTintCount = item == Items.LEATHER_BOOTS ? 1 : 0;
             if (baseline.tintLayers().size() != expectedTintCount
                     || baseline.usesBlockLight()
@@ -162,7 +162,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         ItemStackRenderStateAccessor stateAccessor = (ItemStackRenderStateAccessor) (Object) state;
         if (stateAccessor.mismatchedboots$getActiveLayerCount() != 1) {
             throw new AssertionError(scenario + " resolved "
-                    + stateAccessor.mismatchedboots$getActiveLayerCount() + " layers instead of one");
+                                             + stateAccessor.mismatchedboots$getActiveLayerCount() + " layers instead of one");
         }
         ItemStackRenderState.LayerRenderState layer = stateAccessor.mismatchedboots$getLayers()[0];
         LayerRenderStateAccessor common = (LayerRenderStateAccessor) (Object) layer;
@@ -192,8 +192,8 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         List<QuadFingerprint> fingerprints = new ArrayList<>();
         IntList tintList = layer.test().mismatchedboots$getTintLayers();
         List<Integer> tintLayers = tintList == null
-                ? List.of()
-                : tintList.intStream().boxed().toList();
+                                   ? List.of()
+                                   : tintList.intStream().boxed().toList();
         int safeCrossings = 0;
         int incompatibleCrossings = 0;
         int frontBackCrossings = 0;
@@ -208,7 +208,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
             for (int vertex = 0; vertex < 4; vertex++) {
                 raw[vertex] = new Vector3f(quad.position(vertex));
                 canonical[vertex] = localTransform.transformPosition(raw[vertex], new Vector3f())
-                        .sub(0.5F, 0.5F, 0.5F);
+                                                  .sub(0.5F, 0.5F, 0.5F);
                 packedUvs[vertex] = quad.packedUV(vertex);
                 requireFinite(raw[vertex], scenario + " raw vertex");
                 requireFinite(canonical[vertex], scenario + " canonical vertex");
@@ -242,7 +242,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
 
         if (maximumResidual > OBSERVED_ERROR_LIMIT) {
             throw new AssertionError(scenario + " exceeds the characterized rectangle error margin: "
-                    + maximumResidual);
+                                             + maximumResidual);
         }
 
         Bounds suppliedExtents = new Bounds();
@@ -252,7 +252,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         }
         for (Vector3fc extent : extents) {
             Vector3f canonicalExtent = localTransform.transformPosition(new Vector3f(extent))
-                    .sub(0.5F, 0.5F, 0.5F);
+                                                     .sub(0.5F, 0.5F, 0.5F);
             requireFinite(canonicalExtent, scenario + " extent");
             suppliedExtents.include(canonicalExtent);
         }
@@ -283,7 +283,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
     private static void validateWindingAndArea(
             BakedQuad quad, Vector3f[] raw, String scenario) {
         Vector3f normal = new Vector3f(raw[1]).sub(raw[0])
-                .cross(new Vector3f(raw[2]).sub(raw[0]));
+                                              .cross(new Vector3f(raw[2]).sub(raw[0]));
         if (!normal.isFinite() || normal.lengthSquared() <= GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
             throw new AssertionError(scenario + " has a degenerate quad");
         }
@@ -330,12 +330,12 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
                 if (near(raw[first].x, raw[second].x)
                         != near(UVPair.unpackU(packedUvs[first]), UVPair.unpackU(packedUvs[second]))) {
                     throw new AssertionError(scenario + " lost the vertex-to-U correspondence for "
-                            + quad.direction());
+                                                     + quad.direction());
                 }
                 if (near(raw[first].y, raw[second].y)
                         != near(UVPair.unpackV(packedUvs[first]), UVPair.unpackV(packedUvs[second]))) {
                     throw new AssertionError(scenario + " lost the vertex-to-V correspondence for "
-                            + quad.direction());
+                                                     + quad.direction());
                 }
             }
         }
@@ -364,7 +364,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
                 layer.common().mismatchedboots$getLocalTransform(),
                 displayContext.leftHand());
         assertMatrix(submission.pose(), expected,
-                scenario + " has the wrong display/center/local multiplication order in " + displayContext);
+                     scenario + " has the wrong display/center/local multiplication order in " + displayContext);
     }
 
     private static Matrix4f expectedSubmittedPose(
@@ -420,15 +420,15 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
 
         QuadEmitter emitter = ((FabricLayerRenderState) (Object) layer).emitter();
         emitter.square(Direction.SOUTH, 0.0F, 0.0F, 1.0F, 1.0F, 0.5F)
-                .color(0xFF3366CC, 0xFF3366CC, 0xFF3366CC, 0xFF3366CC)
-                .lightmap(1, 2, 3, 4)
-                .normal(0, 0.0F, 0.0F, 1.0F)
-                .normal(1, 0.0F, 0.0F, 1.0F)
-                .normal(2, 0.0F, 0.0F, 1.0F)
-                .normal(3, 0.0F, 0.0F, 1.0F)
-                .ambientOcclusion(TriState.FALSE)
-                .tag(37)
-                .emit();
+               .color(0xFF3366CC, 0xFF3366CC, 0xFF3366CC, 0xFF3366CC)
+               .lightmap(1, 2, 3, 4)
+               .normal(0, 0.0F, 0.0F, 1.0F)
+               .normal(1, 0.0F, 0.0F, 1.0F)
+               .normal(2, 0.0F, 0.0F, 1.0F)
+               .normal(3, 0.0F, 0.0F, 1.0F)
+               .ambientOcclusion(TriState.FALSE)
+               .tag(37)
+               .emit();
 
         MutableMesh mesh = extension.fabric_getMutableMesh();
         if (mesh == null || mesh.size() != 1 || !layer.prepareQuadList().isEmpty()) {
@@ -567,7 +567,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
                 material.flags());
         return new QuadFingerprint(
                 quad.direction(), List.copyOf(coordinateBits), List.of(
-                        packedUvs[0], packedUvs[1], packedUvs[2], packedUvs[3]), materialFingerprint);
+                packedUvs[0], packedUvs[1], packedUvs[2], packedUvs[3]), materialFingerprint);
     }
 
     private static void addBits(List<Integer> target, Vector3f vector) {
@@ -655,7 +655,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         for (int index = 0; index < actualValues.length; index++) {
             if (Math.abs(actualValues[index] - expectedValues[index]) > GEOMETRY_EPSILON) {
                 throw new AssertionError(scenario + " differs at matrix index " + index + ": "
-                        + actualValues[index] + " instead of " + expectedValues[index]);
+                                                 + actualValues[index] + " instead of " + expectedValues[index]);
             }
         }
     }

@@ -37,8 +37,8 @@ public final class IceAndFireDamageShape {
             return false;
         }
         MethodNode method = handler.methods.stream()
-                .filter(candidate -> METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
-                .findFirst().orElse(null);
+                                           .filter(candidate -> METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
+                                           .findFirst().orElse(null);
         return isPublicHandler(method)
                 && feetChecks(method.instructions).size() == 3;
     }
@@ -46,14 +46,14 @@ public final class IceAndFireDamageShape {
     static boolean isLightningCompatible(ClassNode handler, ClassNode items) {
         if (handler == null || !HANDLER.equals(handler.name) || items == null || !ITEMS.equals(items.name)
                 || items.fields.stream().noneMatch(field -> "DRAGONSTEEL_LIGHTNING_BOOTS".equals(field.name)
-                    && "Lnet/neoforged/neoforge/registries/DeferredItem;".equals(field.desc)
-                    && (field.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
-                        == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))) {
+                && "Lnet/neoforged/neoforge/registries/DeferredItem;".equals(field.desc)
+                && (field.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
+                == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))) {
             return false;
         }
         MethodNode method = handler.methods.stream()
-                .filter(candidate -> LIGHTNING_METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
-                .findFirst().orElse(null);
+                                           .filter(candidate -> LIGHTNING_METHOD.equals(candidate.name) && DESCRIPTOR.equals(candidate.desc))
+                                           .findFirst().orElse(null);
         return isPublicHandler(method) && lightningFeetChecks(method.instructions).size() == 1;
     }
 
@@ -91,16 +91,17 @@ public final class IceAndFireDamageShape {
                     && "net/minecraft/world/entity/EquipmentSlot".equals(slot.owner)
                     && "FEET".equals(slot.name) && ("L" + slot.owner + ";").equals(slot.desc)
                     && isCall(code.get(index - 2), "net/minecraft/world/entity/LivingEntity", "getItemBySlot",
-                        "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
+                              "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
                     && isCall(code.get(index - 1), "net/minecraft/world/item/ItemStack", "getItem",
-                        "()Lnet/minecraft/world/item/Item;")
+                              "()Lnet/minecraft/world/item/Item;")
                     && hasArmorContribution(code, index, check.desc)) {
                 result.add(check);
             }
         }
         if (result.size() != 3
                 || List.of(TROLL, SCALE, STEEL).stream().anyMatch(type -> result.stream()
-                    .filter(node -> type.equals(((TypeInsnNode) node).desc)).count() != 1)) {
+                                                                                .filter(node -> type.equals(((TypeInsnNode) node).desc))
+                                                                                .count() != 1)) {
             return List.of();
         }
         var scale = result.stream().filter(node -> SCALE.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
@@ -128,12 +129,12 @@ public final class IceAndFireDamageShape {
                     && "net/minecraft/world/entity/EquipmentSlot".equals(slot.owner)
                     && "FEET".equals(slot.name) && ("L" + slot.owner + ";").equals(slot.desc)
                     && isCall(code.get(index - 4), "net/minecraft/world/entity/LivingEntity", "getItemBySlot",
-                        "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
+                              "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
                     && code.get(index - 3) instanceof FieldInsnNode item && item.getOpcode() == Opcodes.GETSTATIC
                     && ITEMS.equals(item.owner) && "DRAGONSTEEL_LIGHTNING_BOOTS".equals(item.name)
                     && "Lnet/neoforged/neoforge/registries/DeferredItem;".equals(item.desc)
                     && isCall(code.get(index - 2), "net/neoforged/neoforge/registries/DeferredItem", "get",
-                        "()Ljava/lang/Object;")
+                              "()Ljava/lang/Object;")
                     && code.get(index - 1) instanceof TypeInsnNode cast && cast.getOpcode() == Opcodes.CHECKCAST
                     && "net/minecraft/world/item/Item".equals(cast.desc)
                     && hasZeroDamageConsumer(code, index)) {
@@ -159,8 +160,8 @@ public final class IceAndFireDamageShape {
                     && store.var == local) {
                 if (index < 2 || !(code.get(index - 2) instanceof VarInsnNode event) || event.getOpcode() != Opcodes.ALOAD
                         || event.var != 0 || !isCall(code.get(index - 1),
-                        "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre", "getEntity",
-                        "()Lnet/minecraft/world/entity/LivingEntity;")) {
+                                                     "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre", "getEntity",
+                                                     "()Lnet/minecraft/world/entity/LivingEntity;")) {
                     return false;
                 }
                 assigned = true;
@@ -208,7 +209,7 @@ public final class IceAndFireDamageShape {
                 && code.get(predicate + 2) instanceof VarInsnNode event && event.getOpcode() == Opcodes.ALOAD
                 && event.var == 0 && code.get(predicate + 3).getOpcode() == Opcodes.FCONST_0
                 && isCall(code.get(predicate + 4), "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Pre",
-                    "setNewDamage", "(F)V")
+                          "setNewDamage", "(F)V")
                 && nextCode(branch.label) == nextCode(code.get(predicate + 4));
     }
 

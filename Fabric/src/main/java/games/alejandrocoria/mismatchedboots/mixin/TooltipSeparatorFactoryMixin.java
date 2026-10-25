@@ -14,6 +14,8 @@ interface TooltipSeparatorFactoryMixin {
     @Inject(method = "create(Lnet/minecraft/util/FormattedCharSequence;)Lnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipComponent;",
             at = @At("HEAD"), cancellable = true)
     private static void mismatchedboots$separator(FormattedCharSequence text, CallbackInfoReturnable<ClientTooltipComponent> result) {
-        if (text instanceof TooltipSeparator.Sequence) { result.setReturnValue(TooltipSeparatorComponent.INSTANCE); }
+        if (text instanceof TooltipSeparator.Sequence) {
+            result.setReturnValue(TooltipSeparatorComponent.INSTANCE);
+        }
     }
 }

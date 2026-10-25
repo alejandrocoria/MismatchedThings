@@ -19,7 +19,9 @@ public final class JustDireSettingsMixinPlugin implements IMixinConfigPlugin {
             boolean compatible = node.methods.stream().anyMatch(method -> method.name.equals("getItemSlots")
                     && method.desc.equals("(Lnet/minecraft/world/item/ItemStack;)Lnet/neoforged/neoforge/transfer/ResourceHandler;")
                     && (method.access & (Opcodes.ACC_STATIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0);
-            if (!compatible) { Constants.LOG.warn("Just Dire Things settings inventory query changed; empty-stack guard disabled"); }
+            if (!compatible) {
+                Constants.LOG.warn("Just Dire Things settings inventory query changed; empty-stack guard disabled");
+            }
             return compatible;
         } catch (ClassNotFoundException absent) {
             return false;
@@ -29,10 +31,29 @@ public final class JustDireSettingsMixinPlugin implements IMixinConfigPlugin {
         }
     }
 
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

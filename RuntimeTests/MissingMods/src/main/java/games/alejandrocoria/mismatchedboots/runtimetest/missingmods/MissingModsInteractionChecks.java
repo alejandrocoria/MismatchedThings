@@ -35,7 +35,8 @@ import java.util.UUID;
 
 /** Real production menus and wearer/XP paths; no substitute recovery codec or gameplay implementation. */
 public final class MissingModsInteractionChecks {
-    private MissingModsInteractionChecks() {}
+    private MissingModsInteractionChecks() {
+    }
 
     public static ItemStack suspend(MinecraftServer server, ItemStack active) {
         var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
@@ -61,7 +62,8 @@ public final class MissingModsInteractionChecks {
         require(!renamed.isEmpty() && renamed.getHoverName().getString().equals("renamed suspended boots"), "Suspended anvil rename rejected");
         var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
         var reloaded = ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, renamed).getOrThrow()).getOrThrow();
-        require(ModContent.suspendedBootsData(reloaded).orElseThrow().equals(archived), "Native rename changed protected state or created a conflict");
+        require(ModContent.suspendedBootsData(reloaded).orElseThrow().equals(archived),
+                "Native rename changed protected state or created a conflict");
         require(reloaded.getDamageValue() == 12, "Rename changed live damage");
         anvil.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.DIAMOND));
         require(anvil.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty() && anvil.getCost() == 0, "Suspended material repair accepted");
@@ -97,15 +99,15 @@ public final class MissingModsInteractionChecks {
         player.doTick();
         require(player.getArmorValue() == 0, "Suspended root grants armor");
         require(player.hurtServer(server.overworld(), player.damageSources().generic(), 4)
-                && player.getHealth() == 16 && root.getDamageValue() == 12, "Suspended root protects or takes combat wear");
+                        && player.getHealth() == 16 && root.getDamageValue() == 12, "Suspended root protects or takes combat wear");
         var orb = new ExperienceOrb(server.overworld(), player.getX(), player.getY(), player.getZ(), 5);
         orb.playerTouch(player);
         require(root.getDamageValue() == 12 && player.totalExperience == 5, "Suspended Mending consumed XP or repaired");
         var tooltip = new ArrayList<net.minecraft.network.chat.Component>();
         root.getItem().appendHoverText(root, Item.TooltipContext.of(server.overworld()), TooltipDisplay.DEFAULT,
-                tooltip::add, TooltipFlag.NORMAL);
+                                       tooltip::add, TooltipFlag.NORMAL);
         require(tooltip.size() == 1 && tooltip.getFirst().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
-                && text.getKey().endsWith(".suspended"), "Suspended tooltip reused bare/source presentation");
+                        && text.getKey().endsWith(".suspended"), "Suspended tooltip reused bare/source presentation");
         require(ModContent.suspendedBootsData(root).orElseThrow().equals(archived), "Interaction modified archived state");
         breakDoesNotRefund(server, root);
     }
@@ -117,16 +119,24 @@ public final class MissingModsInteractionChecks {
         root.hurtAndBreak(root.getMaxDamage(), player, EquipmentSlot.FEET);
         require(root.isEmpty(), "Explicit direct-wear break did not consume suspended root");
         require(player.getInventory().isEmpty()
-                && server.overworld().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(4)).size() == drops,
+                        && server.overworld().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(4)).size() == drops,
                 "Archived upgrades were refunded on a direct break");
     }
 
     private static ServerPlayer player(MinecraftServer server) {
-        var player = new ServerPlayer(server, server.overworld(), new GameProfile(UUID.randomUUID(), "recovery-check"), ClientInformation.createDefault());
+        var player = new ServerPlayer(server,
+                                      server.overworld(),
+                                      new GameProfile(UUID.randomUUID(), "recovery-check"),
+                                      ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
-                CommonListenerCookie.createInitial(player.getGameProfile(), false));
+                                         CommonListenerCookie.createInitial(player.getGameProfile(), false));
         player.connection.handleAcceptPlayerLoad(new net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket());
         return player;
     }
-    private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

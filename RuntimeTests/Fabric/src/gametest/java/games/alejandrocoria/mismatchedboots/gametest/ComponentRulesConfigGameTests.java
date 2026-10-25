@@ -29,12 +29,12 @@ public final class ComponentRulesConfigGameTests {
         helper.assertValueEqual(rules.durability(), DurabilityPolicy.SEPARATE, "loaded durability policy");
         helper.assertValueEqual(rules.repairCost(), RepairCostPolicy.OWNER, "loaded repair-cost policy");
         helper.assertValueEqual(rules.declarations().get(TestContent.NUMERIC_COMPONENT_ID),
-                ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT),
-                "loaded numeric declaration");
+                                ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT),
+                                "loaded numeric declaration");
         helper.assertValueEqual(rules.declarations().get(DORMANT_ID),
-                ComponentRule.of(ComponentPolicy.SHARE), "retained dormant declaration");
+                                ComponentRule.of(ComponentPolicy.SHARE), "retained dormant declaration");
         helper.assertTrue(!rules.components().rules().containsKey(DORMANT_ID),
-                "Dormant declaration became an effective rule");
+                          "Dormant declaration became an effective rule");
 
         ItemStack left = new ItemStack(Items.IRON_BOOTS);
         ItemStack right = new ItemStack(Items.GOLDEN_BOOTS);
@@ -51,12 +51,12 @@ public final class ComponentRulesConfigGameTests {
         helper.assertValueEqual(pair.inverse().getMaxDamage(), right.getMaxDamage(), "inverse separate maximum");
         helper.assertValueEqual(pair.inverse().getDamageValue(), 7, "inverse separate damage");
         helper.assertValueEqual(pair.primary().getOrDefault(DataComponents.REPAIR_COST, 0), 2,
-                "primary owner repair cost");
+                                "primary owner repair cost");
         helper.assertValueEqual(pair.inverse().getOrDefault(DataComponents.REPAIR_COST, 0), 5,
-                "inverse owner repair cost");
+                                "inverse owner repair cost");
         for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
             helper.assertValueEqual(output.get(TestContent.requireNumericComponent()), 4,
-                    "configured numeric average");
+                                    "configured numeric average");
         }
         helper.succeed();
     }

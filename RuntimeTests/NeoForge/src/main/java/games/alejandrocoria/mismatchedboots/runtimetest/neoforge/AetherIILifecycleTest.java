@@ -40,20 +40,25 @@ final class AetherIILifecycleTest {
     private static final BlockPos BARREL = new BlockPos(4, 80, 4);
     private static boolean finished;
 
-    private AetherIILifecycleTest() {}
+    private AetherIILifecycleTest() {
+    }
 
     static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
-            if (finished) { return; }
+            if (finished) {
+                return;
+            }
             finished = true;
             String phase = System.getProperty("mismatchedboots.runtimetest.aetherIILifecycle");
             String output = "aether-ii-" + phase;
             try {
                 var server = event.getServer();
                 var owner = FakePlayerFactory.getMinecraft(server.overworld());
-                owner.setGameMode(GameType.SURVIVAL); owner.setNoGravity(true);
-                if (phase.equals("save")) { save(server, owner); }
-                else {
+                owner.setGameMode(GameType.SURVIVAL);
+                owner.setNoGravity(true);
+                if (phase.equals("save")) {
+                    save(server, owner);
+                } else {
                     var manifest = read("aether-ii-world.json");
                     require(manifest.get("process").getAsLong() != ProcessHandle.current().pid(), "Restart reused save JVM");
                     var roots = roots(server);
@@ -63,8 +68,11 @@ final class AetherIILifecycleTest {
                     NetworkAcceptanceFiles.write(output + "-report.txt", report.toString());
                 }
                 NetworkAcceptanceFiles.write(output + "-success.txt", "neoforge\n");
-            } catch (Throwable failure) { NetworkAcceptanceFiles.failure(output, failure); }
-            finally { event.getServer().halt(false); }
+            } catch (Throwable failure) {
+                NetworkAcceptanceFiles.failure(output, failure);
+            } finally {
+                event.getServer().halt(false);
+            }
         });
     }
 
@@ -85,18 +93,24 @@ final class AetherIILifecycleTest {
         check(owner, roots, report);
         server.overworld().setBlock(BARREL, Blocks.BARREL.defaultBlockState(), 3);
         var barrel = barrel(server);
-        for (int i = 0; i < roots.size(); i++) { barrel.setItem(i, roots.get(i)); }
+        for (int i = 0; i < roots.size(); i++) {
+            barrel.setItem(i, roots.get(i));
+        }
         barrel.setChanged();
-        var manifest = new JsonObject(); manifest.addProperty("process", ProcessHandle.current().pid());
+        var manifest = new JsonObject();
+        manifest.addProperty("process", ProcessHandle.current().pid());
         manifest.add("roots", encode(server, roots));
         NetworkAcceptanceFiles.write("aether-ii-world.json", manifest.toString());
-        NetworkAcceptanceFiles.write("aether-ii-save-report.txt", "Six paid used roots: Health/diamond, Sentry/diamond, Gravitite/diamond inverses\n" + report);
+        NetworkAcceptanceFiles.write("aether-ii-save-report.txt",
+                                     "Six paid used roots: Health/diamond, Sentry/diamond, Gravitite/diamond inverses\n" + report);
     }
 
     static List<ItemStack> roots(MinecraftServer server) {
         var barrel = barrel(server);
         var roots = new ArrayList<ItemStack>();
-        for (int i = 0; i < 6; i++) { roots.add(barrel.getItem(i)); }
+        for (int i = 0; i < 6; i++) {
+            roots.add(barrel.getItem(i));
+        }
         return roots;
     }
 
@@ -107,7 +121,9 @@ final class AetherIILifecycleTest {
     static JsonArray encode(MinecraftServer server, List<ItemStack> roots) {
         var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         var values = new JsonArray();
-        for (var root : roots) { values.add(ItemStack.CODEC.encodeStart(ops, root).getOrThrow()); }
+        for (var root : roots) {
+            values.add(ItemStack.CODEC.encodeStart(ops, root).getOrThrow());
+        }
         return values;
     }
 
@@ -138,7 +154,8 @@ final class AetherIILifecycleTest {
                 install(owner, api, root, "health", 0, false);
             } else if (i < 4) {
                 measure(owner, root, Attributes.FALL_DAMAGE_MULTIPLIER, -.375, "persisted Sentry " + i, report);
-                fall(owner, root, 7.99, true); fall(owner, root, 8, false);
+                fall(owner, root, 7.99, true);
+                fall(owner, root, 8, false);
             } else {
                 owner.setItemSlot(EquipmentSlot.HEAD, item("gravitite_helmet"));
                 owner.setItemSlot(EquipmentSlot.CHEST, item("gravitite_chestplate"));
@@ -150,7 +167,9 @@ final class AetherIILifecycleTest {
                 require(!api.ability(owner, item("gravitite_boots").get(component("armor_set"))), "Two pieces activated after restart");
             }
         }
-        clear(owner); compare(server, roots, before);
-        report.append("Both inverses: snapshot-only Health +1, rejected Forge installation, Sentry -.375 and 7.99/8, Gravitite 3/2 counts/fall; unchanged full roots\n");
+        clear(owner);
+        compare(server, roots, before);
+        report.append(
+                "Both inverses: snapshot-only Health +1, rejected Forge installation, Sentry -.375 and 7.99/8, Gravitite 3/2 counts/fall; unchanged full roots\n");
     }
 }

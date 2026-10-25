@@ -50,11 +50,11 @@ class VanillaComponentEqualityCharacterizationTest {
         assertStableEquality(DataComponents.LORE, new ItemLore(List.of(Component.literal("source lore"))));
         assertStableEquality(DataComponents.RARITY, Rarity.RARE);
         assertStableEquality(DataComponents.TOOLTIP_DISPLAY,
-                net.minecraft.world.item.component.TooltipDisplay.DEFAULT
-                        .withHidden(DataComponents.ATTRIBUTE_MODIFIERS, true));
+                             net.minecraft.world.item.component.TooltipDisplay.DEFAULT
+                                     .withHidden(DataComponents.ATTRIBUTE_MODIFIERS, true));
         assertStableEquality(DataComponents.DYED_COLOR, new DyedItemColor(0x336699));
         assertStableEquality(DataComponents.CUSTOM_MODEL_DATA,
-                new CustomModelData(List.of(0.25F), List.of(true), List.of("variant"), List.of(0x334455)));
+                             new CustomModelData(List.of(0.25F), List.of(true), List.of("variant"), List.of(0x334455)));
         assertStableEquality(DataComponents.ENCHANTABLE, new Enchantable(13));
         assertStableEquality(DataComponents.UNBREAKABLE, Unit.INSTANCE);
         assertStableEquality(DataComponents.CUSTOM_DATA, CustomData.of(data));
@@ -64,7 +64,7 @@ class VanillaComponentEqualityCharacterizationTest {
     @SuppressWarnings("deprecation")
     void separatelyObtainedNamedDamageSetsDoNotHaveValueEquality() {
         TagKey<DamageType> tag = TagKey.create(Registries.DAMAGE_TYPE,
-                Identifier.fromNamespaceAndPath("mismatchedboots-test", "resistant"));
+                                               Identifier.fromNamespaceAndPath("mismatchedboots-test", "resistant"));
         HolderOwner<DamageType> owner = new HolderOwner<>() {
         };
         DamageResistant first = new DamageResistant(HolderSet.emptyNamed(owner, tag));
@@ -77,7 +77,7 @@ class VanillaComponentEqualityCharacterizationTest {
 
     private static <T> void assertStableEquality(DataComponentType<T> type, T value) {
         ItemStack source = new ItemStack(Holder.direct(Items.IRON_BOOTS,
-                DataComponentMap.builder().set(type, value).build()), 1);
+                                                       DataComponentMap.builder().set(type, value).build()), 1);
         ItemStack copy = source.copy();
         JsonElement encoded = type.codecOrThrow().encodeStart(JsonOps.INSTANCE, value).getOrThrow();
         T decoded = type.codecOrThrow().parse(JsonOps.INSTANCE, encoded).getOrThrow();

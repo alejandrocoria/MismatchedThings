@@ -16,11 +16,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.event.GearEvents", remap = false)
 abstract class SilentGearSafeFallMixin {
-    @Unique private static boolean mismatchedboots$sgSafeFallReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgSafeFallReady() {
+        return false;
+    }
 
     @Inject(method = "onLivingFall", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSuppressingBounce()Z"), cancellable = true, require = 0, expect = 0, allow = 1)
     private static void mismatchedboots$sgFallGate(LivingFallEvent event, CallbackInfo callback) {
-        if (!SilentGearDefense.allowFall(event, mismatchedboots$sgSafeFallReady())) { callback.cancel(); }
+        if (!SilentGearDefense.allowFall(event, mismatchedboots$sgSafeFallReady())) {
+            callback.cancel();
+        }
     }
 
     @WrapWithCondition(method = "onLivingFall", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearDefenseInjectionPoint", args = "site=wear"), require = 0, expect = 0, allow = 1)

@@ -6,9 +6,9 @@ def runBounded = rootProject.ext.runBoundedGradleTask
 def reports = layout.buildDirectory.dir("reports/oritech-fall/${neoforge_version}")
 def runs = layout.buildDirectory.dir("run/oritechFall/${neoforge_version}")
 def artifacts = [
-        'oritech-2.0.0-exp6.jar': 'caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b',
+        'oritech-2.0.0-exp6.jar'            : 'caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b',
         'geckolib-neoforge-26.1.2-5.5.2.jar': 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d',
-        'athena-4.7.3.jar': 'e0cf1eb366d8ada36c3f03cddae01be2b11b90a6684849e829b89c0ffac15888'
+        'athena-4.7.3.jar'                  : 'e0cf1eb366d8ada36c3f03cddae01be2b11b90a6684849e829b89c0ffac15888'
 ].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
 
 ['Live', 'Absent'].each { variant ->
@@ -38,7 +38,9 @@ def artifacts = [
             fixtureFiles.delete { delete directory, markers }
             fixtureFiles.copy {
                 from(productionJar, fixtureJar)
-                if (variant == 'Live') { from(artifacts.keySet()) }
+                if (variant == 'Live') {
+                    from(artifacts.keySet())
+                }
                 into(new File(directory.get().asFile, 'mods'))
             }
             new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
@@ -62,7 +64,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             runBounded(":RuntimeTests:NeoForge:runOritechFall${variant}", processLog, 240)
             def result = markers.get().asFile
             def failure = new File(result, 'oritech-fall-failure.txt')
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             def report = new File(result, 'oritech-fall-report.txt')
             if (!new File(result, 'oritech-fall-success.txt').isFile() || !report.isFile()) {
                 throw new GradleException("Missing Oritech result; see ${processLog}")

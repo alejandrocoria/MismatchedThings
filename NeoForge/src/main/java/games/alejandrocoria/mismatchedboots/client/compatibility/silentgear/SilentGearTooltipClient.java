@@ -25,19 +25,26 @@ public final class SilentGearTooltipClient {
     private static Bindings bindings;
     private static boolean disabled, warnedData;
 
-    private SilentGearTooltipClient() {}
+    private SilentGearTooltipClient() {
+    }
 
     public static void appendSource(ItemStack input, TooltipFlag flag, Consumer<Component> output) {
-        if (disabled) { return; }
+        if (disabled) {
+            return;
+        }
         List<Component> lines;
         try {
-            if (bindings == null) { bindings = new Bindings(); }
+            if (bindings == null) {
+                bindings = new Bindings();
+            }
             lines = bindings.details(input, flag);
         } catch (Throwable failure) {
             while (failure instanceof InvocationTargetException invocation && invocation.getCause() != null) {
                 failure = invocation.getCause();
             }
-            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
+                throw fatal;
+            }
             if (failure instanceof SourceDataException) {
                 if (!warnedData) {
                     warnedData = true;
@@ -59,7 +66,9 @@ public final class SilentGearTooltipClient {
 
     /** Only explicit source validation failures are local; formatter/API exceptions revoke presentation. */
     private static final class SourceDataException extends RuntimeException {
-        private SourceDataException(String message) { super(message); }
+        private SourceDataException(String message) {
+            super(message);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -90,7 +99,8 @@ public final class SilentGearTooltipClient {
         private final Class<?> color = Class.forName("net.silentchaos512.lib.util.Color");
         private final int gold = (int) color.getMethod("getColor").invoke(color.getField("GOLD").get(null)) & 0xFFFFFF;
 
-        private Bindings() throws ReflectiveOperationException {}
+        private Bindings() throws ReflectiveOperationException {
+        }
 
         private List<Component> details(ItemStack input, TooltipFlag flag) throws ReflectiveOperationException {
             var equipment = input.get(DataComponents.EQUIPPABLE);
@@ -101,25 +111,39 @@ public final class SilentGearTooltipClient {
                 return List.of();
             }
             boolean showParts = display.shows(construction), showProperties = display.shows(properties);
-            if (!showParts && !showProperties) { return List.of(); }
+            if (!showParts && !showProperties) {
+                return List.of();
+            }
             ItemStack source = input.copy();
-            if (((java.util.Map<?, ?>) propertyValues.invoke(source.get(properties))).isEmpty()) { return List.of(); }
+            if (((java.util.Map<?, ?>) propertyValues.invoke(source.get(properties))).isEmpty()) {
+                return List.of();
+            }
             Object parts = getParts.invoke(source.get(construction));
-            if (!partListType.isInstance(parts)) { throw new SourceDataException("Invalid SG construction part list"); }
+            if (!partListType.isInstance(parts)) {
+                throw new SourceDataException("Invalid SG construction part list");
+            }
             // Native sorting filters invalid references out. Validate raw provenance before that lossy view.
             for (Object part : (Collection<?>) parts) {
                 if (!partType.isInstance(part) || !(boolean) validPart.invoke(part)) {
                     throw new SourceDataException("Invalid SG source part");
                 }
             }
-            if (((Collection<?>) mains.invoke(parts)).isEmpty()) { return List.of(); }
+            if (((Collection<?>) mains.invoke(parts)).isEmpty()) {
+                return List.of();
+            }
             var ordered = (Collection<?>) sorted.invoke(parts);
             Object nativeFlag = flags.invoke(null, flag.isAdvanced(), showProperties, showParts);
             var result = new ArrayList<Component>();
             if (!(boolean) vanillaValue.invoke(vanilla)) {
-                if (showParts) { for (Object part : ordered) { partInfo.invoke(part, source, result, nativeFlag); } }
+                if (showParts) {
+                    for (Object part : ordered) {
+                        partInfo.invoke(part, source, result, nativeFlag);
+                    }
+                }
                 // Native emits compact traits even when showProperties=false; the whole call must be gated.
-                if (showProperties) { propertyInfo.invoke(null, source, result, nativeFlag, source.getItem()); }
+                if (showProperties) {
+                    propertyInfo.invoke(null, source, result, nativeFlag, source.getItem());
+                }
             }
             if (showParts) {
                 MutableComponent header = Component.translatable("misc.silentgear.tooltip.construction").withColor(gold);

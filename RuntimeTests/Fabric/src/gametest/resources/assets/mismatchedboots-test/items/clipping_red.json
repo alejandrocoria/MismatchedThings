@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "mismatchedboots-test:item/clipping_red"
-  }
+    "model": {
+        "type": "minecraft:model",
+        "model": "mismatchedboots-test:item/clipping_red"
+    }
 }

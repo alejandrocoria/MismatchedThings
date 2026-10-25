@@ -17,6 +17,7 @@ abstract class AetherTextFaultMixin {
             throw new NoSuchFieldError("Controlled native tooltip component binding failure: " + name);
         }
     }
+
     @Inject(method = "sourceLines", at = @At("RETURN"))
     private static void populated(CallbackInfoReturnable<?> callback) {
         if (System.getProperty("mismatchedboots.runtimetest.aetherTooltipVariant").equals("setpopulatedfailure")) {

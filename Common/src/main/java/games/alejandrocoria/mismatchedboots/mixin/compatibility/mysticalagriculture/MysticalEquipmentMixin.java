@@ -15,7 +15,10 @@ import java.util.List;
 @Pseudo
 @Mixin(targets = "com.blakebr0.mysticalagriculture.api.util.AugmentUtils", remap = false)
 abstract class MysticalEquipmentMixin {
-    @Unique private static boolean mismatchedboots$maEquipmentReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$maEquipmentReady() {
+        return false;
+    }
 
     @WrapOperation(method = "getArmorAugments", at = @At(value = "INVOKE",
             target = "Lcom/blakebr0/mysticalagriculture/api/util/AugmentUtils;getAugments(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;"), require = 0, expect = 0)

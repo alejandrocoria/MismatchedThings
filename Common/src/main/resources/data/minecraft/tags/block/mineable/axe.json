@@ -1,6 +1,6 @@
 {
-  "replace": false,
-  "values": [
-    "mismatchedboots:mismatched_workbench"
-  ]
+    "replace": false,
+    "values": [
+        "mismatchedboots:mismatched_workbench"
+    ]
 }

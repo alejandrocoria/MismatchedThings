@@ -29,23 +29,27 @@ public final class JustDireTooltipClient {
     private static Formats formats;
     private static boolean formatsFailed;
 
-    private JustDireTooltipClient() {}
+    private JustDireTooltipClient() {
+    }
 
     public static void appendRootState(ItemStack root, TooltipDisplay display, Consumer<Component> tooltip) {
         var data = ModContent.getMixedBootsData(root).orElse(null);
         if (data == null || !JustDireSettingsCompatibility.mixed(root)
                 || !(JustDireUpgradesCompatibility.nativeBoot(data.left().source())
-                || JustDireUpgradesCompatibility.nativeBoot(data.right().source()))) { return; }
+                || JustDireUpgradesCompatibility.nativeBoot(data.right().source()))) {
+            return;
+        }
         boolean shift = Minecraft.getInstance().hasShiftDown();
         appendEnergy(root, display, tooltip, shift);
         var global = JustDireTooltipClient.<Boolean>component("tool_enabled");
         if (global != null && display.shows(global)) {
             var line = Component.translatable(root.getOrDefault(global, true) ? "justdirethings.enabled" : "justdirethings.disabled")
-                    .withStyle(root.getOrDefault(global, true) ? ChatFormatting.GREEN : ChatFormatting.DARK_RED);
+                                .withStyle(root.getOrDefault(global, true) ? ChatFormatting.GREEN : ChatFormatting.DARK_RED);
             var mapping = JustDireSettingsClient.toggleMapping();
             if (mapping != null) {
                 line.append(Component.literal(" ").append(Component.translatable("justdirethings.presshotkey",
-                        mapping.getKey().getDisplayName()).withStyle(ChatFormatting.DARK_GRAY)));
+                                                                                 mapping.getKey().getDisplayName())
+                                                                   .withStyle(ChatFormatting.DARK_GRAY)));
             }
             tooltip.accept(line);
         }
@@ -54,7 +58,9 @@ public final class JustDireTooltipClient {
             var installed = JustDireTooltipClient.<Boolean>component(name + "_upgrade_installed");
             var toggle = JustDireTooltipClient.<Boolean>component(name + "_toggle");
             if (installed == null || toggle == null || !display.shows(installed) || !display.shows(toggle)
-                    || JustDireSettingsCompatibility.metadata(root, name) == null) { continue; }
+                    || JustDireSettingsCompatibility.metadata(root, name) == null) {
+                continue;
+            }
             var ability = Component.translatable("justdirethings.ability." + name);
             if (!root.getOrDefault(installed, false)) {
                 ability.append(Component.translatable("justdirethings.missingupgrade")).withStyle(ChatFormatting.GRAY);
@@ -67,19 +73,24 @@ public final class JustDireTooltipClient {
         var lava = JustDireTooltipClient.<Boolean>component("lavarepair_toggle");
         if (lava != null && display.shows(lava) && JustDireLavaRepairCompatibility.eligible(root)) {
             abilities.add(Component.translatable("justdirethings.ability.lavarepair")
-                    .withStyle(root.getOrDefault(lava, true) ? ChatFormatting.GREEN : ChatFormatting.DARK_RED));
+                                   .withStyle(root.getOrDefault(lava, true) ? ChatFormatting.GREEN : ChatFormatting.DARK_RED));
         }
-        if (shift) { abilities.forEach(tooltip); }
-        else if (!abilities.isEmpty()) {
+        if (shift) {
+            abilities.forEach(tooltip);
+        } else if (!abilities.isEmpty()) {
             tooltip.accept(Component.translatable("justdirethings.shiftmoreinfo").withStyle(ChatFormatting.GRAY));
         }
     }
 
     private static void appendEnergy(ItemStack root, TooltipDisplay display, Consumer<Component> tooltip, boolean shift) {
         var energyType = component("forge_energy");
-        if (energyType == null || !display.shows(energyType)) { return; }
+        if (energyType == null || !display.shows(energyType)) {
+            return;
+        }
         var energy = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
-        if (energy == null) { return; }
+        if (energy == null) {
+            return;
+        }
         String amount = number(energy.getAmountAsInt(), shift), capacity = number(energy.getCapacityAsInt(), shift);
         if (amount != null && capacity != null) {
             tooltip.accept(Component.translatable("justdirethings.festored", amount, capacity).withStyle(ChatFormatting.GREEN));
@@ -87,27 +98,33 @@ public final class JustDireTooltipClient {
     }
 
     private static String number(int value, boolean full) {
-        if (formatsFailed) { return null; }
+        if (formatsFailed) {
+            return null;
+        }
         try {
             if (formats == null) {
                 var helpers = Class.forName("com.direwolf20.justdirethings.util.MagicHelpers");
                 var lookup = MethodHandles.publicLookup();
                 formats = new Formats(lookup.findStatic(helpers, "formatted", MethodType.methodType(String.class, int.class)),
-                        lookup.findStatic(helpers, "tidyValue", MethodType.methodType(String.class, float.class)));
+                                      lookup.findStatic(helpers, "tidyValue", MethodType.methodType(String.class, float.class)));
             }
             return full ? (String) formats.full.invokeExact(value) : (String) formats.shortened.invokeExact((float) value);
         } catch (Throwable failure) {
-            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
+                throw fatal;
+            }
             formatsFailed = true;
             Constants.LOG.warn("Just Dire Things tooltip number formatting unavailable; mixed FE text disabled", failure);
             return null;
         }
     }
 
-    @SuppressWarnings("unchecked") private static <T> DataComponentType<T> component(String path) {
+    @SuppressWarnings("unchecked")
+    private static <T> DataComponentType<T> component(String path) {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(
                 Identifier.fromNamespaceAndPath("justdirethings", path)).map(holder -> holder.value()).orElse(null);
     }
 
-    private record Formats(MethodHandle full, MethodHandle shortened) {}
+    private record Formats(MethodHandle full, MethodHandle shortened) {
+    }
 }

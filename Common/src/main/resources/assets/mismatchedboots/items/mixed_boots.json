@@ -1,27 +1,63 @@
 {
-  "model": {
-    "type": "minecraft:composite",
-    "models": [
-      {
-        "type": "minecraft:model",
-        "model": "minecraft:item/iron_boots",
-        "transformation": {
-          "left_rotation": [0.0, -0.0087265355, 0.0, 0.9999619231],
-          "scale": [1.0, 1.0, 1.0],
-          "translation": [0.0088023556, 0.0, -0.0086500508],
-          "right_rotation": [0.0, 0.0, 0.0, 1.0]
-        }
-      },
-      {
-        "type": "minecraft:model",
-        "model": "minecraft:item/golden_boots",
-        "transformation": {
-          "left_rotation": [0.0, 0.0087265355, 0.0, 0.9999619231],
-          "scale": [1.0, 1.0, 1.0],
-          "translation": [-0.0086500508, 0.0, 0.0088023556],
-          "right_rotation": [0.0, 0.0, 0.0, 1.0]
-        }
-      }
-    ]
-  }
+    "model": {
+        "type": "minecraft:composite",
+        "models": [
+            {
+                "type": "minecraft:model",
+                "model": "minecraft:item/iron_boots",
+                "transformation": {
+                    "left_rotation": [
+                        0.0,
+                        -0.0087265355,
+                        0.0,
+                        0.9999619231
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "translation": [
+                        0.0088023556,
+                        0.0,
+                        -0.0086500508
+                    ],
+                    "right_rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                }
+            },
+            {
+                "type": "minecraft:model",
+                "model": "minecraft:item/golden_boots",
+                "transformation": {
+                    "left_rotation": [
+                        0.0,
+                        0.0087265355,
+                        0.0,
+                        0.9999619231
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "translation": [
+                        -0.0086500508,
+                        0.0,
+                        0.0088023556
+                    ],
+                    "right_rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                }
+            }
+        ]
+    }
 }

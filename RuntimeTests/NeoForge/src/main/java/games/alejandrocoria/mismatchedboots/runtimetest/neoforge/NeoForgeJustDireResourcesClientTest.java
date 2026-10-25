@@ -59,26 +59,38 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static int fallCharge;
     private static ItemStack refundPurchased;
 
-    private NeoForgeJustDireResourcesClientTest() {}
+    private NeoForgeJustDireResourcesClientTest() {
+    }
 
     static void tick(Minecraft client) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         try {
-            if (++ticks > 3_600) { throw new IllegalStateException("Resource client timed out at phase " + phase); }
-            if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) { return; }
-            if (job != null && !job.isDone()) { return; }
-            if (job != null) { job.get(); job = null; }
+            if (++ticks > 3_600) {
+                throw new IllegalStateException("Resource client timed out at phase " + phase);
+            }
+            if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
+                return;
+            }
+            if (job != null && !job.isDone()) {
+                return;
+            }
+            if (job != null) {
+                job.get();
+                job = null;
+            }
             var player = client.player;
             var server = client.getSingleplayerServer();
             require(server != null, "Integrated server missing");
             if (phase == 0) {
                 require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0
-                        && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
+                                && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                         "Resource client was not hidden and muted");
                 tooltipMatrix(client);
                 preview = new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(
-                        poweredBoots(), new ItemStack(Items.IRON_BOOTS)),
-                        AttributeRuleState.current(), ComponentRuleState.current());
+                                                                                  poweredBoots(), new ItemStack(Items.IRON_BOOTS)),
+                                                                          AttributeRuleState.current(), ComponentRuleState.current());
                 require(preview.isComplete(), "Synchronized client preview failed");
                 var id = player.getUUID();
                 job = server.submit(() -> {
@@ -100,12 +112,17 @@ public final class NeoForgeJustDireResourcesClientTest {
             } else if (phase == 1) {
                 ItemStack first = player.getInventory().getItem(0);
                 ItemStack second = player.getInventory().getItem(1);
-                if (!ModContent.isMixedBoots(first) || !ModContent.isMixedBoots(second)) { return; }
-                if (!equipmentAgrees(client, first)) { return; }
+                if (!ModContent.isMixedBoots(first) || !ModContent.isMixedBoots(second)) {
+                    return;
+                }
+                if (!equipmentAgrees(client, first)) {
+                    return;
+                }
                 require(ItemStack.matches(preview.primary(), first) && ItemStack.matches(preview.inverse(), second),
                         "Actual server outputs differed from independently assembled client preview");
                 require(JustDireResourceTestSupport.handler(first).getAmountAsInt() == 3_000
-                        && JustDireResourceTestSupport.handler(first).getCapacityAsInt() == 10_000, "Client capability initial state differs");
+                                && JustDireResourceTestSupport.handler(first).getCapacityAsInt() == 10_000,
+                        "Client capability initial state differs");
                 assertTooltip(client, first, 3_000, 10_000);
                 assertTooltip(client, second, 3_000, 10_000);
                 var id = player.getUUID();
@@ -122,9 +139,11 @@ public final class NeoForgeJustDireResourcesClientTest {
                 phase = 2;
             } else if (phase == 2) {
                 ItemStack first = player.getInventory().getItem(0);
-                if (JustDireResourceTestSupport.handler(first).getAmountAsInt() != 1_733) { return; }
+                if (JustDireResourceTestSupport.handler(first).getAmountAsInt() != 1_733) {
+                    return;
+                }
                 require(ItemStack.matches(preview.inverse(), player.getInventory().getItem(1))
-                        && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
+                                && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Actual FE packet changed inverse output or source snapshots");
                 assertTooltip(client, first, 1_733, 10_000);
                 var id = player.getUUID();
@@ -137,10 +156,14 @@ public final class NeoForgeJustDireResourcesClientTest {
                 phase = 3;
             } else if (phase == 3) {
                 ItemStack first = player.getInventory().getItem(0);
-                if (first.has(JustDireResourceTestSupport.energyComponent())) { return; }
-                if (!equipmentAgrees(client, first)) { return; }
+                if (first.has(JustDireResourceTestSupport.energyComponent())) {
+                    return;
+                }
+                if (!equipmentAgrees(client, first)) {
+                    return;
+                }
                 require(JustDireResourceTestSupport.handler(first).getAmountAsInt() == 0
-                        && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
+                                && ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Absent live FE field was refilled on the real client");
                 assertTooltip(client, first, 0, 10_000);
                 var id = player.getUUID();
@@ -155,7 +178,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                     JustDireAttributeTestSupport.set(generator, "tool_enabled", true);
                     owner.getInventory().setItem(2, generator);
                     generator.getItem().inventoryTick(generator, server.overworld(), owner,
-                            net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                                                      net.minecraft.world.entity.EquipmentSlot.MAINHAND);
                     generatorCharge = JustDireResourceTestSupport.handler(owner.getInventory().getItem(0)).getAmountAsInt();
                     int remainder = JustDireResourceTestSupport.handler(generator).getAmountAsInt();
                     require(generatorCharge > 0 && generatorCharge + remainder == 2_000,
@@ -166,7 +189,9 @@ public final class NeoForgeJustDireResourcesClientTest {
                 phase = 4;
             } else if (phase == 4) {
                 ItemStack first = player.getInventory().getItem(0);
-                if (JustDireResourceTestSupport.handler(first).getAmountAsInt() != generatorCharge) { return; }
+                if (JustDireResourceTestSupport.handler(first).getAmountAsInt() != generatorCharge) {
+                    return;
+                }
                 assertTooltip(client, first, generatorCharge, 10_000);
                 require(ModContent.getMixedBootsData(first).equals(ModContent.getMixedBootsData(preview.primary())),
                         "Pocket Generator recharge changed provenance");
@@ -186,7 +211,9 @@ public final class NeoForgeJustDireResourcesClientTest {
             } else if (phase == 5) {
                 ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
                 if (!ModContent.isMixedBoots(root) || JustDireResourceTestSupport.handler(root).getAmountAsInt() != fallCharge
-                        || !equipmentAgrees(client, root)) { return; }
+                        || !equipmentAgrees(client, root)) {
+                    return;
+                }
                 assertTooltip(client, root, fallCharge, 10_000);
                 require(player.getInventory().getItem(0).isEmpty(), "Equipping retained a duplicate receiver");
                 var id = player.getUUID();
@@ -200,9 +227,12 @@ public final class NeoForgeJustDireResourcesClientTest {
                 phase = 6;
             } else if (phase == 6) {
                 ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != 0 || !equipmentAgrees(client, root)) { return; }
+                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != 0 || !equipmentAgrees(client, root)) {
+                    return;
+                }
                 assertTooltip(client, root, 0, 10_000);
-                require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())), "Actual fall packet changed source charge");
+                require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())),
+                        "Actual fall packet changed source charge");
                 var id = player.getUUID();
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id);
@@ -222,7 +252,9 @@ public final class NeoForgeJustDireResourcesClientTest {
                 phase = 7;
             } else if (phase == 7) {
                 ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != generatorCharge || !equipmentAgrees(client, root)) { return; }
+                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != generatorCharge || !equipmentAgrees(client, root)) {
+                    return;
+                }
                 assertTooltip(client, root, generatorCharge, 10_000);
                 var id = player.getUUID();
                 job = server.submit(() -> {
@@ -232,9 +264,12 @@ public final class NeoForgeJustDireResourcesClientTest {
                 phase = 8;
             } else if (phase == 8) {
                 ItemStack root = player.getItemBySlot(EquipmentSlot.FEET);
-                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != fallCharge || !equipmentAgrees(client, root)) { return; }
+                if (JustDireResourceTestSupport.handler(root).getAmountAsInt() != fallCharge || !equipmentAgrees(client, root)) {
+                    return;
+                }
                 assertTooltip(client, root, fallCharge, 10_000);
-                require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())), "Recharge/fall rewrote source provenance");
+                require(ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(preview.primary())),
+                        "Recharge/fall rewrote source provenance");
                 require(JustDireRefundLifecycleTest.credits(root).equals(List.of("stepheight", "negatefalldamage")),
                         "Recharge/depletion/equipment packets lost inherited credits");
                 var id = player.getUUID();
@@ -242,66 +277,92 @@ public final class NeoForgeJustDireResourcesClientTest {
                     var owner = server.getPlayerList().getPlayer(id);
                     owner.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
                     owner.getInventory().clearContent();
-                    owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new MismatchedWorkbenchMenu(menuId, inventory), Component.literal("Refund packets")));
+                    owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new MismatchedWorkbenchMenu(menuId, inventory),
+                                                          Component.literal("Refund packets")));
                     var menu = owner.containerMenu;
-                    menu.getSlot(0).set(poweredBoots()); menu.getSlot(1).set(new ItemStack(Items.IRON_BOOTS));
+                    menu.getSlot(0).set(poweredBoots());
+                    menu.getSlot(1).set(new ItemStack(Items.IRON_BOOTS));
                     menu.broadcastChanges();
                 });
                 phase = 9;
             } else if (phase == 9) {
-                if (!(player.containerMenu instanceof MismatchedWorkbenchMenu menu) || menu.getSlot(2).getItem().isEmpty() || menu.getSlot(3).getItem().isEmpty()) { return; }
-                require(ItemStack.matches(menu.getSlot(2).getItem(), preview.primary()) && ItemStack.matches(menu.getSlot(3).getItem(), preview.inverse())
-                        && JustDireRefundLifecycleTest.credits(menu.getSlot(2).getItem()).equals(List.of("stepheight", "negatefalldamage"))
-                        && JustDireRefundLifecycleTest.credits(menu.getSlot(3).getItem()).isEmpty(), "Real Workbench menu packets lost inverse allocation");
+                if (!(player.containerMenu instanceof MismatchedWorkbenchMenu menu) || menu.getSlot(2).getItem().isEmpty() || menu.getSlot(3)
+                                                                                                                                  .getItem()
+                                                                                                                                  .isEmpty()) {
+                    return;
+                }
+                require(ItemStack.matches(menu.getSlot(2).getItem(), preview.primary()) && ItemStack.matches(menu.getSlot(3).getItem(),
+                                                                                                             preview.inverse())
+                                && JustDireRefundLifecycleTest.credits(menu.getSlot(2).getItem()).equals(List.of("stepheight", "negatefalldamage"))
+                                && JustDireRefundLifecycleTest.credits(menu.getSlot(3).getItem()).isEmpty(),
+                        "Real Workbench menu packets lost inverse allocation");
                 var id = player.getUUID();
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id);
                     var bench = owner.containerMenu;
-                    var first = bench.getSlot(2).safeTake(1, 1, owner); var second = bench.getSlot(3).safeTake(1, 1, owner);
+                    var first = bench.getSlot(2).safeTake(1, 1, owner);
+                    var second = bench.getSlot(3).safeTake(1, 1, owner);
                     require(!first.isEmpty() && !second.isEmpty(), "Packet Workbench take failed");
-                    owner.closeContainer(); owner.getInventory().setItem(1, second);
-                    var pos = owner.blockPosition(); server.overworld().setBlock(pos, Blocks.SMITHING_TABLE.defaultBlockState(), 3);
+                    owner.closeContainer();
+                    owner.getInventory().setItem(1, second);
+                    var pos = owner.blockPosition();
+                    server.overworld().setBlock(pos, Blocks.SMITHING_TABLE.defaultBlockState(), 3);
                     owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new SmithingMenu(menuId, inventory,
-                            ContainerLevelAccess.create(server.overworld(), pos)), Component.literal("Refund installation packets")));
+                                                                                                           ContainerLevelAccess.create(server.overworld(),
+                                                                                                                                       pos)),
+                                                          Component.literal("Refund installation packets")));
                     var smith = owner.containerMenu;
                     smith.getSlot(SmithingMenu.BASE_SLOT).set(first);
                     smith.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(JustDireRefundLifecycleTest.item("upgrade_groundstomp"));
                     refundPurchased = smith.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
                     require(!refundPurchased.isEmpty() && JustDireRefundLifecycleTest.credits(refundPurchased)
-                            .equals(List.of("stepheight", "groundstomp", "negatefalldamage")), "Paid preview lacks new credit");
+                                                                                     .equals(List.of("stepheight",
+                                                                                                     "groundstomp",
+                                                                                                     "negatefalldamage")),
+                            "Paid preview lacks new credit");
                     smith.broadcastChanges();
                 });
                 phase = 10;
             } else if (phase == 10) {
-                if (!(player.containerMenu instanceof SmithingMenu smith) || smith.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty()) { return; }
+                if (!(player.containerMenu instanceof SmithingMenu smith) || smith.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty()) {
+                    return;
+                }
                 require(ItemStack.matches(refundPurchased, smith.getSlot(SmithingMenu.RESULT_SLOT).getItem())
-                        && JustDireRefundLifecycleTest.credits(smith.getSlot(SmithingMenu.BASE_SLOT).getItem()).equals(List.of("stepheight", "negatefalldamage")),
+                                && JustDireRefundLifecycleTest.credits(smith.getSlot(SmithingMenu.BASE_SLOT).getItem())
+                                                              .equals(List.of("stepheight", "negatefalldamage")),
                         "Actual smithing base/result packets lost distinct credit state");
                 var id = player.getUUID();
                 job = server.submit(() -> {
-                    var owner = server.getPlayerList().getPlayer(id); var menu = owner.containerMenu;
+                    var owner = server.getPlayerList().getPlayer(id);
+                    var menu = owner.containerMenu;
                     menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, owner);
                     var taken = menu.getCarried();
                     require(ItemStack.matches(taken, refundPurchased) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                            && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Real packet installation did not pay once");
-                    menu.setCarried(ItemStack.EMPTY); owner.closeContainer(); owner.setItemSlot(EquipmentSlot.FEET, taken);
+                                    && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Real packet installation did not pay once");
+                    menu.setCarried(ItemStack.EMPTY);
+                    owner.closeContainer();
+                    owner.setItemSlot(EquipmentSlot.FEET, taken);
                 });
                 phase = 11;
             } else {
-                if (!ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), refundPurchased)) { return; }
+                if (!ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), refundPurchased)) {
+                    return;
+                }
                 require(ItemStack.matches(player.getInventory().getItem(1), preview.inverse())
-                        && JustDireRefundLifecycleTest.credits(player.getInventory().getItem(1)).isEmpty(), "Later paid equipment packet changed inverse sibling");
-                NetworkAcceptanceFiles.write("just-dire-resources-client-report.txt", "hidden/muted NeoForge client; actual integrated-server Workbench takes; "
-                        + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
-                        + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
-                        + "native normal/advanced/controlled-Shift tooltip controls; abbreviated/full live FE in both orientations; "
-                        + "maximum capacity; native global status/rebound and unbound key hint; supported missing/installed rows with independent switch colors; dormant flags omitted; "
-                        + "intrinsic Lava last only with Shift; no source state/qualifier/empty Shift hint; hidden FE/global/upgrade/Lava/source details; unchanged vanilla lore; "
-                        + "actual native Pocket Generator inventory/equipped transfers with FE conservation; actual survival Negate debit/depletion; "
-                        + "positive unprotected fall control after depletion; natural equipment/attribute packets and exact live tooltip after debit; "
-                        + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill; "
-                        + "production refund credits through recharge/depletion; actual open Workbench menu packets with unequal inverse credits; "
-                        + "actual open smithing base/result packets and paid Ground Stomp take; equipped purchased root packet; unchanged uncredited sibling\n");
+                                && JustDireRefundLifecycleTest.credits(player.getInventory().getItem(1)).isEmpty(),
+                        "Later paid equipment packet changed inverse sibling");
+                NetworkAcceptanceFiles.write("just-dire-resources-client-report.txt",
+                                             "hidden/muted NeoForge client; actual integrated-server Workbench takes; "
+                                                     + "independent synchronized-rule preview equality; production client capability; actual spent/absent FE inventory packets; "
+                                                     + "actual charged/depleted client armor and Step Assist; unchanged inverse/provenance; "
+                                                     + "native normal/advanced/controlled-Shift tooltip controls; abbreviated/full live FE in both orientations; "
+                                                     + "maximum capacity; native global status/rebound and unbound key hint; supported missing/installed rows with independent switch colors; dormant flags omitted; "
+                                                     + "intrinsic Lava last only with Shift; no source state/qualifier/empty Shift hint; hidden FE/global/upgrade/Lava/source details; unchanged vanilla lore; "
+                                                     + "actual native Pocket Generator inventory/equipped transfers with FE conservation; actual survival Negate debit/depletion; "
+                                                     + "positive unprotected fall control after depletion; natural equipment/attribute packets and exact live tooltip after debit; "
+                                                     + "charged/depleted/recharged equipped armor/Step Assist and Negate protection restored without source refill; "
+                                                     + "production refund credits through recharge/depletion; actual open Workbench menu packets with unequal inverse credits; "
+                                                     + "actual open smithing base/result packets and paid Ground Stomp take; equipped purchased root packet; unchanged uncredited sibling\n");
                 NetworkAcceptanceFiles.write("just-dire-resources-client-success.txt", "neoforge\n");
                 finished = true;
             }
@@ -309,11 +370,15 @@ public final class NeoForgeJustDireResourcesClientTest {
             finished = true;
             NetworkAcceptanceFiles.failure("just-dire-resources-client", failure);
         }
-        if (finished) { client.stop(); }
+        if (finished) {
+            client.stop();
+        }
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new IllegalStateException(message); }
+        if (!condition) {
+            throw new IllegalStateException(message);
+        }
     }
 
     private static ItemStack poweredBoots() {
@@ -326,13 +391,15 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static void equippedFall(net.minecraft.server.level.ServerPlayer owner, double distance, int remaining, float loss) {
         ItemStack root = owner.getItemBySlot(EquipmentSlot.FEET);
         ItemStack before = root.copy();
-        owner.setHealth(owner.getMaxHealth()); owner.invulnerableTime = 0;
+        owner.setHealth(owner.getMaxHealth());
+        owner.invulnerableTime = 0;
         owner.causeFallDamage(distance, 1, owner.damageSources().fall());
         require(owner.getMaxHealth() - owner.getHealth() == loss
                         && JustDireResourceTestSupport.handler(root).getAmountAsInt() == remaining,
                 "Actual integrated-server Negate fall health/FE differs: distance=" + distance);
         before.set(JustDireResourceTestSupport.energyComponent(), remaining);
-        require(owner.getItemBySlot(EquipmentSlot.FEET) == root && ItemStack.matches(before, root), "Negate debit changed equipped identity/non-FE state");
+        require(owner.getItemBySlot(EquipmentSlot.FEET) == root && ItemStack.matches(before, root),
+                "Negate debit changed equipped identity/non-FE state");
         // No forced equipment replacement or broadcast: normal ticks must synchronize this in-place debit.
     }
 
@@ -381,19 +448,20 @@ public final class NeoForgeJustDireResourcesClientTest {
                     root.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT
                             .withHidden(JustDireResourceTestSupport.energyComponent(), true));
                     require(capture(client, root, TooltipFlag.NORMAL, true).stream()
-                            .noneMatch(line -> key(line).equals("justdirethings.festored")), "Root hidden FE was displayed");
+                                                                           .noneMatch(line -> key(line).equals("justdirethings.festored")),
+                            "Root hidden FE was displayed");
                 }
             }
             require(ItemStack.matches(source, sourceBefore), "Tooltip matrix mutated native input");
         }
         Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config")
-                .getField("AVAILABLE_ABILITY_MAP").get(null);
+                                           .getField("AVAILABLE_ABILITY_MAP").get(null);
         var lavaRepair = (ModConfigSpec.BooleanValue) flags.entrySet().stream()
-                .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("LAVAREPAIR"))
-                .findFirst().orElseThrow().getValue();
+                                                           .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("LAVAREPAIR"))
+                                                           .findFirst().orElseThrow().getValue();
         boolean original = lavaRepair.get();
         var intrinsicPair = MixedBootsFactory.createPair(NeoForgeJustDireResourcesTest.boots("blazegold", 0),
-                NeoForgeJustDireResourcesTest.boots("blazegold", 0));
+                                                         NeoForgeJustDireResourcesTest.boots("blazegold", 0));
         try {
             lavaRepair.set(false);
             assertTooltip(client, intrinsicPair.primary(), 0, 0);
@@ -406,10 +474,12 @@ public final class NeoForgeJustDireResourcesClientTest {
             intrinsicPair.primary().set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT
                     .withHidden(JustDireAttributeTestSupport.component("lavarepair_toggle"), true));
             assertTooltip(client, intrinsicPair.primary(), 0, 0);
-        } finally { lavaRepair.set(original); }
+        } finally {
+            lavaRepair.set(original);
+        }
         var step = (ModConfigSpec.BooleanValue) flags.entrySet().stream()
-                .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("STEPHEIGHT"))
-                .findFirst().orElseThrow().getValue();
+                                                     .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("STEPHEIGHT"))
+                                                     .findFirst().orElseThrow().getValue();
         boolean originalStep = step.get();
         try {
             step.set(false);
@@ -417,26 +487,35 @@ public final class NeoForgeJustDireResourcesClientTest {
             JustDireAttributeTestSupport.set(disabledPair.primary(), "stepheight_upgrade_installed", true);
             assertTooltip(client, disabledPair.primary(), 3_000, 10_000);
             require(capture(client, disabledPair.primary(), TooltipFlag.NORMAL, true).stream()
-                    .noneMatch(line -> key(line).equals("justdirethings.ability.stepheight")), "Config-disabled installed ability advertised");
-        } finally { step.set(originalStep); }
+                                                                                     .noneMatch(line -> key(line).equals(
+                                                                                             "justdirethings.ability.stepheight")),
+                    "Config-disabled installed ability advertised");
+        } finally {
+            step.set(originalStep);
+        }
         var abilityFlags = new java.util.LinkedHashMap<ModConfigSpec.BooleanValue, Boolean>();
         var noDetails = MixedBootsFactory.createPair(poweredBoots(), new ItemStack(Items.DIAMOND_BOOTS)).primary();
         try {
             for (var entry : flags.entrySet()) {
                 if (!List.of("STEPHEIGHT", "JUMPBOOST", "NEGATEFALLDAMAGE", "GROUNDSTOMP", "EARTHQUAKE", "LAVAREPAIR")
-                        .contains(((Enum<?>) entry.getKey()).name())) { continue; }
+                         .contains(((Enum<?>) entry.getKey()).name())) {
+                    continue;
+                }
                 var value = (ModConfigSpec.BooleanValue) entry.getValue();
-                abilityFlags.put(value, value.get()); value.set(false);
+                abilityFlags.put(value, value.get());
+                value.set(false);
             }
             assertTooltip(client, noDetails, 3_000, 10_000);
-        } finally { abilityFlags.forEach(ModConfigSpec.BooleanValue::set); }
+        } finally {
+            abilityFlags.forEach(ModConfigSpec.BooleanValue::set);
+        }
         ItemStack hiddenIntrinsic = NeoForgeJustDireResourcesTest.boots("blazegold", 0);
         hiddenIntrinsic.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
         var hiddenIntrinsicRoot = MixedBootsFactory.createPair(hiddenIntrinsic, new ItemStack(Items.DIAMOND_BOOTS)).primary();
         hiddenIntrinsicRoot.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
         assertTooltip(client, hiddenIntrinsicRoot, 0, 0);
         var pair = MixedBootsFactory.createPair(NeoForgeJustDireResourcesTest.boots("celestigem", 6_000),
-                NeoForgeJustDireResourcesTest.boots("eclipsealloy", 20_000));
+                                                NeoForgeJustDireResourcesTest.boots("eclipsealloy", 20_000));
         assertTooltip(client, pair.primary(), 13_000, 500_000);
         assertTooltip(client, pair.inverse(), 13_000, 500_000);
         var mapping = (KeyMapping) Class.forName("com.direwolf20.justdirethings.client.KeyBindings").getField("toggleTool").get(null);
@@ -447,7 +526,9 @@ public final class NeoForgeJustDireResourcesClientTest {
                 pair.primary().set(JustDireResourceTestSupport.energyComponent(), 88_680);
                 assertTooltip(client, pair.primary(), 88_680, 500_000);
             }
-        } finally { mapping.setKey(originalKey); }
+        } finally {
+            mapping.setKey(originalKey);
+        }
 
         ItemStack hidden = poweredBoots();
         hidden.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
@@ -466,10 +547,10 @@ public final class NeoForgeJustDireResourcesClientTest {
         vanilla.set(DataComponents.LORE, new ItemLore(List.of(lore, hintLore)));
         root = MixedBootsFactory.createPair(vanilla, new ItemStack(Items.DIAMOND_BOOTS)).primary();
         require(capture(client, root, TooltipFlag.NORMAL, false).stream()
-                        .anyMatch(line -> key(line).equals("justdirethings.enabled")),
+                                                                .anyMatch(line -> key(line).equals("justdirethings.enabled")),
                 "Just Dire Things adapter filtered unrelated source lore");
         require(capture(client, root, TooltipFlag.NORMAL, false).stream()
-                        .anyMatch(line -> key(line).equals("justdirethings.shiftmoreinfo")),
+                                                                .anyMatch(line -> key(line).equals("justdirethings.shiftmoreinfo")),
                 "Just Dire Things adapter filtered unrelated Shift lore");
     }
 
@@ -491,20 +572,22 @@ public final class NeoForgeJustDireResourcesClientTest {
         var rows = new ArrayList<Component>();
         for (String name : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "earthquake")) {
             if (!supported.contains(name) || !display.shows(JustDireAttributeTestSupport.component(name + "_upgrade_installed"))
-                    || !display.shows(JustDireAttributeTestSupport.component(name + "_toggle"))) { continue; }
+                    || !display.shows(JustDireAttributeTestSupport.component(name + "_toggle"))) {
+                continue;
+            }
             var row = Component.translatable("justdirethings.ability." + name);
             if (!root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component(name + "_upgrade_installed"), false)) {
                 row.append(Component.translatable("justdirethings.missingupgrade")).withStyle(ChatFormatting.GRAY);
             } else {
                 row.withStyle(root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component(name + "_toggle"), true)
-                        ? ChatFormatting.GREEN : ChatFormatting.DARK_RED);
+                              ? ChatFormatting.GREEN : ChatFormatting.DARK_RED);
             }
             rows.add(row);
         }
         if (supported.contains("lavarepair") && display.shows(JustDireAttributeTestSupport.component("lavarepair_toggle"))) {
             rows.add(Component.translatable("justdirethings.ability.lavarepair").withStyle(
                     root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("lavarepair_toggle"), true)
-                            ? ChatFormatting.GREEN : ChatFormatting.DARK_RED));
+                    ? ChatFormatting.GREEN : ChatFormatting.DARK_RED));
         }
         for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
             for (boolean shift : new boolean[]{false, true}) {
@@ -515,26 +598,41 @@ public final class NeoForgeJustDireResourcesClientTest {
                 if (showEnergy) {
                     JustDireTooltipTestSupport.energy(lines, amount, capacity, shift);
                 }
-                var global = lines.stream().filter(line -> key(line).equals("justdirethings.enabled") || key(line).equals("justdirethings.disabled")).toList();
+                var global = lines.stream()
+                                  .filter(line -> key(line).equals("justdirethings.enabled") || key(line).equals("justdirethings.disabled"))
+                                  .toList();
                 boolean showGlobal = nativeBoot && display.shows(JustDireAttributeTestSupport.component("tool_enabled"));
                 require(global.size() == (showGlobal ? 1 : 0), "Missing/duplicate/historical global state: " + global);
                 if (showGlobal) {
                     var control = NeoForgeJustDireResourcesTest.boots("ferricore", 0);
-                    JustDireAttributeTestSupport.set(control, "tool_enabled", root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("tool_enabled"), true));
-                    var nativeGlobal = capture(client, control, flag, shift).stream().filter(line ->
-                            key(line).equals("justdirethings.enabled") || key(line).equals("justdirethings.disabled")).findFirst().orElseThrow();
+                    JustDireAttributeTestSupport.set(control,
+                                                     "tool_enabled",
+                                                     root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("tool_enabled"), true));
+                    var nativeGlobal = capture(client, control, flag, shift).stream()
+                                                                            .filter(line ->
+                                                                                            key(line).equals("justdirethings.enabled") || key(line).equals(
+                                                                                                    "justdirethings.disabled"))
+                                                                            .findFirst()
+                                                                            .orElseThrow();
                     require(global.getFirst().equals(nativeGlobal), "Global status/key differs from native: " + global + " vs " + nativeGlobal);
-                    if (showEnergy) { require(lines.indexOf(energy.getFirst()) < lines.indexOf(global.getFirst()), "FE/global order changed"); }
+                    if (showEnergy) {
+                        require(lines.indexOf(energy.getFirst()) < lines.indexOf(global.getFirst()), "FE/global order changed");
+                    }
                 }
                 var actualRows = lines.stream().filter(line -> key(line).startsWith("justdirethings.ability.")).toList();
                 require(actualRows.equals(shift ? rows : List.of()), "Supported row order/state/color differs: " + actualRows + " vs " + rows);
                 var hint = lines.stream().filter(line -> key(line).equals("justdirethings.shiftmoreinfo")).toList();
                 require(hint.size() == (!shift && !rows.isEmpty() ? 1 : 0), "Empty/duplicate/missing Shift hint");
                 if (!hint.isEmpty()) {
-                    require(TextColor.fromLegacyFormat(ChatFormatting.GRAY).equals(hint.getFirst().getStyle().getColor()), "Shift hint color differs");
-                    if (showGlobal) { require(lines.indexOf(global.getFirst()) < lines.indexOf(hint.getFirst()), "Global/hint order changed"); }
+                    require(TextColor.fromLegacyFormat(ChatFormatting.GRAY).equals(hint.getFirst().getStyle().getColor()),
+                            "Shift hint color differs");
+                    if (showGlobal) {
+                        require(lines.indexOf(global.getFirst()) < lines.indexOf(hint.getFirst()), "Global/hint order changed");
+                    }
                 }
-                if (shift && showGlobal && !actualRows.isEmpty()) { require(lines.indexOf(global.getFirst()) < lines.indexOf(actualRows.getFirst()), "Global/list order changed"); }
+                if (shift && showGlobal && !actualRows.isEmpty()) {
+                    require(lines.indexOf(global.getFirst()) < lines.indexOf(actualRows.getFirst()), "Global/list order changed");
+                }
                 require(lines.stream().noneMatch(line -> key(line).startsWith("tooltip.mismatchedboots.just_dire.")
                         || key(line).equals("justdirethings.ability")), "Retired heading/status/qualifier remained");
                 require(ItemStack.matches(root, before), "Tooltip generation mutated root/provenance");
@@ -544,14 +642,18 @@ public final class NeoForgeJustDireResourcesClientTest {
 
     private static boolean equipmentAgrees(Minecraft client, ItemStack expected) {
         var feet = client.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET);
-        if (!ItemStack.matches(feet, expected)) { return false; }
+        if (!ItemStack.matches(feet, expected)) {
+            return false;
+        }
         var modifiers = expected.getAttributeModifiers();
         for (var attribute : java.util.List.of(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR,
-                net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT)) {
+                                               net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT)) {
             double amount = modifiers.modifiers().stream().filter(entry -> entry.attribute().equals(attribute))
-                    .mapToDouble(entry -> entry.modifier().amount()).sum();
+                                     .mapToDouble(entry -> entry.modifier().amount()).sum();
             double base = client.player.getAttributeBaseValue(attribute);
-            if (Math.abs(client.player.getAttributeValue(attribute) - base - amount) > 1e-7) { return false; }
+            if (Math.abs(client.player.getAttributeValue(attribute) - base - amount) > 1e-7) {
+                return false;
+            }
         }
         return true;
     }

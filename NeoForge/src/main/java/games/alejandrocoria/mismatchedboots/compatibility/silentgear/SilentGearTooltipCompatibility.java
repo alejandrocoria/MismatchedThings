@@ -12,7 +12,8 @@ import java.util.function.Consumer;
 
 /** The item also exists on dedicated servers: client bindings are resolved only behind both gates. */
 public final class SilentGearTooltipCompatibility {
-    private SilentGearTooltipCompatibility() {}
+    private SilentGearTooltipCompatibility() {
+    }
 
     public static void appendSource(ItemStack source, TooltipFlag flag, Consumer<Component> output) {
         if (FMLEnvironment.getDist() == Dist.CLIENT && ModList.get().isLoaded("silentgear")) {

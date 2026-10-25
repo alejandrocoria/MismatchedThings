@@ -8,11 +8,17 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionPointData;
 import java.util.Collection;
 
 public final class SilentGearRepairInjectionPoint extends InjectionPoint {
-    public SilentGearRepairInjectionPoint(InjectionPointData data) { super(data); }
+    public SilentGearRepairInjectionPoint(InjectionPointData data) {
+        super(data);
+    }
 
-    @Override public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
+    @Override
+    public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
         var call = SilentGearEffectShape.repairCall(descriptor, instructions);
-        if (call == null) { return false; }
-        nodes.add(call); return true;
+        if (call == null) {
+            return false;
+        }
+        nodes.add(call);
+        return true;
     }
 }

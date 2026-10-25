@@ -21,7 +21,7 @@ public final class AttributeComposer {
 
     static Result compose(ItemStack first, ItemStack second, AttributeRuleSet rules) {
         return composeModifiers(Services.PLATFORM.getCompositionAttributeModifiers(first),
-                Services.PLATFORM.getCompositionAttributeModifiers(second), rules);
+                                Services.PLATFORM.getCompositionAttributeModifiers(second), rules);
     }
 
     /** Pure supplied-input entry for frozen optional-integration projections; no stack queries. */
@@ -51,12 +51,12 @@ public final class AttributeComposer {
                         "Non-finite attribute modifier at " + side.serializedName + " index " + index);
             }
             Identifier attributeId = entry.attribute()
-                    .unwrapKey()
-                    .map(key -> key.identifier())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Attribute modifier uses an unregistered attribute"));
+                                          .unwrapKey()
+                                          .map(key -> key.identifier())
+                                          .orElseThrow(() -> new IllegalArgumentException(
+                                                  "Attribute modifier uses an unregistered attribute"));
             attributes.computeIfAbsent(attributeId, ignored -> new AttributeGroup())
-                    .add(side, entry);
+                      .add(side, entry);
         }
     }
 
@@ -128,8 +128,8 @@ public final class AttributeComposer {
         double result = switch (policy) {
             case AVERAGE -> first * 0.5D + second * 0.5D;
             case COMBINE -> operation == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
-                    ? first * second
-                    : first + second;
+                            ? first * second
+                            : first + second;
             case MINIMUM -> Math.min(first, second);
             case MAXIMUM -> Math.max(first, second);
             case SEPARATE, REJECT -> throw new IllegalStateException("Non-arithmetic attribute policy: " + policy);
@@ -171,7 +171,7 @@ public final class AttributeComposer {
         private void add(Side side, ItemAttributeModifiers.Entry entry) {
             side.select(firstEntries, secondEntries).add(entry);
             identities.computeIfAbsent(entry.modifier().id(), ignored -> new IdentityGroup())
-                    .add(side, entry);
+                      .add(side, entry);
         }
     }
 

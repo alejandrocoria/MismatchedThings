@@ -24,7 +24,7 @@ public final class BeltExtraPredicatePlugin implements IMixinConfigPlugin {
             return;
         }
         MethodNode method = node.methods.stream().filter(candidate -> candidate.name.equals("entityInside"))
-                .findFirst().orElseThrow();
+                                        .findFirst().orElseThrow();
         String player = "net/minecraft/world/entity/player/Player";
         String slot = "net/minecraft/world/entity/EquipmentSlot";
         InsnList extra = new InsnList();
@@ -36,22 +36,42 @@ public final class BeltExtraPredicatePlugin implements IMixinConfigPlugin {
         extra.add(new TypeInsnNode(Opcodes.CHECKCAST, player));
         extra.add(new FieldInsnNode(Opcodes.GETSTATIC, slot, "FEET", "L" + slot + ";"));
         extra.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, player, "getItemBySlot",
-                "(L" + slot + ";)Lnet/minecraft/world/item/ItemStack;", false));
+                                     "(L" + slot + ";)Lnet/minecraft/world/item/ItemStack;", false));
         extra.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/world/item/Items", "DIAMOND",
-                "Lnet/minecraft/world/item/Item;"));
+                                    "Lnet/minecraft/world/item/Item;"));
         extra.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/item/ItemStack",
-                "is", "(Ljava/lang/Object;)Z", false));
+                                     "is", "(Ljava/lang/Object;)Z", false));
         extra.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
-                "games/alejandrocoria/mismatchedboots/runtimetest/createfly/fabric/BeltExtraPredicateFixture",
-                "observe", "(Z)V", false));
+                                     "games/alejandrocoria/mismatchedboots/runtimetest/createfly/fabric/BeltExtraPredicateFixture",
+                                     "observe", "(Z)V", false));
         extra.add(skip);
         method.instructions.insert(extra);
     }
 
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return true; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return true;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

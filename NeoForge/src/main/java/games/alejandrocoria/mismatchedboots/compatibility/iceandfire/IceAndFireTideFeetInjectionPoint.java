@@ -26,15 +26,21 @@ public final class IceAndFireTideFeetInjectionPoint extends InjectionPoint {
             }
             AbstractInsnNode read = instruction;
             for (int count = 0; count < 3 && read != null; count++) {
-                do { read = read.getPrevious(); } while (read != null && read.getOpcode() < 0);
+                do {
+                    read = read.getPrevious();
+                } while (read != null && read.getOpcode() < 0);
             }
             if (read instanceof FieldInsnNode field && field.getOpcode() == Opcodes.GETSTATIC
                     && field.owner.equals("net/minecraft/world/entity/EquipmentSlot") && field.name.equals("FEET")) {
-                if (candidate != null) { return false; } // Ambiguity must skip our hook, not inject twice or abort startup.
+                if (candidate != null) {
+                    return false;
+                } // Ambiguity must skip our hook, not inject twice or abort startup.
                 candidate = instruction;
             }
         }
-        if (candidate == null) { return false; }
+        if (candidate == null) {
+            return false;
+        }
         nodes.add(candidate);
         return true;
     }

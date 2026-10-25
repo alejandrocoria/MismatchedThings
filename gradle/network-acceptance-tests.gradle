@@ -205,7 +205,7 @@ def assertCleanLogs = { List<File> runDirectories, File markers ->
     }
     String combined = logs.findAll(File::isFile).collect(File::getText).join('\n')
     Map<String, String> forbidden = [
-            'missing network channel' : '(?i)(missing|required).{0,40}(network )?channel|channel.{0,40}(missing|required)',
+            'missing network channel'  : '(?i)(missing|required).{0,40}(network )?channel|channel.{0,40}(missing|required)',
             'duplicate mod'            : '(?i)duplicate.{0,20}mod',
             'CommonNetworking mismatch': '(?i)common.?networking.{0,80}(version mismatch|version conflict|incompatible version)'
     ]

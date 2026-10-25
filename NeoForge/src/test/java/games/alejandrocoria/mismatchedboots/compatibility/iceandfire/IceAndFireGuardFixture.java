@@ -54,10 +54,10 @@ final class IceAndFireGuardFixture {
 
     static MethodNode start(String name) {
         MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                name, IceAndFireDamageShape.DESCRIPTOR, null, null);
+                                           name, IceAndFireDamageShape.DESCRIPTOR, null, null);
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, EVENT, "getEntity",
-                "()L" + ENTITY + ";", false));
+                                                   "()L" + ENTITY + ";", false));
         method.instructions.add(new VarInsnNode(Opcodes.ASTORE, 1));
         return method;
     }
@@ -66,13 +66,13 @@ final class IceAndFireGuardFixture {
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
         method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, SLOT, slot, "L" + SLOT + ";"));
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, ENTITY, "getItemBySlot",
-                "(L" + SLOT + ";)L" + STACK + ";", false));
+                                                   "(L" + SLOT + ";)L" + STACK + ";", false));
     }
 
     static void classCheck(MethodNode method, String slot, String type) {
         equipment(method, slot);
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, STACK, "getItem",
-                "()Lnet/minecraft/world/item/Item;", false));
+                                                   "()Lnet/minecraft/world/item/Item;", false));
         method.instructions.add(new TypeInsnNode(Opcodes.INSTANCEOF, type));
     }
 
@@ -117,13 +117,13 @@ final class IceAndFireGuardFixture {
         for (int index = 0; index < slots.length; index++) {
             equipment(method, slots[index]);
             method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, IceAndFireDamageShape.ITEMS,
-                    "DRAGONSTEEL_LIGHTNING_" + pieces[index],
-                    "Lnet/neoforged/neoforge/registries/DeferredItem;"));
+                                                      "DRAGONSTEEL_LIGHTNING_" + pieces[index],
+                                                      "Lnet/neoforged/neoforge/registries/DeferredItem;"));
             method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
-                    "net/neoforged/neoforge/registries/DeferredItem", "get", "()Ljava/lang/Object;", false));
+                                                       "net/neoforged/neoforge/registries/DeferredItem", "get", "()Ljava/lang/Object;", false));
             method.instructions.add(new TypeInsnNode(Opcodes.CHECKCAST, "net/minecraft/world/item/Item"));
             method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, STACK, "is",
-                    "(Ljava/lang/Object;)Z", false));
+                                                       "(Ljava/lang/Object;)Z", false));
             method.instructions.add(new JumpInsnNode(Opcodes.IFEQ, skip));
         }
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
@@ -138,7 +138,7 @@ final class IceAndFireGuardFixture {
         ClassWriter writer = new ClassWriter(0);
         writer.visit(Opcodes.V25, Opcodes.ACC_PUBLIC, "AuditedHandler", null, "java/lang/Object", null);
         var visitor = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                method.name, method.desc, null, null);
+                                         method.name, method.desc, null, null);
         visitor.visitCode();
         // Fresh labels avoid retaining ASM writer offsets. Frame/line/local metadata is not executable.
         Map<LabelNode, LabelNode> labels = new HashMap<>();

@@ -14,7 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class JustDireEnergyBarQueryFaultMixin {
     @Inject(method = "isBarVisible", at = @At("HEAD"))
     private void visibility(ItemStack root, CallbackInfoReturnable<Boolean> callback) {
-        if (!NeoForgeJustDireItemBarsTest.faultArmed(root)) { return; }
+        if (!NeoForgeJustDireItemBarsTest.faultArmed(root)) {
+            return;
+        }
         switch (System.getProperty("mismatchedboots.runtimetest.justDireItemBarsVariant", "")) {
             case "queryFailure" -> {
                 NeoForgeJustDireItemBarsTest.faultObserved();
@@ -31,7 +33,8 @@ abstract class JustDireEnergyBarQueryFaultMixin {
     private void width(ItemStack root, CallbackInfoReturnable<Integer> callback) {
         if (NeoForgeJustDireItemBarsTest.faultArmed(root)
                 && System.getProperty("mismatchedboots.runtimetest.justDireItemBarsVariant", "").equals("invalidWidth")) {
-            NeoForgeJustDireItemBarsTest.faultObserved(); callback.setReturnValue(14);
+            NeoForgeJustDireItemBarsTest.faultObserved();
+            callback.setReturnValue(14);
         }
     }
 }

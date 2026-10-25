@@ -1,16 +1,16 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "client": [
-    "LoadingErrorScreenMixin",
-    "ModelSubmitStorageAccessor",
-    "SubmitNodeStorageProbeMixin",
-    "WindowVisibilityMixin",
-    "compatibility.justdirethings.JustDireTooltipShiftMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "LoadingErrorScreenMixin",
+        "ModelSubmitStorageAccessor",
+        "SubmitNodeStorageProbeMixin",
+        "WindowVisibilityMixin",
+        "compatibility.justdirethings.JustDireTooltipShiftMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

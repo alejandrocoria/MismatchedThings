@@ -36,57 +36,57 @@ class AttributeRuleDefaultsTest {
     @Test
     void tableCoversEveryMinecraftAttributeInAuditedOrder() {
         Set<Identifier> registeredMinecraftAttributes = BuiltInRegistries.ATTRIBUTE.keySet().stream()
-                .filter(id -> id.getNamespace().equals("minecraft"))
-                .collect(Collectors.toSet());
+                                                                                   .filter(id -> id.getNamespace().equals("minecraft"))
+                                                                                   .collect(Collectors.toSet());
 
         List<Identifier> defaultMinecraftAttributes = AttributeRuleDefaults.rules().keySet().stream()
-                .filter(id -> id.getNamespace().equals("minecraft"))
-                .toList();
+                                                                           .filter(id -> id.getNamespace().equals("minecraft"))
+                                                                           .toList();
         assertEquals(registeredMinecraftAttributes, Set.copyOf(defaultMinecraftAttributes));
         assertEquals(List.of(
-                minecraft("armor"),
-                minecraft("armor_toughness"),
-                minecraft("attack_damage"),
-                minecraft("attack_knockback"),
-                minecraft("attack_speed"),
-                minecraft("block_break_speed"),
-                minecraft("block_interaction_range"),
-                minecraft("burning_time"),
-                minecraft("camera_distance"),
-                minecraft("explosion_knockback_resistance"),
-                minecraft("entity_interaction_range"),
-                minecraft("fall_damage_multiplier"),
-                minecraft("flying_speed"),
-                minecraft("gravity"),
-                minecraft("jump_strength"),
-                minecraft("knockback_resistance"),
-                minecraft("luck"),
-                minecraft("max_absorption"),
-                minecraft("max_health"),
-                minecraft("mining_efficiency"),
-                minecraft("movement_efficiency"),
-                minecraft("movement_speed"),
-                minecraft("oxygen_bonus"),
-                minecraft("safe_fall_distance"),
-                minecraft("scale"),
-                minecraft("sneaking_speed"),
-                minecraft("submerged_mining_speed"),
-                minecraft("sweeping_damage_ratio"),
-                minecraft("water_movement_efficiency"),
-                minecraft("step_height"),
-                minecraft("follow_range"),
-                minecraft("spawn_reinforcements"),
-                minecraft("tempt_range"),
-                minecraft("waypoint_receive_range"),
-                minecraft("waypoint_transmit_range")),
-                defaultMinecraftAttributes);
+                             minecraft("armor"),
+                             minecraft("armor_toughness"),
+                             minecraft("attack_damage"),
+                             minecraft("attack_knockback"),
+                             minecraft("attack_speed"),
+                             minecraft("block_break_speed"),
+                             minecraft("block_interaction_range"),
+                             minecraft("burning_time"),
+                             minecraft("camera_distance"),
+                             minecraft("explosion_knockback_resistance"),
+                             minecraft("entity_interaction_range"),
+                             minecraft("fall_damage_multiplier"),
+                             minecraft("flying_speed"),
+                             minecraft("gravity"),
+                             minecraft("jump_strength"),
+                             minecraft("knockback_resistance"),
+                             minecraft("luck"),
+                             minecraft("max_absorption"),
+                             minecraft("max_health"),
+                             minecraft("mining_efficiency"),
+                             minecraft("movement_efficiency"),
+                             minecraft("movement_speed"),
+                             minecraft("oxygen_bonus"),
+                             minecraft("safe_fall_distance"),
+                             minecraft("scale"),
+                             minecraft("sneaking_speed"),
+                             minecraft("submerged_mining_speed"),
+                             minecraft("sweeping_damage_ratio"),
+                             minecraft("water_movement_efficiency"),
+                             minecraft("step_height"),
+                             minecraft("follow_range"),
+                             minecraft("spawn_reinforcements"),
+                             minecraft("tempt_range"),
+                             minecraft("waypoint_receive_range"),
+                             minecraft("waypoint_transmit_range")),
+                     defaultMinecraftAttributes);
     }
 
     @Test
     void optionalModDefaultsAreExplicitAndDoNotRequireRegisteredAttributes() {
         Map<Identifier, AttributePolicy> optionalRules = AttributeRuleDefaults.rules().entrySet().stream()
-                .filter(entry -> !entry.getKey().getNamespace().equals("minecraft"))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                                                                              .filter(entry -> !entry.getKey().getNamespace().equals("minecraft"))
+                                                                              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         assertEquals(Map.of(
                 Identifier.parse("neoforge:swim_speed"), AttributePolicy.AVERAGE,
@@ -141,7 +141,7 @@ class AttributeRuleDefaultsTest {
 
         assertEquals(AttributePolicy.AVERAGE, rules.policyFor(id));
         assertThrows(UnsupportedOperationException.class,
-                () -> rules.rules().put(minecraft("luck"), AttributePolicy.COMBINE));
+                     () -> rules.rules().put(minecraft("luck"), AttributePolicy.COMBINE));
     }
 
     @Test

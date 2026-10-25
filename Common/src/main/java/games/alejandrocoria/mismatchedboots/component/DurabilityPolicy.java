@@ -19,7 +19,7 @@ public enum DurabilityPolicy {
 
     public static Optional<DurabilityPolicy> fromSerializedName(String value) {
         return Arrays.stream(values())
-                .filter(policy -> policy.serializedName.equals(value))
-                .findFirst();
+                     .filter(policy -> policy.serializedName.equals(value))
+                     .findFirst();
     }
 }

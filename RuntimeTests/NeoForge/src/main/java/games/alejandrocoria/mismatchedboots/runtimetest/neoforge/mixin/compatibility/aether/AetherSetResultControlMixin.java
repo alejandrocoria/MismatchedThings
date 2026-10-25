@@ -11,5 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 abstract class AetherSetResultControlMixin {
     @ModifyExpressionValue(method = "getArmorCount", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/item/ItemStack;get(Ljava/util/function/Supplier;)Ljava/lang/Object;"))
-    private static Object observe(Object original) { return AetherRecognitionTestControl.setResult(original); }
+    private static Object observe(Object original) {
+        return AetherRecognitionTestControl.setResult(original);
+    }
 }

@@ -1,12 +1,14 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.aether",
-  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.aether.AetherAlkahestMixinPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "AetherAlkahestArmorTargetMixin",
-    "AetherAlkahestFluidTargetMixin"
-  ],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.aether",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.aether.AetherAlkahestMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "AetherAlkahestArmorTargetMixin",
+        "AetherAlkahestFluidTargetMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

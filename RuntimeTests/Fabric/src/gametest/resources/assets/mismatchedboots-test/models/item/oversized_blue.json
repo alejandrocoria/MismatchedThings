@@ -1,16 +1,28 @@
 {
-  "textures": {
-    "particle": "minecraft:block/blue_concrete",
-    "face": "minecraft:block/blue_concrete"
-  },
-  "elements": [
-    {
-      "from": [-8, -8, 7.5],
-      "to": [24, 24, 8.5],
-      "faces": {
-        "north": { "texture": "#face" },
-        "south": { "texture": "#face" }
-      }
-    }
-  ]
+    "textures": {
+        "particle": "minecraft:block/blue_concrete",
+        "face": "minecraft:block/blue_concrete"
+    },
+    "elements": [
+        {
+            "from": [
+                -8,
+                -8,
+                7.5
+            ],
+            "to": [
+                24,
+                24,
+                8.5
+            ],
+            "faces": {
+                "north": {
+                    "texture": "#face"
+                },
+                "south": {
+                    "texture": "#face"
+                }
+            }
+        }
+    ]
 }

@@ -225,8 +225,8 @@ public final class BetterXCompatibilityGameTests {
     @GameTest(structure = EMPTY_STRUCTURE)
     public void rubyFireRemainsAWorkingRootEnchantment(GameTestHelper helper) {
         Holder.Reference<Enchantment> rubyFire = helper.getLevel().registryAccess()
-                .lookupOrThrow(Registries.ENCHANTMENT)
-                .getOrThrow(RUBY_FIRE);
+                                                       .lookupOrThrow(Registries.ENCHANTMENT)
+                                                       .getOrThrow(RUBY_FIRE);
         ItemStack flamingRuby = betterXCustomStack(
                 helper, item("betternether", "flaming_ruby_boots"));
         require(flamingRuby.getEnchantments().getLevel(rubyFire) == 1,
@@ -602,10 +602,10 @@ public final class BetterXCompatibilityGameTests {
         PackFormat version = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
         Files.createDirectories(pack);
         Files.writeString(pack.resolve("pack.mcmeta"), """
-                {"pack":{"description":"MismatchedBoots BetterX compatibility tests",
-                "min_format":[%d,%d],"max_format":[%d,%d]}}
-                """.formatted(version.major(), version.minor(), version.major(), version.minor()),
-                StandardCharsets.UTF_8);
+                                  {"pack":{"description":"MismatchedBoots BetterX compatibility tests",
+                                  "min_format":[%d,%d],"max_format":[%d,%d]}}
+                                  """.formatted(version.major(), version.minor(), version.major(), version.minor()),
+                          StandardCharsets.UTF_8);
     }
 
     private static void writeCrystaliteSet(Path pack, String... boots) throws IOException {
@@ -617,10 +617,10 @@ public final class BetterXCompatibilityGameTests {
                 "betterend:crystalite_leggings"));
         values.addAll(Arrays.asList(boots));
         String encoded = values.stream()
-                .map(item -> "\"" + item + "\"")
-                .collect(Collectors.joining(","));
+                               .map(item -> "\"" + item + "\"")
+                               .collect(Collectors.joining(","));
         Files.writeString(tag, "{\"replace\":true,\"values\":[" + encoded + "]}",
-                StandardCharsets.UTF_8);
+                          StandardCharsets.UTF_8);
     }
 
     private static void assertUnchanged(
@@ -634,7 +634,7 @@ public final class BetterXCompatibilityGameTests {
 
     private static MixedBootsData mixedData(ItemStack stack) {
         return ModContent.getMixedBootsData(stack)
-                .orElseThrow(() -> new AssertionError("Missing mixed-boots source data"));
+                         .orElseThrow(() -> new AssertionError("Missing mixed-boots source data"));
     }
 
     private static Item item(String namespace, String path) {

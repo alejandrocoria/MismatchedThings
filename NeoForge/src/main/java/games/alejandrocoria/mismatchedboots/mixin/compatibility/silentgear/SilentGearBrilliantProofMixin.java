@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Unique;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.item.gear.GearArmorItem", remap = false)
 abstract class SilentGearBrilliantProofMixin {
-    @Unique private static boolean mismatchedboots$sgBrilliantReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgBrilliantReady() {
+        return false;
+    }
 }

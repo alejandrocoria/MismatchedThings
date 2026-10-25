@@ -79,10 +79,10 @@ public final class MixedBootsTooltipFormatter {
             BiFunction<ItemStack, Consumer<Component>, Consumer<Component>> sourceTooltips) {
         ItemStack source = half.source();
         tooltip.accept(Component.empty()
-                .withStyle(ChatFormatting.GRAY)
-                .append(Component.translatable(sideKey).withStyle(ChatFormatting.BOLD))
-                .append(CommonComponents.SPACE)
-                .append(sourceName(source)));
+                                .withStyle(ChatFormatting.GRAY)
+                                .append(Component.translatable(sideKey).withStyle(ChatFormatting.BOLD))
+                                .append(CommonComponents.SPACE)
+                                .append(sourceName(source)));
 
         TooltipDisplay sourceDisplay = source.getOrDefault(
                 DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
@@ -94,12 +94,12 @@ public final class MixedBootsTooltipFormatter {
             tooltip.accept(sourceId(source));
         }
         appendSourceDetails(source, context, hideGameplayComponents(sourceDisplay), flag,
-                sourceTooltips.apply(source, tooltip));
+                            sourceTooltips.apply(source, tooltip));
     }
 
     private static Component sourceId(ItemStack source) {
         return Component.literal(BuiltInRegistries.ITEM.getKey(source.getItem()).toString())
-                .withStyle(ChatFormatting.DARK_GRAY);
+                        .withStyle(ChatFormatting.DARK_GRAY);
     }
 
     private static Component sourceName(ItemStack source) {
@@ -146,7 +146,7 @@ public final class MixedBootsTooltipFormatter {
         int componentCount = source.getComponents().size();
         if (componentCount > 0) {
             Component countLine = Component.translatable("item.components", componentCount)
-                    .withStyle(ChatFormatting.DARK_GRAY);
+                                           .withStyle(ChatFormatting.DARK_GRAY);
             for (int index = details.size() - 2; index >= 0; index--) {
                 if (details.get(index).equals(itemId) && details.get(index + 1).equals(countLine)) {
                     details.remove(index + 1);

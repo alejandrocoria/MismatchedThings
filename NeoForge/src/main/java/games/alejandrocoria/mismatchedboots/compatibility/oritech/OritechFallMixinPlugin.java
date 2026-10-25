@@ -19,7 +19,9 @@ public final class OritechFallMixinPlugin implements IMixinConfigPlugin {
                 if (OritechFallInjectionPoint.METHOD.equals(method.name)
                         && OritechFallInjectionPoint.DESCRIPTOR.equals(method.desc)
                         && (method.access & Opcodes.ACC_STATIC) != 0
-                        && OritechFallInjectionPoint.select(method.desc, method.instructions) != null) { return true; }
+                        && OritechFallInjectionPoint.select(method.desc, method.instructions) != null) {
+                    return true;
+                }
             }
             OritechFallInjectionPoint.warn();
         } catch (ClassNotFoundException absent) {
@@ -30,10 +32,29 @@ public final class OritechFallMixinPlugin implements IMixinConfigPlugin {
         return false;
     }
 
-    @Override public void onLoad(String name) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+    @Override
+    public void onLoad(String name) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

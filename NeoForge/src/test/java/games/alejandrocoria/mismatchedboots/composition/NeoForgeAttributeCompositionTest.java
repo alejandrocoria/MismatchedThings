@@ -83,9 +83,13 @@ public class NeoForgeAttributeCompositionTest {
         try (Fixture fixture = new Fixture(AttributePolicy.SEPARATE)) {
             ItemStack source = boots(Items.IRON_BOOTS);
             source.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                    .add(Attributes.LUCK, modifier(MODIFIER_ID, 88), EquipmentSlotGroup.FEET)
-                    .add(Attributes.ARMOR, modifier(REMOVED_ID, 8), EquipmentSlotGroup.FEET)
-                    .build());
+                                                                                 .add(Attributes.LUCK,
+                                                                                      modifier(MODIFIER_ID, 88),
+                                                                                      EquipmentSlotGroup.FEET)
+                                                                                 .add(Attributes.ARMOR,
+                                                                                      modifier(REMOVED_ID, 8),
+                                                                                      EquipmentSlotGroup.FEET)
+                                                                                 .build());
             ItemStack before = source.copy();
 
             ItemAttributeModifiers effective = Services.PLATFORM.getCompositionAttributeModifiers(source);
@@ -206,11 +210,11 @@ public class NeoForgeAttributeCompositionTest {
     void normalizesWrappedComponentEntriesWithoutChangingMetadataOrSource() {
         Holder<Attribute> wrapped = wrappedHolder(Attributes.LUCK);
         AttributeModifier modifier = new AttributeModifier(MODIFIER_ID, 0.25,
-                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                                                           AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         ItemAttributeModifiers.Display display = ItemAttributeModifiers.Display.hidden();
         ItemStack source = boots(Items.GOLDEN_BOOTS);
         ItemAttributeModifiers raw = ItemAttributeModifiers.builder()
-                .add(wrapped, modifier, EquipmentSlotGroup.ARMOR, display).build();
+                                                           .add(wrapped, modifier, EquipmentSlotGroup.ARMOR, display).build();
         source.set(DataComponents.ATTRIBUTE_MODIFIERS, raw);
 
         ItemAttributeModifiers effective = Services.PLATFORM.getCompositionAttributeModifiers(source);
@@ -227,7 +231,7 @@ public class NeoForgeAttributeCompositionTest {
         try (Fixture fixture = new Fixture(AttributePolicy.SEPARATE)) {
             fixture.listener.attribute = Holder.direct(Attributes.LUCK.value());
             assertThrows(IllegalArgumentException.class,
-                    () -> Services.PLATFORM.getCompositionAttributeModifiers(boots(Items.IRON_BOOTS)));
+                         () -> Services.PLATFORM.getCompositionAttributeModifiers(boots(Items.IRON_BOOTS)));
         }
     }
 
@@ -238,7 +242,7 @@ public class NeoForgeAttributeCompositionTest {
                     BuiltInRegistries.ATTRIBUTE.key(), Identifier.parse("test:missing_attribute"));
             fixture.listener.attribute = wrappedHolder(Attributes.LUCK, missing);
             assertThrows(IllegalArgumentException.class,
-                    () -> Services.PLATFORM.getCompositionAttributeModifiers(boots(Items.IRON_BOOTS)));
+                         () -> Services.PLATFORM.getCompositionAttributeModifiers(boots(Items.IRON_BOOTS)));
         }
     }
 
@@ -275,7 +279,7 @@ public class NeoForgeAttributeCompositionTest {
         // Like Valhelsia's RegistryEntry: reports a key but is not a canonical
         // Holder.Reference and does not expose that reference via getDelegate().
         return (Holder<Attribute>) Proxy.newProxyInstance(Holder.class.getClassLoader(),
-                new Class<?>[]{Holder.class}, (proxy, method, args) -> switch (method.getName()) {
+                                                          new Class<?>[]{Holder.class}, (proxy, method, args) -> switch (method.getName()) {
                     case "getDelegate" -> proxy;
                     case "unwrapKey" -> Optional.of(key);
                     default -> method.invoke(delegate, args);
@@ -289,16 +293,16 @@ public class NeoForgeAttributeCompositionTest {
     private static DataComponentMap baseComponents() {
         // The loader unit-test bootstrap does not bind data-driven item components.
         return DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build();
+                               .set(DataComponents.MAX_STACK_SIZE, 1)
+                               .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                               .build();
     }
 
     private static double bonus(ItemAttributeModifiers modifiers) {
         var bonuses = modifiers.modifiers().stream()
-                .filter(entry -> entry.attribute().equals(Attributes.LUCK)
-                        && entry.modifier().id().equals(MODIFIER_ID))
-                .toList();
+                               .filter(entry -> entry.attribute().equals(Attributes.LUCK)
+                                       && entry.modifier().id().equals(MODIFIER_ID))
+                               .toList();
         assertEquals(1, bonuses.size());
         return bonuses.getFirst().modifier().amount();
     }
@@ -324,7 +328,7 @@ public class NeoForgeAttributeCompositionTest {
             queries++;
             event.removeModifier(Attributes.ARMOR, REMOVED_ID);
             event.replaceModifier(attribute,
-                    modifier(MODIFIER_ID, first ? firstAmount : secondAmount), EquipmentSlotGroup.FEET);
+                                  modifier(MODIFIER_ID, first ? firstAmount : secondAmount), EquipmentSlotGroup.FEET);
             if (mutateSource) {
                 source.set(DataComponents.CUSTOM_NAME, Component.literal("mutated query copy"));
             }
@@ -337,19 +341,19 @@ public class NeoForgeAttributeCompositionTest {
 
         private Fixture(AttributePolicy policy) {
             rules = new AttributeRuleSet(AttributePolicy.SEPARATE,
-                    Map.of(Attributes.LUCK.unwrapKey().orElseThrow().identifier(), policy));
+                                         Map.of(Attributes.LUCK.unwrapKey().orElseThrow().identifier(), policy));
             NeoForge.EVENT_BUS.register(listener);
         }
 
         private MixedBootsPair createPair(ItemStack first, ItemStack second) {
             Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
             return MixedBootsFactory.createPair(first, second, Holder.direct(mixedItem, baseComponents()),
-                    ModContent.mixedBootsDataType().orElseThrow(), rules, ComponentRuleDefaults.state());
+                                                ModContent.mixedBootsDataType().orElseThrow(), rules, ComponentRuleDefaults.state());
         }
 
         private ItemStack recompose(ItemStack root, ItemStack first, ItemStack second) {
             return MixedBootsRecomposer.recompose(root, first, second,
-                    ModContent.mixedBootsDataType().orElseThrow(), rules, ComponentRuleDefaults.state());
+                                                  ModContent.mixedBootsDataType().orElseThrow(), rules, ComponentRuleDefaults.state());
         }
 
         @Override

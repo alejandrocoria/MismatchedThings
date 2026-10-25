@@ -84,7 +84,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             var selected = ComponentRuleSupport.resolve(registered.orElseThrow(), entry.getValue());
             if (selected.isEmpty()) {
                 Constants.LOG.warn("Discarding component rule '{}' because the field is fixed by MismatchedBoots",
-                        entry.getKey());
+                                   entry.getKey());
                 discarded.add(entry.getKey());
                 dirty = true;
                 continue;
@@ -165,14 +165,14 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             return new Parsed<>(fallback, true);
         }
         boolean dirty = category.valueMap().keySet().stream()
-                .anyMatch(key -> !POLICY.equals(key) && !NUMBER.equals(key));
+                                .anyMatch(key -> !POLICY.equals(key) && !NUMBER.equals(key));
         if (dirty) {
             warnRule(id);
             return new Parsed<>(fallback, true);
         }
         Object rawPolicy = category.valueMap().get(POLICY);
         ComponentPolicy policy = rawPolicy instanceof String value
-                ? ComponentPolicy.fromSerializedName(value).orElse(null) : null;
+                                 ? ComponentPolicy.fromSerializedName(value).orElse(null) : null;
         if (policy == null) {
             warnRule(id);
             return new Parsed<>(fallback, true);
@@ -180,7 +180,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
 
         Object rawNumber = category.valueMap().get(NUMBER);
         ComponentNumericKind number = rawNumber instanceof String value
-                ? ComponentNumericKind.fromSerializedName(value).orElse(null) : null;
+                                      ? ComponentNumericKind.fromSerializedName(value).orElse(null) : null;
         DataComponentType<?> registered = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(id).orElse(null);
         boolean dedicatedNumber = registered == DataComponents.ENCHANTABLE;
         ComponentRule rule;
@@ -212,9 +212,9 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             }
         });
         declarations.entrySet().stream()
-                .filter(entry -> !ComponentRuleDefaults.rules().containsKey(entry.getKey()))
-                .sorted(Map.Entry.comparingByKey(Comparator.comparing(Identifier::toString)))
-                .forEach(entry -> ordered.put(entry.getKey(), entry.getValue()));
+                    .filter(entry -> !ComponentRuleDefaults.rules().containsKey(entry.getKey()))
+                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(Identifier::toString)))
+                    .forEach(entry -> ordered.put(entry.getKey(), entry.getValue()));
         return ordered;
     }
 

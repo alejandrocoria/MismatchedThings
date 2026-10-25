@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class SilentGearIncomingWitnessMixin {
     @Inject(method = "incoming", at = @At("RETURN"))
     private void sgtest$afterNative(Object instance, Object effect, ItemStack context, LivingEntity actor, DamageSource source,
-            float current, float base, CallbackInfoReturnable<Float> callback) {
+                                    float current, float base, CallbackInfoReturnable<Float> callback) {
         SilentGearIncomingTest.called();
     }
 }

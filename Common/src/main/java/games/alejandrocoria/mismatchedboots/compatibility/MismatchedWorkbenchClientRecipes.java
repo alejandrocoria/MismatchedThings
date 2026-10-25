@@ -40,10 +40,11 @@ public final class MismatchedWorkbenchClientRecipes {
     public static MismatchedWorkbenchResult assemblePair(
             MismatchedWorkbenchInput input, Level level, AttributeRuleSet attributes, ComponentRules components) {
         return input.isEmpty() ? MismatchedWorkbenchResult.EMPTY : recipes.stream()
-                .filter(holder -> holder.value().matches(input, level))
-                .findFirst()
-                .map(holder -> holder.value().assemblePreview(input, attributes, components))
-                .orElse(MismatchedWorkbenchResult.EMPTY);
+                                                                          .filter(holder -> holder.value().matches(input, level))
+                                                                          .findFirst()
+                                                                          .map(holder -> holder.value()
+                                                                                               .assemblePreview(input, attributes, components))
+                                                                          .orElse(MismatchedWorkbenchResult.EMPTY);
     }
 
     public static Runnable addListener(Runnable listener) {

@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class JustDireGroundStompQueryFailureMixin {
     @Inject(method = "getFeCost", at = @At("HEAD"))
     private void fail(CallbackInfoReturnable<Integer> ci) {
-        if (((Enum<?>) (Object) this).name().equals("GROUNDSTOMP")) { throw new IllegalStateException("Ground Stomp read-only query fixture failure"); }
+        if (((Enum<?>) (Object) this).name().equals("GROUNDSTOMP")) {
+            throw new IllegalStateException("Ground Stomp read-only query fixture failure");
+        }
     }
 }

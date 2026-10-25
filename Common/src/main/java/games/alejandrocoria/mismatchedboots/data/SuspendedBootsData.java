@@ -32,18 +32,23 @@ public final class SuspendedBootsData {
     public static final int MAX_DEPTH = Tag.MAX_DEPTH + 3;
     private static final Codec<SuspendedBootsData> BINARY_CODEC = Codec.BYTE_BUFFER.xmap(
             buffer -> {
-                if (buffer.remaining() > MAX_BYTES) { throw new RecoveryRefusalException("Recovery payload exceeds byte budget"); }
+                if (buffer.remaining() > MAX_BYTES) {
+                    throw new RecoveryRefusalException("Recovery payload exceeds byte budget");
+                }
                 byte[] bytes = new byte[buffer.remaining()];
                 buffer.duplicate().get(bytes);
                 return fromBytes(bytes);
             }, value -> ByteBuffer.wrap(value.bytes.clone()));
     public static final Codec<SuspendedBootsData> CODEC = new Codec<>() {
-        @Override public <T> DataResult<Pair<SuspendedBootsData, T>> decode(DynamicOps<T> ops, T input) {
+        @Override
+        public <T> DataResult<Pair<SuspendedBootsData, T>> decode(DynamicOps<T> ops, T input) {
             Tag raw = input instanceof Tag tag ? tag : ops.convertTo(NbtOps.INSTANCE, input);
             validateBudget(raw, MAX_BYTES, MAX_DEPTH);
             try {
                 var result = BINARY_CODEC.decode(ops, input);
-                if (result.result().isPresent()) { return result; }
+                if (result.result().isPresent()) {
+                    return result;
+                }
             } catch (RuntimeException failure) {
                 // BlockEntity.loadStatic catches Throwable and drops the container: never throw for bounded bad archive bytes.
             }
@@ -51,12 +56,17 @@ public final class SuspendedBootsData {
             original.put(SuspendedBootsItemCodec.ARCHIVE, raw);
             return DataResult.success(Pair.of(create(original, new CompoundTag(), new CompoundTag(), true), ops.empty()));
         }
-        @Override public <T> DataResult<T> encode(SuspendedBootsData value, DynamicOps<T> ops, T prefix) {
+
+        @Override
+        public <T> DataResult<T> encode(SuspendedBootsData value, DynamicOps<T> ops, T prefix) {
             return BINARY_CODEC.encode(value, ops, prefix);
         }
     };
     public static final StreamCodec<RegistryFriendlyByteBuf, SuspendedBootsData> STREAM_CODEC = StreamCodec.of(
-            (buffer, value) -> { buffer.writeVarInt(value.bytes.length); buffer.writeBytes(value.bytes); },
+            (buffer, value) -> {
+                buffer.writeVarInt(value.bytes.length);
+                buffer.writeBytes(value.bytes);
+            },
             buffer -> {
                 int length = buffer.readVarInt();
                 if (length < 0 || length > MAX_BYTES || length > buffer.readableBytes()) {
@@ -94,13 +104,19 @@ public final class SuspendedBootsData {
         try {
             var bytes = new ByteArrayOutputStream();
             NbtIo.write(envelope, new DataOutputStream(bytes));
-            if (bytes.size() > MAX_BYTES) { throw new RecoveryRefusalException("Recovery payload exceeds byte budget"); }
+            if (bytes.size() > MAX_BYTES) {
+                throw new RecoveryRefusalException("Recovery payload exceeds byte budget");
+            }
             return fromBytes(bytes.toByteArray());
-        } catch (IOException failure) { throw new RecoveryRefusalException("Cannot preserve recovery NBT", failure); }
+        } catch (IOException failure) {
+            throw new RecoveryRefusalException("Cannot preserve recovery NBT", failure);
+        }
     }
 
     public static SuspendedBootsData fromBytes(byte[] input) {
-        if (input.length > MAX_BYTES) { throw new RecoveryRefusalException("Recovery payload exceeds byte budget"); }
+        if (input.length > MAX_BYTES) {
+            throw new RecoveryRefusalException("Recovery payload exceeds byte budget");
+        }
         try {
             var stream = new ByteArrayInputStream(input);
             CompoundTag data = NbtIo.read(new DataInputStream(stream), new NbtAccounter(MAX_BYTES, MAX_DEPTH));
@@ -129,12 +145,29 @@ public final class SuspendedBootsData {
         }
     }
 
-    public CompoundTag original() { return data.getCompoundOrEmpty("original").copy(); }
-    public CompoundTag projection() { return data.getCompoundOrEmpty("projection").copy(); }
-    public CompoundTag conflicts() { return data.getCompoundOrEmpty("conflicts").copy(); }
-    public boolean conflicted() { return !data.getCompoundOrEmpty("conflicts").isEmpty(); }
-    public boolean quarantined() { return data.getBooleanOr("quarantined", false); }
-    public int encodedSize() { return bytes.length; }
+    public CompoundTag original() {
+        return data.getCompoundOrEmpty("original").copy();
+    }
+
+    public CompoundTag projection() {
+        return data.getCompoundOrEmpty("projection").copy();
+    }
+
+    public CompoundTag conflicts() {
+        return data.getCompoundOrEmpty("conflicts").copy();
+    }
+
+    public boolean conflicted() {
+        return !data.getCompoundOrEmpty("conflicts").isEmpty();
+    }
+
+    public boolean quarantined() {
+        return data.getBooleanOr("quarantined", false);
+    }
+
+    public int encodedSize() {
+        return bytes.length;
+    }
 
     public static CompoundTag equipmentProjection() {
         var projection = new CompoundTag();
@@ -145,10 +178,15 @@ public final class SuspendedBootsData {
         return projection;
     }
 
-    @Override public boolean equals(Object other) {
+    @Override
+    public boolean equals(Object other) {
         return this == other || other instanceof SuspendedBootsData value && data.equals(value.data);
     }
-    @Override public int hashCode() { return data.hashCode(); }
+
+    @Override
+    public int hashCode() {
+        return data.hashCode();
+    }
 
     /** Shared native heap accounting also bounds node/entry counts; arrays are counted in constant time. */
     public static void validateBudget(Tag value, long maximum, int depth) {
@@ -156,7 +194,9 @@ public final class SuspendedBootsData {
     }
 
     private static void measure(Tag value, long[] remaining, int depth) {
-        if (depth < 0) { throw new RecoveryRefusalException("Recovery NBT exceeds depth budget"); }
+        if (depth < 0) {
+            throw new RecoveryRefusalException("Recovery NBT exceeds depth budget");
+        }
         long own;
         if (value instanceof CompoundTag compound) {
             own = 48;
@@ -167,7 +207,9 @@ public final class SuspendedBootsData {
             }
         } else if (value instanceof ListTag list) {
             spend(remaining, 37L + 4L * list.size());
-            for (Tag element : list) { measure(element, remaining, depth - 1); }
+            for (Tag element : list) {
+                measure(element, remaining, depth - 1);
+            }
         } else {
             own = switch (value) {
                 case ByteArrayTag array -> 24L + array.size();
@@ -180,7 +222,9 @@ public final class SuspendedBootsData {
     }
 
     private static void spend(long[] remaining, long amount) {
-        if (amount < 0 || amount > remaining[0]) { throw new RecoveryRefusalException("Recovery NBT exceeds heap/entry budget"); }
+        if (amount < 0 || amount > remaining[0]) {
+            throw new RecoveryRefusalException("Recovery NBT exceeds heap/entry budget");
+        }
         remaining[0] -= amount;
     }
 }

@@ -74,7 +74,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
         NetworkTrafficProbe.reset();
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             context.waitFor(client -> AttributeRuleState.current()
-                    .policyFor(Identifier.withDefaultNamespace("movement_speed")) == expectedPolicy);
+                                                        .policyFor(Identifier.withDefaultNamespace("movement_speed")) == expectedPolicy);
             context.waitFor(client -> ComponentRuleState.current().durability() == DurabilityPolicy.SEPARATE
                     && ComponentRuleState.current().repairCost() == RepairCostPolicy.OWNER);
             context.waitFor(client -> NetworkTrafficProbe.events().size() == 3);
@@ -82,17 +82,18 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             context.runOnClient(client -> assertHandshake(expectedPolicy));
 
             singleplayer.getServer().runOnServer(server -> server.getPlayerList().getPlayers().getFirst()
-                    .getInventory().add(createPolicyResult()));
+                                                                 .getInventory().add(createPolicyResult()));
             context.waitFor(client -> client.player != null && client.player.getInventory()
-                    .contains(stack -> isPolicyResult(stack) && attributeAmount(stack) == expectedAmount));
+                                                                            .contains(stack -> isPolicyResult(stack) && attributeAmount(stack) == expectedAmount));
             context.runOnClient(client -> {
                 ItemStack serverResult = client.player.getInventory().getNonEquipmentItems().stream()
-                        .filter(CompositionRulesClientGameTest::isPolicyResult)
-                        .findFirst()
-                        .orElseThrow();
+                                                      .filter(CompositionRulesClientGameTest::isPolicyResult)
+                                                      .findFirst()
+                                                      .orElseThrow();
                 ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
-                        source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0)), client.level,
-                        AttributeRuleState.current(), ComponentRuleState.current()).primary();
+                                                                                          source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0)), client.level,
+                                                                                  AttributeRuleState.current(), ComponentRuleState.current())
+                                                                    .primary();
                 if (!serverResult.getOrDefault(
                         DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).equals(
                         preview.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY))) {
@@ -119,8 +120,12 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             int partial = phase;
             context.runOnClient(client -> {
                 CompositionRulesClientLifecycle.onDisconnected();
-                if (partial == 1) AttributeRuleState.install(attributes);
-                if (partial == 2) ComponentRuleState.install(components);
+                if (partial == 1) {
+                    AttributeRuleState.install(attributes);
+                }
+                if (partial == 2) {
+                    ComponentRuleState.install(components);
+                }
                 if (CompositionRulesClientLifecycle.areRulesSynchronized()) {
                     throw new AssertionError("Reset/partial receipt incorrectly reports full readiness");
                 }
@@ -184,9 +189,9 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
         if (componentRules.durability() != DurabilityPolicy.SEPARATE
                 || componentRules.repairCost() != RepairCostPolicy.OWNER
                 || !ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT).equals(
-                        componentRules.declarations().get(TestContent.NUMERIC_COMPONENT_ID))
+                componentRules.declarations().get(TestContent.NUMERIC_COMPONENT_ID))
                 || !ComponentRule.of(ComponentPolicy.SHARE).equals(
-                        componentRules.declarations().get(DORMANT_COMPONENT))
+                componentRules.declarations().get(DORMANT_COMPONENT))
                 || componentRules.components().rules().containsKey(DORMANT_COMPONENT)) {
             throw new AssertionError("Server component snapshot omitted configured rules: " + componentRules);
         }
@@ -215,10 +220,12 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
     private static ItemStack source(Item item, double amount) {
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(Attributes.MOVEMENT_SPEED,
-                        new AttributeModifier(MOVEMENT_MODIFIER, amount, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(Attributes.MOVEMENT_SPEED,
+                                                                                 new AttributeModifier(MOVEMENT_MODIFIER,
+                                                                                                       amount,
+                                                                                                       AttributeModifier.Operation.ADD_VALUE),
+                                                                                 EquipmentSlotGroup.FEET)
+                                                                            .build());
         if (item == Items.LEATHER_BOOTS) {
             stack.setDamageValue(11);
             stack.set(DataComponents.REPAIR_COST, 2);
@@ -242,7 +249,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
         if (serverResult.getMaxDamage() != preview.getMaxDamage()
                 || serverResult.getDamageValue() != preview.getDamageValue()
                 || serverResult.getOrDefault(DataComponents.REPAIR_COST, 0)
-                        != preview.getOrDefault(DataComponents.REPAIR_COST, 0)
+                != preview.getOrDefault(DataComponents.REPAIR_COST, 0)
                 || !previewNumeric.equals(serverResult.get(TestContent.requireNumericComponent()))) {
             throw new AssertionError("Client component preview differs from the server result");
         }
@@ -250,19 +257,19 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
 
     private static boolean isPolicyResult(ItemStack stack) {
         return games.alejandrocoria.mismatchedboots.content.ModContent.getMixedBootsData(stack)
-                .filter(data -> data.left().source().is(Items.LEATHER_BOOTS)
-                        && data.right().source().is(Items.CHAINMAIL_BOOTS))
-                .isPresent();
+                                                                      .filter(data -> data.left().source().is(Items.LEATHER_BOOTS)
+                                                                              && data.right().source().is(Items.CHAINMAIL_BOOTS))
+                                                                      .isPresent();
     }
 
     private static double attributeAmount(ItemStack stack) {
         ItemAttributeModifiers modifiers = stack.getOrDefault(
                 DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
         return modifiers.modifiers().stream()
-                .filter(entry -> entry.modifier().id().equals(MOVEMENT_MODIFIER))
-                .mapToDouble(entry -> entry.modifier().amount())
-                .findFirst()
-                .orElse(Double.NaN);
+                        .filter(entry -> entry.modifier().id().equals(MOVEMENT_MODIFIER))
+                        .mapToDouble(entry -> entry.modifier().amount())
+                        .findFirst()
+                        .orElse(Double.NaN);
     }
 
     private static void assertMalformedSnapshotsAreAtomic(
@@ -323,10 +330,10 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             Files.writeString(path, """
                     [attributes]
                     fallback = "separate"
-
+                    
                     [attributes."minecraft:movement_speed"]
                     policy = "%s"
-
+                    
                     [attributes."futuremod:dormant"]
                     policy = "minimum"
                     """.formatted(movementPolicy));
@@ -341,14 +348,14 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             Files.writeString(path, """
                     [durability]
                     policy = "separate"
-
+                    
                     [repair_cost]
                     policy = "owner"
-
+                    
                     [components."mismatchedboots-test:numeric"]
                     policy = "average"
                     number = "int"
-
+                    
                     [components."futuremod:dormant_energy"]
                     policy = "share"
                     """);

@@ -82,7 +82,9 @@ public final class NeoForgeGeometryClientTest {
                 return;
             }
             if (rootsReload != null) {
-                if (!rootsReload.isDone()) { return; }
+                if (!rootsReload.isDone()) {
+                    return;
+                }
                 rootsReload.join();
             }
 
@@ -100,7 +102,9 @@ public final class NeoForgeGeometryClientTest {
                 rootsReload = client.reloadResourcePacks();
                 return;
             }
-            if (roots) { equipmentReport += "equipment.roots.resourceReload=true\n"; }
+            if (roots) {
+                equipmentReport += "equipment.roots.resourceReload=true\n";
+            }
 
             NetworkAcceptanceFiles.write("geometry-report.txt", red.describe("red") + blue.describe("blue")
                     + "gui.canonicalOwnership=true\ngui.depthSharing=true\ngui.atomicFallback=true\n"
@@ -121,7 +125,7 @@ public final class NeoForgeGeometryClientTest {
         ItemStackRenderStateAccessor stateAccessor = (ItemStackRenderStateAccessor) (Object) state;
         if (stateAccessor.mismatchedboots$getActiveLayerCount() != 1) {
             throw new AssertionError("Synthetic geometry resolved "
-                    + stateAccessor.mismatchedboots$getActiveLayerCount() + " layers instead of one");
+                                             + stateAccessor.mismatchedboots$getActiveLayerCount() + " layers instead of one");
         }
 
         ItemStackRenderState.LayerRenderState renderLayer = stateAccessor.mismatchedboots$getLayers()[0];
@@ -204,7 +208,7 @@ public final class NeoForgeGeometryClientTest {
                 throw new AssertionError("Candidate tessellation changed source metadata");
             }
             Vector3f normal = new Vector3f(candidate.position1()).sub(candidate.position0())
-                    .cross(new Vector3f(candidate.position2()).sub(candidate.position1()));
+                                                                 .cross(new Vector3f(candidate.position2()).sub(candidate.position1()));
             if (!normal.isFinite() || normal.lengthSquared() <= EPSILON * EPSILON) {
                 throw new AssertionError("Candidate tessellation produced a degenerate primitive");
             }
@@ -273,7 +277,7 @@ public final class NeoForgeGeometryClientTest {
         int center = 0;
         for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
             Vector3f canonical = transform.transformPosition(quad.position(vertex), new Vector3f())
-                    .sub(0.5F, 0.5F, 0.5F);
+                                          .sub(0.5F, 0.5F, 0.5F);
             if (!canonical.isFinite()) {
                 throw new AssertionError("Synthetic geometry contains a non-finite vertex");
             }
@@ -316,10 +320,10 @@ public final class NeoForgeGeometryClientTest {
             return Topology.OTHER_CROSSING;
         }
         return Math.floorMod(firstCrossing - secondCrossing, BakedQuad.VERTEX_COUNT) == 2
-                ? Topology.OPPOSITE_EDGE_CROSSING
-                : left == 1
-                ? Topology.ADJACENT_EDGE_LEFT_TRIANGLE
-                : Topology.ADJACENT_EDGE_RIGHT_TRIANGLE;
+               ? Topology.OPPOSITE_EDGE_CROSSING
+               : left == 1
+                 ? Topology.ADJACENT_EDGE_LEFT_TRIANGLE
+                 : Topology.ADJACENT_EDGE_RIGHT_TRIANGLE;
     }
 
     private static void assertExpectedTopology(GeometryReport report, String scenario) {
@@ -327,25 +331,25 @@ public final class NeoForgeGeometryClientTest {
         assertCount(report.count(Topology.WHOLE_LEFT), 2, scenario + " whole-left quads");
         assertCount(report.count(Topology.WHOLE_RIGHT), 2, scenario + " whole-right quads");
         assertCount(report.count(Topology.OPPOSITE_EDGE_CROSSING), 4,
-                scenario + " opposite-edge crossings");
+                    scenario + " opposite-edge crossings");
         assertCount(report.count(Topology.ADJACENT_EDGE_LEFT_TRIANGLE), 2,
-                scenario + " left-triangle crossings");
+                    scenario + " left-triangle crossings");
         assertCount(report.count(Topology.ADJACENT_EDGE_RIGHT_TRIANGLE), 2,
-                scenario + " right-triangle crossings");
+                    scenario + " right-triangle crossings");
         assertCount(report.count(Topology.CENTER_VERTEX), 0, scenario + " center-vertex quads");
         assertCount(report.count(Topology.OTHER_CROSSING), 0, scenario + " other crossings");
         assertCount(report.currentKeep(), 2, scenario + " current keeps");
         assertCount(report.currentDrop(), 2, scenario + " current drops");
         assertCount(report.currentSplit(), 8, scenario + " current splits");
         assertCount(report.incompatibilities().getOrDefault(
-                BakedQuadClipper.Incompatibility.UNSUPPORTED_TOPOLOGY, 0), 0,
-                scenario + " unsupported-topology results");
+                            BakedQuadClipper.Incompatibility.UNSUPPORTED_TOPOLOGY, 0), 0,
+                    scenario + " unsupported-topology results");
         assertCount(report.incompatibilities().getOrDefault(
-                BakedQuadClipper.Incompatibility.NOT_RECTANGLE, 0), 0,
-                scenario + " non-rectangle results");
+                            BakedQuadClipper.Incompatibility.NOT_RECTANGLE, 0), 0,
+                    scenario + " non-rectangle results");
         assertCount(report.incompatibilities().getOrDefault(
-                BakedQuadClipper.Incompatibility.UNSUPPORTED_EXTENSION_METADATA, 0), 0,
-                scenario + " extension-metadata results");
+                            BakedQuadClipper.Incompatibility.UNSUPPORTED_EXTENSION_METADATA, 0), 0,
+                    scenario + " extension-metadata results");
         assertCount(report.candidateLeftPrimitives(), 12, scenario + " left candidate primitives");
         assertCount(report.candidateRightPrimitives(), 12, scenario + " right candidate primitives");
         assertCount(report.candidateLeftTriangles(), 4, scenario + " left candidate triangles");
@@ -405,7 +409,7 @@ public final class NeoForgeGeometryClientTest {
 
     private static void assertInvalidStackFallback(Minecraft client) {
         ItemStack invalid = modelBoot(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID),
-                ModContent.MIXED_BOOTS_ID);
+                                      ModContent.MIXED_BOOTS_ID);
         if (ModContent.getMixedBootsData(invalid).isPresent()) {
             throw new AssertionError("Give-style fixture unexpectedly has source data");
         }
@@ -420,7 +424,7 @@ public final class NeoForgeGeometryClientTest {
 
     private static void assertFallbackRotation(Matrix4f transform, float degrees, String scenario) {
         Matrix4f expected = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
-                .rotateY((float) Math.toRadians(degrees)).translate(-0.5F, -0.5F, -0.5F);
+                                          .rotateY((float) Math.toRadians(degrees)).translate(-0.5F, -0.5F, -0.5F);
         if (!transform.equals(expected, EPSILON)) {
             throw new AssertionError(scenario + " did not retain full scale and rotate about the shared center");
         }
@@ -443,7 +447,7 @@ public final class NeoForgeGeometryClientTest {
         if (!(items.getFirst().itemStackRenderState() instanceof MixedBootsGuiRenderState combined)
                 || items.stream().anyMatch(item -> item.scissorArea() != null)
                 || items.getFirst().itemStackRenderState().getModelIdentity()
-                .equals(items.getLast().itemStackRenderState().getModelIdentity())) {
+                        .equals(items.getLast().itemStackRenderState().getModelIdentity())) {
             throw new AssertionError("Oblique GUI models did not select distinct canonical compositions");
         }
         for (int side = 0; side < 2; side++) {
@@ -461,7 +465,9 @@ public final class NeoForgeGeometryClientTest {
             }
         }
         combined.visitExtents(position -> {
-            if (!position.isFinite()) throw new AssertionError("GUI composition has non-finite extents");
+            if (!position.isFinite()) {
+                throw new AssertionError("GUI composition has non-finite extents");
+            }
         });
 
         ItemStack special = modelBoot(Items.GOLDEN_BOOTS, Identifier.withDefaultNamespace("chest"));
@@ -469,10 +475,15 @@ public final class NeoForgeGeometryClientTest {
         for (boolean rotated : List.of(false, true)) {
             gui = new GuiRenderState();
             graphics = new GuiGraphicsExtractor(client, gui, 0, 0);
-            if (rotated) graphics.pose().rotate(0.2F);
-            else graphics.enableScissor(42, 40, 54, 56);
+            if (rotated) {
+                graphics.pose().rotate(0.2F);
+            } else {
+                graphics.enableScissor(42, 40, 54, 56);
+            }
             graphics.item(incompatible, 40, 40);
-            if (!rotated) graphics.disableScissor();
+            if (!rotated) {
+                graphics.disableScissor();
+            }
             graphics.item(modelBoot(Items.DIAMOND_BOOTS, Identifier.withDefaultNamespace("diamond_boots")), 80, 40);
             items.clear();
             gui.forEachItem(items::add);
@@ -505,15 +516,16 @@ public final class NeoForgeGeometryClientTest {
 
     private static ItemStack mixedStack(ItemStack leftSource, ItemStack rightSource) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
-                .orElseThrow(() -> new AssertionError("Mismatched boots data component is not registered"));
+                                                               .orElseThrow(() -> new AssertionError(
+                                                                       "Mismatched boots data component is not registered"));
         Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
         if (mixedItem == null) {
             throw new AssertionError("Mismatched boots item is not registered");
         }
         DataComponentPatch components = DataComponentPatch.builder()
-                .set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID)
-                .set(dataType, new MixedBootsData(new BootHalf(leftSource), new BootHalf(rightSource)))
-                .build();
+                                                          .set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID)
+                                                          .set(dataType, new MixedBootsData(new BootHalf(leftSource), new BootHalf(rightSource)))
+                                                          .build();
         return new ItemStack(Holder.direct(mixedItem), 1, components);
     }
 
@@ -523,13 +535,13 @@ public final class NeoForgeGeometryClientTest {
         Matrix4f transform = new Matrix4f(layer.mismatchedboots$getLocalTransform());
         assertMatrix(transform, new Matrix4f(), side + " production transform");
         assertCount(layer.mismatchedboots$getQuads().size(), 12,
-                side + " production primitive count");
+                    side + " production primitive count");
         assertCount(triangleCount(layer.mismatchedboots$getQuads()), 4,
-                side + " production triangle count");
+                    side + " production triangle count");
         for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
             for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                 float x = transform.transformPosition(new Vector3f(quad.position(vertex)))
-                        .sub(0.5F, 0.5F, 0.5F).x;
+                                   .sub(0.5F, 0.5F, 0.5F).x;
                 if ((side == QuadClipper.Side.LEFT && x > EPSILON)
                         || (side == QuadClipper.Side.RIGHT && x < -EPSILON)) {
                     throw new AssertionError(side + " production layer retained opposite-side geometry");
@@ -547,10 +559,10 @@ public final class NeoForgeGeometryClientTest {
 
     private static ItemStack modelBoot(Item item, Identifier model) {
         DataComponentPatch components = DataComponentPatch.builder()
-                .set(DataComponents.ITEM_MODEL, model)
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build();
+                                                          .set(DataComponents.ITEM_MODEL, model)
+                                                          .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                          .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                          .build();
         return new ItemStack(Holder.direct(item), 1, components);
     }
 
@@ -633,32 +645,32 @@ public final class NeoForgeGeometryClientTest {
                     .append(".totalQuads=").append(totalQuads).append('\n');
             for (Topology topology : Topology.values()) {
                 result.append(name).append('.').append(topology.name().toLowerCase())
-                        .append('=').append(count(topology));
+                      .append('=').append(count(topology));
                 if (topology.leftVertices >= 0) {
                     result.append(" (left=").append(topology.leftVertices)
-                            .append(", right=").append(topology.rightVertices).append(')');
+                          .append(", right=").append(topology.rightVertices).append(')');
                 }
                 result.append('\n');
             }
             result.append(name).append(".current.keep=").append(currentKeep).append('\n')
-                    .append(name).append(".current.drop=").append(currentDrop).append('\n')
-                    .append(name).append(".current.split=").append(currentSplit).append('\n')
-                    .append(name).append(".candidate.leftPrimitives=")
-                    .append(candidateLeftPrimitives).append('\n')
-                    .append(name).append(".candidate.rightPrimitives=")
-                    .append(candidateRightPrimitives).append('\n')
-                    .append(name).append(".candidate.leftTriangles=")
-                    .append(candidateLeftTriangles).append('\n')
-                    .append(name).append(".candidate.rightTriangles=")
-                    .append(candidateRightTriangles).append('\n')
-                    .append(name).append(".candidate.maximumExpansion=")
-                    .append(maximumCandidateExpansion).append('\n')
-                    .append(name).append(".candidate.submissions=")
-                    .append(candidateSubmissions).append('\n');
+                  .append(name).append(".current.drop=").append(currentDrop).append('\n')
+                  .append(name).append(".current.split=").append(currentSplit).append('\n')
+                  .append(name).append(".candidate.leftPrimitives=")
+                  .append(candidateLeftPrimitives).append('\n')
+                  .append(name).append(".candidate.rightPrimitives=")
+                  .append(candidateRightPrimitives).append('\n')
+                  .append(name).append(".candidate.leftTriangles=")
+                  .append(candidateLeftTriangles).append('\n')
+                  .append(name).append(".candidate.rightTriangles=")
+                  .append(candidateRightTriangles).append('\n')
+                  .append(name).append(".candidate.maximumExpansion=")
+                  .append(maximumCandidateExpansion).append('\n')
+                  .append(name).append(".candidate.submissions=")
+                  .append(candidateSubmissions).append('\n');
             for (BakedQuadClipper.Incompatibility incompatibility : BakedQuadClipper.Incompatibility.values()) {
                 result.append(name).append(".current.incompatible.")
-                        .append(incompatibility.name().toLowerCase()).append('=')
-                        .append(incompatibilities.getOrDefault(incompatibility, 0)).append('\n');
+                      .append(incompatibility.name().toLowerCase()).append('=')
+                      .append(incompatibilities.getOrDefault(incompatibility, 0)).append('\n');
             }
             return result.toString();
         }

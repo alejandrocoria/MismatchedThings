@@ -11,5 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "com.iafenvoy.iceandfire.item.armor.SeaSerpentArmorItem", priority = 500, remap = false)
 abstract class TideExtraWorkMixin {
     @Inject(method = "inventoryTick", at = @At("RETURN"))
-    private void tideTest$opaqueWork(CallbackInfo ci) { TideCarrierProbe.extraWork(); }
+    private void tideTest$opaqueWork(CallbackInfo ci) {
+        TideCarrierProbe.extraWork();
+    }
 }

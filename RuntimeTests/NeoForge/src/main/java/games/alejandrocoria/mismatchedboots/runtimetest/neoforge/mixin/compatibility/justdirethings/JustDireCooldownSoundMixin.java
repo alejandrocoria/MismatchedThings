@@ -14,7 +14,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Level.class)
 abstract class JustDireCooldownSoundMixin {
     @Inject(method = "playSound(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("HEAD"))
-    private void fixtureSound(Entity excluded, double x, double y, double z, SoundEvent event, SoundSource source, float volume, float pitch, CallbackInfo ci) {
+    private void fixtureSound(Entity excluded,
+                              double x,
+                              double y,
+                              double z,
+                              SoundEvent event,
+                              SoundSource source,
+                              float volume,
+                              float pitch,
+                              CallbackInfo ci) {
         if (!((Level) (Object) this).isClientSide() && JustDireCooldownFeedbackTestSupport.capturingSounds
                 && (event == SoundEvents.CONDUIT_DEACTIVATE || event == SoundEvents.ENDER_EYE_DEATH
                 || event == SoundEvents.MACE_SMASH_GROUND || event == SoundEvents.MACE_SMASH_GROUND_HEAVY)) {
@@ -23,8 +31,18 @@ abstract class JustDireCooldownSoundMixin {
             if (player != null && ((Level) (Object) this).getPlayerByUUID(player.getUUID()) instanceof net.minecraft.server.level.ServerPlayer current) {
                 player = current;
             }
-            var clocks = player == null ? java.util.List.<JustDireCooldownFeedbackTestSupport.Clock>of() : JustDireCooldownFeedbackTestSupport.before(player);
-            JustDireCooldownFeedbackTestSupport.sounds.add(new JustDireCooldownFeedbackTestSupport.Sound(event, source, x, y, z, volume, pitch, excluded != null, clocks));
+            var clocks = player == null
+                         ? java.util.List.<JustDireCooldownFeedbackTestSupport.Clock>of()
+                         : JustDireCooldownFeedbackTestSupport.before(player);
+            JustDireCooldownFeedbackTestSupport.sounds.add(new JustDireCooldownFeedbackTestSupport.Sound(event,
+                                                                                                         source,
+                                                                                                         x,
+                                                                                                         y,
+                                                                                                         z,
+                                                                                                         volume,
+                                                                                                         pitch,
+                                                                                                         excluded != null,
+                                                                                                         clocks));
             if (JustDireCooldownFeedbackTestSupport.failNextSound) {
                 JustDireCooldownFeedbackTestSupport.failNextSound = false;
                 throw new JustDireCooldownFeedbackTestSupport.SoundProbeFailure();

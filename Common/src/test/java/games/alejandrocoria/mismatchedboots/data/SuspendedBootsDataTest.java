@@ -25,9 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SuspendedBootsDataTest {
-    @BeforeAll static void bootstrap() { SharedConstants.tryDetectVersion(); Bootstrap.bootStrap(); }
+    @BeforeAll
+    static void bootstrap() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
 
-    @Test void persistentAndNetworkCodecsRetainTypedOriginalsRemovalsAndConflicts() {
+    @Test
+    void persistentAndNetworkCodecsRetainTypedOriginalsRemovalsAndConflicts() {
         CompoundTag original = original();
         CompoundTag conflicts = new CompoundTag();
         conflicts.putInt("future:energy", 99);
@@ -42,10 +47,13 @@ class SuspendedBootsDataTest {
         try {
             SuspendedBootsData.STREAM_CODEC.encode(buffer, persisted);
             assertEquals(value, SuspendedBootsData.STREAM_CODEC.decode(buffer));
-        } finally { buffer.release(); }
+        } finally {
+            buffer.release();
+        }
     }
 
-    @Test void neitherConstructorInputsNorExposedNbtAndEncodedBytesCanRewriteHistory() {
+    @Test
+    void neitherConstructorInputsNorExposedNbtAndEncodedBytesCanRewriteHistory() {
         CompoundTag original = original();
         var archive = SuspendedBootsData.of(original, new CompoundTag(), new CompoundTag());
         CompoundTag expected = original.copy();
@@ -55,10 +63,12 @@ class SuspendedBootsDataTest {
         output.getAsByteArray()[0] = 0;
         assertEquals(expected, archive.original());
         assertEquals(archive, SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE,
-                SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, archive).getOrThrow()).getOrThrow());
+                                                             SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, archive).getOrThrow())
+                                                      .getOrThrow());
     }
 
-    @Test void nativeHeapAndDepthBudgetsRejectBeforeCopyOrForeignDecoding() {
+    @Test
+    void nativeHeapAndDepthBudgetsRejectBeforeCopyOrForeignDecoding() {
         var root = new CompoundTag();
         root.putByteArray("payload", new byte[128]);
         long exact = root.sizeInBytes();
@@ -68,22 +78,30 @@ class SuspendedBootsDataTest {
         var deep = new CompoundTag();
         var cursor = deep;
         for (int i = 0; i < SuspendedBootsData.MAX_DEPTH + 1; i++) {
-            var child = new CompoundTag(); cursor.put("x", child); cursor = child;
+            var child = new CompoundTag();
+            cursor.put("x", child);
+            cursor = child;
         }
         assertThrows(RecoveryRefusalException.class, () -> SuspendedBootsData.of(deep, new CompoundTag(), new CompoundTag()));
     }
 
-    @Test void truncatedOrUnboundedNetworkLengthsFailBeforePayloadAllocation() {
+    @Test
+    void truncatedOrUnboundedNetworkLengthsFailBeforePayloadAllocation() {
         var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), RegistryAccess.EMPTY);
         try {
             buffer.writeVarInt(SuspendedBootsData.MAX_BYTES + 1);
             assertThrows(RecoveryRefusalException.class, () -> SuspendedBootsData.STREAM_CODEC.decode(buffer));
-            buffer.clear(); buffer.writeVarInt(1024); buffer.writeByte(0);
+            buffer.clear();
+            buffer.writeVarInt(1024);
+            buffer.writeByte(0);
             assertThrows(RecoveryRefusalException.class, () -> SuspendedBootsData.STREAM_CODEC.decode(buffer));
-        } finally { buffer.release(); }
+        } finally {
+            buffer.release();
+        }
     }
 
-    @Test void malformedArchiveIsRetainedByNativeFieldLoadingInsteadOfReturningAPartialResult() {
+    @Test
+    void malformedArchiveIsRetainedByNativeFieldLoadingInsteadOfReturningAPartialResult() {
         var field = new CompoundTag();
         field.putByteArray("archive", new byte[]{10, 0});
         var input = TagValueInput.create(ProblemReporter.DISCARDING, RegistryAccess.EMPTY, field);
@@ -92,14 +110,18 @@ class SuspendedBootsDataTest {
         assertEquals(field.get("archive"), retained.original().get(SuspendedBootsItemCodec.ARCHIVE));
         field.putString("archive", "wrong component type");
         assertTrue(TagValueInput.create(ProblemReporter.DISCARDING, RegistryAccess.EMPTY, field)
-                .read("archive", SuspendedBootsData.CODEC).orElseThrow().quarantined());
+                                .read("archive", SuspendedBootsData.CODEC).orElseThrow().quarantined());
     }
 
-    @Test void malformedAndRecursiveHistoryDoesNotAcquireAnEquipShell() {
+    @Test
+    void malformedAndRecursiveHistoryDoesNotAcquireAnEquipShell() {
         assertFalse(SuspendedBootsItemCodec.admittedSources(new CompoundTag()));
         var data = new CompoundTag();
-        var source = new CompoundTag(); source.putString("id", "future:boots"); source.putInt("count", 1);
-        data.put("left", source); data.put("right", source.copy());
+        var source = new CompoundTag();
+        source.putString("id", "future:boots");
+        source.putInt("count", 1);
+        data.put("left", source);
+        data.put("right", source.copy());
         assertTrue(SuspendedBootsItemCodec.admittedSources(data));
         source.putInt("components", 7);
         assertFalse(SuspendedBootsItemCodec.admittedSources(data));
@@ -108,29 +130,34 @@ class SuspendedBootsDataTest {
         assertFalse(SuspendedBootsItemCodec.admittedSources(data));
     }
 
-    @Test void recoveryHistoryCannotBeEmbeddedInANormalSourceOrForgedProjection() {
+    @Test
+    void recoveryHistoryCannotBeEmbeddedInANormalSourceOrForgedProjection() {
         var source = new ItemStack(Items.IRON_BOOTS);
         source.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build());
         new BootHalf(source);
         source.set(ModContent.createSuspendedBootsType(), SuspendedBootsData.of(original(), new CompoundTag(), new CompoundTag()));
         assertThrows(IllegalArgumentException.class, () -> new BootHalf(source));
-        var fake = new CompoundTag(); fake.putInt("minecraft:damage", 0);
+        var fake = new CompoundTag();
+        fake.putInt("minecraft:damage", 0);
         assertThrows(RecoveryRefusalException.class, () -> SuspendedBootsData.of(original(), fake, new CompoundTag()));
     }
 
-    @Test void nativeDepthRemainsInsideTheBinaryPayloadAndQuarantineDoesNotGrow() {
+    @Test
+    void nativeDepthRemainsInsideTheBinaryPayloadAndQuarantineDoesNotGrow() {
         var original = new CompoundTag();
         var cursor = original;
         for (int i = 0; i < net.minecraft.nbt.Tag.MAX_DEPTH - 1; i++) {
-            var child = new CompoundTag(); cursor.put("x", child); cursor = child;
+            var child = new CompoundTag();
+            cursor.put("x", child);
+            cursor = child;
         }
         var deep = SuspendedBootsData.of(original, new CompoundTag(), new CompoundTag());
         assertEquals(deep, SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE,
-                SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, deep).getOrThrow()).getOrThrow());
+                                                          SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, deep).getOrThrow()).getOrThrow());
         var raw = new ByteArrayTag(new byte[]{10, 0});
         var quarantined = SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE, raw).getOrThrow();
         var reloaded = SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE,
-                SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, quarantined).getOrThrow()).getOrThrow();
+                                                      SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, quarantined).getOrThrow()).getOrThrow();
         assertTrue(reloaded.quarantined());
         assertEquals(quarantined, reloaded);
         assertEquals(raw, reloaded.original().get(SuspendedBootsItemCodec.ARCHIVE));

@@ -32,7 +32,8 @@ public final class DamageTagReloadGameTests {
     private static final String PACK_NAME = "mismatchedboots-damage-tag-reload";
     private static final String PACK_ID = "file/" + PACK_NAME;
     private static final TagKey<DamageType> RESISTANCE_TAG = TagKey.create(Registries.DAMAGE_TYPE,
-            Identifier.fromNamespaceAndPath("mismatchedboots-test", "reload_resistance"));
+                                                                           Identifier.fromNamespaceAndPath("mismatchedboots-test",
+                                                                                                           "reload_resistance"));
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE, maxTicks = 1200)
     public void existingStackTracksTagReload(GameTestHelper helper) {
@@ -54,7 +55,7 @@ public final class DamageTagReloadGameTests {
             ItemStack first = new ItemStack(Items.IRON_BOOTS);
             DamageResistant resistance = new DamageResistant(
                     helper.getLevel().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
-                            .getOrThrow(RESISTANCE_TAG));
+                          .getOrThrow(RESISTANCE_TAG));
             first.set(DataComponents.DAMAGE_RESISTANT, resistance);
             ItemStack second = new ItemStack(Items.GOLDEN_BOOTS);
             second.set(DataComponents.DAMAGE_RESISTANT, resistance);
@@ -72,7 +73,7 @@ public final class DamageTagReloadGameTests {
             server.reloadResources(selected).join();
 
             helper.assertTrue(existing.get(DataComponents.DAMAGE_RESISTANT) == resistance,
-                    "Reload replaced the existing stack component");
+                              "Reload replaced the existing stack component");
             assertDamageBehavior(helper, existing, false, true, "after data-pack reload");
             assertDamageBehavior(helper, inverse, false, true, "inverse after data-pack reload");
             assertDamageBehavior(helper, decoded, false, true, "decoded after data-pack reload");
@@ -86,41 +87,41 @@ public final class DamageTagReloadGameTests {
         PackFormat version = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
         Files.createDirectories(pack);
         Files.writeString(pack.resolve("pack.mcmeta"), """
-                {"pack":{"description":"MismatchedBoots damage-tag reload test",
-                "min_format":[%d,%d],"max_format":[%d,%d]}}
-                """.formatted(version.major(), version.minor(), version.major(), version.minor()),
-                StandardCharsets.UTF_8);
+                                  {"pack":{"description":"MismatchedBoots damage-tag reload test",
+                                  "min_format":[%d,%d],"max_format":[%d,%d]}}
+                                  """.formatted(version.major(), version.minor(), version.major(), version.minor()),
+                          StandardCharsets.UTF_8);
     }
 
     private static void writeDamageTypes(Path pack, String damageType) throws IOException {
         Path tag = pack.resolve("data/mismatchedboots-test/tags/damage_type/reload_resistance.json");
         Files.createDirectories(tag.getParent());
         Files.writeString(tag, "{\"replace\":true,\"values\":[\"" + damageType + "\"]}",
-                StandardCharsets.UTF_8);
+                          StandardCharsets.UTF_8);
     }
 
     private static void assertDamageBehavior(
             GameTestHelper helper, ItemStack stack, boolean resistsInFire, boolean resistsCactus, String stage) {
         var level = helper.getLevel();
         helper.assertValueEqual(stack.canBeHurtBy(level.damageSources().inFire()), !resistsInFire,
-                stage + " in-fire stack damage");
+                                stage + " in-fire stack damage");
         helper.assertValueEqual(stack.canBeHurtBy(level.damageSources().cactus()), !resistsCactus,
-                stage + " cactus stack damage");
+                                stage + " cactus stack damage");
         helper.assertTrue(stack.canBeHurtBy(level.damageSources().lava()),
-                stage + " lava stack damage");
+                          stage + " lava stack damage");
 
         ItemEntity fireItem = new ItemEntity(level, 0, 0, 0, stack.copy());
         helper.assertValueEqual(fireItem.fireImmune(), resistsInFire, stage + " item-entity fire immunity");
         helper.assertValueEqual(fireItem.hurtServer(level, level.damageSources().inFire(), 1.0F), !resistsInFire,
-                stage + " item-entity in-fire damage");
+                                stage + " item-entity in-fire damage");
 
         ItemEntity cactusItem = new ItemEntity(level, 0, 0, 0, stack.copy());
         helper.assertValueEqual(cactusItem.hurtServer(level, level.damageSources().cactus(), 1.0F), !resistsCactus,
-                stage + " item-entity cactus damage");
+                                stage + " item-entity cactus damage");
 
         // Entity.fireImmune broadens in-fire stack resistance to all fire damage, including lava.
         ItemEntity lavaItem = new ItemEntity(level, 0, 0, 0, stack.copy());
         helper.assertValueEqual(lavaItem.hurtServer(level, level.damageSources().lava(), 1.0F), !resistsInFire,
-                stage + " item-entity lava damage");
+                                stage + " item-entity lava damage");
     }
 }

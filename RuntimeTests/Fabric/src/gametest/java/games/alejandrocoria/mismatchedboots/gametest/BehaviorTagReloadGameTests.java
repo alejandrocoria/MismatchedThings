@@ -36,7 +36,7 @@ public final class BehaviorTagReloadGameTests {
         ItemStack unchangedRoot = existing.copy();
         MixedBootsData unchangedSources = GameTestStacks.data(existing);
         helper.assertTrue(existing.is(ItemTags.PIGLIN_SAFE_ARMOR),
-                "Default golden source did not grant piglin safety");
+                          "Default golden source did not grant piglin safety");
 
         Path pack = server.getWorldPath(LevelResource.DATAPACK_DIR).resolve(PACK_NAME);
         try {
@@ -46,19 +46,19 @@ public final class BehaviorTagReloadGameTests {
             server.reloadResources(selected).join();
 
             helper.assertTrue(!existing.is(ItemTags.PIGLIN_SAFE_ARMOR),
-                    "Existing stack retained piglin safety after replacing the tag with an empty set");
+                              "Existing stack retained piglin safety after replacing the tag with an empty set");
             assertUnchanged(helper, existing, unchangedRoot, unchangedSources, "empty replacement");
 
             writePiglinSafeArmor(pack, "minecraft:iron_boots");
             server.reloadResources(selected).join();
 
             helper.assertTrue(existing.is(ItemTags.PIGLIN_SAFE_ARMOR),
-                    "Existing stack did not follow its iron source into the reloaded tag");
+                              "Existing stack did not follow its iron source into the reloaded tag");
             MixedBootsData liveSources = GameTestStacks.data(existing);
             helper.assertTrue(!liveSources.left().source().is(ItemTags.PIGLIN_SAFE_ARMOR),
-                    "Golden source unexpectedly remained in the replacement tag");
+                              "Golden source unexpectedly remained in the replacement tag");
             helper.assertTrue(liveSources.right().source().is(ItemTags.PIGLIN_SAFE_ARMOR),
-                    "Iron source did not enter the replacement tag");
+                              "Iron source did not enter the replacement tag");
             assertUnchanged(helper, existing, unchangedRoot, unchangedSources, "iron replacement");
             helper.succeed();
         } catch (IOException exception) {
@@ -69,7 +69,7 @@ public final class BehaviorTagReloadGameTests {
     private static ArrayList<String> selectPack(GameTestHelper helper, MinecraftServer server) {
         server.getPackRepository().reload();
         helper.assertTrue(server.getPackRepository().isAvailable(PACK_ID),
-                "Behavior-tag test data pack was not discovered");
+                          "Behavior-tag test data pack was not discovered");
         ArrayList<String> selected = new ArrayList<>(server.getPackRepository().getSelectedIds());
         selected.remove(PACK_ID);
         selected.add(PACK_ID);
@@ -80,20 +80,20 @@ public final class BehaviorTagReloadGameTests {
         PackFormat version = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
         Files.createDirectories(pack);
         Files.writeString(pack.resolve("pack.mcmeta"), """
-                {"pack":{"description":"MismatchedBoots behavior-tag reload test",
-                "min_format":[%d,%d],"max_format":[%d,%d]}}
-                """.formatted(version.major(), version.minor(), version.major(), version.minor()),
-                StandardCharsets.UTF_8);
+                                  {"pack":{"description":"MismatchedBoots behavior-tag reload test",
+                                  "min_format":[%d,%d],"max_format":[%d,%d]}}
+                                  """.formatted(version.major(), version.minor(), version.major(), version.minor()),
+                          StandardCharsets.UTF_8);
     }
 
     private static void writePiglinSafeArmor(Path pack, String... items) throws IOException {
         Path tag = pack.resolve("data/minecraft/tags/item/piglin_safe_armor.json");
         Files.createDirectories(tag.getParent());
         String values = Arrays.stream(items)
-                .map(item -> "\"" + item + "\"")
-                .collect(Collectors.joining(","));
+                              .map(item -> "\"" + item + "\"")
+                              .collect(Collectors.joining(","));
         Files.writeString(tag, "{\"replace\":true,\"values\":[" + values + "]}",
-                StandardCharsets.UTF_8);
+                          StandardCharsets.UTF_8);
     }
 
     private static void assertUnchanged(
@@ -103,8 +103,8 @@ public final class BehaviorTagReloadGameTests {
             MixedBootsData expectedSources,
             String stage) {
         helper.assertTrue(ItemStack.matches(expectedRoot, existing),
-                stage + " changed root item data");
+                          stage + " changed root item data");
         helper.assertTrue(expectedSources.equals(GameTestStacks.data(existing)),
-                stage + " changed source snapshots");
+                          stage + " changed source snapshots");
     }
 }

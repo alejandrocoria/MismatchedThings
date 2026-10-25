@@ -78,13 +78,13 @@ class CreateFlyBeltShapeTest {
         InsnList code = new InsnList();
         code.add(new VarInsnNode(Opcodes.ALOAD, 7));
         code.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/world/entity/EquipmentSlot", "FEET",
-                "Lnet/minecraft/world/entity/EquipmentSlot;"));
+                                   "Lnet/minecraft/world/entity/EquipmentSlot;"));
         code.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/entity/player/Player",
-                "getItemBySlot", "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;", false));
+                                    "getItemBySlot", "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;", false));
         code.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/world/item/Items", "DIAMOND",
-                "Lnet/minecraft/world/item/Item;"));
+                                   "Lnet/minecraft/world/item/Item;"));
         code.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/item/ItemStack", "is",
-                "(Ljava/lang/Object;)Z", false));
+                                    "(Ljava/lang/Object;)Z", false));
         code.add(new InsnNode(Opcodes.POP));
         return code;
     }
@@ -94,17 +94,20 @@ class CreateFlyBeltShapeTest {
         LabelNode accepted = new LabelNode();
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 7));
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/entity/player/Player",
-                "isShiftKeyDown", "()Z", false));
+                                                   "isShiftKeyDown", "()Z", false));
         method.instructions.add(new JumpInsnNode(Opcodes.IFEQ, accepted));
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 7));
         method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/world/entity/EquipmentSlot", "FEET",
-                "Lnet/minecraft/world/entity/EquipmentSlot;"));
-        method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/entity/player/Player",
-                "getItemBySlot", "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;", false));
+                                                  "Lnet/minecraft/world/entity/EquipmentSlot;"));
+        method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                                                   "net/minecraft/world/entity/player/Player",
+                                                   "getItemBySlot",
+                                                   "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;",
+                                                   false));
         method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, "com/zurrtum/create/AllItems", "CARDBOARD_BOOTS",
-                "Lcom/zurrtum/create/content/equipment/armor/CardboardArmorItem;"));
+                                                  "Lcom/zurrtum/create/content/equipment/armor/CardboardArmorItem;"));
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/item/ItemStack", "is",
-                "(Ljava/lang/Object;)Z", false));
+                                                   "(Ljava/lang/Object;)Z", false));
         method.instructions.add(new JumpInsnNode(Opcodes.IFNE, accepted));
         method.instructions.add(new InsnNode(Opcodes.RETURN));
         method.instructions.add(accepted);

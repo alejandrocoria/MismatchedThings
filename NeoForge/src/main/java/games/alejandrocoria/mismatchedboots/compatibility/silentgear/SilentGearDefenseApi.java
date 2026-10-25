@@ -21,7 +21,8 @@ public final class SilentGearDefenseApi {
     private final Field tag, scale;
 
     public SilentGearDefenseApi() throws ReflectiveOperationException {
-        negate = nativeClass("gear.trait.effect.NegateDamageTraitEffect"); fireproof = nativeClass("gear.trait.effect.FireproofTraitEffect");
+        negate = nativeClass("gear.trait.effect.NegateDamageTraitEffect");
+        fireproof = nativeClass("gear.trait.effect.FireproofTraitEffect");
         Class<?> instance = nativeClass("api.traits.TraitInstance"), trait = nativeClass("gear.trait.Trait");
         var lookup = MethodHandles.publicLookup();
         definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));
@@ -29,18 +30,30 @@ public final class SilentGearDefenseApi {
         id = lookup.findVirtual(instance, "getTraitId", MethodType.methodType(Identifier.class));
         level = lookup.findVirtual(instance, "getLevel", MethodType.methodType(int.class));
         incoming = lookup.findVirtual(negate, "onEntityIncomingDamage", MethodType.methodType(float.class,
-                ItemStack.class, int.class, LivingEntity.class, DamageSource.class, float.class, float.class));
-        tag = field(negate, "damageType"); scale = field(negate, "negatedDamageScale");
+                                                                                              ItemStack.class,
+                                                                                              int.class,
+                                                                                              LivingEntity.class,
+                                                                                              DamageSource.class,
+                                                                                              float.class,
+                                                                                              float.class));
+        tag = field(negate, "damageType");
+        scale = field(negate, "negatedDamageScale");
     }
 
     public Object admittedEffect(Object instance) throws Throwable {
         String name = id.invoke(instance).toString();
-        if (!Set.of("silentgear:heat_resistant", "silentgear:bounce").contains(name)) { throw new IllegalArgumentException("Unaudited defensive trait"); }
-        var list = (List<?>) effects.invoke(definition.invoke(instance)); Object selected = null; int companions = 0;
+        if (!Set.of("silentgear:heat_resistant", "silentgear:bounce").contains(name)) {
+            throw new IllegalArgumentException("Unaudited defensive trait");
+        }
+        var list = (List<?>) effects.invoke(definition.invoke(instance));
+        Object selected = null;
+        int companions = 0;
         for (var effect : list) {
-            if (effect.getClass() == negate && selected == null) { selected = effect; }
-            else if (name.equals("silentgear:heat_resistant") && effect.getClass() == fireproof && companions++ == 0) { /* Not executed. */ }
-            else { throw new IllegalStateException("Changed defensive effect count/class"); }
+            if (effect.getClass() == negate && selected == null) {
+                selected = effect;
+            } else if (name.equals("silentgear:heat_resistant") && effect.getClass() == fireproof && companions++ == 0) { /* Not executed. */ } else {
+                throw new IllegalStateException("Changed defensive effect count/class");
+            }
         }
         if (selected == null || name.equals("silentgear:heat_resistant") && companions != 1
                 || !(tag.get(selected) instanceof TagKey<?> key) || !key.registry().equals(Registries.DAMAGE_TYPE)
@@ -50,7 +63,13 @@ public final class SilentGearDefenseApi {
         return selected;
     }
 
-    public float incoming(Object instance, Object effect, ItemStack context, LivingEntity actor, DamageSource source, float current, float base) throws Throwable {
+    public float incoming(Object instance,
+                          Object effect,
+                          ItemStack context,
+                          LivingEntity actor,
+                          DamageSource source,
+                          float current,
+                          float base) throws Throwable {
         require("gear.trait.effect.NegateDamageTraitEffect", "mismatchedboots$sgNegateReady");
         require("event.GearEvents", "mismatchedboots$sgIncomingReady");
         validate(instance, effect, current, base);
@@ -65,19 +84,35 @@ public final class SilentGearDefenseApi {
         }
     }
 
-    static boolean parameters(float scale, int level) { return Float.isFinite(scale) && scale >= 0 && level > 0 && level <= Byte.MAX_VALUE && Float.isFinite(scale * level); }
+    static boolean parameters(float scale, int level) {
+        return Float.isFinite(scale) && scale >= 0 && level > 0 && level <= Byte.MAX_VALUE && Float.isFinite(scale * level);
+    }
+
     public static void require(String owner, String getter) throws Throwable {
         Class<?> type = nativeClass(owner);
-        if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup()).findStatic(type, getter, MethodType.methodType(boolean.class)).invoke()) {
+        if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup())
+                                    .findStatic(type, getter, MethodType.methodType(boolean.class))
+                                    .invoke()) {
             throw new IllegalStateException("Final defensive proof unavailable: " + getter);
         }
     }
+
     static void requireSchedule() throws Throwable {
         Class<?> type = Class.forName("net.silentchaos512.lib.event.ServerTicks");
-        if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup()).findStatic(type, "mismatchedboots$sgScheduleReady", MethodType.methodType(boolean.class)).invoke()) {
+        if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup())
+                                    .findStatic(type, "mismatchedboots$sgScheduleReady", MethodType.methodType(boolean.class))
+                                    .invoke()) {
             throw new IllegalStateException("Native Bounce scheduler unavailable");
         }
     }
-    private static Field field(Class<?> type, String name) throws NoSuchFieldException { var field = type.getDeclaredField(name); field.setAccessible(true); return field; }
-    private static Class<?> nativeClass(String name) throws ClassNotFoundException { return Class.forName("net.silentchaos512.gear." + name); }
+
+    private static Field field(Class<?> type, String name) throws NoSuchFieldException {
+        var field = type.getDeclaredField(name);
+        field.setAccessible(true);
+        return field;
+    }
+
+    private static Class<?> nativeClass(String name) throws ClassNotFoundException {
+        return Class.forName("net.silentchaos512.gear." + name);
+    }
 }

@@ -19,7 +19,7 @@ public enum ComponentNumericKind {
 
     public static Optional<ComponentNumericKind> fromSerializedName(String value) {
         return Arrays.stream(values())
-                .filter(kind -> kind.serializedName.equals(value))
-                .findFirst();
+                     .filter(kind -> kind.serializedName.equals(value))
+                     .findFirst();
     }
 }

@@ -16,6 +16,8 @@ abstract class SilentGearDefenseWearWitnessMixin {
     @WrapOperation(method = "allowNativeFallWear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;hurtAndBreak(ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;)V"))
     private static void payment(ItemStack root, int amount, LivingEntity actor, EquipmentSlot slot, Operation<Void> original) {
         SilentGearBounceJointTest.sgWear();
-        SilentGearBounceTest.wearCalls++; SilentGearBounceTest.requestedWear = amount; original.call(root, amount, actor, slot);
+        SilentGearBounceTest.wearCalls++;
+        SilentGearBounceTest.requestedWear = amount;
+        original.call(root, amount, actor, slot);
     }
 }

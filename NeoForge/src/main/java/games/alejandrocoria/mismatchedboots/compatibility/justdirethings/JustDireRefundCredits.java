@@ -9,7 +9,7 @@ import java.util.List;
 public record JustDireRefundCredits(List<String> names) {
     static final List<String> NAMES = List.of("stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake");
     public static final Codec<JustDireRefundCredits> CODEC = Codec.STRING.listOf(0, 5)
-            .comapFlatMap(JustDireRefundCredits::decode, JustDireRefundCredits::names);
+                                                                         .comapFlatMap(JustDireRefundCredits::decode, JustDireRefundCredits::names);
 
     public JustDireRefundCredits {
         if (names.size() > NAMES.size() || names.stream().anyMatch(name -> !NAMES.contains(name))
@@ -20,7 +20,10 @@ public record JustDireRefundCredits(List<String> names) {
     }
 
     private static DataResult<JustDireRefundCredits> decode(List<String> names) {
-        try { return DataResult.success(new JustDireRefundCredits(names)); }
-        catch (IllegalArgumentException failure) { return DataResult.error(failure::getMessage); }
+        try {
+            return DataResult.success(new JustDireRefundCredits(names));
+        } catch (IllegalArgumentException failure) {
+            return DataResult.error(failure::getMessage);
+        }
     }
 }

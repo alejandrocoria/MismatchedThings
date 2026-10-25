@@ -17,10 +17,18 @@ public final class TideFixturePlugin implements IMixinConfigPlugin {
     static final String TICK = "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/server/level/ServerLevel;"
             + "Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/EquipmentSlot;)V";
 
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
-        if (mixin.endsWith("TideProductionRuntimeMixin")) { return true; }
-        if (!new IceAndFireTideMixinPlugin().shouldApplyMixin(target, mixin)) { return false; }
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("TideProductionRuntimeMixin")) {
+            return true;
+        }
+        if (!new IceAndFireTideMixinPlugin().shouldApplyMixin(target, mixin)) {
+            return false;
+        }
         return mixin.endsWith("TideLateEntryMixin") && MODE.equals("late")
                 || mixin.endsWith("TidePublicationChangeMixin") && MODE.equals("publicationChanged")
                 || mixin.endsWith("TideBaseChangeMixin") && MODE.startsWith("base")
@@ -30,12 +38,18 @@ public final class TideFixturePlugin implements IMixinConfigPlugin {
                 || mixin.endsWith("TidePredicateChangeMixin") && MODE.startsWith("predicate");
     }
 
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        if (mixin.endsWith("TidePredicateChangeMixin")) { TidePredicateMutation.apply(node, MODE); }
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.endsWith("TidePredicateChangeMixin")) {
+            TidePredicateMutation.apply(node, MODE);
+        }
     }
 
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        if (!mixin.endsWith("TidePublicationChangeMixin")) { return; }
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (!mixin.endsWith("TidePublicationChangeMixin")) {
+            return;
+        }
         var getter = node.methods.stream().filter(method -> method.name.equals("mismatchedboots$tideEntryReady")
                 && method.desc.equals("()Z")).findFirst().orElseThrow();
         getter.access |= Opcodes.ACC_FINAL;
@@ -44,7 +58,17 @@ public final class TideFixturePlugin implements IMixinConfigPlugin {
         getter.instructions.add(new InsnNode(Opcodes.IRETURN));
     }
 
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
 }

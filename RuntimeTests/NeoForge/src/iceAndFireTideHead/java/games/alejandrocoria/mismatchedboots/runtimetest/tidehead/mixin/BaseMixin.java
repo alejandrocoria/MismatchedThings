@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Item.class)
 abstract class BaseMixin implements Ready.Base {
-    @Override public boolean tideHead$baseReady() { return false; }
+    @Override
+    public boolean tideHead$baseReady() {
+        return false;
+    }
 }

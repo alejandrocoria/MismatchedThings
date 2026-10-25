@@ -5,4 +5,5 @@ import org.spongepowered.asm.mixin.Pseudo;
 
 @Pseudo
 @Mixin(targets = "com.aetherteam.aetherii.item.equipment.armor.abilities.SentryArmor", remap = false)
-interface AetherSentryTargetMixin {}
+interface AetherSentryTargetMixin {
+}

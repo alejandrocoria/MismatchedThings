@@ -37,18 +37,24 @@ final class NeoForgeJustDireJumpClientTest {
     private static Future<?> job;
 
     static void tick(Minecraft client) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         try {
-            if (++ticks > 3600) { throw new AssertionError("Jump client timed out; screen="
-                    + (client.screen == null ? "none" : client.screen.getClass().getName())
-                    + "; flight=" + flightCase + "; settled=" + settled); }
+            if (++ticks > 3600) {
+                throw new AssertionError("Jump client timed out; screen="
+                                                 + (client.screen == null ? "none" : client.screen.getClass().getName())
+                                                 + "; flight=" + flightCase + "; settled=" + settled);
+            }
             if (client.player == null || client.level == null || client.screen != null
                     || client.getCameraEntity() != client.player || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
                 return;
             }
             if (directChecked) {
                 flight(client);
-                if (finished) { client.stop(); }
+                if (finished) {
+                    client.stop();
+                }
                 return;
             }
             if (client.options.getSoundSourceVolume(SoundSource.MASTER) != 0
@@ -57,17 +63,24 @@ final class NeoForgeJustDireJumpClientTest {
             }
             var player = client.player;
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
-            player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
+            player.setDeltaMovement(Vec3.ZERO);
+            player.jumpFromGround();
             double control = player.getDeltaMovement().y;
             for (String tier : new String[]{"ferricore", "blazegold", "celestigem", "eclipsealloy"}) {
                 ItemStack original = NeoForgeJustDireJumpTest.poweredBoots(tier, 5);
                 var pair = MixedBootsFactory.createPair(original, new ItemStack(Items.IRON_BOOTS));
-                int value = switch (tier) { case "ferricore" -> 1; case "blazegold" -> 2; case "celestigem" -> 3; default -> 5; };
+                int value = switch (tier) {
+                    case "ferricore" -> 1;
+                    case "blazegold" -> 2;
+                    case "celestigem" -> 3;
+                    default -> 5;
+                };
                 for (ItemStack stack : new ItemStack[]{original, pair.primary(), pair.inverse()}) {
                     NeoForgeJustDireJumpTest.charge(stack, 5);
                     ItemStack before = stack.copy();
                     player.setItemSlot(EquipmentSlot.FEET, stack);
-                    player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
+                    player.setDeltaMovement(Vec3.ZERO);
+                    player.jumpFromGround();
                     if (Math.abs(player.getDeltaMovement().y - control - value / 7.5f) > 1e-7
                             || !ItemStack.matches(before, stack)) {
                         throw new AssertionError("Client Jump differed from native value or mutated the stack: " + tier);
@@ -82,34 +95,48 @@ final class NeoForgeJustDireJumpClientTest {
             finished = true;
             NetworkAcceptanceFiles.failure(OUTPUT, failure);
         }
-        if (finished) { client.stop(); }
+        if (finished) {
+            client.stop();
+        }
     }
 
     private static void flight(Minecraft client) throws Exception {
         var player = client.player;
         if (job != null) {
-            if (!job.isDone()) { return; }
-            job.get(); job = null;
+            if (!job.isDone()) {
+                return;
+            }
+            job.get();
+            job = null;
         }
         if (flightTicks == 0) {
-            if (++waitingTicks > 400) { throw new AssertionError("Flight setup did not synchronize at case " + flightCase
-                    + "; feetMatch=" + ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), equipped)
-                    + "; ground=" + player.onGround() + "; y=" + player.getY()
-                    + "; FE=" + player.getItemBySlot(EquipmentSlot.FEET).getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
-                    + "; armor=" + player.getAttributeValue(Attributes.ARMOR)
-                    + "; expected=" + equipped.getAttributeModifiers()); }
+            if (++waitingTicks > 400) {
+                throw new AssertionError("Flight setup did not synchronize at case " + flightCase
+                                                 + "; feetMatch=" + ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), equipped)
+                                                 + "; ground=" + player.onGround() + "; y=" + player.getY()
+                                                 + "; FE=" + player.getItemBySlot(EquipmentSlot.FEET)
+                                                                   .getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                                                 + "; armor=" + player.getAttributeValue(Attributes.ARMOR)
+                                                 + "; expected=" + equipped.getAttributeModifiers());
+            }
             if (!ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), equipped)
                     || !player.onGround() || Math.abs(player.getY() - 81) > 1e-5
-                    || player.getAbilities().flying) { settled = 0; return; }
+                    || player.getAbilities().flying) {
+                settled = 0;
+                return;
+            }
             // Only syncable attributes have a client value; knockback resistance is server-only.
             for (var attribute : List.of(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS)) {
                 double modifier = equipped.getAttributeModifiers().modifiers().stream()
-                        .filter(entry -> entry.attribute().equals(attribute)).mapToDouble(entry -> entry.modifier().amount()).sum();
+                                          .filter(entry -> entry.attribute().equals(attribute)).mapToDouble(entry -> entry.modifier().amount()).sum();
                 if (Math.abs(player.getAttributeValue(attribute) - player.getAttributeBaseValue(attribute) - modifier) > 1e-7) {
-                    settled = 0; return;
+                    settled = 0;
+                    return;
                 }
             }
-            if (++settled < 15) { return; }
+            if (++settled < 15) {
+                return;
+            }
             client.options.keyJump.setDown(true);
             flightTicks = 1;
             settled = 0;
@@ -120,9 +147,13 @@ final class NeoForgeJustDireJumpClientTest {
         client.options.keyJump.setDown(false);
         flightTicks++;
         peak = Math.max(peak, player.getY() - 81);
-        if (flightTicks > 80) { throw new AssertionError("Keyboard did not complete jump case " + flightCase + "; peak=" + peak); }
+        if (flightTicks > 80) {
+            throw new AssertionError("Keyboard did not complete jump case " + flightCase + "; peak=" + peak);
+        }
         if (!apexChecked) {
-            if (peak <= 0 || player.getDeltaMovement().y > 0) { return; }
+            if (peak <= 0 || player.getDeltaMovement().y > 0) {
+                return;
+            }
             int value = VALUES[flightCase];
             if (flightCase < 5) {
                 nativeHeights[value] = peak;
@@ -131,7 +162,7 @@ final class NeoForgeJustDireJumpClientTest {
                 }
             } else if (Math.abs(peak - nativeHeights[value]) > .03) {
                 throw new AssertionError("Mixed keyboard height differs from native control at " + flightCase
-                        + ": value=" + value + ", height=" + peak + ", control=" + nativeHeights[value]);
+                                                 + ": value=" + value + ", height=" + peak + ", control=" + nativeHeights[value]);
             }
             if (!ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), equipped)) {
                 throw new AssertionError("Ascent mutated equipped boots at case " + flightCase);
@@ -139,33 +170,46 @@ final class NeoForgeJustDireJumpClientTest {
             apexChecked = true;
         }
         // Finish the real landing before changing FE: Negate can legitimately bill that landing.
-        if (!player.onGround()) { settled = 0; return; }
-        if (++settled < 10) { return; }
-        if (++flightCase < VALUES.length) { prepareFlight(client); return; }
+        if (!player.onGround()) {
+            settled = 0;
+            return;
+        }
+        if (++settled < 10) {
+            return;
+        }
+        if (++flightCase < VALUES.length) {
+            prepareFlight(client);
+            return;
+        }
         NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", "12 direct native/mixed client jump cases; 20 actual keyboard flights; "
-                    + "native ordinary/Ferricore/Blazegold/Celestigem/Eclipse height controls; both Eclipse+Ferricore orientations; "
-                    + "Celestigem+vanilla; in-place 5/4/5 FE changes through ordinary integrated-server equipment/attribute packets; "
-                    + "native-equivalent height and unchanged ascent state; heights=" + java.util.Arrays.toString(nativeHeights)
-                    + "; Eclipse Negate + Ferricore coexistence in both orientations; unchanged ascent resources; "
-                    + "normal production archive; hidden/muted, not physical/manual acceptance\n");
+                + "native ordinary/Ferricore/Blazegold/Celestigem/Eclipse height controls; both Eclipse+Ferricore orientations; "
+                + "Celestigem+vanilla; in-place 5/4/5 FE changes through ordinary integrated-server equipment/attribute packets; "
+                + "native-equivalent height and unchanged ascent state; heights=" + java.util.Arrays.toString(nativeHeights)
+                + "; Eclipse Negate + Ferricore coexistence in both orientations; unchanged ascent resources; "
+                + "normal production archive; hidden/muted, not physical/manual acceptance\n");
         NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "neoforge\n");
         finished = true;
     }
 
     private static void prepareFlight(Minecraft client) {
         client.options.keyJump.setDown(false);
-        flightTicks = 0; settled = 0; waitingTicks = 0;
+        flightTicks = 0;
+        settled = 0;
+        waitingTicks = 0;
         boolean balanceChange;
-        if (flightCase == 0) { equipped = new ItemStack(Items.IRON_BOOTS); }
-        else if (flightCase < 5) {
+        if (flightCase == 0) {
+            equipped = new ItemStack(Items.IRON_BOOTS);
+        } else if (flightCase < 5) {
             equipped = NeoForgeJustDireJumpTest.poweredBoots(new String[]{"", "ferricore", "blazegold", "celestigem", "eclipsealloy"}[flightCase], 5);
         } else if (flightCase == 5 || flightCase == 8) {
-            var pair = MixedBootsFactory.createPair(NeoForgeJustDireJumpTest.poweredBoots("eclipsealloy", 0), NeoForgeJustDireJumpTest.boots("ferricore", true));
+            var pair = MixedBootsFactory.createPair(NeoForgeJustDireJumpTest.poweredBoots("eclipsealloy", 0),
+                                                    NeoForgeJustDireJumpTest.boots("ferricore", true));
             equipped = flightCase == 5 ? pair.primary() : pair.inverse();
-        } else if (flightCase == 11) { equipped = NeoForgeJustDireJumpTest.poweredPair("celestigem", "iron"); }
-        else if (flightCase == 14 || flightCase == 17) {
+        } else if (flightCase == 11) {
+            equipped = NeoForgeJustDireJumpTest.poweredPair("celestigem", "iron");
+        } else if (flightCase == 14 || flightCase == 17) {
             var pair = MixedBootsFactory.createPair(NeoForgeJustDireNegateFallTest.boots("eclipsealloy", 6_000),
-                    NeoForgeJustDireJumpTest.boots("ferricore", true));
+                                                    NeoForgeJustDireJumpTest.boots("ferricore", true));
             equipped = flightCase == 14 ? pair.primary() : pair.inverse();
         }
         balanceChange = flightCase == 6 || flightCase == 7 || flightCase == 9 || flightCase == 10 || flightCase == 12 || flightCase == 13
@@ -182,14 +226,18 @@ final class NeoForgeJustDireJumpClientTest {
         var id = client.player.getUUID();
         job = server.submit(() -> {
             var owner = server.getPlayerList().getPlayer(id);
-            if (flightCase == 0) { owner.getInventory().clearContent(); }
+            if (flightCase == 0) {
+                owner.getInventory().clearContent();
+            }
             owner.removeAllEffects();
             owner.setGameMode(GameType.SURVIVAL);
             if (balanceChange) {
                 // Keep the actual equipped root: ordinary ticks must refresh armor after its FE changes.
                 owner.getItemBySlot(EquipmentSlot.FEET).set(JustDireResourceTestSupport.energyComponent(),
-                        equipped.get(JustDireResourceTestSupport.energyComponent()));
-            } else { owner.setItemSlot(EquipmentSlot.FEET, equipped.copy()); }
+                                                            equipped.get(JustDireResourceTestSupport.energyComponent()));
+            } else {
+                owner.setItemSlot(EquipmentSlot.FEET, equipped.copy());
+            }
             for (int x = -2; x <= 2; x++) {
                 for (int z = -2; z <= 2; z++) {
                     server.overworld().setBlock(new BlockPos(x, 80, z), Blocks.STONE.defaultBlockState(), 3);

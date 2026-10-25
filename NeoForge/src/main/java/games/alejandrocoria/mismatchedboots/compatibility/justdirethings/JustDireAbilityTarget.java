@@ -20,7 +20,9 @@ public record JustDireAbilityTarget(ServerPlayer player, int slot, ItemStack roo
         return slot >= 0 && slot < Inventory.INVENTORY_SIZE || slot == FEET_SLOT || slot == Inventory.SLOT_OFFHAND;
     }
 
-    public boolean equipped() { return slot == FEET_SLOT && player.getItemBySlot(EquipmentSlot.FEET) == root; }
+    public boolean equipped() {
+        return slot == FEET_SLOT && player.getItemBySlot(EquipmentSlot.FEET) == root;
+    }
 
     void hurtAndBreak(int amount) {
         root.hurtAndBreak(amount, player.level(), player, this::broken);
@@ -35,9 +37,15 @@ public record JustDireAbilityTarget(ServerPlayer player, int slot, ItemStack roo
         // Shrink/refund callbacks may already have replaced the slot or changed selected hotbar.
         // Empty consumed roots still have identity; never clean up a replacement's location effects.
         EquipmentSlot equipment = !present() ? null : slot == FEET_SLOT ? EquipmentSlot.FEET
-                : slot == Inventory.SLOT_OFFHAND ? EquipmentSlot.OFFHAND
-                : slot == player.getInventory().getSelectedSlot() ? EquipmentSlot.MAINHAND : null;
-        if (equipment != null) { player.onEquippedItemBroken(item, equipment); }
-        else { player.awardStat(Stats.ITEM_BROKEN.get(item)); }
+                                                                        : slot == Inventory.SLOT_OFFHAND ? EquipmentSlot.OFFHAND
+                                                                                                         : slot == player.getInventory()
+                                                                                                                         .getSelectedSlot()
+                                                                                                           ? EquipmentSlot.MAINHAND
+                                                                                                           : null;
+        if (equipment != null) {
+            player.onEquippedItemBroken(item, equipment);
+        } else {
+            player.awardStat(Stats.ITEM_BROKEN.get(item));
+        }
     }
 }

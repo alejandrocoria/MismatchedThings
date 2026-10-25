@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Mixin;
 /** Adds a proof getter, not an override or callback in the base tick. */
 @Mixin(Item.class)
 abstract class IceAndFireTideBaseMixin implements IceAndFireTideReadiness.Base {
-    @Override public boolean mismatchedboots$tideBaseReady() { return false; }
+    @Override
+    public boolean mismatchedboots$tideBaseReady() {
+        return false;
+    }
 }

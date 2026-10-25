@@ -9,5 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(JustDireUpgradesCompatibility.class)
 abstract class JustDireRootUpgradeApiMissingMixin {
     @ModifyVariable(method = "component", at = @At("HEAD"), argsOnly = true)
-    private static String missing(String path) { return "missing_root_upgrade_fixture_component"; }
+    private static String missing(String path) {
+        return "missing_root_upgrade_fixture_component";
+    }
 }

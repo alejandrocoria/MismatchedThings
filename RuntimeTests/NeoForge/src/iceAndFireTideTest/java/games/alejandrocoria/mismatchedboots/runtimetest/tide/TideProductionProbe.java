@@ -9,13 +9,26 @@ public final class TideProductionProbe {
     public static int activations, warnings, bindings;
 
     public TideProductionProbe() {
-        if (TideFixturePlugin.MODE.isEmpty()) { throw new IllegalStateException("Tide fixture is test-only"); }
+        if (TideFixturePlugin.MODE.isEmpty()) {
+            throw new IllegalStateException("Tide fixture is test-only");
+        }
     }
 
-    public static int ownerActivations() { return activations; }
-    public static int ownerWarnings() { return warnings; }
-    public static int ownerBindingAttempts() { return bindings; }
-    public static int ownerApiAvailable() { return new IceAndFireTideMixinPlugin().shouldApplyMixin("", "") ? 1 : 0; }
+    public static int ownerActivations() {
+        return activations;
+    }
+
+    public static int ownerWarnings() {
+        return warnings;
+    }
+
+    public static int ownerBindingAttempts() {
+        return bindings;
+    }
+
+    public static int ownerApiAvailable() {
+        return new IceAndFireTideMixinPlugin().shouldApplyMixin("", "") ? 1 : 0;
+    }
 
     public static void verifyMutation() {
         String mode = TideFixturePlugin.MODE;

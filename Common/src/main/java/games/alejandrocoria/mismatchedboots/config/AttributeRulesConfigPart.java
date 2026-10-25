@@ -63,8 +63,8 @@ final class AttributeRulesConfigPart implements DynamicConfigPart {
             boolean categoryDirty = category.valueMap().keySet().stream().anyMatch(key -> !POLICY.equals(key));
             Object rawPolicy = category.valueMap().get(POLICY);
             AttributePolicy policy = rawPolicy instanceof String value
-                    ? AttributePolicy.fromSerializedName(value).orElse(null)
-                    : null;
+                                     ? AttributePolicy.fromSerializedName(value).orElse(null)
+                                     : null;
             if (policy == null) {
                 policy = AttributeRuleDefaults.rules().getOrDefault(id, fallback.get());
                 categoryDirty = true;

@@ -16,7 +16,7 @@ abstract class SeparatorObservationMixin {
         if (SeparatorObservations.enabled()) {
             SeparatorObservations.WIDTHS.add(width);
             SeparatorObservations.DRAWS.add(new SeparatorObservations.Draw(true, y,
-                    ((TooltipSeparatorComponent) (Object) this).getHeight(font)));
+                                                                           ((TooltipSeparatorComponent) (Object) this).getHeight(font)));
         }
     }
 }

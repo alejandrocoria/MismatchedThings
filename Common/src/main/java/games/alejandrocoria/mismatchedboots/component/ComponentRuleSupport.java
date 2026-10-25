@@ -43,7 +43,7 @@ public final class ComponentRuleSupport {
             return Optional.of(requested);
         }
         return Optional.of(ComponentRuleDefaults.ruleSet()
-                .ruleFor(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type)));
+                                                .ruleFor(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type)));
     }
 
     private static boolean supports(DataComponentType<?> type, ComponentRule rule) {
@@ -51,9 +51,9 @@ public final class ComponentRuleSupport {
             case OWNER, OMIT, SAME, SHARE -> true;
             case INTERSECTION -> type == DataComponents.DAMAGE_RESISTANT;
             case AVERAGE, MINIMUM, MAXIMUM -> type == DataComponents.ENCHANTABLE
-                    ? rule.number() == null
-                    : !ComponentRuleDefaults.rules().containsKey(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type))
-                            && rule.number() != null && !type.isTransient();
+                                              ? rule.number() == null
+                                              : !ComponentRuleDefaults.rules().containsKey(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type))
+                                                && rule.number() != null && !type.isTransient();
         };
     }
 }

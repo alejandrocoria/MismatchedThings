@@ -1,12 +1,14 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.aether",
-  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherRecognitionTestPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "AetherSentryResultControlMixin",
-    "AetherSetResultControlMixin"
-  ],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.aether",
+    "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.AetherRecognitionTestPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "AetherSentryResultControlMixin",
+        "AetherSetResultControlMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

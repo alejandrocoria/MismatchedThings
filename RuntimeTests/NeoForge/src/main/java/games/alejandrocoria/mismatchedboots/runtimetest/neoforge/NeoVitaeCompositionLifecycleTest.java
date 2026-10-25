@@ -41,7 +41,8 @@ final class NeoVitaeCompositionLifecycleTest {
     private static final BlockPos BARREL = new BlockPos(0, 80, 0);
     private static final BlockPos FORGE = new BlockPos(2, 80, 0);
 
-    private NeoVitaeCompositionLifecycleTest() {}
+    private NeoVitaeCompositionLifecycleTest() {
+    }
 
     static void save(MinecraftServer server) throws Exception {
         var api = new NativeApi();
@@ -51,7 +52,10 @@ final class NeoVitaeCompositionLifecycleTest {
         ItemStack iron = api.infuse(server, new ItemStack(Items.IRON_BOOTS), "spiritus_gem_common");
         require(api.fill(diamond, api.raw, 40, true) == 40 && api.fill(iron, api.raw, 100, true) == 100, "Native source fill failed");
         var compatible = workbench(player, diamond, iron);
-        for (ItemStack root : compatible) { api.tuple(root, 1024, 70, api.raw); require(root.has(api.blood), "Inherited mark missing"); }
+        for (ItemStack root : compatible) {
+            api.tuple(root, 1024, 70, api.raw);
+            require(root.has(api.blood), "Inherited mark missing");
+        }
         ItemStack live = compatible.getFirst();
         var provenance = ModContent.getMixedBootsData(live).orElseThrow();
         ItemStack beforeSimulation = live.copy();
@@ -65,24 +69,26 @@ final class NeoVitaeCompositionLifecycleTest {
         api.same(beforeTake, trimmed, "paid trim");
         var trimmedData = ModContent.getMixedBootsData(trimmed).orElseThrow();
         require(trimmedData.left().source().has(net.minecraft.core.component.DataComponents.TRIM)
-                && trimmedData.right().source().has(net.minecraft.core.component.DataComponents.TRIM), "Paid trim missed a source");
+                        && trimmedData.right().source().has(net.minecraft.core.component.DataComponents.TRIM), "Paid trim missed a source");
         beforeTake = trimmed.copy();
         ItemStack upgraded = smithing(server, player, trimmed, Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Items.NETHERITE_INGOT);
         api.same(beforeTake, upgraded, "paid tier");
         var tier = ModContent.getMixedBootsData(upgraded).orElseThrow();
         require(tier.left().source().is(Items.NETHERITE_BOOTS) && tier.right().source().is(Items.IRON_BOOTS)
-                && tier.left().source().get(api.amount) == 40 && tier.right().source().get(api.amount) == 100,
+                        && tier.left().source().get(api.amount) == 40 && tier.right().source().get(api.amount) == 100,
                 "Tier take changed source balances or wrong item");
         require(api.drain(compatible.get(1), api.raw, 1000, true) == 70, "Empty control did not drain");
 
         ItemStack raw = api.infuse(server, new ItemStack(Items.DIAMOND_BOOTS), "spiritus_gem_petty");
         ItemStack ruina = api.infuse(server, new ItemStack(Items.IRON_BOOTS), "spiritus_gem_common");
-        api.fill(raw, api.raw, 40, true); api.fill(ruina, api.ruina, 100, true);
+        api.fill(raw, api.raw, 40, true);
+        api.fill(ruina, api.ruina, 100, true);
         var conflicting = workbench(player, raw, ruina);
-        api.tuple(conflicting.getFirst(), 1024, 40, api.raw); api.tuple(conflicting.get(1), 1024, 100, api.ruina);
+        api.tuple(conflicting.getFirst(), 1024, 40, api.raw);
+        api.tuple(conflicting.get(1), 1024, 100, api.ruina);
         beforeSimulation = conflicting.getFirst().copy();
         require(api.fill(conflicting.getFirst(), api.ruina, 20, true) == 0
-                && ItemStack.matches(beforeSimulation, conflicting.getFirst()), "Native conflicting fill converted a resource");
+                        && ItemStack.matches(beforeSimulation, conflicting.getFirst()), "Native conflicting fill converted a resource");
         require(api.drain(conflicting.getFirst(), api.raw, 7.25, true) == 7.25, "Native fractional drain failed");
 
         var plain = workbench(player, new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.IRON_BOOTS));
@@ -108,26 +114,29 @@ final class NeoVitaeCompositionLifecycleTest {
             var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), server.registryAccess());
             try {
                 ClientboundContainerSetSlotPacket.STREAM_CODEC.encode(buffer,
-                        new ClientboundContainerSetSlotPacket(1, 0, index, roots.get(index)));
+                                                                      new ClientboundContainerSetSlotPacket(1, 0, index, roots.get(index)));
                 var decoded = ClientboundContainerSetSlotPacket.STREAM_CODEC.decode(buffer);
                 require(decoded.getSlot() == index && ItemStack.matches(roots.get(index), decoded.getItem()), "Slot packet lost complete root");
-            } finally { buffer.release(); }
+            } finally {
+                buffer.release();
+            }
         }
         barrel.setChanged();
         var manifest = new JsonObject();
-        manifest.addProperty("process", ProcessHandle.current().pid()); manifest.add("roots", saved);
+        manifest.addProperty("process", ProcessHandle.current().pid());
+        manifest.add("roots", saved);
         NetworkAcceptanceFiles.write("neo-vitae-composition-saved.json", manifest.toString());
         NetworkAcceptanceFiles.write("neo-vitae-composition-lifecycle-report.txt",
-                "3 real Workbench transactions/6 outputs; native forge infusion and Blood Mending with ingredient/fuel payment; "
-                        + "native fill/drain/simulation/type rejection/deplete/refill; 3 paid smithing takes; "
-                        + "6 complete roots saved in world barrel (compatible, zero, two conflicting, later-infused, absent); "
-                        + "vanilla slot-packet codec round trips with native components, not connected-client acceptance\n");
+                                     "3 real Workbench transactions/6 outputs; native forge infusion and Blood Mending with ingredient/fuel payment; "
+                                             + "native fill/drain/simulation/type rejection/deplete/refill; 3 paid smithing takes; "
+                                             + "6 complete roots saved in world barrel (compatible, zero, two conflicting, later-infused, absent); "
+                                             + "vanilla slot-packet codec round trips with native components, not connected-client acceptance\n");
     }
 
     static void restart(MinecraftServer server) throws Exception {
         var api = new NativeApi();
         var manifest = JsonParser.parseString(Files.readString(Path.of(System.getProperty("mismatchedboots.runtimetest.markers"),
-                "neo-vitae-composition-saved.json"))).getAsJsonObject();
+                                                                       "neo-vitae-composition-saved.json"))).getAsJsonObject();
         require(manifest.get("process").getAsLong() != ProcessHandle.current().pid(), "Restart did not use another JVM");
         server.overworld().getChunk(0, 0);
         var barrel = (BarrelBlockEntity) server.overworld().getBlockEntity(BARREL);
@@ -155,30 +164,33 @@ final class NeoVitaeCompositionLifecycleTest {
         require(!absent.has(api.capacity) && !absent.has(api.amount) && !absent.has(api.type), "Absent container resurrected");
         ItemStack installed = api.infuse(server, absent, "spiritus_gem_petty");
         api.tuple(installed, 64, 0, api.raw);
-        barrel.setItem(5, installed); barrel.setChanged();
+        barrel.setItem(5, installed);
+        barrel.setChanged();
         NetworkAcceptanceFiles.write("neo-vitae-composition-restart-report.txt",
-                "second JVM reloads actual world barrel; six independent complete-stack/provenance comparisons before mutation; "
-                        + "native drain, paid trim, empty refill/type switch and later native infusion still work\n");
+                                     "second JVM reloads actual world barrel; six independent complete-stack/provenance comparisons before mutation; "
+                                             + "native drain, paid trim, empty refill/type switch and later native infusion still work\n");
     }
 
     private static List<ItemStack> workbench(ServerPlayer player, ItemStack first, ItemStack second) {
         var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
         ItemStack beforeFirst = first.copy(), beforeSecond = second.copy();
-        menu.getSlot(0).set(first); menu.getSlot(1).set(second);
+        menu.getSlot(0).set(first);
+        menu.getSlot(1).set(second);
         ItemStack primaryPreview = menu.getSlot(2).getItem().copy(), inversePreview = menu.getSlot(3).getItem().copy();
         require(!primaryPreview.isEmpty() && !inversePreview.isEmpty() && !menu.isCommitted(), "Missing Workbench previews");
         var result = new ArrayList<ItemStack>();
         result.add(menu.getSlot(2).safeTake(1, 1, player));
         require(menu.isCommitted() && menu.getSlot(0).getItem().isEmpty() && menu.getSlot(1).getItem().isEmpty()
-                && ItemStack.matches(inversePreview, menu.getSlot(3).getItem()), "First take did not pay once for both outputs");
+                        && ItemStack.matches(inversePreview, menu.getSlot(3).getItem()), "First take did not pay once for both outputs");
         result.add(menu.getSlot(3).safeTake(1, 1, player));
         require(ItemStack.matches(primaryPreview, result.getFirst()) && ItemStack.matches(inversePreview, result.get(1))
-                && menu.getSlot(2).safeTake(1, 1, player).isEmpty() && menu.getSlot(3).safeTake(1, 1, player).isEmpty(),
+                        && menu.getSlot(2).safeTake(1, 1, player).isEmpty() && menu.getSlot(3).safeTake(1, 1, player).isEmpty(),
                 "Workbench changed results or allowed another unpaid take");
         for (int index = 0; index < 2; index++) {
             var data = ModContent.getMixedBootsData(result.get(index)).orElseThrow();
             require(ItemStack.matches(data.left().source(), index == 0 ? beforeFirst : beforeSecond)
-                    && ItemStack.matches(data.right().source(), index == 0 ? beforeSecond : beforeFirst), "Workbench lost original provenance");
+                            && ItemStack.matches(data.right().source(), index == 0 ? beforeSecond : beforeFirst),
+                    "Workbench lost original provenance");
         }
         return result;
     }
@@ -198,10 +210,11 @@ final class NeoVitaeCompositionLifecycleTest {
         ItemStack preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
         menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
         require(!preview.isEmpty() && ItemStack.matches(preview, menu.getCarried())
-                && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
-                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Paid smithing menu take failed");
-        ItemStack result = menu.getCarried(); menu.setCarried(ItemStack.EMPTY);
+                        && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Paid smithing menu take failed");
+        ItemStack result = menu.getCarried();
+        menu.setCarried(ItemStack.EMPTY);
         return result;
     }
 
@@ -249,7 +262,7 @@ final class NeoVitaeCompositionLifecycleTest {
         ItemStack bloodMending(MinecraftServer server, ItemStack target) throws Exception {
             var provenance = ModContent.getMixedBootsData(target);
             ItemStack result = forge(server, List.of(target, item("tabula_robur"), new ItemStack(Items.LAPIS_LAZULI),
-                    new ItemStack(Items.NETHER_WART)), 200);
+                                                     new ItemStack(Items.NETHER_WART)), 200);
             require(Boolean.TRUE.equals(result.get(blood)), "Native Blood Mending installation failed");
             require(provenance.equals(ModContent.getMixedBootsData(result)), "Native Blood Mending changed mixed provenance");
             return result;
@@ -264,7 +277,9 @@ final class NeoVitaeCompositionLifecycleTest {
             Object forge = level.getBlockEntity(FORGE);
             require(forgeClass.isInstance(forge), "Missing native forge entity");
             Object inventory = forgeClass.getField("inv").get(forge);
-            for (int index = 0; index < ingredients.size(); index++) { setSlot.invoke(inventory, index, ingredients.get(index).copy()); }
+            for (int index = 0; index < ingredients.size(); index++) {
+                setSlot.invoke(inventory, index, ingredients.get(index).copy());
+            }
             ItemStack fuel = item("spiritus_gem_common");
             double full = (double) maximum.invoke(null, fuel);
             require(fill(fuel, raw, full, true) == full, "Could not seed full native fuel");
@@ -275,8 +290,11 @@ final class NeoVitaeCompositionLifecycleTest {
             }
             ItemStack result = stack(inventory, 5).copy();
             require(!result.isEmpty() && stack(inventory, 4).get(amount) == full - cost, "Native forge did not complete/pay expected fuel");
-            for (int index = 0; index < 4; index++) { require(stack(inventory, index).isEmpty(), "Forge did not consume one ingredient"); }
-            setSlot.invoke(inventory, 5, ItemStack.EMPTY); setSlot.invoke(inventory, 4, ItemStack.EMPTY);
+            for (int index = 0; index < 4; index++) {
+                require(stack(inventory, index).isEmpty(), "Forge did not consume one ingredient");
+            }
+            setSlot.invoke(inventory, 5, ItemStack.EMPTY);
+            setSlot.invoke(inventory, 4, ItemStack.EMPTY);
             return result;
         }
 
@@ -286,7 +304,7 @@ final class NeoVitaeCompositionLifecycleTest {
 
         void tuple(ItemStack root, double expectedCapacity, double expectedAmount, Object expectedType) {
             require(Double.valueOf(expectedCapacity).equals(root.get(capacity)) && Double.valueOf(expectedAmount).equals(root.get(amount))
-                    && expectedType.equals(root.get(type)), "Unexpected native lifecycle tuple");
+                            && expectedType.equals(root.get(type)), "Unexpected native lifecycle tuple");
         }
 
         void same(ItemStack before, ItemStack after, String operation) {
@@ -299,6 +317,8 @@ final class NeoVitaeCompositionLifecycleTest {
     }
 
     private static void require(boolean valid, String message) {
-        if (!valid) { throw new IllegalStateException(message); }
+        if (!valid) {
+            throw new IllegalStateException(message);
+        }
     }
 }

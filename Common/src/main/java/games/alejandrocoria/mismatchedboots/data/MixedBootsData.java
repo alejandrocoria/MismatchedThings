@@ -16,9 +16,9 @@ public record MixedBootsData(BootHalf left, BootHalf right) {
     private static final ThreadLocal<Integer> PERSISTENT_CODEC_DEPTH = ThreadLocal.withInitial(() -> 0);
     private static final ThreadLocal<Integer> NETWORK_CODEC_DEPTH = ThreadLocal.withInitial(() -> 0);
     private static final Codec<MixedBootsData> UNGUARDED_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                    BootHalf.CODEC.fieldOf("left").forGetter(MixedBootsData::left),
-                    BootHalf.CODEC.fieldOf("right").forGetter(MixedBootsData::right))
-            .apply(instance, MixedBootsData::new));
+                                                                                                                       BootHalf.CODEC.fieldOf("left").forGetter(MixedBootsData::left),
+                                                                                                                       BootHalf.CODEC.fieldOf("right").forGetter(MixedBootsData::right))
+                                                                                                               .apply(instance, MixedBootsData::new));
     public static final Codec<MixedBootsData> CODEC = new Codec<>() {
         @Override
         public <T> DataResult<Pair<MixedBootsData, T>> decode(DynamicOps<T> ops, T input) {

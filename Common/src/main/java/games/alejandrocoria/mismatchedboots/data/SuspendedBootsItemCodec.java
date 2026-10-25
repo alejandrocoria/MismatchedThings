@@ -29,8 +29,13 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
     private static final String SOURCES = "mismatchedboots:mixed_boots_data";
     private static final String EQUIPPABLE = "minecraft:equippable";
     private static final String ITEM = "mismatchedboots:mixed_boots";
-    private static final Set<String> PASSIVE = Set.of("minecraft:max_stack_size", "minecraft:max_damage", "minecraft:damage",
-            "minecraft:custom_name", "minecraft:item_name", "minecraft:custom_data", "minecraft:damage_resistant");
+    private static final Set<String> PASSIVE = Set.of("minecraft:max_stack_size",
+                                                      "minecraft:max_damage",
+                                                      "minecraft:damage",
+                                                      "minecraft:custom_name",
+                                                      "minecraft:item_name",
+                                                      "minecraft:custom_data",
+                                                      "minecraft:damage_resistant");
     private final MapCodec<ItemStack> delegate;
 
     public SuspendedBootsItemCodec(MapCodec<ItemStack> delegate) {
@@ -41,12 +46,18 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         this.delegate = delegate;
     }
 
-    @Override public <T> Stream<T> keys(DynamicOps<T> ops) { return delegate.keys(ops); }
-    @Override public <T> RecordBuilder<T> encode(ItemStack value, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+    @Override
+    public <T> Stream<T> keys(DynamicOps<T> ops) {
+        return delegate.keys(ops);
+    }
+
+    @Override
+    public <T> RecordBuilder<T> encode(ItemStack value, DynamicOps<T> ops, RecordBuilder<T> prefix) {
         return delegate.encode(value, ops, prefix);
     }
 
-    @Override public <T> DataResult<ItemStack> decode(DynamicOps<T> ops, MapLike<T> input) {
+    @Override
+    public <T> DataResult<ItemStack> decode(DynamicOps<T> ops, MapLike<T> input) {
         T id = input.get("id"), components = input.get("components");
         if (id == null || components == null || !ops.getStringValue(id).result().orElse("").equals(ITEM)) {
             return delegate.decode(ops, input);
@@ -61,7 +72,9 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         boolean restoring = patch.contains(ARCHIVE);
         if (!restoring && oneItem && sourcesPresent(patch.get(SOURCES))) {
             DataResult<ItemStack> active = read(ops, input, patch);
-            if (ready(active)) { return active; }
+            if (ready(active)) {
+                return active;
+            }
         }
         CompoundTag original;
         CompoundTag passive = new CompoundTag();
@@ -74,26 +87,41 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
             conflicts = archive.conflicts();
             CompoundTag projection = archive.projection();
             for (String key : patch.keySet()) {
-                if (key.equals(ARCHIVE)) { continue; }
+                if (key.equals(ARCHIVE)) {
+                    continue;
+                }
                 Tag value = patch.get(key);
-                if (value.equals(projection.get(key))) { continue; }
+                if (value.equals(projection.get(key))) {
+                    continue;
+                }
                 String prior = matchingKey(original, key);
                 if (prior != null) {
-                    if (!key.equals(prior) || !value.equals(original.get(prior))) { conflicts.put(key, value.copy()); }
+                    if (!key.equals(prior) || !value.equals(original.get(prior))) {
+                        conflicts.put(key, value.copy());
+                    }
                 } else if (PASSIVE.contains(type(key))) {
-                    if (readablePassive(ops, key, value)) { passive.put(key, value.copy()); }
-                    else { original.put(key, value.copy()); }
-                } else { conflicts.put(key, value.copy()); }
+                    if (readablePassive(ops, key, value)) {
+                        passive.put(key, value.copy());
+                    } else {
+                        original.put(key, value.copy());
+                    }
+                } else {
+                    conflicts.put(key, value.copy());
+                }
             }
             for (String key : projection.keySet()) {
-                if (matchingKey(patch, key) == null) { conflicts.put("!" + type(key), new CompoundTag()); }
+                if (matchingKey(patch, key) == null) {
+                    conflicts.put("!" + type(key), new CompoundTag());
+                }
             }
         } else {
             original = new CompoundTag();
             for (String key : patch.keySet()) {
                 if (PASSIVE.contains(type(key)) && readablePassive(ops, key, patch.get(key))) {
                     passive.put(key, patch.get(key).copy());
-                } else { original.put(key, patch.get(key).copy()); }
+                } else {
+                    original.put(key, patch.get(key).copy());
+                }
             }
         }
         CompoundTag restored = passive.copy();
@@ -106,9 +134,9 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         }
         // The complete gameplay patch is parked even when only one foreign value was unreadable.
         CompoundTag projection = !quarantined && oneItem && admittedHistory(ops, original)
-                ? SuspendedBootsData.equipmentProjection() : new CompoundTag();
+                                 ? SuspendedBootsData.equipmentProjection() : new CompoundTag();
         var archive = quarantined ? SuspendedBootsData.quarantined(original, conflicts)
-                : SuspendedBootsData.of(original, projection, conflicts);
+                                  : SuspendedBootsData.of(original, projection, conflicts);
         CompoundTag suspended = passive.copy();
         projection.keySet().forEach(key -> suspended.put(key, projection.get(key).copy()));
         suspended.put(ARCHIVE, SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, archive).getOrThrow());
@@ -129,22 +157,30 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
     }
 
     public static boolean admittedSources(Tag raw) {
-        if (!(raw instanceof CompoundTag data) || !data.keySet().equals(Set.of("left", "right"))) { return false; }
+        if (!(raw instanceof CompoundTag data) || !data.keySet().equals(Set.of("left", "right"))) {
+            return false;
+        }
         for (String side : Set.of("left", "right")) {
             if (!(data.get(side) instanceof CompoundTag source) || source.getStringOr("id", "").isEmpty()
                     || Identifier.tryParse(source.getStringOr("id", "")) == null
                     || source.getStringOr("id", "").equals(ITEM) || source.getStringOr("id", "").equals("minecraft:air")
                     || source.contains("count") && !(source.get("count") instanceof IntTag)
                     || source.getIntOr("count", 1) != 1
-                    || source.contains("components") && !(source.get("components") instanceof CompoundTag)) { return false; }
+                    || source.contains("components") && !(source.get("components") instanceof CompoundTag)) {
+                return false;
+            }
             var components = source.getCompoundOrEmpty("components");
-            if (components.contains(SOURCES) || components.contains(ARCHIVE)) { return false; }
+            if (components.contains(SOURCES) || components.contains(ARCHIVE)) {
+                return false;
+            }
         }
         return true;
     }
 
     private static boolean sourceRegistered(Tag raw) {
-        if (!(raw instanceof CompoundTag source)) { return false; }
+        if (!(raw instanceof CompoundTag source)) {
+            return false;
+        }
         Identifier id = Identifier.tryParse(source.getStringOr("id", ""));
         // The item registry's default (air) must not stand in for an absent source.
         return id != null && BuiltInRegistries.ITEM.containsKey(id);
@@ -156,56 +192,79 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
 
     private static <T> boolean admittedHistory(DynamicOps<T> ops, CompoundTag original) {
         if (!admittedSources(original.get(SOURCES))
-                || !original.getCompoundOrEmpty(EQUIPPABLE).getStringOr("slot", "").equals("feet")) { return false; }
+                || !original.getCompoundOrEmpty(EQUIPPABLE).getStringOr("slot", "").equals("feet")) {
+            return false;
+        }
         var sources = original.getCompoundOrEmpty(SOURCES);
         for (String side : Set.of("left", "right")) {
-            if (!sourceRegistered(sources.get(side))) { continue; }
+            if (!sourceRegistered(sources.get(side))) {
+                continue;
+            }
             try {
                 var readable = ItemStack.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, sources.get(side))).result();
                 // Missing registrations cannot prove gameplay readiness. Fully readable non-boots,
                 // however, are known invalid history and must not acquire an invented feet slot.
-                if (readable.isPresent() && !BootHalf.isValidSource(readable.get())) { return false; }
+                if (readable.isPresent() && !BootHalf.isValidSource(readable.get())) {
+                    return false;
+                }
             } catch (RuntimeException unreadable) { /* Keep structurally admitted unavailable history opaque. */ }
         }
         return true;
     }
 
-    private static String type(String key) { return key.startsWith("!") ? key.substring(1) : key; }
+    private static String type(String key) {
+        return key.startsWith("!") ? key.substring(1) : key;
+    }
+
     private static String matchingKey(CompoundTag map, String key) {
         String type = type(key);
         return map.contains(type) ? type : map.contains("!" + type) ? "!" + type : null;
     }
+
     private static boolean ready(DataResult<ItemStack> decoded) {
         var result = decoded.result();
         return result.isPresent() && ItemStack.validateStrict(result.get()).result().isPresent()
                 && ModContent.getMixedBootsData(result.get()).filter(data ->
-                BootHalf.isValidSource(data.left().source()) && BootHalf.isValidSource(data.right().source())).isPresent();
+                                                                             BootHalf.isValidSource(data.left().source()) && BootHalf.isValidSource(
+                                                                                     data.right().source())).isPresent();
     }
+
     private static boolean safeShell(DataResult<ItemStack> decoded, SuspendedBootsData expected) {
         var result = decoded.result();
-        if (result.isEmpty() || ModContent.suspendedBootsData(result.get()).filter(expected::equals).isEmpty()) { return false; }
+        if (result.isEmpty() || ModContent.suspendedBootsData(result.get()).filter(expected::equals).isEmpty()) {
+            return false;
+        }
         var root = result.get();
         Equippable equipment = expected.projection().isEmpty() ? null
-                : Equippable.builder(EquipmentSlot.FEET).setDamageOnHurt(false).build();
-        if (!Objects.equals(root.get(DataComponents.EQUIPPABLE), equipment)) { return false; }
+                                                               : Equippable.builder(EquipmentSlot.FEET).setDamageOnHurt(false).build();
+        if (!Objects.equals(root.get(DataComponents.EQUIPPABLE), equipment)) {
+            return false;
+        }
         // Only our inert shell is checked here, not a foreign codec's migration or re-encoding.
         return root.getComponentsPatch().entrySet().stream().allMatch(entry -> {
             Identifier id = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(entry.getKey());
             return id != null && (id.toString().equals(ARCHIVE) || id.toString().equals(EQUIPPABLE) || PASSIVE.contains(id.toString()));
         });
     }
+
     private static <T> boolean readablePassive(DynamicOps<T> ops, String key, Tag value) {
         CompoundTag singleton = new CompoundTag();
         singleton.put(key, value.copy());
         try {
             return DataComponentPatch.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, singleton)).result().isPresent();
-        } catch (RuntimeException unreadable) { return false; }
+        } catch (RuntimeException unreadable) {
+            return false;
+        }
     }
+
     private <T> DataResult<ItemStack> read(DynamicOps<T> ops, MapLike<T> input, CompoundTag patch) {
         T replacement = NbtOps.INSTANCE.convertTo(ops, patch.copy());
         T root = ops.createMap(input.entries().map(entry -> ops.getStringValue(entry.getFirst()).result().orElse("").equals("components")
-                ? com.mojang.datafixers.util.Pair.of(entry.getFirst(), replacement) : entry));
-        try { return ops.getMap(root).flatMap(map -> delegate.decode(ops, map)); }
-        catch (RuntimeException failure) { return DataResult.error(() -> "Native mixed root decoding failed"); }
+                                                            ? com.mojang.datafixers.util.Pair.of(entry.getFirst(), replacement) : entry));
+        try {
+            return ops.getMap(root).flatMap(map -> delegate.decode(ops, map));
+        } catch (RuntimeException failure) {
+            return DataResult.error(() -> "Native mixed root decoding failed");
+        }
     }
 }

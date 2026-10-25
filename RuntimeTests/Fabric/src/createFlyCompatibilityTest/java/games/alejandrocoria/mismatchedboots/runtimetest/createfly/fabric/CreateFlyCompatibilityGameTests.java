@@ -47,18 +47,18 @@ public final class CreateFlyCompatibilityGameTests {
         Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         player.setShiftKeyDown(true);
         var pair = MixedBootsFactory.createPair(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
-                Items.IRON_BOOTS.getDefaultInstance());
+                                                Items.IRON_BOOTS.getDefaultInstance());
         for (ItemStack boots : java.util.List.of(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
-                pair.primary(), pair.inverse(),
-                MixedBootsFactory.createPair(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
-                        AllItems.CARDBOARD_BOOTS.getDefaultInstance()).primary())) {
+                                                 pair.primary(), pair.inverse(),
+                                                 MixedBootsFactory.createPair(AllItems.CARDBOARD_BOOTS.getDefaultInstance(),
+                                                                              AllItems.CARDBOARD_BOOTS.getDefaultInstance()).primary())) {
             assertBeltExit(helper, player, belt, position, boots, true, false);
         }
         assertBeltExit(helper, player, belt, position, Items.IRON_BOOTS.getDefaultInstance(), false, false);
         assertBeltExit(helper, player, belt, position, pair.primary().copyWithCount(2), false, false);
         ItemStack spoof = Items.IRON_BOOTS.getDefaultInstance();
         spoof.set(ModContent.mixedBootsDataType().orElseThrow(),
-                ModContent.getMixedBootsData(pair.primary()).orElseThrow());
+                  ModContent.getMixedBootsData(pair.primary()).orElseThrow());
         assertBeltExit(helper, player, belt, position, spoof, false, false);
         // Deliberately in FEET: proves the fixture observation is a real item predicate, not a fixed false.
         assertBeltExit(helper, player, belt, position, Items.DIAMOND.getDefaultInstance(), false, true);
@@ -69,7 +69,7 @@ public final class CreateFlyCompatibilityGameTests {
         assertBeltExit(helper, player, belt, position, pair.primary().copy(), false, false);
         player.getAbilities().flying = false;
         var diving = MixedBootsFactory.createPair(AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
-                Items.IRON_BOOTS.getDefaultInstance());
+                                                  Items.IRON_BOOTS.getDefaultInstance());
         assertBeltExit(helper, player, belt, position, diving.primary(), false, false);
         helper.succeed();
     }
@@ -178,14 +178,14 @@ public final class CreateFlyCompatibilityGameTests {
                 player, AllItems.NETHERITE_DIVING_BOOTS.getDefaultInstance(), "Netherite");
 
         assertDivingRecognition(player, AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
-                Items.IRON_BOOTS.getDefaultInstance(), AllItems.COPPER_DIVING_BOOTS,
-                "Copper/iron");
+                                Items.IRON_BOOTS.getDefaultInstance(), AllItems.COPPER_DIVING_BOOTS,
+                                "Copper/iron");
         assertDivingRecognition(player, AllItems.NETHERITE_DIVING_BOOTS.getDefaultInstance(),
-                Items.IRON_BOOTS.getDefaultInstance(), AllItems.NETHERITE_DIVING_BOOTS,
-                "Netherite/iron");
+                                Items.IRON_BOOTS.getDefaultInstance(), AllItems.NETHERITE_DIVING_BOOTS,
+                                "Netherite/iron");
         assertDivingRecognition(player, AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
-                AllItems.NETHERITE_DIVING_BOOTS.getDefaultInstance(),
-                AllItems.NETHERITE_DIVING_BOOTS, "Copper/Netherite");
+                                AllItems.NETHERITE_DIVING_BOOTS.getDefaultInstance(),
+                                AllItems.NETHERITE_DIVING_BOOTS, "Copper/Netherite");
 
         MixedBootsPair validPair = MixedBootsFactory.createPair(
                 AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
@@ -209,7 +209,7 @@ public final class CreateFlyCompatibilityGameTests {
     public void divingAdapterPreservesWaterMovementAndSyncedState(GameTestHelper helper) {
         Player player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         assertWaterBehavior(helper, player,
-                AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(), "ordinary Copper");
+                            AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(), "ordinary Copper");
 
         MixedBootsPair copperIron = MixedBootsFactory.createPair(
                 AllItems.COPPER_DIVING_BOOTS.getDefaultInstance(),
@@ -398,13 +398,13 @@ public final class CreateFlyCompatibilityGameTests {
         DivingBootsItem.accelerateDescentUnderwater(player);
         require(heavyBoots(player), description + " did not activate HEAVY_BOOTS");
         assertVector(player.getDeltaMovement(), new Vec3(0.0D, -0.05D, 0.0D),
-                description + " descent");
+                     description + " descent");
 
         player.zza = 1.0F;
         player.setDeltaMovement(new Vec3(0.1D, 0.0D, 0.0D));
         DivingBootsItem.accelerateDescentUnderwater(player);
         assertVector(player.getDeltaMovement(), new Vec3(0.13D, -0.05D, 0.0D),
-                description + " horizontal movement");
+                     description + " horizontal movement");
 
         player.zza = 0.0F;
         player.setJumping(true);
@@ -412,7 +412,7 @@ public final class CreateFlyCompatibilityGameTests {
         player.setDeltaMovement(Vec3.ZERO);
         DivingBootsItem.accelerateDescentUnderwater(player);
         assertVector(player.getDeltaMovement(), new Vec3(0.0D, 0.5D, 0.0D),
-                description + " grounded jump");
+                     description + " grounded jump");
         require(!player.onGround(), description + " grounded jump did not leave the ground");
 
         player.setJumping(false);
@@ -517,7 +517,7 @@ public final class CreateFlyCompatibilityGameTests {
 
     private static MixedBootsData mixedData(ItemStack stack) {
         return ModContent.getMixedBootsData(stack)
-                .orElseThrow(() -> new AssertionError("Missing mixed-boots source data"));
+                         .orElseThrow(() -> new AssertionError("Missing mixed-boots source data"));
     }
 
     private static void require(boolean condition, String message) {

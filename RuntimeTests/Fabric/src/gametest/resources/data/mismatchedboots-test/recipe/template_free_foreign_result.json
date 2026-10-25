@@ -1,14 +1,14 @@
 {
-  "type": "minecraft:smithing_transform",
-  "base": [
-    "mismatchedboots:mixed_boots",
-    "minecraft:iron_boots"
-  ],
-  "addition": "minecraft:coal",
-  "result": {
-    "id": "minecraft:iron_boots",
-    "components": {
-      "mismatchedboots-test:added": "foreign template-free result"
+    "type": "minecraft:smithing_transform",
+    "base": [
+        "mismatchedboots:mixed_boots",
+        "minecraft:iron_boots"
+    ],
+    "addition": "minecraft:coal",
+    "result": {
+        "id": "minecraft:iron_boots",
+        "components": {
+            "mismatchedboots-test:added": "foreign template-free result"
+        }
     }
-  }
 }

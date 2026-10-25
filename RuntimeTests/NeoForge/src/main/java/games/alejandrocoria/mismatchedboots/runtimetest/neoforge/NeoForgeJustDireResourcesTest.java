@@ -58,7 +58,8 @@ public final class NeoForgeJustDireResourcesTest {
     private static boolean finished;
     private static int cases;
 
-    private NeoForgeJustDireResourcesTest() {}
+    private NeoForgeJustDireResourcesTest() {
+    }
 
     public static void register() {
         JustDireRefundBreakTest.register();
@@ -66,7 +67,9 @@ public final class NeoForgeJustDireResourcesTest {
     }
 
     private static void tick(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         finished = true;
         try {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesRestart")) {
@@ -87,13 +90,15 @@ public final class NeoForgeJustDireResourcesTest {
             NetworkAcceptanceFiles.write("just-dire-resources-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("just-dire-resources", failure);
-        } finally { server.halt(false); }
+        } finally {
+            server.halt(false);
+        }
     }
 
     private static void matrix(MinecraftServer server) throws ReflectiveOperationException {
         ItemStack iron = new ItemStack(Items.IRON_BOOTS);
         require(energy(boots("celestigem", 6_000)).getCapacityAsInt() == 10_000
-                && energy(boots("eclipsealloy", 1)).getCapacityAsInt() == 500_000, "Native tier capacity mismatch");
+                        && energy(boots("eclipsealloy", 1)).getCapacityAsInt() == 500_000, "Native tier capacity mismatch");
         creation(boots("celestigem", 6_000), iron, 10_000, 3_000);
         creation(iron, boots("celestigem", 6_000), 10_000, 3_000);
         creation(boots("celestigem", 1), iron, 10_000, 0);
@@ -102,21 +107,21 @@ public final class NeoForgeJustDireResourcesTest {
         creation(boots("celestigem", 5), boots("celestigem", 4), 10_000, 4);
         var unpowered = MixedBootsFactory.createPair(boots("ferricore", 0), iron);
         require(energy(unpowered.primary()) == null && energy(unpowered.inverse()) == null
-                && !unpowered.primary().has(JustDireResourceTestSupport.energyComponent())
-                && !unpowered.inverse().has(JustDireResourceTestSupport.energyComponent()), "Unpowered creation acquired FE storage");
+                        && !unpowered.primary().has(JustDireResourceTestSupport.energyComponent())
+                        && !unpowered.inverse().has(JustDireResourceTestSupport.energyComponent()), "Unpowered creation acquired FE storage");
         cases++;
 
         var pair = MixedBootsFactory.createPair(boots("celestigem", 6_000), iron);
         ItemStack root = pair.primary();
         ItemStack tooltipBefore = root.copy();
         JustDireTooltipCompatibility.appendRootState(root, TooltipDisplay.DEFAULT,
-                line -> { throw new AssertionError("Dedicated server emitted client-only JDT root details"); });
+                                                     line -> {throw new AssertionError("Dedicated server emitted client-only JDT root details");});
         require(ItemStack.matches(root, tooltipBefore), "Dedicated-server tooltip boundary changed root/provenance");
         ItemStack inverseBefore = pair.inverse().copy();
         var provenance = data(root);
         ItemStack source = boots("eclipsealloy", 20_000);
         require(EnergyHandlerUtil.move(energy(source), energy(root), 20_000, null) == 7_000
-                && energy(source).getAmountAsInt() == 13_000 && energy(root).getAmountAsInt() == 10_000,
+                        && energy(source).getAmountAsInt() == 13_000 && energy(root).getAmountAsInt() == 10_000,
                 "Recharge duplicated FE or ignored maximum space");
         require(EnergyHandlerUtil.move(energy(source), energy(root), 1, null) == 0, "Full root accepted more energy");
         unchanged(root, provenance, pair.inverse(), inverseBefore);
@@ -138,52 +143,54 @@ public final class NeoForgeJustDireResourcesTest {
         require(extract(root, 3_000) == 3_000 && extract(root, 50_000) == 5_000 && extract(root, 1) == 0,
                 "Repeated/partial extraction did not exhaust current root");
         require(EnergyHandlerUtil.move(energy(source), energy(root), 10_000, null) == 10_000
-                && energy(root).getAmountAsInt() == 10_000 && energy(source).getAmountAsInt() == 3_000,
+                        && energy(root).getAmountAsInt() == 10_000 && energy(source).getAmountAsInt() == 3_000,
                 "Exhausted root could not externally recharge");
         unchanged(root, provenance, pair.inverse(), inverseBefore);
         cases++;
 
         Class<?> powered = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.PoweredItem");
         require((int) powered.getMethod("getAvailableEnergy", ItemStack.class).invoke(null, root) == 10_000
-                && (int) powered.getMethod("getMaxEnergyFor", ItemStack.class).invoke(null, root) == 10_000,
+                        && (int) powered.getMethod("getMaxEnergyFor", ItemStack.class).invoke(null, root) == 10_000,
                 "Native static FE queries did not see mixed capability");
         require((boolean) powered.getMethod("consumeEnergy", net.minecraft.world.entity.player.Player.class,
-                ItemStack.class, int.class).invoke(null, null, root, 50) && energy(root).getAmountAsInt() == 9_950,
+                                            ItemStack.class, int.class).invoke(null, null, root, 50) && energy(root).getAmountAsInt() == 9_950,
                 "Native FE consumption did not reach live root");
         require(!(boolean) powered.getMethod("consumeEnergy", net.minecraft.world.entity.player.Player.class,
-                ItemStack.class, int.class).invoke(null, null, root, 20_000) && energy(root).getAmountAsInt() == 0,
+                                             ItemStack.class, int.class).invoke(null, null, root, 20_000) && energy(root).getAmountAsInt() == 0,
                 "Native insufficient payment no longer drains partial energy; review later ability semantics");
         require(!powered.isInstance(root.getItem()), "Mixed item impersonated native PoweredItem");
         ItemStack nativeControl = boots("celestigem", 100);
         require((boolean) powered.getMethod("consumeEnergy", net.minecraft.world.entity.player.Player.class,
-                ItemStack.class, int.class).invoke(null, null, nativeControl, 50)
-                && energy(nativeControl).getAmountAsInt() == 50,
+                                            ItemStack.class, int.class).invoke(null, null, nativeControl, 50)
+                        && energy(nativeControl).getAmountAsInt() == 50,
                 "Native original exact-payment control failed");
         require(!(boolean) powered.getMethod("consumeEnergy", net.minecraft.world.entity.player.Player.class,
-                ItemStack.class, int.class).invoke(null, null, nativeControl, 100)
-                && energy(nativeControl).getAmountAsInt() == 0, "Native original partial-payment control failed");
+                                             ItemStack.class, int.class).invoke(null, null, nativeControl, 100)
+                        && energy(nativeControl).getAmountAsInt() == 0, "Native original partial-payment control failed");
         cases++;
 
         Class<?> transmitter = Class.forName("com.direwolf20.justdirethings.common.blockentities.EnergyTransmitterBE");
         var block = BuiltInRegistries.BLOCK.get(Identifier.fromNamespaceAndPath("justdirethings", "energytransmitter"))
-                .orElseThrow().value();
+                                           .orElseThrow().value();
         Object machine = transmitter.getConstructor(BlockPos.class, net.minecraft.world.level.block.state.BlockState.class)
-                .newInstance(BlockPos.ZERO, block.defaultBlockState());
+                                    .newInstance(BlockPos.ZERO, block.defaultBlockState());
         require((int) transmitter.getMethod("transmitPower", EnergyHandler.class, EnergyHandler.class, int.class)
-                .invoke(machine, energy(source), energy(root), 1_000) == 1_000
-                && energy(root).getAmountAsInt() == 1_000 && energy(source).getAmountAsInt() == 2_000,
+                                 .invoke(machine, energy(source), energy(root), 1_000) == 1_000
+                        && energy(root).getAmountAsInt() == 1_000 && energy(source).getAmountAsInt() == 2_000,
                 "Native transmitter transfer primitive did not charge/debit actual stacks");
         unchanged(root, provenance, pair.inverse(), inverseBefore);
         cases++;
 
         ServerPlayer player = new ServerPlayer(server, server.overworld(),
-                new GameProfile(UUID.randomUUID(), "resources-test"), ClientInformation.createDefault());
+                                               new GameProfile(UUID.randomUUID(), "resources-test"), ClientInformation.createDefault());
         player.getInventory().setItem(0, root.copy());
         ItemAccess slot = ItemAccess.forPlayerSlot(player, 0);
         EnergyHandler retained = slot.getCapability(Capabilities.Energy.ITEM);
         require(retained != null, "Player-slot capability unavailable");
         ItemStack slotBefore = player.getInventory().getItem(0).copy();
-        try (var transaction = Transaction.openRoot()) { retained.extract(500, transaction); }
+        try (var transaction = Transaction.openRoot()) {
+            retained.extract(500, transaction);
+        }
         require(ItemStack.matches(slotBefore, player.getInventory().getItem(0)), "Slot simulation replaced its stack");
         try (var transaction = Transaction.openRoot()) {
             require(retained.extract(500, transaction) == 500, "Slot extraction unavailable");
@@ -214,9 +221,9 @@ public final class NeoForgeJustDireResourcesTest {
         ItemStack current = root.copy();
         ItemStack upgraded = MixedBootsRecomposer.recompose(root, boots("eclipsealloy", 500_000), iron);
         require(energy(upgraded).getAmountAsInt() == 1_000 && energy(upgraded).getCapacityAsInt() == 500_000
-                && ItemStack.matches(current, root) && upgraded.getDamageValue() == 31
-                && upgraded.getHoverName().equals(root.getHoverName()) && upgraded.get(DataComponents.REPAIR_COST) == 11
-                && upgraded.get(integerComponent("jumpboost_value")) == 1,
+                        && ItemStack.matches(current, root) && upgraded.getDamageValue() == 31
+                        && upgraded.getHoverName().equals(root.getHoverName()) && upgraded.get(DataComponents.REPAIR_COST) == 11
+                        && upgraded.get(integerComponent("jumpboost_value")) == 1,
                 "Higher tier refilled energy, mutated input, or lost live state");
         upgraded.set(JustDireResourceTestSupport.energyComponent(), 450_000);
         ItemStack downgraded = MixedBootsRecomposer.recompose(upgraded, boots("celestigem", 0), iron);
@@ -247,25 +254,30 @@ public final class NeoForgeJustDireResourcesTest {
         cases++;
 
         for (ItemStack invalid : List.of(new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
-                root.copyWithCount(2), MixedBootsFactory.createPair(iron, iron).primary())) {
+                                         root.copyWithCount(2), MixedBootsFactory.createPair(iron, iron).primary())) {
             invalid.set(JustDireResourceTestSupport.energyComponent(), 6_000);
             ItemStack invalidBefore = invalid.copy();
             require(energy(invalid) == null && ItemStack.matches(invalidBefore, invalid),
                     "Invalid/forged root gained FE or changed on lookup: " + invalid);
         }
         for (int invalidAmount : new int[]{-1, 10_001}) {
-            ItemStack invalid = root.copy(); invalid.set(JustDireResourceTestSupport.energyComponent(), invalidAmount);
+            ItemStack invalid = root.copy();
+            invalid.set(JustDireResourceTestSupport.energyComponent(), invalidAmount);
             ItemStack invalidBefore = invalid.copy();
             require(energy(invalid) == null && ItemStack.matches(invalidBefore, invalid), "Invalid charge was usable or silently repaired");
         }
-        ItemStack forged = iron.copy(); forged.set(JustDireResourceTestSupport.energyComponent(), 9_999);
+        ItemStack forged = iron.copy();
+        forged.set(JustDireResourceTestSupport.energyComponent(), 9_999);
         creation(boots("celestigem", 6_000), forged, 10_000, 3_000);
         for (int invalidAmount : new int[]{-1, 10_001}) {
             ItemStack invalidSource = boots("celestigem", invalidAmount);
             ItemStack invalidBefore = invalidSource.copy();
             boolean rejected = false;
-            try { MixedBootsFactory.createPair(invalidSource, iron); }
-            catch (IllegalArgumentException expected) { rejected = true; }
+            try {
+                MixedBootsFactory.createPair(invalidSource, iron);
+            } catch (IllegalArgumentException expected) {
+                rejected = true;
+            }
             require(rejected && ItemStack.matches(invalidBefore, invalidSource), "Invalid input charge was accepted/mutated");
         }
         cases++;
@@ -300,7 +312,8 @@ public final class NeoForgeJustDireResourcesTest {
                 for (int repeat = 0; repeat < 3; repeat++) {
                     menu.slotsChanged(menu.getSlot(0).container);
                     require(ItemStack.matches(firstPreview, menu.getSlot(firstSlot).getItem())
-                            && ItemStack.matches(secondPreview, menu.getSlot(5 - firstSlot).getItem()), "Repeated preview changed initial FE");
+                                    && ItemStack.matches(secondPreview, menu.getSlot(5 - firstSlot).getItem()),
+                            "Repeated preview changed initial FE");
                 }
                 require(energy(firstPreview).getAmountAsInt() == 3_000 && energy(secondPreview).getAmountAsInt() == 3_000,
                         "Workbench did not conserve source charge");
@@ -308,31 +321,36 @@ public final class NeoForgeJustDireResourcesTest {
                     player.getInventory().setItem(slot, new ItemStack(Items.STONE, 64));
                 }
                 require(menu.quickMoveStack(player, firstSlot).isEmpty() && !menu.isCommitted()
-                        && ItemStack.matches(powered, menu.getSlot(reverse ? 1 : 0).getItem()), "Blocked take debited source FE");
+                                && ItemStack.matches(powered, menu.getSlot(reverse ? 1 : 0).getItem()), "Blocked take debited source FE");
                 player.getInventory().clearContent();
                 menu.clicked(firstSlot, 0, ContainerInput.PICKUP, player);
                 ItemStack taken = menu.getCarried();
                 require(ItemStack.matches(taken, firstPreview) && menu.isCommitted()
-                        && menu.getSlot(0).getItem().isEmpty() && menu.getSlot(1).getItem().isEmpty(), "Workbench take did not commit exactly once");
+                                && menu.getSlot(0).getItem().isEmpty() && menu.getSlot(1).getItem().isEmpty(),
+                        "Workbench take did not commit exactly once");
                 ItemStack charger = boots("eclipsealloy", 20_000);
                 require(EnergyHandlerUtil.move(energy(charger), energy(taken), 7_000, null) == 7_000
-                        && energy(charger).getAmountAsInt() == 13_000
-                        && ItemStack.matches(secondPreview, menu.getSlot(5 - firstSlot).getItem()), "Taken root recharge affected the pending inverse/source");
+                                && energy(charger).getAmountAsInt() == 13_000
+                                && ItemStack.matches(secondPreview, menu.getSlot(5 - firstSlot).getItem()),
+                        "Taken root recharge affected the pending inverse/source");
                 menu.removed(player);
                 var returned = player.getInventory().getNonEquipmentItems().stream().filter(stack -> !stack.isEmpty()).toList();
                 require(returned.size() == 2 && returned.stream().allMatch(ModContent::isMixedBoots)
-                        && returned.stream().mapToInt(stack -> energy(stack).getAmountAsInt()).sum() == 13_000,
+                                && returned.stream().mapToInt(stack -> energy(stack).getAmountAsInt()).sum() == 13_000,
                         "Close duplicated/lost pending output or live charge");
                 cases++;
             }
             player.getInventory().clearContent();
             ItemStack powered = boots("celestigem", 6_000);
             var menu = workbench(player, reverse ? new ItemStack(Items.IRON_BOOTS) : powered,
-                    reverse ? powered : new ItemStack(Items.IRON_BOOTS));
+                                 reverse ? powered : new ItemStack(Items.IRON_BOOTS));
             menu.removed(player);
             var returned = player.getInventory().getNonEquipmentItems().stream().filter(stack -> !stack.isEmpty()).toList();
             require(returned.size() == 2 && returned.stream().noneMatch(ModContent::isMixedBoots)
-                    && returned.stream().filter(stack -> stack.is(powered.getItem())).mapToInt(stack -> energy(stack).getAmountAsInt()).sum() == 6_000,
+                            && returned.stream()
+                                       .filter(stack -> stack.is(powered.getItem()))
+                                       .mapToInt(stack -> energy(stack).getAmountAsInt())
+                                       .sum() == 6_000,
                     "Uncommitted close duplicated FE through disposable previews");
             cases++;
         }
@@ -340,14 +358,15 @@ public final class NeoForgeJustDireResourcesTest {
             ItemStack source = boots("celestigem", invalid);
             var menu = workbench(player, source, new ItemStack(Items.IRON_BOOTS));
             require(menu.getSlot(2).getItem().isEmpty() && menu.getSlot(3).getItem().isEmpty()
-                    && ItemStack.matches(source, menu.getSlot(0).getItem()), "Invalid source charge produced a real menu output");
+                            && ItemStack.matches(source, menu.getSlot(0).getItem()), "Invalid source charge produced a real menu output");
         }
         cases++;
     }
 
     private static MismatchedWorkbenchMenu workbench(ServerPlayer player, ItemStack left, ItemStack right) {
         var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
-        menu.getSlot(0).set(left.copy()); menu.getSlot(1).set(right.copy());
+        menu.getSlot(0).set(left.copy());
+        menu.getSlot(1).set(right.copy());
         return menu;
     }
 
@@ -366,10 +385,12 @@ public final class NeoForgeJustDireResourcesTest {
                     menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(nativeItem(tierUpgrade ? "eclipsealloy_ingot" : "upgrade_stepheight"));
                     ItemStack preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
                     require(!preview.isEmpty() && energy(preview).getAmountAsInt() == charge
-                            && energy(preview).getCapacityAsInt() == (tierUpgrade ? 500_000 : 10_000), "Native smithing preview restored source FE");
+                                    && energy(preview).getCapacityAsInt() == (tierUpgrade ? 500_000 : 10_000),
+                            "Native smithing preview restored source FE");
                     menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
                     require(ItemStack.matches(preview, menu.getCarried()) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                            && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Actual smithing take lost live FE or did not consume one addition");
+                                    && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
+                            "Actual smithing take lost live FE or did not consume one addition");
                     cases++;
                 }
             }
@@ -377,7 +398,8 @@ public final class NeoForgeJustDireResourcesTest {
         ItemStack unpowered = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
         unpowered.set(JustDireResourceTestSupport.energyComponent(), 9_999);
         ItemStack gained = MixedBootsRecomposer.recompose(unpowered, boots("celestigem", 6_000), new ItemStack(Items.GOLDEN_BOOTS));
-        require(energy(gained).getAmountAsInt() == 0 && !gained.has(JustDireResourceTestSupport.energyComponent()), "New storage seeded forged unrelated/source FE");
+        require(energy(gained).getAmountAsInt() == 0 && !gained.has(JustDireResourceTestSupport.energyComponent()),
+                "New storage seeded forged unrelated/source FE");
         cases++;
     }
 
@@ -389,12 +411,13 @@ public final class NeoForgeJustDireResourcesTest {
         ItemStack left = boots("celestigem", 6_000);
         ItemStack before = left.copy();
         require(!new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(left, new ItemStack(Items.IRON_BOOTS)),
-                new AttributeRuleSet(AttributePolicy.REJECT, java.util.Map.of()), sharing).isComplete()
-                && ItemStack.matches(before, left), "Storage finalization bypassed configured composition rejection");
+                                                                 new AttributeRuleSet(AttributePolicy.REJECT, java.util.Map.of()), sharing)
+                                                .isComplete()
+                        && ItemStack.matches(before, left), "Storage finalization bypassed configured composition rejection");
         var result = new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(left, new ItemStack(Items.IRON_BOOTS)),
-                new AttributeRuleSet(AttributePolicy.AVERAGE, java.util.Map.of()), sharing);
+                                                                     new AttributeRuleSet(AttributePolicy.AVERAGE, java.util.Map.of()), sharing);
         require(result.isComplete() && energy(result.primary()).getAmountAsInt() == 3_000
-                && energy(result.inverse()).getAmountAsInt() == 3_000, "Generic FE share rule duplicated managed resources");
+                        && energy(result.inverse()).getAmountAsInt() == 3_000, "Generic FE share rule duplicated managed resources");
         cases++;
     }
 
@@ -406,12 +429,18 @@ public final class NeoForgeJustDireResourcesTest {
         ItemStack root = MixedBootsFactory.createPair(boots("celestigem", 6_000), new ItemStack(Items.IRON_BOOTS)).primary();
         extract(root, 1_267);
         barrel.setItem(0, root);
-        ItemStack frozenAttributes = MixedBootsFactory.createPair(boots("celestigem", 0), new ItemStack(Items.IRON_BOOTS),
-                new AttributeRuleSet(AttributePolicy.COMBINE, java.util.Map.of()), ComponentRulesLifecycle.serverRules()).primary();
+        ItemStack frozenAttributes = MixedBootsFactory.createPair(boots("celestigem", 0),
+                                                                  new ItemStack(Items.IRON_BOOTS),
+                                                                  new AttributeRuleSet(AttributePolicy.COMBINE, java.util.Map.of()),
+                                                                  ComponentRulesLifecycle.serverRules()).primary();
         frozenAttributes.set(JustDireResourceTestSupport.energyComponent(), 100);
         barrel.setItem(3, frozenAttributes);
-        ItemStack zero = root.copy(); extract(zero, 1_733); barrel.setItem(1, zero);
-        ItemStack absent = root.copy(); absent.remove(JustDireResourceTestSupport.energyComponent()); barrel.setItem(2, absent);
+        ItemStack zero = root.copy();
+        extract(zero, 1_733);
+        barrel.setItem(1, zero);
+        ItemStack absent = root.copy();
+        absent.remove(JustDireResourceTestSupport.energyComponent());
+        barrel.setItem(2, absent);
         saveFallFixture(server, barrel);
         JustDireRefundLifecycleTest.save(server, barrel);
         barrel.setChanged();
@@ -443,36 +472,40 @@ public final class NeoForgeJustDireResourcesTest {
                 menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(nativeItem(tierUpgrade ? "eclipsealloy_ingot" : "upgrade_stepheight"));
                 ItemStack preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
                 require(!preview.isEmpty() && energy(preview).getAmountAsInt() == 2_550
-                        && preview.getDamageValue() == 31, "Negate spent state was refilled/lost by smithing preview");
+                                && preview.getDamageValue() == 31, "Negate spent state was refilled/lost by smithing preview");
                 menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, owner);
                 root = menu.getCarried();
                 require(ItemStack.matches(root, preview) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty()
-                        && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty(), "Negate smithing take lost live FE/payment");
+                                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty()
+                                && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty(), "Negate smithing take lost live FE/payment");
             }
             int slot = inverse ? 6 : 4;
             var stepInstalled = JustDireAttributeTestSupport.<Boolean>component("stepheight_upgrade_installed");
             var negateInstalled = JustDireAttributeTestSupport.<Boolean>component("negatefalldamage_upgrade_installed");
             require(root.getOrDefault(stepInstalled, false)
-                    && !data(root).left().source().getOrDefault(stepInstalled, false)
-                    && !data(root).right().source().getOrDefault(stepInstalled, false), "Root-only Step installation altered historical source flags");
+                            && !data(root).left().source().getOrDefault(stepInstalled, false)
+                            && !data(root).right().source().getOrDefault(stepInstalled, false),
+                    "Root-only Step installation altered historical source flags");
             // Save negative live permissions beside genuinely upgraded provenance, then test a new JVM.
             for (int state = 0; state < 2; state++) {
                 var disabled = root.copy();
                 if (state == 0) {
-                    disabled.set(stepInstalled, false); disabled.set(negateInstalled, false);
+                    disabled.set(stepInstalled, false);
+                    disabled.set(negateInstalled, false);
                 } else {
-                    disabled.remove(stepInstalled); disabled.remove(negateInstalled);
+                    disabled.remove(stepInstalled);
+                    disabled.remove(negateInstalled);
                 }
                 disabled = MixedBootsRecomposer.recompose(disabled, data(disabled).left().source(), data(disabled).right().source());
                 require(!disabled.getOrDefault(stepInstalled, false) && !disabled.getOrDefault(negateInstalled, false)
-                        && disabled.has(stepInstalled) == (state == 0) && disabled.has(negateInstalled) == (state == 0),
+                                && disabled.has(stepInstalled) == (state == 0) && disabled.has(negateInstalled) == (state == 0),
                         "Rebuilding negative root permission reimported source upgrades");
                 barrel.setItem((inverse ? 10 : 8) + state, disabled);
                 rootFlags.add(ItemStack.CODEC.encodeStart(ops, disabled).getOrThrow());
                 cases++;
             }
-            ItemStack spent = root.copy(); barrel.setItem(slot, spent);
+            ItemStack spent = root.copy();
+            barrel.setItem(slot, spent);
             saved.add(ItemStack.CODEC.encodeStart(ops, spent).getOrThrow());
             var charged = root.getAttributeModifiers();
             fallBalance(owner, root, 60, 0, 0);
@@ -488,13 +521,15 @@ public final class NeoForgeJustDireResourcesTest {
 
     private static void fallBalance(ServerPlayer owner, ItemStack root, double distance, int remaining, float loss) {
         owner.setItemSlot(EquipmentSlot.FEET, root);
-        owner.setHealth(owner.getMaxHealth()); owner.invulnerableTime = 0;
+        owner.setHealth(owner.getMaxHealth());
+        owner.invulnerableTime = 0;
         ItemStack before = root.copy();
         owner.causeFallDamage(distance, 1, owner.damageSources().fall());
         require(owner.getMaxHealth() - owner.getHealth() == loss && energy(root).getAmountAsInt() == remaining,
                 "Actual resource-lifecycle fall health/FE mismatch: distance=" + distance + " FE=" + energy(root).getAmountAsInt());
         before.set(JustDireResourceTestSupport.energyComponent(), remaining);
-        require(owner.getItemBySlot(EquipmentSlot.FEET) == root && ItemStack.matches(before, root), "Ability debit changed identity/sources/projections/wear");
+        require(owner.getItemBySlot(EquipmentSlot.FEET) == root && ItemStack.matches(before, root),
+                "Ability debit changed identity/sources/projections/wear");
     }
 
     private static void verifyRestart(MinecraftServer server) throws java.io.IOException {
@@ -514,47 +549,59 @@ public final class NeoForgeJustDireResourcesTest {
                 System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-resources-saved.json")));
         ItemStack expected = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), json).getOrThrow();
         require(ItemStack.matches(expected, barrel.getItem(0)) && energy(barrel.getItem(0)).getAmountAsInt() == 1_733
-                && energy(barrel.getItem(1)).getAmountAsInt() == 0 && energy(barrel.getItem(2)).getAmountAsInt() == 0
-                && !barrel.getItem(2).has(JustDireResourceTestSupport.energyComponent()), "World restart restored snapshot charge or lost zero/absence");
+                        && energy(barrel.getItem(1)).getAmountAsInt() == 0 && energy(barrel.getItem(2)).getAmountAsInt() == 0
+                        && !barrel.getItem(2).has(JustDireResourceTestSupport.energyComponent()),
+                "World restart restored snapshot charge or lost zero/absence");
         require(extract(barrel.getItem(0), 50) == 50 && energy(barrel.getItem(0)).getAmountAsInt() == 1_683,
                 "Restarted root cannot consume live FE");
         var savedFalls = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                 System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-negate-saved.json"))).getAsJsonArray();
         require(savedFalls.size() == 4, "Missing independently saved Negate roots");
         for (int index = 0; index < savedFalls.size(); index++) {
-            ItemStack expectedFall = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), savedFalls.get(index)).getOrThrow();
+            ItemStack expectedFall = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), savedFalls.get(index))
+                                                    .getOrThrow();
             ItemStack loaded = barrel.getItem(index + 4);
             require(ItemStack.matches(expectedFall, loaded) && energy(loaded).getAmountAsInt() == (index % 2 == 0 ? 2_550 : 0),
                     "World restart refilled/lost actually spent Negate state");
             fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9,
-                    index % 2 == 0 ? 2_100 : 0, index % 2 == 0 ? 0 : 6);
+                        index % 2 == 0 ? 2_100 : 0, index % 2 == 0 ? 0 : 6);
         }
         var savedFlags = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                 System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-root-flags-saved.json"))).getAsJsonArray();
         require(savedFlags.size() == 4, "Missing false/absent root-permission restart fixtures");
         for (int index = 0; index < savedFlags.size(); index++) {
-            ItemStack expectedFlags = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), savedFlags.get(index)).getOrThrow();
+            ItemStack expectedFlags = ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), savedFlags.get(index))
+                                                     .getOrThrow();
             ItemStack loaded = barrel.getItem(index + 8);
             require(ItemStack.matches(expectedFlags, loaded), "World restart changed false/absent root installations");
             require(loaded.getAttributeModifiers().modifiers().stream().noneMatch(entry -> entry.attribute()
-                    .is(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT.unwrapKey().orElseThrow())),
+                                                                                                .is(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT.unwrapKey()
+                                                                                                                                                                   .orElseThrow())),
                     "Restart restored root-disabled Step from historical sources");
             fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9, 2_550, 6);
         }
         JustDireRefundLifecycleTest.restart(server, barrel);
-        NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt", "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; "
-                + "frozen non-default attributes through depletion/recharge; four actually spent Negate roots after Workbench/smithing, both orientations; "
-                + "root-only Step retained; four false/absent root Step/Negate fixtures; no historical resurrection or FE spending; charged/empty actual falls after restart\n");
+        NetworkAcceptanceFiles.write("just-dire-resources-restart-report.txt",
+                                     "actual second server process; persisted barrel contents/live FE/provenance; zero/absence preserved; live extraction after load; "
+                                             + "frozen non-default attributes through depletion/recharge; four actually spent Negate roots after Workbench/smithing, both orientations; "
+                                             + "root-only Step retained; four false/absent root Step/Negate fixtures; no historical resurrection or FE spending; charged/empty actual falls after restart\n");
     }
 
     private static ServerPlayer player(MinecraftServer server) {
         var player = new ServerPlayer(server, server.overworld(), new GameProfile(UUID.randomUUID(), "resources-menu"),
-                ClientInformation.createDefault()) {
-            @Override public GameType gameMode() { return GameType.CREATIVE; }
-            @Override public boolean hasDisconnected() { return false; }
+                                      ClientInformation.createDefault()) {
+            @Override
+            public GameType gameMode() {
+                return GameType.CREATIVE;
+            }
+
+            @Override
+            public boolean hasDisconnected() {
+                return false;
+            }
         };
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
-                CommonListenerCookie.createInitial(player.getGameProfile(), false));
+                                         CommonListenerCookie.createInitial(player.getGameProfile(), false));
         return player;
     }
 
@@ -576,12 +623,16 @@ public final class NeoForgeJustDireResourcesTest {
 
     static ItemStack boots(String tier, int charge) {
         ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", tier + "_boots"))
-                .orElseThrow().value());
-        if (tier.equals("celestigem") || tier.equals("eclipsealloy")) { stack.set(JustDireResourceTestSupport.energyComponent(), charge); }
+                                                              .orElseThrow().value());
+        if (tier.equals("celestigem") || tier.equals("eclipsealloy")) {
+            stack.set(JustDireResourceTestSupport.energyComponent(), charge);
+        }
         return stack;
     }
 
-    private static EnergyHandler energy(ItemStack stack) { return JustDireResourceTestSupport.handler(stack); }
+    private static EnergyHandler energy(ItemStack stack) {
+        return JustDireResourceTestSupport.handler(stack);
+    }
 
     @SuppressWarnings("unchecked")
     private static DataComponentType<Integer> integerComponent(String path) {
@@ -607,6 +658,8 @@ public final class NeoForgeJustDireResourcesTest {
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new IllegalStateException(message); }
+        if (!condition) {
+            throw new IllegalStateException(message);
+        }
     }
 }

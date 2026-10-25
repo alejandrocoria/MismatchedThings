@@ -10,8 +10,12 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(targets = "com.iafenvoy.iceandfire.item.armor.SeaSerpentArmorItem", priority = 500, remap = false)
 abstract class TideChainLowMixin {
     @ModifyExpressionValue(method = "inventoryTick", at = @At(value = "games.alejandrocoria.mismatchedboots.runtimetest.tide.TideSlotInjectionPoint", args = "slot=FEET"))
-    private boolean tideTest$lowFeet(boolean original) { return TideCarrierProbe.chain(original); }
+    private boolean tideTest$lowFeet(boolean original) {
+        return TideCarrierProbe.chain(original);
+    }
 
     @ModifyExpressionValue(method = "inventoryTick", at = @At(value = "games.alejandrocoria.mismatchedboots.runtimetest.tide.TideSlotInjectionPoint", args = "slot=HEAD"))
-    private boolean tideTest$lowHead(boolean original) { return TideCarrierProbe.chain(original); }
+    private boolean tideTest$lowHead(boolean original) {
+        return TideCarrierProbe.chain(original);
+    }
 }

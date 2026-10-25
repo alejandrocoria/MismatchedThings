@@ -64,7 +64,7 @@ public class MismatchedBootsNeoForge {
             ComponentRulesLifecycle.onServerStopped();
         });
         NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) ->
-                event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
+                                               event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
         eventBus.addListener(MismatchedBootsClientNeoForge::onClientSetup);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerItemDecorations);

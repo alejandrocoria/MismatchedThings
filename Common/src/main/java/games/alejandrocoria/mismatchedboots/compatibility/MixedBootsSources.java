@@ -13,7 +13,8 @@ public final class MixedBootsSources {
     private MixedBootsSources() {
     }
 
-    /** Strict gameplay boundary: unlike ModContent's broad detection, require our
+    /**
+     * Strict gameplay boundary: unlike ModContent's broad detection, require our
      * item, registered data and two valid non-mixed sources before invoking consumers.
      */
     public static boolean anySource(ItemStack stack, Predicate<ItemStack> predicate) {
@@ -24,7 +25,7 @@ public final class MixedBootsSources {
         }
 
         MixedBootsData data = ModContent.suspendedBootsData(stack).isPresent() ? null
-                : ModContent.mixedBootsDataType().map(stack::get).orElse(null);
+                                                                               : ModContent.mixedBootsDataType().map(stack::get).orElse(null);
         return anySource(data, predicate);
     }
 

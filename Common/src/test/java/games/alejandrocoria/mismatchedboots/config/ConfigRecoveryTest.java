@@ -33,7 +33,7 @@ class ConfigRecoveryTest {
 
     @ParameterizedTest
     @CsvSource({"true,true,false", "true,false,false", "false,true,false", "false,false,false",
-            "true,true,true", "true,false,true", "false,true,true", "false,false,true"})
+                "true,true,true", "true,false,true", "false,true,true", "false,false,true"})
     void readOrBackupFailureUsesMemoryDefaultsAndPreservesOriginal(
             boolean attributes, boolean unreadable, boolean securityFailure) throws IOException {
         Path path = directory.resolve(attributes ? AttributeRulesConfig.FILE_NAME : ComponentRulesConfig.FILE_NAME);
@@ -71,7 +71,7 @@ class ConfigRecoveryTest {
         };
 
         assertEquals(attributes ? AttributeRuleDefaults.ruleSet() : ComponentRuleDefaults.state(),
-                attributes ? new AttributeRulesConfig(path, files).load() : new ComponentRulesConfig(path, files).load());
+                     attributes ? new AttributeRulesConfig(path, files).load() : new ComponentRulesConfig(path, files).load());
         assertArrayEquals(original, Files.readAllBytes(path));
         assertEquals(unreadable ? 0 : 1, backupAttempts[0]);
         try (var contents = Files.list(directory)) {
@@ -86,7 +86,7 @@ class ConfigRecoveryTest {
         byte[] original = {(byte) 0xC3, (byte) 0x28};
         Files.write(path, original);
         assertEquals(attributes ? AttributeRuleDefaults.ruleSet() : ComponentRuleDefaults.state(),
-                attributes ? new AttributeRulesConfig(path).load() : new ComponentRulesConfig(path).load());
+                     attributes ? new AttributeRulesConfig(path).load() : new ComponentRulesConfig(path).load());
         assertArrayEquals(original, Files.readAllBytes(path));
         try (var contents = Files.list(directory)) {
             assertEquals(1, contents.count());

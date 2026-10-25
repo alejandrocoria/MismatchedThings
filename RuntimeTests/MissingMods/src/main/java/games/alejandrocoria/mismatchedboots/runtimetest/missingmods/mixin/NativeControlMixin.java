@@ -16,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /** Explicit disposable-world negative control. No production configuration can disable capture. */
 @Mixin(SuspendedBootsItemCodec.class)
 abstract class NativeControlMixin {
-    @Shadow @Final private MapCodec<ItemStack> delegate;
+    @Shadow
+    @Final
+    private MapCodec<ItemStack> delegate;
 
     @Inject(method = "decode", at = @At("HEAD"), cancellable = true, remap = false)
     private <T> void nativeControl(DynamicOps<T> ops, MapLike<T> input, CallbackInfoReturnable<DataResult<ItemStack>> result) {

@@ -14,7 +14,8 @@ import java.util.Set;
 
 /** Controlled real competing transformations, before production final-export readiness publication. */
 public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, Opcodes {
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
         if (mixin.endsWith("SilentGearMoonQueryPeerMixin")) {
             return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") && variant.equals("recognition-compatible");
@@ -25,10 +26,17 @@ public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, O
         return Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
                 && List.of("repair", "wear", "compatible").contains(System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", ""));
     }
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant");
-        if (mixin.endsWith("SilentGearRecognitionFaultMixin")) { recognition(node, variant); return; }
-        if (mixin.endsWith("SilentGearMoonQueryPeerMixin")) { return; }
+        if (mixin.endsWith("SilentGearRecognitionFaultMixin")) {
+            recognition(node, variant);
+            return;
+        }
+        if (mixin.endsWith("SilentGearMoonQueryPeerMixin")) {
+            return;
+        }
         for (MethodNode method : node.methods) {
             if (method.name.equals("inventoryTick") || method.name.equals("onDurabilityDamage")) {
                 method.instructions.insert(new InsnNode(NOP));
@@ -45,14 +53,18 @@ public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, O
             }
         }
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$modified", "()Z", null, null);
-        marker.instructions.add(new InsnNode(ICONST_1)); marker.instructions.add(new InsnNode(IRETURN)); marker.maxStack = 1;
+        marker.instructions.add(new InsnNode(ICONST_1));
+        marker.instructions.add(new InsnNode(IRETURN));
+        marker.maxStack = 1;
         node.methods.add(marker);
     }
 
     private static void recognition(ClassNode node, String variant) {
         MethodInsnNode changed = null;
         for (var method : node.methods) {
-            if (!method.name.equals("makesPiglinsNeutral") && !method.name.equals("onLivingFall")) { continue; }
+            if (!method.name.equals("makesPiglinsNeutral") && !method.name.equals("onLivingFall")) {
+                continue;
+            }
             method.instructions.insert(new InsnNode(NOP));
             for (var insn : method.instructions) {
                 if (insn instanceof MethodInsnNode call && call.owner.equals("net/silentchaos512/gear/util/TraitHelper")
@@ -68,16 +80,38 @@ public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, O
             alias.instructions.add(new VarInsnNode(ALOAD, 1));
             alias.instructions.add(new MethodInsnNode(INVOKESTATIC, changed.owner, changed.name, changed.desc, false));
             alias.instructions.add(new InsnNode(IRETURN));
-            alias.maxLocals = 2; alias.maxStack = 2; node.methods.add(alias);
-            changed.owner = node.name; changed.name = alias.name;
+            alias.maxLocals = 2;
+            alias.maxStack = 2;
+            node.methods.add(alias);
+            changed.owner = node.name;
+            changed.name = alias.name;
         }
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$recognitionChanged", "()Z", null, null);
-        marker.instructions.add(new InsnNode(ICONST_1)); marker.instructions.add(new InsnNode(IRETURN)); marker.maxStack = 1;
+        marker.instructions.add(new InsnNode(ICONST_1));
+        marker.instructions.add(new InsnNode(IRETURN));
+        marker.maxStack = 1;
         node.methods.add(marker);
     }
-    @Override public void onLoad(String name) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+
+    @Override
+    public void onLoad(String name) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

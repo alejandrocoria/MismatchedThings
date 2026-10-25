@@ -1,7 +1,7 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "mismatchedboots-test:item/oversized_red"
-  },
-  "oversized_in_gui": true
+    "model": {
+        "type": "minecraft:model",
+        "model": "mismatchedboots-test:item/oversized_red"
+    },
+    "oversized_in_gui": true
 }

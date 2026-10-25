@@ -12,24 +12,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JustDireRefundCreditsTest {
-    @Test void entitlementHasStableOrderAndCannotAliasThePurchaseInput() {
+    @Test
+    void entitlementHasStableOrderAndCannotAliasThePurchaseInput() {
         var input = new ArrayList<>(List.of("earthquake", "stepheight", "jumpboost"));
         var credits = new JustDireRefundCredits(input);
         input.clear();
         assertEquals(List.of("stepheight", "jumpboost", "earthquake"), credits.names());
         assertEquals("[\"stepheight\",\"jumpboost\",\"earthquake\"]",
-                JustDireRefundCredits.CODEC.encodeStart(JsonOps.INSTANCE, credits).getOrThrow().toString());
+                     JustDireRefundCredits.CODEC.encodeStart(JsonOps.INSTANCE, credits).getOrThrow().toString());
         assertThrows(UnsupportedOperationException.class, () -> credits.names().add("groundstomp"));
     }
 
-    @Test void programmaticCreditsCannotRepresentDuplicateOrUnsupportedPurchases() {
+    @Test
+    void programmaticCreditsCannotRepresentDuplicateOrUnsupportedPurchases() {
         assertThrows(IllegalArgumentException.class, () -> new JustDireRefundCredits(List.of("jumpboost", "jumpboost")));
         assertThrows(IllegalArgumentException.class, () -> new JustDireRefundCredits(List.of("lavarepair")));
     }
 
-    @Test void persistentCodecRejectsInvalidEntitlementsAndCanonicalizesValidOnes() {
+    @Test
+    void persistentCodecRejectsInvalidEntitlementsAndCanonicalizesValidOnes() {
         for (String invalid : List.of("[\"jumpboost\",\"jumpboost\"]", "[\"lavarepair\"]",
-                "[\"stepheight\",\"jumpboost\",\"groundstomp\",\"negatefalldamage\",\"earthquake\",\"extra\"]")) {
+                                      "[\"stepheight\",\"jumpboost\",\"groundstomp\",\"negatefalldamage\",\"earthquake\",\"extra\"]")) {
             assertTrue(JustDireRefundCredits.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(invalid)).error().isPresent(), invalid);
         }
         assertEquals(List.of("stepheight", "earthquake"), JustDireRefundCredits.CODEC

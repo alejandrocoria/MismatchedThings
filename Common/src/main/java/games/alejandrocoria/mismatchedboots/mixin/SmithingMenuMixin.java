@@ -27,12 +27,18 @@ import java.util.List;
 
 @Mixin(SmithingMenu.class)
 abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
-    @Shadow @Final private Level level;
+    @Shadow
+    @Final
+    private Level level;
 
-    @Unique private RecipeHolder<SmithingRecipe> mismatchedboots$additionalRecipe;
-    @Unique private RecipeHolder<SmithingRecipe> mismatchedboots$primaryRecipe;
-    @Unique private ItemStack mismatchedboots$preview;
-    @Unique private List<ItemStack> mismatchedboots$matchedInputs;
+    @Unique
+    private RecipeHolder<SmithingRecipe> mismatchedboots$additionalRecipe;
+    @Unique
+    private RecipeHolder<SmithingRecipe> mismatchedboots$primaryRecipe;
+    @Unique
+    private ItemStack mismatchedboots$preview;
+    @Unique
+    private List<ItemStack> mismatchedboots$matchedInputs;
 
     @Inject(method = "createResult", at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$clearAdditionalRecipe(CallbackInfo callback) {

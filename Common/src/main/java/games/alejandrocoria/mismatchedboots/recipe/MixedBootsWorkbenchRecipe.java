@@ -54,16 +54,16 @@ public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecip
             MixedBootsPair pair = pairFactory.create(input.left().copy(), input.right().copy());
             if (pair.primary().isEmpty() || pair.inverse().isEmpty()) {
                 Constants.LOG.debug("Rejected empty workbench output for {} and {}",
-                        BuiltInRegistries.ITEM.getKey(input.left().getItem()),
-                        BuiltInRegistries.ITEM.getKey(input.right().getItem()));
+                                    BuiltInRegistries.ITEM.getKey(input.left().getItem()),
+                                    BuiltInRegistries.ITEM.getKey(input.right().getItem()));
                 return MismatchedWorkbenchResult.EMPTY;
             }
             return new MismatchedWorkbenchResult(pair.primary(), pair.inverse());
         } catch (IllegalArgumentException exception) {
             Constants.LOG.debug("Rejected workbench composition for {} and {}: {}",
-                    BuiltInRegistries.ITEM.getKey(input.left().getItem()),
-                    BuiltInRegistries.ITEM.getKey(input.right().getItem()),
-                    exception.getMessage());
+                                BuiltInRegistries.ITEM.getKey(input.left().getItem()),
+                                BuiltInRegistries.ITEM.getKey(input.right().getItem()),
+                                exception.getMessage());
             return MismatchedWorkbenchResult.EMPTY;
         }
     }

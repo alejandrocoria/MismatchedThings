@@ -39,17 +39,32 @@ public final class TideHeadFixture {
         var api = TideOptionalApi.inspect();
         if (!api.available()) {
             disabled = true;
-            if (api.present()) { disable(api.reason()); }
+            if (api.present()) {
+                disable(api.reason());
+            }
         }
     }
 
-    public static int activations() { return activations; }
-    public static int warnings() { return warnings; }
-    public static int bindingAttempts() { return bindingAttempts; }
-    public static int apiAvailable() { return TideOptionalApi.inspect().available() ? 1 : 0; }
+    public static int activations() {
+        return activations;
+    }
+
+    public static int warnings() {
+        return warnings;
+    }
+
+    public static int bindingAttempts() {
+        return bindingAttempts;
+    }
+
+    public static int apiAvailable() {
+        return TideOptionalApi.inspect().available() ? 1 : 0;
+    }
 
     public static boolean recognizes(Entity entity, EquipmentSlot slot) {
-        if (disabled || slot != EquipmentSlot.HEAD || !(entity instanceof Player player)) { return false; }
+        if (disabled || slot != EquipmentSlot.HEAD || !(entity instanceof Player player)) {
+            return false;
+        }
         try {
             return qualifies(player.getItemBySlot(slot)) && ready();
         } catch (LinkageError failure) {
@@ -62,27 +77,36 @@ public final class TideHeadFixture {
         if (receiver == null) {
             bindingAttempts++;
             String fault = System.getProperty("mismatchedboots.runtimetest.tideHeadReceiver", "");
-            if (fault.equals("linkage")) { throw new NoSuchMethodError("Injected fixed HEAD receiver binding failure"); }
+            if (fault.equals("linkage")) {
+                throw new NoSuchMethodError("Injected fixed HEAD receiver binding failure");
+            }
             receiver = fault.equals("replaced") ? Items.IRON_HELMET : item("iceandfire:tide_blue_helmet");
         }
         boolean result = nativeSource(receiver) && receiver instanceof Ready entry && entry.tideHead$entryReady()
                 && receiver instanceof Ready.Base base && base.tideHead$baseReady();
-        if (!result) { disable("fixed receiver or entry/base readiness unavailable"); }
+        if (!result) {
+            disable("fixed receiver or entry/base readiness unavailable");
+        }
         return result;
     }
 
     private static void disable(String reason) {
         disabled = true;
         if (!warned) {
-            warned = true; warnings++;
+            warned = true;
+            warnings++;
             org.slf4j.LoggerFactory.getLogger(TideHeadFixture.class).warn("TEST-ONLY HEAD Tide adapter disabled: {}", reason);
         }
     }
 
     private static boolean qualifies(ItemStack root) {
-        if (root.isEmpty() || root.getCount() != 1 || root.getItem() != ROOT.get()) { return false; }
+        if (root.isEmpty() || root.getCount() != 1 || root.getItem() != ROOT.get()) {
+            return false;
+        }
         CustomData data = root.get(DataComponents.CUSTOM_DATA);
-        if (data == null) { return false; }
+        if (data == null) {
+            return false;
+        }
         CompoundTag tag = data.copyTag();
         Item first = item(tag.getStringOr("primary_head", ""));
         Item second = item(tag.getStringOr("secondary_head", ""));
@@ -106,17 +130,24 @@ public final class TideHeadFixture {
     }
 
     private static final class Root extends Item {
-        Root(Properties properties) { super(properties.stacksTo(1)); }
+        Root(Properties properties) {
+            super(properties.stacksTo(1));
+        }
 
-        @Override public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
+        @Override
+        public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
             super.inventoryTick(stack, level, entity, slot);
             if (!(entity instanceof ServerPlayer player) || slot != EquipmentSlot.HEAD
-                    || player.getItemBySlot(slot) != stack || !recognizes(player, slot)) { return; }
+                    || player.getItemBySlot(slot) != stack || !recognizes(player, slot)) {
+                return;
+            }
             // Native invocation is deliberately outside the preflight LinkageError catch.
             ItemStack disposable = new ItemStack(receiver);
             ItemStack before = disposable.copy();
             receiver.inventoryTick(disposable, level, entity, slot);
-            if (!ItemStack.matches(before, disposable)) { throw new AssertionError("HEAD bridge mutated carrier"); }
+            if (!ItemStack.matches(before, disposable)) {
+                throw new AssertionError("HEAD bridge mutated carrier");
+            }
             activations++;
         }
     }

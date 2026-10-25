@@ -9,5 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(JustDireUpgradesCompatibility.class)
 abstract class JustDireRefundMetadataMissingMixin {
     @ModifyVariable(method = "installedFlag", at = @At("HEAD"), argsOnly = true)
-    private static String missing(String name) { return "missing_refund_metadata"; }
+    private static String missing(String name) {
+        return "missing_refund_metadata";
+    }
 }

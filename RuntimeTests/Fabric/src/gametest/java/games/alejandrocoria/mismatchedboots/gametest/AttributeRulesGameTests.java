@@ -31,7 +31,7 @@ public final class AttributeRulesGameTests {
         assertOnlyAmount(helper, pair.primary(), Attributes.ARMOR, 2.0D, "one-sided primary");
         assertOnlyAmount(helper, pair.inverse(), Attributes.ARMOR, 2.0D, "one-sided inverse");
         helper.assertValueEqual(modifiers(first).modifiers().getFirst().modifier().amount(), 4.0D,
-                "one-sided source amount");
+                                "one-sided source amount");
         helper.succeed();
     }
 
@@ -43,12 +43,12 @@ public final class AttributeRulesGameTests {
         MixedBootsWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe();
 
         helper.assertTrue(recipe.matches(input, helper.getLevel()),
-                "Structurally valid non-finite sources did not reach composition");
+                          "Structurally valid non-finite sources did not reach composition");
         var result = recipe.assemblePair(input);
         helper.assertTrue(!result.isComplete()
-                        && result.primary().isEmpty()
-                        && result.inverse().isEmpty(),
-                "Non-finite workbench composition exposed a partial result");
+                                  && result.primary().isEmpty()
+                                  && result.inverse().isEmpty(),
+                          "Non-finite workbench composition exposed a partial result");
         helper.succeed();
     }
 
@@ -59,10 +59,10 @@ public final class AttributeRulesGameTests {
         }
 
         helper.assertValueEqual(AttributeRulesLifecycle.serverRules().policyFor(Identifier.withDefaultNamespace("movement_speed")),
-                AttributePolicy.COMBINE, "loaded movement-speed policy");
+                                AttributePolicy.COMBINE, "loaded movement-speed policy");
         helper.assertValueEqual(AttributeRulesLifecycle.serverRules().policyFor(
-                        Identifier.withDefaultNamespace("waypoint_transmit_range")),
-                AttributePolicy.REJECT, "loaded waypoint-transmit-range policy");
+                                        Identifier.withDefaultNamespace("waypoint_transmit_range")),
+                                AttributePolicy.REJECT, "loaded waypoint-transmit-range policy");
 
         ItemStack first = bootsWithModifier(Items.IRON_BOOTS, Attributes.MOVEMENT_SPEED, 0.2D);
         ItemStack second = bootsWithModifier(Items.GOLDEN_BOOTS, Attributes.MOVEMENT_SPEED, 0.4D);
@@ -70,21 +70,21 @@ public final class AttributeRulesGameTests {
         assertOnlyAmount(helper, combined.primary(), Attributes.MOVEMENT_SPEED, 0.6D, "configured primary");
         assertOnlyAmount(helper, combined.inverse(), Attributes.MOVEMENT_SPEED, 0.6D, "configured inverse");
         helper.assertValueEqual(modifiers(first).modifiers().getFirst().modifier().amount(), 0.2D,
-                "configured first source amount");
+                                "configured first source amount");
         helper.assertValueEqual(modifiers(second).modifiers().getFirst().modifier().amount(), 0.4D,
-                "configured second source amount");
+                                "configured second source amount");
 
         ItemStack rejected = bootsWithModifier(Items.IRON_BOOTS, Attributes.WAYPOINT_TRANSMIT_RANGE, 1.0D);
         MismatchedWorkbenchInput rejectedInput = new MismatchedWorkbenchInput(
                 rejected, new ItemStack(Items.GOLDEN_BOOTS));
         MixedBootsWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe();
         helper.assertTrue(recipe.matches(rejectedInput, helper.getLevel()),
-                "Structurally valid configured-reject sources did not reach composition");
+                          "Structurally valid configured-reject sources did not reach composition");
         var rejectedResult = recipe.assemblePair(rejectedInput);
         helper.assertTrue(!rejectedResult.isComplete()
-                        && rejectedResult.primary().isEmpty()
-                        && rejectedResult.inverse().isEmpty(),
-                "Configured reject exposed a partial workbench result");
+                                  && rejectedResult.primary().isEmpty()
+                                  && rejectedResult.inverse().isEmpty(),
+                          "Configured reject exposed a partial workbench result");
         helper.succeed();
     }
 
@@ -94,9 +94,12 @@ public final class AttributeRulesGameTests {
             double amount) {
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(attribute, new AttributeModifier(SHARED_ID, amount, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(attribute,
+                                                                                 new AttributeModifier(SHARED_ID,
+                                                                                                       amount,
+                                                                                                       AttributeModifier.Operation.ADD_VALUE),
+                                                                                 EquipmentSlotGroup.FEET)
+                                                                            .build());
         return stack;
     }
 
@@ -111,11 +114,11 @@ public final class AttributeRulesGameTests {
             double expected,
             String description) {
         var entries = modifiers(stack).modifiers().stream()
-                .filter(entry -> entry.attribute().equals(attribute))
-                .toList();
+                                      .filter(entry -> entry.attribute().equals(attribute))
+                                      .toList();
         helper.assertValueEqual(entries.size(), 1, description + " entries");
         helper.assertValueEqual(entries.getFirst().modifier().id(), SHARED_ID, description + " modifier ID");
         helper.assertTrue(Math.abs(entries.getFirst().modifier().amount() - expected) < 1.0E-12D,
-                description + " amount was " + entries.getFirst().modifier().amount());
+                          description + " amount was " + entries.getFirst().modifier().amount());
     }
 }

@@ -83,16 +83,16 @@ public final class NeoForgeTooltipClientTest {
             characterize(client);
             acceptProductionTooltip();
             NetworkAcceptanceFiles.write("tooltip-report.txt",
-                    "finalHook.afterBase=true\n"
-                            + "finalHook.recursesForNestedDetails=false\n"
-                            + "appender.runsForNestedDetails=true\n"
-                            + "finalHook.context=true\n"
-                            + "finalHook.display=true\n"
-                            + "finalHook.playerNullable=true\n"
-                            + "production.primaryInverse=true\n"
-                            + "production.sourceAppenderInRegion=true\n"
-                            + "production.finalHookAfterRoot=true\n"
-                            + "shift.requiresClientState=true\n");
+                                         "finalHook.afterBase=true\n"
+                                                 + "finalHook.recursesForNestedDetails=false\n"
+                                                 + "appender.runsForNestedDetails=true\n"
+                                                 + "finalHook.context=true\n"
+                                                 + "finalHook.display=true\n"
+                                                 + "finalHook.playerNullable=true\n"
+                                                 + "production.primaryInverse=true\n"
+                                                 + "production.sourceAppenderInRegion=true\n"
+                                                 + "production.finalHookAfterRoot=true\n"
+                                                 + "shift.requiresClientState=true\n");
             NetworkAcceptanceFiles.write("tooltip-success.txt", "neoforge\n");
             finished = true;
             client.stop();
@@ -105,10 +105,10 @@ public final class NeoForgeTooltipClientTest {
 
     private static void characterize(Minecraft client) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.ITEM_NAME, Component.translatable(Items.IRON_BOOTS.getDescriptionId()))
-                .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(Items.IRON_BOOTS))
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.ITEM_NAME, Component.translatable(Items.IRON_BOOTS.getDescriptionId()))
+                                                      .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(Items.IRON_BOOTS))
+                                                      .build();
         ItemStack stack = new ItemStack(Holder.direct(Items.IRON_BOOTS, components), 1);
         ItemStack before = stack.copy();
         Item.TooltipContext context = Item.TooltipContext.EMPTY;
@@ -172,28 +172,29 @@ public final class NeoForgeTooltipClientTest {
 
     private static ItemStack source(Item item) {
         DataComponentPatch components = DataComponentPatch.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
-                .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(item))
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build();
+                                                          .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                          .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
+                                                          .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(item))
+                                                          .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                          .build();
         return new ItemStack(Holder.direct(item), 1, components);
     }
 
     private static ItemStack mixed(ItemStack left, ItemStack right) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
-                .orElseThrow(() -> new AssertionError("Mismatched boots data component is not registered"));
+                                                               .orElseThrow(() -> new AssertionError(
+                                                                       "Mismatched boots data component is not registered"));
         Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
         if (mixedItem == null) {
             throw new AssertionError("Mismatched boots item is not registered");
         }
         DataComponentPatch components = DataComponentPatch.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"))
-                .set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .set(dataType, new MixedBootsData(new BootHalf(left), new BootHalf(right)))
-                .build();
+                                                          .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                          .set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"))
+                                                          .set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID)
+                                                          .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                          .set(dataType, new MixedBootsData(new BootHalf(left), new BootHalf(right)))
+                                                          .build();
         return new ItemStack(Holder.direct(mixedItem), 1, components);
     }
 
@@ -215,20 +216,20 @@ public final class NeoForgeTooltipClientTest {
         AppenderObservation appender = requireAppenderObservation();
         if (!ItemStack.matches(expectedSource, appender.stack())) {
             throw new AssertionError("NeoForge appender received the wrong source snapshot: "
-                    + appender.stack());
+                                             + appender.stack());
         }
         assertSame(context, appender.context(), "source appender context");
         if (appender.player() != null || appender.flag() != rootFlag
                 || !appender.display().hiddenComponents().contains(DataComponents.TRIM)
                 || !appender.display().hiddenComponents().contains(DataComponents.ENCHANTMENTS)) {
             throw new AssertionError("NeoForge source appender lost display, player, or flag state: "
-                    + appender);
+                                             + appender);
         }
 
         FinalObservation finalHook = requireFinalObservation();
         if (finalInvocationCount != 1) {
             throw new AssertionError("NeoForge final event recursively ran for a source: "
-                    + finalInvocationCount);
+                                             + finalInvocationCount);
         }
         assertSame(output, finalHook.stack(), "Mismatched final-event stack");
         assertSame(context, finalHook.context(), "Mismatched final-event context");
@@ -279,7 +280,7 @@ public final class NeoForgeTooltipClientTest {
     private static AppenderObservation requireAppenderObservation() {
         if (APPENDER_OBSERVATIONS.size() != 1) {
             throw new AssertionError("Expected one NeoForge tooltip appender call, got "
-                    + APPENDER_OBSERVATIONS);
+                                             + APPENDER_OBSERVATIONS);
         }
         return APPENDER_OBSERVATIONS.getFirst();
     }

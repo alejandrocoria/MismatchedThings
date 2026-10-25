@@ -5,4 +5,5 @@ import org.spongepowered.asm.mixin.Pseudo;
 
 @Pseudo
 @Mixin(targets = "com.aetherteam.aetherii.AetherIIEventListeners", remap = false)
-abstract class AetherAlkahestArmorTargetMixin {}
+abstract class AetherAlkahestArmorTargetMixin {
+}

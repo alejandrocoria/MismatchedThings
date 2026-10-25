@@ -128,7 +128,7 @@ class AttributeRulesPayloadTest {
         byte[] complete = encode(new AttributeRulesPayload(rules()));
 
         assertThrows(RuntimeException.class,
-                () -> decode(Arrays.copyOf(complete, complete.length - 1)));
+                     () -> decode(Arrays.copyOf(complete, complete.length - 1)));
     }
 
     @Test

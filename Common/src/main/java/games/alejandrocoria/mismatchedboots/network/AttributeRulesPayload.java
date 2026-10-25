@@ -86,6 +86,6 @@ public record AttributeRulesPayload(AttributeRuleSet rules) implements CustomPac
     private static AttributePolicy readPolicy(RegistryFriendlyByteBuf buffer) {
         String serialized = buffer.readUtf(MAX_POLICY_LENGTH);
         return AttributePolicy.fromSerializedName(serialized)
-                .orElseThrow(() -> new DecoderException("Invalid attribute policy: " + serialized));
+                              .orElseThrow(() -> new DecoderException("Invalid attribute policy: " + serialized));
     }
 }

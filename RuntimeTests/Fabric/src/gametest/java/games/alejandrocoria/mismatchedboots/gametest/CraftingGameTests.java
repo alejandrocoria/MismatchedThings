@@ -59,7 +59,7 @@ public final class CraftingGameTests {
         assertNoMenuComposition(helper, player, tableMenu, 0, 8, "3x3 crafting table");
 
         helper.assertTrue(player.getInventory().getNonEquipmentItems().stream().noneMatch(ModContent::isMixedBoots),
-                "Ordinary crafting inserted mixed boots into the player inventory");
+                          "Ordinary crafting inserted mixed boots into the player inventory");
         helper.succeed();
     }
 
@@ -80,11 +80,11 @@ public final class CraftingGameTests {
     public void mixedInputsCannotReachTheVanillaRepairRecipe(GameTestHelper helper) {
         var pair = GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         assertNoLoadedRecipe(helper, input(2, 2, 0, pair.primary(), 3, pair.inverse()),
-                "two mixed stacks");
+                             "two mixed stacks");
 
         ItemStack bareMixed = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
         assertNoLoadedRecipe(helper, input(2, 2, 0, bareMixed, 3, new ItemStack(Items.IRON_BOOTS)),
-                "bare mixed stack and ordinary donor");
+                             "bare mixed stack and ordinary donor");
         helper.succeed();
     }
 
@@ -96,15 +96,15 @@ public final class CraftingGameTests {
         secondIron.setDamageValue(Math.max(1, secondIron.getMaxDamage() / 2));
         CraftingInput repairInput = input(2, 2, 0, firstIron, 3, secondIron);
         var repair = helper.getLevel().recipeAccess()
-                .getRecipeFor(RecipeType.CRAFTING, repairInput, helper.getLevel())
-                .orElseThrow(() -> new AssertionError("Ordinary vanilla repair recipe disappeared"));
+                           .getRecipeFor(RecipeType.CRAFTING, repairInput, helper.getLevel())
+                           .orElseThrow(() -> new AssertionError("Ordinary vanilla repair recipe disappeared"));
         helper.assertTrue(repair.value() instanceof RepairItemRecipe,
-                "Ordinary repair selected a non-vanilla recipe: " + repair);
+                          "Ordinary repair selected a non-vanilla recipe: " + repair);
         helper.assertTrue(repair.value().assemble(repairInput).is(Items.IRON_BOOTS),
-                "Ordinary vanilla repair produced the wrong item");
+                          "Ordinary vanilla repair produced the wrong item");
 
         assertNoLoadedRecipe(helper, input(2, 2, 0, new ItemStack(Items.IRON_BOOTS),
-                3, new ItemStack(Items.GOLDEN_BOOTS)), "two ordinary source boots");
+                                           3, new ItemStack(Items.GOLDEN_BOOTS)), "two ordinary source boots");
         helper.succeed();
     }
 
@@ -119,9 +119,9 @@ public final class CraftingGameTests {
         CraftingInput input = input(width, height, firstSlot, new ItemStack(first), secondSlot, new ItemStack(second));
         var recipe = helper.getLevel().recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel());
         helper.assertTrue(recipe.isEmpty(),
-                "Direct composition recipe remained for " + width + "x" + height
-                        + " layout " + firstSlot + "/" + secondSlot
-                        + " and order " + first + "/" + second + ": " + recipe);
+                          "Direct composition recipe remained for " + width + "x" + height
+                                  + " layout " + firstSlot + "/" + secondSlot
+                                  + " and order " + first + "/" + second + ": " + recipe);
     }
 
     private static void assertLoadedRepair(
@@ -132,18 +132,18 @@ public final class CraftingGameTests {
             int secondSlot) {
         CraftingInput input = input(2, 2, firstSlot, first, secondSlot, second);
         var recipe = helper.getLevel().recipeAccess()
-                .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
-                .orElseThrow(() -> new AssertionError("Mixed repair recipe did not load or match"));
+                           .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
+                           .orElseThrow(() -> new AssertionError("Mixed repair recipe did not load or match"));
         helper.assertTrue(recipe.id().equals(MIXED_REPAIR_RECIPE),
-                "Mixed repair selected the wrong recipe ID: " + recipe.id());
+                          "Mixed repair selected the wrong recipe ID: " + recipe.id());
         helper.assertTrue(recipe.value() instanceof MixedBootsRepairRecipe,
-                "Mixed repair selected the wrong recipe implementation: " + recipe);
+                          "Mixed repair selected the wrong recipe implementation: " + recipe);
         ItemStack mixed = ModContent.isMixedBoots(first) ? first : second;
         ItemStack output = recipe.value().assemble(input);
         helper.assertTrue(output.is(ModContent.MIXED_BOOTS_KEY),
-                "Mixed repair did not retain the mixed item identity");
+                          "Mixed repair did not retain the mixed item identity");
         helper.assertTrue(ModContent.getMixedBootsData(output).equals(ModContent.getMixedBootsData(mixed)),
-                "Mixed repair did not retain the exact source data");
+                          "Mixed repair did not retain the exact source data");
     }
 
     private static void assertNoLoadedRecipe(GameTestHelper helper, CraftingInput input, String description) {
@@ -162,16 +162,16 @@ public final class CraftingGameTests {
         menu.getInputGridSlots().get(secondSlot).set(new ItemStack(Items.GOLDEN_BOOTS));
 
         helper.assertTrue(menu.getSlot(0).getItem().isEmpty(),
-                description + " exposed a legacy preview");
+                          description + " exposed a legacy preview");
         ItemStack moved = menu.quickMoveStack(player, 0);
         helper.assertTrue(moved.isEmpty(), description + " shift-click created a legacy result");
         helper.assertTrue(menu.getInputGridSlots().get(firstSlot).getItem().is(Items.IRON_BOOTS),
-                description + " shift-click consumed the first input");
+                          description + " shift-click consumed the first input");
         helper.assertTrue(menu.getInputGridSlots().get(secondSlot).getItem().is(Items.GOLDEN_BOOTS),
-                description + " shift-click consumed the second input");
+                          description + " shift-click consumed the second input");
         helper.assertValueEqual(menu.getInputGridSlots().stream()
-                .filter(slot -> !slot.getItem().isEmpty()).count(), 2L,
-                description + " occupied input count");
+                                    .filter(slot -> !slot.getItem().isEmpty()).count(), 2L,
+                                description + " occupied input count");
     }
 
     private static CraftingInput input(int width, int height, Object... slotAndStacks) {

@@ -39,8 +39,8 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
                 WIDTH,
                 HEIGHT);
         this.arrows = guiHelper.drawableBuilder(ARROWS_TEXTURE, 0, 0, 26, 26)
-                .setTextureSize(26, 26)
-                .build();
+                               .setTextureSize(26, 26)
+                               .build();
     }
 
     @Override
@@ -49,17 +49,17 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
             MismatchedWorkbenchJeiExample recipe,
             IFocusGroup focuses) {
         IRecipeSlotBuilder leftInput = builder.addInputSlot(LEFT_SLOT_X, INPUT_Y)
-                .setStandardSlotBackground()
-                .addItemStacks(recipe.leftInputs());
+                                              .setStandardSlotBackground()
+                                              .addItemStacks(recipe.leftInputs());
         IRecipeSlotBuilder rightInput = builder.addInputSlot(RIGHT_SLOT_X, INPUT_Y)
-                .setStandardSlotBackground()
-                .addItemStacks(recipe.rightInputs());
+                                               .setStandardSlotBackground()
+                                               .addItemStacks(recipe.rightInputs());
         IRecipeSlotBuilder primaryOutput = builder.addOutputSlot(LEFT_SLOT_X, OUTPUT_Y)
-                .setStandardSlotBackground()
-                .addItemStacks(recipe.primaryOutputs());
+                                                  .setStandardSlotBackground()
+                                                  .addItemStacks(recipe.primaryOutputs());
         IRecipeSlotBuilder inverseOutput = builder.addOutputSlot(RIGHT_SLOT_X, OUTPUT_Y)
-                .setStandardSlotBackground()
-                .addItemStacks(recipe.inverseOutputs());
+                                                  .setStandardSlotBackground()
+                                                  .addItemStacks(recipe.inverseOutputs());
         builder.createFocusLink(leftInput, rightInput, primaryOutput, inverseOutput);
     }
 

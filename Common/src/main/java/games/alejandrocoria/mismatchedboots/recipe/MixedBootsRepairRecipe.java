@@ -65,9 +65,9 @@ public final class MixedBootsRepairRecipe extends CustomRecipe {
         var error = ItemStack.validateStrict(result).error();
         if (error.isPresent()) {
             Constants.LOG.debug("Rejected crafting repair output for {} and {}: {}",
-                    BuiltInRegistries.ITEM.getKey(match.mixed().getItem()),
-                    BuiltInRegistries.ITEM.getKey(match.donor().getItem()),
-                    error.get().message());
+                                BuiltInRegistries.ITEM.getKey(match.mixed().getItem()),
+                                BuiltInRegistries.ITEM.getKey(match.donor().getItem()),
+                                error.get().message());
             return ItemStack.EMPTY;
         }
         return result;

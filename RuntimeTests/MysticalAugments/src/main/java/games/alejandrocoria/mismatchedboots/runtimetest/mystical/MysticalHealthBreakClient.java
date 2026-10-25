@@ -31,19 +31,31 @@ public final class MysticalHealthBreakClient {
     private static boolean deathScreen;
     private static boolean finished;
 
-    private MysticalHealthBreakClient() {}
+    private MysticalHealthBreakClient() {
+    }
 
-    private static int kind() { return scene >= 6 ? (scene + 1) % 3 : scene % 3; }
+    private static int kind() {
+        return scene >= 6 ? (scene + 1) % 3 : scene % 3;
+    }
 
     public static void tick(Minecraft client) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         try {
             require(++ticks < 2000, "Health break diagnostic timeout");
-            if (client.player == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) { return; }
+            if (client.player == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
+                return;
+            }
             client.options.pauseOnLostFocus = false;
             if (job != null) {
-                if (!job.isDone()) { return; }
-                job.get(); job = null; phase = next; age = 0;
+                if (!job.isDone()) {
+                    return;
+                }
+                job.get();
+                job = null;
+                phase = next;
+                age = 0;
             }
             age++;
             if (phase == 3) {
@@ -53,23 +65,31 @@ public final class MysticalHealthBreakClient {
             if (phase == 0) {
                 queue(client, () -> {
                     var owner = owner(client);
-                    owner.setGameMode(GameType.SURVIVAL); owner.setNoGravity(true); owner.setInvulnerable(false);
-                    owner.getFoodData().setFoodLevel(10); owner.getInventory().clearContent();
-                    owner.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); owner.removeAllEffects();
+                    owner.setGameMode(GameType.SURVIVAL);
+                    owner.setNoGravity(true);
+                    owner.setInvulnerable(false);
+                    owner.getFoodData().setFoodLevel(10);
+                    owner.getInventory().clearContent();
+                    owner.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                    owner.removeAllEffects();
                 }, 1);
             } else if (phase == 1 && age >= 30) {
                 // Diagnostic recovery only: the server must still be alive before repairing a client-only death.
                 require(owner(client).isAlive(), "Server unexpectedly dead before next control");
-                client.player.setHealth(20); client.setScreen(null);
+                client.player.setHealth(20);
+                client.setScreen(null);
                 queue(client, () -> {
                     var nativeBoots = MysticalAugmentsProbe.item("awakened_supremium_boots", "HEALTH_BOOST_V", "STEP_ASSIST");
-                    if (kind() == 0) { boots = nativeBoots; }
-                    else {
-                        var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(nativeBoots, new ItemStack(Items.DIAMOND_BOOTS)));
+                    if (kind() == 0) {
+                        boots = nativeBoots;
+                    } else {
+                        var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(nativeBoots,
+                                                                                                             new ItemStack(Items.DIAMOND_BOOTS)));
                         require(pair.isComplete(), "Recipe rejected health break control");
                         boots = kind() == 1 ? pair.primary() : pair.inverse();
                     }
-                    boots.remove(DataComponents.UNBREAKABLE); boots.setDamageValue(boots.getMaxDamage() - 1);
+                    boots.remove(DataComponents.UNBREAKABLE);
+                    boots.setDamageValue(boots.getMaxDamage() - 1);
                     owner(client).setItemSlot(EquipmentSlot.FEET, scene == 4 || scene == 5 ? nativeBoots : boots);
                     owner(client).setHealth(20);
                 }, 2);
@@ -90,9 +110,11 @@ public final class MysticalHealthBreakClient {
                     client.player.getAttribute(Attributes.MAX_HEALTH).removeModifier(Identifier.parse("mysticalagriculture:health_boost_augment"));
                     require(client.player.getMaxHealth() == 20, "Controlled synchronized snapshot still has bonus");
                 }
-                minimumHealth = client.player.getHealth(); deathScreen = false;
+                minimumHealth = client.player.getHealth();
+                deathScreen = false;
                 queue(client, () -> {
-                    var owner = owner(client); owner.invulnerableTime = 0;
+                    var owner = owner(client);
+                    owner.invulnerableTime = 0;
                     require(owner.hurtServer(owner.level(), owner.damageSources().playerAttack(owner), 4), "Actual armor-damaging hit refused");
                     require(boots.isEmpty(), "Incoming hit did not break near-broken armor");
                     REPORT.append("scene=").append(scene).append(" immediate serverHealth=").append(owner.getHealth()).append('\n');
@@ -101,26 +123,30 @@ public final class MysticalHealthBreakClient {
                 queue(client, () -> {
                     var owner = owner(client);
                     REPORT.append("scene=").append(scene).append(" kind=").append(kind())
-                            .append(" controlledAttributeOrder=").append(scene >= 3).append(" serverHealth=")
-                            .append(owner.getHealth()).append(" serverMax=").append(owner.getMaxHealth())
-                            .append(" serverDead=").append(owner.isDeadOrDying())
-                            .append(" clientHealth=").append(client.player.getHealth()).append(" clientMax=").append(client.player.getMaxHealth())
-                            .append(" clientDead=").append(client.player.isDeadOrDying()).append(" minimumClientHealth=").append(minimumHealth)
-                            .append(" deathScreen=").append(deathScreen).append('\n');
+                          .append(" controlledAttributeOrder=").append(scene >= 3).append(" serverHealth=")
+                          .append(owner.getHealth()).append(" serverMax=").append(owner.getMaxHealth())
+                          .append(" serverDead=").append(owner.isDeadOrDying())
+                          .append(" clientHealth=").append(client.player.getHealth()).append(" clientMax=").append(client.player.getMaxHealth())
+                          .append(" clientDead=").append(client.player.isDeadOrDying()).append(" minimumClientHealth=").append(minimumHealth)
+                          .append(" deathScreen=").append(deathScreen).append('\n');
                     require(owner.isAlive(), "Incoming nonlethal hit killed server player");
                     if (kind() != 0 || scene < 3) {
                         require(minimumHealth > 0 && !deathScreen && !client.player.isDeadOrDying(), "Mixed cleanup caused client-only death");
-                        require(Math.abs(owner.getHealth() - client.player.getHealth()) < .001f, "Mixed cleanup left client/server health desynchronized");
+                        require(Math.abs(owner.getHealth() - client.player.getHealth()) < .001f,
+                                "Mixed cleanup left client/server health desynchronized");
                     }
                     scene++;
                 }, 4);
             } else if (phase == 4) {
-                if (scene < 9) { phase = 0; age = 0; }
-                else if (CLIENT_CACHE) {
+                if (scene < 9) {
+                    phase = 0;
+                    age = 0;
+                } else if (CLIENT_CACHE) {
                     require(client.player.isDeadOrDying() && client.screen instanceof net.minecraft.client.gui.screens.DeathScreen,
                             "Controlled native ordering did not reproduce persistent client-only death");
                     client.player.connection.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN));
-                    phase = 6; age = 0;
+                    phase = 6;
+                    age = 0;
                 } else {
                     require(!client.player.isDeadOrDying() && !deathScreen, "Server-only native handler caused client-only death");
                     REPORT.append("Fabric native handler has no client cache; no local removal/death is expected\n");
@@ -134,20 +160,33 @@ public final class MysticalHealthBreakClient {
             } else if (phase == 7) {
                 NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", REPORT.toString());
                 NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "diagnostic completed; controlled ordering is not ordinary acceptance\n");
-                finished = true; client.stop();
+                finished = true;
+                client.stop();
             }
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", REPORT.toString());
-            NetworkAcceptanceFiles.failure(OUTPUT, failure); finished = true; client.stop();
+            NetworkAcceptanceFiles.failure(OUTPUT, failure);
+            finished = true;
+            client.stop();
         }
     }
 
     private static ServerPlayer owner(Minecraft client) {
         return client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
     }
+
     private static void queue(Minecraft client, Action action, int target) {
-        job = client.getSingleplayerServer().submit(() -> { try { action.run(); } catch (Exception failure) { throw new RuntimeException(failure); } });
+        job = client.getSingleplayerServer().submit(() -> {
+            try {
+                action.run();
+            } catch (Exception failure) {
+                throw new RuntimeException(failure);
+            }
+        });
         next = target;
     }
-    private interface Action { void run() throws Exception; }
+
+    private interface Action {
+        void run() throws Exception;
+    }
 }

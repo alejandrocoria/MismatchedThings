@@ -11,12 +11,20 @@ abstract class JustDireEarthquakeDebitFailureMixin {
     @ModifyReturnValue(method = "extract", at = @At("RETURN"))
     private int fail(int extracted) {
         if (extracted <= 0 || JustDireEarthquakeServerGuardPlugin.fault == 0
-                || ++JustDireEarthquakeServerGuardPlugin.debits != JustDireEarthquakeServerGuardPlugin.failAt) { return extracted; }
+                || ++JustDireEarthquakeServerGuardPlugin.debits != JustDireEarthquakeServerGuardPlugin.failAt) {
+            return extracted;
+        }
         int fault = JustDireEarthquakeServerGuardPlugin.fault;
         var player = JustDireEarthquakeServerGuardPlugin.player;
-        if (fault == 1) { return extracted - 1; }
-        if (fault == 2) { player.setItemSlot(EquipmentSlot.FEET, player.getItemBySlot(EquipmentSlot.FEET).copy()); }
-        if (fault == 3) { JustDireEarthquakeServerGuardPlugin.changeToggle(); }
+        if (fault == 1) {
+            return extracted - 1;
+        }
+        if (fault == 2) {
+            player.setItemSlot(EquipmentSlot.FEET, player.getItemBySlot(EquipmentSlot.FEET).copy());
+        }
+        if (fault == 3) {
+            JustDireEarthquakeServerGuardPlugin.changeToggle();
+        }
         return extracted;
     }
 }

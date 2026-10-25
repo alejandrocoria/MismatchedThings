@@ -37,14 +37,17 @@ import java.util.function.Supplier;
 public final class NeoForgeSilentGearTest {
     private static boolean finished;
 
-    private NeoForgeSilentGearTest() {}
+    private NeoForgeSilentGearTest() {
+    }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
     }
 
     private static void tick(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         finished = true;
         try {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearAbsent")) {
@@ -55,7 +58,8 @@ public final class NeoForgeSilentGearTest {
             var api = new NativeApi();
             var player = FakePlayerFactory.getMinecraft(server.overworld());
             player.setGameMode(GameType.SURVIVAL);
-            player.setPos(0, 80, 0); player.setNoGravity(true);
+            player.setPos(0, 80, 0);
+            player.setNoGravity(true);
             var report = new StringBuilder("Native construction API; default composition policies; FEET additive modifiers\n");
             String stateVariant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
             if (stateVariant.equals("parts-audit")) {
@@ -65,18 +69,36 @@ public final class NeoForgeSilentGearTest {
                 return;
             }
             if (List.of("defense-bounce", "defense-bounce-compatible").contains(stateVariant)) {
-                if (!SilentGearBounceTest.step(player, api, report)) { finished = false; return; }
+                if (!SilentGearBounceTest.step(player, api, report)) {
+                    finished = false;
+                    return;
+                }
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
-                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n"); return;
+                NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
+                return;
             }
             if (stateVariant.startsWith("defense-")) {
-                if (stateVariant.equals("defense-joint")) { SilentGearBounceJointTest.run(player, api, report); }
-                else if (stateVariant.equals("defense-reload")) {
-                    if (!SilentGearIncomingTest.reloadStep(player, api, report)) { finished = false; return; }
+                if (stateVariant.equals("defense-joint")) {
+                    SilentGearBounceJointTest.run(player, api, report);
+                } else if (stateVariant.equals("defense-reload")) {
+                    if (!SilentGearIncomingTest.reloadStep(player, api, report)) {
+                        finished = false;
+                        return;
+                    }
                 } else {
-                    if (!List.of("defense-data", "defense-throw").contains(stateVariant)) { SilentGearDefenseTest.run(player, api, report, stateVariant); }
-                    if (!List.of("defense-fall", "defense-retaliation").contains(stateVariant)) { SilentGearIncomingTest.run(player, api, report, stateVariant); }
-                    if (List.of("defense-bounce-query", "defense-fall", "defense-retaliation", "defense-incoming", "defense-negate", "defense-data", "defense-throw").contains(stateVariant)) {
+                    if (!List.of("defense-data", "defense-throw").contains(stateVariant)) {
+                        SilentGearDefenseTest.run(player, api, report, stateVariant);
+                    }
+                    if (!List.of("defense-fall", "defense-retaliation").contains(stateVariant)) {
+                        SilentGearIncomingTest.run(player, api, report, stateVariant);
+                    }
+                    if (List.of("defense-bounce-query",
+                                "defense-fall",
+                                "defense-retaliation",
+                                "defense-incoming",
+                                "defense-negate",
+                                "defense-data",
+                                "defense-throw").contains(stateVariant)) {
                         SilentGearBounceTest.refusal(player, api, report, stateVariant);
                     }
                 }
@@ -86,8 +108,13 @@ public final class NeoForgeSilentGearTest {
             }
             if (stateVariant.startsWith("magnet-")) {
                 if (stateVariant.equals("magnet-reload")) {
-                    if (!SilentGearMagnetTest.reloadStep(player, api, report)) { finished = false; return; }
-                } else { SilentGearMagnetTest.run(player, api, report); }
+                    if (!SilentGearMagnetTest.reloadStep(player, api, report)) {
+                        finished = false;
+                        return;
+                    }
+                } else {
+                    SilentGearMagnetTest.run(player, api, report);
+                }
                 NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
                 NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
                 return;
@@ -128,16 +155,18 @@ public final class NeoForgeSilentGearTest {
             require(!lined.isEmpty() && !ItemStack.matches(iron, lined), "Native lining recipe did not change boots");
             profiles.put("iron+wool", lined);
             require(contributions(lined).getOrDefault("minecraft:knockback_resistance", 0D)
-                    > contributions(iron).getOrDefault("minecraft:knockback_resistance", 0D), "Lining control did not change its numeric stat");
+                            > contributions(iron).getOrDefault("minecraft:knockback_resistance", 0D),
+                    "Lining control did not change its numeric stat");
             for (var profile : profiles.entrySet()) {
                 ItemStack stack = profile.getValue();
                 require(stack.getMaxDamage() > 0 && stack.has(DataComponents.MAX_DAMAGE), "Native durability was not materialized");
                 report.append("\nNATIVE ").append(profile.getKey()).append(" max=").append(stack.getMaxDamage())
-                        .append(" attrs=").append(contributions(stack)).append('\n');
+                      .append(" attrs=").append(contributions(stack)).append('\n');
                 api.describe(stack, report);
                 equipAndCheck(player, stack, report);
                 stack.setDamageValue(17);
-                ItemStack vanilla = new ItemStack(Items.DIAMOND_BOOTS); vanilla.setDamageValue(32);
+                ItemStack vanilla = new ItemStack(Items.DIAMOND_BOOTS);
+                vanilla.setDamageValue(32);
                 if (List.of("leather", "iron+wool").contains(profile.getKey())) {
                     measure(player, profile.getKey() + " / vanilla diamond", stack, vanilla, api, report);
                 }
@@ -154,9 +183,9 @@ public final class NeoForgeSilentGearTest {
                     boolean snow = root.getItem().canWalkOnPowderedSnow(root, player);
                     boolean piglin = root.getItem().makesPiglinsNeutral(root, player);
                     report.append("TRAIT ").append(sample[1]).append(" nativeLevel=").append(nativeLevel)
-                            .append(" rootLevel=0 nativeSnow=").append(nativeBoot.getItem().canWalkOnPowderedSnow(nativeBoot, player))
-                            .append(" rootSnow=").append(snow).append(" nativePiglin=")
-                            .append(nativeBoot.getItem().makesPiglinsNeutral(nativeBoot, player)).append(" rootPiglin=").append(piglin).append('\n');
+                          .append(" rootLevel=0 nativeSnow=").append(nativeBoot.getItem().canWalkOnPowderedSnow(nativeBoot, player))
+                          .append(" rootSnow=").append(snow).append(" nativePiglin=")
+                          .append(nativeBoot.getItem().makesPiglinsNeutral(nativeBoot, player)).append(" rootPiglin=").append(piglin).append('\n');
                     var input = CraftingInput.of(2, 1, List.of(root.copy(), api.part("lining", "wool")));
                     require(!(boolean) api.matches.invoke(swap, input, server.overworld()), "Native part swap unexpectedly accepts mixed root");
                 }
@@ -169,18 +198,25 @@ public final class NeoForgeSilentGearTest {
             SilentGearEffectsTest.run(player, api, report);
             SilentGearLiveStateTest.run(player, api, report, "");
             report.append("\nBaseline: 8 representative numeric paid output measurements plus production foundation/effect/state controls; ")
-                    .append("production recognition/wearer acceptance uses separate opt-in variants\n");
+                  .append("production recognition/wearer acceptance uses separate opt-in variants\n");
             NetworkAcceptanceFiles.write("silent-gear-stats-report.txt", report.toString());
             NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
-        } catch (Throwable failure) { NetworkAcceptanceFiles.failure("silent-gear-stats", failure); }
-        finally { if (finished) { server.halt(false); } }
+        } catch (Throwable failure) {
+            NetworkAcceptanceFiles.failure("silent-gear-stats", failure);
+        } finally {
+            if (finished) {
+                server.halt(false);
+            }
+        }
     }
 
     private static void measure(ServerPlayer player, String label, ItemStack first, ItemStack second,
                                 NativeApi api, StringBuilder report) throws Exception {
         var outputs = workbench(player, first, second);
-        var a = contributions(first); var b = contributions(second);
-        var ids = new TreeSet<>(a.keySet()); ids.addAll(b.keySet());
+        var a = contributions(first);
+        var b = contributions(second);
+        var ids = new TreeSet<>(a.keySet());
+        ids.addAll(b.keySet());
         int max = (first.getMaxDamage() + second.getMaxDamage()) / 2;
         int remaining = ((first.getMaxDamage() - first.getDamageValue()) + (second.getMaxDamage() - second.getDamageValue())) / 2;
         for (int index = 0; index < outputs.size(); index++) {
@@ -191,19 +227,23 @@ public final class NeoForgeSilentGearTest {
                 var policy = AttributeRulesLifecycle.serverRules().policyFor(Identifier.parse(id));
                 require(policy == AttributePolicy.AVERAGE || policy == AttributePolicy.SEPARATE, "Unexpected fixture policy: " + id);
                 double value = policy == AttributePolicy.AVERAGE ? (a.getOrDefault(id, 0D) + b.getOrDefault(id, 0D)) / 2
-                        : (index == 0 ? a : b).getOrDefault(id, 0D);
-                if (value != 0) { expected.put(id, value); }
+                                                                 : (index == 0 ? a : b).getOrDefault(id, 0D);
+                if (value != 0) {
+                    expected.put(id, value);
+                }
             }
             var actual = contributions(root);
             require(expected.keySet().equals(actual.keySet()), "Attribute set differs: " + label + ": " + expected + " vs " + actual);
-            for (String id : expected.keySet()) { close(actual.get(id), expected.get(id), label + " " + id); }
+            for (String id : expected.keySet()) {
+                close(actual.get(id), expected.get(id), label + " " + id);
+            }
             for (var type : List.of(api.construction, api.properties)) {
                 require(java.util.Objects.equals(root.get(type), owner.get(type)), "Unknown native component is not owner-owned");
             }
             equipAndCheck(player, root, report);
             report.append("MIXED ").append(label).append(index == 0 ? " primary" : " inverse")
-                    .append(" max=").append(max).append(" damage=").append(root.getDamageValue())
-                    .append(" attrs=").append(actual).append(" ownerNativeComponents=true\n");
+                  .append(" max=").append(max).append(" damage=").append(root.getDamageValue())
+                  .append(" attrs=").append(actual).append(" ownerNativeComponents=true\n");
         }
     }
 
@@ -222,8 +262,10 @@ public final class NeoForgeSilentGearTest {
 
     private static void equipAndCheck(ServerPlayer player, ItemStack stack, StringBuilder report) throws Exception {
         // Invoke the vanilla equipment-update boundary, not manual modifier installation.
-        Method update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates"); update.setAccessible(true);
-        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); update.invoke(player);
+        Method update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates");
+        update.setAccessible(true);
+        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+        update.invoke(player);
         var baseline = new TreeMap<String, Double>();
         for (String id : contributions(stack).keySet()) {
             var attribute = BuiltInRegistries.ATTRIBUTE.get(Identifier.parse(id)).orElseThrow();
@@ -234,9 +276,12 @@ public final class NeoForgeSilentGearTest {
             }
             baseline.put(id, player.getAttributeValue(attribute));
         }
-        player.setItemSlot(EquipmentSlot.FEET, stack.copy()); update.invoke(player);
+        player.setItemSlot(EquipmentSlot.FEET, stack.copy());
+        update.invoke(player);
         for (var value : contributions(stack).entrySet()) {
-            if (!baseline.containsKey(value.getKey())) { continue; }
+            if (!baseline.containsKey(value.getKey())) {
+                continue;
+            }
             var attribute = BuiltInRegistries.ATTRIBUTE.get(Identifier.parse(value.getKey())).orElseThrow();
             close(player.getAttributeValue(attribute) - baseline.get(value.getKey()), value.getValue(), "Equipped " + value.getKey());
         }
@@ -244,7 +289,8 @@ public final class NeoForgeSilentGearTest {
 
     static List<ItemStack> workbench(ServerPlayer player, ItemStack first, ItemStack second) {
         var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
-        menu.getSlot(0).set(first.copy()); menu.getSlot(1).set(second.copy());
+        menu.getSlot(0).set(first.copy());
+        menu.getSlot(1).set(second.copy());
         var previews = List.of(menu.getSlot(2).getItem().copy(), menu.getSlot(3).getItem().copy());
         require(previews.stream().noneMatch(ItemStack::isEmpty) && !menu.isCommitted(), "Missing previews");
         ItemStack primary = menu.getSlot(2).safeTake(1, 1, player);
@@ -254,7 +300,7 @@ public final class NeoForgeSilentGearTest {
             require(ItemStack.matches(previews.get(index), result.get(index)), "Preview differs from paid output");
             var data = ModContent.getMixedBootsData(result.get(index)).orElseThrow();
             require(ItemStack.matches(data.left().source(), index == 0 ? first : second)
-                    && ItemStack.matches(data.right().source(), index == 0 ? second : first), "Source data changed");
+                            && ItemStack.matches(data.right().source(), index == 0 ? second : first), "Source data changed");
         }
         return result;
     }
@@ -262,8 +308,11 @@ public final class NeoForgeSilentGearTest {
     private static void close(double actual, double expected, String label) {
         require(Math.abs(actual - expected) < 1E-6, label + ": " + actual + " != " + expected);
     }
+
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new AssertionError(message); }
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 
     /** Reflection keeps optional native classes out of the ordinary fixture compile classpath. */
@@ -279,7 +328,8 @@ public final class NeoForgeSilentGearTest {
         final DataComponentType<Object> construction = component("GEAR_CONSTRUCTION");
         final DataComponentType<Object> properties = component("GEAR_PROPERTIES");
 
-        NativeApi() throws ReflectiveOperationException {}
+        NativeApi() throws ReflectiveOperationException {
+        }
 
         ItemStack part(String name, String mat) throws Exception {
             Object ref = resource.getMethod("material", String.class).invoke(null, "silentgear:" + mat);
@@ -317,7 +367,9 @@ public final class NeoForgeSilentGearTest {
             var values = (Map<?, ?>) props.getClass().getMethod("properties").invoke(props);
             var sorted = new TreeMap<String, Object>();
             Method payload = Class.forName("net.silentchaos512.gear.api.property.GearPropertyValue").getMethod("value");
-            for (var entry : values.entrySet()) { sorted.put(registry.getKey(entry.getKey()).toString(), payload.invoke(entry.getValue())); }
+            for (var entry : values.entrySet()) {
+                sorted.put(registry.getKey(entry.getKey()).toString(), payload.invoke(entry.getValue()));
+            }
             report.append("PROPERTIES ").append(sorted).append('\n');
             report.append("MODIFIERS ").append(stack.getAttributeModifiers().modifiers()).append('\n');
         }

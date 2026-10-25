@@ -49,8 +49,8 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
 
     public MismatchedWorkbenchMenu(int containerId, Inventory inventory, ContainerLevelAccess access) {
         super(ModContent.mismatchedWorkbenchMenuType()
-                .orElseThrow(() -> new IllegalStateException("Mismatched workbench menu type is not registered")),
-                containerId);
+                        .orElseThrow(() -> new IllegalStateException("Mismatched workbench menu type is not registered")),
+              containerId);
         this.owner = inventory.player;
         this.access = access;
         this.inputs = new InputContainer();
@@ -83,8 +83,8 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(
                 inputs.getItem(0), inputs.getItem(1));
         RecipeHolder<MismatchedWorkbenchRecipe> recipe = level.recipeAccess()
-                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, level)
-                .orElse(null);
+                                                              .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, level)
+                                                              .orElse(null);
         if (recipe == null) {
             clearPreview();
             return;
@@ -112,7 +112,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         }
         MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(inputs.getItem(0), inputs.getItem(1));
         RecipeHolder<MismatchedWorkbenchRecipe> current = level.recipeAccess()
-                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, level).orElse(null);
+                                                               .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, level).orElse(null);
         if (current == null) {
             clearPreview();
             this.broadcastChanges();
@@ -174,8 +174,8 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
     @Override
     public boolean stillValid(Player player) {
         return ModContent.mismatchedWorkbenchBlock()
-                .map(block -> stillValid(access, player, block))
-                .orElse(false);
+                         .map(block -> stillValid(access, player, block))
+                         .orElse(false);
     }
 
     @Override

@@ -14,7 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "elucent.rootsclassic.util.RootsUtil", remap = false)
 abstract class RootsRepairControlMixin {
     @Inject(method = "randomlyRepair", at = @At("HEAD"))
-    private static void noteRepair(CallbackInfo callback) { RootsTickTestControl.repair(); }
+    private static void noteRepair(CallbackInfo callback) {
+        RootsTickTestControl.repair();
+    }
 
     @WrapOperation(method = "randomlyRepair", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/util/RandomSource;nextInt(I)I"))

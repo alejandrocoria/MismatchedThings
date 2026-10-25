@@ -50,20 +50,20 @@ final class MismatchedWorkbenchReiExamples {
         var attributes = AttributeRuleState.current();
         var components = ComponentRuleState.current();
         return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) ->
-                MismatchedWorkbenchClientRecipes.assemblePair(
-                        new MismatchedWorkbenchInput(left, right), level, attributes, components))
-                .map(example -> MismatchedWorkbenchReiDisplay.create(
-                example.leftInputs(),
-                example.rightInputs(),
-                example.primaryOutputs(),
-                example.inverseOutputs()));
+                                                      MismatchedWorkbenchClientRecipes.assemblePair(
+                                                              new MismatchedWorkbenchInput(left, right), level, attributes, components))
+                                              .map(example -> MismatchedWorkbenchReiDisplay.create(
+                                                      example.leftInputs(),
+                                                      example.rightInputs(),
+                                                      example.primaryOutputs(),
+                                                      example.inverseOutputs()));
     }
 
     private static List<ItemStack> collectCandidates() {
         return collectCandidates(EntryRegistry.getInstance().getPreFilteredList().stream()
-                .filter(entry -> entry.getType() == VanillaEntryTypes.ITEM)
-                .map(MismatchedWorkbenchReiExamples::itemStack)
-                .toList());
+                                              .filter(entry -> entry.getType() == VanillaEntryTypes.ITEM)
+                                              .map(MismatchedWorkbenchReiExamples::itemStack)
+                                              .toList());
     }
 
     static List<ItemStack> collectCandidates(Iterable<ItemStack> entries) {
@@ -76,8 +76,8 @@ final class MismatchedWorkbenchReiExamples {
         }
 
         return uniqueCandidates.values().stream()
-                .sorted(Comparator.comparing(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()))
-                .toList();
+                               .sorted(Comparator.comparing(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()))
+                               .toList();
     }
 
     private static ItemStack itemStack(EntryStack<?> entry) {

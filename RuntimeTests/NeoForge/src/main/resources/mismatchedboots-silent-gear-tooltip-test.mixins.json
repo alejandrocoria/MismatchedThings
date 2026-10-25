@@ -1,13 +1,15 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.silentgear",
-  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
-  "compatibilityLevel": "JAVA_25",
-  "client": [
-    "SilentGearTooltipFormatterFaultMixin",
-    "SilentGearTooltipInputMixin",
-    "SilentGearTooltipProductionControlMixin"
-  ],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.silentgear",
+    "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGearTraitSpikePlugin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "SilentGearTooltipFormatterFaultMixin",
+        "SilentGearTooltipInputMixin",
+        "SilentGearTooltipProductionControlMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

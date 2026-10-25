@@ -16,7 +16,9 @@ import java.util.Set;
 public final class IceAndFireTideMixinPlugin implements IMixinConfigPlugin, IExtension {
     @Override
     public void onLoad(String mixinPackage) {
-        if (!IceAndFireTideApi.inspect().available()) { return; }
+        if (!IceAndFireTideApi.inspect().available()) {
+            return;
+        }
         Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
         if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
             // Inspected .99/.114 lifecycle: onLoad precedes Extensions.select. export runs after
@@ -27,7 +29,9 @@ public final class IceAndFireTideMixinPlugin implements IMixinConfigPlugin, IExt
     }
 
     @Override
-    public boolean shouldApplyMixin(String target, String mixin) { return IceAndFireTideApi.inspect().available(); }
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return IceAndFireTideApi.inspect().available();
+    }
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
@@ -44,12 +48,38 @@ public final class IceAndFireTideMixinPlugin implements IMixinConfigPlugin, IExt
         }
     }
 
-    @Override public boolean checkActive(MixinEnvironment environment) { return true; }
-    @Override public void preApply(ITargetClassContext context) {}
-    @Override public void postApply(ITargetClassContext context) {}
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
+    @Override
+    public boolean checkActive(MixinEnvironment environment) {
+        return true;
+    }
+
+    @Override
+    public void preApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void postApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
 }

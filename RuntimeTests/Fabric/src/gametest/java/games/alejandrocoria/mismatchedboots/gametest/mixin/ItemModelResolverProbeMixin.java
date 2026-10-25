@@ -46,7 +46,7 @@ abstract class ItemModelResolverProbeMixin {
             CallbackInfo callback,
             @Share("mismatchedboots$firstLayer") LocalIntRef firstLayer) {
         firstLayer.set(((ItemStackRenderStateAccessor) (Object) state)
-                .mismatchedboots$getActiveLayerCount());
+                               .mismatchedboots$getActiveLayerCount());
         Identifier modelId = stack.get(DataComponents.ITEM_MODEL);
         if (modelId != null) {
             ItemLayerResolutionProbe.record(modelId);
@@ -71,7 +71,7 @@ abstract class ItemModelResolverProbeMixin {
         ItemStackRenderStateAccessor accessor = (ItemStackRenderStateAccessor) (Object) state;
         for (int index = firstLayer.get(); index < accessor.mismatchedboots$getActiveLayerCount(); index++) {
             MeshTestFixtures.append(modelId, accessor.mismatchedboots$getLayers()[index],
-                    index == accessor.mismatchedboots$getActiveLayerCount() - 1);
+                                    index == accessor.mismatchedboots$getActiveLayerCount() - 1);
             if (!ItemLayerResolutionProbe.requiresNonplanarExtensionGeometry(modelId)) {
                 continue;
             }

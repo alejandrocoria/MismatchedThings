@@ -44,10 +44,10 @@ final class MismatchedWorkbenchJeiCycle {
             List<ItemStack> boots,
             BiFunction<ItemStack, ItemStack, MismatchedWorkbenchResult> composer) {
         return MismatchedWorkbenchExampleCycle.create(boots, composer)
-                .map(example -> new MismatchedWorkbenchJeiExample(
-                        example.leftInputs(),
-                        example.rightInputs(),
-                        example.primaryOutputs(),
-                        example.inverseOutputs()));
+                                              .map(example -> new MismatchedWorkbenchJeiExample(
+                                                      example.leftInputs(),
+                                                      example.rightInputs(),
+                                                      example.primaryOutputs(),
+                                                      example.inverseOutputs()));
     }
 }

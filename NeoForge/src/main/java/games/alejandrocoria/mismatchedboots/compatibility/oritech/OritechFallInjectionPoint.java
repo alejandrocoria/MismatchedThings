@@ -23,12 +23,17 @@ public final class OritechFallInjectionPoint extends InjectionPoint {
             + "Lnet/neoforged/neoforge/common/damagesource/DamageContainer;Lnet/minecraft/world/entity/LivingEntity;)Z";
     private static final AtomicBoolean WARNED = new AtomicBoolean();
 
-    public OritechFallInjectionPoint(InjectionPointData data) { super(data); }
+    public OritechFallInjectionPoint(InjectionPointData data) {
+        super(data);
+    }
 
     @Override
     public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
         MethodInsnNode check = select(descriptor, instructions);
-        if (check == null) { warn(); return false; }
+        if (check == null) {
+            warn();
+            return false;
+        }
         nodes.add(check);
         return true;
     }
@@ -40,34 +45,44 @@ public final class OritechFallInjectionPoint extends InjectionPoint {
     }
 
     static MethodInsnNode select(String descriptor, InsnList instructions) {
-        if (!DESCRIPTOR.equals(descriptor)) { return null; }
+        if (!DESCRIPTOR.equals(descriptor)) {
+            return null;
+        }
         var code = new ArrayList<AbstractInsnNode>();
         for (var node : instructions) {
-            if (node.getOpcode() >= 0 && node.getOpcode() != Opcodes.NOP) { code.add(node); }
+            if (node.getOpcode() >= 0 && node.getOpcode() != Opcodes.NOP) {
+                code.add(node);
+            }
         }
         MethodInsnNode selected = null;
         boolean overwrittenArgument = false;
         for (int i = 0; i < code.size(); i++) {
             if (code.get(i) instanceof VarInsnNode variable && variable.getOpcode() == Opcodes.ASTORE
-                    && (variable.var == 0 || variable.var == 2)) { overwrittenArgument = true; }
+                    && (variable.var == 0 || variable.var == 2)) {
+                overwrittenArgument = true;
+            }
             if (overwrittenArgument || i < 8 || i + 1 >= code.size()
                     || !call(code.get(i), "net/minecraft/world/item/ItemStack", "is", "(Lnet/minecraft/core/Holder;)Z")
                     || !field(code.get(i - 1), "rearth/oritech/init/ToolsContent", "EXO_BOOTS",
-                        "Lnet/neoforged/neoforge/registries/DeferredItem;")
+                              "Lnet/neoforged/neoforge/registries/DeferredItem;")
                     || !call(code.get(i - 2), "net/minecraft/world/entity/LivingEntity", "getItemBySlot",
-                        "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
+                             "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;")
                     || !field(code.get(i - 3), "net/minecraft/world/entity/EquipmentSlot", "FEET",
-                        "Lnet/minecraft/world/entity/EquipmentSlot;")
+                              "Lnet/minecraft/world/entity/EquipmentSlot;")
                     || !load(code.get(i - 4), 2)
                     || !(code.get(i - 5) instanceof JumpInsnNode fall) || fall.getOpcode() != Opcodes.IFEQ
                     || !call(code.get(i - 6), "net/minecraft/world/damagesource/DamageSource", "is",
-                        "(Lnet/minecraft/resources/ResourceKey;)Z")
+                             "(Lnet/minecraft/resources/ResourceKey;)Z")
                     || !field(code.get(i - 7), "net/minecraft/world/damagesource/DamageTypes", "FALL",
-                        "Lnet/minecraft/resources/ResourceKey;")
+                              "Lnet/minecraft/resources/ResourceKey;")
                     || !load(code.get(i - 8), 0)
                     || !(code.get(i + 1) instanceof JumpInsnNode boots) || boots.getOpcode() != Opcodes.IFEQ
-                    || boots.label != fall.label) { continue; }
-            if (selected != null) { return null; }
+                    || boots.label != fall.label) {
+                continue;
+            }
+            if (selected != null) {
+                return null;
+            }
             selected = (MethodInsnNode) code.get(i);
         }
         return selected;

@@ -41,7 +41,7 @@ public final class CreateFlyBeltShape {
                     && field(code.get(index - 3), SLOT, "FEET", "L" + SLOT + ";")
                     && call(code.get(index - 2), PLAYER, "getItemBySlot", "(L" + SLOT + ";)L" + STACK + ";")
                     && field(code.get(index - 1), "com/zurrtum/create/AllItems", "CARDBOARD_BOOTS",
-                        "Lcom/zurrtum/create/content/equipment/armor/CardboardArmorItem;")
+                             "Lcom/zurrtum/create/content/equipment/armor/CardboardArmorItem;")
                     && code.get(index + 1) instanceof JumpInsnNode item && item.getOpcode() == Opcodes.IFNE
                     && item.label == shift.label && code.get(index + 2).getOpcode() == Opcodes.RETURN
                     && nextCode(item.label) == nextCode(code.get(index + 2))) {

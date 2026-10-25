@@ -11,7 +11,8 @@ import java.util.Set;
 
 /** Explicit native families: effective abilities and occupied physical slots are different views. */
 public final class MysticalAugments {
-    public enum Route { ARMOR, PLAYER, FALL }
+    public enum Route {ARMOR, PLAYER, FALL}
+
     public enum Family {
         ABSORPTION(Route.ARMOR), FIRE_RESISTANCE(Route.ARMOR), HEALTH_BOOST(Route.PLAYER),
         JUMP_BOOST(Route.ARMOR), LUCK(Route.ARMOR), MINING_FATIGUE_RESISTANCE(Route.ARMOR),
@@ -19,7 +20,11 @@ public final class MysticalAugments {
         STEP_ASSIST(Route.PLAYER), WITHER_RESISTANCE(Route.ARMOR);
 
         public final Route route;
-        Family(Route route) { this.route = route; }
+
+        Family(Route route) {
+            this.route = route;
+        }
+
         public String nativeClass() {
             return "com.blakebr0.mysticalagriculture.augment." + switch (this) {
                 case ABSORPTION -> "AbsorptionAugment";
@@ -36,21 +41,29 @@ public final class MysticalAugments {
             };
         }
     }
-    public record Spec(Identifier id, Family family, int strength) {}
+
+    public record Spec(Identifier id, Family family, int strength) {
+    }
+
     public static final Set<String> BOOTS = Set.of("inferium_boots", "prudentium_boots", "tertium_boots",
-            "imperium_boots", "supremium_boots", "awakened_supremium_boots");
+                                                   "imperium_boots", "supremium_boots", "awakened_supremium_boots");
     public static final Map<Identifier, Spec> CATALOG = catalog();
 
-    private MysticalAugments() {}
+    private MysticalAugments() {
+    }
 
     private static Map<Identifier, Spec> catalog() {
         var result = new LinkedHashMap<Identifier, Spec>();
         for (Family family : Family.values()) {
-            int count = switch (family) { case ABSORPTION, HEALTH_BOOST -> 5; case JUMP_BOOST, LUCK -> 3; default -> 1; };
+            int count = switch (family) {
+                case ABSORPTION, HEALTH_BOOST -> 5;
+                case JUMP_BOOST, LUCK -> 3;
+                default -> 1;
+            };
             for (int rank = 1; rank <= count; rank++) {
                 String suffix = count == 1 ? "" : "_" + List.of("i", "ii", "iii", "iv", "v").get(rank - 1);
                 Identifier id = Identifier.fromNamespaceAndPath("mysticalagriculture",
-                        family.name().toLowerCase(java.util.Locale.ROOT) + suffix);
+                                                                family.name().toLowerCase(java.util.Locale.ROOT) + suffix);
                 result.put(id, new Spec(id, family, rank));
             }
         }

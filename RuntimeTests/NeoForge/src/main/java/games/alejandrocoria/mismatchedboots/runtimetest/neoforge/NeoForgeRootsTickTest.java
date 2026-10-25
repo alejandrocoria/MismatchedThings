@@ -31,19 +31,25 @@ public final class NeoForgeRootsTickTest {
     private static int cases;
     private static Object manaSupplier;
 
-    private NeoForgeRootsTickTest() {}
+    private NeoForgeRootsTickTest() {
+    }
+
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
     }
 
     private static void tick(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         finished = true;
         try {
             boolean absent = VARIANT.equals("absent");
             require(ModList.get().isLoaded("rootsclassic") != absent, "Wrong Roots environment");
             ServerPlayer player = FakePlayerFactory.getMinecraft(server.overworld());
-            player.setGameMode(GameType.SURVIVAL); player.setPos(0, 80, 0); player.setNoGravity(true);
+            player.setGameMode(GameType.SURVIVAL);
+            player.setPos(0, 80, 0);
+            player.setNoGravity(true);
             var plain = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
             if (absent) {
                 check(player, plain.primary(), false, false, 10, 0, 0, EquipmentSlot.FEET, null);
@@ -59,8 +65,8 @@ public final class NeoForgeRootsTickTest {
                 var w = MixedBootsFactory.createPair(wildwood, new ItemStack(Items.DIAMOND_BOOTS));
                 var sw = MixedBootsFactory.createPair(sylvan, wildwood);
                 pairs.addAll(List.of(s.primary(), s.inverse(), w.primary(), w.inverse(), sw.primary(), sw.inverse(),
-                        MixedBootsFactory.createPair(sylvan, sylvan).primary(),
-                        MixedBootsFactory.createPair(wildwood, wildwood).primary()));
+                                     MixedBootsFactory.createPair(sylvan, sylvan).primary(),
+                                     MixedBootsFactory.createPair(wildwood, wildwood).primary()));
                 for (ItemStack pair : pairs) {
                     boolean hasSylvan = ModContent.getMixedBootsData(pair).orElseThrow().left().source().is(sylvan.getItem())
                             || ModContent.getMixedBootsData(pair).orElseThrow().right().source().is(sylvan.getItem());
@@ -75,13 +81,17 @@ public final class NeoForgeRootsTickTest {
                 check(player, s.primary(), false, true, 10, 0, 0, null, null);
                 check(player, w.primary(), available(false), false, 0, 0, 0, EquipmentSlot.FEET, null);
                 check(player, plain.primary(), false, false, 10, 0, 0, EquipmentSlot.FEET, null);
-                ItemStack bad = s.primary().copy(); bad.setCount(2);
+                ItemStack bad = s.primary().copy();
+                bad.setCount(2);
                 check(player, bad, false, true, 10, 0, 0, EquipmentSlot.FEET, null);
-                bad = s.primary().copy(); bad.remove(ModContent.mixedBootsDataType().orElseThrow());
+                bad = s.primary().copy();
+                bad.remove(ModContent.mixedBootsDataType().orElseThrow());
                 check(player, bad, false, true, 10, 0, 0, EquipmentSlot.FEET, null);
-                bad = new ItemStack(Items.STICK); bad.applyComponents(s.primary().getComponents());
+                bad = new ItemStack(Items.STICK);
+                bad.applyComponents(s.primary().getComponents());
                 check(player, bad, false, true, 10, 0, 0, EquipmentSlot.FEET, null);
-                bad = s.primary().copy(); bad.set(DataComponents.EQUIPPABLE,
+                bad = s.primary().copy();
+                bad.set(DataComponents.EQUIPPABLE,
                         net.minecraft.world.item.equipment.Equippable.builder(EquipmentSlot.HEAD).build());
                 check(player, bad, false, true, 10, 0, 0, EquipmentSlot.FEET, null);
                 for (String location : List.of("feet", "mainhand", "offhand", "backpack")) {
@@ -91,24 +101,33 @@ public final class NeoForgeRootsTickTest {
                 }
                 var nonPlayer = EntityType.ZOMBIE.create(server.overworld(), EntitySpawnReason.COMMAND);
                 require(nonPlayer != null, "Missing non-player control");
-                ItemStack root = s.primary().copy(); root.setDamageValue(10);
+                ItemStack root = s.primary().copy();
+                root.setDamageValue(10);
                 try (var scope = RootsTickTestControl.begin(0)) {
                     root.inventoryTick(server.overworld(), nonPlayer, EquipmentSlot.FEET);
                     require(root.getDamageValue() == (enabled ? 9 : 10), "Non-player repair differs");
-                    require(scope.ticks == (enabled ? 1 : 0), "Non-player native tick count differs"); cases++;
-                } finally { nonPlayer.discard(); }
+                    require(scope.ticks == (enabled ? 1 : 0), "Non-player native tick count differs");
+                    cases++;
+                } finally {
+                    nonPlayer.discard();
+                }
                 // A repeated declined candidate must not reenter native code or warn every tick.
-                if (!enabled) { check(player, s.primary(), false, true, 10, 0, 0, EquipmentSlot.FEET, null); }
+                if (!enabled) {
+                    check(player, s.primary(), false, true, 10, 0, 0, EquipmentSlot.FEET, null);
+                }
             }
             int setCases = absent ? 0 : NeoForgeRootsSetTest.run(player);
             NetworkAcceptanceFiles.write("roots-ticks-report.txt", VARIANT + ": " + cases
                     + (absent ? " ordinary inverse-item tick cases; quiet optional absence; no native Roots loaded\n"
-                    : " cases; actual native callbacks/repair/attachment; item and player AI inventory dispatch; "
-                    + "single receiver; immutable sources; no periodic regeneration event posted during tick cases\n")
+                              : " cases; actual native callbacks/repair/attachment; item and player AI inventory dispatch; "
+                                + "single receiver; immutable sources; no periodic regeneration event posted during tick cases\n")
                     + "Native staff/set cases: " + setCases + "\n");
             NetworkAcceptanceFiles.write("roots-ticks-success.txt", "neoforge\n");
-        } catch (Throwable failure) { NetworkAcceptanceFiles.failure("roots-ticks", failure); }
-        finally { server.halt(false); }
+        } catch (Throwable failure) {
+            NetworkAcceptanceFiles.failure("roots-ticks", failure);
+        } finally {
+            server.halt(false);
+        }
     }
 
     private static boolean available(boolean sylvan) {
@@ -128,8 +147,11 @@ public final class NeoForgeRootsTickTest {
                              int damage, float mana, int roll, EquipmentSlot slot, String location, int dispatches) throws Exception {
         player.getInventory().clearContent();
         for (EquipmentSlot equipment : List.of(EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST,
-                EquipmentSlot.HEAD, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) { player.setItemSlot(equipment, ItemStack.EMPTY); }
-        ItemStack root = input.copy(); root.setDamageValue(damage);
+                                               EquipmentSlot.HEAD, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
+            player.setItemSlot(equipment, ItemStack.EMPTY);
+        }
+        ItemStack root = input.copy();
+        root.setDamageValue(damage);
         root.set(DataComponents.CUSTOM_NAME, Component.literal("Roots native callback subject"));
         var history = ModContent.getMixedBootsData(root);
         ItemStack leftBefore = history.map(data -> data.left().source()).orElse(ItemStack.EMPTY);
@@ -149,8 +171,11 @@ public final class NeoForgeRootsTickTest {
             }
         }
         try (var scope = RootsTickTestControl.begin(roll)) {
-            if (location == null) { root.inventoryTick(player.level(), player, slot); }
-            else { player.aiStep(); }
+            if (location == null) {
+                root.inventoryTick(player.level(), player, slot);
+            } else {
+                player.aiStep();
+            }
             if (dispatches < 0) {
                 require(!ModContent.isMixedBoots(root), "Native dispatch calibration used mixed boots");
                 dispatches = scope.ticks; // Match native engine dispatch; don't invent per-game-tick deduplication.
@@ -171,24 +196,35 @@ public final class NeoForgeRootsTickTest {
             require(scope.repairs == (enabled ? dispatches : 0), "Wrong repair callback count: " + scope.repairs);
             List<Integer> bounds = new ArrayList<>();
             for (int invocation = 0; enabled && invocation < dispatches; invocation++) {
-                if (damage > 0) { bounds.add(80); }
-                if (sylvan) { bounds.add(40); }
+                if (damage > 0) {
+                    bounds.add(80);
+                }
+                if (sylvan) {
+                    bounds.add(40);
+                }
             }
             require(scope.bounds.equals(bounds), "Native roll order/count differs: " + scope.bounds + " vs " + bounds);
             require(history.equals(ModContent.getMixedBootsData(root)), "Callback mutated source snapshots");
             if (history.isPresent()) {
                 var after = ModContent.getMixedBootsData(root).orElseThrow();
                 require(ItemStack.matches(leftBefore, after.left().source())
-                        && ItemStack.matches(rightBefore, after.right().source()), "Callback changed recorded source stacks");
+                                && ItemStack.matches(rightBefore, after.right().source()), "Callback changed recorded source stacks");
             }
-            require(Component.literal("Roots native callback subject").equals(root.get(DataComponents.CUSTOM_NAME)), "Callback changed unrelated root state");
+            require(Component.literal("Roots native callback subject").equals(root.get(DataComponents.CUSTOM_NAME)),
+                    "Callback changed unrelated root state");
             cases++;
             return scope.ticks;
         }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Object attachment(ServerPlayer player) { return player.getData((Supplier) manaSupplier); }
+    private static Object attachment(ServerPlayer player) {
+        return player.getData((Supplier) manaSupplier);
+    }
 
-    private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

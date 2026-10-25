@@ -59,8 +59,8 @@ public class MismatchedBootsReiClientPlugin implements REIClientPlugin {
     @Override
     public void registerEntries(EntryRegistry registry) {
         Item mixedBoots = BuiltInRegistries.ITEM.get(ModContent.MIXED_BOOTS_ID)
-                .orElseThrow(() -> new IllegalStateException("MismatchedBoots item is not registered"))
-                .value();
+                                                .orElseThrow(() -> new IllegalStateException("MismatchedBoots item is not registered"))
+                                                .value();
         registry.removeEntry(EntryStacks.of(new ItemStack(mixedBoots)));
     }
 }

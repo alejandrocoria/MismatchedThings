@@ -17,16 +17,24 @@ import java.util.Set;
 public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IExtension {
     private MysticalRefundShape refundShape;
     private boolean refundWarned;
-    @Override public void onLoad(String name) {
+
+    @Override
+    public void onLoad(String name) {
         Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
-        if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) { extensions.add(this); }
+        if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
+            extensions.add(this);
+        }
     }
-    @Override public List<String> getMixins() {
+
+    @Override
+    public List<String> getMixins() {
         try {
             MixinService.getService().getBytecodeProvider().getClassNode(MysticalAugmentsShape.UTILS);
-        } catch (ClassNotFoundException absent) { return List.of(); }
-        catch (Exception | LinkageError failure) {
-            Constants.LOG.warn("Could not inspect Mystical Agriculture augment API", failure); return List.of();
+        } catch (ClassNotFoundException absent) {
+            return List.of();
+        } catch (Exception | LinkageError failure) {
+            Constants.LOG.warn("Could not inspect Mystical Agriculture augment API", failure);
+            return List.of();
         }
         var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin"));
         try {
@@ -40,7 +48,9 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
         }
         return selected;
     }
-    @Override public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+
+    @Override
+    public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         if (node.name.equals("net/minecraft/world/item/ItemStack")) {
             if (refundShape != null && !refundShape.publish(node) && !refundWarned) {
                 refundWarned = true;
@@ -59,12 +69,39 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
             }
         }
     }
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return true; }
-    @Override public boolean checkActive(MixinEnvironment environment) { return true; }
-    @Override public void preApply(ITargetClassContext context) {}
-    @Override public void postApply(ITargetClassContext context) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return true;
+    }
+
+    @Override
+    public boolean checkActive(MixinEnvironment environment) {
+        return true;
+    }
+
+    @Override
+    public void preApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void postApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

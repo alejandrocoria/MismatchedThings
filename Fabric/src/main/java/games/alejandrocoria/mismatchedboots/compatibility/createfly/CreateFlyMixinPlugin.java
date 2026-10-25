@@ -121,10 +121,10 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 && isPublicClass(allItems)
                 && hasCardboardPredicate(handler)
                 && hasField(
-                        allItems,
-                        "CARDBOARD_BOOTS",
-                        ARMOR_ITEM_DESCRIPTOR,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
+                allItems,
+                "CARDBOARD_BOOTS",
+                ARMOR_ITEM_DESCRIPTOR,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
     }
 
     static boolean hasCompatibleBeltConsumer(ClassNode beltBlock) {
@@ -151,30 +151,30 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 && isPublicClass(allItems)
                 && hasDivingWornItemPredicate(divingBoots)
                 && hasMethod(
-                        divingBoots,
-                        "isWornBy",
-                        ENTITY_TO_BOOLEAN,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                divingBoots,
+                "isWornBy",
+                ENTITY_TO_BOOLEAN,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
                 && hasMethod(
-                        divingBoots,
-                        "accelerateDescentUnderwater",
-                        ENTITY_TO_VOID,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                divingBoots,
+                "accelerateDescentUnderwater",
+                ENTITY_TO_VOID,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
                 && hasMethod(
-                        divingBoots,
-                        "onLavaTravel",
-                        PLAYER_BOOLEAN_TO_VOID,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                divingBoots,
+                "onLavaTravel",
+                PLAYER_BOOLEAN_TO_VOID,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
                 && hasField(
-                        allItems,
-                        "COPPER_DIVING_BOOTS",
-                        DIVING_BOOTS_DESCRIPTOR,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                allItems,
+                "COPPER_DIVING_BOOTS",
+                DIVING_BOOTS_DESCRIPTOR,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
                 && hasField(
-                        allItems,
-                        "NETHERITE_DIVING_BOOTS",
-                        DIVING_BOOTS_DESCRIPTOR,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
+                allItems,
+                "NETHERITE_DIVING_BOOTS",
+                DIVING_BOOTS_DESCRIPTOR,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL);
     }
 
     static boolean hasCompatibleTooltipApi(
@@ -182,20 +182,20 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
         return isPublicInterface(tooltipModifier)
                 && isPublicInterface(simpleRegistry)
                 && hasField(
-                        tooltipModifier,
-                        "REGISTRY",
-                        SIMPLE_REGISTRY_DESCRIPTOR,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                tooltipModifier,
+                "REGISTRY",
+                SIMPLE_REGISTRY_DESCRIPTOR,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
                 && hasMethod(
-                        tooltipModifier,
-                        "modify",
-                        MODIFY_TOOLTIP,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
+                tooltipModifier,
+                "modify",
+                MODIFY_TOOLTIP,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
                 && hasMethod(
-                        simpleRegistry,
-                        "get",
-                        GET_REGISTRY_VALUE,
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT);
+                simpleRegistry,
+                "get",
+                GET_REGISTRY_VALUE,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT);
     }
 
     private static boolean hasCardboardPredicate(ClassNode handler) {

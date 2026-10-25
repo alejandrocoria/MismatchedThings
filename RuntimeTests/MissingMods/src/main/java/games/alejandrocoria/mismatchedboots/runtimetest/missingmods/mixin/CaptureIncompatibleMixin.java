@@ -16,6 +16,6 @@ abstract class CaptureIncompatibleMixin {
             "Lcom/mojang/serialization/MapCodec;recursive(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;"), index = 1)
     private static Function<Codec<ItemStack>, MapCodec<ItemStack>> alter(Function<Codec<ItemStack>, MapCodec<ItemStack>> factory) {
         return Boolean.getBoolean("mismatchedboots.test.missingModsRefuse")
-                ? self -> factory.apply(self).codec().fieldOf("hidden_native_stack") : factory;
+               ? self -> factory.apply(self).codec().fieldOf("hidden_native_stack") : factory;
     }
 }

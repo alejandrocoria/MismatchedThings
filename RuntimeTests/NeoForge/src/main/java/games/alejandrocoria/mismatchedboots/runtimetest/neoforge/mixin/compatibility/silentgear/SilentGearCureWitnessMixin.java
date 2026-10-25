@@ -17,6 +17,8 @@ abstract class SilentGearCureWitnessMixin {
         try {
             String name = instance.getClass().getMethod("getTraitId").invoke(instance).toString().split(":")[1];
             SilentGearRemainingFixture.cureCalls.merge(name, 1, Integer::sum);
-        } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError(failure);
+        }
     }
 }

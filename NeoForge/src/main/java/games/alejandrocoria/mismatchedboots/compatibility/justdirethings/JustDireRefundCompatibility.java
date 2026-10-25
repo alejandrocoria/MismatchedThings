@@ -31,16 +31,26 @@ public final class JustDireRefundCompatibility {
     private static final DeferredRegister<DataComponentType<?>> TYPES = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, Constants.MOD_ID);
     private static final DeferredHolder<DataComponentType<?>, DataComponentType<JustDireRefundCredits>> CREDITS =
             TYPES.register("jdt_refundable_upgrades", () -> DataComponentType.<JustDireRefundCredits>builder()
-                    .persistent(JustDireRefundCredits.CODEC)
-                    .networkSynchronized(ByteBufCodecs.fromCodec(JustDireRefundCredits.CODEC)).build());
+                                                                             .persistent(JustDireRefundCredits.CODEC)
+                                                                             .networkSynchronized(ByteBufCodecs.fromCodec(JustDireRefundCredits.CODEC))
+                                                                             .build());
     private static volatile Map<String, Refund> refunds;
     private static final ThreadLocal<Set<ItemStack>> IN_FLIGHT = ThreadLocal.withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
 
-    private JustDireRefundCompatibility() {}
+    private JustDireRefundCompatibility() {
+    }
 
-    public static void initialize(IEventBus bus) { TYPES.register(bus); }
-    public static DataComponentType<JustDireRefundCredits> component() { return CREDITS.get(); }
-    public static boolean available() { return refunds != null; }
+    public static void initialize(IEventBus bus) {
+        TYPES.register(bus);
+    }
+
+    public static DataComponentType<JustDireRefundCredits> component() {
+        return CREDITS.get();
+    }
+
+    public static boolean available() {
+        return refunds != null;
+    }
 
     /** Called only after the existing installed-upgrade binder has published its validated metadata. */
     static void bindItems() {
@@ -59,13 +69,17 @@ public final class JustDireRefundCompatibility {
     static void initializeCredits(ItemStack output, List<String> ownerPurchases) {
         // The factory first copies owner components. Never trust an own credit forged onto a native input.
         output.remove(component());
-        if (!ownerPurchases.isEmpty()) { output.set(component(), new JustDireRefundCredits(ownerPurchases)); }
+        if (!ownerPurchases.isEmpty()) {
+            output.set(component(), new JustDireRefundCredits(ownerPurchases));
+        }
     }
 
     static void preserve(ItemStack previous, ItemStack output) {
         // Explicitly override generic projection, including absence, even after optional binding refusal.
         output.remove(component());
-        if (previous.has(component())) { output.set(component(), previous.get(component())); }
+        if (previous.has(component())) {
+            output.set(component(), previous.get(component()));
+        }
     }
 
     static void addInstallation(ItemStack output, String name) {
@@ -77,16 +91,24 @@ public final class JustDireRefundCompatibility {
 
     public static void route(boolean ready, ItemStack root, int count, LivingEntity owner, Operation<Void> ordinary) {
         var capture = ready ? capture(root, count, owner) : null;
-        if (capture == null) { ordinary.call(root, count); return; }
+        if (capture == null) {
+            ordinary.call(root, count);
+            return;
+        }
         // A foreign shrink wrapper can reenter before count reaches zero. Ownership lasts only this call.
         var inFlight = IN_FLIGHT.get();
-        if (!inFlight.add(root)) { ordinary.call(root, count); return; }
+        if (!inFlight.add(root)) {
+            ordinary.call(root, count);
+            return;
+        }
         try {
             ordinary.call(root, count);
             complete(capture);
         } finally {
             inFlight.remove(root);
-            if (inFlight.isEmpty()) { IN_FLIGHT.remove(); }
+            if (inFlight.isEmpty()) {
+                IN_FLIGHT.remove();
+            }
         }
     }
 
@@ -94,44 +116,66 @@ public final class JustDireRefundCompatibility {
         var binding = refunds;
         if (binding == null || !(owner instanceof ServerPlayer player) || player.hasInfiniteMaterials() || player.isSpectator()
                 || count != 1 || root.getCount() != 1
-                || !(root.getItem() instanceof MixedBootsItem)) { return null; }
+                || !(root.getItem() instanceof MixedBootsItem)) {
+            return null;
+        }
         // Actual inventory actions may break boots outside FEET. Follow one exact supported slot,
         // not a menu/action permission: combat/direct breaks also refund while another menu is open.
         JustDireAbilityTarget target = null;
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             if (JustDireAbilityTarget.supportedSlot(slot) && player.getInventory().getItem(slot) == root) {
-                target = new JustDireAbilityTarget(player, slot, root); break;
+                target = new JustDireAbilityTarget(player, slot, root);
+                break;
             }
         }
-        if (target == null) { return null; }
+        if (target == null) {
+            return null;
+        }
         try {
             if (ModContent.getMixedBootsData(root).isEmpty() || !root.isDamageableItem() || root.getMaxDamage() <= 0
-                    || root.getDamageValue() < root.getMaxDamage()) { return null; }
+                    || root.getDamageValue() < root.getMaxDamage()) {
+                return null;
+            }
             var credits = root.get(component());
-            if (credits == null || credits.names().isEmpty()) { return null; }
+            if (credits == null || credits.names().isEmpty()) {
+                return null;
+            }
             var items = new ArrayList<Item>();
             for (String name : credits.names()) {
                 var refund = binding.get(name);
-                if (refund == null || !root.getOrDefault(refund.installed, false)) { return null; }
+                if (refund == null || !root.getOrDefault(refund.installed, false)) {
+                    return null;
+                }
                 items.add(refund.item);
             }
             // Empty-stack getters hide their components. Retain the live map now, plus detached native lists.
             return new Capture(root, player, target, binding, JustDireActiveState.snapshot(root), root.getComponents(), List.copyOf(items));
-        } catch (RuntimeException malformedState) { return null; }
+        } catch (RuntimeException malformedState) {
+            return null;
+        }
     }
 
     private static void complete(Capture capture) {
         if (refunds != capture.binding || !capture.root.isEmpty()
-                || !capture.target.present()) { return; }
+                || !capture.target.present()) {
+            return;
+        }
         var shadow = new ItemStack(capture.before.getItem(), 1);
         List.copyOf(shadow.getComponents().keySet()).forEach(shadow::remove);
         shadow.applyComponents(capture.live);
-        if (!ItemStack.matches(capture.before, shadow)) { return; }
+        if (!ItemStack.matches(capture.before, shadow)) {
+            return;
+        }
         // This local authorization is consumed before world callbacks; never retry a cancelled/throwing drop.
-        for (Item item : capture.items) { capture.player.drop(new ItemStack(item), true); }
+        for (Item item : capture.items) {
+            capture.player.drop(new ItemStack(item), true);
+        }
     }
 
-    private record Refund(Item item, DataComponentType<Boolean> installed) {}
+    private record Refund(Item item, DataComponentType<Boolean> installed) {
+    }
+
     private record Capture(ItemStack root, ServerPlayer player, JustDireAbilityTarget target, Map<String, Refund> binding,
-                           ItemStack before, DataComponentMap live, List<Item> items) {}
+                           ItemStack before, DataComponentMap live, List<Item> items) {
+    }
 }

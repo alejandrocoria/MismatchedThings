@@ -1,1 +1,10 @@
-{"temporary_equip":{"sounds":[{"name":"minecraft:item.armor.equip_iron","type":"event"}]}}
+{
+    "temporary_equip": {
+        "sounds": [
+            {
+                "name": "minecraft:item.armor.equip_iron",
+                "type": "event"
+            }
+        ]
+    }
+}

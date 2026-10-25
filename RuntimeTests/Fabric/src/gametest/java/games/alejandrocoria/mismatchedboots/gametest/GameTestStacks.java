@@ -43,20 +43,21 @@ final class GameTestStacks {
     static ItemStack ownerDivergentBoots(Item item, double amount) {
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.FOLLOW_RANGE,
-                        new AttributeModifier(
-                                Identifier.fromNamespaceAndPath("mismatchedboots-test", "owner_divergence"),
-                                amount,
-                                AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(
+                                                                                    Attributes.FOLLOW_RANGE,
+                                                                                    new AttributeModifier(
+                                                                                            Identifier.fromNamespaceAndPath("mismatchedboots-test",
+                                                                                                                            "owner_divergence"),
+                                                                                            amount,
+                                                                                            AttributeModifier.Operation.ADD_VALUE),
+                                                                                    EquipmentSlotGroup.FEET)
+                                                                            .build());
         return stack;
     }
 
     static MixedBootsData data(ItemStack stack) {
         return ModContent.getMixedBootsData(stack)
-                .orElseThrow(() -> new AssertionError("Stack has no mixed boots data: " + stack));
+                         .orElseThrow(() -> new AssertionError("Stack has no mixed boots data: " + stack));
     }
 
     static void assertOrientation(
@@ -66,13 +67,13 @@ final class GameTestStacks {
             Item expectedRight,
             String outputName) {
         helper.assertTrue(stack.is(ModContent.MIXED_BOOTS_KEY),
-                outputName + " is not the registered mixed boots item");
+                          outputName + " is not the registered mixed boots item");
         helper.assertValueEqual(stack.getCount(), 1, outputName + " count");
         MixedBootsData data = data(stack);
         helper.assertTrue(data.left().source().is(expectedLeft),
-                outputName + " has the wrong left source: " + data.left().source());
+                          outputName + " has the wrong left source: " + data.left().source());
         helper.assertTrue(data.right().source().is(expectedRight),
-                outputName + " has the wrong right source: " + data.right().source());
+                          outputName + " has the wrong right source: " + data.right().source());
         helper.assertValueEqual(data.left().source().getCount(), 1, outputName + " left source count");
         helper.assertValueEqual(data.right().source().getCount(), 1, outputName + " right source count");
     }
@@ -80,14 +81,14 @@ final class GameTestStacks {
     static void assertOwnerDivergentAttribute(
             GameTestHelper helper, ItemStack stack, double expectedAmount, String outputName) {
         var entries = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
-                .modifiers().stream()
-                .filter(entry -> entry.attribute().equals(Attributes.FOLLOW_RANGE))
-                .toList();
+                           .modifiers().stream()
+                           .filter(entry -> entry.attribute().equals(Attributes.FOLLOW_RANGE))
+                           .toList();
         helper.assertValueEqual(entries.size(), 1, outputName + " divergent attribute entries");
         helper.assertValueEqual(entries.getFirst().modifier().id(),
-                Identifier.fromNamespaceAndPath("mismatchedboots-test", "owner_divergence"),
-                outputName + " divergent attribute ID");
+                                Identifier.fromNamespaceAndPath("mismatchedboots-test", "owner_divergence"),
+                                outputName + " divergent attribute ID");
         helper.assertTrue(Math.abs(entries.getFirst().modifier().amount() - expectedAmount) < 1.0E-12D,
-                outputName + " divergent attribute amount was " + entries.getFirst().modifier().amount());
+                          outputName + " divergent attribute amount was " + entries.getFirst().modifier().amount());
     }
 }

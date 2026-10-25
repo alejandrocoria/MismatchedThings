@@ -38,7 +38,7 @@ public final class BakedQuadClipper {
                 throw new IllegalArgumentException("Baked quad vertex " + index + " is missing");
             }
             Vector3f clippingPosition = localTransform.transformPosition(new Vector3f(position))
-                    .sub(0.5F, 0.5F, 0.5F);
+                                                      .sub(0.5F, 0.5F, 0.5F);
             long packedUv = input.packedUV(index);
             vertices[index] = new QuadClipper.Vertex(
                     point(position),
@@ -53,8 +53,7 @@ public final class BakedQuadClipper {
             case DROP -> Result.drop();
             case SPLIT -> Result.split(BakedPolygonTessellator.tessellate(
                     input, Objects.requireNonNull(geometry.polygon())));
-            case INCOMPATIBLE -> Result.incompatible(switch (
-                    Objects.requireNonNull(geometry.incompatibility())) {
+            case INCOMPATIBLE -> Result.incompatible(switch (Objects.requireNonNull(geometry.incompatibility())) {
                 case NOT_RECTANGLE -> Incompatibility.NOT_RECTANGLE;
                 case UNSUPPORTED_TOPOLOGY -> Incompatibility.UNSUPPORTED_TOPOLOGY;
                 case DEGENERATE_CUT -> Incompatibility.DEGENERATE_CUT;

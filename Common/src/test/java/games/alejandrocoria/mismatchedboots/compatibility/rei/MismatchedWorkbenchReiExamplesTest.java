@@ -49,9 +49,9 @@ class MismatchedWorkbenchReiExamplesTest {
                 duplicateFirstIron));
 
         assertEquals(List.of(Items.DIAMOND_BOOTS, Items.IRON_BOOTS, Items.IRON_BOOTS),
-                candidates.stream().map(ItemStack::getItem).toList());
+                     candidates.stream().map(ItemStack::getItem).toList());
         assertEquals(List.of("second iron", "first iron"),
-                candidates.subList(1, 3).stream().map(stack -> stack.getHoverName().getString()).toList());
+                     candidates.subList(1, 3).stream().map(stack -> stack.getHoverName().getString()).toList());
         assertTrue(candidates.stream().allMatch(stack -> stack.getCount() == 1));
     }
 
@@ -125,10 +125,10 @@ class MismatchedWorkbenchReiExamplesTest {
 
     private static ItemStack equippable(Item item, EquipmentSlot slot) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(slot).build())
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(slot).build())
+                                                      .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 }

@@ -124,8 +124,8 @@ class MixedBootsSourcesTest {
 
     private static void bindBoot(Item item) {
         item.builtInRegistryHolder().bindComponents(DataComponentMap.builder()
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build());
+                                                                    .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                                    .build());
     }
 
     private static TagKey<Item> advancedNetheriteTag(String path) {

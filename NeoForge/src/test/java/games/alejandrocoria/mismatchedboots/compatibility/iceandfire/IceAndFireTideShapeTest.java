@@ -31,9 +31,12 @@ class IceAndFireTideShapeTest implements Opcodes {
         ClassNode base = new ClassNode();
         base.name = IceAndFireTideShape.ITEM;
         MethodNode tick = new MethodNode(ACC_PUBLIC, "inventoryTick", IceAndFireTideShape.TICK, null, null);
-        tick.instructions.add(new InsnNode(RETURN)); base.methods.add(tick);
+        tick.instructions.add(new InsnNode(RETURN));
+        base.methods.add(tick);
         MethodNode getter = new MethodNode(ACC_PUBLIC, "mismatchedboots$tideBaseReady", "()Z", null, null);
-        getter.instructions.add(new InsnNode(ICONST_0)); getter.instructions.add(new InsnNode(IRETURN)); base.methods.add(getter);
+        getter.instructions.add(new InsnNode(ICONST_0));
+        getter.instructions.add(new InsnNode(IRETURN));
+        base.methods.add(getter);
         assertNull(IceAndFireTideShape.baseFailure(base));
         assertTrue(IceAndFireTideShape.prepareGetter(base, getter.name));
         assertTrue(IceAndFireTideShape.publish(base, getter.name));
@@ -57,8 +60,12 @@ class IceAndFireTideShapeTest implements Opcodes {
         assertNull(IceAndFireTideShape.entryFailure(accepted));
         ClassNode changed = copy(accepted);
         for (var node : entry(changed).instructions) {
-            if (node instanceof IntInsnNode constant && constant.operand == 50) { constant.operand = 75; }
-            if (node instanceof VarInsnNode local && local.var >= 5) { local.var += 13; }
+            if (node instanceof IntInsnNode constant && constant.operand == 50) {
+                constant.operand = 75;
+            }
+            if (node instanceof VarInsnNode local && local.var >= 5) {
+                local.var += 13;
+            }
         }
         assertNull(IceAndFireTideShape.entryFailure(changed), "Balance constants and local numbering are not identity fingerprints");
         changed = copy(accepted);
@@ -67,12 +74,15 @@ class IceAndFireTideShapeTest implements Opcodes {
         changed = copy(accepted);
         MethodNode hook = changed.methods.stream().filter(m -> m.name.equals("mismatchedboots$tideFeetResult")).findFirst().orElseThrow();
         for (var node : hook.instructions) {
-            if (node instanceof JumpInsnNode jump && jump.getOpcode() == IFNE) { jump.setOpcode(IFEQ); break; }
+            if (node instanceof JumpInsnNode jump && jump.getOpcode() == IFNE) {
+                jump.setOpcode(IFEQ);
+                break;
+            }
         }
         assertNotNull(IceAndFireTideShape.entryFailure(changed), "Recognition call without native-positive OR semantics is insufficient");
         changed = copy(accepted);
         entry(changed).instructions.insertBefore(entry(changed).instructions.getLast(),
-                new MethodInsnNode(INVOKESTATIC, "fixture/ExtraWork", "run", "()V", false));
+                                                 new MethodInsnNode(INVOKESTATIC, "fixture/ExtraWork", "run", "()V", false));
         assertNotNull(IceAndFireTideShape.entryFailure(changed), "Unfamiliar native entry work must fail closed");
     }
 
@@ -83,11 +93,16 @@ class IceAndFireTideShapeTest implements Opcodes {
             MethodNode entry = entry(node);
             FieldInsnNode feet = null;
             for (var instruction : entry.instructions) {
-                if (instruction instanceof FieldInsnNode field && field.name.equals("FEET")) { feet = field; break; }
+                if (instruction instanceof FieldInsnNode field && field.name.equals("FEET")) {
+                    feet = field;
+                    break;
+                }
             }
             assertNotNull(feet);
             AbstractInsnNode predicate = feet;
-            while (!(predicate instanceof TypeInsnNode)) { predicate = predicate.getNext(); }
+            while (!(predicate instanceof TypeInsnNode)) {
+                predicate = predicate.getNext();
+            }
             switch (mutation) {
                 case "missing" -> entry.instructions.remove(predicate);
                 case "slot" -> feet.name = "LEGS";
@@ -103,7 +118,8 @@ class IceAndFireTideShapeTest implements Opcodes {
         ClassNode base = new ClassNode();
         base.name = IceAndFireTideShape.ITEM;
         MethodNode tick = new MethodNode(ACC_PUBLIC, "inventoryTick", IceAndFireTideShape.TICK, null, null);
-        tick.instructions.add(new InsnNode(RETURN)); base.methods.add(tick);
+        tick.instructions.add(new InsnNode(RETURN));
+        base.methods.add(tick);
         base.methods.add(compiledGetter("IceAndFireTideBaseMixin", "mismatchedboots$tideBaseReady"));
         ClassNode armor = withHook(nativeEntry());
         armor.methods.add(compiledGetter("IceAndFireTideEntryMixin", "mismatchedboots$tideEntryReady"));
@@ -125,14 +141,14 @@ class IceAndFireTideShapeTest implements Opcodes {
         armor.methods.removeIf(method -> method.name.equals("mismatchedboots$tideEntryReady"));
         plugin.export(null, armor.name, false, armor);
         assertNull(IceAndFireTideShape.method(armor, "mismatchedboots$tideEntryReady", "()Z"),
-                "A missing getter must not be recreated or grant permission");
+                   "A missing getter must not be recreated or grant permission");
     }
 
     @Test
     void productionGuardRejectsUnsupportedConsumerProvenanceAndSemantics() throws Exception {
         ClassNode accepted = withHook(nativeEntry());
         for (String mutation : new String[]{"hierarchy", "entryAccess", "field", "entity", "count",
-                "effect", "wetness", "carrierAlias", "carrierMutation", "ownedSlot"}) {
+                                            "effect", "wetness", "carrierAlias", "carrierMutation", "ownedSlot"}) {
             ClassNode node = copy(accepted);
             MethodNode tick = entry(node);
             switch (mutation) {
@@ -142,40 +158,54 @@ class IceAndFireTideShapeTest implements Opcodes {
                 case "entity" -> {
                     for (var instruction : tick.instructions) {
                         if (instruction instanceof VarInsnNode load && load.var == 3
-                                && load.getNext() instanceof TypeInsnNode) { load.var = 1; break; }
+                                && load.getNext() instanceof TypeInsnNode) {
+                            load.var = 1;
+                            break;
+                        }
                     }
                 }
                 case "count" -> {
                     for (var instruction : tick.instructions) {
-                        if (instruction.getOpcode() == IADD) { tick.instructions.set(instruction, new InsnNode(ISUB)); break; }
+                        if (instruction.getOpcode() == IADD) {
+                            tick.instructions.set(instruction, new InsnNode(ISUB));
+                            break;
+                        }
                     }
                 }
                 case "effect" -> {
                     for (var instruction : tick.instructions) {
-                        if (instruction instanceof FieldInsnNode field && field.name.equals("STRENGTH")) { field.name = "SPEED"; }
+                        if (instruction instanceof FieldInsnNode field && field.name.equals("STRENGTH")) {
+                            field.name = "SPEED";
+                        }
                     }
                 }
                 case "wetness" -> {
                     for (var instruction : tick.instructions) {
-                        if (instruction instanceof MethodInsnNode call && call.name.equals("isInWaterOrRain")) { call.name = "isInWater"; }
+                        if (instruction instanceof MethodInsnNode call && call.name.equals("isInWaterOrRain")) {
+                            call.name = "isInWater";
+                        }
                     }
                 }
                 case "carrierAlias" -> {
                     InsnList alias = new InsnList();
-                    alias.add(new VarInsnNode(ALOAD, 1)); alias.add(new VarInsnNode(ASTORE, 19));
+                    alias.add(new VarInsnNode(ALOAD, 1));
+                    alias.add(new VarInsnNode(ASTORE, 19));
                     tick.instructions.insert(alias);
                 }
                 case "carrierMutation" -> {
                     InsnList write = new InsnList();
-                    write.add(new VarInsnNode(ALOAD, 1)); write.add(new InsnNode(ICONST_0));
+                    write.add(new VarInsnNode(ALOAD, 1));
+                    write.add(new InsnNode(ICONST_0));
                     write.add(new MethodInsnNode(INVOKEVIRTUAL, IceAndFireTideShape.STACK, "setCount", "(I)V", false));
                     tick.instructions.insert(write);
                 }
                 case "ownedSlot" -> {
                     MethodNode handler = IceAndFireTideShape.method(node, "mismatchedboots$tideFeetResult",
-                            "(ZLnet/minecraft/world/entity/Entity;)Z");
+                                                                    "(ZLnet/minecraft/world/entity/Entity;)Z");
                     for (var instruction : handler.instructions) {
-                        if (instruction instanceof FieldInsnNode field && field.name.equals("FEET")) { field.name = "HEAD"; }
+                        if (instruction instanceof FieldInsnNode field && field.name.equals("FEET")) {
+                            field.name = "HEAD";
+                        }
                     }
                 }
             }
@@ -203,7 +233,7 @@ class IceAndFireTideShapeTest implements Opcodes {
         MethodNode method = IceAndFireTideShape.method(node, getter, "()Z");
         assertNotNull(method);
         assertEquals(ready ? ICONST_1 : ICONST_0, IceAndFireTideShape.code(method).getFirst().getOpcode(),
-                message.length == 0 ? getter : message[0]);
+                     message.length == 0 ? getter : message[0]);
     }
 
     private static ClassNode nativeEntry() throws Exception {
@@ -217,16 +247,22 @@ class IceAndFireTideShapeTest implements Opcodes {
     private static ClassNode withHook(ClassNode nativeEntry) throws Exception {
         // Copies the real compiled production handler; not a hand-written substitute for its OR body.
         ClassNode mixin = new ClassNode();
-        try (var stream = getClassResource()) { new ClassReader(stream).accept(mixin, 0); }
+        try (var stream = getClassResource()) {
+            new ClassReader(stream).accept(mixin, 0);
+        }
         MethodNode handler = mixin.methods.stream().filter(m -> m.name.equals("mismatchedboots$tideFeetResult")).findFirst().orElseThrow();
         nativeEntry.methods.add(handler);
         MethodNode entry = entry(nativeEntry);
         for (var instruction : entry.instructions) {
             if (instruction instanceof FieldInsnNode field && field.name.equals("FEET")) {
                 AbstractInsnNode predicate = field;
-                while (!(predicate instanceof TypeInsnNode)) { predicate = predicate.getNext(); }
+                while (!(predicate instanceof TypeInsnNode)) {
+                    predicate = predicate.getNext();
+                }
                 InsnList call = new InsnList();
-                call.add(new VarInsnNode(ALOAD, 0)); call.add(new InsnNode(SWAP)); call.add(new VarInsnNode(ALOAD, 3));
+                call.add(new VarInsnNode(ALOAD, 0));
+                call.add(new InsnNode(SWAP));
+                call.add(new VarInsnNode(ALOAD, 3));
                 call.add(new MethodInsnNode(INVOKESPECIAL, IceAndFireTideShape.ARMOR, handler.name, handler.desc, false));
                 entry.instructions.insert(predicate, call);
                 return nativeEntry;
@@ -236,8 +272,17 @@ class IceAndFireTideShapeTest implements Opcodes {
     }
 
     private static java.io.InputStream getClassResource() {
-        return IceAndFireTideShapeTest.class.getResourceAsStream("/games/alejandrocoria/mismatchedboots/mixin/compatibility/iceandfire/IceAndFireTideFeetMixin.class");
+        return IceAndFireTideShapeTest.class.getResourceAsStream(
+                "/games/alejandrocoria/mismatchedboots/mixin/compatibility/iceandfire/IceAndFireTideFeetMixin.class");
     }
-    private static ClassNode copy(ClassNode node) { ClassNode copy = new ClassNode(); node.accept(copy); return copy; }
-    private static MethodNode entry(ClassNode node) { return IceAndFireTideShape.method(node, "inventoryTick", IceAndFireTideShape.TICK); }
+
+    private static ClassNode copy(ClassNode node) {
+        ClassNode copy = new ClassNode();
+        node.accept(copy);
+        return copy;
+    }
+
+    private static MethodNode entry(ClassNode node) {
+        return IceAndFireTideShape.method(node, "inventoryTick", IceAndFireTideShape.TICK);
+    }
 }

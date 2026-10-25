@@ -1,15 +1,15 @@
 {
-  "type": "minecraft:smithing_transform",
-  "addition": "minecraft:quartz",
-  "base": "mismatchedboots-test:component_boots",
-  "result": {
-    "id": "mismatchedboots-test:upgraded_component_boots",
-    "components": {
-      "mismatchedboots-test:opaque": "changed by recipe",
-      "mismatchedboots-test:added": "added by recipe",
-      "mismatchedboots-test:numeric": 6,
-      "!mismatchedboots-test:removed": {}
-    }
-  },
-  "template": "minecraft:paper"
+    "type": "minecraft:smithing_transform",
+    "addition": "minecraft:quartz",
+    "base": "mismatchedboots-test:component_boots",
+    "result": {
+        "id": "mismatchedboots-test:upgraded_component_boots",
+        "components": {
+            "mismatchedboots-test:opaque": "changed by recipe",
+            "mismatchedboots-test:added": "added by recipe",
+            "mismatchedboots-test:numeric": 6,
+            "!mismatchedboots-test:removed": {}
+        }
+    },
+    "template": "minecraft:paper"
 }

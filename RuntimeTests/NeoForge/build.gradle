@@ -71,8 +71,8 @@ def rootsRenderingArtifact = rootProject.file('NeoForge/runs/client/mods/RootsCl
 def iceAndFireModsDirectory = providers.gradleProperty('iceAndFireTestModsDirectory')
         .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods'))
 def iceAndFireArtifacts = [
-        'iceandfire-2.2-beta.3.jar': 'ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2',
-        'uranus-3.0-alpha.1.jar': 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',
+        'iceandfire-2.2-beta.3.jar'         : 'ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2',
+        'uranus-3.0-alpha.1.jar'            : 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',
         'jupiter-2.4.3-26.1.2-universal.jar': 'fc2f273c02788c5ff6736439de8cef9a7eb2662f768e8ee1ac23c57323ee740c'
 ]
 def verifiedIceAndFireArtifacts = {
@@ -109,7 +109,7 @@ def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-mark
 def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
 def justDireRefundVariants = ['Live', 'ItemsMissing', 'MetadataMissing', 'Absent', 'Inner', 'Outer', 'Missing', 'Extra', 'Count', 'Entity', 'Operation', 'Publication', 'Router']
 def justDireArmorWearVariants = ['Live', 'Missing', 'Absent', 'WrapperBefore', 'WrapperAfter', 'Amount', 'Entry', 'Slot', 'Entity',
-                                'Cancellation', 'Association', 'Router', 'Publication', 'Transactions', 'QueryFailure', 'StorageMissing', 'Abilities']
+                                 'Cancellation', 'Association', 'Router', 'Publication', 'Transactions', 'QueryFailure', 'StorageMissing', 'Abilities']
 def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
 def justDireResourcesClientDirectory = fixtureBuildDirectory.dir('run/justDireResourcesClient')
 
@@ -146,7 +146,9 @@ neoForge {
                 systemProperty('mismatchedboots.runtimetest.markers', justDireItemBarsMarkers.get().asFile.absolutePath)
                 systemProperty('mismatchedboots.runtimetest.justDireItemBarsTest', 'true')
                 systemProperty('mismatchedboots.runtimetest.justDireItemBarsVariant', variant.uncapitalize())
-                if (variant == 'StorageMissing') { systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing') }
+                if (variant == 'StorageMissing') {
+                    systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing')
+                }
                 systemProperty('mismatchedboots.test.hideClientWindow', 'true')
                 systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
                 jvmArgument('-Xmx1G')
@@ -177,15 +179,15 @@ neoForge {
             jvmArgument('-Xmx1G')
         }
         ['Save', 'Restart'].each { mode ->
-          register("justDireLavaLifecycle${mode}") {
-            server()
-            disableIdeRun()
-            gameDirectory = justDireSmithingRunDirectory.get().asFile
-            programArgument('--nogui')
-            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
-            systemProperty('mismatchedboots.runtimetest.justDireLavaLifecycle', mode.uncapitalize())
-            jvmArgument('-Xmx1G')
-          }
+            register("justDireLavaLifecycle${mode}") {
+                server()
+                disableIdeRun()
+                gameDirectory = justDireSmithingRunDirectory.get().asFile
+                programArgument('--nogui')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireLavaLifecycle', mode.uncapitalize())
+                jvmArgument('-Xmx1G')
+            }
         }
         ['Compatible', 'MissingFall', 'Absent'].each { variant ->
             register("justDireJump${variant}") {
@@ -280,32 +282,32 @@ neoForge {
             jvmArgument('-Xmx1G')
         }
         ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent', 'Lava', 'LavaSettingsFailure'].each { variant ->
-          register("justDireGroundStompClient${variant}") {
-            client()
-            disableIdeRun()
-            gameDirectory = justDireJumpClientDirectory.get().asFile
-            programArgument('--quickPlaySingleplayer')
-            programArgument('jump')
-            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
-            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientTest', 'true')
-            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientVariant', variant.uncapitalize())
-            systemProperty('mixin.debug.export', 'true')
-            if (variant == 'ApiMissing') {
-                systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerVariant', 'settingsMissing')
+            register("justDireGroundStompClient${variant}") {
+                client()
+                disableIdeRun()
+                gameDirectory = justDireJumpClientDirectory.get().asFile
+                programArgument('--quickPlaySingleplayer')
+                programArgument('jump')
+                systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientTest', 'true')
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientVariant', variant.uncapitalize())
+                systemProperty('mixin.debug.export', 'true')
+                if (variant == 'ApiMissing') {
+                    systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerVariant', 'settingsMissing')
+                }
+                if (variant == 'EarthquakeMissing') {
+                    systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'apiMissing')
+                }
+                if (variant == 'EarthquakeSettingsFailure') {
+                    systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'settingsFailure')
+                }
+                if (variant == 'LavaSettingsFailure') {
+                    systemProperty('mismatchedboots.runtimetest.justDireLavaRepairSettingsFailure', 'true')
+                }
+                systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+                systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+                jvmArgument('-Xmx1G')
             }
-            if (variant == 'EarthquakeMissing') {
-                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'apiMissing')
-            }
-            if (variant == 'EarthquakeSettingsFailure') {
-                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'settingsFailure')
-            }
-            if (variant == 'LavaSettingsFailure') {
-                systemProperty('mismatchedboots.runtimetest.justDireLavaRepairSettingsFailure', 'true')
-            }
-            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
-            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
-            jvmArgument('-Xmx1G')
-          }
         }
         ['Save', 'Restart'].each { mode ->
             register("justDireGroundStompLifecycle${mode}") {
@@ -414,8 +416,12 @@ neoForge {
                 systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
                 systemProperty('mismatchedboots.runtimetest.justDireArmorWearTest', 'true')
                 systemProperty('mismatchedboots.runtimetest.justDireArmorWearVariant', variant.uncapitalize())
-                if (variant == 'StorageMissing') { systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing') }
-                if (variant == 'Abilities') { systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true') }
+                if (variant == 'StorageMissing') {
+                    systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing')
+                }
+                if (variant == 'Abilities') {
+                    systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true')
+                }
                 systemProperty('mixin.debug.export', 'true')
                 jvmArgument('-Xmx1G')
             }
@@ -628,7 +634,9 @@ justDireItemBarVariants.each { variant ->
         dependsOn(':NeoForge:jar', tasks.named('jar'))
         doLast {
             def world = justDireItemBarsDirectory.get().dir('server/world').asFile
-            if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run runJustDireItemBarsServer first') }
+            if (!new File(world, 'level.dat').isFile()) {
+                throw new GradleException('Run runJustDireItemBarsServer first')
+            }
             def directory = justDireItemBarsDirectory.get().dir(variant).asFile
             def staleMarkers = ['failure', 'report', 'success'].collect { suffix ->
                 new File(justDireItemBarsMarkers.get().asFile, "just-dire-item-bars-${suffix}.txt")
@@ -647,7 +655,9 @@ justDireItemBarVariants.each { variant ->
             fixtureFileOperations.copy { from(world); into(new File(directory, 'saves/bars')) }
             fixtureFileOperations.copy {
                 from(productionArchive, justDireSmithingFixtureArchive)
-                if (variant != 'Absent') { from(justDireSmithingArtifact) }
+                if (variant != 'Absent') {
+                    from(justDireSmithingArtifact)
+                }
                 into(new File(directory, 'mods'))
             }
             new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\nguiScale:1\n'
@@ -751,7 +761,9 @@ tasks.register('verifyJustDireRefunds') {
     doLast {
         def supported = justDireRefundVariants
         def variants = providers.gradleProperty('refundVariants').getOrElse(supported.join(',')).split(',')
-        if (!variants.every { it in supported }) { throw new GradleException('Unknown production refund variant') }
+        if (!variants.every { it in supported }) {
+            throw new GradleException('Unknown production refund variant')
+        }
         variants.each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-refunds-production/${neoforge_version}/${variant}-process.log").get().asFile
             runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireRefunds${variant}", log, 240)
@@ -770,8 +782,11 @@ tasks.register('verifyJustDireRefunds') {
             new File(log.parentFile, "${variant}-report.txt").text = report.text
             def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/minecraft/world/item/ItemStack.class')
             if (variant != 'Absent') {
-                if (!exported.isFile()) { throw new GradleException('Missing final ItemStack export') }
-                fixtureFileOperations.copy { from exported; into log.parentFile; rename { "${variant}-ItemStack.class" } }
+                if (!exported.isFile()) {
+                    throw new GradleException('Missing final ItemStack export')
+                }
+                fixtureFileOperations.copy { from exported; into log.parentFile;
+                    rename { "${variant}-ItemStack.class" } }
             }
             logger.lifecycle(report.text)
         }
@@ -788,7 +803,9 @@ tasks.register('verifyJustDireArmorWear') {
     doLast {
         def supported = justDireArmorWearVariants
         def variants = providers.gradleProperty('armorWearVariants').getOrElse(supported.join(',')).split(',')
-        if (!variants.every { it in supported }) { throw new GradleException('Unknown production armor-wear variant') }
+        if (!variants.every { it in supported }) {
+            throw new GradleException('Unknown production armor-wear variant')
+        }
         variants.each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-armor-wear-production/${neoforge_version}/${variant}-process.log").get().asFile
             runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireArmorWear${variant}", log, 240)
@@ -812,14 +829,19 @@ tasks.register('verifyJustDireArmorWear') {
                 throw new GradleException("Production armor wear ${variant} failed: ${failure.isFile() ? failure.text : witnessFailure.isFile() ? witnessFailure.text : log}")
             }
             new File(log.parentFile, "${variant}-report.txt").text = report.text
-            if (variant == 'Abilities') { new File(log.parentFile, 'Abilities-armed.txt').text = new File(directory, 'just-dire-armor-wear-armed.txt').text }
+            if (variant == 'Abilities') {
+                new File(log.parentFile, 'Abilities-armed.txt').text = new File(directory, 'just-dire-armor-wear-armed.txt').text
+            }
             def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/neoforged/neoforge/common/CommonHooks.class')
             if (variant == 'Live') {
-                if (!exported.isFile()) { throw new GradleException('Missing final CommonHooks export') }
+                if (!exported.isFile()) {
+                    throw new GradleException('Missing final CommonHooks export')
+                }
                 fixtureFileOperations.copy { from exported; into log.parentFile }
             }
             if (variant.startsWith('Wrapper')) {
-                fixtureFileOperations.copy { from exported; into log.parentFile; rename { "${variant}-CommonHooks.class" } }
+                fixtureFileOperations.copy { from exported; into log.parentFile;
+                    rename { "${variant}-CommonHooks.class" } }
             }
             logger.lifecycle(report.text)
         }
@@ -889,7 +911,9 @@ tasks.register('verifyJustDireLavaRepair') {
             new File(log.parentFile, "production${variant}-report.txt").text = report.text
             if (variant == 'Client') {
                 def trajectory = new File(directory, 'just-dire-lava-repair-trajectory.csv')
-                if (trajectory.isFile()) { new File(log.parentFile, 'productionClient-trajectory.csv').text = trajectory.text }
+                if (trajectory.isFile()) {
+                    new File(log.parentFile, 'productionClient-trajectory.csv').text = trajectory.text
+                }
             }
             logger.lifecycle(report.text)
         }
@@ -958,7 +982,9 @@ tasks.register('prepareJustDireGroundStompStateAbsent') {
     dependsOn tasks.named('prepareJustDireSmithing')
     doLast {
         def copiedArtifact = new File(justDireSmithingRunDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")
-        if (!copiedArtifact.isFile()) { throw new GradleException("Missing copied JDT artifact: ${copiedArtifact}") }
+        if (!copiedArtifact.isFile()) {
+            throw new GradleException("Missing copied JDT artifact: ${copiedArtifact}")
+        }
         fixtureFileOperations.delete { delete copiedArtifact }
     }
 }
@@ -1139,7 +1165,9 @@ tasks.register('prepareJustDireResourcesClient') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def world = new File(justDireSmithingRunDirectory.get().asFile, 'world')
-        if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run resource server/restart acceptance first') }
+        if (!new File(world, 'level.dat').isFile()) {
+            throw new GradleException('Run resource server/restart acceptance first')
+        }
         fixtureFileOperations.delete { delete justDireResourcesClientDirectory }
         def directory = justDireResourcesClientDirectory.get().asFile
         fixtureFileOperations.copy { from(world); into(new File(directory, 'saves/resources')) }
@@ -1221,7 +1249,9 @@ tasks.register('verifyJustDireAttributes') {
             new File(log.parentFile, "${variant}-report.txt").text = report.text
             if (variant == 'Live') {
                 def saved = new File(directory, 'just-dire-attributes-root.json')
-                if (!saved.isFile()) { throw new GradleException('Missing live-root fixture for the absent-hook process') }
+                if (!saved.isFile()) {
+                    throw new GradleException('Missing live-root fixture for the absent-hook process')
+                }
                 new File(log.parentFile, 'Live-root.json').text = saved.text
             }
             logger.lifecycle(report.text)
@@ -1245,7 +1275,9 @@ tasks.register('verifyJustDireResources') {
         }
         new File(log.parentFile, 'production-report.txt').text = report.text
         def refundSave = new File(directory, 'just-dire-refunds-lifecycle-report.txt')
-        if (!refundSave.isFile()) { throw new GradleException('Missing production refund lifecycle report') }
+        if (!refundSave.isFile()) {
+            throw new GradleException('Missing production refund lifecycle report')
+        }
         new File(log.parentFile, 'refund-lifecycle-report.txt').text = refundSave.text
         logger.lifecycle(report.text)
         def restartLog = new File(log.parentFile, 'restart-process.log')
@@ -1255,10 +1287,14 @@ tasks.register('verifyJustDireResources') {
             throw new GradleException("Just Dire Things actual restart failed: ${failure.isFile() ? failure.text : restartLog}")
         }
         def restartReport = new File(directory, 'just-dire-resources-restart-report.txt')
-        if (!restartReport.isFile()) { throw new GradleException('Missing actual restart report') }
+        if (!restartReport.isFile()) {
+            throw new GradleException('Missing actual restart report')
+        }
         new File(log.parentFile, 'restart-report.txt').text = restartReport.text
         def refundRestart = new File(directory, 'just-dire-refunds-restart-report.txt')
-        if (!refundRestart.isFile()) { throw new GradleException('Missing actual production refund restart report') }
+        if (!refundRestart.isFile()) {
+            throw new GradleException('Missing actual production refund restart report')
+        }
         new File(log.parentFile, 'refund-restart-report.txt').text = refundRestart.text
         logger.lifecycle(restartReport.text)
         def clientLog = new File(log.parentFile, 'client-process.log')
@@ -1301,7 +1337,9 @@ tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJum
         doLast {
             fixtureFileOperations.delete { spec ->
                 spec.delete(['failure', 'success', 'report'].collect { suffix -> new File(justDireSmithingMarkers.get().asFile, "just-dire-cooldown-hud-${suffix}.txt") })
-                if (variant == 'Absent') { spec.delete(new File(justDireJumpClientDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")) }
+                if (variant == 'Absent') {
+                    spec.delete(new File(justDireJumpClientDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}"))
+                }
             }
         }
     }
@@ -1384,38 +1422,40 @@ tasks.register('verifyJustDireGroundStompClient') {
     description = 'Verifies native JDT mixed widgets/capture and production location-aware keyboard/mouse batch transport.'
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
-      ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
-        def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-client/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
-        runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
-        def directory = justDireSmithingMarkers.get().asFile
-        def failure = new File(directory, 'just-dire-ground-stomp-client-failure.txt')
-        def success = new File(directory, 'just-dire-ground-stomp-client-success.txt')
-        def report = new File(directory, 'just-dire-ground-stomp-client-report.txt')
-        def warnings = log.readLines().findAll { it.contains('mixed screen bridge disabled') || it.contains('mixed settings API; new settings/input routes disabled') }
-        def earthquakeWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled')
-                || it.contains('Just Dire Things Earthquake mixed settings unavailable; Earthquake metadata/input disabled') }
-        def lavaWarnings = log.readLines().count { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }
-        if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
-                || warnings.size() != (variant in ['HooksMissing', 'ApiMissing'] ? 1 : 0)
-                || earthquakeWarnings != (variant in ['EarthquakeMissing', 'EarthquakeSettingsFailure'] ? 1 : 0) || lavaWarnings != 0) {
-            throw new GradleException("Production JDT active native client failed: ${failure.isFile() ? failure.text : log}")
-        }
-        if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
-            throw new GradleException("Absent JDT emitted a class loading warning: ${log}")
-        }
-        if (log.text.contains('/ERROR]')) {
-            throw new GradleException("JDT active native client emitted an error: ${log}")
-        }
-        new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
-        if (variant == 'Live') {
-            fixtureFileOperations.copy {
-                from(new File(justDireJumpClientDirectory.get().asFile,
-                        '.mixin.out/class/com/direwolf20/justdirethings/client/screens/ToolSettingScreen.class'))
-                into(log.parentFile)
+        ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-client/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-ground-stomp-client-failure.txt')
+            def success = new File(directory, 'just-dire-ground-stomp-client-success.txt')
+            def report = new File(directory, 'just-dire-ground-stomp-client-report.txt')
+            def warnings = log.readLines().findAll { it.contains('mixed screen bridge disabled') || it.contains('mixed settings API; new settings/input routes disabled') }
+            def earthquakeWarnings = log.readLines().count {
+                it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled')
+                        || it.contains('Just Dire Things Earthquake mixed settings unavailable; Earthquake metadata/input disabled')
             }
+            def lavaWarnings = log.readLines().count { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }
+            if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
+                    || warnings.size() != (variant in ['HooksMissing', 'ApiMissing'] ? 1 : 0)
+                    || earthquakeWarnings != (variant in ['EarthquakeMissing', 'EarthquakeSettingsFailure'] ? 1 : 0) || lavaWarnings != 0) {
+                throw new GradleException("Production JDT active native client failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT emitted a class loading warning: ${log}")
+            }
+            if (log.text.contains('/ERROR]')) {
+                throw new GradleException("JDT active native client emitted an error: ${log}")
+            }
+            new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
+            if (variant == 'Live') {
+                fixtureFileOperations.copy {
+                    from(new File(justDireJumpClientDirectory.get().asFile,
+                            '.mixin.out/class/com/direwolf20/justdirethings/client/screens/ToolSettingScreen.class'))
+                    into(log.parentFile)
+                }
+            }
+            logger.lifecycle(report.text)
         }
-        logger.lifecycle(report.text)
-      }
     }
 }
 tasks.register('verifyJustDireGroundStompTransport') {
@@ -1441,11 +1481,13 @@ tasks.register('prepareJustDireGroundStompLifecycle') {
     dependsOn('prepareJustDireGroundStompClient')
     doLast {
         def lifecycleMarkers = ['save-report.txt', 'save-success.txt', 'save-failure.txt', 'restart-report.txt',
-                'restart-success.txt', 'restart-failure.txt', 'saved.json', 'packets.json'].collect { suffix ->
+                                'restart-success.txt', 'restart-failure.txt', 'saved.json', 'packets.json'].collect { suffix ->
             new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-lifecycle-${suffix}")
         }
         fixtureFileOperations.delete { delete lifecycleMarkers }
-        if (lifecycleMarkers.any { it.exists() }) { throw new GradleException('Lifecycle preparation retained stale markers') }
+        if (lifecycleMarkers.any { it.exists() }) {
+            throw new GradleException('Lifecycle preparation retained stale markers')
+        }
     }
 }
 tasks.named('runJustDireGroundStompLifecycleSave') { dependsOn('prepareJustDireGroundStompLifecycle') }
@@ -1549,7 +1591,9 @@ tasks.register('verifyJustDireJump') {
             throw new GradleException("Just Dire Things client jump failed: ${clientFailure.isFile() ? clientFailure.text : clientLog}")
         }
         def clientReport = new File(directory, 'just-dire-jump-client-report.txt')
-        if (!clientReport.isFile()) { throw new GradleException("Missing client gameplay report: ${clientLog}") }
+        if (!clientReport.isFile()) {
+            throw new GradleException("Missing client gameplay report: ${clientLog}")
+        }
         new File(log.parentFile, 'client-report.txt').text = clientReport.text
         logger.lifecycle(clientReport.text)
     }
@@ -1672,7 +1716,9 @@ def mutateTideApi = tasks.register('mutateTideApi', JavaExec) {
 tideProductionVariants.each { variant ->
     def prepare = tasks.register("prepareIceAndFireTideProduction${variant}") {
         dependsOn('prepareIceAndFireTideProduction', tideHeadJar)
-        if (variant == 'ApiField') { dependsOn(mutateTideApi) }
+        if (variant == 'ApiField') {
+            dependsOn(mutateTideApi)
+        }
         doLast {
             def mods = new File(tideRunDirectory.get().asFile, 'mods')
             if (variant != 'Feet') {
@@ -1708,7 +1754,9 @@ tasks.register('verifyIceAndFireTideProduction') {
                     .contains('modId="mismatchedboots"')) {
                 throw new GradleException('HEAD fixture metadata depends on production')
             }
-        } finally { head.close() }
+        } finally {
+            head.close()
+        }
         tideProductionVariants.each { variant ->
             def log = fixtureBuildDirectory.file("reports/tide-production/${neoforge_version}/${variant}.log").get().asFile
             runBoundedGradleTask(":RuntimeTests:NeoForge:runIceAndFireTideProduction${variant}", log, 240)

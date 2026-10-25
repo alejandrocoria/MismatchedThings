@@ -11,5 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 interface AetherSentryResultControlMixin {
     @ModifyExpressionValue(method = "playerFall", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/item/ItemStack;is(Lnet/minecraft/core/Holder;)Z"))
-    private static boolean observe(boolean original) { return AetherRecognitionTestControl.sentryResult(original); }
+    private static boolean observe(boolean original) {
+        return AetherRecognitionTestControl.sentryResult(original);
+    }
 }

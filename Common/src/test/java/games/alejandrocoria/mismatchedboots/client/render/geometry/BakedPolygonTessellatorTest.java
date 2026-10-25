@@ -111,7 +111,7 @@ class BakedPolygonTessellatorTest {
                     Vector3f expectedNormal = normal(polygon);
                     for (BakedQuad quad : output) {
                         assertTrue(normal(quad).dot(expectedNormal) > 0.0F,
-                                "Winding changed at rotation " + rotation);
+                                   "Winding changed at rotation " + rotation);
                     }
                 }
             }
@@ -126,8 +126,8 @@ class BakedPolygonTessellatorTest {
             BakedQuad equalSource = source(fixture.material());
             QuadClipper.Polygon firstPolygon = pentagon();
             QuadClipper.Polygon equalPolygon = new QuadClipper.Polygon(firstPolygon.vertices().stream()
-                    .map(BakedPolygonTessellatorTest::copy)
-                    .toList());
+                                                                                   .map(BakedPolygonTessellatorTest::copy)
+                                                                                   .toList());
 
             List<BakedQuad> first = BakedPolygonTessellator.tessellate(firstSource, firstPolygon);
             List<BakedQuad> repeated = BakedPolygonTessellator.tessellate(firstSource, firstPolygon);
@@ -172,7 +172,7 @@ class BakedPolygonTessellatorTest {
 
             for (QuadClipper.Polygon polygon : invalid) {
                 assertThrows(IllegalArgumentException.class,
-                        () -> BakedPolygonTessellator.tessellate(source, polygon));
+                             () -> BakedPolygonTessellator.tessellate(source, polygon));
             }
         }
     }
@@ -192,9 +192,9 @@ class BakedPolygonTessellatorTest {
                     source.direction(), null);
 
             assertThrows(IllegalArgumentException.class,
-                    () -> BakedPolygonTessellator.tessellate(missingDirection, pentagon()));
+                         () -> BakedPolygonTessellator.tessellate(missingDirection, pentagon()));
             assertThrows(IllegalArgumentException.class,
-                    () -> BakedPolygonTessellator.tessellate(missingMaterial, pentagon()));
+                         () -> BakedPolygonTessellator.tessellate(missingMaterial, pentagon()));
         }
     }
 
@@ -254,7 +254,7 @@ class BakedPolygonTessellatorTest {
 
     private static void assertVertex(BakedQuad quad, int index, QuadClipper.Vertex vertex) {
         assertVertex(quad, index,
-                vertex.position().x(), vertex.position().y(), vertex.uv().u(), vertex.uv().v());
+                     vertex.position().x(), vertex.position().y(), vertex.uv().u(), vertex.uv().v());
         assertEquals(vertex.position().z(), quad.position(index).z(), EPSILON);
     }
 
@@ -291,12 +291,12 @@ class BakedPolygonTessellatorTest {
 
     private static Vector3f normal(QuadClipper.Polygon polygon) {
         return vector(polygon.vertex(1).position()).sub(vector(polygon.vertex(0).position()))
-                .cross(vector(polygon.vertex(2).position()).sub(vector(polygon.vertex(1).position())));
+                                                   .cross(vector(polygon.vertex(2).position()).sub(vector(polygon.vertex(1).position())));
     }
 
     private static Vector3f normal(BakedQuad quad) {
         return new Vector3f(quad.position1()).sub(quad.position0())
-                .cross(new Vector3f(quad.position2()).sub(quad.position1()));
+                                             .cross(new Vector3f(quad.position2()).sub(quad.position1()));
     }
 
     private static Vector3f vector(QuadClipper.Point point) {

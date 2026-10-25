@@ -16,7 +16,7 @@ abstract class BundleObservationMixin {
     private void observe(Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics, CallbackInfo callback) {
         if (SeparatorObservations.enabled()) {
             SeparatorObservations.DRAWS.add(new SeparatorObservations.Draw(false, y,
-                    ((ClientBundleTooltip) (Object) this).getHeight(font)));
+                                                                           ((ClientBundleTooltip) (Object) this).getHeight(font)));
         }
     }
 }

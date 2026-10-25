@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "mismatchedboots-test:item/animated_source"
-  }
+    "model": {
+        "type": "minecraft:model",
+        "model": "mismatchedboots-test:item/animated_source"
+    }
 }

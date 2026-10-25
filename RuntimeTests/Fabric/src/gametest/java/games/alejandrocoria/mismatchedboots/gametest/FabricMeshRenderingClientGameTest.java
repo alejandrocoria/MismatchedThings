@@ -64,7 +64,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
 
     private static void verifyAttributes() {
         for (var foil : new ItemStackRenderState.FoilType[]{null, ItemStackRenderState.FoilType.NONE,
-                ItemStackRenderState.FoilType.STANDARD, ItemStackRenderState.FoilType.SPECIAL}) {
+                                                            ItemStackRenderState.FoilType.STANDARD, ItemStackRenderState.FoilType.SPECIAL}) {
             for (int normals = 0; normals < 4; normals++) {
                 for (boolean itemAtlas : List.of(false, true)) {
                     MutableMesh source = gradient(normals, foil, itemAtlas);
@@ -110,18 +110,22 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         MutableMesh mesh = Renderer.get().mutableMesh();
         var emitter = mesh.emitter();
         emitter.pos(0, 0, 0, 0.5F).pos(1, 1, 0, 0.5F).pos(2, 1, 1, 0.5F).pos(3, 0, 1, 0.5F)
-                .uv(0, 10, 20).uv(1, 30, 24).uv(2, 34, 44).uv(3, 14, 40)
-                .color(0x20406080, 0xA0C0E000, 0xA0C0E000, 0x20406080)
-                .lightmap(LightCoordsUtil.smoothPack(31, 47), LightCoordsUtil.smoothPack(91, 117),
-                        LightCoordsUtil.smoothPack(91, 117), LightCoordsUtil.smoothPack(31, 47))
-                .atlas(itemAtlas ? QuadAtlas.ITEM : QuadAtlas.BLOCK)
-                .itemRenderType(itemAtlas ? Sheets.translucentItemSheet() : Sheets.translucentBlockItemSheet())
-                .chunkLayer(ChunkSectionLayer.TRANSLUCENT)
-                .cullFace(Direction.SOUTH).nominalFace(Direction.SOUTH)
-                .emissive(true).diffuseShade(false).ambientOcclusion(TriState.FALSE)
-                .shadeMode(ShadeMode.ENHANCED).animated(true).foilType(foil).tintIndex(2).tag(381);
-        if ((normals & 1) != 0) emitter.normal(0, 0, 0, 1).normal(3, 0, 0, 1);
-        if ((normals & 2) != 0) emitter.normal(1, 0, 0.6F, 0.8F).normal(2, 0, 0.6F, 0.8F);
+               .uv(0, 10, 20).uv(1, 30, 24).uv(2, 34, 44).uv(3, 14, 40)
+               .color(0x20406080, 0xA0C0E000, 0xA0C0E000, 0x20406080)
+               .lightmap(LightCoordsUtil.smoothPack(31, 47), LightCoordsUtil.smoothPack(91, 117),
+                         LightCoordsUtil.smoothPack(91, 117), LightCoordsUtil.smoothPack(31, 47))
+               .atlas(itemAtlas ? QuadAtlas.ITEM : QuadAtlas.BLOCK)
+               .itemRenderType(itemAtlas ? Sheets.translucentItemSheet() : Sheets.translucentBlockItemSheet())
+               .chunkLayer(ChunkSectionLayer.TRANSLUCENT)
+               .cullFace(Direction.SOUTH).nominalFace(Direction.SOUTH)
+               .emissive(true).diffuseShade(false).ambientOcclusion(TriState.FALSE)
+               .shadeMode(ShadeMode.ENHANCED).animated(true).foilType(foil).tintIndex(2).tag(381);
+        if ((normals & 1) != 0) {
+            emitter.normal(0, 0, 0, 1).normal(3, 0, 0, 1);
+        }
+        if ((normals & 2) != 0) {
+            emitter.normal(1, 0, 0.6F, 0.8F).normal(2, 0, 0.6F, 0.8F);
+        }
         emitter.emit();
         return mesh;
     }
@@ -130,7 +134,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         // This diamond's two hand-calculated intersections are (0.5,-0.5)
         // and (0.5,1.5). They remain the same for every cyclic start/winding.
         Vector3f[] positions = {new Vector3f(-0.5F, 0.5F, 0.5F), new Vector3f(1.5F, -1.5F, 0.5F),
-                new Vector3f(3.5F, 0.5F, 0.5F), new Vector3f(1.5F, 2.5F, 0.5F)};
+                                new Vector3f(3.5F, 0.5F, 0.5F), new Vector3f(1.5F, 2.5F, 0.5F)};
         for (boolean reverse : List.of(false, true)) {
             for (int start = 0; start < 4; start++) {
                 for (var side : QuadClipper.Side.values()) {
@@ -142,8 +146,8 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                         for (int index = 0; index < 4; index++) {
                             int original = Math.floorMod(first + (reverse ? -index : index), 4);
                             emitter.pos(index, positions[original]).uv(index, quad.u(original), quad.v(original))
-                                    .color(index, quad.color(original)).lightmap(index, quad.lightmap(original))
-                                    .normal(index, quad.copyNormal(original, null));
+                                   .color(index, quad.color(original)).lightmap(index, quad.lightmap(original))
+                                   .normal(index, quad.copyNormal(original, null));
                         }
                         emitter.emit();
                     });
@@ -184,10 +188,10 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
             float mirror = side == QuadClipper.Side.LEFT ? 1.0F : -1.0F;
             float d = 2.0F * QuadClipper.GEOMETRY_EPSILON;
             nearPlane.emitter()
-                    .pos(0, 0.5F - d * mirror, 0.5F, 0.5F)
-                    .pos(1, 0.5F + (0.5F - d) * mirror, 1, 0.5F)
-                    .pos(2, 0.5F + (1.0F - d) * mirror, 0.5F, 0.5F)
-                    .pos(3, 0.5F + (0.5F - d) * mirror, 0, 0.5F).emit();
+                     .pos(0, 0.5F - d * mirror, 0.5F, 0.5F)
+                     .pos(1, 0.5F + (0.5F - d) * mirror, 1, 0.5F)
+                     .pos(2, 0.5F + (1.0F - d) * mirror, 0.5F, 0.5F)
+                     .pos(3, 0.5F + (0.5F - d) * mirror, 0, 0.5F).emit();
             var before = MeshSubmissionProbe.fingerprint(nearPlane);
             var plan = FabricMeshClipper.plan(nearPlane, IDENTITY, side);
             require(!plan.compatible(), "Near-plane sliver was accepted");
@@ -201,8 +205,10 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
             for (var side : QuadClipper.Side.values()) {
                 MutableMesh source = gradient(0, null, false);
                 source.forEachMutable(quad -> {
-                    for (int i = 0; i < 4; i++) quad.pos(i, Math.abs(offset) < 0.000001F ? 0.5F + offset : quad.x(i) + offset,
-                            quad.y(i), quad.z(i));
+                    for (int i = 0; i < 4; i++) {
+                        quad.pos(i, Math.abs(offset) < 0.000001F ? 0.5F + offset : quad.x(i) + offset,
+                                 quad.y(i), quad.z(i));
+                    }
                 });
                 var original = MeshSubmissionProbe.fingerprint(source);
                 var plan = FabricMeshClipper.plan(source, IDENTITY, side);
@@ -259,7 +265,9 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                     // not only the source's local geometry transform.
                     var transform = submissions.get(layer).pose();
                     for (var face : MeshSubmissionProbe.fingerprint(mesh(output, layer))) {
-                        for (var vertex : face.vertices()) actual.add(transform.transformPosition(vertex.position(), new Vector3f()));
+                        for (var vertex : face.vertices()) {
+                            actual.add(transform.transformPosition(vertex.position(), new Vector3f()));
+                        }
                     }
                 }
                 require(visited.matches(actual), "Mesh-only visited extents do not match emitted vertices");
@@ -269,7 +277,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         }
         // Both collections in one layer, and baked/mesh pairs in both orders.
         for (var mode : List.of(MeshTestFixtures.Mode.BOTH, MeshTestFixtures.Mode.MESH_ONLY,
-                MeshTestFixtures.Mode.EMPTY, MeshTestFixtures.Mode.DROP)) {
+                                MeshTestFixtures.Mode.EMPTY, MeshTestFixtures.Mode.DROP)) {
             MeshTestFixtures.models.put(RED, mode);
             MeshTestFixtures.models.remove(BLUE);
             for (var stack : List.of(pair.primary(), pair.inverse())) {
@@ -302,7 +310,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
     private static void verifyAtomicFallback(Minecraft client) {
         for (var model : List.of(RED, id("geometry_multi_late_rotated"))) {
             for (var mode : List.of(MeshTestFixtures.Mode.INVALID_LATE, MeshTestFixtures.Mode.INVALID_NORMAL,
-                    MeshTestFixtures.Mode.DEGENERATE_CUT)) {
+                                    MeshTestFixtures.Mode.DEGENERATE_CUT)) {
                 if (mode == MeshTestFixtures.Mode.DEGENERATE_CUT && !model.equals(RED)) {
                     continue; // The near-plane fixture is defined in the identity local transform.
                 }
@@ -319,16 +327,18 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                     for (var baseline : List.of(firstBase, secondBase)) {
                         int layerCount = ((ItemStackRenderStateAccessor) (Object) baseline).mismatchedboots$getActiveLayerCount();
                         for (int index = 0; index < layerCount; index++, outputIndex++) {
-                            require(MeshSubmissionProbe.fingerprint(mesh(baseline, index)).equals(MeshSubmissionProbe.fingerprint(mesh(output, outputIndex))),
+                            require(MeshSubmissionProbe.fingerprint(mesh(baseline, index))
+                                                       .equals(MeshSubmissionProbe.fingerprint(mesh(output, outputIndex))),
                                     "Late incompatibility partially changed mesh geometry or metadata: " + model + "/" + mode
                                             + "/swap=" + swap + "/layer=" + outputIndex);
                             require(access(baseline, index).mismatchedboots$getQuads().equals(access(output, outputIndex).mismatchedboots$getQuads()),
                                     "Late incompatibility partially changed vanilla geometry");
                             float angle = (float) Math.toRadians(baseline == firstBase ? -1.0 : 1.0);
                             var expected = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
-                                    .rotateY(angle).translate(-0.5F, -0.5F, -0.5F)
-                                    .mul(access(baseline, index).mismatchedboots$getLocalTransform());
-                            require(expected.equals(access(output, outputIndex).mismatchedboots$getLocalTransform(), 0.000001F), "Fallback transform changed");
+                                                         .rotateY(angle).translate(-0.5F, -0.5F, -0.5F)
+                                                         .mul(access(baseline, index).mismatchedboots$getLocalTransform());
+                            require(expected.equals(access(output, outputIndex).mismatchedboots$getLocalTransform(), 0.000001F),
+                                    "Fallback transform changed");
                         }
                     }
                 }
@@ -349,7 +359,9 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
         for (int layer = 0; layer < count; layer++) {
             var transform = submissions.get(layer).pose();
             for (var face : MeshSubmissionProbe.fingerprint(mesh(output, layer))) {
-                for (var vertex : face.vertices()) expected.add(transform.transformPosition(vertex.position(), new Vector3f()));
+                for (var vertex : face.vertices()) {
+                    expected.add(transform.transformPosition(vertex.position(), new Vector3f()));
+                }
             }
             for (var extent : testAccess(output, layer).mismatchedboots$getExtents().get()) {
                 expected.add(transform.transformPosition(extent, new Vector3f()));
@@ -452,7 +464,9 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) throw new AssertionError(message);
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 
     private static void close(float actual, float expected, float epsilon, String message) {
@@ -462,7 +476,14 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
     private static final class Bounds {
         final Vector3f min = new Vector3f(Float.POSITIVE_INFINITY);
         final Vector3f max = new Vector3f(Float.NEGATIVE_INFINITY);
-        void add(org.joml.Vector3fc value) { min.min(value); max.max(value); }
-        boolean matches(Bounds other) { return min.equals(other.min, 0.000001F) && max.equals(other.max, 0.000001F); }
+
+        void add(org.joml.Vector3fc value) {
+            min.min(value);
+            max.max(value);
+        }
+
+        boolean matches(Bounds other) {
+            return min.equals(other.min, 0.000001F) && max.equals(other.max, 0.000001F);
+        }
     }
 }

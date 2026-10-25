@@ -6,5 +6,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(value = ItemStack.class, priority = 1200)
 abstract class JustDireRefundEarlyMixin {
-    @Unique private static void refundTest$earlyMarker() {}
+    @Unique
+    private static void refundTest$earlyMarker() {
+    }
 }

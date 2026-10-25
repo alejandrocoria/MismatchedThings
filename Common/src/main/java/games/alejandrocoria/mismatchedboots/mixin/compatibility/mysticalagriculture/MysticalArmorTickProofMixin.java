@@ -16,5 +16,8 @@ import org.spongepowered.asm.mixin.Unique;
         "com.blakebr0.mysticalagriculture.augment.WitherResistanceAugment"
 }, remap = false)
 abstract class MysticalArmorTickProofMixin {
-    @Unique private static boolean mismatchedboots$maArmorTickReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$maArmorTickReady() {
+        return false;
+    }
 }

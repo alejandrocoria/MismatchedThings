@@ -20,16 +20,20 @@ import java.util.UUID;
 /** Real startup fallback, independent of the accepted passive Jump adapter. */
 final class NeoForgeJustDireResourcesGuardTest {
     private static boolean finished;
-    private NeoForgeJustDireResourcesGuardTest() {}
+
+    private NeoForgeJustDireResourcesGuardTest() {
+    }
 
     static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
-            if (finished) { return; }
+            if (finished) {
+                return;
+            }
             finished = true;
             String variant = System.getProperty("mismatchedboots.runtimetest.justDireResourcesGuard");
             try {
                 ItemStack source = variant.equals("absent") ? new ItemStack(Items.GOLDEN_BOOTS)
-                        : NeoForgeJustDireResourcesTest.boots("celestigem", 6_000);
+                                                            : NeoForgeJustDireResourcesTest.boots("celestigem", 6_000);
                 ItemStack before = source.copy();
                 var pair = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS));
                 for (ItemStack root : new ItemStack[]{pair.primary(), pair.inverse()}) {
@@ -50,23 +54,32 @@ final class NeoForgeJustDireResourcesGuardTest {
                     ItemStack original = NeoForgeJustDireJumpTest.boots("ferricore", true);
                     ItemStack mixed = MixedBootsFactory.createPair(original, new ItemStack(Items.IRON_BOOTS)).primary();
                     var player = new ServerPlayer(event.getServer(), event.getServer().overworld(),
-                            new GameProfile(UUID.randomUUID(), "resources-guard"), ClientInformation.createDefault());
+                                                  new GameProfile(UUID.randomUUID(), "resources-guard"), ClientInformation.createDefault());
                     player.setItemSlot(EquipmentSlot.FEET, original);
-                    player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
+                    player.setDeltaMovement(Vec3.ZERO);
+                    player.jumpFromGround();
                     double nativeJump = player.getDeltaMovement().y;
                     player.setItemSlot(EquipmentSlot.FEET, mixed);
-                    player.setDeltaMovement(Vec3.ZERO); player.jumpFromGround();
+                    player.setDeltaMovement(Vec3.ZERO);
+                    player.jumpFromGround();
                     require(Math.abs(nativeJump - player.getDeltaMovement().y) < 1e-7, "Storage API failure disabled independent 8.2 Jump");
                 }
                 NetworkAcceptanceFiles.write("just-dire-resources-guard-report.txt", variant + "; production startup fallback; no mixed capability; "
-                        + "read-only repeated lookup/input preservation; " + (variant.equals("absent") ? "optional mod absent" : "native FE intact; independent 8.2 Jump intact") + "\n");
+                        + "read-only repeated lookup/input preservation; " + (variant.equals("absent")
+                                                                              ? "optional mod absent"
+                                                                              : "native FE intact; independent 8.2 Jump intact") + "\n");
                 NetworkAcceptanceFiles.write("just-dire-resources-guard-success.txt", variant + "\n");
-            } catch (Throwable failure) { NetworkAcceptanceFiles.failure("just-dire-resources-guard", failure); }
-            finally { event.getServer().halt(false); }
+            } catch (Throwable failure) {
+                NetworkAcceptanceFiles.failure("just-dire-resources-guard", failure);
+            } finally {
+                event.getServer().halt(false);
+            }
         });
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new IllegalStateException(message); }
+        if (!condition) {
+            throw new IllegalStateException(message);
+        }
     }
 }

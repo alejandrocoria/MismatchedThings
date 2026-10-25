@@ -25,8 +25,8 @@ public enum ComponentPolicy {
 
     public static Optional<ComponentPolicy> fromSerializedName(String value) {
         return Arrays.stream(values())
-                .filter(policy -> policy.serializedName.equals(value))
-                .findFirst();
+                     .filter(policy -> policy.serializedName.equals(value))
+                     .findFirst();
     }
 
     public boolean isNumeric() {

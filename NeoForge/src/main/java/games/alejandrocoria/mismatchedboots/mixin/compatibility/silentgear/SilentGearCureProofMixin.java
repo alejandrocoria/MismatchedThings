@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Unique;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.gear.trait.effect.CancelEffectsTraitEffect", remap = false)
 abstract class SilentGearCureProofMixin {
-    @Unique private static boolean mismatchedboots$sgCureReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgCureReady() {
+        return false;
+    }
 }

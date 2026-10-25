@@ -45,7 +45,8 @@ public final class MixedBootsFactory {
                 .filter(holder -> holder.value() instanceof MixedBootsItem)
                 .orElseThrow(() -> new IllegalStateException("MismatchedBoots item is not registered"));
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
-                .orElseThrow(() -> new IllegalStateException("MismatchedBoots data component is not registered"));
+                                                               .orElseThrow(() -> new IllegalStateException(
+                                                                       "MismatchedBoots data component is not registered"));
         return createPair(first, second, mixedBoots, dataType, attributes, components);
     }
 

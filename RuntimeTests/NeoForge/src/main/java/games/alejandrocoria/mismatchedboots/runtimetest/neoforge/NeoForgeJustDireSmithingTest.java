@@ -59,22 +59,22 @@ public final class NeoForgeJustDireSmithingTest {
         try {
             ServerLevel level = server.overworld();
             ServerPlayer player = new ServerPlayer(server, level,
-                    new GameProfile(UUID.randomUUID(), "smithing-test"), ClientInformation.createDefault()) {
+                                                   new GameProfile(UUID.randomUUID(), "smithing-test"), ClientInformation.createDefault()) {
                 @Override
                 public GameType gameMode() {
                     return GameType.CREATIVE;
                 }
             };
             new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
-                    CommonListenerCookie.createInitial(player.getGameProfile(), false));
+                                             CommonListenerCookie.createInitial(player.getGameProfile(), false));
             verifyMatrix(level, player);
             verifyDisabledAbility(level, player);
             require(installationRecipes == 14 && takeCases == 28, "Incomplete native installation matrix");
             NetworkAcceptanceFiles.write("just-dire-smithing-report.txt",
-                    "4 boots; 5 upgrades; 14 real installation recipes; 6 ineligible tier controls; "
-                            + "both source orders; root-only installation; eligible union/duplicate rejection; "
-                            + "28 ordinary/shift-click takes with one addition; blocked take; "
-                            + "wrong/missing inputs; invalid roots; disabled native ability; unchanged source/root previews\n");
+                                         "4 boots; 5 upgrades; 14 real installation recipes; 6 ineligible tier controls; "
+                                                 + "both source orders; root-only installation; eligible union/duplicate rejection; "
+                                                 + "28 ordinary/shift-click takes with one addition; blocked take; "
+                                                 + "wrong/missing inputs; invalid roots; disabled native ability; unchanged source/root previews\n");
             NetworkAcceptanceFiles.write("just-dire-smithing-success.txt", "neoforge\n");
         } catch (Throwable throwable) {
             NetworkAcceptanceFiles.failure("just-dire-smithing", throwable);
@@ -92,7 +92,8 @@ public final class NeoForgeJustDireSmithingTest {
                 var nativeMenu = menu(level, player, ItemStack.EMPTY, source.copy(), addition.copy());
                 ItemStack nativeResult = output(nativeMenu).copy();
                 boolean eligible = ability < 2 || ability == 2 && tier >= 1 || ability == 3 && tier >= 2 || ability == 4 && tier == 3;
-                require(!nativeResult.isEmpty() == eligible, "Unexpected native tier/ability recipe: " + BOOTS.get(tier) + "/" + ABILITIES.get(ability));
+                require(!nativeResult.isEmpty() == eligible,
+                        "Unexpected native tier/ability recipe: " + BOOTS.get(tier) + "/" + ABILITIES.get(ability));
                 var pair = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS));
                 for (ItemStack root : List.of(pair.primary(), pair.inverse())) {
                     root.setDamageValue(31);
@@ -109,12 +110,15 @@ public final class NeoForgeJustDireSmithingTest {
                         require(changed.equals(original), "Root installation changed historical snapshots");
                         require(result.getOrDefault(flag(ABILITIES.get(ability)), false), "Root installation is missing");
                         require(((ResultContainer) mixedMenu.getSlot(SmithingMenu.RESULT_SLOT).container).getRecipeUsed().id()
-                                .equals(((ResultContainer) nativeMenu.getSlot(SmithingMenu.RESULT_SLOT).container).getRecipeUsed().id()),
+                                                                                                         .equals(((ResultContainer) nativeMenu.getSlot(
+                                                                                                                 SmithingMenu.RESULT_SLOT).container).getRecipeUsed()
+                                                                                                                                                     .id()),
                                 "Root installation credited a fabricated recipe");
                         require(result.getDamageValue() == 31 && result.get(DataComponents.REPAIR_COST) == 11
-                                && result.getHoverName().equals(root.getHoverName())
-                                && result.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
-                                .equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)), "Live root state was lost");
+                                        && result.getHoverName().equals(root.getHoverName())
+                                        && result.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                                                 .equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)),
+                                "Live root state was lost");
                         reject(level, player, ItemStack.EMPTY, result.copy(), addition.copy(), "Repeated installation");
                     }
                     reject(level, player, new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), root.copy(), addition.copy(), "Wrong template");
@@ -131,13 +135,13 @@ public final class NeoForgeJustDireSmithingTest {
             }
         }
         reject(level, player, ItemStack.EMPTY, new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
-                new ItemStack(item("upgrade_stepheight")), "Bare shell");
+               new ItemStack(item("upgrade_stepheight")), "Bare shell");
         ItemStack multiple = MixedBootsFactory.createPair(new ItemStack(item("ferricore_boots")), new ItemStack(Items.IRON_BOOTS)).primary();
         multiple.setCount(2);
         // A real menu clamps an overstack to its slot limit. Check the policy's
         // malformed-count boundary directly instead of mistaking that clamp for acceptance.
         require(MixedBootsSmithingPolicy.evaluate(level, ItemStack.EMPTY, multiple,
-                new ItemStack(item("upgrade_stepheight"))).isEmpty(), "Policy accepted multiple mixed bases");
+                                                  new ItemStack(item("upgrade_stepheight"))).isEmpty(), "Policy accepted multiple mixed bases");
     }
 
     private static void verifyTakes(ServerLevel level, ServerPlayer player, ItemStack source, String ability, ItemStack addition) {
@@ -148,7 +152,7 @@ public final class NeoForgeJustDireSmithingTest {
             ItemStack root = MixedBootsFactory.createPair(source, source).primary();
             MixedBootsData originalSources = data(root);
             require(menu.getSlot(SmithingMenu.BASE_SLOT).mayPlace(root)
-                    && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).mayPlace(addition), "Loaded recipe slot properties reject inputs");
+                            && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).mayPlace(addition), "Loaded recipe slot properties reject inputs");
             if (shiftClick) {
                 menu.getSlot(4).set(root);
                 menu.getSlot(5).set(addition.copyWithCount(additionCount));
@@ -163,16 +167,17 @@ public final class NeoForgeJustDireSmithingTest {
             }
             ItemStack preview = output(menu).copy();
             require(!preview.isEmpty() && preview.getOrDefault(flag(ability), false)
-                    && data(preview).equals(originalSources), "Root-only installation changed snapshots or lost its flag");
+                            && data(preview).equals(originalSources), "Root-only installation changed snapshots or lost its flag");
             if (shiftClick) {
                 ItemStack baseBefore = menu.getSlot(SmithingMenu.BASE_SLOT).getItem().copy();
                 for (int slot = SmithingMenu.RESULT_SLOT + 1; slot < menu.slots.size(); slot++) {
                     menu.getSlot(slot).set(new ItemStack(Items.STONE, 64));
                 }
                 require(menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT).isEmpty()
-                        && ItemStack.matches(preview, output(menu))
-                        && ItemStack.matches(baseBefore, menu.getSlot(SmithingMenu.BASE_SLOT).getItem())
-                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount() == additionCount, "Blocked take consumed or lost inputs");
+                                && ItemStack.matches(preview, output(menu))
+                                && ItemStack.matches(baseBefore, menu.getSlot(SmithingMenu.BASE_SLOT).getItem())
+                                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount() == additionCount,
+                        "Blocked take consumed or lost inputs");
                 player.getInventory().clearContent();
             }
             ItemStack taken;
@@ -184,9 +189,9 @@ public final class NeoForgeJustDireSmithingTest {
             }
             require(ItemStack.matches(preview, taken), "Extraction differs from preview: " + source + "/" + addition + "; shift=" + shiftClick);
             require(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
-                    && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                    && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount() == additionCount - 1
-                    && output(menu).isEmpty(), "Installation did not consume exactly one base/addition");
+                            && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                            && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount() == additionCount - 1
+                            && output(menu).isEmpty(), "Installation did not consume exactly one base/addition");
             takeCases++;
         }
     }
@@ -194,10 +199,10 @@ public final class NeoForgeJustDireSmithingTest {
     private static void verifyDisabledAbility(ServerLevel level, ServerPlayer player) throws ReflectiveOperationException {
         // Reflection is fixture-only: production remains completely independent of JDT.
         Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config")
-                .getField("AVAILABLE_ABILITY_MAP").get(null);
+                                           .getField("AVAILABLE_ABILITY_MAP").get(null);
         ModConfigSpec.BooleanValue flag = flags.entrySet().stream()
-                .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("JUMPBOOST"))
-                .map(entry -> (ModConfigSpec.BooleanValue) entry.getValue()).findFirst().orElseThrow();
+                                               .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("JUMPBOOST"))
+                                               .map(entry -> (ModConfigSpec.BooleanValue) entry.getValue()).findFirst().orElseThrow();
         boolean previous = flag.get();
         try {
             flag.set(false);
@@ -205,7 +210,7 @@ public final class NeoForgeJustDireSmithingTest {
             ItemStack addition = new ItemStack(item("upgrade_jumpboost"));
             reject(level, player, ItemStack.EMPTY, source.copy(), addition.copy(), "Disabled native upgrade");
             reject(level, player, ItemStack.EMPTY, MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS)).primary(),
-                    addition, "Disabled mixed upgrade");
+                   addition, "Disabled mixed upgrade");
         } finally {
             flag.set(previous);
         }
@@ -237,7 +242,8 @@ public final class NeoForgeJustDireSmithingTest {
         return BuiltInRegistries.ITEM.getOptional(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow();
     }
 
-    @SuppressWarnings("unchecked") private static DataComponentType<Boolean> flag(String ability) {
+    @SuppressWarnings("unchecked")
+    private static DataComponentType<Boolean> flag(String ability) {
         return (DataComponentType<Boolean>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(
                 Identifier.fromNamespaceAndPath("justdirethings", ability + "_upgrade_installed")).orElseThrow().value();
     }

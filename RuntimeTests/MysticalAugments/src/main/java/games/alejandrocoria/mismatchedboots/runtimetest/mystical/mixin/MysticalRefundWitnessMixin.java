@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class MysticalRefundWitnessMixin {
     @Inject(method = "placeItemBackInInventory(Lnet/minecraft/world/item/ItemStack;)V", at = @At("HEAD"), cancellable = true)
     private void delivery(ItemStack stack, CallbackInfo callback) {
-        if (MysticalRefundControl.delivery((Inventory) (Object) this)) { callback.cancel(); }
+        if (MysticalRefundControl.delivery((Inventory) (Object) this)) {
+            callback.cancel();
+        }
     }
 }

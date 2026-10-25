@@ -47,9 +47,9 @@ final class MismatchedWorkbenchReiDisplay extends BasicDisplay {
 
     private static EntryIngredient ingredient(List<ItemStack> stacks) {
         return EntryIngredient.of(stacks.stream()
-                .map(stack -> Objects.requireNonNull(stack, "stack").copyWithCount(1))
-                .map(EntryStacks::of)
-                .toList());
+                                        .map(stack -> Objects.requireNonNull(stack, "stack").copyWithCount(1))
+                                        .map(EntryStacks::of)
+                                        .toList());
     }
 
     @Override

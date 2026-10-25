@@ -33,34 +33,47 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
             Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
             if (available && transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
                 extensions.add(this);
-            } else { available = false; }
-            if (!available) { Constants.LOG.warn("Just Dire Things Jump local contract/API incompatible; compatibility disabled"); }
+            } else {
+                available = false;
+            }
+            if (!available) {
+                Constants.LOG.warn("Just Dire Things Jump local contract/API incompatible; compatibility disabled");
+            }
             if (available) {
                 try {
                     negateAvailable = JustDireNegateFallShape.flow(handler, false) && JustDireNegateFallShape.api(
                             provider.getClassNode(JustDireJumpShape.TOOL.replace('/', '.')),
                             provider.getClassNode(JustDireJumpShape.ABILITY.replace('/', '.')));
-                    if (!negateAvailable) { Constants.LOG.warn("Just Dire Things Negate Fall local contract/API incompatible; compatibility disabled"); }
+                    if (!negateAvailable) {
+                        Constants.LOG.warn("Just Dire Things Negate Fall local contract/API incompatible; compatibility disabled");
+                    }
                 } catch (Exception | LinkageError failure) {
                     Constants.LOG.warn("Could not inspect Just Dire Things Negate Fall API; compatibility disabled", failure);
                 }
             }
         } catch (ClassNotFoundException failure) {
             available = false;
-            if (present) { Constants.LOG.warn("Just Dire Things Jump API incomplete; compatibility disabled", failure); }
+            if (present) {
+                Constants.LOG.warn("Just Dire Things Jump API incomplete; compatibility disabled", failure);
+            }
         } catch (Exception | LinkageError failure) {
             available = false;
             Constants.LOG.warn("Could not inspect Just Dire Things Jump API; compatibility disabled", failure);
         }
     }
 
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return available; }
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return available;
+    }
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         if (node.name.equals(JustDireJumpShape.HANDLER)) {
             boolean jump = JustDireJumpShape.publish(node);
-            if (!jump) { Constants.LOG.warn("Just Dire Things Jump transformed paired hooks incompatible; compatibility disabled"); }
+            if (!jump) {
+                Constants.LOG.warn("Just Dire Things Jump transformed paired hooks incompatible; compatibility disabled");
+            }
             boolean negate = JustDireNegateFallShape.publish(node, jump && negateAvailable);
             if (jump && negateAvailable && !negate) {
                 Constants.LOG.warn("Just Dire Things Negate Fall transformed flow incompatible; compatibility disabled");
@@ -68,12 +81,38 @@ public final class JustDireJumpMixinPlugin implements IMixinConfigPlugin, IExten
         }
     }
 
-    @Override public boolean checkActive(MixinEnvironment environment) { return true; }
-    @Override public void preApply(ITargetClassContext context) {}
-    @Override public void postApply(ITargetClassContext context) {}
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
+    @Override
+    public boolean checkActive(MixinEnvironment environment) {
+        return true;
+    }
+
+    @Override
+    public void preApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void postApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
 }

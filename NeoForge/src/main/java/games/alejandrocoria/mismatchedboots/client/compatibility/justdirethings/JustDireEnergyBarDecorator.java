@@ -15,21 +15,30 @@ public final class JustDireEnergyBarDecorator implements IItemDecorator {
     public static final JustDireEnergyBarDecorator INSTANCE = new JustDireEnergyBarDecorator();
     private boolean failed;
 
-    private JustDireEnergyBarDecorator() {}
+    private JustDireEnergyBarDecorator() {
+    }
 
     @Override
     public boolean render(GuiGraphicsExtractor graphics, Font font, ItemStack root, int x, int y) {
-        if (failed || !ModContent.isMixedBoots(root)) { return false; }
+        if (failed || !ModContent.isMixedBoots(root)) {
+            return false;
+        }
         int width;
         int offset;
         try {
             var receiver = JustDireResourcesCompatibility.energyBarReceiver(root);
-            if (receiver == null) { return false; }
+            if (receiver == null) {
+                return false;
+            }
             var storage = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
-            if (storage == null || storage.getCapacityAsLong() <= 0 || !receiver.isBarVisible(root)) { return false; }
+            if (storage == null || storage.getCapacityAsLong() <= 0 || !receiver.isBarVisible(root)) {
+                return false;
+            }
             // Native methods query the passed root's capability, even for a lower-tier receiver.
             width = receiver.getBarWidth(root);
-            if (width < 0 || width > 13) { throw new IllegalStateException("Unsupported native FE bar width: " + width); }
+            if (width < 0 || width > 13) {
+                throw new IllegalStateException("Unsupported native FE bar width: " + width);
+            }
             // Visibility includes Unbreakable; damage alone would leave an unnecessary upper row.
             offset = root.isBarVisible() ? 10 : 13;
         } catch (RuntimeException | LinkageError failure) {

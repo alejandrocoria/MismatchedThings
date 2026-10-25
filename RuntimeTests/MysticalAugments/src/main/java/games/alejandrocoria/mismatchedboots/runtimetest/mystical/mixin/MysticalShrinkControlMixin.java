@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class MysticalShrinkControlMixin {
     @Inject(method = "shrink", at = @At("HEAD"), cancellable = true)
     private void prevent(int count, CallbackInfo callback) {
-        if ((Object) this == MysticalRefundControl.root && MysticalRefundControl.prevent) { callback.cancel(); }
+        if ((Object) this == MysticalRefundControl.root && MysticalRefundControl.prevent) {
+            callback.cancel();
+        }
     }
 }

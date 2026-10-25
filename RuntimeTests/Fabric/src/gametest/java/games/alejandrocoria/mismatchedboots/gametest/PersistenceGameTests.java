@@ -94,14 +94,14 @@ public final class PersistenceGameTests {
         CompoundTag encoded = output.buildResult();
         inventory.clearContent();
         inventory.load(TagValueInput.create(
-                        ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), encoded)
-                .listOrEmpty("Inventory", ItemStackWithSlot.CODEC));
+                                            ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), encoded)
+                                    .listOrEmpty("Inventory", ItemStackWithSlot.CODEC));
 
         ItemStack decoded = inventory.getItem(9);
         assertPersistedPrimary(helper, decoded, "player inventory", "inventory-alpha");
         helper.assertValueEqual(decoded.getDamageValue(), 17, "player inventory root damage");
         helper.assertTrue(Component.literal("persisted inventory boots").equals(decoded.get(DataComponents.CUSTOM_NAME)),
-                "Player inventory lost the live root custom name");
+                          "Player inventory lost the live root custom name");
         helper.succeed();
     }
 
@@ -116,8 +116,8 @@ public final class PersistenceGameTests {
 
         AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(3.0);
         List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, bounds, Entity::isAlive).stream()
-                .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
-                .toList();
+                                       .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
+                                       .toList();
         helper.assertValueEqual(drops.size(), 1, "mixed boots death-drop entities");
         ItemEntity decoded = new ItemEntity(EntityType.ITEM, helper.getLevel());
         decoded.restoreFrom(drops.getFirst());
@@ -140,7 +140,7 @@ public final class PersistenceGameTests {
         } else if (mode.equals("read")) {
             BlockEntity blockEntity = helper.getLevel().getBlockEntity(RESTART_CHEST_POS);
             helper.assertTrue(blockEntity instanceof ChestBlockEntity,
-                    "The restart read process did not load the persisted chest");
+                              "The restart read process did not load the persisted chest");
             ChestBlockEntity chest = (ChestBlockEntity) blockEntity;
             ItemStack primary = chest.getItem(0);
             ItemStack inverse = chest.getItem(1);
@@ -152,15 +152,15 @@ public final class PersistenceGameTests {
             assertNamedResistancePair(helper, chest.getItem(5), "named inverse");
 
             helper.assertValueEqual(AttributeRulesLifecycle.serverRules().policyFor(
-                            Identifier.withDefaultNamespace("movement_speed")),
-                    AttributePolicy.COMBINE, "restart read process movement-speed policy");
+                                            Identifier.withDefaultNamespace("movement_speed")),
+                                    AttributePolicy.COMBINE, "restart read process movement-speed policy");
             helper.assertValueEqual(ComponentRulesLifecycle.serverRules().durability(),
-                    DurabilityPolicy.SEPARATE, "restart read durability policy");
+                                    DurabilityPolicy.SEPARATE, "restart read durability policy");
             helper.assertValueEqual(ComponentRulesLifecycle.serverRules().repairCost(),
-                    RepairCostPolicy.OWNER, "restart read repair-cost policy");
+                                    RepairCostPolicy.OWNER, "restart read repair-cost policy");
             helper.assertValueEqual(ComponentRulesLifecycle.serverRules().declarations().get(TestContent.NUMERIC_COMPONENT_ID),
-                    ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT),
-                    "restart read numeric component rule");
+                                    ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT),
+                                    "restart read numeric component rule");
 
             assertSmithingAfterRuleChange(helper, primary, true, token);
             assertSmithingAfterRuleChange(helper, inverse, false, token);
@@ -169,15 +169,15 @@ public final class PersistenceGameTests {
             assertMovementAmount(newlyCrafted.primary(), 6.0D, "new primary after rule change");
             assertMovementAmount(newlyCrafted.inverse(), 6.0D, "new inverse after rule change");
             helper.assertValueEqual(newlyCrafted.primary().getMaxDamage(),
-                    new ItemStack(TestContent.requireComponentBoots()).getMaxDamage(),
-                    "new primary separate maximum");
+                                    new ItemStack(TestContent.requireComponentBoots()).getMaxDamage(),
+                                    "new primary separate maximum");
             helper.assertValueEqual(newlyCrafted.inverse().getMaxDamage(),
-                    new ItemStack(Items.IRON_BOOTS).getMaxDamage(),
-                    "new inverse separate maximum");
+                                    new ItemStack(Items.IRON_BOOTS).getMaxDamage(),
+                                    "new inverse separate maximum");
             helper.assertValueEqual(newlyCrafted.primary().getOrDefault(DataComponents.REPAIR_COST, 0), 2,
-                    "new primary owner repair cost");
+                                    "new primary owner repair cost");
             helper.assertValueEqual(newlyCrafted.inverse().getOrDefault(DataComponents.REPAIR_COST, 0), 7,
-                    "new inverse owner repair cost");
+                                    "new inverse owner repair cost");
         } else {
             throw new AssertionError("Unknown persistence restart mode: " + mode);
         }
@@ -217,9 +217,9 @@ public final class PersistenceGameTests {
 
     private static MixedBootsPair restartPair(String opaqueValue) {
         ItemStack first = restartSource(TestContent.requireComponentBoots(), 2, 40, 2,
-                opaqueValue, "first", "first-only");
+                                        opaqueValue, "first", "first-only");
         ItemStack second = restartSource(Items.IRON_BOOTS, 6, 80, 7,
-                opaqueValue, "added by recipe", "second-only");
+                                         opaqueValue, "added by recipe", "second-only");
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, movementModifiers(2.0D));
         second.set(DataComponents.ATTRIBUTE_MODIFIERS, movementModifiers(4.0D));
         return GameTestStacks.pair(first, second);
@@ -251,7 +251,7 @@ public final class PersistenceGameTests {
             root.remove(DataComponents.REPAIR_COST);
         }
         root.set(DataComponents.CUSTOM_NAME,
-                Component.literal((primary ? "primary-" : "inverse-") + token));
+                 Component.literal((primary ? "primary-" : "inverse-") + token));
         root.set(DataComponents.LORE, liveLore(primary, token));
     }
 
@@ -281,18 +281,18 @@ public final class PersistenceGameTests {
 
     private static ItemAttributeModifiers movementModifiers(double amount) {
         return ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.MOVEMENT_SPEED,
-                        new AttributeModifier(RESTART_MODIFIER_ID, amount, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build();
+                                     .add(
+                                             Attributes.MOVEMENT_SPEED,
+                                             new AttributeModifier(RESTART_MODIFIER_ID, amount, AttributeModifier.Operation.ADD_VALUE),
+                                             EquipmentSlotGroup.FEET)
+                                     .build();
     }
 
     private static void assertMovementAmount(ItemStack stack, double expected, String description) {
         var entries = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
-                .modifiers().stream()
-                .filter(entry -> entry.attribute().equals(Attributes.MOVEMENT_SPEED))
-                .toList();
+                           .modifiers().stream()
+                           .filter(entry -> entry.attribute().equals(Attributes.MOVEMENT_SPEED))
+                           .toList();
         if (entries.size() != 1
                 || !entries.getFirst().modifier().id().equals(RESTART_MODIFIER_ID)
                 || Math.abs(entries.getFirst().modifier().amount() - expected) >= 1.0E-12D) {
@@ -303,40 +303,40 @@ public final class PersistenceGameTests {
     private static void assertRestartedRoot(
             GameTestHelper helper, ItemStack stack, boolean primary, String token) {
         GameTestStacks.assertOrientation(helper, stack,
-                primary ? TestContent.requireComponentBoots() : Items.IRON_BOOTS,
-                primary ? Items.IRON_BOOTS : TestContent.requireComponentBoots(),
-                primary ? "restarted primary" : "restarted inverse");
+                                         primary ? TestContent.requireComponentBoots() : Items.IRON_BOOTS,
+                                         primary ? Items.IRON_BOOTS : TestContent.requireComponentBoots(),
+                                         primary ? "restarted primary" : "restarted inverse");
         int expectedMaximum = (new ItemStack(TestContent.requireComponentBoots()).getMaxDamage()
                 + new ItemStack(Items.IRON_BOOTS).getMaxDamage()) / 2;
         helper.assertValueEqual(stack.getMaxDamage(), expectedMaximum, "persisted average maximum");
         helper.assertValueEqual(stack.getDamageValue(), primary ? PRIMARY_DAMAGE : INVERSE_DAMAGE,
-                "persisted explicit root damage");
+                                "persisted explicit root damage");
         helper.assertValueEqual(stack.getOrDefault(DataComponents.REPAIR_COST, 0),
-                primary ? PRIMARY_REPAIR_COST : 0, "persisted edited repair cost");
+                                primary ? PRIMARY_REPAIR_COST : 0, "persisted edited repair cost");
         helper.assertValueEqual(stack.get(TestContent.requireNumericComponent()), 4,
-                "persisted projected numeric value");
+                                "persisted projected numeric value");
         helper.assertValueEqual(stack.get(TestContent.requireOpaqueComponent()), token,
-                "persisted shared opaque value");
+                                "persisted shared opaque value");
         helper.assertTrue(!stack.has(TestContent.ADDED_COMPONENT),
-                "Persisted root regained a deliberately absent projected component");
+                          "Persisted root regained a deliberately absent projected component");
         helper.assertTrue(!stack.has(TestContent.REMOVED_COMPONENT),
-                "Persisted root regained an omitted component");
+                          "Persisted root regained an omitted component");
         helper.assertValueEqual(stack.get(DataComponents.CUSTOM_NAME),
-                Component.literal((primary ? "primary-" : "inverse-") + token),
-                "persisted custom name");
+                                Component.literal((primary ? "primary-" : "inverse-") + token),
+                                "persisted custom name");
         helper.assertValueEqual(stack.get(DataComponents.LORE), liveLore(primary, token),
-                "persisted independently edited lore");
+                                "persisted independently edited lore");
         helper.assertTrue(!stack.has(DataComponents.DAMAGE_RESISTANT),
-                "Persisted ordinary sources gained damage resistance");
+                          "Persisted ordinary sources gained damage resistance");
         assertMovementAmount(stack, 3.0D, "stored result after rule change");
 
         MixedBootsData data = GameTestStacks.data(stack);
         ItemStack physicalFirst = primary ? data.left().source() : data.right().source();
         ItemStack physicalSecond = primary ? data.right().source() : data.left().source();
         assertRestartSource(helper, physicalFirst, TestContent.requireComponentBoots(),
-                2, 40, 2, token, "first", "first-only");
+                            2, 40, 2, token, "first", "first-only");
         assertRestartSource(helper, physicalSecond, Items.IRON_BOOTS,
-                6, 80, 7, token, "added by recipe", "second-only");
+                            6, 80, 7, token, "added by recipe", "second-only");
     }
 
     private static void assertRestartSource(
@@ -351,18 +351,18 @@ public final class PersistenceGameTests {
             String removed) {
         helper.assertTrue(source.is(expectedItem), "Persisted source has the wrong item identity");
         helper.assertValueEqual(source.get(TestContent.requireNumericComponent()), numeric,
-                "persisted source numeric component");
+                                "persisted source numeric component");
         helper.assertValueEqual(source.getDamageValue(), damage, "persisted source damage");
         helper.assertValueEqual(source.getOrDefault(DataComponents.REPAIR_COST, 0), repairCost,
-                "persisted source repair cost");
+                                "persisted source repair cost");
         helper.assertValueEqual(source.get(TestContent.requireOpaqueComponent()), opaque,
-                "persisted source opaque component");
+                                "persisted source opaque component");
         helper.assertValueEqual(source.get(TestContent.ADDED_COMPONENT), added,
-                "persisted source added component");
+                                "persisted source added component");
         helper.assertValueEqual(source.get(TestContent.REMOVED_COMPONENT), removed,
-                "persisted source omitted component");
+                                "persisted source omitted component");
         helper.assertTrue(!source.has(DataComponents.DAMAGE_RESISTANT),
-                "Persisted ordinary source gained damage resistance");
+                          "Persisted ordinary source gained damage resistance");
     }
 
     private static void assertSmithingAfterRuleChange(
@@ -370,7 +370,7 @@ public final class PersistenceGameTests {
         ItemStack before = root.copy();
         var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.CREATIVE);
         SmithingMenu menu = new SmithingMenu(1, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
+                                             ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
         menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(new ItemStack(Items.PAPER));
         menu.getSlot(SmithingMenu.BASE_SLOT).set(root);
         menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.QUARTZ));
@@ -380,61 +380,61 @@ public final class PersistenceGameTests {
         helper.assertTrue(ItemStack.matches(root, before), "Smithing preview mutated the persisted root");
         MixedBootsData resultData = GameTestStacks.data(result);
         helper.assertTrue(resultData.left().source().is(primary
-                        ? TestContent.UPGRADED_COMPONENT_BOOTS : Items.DIAMOND_BOOTS)
-                        && resultData.right().source().is(primary
-                        ? Items.DIAMOND_BOOTS : TestContent.UPGRADED_COMPONENT_BOOTS),
-                "Smithing did not transform both persisted sources in orientation order");
+                                                        ? TestContent.UPGRADED_COMPONENT_BOOTS : Items.DIAMOND_BOOTS)
+                                  && resultData.right().source().is(primary
+                                                                    ? Items.DIAMOND_BOOTS : TestContent.UPGRADED_COMPONENT_BOOTS),
+                          "Smithing did not transform both persisted sources in orientation order");
         helper.assertValueEqual(result.getMaxDamage(), resultData.left().source().getMaxDamage(),
-                "separate durability after restart");
+                                "separate durability after restart");
         helper.assertValueEqual(result.getDamageValue(), primary ? PRIMARY_DAMAGE : INVERSE_DAMAGE,
-                "preserved raw damage after restart");
+                                "preserved raw damage after restart");
         helper.assertValueEqual(result.getOrDefault(DataComponents.REPAIR_COST, 0),
-                primary ? PRIMARY_REPAIR_COST : 0, "preserved repair cost after restart");
+                                primary ? PRIMARY_REPAIR_COST : 0, "preserved repair cost after restart");
         helper.assertValueEqual(result.get(TestContent.requireNumericComponent()), 6,
-                "updated matching numeric projection");
+                                "updated matching numeric projection");
         helper.assertTrue(!result.has(TestContent.requireOpaqueComponent()),
-                "Matching old projection was not removed when the new sources diverged");
+                          "Matching old projection was not removed when the new sources diverged");
         helper.assertValueEqual(result.get(TestContent.ADDED_COMPONENT), "added by recipe",
-                "Absent old projection was not added from the new sources");
+                                "Absent old projection was not added from the new sources");
         helper.assertTrue(!result.has(TestContent.REMOVED_COMPONENT),
-                "Omitted component appeared after recomposition");
+                          "Omitted component appeared after recomposition");
         helper.assertTrue(!result.has(DataComponents.DAMAGE_RESISTANT),
-                "Smithing introduced unexpected damage resistance");
+                          "Smithing introduced unexpected damage resistance");
         helper.assertValueEqual(result.get(DataComponents.CUSTOM_NAME),
-                Component.literal((primary ? "primary-" : "inverse-") + token),
-                "custom name after recomposition");
+                                Component.literal((primary ? "primary-" : "inverse-") + token),
+                                "custom name after recomposition");
         helper.assertValueEqual(result.get(DataComponents.LORE), liveLore(primary, token),
-                "independently edited lore after recomposition");
+                                "independently edited lore after recomposition");
         assertMovementAmount(result, 6.0D, "recomposed attribute after rule change");
     }
 
     private static void assertExplicitResistancePair(
             GameTestHelper helper, ItemStack stack, boolean primary) {
         GameTestStacks.assertOrientation(helper, stack,
-                primary ? Items.IRON_BOOTS : Items.GOLDEN_BOOTS,
-                primary ? Items.GOLDEN_BOOTS : Items.IRON_BOOTS,
-                primary ? "explicit primary" : "explicit inverse");
+                                         primary ? Items.IRON_BOOTS : Items.GOLDEN_BOOTS,
+                                         primary ? Items.GOLDEN_BOOTS : Items.IRON_BOOTS,
+                                         primary ? "explicit primary" : "explicit inverse");
         DamageResistant resistance = stack.get(DataComponents.DAMAGE_RESISTANT);
         helper.assertTrue(resistance != null && resistance.types().unwrapKey().isEmpty(),
-                "Explicit resistance became a named tag after restart");
+                          "Explicit resistance became a named tag after restart");
         helper.assertTrue(stack.canBeHurtBy(helper.getLevel().damageSources().inFire()),
-                "Explicit intersection retained fire resistance");
+                          "Explicit intersection retained fire resistance");
         helper.assertTrue(!stack.canBeHurtBy(helper.getLevel().damageSources().cactus()),
-                "Explicit intersection lost cactus resistance");
+                          "Explicit intersection lost cactus resistance");
         MixedBootsData data = GameTestStacks.data(stack);
         helper.assertTrue(!data.left().source().canBeHurtBy(helper.getLevel().damageSources().cactus())
-                        && !data.right().source().canBeHurtBy(helper.getLevel().damageSources().cactus()),
-                "Explicit resistance source snapshots changed after restart");
+                                  && !data.right().source().canBeHurtBy(helper.getLevel().damageSources().cactus()),
+                          "Explicit resistance source snapshots changed after restart");
     }
 
     private static void assertNamedResistance(GameTestHelper helper, ItemStack stack, String description) {
         DamageResistant resistance = stack.get(DataComponents.DAMAGE_RESISTANT);
         helper.assertTrue(resistance != null && resistance.types().unwrapKey().isPresent(),
-                description + " did not retain its named tag");
+                          description + " did not retain its named tag");
         helper.assertTrue(!stack.canBeHurtBy(helper.getLevel().damageSources().inFire()),
-                description + " lost in-fire behavior");
+                          description + " lost in-fire behavior");
         helper.assertTrue(stack.canBeHurtBy(helper.getLevel().damageSources().cactus()),
-                description + " gained unrelated cactus behavior");
+                          description + " gained unrelated cactus behavior");
     }
 
     private static void assertNamedResistancePair(
@@ -455,12 +455,12 @@ public final class PersistenceGameTests {
         GameTestStacks.assertOrientation(
                 helper, stack, TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, description);
         helper.assertTrue(opaqueValue.equals(stack.get(TestContent.requireOpaqueComponent())),
-                description + " lost the opaque owner component on the root");
+                          description + " lost the opaque owner component on the root");
         MixedBootsData data = GameTestStacks.data(stack);
         helper.assertTrue(opaqueValue.equals(data.left().source().get(TestContent.requireOpaqueComponent())),
-                description + " lost the opaque component in its left snapshot");
+                          description + " lost the opaque component in its left snapshot");
         helper.assertTrue(data.right().source().get(TestContent.requireOpaqueComponent()) == null,
-                description + " copied the opaque component into its right snapshot");
+                          description + " copied the opaque component into its right snapshot");
     }
 
     private static void assertPersistedSecondary(
@@ -471,9 +471,9 @@ public final class PersistenceGameTests {
         GameTestStacks.assertOrientation(
                 helper, stack, Items.DIAMOND_BOOTS, TestContent.requireComponentBoots(), description);
         helper.assertTrue(stack.get(TestContent.requireOpaqueComponent()) == null,
-                description + " copied a right-source component onto the root");
+                          description + " copied a right-source component onto the root");
         MixedBootsData data = GameTestStacks.data(stack);
         helper.assertTrue(opaqueValue.equals(data.right().source().get(TestContent.requireOpaqueComponent())),
-                description + " lost the opaque component in its right snapshot");
+                          description + " lost the opaque component in its right snapshot");
     }
 }

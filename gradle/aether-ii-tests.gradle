@@ -7,41 +7,43 @@ def artifact = rootProject.file('NeoForge/runs/client/mods/aether_ii-26.1.2-alph
 
 def recognitionVariants = ['Live', 'Chains', 'SetChanged', 'SentryChanged']
 (['Charms'] + recognitionVariants.collect { "Recognition${it}" }).each { scope ->
-def recognition = scope.startsWith('Recognition')
-def variant = recognition ? scope.substring('Recognition'.length()).toLowerCase(Locale.ROOT) : ''
-def prefix = recognition ? 'aether-ii-recognition' : 'aether-ii-charms'
-def reports = layout.buildDirectory.dir("reports/${prefix}/${neoforge_version}${recognition ? '/' + variant : ''}")
-def directory = layout.buildDirectory.dir("run/aetherII${scope}/${neoforge_version}")
-neoForge.runs.create("aetherII${scope}") {
-    server()
-    disableIdeRun()
-    gameDirectory = directory.get().asFile
-    programArgument('--nogui')
-    systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
-    systemProperty("mismatchedboots.runtimetest.aetherII${recognition ? 'Recognition' : 'Charms'}", 'true')
-    if (recognition) { systemProperty('mismatchedboots.runtimetest.aetherRecognitionVariant', variant) }
-    jvmArgument('-Xmx1G')
-}
-def prepare = tasks.register("prepareAetherII${scope}") {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
-    doLast {
-        if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                .digest(artifact.bytes).encodeHex().toString() !=
-                '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6') {
-            throw new GradleException('Missing/unexpected pinned Aether II fixture artifact')
+    def recognition = scope.startsWith('Recognition')
+    def variant = recognition ? scope.substring('Recognition'.length()).toLowerCase(Locale.ROOT) : ''
+    def prefix = recognition ? 'aether-ii-recognition' : 'aether-ii-charms'
+    def reports = layout.buildDirectory.dir("reports/${prefix}/${neoforge_version}${recognition ? '/' + variant : ''}")
+    def directory = layout.buildDirectory.dir("run/aetherII${scope}/${neoforge_version}")
+    neoForge.runs.create("aetherII${scope}") {
+        server()
+        disableIdeRun()
+        gameDirectory = directory.get().asFile
+        programArgument('--nogui')
+        systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+        systemProperty("mismatchedboots.runtimetest.aetherII${recognition ? 'Recognition' : 'Charms'}", 'true')
+        if (recognition) {
+            systemProperty('mismatchedboots.runtimetest.aetherRecognitionVariant', variant)
         }
-        fixtureFiles.delete { delete directory }
-        fixtureFiles.delete {
-            delete new File(reports.get().asFile, "${prefix}-success.txt"),
-                    new File(reports.get().asFile, "${prefix}-failure.txt"),
-                    new File(reports.get().asFile, "${prefix}-report.txt")
-        }
-        fixtureFiles.copy {
-            from(productionJar, fixtureJar, artifact)
-            into(new File(directory.get().asFile, 'mods'))
-        }
-        new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
-        new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareAetherII${scope}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                    .digest(artifact.bytes).encodeHex().toString() !=
+                    '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6') {
+                throw new GradleException('Missing/unexpected pinned Aether II fixture artifact')
+            }
+            fixtureFiles.delete { delete directory }
+            fixtureFiles.delete {
+                delete new File(reports.get().asFile, "${prefix}-success.txt"),
+                        new File(reports.get().asFile, "${prefix}-failure.txt"),
+                        new File(reports.get().asFile, "${prefix}-report.txt")
+            }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar, artifact)
+                into(new File(directory.get().asFile, 'mods'))
+            }
+            new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+            new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
 server-port=0
 view-distance=2
@@ -50,36 +52,42 @@ max-tick-time=-1
 level-type=minecraft:flat
 generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
 '''
-    }
-}
-tasks.named("runAetherII${scope}") { dependsOn prepare }
-tasks.register("verifyAetherII${scope}") {
-    group = 'verification'
-    description = recognition ? "Production Aether II set/Sentry recognition (${variant})"
-            : 'Production Aether II pre-installed charm composition and native Forge rejection'
-    doLast {
-        def processLog = new File(reports.get().asFile, 'process.log')
-        runBounded(":RuntimeTests:NeoForge:runAetherII${scope}", processLog, 240)
-        def failure = new File(reports.get().asFile, "${prefix}-failure.txt")
-        def report = new File(reports.get().asFile, "${prefix}-report.txt")
-        def success = new File(reports.get().asFile, "${prefix}-success.txt")
-        if (failure.isFile()) { throw new GradleException(failure.text) }
-        if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()
-                || !report.text.contains(recognition ? 'production recognition=passed' : 'production charms=passed')) {
-            throw new GradleException("Incomplete Aether II ${scope}; see ${processLog}")
         }
-        def refusals = processLog.readLines().findAll { it.contains('Aether II mixed ') && it.contains('recognition disabled:') }
-        def expectedRefusal = variant == 'setchanged' ? 'set' : variant == 'sentrychanged' ? 'Sentry' : null
-        if (refusals.size() != (expectedRefusal == null ? 0 : 1)
-                || expectedRefusal != null && !refusals.first().contains("mixed ${expectedRefusal} recognition")) {
-            throw new GradleException("Unexpected local recognition diagnostics: ${refusals}")
-        }
-        def errors = processLog.readLines().findAll { it.contains('/ERROR]')
-                && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
-        if (!errors.isEmpty()) { throw new GradleException("Unexpected Aether runtime errors: ${errors}") }
-        logger.lifecycle(report.text)
     }
-}
+    tasks.named("runAetherII${scope}") { dependsOn prepare }
+    tasks.register("verifyAetherII${scope}") {
+        group = 'verification'
+        description = recognition ? "Production Aether II set/Sentry recognition (${variant})"
+                : 'Production Aether II pre-installed charm composition and native Forge rejection'
+        doLast {
+            def processLog = new File(reports.get().asFile, 'process.log')
+            runBounded(":RuntimeTests:NeoForge:runAetherII${scope}", processLog, 240)
+            def failure = new File(reports.get().asFile, "${prefix}-failure.txt")
+            def report = new File(reports.get().asFile, "${prefix}-report.txt")
+            def success = new File(reports.get().asFile, "${prefix}-success.txt")
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
+            if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || !report.text.contains(recognition ? 'production recognition=passed' : 'production charms=passed')) {
+                throw new GradleException("Incomplete Aether II ${scope}; see ${processLog}")
+            }
+            def refusals = processLog.readLines().findAll { it.contains('Aether II mixed ') && it.contains('recognition disabled:') }
+            def expectedRefusal = variant == 'setchanged' ? 'set' : variant == 'sentrychanged' ? 'Sentry' : null
+            if (refusals.size() != (expectedRefusal == null ? 0 : 1)
+                    || expectedRefusal != null && !refusals.first().contains("mixed ${expectedRefusal} recognition")) {
+                throw new GradleException("Unexpected local recognition diagnostics: ${refusals}")
+            }
+            def errors = processLog.readLines().findAll {
+                it.contains('/ERROR]')
+                        && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server')
+            }
+            if (!errors.isEmpty()) {
+                throw new GradleException("Unexpected Aether runtime errors: ${errors}")
+            }
+            logger.lifecycle(report.text)
+        }
+    }
 }
 
 recognitionVariants.eachWithIndex { variant, index ->
@@ -131,7 +139,8 @@ tasks.register('prepareAetherIISave') {
         fixtureFiles.delete { delete lifecycleServer }
         // Keep the outer task's raw process log intact while resetting only marker/manifest evidence.
         fixtureFiles.delete { delete fileTree(lifecycleReports) { include '*.txt', '*.json' } }
-        fixtureFiles.copy { from(productionJar, fixtureJar, artifact); into(new File(lifecycleServer.get().asFile, 'mods')) }
+        fixtureFiles.copy { from(productionJar, fixtureJar, artifact);
+            into(new File(lifecycleServer.get().asFile, 'mods')) }
         new File(lifecycleServer.get().asFile, 'eula.txt').text = 'eula=true\n'
         new File(lifecycleServer.get().asFile, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -161,8 +170,10 @@ tasks.register('prepareAetherIIClient') {
             throw new GradleException('Aether Client requires the completed Restart world')
         }
         fixtureFiles.delete { delete lifecycleClient }
-        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'world')); into(new File(lifecycleClient.get().asFile, 'saves/aether')) }
-        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'mods')); into(new File(lifecycleClient.get().asFile, 'mods')) }
+        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'world'));
+            into(new File(lifecycleClient.get().asFile, 'saves/aether')) }
+        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'mods'));
+            into(new File(lifecycleClient.get().asFile, 'mods')) }
         new File(lifecycleClient.get().asFile, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
         def config = new File(lifecycleClient.get().asFile, 'config'); config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
@@ -193,9 +204,13 @@ tasks.register('verifyAetherIILifecycle') {
             def failure = new File(result, "aether-ii-${name}-failure.txt")
             def report = new File(result, "aether-ii-${name}-report.txt")
             def success = new File(result, "aether-ii-${name}-success.txt")
-            if (failure.isFile()) { throw new GradleException(failure.text) }
-            def errors = log.readLines().findAll { it.contains('/ERROR]')
-                    && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
+            def errors = log.readLines().findAll {
+                it.contains('/ERROR]')
+                        && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server')
+            }
             if (!success.isFile() || success.text != 'neoforge\n' || !report.isFile()
                     || log.text.contains('recognition disabled:') || !errors.isEmpty()) {
                 throw new GradleException("Incomplete/refused Aether ${phase}: ${log}; unexpected errors=${errors}")

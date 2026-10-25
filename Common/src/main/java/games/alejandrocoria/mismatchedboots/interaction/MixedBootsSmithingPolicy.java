@@ -33,7 +33,9 @@ public final class MixedBootsSmithingPolicy {
         }
 
         RootAttempt rootAttempt = Services.PLATFORM.tryRootSmithing(level, template, root, addition);
-        if (rootAttempt.handled()) { return Optional.ofNullable(rootAttempt.result()); }
+        if (rootAttempt.handled()) {
+            return Optional.ofNullable(rootAttempt.result());
+        }
 
         // Template requirements belong to the loaded recipes, including recipes
         // that require the slot to be empty. Pass the actual input unchanged.
@@ -47,7 +49,7 @@ public final class MixedBootsSmithingPolicy {
             ItemStack result = MixedBootsRecomposer.recompose(root, left.source(), right.source());
             RecipeHolder<SmithingRecipe> primary = left.recipe() != null ? left.recipe() : right.recipe();
             RecipeHolder<SmithingRecipe> additional = left.recipe() != null && right.recipe() != null
-                    && !left.recipe().id().equals(right.recipe().id()) ? right.recipe() : null;
+                                                              && !left.recipe().id().equals(right.recipe().id()) ? right.recipe() : null;
             return Optional.of(new Result(result, primary, additional));
         } catch (IllegalArgumentException exception) {
             Constants.LOG.debug("Rejected mixed boots smithing recomposition: {}", exception.getMessage());
@@ -59,7 +61,7 @@ public final class MixedBootsSmithingPolicy {
             ServerLevel level, ItemStack template, ItemStack source, ItemStack addition) {
         SmithingRecipeInput input = new SmithingRecipeInput(template.copy(), source.copy(), addition.copy());
         Optional<RecipeHolder<SmithingRecipe>> match = level.recipeAccess()
-                .getRecipeFor(RecipeType.SMITHING, input, level);
+                                                            .getRecipeFor(RecipeType.SMITHING, input, level);
         if (match.isEmpty()) {
             return new Side(source, null);
         }

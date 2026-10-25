@@ -14,7 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AnvilMenu.class)
 abstract class SuspendedBootsAnvilMixin {
-    @Shadow @Final private DataSlot cost;
+    @Shadow
+    @Final
+    private DataSlot cost;
 
     @Inject(method = "createResult", at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$onlyRename(CallbackInfo callback) {
@@ -35,13 +37,18 @@ abstract class SuspendedBootsAnvilMixin {
         ItemStack input = menu.getSlot(AnvilMenu.INPUT_SLOT).getItem();
         ItemStack result = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         if (ModContent.suspendedBootsData(input).isEmpty() || result.isEmpty()
-                || !menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().isEmpty()) { return; }
+                || !menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().isEmpty()) {
+            return;
+        }
         // Native rename also writes empty enchantments and repair cost. Neither is a live-shell edit:
         // retain the exact suspended patch and transfer only the name, so reload cannot invent a conflict.
         ItemStack renamed = input.copy();
         var name = result.get(DataComponents.CUSTOM_NAME);
-        if (name == null) { renamed.remove(DataComponents.CUSTOM_NAME); }
-        else { renamed.set(DataComponents.CUSTOM_NAME, name); }
+        if (name == null) {
+            renamed.remove(DataComponents.CUSTOM_NAME);
+        } else {
+            renamed.set(DataComponents.CUSTOM_NAME, name);
+        }
         menu.getSlot(AnvilMenu.RESULT_SLOT).set(renamed);
     }
 }

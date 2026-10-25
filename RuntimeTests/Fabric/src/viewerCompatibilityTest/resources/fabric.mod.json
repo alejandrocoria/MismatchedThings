@@ -1,22 +1,22 @@
 {
-  "schemaVersion": 1,
-  "id": "mismatchedboots_viewer_compatibility_test",
-  "version": "1.0.0",
-  "name": "MismatchedBoots Viewer Reload Tests",
-  "environment": "client",
-  "entrypoints": {
-    "jei_mod_plugin": [
-      "games.alejandrocoria.mismatchedboots.compatibility.jei.JeiRecipeReloadProbe"
-    ],
-    "fabric-client-gametest": [
-      "games.alejandrocoria.mismatchedboots.runtimetest.viewer.RecipeViewerReloadClientGameTest"
-    ]
-  },
-  "depends": {
-    "fabricloader": "*",
-    "fabric-api": "*",
-    "minecraft": "26.1.2",
-    "mismatchedboots": "*",
-    "mismatchedboots-test": "*"
-  }
+    "schemaVersion": 1,
+    "id": "mismatchedboots_viewer_compatibility_test",
+    "version": "1.0.0",
+    "name": "MismatchedBoots Viewer Reload Tests",
+    "environment": "client",
+    "entrypoints": {
+        "jei_mod_plugin": [
+            "games.alejandrocoria.mismatchedboots.compatibility.jei.JeiRecipeReloadProbe"
+        ],
+        "fabric-client-gametest": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.viewer.RecipeViewerReloadClientGameTest"
+        ]
+    },
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "26.1.2",
+        "mismatchedboots": "*",
+        "mismatchedboots-test": "*"
+    }
 }

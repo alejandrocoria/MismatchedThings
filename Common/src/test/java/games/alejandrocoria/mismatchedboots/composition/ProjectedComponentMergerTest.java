@@ -55,23 +55,23 @@ class ProjectedComponentMergerTest {
     @Test
     void updatesOnlyOwnerProjectedComponents() {
         ItemStack previousOwner = stack(Items.IRON_BOOTS, DataComponentMap.builder()
-                .set(inheritedType, "old inherited")
-                .set(divergedType, "old owner")
-                .set(removedType, "old removable")
-                .set(managedType, "old managed")
-                .build());
+                                                                          .set(inheritedType, "old inherited")
+                                                                          .set(divergedType, "old owner")
+                                                                          .set(removedType, "old removable")
+                                                                          .set(managedType, "old managed")
+                                                                          .build());
         ItemStack newOwner = stack(Items.DIAMOND_BOOTS, DataComponentMap.builder()
-                .set(inheritedType, "new inherited")
-                .set(divergedType, "new owner")
-                .set(introducedType, "newly introduced")
-                .set(managedType, "new managed")
-                .build());
+                                                                        .set(inheritedType, "new inherited")
+                                                                        .set(divergedType, "new owner")
+                                                                        .set(introducedType, "newly introduced")
+                                                                        .set(managedType, "new managed")
+                                                                        .build());
         ItemStack currentRoot = stack(Items.CHAINMAIL_BOOTS, DataComponentMap.builder()
-                .set(inheritedType, "old inherited")
-                .set(divergedType, "old owner")
-                .set(removedType, "old removable")
-                .set(managedType, "old managed")
-                .build());
+                                                                             .set(inheritedType, "old inherited")
+                                                                             .set(divergedType, "old owner")
+                                                                             .set(removedType, "old removable")
+                                                                             .set(managedType, "old managed")
+                                                                             .build());
         currentRoot.set(divergedType, "root mutation");
         currentRoot.set(rootOnlyType, "root only");
         currentRoot.set(managedType, "old managed");
@@ -97,14 +97,14 @@ class ProjectedComponentMergerTest {
     @Test
     void preservesAnExplicitRootRemoval() {
         ItemStack previousOwner = stack(Items.IRON_BOOTS, DataComponentMap.builder()
-                .set(divergedType, "old owner")
-                .build());
+                                                                          .set(divergedType, "old owner")
+                                                                          .build());
         ItemStack newOwner = stack(Items.DIAMOND_BOOTS, DataComponentMap.builder()
-                .set(divergedType, "new owner")
-                .build());
+                                                                        .set(divergedType, "new owner")
+                                                                        .build());
         ItemStack currentRoot = stack(Items.CHAINMAIL_BOOTS, DataComponentMap.builder()
-                .set(divergedType, "old owner")
-                .build());
+                                                                             .set(divergedType, "old owner")
+                                                                             .build());
         currentRoot.remove(divergedType);
 
         ItemStack result = mergeOwnerProjection(
@@ -130,8 +130,8 @@ class ProjectedComponentMergerTest {
                                 managed ? Set.of(decisionType) : Set.of());
 
                         String expected = !managed && Objects.equals(current, previous)
-                                ? replacement
-                                : current;
+                                          ? replacement
+                                          : current;
                         assertEquals(expected, result.get(decisionType), () ->
                                 "previous=" + previous
                                         + ", current=" + current
@@ -146,29 +146,31 @@ class ProjectedComponentMergerTest {
     @Test
     @SuppressWarnings("deprecation")
     void semanticTagEqualityAllowsDerivedRemovalAcrossDistinctHolderSets() {
-        HolderOwner<DamageType> owner = new HolderOwner<>() {};
+        HolderOwner<DamageType> owner = new HolderOwner<>() {
+        };
         var tag = TagKey.create(Registries.DAMAGE_TYPE, Identifier.withDefaultNamespace("is_fire"));
         var oldResistance = new DamageResistant(HolderSet.emptyNamed(owner, tag));
         var liveResistance = new DamageResistant(HolderSet.emptyNamed(owner, tag));
         ItemStack root = stack(Items.IRON_BOOTS, DataComponentMap.EMPTY);
         root.set(DataComponents.DAMAGE_RESISTANT, liveResistance);
         var previous = new ComponentProjection.Result(DataComponentMap.builder()
-                .set(DataComponents.DAMAGE_RESISTANT, oldResistance).build(), DataComponentMap.EMPTY,
-                Set.of(DataComponents.DAMAGE_RESISTANT));
+                                                                      .set(DataComponents.DAMAGE_RESISTANT, oldResistance).build(),
+                                                      DataComponentMap.EMPTY,
+                                                      Set.of(DataComponents.DAMAGE_RESISTANT));
         var replacement = new ComponentProjection.Result(DataComponentMap.EMPTY, DataComponentMap.EMPTY, Set.of());
         assertNull(ProjectedComponentMerger.merge(root, previous, replacement).get(DataComponents.DAMAGE_RESISTANT));
         assertEquals(liveResistance, root.get(DataComponents.DAMAGE_RESISTANT));
     }
 
     private static ItemStack mergeOwnerProjection(ItemStack root, ItemStack previous, ItemStack replacement,
-                                                 Set<DataComponentType<?>> fixed) {
+                                                  Set<DataComponentType<?>> fixed) {
         Set<DataComponentType<?>> oldTypes = new HashSet<>(previous.getComponents().keySet());
         Set<DataComponentType<?>> newTypes = new HashSet<>(replacement.getComponents().keySet());
         oldTypes.removeAll(fixed);
         newTypes.removeAll(fixed);
         return ProjectedComponentMerger.merge(root,
-                new ComponentProjection.Result(previous.getComponents(), DataComponentMap.EMPTY, oldTypes),
-                new ComponentProjection.Result(replacement.getComponents(), DataComponentMap.EMPTY, newTypes));
+                                              new ComponentProjection.Result(previous.getComponents(), DataComponentMap.EMPTY, oldTypes),
+                                              new ComponentProjection.Result(replacement.getComponents(), DataComponentMap.EMPTY, newTypes));
     }
 
     private static DataComponentType<String> stringComponent() {

@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class JustDireEarthquakePostCommitMixin {
     @Inject(method = "activate", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z", shift = At.Shift.AFTER))
     private static void fail(CallbackInfoReturnable<Boolean> callback) {
-        if (JustDireEarthquakeServerGuardPlugin.fault == 4) { throw new JustDireEarthquakeServerGuardPlugin.PostCommitFailure(); }
+        if (JustDireEarthquakeServerGuardPlugin.fault == 4) {
+            throw new JustDireEarthquakeServerGuardPlugin.PostCommitFailure();
+        }
     }
 }

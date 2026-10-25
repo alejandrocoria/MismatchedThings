@@ -53,10 +53,10 @@ public final class CraftingRepairFlowGameTests {
 
         ItemStack preview = menu.getSlot(InventoryMenu.RESULT_SLOT).getItem();
         assertRichResult(helper, preview, sources, rootMaximum, expectedDamage, ordinary, curse, opaque,
-                "2x2 preview");
+                         "2x2 preview");
         ItemStack taken = menu.getSlot(InventoryMenu.RESULT_SLOT).safeTake(1, 1, player);
         assertRichResult(helper, taken, sources, rootMaximum, expectedDamage, ordinary, curse, opaque,
-                "2x2 extracted result");
+                         "2x2 extracted result");
         assertConsumedOnce(helper, menu, 0, 3, "2x2 normal take");
         helper.assertValueEqual(player.experienceLevel, experienceBefore, "crafting repair experience level");
         helper.succeed();
@@ -73,13 +73,13 @@ public final class CraftingRepairFlowGameTests {
         menu.getInputGridSlots().get(2).set(mixed);
 
         helper.assertTrue(!menu.getSlot(InventoryMenu.RESULT_SLOT).getItem().isEmpty(),
-                "2x2 reverse-order repair had no preview");
+                          "2x2 reverse-order repair had no preview");
         ItemStack moved = menu.quickMoveStack(player, InventoryMenu.RESULT_SLOT);
 
         helper.assertTrue(!moved.isEmpty(), "2x2 reverse-order repair could not be shift-clicked");
         helper.assertValueEqual(moved.getDamageValue(), 0, "saturated 2x2 repair damage");
         helper.assertTrue(GameTestStacks.data(moved).equals(sources),
-                "2x2 shift-click changed source snapshots");
+                          "2x2 shift-click changed source snapshots");
         assertConsumedOnce(helper, menu, 0, 2, "2x2 shift-click");
         helper.assertValueEqual(countMixed(player), 1L, "2x2 shift-click inventory result count");
         helper.succeed();
@@ -102,7 +102,7 @@ public final class CraftingRepairFlowGameTests {
         helper.assertValueEqual(preview.getDamageValue(), expectedDamage, "sparse 3x3 preview damage");
         ItemStack taken = normal.getSlot(CraftingMenu.RESULT_SLOT).safeTake(1, 1, player);
         helper.assertTrue(GameTestStacks.data(taken).equals(normalSources),
-                "Sparse 3x3 normal take changed source snapshots");
+                          "Sparse 3x3 normal take changed source snapshots");
         assertConsumedOnce(helper, normal, 0, 8, "sparse 3x3 normal take");
 
         CraftingMenu shifted = craftingTable(helper, player, 2);
@@ -117,7 +117,7 @@ public final class CraftingRepairFlowGameTests {
         helper.assertTrue(!moved.isEmpty(), "Sparse reverse-order 3x3 repair could not be shift-clicked");
         helper.assertValueEqual(moved.getDamageValue(), 0, "saturated sparse 3x3 repair damage");
         helper.assertTrue(GameTestStacks.data(moved).equals(shiftedSources),
-                "Sparse 3x3 shift-click changed source snapshots");
+                          "Sparse 3x3 shift-click changed source snapshots");
         assertConsumedOnce(helper, shifted, 2, 6, "sparse 3x3 shift-click");
         helper.succeed();
     }
@@ -147,13 +147,13 @@ public final class CraftingRepairFlowGameTests {
         table.getInputGridSlots().get(4).set(donor);
         table.getInputGridSlots().get(8).set(extra);
         helper.assertTrue(table.getSlot(CraftingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "3x3 repair accepted an unrelated occupied slot");
+                          "3x3 repair accepted an unrelated occupied slot");
         helper.assertTrue(table.quickMoveStack(player, CraftingMenu.RESULT_SLOT).isEmpty(),
-                "Rejected 3x3 repair produced a shift-click result");
+                          "Rejected 3x3 repair produced a shift-click result");
         helper.assertTrue(table.getInputGridSlots().get(0).getItem() == mixed
-                        && table.getInputGridSlots().get(4).getItem() == donor
-                        && table.getInputGridSlots().get(8).getItem() == extra,
-                "Rejected 3x3 repair changed an input or unrelated slot");
+                                  && table.getInputGridSlots().get(4).getItem() == donor
+                                  && table.getInputGridSlots().get(8).getItem() == extra,
+                          "Rejected 3x3 repair changed an input or unrelated slot");
         helper.succeed();
     }
 
@@ -171,7 +171,7 @@ public final class CraftingRepairFlowGameTests {
         helper.assertTrue(menu.quickMoveStack(player, 0).isEmpty(), description + " produced a shift-click result");
         for (int index = 0; index < inputs.size(); index++) {
             helper.assertTrue(menu.getInputGridSlots().get(index).getItem() == inputs.get(index),
-                    description + " changed input " + index);
+                              description + " changed input " + index);
         }
     }
 
@@ -195,9 +195,9 @@ public final class CraftingRepairFlowGameTests {
         helper.assertTrue(!result.has(DataComponents.CUSTOM_NAME), description + " retained its custom name");
         helper.assertTrue(!result.has(DataComponents.REPAIR_COST), description + " retained prior-work cost");
         helper.assertTrue(opaque.equals(result.get(DataComponents.CUSTOM_DATA)),
-                description + " lost its opaque root component");
+                          description + " lost its opaque root component");
         helper.assertTrue(GameTestStacks.data(result).equals(sources),
-                description + " changed ordered source snapshots");
+                          description + " changed ordered source snapshots");
     }
 
     private static void assertConsumedOnce(
@@ -207,11 +207,11 @@ public final class CraftingRepairFlowGameTests {
             int secondSlot,
             String description) {
         helper.assertTrue(menu.getInputGridSlots().get(firstSlot).getItem().isEmpty(),
-                description + " did not consume the first input exactly once");
+                          description + " did not consume the first input exactly once");
         helper.assertTrue(menu.getInputGridSlots().get(secondSlot).getItem().isEmpty(),
-                description + " did not consume the second input exactly once");
+                          description + " did not consume the second input exactly once");
         helper.assertTrue(menu.getInputGridSlots().stream().allMatch(slot -> slot.getItem().isEmpty()),
-                description + " left an unexpected crafting remainder");
+                          description + " left an unexpected crafting remainder");
     }
 
     private static CraftingMenu craftingTable(GameTestHelper helper, ServerPlayer player, int containerId) {
@@ -229,9 +229,9 @@ public final class CraftingRepairFlowGameTests {
 
     private static long countMixed(ServerPlayer player) {
         return player.getInventory().getNonEquipmentItems().stream()
-                .filter(ModContent::isMixedBoots)
-                .mapToLong(ItemStack::getCount)
-                .sum();
+                     .filter(ModContent::isMixedBoots)
+                     .mapToLong(ItemStack::getCount)
+                     .sum();
     }
 
     private static Holder<Enchantment> enchantment(

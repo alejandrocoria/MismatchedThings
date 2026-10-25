@@ -50,41 +50,61 @@ final class AetherIIClientTest {
     private static double serverPeak;
     private static int preparedTick;
 
-    private AetherIIClientTest() {}
+    private AetherIIClientTest() {
+    }
 
     static void observeServer() {
-        if (serverOwner != null) { serverPeak = Math.max(serverPeak, serverOwner.getY() - 81); }
+        if (serverOwner != null) {
+            serverPeak = Math.max(serverPeak, serverOwner.getY() - 81);
+        }
     }
 
     static void tick(Minecraft client) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         try {
             require(++ticks < 2400, "Aether client timeout: scene=" + scene + " phase=" + phase + " age=" + age
                     + " y=" + (client.player == null ? "none" : client.player.getY()) + " screen="
                     + (client.screen == null ? "none" : client.screen.getClass().getName()) + " state=" + expected);
             if (client.player == null && client.screen instanceof BackupConfirmScreen backup) {
-                if (backupConfirmed) { return; }
+                if (backupConfirmed) {
+                    return;
+                }
                 backupConfirmed = true;
                 // Only this opt-in fixture's disposable copied world: use the native skip-backup/join button.
                 REPORT.append("Disposable-world confirmation: ").append(backup.getTitle().getString()).append('\n');
                 backup.children().stream().filter(child -> child instanceof Button button
-                        && button.getMessage().equals(Component.translatable("selectWorld.backupJoinSkipButton")))
-                        .map(Button.class::cast).findFirst().orElseThrow().onPress(new KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
+                              && button.getMessage().equals(Component.translatable("selectWorld.backupJoinSkipButton")))
+                      .map(Button.class::cast).findFirst().orElseThrow().onPress(new KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
                 return;
             }
-            if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) { return; }
-            client.options.pauseOnLostFocus = false;
-            if (client.screen instanceof net.minecraft.client.gui.screens.PauseScreen) { client.setScreen(null); }
-            if (client.screen != null) { return; }
-            if (job != null) {
-                if (!job.isDone()) { return; }
-                expected = JsonParser.parseString(job.get()).getAsJsonObject(); job = null;
-                if (phase == 5) { complete(client); return; }
+            if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
+                return;
             }
-            var server = client.getSingleplayerServer(); var id = client.player.getUUID();
+            client.options.pauseOnLostFocus = false;
+            if (client.screen instanceof net.minecraft.client.gui.screens.PauseScreen) {
+                client.setScreen(null);
+            }
+            if (client.screen != null) {
+                return;
+            }
+            if (job != null) {
+                if (!job.isDone()) {
+                    return;
+                }
+                expected = JsonParser.parseString(job.get()).getAsJsonObject();
+                job = null;
+                if (phase == 5) {
+                    complete(client);
+                    return;
+                }
+            }
+            var server = client.getSingleplayerServer();
+            var id = client.player.getUUID();
             if (phase == 0) {
                 require(client.options.getSoundSourceVolume(SoundSource.MASTER) == 0
-                        && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
+                                && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                         "Aether client not hidden/muted");
                 client.player.input = new KeyboardInput(client.options);
                 job = server.submit(() -> {
@@ -93,9 +113,11 @@ final class AetherIIClientTest {
                         if (REJOIN) {
                             var saved = AetherIILifecycleTest.read("aether-ii-player.json");
                             require(saved.get("process").getAsLong() != ProcessHandle.current().pid()
-                                    && saved.get("uuid").getAsString().equals(id.toString()), "Rejoin reused process/changed identity");
+                                            && saved.get("uuid").getAsString().equals(id.toString()), "Rejoin reused process/changed identity");
                             roots = new ArrayList<>();
-                            for (int i = 0; i < 6; i++) { roots.add(owner.getInventory().getItem(9 + i)); }
+                            for (int i = 0; i < 6; i++) {
+                                roots.add(owner.getInventory().getItem(9 + i));
+                            }
                             AetherIILifecycleTest.compare(server, roots, saved.getAsJsonArray("roots"));
                             REPORT.append("Same player UUID in different JVM: six complete used player roots matched before callbacks\n");
                         } else {
@@ -103,46 +125,73 @@ final class AetherIIClientTest {
                             AetherIILifecycleTest.compare(server, roots, AetherIILifecycleTest.read("aether-ii-world.json").getAsJsonArray("roots"));
                         }
                         AetherIILifecycleTest.check(owner, roots, REPORT);
-                        owner.getInventory().clearContent(); owner.removeAllEffects(); owner.setGameMode(GameType.SURVIVAL);
-                        owner.getFoodData().setFoodLevel(10); owner.setNoGravity(false);
+                        owner.getInventory().clearContent();
+                        owner.removeAllEffects();
+                        owner.setGameMode(GameType.SURVIVAL);
+                        owner.getFoodData().setFoodLevel(10);
+                        owner.setNoGravity(false);
                         for (int x = -3; x <= 3; x++) {
-                            for (int z = -3; z <= 3; z++) { server.overworld().setBlock(new BlockPos(x, 80, z), Blocks.STONE.defaultBlockState(), 3); }
+                            for (int z = -3; z <= 3; z++) {
+                                server.overworld().setBlock(new BlockPos(x, 80, z), Blocks.STONE.defaultBlockState(), 3);
+                            }
                         }
                         return prepare(owner);
-                    } catch (Exception failure) { throw new IllegalStateException(failure); }
-                }); phase = 1; return;
+                    } catch (Exception failure) {
+                        throw new IllegalStateException(failure);
+                    }
+                });
+                phase = 1;
+                return;
             }
-            if (!received(client)) { return; }
+            if (!received(client)) {
+                return;
+            }
             if (scene < 4) {
                 // Two Health/Neptune inverses, each followed by native set deactivation.
-                if (++settled < 10) { return; }
+                if (++settled < 10) {
+                    return;
+                }
                 close(client.player.getAttributeValue(Attributes.MAX_HEALTH), 21, "Connected Health snapshot");
                 boolean active = scene % 2 == 0;
                 close(client.player.getAttributeValue(Attributes.OXYGEN_BONUS), active ? 1.5 : 0, "Connected native Neptune set");
-                REPORT.append("PACKET Health/Neptune scene=").append(scene).append(" root+attributes received, native set active=").append(active).append('\n');
-                next(client); return;
+                REPORT.append("PACKET Health/Neptune scene=")
+                      .append(scene)
+                      .append(" root+attributes received, native set active=")
+                      .append(active)
+                      .append('\n');
+                next(client);
+                return;
             }
             flight(client);
         } catch (Throwable failure) {
-            NetworkAcceptanceFiles.failure(OUTPUT, failure); finished = true;
-            client.options.keyJump.setDown(false); client.stop();
+            NetworkAcceptanceFiles.failure(OUTPUT, failure);
+            finished = true;
+            client.options.keyJump.setDown(false);
+            client.stop();
         }
     }
 
     private static boolean received(Minecraft client) {
-        if (expected == null || !expected.has("root")) { return false; }
+        if (expected == null || !expected.has("root")) {
+            return false;
+        }
         if (!expected.get("ready").getAsBoolean()) {
-            var server = client.getSingleplayerServer(); var id = client.player.getUUID();
+            var server = client.getSingleplayerServer();
+            var id = client.player.getUUID();
             job = server.submit(() -> poll(server.getPlayerList().getPlayer(id)));
             return false;
         }
         var ops = client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         var root = ItemStack.CODEC.parse(ops, expected.get("root")).getOrThrow();
-        if (!ItemStack.matches(root, client.player.getItemBySlot(EquipmentSlot.FEET))) { return false; }
+        if (!ItemStack.matches(root, client.player.getItemBySlot(EquipmentSlot.FEET))) {
+            return false;
+        }
         // Server effects / vanilla equipment updates are the oracle, not a client-side forced modifier.
         for (var entry : List.of(Attributes.MAX_HEALTH, Attributes.ARMOR, Attributes.OXYGEN_BONUS, Attributes.FALL_DAMAGE_MULTIPLIER)) {
             String name = entry.unwrapKey().orElseThrow().identifier().toString();
-            if (Math.abs(client.player.getAttributeValue(entry) - expected.getAsJsonObject("attributes").get(name).getAsDouble()) > 1E-6) { return false; }
+            if (Math.abs(client.player.getAttributeValue(entry) - expected.getAsJsonObject("attributes").get(name).getAsDouble()) > 1E-6) {
+                return false;
+            }
         }
         return true;
     }
@@ -151,33 +200,60 @@ final class AetherIIClientTest {
         var player = client.player;
         boolean supported = scene != 7;
         if (phase == 1) {
-            if (!player.onGround() || Math.abs(player.getY() - 81) > .001) { settled = 0; return; }
-            if (++settled < 15) { return; }
+            if (!player.onGround() || Math.abs(player.getY() - 81) > .001) {
+                settled = 0;
+                return;
+            }
+            if (++settled < 15) {
+                return;
+            }
             require(!jumpUsed(player), "Native grounded reset missing");
-            client.options.keyJump.setDown(true); phase = 2; age = 0; peak = 0; boosted = false; settled = 0;
+            client.options.keyJump.setDown(true);
+            phase = 2;
+            age = 0;
+            peak = 0;
+            boosted = false;
+            settled = 0;
             return;
         }
         client.options.keyJump.setDown(false);
-        age++; peak = Math.max(peak, player.getY() - 81);
+        age++;
+        peak = Math.max(peak, player.getY() - 81);
         require(age < 110, "Flight did not land scene=" + scene + " peak=" + peak);
         // Initial press -> release -> second press after the ordinary jump delay. No velocity/attachment writes.
-        if (age == 7 || age == 20) { client.options.keyJump.setDown(true); }
-        if (!player.onGround() && jumpUsed(player)) { boosted = true; }
-        if (age < 12 || !player.onGround()) { return; }
-        if (++settled < 8) { return; }
+        if (age == 7 || age == 20) {
+            client.options.keyJump.setDown(true);
+        }
+        if (!player.onGround() && jumpUsed(player)) {
+            boosted = true;
+        }
+        if (age < 12 || !player.onGround()) {
+            return;
+        }
+        if (++settled < 8) {
+            return;
+        }
         require(boosted == supported, "Wrong native double-jump admission scene=" + scene + " boosted=" + boosted);
         require(!jumpUsed(player), "Landing did not reset native jump attachment");
-        if (scene == 4) { nativePeak = peak; require(peak > 2, "Native double-jump control did not exceed ordinary height"); }
-        else if (supported) { require(Math.abs(peak - nativePeak) < .06, "Mixed keyboard height differs: " + peak + " vs " + nativePeak); }
-        else { require(peak < nativePeak - .5, "Missing-third-piece control double jumped"); }
+        if (scene == 4) {
+            nativePeak = peak;
+            require(peak > 2, "Native double-jump control did not exceed ordinary height");
+        } else if (supported) {
+            require(Math.abs(peak - nativePeak) < .06, "Mixed keyboard height differs: " + peak + " vs " + nativePeak);
+        } else {
+            require(peak < nativePeak - .5, "Missing-third-piece control double jumped");
+        }
         REPORT.append("FLIGHT scene=").append(scene).append(" native attachment boost=").append(boosted)
-                .append(" apex=").append(peak).append("; grounded reset, third press cannot exceed native height\n");
+              .append(" apex=").append(peak).append("; grounded reset, third press cannot exceed native height\n");
         next(client);
     }
 
     private static void next(Minecraft client) {
-        client.options.keyJump.setDown(false); settled = 0; phase = 1;
-        var server = client.getSingleplayerServer(); var id = client.player.getUUID();
+        client.options.keyJump.setDown(false);
+        settled = 0;
+        phase = 1;
+        var server = client.getSingleplayerServer();
+        var id = client.player.getUUID();
         int completed = scene++;
         job = server.submit(() -> {
             try {
@@ -189,24 +265,38 @@ final class AetherIIClientTest {
                     require(owner.onGround() && Math.abs(owner.getY() - 81) < .1, "Client landing did not reach server");
                     require(Math.abs(serverPeak - peak) < .3, "Actual keyboard ascent did not reach server: " + serverPeak + " vs " + peak);
                 }
-                if (scene < 8) { return prepare(owner); }
+                if (scene < 8) {
+                    return prepare(owner);
+                }
                 clear(owner);
-                for (int i = 0; i < 6; i++) { owner.getInventory().setItem(9 + i, roots.get(i)); }
-                var manifest = new JsonObject(); manifest.addProperty("process", ProcessHandle.current().pid()); manifest.addProperty("uuid", id.toString());
+                for (int i = 0; i < 6; i++) {
+                    owner.getInventory().setItem(9 + i, roots.get(i));
+                }
+                var manifest = new JsonObject();
+                manifest.addProperty("process", ProcessHandle.current().pid());
+                manifest.addProperty("uuid", id.toString());
                 manifest.add("roots", AetherIILifecycleTest.encode(server, roots));
-                if (!REJOIN) { NetworkAcceptanceFiles.write("aether-ii-player.json", manifest.toString()); }
+                if (!REJOIN) {
+                    NetworkAcceptanceFiles.write("aether-ii-player.json", manifest.toString());
+                }
                 server.getPlayerList().saveAll();
                 return "{}";
-            } catch (Exception failure) { throw new IllegalStateException(failure); }
+            } catch (Exception failure) {
+                throw new IllegalStateException(failure);
+            }
         });
-        if (scene == 8) { phase = 5; }
+        if (scene == 8) {
+            phase = 5;
+        }
     }
 
     private static String prepare(ServerPlayer owner) throws Exception {
         clear(owner);
         if (scene < 4) {
             owner.setItemSlot(EquipmentSlot.HEAD, item("neptune_helmet"));
-            if (scene % 2 == 0) { owner.setItemSlot(EquipmentSlot.CHEST, item("neptune_chestplate")); }
+            if (scene % 2 == 0) {
+                owner.setItemSlot(EquipmentSlot.CHEST, item("neptune_chestplate"));
+            }
             worn = roots.get(scene / 2);
         } else {
             owner.setItemSlot(EquipmentSlot.HEAD, item("gravitite_helmet"));
@@ -214,8 +304,11 @@ final class AetherIIClientTest {
             worn = scene == 4 ? item("gravitite_boots") : scene == 7 ? new ItemStack(Items.DIAMOND_BOOTS) : roots.get(scene - 1);
         }
         owner.setItemSlot(EquipmentSlot.FEET, worn);
-        owner.setDeltaMovement(Vec3.ZERO); owner.connection.teleport(.5, 81, .5, 0, 0);
-        preparedTick = owner.tickCount; serverOwner = owner; serverPeak = 0;
+        owner.setDeltaMovement(Vec3.ZERO);
+        owner.connection.teleport(.5, 81, .5, 0, 0);
+        preparedTick = owner.tickCount;
+        serverOwner = owner;
+        serverPeak = 0;
         // poll() waits for ordinary native tick/equipment callbacks, never writes expected modifiers.
         return poll(owner);
     }
@@ -228,7 +321,8 @@ final class AetherIIClientTest {
         for (var entry : List.of(Attributes.MAX_HEALTH, Attributes.ARMOR, Attributes.OXYGEN_BONUS, Attributes.FALL_DAMAGE_MULTIPLIER)) {
             attributes.addProperty(entry.unwrapKey().orElseThrow().identifier().toString(), owner.getAttributeValue(entry));
         }
-        value.add("attributes", attributes); return value.toString();
+        value.add("attributes", attributes);
+        return value.toString();
     }
 
     private static boolean jumpUsed(Player player) throws Exception {
@@ -241,6 +335,8 @@ final class AetherIIClientTest {
     private static void complete(Minecraft client) {
         NetworkAcceptanceFiles.write(OUTPUT + "-report.txt", REPORT.toString());
         NetworkAcceptanceFiles.write(OUTPUT + "-success.txt", "neoforge\n");
-        finished = true; client.options.keyJump.setDown(false); client.stop();
+        finished = true;
+        client.options.keyJump.setDown(false);
+        client.stop();
     }
 }

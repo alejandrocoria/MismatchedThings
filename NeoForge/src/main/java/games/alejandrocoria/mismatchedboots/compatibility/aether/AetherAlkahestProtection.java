@@ -14,23 +14,39 @@ public final class AetherAlkahestProtection {
     private static final Identifier TIER = Identifier.fromNamespaceAndPath("aether_ii", "reinforcement_tier");
     private static volatile boolean fluidDisabled, armorDisabled;
 
-    private AetherAlkahestProtection() {}
+    private AetherAlkahestProtection() {
+    }
 
     public static boolean matches(boolean original, ItemStack stack, Supplier<?> supplier, boolean armor) {
-        if (original || (armor ? armorDisabled : fluidDisabled) || !(stack.getItem() instanceof MixedBootsItem)) { return original; }
+        if (original || (armor ? armorDisabled : fluidDisabled) || !(stack.getItem() instanceof MixedBootsItem)) {
+            return original;
+        }
         try {
             var type = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(TIER).orElseThrow();
-            if (supplier.get() != type) { throw new IllegalStateException("Native reinforcement supplier changed"); }
+            if (supplier.get() != type) {
+                throw new IllegalStateException("Native reinforcement supplier changed");
+            }
             return MixedBootsSources.anySource(stack, source -> source.has(type));
         } catch (RuntimeException | LinkageError failure) {
-            disable(armor, failure); return original;
+            disable(armor, failure);
+            return original;
         }
     }
 
     static synchronized void disable(boolean armor, Throwable failure) {
-        if (armor ? armorDisabled : fluidDisabled) { return; }
-        if (armor) { armorDisabled = true; } else { fluidDisabled = true; }
+        if (armor ? armorDisabled : fluidDisabled) {
+            return;
+        }
+        if (armor) {
+            armorDisabled = true;
+        } else {
+            fluidDisabled = true;
+        }
         String message = "Aether II mixed Alkahest " + (armor ? "armor" : "fluid") + " protection disabled: local contract unavailable";
-        if (failure == null) { Constants.LOG.warn(message); } else { Constants.LOG.warn(message, failure); }
+        if (failure == null) {
+            Constants.LOG.warn(message);
+        } else {
+            Constants.LOG.warn(message, failure);
+        }
     }
 }

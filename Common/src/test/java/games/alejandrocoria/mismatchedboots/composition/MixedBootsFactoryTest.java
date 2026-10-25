@@ -160,10 +160,11 @@ class MixedBootsFactoryTest {
         var customB = Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("other", "equip_b")));
         var sameIdDifferentRange = Holder.direct(SoundEvent.createFixedRangeEvent(customA.value().location(), 64));
         var inlineVanilla = Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.withDefaultNamespace("item.armor.equip_iron")));
-        record Case(Holder<SoundEvent> left, Holder<SoundEvent> right, Holder<SoundEvent> primary, Holder<SoundEvent> inverse) {}
+        record Case(Holder<SoundEvent> left, Holder<SoundEvent> right, Holder<SoundEvent> primary, Holder<SoundEvent> inverse) {
+        }
         for (var example : List.of(
                 new Case(SoundEvents.ARMOR_EQUIP_IRON, SoundEvents.ARMOR_EQUIP_DIAMOND,
-                        SoundEvents.ARMOR_EQUIP_IRON, SoundEvents.ARMOR_EQUIP_DIAMOND),
+                         SoundEvents.ARMOR_EQUIP_IRON, SoundEvents.ARMOR_EQUIP_DIAMOND),
                 new Case(customA, SoundEvents.ARMOR_EQUIP_DIAMOND, customA, customA),
                 new Case(inlineVanilla, customB, customB, customB),
                 new Case(customA, customB, customA, customB),
@@ -196,31 +197,33 @@ class MixedBootsFactoryTest {
             changedRight.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).setEquipSound(custom).build());
             ItemStack changedBefore = changedRight.copy();
             ItemStack result = MixedBootsRecomposer.recompose(root, changedLeft, changedRight,
-                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                              mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertEquals(custom, result.get(DataComponents.EQUIPPABLE).equipSound());
             assertTrue(ItemStack.matches(rootBefore, root));
             assertTrue(ItemStack.matches(changedBefore, changedRight));
             assertTrue(ItemStack.matches(changedBefore, result.get(mixedDataType).right().source()));
             // Removing a custom sound or changing it to a second custom must use the current sources, not the old root.
             ItemStack reset = MixedBootsRecomposer.recompose(result, changedLeft, inverse ? left : right,
-                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                             mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertEquals(changedLeft.get(DataComponents.EQUIPPABLE).equipSound(), reset.get(DataComponents.EQUIPPABLE).equipSound());
             changedLeft.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET)
-                    .setEquipSound(Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("other", "equip")))).build());
+                                                                 .setEquipSound(Holder.direct(SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(
+                                                                         "other",
+                                                                         "equip")))).build());
             ItemStack twoCustom = MixedBootsRecomposer.recompose(result, changedLeft, changedRight,
-                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                                 mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertEquals(changedLeft.get(DataComponents.EQUIPPABLE).equipSound(), twoCustom.get(DataComponents.EQUIPPABLE).equipSound());
         }
     }
 
     @ParameterizedTest
     @CsvSource({
-        "100,0,100,0,100,0",
-        "101,0,100,0,100,0",
-        "101,50,101,51,101,51",
-        "0,0,100,60,50,30",
-        "0,0,0,0,0,0",
-        "100,100,100,100,100,100"
+            "100,0,100,0,100,0",
+            "101,0,100,0,100,0",
+            "101,50,101,51,101,51",
+            "0,0,100,60,50,30",
+            "0,0,0,0,0,0",
+            "100,100,100,100,100,100"
     })
     void derivesConservativeDurability(
             int firstMaximum,
@@ -317,33 +320,33 @@ class MixedBootsFactoryTest {
         second.set(DataComponents.REPAIR_COST, 5);
 
         assertEquals(new RepairCostMerger.Results(2, 5),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
         assertEquals(new RepairCostMerger.Results(4, 4),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
         assertEquals(new RepairCostMerger.Results(2, 2),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
         assertEquals(new RepairCostMerger.Results(5, 5),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
 
         first.remove(DataComponents.REPAIR_COST);
         assertEquals(new RepairCostMerger.Results(0, 5),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
         assertEquals(new RepairCostMerger.Results(3, 3),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
         assertEquals(new RepairCostMerger.Results(0, 0),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
 
         first.set(DataComponents.REPAIR_COST, Integer.MAX_VALUE);
         second.set(DataComponents.REPAIR_COST, Integer.MAX_VALUE);
         assertEquals(new RepairCostMerger.Results(Integer.MAX_VALUE, Integer.MAX_VALUE),
-                RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
+                     RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
 
         first.set(DataComponents.REPAIR_COST, -1);
         second.set(DataComponents.REPAIR_COST, 5);
         ItemStack firstBefore = first.copy();
         ItemStack secondBefore = second.copy();
         assertThrows(IllegalArgumentException.class,
-                () -> RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
+                     () -> RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
         assertThrows(IllegalArgumentException.class, () -> create(first, second));
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
@@ -373,14 +376,32 @@ class MixedBootsFactoryTest {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.IRON_BOOTS);
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR, modifier(sharedId, 4.0, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET)
-                .add(Attributes.MOVEMENT_SPEED, modifier(sharedId, -0.2, AttributeModifier.Operation.ADD_MULTIPLIED_BASE), EquipmentSlotGroup.ANY, ItemAttributeModifiers.Display.hidden())
-                .add(moddedAttribute, modifier(Identifier.fromNamespaceAndPath("test", "mana"), 3.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL), EquipmentSlotGroup.ARMOR, customDisplay)
-                .build());
+                                                                            .add(Attributes.ARMOR,
+                                                                                 modifier(sharedId, 4.0, AttributeModifier.Operation.ADD_VALUE),
+                                                                                 EquipmentSlotGroup.FEET)
+                                                                            .add(Attributes.MOVEMENT_SPEED,
+                                                                                 modifier(sharedId,
+                                                                                          -0.2,
+                                                                                          AttributeModifier.Operation.ADD_MULTIPLIED_BASE),
+                                                                                 EquipmentSlotGroup.ANY,
+                                                                                 ItemAttributeModifiers.Display.hidden())
+                                                                            .add(moddedAttribute,
+                                                                                 modifier(Identifier.fromNamespaceAndPath("test", "mana"),
+                                                                                          3.5,
+                                                                                          AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                                                                                 EquipmentSlotGroup.ARMOR,
+                                                                                 customDisplay)
+                                                                            .build());
         second.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR, modifier(sharedId, 2.0, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET)
-                .add(Attributes.ARMOR_TOUGHNESS, modifier(Identifier.fromNamespaceAndPath("test", "zero"), 0.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL), EquipmentSlotGroup.ARMOR)
-                .build());
+                                                                             .add(Attributes.ARMOR,
+                                                                                  modifier(sharedId, 2.0, AttributeModifier.Operation.ADD_VALUE),
+                                                                                  EquipmentSlotGroup.FEET)
+                                                                             .add(Attributes.ARMOR_TOUGHNESS,
+                                                                                  modifier(Identifier.fromNamespaceAndPath("test", "zero"),
+                                                                                           0.0,
+                                                                                           AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                                                                                  EquipmentSlotGroup.ARMOR)
+                                                                             .build());
 
         MixedBootsPair firstPair = create(first, second);
         MixedBootsPair repeatedPair = create(first.copy(), second.copy());
@@ -392,21 +413,21 @@ class MixedBootsFactoryTest {
         assertEquals(3, primary.modifiers().size());
         assertEquals(2, inverse.modifiers().size());
         assertEquals(List.of(-0.1, 3.0, 3.5),
-                primary.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
+                     primary.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
         assertEquals(List.of(-0.1, 3.0),
-                inverse.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
+                     inverse.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
         assertTrue(primary.modifiers().stream().anyMatch(entry ->
-                entry.slot() == EquipmentSlotGroup.ANY
-                        && entry.display().equals(ItemAttributeModifiers.Display.hidden())));
+                                                                 entry.slot() == EquipmentSlotGroup.ANY
+                                                                         && entry.display().equals(ItemAttributeModifiers.Display.hidden())));
         assertTrue(primary.modifiers().stream().anyMatch(entry -> entry.display().equals(customDisplay)));
         assertTrue(inverse.modifiers().stream().noneMatch(entry -> entry.display().equals(customDisplay)));
         assertEquals(primary, repeated);
         assertEquals(List.of(sharedId, Identifier.fromNamespaceAndPath("test", "mana"), sharedId),
-                primary.modifiers().stream().map(entry -> entry.modifier().id()).toList());
+                     primary.modifiers().stream().map(entry -> entry.modifier().id()).toList());
         assertTrue(primary.modifiers().stream().noneMatch(entry ->
-                entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+                                                                  entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
         assertTrue(inverse.modifiers().stream().noneMatch(entry ->
-                entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+                                                                  entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
     }
 
     @Test
@@ -419,27 +440,27 @@ class MixedBootsFactoryTest {
         try {
             ItemStack iron = boots(Items.IRON_BOOTS);
             iron.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                    .add(Attributes.ARMOR,
-                            modifier(Identifier.withDefaultNamespace("armor.boots"), 2.0D,
-                                    AttributeModifier.Operation.ADD_VALUE),
-                            EquipmentSlotGroup.FEET)
-                    .build());
+                                                                               .add(Attributes.ARMOR,
+                                                                                    modifier(Identifier.withDefaultNamespace("armor.boots"), 2.0D,
+                                                                                             AttributeModifier.Operation.ADD_VALUE),
+                                                                                    EquipmentSlotGroup.FEET)
+                                                                               .build());
             ItemStack gold = boots(Items.GOLDEN_BOOTS);
             gold.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                    .add(Attributes.ARMOR,
-                            modifier(Identifier.withDefaultNamespace("armor.boots"), 1.0D,
-                                    AttributeModifier.Operation.ADD_VALUE),
-                            EquipmentSlotGroup.FEET)
-                    .build());
+                                                                               .add(Attributes.ARMOR,
+                                                                                    modifier(Identifier.withDefaultNamespace("armor.boots"), 1.0D,
+                                                                                             AttributeModifier.Operation.ADD_VALUE),
+                                                                                    EquipmentSlotGroup.FEET)
+                                                                               .build());
             MixedBootsPair pair = MixedBootsFactory.createPair(
                     iron, gold, outputItem, mixedDataType, combineArmor, ComponentRuleDefaults.state());
 
             for (ItemStack output : List.of(pair.primary(), pair.inverse())) {
                 List<ItemAttributeModifiers.Entry> armor = output.getOrDefault(
-                                DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
-                        .modifiers().stream()
-                        .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
-                        .toList();
+                                                                         DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                                                                 .modifiers().stream()
+                                                                 .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
+                                                                 .toList();
                 assertEquals(1, armor.size());
                 assertEquals(Identifier.withDefaultNamespace("armor.boots"), armor.getFirst().modifier().id());
                 assertEquals(3.0D, armor.getFirst().modifier().amount());
@@ -464,7 +485,7 @@ class MixedBootsFactoryTest {
             second.set(DataComponents.REPAIR_COST, 5);
 
             MixedBootsPair pair = MixedBootsFactory.createPair(first, second, outputItem, mixedDataType,
-                    AttributeRuleDefaults.ruleSet(), rules);
+                                                               AttributeRuleDefaults.ruleSet(), rules);
 
             assertEquals(100, pair.primary().getMaxDamage());
             assertEquals(10, pair.primary().getDamageValue());
@@ -482,11 +503,13 @@ class MixedBootsFactoryTest {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.ARMOR,
-                        modifier(Identifier.fromNamespaceAndPath("test", "invalid"), Double.NaN, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(
+                                                                                    Attributes.ARMOR,
+                                                                                    modifier(Identifier.fromNamespaceAndPath("test", "invalid"),
+                                                                                             Double.NaN,
+                                                                                             AttributeModifier.Operation.ADD_VALUE),
+                                                                                    EquipmentSlotGroup.FEET)
+                                                                            .build());
         ItemStack firstBefore = first.copy();
         ItemStack secondBefore = second.copy();
 
@@ -500,17 +523,21 @@ class MixedBootsFactoryTest {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.ARMOR,
-                        modifier(Identifier.fromNamespaceAndPath("test", "add"), 10.0, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(
+                                                                                    Attributes.ARMOR,
+                                                                                    modifier(Identifier.fromNamespaceAndPath("test", "add"),
+                                                                                             10.0,
+                                                                                             AttributeModifier.Operation.ADD_VALUE),
+                                                                                    EquipmentSlotGroup.FEET)
+                                                                            .build());
         second.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.ARMOR,
-                        modifier(Identifier.fromNamespaceAndPath("test", "total"), 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                             .add(
+                                                                                     Attributes.ARMOR,
+                                                                                     modifier(Identifier.fromNamespaceAndPath("test", "total"),
+                                                                                              1.0,
+                                                                                              AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                                                                                     EquipmentSlotGroup.FEET)
+                                                                             .build());
 
         MixedBootsPair pair = create(first, second);
         ItemAttributeModifiers primary = pair.primary().get(DataComponents.ATTRIBUTE_MODIFIERS);
@@ -526,12 +553,14 @@ class MixedBootsFactoryTest {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(
-                        Attributes.ARMOR,
-                        modifier(Identifier.fromNamespaceAndPath("test", "large"), Double.MAX_VALUE, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET,
-                        ItemAttributeModifiers.Display.override(Component.literal("large")))
-                .build());
+                                                                            .add(
+                                                                                    Attributes.ARMOR,
+                                                                                    modifier(Identifier.fromNamespaceAndPath("test", "large"),
+                                                                                             Double.MAX_VALUE,
+                                                                                             AttributeModifier.Operation.ADD_VALUE),
+                                                                                    EquipmentSlotGroup.FEET,
+                                                                                    ItemAttributeModifiers.Display.override(Component.literal("large")))
+                                                                            .build());
         ItemAttributeModifiers original = create(first, second).primary().get(DataComponents.ATTRIBUTE_MODIFIERS);
         RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, builtInRegistryAccess());
 
@@ -544,12 +573,12 @@ class MixedBootsFactoryTest {
 
     @ParameterizedTest
     @CsvSource({
-        "0,3,4,3",
-        "2,3,4,3",
-        "3,3,4,4",
-        "4,4,4,5",
-        "5,5,4,5",
-        "1,1,1,2"
+            "0,3,4,3",
+            "2,3,4,3",
+            "3,3,4,4",
+            "4,4,4,5",
+            "5,5,4,5",
+            "1,1,1,2"
     })
     void mergesEnchantmentLevels(int firstLevel, int secondLevel, int declaredMaximum, int expected) {
         Holder<Enchantment> enchantment = syntheticEnchantment("level_case", declaredMaximum, HolderSet.empty());
@@ -637,7 +666,7 @@ class MixedBootsFactoryTest {
         left.set(opaqueType, "old");
         left.set(rightOnlyType, "removed");
         right.set(DataComponents.REPAIRABLE,
-                new Repairable(HolderSet.direct(Holder.direct(Items.GOLD_INGOT))));
+                  new Repairable(HolderSet.direct(Holder.direct(Items.GOLD_INGOT))));
         ItemStack root = create(left, right).primary();
         root.set(DataComponents.CUSTOM_NAME, Component.literal("Anvil name"));
         root.set(DataComponents.REPAIR_COST, 13);
@@ -647,15 +676,17 @@ class MixedBootsFactoryTest {
         replacement.remove(rightOnlyType);
         replacement.set(addedType, "introduced");
         replacement.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR,
-                        modifier(Identifier.fromNamespaceAndPath("test", "smithing_armor"), 4.0,
-                                AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                                  .add(Attributes.ARMOR,
+                                                                                       modifier(Identifier.fromNamespaceAndPath("test",
+                                                                                                                                "smithing_armor"),
+                                                                                                4.0,
+                                                                                                AttributeModifier.Operation.ADD_VALUE),
+                                                                                       EquipmentSlotGroup.FEET)
+                                                                                  .build());
         replacement.set(DataComponents.EQUIPPABLE,
-                Equippable.builder(EquipmentSlot.FEET).setAsset(EquipmentAssets.DIAMOND).build());
+                        Equippable.builder(EquipmentSlot.FEET).setAsset(EquipmentAssets.DIAMOND).build());
         replacement.set(DataComponents.REPAIRABLE,
-                new Repairable(HolderSet.direct(Holder.direct(Items.DIAMOND))));
+                        new Repairable(HolderSet.direct(Holder.direct(Items.DIAMOND))));
         ItemStack rootBefore = root.copy();
         ItemStack replacementBefore = replacement.copy();
 
@@ -670,7 +701,7 @@ class MixedBootsFactoryTest {
         assertEquals(17, result.getDamageValue());
         assertRepairableAccepts(result, Items.DIAMOND, Items.GOLD_INGOT);
         assertEquals(AttributeComposer.compose(replacement, right, AttributeRuleDefaults.ruleSet()).primary(),
-                result.get(DataComponents.ATTRIBUTE_MODIFIERS));
+                     result.get(DataComponents.ATTRIBUTE_MODIFIERS));
         assertEquals(Optional.of(EquipmentAssets.DIAMOND), result.get(DataComponents.EQUIPPABLE).assetId());
         assertEquals("new", result.get(mixedDataType).left().source().get(opaqueType));
         assertTrue(ItemStack.matches(rootBefore, root));
@@ -725,7 +756,7 @@ class MixedBootsFactoryTest {
         assertEquals(20, result.getDamageValue());
         assertEquals(17, result.get(DataComponents.REPAIR_COST));
         assertTrue(ItemStack.matches(root.get(mixedDataType).right().source(),
-                result.get(mixedDataType).right().source()));
+                                     result.get(mixedDataType).right().source()));
 
         root.remove(DataComponents.REPAIR_COST);
         result = MixedBootsRecomposer.recompose(
@@ -764,10 +795,12 @@ class MixedBootsFactoryTest {
             double amount = source == left ? leftAmount : rightAmount;
             if (amount != 0) {
                 source.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                        .add(Attributes.STEP_HEIGHT,
-                                new AttributeModifier(modifierId, amount, AttributeModifier.Operation.ADD_VALUE),
-                                EquipmentSlotGroup.FEET)
-                        .build());
+                                                                                     .add(Attributes.STEP_HEIGHT,
+                                                                                          new AttributeModifier(modifierId,
+                                                                                                                amount,
+                                                                                                                AttributeModifier.Operation.ADD_VALUE),
+                                                                                          EquipmentSlotGroup.FEET)
+                                                                                     .build());
             }
         }
         MixedBootsPair pair = create(left, right);
@@ -794,20 +827,21 @@ class MixedBootsFactoryTest {
             ItemStack newLeft = inverse ? changedRight : left;
             ItemStack newRight = inverse ? left : changedRight;
             ItemStack result = MixedBootsRecomposer.recompose(root, newLeft, newRight,
-                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                              mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertEquals(new Enchantable(15), result.get(DataComponents.ENCHANTABLE));
             root.remove(DataComponents.ENCHANTABLE);
             ItemLore liveLore = new ItemLore(List.of(Component.literal("Live lore")));
             root.set(DataComponents.LORE, liveLore);
             result = MixedBootsRecomposer.recompose(root, newLeft, newRight,
-                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                    mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
             assertNull(result.get(DataComponents.ENCHANTABLE));
             assertEquals(liveLore, result.get(DataComponents.LORE));
         }
         ItemStack root = create(left, right).primary();
         changedRight.remove(DataComponents.ENCHANTABLE);
         assertNull(MixedBootsRecomposer.recompose(root, left, changedRight,
-                mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state()).get(DataComponents.ENCHANTABLE));
+                                                  mixedDataType, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state())
+                                       .get(DataComponents.ENCHANTABLE));
     }
 
     @Test
@@ -823,10 +857,12 @@ class MixedBootsFactoryTest {
         ItemStack upgraded = left.copy();
         upgraded.set(DataComponents.ENCHANTABLE, new Enchantable(30));
         assertEquals(new Enchantable(9), MixedBootsRecomposer.recompose(root, upgraded, right,
-                mixedDataType, AttributeRuleDefaults.ruleSet(), withComponents(changedRules)).get(DataComponents.ENCHANTABLE));
+                                                                        mixedDataType, AttributeRuleDefaults.ruleSet(), withComponents(changedRules))
+                                                             .get(DataComponents.ENCHANTABLE));
         root.set(DataComponents.ENCHANTABLE, new Enchantable(25));
         assertEquals(new Enchantable(30), MixedBootsRecomposer.recompose(root, upgraded, right,
-                mixedDataType, AttributeRuleDefaults.ruleSet(), withComponents(changedRules)).get(DataComponents.ENCHANTABLE));
+                                                                         mixedDataType, AttributeRuleDefaults.ruleSet(), withComponents(changedRules))
+                                                              .get(DataComponents.ENCHANTABLE));
     }
 
     private static MixedBootsPair create(ItemStack first, ItemStack second) {
@@ -849,11 +885,11 @@ class MixedBootsFactoryTest {
 
     private static DataComponentMap baseComponents(Equippable equippable) {
         return DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, equippable)
-                .set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                               .set(DataComponents.MAX_STACK_SIZE, 1)
+                               .set(DataComponents.EQUIPPABLE, equippable)
+                               .set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+                               .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                               .build();
     }
 
     private static Equippable defaultEquippable() {
@@ -875,8 +911,8 @@ class MixedBootsFactoryTest {
         Repairable repairable = stack.get(DataComponents.REPAIRABLE);
         assertNotNull(repairable);
         assertEquals(Set.of(expectedItems), repairable.items().stream()
-                .map(Holder::value)
-                .collect(java.util.stream.Collectors.toUnmodifiableSet()));
+                                                      .map(Holder::value)
+                                                      .collect(java.util.stream.Collectors.toUnmodifiableSet()));
     }
 
     private static AttributeModifier modifier(

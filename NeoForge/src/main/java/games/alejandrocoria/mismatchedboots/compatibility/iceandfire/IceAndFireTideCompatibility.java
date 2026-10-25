@@ -22,18 +22,23 @@ public final class IceAndFireTideCompatibility {
     private static Item receiver;
     private static volatile boolean disabled;
 
-    private IceAndFireTideCompatibility() {}
+    private IceAndFireTideCompatibility() {
+    }
 
     public static void initialize() {
         var api = IceAndFireTideApi.inspect();
         if (!api.available()) {
             disabled = true;
-            if (api.present()) { disable(api.reason()); }
+            if (api.present()) {
+                disable(api.reason());
+            }
         }
     }
 
     public static boolean recognizes(Entity entity, EquipmentSlot slot) {
-        if (disabled || slot != EquipmentSlot.FEET || !(entity instanceof Player player)) { return false; }
+        if (disabled || slot != EquipmentSlot.FEET || !(entity instanceof Player player)) {
+            return false;
+        }
         try {
             return MixedBootsSources.anySource(player.getItemBySlot(slot), source -> nativeBoots(source.getItem()))
                     && ready();
@@ -52,11 +57,15 @@ public final class IceAndFireTideCompatibility {
     }
 
     private static boolean ready() {
-        if (receiver == null) { receiver = resolveReceiver(); }
+        if (receiver == null) {
+            receiver = resolveReceiver();
+        }
         boolean ready = nativeBoots(receiver)
                 && receiver instanceof IceAndFireTideReadiness entry && entry.mismatchedboots$tideEntryReady()
                 && receiver instanceof IceAndFireTideReadiness.Base base && base.mismatchedboots$tideBaseReady();
-        if (!ready) { disable("fixed receiver or final entry/base readiness unavailable"); }
+        if (!ready) {
+            disable("fixed receiver or final entry/base readiness unavailable");
+        }
         return ready;
     }
 
@@ -73,7 +82,9 @@ public final class IceAndFireTideCompatibility {
 
     public static void activate(ItemStack root, ServerLevel level, Entity entity, EquipmentSlot tickSlot) {
         if (tickSlot != EquipmentSlot.FEET || !(entity instanceof Player player)
-                || player.getItemBySlot(EquipmentSlot.FEET) != root || !recognizes(player, EquipmentSlot.FEET)) { return; }
+                || player.getItemBySlot(EquipmentSlot.FEET) != root || !recognizes(player, EquipmentSlot.FEET)) {
+            return;
+        }
         // Final proof permits this fixed receiver + disposable carrier, not arbitrary item dispatch.
         // Equipment and both stored sources remain owned by the player/root throughout the call.
         receiver.inventoryTick(new ItemStack(receiver), level, player, EquipmentSlot.FEET);

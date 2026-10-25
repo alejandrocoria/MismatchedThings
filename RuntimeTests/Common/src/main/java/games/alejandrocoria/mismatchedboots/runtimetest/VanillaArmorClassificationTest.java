@@ -31,13 +31,14 @@ import java.util.stream.Stream;
 
 /** Shared production regressions, run by both loader servers without optional mods or a candidate datapack. */
 final class VanillaArmorClassificationTest {
-    private VanillaArmorClassificationTest() {}
+    private VanillaArmorClassificationTest() {
+    }
 
     static void run(MinecraftServer server) {
         var player = new ServerPlayer(server, server.overworld(),
-                new GameProfile(UUID.randomUUID(), "armor-test"), ClientInformation.createDefault());
+                                      new GameProfile(UUID.randomUUID(), "armor-test"), ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
-                CommonListenerCookie.createInitial(player.getGameProfile(), false));
+                                         CommonListenerCookie.createInitial(player.getGameProfile(), false));
         player.setGameMode(GameType.SURVIVAL);
         player.giveExperienceLevels(100);
         var enchantments = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
@@ -59,18 +60,18 @@ final class VanillaArmorClassificationTest {
         for (var root : List.of(pair.primary(), pair.inverse())) {
             var sources = ModContent.getMixedBootsData(root).orElseThrow();
             require(root.is(ItemTags.ARMOR_ENCHANTABLE) && !root.is(ItemTags.FOOT_ARMOR_ENCHANTABLE)
-                    && !root.is(ItemTags.FOOT_ARMOR), "Root armor classification expanded into foot tags");
+                            && !root.is(ItemTags.FOOT_ARMOR), "Root armor classification expanded into foot tags");
             require(wear(player, root) == armorWear, "Mixed root does not use armor Unbreaking");
             require(EnchantmentHelper.getItemEnchantmentLevel(unbreaking, root) == 3
-                    && sources.equals(ModContent.getMixedBootsData(root).orElseThrow()), "Wear changed enchantments or sources");
+                            && sources.equals(ModContent.getMixedBootsData(root).orElseThrow()), "Wear changed enchantments or sources");
             require(protection.value().canEnchant(root) && thorns.value().canEnchant(root)
-                    && !feather.value().canEnchant(root), "General/foot-specific enchantment support changed");
+                            && !feather.value().canEnchant(root), "General/foot-specific enchantment support changed");
             var tableChoices = EnchantmentHelper.getAvailableEnchantmentResults(10, root,
-                    Stream.of(protection, thorns, feather));
+                                                                                Stream.of(protection, thorns, feather));
             require(tableChoices.size() == (sourceTableHook ? 2 : 1)
-                    && tableChoices.stream().anyMatch(choice -> choice.enchantment().equals(protection))
-                    && tableChoices.stream().noneMatch(choice -> choice.enchantment().equals(thorns))
-                    && tableChoices.stream().anyMatch(choice -> choice.enchantment().equals(feather)) == sourceTableHook,
+                            && tableChoices.stream().anyMatch(choice -> choice.enchantment().equals(protection))
+                            && tableChoices.stream().noneMatch(choice -> choice.enchantment().equals(thorns))
+                            && tableChoices.stream().anyMatch(choice -> choice.enchantment().equals(feather)) == sourceTableHook,
                     "Table candidates lost armor support or changed existing loader-specific source/primary behavior");
             anvil(player, root, protection, true);
         }
@@ -97,9 +98,9 @@ final class VanillaArmorClassificationTest {
         conflict.enchant(enchantments.getOrThrow(Enchantments.FIRE_PROTECTION), 1);
         anvil(player, conflict, protection, false);
         NetworkAcceptanceFiles.write("vanilla-armor-classification-report.txt",
-                "both orientations: native/mixed Unbreaking III wear=17; non-armor control=6; sources/enchantments unchanged\n"
-                        + "table candidates retain Protection, not chest-primary Thorns; existing source-hook Feather Falling=" + sourceTableHook + "\n"
-                        + "real survival anvil: two-source/one-source acceptance; source-rejecting, bare and conflicting roots rejected; ordinary decisions preserved\n");
+                                     "both orientations: native/mixed Unbreaking III wear=17; non-armor control=6; sources/enchantments unchanged\n"
+                                             + "table candidates retain Protection, not chest-primary Thorns; existing source-hook Feather Falling=" + sourceTableHook + "\n"
+                                             + "real survival anvil: two-source/one-source acceptance; source-rejecting, bare and conflicting roots rejected; ordinary decisions preserved\n");
     }
 
     private static int wear(ServerPlayer player, ItemStack stack) {
@@ -137,16 +138,18 @@ final class VanillaArmorClassificationTest {
             require(EnchantmentHelper.getItemEnchantmentLevel(enchantment, taken) == 1, "Anvil did not apply book enchantment");
             require(ModContent.getMixedBootsData(before).equals(ModContent.getMixedBootsData(taken)), "Anvil changed sources");
             require(menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().isEmpty()
-                    && menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().isEmpty()
-                    && player.experienceLevel < levels, "Anvil did not consume accepted inputs/payment");
+                            && menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().isEmpty()
+                            && player.experienceLevel < levels, "Anvil did not consume accepted inputs/payment");
         } else {
             require(ItemStack.matches(menu.getSlot(AnvilMenu.INPUT_SLOT).getItem(), before)
-                    && ItemStack.matches(menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem(), bookBefore)
-                    && player.experienceLevel == levels, "Rejected anvil input was consumed or charged");
+                            && ItemStack.matches(menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem(), bookBefore)
+                            && player.experienceLevel == levels, "Rejected anvil input was consumed or charged");
         }
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new AssertionError(message); }
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 }

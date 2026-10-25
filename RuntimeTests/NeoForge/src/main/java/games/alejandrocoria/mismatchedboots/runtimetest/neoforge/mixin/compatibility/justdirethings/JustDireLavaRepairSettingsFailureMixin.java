@@ -11,7 +11,10 @@ abstract class JustDireLavaRepairSettingsFailureMixin {
     @ModifyArg(method = "lavaProfile", at = @At(value = "INVOKE",
             target = "Lgames/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireSettingsCompatibility;nativeMetadata(Lgames/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireSettingsCompatibility$Api;Ljava/lang/Object;Z)Lgames/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireSettingsCompatibility$Metadata;"), index = 1)
     private static Object unsupported(Object actual) {
-        try { return actual.getClass().getConstructor(int.class, int.class, int.class, int.class).newInstance(0, 1, 1, 0); }
-        catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        try {
+            return actual.getClass().getConstructor(int.class, int.class, int.class, int.class).newInstance(0, 1, 1, 0);
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError(failure);
+        }
     }
 }

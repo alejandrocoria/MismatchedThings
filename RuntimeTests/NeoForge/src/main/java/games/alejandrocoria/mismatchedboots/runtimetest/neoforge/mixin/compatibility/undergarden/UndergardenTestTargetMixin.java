@@ -5,4 +5,5 @@ import org.spongepowered.asm.mixin.Pseudo;
 
 @Pseudo
 @Mixin(targets = "quek.undergarden.block.GooLayerBlock", remap = false)
-abstract class UndergardenTestTargetMixin {}
+abstract class UndergardenTestTargetMixin {
+}

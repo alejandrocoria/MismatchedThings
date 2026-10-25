@@ -66,7 +66,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
             throw new AssertionError("Standard NeoForge mixed equipment declined the native route");
         }
         assertCalls(renderer.calls(), model, Items.IRON_BOOTS, EquipmentAssets.IRON,
-                Items.GOLDEN_BOOTS, EquipmentAssets.GOLD, false, null, null);
+                    Items.GOLDEN_BOOTS, EquipmentAssets.GOLD, false, null, null);
         assertCenterCrossingOwnership();
 
         ItemStack leather = source(Items.LEATHER_BOOTS, EquipmentAssets.LEATHER);
@@ -87,8 +87,8 @@ public final class NeoForgeEquipmentRenderingClientTest {
             throw new AssertionError("Decorated NeoForge mixed equipment declined the native route");
         }
         assertCalls(renderer.calls(), model, Items.LEATHER_BOOTS, EquipmentAssets.LEATHER,
-                Items.DIAMOND_BOOTS, EquipmentAssets.DIAMOND, true,
-                leather.get(DataComponents.DYED_COLOR), null);
+                    Items.DIAMOND_BOOTS, EquipmentAssets.DIAMOND, true,
+                    leather.get(DataComponents.DYED_COLOR), null);
         ItemStack storedLeft = ModContent.getMixedBootsData(decorated).orElseThrow().left().source();
         if (storedLeft.hasFoil()) {
             throw new AssertionError("Root foil mutated the stored NeoForge source snapshot");
@@ -122,8 +122,8 @@ public final class NeoForgeEquipmentRenderingClientTest {
         MeshDefinition mesh = mesh();
         PartDefinition leftLeg = mesh.getRoot().getChild("left_leg");
         leftLeg.addOrReplaceChild("center_crossing", CubeListBuilder.create()
-                .texOffs(0, 0)
-                .addBox(-6.0F, -2.0F, -2.0F, 12.0F, 4.0F, 4.0F), PartPose.ZERO);
+                                                                    .texOffs(0, 0)
+                                                                    .addBox(-6.0F, -2.0F, -2.0F, 12.0F, 4.0F, 4.0F), PartPose.ZERO);
         HumanoidModel<HumanoidRenderState> model = new HumanoidModel<>(
                 LayerDefinition.create(mesh, 64, 32).bakeRoot());
         ModelPart crossing = model.leftLeg.getChild("center_crossing");
@@ -134,7 +134,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
                 model,
                 new HumanoidRenderState(),
                 mixed(source(Items.IRON_BOOTS, EquipmentAssets.IRON),
-                        source(Items.GOLDEN_BOOTS, EquipmentAssets.GOLD)),
+                      source(Items.GOLDEN_BOOTS, EquipmentAssets.GOLD)),
                 new PoseStack(),
                 new SubmitNodeStorage(),
                 0x00F000F0,
@@ -154,15 +154,16 @@ public final class NeoForgeEquipmentRenderingClientTest {
 
     static ItemStack mixed(ItemStack left, ItemStack right) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
-                .orElseThrow(() -> new AssertionError("Mismatched boots data component is not registered"));
+                                                               .orElseThrow(() -> new AssertionError(
+                                                                       "Mismatched boots data component is not registered"));
         Item mixedItem = BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID);
         if (mixedItem == null) {
             throw new AssertionError("Mismatched boots item is not registered");
         }
         DataComponentPatch components = DataComponentPatch.builder()
-                .set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID)
-                .set(dataType, new MixedBootsData(new BootHalf(left), new BootHalf(right)))
-                .build();
+                                                          .set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID)
+                                                          .set(dataType, new MixedBootsData(new BootHalf(left), new BootHalf(right)))
+                                                          .build();
         return new ItemStack(Holder.direct(mixedItem), 1, components);
     }
 
@@ -172,9 +173,9 @@ public final class NeoForgeEquipmentRenderingClientTest {
             equippable.setAsset(asset);
         }
         DataComponentPatch components = DataComponentPatch.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, equippable.build())
-                .build();
+                                                          .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                          .set(DataComponents.EQUIPPABLE, equippable.build())
+                                                          .build();
         return new ItemStack(Holder.direct(item), 1, components);
     }
 
@@ -211,7 +212,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
                 || !java.util.Objects.equals(call.dye(), dye)
                 || !java.util.Objects.equals(call.trim(), trim)) {
             throw new AssertionError("NeoForge standard equipment call did not preserve the expected "
-                    + side + " source view: " + call);
+                                             + side + " source view: " + call);
         }
     }
 
@@ -234,7 +235,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
                 int light,
                 int outlineColor) {
             calls.add(new Call(asset, model, stack.getItem(), stack.hasFoil(),
-                    stack.get(DataComponents.DYED_COLOR), stack.get(DataComponents.TRIM)));
+                               stack.get(DataComponents.DYED_COLOR), stack.get(DataComponents.TRIM)));
         }
 
         private List<Call> calls() {

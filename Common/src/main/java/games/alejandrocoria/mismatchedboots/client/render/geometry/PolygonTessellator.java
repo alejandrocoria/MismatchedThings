@@ -50,7 +50,7 @@ public final class PolygonTessellator {
         QuadClipper.Point normal = null;
         for (int index = 1; index < polygon.vertices().size() - 1; index++) {
             QuadClipper.Point candidate = polygon.vertex(index).position().subtract(origin)
-                    .cross(polygon.vertex(index + 1).position().subtract(origin));
+                                                 .cross(polygon.vertex(index + 1).position().subtract(origin));
             if (candidate.lengthSquared() > epsilonSquared) {
                 normal = candidate;
                 break;
@@ -70,9 +70,9 @@ public final class PolygonTessellator {
 
         for (int index = 0; index < polygon.vertices().size(); index++) {
             QuadClipper.Point firstEdge = polygon.vertex((index + 1) % polygon.vertices().size())
-                    .position().subtract(polygon.vertex(index).position());
+                                                 .position().subtract(polygon.vertex(index).position());
             QuadClipper.Point secondEdge = polygon.vertex((index + 2) % polygon.vertices().size())
-                    .position().subtract(polygon.vertex((index + 1) % polygon.vertices().size()).position());
+                                                  .position().subtract(polygon.vertex((index + 1) % polygon.vertices().size()).position());
             float firstLength = firstEdge.length();
             float secondLength = secondEdge.length();
             if (firstLength <= QuadClipper.GEOMETRY_EPSILON

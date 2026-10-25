@@ -20,7 +20,8 @@ import net.minecraft.world.level.storage.TagValueInput;
 
 /** Focused actual-codec checks, with real registries instead of a fake successful decoder. */
 final class MissingModsModelChecks {
-    private MissingModsModelChecks() {}
+    private MissingModsModelChecks() {
+    }
 
     static void run(MinecraftServer server, ItemStack active) {
         var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
@@ -31,7 +32,8 @@ final class MissingModsModelChecks {
         ItemStack suspended = ItemStack.CODEC.parse(ops, changed).getOrThrow();
         var archive = archive(server, suspended);
         require(ModContent.getMixedBootsData(suspended).isEmpty()
-                && suspended.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers().isEmpty(), "Partial activation");
+                        && suspended.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers().isEmpty(),
+                "Partial activation");
         require(archive.original().getLongOr("future:unavailable", 0) == 9_007_199_254_740_993L, "Unknown value lost");
 
         // A conflicting native replacement is preserved next to the original, never selected or exposed.
@@ -43,17 +45,23 @@ final class MissingModsModelChecks {
         var conflict = archive(server, conflicted);
         require(conflict.conflicted() && conflict.original().equals(archive.original()), "Conflict destroyed original");
         require(replacement.equals(conflict.conflicts().get("minecraft:attribute_modifiers")), "Competing value discarded");
-        require(conflicted.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers().isEmpty(), "Competing gameplay value leaked");
+        require(conflicted.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers().isEmpty(),
+                "Competing gameplay value leaked");
         ItemStack again = ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, conflicted).getOrThrow()).getOrThrow();
         require(ItemStack.matches(conflicted, again), "Conflict grows or disappears on reload");
-        var available = conflict.original(); available.remove("future:unavailable");
+        var available = conflict.original();
+        available.remove("future:unavailable");
         var readyButConflicted = collision.copy();
         readyButConflicted.getCompoundOrEmpty("components").remove("minecraft:attribute_modifiers");
         readyButConflicted.getCompoundOrEmpty("components").put(SuspendedBootsItemCodec.ARCHIVE,
-                SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE,
-                        SuspendedBootsData.of(available, conflict.projection(), conflict.conflicts())).getOrThrow());
+                                                                SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE,
+                                                                                                     SuspendedBootsData.of(available,
+                                                                                                                           conflict.projection(),
+                                                                                                                           conflict.conflicts()))
+                                                                                        .getOrThrow());
         var blocked = ItemStack.CODEC.parse(ops, readyButConflicted).getOrThrow();
-        require(archive(server, blocked).conflicted() && ModContent.getMixedBootsData(blocked).isEmpty(), "Available conflicting values silently chose a winner");
+        require(archive(server, blocked).conflicted() && ModContent.getMixedBootsData(blocked).isEmpty(),
+                "Available conflicting values silently chose a winner");
 
         var removal = collision.copy();
         removal.getCompoundOrEmpty("components").remove("minecraft:attribute_modifiers");
@@ -91,14 +99,19 @@ final class MissingModsModelChecks {
         badRoot.getCompoundOrEmpty("components").putByteArray(SuspendedBootsItemCodec.ARCHIVE, new byte[]{10, 0});
         malformed.put("stack", badRoot);
         var retained = TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), malformed)
-                .read("stack", ItemStack.CODEC).orElseThrow();
+                                    .read("stack", ItemStack.CODEC).orElseThrow();
         require(archive(server, retained).quarantined(), "Malformed archive was not kept opaque");
-        require(ModContent.getMixedBootsData(retained).isEmpty() && !retained.has(DataComponents.EQUIPPABLE), "Quarantine acquired active/equip semantics");
+        require(ModContent.getMixedBootsData(retained).isEmpty() && !retained.has(DataComponents.EQUIPPABLE),
+                "Quarantine acquired active/equip semantics");
         CompoundTag container = new CompoundTag();
         container.putString("id", "minecraft:barrel");
         var items = new ListTag();
-        var badSlot = badRoot.copy(); badSlot.putByte("Slot", (byte) 0); items.add(badSlot);
-        var goodSlot = encoded.copy(); goodSlot.putByte("Slot", (byte) 1); items.add(goodSlot);
+        var badSlot = badRoot.copy();
+        badSlot.putByte("Slot", (byte) 0);
+        items.add(badSlot);
+        var goodSlot = encoded.copy();
+        goodSlot.putByte("Slot", (byte) 1);
+        items.add(goodSlot);
         container.put("Items", items);
         var loaded = BlockEntity.loadStatic(BlockPos.ZERO, Blocks.BARREL.defaultBlockState(), container, server.registryAccess());
         require(loaded instanceof BarrelBlockEntity, "Native outer loader discarded a whole container");
@@ -109,8 +122,10 @@ final class MissingModsModelChecks {
 
     private static void nativeReadiness(MinecraftServer server, CompoundTag encoded) {
         var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
-        var nativeInput = new CompoundTag(); nativeInput.putString("id", "minecraft:diamond_boots");
-        var nativePatch = new CompoundTag(); nativePatch.put("minecraft:damage", FloatTag.valueOf(3.5f));
+        var nativeInput = new CompoundTag();
+        nativeInput.putString("id", "minecraft:diamond_boots");
+        var nativePatch = new CompoundTag();
+        nativePatch.put("minecraft:damage", FloatTag.valueOf(3.5f));
         nativeInput.put("components", nativePatch);
         int nativeDamage = ItemStack.CODEC.parse(ops, nativeInput).getOrThrow().getDamageValue();
         var normalized = encoded.copy();
@@ -121,13 +136,17 @@ final class MissingModsModelChecks {
 
         String property = MissingModsProof.MOD + ":converting_property";
         for (boolean filtersUnknown : new boolean[]{false, true}) {
-            var legacy = new CompoundTag(); legacy.putInt("legacy", 42);
-            if (filtersUnknown) { legacy.putString("unrecognized_reference", "future:removed"); }
+            var legacy = new CompoundTag();
+            legacy.putInt("legacy", 42);
+            if (filtersUnknown) {
+                legacy.putString("unrecognized_reference", "future:removed");
+            }
             var input = normalized.copy();
             var patch = input.getCompoundOrEmpty("components");
             patch.put(property, legacy.copy());
             var source = patch.getCompoundOrEmpty("mismatchedboots:mixed_boots_data").getCompoundOrEmpty("left");
-            var sourcePatch = source.getCompoundOrEmpty("components"); source.put("components", sourcePatch);
+            var sourcePatch = source.getCompoundOrEmpty("components");
+            source.put("components", sourcePatch);
             sourcePatch.put(property, legacy.copy());
             nativePatch.put(property, legacy.copy());
             var nativeRoot = ItemStack.CODEC.parse(ops, nativeInput).getOrThrow();
@@ -139,19 +158,23 @@ final class MissingModsModelChecks {
             // This is a controlled codec transition, not evidence of an actual third-party upgrade.
             ItemStack suspended;
             MissingModsProof.legacyReadable = false;
-            try { suspended = ItemStack.CODEC.parse(ops, input).getOrThrow(); }
-            finally { MissingModsProof.legacyReadable = true; }
+            try {
+                suspended = ItemStack.CODEC.parse(ops, input).getOrThrow();
+            } finally {
+                MissingModsProof.legacyReadable = true;
+            }
             var retained = archive(server, suspended);
             require(legacy.equals(retained.original().get(property)), "Failed full read discarded original foreign data");
             require(legacy.equals(retained.original().getCompoundOrEmpty("mismatchedboots:mixed_boots_data")
-                    .getCompoundOrEmpty("left").getCompoundOrEmpty("components").get(property)), "Failed full read discarded source data");
+                                          .getCompoundOrEmpty("left").getCompoundOrEmpty("components").get(property)),
+                    "Failed full read discarded source data");
             require(suspended.getDamageValue() == nativeDamage && !retained.quarantined(), "Passive normalization quarantined a safe shell");
             var restored = ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, suspended).getOrThrow()).getOrThrow();
             require(ModContent.getMixedBootsData(restored).isPresent() && ModContent.suspendedBootsData(restored).isEmpty(),
                     "Successful native conversion did not restore the whole root");
             var canonical = (CompoundTag) ItemStack.CODEC.encodeStart(ops, restored).getOrThrow();
             require(canonical.getCompoundOrEmpty("components").get(property)
-                    .equals(nativeEncoded.getCompoundOrEmpty("components").get(property)), "Conversion differs from native item semantics");
+                             .equals(nativeEncoded.getCompoundOrEmpty("components").get(property)), "Conversion differs from native item semantics");
             require(ItemStack.matches(active, restored), "Converted active and restored states differ");
             require(ItemStack.matches(restored, ItemStack.CODEC.parse(ops, canonical).getOrThrow()), "Converted root is unstable on reload");
 
@@ -160,13 +183,20 @@ final class MissingModsModelChecks {
             var missing = ItemStack.CODEC.parse(ops, input).getOrThrow();
             require(MissingModsProof.convertingReads == before, "Missing source reached foreign decoding before suspension");
             require(archive(server, missing).original().get(property).equals(legacy)
-                    && ModContent.getMixedBootsData(missing).isEmpty(), "Missing source did not preserve the complete root");
+                            && ModContent.getMixedBootsData(missing).isEmpty(), "Missing source did not preserve the complete root");
         }
     }
 
     private static SuspendedBootsData archive(MinecraftServer server, ItemStack root) {
-        CompoundTag encoded = (CompoundTag) ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(NbtOps.INSTANCE), root).getOrThrow();
-        return SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE, encoded.getCompoundOrEmpty("components").get(SuspendedBootsItemCodec.ARCHIVE)).getOrThrow();
+        CompoundTag encoded = (CompoundTag) ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(NbtOps.INSTANCE), root)
+                                                           .getOrThrow();
+        return SuspendedBootsData.CODEC.parse(NbtOps.INSTANCE, encoded.getCompoundOrEmpty("components").get(SuspendedBootsItemCodec.ARCHIVE))
+                                       .getOrThrow();
     }
-    private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

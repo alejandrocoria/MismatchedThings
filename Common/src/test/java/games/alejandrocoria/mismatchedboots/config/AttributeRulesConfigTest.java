@@ -63,7 +63,7 @@ class AttributeRulesConfigTest {
         Files.writeString(path, """
                 [attributes]
                 fallback = "separate"
-
+                
                 [attributes."%s"]
                 policy = "maximum"
                 """.formatted(id));
@@ -81,10 +81,10 @@ class AttributeRulesConfigTest {
                 [attributes]
                 fallback = "separate"
                 unknown = true
-
+                
                 [attributes."zeta:last"]
                 policy = "combine"
-
+                
                 [attributes."alpha:first"]
                 policy = "minimum"
                 """);
@@ -93,14 +93,14 @@ class AttributeRulesConfigTest {
         String saved = Files.readString(path);
 
         assertOrdered(saved,
-                "[attributes.\"minecraft:armor\"]",
-                "[attributes.\"minecraft:waypoint_transmit_range\"]",
-                "[attributes.\"neoforge:swim_speed\"]",
-                "[attributes.\"neoforge:nametag_distance\"]",
-                "[attributes.\"neoforge:creative_flight\"]",
-                "[attributes.\"silentgear:magic_armor\"]",
-                "[attributes.\"alpha:first\"]",
-                "[attributes.\"zeta:last\"]");
+                      "[attributes.\"minecraft:armor\"]",
+                      "[attributes.\"minecraft:waypoint_transmit_range\"]",
+                      "[attributes.\"neoforge:swim_speed\"]",
+                      "[attributes.\"neoforge:nametag_distance\"]",
+                      "[attributes.\"neoforge:creative_flight\"]",
+                      "[attributes.\"silentgear:magic_armor\"]",
+                      "[attributes.\"alpha:first\"]",
+                      "[attributes.\"zeta:last\"]");
         assertFalse(saved.contains("unknown"));
     }
 
@@ -122,10 +122,10 @@ class AttributeRulesConfigTest {
         assertEquals(existing, Files.readString(path));
 
         String overridden = existing + """
-
+                
                 [attributes."neoforge:swim_speed"]
                 policy = "separate"
-
+                
                 [attributes."silentgear:magic_armor"]
                 policy = "separate"
                 """;
@@ -149,17 +149,17 @@ class AttributeRulesConfigTest {
                 """;
         Files.writeString(path, existing);
         assertEquals(AttributePolicy.MAXIMUM,
-                new AttributeRulesConfig(path).load().policyFor(id("minecraft:step_height")));
+                     new AttributeRulesConfig(path).load().policyFor(id("minecraft:step_height")));
         assertEquals(existing, Files.readString(path));
 
         String overridden = existing + """
-
+                
                 [attributes."minecraft:step_height"]
                 policy = "average"
                 """;
         Files.writeString(path, overridden);
         assertEquals(AttributePolicy.AVERAGE,
-                new AttributeRulesConfig(path).load().policyFor(id("minecraft:step_height")));
+                     new AttributeRulesConfig(path).load().policyFor(id("minecraft:step_height")));
         assertEquals(overridden, Files.readString(path));
     }
 
@@ -169,11 +169,11 @@ class AttributeRulesConfigTest {
         Files.writeString(path, """
                 [attributes]
                 fallback = "maximum"
-
+                
                 [attributes."minecraft:armor"]
-
+                
                 [attributes."example:missing"]
-
+                
                 [attributes."example:invalid"]
                 policy = "Average"
                 """);
@@ -191,12 +191,12 @@ class AttributeRulesConfigTest {
     void malformedAndDuplicateTablesAreBackedUpAndReset() throws IOException {
         assertMalformedRecovery("[attributes\n", "syntactically malformed");
         assertMalformedRecovery("""
-                [attributes."minecraft:armor"]
-                policy = "average"
-
-                [attributes."minecraft:armor"]
-                policy = "maximum"
-                """, "duplicate table");
+                                        [attributes."minecraft:armor"]
+                                        policy = "average"
+                                        
+                                        [attributes."minecraft:armor"]
+                                        policy = "maximum"
+                                        """, "duplicate table");
     }
 
     @Test
@@ -204,17 +204,17 @@ class AttributeRulesConfigTest {
         Path path = configPath();
         Files.writeString(path, """
                 root_unknown = true
-
+                
                 [attributes]
                 fallback = 12
                 "minecraft:luck" = "average"
-
+                
                 [attributes."missing_namespace"]
                 policy = "combine"
-
+                
                 [attributes."Minecraft:armor"]
                 policy = "maximum"
-
+                
                 [attributes."example:valid"]
                 policy = "minimum"
                 unknown = "remove me"
@@ -247,10 +247,10 @@ class AttributeRulesConfigTest {
         Files.writeString(path, """
                 [attributes]
                 fallback = "separate"
-
+                
                 [attributes."test:registered_heat"]
                 policy = "maximum"
-
+                
                 [attributes."absentmod:dormant_heat"]
                 policy = "combine"
                 """);
@@ -299,7 +299,7 @@ class AttributeRulesConfigTest {
         AttributeRuleSet first = new AttributeRulesConfig(path).load();
 
         assertThrows(UnsupportedOperationException.class,
-                () -> first.rules().put(id("example:mutate"), AttributePolicy.REJECT));
+                     () -> first.rules().put(id("example:mutate"), AttributePolicy.REJECT));
         String generated = Files.readString(path);
         int armorCategory = generated.indexOf("[attributes.\"minecraft:armor\"]");
         int armorPolicy = generated.indexOf("policy = \"average\"", armorCategory);

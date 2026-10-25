@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class AetherCharmSourceFaultMixin {
     @Inject(method = "marker", at = @At("RETURN"))
     private static void fault(CallbackInfoReturnable<?> callback) {
-        if (callback.getReturnValue() != null) { throw new IllegalStateException("Controlled populated source charm formatter failure"); }
+        if (callback.getReturnValue() != null) {
+            throw new IllegalStateException("Controlled populated source charm formatter failure");
+        }
     }
 }

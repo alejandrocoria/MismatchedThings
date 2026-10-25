@@ -36,13 +36,16 @@ public final class MismatchedBootsClientNeoForge {
         }
         JustDireActiveNetwork.clientReplies(JustDireAbilityInput::reply, JustDireSettingsClient::reply);
         NeoForge.EVENT_BUS.addListener((InputEvent.Key key) -> {
-            JustDireSettingsClient.heldKey(key); JustDireAbilityInput.key(key);
+            JustDireSettingsClient.heldKey(key);
+            JustDireAbilityInput.key(key);
         });
         NeoForge.EVENT_BUS.addListener((InputEvent.MouseButton.Post mouse) -> {
-            JustDireSettingsClient.heldMouse(mouse); JustDireAbilityInput.mouse(mouse);
+            JustDireSettingsClient.heldMouse(mouse);
+            JustDireAbilityInput.mouse(mouse);
         });
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> {
-            JustDireSettingsClient.tick(); JustDireAbilityInput.tick();
+            JustDireSettingsClient.tick();
+            JustDireAbilityInput.tick();
         });
         NeoForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingIn login) -> CompositionRulesClientLifecycle.onConnected());
@@ -55,23 +58,28 @@ public final class MismatchedBootsClientNeoForge {
                 });
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> {
             JustDireLavaRepairCompatibility.clearClientEpisodes();
-            JustDireSettingsClient.reset(); JustDireAbilityInput.reset();
+            JustDireSettingsClient.reset();
+            JustDireAbilityInput.reset();
             CompositionRulesClientLifecycle.onDisconnected();
             MismatchedWorkbenchClientRecipes.reset();
         });
         NeoForge.EVENT_BUS.addListener((LevelEvent.Unload unload) -> {
-            if (unload.getLevel().isClientSide()) { JustDireLavaRepairCompatibility.clearClientEpisodes(); }
+            if (unload.getLevel().isClientSide()) {
+                JustDireLavaRepairCompatibility.clearClientEpisodes();
+            }
         });
     }
 
     public static void registerTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
         NeoForgeTooltipSeparators.registerFactory(event);
-        if (ModList.get().isLoaded("aether_ii")) { AetherSourceCharms.registerFactory(event); }
+        if (ModList.get().isLoaded("aether_ii")) {
+            AetherSourceCharms.registerFactory(event);
+        }
     }
 
     public static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModContent.mismatchedWorkbenchMenuType().orElseThrow(),
-                MismatchedWorkbenchScreen::new);
+                       MismatchedWorkbenchScreen::new);
     }
 
     public static void registerItemDecorations(RegisterItemDecorationsEvent event) {

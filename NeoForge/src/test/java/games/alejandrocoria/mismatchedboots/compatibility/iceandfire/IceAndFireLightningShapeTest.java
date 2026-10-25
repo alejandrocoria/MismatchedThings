@@ -32,7 +32,7 @@ class IceAndFireLightningShapeTest {
         try (JarFile jar = new JarFile(Path.of(artifact).toFile())) {
             ClassNode handler = read(jar, IceAndFireDamageShape.HANDLER);
             MethodNode method = handler.methods.stream()
-                    .filter(node -> IceAndFireDamageShape.LIGHTNING_METHOD.equals(node.name)).findFirst().orElseThrow();
+                                               .filter(node -> IceAndFireDamageShape.LIGHTNING_METHOD.equals(node.name)).findFirst().orElseThrow();
             assertEquals("27d4490cc0ac9741b62dcbc4d2e39422cf12dbb8964c82decdf5cf41666f6169", fingerprint(method));
             assertTrue(IceAndFireDamageShape.isLightningCompatible(handler, read(jar, IceAndFireDamageShape.ITEMS)));
             String before = fingerprint(method);
@@ -80,7 +80,7 @@ class IceAndFireLightningShapeTest {
     void unrelatedInstructionsAndEntityLocalRelocationAreAcceptedButForeignEntityIsNot() {
         MethodNode method = lightning();
         method.instructions.insertBefore(method.instructions.getLast(),
-                new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Logger", "tick", "()V", false));
+                                         new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Logger", "tick", "()V", false));
         method.instructions.insert(new InsnNode(Opcodes.NOP));
         for (var node : method.instructions) {
             if (node instanceof VarInsnNode variable && variable.var == 1) {
@@ -99,7 +99,7 @@ class IceAndFireLightningShapeTest {
         ClassNode items = new ClassNode();
         items.name = IceAndFireDamageShape.ITEMS;
         items.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "DRAGONSTEEL_LIGHTNING_BOOTS",
-                "Lnet/neoforged/neoforge/registries/DeferredItem;", null, null));
+                                       "Lnet/neoforged/neoforge/registries/DeferredItem;", null, null));
         assertTrue(IceAndFireDamageShape.isLightningCompatible(handler, items));
         assertFalse(IceAndFireDamageShape.isLightningCompatible(null, items));
         assertFalse(IceAndFireDamageShape.isLightningCompatible(handler, null));

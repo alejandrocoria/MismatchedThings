@@ -1,9 +1,11 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.mystical.mixin",
-  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalAugmentsPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.mystical.mixin",
+    "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalAugmentsPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

@@ -13,8 +13,8 @@ gradle.projectsEvaluated {
             original = metadata.bytes
             def document = new groovy.json.JsonSlurper().parse(metadata)
             document.entrypoints['fabric-client-gametest'] = [
-                'games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingClientGameTest',
-                'games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingRuntimeClientGameTest'
+                    'games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingClientGameTest',
+                    'games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingRuntimeClientGameTest'
             ]
             metadata.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(document))
         }

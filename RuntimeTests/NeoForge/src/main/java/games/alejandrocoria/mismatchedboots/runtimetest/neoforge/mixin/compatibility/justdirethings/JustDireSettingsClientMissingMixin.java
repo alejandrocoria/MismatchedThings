@@ -7,5 +7,6 @@ import org.spongepowered.asm.mixin.Unique;
 @Pseudo
 @Mixin(targets = "com.direwolf20.justdirethings.client.screens.ToolSettingScreen", priority = 500, remap = false)
 abstract class JustDireSettingsClientMissingMixin {
-    @Unique private boolean fixtureMissingAnchor;
+    @Unique
+    private boolean fixtureMissingAnchor;
 }

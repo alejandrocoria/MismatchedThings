@@ -18,7 +18,9 @@ abstract class SilentGearVoidWardWitnessMixin {
     @Inject(method = "onPlayerTick", at = @At("HEAD"))
     private static void query(PlayerTickEvent.Pre event, CallbackInfo ci) {
         var player = event.getEntity();
-        if (!player.level().isClientSide() && player.getY() < player.level().getMinY() - 32) { SilentGearRemainingFixture.queries++; }
+        if (!player.level().isClientSide() && player.getY() < player.level().getMinY() - 32) {
+            SilentGearRemainingFixture.queries++;
+        }
     }
 
     @WrapOperation(method = "onPlayerTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;push(DDD)V"))

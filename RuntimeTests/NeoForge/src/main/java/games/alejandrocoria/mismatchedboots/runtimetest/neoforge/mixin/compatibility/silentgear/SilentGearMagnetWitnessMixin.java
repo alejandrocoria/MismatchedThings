@@ -16,5 +16,7 @@ abstract class SilentGearMagnetWitnessMixin {
     }
 
     @Inject(method = "invoke", at = @At("RETURN"))
-    private void completed(CallbackInfo ci) { SilentGearMagnetTest.afterCall(); }
+    private void completed(CallbackInfo ci) {
+        SilentGearMagnetTest.afterCall();
+    }
 }

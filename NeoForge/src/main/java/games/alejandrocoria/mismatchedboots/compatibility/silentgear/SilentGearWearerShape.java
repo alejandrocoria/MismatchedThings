@@ -22,12 +22,17 @@ public final class SilentGearWearerShape implements Opcodes {
     static final String SLOT = "net/minecraft/world/entity/EquipmentSlot", PLAYER = "net/minecraft/world/entity/player/Player";
     static final String COUNT = "(L" + CONTEXT + ";L" + SilentGearEffectShape.PREFIX + "api/item/GearType;L" + PLAYER + ";)I";
     static final String HAS = "(Lnet/minecraft/world/item/ItemInstance;L" + TRAIT + ";)Z";
-    record Pair(AbstractInsnNode type, AbstractInsnNode trait) {}
 
-    private SilentGearWearerShape() {}
+    record Pair(AbstractInsnNode type, AbstractInsnNode trait) {
+    }
+
+    private SilentGearWearerShape() {
+    }
 
     static Pair pair(String descriptor, InsnList instructions) {
-        if (!COUNT.equals(descriptor)) { return null; }
+        if (!COUNT.equals(descriptor)) {
+            return null;
+        }
         return pair(code(instructions), false);
     }
 
@@ -42,13 +47,19 @@ public final class SilentGearWearerShape implements Opcodes {
                     || !load(code.get(i - 6), ALOAD, 3) || !load(code.get(i - 5), ALOAD, 6)
                     || !call(code.get(i - 4), PLAYER, "getItemBySlot", "(L" + SLOT + ";)L" + STACK + ";")
                     || !load(code.get(i - 3), ASTORE, 7) || !load(code.get(i - 2), ALOAD, 7)
-                    || !call(code.get(i - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) { continue; }
+                    || !call(code.get(i - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) {
+                continue;
+            }
             int cursor = i + 1;
             cursor = handlers(code, cursor, "mismatchedboots$sgSetType", transformed);
-            if (cursor < 0 || cursor + 5 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode typeNo) || typeNo.getOpcode() != IFEQ) { continue; }
+            if (cursor < 0 || cursor + 5 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode typeNo) || typeNo.getOpcode() != IFEQ) {
+                continue;
+            }
             if (!load(code.get(cursor + 1), ALOAD, 7) || !load(code.get(cursor + 2), ALOAD, 1)
                     || !call(code.get(cursor + 3), CONTEXT, "trait", "()L" + TRAIT + ";")
-                    || !call(code.get(cursor + 4), SilentGearEffectShape.PREFIX + "util/TraitHelper", "hasTrait", HAS)) { continue; }
+                    || !call(code.get(cursor + 4), SilentGearEffectShape.PREFIX + "util/TraitHelper", "hasTrait", HAS)) {
+                continue;
+            }
             AbstractInsnNode trait = code.get(cursor + 4);
             cursor += 5;
             cursor = handlers(code, cursor, "mismatchedboots$sgSetTrait", transformed);
@@ -56,8 +67,12 @@ public final class SilentGearWearerShape implements Opcodes {
                     || traitNo.getOpcode() != IFEQ || typeNo.label != traitNo.label
                     || !(code.get(cursor + 1) instanceof IincInsnNode increment) || increment.var != 4 || increment.incr != 1
                     || !(code.get(cursor + 2) instanceof JumpInsnNode back) || back.getOpcode() != GOTO
-                    || nextCode(typeNo.label) != back || !load(nextCode(back.label), ALOAD, 5)) { continue; }
-            if (found != null) { return null; }
+                    || nextCode(typeNo.label) != back || !load(nextCode(back.label), ALOAD, 5)) {
+                continue;
+            }
+            if (found != null) {
+                return null;
+            }
             found = new Pair(type, trait);
         }
         return found;
@@ -71,15 +86,21 @@ public final class SilentGearWearerShape implements Opcodes {
                     || !load(code.get(index + 4), ALOAD, 3) || !load(code.get(index + 5), ALOAD, 6)
                     || !load(code.get(index + 6), ALOAD, 7)
                     || !(code.get(index + 7) instanceof MethodInsnNode call) || !call.owner.equals(OWNER)
-                    || !call.desc.equals("(ZLjava/lang/Object;Ljava/lang/Object;L" + PLAYER + ";L" + SLOT + ";L" + STACK + ";)Z")) { return -1; }
-            if (call.name.contains(name)) { own++; }
+                    || !call.desc.equals("(ZLjava/lang/Object;Ljava/lang/Object;L" + PLAYER + ";L" + SLOT + ";L" + STACK + ";)Z")) {
+                return -1;
+            }
+            if (call.name.contains(name)) {
+                own++;
+            }
             index += 8;
         }
         return own > 1 || required && own != 1 ? -1 : index;
     }
 
     private static AbstractInsnNode nextCode(AbstractInsnNode node) {
-        do { node = node.getNext(); } while (node != null && (node.getOpcode() < 0 || node.getOpcode() == NOP));
+        do {
+            node = node.getNext();
+        } while (node != null && (node.getOpcode() < 0 || node.getOpcode() == NOP));
         return node;
     }
 
@@ -90,10 +111,18 @@ public final class SilentGearWearerShape implements Opcodes {
 
     private static List<AbstractInsnNode> code(InsnList instructions) {
         var result = new ArrayList<AbstractInsnNode>();
-        for (var node : instructions) { if (node.getOpcode() >= 0 && node.getOpcode() != NOP) { result.add(node); } }
+        for (var node : instructions) {
+            if (node.getOpcode() >= 0 && node.getOpcode() != NOP) {
+                result.add(node);
+            }
+        }
         return result;
     }
-    private static boolean load(AbstractInsnNode node, int opcode, int index) { return node instanceof VarInsnNode var && var.getOpcode() == opcode && var.var == index; }
+
+    private static boolean load(AbstractInsnNode node, int opcode, int index) {
+        return node instanceof VarInsnNode var && var.getOpcode() == opcode && var.var == index;
+    }
+
     private static boolean call(AbstractInsnNode node, String owner, String name, String descriptor) {
         return node instanceof MethodInsnNode call && call.owner.equals(owner) && call.name.equals(name) && call.desc.equals(descriptor);
     }

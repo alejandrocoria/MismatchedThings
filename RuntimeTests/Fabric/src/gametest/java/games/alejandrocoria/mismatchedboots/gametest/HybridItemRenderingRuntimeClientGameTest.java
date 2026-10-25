@@ -135,13 +135,13 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                         && RuntimeItemSubmissionProbe.hasAtLeast(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, 2));
                 var snapshot = takeSubmissions(context);
                 for (ItemDisplayContext hand : List.of(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
-                        ItemDisplayContext.FIRST_PERSON_LEFT_HAND)) {
+                                                       ItemDisplayContext.FIRST_PERSON_LEFT_HAND)) {
                     for (String sprite : List.of("iron_boots", "golden_boots")) {
                         requireFullFallback(snapshot, hand, sprite, foil);
                     }
                 }
                 context.takeScreenshot("overlapping-fallback-" + (invalid ? "invalid-" : "")
-                        + "both-hands-" + (foil ? "foil" : "plain"));
+                                               + "both-hands-" + (foil ? "foil" : "plain"));
             }
         }
         context.runOnClient(client -> forceVisualFallback = true);
@@ -156,7 +156,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
     }
 
     private static void requireFullFallback(RuntimeItemSubmissionProbe.Snapshot snapshot,
-            ItemDisplayContext hand, String sprite, boolean foil) {
+                                            ItemDisplayContext hand, String sprite, boolean foil) {
         if (snapshot.submissions().stream().noneMatch(submission -> submission.displayContext() == hand
                 && submission.sprite().equals(sprite) && submission.minX() < 0.5F - EPSILON
                 && submission.maxX() > 0.5F + EPSILON && hasFoil(submission) == foil)) {
@@ -169,17 +169,21 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
         private int frames;
 
-        private FallbackScreen() { super(Component.literal("Overlapping fallback")); }
+        private FallbackScreen() {
+            super(Component.literal("Overlapping fallback"));
+        }
 
-        @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float delta) {
+        @Override
+        public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float delta) {
             graphics.fill(0, 0, width, height, 0xFF202020);
         }
 
-        @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float delta) {
+        @Override
+        public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float delta) {
             frames++;
             String[] labels = {"Iron / gold", "Gold / iron", "Native iron", "Native gold", "No data"};
             List<ItemStack> items = List.of(pair.primary(), pair.inverse(),
-                    new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS), invalidMixed());
+                                            new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS), invalidMixed());
             for (int row = 0; row < 2; row++) {
                 for (int column = 0; column < items.size(); column++) {
                     ItemStack item = items.get(column).copy();
@@ -188,7 +192,9 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(20 + column * 80, 40 + row * 110);
                     // An imperceptible GUI rotation makes screen-scissor fallback unavailable.
-                    if (column != 4) graphics.pose().rotate(0.001F);
+                    if (column != 4) {
+                        graphics.pose().rotate(0.001F);
+                    }
                     graphics.pose().scale(4, 4);
                     graphics.item(item, 0, 0);
                     graphics.pose().popMatrix();
@@ -229,14 +235,14 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             if (ItemLayerResolutionProbe.count(RED_MODEL) != REPEATED_RESOLUTIONS
                     || ItemLayerResolutionProbe.count(BLUE_MODEL) != REPEATED_RESOLUTIONS) {
                 throw new AssertionError("A repeated render resolved a source more than once: red="
-                        + ItemLayerResolutionProbe.count(RED_MODEL) + ", blue="
-                        + ItemLayerResolutionProbe.count(BLUE_MODEL));
+                                                 + ItemLayerResolutionProbe.count(RED_MODEL) + ", blue="
+                                                 + ItemLayerResolutionProbe.count(BLUE_MODEL));
             }
             int plannedQuads = QuadPlanningProbe.take();
             int expectedQuads = REPEATED_RESOLUTIONS * quadsPerResolution;
             if (plannedQuads != expectedQuads) {
                 throw new AssertionError("Repeated rendering planned " + plannedQuads
-                        + " quads instead of the bounded " + expectedQuads);
+                                                 + " quads instead of the bounded " + expectedQuads);
             }
         } finally {
             ItemLayerResolutionProbe.clear();
@@ -244,8 +250,8 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         }
 
         for (ItemDisplayContext displayContext : Arrays.stream(ItemDisplayContext.values())
-                .filter(value -> value != ItemDisplayContext.GUI)
-                .toList()) {
+                                                       .filter(value -> value != ItemDisplayContext.GUI)
+                                                       .toList()) {
             assertClipped(resolve(client, mixed, displayContext), "runtime context " + displayContext);
         }
     }
@@ -266,9 +272,9 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         context.takeScreenshot("hybrid-first-person-both-hands");
         RuntimeItemSubmissionProbe.Snapshot firstPerson = takeSubmissions(context);
         assertClippedOrientation(firstPerson, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
-                "red_concrete", "blue_concrete", true, "first-person main hand");
+                                 "red_concrete", "blue_concrete", true, "first-person main hand");
         assertClippedOrientation(firstPerson, ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
-                "blue_concrete", "red_concrete", true, "first-person offhand");
+                                 "blue_concrete", "red_concrete", true, "first-person offhand");
 
         context.runOnClient(client -> {
             client.options.setCameraType(CameraType.THIRD_PERSON_BACK);
@@ -280,9 +286,9 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         context.takeScreenshot("hybrid-third-person-both-hands");
         RuntimeItemSubmissionProbe.Snapshot thirdPerson = takeSubmissions(context);
         assertClippedOrientation(thirdPerson, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                "red_concrete", "blue_concrete", true, "third-person main hand");
+                                 "red_concrete", "blue_concrete", true, "third-person main hand");
         assertClippedOrientation(thirdPerson, ItemDisplayContext.THIRD_PERSON_LEFT_HAND,
-                "blue_concrete", "red_concrete", true, "third-person offhand");
+                                 "blue_concrete", "red_concrete", true, "third-person offhand");
 
         singleplayer.getServer().runOnServer(server -> {
             ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
@@ -303,8 +309,8 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
             ServerLevel level = player.level();
             ItemEntity dropped = addDroppedItem(level,
-                    player.getX(), player.getEyeY() - 0.6, player.getZ() + 3.0,
-                    coloredPair(false).primary());
+                                                player.getX(), player.getEyeY() - 0.6, player.getZ() + 3.0,
+                                                coloredPair(false).primary());
             primaryDrop.set(dropped.getId());
         });
         context.waitFor(client -> client.level != null
@@ -317,7 +323,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         context.waitFor(client -> RuntimeItemSubmissionProbe.hasAtLeast(ItemDisplayContext.GROUND, 2));
         RuntimeItemSubmissionProbe.Snapshot snapshot = takeSubmissions(context);
         assertClippedOrientation(snapshot, ItemDisplayContext.GROUND,
-                "red_concrete", "blue_concrete", false, "rotating ground item");
+                                 "red_concrete", "blue_concrete", false, "rotating ground item");
 
         for (int angle : List.of(0, 55, 125)) {
             context.waitFor(client -> hasRotation(client, entityId, angle), 400);
@@ -331,9 +337,9 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
             ServerLevel level = player.level();
             addDroppedItem(level, player.getX() - 1.1, player.getEyeY() - 0.6, player.getZ() + 3.2,
-                    coloredPair(true).inverse());
+                           coloredPair(true).inverse());
             addDroppedItem(level, player.getX() + 1.1, player.getEyeY() - 0.6, player.getZ() + 3.2,
-                    coloredPair(false).primary());
+                           coloredPair(false).primary());
 
             BlockPos center = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ() + 5.0);
             addFrame(level, center.offset(-2, 0, 0), coloredPair(true).primary());
@@ -354,15 +360,15 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
 
         RuntimeItemSubmissionProbe.Snapshot snapshot = takeSubmissions(context);
         assertClippedOrientation(snapshot, ItemDisplayContext.GROUND,
-                "red_concrete", "blue_concrete", false, "simultaneous primary ground item");
+                                 "red_concrete", "blue_concrete", false, "simultaneous primary ground item");
         assertClippedOrientation(snapshot, ItemDisplayContext.GROUND,
-                "blue_concrete", "red_concrete", true, "simultaneous inverse ground item");
+                                 "blue_concrete", "red_concrete", true, "simultaneous inverse ground item");
         assertClippedOrientation(snapshot, ItemDisplayContext.FIXED,
-                "red_concrete", "blue_concrete", true, "compatible item frame");
+                                 "red_concrete", "blue_concrete", true, "compatible item frame");
         assertRotatedClipping(snapshot, ItemDisplayContext.FIXED,
-                "red_concrete", "blue_concrete", true, "rotated item frame");
+                              "red_concrete", "blue_concrete", true, "rotated item frame");
         assertClippedOrientation(snapshot, ItemDisplayContext.FIXED,
-                "leather_boots", "diamond_boots", false, "dyed leather item frame");
+                                 "leather_boots", "diamond_boots", false, "dyed leather item frame");
     }
 
     private static void verifyResourceReloadWithWorldItems(ClientGameTestContext context) {
@@ -389,13 +395,13 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
 
         RuntimeItemSubmissionProbe.Snapshot snapshot = takeSubmissions(context);
         assertClippedOrientation(snapshot, ItemDisplayContext.GROUND,
-                "red_concrete", "blue_concrete", false, "post-reload ground item");
+                                 "red_concrete", "blue_concrete", false, "post-reload ground item");
         assertClippedOrientation(snapshot, ItemDisplayContext.FIXED,
-                "red_concrete", "blue_concrete", true, "post-reload item frame");
+                                 "red_concrete", "blue_concrete", true, "post-reload item frame");
         assertRotatedClipping(snapshot, ItemDisplayContext.FIXED,
-                "red_concrete", "blue_concrete", true, "post-reload rotated frame");
+                              "red_concrete", "blue_concrete", true, "post-reload rotated frame");
         assertClippedOrientation(snapshot, ItemDisplayContext.FIXED,
-                "leather_boots", "diamond_boots", false, "post-reload dyed leather frame");
+                                 "leather_boots", "diamond_boots", false, "post-reload dyed leather frame");
     }
 
     private static Map<Integer, ItemStack> snapshotWorldItems(Minecraft client) {
@@ -405,11 +411,11 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         AABB bounds = client.player.getBoundingBox().inflate(10.0);
         Map<Integer, ItemStack> stacks = new LinkedHashMap<>();
         client.level.getEntitiesOfClass(ItemEntity.class, bounds, Entity::isAlive).stream()
-                .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
-                .forEach(entity -> stacks.put(entity.getId(), entity.getItem().copy()));
+                    .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
+                    .forEach(entity -> stacks.put(entity.getId(), entity.getItem().copy()));
         client.level.getEntitiesOfClass(ItemFrame.class, bounds, Entity::isAlive).stream()
-                .filter(frame -> ModContent.isMixedBoots(frame.getItem()))
-                .forEach(frame -> stacks.put(frame.getId(), frame.getItem().copy()));
+                    .filter(frame -> ModContent.isMixedBoots(frame.getItem()))
+                    .forEach(frame -> stacks.put(frame.getId(), frame.getItem().copy()));
         return Map.copyOf(stacks);
     }
 
@@ -417,7 +423,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         Map<Integer, ItemStack> actual = snapshotWorldItems(client);
         if (!actual.keySet().equals(expected.keySet())) {
             throw new AssertionError("Resource reload changed the mixed world-item set: expected "
-                    + expected.keySet() + ", actual " + actual.keySet());
+                                             + expected.keySet() + ", actual " + actual.keySet());
         }
         expected.forEach((entityId, before) -> {
             if (!ItemStack.matches(before, actual.get(entityId))) {
@@ -451,15 +457,15 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             boolean foil,
             String scenario) {
         boolean left = snapshot.submissions().stream().anyMatch(submission ->
-                submission.displayContext() == context
-                        && submission.sprite().equals(leftSprite)
-                        && submission.minX() >= 0.5F - EPSILON
-                        && hasFoil(submission) == foil);
+                                                                        submission.displayContext() == context
+                                                                                && submission.sprite().equals(leftSprite)
+                                                                                && submission.minX() >= 0.5F - EPSILON
+                                                                                && hasFoil(submission) == foil);
         boolean right = snapshot.submissions().stream().anyMatch(submission ->
-                submission.displayContext() == context
-                        && submission.sprite().equals(rightSprite)
-                        && submission.maxX() <= 0.5F + EPSILON
-                        && hasFoil(submission) == foil);
+                                                                         submission.displayContext() == context
+                                                                                 && submission.sprite().equals(rightSprite)
+                                                                                 && submission.maxX() <= 0.5F + EPSILON
+                                                                                 && hasFoil(submission) == foil);
         if (!left || !right) {
             throw new AssertionError(scenario + " did not submit complementary full-scale halves");
         }
@@ -473,15 +479,15 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             boolean foil,
             String scenario) {
         boolean rotated = snapshot.submissions().stream().anyMatch(submission ->
-                submission.displayContext() == context
-                        && submission.sprite().equals(rotatedSprite)
-                        && submission.triangleCount() > 0
-                        && hasFoil(submission) == foil);
+                                                                           submission.displayContext() == context
+                                                                                   && submission.sprite().equals(rotatedSprite)
+                                                                                   && submission.triangleCount() > 0
+                                                                                   && hasFoil(submission) == foil);
         boolean ordinary = snapshot.submissions().stream().anyMatch(submission ->
-                submission.displayContext() == context
-                        && submission.sprite().equals(ordinarySprite)
-                        && submission.maxX() <= 0.5F + EPSILON
-                        && hasFoil(submission) == foil);
+                                                                            submission.displayContext() == context
+                                                                                    && submission.sprite().equals(ordinarySprite)
+                                                                                    && submission.maxX() <= 0.5F + EPSILON
+                                                                                    && hasFoil(submission) == foil);
         if (!rotated || !ordinary) {
             throw new AssertionError(scenario + " did not submit the tessellated rotated half");
         }
@@ -497,11 +503,11 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         }
         AABB bounds = client.player.getBoundingBox().inflate(10.0);
         long drops = client.level.getEntitiesOfClass(ItemEntity.class, bounds, Entity::isAlive).stream()
-                .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
-                .count();
+                                 .filter(entity -> ModContent.isMixedBoots(entity.getItem()))
+                                 .count();
         long frames = client.level.getEntitiesOfClass(ItemFrame.class, bounds, Entity::isAlive).stream()
-                .filter(frame -> ModContent.isMixedBoots(frame.getItem()))
-                .count();
+                                  .filter(frame -> ModContent.isMixedBoots(frame.getItem()))
+                                  .count();
         return drops >= 3 && frames >= 4;
     }
 
@@ -537,7 +543,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         }
         if (redPixels < 8 || bluePixels < 8) {
             throw new AssertionError(scenario + " did not retain both controlled source colors: red="
-                    + redPixels + ", blue=" + bluePixels);
+                                             + redPixels + ", blue=" + bluePixels);
         }
     }
 
@@ -645,7 +651,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                 mesh.forEach(quad -> {
                     for (int vertex = 0; vertex < 4; vertex++) {
                         float x = layer.mismatchedboots$getLocalTransform()
-                                .transformPosition(quad.copyPos(vertex, null)).x - 0.5F;
+                                       .transformPosition(quad.copyPos(vertex, null)).x - 0.5F;
                         if ((side == 0 && x < -EPSILON) || (side == 1 && x > EPSILON)) {
                             throw new AssertionError(scenario + " mesh crossed the canonical center");
                         }
@@ -655,7 +661,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             for (BakedQuad quad : layer.mismatchedboots$getQuads()) {
                 for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
                     float x = layer.mismatchedboots$getLocalTransform()
-                            .transformPosition(quad.position(vertex), new org.joml.Vector3f()).x - 0.5F;
+                                   .transformPosition(quad.position(vertex), new org.joml.Vector3f()).x - 0.5F;
                     if ((index == 0 && x < -EPSILON) || (index == 1 && x > EPSILON)) {
                         throw new AssertionError(scenario + " crossed the canonical center");
                     }

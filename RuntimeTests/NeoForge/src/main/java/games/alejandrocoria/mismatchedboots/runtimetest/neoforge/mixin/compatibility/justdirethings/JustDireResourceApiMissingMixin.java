@@ -9,5 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(JustDireResourcesCompatibility.class)
 abstract class JustDireResourceApiMissingMixin {
     @ModifyReturnValue(method = "energyComponent", at = @At("RETURN"))
-    private static DataComponentType<Integer> missingBinding(DataComponentType<Integer> original) { return null; }
+    private static DataComponentType<Integer> missingBinding(DataComponentType<Integer> original) {
+        return null;
+    }
 }

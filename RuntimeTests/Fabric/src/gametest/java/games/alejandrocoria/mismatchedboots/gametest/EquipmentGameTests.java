@@ -42,17 +42,17 @@ public final class EquipmentGameTests {
     public void bareMixedShellCannotUseOrEnterTheFeetSlot(GameTestHelper helper) {
         var player = GameTestPlayers.makeMockServerPlayer(helper, GameType.SURVIVAL);
         ItemStack bare = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM
-                .getValue(ModContent.MIXED_BOOTS_ID));
+                                               .getValue(ModContent.MIXED_BOOTS_ID));
         player.setItemInHand(InteractionHand.MAIN_HAND, bare.copy());
         helper.assertValueEqual(bare.getItem().use(helper.getLevel(), player, InteractionHand.MAIN_HAND),
-                InteractionResult.PASS, "bare mixed use result");
+                                InteractionResult.PASS, "bare mixed use result");
         helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).isEmpty(), "Using a bare shell equipped it");
         InventoryMenu menu = player.inventoryMenu;
         helper.assertTrue(!menu.getSlot(8).mayPlace(bare), "Feet slot accepts a bare shell");
         menu.setCarried(bare.copy());
         menu.clicked(8, 0, ContainerInput.PICKUP, player);
         helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).isEmpty()
-                && ItemStack.matches(menu.getCarried(), bare), "Armor-slot click equipped or consumed a bare shell");
+                                  && ItemStack.matches(menu.getCarried(), bare), "Armor-slot click equipped or consumed a bare shell");
         menu.setCarried(ItemStack.EMPTY);
         player.getInventory().setItem(0, bare.copy());
         menu.quickMoveStack(player, 36);
@@ -61,7 +61,7 @@ public final class EquipmentGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, valid.copy());
         valid.getItem().use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
         helper.assertTrue(ItemStack.matches(player.getItemBySlot(EquipmentSlot.FEET), valid),
-                "Valid mixed boots lost right-click equipment behavior");
+                          "Valid mixed boots lost right-click equipment behavior");
         helper.succeed();
     }
 
@@ -70,15 +70,17 @@ public final class EquipmentGameTests {
         helper.setBlock(BlockPos.ZERO, Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH));
         DispenserBlockEntity dispenser = helper.getBlockEntity(BlockPos.ZERO, DispenserBlockEntity.class);
         ItemStack bare = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM
-                .getValue(ModContent.MIXED_BOOTS_ID));
+                                               .getValue(ModContent.MIXED_BOOTS_ID));
         dispenser.setItem(0, bare.copy());
         ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, new BlockPos(0, 0, 1));
         helper.tickBlock(BlockPos.ZERO);
         helper.assertTrue(stand.getItemBySlot(EquipmentSlot.FEET).isEmpty(), "Dispenser equipped a bare shell");
         helper.assertTrue(dispenser.isEmpty(), "Dispenser did not eject the bare shell");
         helper.assertValueEqual(helper.getLevel().getEntitiesOfClass(ItemEntity.class,
-                new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(3.0),
-                entity -> ItemStack.matches(entity.getItem(), bare)).size(), 1, "ejected bare shells");
+                                                                     new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(3.0),
+                                                                     entity -> ItemStack.matches(entity.getItem(), bare)).size(),
+                                1,
+                                "ejected bare shells");
         helper.succeed();
     }
 
@@ -100,25 +102,25 @@ public final class EquipmentGameTests {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Golden boots have no armor modifier"));
         helper.assertValueEqual(ironArmor.modifier().id(), goldArmor.modifier().id(),
-                "vanilla boot armor modifier identity");
+                                "vanilla boot armor modifier identity");
         helper.assertValueEqual(ironArmor.modifier().id(), Identifier.withDefaultNamespace("armor.boots"),
-                "vanilla boot armor modifier ID");
+                                "vanilla boot armor modifier ID");
 
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         stand.setItemSlot(EquipmentSlot.FEET, mixed);
 
         var armorEntries = mixed.getOrDefault(
-                        DataComponents.ATTRIBUTE_MODIFIERS,
-                        ItemAttributeModifiers.EMPTY)
-                .modifiers()
-                .stream()
-                .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
-                .toList();
+                                        DataComponents.ATTRIBUTE_MODIFIERS,
+                                        ItemAttributeModifiers.EMPTY)
+                                .modifiers()
+                                .stream()
+                                .filter(entry -> entry.attribute().equals(Attributes.ARMOR))
+                                .toList();
         helper.assertValueEqual(armorEntries.size(), 1, "iron/gold stored armor entries");
         helper.assertValueEqual(armorEntries.getFirst().modifier().id(), ironArmor.modifier().id(),
-                "iron/gold stored armor modifier ID");
+                                "iron/gold stored armor modifier ID");
         helper.assertTrue(Math.abs(armorEntries.getFirst().modifier().amount() - 1.5D) < 1.0E-12D,
-                "Iron/gold stored armor amount was not 1.5: " + armorEntries);
+                          "Iron/gold stored armor amount was not 1.5: " + armorEntries);
         helper.succeedWhen(() -> helper.assertTrue(
                 Math.abs(stand.getAttributeValue(Attributes.ARMOR) - 1.5D) < 1.0E-12D,
                 "Iron/gold equipped armor was not 1.5: "
@@ -139,7 +141,7 @@ public final class EquipmentGameTests {
         mixed.setDamageValue(mixed.getMaxDamage() - 1);
         mixed.hurtAndBreak(1, stand, EquipmentSlot.FEET);
         helper.assertTrue(stand.getItemBySlot(EquipmentSlot.FEET).isEmpty(),
-                "Broken mixed boots remained equipped");
+                          "Broken mixed boots remained equipped");
         helper.succeed();
     }
 
@@ -165,7 +167,7 @@ public final class EquipmentGameTests {
         ItemStack withUnbreaking = GameTestStacks.pair(enchantedSource, otherSource).primary();
         withUnbreaking.hurtAndBreak(1000, stand, EquipmentSlot.FEET);
         helper.assertTrue(withUnbreaking.getDamageValue() > 0 && withUnbreaking.getDamageValue() < 1000,
-                "Unbreaking did not reduce durability loss through the vanilla path: " + withUnbreaking.getDamageValue());
+                          "Unbreaking did not reduce durability loss through the vanilla path: " + withUnbreaking.getDamageValue());
         helper.succeed();
     }
 
@@ -197,11 +199,11 @@ public final class EquipmentGameTests {
         ItemStack moved = menu.quickMoveStack(player, 36);
 
         GameTestStacks.assertOrientation(helper, moved,
-                Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "shift-click return value");
+                                         Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "shift-click return value");
         GameTestStacks.assertOrientation(helper, player.getItemBySlot(EquipmentSlot.FEET),
-                Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "equipped stack");
+                                         Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "equipped stack");
         helper.assertTrue(player.getInventory().getItem(0).isEmpty(),
-                "Inventory shift-click retained a duplicate mixed stack in its source slot");
+                          "Inventory shift-click retained a duplicate mixed stack in its source slot");
         helper.succeed();
     }
 
@@ -217,11 +219,11 @@ public final class EquipmentGameTests {
         menu.clicked(8, 0, ContainerInput.PICKUP, player);
 
         GameTestStacks.assertOrientation(helper, player.getItemBySlot(EquipmentSlot.FEET),
-                Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "swapped equipped stack");
+                                         Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "swapped equipped stack");
         helper.assertTrue(menu.getCarried().is(Items.LEATHER_BOOTS),
-                "Equipment swap did not return the previously equipped boots to the cursor");
+                          "Equipment swap did not return the previously equipped boots to the cursor");
         helper.assertTrue(player.getInventory().getItem(0).isEmpty(),
-                "Equipment swap retained a duplicate mixed stack in the inventory");
+                          "Equipment swap retained a duplicate mixed stack in the inventory");
         helper.succeed();
     }
 
@@ -235,7 +237,7 @@ public final class EquipmentGameTests {
         helper.tickBlock(BlockPos.ZERO);
 
         GameTestStacks.assertOrientation(helper, stand.getItemBySlot(EquipmentSlot.FEET),
-                Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "dispenser-equipped stack");
+                                         Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "dispenser-equipped stack");
         helper.assertTrue(dispenser.isEmpty(), "Dispenser retained an item after equipping the mixed boots");
         helper.succeed();
     }
@@ -253,15 +255,15 @@ public final class EquipmentGameTests {
 
         AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(3.0);
         List<ItemStack> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, bounds, Entity::isAlive).stream()
-                .map(ItemEntity::getItem)
-                .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
-                .toList();
+                                      .map(ItemEntity::getItem)
+                                      .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
+                                      .toList();
         helper.assertValueEqual(drops.size(), 1, "mixed boots death drops");
         ItemStack dropped = drops.getFirst();
         GameTestStacks.assertOrientation(helper, dropped,
-                Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "death drop");
+                                         Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "death drop");
         helper.assertTrue(GameTestStacks.data(dropped).equals(snapshots),
-                "Death drop changed nested sources");
+                          "Death drop changed nested sources");
         helper.succeed();
     }
 

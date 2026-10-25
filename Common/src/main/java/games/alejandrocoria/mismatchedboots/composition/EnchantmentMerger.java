@@ -35,8 +35,8 @@ final class EnchantmentMerger {
             Map<Identifier, Holder<Enchantment>> ordered, ItemEnchantments enchantments) {
         for (Holder<Enchantment> enchantment : enchantments.keySet()) {
             Identifier id = enchantment.unwrapKey()
-                    .map(key -> key.identifier())
-                    .orElseThrow(() -> new IllegalArgumentException("Source uses an unregistered enchantment"));
+                                       .map(key -> key.identifier())
+                                       .orElseThrow(() -> new IllegalArgumentException("Source uses an unregistered enchantment"));
             ordered.put(id, enchantment);
         }
     }

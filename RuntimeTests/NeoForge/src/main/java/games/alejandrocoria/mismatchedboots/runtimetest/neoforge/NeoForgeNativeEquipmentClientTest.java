@@ -94,7 +94,7 @@ public final class NeoForgeNativeEquipmentClientTest {
         leftStack.set(DataComponents.TRIM, new ArmorTrim(
                 Holder.direct(new TrimMaterial(MaterialAssetGroup.IRON, Component.literal("iron"))),
                 Holder.direct(new TrimPattern(Identifier.withDefaultNamespace("sentry"),
-                        Component.literal("sentry"), false))));
+                                              Component.literal("sentry"), false))));
         ItemStack rightStack = source(RIGHT.get(), EquipmentAssets.IRON);
         ItemStack pair = mixed(leftStack, rightStack);
         ItemStack leftSnapshot = ModContent.getMixedBootsData(pair).orElseThrow().left().source().copy();
@@ -107,11 +107,11 @@ public final class NeoForgeNativeEquipmentClientTest {
         if (nodes.size() != 6 || nodes.stream().filter(n -> n.type() == RenderTypes.armorEntityGlint()).count() != 2
                 || nodes.stream().noneMatch(n -> n.submit().tintedColor() == 0xFF3366CC)
                 || nodes.stream().filter(n -> n.type() == Sheets.armorTrimsSheet(false)
-                        && n.submit().sprite() != null && n.submit().model().root() == left.leftLeg).count() != 1
+                && n.submit().sprite() != null && n.submit().model().root() == left.leftLeg).count() != 1
                 || nodes.stream().filter(n -> n.type() == RenderTypes.armorCutoutNoCull(TEXTURE)).count() != 3) {
             throw new AssertionError("Native custom armor lost leather layers, dye, trim, root foil, or extension texture: "
-                    + nodes.stream().map(n -> n.type() + "/" + Integer.toHexString(n.submit().tintedColor())
-                            + "/trim=" + (n.submit().sprite() != null)).toList());
+                                             + nodes.stream().map(n -> n.type() + "/" + Integer.toHexString(n.submit().tintedColor())
+                    + "/trim=" + (n.submit().sprite() != null)).toList());
         }
         assertAnimation(nodes, left, right);
         if (!ItemStack.matches(ModContent.getMixedBootsData(pair).orElseThrow().left().source(), leftSnapshot)
@@ -131,12 +131,12 @@ public final class NeoForgeNativeEquipmentClientTest {
         assertSharedAnimation(nextEntity, left, 1.3F);
         RIGHT_EXTENSION.replacement = right;
         assertRoots(renderPair(mixed(rightStack, leftStack), original),
-                right.leftLeg, left.rightLeg, right.rightLeg, left.leftLeg);
+                    right.leftLeg, left.rightLeg, right.rightLeg, left.leftLeg);
         assertResolutions(LEFT_EXTENSION, 1);
         assertResolutions(RIGHT_EXTENSION, 1);
         assertRoots(renderPair(mixed(source(DEFAULT.get(), EquipmentAssets.IRON),
-                        source(DEFAULT.get(), EquipmentAssets.GOLD)), original),
-                original.leftLeg, original.rightLeg, original.rightLeg, original.leftLeg);
+                                     source(DEFAULT.get(), EquipmentAssets.GOLD)), original),
+                    original.leftLeg, original.rightLeg, original.rightLeg, original.leftLeg);
         assertResolutions(DEFAULT_EXTENSION, 2);
         Model<HumanoidRenderState> generic = new Model<>(model().root(), RenderTypes::armorCutoutNoCull) {
             @Override
@@ -145,15 +145,15 @@ public final class NeoForgeNativeEquipmentClientTest {
         };
         GENERIC_EXTENSION.replacement = generic;
         List<Node> genericNodes = renderPair(mixed(source(GENERIC.get(), EquipmentAssets.IRON),
-                source(GENERIC.get(), EquipmentAssets.GOLD)), original);
+                                                   source(GENERIC.get(), EquipmentAssets.GOLD)), original);
         if (genericNodes.size() != 2 || genericNodes.stream().anyMatch(n -> n.submit().model() != generic)) {
             throw new AssertionError("Non-humanoid extension was altered");
         }
         assertResolutions(GENERIC_EXTENSION, 2);
         SubmitNodeStorage ordinary = new SubmitNodeStorage();
         renderer.renderLayers(EquipmentClientInfo.LayerType.HUMANOID, EquipmentAssets.IRON,
-                original, new HumanoidRenderState(), source(LEFT.get(), EquipmentAssets.IRON),
-                new PoseStack(), ordinary, LIGHT, OUTLINE);
+                              original, new HumanoidRenderState(), source(LEFT.get(), EquipmentAssets.IRON),
+                              new PoseStack(), ordinary, LIGHT, OUTLINE);
         if (nodes(ordinary).getFirst().submit().model() != left) {
             throw new AssertionError("Ordinary equipment replacement was split");
         }
@@ -188,11 +188,11 @@ public final class NeoForgeNativeEquipmentClientTest {
             }
             ItemStack vanilla = source(Items.IRON_BOOTS, EquipmentAssets.IRON);
             assertRoots(renderPair(mixed(stack, vanilla), original),
-                    humanoid.leftLeg, original.rightLeg, humanoid.rightLeg, original.leftLeg);
+                        humanoid.leftLeg, original.rightLeg, humanoid.rightLeg, original.leftLeg);
             assertRoots(renderPair(mixed(vanilla, stack), original),
-                    original.leftLeg, humanoid.rightLeg, original.rightLeg, humanoid.leftLeg);
+                        original.leftLeg, humanoid.rightLeg, original.rightLeg, humanoid.leftLeg);
             assertRoots(renderPair(mixed(stack, stack), original),
-                    humanoid.leftLeg, humanoid.rightLeg, humanoid.rightLeg, humanoid.leftLeg);
+                        humanoid.leftLeg, humanoid.rightLeg, humanoid.rightLeg, humanoid.leftLeg);
             if (resolved == original) {
                 ordinary++;
             } else {
@@ -215,7 +215,7 @@ public final class NeoForgeNativeEquipmentClientTest {
         state.walkAnimationPos = phase;
         SubmitNodeStorage storage = new SubmitNodeStorage();
         if (!MixedBootsEquipmentRenderer.renderLayers(renderer, EquipmentClientInfo.LayerType.HUMANOID,
-                original, state, stack, new PoseStack(), storage, LIGHT, OUTLINE)) {
+                                                      original, state, stack, new PoseStack(), storage, LIGHT, OUTLINE)) {
             throw new AssertionError("Native fixture declined the split route");
         }
         List<Node> nodes = nodes(storage);
@@ -245,7 +245,7 @@ public final class NeoForgeNativeEquipmentClientTest {
     }
 
     private static void assertRoots(List<Node> nodes, ModelPart left, ModelPart right,
-                                   ModelPart excludedLeft, ModelPart excludedRight) {
+                                    ModelPart excludedLeft, ModelPart excludedRight) {
         boolean foundLeft = false;
         boolean foundRight = false;
         for (Node node : nodes) {

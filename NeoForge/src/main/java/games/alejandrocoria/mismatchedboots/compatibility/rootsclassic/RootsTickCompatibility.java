@@ -18,15 +18,20 @@ public final class RootsTickCompatibility {
     private static final java.util.Set<Identifier> disabled = new java.util.HashSet<>();
     private static Boolean repairReady;
 
-    private RootsTickCompatibility() {}
+    private RootsTickCompatibility() {
+    }
 
     public static void tick(ItemStack root, ServerLevel level, Entity entity, EquipmentSlot slot) {
         var equipped = root.get(DataComponents.EQUIPPABLE);
-        if (equipped == null || equipped.slot() != EquipmentSlot.FEET) { return; }
+        if (equipped == null || equipped.slot() != EquipmentSlot.FEET) {
+            return;
+        }
         Identifier id = MixedBootsSources.anySource(root, source -> source.is(BuiltInRegistries.ITEM.getValue(SYLVAN)))
-                ? SYLVAN : MixedBootsSources.anySource(root, source -> source.is(BuiltInRegistries.ITEM.getValue(WILDWOOD)))
-                ? WILDWOOD : null;
-        if (id == null || disabled.contains(id)) { return; }
+                        ? SYLVAN : MixedBootsSources.anySource(root, source -> source.is(BuiltInRegistries.ITEM.getValue(WILDWOOD)))
+                                   ? WILDWOOD : null;
+        if (id == null || disabled.contains(id)) {
+            return;
+        }
         Item receiver = BuiltInRegistries.ITEM.getValue(id);
         String expected = id.equals(SYLVAN) ? RootsTickShape.SYLVAN : RootsTickShape.WILDWOOD;
         boolean ready;
@@ -38,7 +43,10 @@ public final class RootsTickCompatibility {
             disable(id, "pre-invocation linkage failure: " + failure.getClass().getSimpleName());
             return;
         }
-        if (!ready) { disable(id, "native receiver or repair stack-consumer proof unavailable"); return; }
+        if (!ready) {
+            disable(id, "native receiver or repair stack-consumer proof unavailable");
+            return;
+        }
         // The native method can already mutate damage/Terra: never catch-and-retry a second source here.
         receiver.inventoryTick(root, level, entity, slot);
     }
@@ -50,12 +58,16 @@ public final class RootsTickCompatibility {
                 var getter = util.getMethod(RootsTickShape.REPAIR_PROOF);
                 repairReady = getter.getReturnType() == boolean.class && java.lang.reflect.Modifier.isStatic(getter.getModifiers())
                         && Boolean.TRUE.equals(getter.invoke(null));
-            } catch (ReflectiveOperationException | LinkageError unavailable) { repairReady = false; }
+            } catch (ReflectiveOperationException | LinkageError unavailable) {
+                repairReady = false;
+            }
         }
         return repairReady;
     }
 
     private static void disable(Identifier id, String reason) {
-        if (disabled.add(id)) { Constants.LOG.warn("Roots Classic mixed {} tick disabled: {}", id, reason); }
+        if (disabled.add(id)) {
+            Constants.LOG.warn("Roots Classic mixed {} tick disabled: {}", id, reason);
+        }
     }
 }

@@ -114,22 +114,22 @@ public final class BetterXMixinPlugin implements IMixinConfigPlugin {
             ClassNode upstreamMixin) {
         return isPublicClass(configs)
                 && hasField(configs, "GAME_RULES", DEFAULT_CONFIG_DESCRIPTOR,
-                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
                 && isPublicClass(defaultConfig)
                 && hasField(defaultConfig, "piglinIgnoreNetherArmor", BOOLEAN_VALUE_DESCRIPTOR,
-                Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL)
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL)
                 && isPublicClass(equipmentItems)
                 && hasField(equipmentItems, "CINCINNASITE_SET", NETHER_SET_DESCRIPTOR,
-                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
                 && hasField(equipmentItems, "NETHER_RUBY_SET", NETHER_SET_DESCRIPTOR,
-                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
                 && hasField(equipmentItems, "FLAMING_RUBY_SET", NETHER_SET_DESCRIPTOR,
-                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
                 && isPublicClass(netherSet)
                 && EQUIPMENT_SET_INTERNAL.equals(netherSet.superName)
                 && isPublicClass(equipmentSet)
                 && hasMethod(equipmentSet, "getArmorPieces", ARMOR_PIECES_DESCRIPTOR,
-                Opcodes.ACC_PUBLIC, Opcodes.ACC_STATIC)
+                             Opcodes.ACC_PUBLIC, Opcodes.ACC_STATIC)
                 && hasUpstreamHeadInjection(upstreamMixin);
     }
 

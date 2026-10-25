@@ -12,7 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 abstract class JustDireRootUpgradeRecipeChangedMixin {
     @ModifyReturnValue(method = "assemble(Lnet/minecraft/world/item/crafting/SmithingRecipeInput;)Lnet/minecraft/world/item/ItemStack;", at = @At("RETURN"))
     private ItemStack changed(ItemStack original) {
-        if (original.isEmpty()) { return original; }
+        if (original.isEmpty()) {
+            return original;
+        }
         var changed = original.copy();
         changed.set(DataComponents.CUSTOM_NAME, Component.literal("Changed native recipe fixture"));
         return changed;

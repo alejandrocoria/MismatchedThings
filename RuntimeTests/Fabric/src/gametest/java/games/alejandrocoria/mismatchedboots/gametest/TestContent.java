@@ -63,17 +63,18 @@ public final class TestContent implements ModInitializer {
         Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, id("reversed_workbench"), ReversedWorkbenchRecipe.SERIALIZER);
         RecipeSynchronization.synchronizeRecipeSerializer(ReversedWorkbenchRecipe.SERIALIZER);
         NUMERIC_COMPONENT = Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, NUMERIC_COMPONENT_ID,
-                DataComponentType.<Integer>builder()
-                        .persistent(Codec.intRange(0, 10).validate(value -> value % 2 == 0
-                                ? DataResult.success(value) : DataResult.error(() -> "Expected even value")))
-                        .networkSynchronized(ByteBufCodecs.VAR_INT).build());
+                                              DataComponentType.<Integer>builder()
+                                                               .persistent(Codec.intRange(0, 10).validate(value -> value % 2 == 0
+                                                                                                                   ? DataResult.success(value)
+                                                                                                                   : DataResult.error(() -> "Expected even value")))
+                                                               .networkSynchronized(ByteBufCodecs.VAR_INT).build());
         OPAQUE_COMPONENT = Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
                 OPAQUE_COMPONENT_ID,
                 DataComponentType.<String>builder()
-                        .persistent(Codec.STRING)
-                        .networkSynchronized(ByteBufCodecs.STRING_UTF8)
-                        .build());
+                                 .persistent(Codec.STRING)
+                                 .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+                                 .build());
         ADDED_COMPONENT = stringComponent(ADDED_COMPONENT_ID);
         REMOVED_COMPONENT = stringComponent(REMOVED_COMPONENT_ID);
         TOOLTIP_PROBE_COMPONENT = Registry.register(
@@ -84,34 +85,34 @@ public final class TestContent implements ModInitializer {
                 BuiltInRegistries.ITEM,
                 COMPONENT_BOOTS_ID,
                 new Item(new Item.Properties()
-                        .stacksTo(1)
-                        .durability(321)
-                        .component(
-                                DataComponents.EQUIPPABLE,
-                                Equippable.builder(EquipmentSlot.FEET)
-                                        .setAsset(EquipmentAssets.IRON)
-                                        .build())
-                        .setId(COMPONENT_BOOTS_KEY)));
+                                 .stacksTo(1)
+                                 .durability(321)
+                                 .component(
+                                         DataComponents.EQUIPPABLE,
+                                         Equippable.builder(EquipmentSlot.FEET)
+                                                   .setAsset(EquipmentAssets.IRON)
+                                                   .build())
+                                 .setId(COMPONENT_BOOTS_KEY)));
         UPGRADED_COMPONENT_BOOTS = Registry.register(
                 BuiltInRegistries.ITEM,
                 UPGRADED_COMPONENT_BOOTS_ID,
                 new Item(new Item.Properties()
-                        .stacksTo(1)
-                        .durability(500)
-                        .component(DataComponents.REPAIRABLE,
-                                new Repairable(HolderSet.direct(BuiltInRegistries.ITEM.wrapAsHolder(Items.DIAMOND))))
-                        .component(DataComponents.EQUIPPABLE,
-                                Equippable.builder(EquipmentSlot.FEET)
-                                        .setAsset(EquipmentAssets.DIAMOND)
-                                        .build())
-                        .setId(UPGRADED_COMPONENT_BOOTS_KEY)));
+                                 .stacksTo(1)
+                                 .durability(500)
+                                 .component(DataComponents.REPAIRABLE,
+                                            new Repairable(HolderSet.direct(BuiltInRegistries.ITEM.wrapAsHolder(Items.DIAMOND))))
+                                 .component(DataComponents.EQUIPPABLE,
+                                            Equippable.builder(EquipmentSlot.FEET)
+                                                      .setAsset(EquipmentAssets.DIAMOND)
+                                                      .build())
+                                 .setId(UPGRADED_COMPONENT_BOOTS_KEY)));
         TOOLTIP_PROBE_ITEM = Registry.register(
                 BuiltInRegistries.ITEM,
                 TOOLTIP_PROBE_ITEM_ID,
                 new TooltipProbeItem(new Item.Properties()
-                        .stacksTo(1)
-                        .equippable(EquipmentSlot.FEET)
-                        .setId(TOOLTIP_PROBE_ITEM_KEY)));
+                                             .stacksTo(1)
+                                             .equippable(EquipmentSlot.FEET)
+                                             .setId(TOOLTIP_PROBE_ITEM_KEY)));
     }
 
     static Item requireComponentBoots() {
@@ -167,9 +168,9 @@ public final class TestContent implements ModInitializer {
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
                 id,
                 DataComponentType.<String>builder()
-                        .persistent(Codec.STRING)
-                        .networkSynchronized(ByteBufCodecs.STRING_UTF8)
-                        .build());
+                                 .persistent(Codec.STRING)
+                                 .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+                                 .build());
     }
 
     private static Identifier id(String path) {

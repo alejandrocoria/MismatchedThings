@@ -11,7 +11,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MouseHandler.class)
 abstract class AetherTooltipMouseMixin {
     @Inject(method = "getScaledXPos(Lcom/mojang/blaze3d/platform/Window;)D", at = @At("HEAD"), cancellable = true)
-    private void x(CallbackInfoReturnable<Double> callback) { Double value = AetherTooltipLifecycleTest.mouse(true); if (value != null) { callback.setReturnValue(value); } }
+    private void x(CallbackInfoReturnable<Double> callback) {
+        Double value = AetherTooltipLifecycleTest.mouse(true);
+        if (value != null) {
+            callback.setReturnValue(value);
+        }
+    }
+
     @Inject(method = "getScaledYPos(Lcom/mojang/blaze3d/platform/Window;)D", at = @At("HEAD"), cancellable = true)
-    private void y(CallbackInfoReturnable<Double> callback) { Double value = AetherTooltipLifecycleTest.mouse(false); if (value != null) { callback.setReturnValue(value); } }
+    private void y(CallbackInfoReturnable<Double> callback) {
+        Double value = AetherTooltipLifecycleTest.mouse(false);
+        if (value != null) {
+            callback.setReturnValue(value);
+        }
+    }
 }

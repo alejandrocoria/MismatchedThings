@@ -19,7 +19,7 @@ public final class CreateFlyBeltInjectionPoint extends InjectionPoint {
     @Override
     public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
         var checks = CreateFlyBeltShape.DESCRIPTOR.equals(descriptor)
-                ? CreateFlyBeltShape.cardboardChecks(instructions) : java.util.List.<AbstractInsnNode>of();
+                     ? CreateFlyBeltShape.cardboardChecks(instructions) : java.util.List.<AbstractInsnNode>of();
         if (checks.isEmpty()) {
             if (WARNED.compareAndSet(false, true)) {
                 Constants.LOG.warn("Create Fly Belt local contract is incompatible; Cardboard Belt compatibility disabled");

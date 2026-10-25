@@ -22,45 +22,54 @@ public final class NeoForgeRuntimeTest {
             games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.initialize(eventBus);
             if (FMLEnvironment.getDist().isClient()) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsClient.tick(Minecraft.getInstance()));
+                                                       games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsClient.tick(Minecraft.getInstance()));
             }
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
-                    games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.tick(event.getServer()));
+                                                   games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.tick(event.getServer()));
             return;
         }
         if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.enabled()) {
-            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.tick(event.getServer()));
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycle.tick(
+                    event.getServer()));
             if (FMLEnvironment.getDist().isClient()) {
-                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycleClient.tick(Minecraft.getInstance()));
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalLifecycleClient.tick(
+                        Minecraft.getInstance()));
             }
             return;
         }
         if (games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalNativeTestApi.enabled()) {
-            MysticalAugmentsServer.register(); return;
+            MysticalAugmentsServer.register();
+            return;
         }
         if (SeparatorObservations.enabled()) {
             if (FMLEnvironment.getDist().isClient()) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> SeparatorClientTest.tick(Minecraft.getInstance()));
+            } else {
+                NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> SeparatorServerProbe.run(event.getServer()));
             }
-            else { NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> SeparatorServerProbe.run(event.getServer())); }
             return;
         }
         if (!System.getProperty("mismatchedboots.runtimetest.undergarden", "").isEmpty()) {
-            UndergardenTest.register(); return;
+            UndergardenTest.register();
+            return;
         }
         if (!System.getProperty("mismatchedboots.runtimetest.aetherAlkahest", "").isEmpty()) {
-            AetherAlkahestTest.register(); return;
+            AetherAlkahestTest.register();
+            return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherTooltipSeed")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> event.getServer().halt(false));
             return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIITooltip")) {
-            if (FMLEnvironment.getDist().isClient()) { AetherIITooltipClientTest.register(); }
+            if (FMLEnvironment.getDist().isClient()) {
+                AetherIITooltipClientTest.register();
+            }
             return;
         }
         if (!System.getProperty("mismatchedboots.runtimetest.aetherIILifecycle", "").isEmpty()) {
-            AetherIILifecycleTest.register(); return;
+            AetherIILifecycleTest.register();
+            return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.aetherIIClient")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> AetherIIClientTest.observeServer());
@@ -75,12 +84,15 @@ public final class NeoForgeRuntimeTest {
             return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipTest")) {
-            if (FMLEnvironment.getDist().isClient()) { SilentGearTooltipClientTest.register(); }
+            if (FMLEnvironment.getDist().isClient()) {
+                SilentGearTooltipClientTest.register();
+            }
             return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingSeed")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
-                games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles.write("silent-gear-remaining-seed-success.txt", "fresh flat world\n");
+                games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles.write("silent-gear-remaining-seed-success.txt",
+                                                                                              "fresh flat world\n");
                 event.getServer().halt(false);
             });
             return;
@@ -98,7 +110,8 @@ public final class NeoForgeRuntimeTest {
             return;
         }
         if (!System.getProperty("mismatchedboots.runtimetest.silentGearLifecycle", "").isEmpty()) {
-            SilentGearLifecycleTest.register(); return;
+            SilentGearLifecycleTest.register();
+            return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearAbsent")) {
@@ -137,7 +150,9 @@ public final class NeoForgeRuntimeTest {
             if (System.getProperty("mismatchedboots.runtimetest.justDireArmorWearVariant", "").equals("abilities")) {
                 NeoForgeJustDireArmorWearTest.registerAbilityWitness();
                 NeoForgeJustDireEarthquakeServerTest.register();
-            } else { NeoForgeJustDireArmorWearTest.register(); }
+            } else {
+                NeoForgeJustDireArmorWearTest.register();
+            }
             return;
         }
         if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireLavaRepairTest")) {
@@ -191,15 +206,16 @@ public final class NeoForgeRuntimeTest {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireCooldownHudTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest")) {
                 // Inspect the selected native root after the production Post handlers refresh it.
-                NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompClientTest.tick(Minecraft.getInstance()));
+                NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST,
+                                               (ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompClientTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompTransportTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> NeoForgeJustDireGroundStompTransportTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireResourcesClientTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        NeoForgeJustDireResourcesClientTest.tick(Minecraft.getInstance()));
+                                                       NeoForgeJustDireResourcesClientTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.justDireJumpClientTest")) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        NeoForgeJustDireJumpClientTest.tick(Minecraft.getInstance()));
+                                                       NeoForgeJustDireJumpClientTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.geometryTest")) {
                 NeoForgeNativeEquipmentClientTest.registerFixtures(eventBus);
                 eventBus.addListener(NeoForgeNativeEquipmentClientTest::registerExtensions);
@@ -210,15 +226,15 @@ public final class NeoForgeRuntimeTest {
                     }
                 });
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        NeoForgeGeometryClientTest.tick(Minecraft.getInstance()));
+                                                       NeoForgeGeometryClientTest.tick(Minecraft.getInstance()));
             } else if (Boolean.getBoolean("mismatchedboots.runtimetest.tooltipTest")) {
                 eventBus.addListener(NeoForgeTooltipClientTest::registerAppenders);
                 NeoForge.EVENT_BUS.addListener(NeoForgeTooltipClientTest::onTooltip);
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        NeoForgeTooltipClientTest.tick(Minecraft.getInstance()));
+                                                       NeoForgeTooltipClientTest.tick(Minecraft.getInstance()));
             } else {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
-                        NetworkAcceptanceClientTest.tick(Minecraft.getInstance()));
+                                                       NetworkAcceptanceClientTest.tick(Minecraft.getInstance()));
             }
         }
     }

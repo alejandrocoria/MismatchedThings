@@ -17,9 +17,9 @@ public final class ReiRecipeReloadProbe implements RecipeViewerReloadClientGameT
     @Override
     public List<RecipeViewerReloadClientGameTest.Cycle> cycles() {
         return search().streamDisplays().map(spec -> spec.provideInternalDisplay())
-                .map(display -> new RecipeViewerReloadClientGameTest.Cycle(
-                        stacks(display.getInputEntries().get(0)), stacks(display.getInputEntries().get(1)),
-                        stacks(display.getOutputEntries().get(0)), stacks(display.getOutputEntries().get(1)))).toList();
+                       .map(display -> new RecipeViewerReloadClientGameTest.Cycle(
+                               stacks(display.getInputEntries().get(0)), stacks(display.getInputEntries().get(1)),
+                               stacks(display.getOutputEntries().get(0)), stacks(display.getOutputEntries().get(1)))).toList();
     }
 
     @Override
@@ -29,7 +29,7 @@ public final class ReiRecipeReloadProbe implements RecipeViewerReloadClientGameT
 
     private static ViewSearchBuilder search() {
         return ViewSearchBuilder.builder().addCategory(MismatchedWorkbenchReiDisplay.CATEGORY)
-                .filterCategory(MismatchedWorkbenchReiDisplay.CATEGORY).mergingDisplays(false);
+                                .filterCategory(MismatchedWorkbenchReiDisplay.CATEGORY).mergingDisplays(false);
     }
 
     private static List<ItemStack> stacks(EntryIngredient entries) {

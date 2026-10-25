@@ -16,18 +16,25 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.gear.trait.effect.WielderEffectTraitEffect", remap = false)
 abstract class SilentGearSetMixin implements SilentGearWearerReadiness {
-    @Override public boolean mismatchedboots$sgSetReady() { return mismatchedboots$sgWielderReady(); }
-    @Unique private static boolean mismatchedboots$sgWielderReady() { return false; }
+    @Override
+    public boolean mismatchedboots$sgSetReady() {
+        return mismatchedboots$sgWielderReady();
+    }
+
+    @Unique
+    private static boolean mismatchedboots$sgWielderReady() {
+        return false;
+    }
 
     @ModifyExpressionValue(method = "getSetPieceCount", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearSetInjectionPoint", args = "predicate=type"), require = 0, expect = 0, allow = 1)
     private boolean mismatchedboots$sgSetType(boolean original, @Coerce Object context, @Coerce Object type, Player player,
-                                            @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
+                                              @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
         return original || mismatchedboots$sgWielderReady() && SilentGearWearer.predicate(false, context, slot, stack);
     }
 
     @ModifyExpressionValue(method = "getSetPieceCount", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearSetInjectionPoint", args = "predicate=trait"), require = 0, expect = 0, allow = 1)
     private boolean mismatchedboots$sgSetTrait(boolean original, @Coerce Object context, @Coerce Object type, Player player,
-                                             @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
+                                               @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
         return original || mismatchedboots$sgWielderReady() && SilentGearWearer.predicate(false, context, slot, stack);
     }
 }

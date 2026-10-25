@@ -132,7 +132,7 @@ public final class QuadClipper {
         float factor = firstX / (firstX - secondX);
         if (!Float.isFinite(factor) || factor <= 0.0F || factor >= 1.0F) {
             throw new IllegalStateException("A supported crossing produced an invalid intersection factor: "
-                    + factor);
+                                                    + factor);
         }
 
         return factor;
@@ -180,9 +180,9 @@ public final class QuadClipper {
             return false;
         }
         float planarity = Math.abs(quad.vertex(3).clippingPosition()
-                .subtract(quad.vertex(0).clippingPosition()).dot(normal)) / normalLength;
+                                       .subtract(quad.vertex(0).clippingPosition()).dot(normal)) / normalLength;
         if (maximum(parallel02, parallel13, orthogonal,
-                lengthDifference02, lengthDifference13, planarity) > GEOMETRY_EPSILON) {
+                    lengthDifference02, lengthDifference13, planarity) > GEOMETRY_EPSILON) {
             return false;
         }
 
@@ -197,7 +197,7 @@ public final class QuadClipper {
 
     private static Point edge(Quad quad, int index) {
         return quad.vertex((index + 1) % Quad.VERTEX_COUNT).clippingPosition()
-                .subtract(quad.vertex(index).clippingPosition());
+                   .subtract(quad.vertex(index).clippingPosition());
     }
 
     private static void validateFinite(Quad quad) {
@@ -218,7 +218,7 @@ public final class QuadClipper {
         for (int first = 0; first < output.vertices().size(); first++) {
             for (int second = first + 1; second < output.vertices().size(); second++) {
                 if (output.vertex(first).clippingPosition()
-                        .distanceSquared(output.vertex(second).clippingPosition())
+                          .distanceSquared(output.vertex(second).clippingPosition())
                         <= GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
                     return true;
                 }
@@ -247,7 +247,7 @@ public final class QuadClipper {
         Point origin = polygon.vertex(0).clippingPosition();
         for (int index = 1; index < polygon.vertices().size() - 1; index++) {
             Point normal = polygon.vertex(index).clippingPosition().subtract(origin)
-                    .cross(polygon.vertex(index + 1).clippingPosition().subtract(origin));
+                                  .cross(polygon.vertex(index + 1).clippingPosition().subtract(origin));
             if (normal.lengthSquared() > GEOMETRY_EPSILON * GEOMETRY_EPSILON) {
                 return normal;
             }
@@ -415,7 +415,7 @@ public final class QuadClipper {
         public VertexOrigin {
             if (first < 0 || first >= 4 || second < 0 || second >= 4 || !Float.isFinite(factor)
                     || (first == second ? factor != 0.0F
-                    : second != (first + 1) % 4 || factor <= 0.0F || factor >= 1.0F)) {
+                                        : second != (first + 1) % 4 || factor <= 0.0F || factor >= 1.0F)) {
                 throw new IllegalArgumentException("Invalid source vertex or edge intersection");
             }
         }
@@ -430,7 +430,7 @@ public final class QuadClipper {
             Objects.requireNonNull(geometry, "geometry");
             origins = List.copyOf(origins);
             int expected = geometry.decision() == Decision.SPLIT
-                    ? Objects.requireNonNull(geometry.polygon()).vertices().size() : 0;
+                           ? Objects.requireNonNull(geometry.polygon()).vertices().size() : 0;
             if (origins.size() != expected) {
                 throw new IllegalArgumentException("Origins must match the clipped polygon");
             }

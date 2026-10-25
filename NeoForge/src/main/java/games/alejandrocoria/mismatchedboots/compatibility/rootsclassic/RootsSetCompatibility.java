@@ -10,7 +10,8 @@ import net.minecraft.world.item.ItemStack;
 
 /** Only the audited FEET predicate is extended; other optional armor adapters own their slots. */
 public final class RootsSetCompatibility {
-    private RootsSetCompatibility() {}
+    private RootsSetCompatibility() {
+    }
 
     public static boolean sylvan(ItemStack feet, boolean original) {
         return original || recognizes(feet, "sylvan_boots");
@@ -24,6 +25,6 @@ public final class RootsSetCompatibility {
         var equipped = feet.get(DataComponents.EQUIPPABLE);
         return equipped != null && equipped.slot() == EquipmentSlot.FEET
                 && MixedBootsSources.anySource(feet, source -> source.is(BuiltInRegistries.ITEM.getValue(
-                        Identifier.fromNamespaceAndPath("rootsclassic", path))));
+                Identifier.fromNamespaceAndPath("rootsclassic", path))));
     }
 }

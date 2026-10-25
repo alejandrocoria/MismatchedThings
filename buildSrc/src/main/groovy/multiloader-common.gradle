@@ -25,8 +25,8 @@ repositories {
             name = 'CommonNetworking'
             url = 'https://jm.gserv.me/repository/maven-public/'
         }
-        forRepositories(*(localRepository == null ? [networkingRepository]
-                : [localRepository, networkingRepository]))
+        forRepositories(*(localRepository == null?[networkingRepository]
+                : [localRepository, networkingRepository]) )
         filter {
             includeGroupAndSubgroups('mysticdrew')
         }
@@ -146,30 +146,30 @@ jar {
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     def expandProps = [
-            "version":                              version,
-            "group":                                project.group, //Else we target the task's group.
-            "java_version":                         java_version,
-            "minecraft_version":                    minecraft_version,
-            "minecraft_version_range":              minecraft_version_range,
-            "pack_format":                          pack_format,
-            "mod_name":                             mod_name,
-            "mod_author":                           mod_author,
-            "mod_id":                               mod_id,
-            "mod_description":                      mod_description,
-            "mod_email":                            mod_email,
-            "mod_homepage":                         mod_homepage,
-            "mod_issues":                           mod_issues,
-            "mod_sources":                          mod_sources,
-            "mod_credits":                          mod_credits,
-            "mod_license":                          mod_license,
-            "mod_logo":                             mod_logo,
-            "fabric_api_version":                   fabric_api_version,
-            "fabric_api_min_version":               fabric_api_min_version,
-            "fabric_loader_version":                fabric_loader_version,
-            "neoforge_version":                     neoforge_version,
-            "neoforge_version_range":               neoforge_version_range,
-            "neoforge_loader_version_range":        neoforge_loader_version_range,
-            "common_networking_version":            common_networking_version
+            "version"                      : version,
+            "group"                        : project.group, //Else we target the task's group.
+            "java_version"                 : java_version,
+            "minecraft_version"            : minecraft_version,
+            "minecraft_version_range"      : minecraft_version_range,
+            "pack_format"                  : pack_format,
+            "mod_name"                     : mod_name,
+            "mod_author"                   : mod_author,
+            "mod_id"                       : mod_id,
+            "mod_description"              : mod_description,
+            "mod_email"                    : mod_email,
+            "mod_homepage"                 : mod_homepage,
+            "mod_issues"                   : mod_issues,
+            "mod_sources"                  : mod_sources,
+            "mod_credits"                  : mod_credits,
+            "mod_license"                  : mod_license,
+            "mod_logo"                     : mod_logo,
+            "fabric_api_version"           : fabric_api_version,
+            "fabric_api_min_version"       : fabric_api_min_version,
+            "fabric_loader_version"        : fabric_loader_version,
+            "neoforge_version"             : neoforge_version,
+            "neoforge_version_range"       : neoforge_version_range,
+            "neoforge_loader_version_range": neoforge_loader_version_range,
+            "common_networking_version"    : common_networking_version
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

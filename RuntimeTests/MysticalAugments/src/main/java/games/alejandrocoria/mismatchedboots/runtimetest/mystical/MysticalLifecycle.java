@@ -30,18 +30,28 @@ public final class MysticalLifecycle {
     static volatile double serverPeak;
     private static boolean seeded;
 
-    private MysticalLifecycle() {}
-    public static String phase() { return System.getProperty("mismatchedboots.test.mysticalLifecycle", ""); }
-    public static boolean enabled() { return !phase().isEmpty(); }
+    private MysticalLifecycle() {
+    }
+
+    public static String phase() {
+        return System.getProperty("mismatchedboots.test.mysticalLifecycle", "");
+    }
+
+    public static boolean enabled() {
+        return !phase().isEmpty();
+    }
 
     public static void tick(MinecraftServer server) {
         if (phase().equals("seed")) {
-            if (seeded) { return; }
+            if (seeded) {
+                return;
+            }
             seeded = true;
             try {
                 var recipe = new MixedBootsWorkbenchRecipe();
                 var first = recipe.assemblePair(new MismatchedWorkbenchInput(
-                        MysticalAugmentsProbe.item("awakened_supremium_boots", "HEALTH_BOOST_III", "STEP_ASSIST"), new ItemStack(Items.DIAMOND_BOOTS)));
+                        MysticalAugmentsProbe.item("awakened_supremium_boots", "HEALTH_BOOST_III", "STEP_ASSIST"),
+                        new ItemStack(Items.DIAMOND_BOOTS)));
                 var second = recipe.assemblePair(new MismatchedWorkbenchInput(
                         MysticalAugmentsProbe.item("awakened_supremium_boots", "JUMP_BOOST_III", "NO_FALL_DAMAGE"),
                         MysticalAugmentsProbe.item("prudentium_boots", "LUCK_I")));
@@ -56,16 +66,23 @@ public final class MysticalLifecycle {
                     barrel.setItem(i, root);
                 }
                 barrel.setChanged();
-                var manifest = new JsonObject(); manifest.addProperty("process", ProcessHandle.current().pid());
+                var manifest = new JsonObject();
+                manifest.addProperty("process", ProcessHandle.current().pid());
                 manifest.add("roots", encode(server, roots));
                 NetworkAcceptanceFiles.write("mystical-world.json", manifest.toString());
-                NetworkAcceptanceFiles.write("mystical-seed-report.txt", "Four recipe-produced named/used inverse roots saved in an actual world barrel\n");
+                NetworkAcceptanceFiles.write("mystical-seed-report.txt",
+                                             "Four recipe-produced named/used inverse roots saved in an actual world barrel\n");
                 NetworkAcceptanceFiles.write("mystical-seed-success.txt", "passed\n");
-            } catch (Throwable failure) { NetworkAcceptanceFiles.failure("mystical-seed", failure); }
-            finally { server.halt(false); }
+            } catch (Throwable failure) {
+                NetworkAcceptanceFiles.failure("mystical-seed", failure);
+            } finally {
+                server.halt(false);
+            }
         } else if (recordJump && playerId != null) {
             var owner = server.getPlayerList().getPlayer(playerId);
-            if (owner != null) { serverPeak = Math.max(serverPeak, owner.getY() - 81); }
+            if (owner != null) {
+                serverPeak = Math.max(serverPeak, owner.getY() - 81);
+            }
         }
     }
 
@@ -73,17 +90,26 @@ public final class MysticalLifecycle {
         var barrel = (BarrelBlockEntity) server.overworld().getBlockEntity(BARREL);
         require(barrel != null, "Restart lost world barrel");
         var roots = new ArrayList<ItemStack>();
-        for (int i = 0; i < 4; i++) { roots.add(barrel.getItem(i).copy()); }
+        for (int i = 0; i < 4; i++) {
+            roots.add(barrel.getItem(i).copy());
+        }
         return roots;
     }
+
     static JsonArray encode(MinecraftServer server, List<ItemStack> roots) {
         var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         var result = new JsonArray();
         roots.forEach(root -> result.add(ItemStack.CODEC.encodeStart(ops, root).getOrThrow()));
         return result;
     }
+
     static JsonObject read(String name) throws Exception {
         return JsonParser.parseString(Files.readString(Path.of(System.getProperty("mismatchedboots.runtimetest.markers"), name))).getAsJsonObject();
     }
-    static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+
+    static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

@@ -15,11 +15,11 @@ def fixtureJar = fixtureTask.flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def artifacts = (fabric ? [
         'MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar': '58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278',
-        'Cucumber-Fabric-26.1.2-9.0.6.2.jar': '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
+        'Cucumber-Fabric-26.1.2-9.0.6.2.jar'            : '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
 ] : [
         'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
-        'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821',
-        'justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
+        'Cucumber-26.1.2-9.0.7.jar'            : '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821',
+        'justdirethings-1.6.11.jar'            : '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
 ]).collectEntries { name, hash -> [(rootProject.file("${loader}/runs/client/mods/${name}")): hash] }
 def artifactsForStage = { String stage ->
     artifacts.findAll { artifact, hash ->
@@ -36,12 +36,12 @@ def artifactsForStage = { String stage ->
         def stage = phase.toLowerCase(Locale.ROOT)
         def markers = reports.map { it.dir(stage) }
         def properties = [
-                'mismatchedboots.runtimetest.markers': markers.get().asFile.absolutePath,
-                'mismatchedboots.runtimetest.loader': loader.toLowerCase(Locale.ROOT),
-                'mismatchedboots.test.missingModsCase': refusal ? 'candidate' : mode,
-                'mismatchedboots.test.missingModsRefuse': (mode == 'refused').toString(),
-                'mismatchedboots.test.missingModsBypass': (mode == 'bypassed').toString(),
-                'mismatchedboots.test.missingModsStage': stage,
+                'mismatchedboots.runtimetest.markers'     : markers.get().asFile.absolutePath,
+                'mismatchedboots.runtimetest.loader'      : loader.toLowerCase(Locale.ROOT),
+                'mismatchedboots.test.missingModsCase'    : refusal ? 'candidate' : mode,
+                'mismatchedboots.test.missingModsRefuse'  : (mode == 'refused').toString(),
+                'mismatchedboots.test.missingModsBypass'  : (mode == 'bypassed').toString(),
+                'mismatchedboots.test.missingModsStage'   : stage,
                 'mismatchedboots.test.missingModsBaseline': new File(reports.get().asFile, 'baseline.nbt').absolutePath
         ]
         if (fabric) {
@@ -114,19 +114,25 @@ tasks.register('verifyMissingModsRecovery') {
     doLast {
         def selectedCases = providers.gradleProperty('missingModsCases').getOrElse('control,candidate,refused,bypassed').split(',')
         selectedCases.each { mode ->
-            if (!(mode in ['control', 'candidate', 'refused', 'bypassed'])) { throw new GradleException("Unknown case ${mode}") }
+            if (!(mode in ['control', 'candidate', 'refused', 'bypassed'])) {
+                throw new GradleException("Unknown case ${mode}")
+            }
             def refusal = mode in ['refused', 'bypassed']
             def selectedStages = providers.gradleProperty('missingModsStages')
                     .getOrElse(mode == 'candidate' ? 'write,absent,absentagain,partial,sources,restore,reloaded' : 'write,absent,restore').split(',')
             (refusal ? ['write'] : selectedStages).each { stage ->
-                if (!(stage in ['write', 'absent', 'absentagain', 'partial', 'sources', 'restore', 'reloaded'])) { throw new GradleException("Unknown stage ${stage}") }
+                if (!(stage in ['write', 'absent', 'absentagain', 'partial', 'sources', 'restore', 'reloaded'])) {
+                    throw new GradleException("Unknown stage ${stage}")
+                }
                 def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/${mode}/${stage}").get().asFile
                 def log = new File(markers, 'process.log')
                 boolean failed = false
                 try {
                     runBounded(":RuntimeTests:${loader}:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
                 } catch (GradleException failure) {
-                    if (!refusal) { throw failure }
+                    if (!refusal) {
+                        throw failure
+                    }
                     failed = true
                 }
                 if (refusal) {
@@ -141,7 +147,9 @@ tasks.register('verifyMissingModsRecovery') {
                     return
                 }
                 def failure = new File(markers, 'missing-mods-failure.txt')
-                if (failure.isFile()) { throw new GradleException(failure.text) }
+                if (failure.isFile()) {
+                    throw new GradleException(failure.text)
+                }
                 def report = new File(markers, 'missing-mods-report.txt')
                 if (!new File(markers, 'missing-mods-success.txt').isFile() || !report.isFile()) {
                     throw new GradleException("Missing spike result; see ${log}")
@@ -165,13 +173,13 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
     def stage = phase.toLowerCase(Locale.ROOT)
     def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/clients/${stage}")
     def properties = [
-            'mismatchedboots.runtimetest.markers': markers.get().asFile.absolutePath,
-            'mismatchedboots.runtimetest.loader': loader.toLowerCase(Locale.ROOT),
-            'mismatchedboots.test.missingModsCase': 'candidate',
-            'mismatchedboots.test.missingModsStage': stage,
-            'mismatchedboots.test.missingModsBaseline': new File(candidateReports.get().asFile, 'baseline.nbt').absolutePath,
-            'mismatchedboots.test.missingModsPlayer': new File(candidateReports.get().asFile, 'clients-player.nbt').absolutePath,
-            'mismatchedboots.test.hideClientWindow': 'true',
+            'mismatchedboots.runtimetest.markers'        : markers.get().asFile.absolutePath,
+            'mismatchedboots.runtimetest.loader'         : loader.toLowerCase(Locale.ROOT),
+            'mismatchedboots.test.missingModsCase'       : 'candidate',
+            'mismatchedboots.test.missingModsStage'      : stage,
+            'mismatchedboots.test.missingModsBaseline'   : new File(candidateReports.get().asFile, 'baseline.nbt').absolutePath,
+            'mismatchedboots.test.missingModsPlayer'     : new File(candidateReports.get().asFile, 'clients-player.nbt').absolutePath,
+            'mismatchedboots.test.hideClientWindow'      : 'true',
             'mismatchedboots.runtimetest.dismissWarnings': 'true'
     ]
     if (fabric) {
@@ -225,7 +233,9 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
             new File(target, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
             def config = new File(target, 'config'); config.mkdirs()
             def fmlConfig = new File(config, 'fml.toml')
-            if (!fmlConfig.exists()) { fmlConfig.text = 'earlyWindowControl = false\n' }
+            if (!fmlConfig.exists()) {
+                fmlConfig.text = 'earlyWindowControl = false\n'
+            }
         }
     }
     tasks.named("runMissingMods${phase}") { dependsOn prepare }
@@ -237,12 +247,16 @@ tasks.register('verifyMissingModsClients') {
     doLast {
         def phases = providers.gradleProperty('missingModsClientStages').getOrElse('Clientwrite,Clientabsent,Clientrestore').split(',')
         phases.each { phase ->
-            if (!(phase in ['Clientwrite', 'Clientabsent', 'Clientrestore'])) { throw new GradleException("Unknown connected phase ${phase}") }
+            if (!(phase in ['Clientwrite', 'Clientabsent', 'Clientrestore'])) {
+                throw new GradleException("Unknown connected phase ${phase}")
+            }
             def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/clients/${phase.toLowerCase(Locale.ROOT)}").get().asFile
             def log = new File(markers, 'process.log')
             runBounded(":RuntimeTests:${loader}:runMissingMods${phase}", log, 360)
             def failure = new File(markers, 'missing-mods-failure.txt')
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             def report = new File(markers, 'missing-mods-report.txt')
             if (!new File(markers, 'missing-mods-success.txt').isFile() || !report.isFile()
                     || log.readLines().any { it.contains('/ERROR]') || it.contains('Failed to decode value') }) {

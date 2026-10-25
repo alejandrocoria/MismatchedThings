@@ -38,31 +38,31 @@ public final class MismatchedWorkbenchScreen extends AbstractContainerScreen<Mis
         int top = this.topPos;
 
         graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE,
-                left, top, 0.0F, 0.0F, 176, 83, 256, 256);
+                      left, top, 0.0F, 0.0F, 176, 83, 256, 256);
         graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE,
-                left, top + 83, 0.0F, 82.0F, 176, 17, 176, 1, 256, 256);
+                      left, top + 83, 0.0F, 82.0F, 176, 17, 176, 1, 256, 256);
         graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE,
-                left, top + 100, 0.0F, 83.0F, 176, 83, 256, 256);
+                      left, top + 100, 0.0F, 83.0F, 176, 83, 256, 256);
         graphics.fill(left + 7, top + 7, left + 169, top + 100, BACKGROUND_COLOR);
 
         for (int index = MismatchedWorkbenchMenu.INPUT_START;
-                index < MismatchedWorkbenchMenu.RESULT_END;
-                index++) {
+             index < MismatchedWorkbenchMenu.RESULT_END;
+             index++) {
             Slot slot = this.menu.getSlot(index);
             graphics.blitSprite(RenderPipelines.GUI_TEXTURED,
-                    SLOT_SPRITE, left + slot.x - 1, top + slot.y - 1, 18, 18);
+                                SLOT_SPRITE, left + slot.x - 1, top + slot.y - 1, 18, 18);
         }
 
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED,
-                ARROWS_SPRITE, left + 75, top + 39, 26, 26);
+                            ARROWS_SPRITE, left + 75, top + 39, 26, 26);
 
         if (this.menu.isCommitted()) {
             for (int index = MismatchedWorkbenchMenu.INPUT_START;
-                    index < MismatchedWorkbenchMenu.INPUT_END;
-                    index++) {
+                 index < MismatchedWorkbenchMenu.INPUT_END;
+                 index++) {
                 Slot slot = this.menu.getSlot(index);
                 graphics.fill(left + slot.x, top + slot.y,
-                        left + slot.x + 16, top + slot.y + 16, DISABLED_COLOR);
+                              left + slot.x + 16, top + slot.y + 16, DISABLED_COLOR);
             }
         }
     }

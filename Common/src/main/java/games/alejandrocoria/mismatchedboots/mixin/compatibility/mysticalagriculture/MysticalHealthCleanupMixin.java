@@ -14,10 +14,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Pseudo
 @Mixin(targets = "com.blakebr0.mysticalagriculture.augment.HealthBoostAugment", remap = false)
 abstract class MysticalHealthCleanupMixin {
-    @Unique private static boolean mismatchedboots$maHealthCleanupReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$maHealthCleanupReady() {
+        return false;
+    }
 
     @Inject(method = "onPlayerTick", at = @At("RETURN"), require = 0, expect = 0)
     private void mismatchedboots$maHealthCleanup(Level level, Player player, @Coerce Object cache, CallbackInfo callback) {
-        if (mismatchedboots$maHealthCleanupReady()) { MysticalAugmentsCompatibility.refreshHealthCleanup(cache, this, player); }
+        if (mismatchedboots$maHealthCleanupReady()) {
+            MysticalAugmentsCompatibility.refreshHealthCleanup(cache, this, player);
+        }
     }
 }

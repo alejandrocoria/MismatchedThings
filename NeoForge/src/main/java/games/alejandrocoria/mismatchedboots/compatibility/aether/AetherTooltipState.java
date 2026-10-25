@@ -16,34 +16,72 @@ public final class AetherTooltipState {
     private static final ThreadLocal<ItemStack> SOURCE = new ThreadLocal<>();
     private static volatile boolean attributes, tiers, scope, refusedAttributes, refusedTiers;
 
-    private AetherTooltipState() {}
+    private AetherTooltipState() {
+    }
 
-    public static boolean managed(ItemStack stack) { return MixedBootsSources.anySource(stack, source -> true); }
-    public static boolean attributesReady() { return attributes && scope && !refusedAttributes; }
-    public static boolean tiersReady() { return tiers && !refusedTiers; }
+    public static boolean managed(ItemStack stack) {
+        return MixedBootsSources.anySource(stack, source -> true);
+    }
+
+    public static boolean attributesReady() {
+        return attributes && scope && !refusedAttributes;
+    }
+
+    public static boolean tiersReady() {
+        return tiers && !refusedTiers;
+    }
+
     public static boolean suppressAttributes(ItemStack stack) {
         return attributesReady() && (SOURCE.get() == stack || managed(stack));
     }
-    public static boolean suppressTier(ItemStack stack) { return tiersReady() && managed(stack); }
 
-    static void ready(boolean attributeDomain) { if (attributeDomain) { attributes = true; } else { tiers = true; } }
-    static void scopeReady() { scope = true; }
+    public static boolean suppressTier(ItemStack stack) {
+        return tiersReady() && managed(stack);
+    }
+
+    static void ready(boolean attributeDomain) {
+        if (attributeDomain) {
+            attributes = true;
+        } else {
+            tiers = true;
+        }
+    }
+
+    static void scopeReady() {
+        scope = true;
+    }
 
     static synchronized void refuse(boolean attributeDomain, Throwable failure) {
-        if (attributeDomain ? refusedAttributes : refusedTiers) { return; }
-        if (attributeDomain) { refusedAttributes = true; } else { refusedTiers = true; }
+        if (attributeDomain ? refusedAttributes : refusedTiers) {
+            return;
+        }
+        if (attributeDomain) {
+            refusedAttributes = true;
+        } else {
+            refusedTiers = true;
+        }
         String message = "Aether II " + (attributeDomain ? "set" : "tier") + " tooltip containment unavailable: local contract changed";
-        if (failure == null) { Constants.LOG.warn(message); } else { Constants.LOG.warn(message, failure); }
+        if (failure == null) {
+            Constants.LOG.warn(message);
+        } else {
+            Constants.LOG.warn(message, failure);
+        }
     }
 
     /** Only our exact source detail call is scoped. Nested foreign tooltips retain their own identity. */
     @SuppressWarnings("deprecation")
     public static void details(ItemStack source, Item.TooltipContext context, TooltipDisplay display,
                                Player player, TooltipFlag flag, Consumer<Component> output) {
-        ItemStack previous = SOURCE.get(); SOURCE.set(source);
-        try { source.addDetailsToTooltip(context, display, player, flag, output); }
-        finally {
-            if (previous == null) { SOURCE.remove(); } else { SOURCE.set(previous); }
+        ItemStack previous = SOURCE.get();
+        SOURCE.set(source);
+        try {
+            source.addDetailsToTooltip(context, display, player, flag, output);
+        } finally {
+            if (previous == null) {
+                SOURCE.remove();
+            } else {
+                SOURCE.set(previous);
+            }
         }
     }
 }

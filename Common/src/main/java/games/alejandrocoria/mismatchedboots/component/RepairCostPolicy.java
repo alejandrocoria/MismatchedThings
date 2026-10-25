@@ -21,7 +21,7 @@ public enum RepairCostPolicy {
 
     public static Optional<RepairCostPolicy> fromSerializedName(String value) {
         return Arrays.stream(values())
-                .filter(policy -> policy.serializedName.equals(value))
-                .findFirst();
+                     .filter(policy -> policy.serializedName.equals(value))
+                     .findFirst();
     }
 }

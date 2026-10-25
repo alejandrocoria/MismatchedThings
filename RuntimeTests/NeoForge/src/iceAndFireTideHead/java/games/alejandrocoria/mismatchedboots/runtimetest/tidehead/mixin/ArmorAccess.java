@@ -8,5 +8,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Pseudo
 @Mixin(targets = "com.iafenvoy.iceandfire.item.armor.SeaSerpentArmorItem", remap = false)
 public interface ArmorAccess {
-    @Accessor("type") ArmorType tideHead$armorType();
+    @Accessor("type")
+    ArmorType tideHead$armorType();
 }

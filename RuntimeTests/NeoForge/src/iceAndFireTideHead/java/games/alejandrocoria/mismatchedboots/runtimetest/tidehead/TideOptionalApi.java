@@ -6,11 +6,15 @@ import org.spongepowered.asm.service.MixinService;
 
 /** Selection only: inspecting bytecode never grants final entry/base permission or loads optional classes. */
 final class TideOptionalApi {
-    record Result(boolean present, boolean available, String reason) {}
+    record Result(boolean present, boolean available, String reason) {
+    }
+
     private static Result cached;
 
     static synchronized Result inspect() {
-        if (cached != null) { return cached; }
+        if (cached != null) {
+            return cached;
+        }
         boolean present = false;
         try {
             var provider = MixinService.getService().getBytecodeProvider();
@@ -20,9 +24,9 @@ final class TideOptionalApi {
             ClassNode type = provider.getClassNode("net.minecraft.world.item.equipment.ArmorType");
             boolean valid = TideEntryShape.ITEM.equals(armor.superName)
                     && armor.fields.stream().anyMatch(field -> field.name.equals("type")
-                        && field.desc.equals("Lnet/minecraft/world/item/equipment/ArmorType;")
-                        && (field.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC))
-                            == (Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL))
+                    && field.desc.equals("Lnet/minecraft/world/item/equipment/ArmorType;")
+                    && (field.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC))
+                    == (Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL))
                     && publicInstanceMethod(armor, "inventoryTick", TideEntryShape.TICK)
                     && publicInstanceMethod(item, "inventoryTick", TideEntryShape.TICK)
                     && publicInstanceMethod(type, "getSlot", "()Lnet/minecraft/world/entity/EquipmentSlot;");

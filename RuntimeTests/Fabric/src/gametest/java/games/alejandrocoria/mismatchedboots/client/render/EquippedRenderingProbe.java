@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,8 +29,8 @@ public final class EquippedRenderingProbe {
             ItemStack stack,
             int outlineColor) {
         MixedBootsEquipmentRenderer.Side side = model instanceof MixedBootsEquipmentRenderer.SplitModel split
-                ? split.mismatchedboots$side()
-                : null;
+                                                ? split.mismatchedboots$side()
+                                                : null;
         if (side == null && !ModContent.isMixedBoots(stack)) {
             return;
         }

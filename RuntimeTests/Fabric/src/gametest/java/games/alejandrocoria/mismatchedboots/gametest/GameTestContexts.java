@@ -13,7 +13,7 @@ final class GameTestContexts {
             return true;
         }
         helper.assertTrue(System.getProperty("fabric-api.gametest.filter") == null,
-                "Focused GameTest is missing its required context: " + requiredProperty);
+                          "Focused GameTest is missing its required context: " + requiredProperty);
         helper.succeed();
         return false;
     }

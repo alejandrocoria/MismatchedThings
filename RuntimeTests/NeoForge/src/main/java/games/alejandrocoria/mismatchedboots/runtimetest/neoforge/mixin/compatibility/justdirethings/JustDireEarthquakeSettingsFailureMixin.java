@@ -11,8 +11,11 @@ abstract class JustDireEarthquakeSettingsFailureMixin {
     @ModifyArg(method = "earthquakeProfile", at = @At(value = "INVOKE",
             target = "Lgames/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireSettingsCompatibility;nativeMetadata(Lgames/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireSettingsCompatibility$Api;Ljava/lang/Object;Z)Lgames/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireSettingsCompatibility$Metadata;"), index = 1)
     private static Object unsupported(Object actual) {
-        try { return actual.getClass().getConstructor(int.class, int.class, int.class, int.class, int.class, int.class)
-                .newInstance(1, 2, 1, 1, 200, 800); }
-        catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
+        try {
+            return actual.getClass().getConstructor(int.class, int.class, int.class, int.class, int.class, int.class)
+                         .newInstance(1, 2, 1, 1, 200, 800);
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError(failure);
+        }
     }
 }

@@ -49,8 +49,8 @@ public final class CompatibilityGameTests {
         modded.set(TestContent.requireOpaqueComponent(), "compatibility-alpha");
         MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(modded, new ItemStack(Items.DIAMOND_BOOTS));
         var recipe = helper.getLevel().recipeAccess()
-                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
-                .orElseThrow(() -> new AssertionError("Live workbench recipe rejected the GameTest modded boots"));
+                           .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
+                           .orElseThrow(() -> new AssertionError("Live workbench recipe rejected the GameTest modded boots"));
 
         var result = recipe.value().assemblePair(input);
         helper.assertTrue(result.isComplete(), "Live workbench recipe did not create both outputs");
@@ -58,16 +58,16 @@ public final class CompatibilityGameTests {
         ItemStack inverse = result.inverse();
 
         GameTestStacks.assertOrientation(helper, primary,
-                TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "modded primary");
+                                         TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "modded primary");
         GameTestStacks.assertOrientation(helper, inverse,
-                Items.DIAMOND_BOOTS, TestContent.requireComponentBoots(), "modded inverse");
+                                         Items.DIAMOND_BOOTS, TestContent.requireComponentBoots(), "modded inverse");
         helper.assertTrue("compatibility-alpha".equals(primary.get(TestContent.requireOpaqueComponent())),
-                "Primary output lost the modded owner's opaque component");
+                          "Primary output lost the modded owner's opaque component");
         helper.assertTrue(inverse.get(TestContent.requireOpaqueComponent()) == null,
-                "Inverse output copied opaque data from its non-owner source");
+                          "Inverse output copied opaque data from its non-owner source");
         helper.assertTrue("compatibility-alpha".equals(
-                        GameTestStacks.data(inverse).right().source().get(TestContent.requireOpaqueComponent())),
-                "Inverse output lost opaque data from its nested modded source");
+                                  GameTestStacks.data(inverse).right().source().get(TestContent.requireOpaqueComponent())),
+                          "Inverse output lost opaque data from its nested modded source");
         helper.succeed();
     }
 
@@ -78,21 +78,21 @@ public final class CompatibilityGameTests {
                 player.createCommandSourceStack().withPermission(LevelBasedPermissionSet.OWNER),
                 "give @s mismatchedboots:mixed_boots");
         List<ItemStack> commandStacks = player.getInventory().getNonEquipmentItems().stream()
-                .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
-                .toList();
+                                              .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
+                                              .toList();
         helper.assertValueEqual(commandStacks.size(), 1, "command-given mixed stacks");
         helper.assertTrue(ModContent.getMixedBootsData(commandStacks.getFirst()).isEmpty(),
-                "The bare command stack unexpectedly acquired source data");
+                          "The bare command stack unexpectedly acquired source data");
 
         List<Component> invalidTooltip = commandStacks.getFirst().getTooltipLines(
                 Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
         assertTranslation(helper, invalidTooltip,
-                "tooltip.mismatchedboots.mixed_boots.invalid", "invalid-stack tooltip");
+                          "tooltip.mismatchedboots.mixed_boots.invalid", "invalid-stack tooltip");
         helper.assertTrue(indexOfTranslation(invalidTooltip,
-                        "tooltip.mismatchedboots.mixed_boots.left") < 0
-                        && indexOfTranslation(invalidTooltip,
-                        "tooltip.mismatchedboots.mixed_boots.right") < 0,
-                "Invalid stack tooltip exposed partial source regions: " + invalidTooltip);
+                                             "tooltip.mismatchedboots.mixed_boots.left") < 0
+                                  && indexOfTranslation(invalidTooltip,
+                                                        "tooltip.mismatchedboots.mixed_boots.right") < 0,
+                          "Invalid stack tooltip exposed partial source regions: " + invalidTooltip);
 
         ItemStack left = new ItemStack(TestContent.requireComponentBoots());
         left.set(DataComponents.CUSTOM_NAME, Component.literal("Fixture Left"));
@@ -102,14 +102,14 @@ public final class CompatibilityGameTests {
         List<Component> validTooltip = valid.getTooltipLines(
                 Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
         assertTranslation(helper, validTooltip,
-                "tooltip.mismatchedboots.mixed_boots.left", "valid left tooltip");
+                          "tooltip.mismatchedboots.mixed_boots.left", "valid left tooltip");
         assertTranslation(helper, validTooltip,
-                "tooltip.mismatchedboots.mixed_boots.right", "valid right tooltip");
+                          "tooltip.mismatchedboots.mixed_boots.right", "valid right tooltip");
         helper.assertTrue(containsBoldTranslation(validTooltip,
-                        "tooltip.mismatchedboots.mixed_boots.left")
-                        && containsBoldTranslation(validTooltip,
-                        "tooltip.mismatchedboots.mixed_boots.right"),
-                "Valid source labels were not bold: " + validTooltip);
+                                                  "tooltip.mismatchedboots.mixed_boots.left")
+                                  && containsBoldTranslation(validTooltip,
+                                                             "tooltip.mismatchedboots.mixed_boots.right"),
+                          "Valid source labels were not bold: " + validTooltip);
 
         ItemStack ordered = GameTestStacks.pair(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
@@ -120,19 +120,19 @@ public final class CompatibilityGameTests {
         int rightIndex = indexOfTranslation(orderedTooltip, "tooltip.mismatchedboots.mixed_boots.right");
         int rootAttributesIndex = indexOfTranslation(orderedTooltip, "item.modifiers.feet");
         helper.assertTrue(leftIndex > 0 && rightIndex > leftIndex && rootAttributesIndex > rightIndex,
-                "Source labels did not precede root details: " + orderedTooltip);
+                          "Source labels did not precede root details: " + orderedTooltip);
         helper.assertTrue(ItemStack.matches(orderedBefore, ordered),
-                "Tooltip generation mutated the mixed stack");
+                          "Tooltip generation mutated the mixed stack");
 
         CreativeModeTabs.tryRebuildTabContents(
                 helper.getLevel().enabledFeatures(), true, helper.getLevel().registryAccess());
         List<ItemStack> creativeEntries = CreativeModeTabs.allTabs().stream()
-                .flatMap(tab -> tab.getSearchTabDisplayItems().stream())
-                .toList();
+                                                          .flatMap(tab -> tab.getSearchTabDisplayItems().stream())
+                                                          .toList();
         helper.assertTrue(creativeEntries.stream().anyMatch(stack -> stack.is(Items.DIAMOND_BOOTS)),
-                "Creative tab control item was unavailable");
+                          "Creative tab control item was unavailable");
         helper.assertTrue(creativeEntries.stream().noneMatch(stack -> stack.is(ModContent.MIXED_BOOTS_KEY)),
-                "Creative tabs exposed a bare mixed stack without source data");
+                          "Creative tabs exposed a bare mixed stack without source data");
         helper.succeed();
     }
 
@@ -168,8 +168,8 @@ public final class CompatibilityGameTests {
 
         MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
         var recipe = helper.getLevel().recipeAccess()
-                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
-                .orElseThrow(() -> new AssertionError("Live workbench recipe rejected tooltip fixtures"));
+                           .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
+                           .orElseThrow(() -> new AssertionError("Live workbench recipe rejected tooltip fixtures"));
         var result = recipe.value().assemblePair(input);
         helper.assertTrue(result.isComplete(), "Live workbench recipe did not create tooltip outputs");
         ItemStack primary = result.primary();
@@ -190,44 +190,44 @@ public final class CompatibilityGameTests {
         List<Component> primaryAdvanced = primary.getTooltipLines(context, player, TooltipFlag.ADVANCED);
 
         helper.assertTrue(primaryNormal.getFirst().equals(primary.getStyledHoverName())
-                        && primaryNormal.getFirst().getString().equals(rootName.getString()),
-                "Renamed root title was not kept separate from source identities: " + primaryNormal);
+                                  && primaryNormal.getFirst().getString().equals(rootName.getString()),
+                          "Renamed root title was not kept separate from source identities: " + primaryNormal);
         assertTooltipLayout(helper, primaryNormal, leftPattern.value().description(),
-                rightPattern.value().description(), rootPattern.value().description(), unbreaking,
-                primary.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(unbreaking),
-                "primary");
+                            rightPattern.value().description(), rootPattern.value().description(), unbreaking,
+                            primary.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(unbreaking),
+                            "primary");
         assertTooltipLayout(helper, inverseNormal, rightPattern.value().description(),
-                leftPattern.value().description(), rootPattern.value().description(), unbreaking,
-                inverse.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(unbreaking),
-                "inverse");
+                            leftPattern.value().description(), rootPattern.value().description(), unbreaking,
+                            inverse.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(unbreaking),
+                            "inverse");
 
         helper.assertValueEqual(countTranslation(primaryAdvanced, "item.durability"), 1L,
-                "advanced live-root durability lines");
+                                "advanced live-root durability lines");
         helper.assertValueEqual(countTranslation(primaryAdvanced, "item.components"), 1L,
-                "advanced live-root component-count lines");
+                                "advanced live-root component-count lines");
         helper.assertValueEqual(countTranslation(primaryNormal, "item.dyed"), 1L,
-                "normal source dyed-marker lines");
+                                "normal source dyed-marker lines");
         helper.assertValueEqual(countTranslation(primaryAdvanced, "item.color"), 1L,
-                "advanced source hexadecimal-color lines");
+                                "advanced source hexadecimal-color lines");
         helper.assertValueEqual(countTranslation(primaryAdvanced, "item.dyed"), 0L,
-                "advanced source dyed-marker lines");
+                                "advanced source dyed-marker lines");
         helper.assertTrue(indexOfText(primaryAdvanced, ModContent.MIXED_BOOTS_ID.toString()) >= 0,
-                "Advanced tooltip omitted the registered root item ID: " + primaryAdvanced);
+                          "Advanced tooltip omitted the registered root item ID: " + primaryAdvanced);
         for (String sourceId : List.of("minecraft:leather_boots", "minecraft:golden_boots")) {
             helper.assertValueEqual(primaryAdvanced.stream().filter(line -> line.getString().equals(sourceId)).count(),
-                    1L, "advanced source ID count: " + sourceId);
+                                    1L, "advanced source ID count: " + sourceId);
             helper.assertTrue(indexOfText(primaryNormal, sourceId) < 0,
-                    "Normal tooltip exposed an advanced source ID: " + sourceId);
+                              "Normal tooltip exposed an advanced source ID: " + sourceId);
         }
 
         helper.assertTrue(ItemStack.matches(leftBefore, left) && ItemStack.matches(rightBefore, right),
-                "Workbench tooltip fixture inputs were mutated");
+                          "Workbench tooltip fixture inputs were mutated");
         helper.assertTrue(ItemStack.matches(primaryBefore, primary)
-                        && ItemStack.matches(inverseBefore, inverse),
-                "Tooltip generation mutated a registered workbench output");
+                                  && ItemStack.matches(inverseBefore, inverse),
+                          "Tooltip generation mutated a registered workbench output");
         helper.assertTrue(primaryDataBefore.equals(GameTestStacks.data(primary))
-                        && inverseDataBefore.equals(GameTestStacks.data(inverse)),
-                "Tooltip generation mutated source snapshots");
+                                  && inverseDataBefore.equals(GameTestStacks.data(inverse)),
+                          "Tooltip generation mutated source snapshots");
         helper.succeed();
     }
 
@@ -242,10 +242,10 @@ public final class CompatibilityGameTests {
         player.getInventory().setItem(9, mixed);
         AABB dropBounds = player.getBoundingBox().inflate(3.0);
         Set<Integer> existingDropIds = helper.getLevel()
-                .getEntitiesOfClass(ItemEntity.class, dropBounds, Entity::isAlive)
-                .stream()
-                .map(Entity::getId)
-                .collect(Collectors.toSet());
+                                             .getEntitiesOfClass(ItemEntity.class, dropBounds, Entity::isAlive)
+                                             .stream()
+                                             .map(Entity::getId)
+                                             .collect(Collectors.toSet());
 
         var server = helper.getLevel().getServer();
         GameRules gameRules = helper.getLevel().getGameRules();
@@ -256,21 +256,21 @@ public final class CompatibilityGameTests {
         helper.runAfterDelay(1, () -> {
             try {
                 List<ItemStack> drops = helper.getLevel()
-                        .getEntitiesOfClass(ItemEntity.class, dropBounds, Entity::isAlive)
-                        .stream()
-                        .filter(entity -> !existingDropIds.contains(entity.getId()))
-                        .map(ItemEntity::getItem)
-                        .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
-                        .filter(stack -> deathFixtureName.equals(stack.get(DataComponents.CUSTOM_NAME)))
-                        .toList();
+                                              .getEntitiesOfClass(ItemEntity.class, dropBounds, Entity::isAlive)
+                                              .stream()
+                                              .filter(entity -> !existingDropIds.contains(entity.getId()))
+                                              .map(ItemEntity::getItem)
+                                              .filter(stack -> stack.is(ModContent.MIXED_BOOTS_KEY))
+                                              .filter(stack -> deathFixtureName.equals(stack.get(DataComponents.CUSTOM_NAME)))
+                                              .toList();
                 helper.assertValueEqual(drops.size(), 1, "player-death mixed drops");
                 GameTestStacks.assertOrientation(helper, drops.getFirst(),
-                        TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "player-death drop");
+                                                 TestContent.requireComponentBoots(), Items.DIAMOND_BOOTS, "player-death drop");
                 helper.assertTrue(GameTestStacks.data(drops.getFirst()).equals(snapshots),
-                        "Player death changed the nested source snapshots");
+                                  "Player death changed the nested source snapshots");
 
                 ServerPlayer respawned = server.getPlayerList()
-                        .respawn(player, false, Entity.RemovalReason.KILLED);
+                                               .respawn(player, false, Entity.RemovalReason.KILLED);
                 helper.assertTrue(
                         respawned.getInventory().getNonEquipmentItems().stream().noneMatch(ModContent::isMixedBoots),
                         "Respawn duplicated the dropped mixed stack into the player inventory");
@@ -288,21 +288,21 @@ public final class CompatibilityGameTests {
                 GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
         var ops = RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess());
         JsonObject encoded = MixedBootsData.CODEC.encodeStart(ops, ordinaryData)
-                .getOrThrow()
-                .getAsJsonObject();
+                                                 .getOrThrow()
+                                                 .getAsJsonObject();
         JsonObject nested = encoded.deepCopy();
         JsonObject leftSource = nested.getAsJsonObject("left");
         JsonObject components = leftSource.has("components")
-                ? leftSource.getAsJsonObject("components")
-                : new JsonObject();
+                                ? leftSource.getAsJsonObject("components")
+                                : new JsonObject();
         components.add(ModContent.MIXED_BOOTS_DATA_ID.toString(), encoded.deepCopy());
         leftSource.add("components", components);
 
         var persistentResult = MixedBootsData.CODEC.parse(ops, nested);
         helper.assertTrue(persistentResult.isError(), "Persistent codec accepted recursive mixed data");
         helper.assertTrue(persistentResult.error().orElseThrow().message().contains("cannot be nested"),
-                "Persistent recursive failure did not come from the nesting boundary: "
-                        + persistentResult.error().orElseThrow().message());
+                          "Persistent recursive failure did not come from the nesting boundary: "
+                                  + persistentResult.error().orElseThrow().message());
 
         ItemStack nestedSource = new ItemStack(Items.IRON_BOOTS);
         nestedSource.set(dataType, ordinaryData);
@@ -316,7 +316,7 @@ public final class CompatibilityGameTests {
                 throw new AssertionError("Network codec accepted recursive mixed data");
             } catch (IllegalArgumentException exception) {
                 helper.assertTrue(exception.getMessage().contains("cannot be nested"),
-                        "Network recursive failure did not come from the nesting boundary: " + exception);
+                                  "Network recursive failure did not come from the nesting boundary: " + exception);
             }
         } finally {
             buffer.release();
@@ -327,7 +327,7 @@ public final class CompatibilityGameTests {
     private static void assertTranslation(
             GameTestHelper helper, List<Component> lines, String key, String description) {
         helper.assertTrue(lines.stream().anyMatch(component -> containsTranslation(component, key)),
-                description + " did not contain " + key + ": " + lines);
+                          description + " did not contain " + key + ": " + lines);
     }
 
     private static int indexOfTranslation(List<Component> lines, String key) {
@@ -357,25 +357,25 @@ public final class CompatibilityGameTests {
         Component effectiveEnchantment = Enchantment.getFullname(rootEnchantment, rootEnchantmentLevel);
 
         helper.assertTrue(left == 1 && leftTrim > left,
-                description + " left source region was misplaced: " + lines);
+                          description + " left source region was misplaced: " + lines);
         helper.assertTrue(right > leftTrim && rightTrim > right,
-                description + " right source region was misplaced: " + lines);
+                          description + " right source region was misplaced: " + lines);
         helper.assertTrue(containsBoldTranslation(lines.get(left),
-                        "tooltip.mismatchedboots.mixed_boots.left")
-                        && containsBoldTranslation(lines.get(right),
-                        "tooltip.mismatchedboots.mixed_boots.right"),
-                description + " source labels were not bold: " + lines);
+                                                  "tooltip.mismatchedboots.mixed_boots.left")
+                                  && containsBoldTranslation(lines.get(right),
+                                                             "tooltip.mismatchedboots.mixed_boots.right"),
+                          description + " source labels were not bold: " + lines);
         helper.assertTrue(rootTrim > rightTrim && rootAttributes > rootTrim,
-                description + " live root region was misplaced: " + lines);
+                          description + " live root region was misplaced: " + lines);
         helper.assertTrue(hasEmptyBetween(lines, leftTrim, right)
-                        && hasEmptyBetween(lines, rightTrim, rootTrim),
-                description + " source boundaries lacked separators: " + lines);
+                                  && hasEmptyBetween(lines, rightTrim, rootTrim),
+                          description + " source boundaries lacked separators: " + lines);
         helper.assertValueEqual(countTranslation(lines, "item.minecraft.smithing_template.upgrade"), 3L,
-                description + " trim section count");
+                                description + " trim section count");
         helper.assertValueEqual(countTranslation(lines, "item.modifiers.feet"), 1L,
-                description + " live-root attribute section count");
+                                description + " live-root attribute section count");
         helper.assertValueEqual(lines.stream().filter(effectiveEnchantment::equals).count(), 1L,
-                description + " effective enchantment line count");
+                                description + " effective enchantment line count");
     }
 
     private static void setEnchantment(
@@ -462,7 +462,7 @@ public final class CompatibilityGameTests {
             }
         }
         return component.getSiblings().stream()
-                .anyMatch(sibling -> containsBoldTranslation(sibling, key));
+                        .anyMatch(sibling -> containsBoldTranslation(sibling, key));
     }
 
     private static int indexOfText(List<Component> lines, String text) {

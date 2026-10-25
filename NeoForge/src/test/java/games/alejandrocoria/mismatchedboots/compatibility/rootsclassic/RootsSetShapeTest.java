@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class RootsSetShapeTest implements Opcodes {
-    @Test void nativePredicatesAreEditedOnceAndUnrelatedSlotWrappersRemainUntouched() throws Exception {
+    @Test
+    void nativePredicatesAreEditedOnceAndUnrelatedSlotWrappersRemainUntouched() throws Exception {
         for (String target : targets()) {
             ClassNode node = nativeClass(target);
             var method = consumer(node);
@@ -44,22 +45,28 @@ class RootsSetShapeTest implements Opcodes {
         }
     }
 
-    @Test void missingAmbiguousOrRepurposedFeetPredicatesFailWithoutEditing() throws Exception {
+    @Test
+    void missingAmbiguousOrRepurposedFeetPredicatesFailWithoutEditing() throws Exception {
         for (String target : targets()) {
             for (String fault : new String[]{"slot", "receiver", "ambiguous", "flow", "item", "player", "potency"}) {
-                if (fault.equals("potency") && target.equals(RootsSetShape.EVENTS)) { continue; }
+                if (fault.equals("potency") && target.equals(RootsSetShape.EVENTS)) {
+                    continue;
+                }
                 ClassNode node = nativeClass(target);
                 var method = consumer(node);
                 FieldInsnNode feet = java.util.Arrays.stream(method.instructions.toArray())
-                        .filter(n -> n instanceof FieldInsnNode f && f.name.equals("FEET"))
-                        .map(n -> (FieldInsnNode) n).findFirst().orElseThrow();
+                                                     .filter(n -> n instanceof FieldInsnNode f && f.name.equals("FEET"))
+                                                     .map(n -> (FieldInsnNode) n).findFirst().orElseThrow();
                 switch (fault) {
                     case "slot" -> feet.name = "HEAD";
                     case "receiver" -> ((MethodInsnNode) next(feet)).owner = "fixture/OtherPlayer";
                     case "ambiguous" -> method.instructions.insert(new FieldInsnNode(GETSTATIC, RootsSetShape.SLOT, "FEET", feet.desc));
                     case "potency" -> {
                         for (var instruction : method.instructions) {
-                            if (instruction instanceof IincInsnNode increment) { increment.var++; break; }
+                            if (instruction instanceof IincInsnNode increment) {
+                                increment.var++;
+                                break;
+                            }
                         }
                     }
                     case "player" -> {
@@ -74,17 +81,26 @@ class RootsSetShapeTest implements Opcodes {
                         boolean afterFeet = false;
                         boolean afterBootItem = !target.equals(RootsSetShape.EVENTS);
                         for (var instruction : method.instructions.toArray()) {
-                            if (instruction == feet) { afterFeet = true; }
-                            if (!afterFeet) { continue; }
-                            if (instruction instanceof FieldInsnNode field && field.name.equals("WILDWOOD_BOOTS")) { afterBootItem = true; }
+                            if (instruction == feet) {
+                                afterFeet = true;
+                            }
+                            if (!afterFeet) {
+                                continue;
+                            }
+                            if (instruction instanceof FieldInsnNode field && field.name.equals("WILDWOOD_BOOTS")) {
+                                afterBootItem = true;
+                            }
                             if (fault.equals("item") && instruction instanceof TypeInsnNode type && type.getOpcode() == INSTANCEOF) {
-                                type.desc = RootsTickShape.WILDWOOD; break;
+                                type.desc = RootsTickShape.WILDWOOD;
+                                break;
                             }
                             if (fault.equals("item") && instruction instanceof FieldInsnNode field && field.name.equals("WILDWOOD_BOOTS")) {
-                                field.name = "WILDWOOD_MASK"; break;
+                                field.name = "WILDWOOD_MASK";
+                                break;
                             }
                             if (fault.equals("flow") && afterBootItem && instruction instanceof JumpInsnNode jump) {
-                                jump.setOpcode(jump.getOpcode() == IFEQ ? IFNE : IF_ACMPEQ); break;
+                                jump.setOpcode(jump.getOpcode() == IFEQ ? IFNE : IF_ACMPEQ);
+                                break;
                             }
                         }
                     }
@@ -97,19 +113,29 @@ class RootsSetShapeTest implements Opcodes {
         }
     }
 
-    private static String[] targets() { return new String[]{RootsSetShape.STAFF, RootsSetShape.CRYSTAL, RootsSetShape.EVENTS}; }
+    private static String[] targets() {
+        return new String[]{RootsSetShape.STAFF, RootsSetShape.CRYSTAL, RootsSetShape.EVENTS};
+    }
+
     private static org.objectweb.asm.tree.MethodNode consumer(ClassNode node) {
         return node.methods.stream().filter(m -> m.name.equals(node.name.equals(RootsSetShape.EVENTS)
-                ? "wildwoodArmorRegenFullset" : "releaseUsing")).findFirst().orElseThrow();
+                                                               ? "wildwoodArmorRegenFullset" : "releaseUsing")).findFirst().orElseThrow();
     }
+
     private static org.objectweb.asm.tree.AbstractInsnNode next(org.objectweb.asm.tree.AbstractInsnNode node) {
-        do { node = node.getNext(); } while (node != null && node.getOpcode() < 0); return node;
+        do {
+            node = node.getNext();
+        } while (node != null && node.getOpcode() < 0);
+        return node;
     }
+
     private static ClassNode nativeClass(String name) throws Exception {
         String path = System.getProperty("mismatchedboots.test.rootsGuardJar");
         assumeTrue(path != null, "Opt-in pinned Roots native guard test");
         try (JarFile jar = new JarFile(path); var stream = jar.getInputStream(jar.getJarEntry(name + ".class"))) {
-            ClassNode node = new ClassNode(); new ClassReader(stream).accept(node, 0); return node;
+            ClassNode node = new ClassNode();
+            new ClassReader(stream).accept(node, 0);
+            return node;
         }
     }
 }

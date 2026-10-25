@@ -72,8 +72,8 @@ public final class NeoForgeIceAndFireDamageTest {
             if (IceAndFireCoexistenceFixture.CASE.equals("incompatible")) {
                 verifyIncompatibleConsumer(server.overworld());
                 NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
-                        "coexistence=incompatible; " + damageCases + " real hurtServer cases; "
-                                + "damage adapter inert; native other slots and independent Lightning adapter preserved\n");
+                                             "coexistence=incompatible; " + damageCases + " real hurtServer cases; "
+                                                     + "damage adapter inert; native other slots and independent Lightning adapter preserved\n");
                 NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
                 finished = true;
                 return;
@@ -81,7 +81,7 @@ public final class NeoForgeIceAndFireDamageTest {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.tideDamageSmoke")) {
                 verifyTideCoexistence(server.overworld());
                 NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
-                        damageCases + " real hurtServer cases; Tide coexistence smoke: dragon/Troll/Lightning preserved\n");
+                                             damageCases + " real hurtServer cases; Tide coexistence smoke: dragon/Troll/Lightning preserved\n");
                 NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
                 finished = true;
                 return;
@@ -100,17 +100,17 @@ public final class NeoForgeIceAndFireDamageTest {
                 verifyCoexistence(server.overworld());
             }
             NetworkAcceptanceFiles.write("ice-and-fire-damage-report.txt",
-                    "15 dragon variants; 3 Troll variants; exact Lightning set; " + damageCases + " real hurtServer cases\n"
-                            + "ordinary/mixed/inverse/two-source controls; additive other-slot coefficients; "
-                            + "invalid/spoofed roots; complete/missing/wrong Lightning set pieces; "
-                            + "native projectile/dragon branch overlap after fixture-only datapack reload; "
-                            + "unchanged equipment identity and source snapshots\n"
-                            + (IceAndFireCoexistenceFixture.CASE.isEmpty() ? "" : "coexistence="
-                                + IceAndFireCoexistenceFixture.CASE + "; high/low FEET wrappers="
-                                + IceAndFireCoexistenceFixture.highFeet + "/" + IceAndFireCoexistenceFixture.lowFeet
-                                + "; high/low Lightning wrappers=" + IceAndFireCoexistenceFixture.highLightning
-                                + "/" + IceAndFireCoexistenceFixture.lowLightning
-                                + "; unrelated calls=" + IceAndFireCoexistenceFixture.logCalls + "\n"));
+                                         "15 dragon variants; 3 Troll variants; exact Lightning set; " + damageCases + " real hurtServer cases\n"
+                                                 + "ordinary/mixed/inverse/two-source controls; additive other-slot coefficients; "
+                                                 + "invalid/spoofed roots; complete/missing/wrong Lightning set pieces; "
+                                                 + "native projectile/dragon branch overlap after fixture-only datapack reload; "
+                                                 + "unchanged equipment identity and source snapshots\n"
+                                                 + (IceAndFireCoexistenceFixture.CASE.isEmpty() ? "" : "coexistence="
+                                                                                                       + IceAndFireCoexistenceFixture.CASE + "; high/low FEET wrappers="
+                                                                                                       + IceAndFireCoexistenceFixture.highFeet + "/" + IceAndFireCoexistenceFixture.lowFeet
+                                                                                                       + "; high/low Lightning wrappers=" + IceAndFireCoexistenceFixture.highLightning
+                                                                                                       + "/" + IceAndFireCoexistenceFixture.lowLightning
+                                                                                                       + "; unrelated calls=" + IceAndFireCoexistenceFixture.logCalls + "\n"));
             NetworkAcceptanceFiles.write("ice-and-fire-damage-success.txt", "neoforge\n");
             finished = true;
         } catch (Throwable throwable) {
@@ -129,14 +129,14 @@ public final class NeoForgeIceAndFireDamageTest {
             hurt(level, damage(level, "dragon_fire"), boots, 0.9F, "Tide leaves dragon protection active");
         }
         var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+                                          .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
         for (ItemStack boots : List.of(new ItemStack(item("forest_troll_leather_boots")), mixed("forest_troll_leather_boots"))) {
             hurt(level, arrow, boots, 0.9F, "Tide leaves Troll protection active");
         }
         hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_lightning_boots"), 0.0F,
-                "Tide leaves complete Lightning set active", lightningArmor(7));
+             "Tide leaves complete Lightning set active", lightningArmor(7));
         hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_fire_boots"), 1.0F,
-                "Tide preserves incomplete Lightning set rejection", lightningArmor(7));
+             "Tide preserves incomplete Lightning set rejection", lightningArmor(7));
     }
 
     private static void verifyCoexistence(ServerLevel level) {
@@ -146,67 +146,67 @@ public final class NeoForgeIceAndFireDamageTest {
         var pair = MixedBootsFactory.createPair(new ItemStack(item("armor_red_boots")), new ItemStack(Items.IRON_BOOTS));
         for (ItemStack feet : List.of(new ItemStack(item("armor_red_boots")), pair.primary(), pair.inverse())) {
             hurt(level, damage(level, "dragon_ice"), feet, 0.8F, "independent dragon helmet + boots",
-                    List.of(head, ItemStack.EMPTY, ItemStack.EMPTY));
+                 List.of(head, ItemStack.EMPTY, ItemStack.EMPTY));
         }
         hurt(level, damage(level, "dragon_ice"), new ItemStack(Items.IRON_BOOTS), 0.9F,
-                "fixture helmet does not also qualify FEET", List.of(head, ItemStack.EMPTY, ItemStack.EMPTY));
+             "fixture helmet does not also qualify FEET", List.of(head, ItemStack.EMPTY, ItemStack.EMPTY));
         hurt(level, damage(level, "dragon_ice"), pair.primary().copy(), 0.9F,
-                "missing helmet sources remain negative",
-                List.of(new ItemStack(Items.IRON_HELMET), ItemStack.EMPTY, ItemStack.EMPTY));
+             "missing helmet sources remain negative",
+             List.of(new ItemStack(Items.IRON_HELMET), ItemStack.EMPTY, ItemStack.EMPTY));
         var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+                                          .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
         hurt(level, arrow, mixed("forest_troll_leather_boots"), 0.8F, "independent Troll helmet + boots",
-                List.of(IceAndFireCoexistenceFixture.helmet(item("forest_troll_leather_helmet")),
-                        ItemStack.EMPTY, ItemStack.EMPTY));
+             List.of(IceAndFireCoexistenceFixture.helmet(item("forest_troll_leather_helmet")),
+                     ItemStack.EMPTY, ItemStack.EMPTY));
         var lightningOthers = lightningArmor(7);
         lightningOthers.set(0, IceAndFireCoexistenceFixture.helmet(item("dragonsteel_lightning_helmet")));
         var lightningPair = MixedBootsFactory.createPair(new ItemStack(item("dragonsteel_lightning_boots")),
-                new ItemStack(Items.IRON_BOOTS));
+                                                         new ItemStack(Items.IRON_BOOTS));
         for (ItemStack feet : List.of(new ItemStack(item("dragonsteel_lightning_boots")),
-                lightningPair.primary(), lightningPair.inverse())) {
+                                      lightningPair.primary(), lightningPair.inverse())) {
             hurt(level, level.damageSources().lightningBolt(), feet, 0.0F,
-                    "independent Lightning helmet + boots complete set", lightningOthers);
+                 "independent Lightning helmet + boots complete set", lightningOthers);
         }
         hurt(level, level.damageSources().lightningBolt(), new ItemStack(Items.IRON_BOOTS), 1.0F,
-                "fixture Lightning helmet cannot substitute missing boots", lightningOthers);
+             "fixture Lightning helmet cannot substitute missing boots", lightningOthers);
         lightningOthers.set(0, IceAndFireCoexistenceFixture.helmet(item("dragonsteel_fire_helmet")));
         hurt(level, level.damageSources().lightningBolt(), lightningPair.primary().copy(), 1.0F,
-                "wrong fixture helmet preserves exact Lightning set requirement", lightningOthers);
+             "wrong fixture helmet preserves exact Lightning set requirement", lightningOthers);
         require(IceAndFireCoexistenceFixture.highFeet > 0 && IceAndFireCoexistenceFixture.lowFeet > 0
-                && IceAndFireCoexistenceFixture.highLightning > 0 && IceAndFireCoexistenceFixture.lowLightning > 0
-                && IceAndFireCoexistenceFixture.logCalls > 0, "Competing mixins did not actually run");
+                        && IceAndFireCoexistenceFixture.highLightning > 0 && IceAndFireCoexistenceFixture.lowLightning > 0
+                        && IceAndFireCoexistenceFixture.logCalls > 0, "Competing mixins did not actually run");
     }
 
     private static void verifyIncompatibleConsumer(ServerLevel level) {
         hurt(level, damage(level, "dragon_fire"), new ItemStack(item("armor_red_boots")), 0.9F,
-                "ordinary dragon recognition still native");
+             "ordinary dragon recognition still native");
         hurt(level, damage(level, "dragon_fire"), mixed("armor_red_boots"), 1.0F,
-                "late incompatible damage consumer disables mixed boot adapter");
+             "late incompatible damage consumer disables mixed boot adapter");
         hurt(level, damage(level, "dragon_fire"), mixed("armor_red_boots"), 0.9F,
-                "native other-slot contribution survives",
-                List.of(new ItemStack(item("armor_red_helmet")), ItemStack.EMPTY, ItemStack.EMPTY));
+             "native other-slot contribution survives",
+             List.of(new ItemStack(item("armor_red_helmet")), ItemStack.EMPTY, ItemStack.EMPTY));
         var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+                                          .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
         hurt(level, arrow, mixed("forest_troll_leather_boots"), 1.0F, "changed Troll target stays inert");
         hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_lightning_boots"), 0.0F,
-                "independent Lightning integration stays active", lightningArmor(7));
+             "independent Lightning integration stays active", lightningArmor(7));
         hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_fire_boots"), 1.0F,
-                "independent Lightning negative control", lightningArmor(7));
+             "independent Lightning negative control", lightningArmor(7));
         require(IceAndFireCoexistenceFixture.highLightning > 0 && IceAndFireCoexistenceFixture.lowLightning > 0
-                && IceAndFireCoexistenceFixture.logCalls > 0, "Incompatible fixture was not applied");
+                        && IceAndFireCoexistenceFixture.logCalls > 0, "Incompatible fixture was not applied");
     }
 
     private static void verifyMatrix(ServerLevel level) {
         List<Item> boots = new ArrayList<>();
         for (String color : List.of("amethyst", "black", "blue", "bronze", "copper", "electric",
-                "gray", "green", "red", "sapphire", "silver", "white")) {
+                                    "gray", "green", "red", "sapphire", "silver", "white")) {
             boots.add(item("armor_" + color + "_boots"));
         }
         for (String element : List.of("fire", "ice", "lightning")) {
             boots.add(item("dragonsteel_" + element + "_boots"));
         }
         List<DamageSource> dragonDamage = List.of(damage(level, "dragon_fire"), damage(level, "dragon_ice"),
-                damage(level, "dragon_lightning"));
+                                                  damage(level, "dragon_lightning"));
         for (DamageSource source : dragonDamage) {
             for (Item boot : boots) {
                 String name = BuiltInRegistries.ITEM.getKey(boot).toString();
@@ -218,29 +218,29 @@ public final class NeoForgeIceAndFireDamageTest {
                 hurt(level, source, both.primary(), 0.9F, name + " two identical sources");
             }
             var scaleSteel = MixedBootsFactory.createPair(new ItemStack(boots.getFirst()),
-                    new ItemStack(boots.getLast()));
+                                                          new ItemStack(boots.getLast()));
             hurt(level, source, scaleSteel.primary(), 0.9F, "Scale/Steel, not double-counted");
             hurt(level, source, scaleSteel.inverse(), 0.9F, "Steel/Scale, not double-counted");
             var colors = MixedBootsFactory.createPair(new ItemStack(boots.get(1)), new ItemStack(boots.get(4)));
             hurt(level, source, colors.primary(), 0.9F, "two scale colors");
             hurt(level, source, colors.inverse(), 0.9F, "two scale colors inverse");
             var elements = MixedBootsFactory.createPair(new ItemStack(item("dragonsteel_fire_boots")),
-                    new ItemStack(item("dragonsteel_ice_boots")));
+                                                        new ItemStack(item("dragonsteel_ice_boots")));
             hurt(level, source, elements.primary(), 0.9F, "two steel elements");
             hurt(level, source, elements.inverse(), 0.9F, "two steel elements inverse");
 
             hurt(level, source, new ItemStack(Items.IRON_BOOTS), 1.0F, "ordinary non-dragon");
             hurt(level, source, mixed("sheep_boots"), 1.0F, "unrelated source");
             hurt(level, source, MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS),
-                    new ItemStack(Items.GOLDEN_BOOTS)).primary(), 1.0F, "neither source qualifies");
+                                                             new ItemStack(Items.GOLDEN_BOOTS)).primary(), 1.0F, "neither source qualifies");
             hurt(level, source, new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
-                    1.0F, "bare root");
+                 1.0F, "bare root");
             ItemStack badCount = mixed("armor_red_boots");
             badCount.setCount(2);
             hurt(level, source, badCount, 1.0F, "invalid root count");
             ItemStack spoof = new ItemStack(Items.IRON_BOOTS);
             spoof.set(ModContent.mixedBootsDataType().orElseThrow(),
-                    ModContent.getMixedBootsData(mixed("armor_red_boots")).orElseThrow());
+                      ModContent.getMixedBootsData(mixed("armor_red_boots")).orElseThrow());
             hurt(level, source, spoof, 1.0F, "foreign item carrying mixed data");
 
             for (int mask = 0; mask < 8; mask++) {
@@ -250,33 +250,33 @@ public final class NeoForgeIceAndFireDamageTest {
                     if ((mask & (1 << bit)) != 0) {
                         coefficient -= new float[]{0.1F, 0.3F, 0.2F}[bit];
                         otherArmor.add(new ItemStack(item(new String[]{"armor_blue_helmet",
-                                "dragonsteel_fire_chestplate", "armor_green_leggings"}[bit])));
+                                                                       "dragonsteel_fire_chestplate", "armor_green_leggings"}[bit])));
                     } else {
                         otherArmor.add(ItemStack.EMPTY);
                     }
                 }
                 hurt(level, source, mixed("dragonsteel_ice_boots"), coefficient,
-                        "native additive armor mask=" + mask, otherArmor);
+                     "native additive armor mask=" + mask, otherArmor);
             }
             // Valid data in another slot must not make its native class predicate recognize a dragon item.
             hurt(level, source, new ItemStack(Items.IRON_BOOTS), 1.0F, "mixed item forced into HEAD",
-                    List.of(mixed("armor_red_boots"), ItemStack.EMPTY, ItemStack.EMPTY));
+                 List.of(mixed("armor_red_boots"), ItemStack.EMPTY, ItemStack.EMPTY));
         }
         hurt(level, level.damageSources().generic(), mixed("armor_red_boots"), 1.0F, "non-dragon damage");
         hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_lightning_boots"), 1.0F,
-                "Lightning source alone grants no set immunity");
+             "Lightning source alone grants no set immunity");
         hurt(level, level.damageSources().lightningBolt(), mixed("dragonsteel_lightning_boots"), 0.0F,
-                "Lightning mixed boots complete the exact set",
-                List.of(new ItemStack(item("dragonsteel_lightning_helmet")),
-                        new ItemStack(item("dragonsteel_lightning_chestplate")),
-                        new ItemStack(item("dragonsteel_lightning_leggings"))));
+             "Lightning mixed boots complete the exact set",
+             List.of(new ItemStack(item("dragonsteel_lightning_helmet")),
+                     new ItemStack(item("dragonsteel_lightning_chestplate")),
+                     new ItemStack(item("dragonsteel_lightning_leggings"))));
         verifyTroll(level);
         verifyLightningSet(level);
     }
 
     private static void verifyTroll(ServerLevel level) {
         DamageSource arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
+                                                   .getOrThrow(net.minecraft.world.damagesource.DamageTypes.ARROW));
         require(arrow.is(DamageTypeTags.IS_PROJECTILE), "Native arrow is not a projectile");
         for (String variant : List.of("forest", "frost", "mountain")) {
             Item boot = item(variant + "_troll_leather_boots");
@@ -285,31 +285,31 @@ public final class NeoForgeIceAndFireDamageTest {
             hurt(level, arrow, pair.primary(), 0.9F, variant + " mixed Troll left");
             hurt(level, arrow, pair.inverse(), 0.9F, variant + " mixed Troll right");
             hurt(level, arrow, MixedBootsFactory.createPair(new ItemStack(boot), new ItemStack(boot)).primary(),
-                    0.9F, variant + " two Troll sources count once");
+                 0.9F, variant + " two Troll sources count once");
         }
         var colors = MixedBootsFactory.createPair(new ItemStack(item("forest_troll_leather_boots")),
-                new ItemStack(item("frost_troll_leather_boots")));
+                                                  new ItemStack(item("frost_troll_leather_boots")));
         hurt(level, arrow, colors.primary(), 0.9F, "two different Troll variants");
         hurt(level, arrow, colors.inverse(), 0.9F, "two different Troll variants inverse");
         for (int mask = 0; mask < 8; mask++) {
             List<ItemStack> others = trollArmor(mask);
             float coefficient = coefficient(mask);
             hurt(level, arrow, mixed("forest_troll_leather_boots"), coefficient,
-                    "native additive Troll armor mask=" + mask, others);
+                 "native additive Troll armor mask=" + mask, others);
             hurt(level, arrow, new ItemStack(item("forest_troll_leather_boots")), coefficient,
-                    "ordinary additive Troll control mask=" + mask, others);
+                 "ordinary additive Troll control mask=" + mask, others);
         }
         hurt(level, level.damageSources().generic(), mixed("forest_troll_leather_boots"), 1.0F, "Troll non-projectile");
         hurt(level, damage(level, "dragon_fire"), mixed("forest_troll_leather_boots"), 1.0F, "Troll non-projectile breath");
         hurt(level, arrow, mixed("armor_red_boots"), 1.0F, "Dragon source is not Troll");
         hurt(level, arrow, new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
-                1.0F, "Troll bare root");
+             1.0F, "Troll bare root");
         ItemStack badCount = mixed("forest_troll_leather_boots");
         badCount.setCount(2);
         hurt(level, arrow, badCount, 1.0F, "Troll invalid count");
         hurt(level, arrow, spoof("forest_troll_leather_boots"), 1.0F, "Troll foreign root");
         hurt(level, arrow, new ItemStack(Items.IRON_BOOTS), 1.0F, "Troll mixed forced into HEAD",
-                List.of(mixed("forest_troll_leather_boots"), ItemStack.EMPTY, ItemStack.EMPTY));
+             List.of(mixed("forest_troll_leather_boots"), ItemStack.EMPTY, ItemStack.EMPTY));
     }
 
     private static void verifyLightningSet(ServerLevel level) {
@@ -320,47 +320,47 @@ public final class NeoForgeIceAndFireDamageTest {
             List<ItemStack> others = lightningArmor(mask);
             float expected = mask == 7 ? 0.0F : 1.0F;
             hurt(level, level.damageSources().lightningBolt(), new ItemStack(boot), expected,
-                    "ordinary Lightning set mask=" + mask, others);
+                 "ordinary Lightning set mask=" + mask, others);
             hurt(level, level.damageSources().lightningBolt(), pair.primary().copy(), expected,
-                    "mixed Lightning set mask=" + mask, others);
+                 "mixed Lightning set mask=" + mask, others);
             hurt(level, level.damageSources().lightningBolt(), pair.inverse().copy(), expected,
-                    "inverse Lightning set mask=" + mask, others);
+                 "inverse Lightning set mask=" + mask, others);
             hurt(level, level.damageSources().lightningBolt(), both.primary().copy(), expected,
-                    "two Lightning sources set mask=" + mask, others);
+                 "two Lightning sources set mask=" + mask, others);
         }
         for (String wrong : List.of("dragonsteel_fire_boots", "dragonsteel_ice_boots", "armor_red_boots", "sheep_boots")) {
             var wrongPair = MixedBootsFactory.createPair(new ItemStack(item(wrong)), new ItemStack(Items.IRON_BOOTS));
             hurt(level, level.damageSources().lightningBolt(), wrongPair.primary(), 1.0F,
-                    "wrong Lightning feet " + wrong, lightningArmor(7));
+                 "wrong Lightning feet " + wrong, lightningArmor(7));
             hurt(level, level.damageSources().lightningBolt(), wrongPair.inverse(), 1.0F,
-                    "wrong Lightning feet inverse " + wrong, lightningArmor(7));
+                 "wrong Lightning feet inverse " + wrong, lightningArmor(7));
         }
         for (int slot = 0; slot < 3; slot++) {
             List<ItemStack> others = lightningArmor(7);
             others.set(slot, new ItemStack(item(new String[]{"dragonsteel_fire_helmet",
-                    "dragonsteel_ice_chestplate", "armor_red_leggings"}[slot])));
+                                                             "dragonsteel_ice_chestplate", "armor_red_leggings"}[slot])));
             hurt(level, level.damageSources().lightningBolt(), pair.primary().copy(), 1.0F,
-                    "wrong non-feet Lightning set piece " + slot, others);
+                 "wrong non-feet Lightning set piece " + slot, others);
             others.set(slot, pair.inverse().copy());
             hurt(level, level.damageSources().lightningBolt(), pair.primary().copy(), 1.0F,
-                    "mixed Lightning forced into non-feet set slot " + slot, others);
+                 "mixed Lightning forced into non-feet set slot " + slot, others);
         }
         hurt(level, level.damageSources().lightningBolt(), new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
-                1.0F, "Lightning bare root", lightningArmor(7));
+             1.0F, "Lightning bare root", lightningArmor(7));
         ItemStack badCount = mixed("dragonsteel_lightning_boots");
         badCount.setCount(2);
         hurt(level, level.damageSources().lightningBolt(), badCount, 1.0F, "Lightning invalid count", lightningArmor(7));
         hurt(level, level.damageSources().lightningBolt(), spoof("dragonsteel_lightning_boots"), 1.0F,
-                "Lightning foreign root", lightningArmor(7));
+             "Lightning foreign root", lightningArmor(7));
         hurt(level, damage(level, "dragon_lightning"), pair.primary().copy(), 0.3F,
-                "Dragon lightning is breath protection, not ordinary Lightning immunity", lightningArmor(7));
+             "Dragon lightning is breath protection, not ordinary Lightning immunity", lightningArmor(7));
         hurt(level, level.damageSources().generic(), pair.inverse().copy(), 1.0F,
-                "Lightning complete set unrelated damage", lightningArmor(7));
+             "Lightning complete set unrelated damage", lightningArmor(7));
     }
 
     private static List<ItemStack> lightningArmor(int mask) {
         return armor(mask, "dragonsteel_lightning_helmet", "dragonsteel_lightning_chestplate",
-                "dragonsteel_lightning_leggings");
+                     "dragonsteel_lightning_leggings");
     }
 
     private static List<ItemStack> trollArmor(int mask) {
@@ -388,7 +388,7 @@ public final class NeoForgeIceAndFireDamageTest {
     private static ItemStack spoof(String name) {
         ItemStack foreign = new ItemStack(Items.IRON_BOOTS);
         foreign.set(ModContent.mixedBootsDataType().orElseThrow(),
-                ModContent.getMixedBootsData(mixed(name)).orElseThrow());
+                    ModContent.getMixedBootsData(mixed(name)).orElseThrow());
         return foreign;
     }
 
@@ -415,7 +415,7 @@ public final class NeoForgeIceAndFireDamageTest {
         DamageSource overlap = damage(level, "dragon_fire");
         require(overlap.is(DamageTypeTags.IS_PROJECTILE), "Overlap datapack did not change the live damage tag");
         var pair = MixedBootsFactory.createPair(new ItemStack(item("forest_troll_leather_boots")),
-                new ItemStack(item("armor_red_boots")));
+                                                new ItemStack(item("armor_red_boots")));
         hurt(level, overlap, pair.primary(), 0.9F * 0.9F, "Troll/Dragon sequential overlap");
         hurt(level, overlap, pair.inverse(), 0.9F * 0.9F, "Dragon/Troll sequential overlap");
         hurt(level, overlap, mixed("forest_troll_leather_boots"), 0.9F, "overlap Troll only");
@@ -423,15 +423,15 @@ public final class NeoForgeIceAndFireDamageTest {
         hurt(level, overlap, mixed("sheep_boots"), 1.0F, "overlap neither branch");
         // Other pieces contribute to their own branch; feet qualifies independently in both branches.
         hurt(level, overlap, pair.primary().copy(), 0.5F * 0.7F, "overlap native other armor contributions",
-                List.of(new ItemStack(item("forest_troll_leather_helmet")),
-                        new ItemStack(item("frost_troll_leather_chestplate")),
-                        new ItemStack(item("armor_red_leggings"))));
+             List.of(new ItemStack(item("forest_troll_leather_helmet")),
+                     new ItemStack(item("frost_troll_leather_chestplate")),
+                     new ItemStack(item("armor_red_leggings"))));
     }
 
     private static void hurt(ServerLevel level, DamageSource source, ItemStack feet, float coefficient,
                              String description) {
         hurt(level, source, feet, coefficient, description,
-                List.of(ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY));
+             List.of(ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY));
     }
 
     private static void hurt(ServerLevel level, DamageSource source, ItemStack feet, float coefficient,
@@ -463,7 +463,7 @@ public final class NeoForgeIceAndFireDamageTest {
         if (data != null) {
             var after = ModContent.getMixedBootsData(feet).orElseThrow();
             require(ItemStack.matches(leftBefore, after.left().source())
-                    && ItemStack.matches(rightBefore, after.right().source()), description + ": snapshots mutated");
+                            && ItemStack.matches(rightBefore, after.right().source()), description + ": snapshots mutated");
         }
         damageCases++;
         subject = null;

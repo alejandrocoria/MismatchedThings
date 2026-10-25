@@ -1,9 +1,13 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.undergarden",
-  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.undergarden.UndergardenGooMixinPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": ["UndergardenGooTargetMixin"],
-  "injectors": { "defaultRequire": 1 }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.undergarden",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.undergarden.UndergardenGooMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "UndergardenGooTargetMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

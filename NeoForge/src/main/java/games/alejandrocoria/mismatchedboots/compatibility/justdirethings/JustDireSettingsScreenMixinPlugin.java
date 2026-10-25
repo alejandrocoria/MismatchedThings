@@ -18,7 +18,8 @@ import java.util.Set;
 public final class JustDireSettingsScreenMixinPlugin implements IMixinConfigPlugin, IExtension {
     private boolean available;
 
-    @Override public void onLoad(String mixinPackage) {
+    @Override
+    public void onLoad(String mixinPackage) {
         boolean present = false;
         try {
             ClassNode node = MixinService.getService().getBytecodeProvider().getClassNode(JustDireSettingsScreenShape.SCREEN.replace('/', '.'));
@@ -27,26 +28,65 @@ public final class JustDireSettingsScreenMixinPlugin implements IMixinConfigPlug
             Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
             if (available && transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
                 extensions.add(this);
-            } else { available = false; }
-            if (!available) { Constants.LOG.warn("Just Dire Things native settings local seams incompatible; mixed screen bridge disabled"); }
+            } else {
+                available = false;
+            }
+            if (!available) {
+                Constants.LOG.warn("Just Dire Things native settings local seams incompatible; mixed screen bridge disabled");
+            }
         } catch (ClassNotFoundException absent) {
-            if (present) { Constants.LOG.warn("Just Dire Things native settings API incomplete; mixed screen bridge disabled", absent); }
+            if (present) {
+                Constants.LOG.warn("Just Dire Things native settings API incomplete; mixed screen bridge disabled", absent);
+            }
         } catch (Exception | LinkageError failure) {
             Constants.LOG.warn("Could not inspect Just Dire Things native settings seams; mixed screen bridge disabled", failure);
         }
     }
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return available; }
-    @Override public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return available;
+    }
+
+    @Override
+    public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         if (node.name.equals(JustDireSettingsScreenShape.SCREEN) && !JustDireSettingsScreenShape.publish(node)) {
             Constants.LOG.warn("Just Dire Things native settings transformed hooks incomplete; mixed screen bridge disabled");
         }
     }
-    @Override public boolean checkActive(MixinEnvironment environment) { return true; }
-    @Override public void preApply(ITargetClassContext context) {}
-    @Override public void postApply(ITargetClassContext context) {}
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
+
+    @Override
+    public boolean checkActive(MixinEnvironment environment) {
+        return true;
+    }
+
+    @Override
+    public void preApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void postApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
 }

@@ -57,7 +57,7 @@ public final class IceAndFireMixinPlugin implements IMixinConfigPlugin {
         } catch (Exception | LinkageError exception) {
             result = false;
             Constants.LOG.warn("Could not inspect Ice and Fire {} handler; its boot compatibility disabled",
-                    integration, exception);
+                               integration, exception);
         }
         if (lightning) {
             lightningCompatible = result;

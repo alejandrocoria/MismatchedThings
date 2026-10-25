@@ -19,7 +19,9 @@ import java.util.function.Supplier;
 public final class SilentGearRemainingFixture {
     public static int queries, pushes, cureTicks;
     public static final Map<String, Integer> cureCalls = new HashMap<>(); // Integrated-server thread only.
-    private SilentGearRemainingFixture() {}
+
+    private SilentGearRemainingFixture() {
+    }
 
     /** Three used paid roots; normal connected controls already cover both orientations of every feature. */
     static List<ItemStack> persisted(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api) throws Exception {
@@ -27,14 +29,18 @@ public final class SilentGearRemainingFixture {
                 NeoForgeSilentGearTest.workbench(player, api.boot("tyrian_steel"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst(),
                 NeoForgeSilentGearTest.workbench(player, api.boot("leather"), new ItemStack(Items.DIAMOND_BOOTS)).get(1),
                 NeoForgeSilentGearTest.workbench(player, injected(api, "cure_poison"), injected(api, "cure_wither")).getFirst());
-        for (var root : roots) { root.setDamageValue(3); }
+        for (var root : roots) {
+            root.setDamageValue(3);
+        }
         selected(player, roots);
         manualCommands(player, api);
         return roots;
     }
 
     static void selected(ServerPlayer player, List<ItemStack> roots) {
-        for (EquipmentSlot slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            player.setItemSlot(slot, ItemStack.EMPTY);
+        }
         double y = player.getY();
         try {
             player.removeAllEffects();
@@ -42,7 +48,8 @@ public final class SilentGearRemainingFixture {
             player.setItemSlot(EquipmentSlot.FEET, roots.getFirst());
             player.setPos(player.getX(), player.level().getMinY() - 32.5, player.getZ());
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Pre(player));
-            SilentGearLifecycleTest.require(player.hasEffect(MobEffects.LEVITATION) && player.hasEffect(MobEffects.SLOW_FALLING), "Persisted Void Ward did not rescue");
+            SilentGearLifecycleTest.require(player.hasEffect(MobEffects.LEVITATION) && player.hasEffect(MobEffects.SLOW_FALLING),
+                                            "Persisted Void Ward did not rescue");
             SilentGearLifecycleTest.require(roots.get(1).canWalkOnPowderedSnow(player), "Persisted Snow Walker absent");
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             player.addEffect(new MobEffectInstance(MobEffects.POISON, 200));
@@ -50,21 +57,26 @@ public final class SilentGearRemainingFixture {
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 200));
             roots.get(2).inventoryTick(player.level(), player, EquipmentSlot.OFFHAND);
             SilentGearLifecycleTest.require(!player.hasEffect(MobEffects.POISON) && !player.hasEffect(MobEffects.WITHER)
-                    && player.hasEffect(MobEffects.NIGHT_VISION), "Persisted distinct cures did not cancel selectively");
-            for (int i = 0; i < roots.size(); i++) { SilentGearLifecycleTest.require(ItemStack.matches(before.get(i), roots.get(i)), "Remaining effect changed persisted root/history"); }
+                                                    && player.hasEffect(MobEffects.NIGHT_VISION),
+                                            "Persisted distinct cures did not cancel selectively");
+            for (int i = 0; i < roots.size(); i++) {
+                SilentGearLifecycleTest.require(ItemStack.matches(before.get(i), roots.get(i)), "Remaining effect changed persisted root/history");
+            }
         } finally {
-            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); player.removeAllEffects();
-            player.setPos(player.getX(), y, player.getZ()); player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+            player.removeAllEffects();
+            player.setPos(player.getX(), y, player.getZ());
+            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         }
     }
 
     /** Full native source commands, verified by the real vanilla parser; command block if longer than chat. */
     private static void manualCommands(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api) throws Exception {
         var text = new StringBuilder("TEST SOURCES ONLY: computed traits injected into ordinary native iron boots; no stock recipe.\n"
-                + "In a test world with cheats, paste each /give command into a command block near you and activate it.\n"
-                + "Commands use @p because a command block has no player @s; their item arguments were verified with the vanilla parser.\n"
-                + "Combine the given native boots in the Workbench with diamond boots (or one of each single cure).\n"
-                + "Do not recalculate/rebuild their native materials before combining: that legitimately replaces synthetic traits.\n\n");
+                                             + "In a test world with cheats, paste each /give command into a command block near you and activate it.\n"
+                                             + "Commands use @p because a command block has no player @s; their item arguments were verified with the vanilla parser.\n"
+                                             + "Combine the given native boots in the Workbench with diamond boots (or one of each single cure).\n"
+                                             + "Do not recalculate/rebuild their native materials before combining: that legitimately replaces synthetic traits.\n\n");
         var ops = player.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         for (var names : List.of(List.of("cure_poison"), List.of("cure_wither"), List.of("cure_poison", "cure_wither"))) {
             var source = injected(api, names.toArray(String[]::new));
@@ -74,17 +86,22 @@ public final class SilentGearRemainingFixture {
                 components.add(entry.getKey().startsWith("!") ? entry.getKey() : entry.getKey() + "=" + entry.getValue());
             }
             String item = encoded.get("id").getAsString() + "[" + String.join(",", components) + "]";
-            player.getInventory().clearContent(); player.getInventory().setSelectedSlot(0);
+            player.getInventory().clearContent();
+            player.getInventory().setSelectedSlot(0);
             player.level().getServer().getCommands().performPrefixedCommand(
                     player.createCommandSourceStack().withPermission(LevelBasedPermissionSet.OWNER), "give @s " + item);
             var given = player.getMainHandItem();
             SilentGearLifecycleTest.require(ItemStack.matches(source, given), "Manual cure source command changed native components");
-            for (String name : names) { SilentGearLifecycleTest.require(api.traitLevel(given, name) == 1, "Manual cure source lacks " + name); }
+            for (String name : names) {
+                SilentGearLifecycleTest.require(api.traitLevel(given, name) == 1, "Manual cure source lacks " + name);
+            }
             var root = NeoForgeSilentGearTest.workbench(player, given, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
-            player.addEffect(new MobEffectInstance(MobEffects.POISON, 200)); player.addEffect(new MobEffectInstance(MobEffects.WITHER, 200));
+            player.addEffect(new MobEffectInstance(MobEffects.POISON, 200));
+            player.addEffect(new MobEffectInstance(MobEffects.WITHER, 200));
             root.inventoryTick(player.level(), player, EquipmentSlot.MAINHAND);
             SilentGearLifecycleTest.require(player.hasEffect(MobEffects.POISON) != names.contains("cure_poison")
-                    && player.hasEffect(MobEffects.WITHER) != names.contains("cure_wither"), "Manual cure source failed production dispatch");
+                                                    && player.hasEffect(MobEffects.WITHER) != names.contains("cure_wither"),
+                                            "Manual cure source failed production dispatch");
             player.removeAllEffects();
             text.append(String.join(" + ", names)).append('\n').append("/give @p ").append(item).append("\n\n");
         }
@@ -108,7 +125,11 @@ public final class SilentGearRemainingFixture {
         Object key = ((Supplier<?>) SilentGearTraitSpike.nativeClass("setup.gear.GearProperties").getField("TRAITS").get(null)).get();
         values.put(key, SilentGearTraitSpike.nativeClass("api.property.TraitListPropertyValue").getConstructor(List.class).newInstance(instances));
         source.set(api.properties, props.getClass().getConstructor(Map.class).newInstance(values));
-        for (String name : names) { if (api.traitLevel(source, name) != 1) { throw new AssertionError("Invalid injected native trait: " + name); } }
+        for (String name : names) {
+            if (api.traitLevel(source, name) != 1) {
+                throw new AssertionError("Invalid injected native trait: " + name);
+            }
+        }
         return source;
     }
 }

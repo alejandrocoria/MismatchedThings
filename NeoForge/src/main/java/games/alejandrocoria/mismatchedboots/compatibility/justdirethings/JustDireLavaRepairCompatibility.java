@@ -46,10 +46,13 @@ public final class JustDireLavaRepairCompatibility {
     private static final Map<ItemEntity, Episode> episodes = new WeakHashMap<>();
     private static final Map<ItemEntity, Episode> clientEpisodes = new WeakHashMap<>();
 
-    private JustDireLavaRepairCompatibility() {}
+    private JustDireLavaRepairCompatibility() {
+    }
 
     public static void initialize(IEventBus bus) {
-        if (ModList.get().isLoaded("justdirethings")) { bus.addListener(JustDireLavaRepairCompatibility::bind); }
+        if (ModList.get().isLoaded("justdirethings")) {
+            bus.addListener(JustDireLavaRepairCompatibility::bind);
+        }
     }
 
     private static void bind(RegisterCapabilitiesEvent event) {
@@ -58,7 +61,7 @@ public final class JustDireLavaRepairCompatibility {
             var ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
             Item provider = BuiltInRegistries.ITEM.get(id("blazegold_boots")).orElseThrow().value();
             var query = MethodHandles.publicLookup().findVirtual(tool, "hasAbility", MethodType.methodType(boolean.class, ability))
-                    .bindTo(provider).bindTo(ability.getField("LAVAREPAIR").get(null));
+                                     .bindTo(provider).bindTo(ability.getField("LAVAREPAIR").get(null));
             api = new Api(provider, query, bool("tool_enabled"), bool("lavarepair_toggle"));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things Lava Repair API; mixed Lava Repair disabled", failure);
@@ -66,8 +69,17 @@ public final class JustDireLavaRepairCompatibility {
         try {
             var data = Class.forName("com.direwolf20.justdirethings.client.particles.itemparticle.ItemFlowParticleData");
             var constructor = MethodHandles.publicLookup().findConstructor(data, MethodType.methodType(void.class,
-                    ItemStack.class, double.class, double.class, double.class, int.class))
-                    .asType(MethodType.methodType(ParticleOptions.class, ItemStack.class, double.class, double.class, double.class, int.class));
+                                                                                                       ItemStack.class,
+                                                                                                       double.class,
+                                                                                                       double.class,
+                                                                                                       double.class,
+                                                                                                       int.class))
+                                           .asType(MethodType.methodType(ParticleOptions.class,
+                                                                         ItemStack.class,
+                                                                         double.class,
+                                                                         double.class,
+                                                                         double.class,
+                                                                         int.class));
             var holder = (Supplier<?>) Class.forName("com.direwolf20.justdirethings.setup.JDTRegistration").getField("GooBlock_Tier2").get(null);
             Item visualItem = ((ItemLike) holder.get()).asItem();
             visuals = new Visuals(constructor, visualItem);
@@ -80,11 +92,18 @@ public final class JustDireLavaRepairCompatibility {
     public static boolean eligible(ItemStack root) {
         Api binding = api;
         var data = ModContent.getMixedBootsData(root).orElse(null);
-        if (binding == null || !(root.getItem() instanceof MixedBootsItem) || root.getCount() != 1 || data == null) { return false; }
-        if (!BootHalf.isValidSource(data.left().source()) || !BootHalf.isValidSource(data.right().source())) { return false; }
-        if (data.left().source().getItem() != binding.provider && data.right().source().getItem() != binding.provider) { return false; }
-        try { return (boolean) binding.enabledAbility.invokeExact() && api == binding; }
-        catch (Throwable failure) {
+        if (binding == null || !(root.getItem() instanceof MixedBootsItem) || root.getCount() != 1 || data == null) {
+            return false;
+        }
+        if (!BootHalf.isValidSource(data.left().source()) || !BootHalf.isValidSource(data.right().source())) {
+            return false;
+        }
+        if (data.left().source().getItem() != binding.provider && data.right().source().getItem() != binding.provider) {
+            return false;
+        }
+        try {
+            return (boolean) binding.enabledAbility.invokeExact() && api == binding;
+        } catch (Throwable failure) {
             fatal(failure);
             synchronized (JustDireLavaRepairCompatibility.class) {
                 if (api == binding) {
@@ -99,7 +118,9 @@ public final class JustDireLavaRepairCompatibility {
     public static void tick(ItemStack root, ItemEntity entity) {
         Level level = entity.level();
         boolean client = level.isClientSide();
-        if (!client) { sanitizeProgress(root); }
+        if (!client) {
+            sanitizeProgress(root);
+        }
         Api binding = api;
         boolean enabled = eligible(root) && binding != null
                 && root.getOrDefault(binding.toolEnabled, true) && root.getOrDefault(binding.toggle, true);
@@ -107,30 +128,49 @@ public final class JustDireLavaRepairCompatibility {
         Episode episode = localEpisodes.get(entity);
         if (episode != null && (!enabled || !episode.owns(entity, root)
                 || !source(level, episode.source) || !episode.inBounds(entity))) {
-            localEpisodes.remove(entity); entity.setOnGround(false); episode = null;
+            localEpisodes.remove(entity);
+            entity.setOnGround(false);
+            episode = null;
         }
-        if (!enabled) { return; }
+        if (!enabled) {
+            return;
+        }
         if (episode == null) {
             BlockPos anchor = source(level, entity.blockPosition()) ? entity.blockPosition()
-                    : client ? clientAnchor(entity) : null;
-            if (anchor == null) { return; }
+                                                                    : client ? clientAnchor(entity) : null;
+            if (anchor == null) {
+                return;
+            }
             episode = new Episode(root, level, anchor);
-            localEpisodes.put(entity, episode); entity.setPickUpDelay(85);
+            localEpisodes.put(entity, episode);
+            entity.setPickUpDelay(85);
         }
         if (episode.ended) {
             // A timed-out airborne prediction must not recover itself from its own last rise velocity.
-            if (!client && !entity.blockPosition().equals(episode.source)) { localEpisodes.remove(entity); }
+            if (!client && !entity.blockPosition().equals(episode.source)) {
+                localEpisodes.remove(entity);
+            }
             return;
         }
-        if (++episode.age > 200) { episode.ended = true; entity.setOnGround(false); return; }
-        if (entity.blockPosition().equals(episode.source)) { episode.progress = 0; entity.setPickUpDelay(85); }
+        if (++episode.age > 200) {
+            episode.ended = true;
+            entity.setOnGround(false);
+            return;
+        }
+        if (entity.blockPosition().equals(episode.source)) {
+            episode.progress = 0;
+            entity.setPickUpDelay(85);
+        }
         rise(entity, episode.source);
         // Client prediction is kinematics only: vanilla item physics otherwise falls between server updates.
         // End on authoritative source/stack changes or timeout, not an independent client completion clock.
-        if (client) { return; }
+        if (client) {
+            return;
+        }
         ServerLevel server = (ServerLevel) level;
         if (++episode.progress >= 80) {
-            episode.ended = true; entity.setOnGround(false);
+            episode.ended = true;
+            entity.setOnGround(false);
             // JDT's full helper repairs even after a refused block write. Only this receipt earns repair;
             // mark the episode ended before notifications, and never catch/retry committed world mutation.
             if (source(server, episode.source) && server.setBlock(episode.source, Blocks.OBSIDIAN.defaultBlockState(), 3)
@@ -140,12 +180,15 @@ public final class JustDireLavaRepairCompatibility {
                 entity.setItem(root.copy());
                 server.playSound(null, episode.source, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1, 1);
             }
-        } else if (episode.progress < 40) { particles(server, entity, episode.source); }
+        } else if (episode.progress < 40) {
+            particles(server, entity, episode.source);
+        }
     }
 
     private static void rise(ItemEntity entity, BlockPos source) {
         entity.setDeltaMovement(new Vec3(0, entity.getY() - source.getY() < 3 ? .05 : .005, 0));
-        entity.move(MoverType.SELF, entity.getDeltaMovement()); entity.setOnGround(true);
+        entity.move(MoverType.SELF, entity.getDeltaMovement());
+        entity.setOnGround(true);
     }
 
     private static BlockPos clientAnchor(ItemEntity entity) {
@@ -153,28 +196,38 @@ public final class JustDireLavaRepairCompatibility {
         // synchronized native rise velocity after vanilla gravity/drag (including wire quantization),
         // never a server block receipt. The fast .05 rise becomes .01 in air before drag.
         double vy = entity.getDeltaMovement().y;
-        if (Math.abs(vy - .01) > .001 && Math.abs(vy - .049) > .001 && Math.abs(vy - .0049) > .001) { return null; }
+        if (Math.abs(vy - .01) > .001 && Math.abs(vy - .049) > .001 && Math.abs(vy - .0049) > .001) {
+            return null;
+        }
         BlockPos pos = entity.blockPosition();
         for (int i = 0; i < 6; i++) {
             pos = pos.below();
-            if (!entity.level().hasChunkAt(pos)) { return null; }
-            if (source(entity.level(), pos)) { return pos; }
+            if (!entity.level().hasChunkAt(pos)) {
+                return null;
+            }
+            if (source(entity.level(), pos)) {
+                return pos;
+            }
             var state = entity.level().getBlockState(pos);
-            if (!state.isAir() && !state.is(Blocks.LAVA)) { return null; }
+            if (!state.isAir() && !state.is(Blocks.LAVA)) {
+                return null;
+            }
         }
         return null;
     }
 
     private static void particles(ServerLevel level, ItemEntity entity, BlockPos source) {
         Visuals binding = visuals;
-        if (binding == null) { return; }
+        if (binding == null) {
+            return;
+        }
         try {
             // Reuse JDT's public particle options, codec and client factory, not the unsafe ritual helper.
             var options = (ParticleOptions) binding.create.invokeExact(new ItemStack(binding.item),
-                    entity.getX(), entity.getY() + .75, entity.getZ(), 3);
+                                                                       entity.getX(), entity.getY() + .75, entity.getZ(), 3);
             for (int i = 0; i < 5; i++) {
                 level.sendParticles(options, source.getX() + level.getRandom().nextDouble(), source.getY() + .95,
-                        source.getZ() + level.getRandom().nextDouble(), 1, 0, 0, 0, 0);
+                                    source.getZ() + level.getRandom().nextDouble(), 1, 0, 0, 0, 0);
             }
         } catch (Throwable failure) {
             fatal(failure);
@@ -188,7 +241,9 @@ public final class JustDireLavaRepairCompatibility {
     }
 
     private static boolean source(Level level, BlockPos pos) {
-        if (!level.hasChunkAt(pos)) { return false; }
+        if (!level.hasChunkAt(pos)) {
+            return false;
+        }
         var state = level.getBlockState(pos);
         return state.is(Blocks.LAVA) && state.getValue(LiquidBlock.LEVEL) == 0;
     }
@@ -200,8 +255,13 @@ public final class JustDireLavaRepairCompatibility {
         }
     }
 
-    public static void clearEpisodes() { episodes.clear(); }
-    public static void clearClientEpisodes() { clientEpisodes.clear(); }
+    public static void clearEpisodes() {
+        episodes.clear();
+    }
+
+    public static void clearClientEpisodes() {
+        clientEpisodes.clear();
+    }
 
     @SuppressWarnings("unchecked")
     private static DataComponentType<Boolean> bool(String path) {
@@ -213,13 +273,21 @@ public final class JustDireLavaRepairCompatibility {
     }
 
     private static void fatal(Throwable failure) {
-        if (failure instanceof Error error && !(error instanceof LinkageError)) { throw error; }
+        if (failure instanceof Error error && !(error instanceof LinkageError)) {
+            throw error;
+        }
     }
 
-    private static Identifier id(String path) { return Identifier.fromNamespaceAndPath("justdirethings", path); }
+    private static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath("justdirethings", path);
+    }
 
-    private record Api(Item provider, MethodHandle enabledAbility, DataComponentType<Boolean> toolEnabled, DataComponentType<Boolean> toggle) {}
-    private record Visuals(MethodHandle create, Item item) {}
+    private record Api(Item provider, MethodHandle enabledAbility, DataComponentType<Boolean> toolEnabled, DataComponentType<Boolean> toggle) {
+    }
+
+    private record Visuals(MethodHandle create, Item item) {
+    }
+
     private static final class Episode {
         final WeakReference<ItemStack> stack;
         final Level level;
@@ -227,14 +295,19 @@ public final class JustDireLavaRepairCompatibility {
         final BlockPos source;
         int age, progress;
         boolean ended;
+
         Episode(ItemStack root, Level level, BlockPos source) {
-            this.stack = new WeakReference<>(root); this.level = level;
-            this.data = ModContent.getMixedBootsData(root).orElseThrow(); this.source = source.immutable();
+            this.stack = new WeakReference<>(root);
+            this.level = level;
+            this.data = ModContent.getMixedBootsData(root).orElseThrow();
+            this.source = source.immutable();
         }
+
         boolean owns(ItemEntity entity, ItemStack root) {
             return entity.isAlive() && entity.level() == level && entity.getItem() == root && stack.get() == root
                     && root.getCount() == 1 && data.equals(ModContent.getMixedBootsData(root).orElse(null));
         }
+
         boolean inBounds(ItemEntity entity) {
             return Math.abs(entity.getX() - source.getX() - .5) <= 2 && Math.abs(entity.getZ() - source.getZ() - .5) <= 2
                     && Math.abs(entity.getY() - source.getY()) <= 6;

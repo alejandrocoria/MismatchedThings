@@ -6,6 +6,11 @@ import net.minecraft.world.item.ItemStack;
 
 public final class MysticalGuardControl {
     public static int equipmentCalls, armorCalls;
-    private MysticalGuardControl() {}
-    public static ItemStack opaqueSlot(Player player, EquipmentSlot slot) { return player.getItemBySlot(slot); }
+
+    private MysticalGuardControl() {
+    }
+
+    public static ItemStack opaqueSlot(Player player, EquipmentSlot slot) {
+        return player.getItemBySlot(slot);
+    }
 }

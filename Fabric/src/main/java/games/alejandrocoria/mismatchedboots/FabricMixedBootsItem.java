@@ -8,9 +8,12 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
 public final class FabricMixedBootsItem extends MixedBootsItem {
-    public FabricMixedBootsItem(Properties properties) { super(properties); }
+    public FabricMixedBootsItem(Properties properties) {
+        super(properties);
+    }
 
-    @Override public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
+    @Override
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
         super.inventoryTick(stack, level, entity, slot);
         MysticalAugmentsCompatibility.tick(stack, level, entity, slot);
     }

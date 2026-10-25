@@ -1,12 +1,12 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.gametest.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "ServerPlayerRecipeCraftedProbeMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.gametest.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "ServerPlayerRecipeCraftedProbeMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

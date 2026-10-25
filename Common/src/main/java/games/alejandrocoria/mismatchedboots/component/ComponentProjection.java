@@ -81,7 +81,7 @@ public final class ComponentProjection {
             case OWNER -> owner(first, second);
             case OMIT -> new Values<>(null, null);
             case SAME -> first != null && equivalentValues(type, first, second)
-                    ? shared(type, first) : new Values<>(null, null);
+                         ? shared(type, first) : new Values<>(null, null);
             case SHARE -> share(type, first, second);
             case AVERAGE, MINIMUM, MAXIMUM -> numeric(type, first, second, rule);
             case INTERSECTION -> intersection(type, first, second);
@@ -135,8 +135,8 @@ public final class ComponentProjection {
 
     private static DamageResistant orderedDamage(Map<ResourceKey<DamageType>, Holder<DamageType>> ids) {
         return new DamageResistant(HolderSet.direct(ids.entrySet().stream()
-                .sorted(Comparator.comparing(entry -> entry.getKey().identifier().toString()))
-                .map(Map.Entry::getValue).toList()));
+                                                       .sorted(Comparator.comparing(entry -> entry.getKey().identifier().toString()))
+                                                       .map(Map.Entry::getValue).toList()));
     }
 
     private static <T> Values<T> shared(DataComponentType<T> type, T value) {
@@ -245,7 +245,7 @@ public final class ComponentProjection {
         if (value != null && !codecAccepts(type, value)) {
             warnOnce(type, "numeric codec rejected input; rejecting composition");
             throw new IllegalArgumentException("Invalid numeric component input: "
-                    + BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type));
+                                                       + BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type));
         }
     }
 
@@ -263,7 +263,7 @@ public final class ComponentProjection {
             var codec = type.codecOrThrow();
             JsonElement encoded = codec.encodeStart(JsonOps.INSTANCE, value).result().orElse(null);
             return encoded != null && codec.parse(JsonOps.INSTANCE, encoded).result()
-                    .filter(value::equals).isPresent();
+                                           .filter(value::equals).isPresent();
         } catch (RuntimeException ignored) {
             return false;
         }

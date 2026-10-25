@@ -31,7 +31,7 @@ def packagedVerification = tasks.register("verifyPackagedDependencies") {
 
 // Child plugins create these tasks after this script; capture their providers at configuration time.
 gradle.projectsEvaluated {
-    def producers = [fabric: project(':Fabric').tasks.named('jar'),
+    def producers = [fabric  : project(':Fabric').tasks.named('jar'),
                      neoforge: project(':NeoForge').tasks.named('jar')]
     def archives = producers.collectEntries { loader, producer ->
         [(loader): producer.flatMap { it.archiveFile }]
@@ -129,16 +129,16 @@ gradle.projectsEvaluated {
                 def backend = "${prefix}common-networking-${loader}-${networkingVersion}.jar".toString()
                 def descriptor = loader == 'fabric' ? 'fabric.mod.json' : 'META-INF/neoforge.mods.toml'
                 def cases = [
-                        missingBackend: [omit: backend, error: 'must contain only'],
-                        wrongBackend: [rename: backend, error: 'must contain only'],
-                        missingNightConfig: [omit: "${prefix}core-${nightConfigVersion}.jar".toString(),
+                        missingBackend    : [omit: backend, error: 'must contain only'],
+                        wrongBackend      : [rename: backend, error: 'must contain only'],
+                        missingNightConfig: [omit : "${prefix}core-${nightConfigVersion}.jar".toString(),
                                              error: 'does not contain'],
-                        extraNightConfig: [extra: "${prefix}core-0.jar".toString(),
-                                           error: 'unexpected NightConfig'],
-                        missingDescriptor: [omit: descriptor, error: "is missing ${descriptor}".toString()],
-                        wrongMinimum: [change: descriptor,
-                                       error: loader == 'fabric' ? 'does not require Fabric API'
-                                               : 'must declare NeoForge']
+                        extraNightConfig  : [extra: "${prefix}core-0.jar".toString(),
+                                             error: 'unexpected NightConfig'],
+                        missingDescriptor : [omit: descriptor, error: "is missing ${descriptor}".toString()],
+                        wrongMinimum      : [change: descriptor,
+                                             error : loader == 'fabric' ? 'does not require Fabric API'
+                                                     : 'must declare NeoForge']
                 ]
                 cases.each { name, control ->
                     File fixture = new File(directory, "${loader}-${name}.jar")

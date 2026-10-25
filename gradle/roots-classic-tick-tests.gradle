@@ -30,7 +30,9 @@ def expectedHash = '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a9
             fixtureFiles.delete { delete directory, markers }
             fixtureFiles.copy {
                 from(productionJar, fixtureJar)
-                if (variant != 'Absent') { from(artifact) }
+                if (variant != 'Absent') {
+                    from(artifact)
+                }
                 into(new File(directory.get().asFile, 'mods'))
             }
             new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
@@ -54,17 +56,23 @@ def verify = { String variant ->
     runBounded(":RuntimeTests:NeoForge:runRootsTicks${variant}", processLog, 240)
     def markers = reports.get().dir(name).asFile
     def failure = new File(markers, 'roots-ticks-failure.txt')
-    if (failure.isFile()) { throw new GradleException(failure.text) }
+    if (failure.isFile()) {
+        throw new GradleException(failure.text)
+    }
     def report = new File(markers, 'roots-ticks-report.txt')
     if (!new File(markers, 'roots-ticks-success.txt').isFile() || !report.isFile()) {
         throw new GradleException("Missing Roots tick results; see ${processLog}")
     }
     def warnings = (processLog.text =~ /Roots Classic mixed .* tick disabled:/).count
     int expected = variant == 'Receiver' ? 1 : variant == 'Helper' ? 2 : 0
-    if (warnings != expected) { throw new GradleException("Unexpected bounded Roots warnings: ${warnings} vs ${expected}") }
+    if (warnings != expected) {
+        throw new GradleException("Unexpected bounded Roots warnings: ${warnings} vs ${expected}")
+    }
     def setWarnings = (processLog.text =~ /Roots Classic mixed set consumer disabled:/).count
     int expectedSets = variant in ['Staff', 'Crystal', 'Healing'] ? 1 : 0
-    if (setWarnings != expectedSets) { throw new GradleException("Unexpected bounded Roots set warnings: ${setWarnings} vs ${expectedSets}") }
+    if (setWarnings != expectedSets) {
+        throw new GradleException("Unexpected bounded Roots set warnings: ${setWarnings} vs ${expectedSets}")
+    }
     logger.lifecycle(report.text)
 }
 tasks.register('verifyRootsTicks') {

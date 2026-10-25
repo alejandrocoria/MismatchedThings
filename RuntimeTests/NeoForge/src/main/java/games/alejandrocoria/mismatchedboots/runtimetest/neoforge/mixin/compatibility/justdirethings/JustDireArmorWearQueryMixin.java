@@ -11,7 +11,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class JustDireArmorWearQueryMixin {
     @Inject(method = "wearProfile", at = @At("HEAD"))
     private static void fail(CallbackInfoReturnable<?> callback) {
-        if (JustDireArmorWearFaults.fault.equals("query")) { throw new IllegalStateException("isolated wear query failure"); }
+        if (JustDireArmorWearFaults.fault.equals("query")) {
+            throw new IllegalStateException("isolated wear query failure");
+        }
     }
 }
 

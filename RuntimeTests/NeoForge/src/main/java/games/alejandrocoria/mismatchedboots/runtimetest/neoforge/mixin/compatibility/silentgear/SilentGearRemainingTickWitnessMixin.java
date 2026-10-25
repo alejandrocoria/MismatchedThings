@@ -19,7 +19,9 @@ abstract class SilentGearRemainingTickWitnessMixin {
     @Inject(method = "inventoryTick", at = @At("HEAD"))
     private void selected(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot, CallbackInfo ci) {
         if (slot != null && entity instanceof Player && SilentGearCompatibility.effectiveTraits(stack).stream()
-                .anyMatch(trait -> java.util.List.of("silentgear:cure_poison", "silentgear:cure_wither").contains(trait.id().toString()))) {
+                                                                               .anyMatch(trait -> java.util.List.of("silentgear:cure_poison",
+                                                                                                                    "silentgear:cure_wither")
+                                                                                                                .contains(trait.id().toString()))) {
             SilentGearRemainingFixture.cureTicks++;
         }
     }

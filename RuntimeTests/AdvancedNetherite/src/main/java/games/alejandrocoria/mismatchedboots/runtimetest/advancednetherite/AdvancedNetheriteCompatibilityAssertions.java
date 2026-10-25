@@ -77,7 +77,7 @@ public final class AdvancedNetheriteCompatibilityAssertions {
         }
 
         ArmorCase vanillaControl = new ArmorCase("iron-diamond control", Items.IRON_BOOTS,
-                false, false, false);
+                                                 false, false, false);
         MixedBootsPair control = MixedBootsFactory.createPair(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
         assertOutput(player, control.primary(), vanillaControl, "primary");
@@ -95,7 +95,7 @@ public final class AdvancedNetheriteCompatibilityAssertions {
         source.setDamageValue(damage);
         MixedBootsPair pair = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS));
         ArmorCase expected = new ArmorCase("hook-only damage " + damage, hookBoot,
-                false, endermen, phantoms);
+                                           false, endermen, phantoms);
         assertOutput(player, pair.primary(), expected, "primary");
         assertOutput(player, pair.inverse(), expected, "inverse");
     }

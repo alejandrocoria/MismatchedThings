@@ -43,7 +43,7 @@ final class RepairableComposer {
         }
 
         repairable.items().stream()
-                .filter(holder -> seenItems.add(holder.value()))
-                .forEach(acceptedItems::add);
+                  .filter(holder -> seenItems.add(holder.value()))
+                  .forEach(acceptedItems::add);
     }
 }

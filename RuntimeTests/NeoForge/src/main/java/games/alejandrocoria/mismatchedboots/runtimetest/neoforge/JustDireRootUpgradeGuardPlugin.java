@@ -9,15 +9,36 @@ import java.util.Set;
 
 /** Opt-in adapter binding/recipe failures; never replace production ownership or native consumers. */
 public final class JustDireRootUpgradeGuardPlugin implements IMixinConfigPlugin {
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireRootUpgradeGuard", "");
         return mixin.endsWith("JustDireRootUpgradeApiMissingMixin") && variant.equals("apiMissing")
                 || mixin.endsWith("JustDireRootUpgradeRecipeChangedMixin") && variant.equals("recipeChanged");
     }
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

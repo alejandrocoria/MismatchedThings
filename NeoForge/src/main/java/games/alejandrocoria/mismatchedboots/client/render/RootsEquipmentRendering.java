@@ -13,7 +13,7 @@ public final class RootsEquipmentRendering {
                 && resolved.root().hasChild("left_foot") && resolved.root().hasChild("right_foot")) {
             // Select geometry only; native setupAnim must retain ownership of cached pose/visibility.
             return MixedBootsEquipmentRenderer.preserveSplit(original, resolved,
-                    resolved.root().getChild("left_foot"), resolved.root().getChild("right_foot"));
+                                                             resolved.root().getChild("left_foot"), resolved.root().getChild("right_foot"));
         }
         return MixedBootsEquipmentRenderer.preserveSplit(original, resolved);
     }

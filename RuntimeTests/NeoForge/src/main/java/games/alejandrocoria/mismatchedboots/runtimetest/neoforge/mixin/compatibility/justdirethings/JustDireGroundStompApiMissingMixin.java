@@ -8,5 +8,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(JustDireGroundStompCompatibility.class)
 abstract class JustDireGroundStompApiMissingMixin {
     @ModifyVariable(method = "component", at = @At("HEAD"), argsOnly = true)
-    private static String missing(String path) { return "missing_ground_stomp_fixture_component"; }
+    private static String missing(String path) {
+        return "missing_ground_stomp_fixture_component";
+    }
 }

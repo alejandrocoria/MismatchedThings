@@ -52,7 +52,7 @@ class BakedQuadClipperTest {
                         UVPair.pack(0, 0), UVPair.pack(1, 0), UVPair.pack(1, 1), UVPair.pack(0, 1),
                         Direction.SOUTH, fixture.material());
                 var result = clip(input, new Matrix4f(),
-                        mirror > 0 ? QuadClipper.Side.LEFT : QuadClipper.Side.RIGHT);
+                                  mirror > 0 ? QuadClipper.Side.LEFT : QuadClipper.Side.RIGHT);
                 assertEquals(QuadClipper.Decision.INCOMPATIBLE, result.decision());
                 assertEquals(BakedQuadClipper.Incompatibility.DEGENERATE_CUT, result.incompatibility());
                 assertTrue(result.quads().isEmpty());
@@ -121,7 +121,7 @@ class BakedQuadClipperTest {
             assertFalse(output.materialInfo().shade());
             assertEquals(13, output.materialInfo().lightEmission());
             assertEquals(BakedQuad.FLAG_TRANSLUCENT | BakedQuad.FLAG_ANIMATED,
-                    output.materialInfo().flags());
+                         output.materialInfo().flags());
         }
     }
 
@@ -172,7 +172,7 @@ class BakedQuadClipperTest {
 
             assertEquals(QuadClipper.Decision.INCOMPATIBLE, result.decision());
             assertEquals(BakedQuadClipper.Incompatibility.UNSUPPORTED_EXTENSION_METADATA,
-                    result.incompatibility());
+                         result.incompatibility());
             assertTrue(result.quads().isEmpty());
             assertEquals(quad(fixture.material()), input);
         }
@@ -259,9 +259,9 @@ class BakedQuadClipperTest {
             BakedQuad invalidUv = replacingUv(quad(fixture.material()), UVPair.pack(0.0F, Float.POSITIVE_INFINITY));
 
             assertThrows(IllegalArgumentException.class,
-                    () -> clip(invalidPosition, new Matrix4f(), QuadClipper.Side.LEFT));
+                         () -> clip(invalidPosition, new Matrix4f(), QuadClipper.Side.LEFT));
             assertThrows(IllegalArgumentException.class,
-                    () -> clip(invalidUv, new Matrix4f(), QuadClipper.Side.LEFT));
+                         () -> clip(invalidUv, new Matrix4f(), QuadClipper.Side.LEFT));
         }
     }
 
@@ -291,7 +291,7 @@ class BakedQuadClipperTest {
                     null, input.materialInfo());
 
             assertThrows(IllegalArgumentException.class,
-                    () -> clip(missingDirection, new Matrix4f(), QuadClipper.Side.LEFT));
+                         () -> clip(missingDirection, new Matrix4f(), QuadClipper.Side.LEFT));
             assertThrows(IllegalArgumentException.class, () -> new BakedQuadClipper.Result(
                     QuadClipper.Decision.SPLIT, List.of(), null));
             assertThrows(IllegalArgumentException.class, () -> new BakedQuadClipper.Result(

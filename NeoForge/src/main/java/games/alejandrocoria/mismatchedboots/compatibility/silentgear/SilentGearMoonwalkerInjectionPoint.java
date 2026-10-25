@@ -9,10 +9,17 @@ import java.util.Collection;
 
 /** Only the Moonwalker resource producer in the fall handler, never the neighboring Bounce query. */
 public final class SilentGearMoonwalkerInjectionPoint extends InjectionPoint {
-    public SilentGearMoonwalkerInjectionPoint(InjectionPointData data) { super(data); }
-    @Override public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
+    public SilentGearMoonwalkerInjectionPoint(InjectionPointData data) {
+        super(data);
+    }
+
+    @Override
+    public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
         var call = SilentGearRecognitionShape.moonQuery(descriptor, instructions);
-        if (call == null) { return false; }
-        nodes.add(call); return true;
+        if (call == null) {
+            return false;
+        }
+        nodes.add(call);
+        return true;
     }
 }

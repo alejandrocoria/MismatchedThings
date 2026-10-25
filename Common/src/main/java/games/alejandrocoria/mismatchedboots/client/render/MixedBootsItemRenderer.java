@@ -48,10 +48,10 @@ public final class MixedBootsItemRenderer {
         boolean foil = stack.hasFoil();
         // Item artwork is front-facing: the wearer's left appears on the viewer's right.
         LayerRange left = appendSource(output, sourceView(data.left().source(), foil), resolver,
-                displayContext, level, owner, seed, QuadClipper.Side.RIGHT);
+                                       displayContext, level, owner, seed, QuadClipper.Side.RIGHT);
         boolean oversized = output.isOversizedInGui();
         LayerRange right = appendSource(output, sourceView(data.right().source(), foil), resolver,
-                displayContext, level, owner, seed, QuadClipper.Side.LEFT);
+                                        displayContext, level, owner, seed, QuadClipper.Side.LEFT);
 
         oversized |= output.isOversizedInGui();
         if (!clipAtomically(output, left, output, right)) {
@@ -73,12 +73,12 @@ public final class MixedBootsItemRenderer {
         TrackingItemStackRenderState left = new TrackingItemStackRenderState();
         TrackingItemStackRenderState right = new TrackingItemStackRenderState();
         resolver.updateForTopItem(left, sourceView(data.left().source(), foil),
-                ItemDisplayContext.GUI, level, owner, seed);
+                                  ItemDisplayContext.GUI, level, owner, seed);
         resolver.updateForTopItem(right, sourceView(data.right().source(), foil),
-                ItemDisplayContext.GUI, level, owner, seed);
+                                  ItemDisplayContext.GUI, level, owner, seed);
         return new GuiPreparation(left, right,
-                clipAtomically(left, wholeSource(left, QuadClipper.Side.RIGHT),
-                        right, wholeSource(right, QuadClipper.Side.LEFT)));
+                                  clipAtomically(left, wholeSource(left, QuadClipper.Side.RIGHT),
+                                                 right, wholeSource(right, QuadClipper.Side.LEFT)));
     }
 
     private static LayerRange wholeSource(ItemStackRenderState state, QuadClipper.Side side) {
@@ -172,8 +172,9 @@ public final class MixedBootsItemRenderer {
                 }
             }
             LayerGeometryExtension.Plan extension = layer instanceof LayerGeometryExtension metadata
-                    ? metadata.mismatchedboots$planGeometry(accessor.mismatchedboots$getLocalTransform(), range.side())
-                    : LayerGeometryExtension.Plan.NONE;
+                                                    ? metadata.mismatchedboots$planGeometry(accessor.mismatchedboots$getLocalTransform(),
+                                                                                            range.side())
+                                                    : LayerGeometryExtension.Plan.NONE;
             if (!extension.compatible()) {
                 return false;
             }
@@ -223,7 +224,7 @@ public final class MixedBootsItemRenderer {
         // Rotate complete sources about the same item center, without shrinking or separating them.
         float angle = range.side() == QuadClipper.Side.LEFT ? FALLBACK_ANGLE : -FALLBACK_ANGLE;
         Matrix4f sideTransform = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
-                .rotateY(angle).translate(-0.5F, -0.5F, -0.5F);
+                                               .rotateY(angle).translate(-0.5F, -0.5F, -0.5F);
         for (int index = range.firstLayer(); index < range.lastLayer(); index++) {
             ItemStackRenderState.LayerRenderState layer = state.mismatchedboots$getLayers()[index];
             Matrix4f localTransform = ((LayerRenderStateAccessor) (Object) layer)

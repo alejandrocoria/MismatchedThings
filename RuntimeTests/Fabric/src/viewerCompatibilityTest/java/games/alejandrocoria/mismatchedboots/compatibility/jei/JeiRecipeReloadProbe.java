@@ -35,8 +35,8 @@ public final class JeiRecipeReloadProbe implements IModPlugin, RecipeViewerReloa
     @Override
     public List<RecipeViewerReloadClientGameTest.Cycle> cycles() {
         return runtime.getRecipeManager().createRecipeLookup(MismatchedWorkbenchJeiCategory.TYPE).get()
-                .map(example -> new RecipeViewerReloadClientGameTest.Cycle(example.leftInputs(), example.rightInputs(),
-                        example.primaryOutputs(), example.inverseOutputs())).toList();
+                      .map(example -> new RecipeViewerReloadClientGameTest.Cycle(example.leftInputs(), example.rightInputs(),
+                                                                                 example.primaryOutputs(), example.inverseOutputs())).toList();
     }
 
     @Override

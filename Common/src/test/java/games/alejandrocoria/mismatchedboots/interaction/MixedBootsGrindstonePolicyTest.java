@@ -109,7 +109,7 @@ class MixedBootsGrindstonePolicyTest {
 
     private static ItemStack boots(Item item) {
         return new ItemStack(Holder.direct(item, DataComponentMap.builder()
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build()));
+                                                                 .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                                 .build()));
     }
 }

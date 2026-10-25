@@ -14,13 +14,16 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(CommonHooks.class)
 abstract class JustDireArmorWearMixin {
-    @Unique private static boolean mismatchedboots$justDireArmorWearReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$justDireArmorWearReady() {
+        return false;
+    }
 
     @WrapOperation(method = "lambda$onArmorHurt$0", require = 0, expect = 0, allow = 1, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/item/ItemStack;hurtAndBreak(ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;)V"))
     private static void mismatchedboots$justDireArmorWear(ItemStack root, int amount, LivingEntity entity, EquipmentSlot slot,
-                                                         Operation<Void> ordinary, LivingEntity capturedEntity, EquipmentSlot capturedSlot,
-                                                         ArmorHurtEvent.ArmorEntry entry) {
+                                                          Operation<Void> ordinary, LivingEntity capturedEntity, EquipmentSlot capturedSlot,
+                                                          ArmorHurtEvent.ArmorEntry entry) {
         // Capture target arguments directly: no mutable LocalRef bridge is needed for this read-only entry.
         JustDireArmorWearCompatibility.route(mismatchedboots$justDireArmorWearReady(), root, amount, entity, slot, ordinary, entry.originalDamage);
     }

@@ -9,5 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(JustDireAttributesCompatibility.class)
 abstract class JustDireAttributeApiMissingMixin {
     @ModifyReturnValue(method = "component", at = @At("RETURN"))
-    private static DataComponentType<?> missing(DataComponentType<?> original) { return null; }
+    private static DataComponentType<?> missing(DataComponentType<?> original) {
+        return null;
+    }
 }

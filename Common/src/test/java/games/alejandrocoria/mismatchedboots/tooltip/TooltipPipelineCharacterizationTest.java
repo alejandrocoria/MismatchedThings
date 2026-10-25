@@ -68,7 +68,7 @@ class TooltipPipelineCharacterizationTest {
         assertEquals(details, full.subList(1, full.size()));
         assertEquals(1, details.size());
         assertEquals(((DiscFragmentItem) stack.getItem()).getDisplayName().withStyle(ChatFormatting.GRAY),
-                details.getFirst());
+                     details.getFirst());
         assertTrue(ItemStack.matches(before, stack));
     }
 
@@ -172,7 +172,7 @@ class TooltipPipelineCharacterizationTest {
 
         assertTrue(full(hidden, TooltipFlag.NORMAL).isEmpty());
         assertFalse(details(hidden, TooltipFlag.NORMAL).isEmpty(),
-                "addDetailsToTooltip unexpectedly enforced hide_tooltip");
+                    "addDetailsToTooltip unexpectedly enforced hide_tooltip");
         assertTrue(ItemStack.matches(hiddenBefore, hidden));
     }
 
@@ -188,7 +188,7 @@ class TooltipPipelineCharacterizationTest {
         assertEquals(Component.translatable(stack.getItem().getDescriptionId()), stack.getItemName());
         assertEquals(customName.getString(), full(stack, TooltipFlag.NORMAL).getFirst().getString());
         assertFalse(details(stack, TooltipFlag.NORMAL).stream()
-                .anyMatch(line -> line.getString().equals(customName.getString())));
+                                                      .anyMatch(line -> line.getString().equals(customName.getString())));
         assertTrue(ItemStack.matches(before, stack));
     }
 
@@ -223,8 +223,8 @@ class TooltipPipelineCharacterizationTest {
         ProbeTooltipProvider probe = new ProbeTooltipProvider(calls);
         DataComponentType<ProbeTooltipProvider> probeType =
                 DataComponentType.<ProbeTooltipProvider>builder()
-                        .persistent(Codec.STRING.xmap(value -> probe, value -> "probe"))
-                        .build();
+                                 .persistent(Codec.STRING.xmap(value -> probe, value -> "probe"))
+                                 .build();
         ItemStack control = boots(Items.IRON_BOOTS, 2.0);
         ItemStack withProbe = control.copy();
         withProbe.set(probeType, probe);
@@ -248,30 +248,32 @@ class TooltipPipelineCharacterizationTest {
 
     private static ItemStack stack(Item item) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 64)
-                .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
-                .set(DataComponents.ITEM_MODEL, net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item))
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 64)
+                                                      .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
+                                                      .set(DataComponents.ITEM_MODEL,
+                                                           net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item))
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 
     private static ItemStack boots(Item item, double armor) {
         ItemAttributeModifiers attributes = ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR, new AttributeModifier(
-                        Identifier.fromNamespaceAndPath("mismatchedboots_test", "armor"),
-                        armor,
-                        AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET)
-                .build();
+                                                                  .add(Attributes.ARMOR, new AttributeModifier(
+                                                                          Identifier.fromNamespaceAndPath("mismatchedboots_test", "armor"),
+                                                                          armor,
+                                                                          AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET)
+                                                                  .build();
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.MAX_DAMAGE, 100)
-                .set(DataComponents.DAMAGE, 0)
-                .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
-                .set(DataComponents.ITEM_MODEL, net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item))
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .set(DataComponents.ATTRIBUTE_MODIFIERS, attributes)
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.MAX_DAMAGE, 100)
+                                                      .set(DataComponents.DAMAGE, 0)
+                                                      .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
+                                                      .set(DataComponents.ITEM_MODEL,
+                                                           net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item))
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                      .set(DataComponents.ATTRIBUTE_MODIFIERS, attributes)
+                                                      .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 
@@ -310,10 +312,10 @@ class TooltipPipelineCharacterizationTest {
     private static Component onlyArmorModifier(List<Component> lines) {
         String armorTranslation = Attributes.ARMOR.value().getDescriptionId();
         List<Component> modifiers = lines.stream()
-                .filter(line -> line.getContents() instanceof TranslatableContents contents
-                        && contents.getKey().startsWith("attribute.modifier."))
-                .filter(line -> containsTranslation(line, armorTranslation))
-                .toList();
+                                         .filter(line -> line.getContents() instanceof TranslatableContents contents
+                                                 && contents.getKey().startsWith("attribute.modifier."))
+                                         .filter(line -> containsTranslation(line, armorTranslation))
+                                         .toList();
         assertEquals(1, modifiers.size(), "unexpected armor modifier lines: " + lines);
         return modifiers.getFirst();
     }

@@ -11,14 +11,21 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionPointData;
 import java.util.Collection;
 
 public final class RootsHeadInjectionPoint extends InjectionPoint {
-    public RootsHeadInjectionPoint(InjectionPointData data) { super(data); }
-    @Override public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
+    public RootsHeadInjectionPoint(InjectionPointData data) {
+        super(data);
+    }
+
+    @Override
+    public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
         boolean head = false;
         for (var instruction : instructions) {
-            if (instruction instanceof FieldInsnNode field && field.name.equals("HEAD")) { head = true; }
+            if (instruction instanceof FieldInsnNode field && field.name.equals("HEAD")) {
+                head = true;
+            }
             if (head && instruction instanceof TypeInsnNode type && type.getOpcode() == Opcodes.INSTANCEOF
                     && type.desc.equals("elucent/rootsclassic/item/SylvanArmorItem")) {
-                nodes.add(type); return true;
+                nodes.add(type);
+                return true;
             }
         }
         return false;

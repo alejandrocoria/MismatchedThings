@@ -1,4 +1,6 @@
 {
-  "parent": "mismatchedboots-test:item/mesh_rotated",
-  "textures": {"texture": "minecraft:block/blue_concrete"}
+    "parent": "mismatchedboots-test:item/mesh_rotated",
+    "textures": {
+        "texture": "minecraft:block/blue_concrete"
+    }
 }

@@ -1,19 +1,19 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.advancednetherite.AdvancedNetheriteMixinPlugin",
-  "package": "games.alejandrocoria.mismatchedboots.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "GrindstoneMenuMixin",
-    "GrindstoneResultSlotXpMixin",
-    "ItemCombinerMenuMixin",
-    "RepairItemRecipeMixin",
-    "SmithingMenuMixin",
-    "TypedInstanceMixin",
-    "compatibility.advancednetherite.AdvancedNetheriteHooksMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.advancednetherite.AdvancedNetheriteMixinPlugin",
+    "package": "games.alejandrocoria.mismatchedboots.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "GrindstoneMenuMixin",
+        "GrindstoneResultSlotXpMixin",
+        "ItemCombinerMenuMixin",
+        "RepairItemRecipeMixin",
+        "SmithingMenuMixin",
+        "TypedInstanceMixin",
+        "compatibility.advancednetherite.AdvancedNetheriteHooksMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

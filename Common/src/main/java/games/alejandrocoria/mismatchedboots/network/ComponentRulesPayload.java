@@ -94,13 +94,13 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
     private static DurabilityPolicy readDurability(RegistryFriendlyByteBuf buffer) {
         String serialized = buffer.readUtf(MAX_POLICY_LENGTH);
         return DurabilityPolicy.fromSerializedName(serialized)
-                .orElseThrow(() -> new DecoderException("Invalid durability policy: " + serialized));
+                               .orElseThrow(() -> new DecoderException("Invalid durability policy: " + serialized));
     }
 
     private static RepairCostPolicy readRepairCost(RegistryFriendlyByteBuf buffer) {
         String serialized = buffer.readUtf(MAX_POLICY_LENGTH);
         return RepairCostPolicy.fromSerializedName(serialized)
-                .orElseThrow(() -> new DecoderException("Invalid repair-cost policy: " + serialized));
+                               .orElseThrow(() -> new DecoderException("Invalid repair-cost policy: " + serialized));
     }
 
     private static Identifier readIdentifier(RegistryFriendlyByteBuf buffer) {
@@ -119,7 +119,7 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
     private static ComponentRule readRule(RegistryFriendlyByteBuf buffer) {
         String serializedPolicy = buffer.readUtf(MAX_POLICY_LENGTH);
         ComponentPolicy policy = ComponentPolicy.fromSerializedName(serializedPolicy)
-                .orElseThrow(() -> new DecoderException("Invalid component policy: " + serializedPolicy));
+                                                .orElseThrow(() -> new DecoderException("Invalid component policy: " + serializedPolicy));
         int marker = buffer.readUnsignedByte();
         if (marker != 0 && marker != 1) {
             throw new DecoderException("Invalid component numeric-kind marker: " + marker);
@@ -128,7 +128,7 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
         if (marker == 1) {
             String serializedNumber = buffer.readUtf(MAX_NUMBER_LENGTH);
             number = ComponentNumericKind.fromSerializedName(serializedNumber)
-                    .orElseThrow(() -> new DecoderException("Invalid component numeric kind: " + serializedNumber));
+                                         .orElseThrow(() -> new DecoderException("Invalid component numeric kind: " + serializedNumber));
         }
         if (policy.isNumeric() && number == null) {
             return ComponentRule.of(policy);

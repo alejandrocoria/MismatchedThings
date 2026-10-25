@@ -32,10 +32,13 @@ public final class JustDireUpgradesCompatibility {
     private static volatile Api api;
     private static boolean recipeShapeWarned;
 
-    private JustDireUpgradesCompatibility() {}
+    private JustDireUpgradesCompatibility() {
+    }
 
     public static void initialize(IEventBus bus) {
-        if (ModList.get().isLoaded("justdirethings")) { bus.addListener(JustDireUpgradesCompatibility::bind); }
+        if (ModList.get().isLoaded("justdirethings")) {
+            bus.addListener(JustDireUpgradesCompatibility::bind);
+        }
     }
 
     private static void bind(RegisterCapabilitiesEvent event) {
@@ -43,7 +46,9 @@ public final class JustDireUpgradesCompatibility {
             var tool = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
             var ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
             var boots = BOOTS.stream().map(path -> BuiltInRegistries.ITEM.get(id(path)).orElseThrow().value()).toList();
-            if (boots.stream().anyMatch(item -> !tool.isInstance(item))) { throw new IllegalStateException("Unsupported native boot upgrade API"); }
+            if (boots.stream().anyMatch(item -> !tool.isInstance(item))) {
+                throw new IllegalStateException("Unsupported native boot upgrade API");
+            }
             var upgrades = new ArrayList<Upgrade>();
             for (String name : ABILITIES) {
                 DataComponentType<Boolean> flag = component(name + "_upgrade_installed");
@@ -53,8 +58,10 @@ public final class JustDireUpgradesCompatibility {
                 upgrades.add(new Upgrade(name, flag, ability.getField(name.toUpperCase(java.util.Locale.ROOT)).get(null)));
             }
             api = new Api(boots, List.copyOf(upgrades), MethodHandles.publicLookup()
-                    .findVirtual(tool, "getAllAbilities", MethodType.methodType(java.util.EnumSet.class))
-                    .asType(MethodType.methodType(Set.class, Item.class)));
+                                                                     .findVirtual(tool,
+                                                                                  "getAllAbilities",
+                                                                                  MethodType.methodType(java.util.EnumSet.class))
+                                                                     .asType(MethodType.methodType(Set.class, Item.class)));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things upgrade API; root upgrade compatibility disabled", failure);
             return;
@@ -62,7 +69,9 @@ public final class JustDireUpgradesCompatibility {
         JustDireRefundCompatibility.bindItems();
     }
 
-    public static boolean available() { return api != null; }
+    public static boolean available() {
+        return api != null;
+    }
 
     static DataComponentType<Boolean> installedFlag(String name) {
         return api.upgrades.stream().filter(upgrade -> upgrade.name.equals(name)).findFirst().orElseThrow().flag;
@@ -76,7 +85,9 @@ public final class JustDireUpgradesCompatibility {
     public static void initializeUpgrades(ItemStack output) {
         JustDireRefundCompatibility.initializeCredits(output, List.of());
         Api binding = api;
-        if (binding == null) { return; }
+        if (binding == null) {
+            return;
+        }
         var data = ModContent.getMixedBootsData(output).orElseThrow();
         var imported = new ArrayList<DataComponentType<Boolean>>();
         var ownerPurchases = new ArrayList<String>();
@@ -84,17 +95,26 @@ public final class JustDireUpgradesCompatibility {
             var sources = List.of(data.left().source(), data.right().source());
             for (int index = 0; index < sources.size(); index++) {
                 var source = sources.get(index);
-                if (!binding.boots.contains(source.getItem())) { continue; }
+                if (!binding.boots.contains(source.getItem())) {
+                    continue;
+                }
                 Set<?> permanent = (Set<?>) binding.allAbilities.invokeExact(source.getItem());
                 for (var upgrade : binding.upgrades) {
                     if (permanent.contains(upgrade.ability) && source.getOrDefault(upgrade.flag, false)) {
                         imported.add(upgrade.flag);
-                        if (index == 0) { ownerPurchases.add(upgrade.name); }
+                        if (index == 0) {
+                            ownerPurchases.add(upgrade.name);
+                        }
                     }
                 }
             }
-        } catch (Throwable failure) { disable(binding, failure); return; }
-        if (api != binding) { return; }
+        } catch (Throwable failure) {
+            disable(binding, failure);
+            return;
+        }
+        if (api != binding) {
+            return;
+        }
         // Publish only after every optional read succeeds. Config-disabled flags remain installed.
         binding.upgrades.forEach(upgrade -> output.remove(upgrade.flag));
         imported.forEach(flag -> output.set(flag, true));
@@ -118,7 +138,7 @@ public final class JustDireUpgradesCompatibility {
         preserve(previous, output, "lavarepair_bindingmode");
         // Live active state is never source-owned again, even when equal to an old projection.
         for (String path : List.of("ability_bindings", "groundstomp_bindingmode", "groundstomp_custom_setting",
-                "earthquake_bindingmode", "earthquake_custom_setting", "ability_cooldowns")) {
+                                   "earthquake_bindingmode", "earthquake_custom_setting", "ability_cooldowns")) {
             preserve(previous, output, path);
         }
     }
@@ -129,13 +149,17 @@ public final class JustDireUpgradesCompatibility {
 
     private static <T> void preserve(ItemStack previous, ItemStack output, DataComponentType<T> type) {
         output.remove(type);
-        if (previous.has(type)) { output.set(type, previous.get(type)); }
+        if (previous.has(type)) {
+            output.set(type, previous.get(type));
+        }
     }
 
     /** Only defensive native query copies may receive these flags; no source snapshot is mutated. */
     public static boolean overlayInstallation(ItemStack source, ItemStack root) {
         Api binding = api;
-        if (binding == null) { return false; }
+        if (binding == null) {
+            return false;
+        }
         binding.upgrades.forEach(upgrade -> source.set(upgrade.flag, root.getOrDefault(upgrade.flag, false)));
         return true;
     }
@@ -143,23 +167,37 @@ public final class JustDireUpgradesCompatibility {
     public static MixedBootsSmithingPolicy.RootAttempt smithing(
             ServerLevel level, ItemStack template, ItemStack root, ItemStack addition) {
         var additionId = BuiltInRegistries.ITEM.getKey(addition.getItem());
-        if (!additionId.getNamespace().equals("justdirethings")) { return MixedBootsSmithingPolicy.RootAttempt.UNHANDLED; }
+        if (!additionId.getNamespace().equals("justdirethings")) {
+            return MixedBootsSmithingPolicy.RootAttempt.UNHANDLED;
+        }
         String name = ABILITIES.stream().filter(ability -> additionId.getPath().equals("upgrade_" + ability)).findFirst().orElse(null);
-        if (name == null) { return MixedBootsSmithingPolicy.RootAttempt.UNHANDLED; }
+        if (name == null) {
+            return MixedBootsSmithingPolicy.RootAttempt.UNHANDLED;
+        }
         Api binding = api;
         // Even failed binding/duplicate/config rejection must not install on a historical source.
-        if (binding == null) { return MixedBootsSmithingPolicy.RootAttempt.REJECTED; }
+        if (binding == null) {
+            return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
+        }
         var upgrade = binding.upgrades.stream().filter(value -> value.name.equals(name)).findFirst().orElseThrow();
-        if (root.getOrDefault(upgrade.flag, false)) { return MixedBootsSmithingPolicy.RootAttempt.REJECTED; }
+        if (root.getOrDefault(upgrade.flag, false)) {
+            return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
+        }
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         for (var source : List.of(data.left().source(), data.right().source())) {
-            if (!binding.boots.contains(source.getItem()) || !overlayInstallation(source, root)) { continue; }
+            if (!binding.boots.contains(source.getItem()) || !overlayInstallation(source, root)) {
+                continue;
+            }
             var input = new SmithingRecipeInput(template.copy(), source, addition.copy());
             var recipe = level.recipeAccess().getRecipeFor(RecipeType.SMITHING, input, level);
             if (recipe.isEmpty() || !recipe.get().value().getClass().getName()
-                    .equals("com.direwolf20.justdirethings.datagen.recipes.AbilityRecipe")) { continue; }
+                                           .equals("com.direwolf20.justdirethings.datagen.recipes.AbilityRecipe")) {
+                continue;
+            }
             var assembled = recipe.get().value().assemble(input);
-            if (assembled.isEmpty()) { continue; } // Native tier/config/installed checks own rejection.
+            if (assembled.isEmpty()) {
+                continue;
+            } // Native tier/config/installed checks own rejection.
             var expected = source.copy();
             expected.set(upgrade.flag, true);
             if (!ItemStack.matches(expected, assembled)) {
@@ -186,7 +224,9 @@ public final class JustDireUpgradesCompatibility {
     }
 
     private static void disable(Api binding, Throwable failure) {
-        if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+        if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
+            throw fatal;
+        }
         synchronized (JustDireUpgradesCompatibility.class) {
             if (api == binding) {
                 api = null;
@@ -195,10 +235,18 @@ public final class JustDireUpgradesCompatibility {
         }
     }
 
-    private static Identifier id(String path) { return Identifier.fromNamespaceAndPath("justdirethings", path); }
-    @SuppressWarnings("unchecked") private static <T> DataComponentType<T> component(String path) {
+    private static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath("justdirethings", path);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> DataComponentType<T> component(String path) {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(id(path)).orElseThrow().value();
     }
-    private record Upgrade(String name, DataComponentType<Boolean> flag, Object ability) {}
-    private record Api(List<Item> boots, List<Upgrade> upgrades, MethodHandle allAbilities) {}
+
+    private record Upgrade(String name, DataComponentType<Boolean> flag, Object ability) {
+    }
+
+    private record Api(List<Item> boots, List<Upgrade> upgrades, MethodHandle allAbilities) {
+    }
 }

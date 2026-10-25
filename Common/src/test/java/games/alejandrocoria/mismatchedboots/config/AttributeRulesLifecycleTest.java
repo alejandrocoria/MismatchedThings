@@ -34,7 +34,7 @@ class AttributeRulesLifecycleTest {
         Files.writeString(path, """
                 [attributes]
                 fallback = "separate"
-
+                
                 [attributes."minecraft:armor"]
                 policy = "combine"
                 """);
@@ -44,7 +44,7 @@ class AttributeRulesLifecycleTest {
         assertSame(client, AttributeRuleState.current());
         assertSame(loaded, AttributeRulesLifecycle.serverRules());
         assertEquals(AttributePolicy.COMBINE,
-                loaded.policyFor(Identifier.withDefaultNamespace("armor")));
+                     loaded.policyFor(Identifier.withDefaultNamespace("armor")));
 
         AttributeRulesLifecycle.onServerStopped();
 

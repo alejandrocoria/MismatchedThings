@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Pseudo;
 abstract class TideLateEntryMixin {
     @WrapMethod(method = "inventoryTick")
     private void tideTest$lateEntry(ItemStack stack, ServerLevel level, Entity entity,
-                                     EquipmentSlot slot, Operation<Void> original) {
+                                    EquipmentSlot slot, Operation<Void> original) {
         TideCarrierProbe.readCarrier(stack);
         original.call(stack, level, entity, slot);
     }

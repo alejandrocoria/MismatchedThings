@@ -15,9 +15,11 @@ abstract class JustDireSettingsContainerMixin {
     @Inject(method = "getItemSlots(Lnet/minecraft/world/item/ItemStack;)Lnet/neoforged/neoforge/transfer/ResourceHandler;",
             at = @At("HEAD"), cancellable = true, require = 0, expect = 0, allow = 1)
     private void mismatchedboots$emptySettingsInventory(ItemStack stack,
-            CallbackInfoReturnable<ResourceHandler<ItemResource>> callback) {
+                                                        CallbackInfoReturnable<ResourceHandler<ItemResource>> callback) {
         // JDT opens this menu even with an empty hand; ItemAccess.forStack rejects EMPTY.
         // Null is the menu's existing no-internal-slots result. Real stacks keep native behavior.
-        if (stack.isEmpty()) { callback.setReturnValue(null); }
+        if (stack.isEmpty()) {
+            callback.setReturnValue(null);
+        }
     }
 }

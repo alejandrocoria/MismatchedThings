@@ -14,7 +14,12 @@ import java.util.function.Supplier;
 @Mixin(targets = "games.alejandrocoria.mismatchedboots.compatibility.aether.AetherAlkahestProtection", remap = false)
 abstract class AetherAlkahestBindingTestMixin {
     @WrapOperation(method = "matches", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
-    private static Object unavailable(Supplier<?> receiver, Operation<Object> operation, boolean original, ItemStack stack, Supplier<?> supplier, boolean armor) {
+    private static Object unavailable(Supplier<?> receiver,
+                                      Operation<Object> operation,
+                                      boolean original,
+                                      ItemStack stack,
+                                      Supplier<?> supplier,
+                                      boolean armor) {
         if (AetherAlkahestTestControl.bindingFault(armor)) {
             AetherAlkahestTestControl.bindingFailures++;
             throw new NoClassDefFoundError("Controlled optional Alkahest tier binding failure");

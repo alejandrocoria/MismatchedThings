@@ -24,7 +24,8 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 
 /** Diagnostic characterization, not a prototype adapter or a promised part-editing policy. */
 final class SilentGearPartsAudit {
-    private SilentGearPartsAudit() {}
+    private SilentGearPartsAudit() {
+    }
 
     static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         ItemStack iron = api.boot("iron");
@@ -48,23 +49,25 @@ final class SilentGearPartsAudit {
                 "Native lining menu did not pay for changed output");
         report.append("PART SWAP: native paid lining changes construction; both mixed orientations have no crafting result\n");
         for (ItemStack addition : List.of(api.part("boot_plates", "diamond"), api.part("tip", "diamond"),
-                api.part("coating", "gold"), item("magnetic_upgrade"), item("red_card_upgrade"))) {
+                                          api.part("coating", "gold"), item("magnetic_upgrade"), item("red_card_upgrade"))) {
             controls(player, "GearPartSwapRecipe", iron, root, List.of(addition), report);
         }
 
         // Select LINING exactly as the native cycling tool would, without installing any root support.
         ItemStack kit = item("mod_kit");
         Object liningType = ((Supplier<?>) Class.forName("net.silentchaos512.gear.setup.gear.PartTypes")
-                .getField("LINING").get(null)).get();
+                                                .getField("LINING").get(null)).get();
         kit.set(NeoForgeSilentGearTest.NativeApi.component("PART_TYPE"), liningType);
         ItemStack linedRoot = NeoForgeSilentGearTest.workbench(player, lined, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
         controls(player, "modkit.ModKitRemovePartRecipe", lined, linedRoot, List.of(kit), report);
         controls(player, "modkit.ModKitPaintPartRecipe", lined, linedRoot, List.of(kit, new ItemStack(Items.RED_DYE)), report);
         controls(player, "QuickPaintRecipe", iron, root, List.of(new ItemStack(Items.RED_DYE)), report);
-        ItemStack damaged = iron.copy(); damaged.setDamageValue(40);
-        ItemStack damagedRoot = root.copy(); damagedRoot.setDamageValue(40);
+        ItemStack damaged = iron.copy();
+        damaged.setDamageValue(40);
+        ItemStack damagedRoot = root.copy();
+        damagedRoot.setDamageValue(40);
         controls(player, "QuickRepairRecipe", damaged, damagedRoot,
-                List.of(item("crude_repair_kit"), new ItemStack(Items.IRON_INGOT)), report);
+                 List.of(item("crude_repair_kit"), new ItemStack(Items.IRON_INGOT)), report);
 
         for (ItemStack mixed : roots) {
             smithing(player, mixed, item("magnetic_upgrade"), ItemStack.EMPTY, false, report);
@@ -74,7 +77,9 @@ final class SilentGearPartsAudit {
         smithing(player, iron, new ItemStack(Items.GOLD_INGOT), item("coating_smithing_template"), true, report);
 
         // Mechanism-only control: a source edit is NOT a currently admitted player transaction.
-        ItemStack before = root.copy(); root.setDamageValue(37); before.setDamageValue(37);
+        ItemStack before = root.copy();
+        root.setDamageValue(37);
+        before.setDamageValue(37);
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         ItemStack recomposed = MixedBootsRecomposer.recompose(root, lined, data.right().source());
         require(recomposed.getDamageValue() == 37 && ItemStack.matches(root, before), "Recomposition changed input/damage");
@@ -88,7 +93,7 @@ final class SilentGearPartsAudit {
         boolean refused = false;
         try {
             MixedBootsRecomposer.recompose(copperRoot, copperLined,
-                    ModContent.getMixedBootsData(copperRoot).orElseThrow().right().source());
+                                           ModContent.getMixedBootsData(copperRoot).orElseThrow().right().source());
         } catch (IllegalArgumentException expected) {
             require(expected.getMessage().contains("oxidation reset"), "Unexpected recompose rejection: " + expected);
             refused = true;
@@ -117,20 +122,21 @@ final class SilentGearPartsAudit {
             require(!result.isEmpty() == accepted, "Unexpected anvil admission for " + donor);
             if (accepted) {
                 require(result.getDamageValue() < damagedRoot.getDamageValue()
-                        && ModContent.getMixedBootsData(result).equals(ModContent.getMixedBootsData(damagedRoot)),
+                                && ModContent.getMixedBootsData(result).equals(ModContent.getMixedBootsData(damagedRoot)),
                         "Anvil donor changed source construction or did not repair");
             }
             report.append("ANVIL ").append(BuiltInRegistries.ITEM.getKey(donor.getItem()))
-                    .append(accepted ? ": repair preview; source construction unchanged\n" : ": no repair preview\n");
+                  .append(accepted ? ": repair preview; source construction unchanged\n" : ": no repair preview\n");
         }
         report.append("TAGS native=").append(iron.typeHolder().tags().map(t -> t.location().toString()).sorted().toList())
-                .append(" root=").append(root.typeHolder().tags().map(t -> t.location().toString()).sorted().toList()).append('\n');
+              .append(" root=").append(root.typeHolder().tags().map(t -> t.location().toString()).sorted().toList()).append('\n');
     }
 
     private static void controls(ServerPlayer player, String name, ItemStack nativeGear, ItemStack root,
                                  List<ItemStack> additions, StringBuilder report) throws Exception {
         Object recipe = recipe(name);
-        var inputs = new java.util.ArrayList<ItemStack>(); inputs.add(nativeGear.copy());
+        var inputs = new java.util.ArrayList<ItemStack>();
+        inputs.add(nativeGear.copy());
         additions.forEach(s -> inputs.add(s.copy()));
         var input = CraftingInput.of(inputs.size(), 1, inputs);
         require(matches(recipe, input, player), "Native control rejected: " + name);
@@ -142,13 +148,14 @@ final class SilentGearPartsAudit {
         inputs.set(0, root.copy());
         require(!matches(recipe, CraftingInput.of(inputs.size(), 1, inputs), player), "Mixed unexpectedly admitted: " + name);
         report.append("CRAFT ").append(name).append(' ')
-                .append(additions.stream().map(s -> BuiltInRegistries.ITEM.getKey(s.getItem()).toString()).toList())
-                .append(": native matches/changes, mixed rejected\n");
+              .append(additions.stream().map(s -> BuiltInRegistries.ITEM.getKey(s.getItem()).toString()).toList())
+              .append(": native matches/changes, mixed rejected\n");
     }
 
     private static InventoryMenu crafting(ServerPlayer player, ItemStack base, ItemStack addition) {
         var menu = new InventoryMenu(player.getInventory(), true, player);
-        menu.getInputGridSlots().get(0).set(base); menu.getInputGridSlots().get(3).set(addition);
+        menu.getInputGridSlots().get(0).set(base);
+        menu.getInputGridSlots().get(3).set(addition);
         return menu;
     }
 
@@ -170,17 +177,17 @@ final class SilentGearPartsAudit {
             require(ItemStack.matches(preview, base), "Native smithing no-op not reproduced: " + addition);
             menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
             require(ItemStack.matches(menu.getCarried(), base) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                    && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
-                    && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Native no-op payment differs");
+                            && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
+                            && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Native no-op payment differs");
             report.append("SMITH native ").append(BuiltInRegistries.ITEM.getKey(addition.getItem()))
-                    .append(": unchanged output; base/template/addition consumed\n");
+                  .append(": unchanged output; base/template/addition consumed\n");
         } else {
             require(preview.isEmpty(), "Mixed no-op smithing unexpectedly admitted");
             menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
             require(ItemStack.matches(menu.getSlot(SmithingMenu.BASE_SLOT).getItem(), base)
-                    && ItemStack.matches(menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem(), addition)
-                    && ItemStack.matches(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem(), template)
-                    && menu.getCarried().isEmpty(), "Rejected mixed smithing consumed inputs");
+                            && ItemStack.matches(menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem(), addition)
+                            && ItemStack.matches(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem(), template)
+                            && menu.getCarried().isEmpty(), "Rejected mixed smithing consumed inputs");
             report.append("SMITH mixed ").append(BuiltInRegistries.ITEM.getKey(addition.getItem())).append(": no result, inputs unchanged\n");
         }
     }

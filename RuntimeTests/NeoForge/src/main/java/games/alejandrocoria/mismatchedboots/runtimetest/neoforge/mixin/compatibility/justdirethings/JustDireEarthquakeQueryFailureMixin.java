@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class JustDireEarthquakeQueryFailureMixin {
     @Inject(method = "getFeCost", at = @At("HEAD"))
     private void fail(CallbackInfoReturnable<Integer> ci) {
-        if (((Enum<?>) (Object) this).name().equals("EARTHQUAKE")) { throw new IllegalStateException("Earthquake read-only query fixture failure"); }
+        if (((Enum<?>) (Object) this).name().equals("EARTHQUAKE")) {
+            throw new IllegalStateException("Earthquake read-only query fixture failure");
+        }
     }
 }

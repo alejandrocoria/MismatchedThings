@@ -65,8 +65,8 @@ public final class BetterNetherPiglinArmorAdapter {
                     "org.betterx.betternether.config.Configs", true, loader);
             Object gameRules = configs.getField("GAME_RULES").get(null);
             Object enabled = gameRules.getClass()
-                    .getField("piglinIgnoreNetherArmor")
-                    .get(gameRules);
+                                      .getField("piglinIgnoreNetherArmor")
+                                      .get(gameRules);
             Method getValue = enabled.getClass().getMethod("get");
 
             Class<?> equipmentItems = Class.forName(
@@ -79,7 +79,7 @@ public final class BetterNetherPiglinArmorAdapter {
             Method getArmorPieces = sets[0].getClass().getMethod("getArmorPieces");
             // Keep only API handles, not configuration results: Better Nether's toggle is live.
             boundary = new Boundary(enabled, getValue, sets, getArmorPieces,
-                    (message, exception) -> Constants.LOG.warn(message, exception));
+                                    (message, exception) -> Constants.LOG.warn(message, exception));
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException
                  | IllegalAccessException | LinkageError | RuntimeException exception) {
             Constants.LOG.warn(

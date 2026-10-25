@@ -18,10 +18,13 @@ import java.math.BigDecimal;
 public final class NeoVitaeInfusionCompatibility {
     private static volatile Binding binding;
 
-    private NeoVitaeInfusionCompatibility() {}
+    private NeoVitaeInfusionCompatibility() {
+    }
 
     public static void initialize(IEventBus bus) {
-        if (ModList.get().isLoaded("neovitae")) { bus.addListener(NeoVitaeInfusionCompatibility::bind); }
+        if (ModList.get().isLoaded("neovitae")) {
+            bus.addListener(NeoVitaeInfusionCompatibility::bind);
+        }
     }
 
     private static void bind(RegisterCapabilitiesEvent event) {
@@ -31,7 +34,9 @@ public final class NeoVitaeInfusionCompatibility {
             var type = component("spiritus_type", Object.class, new JsonPrimitive("raw"));
             var bloodMending = component("blood_mending", Boolean.class, new JsonPrimitive(true));
             Object raw = type.codec().parse(JsonOps.INSTANCE, new JsonPrimitive("raw")).getOrThrow();
-            if (!(raw instanceof Enum<?> rawType)) { throw new IllegalStateException("Unsupported Spiritus type schema"); }
+            if (!(raw instanceof Enum<?> rawType)) {
+                throw new IllegalStateException("Unsupported Spiritus type schema");
+            }
             binding = new Binding(capacity, amount, type, bloodMending, rawType);
         } catch (RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Neo Vitae infusion components; mixed infusion composition disabled", failure);
@@ -41,7 +46,7 @@ public final class NeoVitaeInfusionCompatibility {
     @SuppressWarnings("unchecked")
     private static <T> DataComponentType<T> component(String path, Class<T> valueClass, JsonPrimitive sample) {
         var type = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(Identifier.fromNamespaceAndPath("neovitae", path))
-                .orElseThrow(() -> new IllegalStateException("Missing Neo Vitae component: " + path));
+                                                        .orElseThrow(() -> new IllegalStateException("Missing Neo Vitae component: " + path));
         if (type.codec() == null || !valueClass.isInstance(type.codec().parse(JsonOps.INSTANCE, sample).getOrThrow())) {
             throw new IllegalStateException("Unsupported Neo Vitae component: " + path);
         }
@@ -50,14 +55,20 @@ public final class NeoVitaeInfusionCompatibility {
 
     public static void initializeCreation(ItemStack output) {
         Binding api = binding;
-        if (api == null) { return; }
+        if (api == null) {
+            return;
+        }
         var data = ModContent.getMixedBootsData(output).orElse(null);
-        if (data != null) { initializeCreation(output, data.left().source(), data.right().source(), api); }
+        if (data != null) {
+            initializeCreation(output, data.left().source(), data.right().source(), api);
+        }
     }
 
     public static void preserveState(ItemStack previous, ItemStack output) {
         Binding api = binding;
-        if (api != null) { preserveState(previous, output, api); }
+        if (api != null) {
+            preserveState(previous, output, api);
+        }
     }
 
     static void preserveState(ItemStack previous, ItemStack output, Binding api) {
@@ -75,8 +86,11 @@ public final class NeoVitaeInfusionCompatibility {
     }
 
     private static <T> void restore(ItemStack output, DataComponentType<T> type, T value) {
-        if (value == null) { output.remove(type); }
-        else { output.set(type, value); }
+        if (value == null) {
+            output.remove(type);
+        } else {
+            output.set(type, value);
+        }
     }
 
     // Owner is the left snapshot in this orientation, not a mutable live wallet.
@@ -99,13 +113,18 @@ public final class NeoVitaeInfusionCompatibility {
             output.remove(api.amount);
             output.remove(api.type);
         }
-        if (bloodMending) { output.set(api.bloodMending, true); }
-        else { output.remove(api.bloodMending); }
+        if (bloodMending) {
+            output.set(api.bloodMending, true);
+        } else {
+            output.remove(api.bloodMending);
+        }
     }
 
     private static Infusion read(ItemStack source, Binding api) {
         Double capacity = source.get(api.capacity);
-        if (capacity == null) { return new Infusion(0, 0, api.raw); }
+        if (capacity == null) {
+            return new Infusion(0, 0, api.raw);
+        }
         double amount = source.getOrDefault(api.amount, 0D);
         Object type = source.getOrDefault(api.type, api.raw);
         if (!Double.isFinite(capacity) || capacity <= 0 || !Double.isFinite(amount) || amount < 0 || amount > capacity
@@ -123,7 +142,9 @@ public final class NeoVitaeInfusionCompatibility {
     }
 
     record Binding(DataComponentType<Double> capacity, DataComponentType<Double> amount,
-                   DataComponentType<Object> type, DataComponentType<Boolean> bloodMending, Enum<?> raw) {}
+                   DataComponentType<Object> type, DataComponentType<Boolean> bloodMending, Enum<?> raw) {
+    }
 
-    private record Infusion(double capacity, double amount, Object type) {}
+    private record Infusion(double capacity, double amount, Object type) {
+    }
 }

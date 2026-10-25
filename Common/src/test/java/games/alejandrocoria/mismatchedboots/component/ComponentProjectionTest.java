@@ -46,11 +46,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ComponentProjectionTest {
     private static final DataComponentType<Integer> INTEGER = DataComponentType.<Integer>builder()
-            .persistent(Codec.INT).build();
+                                                                               .persistent(Codec.INT).build();
     private static final DataComponentType<Long> LONG = DataComponentType.<Long>builder()
-            .persistent(Codec.LONG).build();
+                                                                         .persistent(Codec.LONG).build();
     private static final DataComponentType<String> STRING = DataComponentType.<String>builder()
-            .persistent(Codec.STRING).build();
+                                                                             .persistent(Codec.STRING).build();
 
     @BeforeAll
     static void bootstrapMinecraft() {
@@ -68,7 +68,9 @@ class ComponentProjectionTest {
         assertEquals(ComponentPolicy.OWNER, defaults.ruleFor(testId("unknown")).policy());
         assertEquals(ComponentPolicy.OMIT, defaults.ruleFor(Identifier.parse("aether_ii:charms")).policy());
         defaults.rules().keySet().stream().filter(id -> id.getNamespace().equals("minecraft")).forEach(id ->
-                assertTrue(BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(id).isPresent(), id.toString()));
+                                                                                                               assertTrue(BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(
+                                                                                                                                  id).isPresent(),
+                                                                                                                          id.toString()));
 
         Map<Identifier, ComponentRule> source = new LinkedHashMap<>();
         source.put(testId("energy"), ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG));
@@ -76,9 +78,9 @@ class ComponentProjectionTest {
         source.clear();
         assertEquals(ComponentNumericKind.LONG, rules.ruleFor(testId("energy")).number());
         assertThrows(UnsupportedOperationException.class,
-                () -> rules.rules().put(testId("other"), ComponentRule.of(ComponentPolicy.OWNER)));
+                     () -> rules.rules().put(testId("other"), ComponentRule.of(ComponentPolicy.OWNER)));
         assertThrows(IllegalArgumentException.class,
-                () -> ComponentRule.numeric(ComponentPolicy.SHARE, ComponentNumericKind.INT));
+                     () -> ComponentRule.numeric(ComponentPolicy.SHARE, ComponentNumericKind.INT));
         assertEquals(ComponentPolicy.SAME, ComponentPolicy.fromSerializedName("same").orElseThrow());
         assertTrue(ComponentPolicy.fromSerializedName("SAME").isEmpty());
         assertEquals(ComponentNumericKind.INT, ComponentNumericKind.fromSerializedName("int").orElseThrow());
@@ -93,20 +95,20 @@ class ComponentProjectionTest {
         CompoundTag secondData = new CompoundTag();
         secondData.putString("owner", "second");
         ItemStack first = stack(DataComponentMap.builder()
-                .set(DataComponents.RARITY, Rarity.RARE)
-                .set(DataComponents.LORE, firstLore)
-                .set(DataComponents.REPAIR_COST, 8)
-                .set(DataComponents.UNBREAKABLE, Unit.INSTANCE)
-                .set(DataComponents.ENCHANTABLE, new Enchantable(25))
-                .set(DataComponents.CUSTOM_DATA, CustomData.of(firstData))
-                .build());
+                                                .set(DataComponents.RARITY, Rarity.RARE)
+                                                .set(DataComponents.LORE, firstLore)
+                                                .set(DataComponents.REPAIR_COST, 8)
+                                                .set(DataComponents.UNBREAKABLE, Unit.INSTANCE)
+                                                .set(DataComponents.ENCHANTABLE, new Enchantable(25))
+                                                .set(DataComponents.CUSTOM_DATA, CustomData.of(firstData))
+                                                .build());
         ItemStack second = stack(DataComponentMap.builder()
-                .set(DataComponents.RARITY, Rarity.RARE)
-                .set(DataComponents.LORE, secondLore)
-                .set(DataComponents.REPAIR_COST, 2)
-                .set(DataComponents.ENCHANTABLE, new Enchantable(9))
-                .set(DataComponents.CUSTOM_DATA, CustomData.of(secondData))
-                .build());
+                                                 .set(DataComponents.RARITY, Rarity.RARE)
+                                                 .set(DataComponents.LORE, secondLore)
+                                                 .set(DataComponents.REPAIR_COST, 2)
+                                                 .set(DataComponents.ENCHANTABLE, new Enchantable(9))
+                                                 .set(DataComponents.CUSTOM_DATA, CustomData.of(secondData))
+                                                 .build());
 
         ItemStack firstBefore = first.copy();
         ItemStack secondBefore = second.copy();
@@ -171,18 +173,18 @@ class ComponentProjectionTest {
                 INTEGER, Integer.MIN_VALUE, Integer.MAX_VALUE,
                 ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         assertEquals(new ComponentProjection.Values<>(Long.MAX_VALUE, Long.MAX_VALUE),
-                ComponentProjection.projectValues(LONG, Long.MAX_VALUE, Long.MAX_VALUE,
-                        ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG)));
+                     ComponentProjection.projectValues(LONG, Long.MAX_VALUE, Long.MAX_VALUE,
+                                                       ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG)));
         assertEquals(new ComponentProjection.Values<>(-1L, -1L),
-                ComponentProjection.projectValues(LONG, Long.MIN_VALUE, Long.MAX_VALUE,
-                        ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG)));
+                     ComponentProjection.projectValues(LONG, Long.MIN_VALUE, Long.MAX_VALUE,
+                                                       ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG)));
         assertEquals(new ComponentProjection.Values<>(4, 4), ComponentProjection.projectValues(
                 INTEGER, 4, 9, ComponentRule.numeric(ComponentPolicy.MINIMUM, ComponentNumericKind.INT)));
         assertEquals(new ComponentProjection.Values<>(9, 9), ComponentProjection.projectValues(
                 INTEGER, 4, 9, ComponentRule.numeric(ComponentPolicy.MAXIMUM, ComponentNumericKind.INT)));
 
         DataComponentType<Integer> limited = DataComponentType.<Integer>builder()
-                .persistent(Codec.intRange(0, 10)).build();
+                                                              .persistent(Codec.intRange(0, 10)).build();
         assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
                 limited, 10, 100, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         // The mean is valid, but invalid sources must not be silently repaired by arithmetic.
@@ -193,8 +195,10 @@ class ComponentProjectionTest {
         assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
                 limited, -2, null, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         DataComponentType<Integer> even = DataComponentType.<Integer>builder()
-                .persistent(Codec.INT.validate(value -> value % 2 == 0
-                        ? DataResult.success(value) : DataResult.error(() -> "Expected an even value"))).build();
+                                                           .persistent(Codec.INT.validate(value -> value % 2 == 0
+                                                                                                   ? DataResult.success(value)
+                                                                                                   : DataResult.error(() -> "Expected an even value")))
+                                                           .build();
         assertEquals(new ComponentProjection.Values<>(2, 4), ComponentProjection.projectValues(
                 even, 2, 4, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         assertEquals(new ComponentProjection.Values<>(4, null), ComponentProjection.projectValues(
@@ -210,11 +214,11 @@ class ComponentProjectionTest {
         assertTrue(DataComponents.ADDITIONAL_TRADE_COST.isTransient());
         assertNull(DataComponents.ADDITIONAL_TRADE_COST.codec());
         ItemStack first = stack(DataComponentMap.builder()
-                .set(DataComponents.ADDITIONAL_TRADE_COST, 1).build());
+                                                .set(DataComponents.ADDITIONAL_TRADE_COST, 1).build());
         ItemStack second = stack(DataComponentMap.builder()
-                .set(DataComponents.ADDITIONAL_TRADE_COST, 3).build());
+                                                 .set(DataComponents.ADDITIONAL_TRADE_COST, 3).build());
         ComponentRuleSet rules = new ComponentRuleSet(Map.of(minecraft("additional_trade_cost"),
-                ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
+                                                             ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
 
         ComponentProjection.Result result = ComponentProjection.project(first, second, rules);
         assertEquals(1, result.primary().get(DataComponents.ADDITIONAL_TRADE_COST));
@@ -225,17 +229,17 @@ class ComponentProjectionTest {
     void enchantableUsesItsDedicatedPositiveIntegerAdapter() {
         ComponentRule minimum = ComponentRule.of(ComponentPolicy.MINIMUM);
         assertEquals(new ComponentProjection.Values<>(new Enchantable(9), new Enchantable(9)),
-                ComponentProjection.projectValues(DataComponents.ENCHANTABLE,
-                        new Enchantable(25), new Enchantable(9), minimum));
+                     ComponentProjection.projectValues(DataComponents.ENCHANTABLE,
+                                                       new Enchantable(25), new Enchantable(9), minimum));
         assertEquals(new ComponentProjection.Values<>(null, null),
-                ComponentProjection.projectValues(DataComponents.ENCHANTABLE,
-                        new Enchantable(25), null, minimum));
+                     ComponentProjection.projectValues(DataComponents.ENCHANTABLE,
+                                                       new Enchantable(25), null, minimum));
         assertEquals(new ComponentProjection.Values<>(new Enchantable(9), new Enchantable(9)),
-                ComponentProjection.projectValues(DataComponents.ENCHANTABLE,
-                        new Enchantable(25), new Enchantable(9),
-                        ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
+                     ComponentProjection.projectValues(DataComponents.ENCHANTABLE,
+                                                       new Enchantable(25), new Enchantable(9),
+                                                       ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         assertEquals(new ComponentProjection.Values<>(new Enchantable(25), new Enchantable(25)),
-                values(DataComponents.ENCHANTABLE, new Enchantable(25), null, ComponentPolicy.SHARE));
+                     values(DataComponents.ENCHANTABLE, new Enchantable(25), null, ComponentPolicy.SHARE));
     }
 
     @Test
@@ -243,8 +247,8 @@ class ComponentProjectionTest {
         assertEquals(ComponentRule.of(ComponentPolicy.SAME), ComponentRuleSupport.resolve(
                 DataComponents.RARITY, ComponentRule.of(ComponentPolicy.INTERSECTION)).orElseThrow());
         assertEquals(ComponentRule.of(ComponentPolicy.OMIT), ComponentRuleSupport.resolve(
-                DataComponents.LORE, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT))
-                .orElseThrow());
+                                                                                         DataComponents.LORE, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT))
+                                                                                 .orElseThrow());
         assertEquals(new ComponentProjection.Values<>(null, null), values(
                 DataComponents.RARITY, Rarity.RARE, Rarity.COMMON, ComponentPolicy.INTERSECTION));
         assertEquals(ComponentRule.of(ComponentPolicy.MINIMUM), ComponentRuleSupport.resolve(
@@ -254,7 +258,7 @@ class ComponentProjectionTest {
                 DataComponents.DAMAGE_RESISTANT,
                 ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)).orElseThrow());
         assertTrue(ComponentRuleSupport.resolve(DataComponents.REPAIR_COST,
-                ComponentRule.of(ComponentPolicy.OMIT)).isEmpty());
+                                                ComponentRule.of(ComponentPolicy.OMIT)).isEmpty());
         ComponentProjection.Result result = ComponentProjection.project(
                 stack(DataComponentMap.builder().set(DataComponents.REPAIR_COST, 8).build()),
                 stack(DataComponentMap.EMPTY),
@@ -266,7 +270,7 @@ class ComponentProjectionTest {
     @Test
     void swappingInputsSwapsOpaqueAndNumericOutputsIncludingAbsence() {
         for (ComponentPolicy policy : List.of(ComponentPolicy.OWNER, ComponentPolicy.OMIT,
-                ComponentPolicy.SAME, ComponentPolicy.SHARE)) {
+                                              ComponentPolicy.SAME, ComponentPolicy.SHARE)) {
             for (String first : Arrays.asList(null, "a", "b")) {
                 for (String second : Arrays.asList(null, "a", "b")) {
                     assertSwap(STRING, first, second, ComponentRule.of(policy));
@@ -320,18 +324,18 @@ class ComponentProjectionTest {
         assertTrue(ComponentProjection.equivalentValues(DataComponents.DAMAGE_RESISTANT, null, null));
         assertFalse(ComponentProjection.equivalentValues(DataComponents.DAMAGE_RESISTANT, first, cactus));
         assertSame(first, ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                first, sameTag, ComponentRule.of(ComponentPolicy.SAME)).primary());
+                                                            first, sameTag, ComponentRule.of(ComponentPolicy.SAME)).primary());
         var overlap = ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                first, sameTag, ComponentRule.of(ComponentPolicy.INTERSECTION));
+                                                        first, sameTag, ComponentRule.of(ComponentPolicy.INTERSECTION));
         assertSame(first, overlap.primary());
         assertSame(first, overlap.inverse());
         assertNull(ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                first, cactus, ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
+                                                     first, cactus, ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
         assertNull(ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                first, null, ComponentRule.of(ComponentPolicy.INTERSECTION)).inverse());
+                                                     first, null, ComponentRule.of(ComponentPolicy.INTERSECTION)).inverse());
         assertEquals(new ComponentProjection.Values<>(first, cactus),
-                ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                        first, cactus, ComponentRule.of(ComponentPolicy.SHARE)));
+                     ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
+                                                       first, cactus, ComponentRule.of(ComponentPolicy.SHARE)));
     }
 
     @Test
@@ -345,18 +349,18 @@ class ComponentProjectionTest {
         DamageResistant right = new DamageResistant(HolderSet.direct(cactusRight, fallRight));
 
         var overlap = ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                left, right, ComponentRule.of(ComponentPolicy.INTERSECTION));
+                                                        left, right, ComponentRule.of(ComponentPolicy.INTERSECTION));
         assertEquals(1, overlap.primary().types().size());
         assertEquals(cactusLeft.unwrapKey(), overlap.primary().types().get(0).unwrapKey());
         assertEquals(overlap.primary(), overlap.inverse());
         assertNull(ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                left, new DamageResistant(HolderSet.direct(fallRight)),
-                ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
+                                                     left, new DamageResistant(HolderSet.direct(fallRight)),
+                                                     ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
         assertNull(ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                left, new DamageResistant(HolderSet.direct(Holder.direct(new DamageType("unkeyed", 0.1F)))),
-                ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
+                                                     left, new DamageResistant(HolderSet.direct(Holder.direct(new DamageType("unkeyed", 0.1F)))),
+                                                     ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
         assertNull(ComponentProjection.projectValues(DataComponents.DAMAGE_RESISTANT,
-                left, new DamageResistant(HolderSet.emptyNamed(new HolderOwner<>() {
+                                                     left, new DamageResistant(HolderSet.emptyNamed(new HolderOwner<>() {
                 }, tag("fire"))), ComponentRule.of(ComponentPolicy.INTERSECTION)).primary());
     }
 

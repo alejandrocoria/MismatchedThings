@@ -32,7 +32,7 @@ public class BetterNetherPiglinArmorAdapterTest {
         ArmorSet third = new ArmorSet(Items.DIAMOND_BOOTS);
         List<String> warnings = new ArrayList<>();
         var boundary = boundary(toggle, new Object[]{first, second, third},
-                ArmorSet.class.getMethod("getArmorPieces"), warnings);
+                                ArmorSet.class.getMethod("getArmorPieces"), warnings);
 
         assertTrue(boundary.isEnabled());
         assertTrue(boundary.contains(Items.IRON_BOOTS));
@@ -89,7 +89,7 @@ public class BetterNetherPiglinArmorAdapterTest {
         Toggle toggle = new Toggle();
         List<String> warnings = new ArrayList<>();
         var boundary = boundary(toggle, new Object[]{new InaccessibleArmorSet()},
-                InaccessibleArmorSet.class.getDeclaredMethod("getArmorPieces"), warnings);
+                                InaccessibleArmorSet.class.getDeclaredMethod("getArmorPieces"), warnings);
 
         assertFalse(boundary.contains(Items.IRON_BOOTS));
         assertFalse(boundary.contains(Items.IRON_BOOTS));
@@ -101,7 +101,7 @@ public class BetterNetherPiglinArmorAdapterTest {
     private static BetterNetherPiglinArmorAdapter.Boundary boundary(
             Toggle toggle, Object[] sets, Method query, List<String> warnings) throws NoSuchMethodException {
         return new BetterNetherPiglinArmorAdapter.Boundary(toggle, Toggle.class.getMethod("get"),
-                sets, query, (message, exception) -> warnings.add(message));
+                                                           sets, query, (message, exception) -> warnings.add(message));
     }
 
     public static final class Toggle {

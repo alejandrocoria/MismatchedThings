@@ -11,10 +11,17 @@ import java.util.List;
 /** Nine immutable projections, never another wallet or a live configuration snapshot. */
 public record JustDireAttributeProjections(List<ItemAttributeModifiers> states) {
     public static final Codec<JustDireAttributeProjections> CODEC = ItemAttributeModifiers.CODEC.listOf(9, 9)
-            .validate(states -> states.stream().allMatch(state -> state.modifiers().size() <= 32
-                    && state.modifiers().stream().allMatch(JustDireAttributeProjections::valid))
-                    ? DataResult.success(states) : DataResult.error(() -> "Invalid JDT attribute projections"))
-            .xmap(JustDireAttributeProjections::new, JustDireAttributeProjections::states);
+                                                                                                .validate(states -> states.stream()
+                                                                                                                          .allMatch(state -> state.modifiers()
+                                                                                                                                                  .size() <= 32
+                                                                                                                                  && state.modifiers()
+                                                                                                                                          .stream()
+                                                                                                                                          .allMatch(
+                                                                                                                                                  JustDireAttributeProjections::valid))
+                                                                                                                    ? DataResult.success(states)
+                                                                                                                    : DataResult.error(() -> "Invalid JDT attribute projections"))
+                                                                                                .xmap(JustDireAttributeProjections::new,
+                                                                                                      JustDireAttributeProjections::states);
 
     public JustDireAttributeProjections {
         states = states.stream().map(state -> new ItemAttributeModifiers(List.copyOf(state.modifiers()))).toList();
@@ -41,5 +48,6 @@ public record JustDireAttributeProjections(List<ItemAttributeModifiers> states) 
         return new Key(BuiltInRegistries.ATTRIBUTE.getKey(entry.attribute().value()), entry.modifier().id());
     }
 
-    record Key(Identifier attribute, Identifier modifier) {}
+    record Key(Identifier attribute, Identifier modifier) {
+    }
 }

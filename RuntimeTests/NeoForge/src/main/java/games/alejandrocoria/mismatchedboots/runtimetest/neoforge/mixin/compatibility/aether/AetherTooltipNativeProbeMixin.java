@@ -19,6 +19,7 @@ abstract class AetherTooltipNativeProbeMixin {
     private static void attributes(ItemStack stack, List<Component> lines, AttributeTooltipContext context, CallbackInfo ci) {
         AetherTooltipTestControl.beforeAttributes(lines);
     }
+
     @Inject(method = "addAbilityAttributeTooltip", at = @At("RETURN"))
     private static void attributesDone(ItemStack stack, List<Component> lines, AttributeTooltipContext context, CallbackInfo ci) {
         AetherTooltipTestControl.afterAttributes(lines);

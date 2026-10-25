@@ -32,7 +32,7 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.ITEM,
                 ModContent.MISMATCHED_WORKBENCH_ID,
                 new BlockItem(workbench, ModContent.mismatchedWorkbenchItemProperties()
-                        .setId(ModContent.MISMATCHED_WORKBENCH_ITEM_KEY)));
+                                                   .setId(ModContent.MISMATCHED_WORKBENCH_ITEM_KEY)));
         Registry.register(
                 BuiltInRegistries.MENU,
                 ModContent.MISMATCHED_WORKBENCH_ID,
@@ -55,7 +55,7 @@ public class MismatchedBootsFabric implements ModInitializer {
                 ModContent.createMixedBootsWorkbenchRecipeSerializer());
         RecipeSynchronization.synchronizeRecipeSerializer(ModContent.createMixedBootsWorkbenchRecipeSerializer());
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
-                .register(output -> output.accept(workbenchItem));
+                             .register(output -> output.accept(workbenchItem));
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();

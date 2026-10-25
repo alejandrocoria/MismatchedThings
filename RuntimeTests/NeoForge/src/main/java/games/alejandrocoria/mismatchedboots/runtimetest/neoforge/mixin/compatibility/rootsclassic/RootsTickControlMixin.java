@@ -14,7 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = {"elucent.rootsclassic.item.SylvanArmorItem", "elucent.rootsclassic.item.WildwoodArmorItem"}, remap = false)
 abstract class RootsTickControlMixin {
     @Inject(method = "inventoryTick", at = @At("HEAD"))
-    private void noteTick(CallbackInfo callback) { RootsTickTestControl.tick(); }
+    private void noteTick(CallbackInfo callback) {
+        RootsTickTestControl.tick();
+    }
 
     @WrapOperation(method = "inventoryTick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/util/RandomSource;nextInt(I)I"), require = 0, expect = 0)

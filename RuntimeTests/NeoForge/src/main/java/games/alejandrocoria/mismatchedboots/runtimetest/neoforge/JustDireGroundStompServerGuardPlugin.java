@@ -15,23 +15,59 @@ public final class JustDireGroundStompServerGuardPlugin implements IMixinConfigP
     public static ServerPlayer player;
     public static ItemStack replacement;
     public static Runnable debitMutation;
+
     public static void afterDebit() {
-        if (debitMutation != null) { var mutation = debitMutation; debitMutation = null; mutation.run(); }
+        if (debitMutation != null) {
+            var mutation = debitMutation;
+            debitMutation = null;
+            mutation.run();
+        }
     }
-    public static void changeToggle() { JustDireAttributeTestSupport.set(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET), "groundstomp_toggle", false); }
-    public static final class PostCommitFailure extends RuntimeException {}
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
+
+    public static void changeToggle() {
+        JustDireAttributeTestSupport.set(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET), "groundstomp_toggle", false);
+    }
+
+    public static final class PostCommitFailure extends RuntimeException {
+    }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
         boolean server = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompServerTest");
         boolean client = Boolean.getBoolean("mismatchedboots.runtimetest.justDireGroundStompClientTest");
-        if (!server && !client) { return false; }
+        if (!server && !client) {
+            return false;
+        }
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireGroundStompServerVariant", "live");
-        if (mixin.endsWith("JustDireSettingsApiMissingMixin")) { return variant.equals("settingsMissing"); }
+        if (mixin.endsWith("JustDireSettingsApiMissingMixin")) {
+            return variant.equals("settingsMissing");
+        }
         return server && variant.equals("live");
     }
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

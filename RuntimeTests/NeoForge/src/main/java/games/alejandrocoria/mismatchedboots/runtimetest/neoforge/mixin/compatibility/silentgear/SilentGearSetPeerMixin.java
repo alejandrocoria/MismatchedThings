@@ -17,12 +17,13 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 abstract class SilentGearSetPeerMixin {
     @ModifyExpressionValue(method = "getSetPieceCount", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearSetInjectionPoint", args = "predicate=type"), require = 1)
     private boolean sgtest$headType(boolean original, @Coerce Object context, @Coerce Object type, Player player,
-                                   @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
+                                    @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
         return original || slot == EquipmentSlot.HEAD && stack.is(Items.DIAMOND_HELMET);
     }
+
     @ModifyExpressionValue(method = "getSetPieceCount", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearSetInjectionPoint", args = "predicate=trait"), require = 1)
     private boolean sgtest$headTrait(boolean original, @Coerce Object context, @Coerce Object type, Player player,
-                                    @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
+                                     @Local(index = 6) EquipmentSlot slot, @Local(index = 7) ItemStack stack) {
         return original || slot == EquipmentSlot.HEAD && stack.is(Items.DIAMOND_HELMET);
     }
 }

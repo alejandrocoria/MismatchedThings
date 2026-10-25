@@ -17,32 +17,81 @@ import java.util.Set;
 public final class JustDireArmorWearMixinPlugin implements IMixinConfigPlugin, IExtension {
     private boolean available, warned;
 
-    @Override public void onLoad(String mixinPackage) {
+    @Override
+    public void onLoad(String mixinPackage) {
         boolean present = false;
         try {
             var provider = MixinService.getService().getBytecodeProvider();
-            provider.getClassNode("com.direwolf20.justdirethings.common.items.interfaces.PoweredItem"); present = true;
+            provider.getClassNode("com.direwolf20.justdirethings.common.items.interfaces.PoweredItem");
+            present = true;
             var transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
             available = JustDireArmorWearShape.entry(provider.getClassNode(JustDireArmorWearShape.OWNER.replace('/', '.')))
                     && transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions;
-            if (available) { ((Extensions) ((IMixinTransformer) transformer).getExtensions()).add(this); }
-            else { warn(); }
-        } catch (ClassNotFoundException absent) { if (present) { warn(); } }
-        catch (Exception | LinkageError failure) { warn(); }
+            if (available) {
+                ((Extensions) ((IMixinTransformer) transformer).getExtensions()).add(this);
+            } else {
+                warn();
+            }
+        } catch (ClassNotFoundException absent) {
+            if (present) {
+                warn();
+            }
+        } catch (Exception | LinkageError failure) {
+            warn();
+        }
     }
+
     private void warn() {
-        if (!warned) { warned = true; Constants.LOG.warn("Just Dire Things armor wear flow incompatible; ordinary wear retained"); }
+        if (!warned) {
+            warned = true;
+            Constants.LOG.warn("Just Dire Things armor wear flow incompatible; ordinary wear retained");
+        }
     }
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return available; }
-    @Override public void export(MixinEnvironment env, String name, boolean force, ClassNode node) {
-        if (node.name.equals(JustDireArmorWearShape.OWNER) && !JustDireArmorWearShape.publish(node)) { warn(); }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return available;
     }
-    @Override public boolean checkActive(MixinEnvironment env) { return true; }
-    @Override public void preApply(ITargetClassContext context) {}
-    @Override public void postApply(ITargetClassContext context) {}
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
+
+    @Override
+    public void export(MixinEnvironment env, String name, boolean force, ClassNode node) {
+        if (node.name.equals(JustDireArmorWearShape.OWNER) && !JustDireArmorWearShape.publish(node)) {
+            warn();
+        }
+    }
+
+    @Override
+    public boolean checkActive(MixinEnvironment env) {
+        return true;
+    }
+
+    @Override
+    public void preApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void postApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
 }

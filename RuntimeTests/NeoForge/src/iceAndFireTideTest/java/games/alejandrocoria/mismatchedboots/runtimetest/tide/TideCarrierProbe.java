@@ -9,23 +9,34 @@ public final class TideCarrierProbe {
     static int baseMutations;
     static int extraCalls;
 
-    private TideCarrierProbe() {}
+    private TideCarrierProbe() {
+    }
 
     public static void readCarrier(ItemStack stack) {
-        if (stack.getCount() < 1) { throw new AssertionError("Unexpected empty tick carrier"); }
+        if (stack.getCount() < 1) {
+            throw new AssertionError("Unexpected empty tick carrier");
+        }
         reads++;
     }
 
     public static void baseTick(ItemStack stack) {
-        if (!stack.getItem().getClass().getName().equals("com.iafenvoy.iceandfire.item.armor.SeaSerpentArmorItem")) { return; }
+        if (!stack.getItem().getClass().getName().equals("com.iafenvoy.iceandfire.item.armor.SeaSerpentArmorItem")) {
+            return;
+        }
         baseReads++;
         if (System.getProperty("mismatchedboots.runtimetest.tideOwners", "").equals("baseMutate")) {
-            stack.set(net.minecraft.core.component.DataComponents.REPAIR_COST, stack.getOrDefault(net.minecraft.core.component.DataComponents.REPAIR_COST, 0) + 1);
+            stack.set(net.minecraft.core.component.DataComponents.REPAIR_COST,
+                      stack.getOrDefault(net.minecraft.core.component.DataComponents.REPAIR_COST, 0) + 1);
             baseMutations++;
         }
     }
 
-    public static void extraWork() { extraCalls++; }
+    public static void extraWork() {
+        extraCalls++;
+    }
 
-    public static boolean chain(boolean original) { extraCalls++; return original; }
+    public static boolean chain(boolean original) {
+        extraCalls++;
+        return original;
+    }
 }

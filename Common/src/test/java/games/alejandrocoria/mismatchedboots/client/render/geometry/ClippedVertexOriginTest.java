@@ -18,14 +18,14 @@ class ClippedVertexOriginTest {
         var left = QuadClipper.clipPolygonWithOrigins(source, QuadClipper.Side.LEFT);
         assertEquals(List.of(origin(0, 0, 0), origin(0, 1, 0.5F), origin(3, 0, 0.5F)), left.origins());
         assertEquals(List.of(new PolygonTessellator.Primitive(0, 1, 2, 2)),
-                PolygonTessellator.tessellate(left.geometry().polygon()));
+                     PolygonTessellator.tessellate(left.geometry().polygon()));
         assertEquals(new QuadClipper.Point(0, -1, 0), left.geometry().polygon().vertex(1).position());
         assertEquals(new QuadClipper.Uv(5, 10), left.geometry().polygon().vertex(1).uv());
         var right = QuadClipper.clipPolygonWithOrigins(source, QuadClipper.Side.RIGHT);
         assertEquals(List.of(origin(0, 1, 0.5F), origin(1, 1, 0), origin(2, 2, 0),
-                origin(3, 3, 0), origin(3, 0, 0.5F)), right.origins());
+                             origin(3, 3, 0), origin(3, 0, 0.5F)), right.origins());
         assertEquals(List.of(new PolygonTessellator.Primitive(0, 1, 2, 3),
-                new PolygonTessellator.Primitive(0, 3, 4, 4)), PolygonTessellator.tessellate(right.geometry().polygon()));
+                             new PolygonTessellator.Primitive(0, 3, 4, 4)), PolygonTessellator.tessellate(right.geometry().polygon()));
         assertThrows(UnsupportedOperationException.class, () -> left.origins().clear());
     }
 
@@ -34,7 +34,9 @@ class ClippedVertexOriginTest {
         for (boolean reverse : List.of(false, true)) {
             for (int rotation = 0; rotation < 4; rotation++) {
                 var vertices = new ArrayList<>(diamond().vertices());
-                if (reverse) Collections.reverse(vertices);
+                if (reverse) {
+                    Collections.reverse(vertices);
+                }
                 Collections.rotate(vertices, rotation);
                 var source = new QuadClipper.Quad(vertices);
                 for (QuadClipper.Side side : QuadClipper.Side.values()) {
@@ -71,7 +73,7 @@ class ClippedVertexOriginTest {
         }
         var malformed = new QuadClipper.Quad(v(-1, 0, 0, 0), v(1, 0, 0, 0), v(1, 1, 0, 0), v(-1, 2, 0, 0));
         assertEquals(QuadClipper.Decision.INCOMPATIBLE,
-                QuadClipper.clipPolygonWithOrigins(malformed, QuadClipper.Side.LEFT).geometry().decision());
+                     QuadClipper.clipPolygonWithOrigins(malformed, QuadClipper.Side.LEFT).geometry().decision());
         assertThrows(IllegalArgumentException.class, () -> new QuadClipper.TracedPolygonResult(
                 QuadClipper.clipPolygon(diamond(), QuadClipper.Side.LEFT), List.of()));
     }

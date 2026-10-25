@@ -22,7 +22,8 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireSettingsScreenMixin";
     private static final String READY = "mismatchedboots$jdtSettingsReady";
     private static final Map<String, String> METHODS = Map.ofEntries(
-            Map.entry("<init>", "(Lcom/direwolf20/justdirethings/common/containers/ToolSettingContainer;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;)V"),
+            Map.entry("<init>",
+                      "(Lcom/direwolf20/justdirethings/common/containers/ToolSettingContainer;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;)V"),
             Map.entry("init", "()V"), Map.entry("refreshButtons", "()V"), Map.entry("clearMaps", "()V"),
             Map.entry("refreshToolAndSlots", "()V"),
             Map.entry("mouseClicked", "(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z"),
@@ -40,20 +41,36 @@ public final class JustDireSettingsScreenShape implements Opcodes {
             Map.entry("toggleRender", Set.of("Particles")), Map.entry("sendBinding", Set.of("Binding")),
             Map.entry("cycleSetting", Set.of("Unsupported")), Map.entry("setCustomSetting2", Set.of("Unsupported")));
 
-    private JustDireSettingsScreenShape() {}
+    private JustDireSettingsScreenShape() {
+    }
 
     static boolean entry(ClassNode node) {
-        if (!"net/minecraft/client/gui/screens/inventory/AbstractContainerScreen".equals(node.superName)) { return false; }
+        if (!"net/minecraft/client/gui/screens/inventory/AbstractContainerScreen".equals(node.superName)) {
+            return false;
+        }
         for (var field : Map.of("tool", "L" + STACK + ";", "toolSlot", "I", "abilities", "Ljava/util/EnumSet;",
-                "bindingEnabled", "Z", "requireEquipped", "Z", "shownAbilityButton", "Lnet/minecraft/client/gui/components/Button;").entrySet()) {
-            if (node.fields.stream().noneMatch(f -> f.name.equals(field.getKey()) && f.desc.equals(field.getValue()) && (f.access & ACC_STATIC) == 0)) { return false; }
+                                "bindingEnabled", "Z", "requireEquipped", "Z", "shownAbilityButton", "Lnet/minecraft/client/gui/components/Button;")
+                            .entrySet()) {
+            if (node.fields.stream()
+                           .noneMatch(f -> f.name.equals(field.getKey()) && f.desc.equals(field.getValue()) && (f.access & ACC_STATIC) == 0)) {
+                return false;
+            }
         }
         for (String field : List.of("leftRightClickButtons", "bindingButtons", "requireEquippedButtons", "buttonToAbilityMap")) {
-            if (node.fields.stream().noneMatch(f -> f.name.equals(field) && f.desc.equals("Ljava/util/Map;") && (f.access & (ACC_FINAL | ACC_STATIC)) == ACC_FINAL)) { return false; }
+            if (node.fields.stream()
+                           .noneMatch(f -> f.name.equals(field) && f.desc.equals("Ljava/util/Map;") && (f.access & (ACC_FINAL | ACC_STATIC)) == ACC_FINAL)) {
+                return false;
+            }
         }
-        if (node.fields.stream().noneMatch(f -> f.name.equals("bindingMap") && f.desc.equals("Ljava/util/Map;") && (f.access & ACC_STATIC) == 0)) { return false; }
-        if (METHODS.entrySet().stream().anyMatch(entry -> node.methods.stream().noneMatch(m -> m.name.equals(entry.getKey()) && m.desc.equals(entry.getValue())
-                && (m.access & (ACC_STATIC | ACC_ABSTRACT | ACC_NATIVE)) == 0))) { return false; }
+        if (node.fields.stream().noneMatch(f -> f.name.equals("bindingMap") && f.desc.equals("Ljava/util/Map;") && (f.access & ACC_STATIC) == 0)) {
+            return false;
+        }
+        if (METHODS.entrySet()
+                   .stream()
+                   .anyMatch(entry -> node.methods.stream().noneMatch(m -> m.name.equals(entry.getKey()) && m.desc.equals(entry.getValue())
+                           && (m.access & (ACC_STATIC | ACC_ABSTRACT | ACC_NATIVE)) == 0))) {
+            return false;
+        }
         return calls(node, "init", TOOL, "getAbilities") && calls(node, "mouseClicked", TOOL, "getAbilities")
                 && calls(node, "refreshButtons", TOOL, "getAbilityParams") && calls(node, "refreshButtons", TOOL, "getToolValue")
                 && List.of("<init>", "init", "refreshButtons", "mouseClicked").stream().allMatch(name -> calls(node, name, STACK, "getItem"));
@@ -62,7 +79,9 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     private static boolean calls(ClassNode node, String method, String owner, String name) {
         return node.methods.stream().filter(m -> m.name.equals(method) && m.desc.equals(METHODS.get(method))).anyMatch(m -> {
             for (var instruction : m.instructions) {
-                if (instruction instanceof MethodInsnNode call && call.owner.equals(owner) && call.name.equals(name)) { return true; }
+                if (instruction instanceof MethodInsnNode call && call.owner.equals(owner) && call.name.equals(name)) {
+                    return true;
+                }
             }
             return false;
         });
@@ -70,18 +89,31 @@ public final class JustDireSettingsScreenShape implements Opcodes {
 
     static boolean publish(ClassNode node) {
         MethodNode ready = node.methods.stream().filter(m -> m.name.equals(READY) && m.desc.equals("()Z")).findFirst().orElse(null);
-        if (ready == null) { return false; }
+        if (ready == null) {
+            return false;
+        }
         var code = new java.util.ArrayList<AbstractInsnNode>();
-        for (var instruction : ready.instructions) { if (instruction.getOpcode() >= 0) { code.add(instruction); } }
+        for (var instruction : ready.instructions) {
+            if (instruction.getOpcode() >= 0) {
+                code.add(instruction);
+            }
+        }
         boolean intact = owned(ready) && ready.access == (ACC_PRIVATE | ACC_STATIC) && code.size() == 2
                 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN;
-        ready.instructions.clear(); ready.instructions.add(new InsnNode(ICONST_0)); ready.instructions.add(new InsnNode(IRETURN));
-        ready.tryCatchBlocks.clear(); ready.maxStack = 1;
-        if (!intact) { return false; }
+        ready.instructions.clear();
+        ready.instructions.add(new InsnNode(ICONST_0));
+        ready.instructions.add(new InsnNode(IRETURN));
+        ready.tryCatchBlocks.clear();
+        ready.maxStack = 1;
+        if (!intact) {
+            return false;
+        }
         for (var requirement : HOOKS.entrySet()) {
             for (String hook : requirement.getValue()) {
                 if (node.methods.stream().filter(m -> m.name.equals(requirement.getKey()) && m.desc.equals(METHODS.get(requirement.getKey())))
-                        .noneMatch(m -> reaches(node, m, "mismatchedboots$jdt" + hook, new HashSet<>()))) { return false; }
+                                .noneMatch(m -> reaches(node, m, "mismatchedboots$jdt" + hook, new HashSet<>()))) {
+                    return false;
+                }
             }
         }
         ready.instructions.set(ready.instructions.getFirst(), new InsnNode(ICONST_1));
@@ -89,17 +121,25 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     }
 
     private static boolean reaches(ClassNode node, MethodNode method, String handler, Set<String> visited) {
-        if (!visited.add(method.name + method.desc)) { return false; }
-        if (method.name.contains(handler) && owned(method)) { return true; }
+        if (!visited.add(method.name + method.desc)) {
+            return false;
+        }
+        if (method.name.contains(handler) && owned(method)) {
+            return true;
+        }
         for (var instruction : method.instructions) {
             if (instruction instanceof MethodInsnNode call && call.owner.equals(node.name)
-                    && reaches(node, call.name, call.desc, handler, visited)) { return true; }
+                    && reaches(node, call.name, call.desc, handler, visited)) {
+                return true;
+            }
             // Stacked WrapOperations pass the inner bridge as a lambda, not a direct invocation.
             if (instruction instanceof InvokeDynamicInsnNode call
                     && call.desc.endsWith(")Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;")) {
                 for (Object argument : call.bsmArgs) {
                     if (argument instanceof Handle handle && handle.getOwner().equals(node.name)
-                            && reaches(node, handle.getName(), handle.getDesc(), handler, visited)) { return true; }
+                            && reaches(node, handle.getName(), handle.getDesc(), handler, visited)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -113,6 +153,8 @@ public final class JustDireSettingsScreenShape implements Opcodes {
 
     private static boolean owned(MethodNode method) {
         return method.visibleAnnotations != null && method.visibleAnnotations.stream().anyMatch(a ->
-                a.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(MIXIN));
+                                                                                                        a.desc.equals(
+                                                                                                                "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(
+                                                                                                                MIXIN));
     }
 }

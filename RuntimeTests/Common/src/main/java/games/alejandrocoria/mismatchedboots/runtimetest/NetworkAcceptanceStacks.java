@@ -42,7 +42,7 @@ public final class NetworkAcceptanceStacks {
             throw new AssertionError("Crafted stack is not Mismatched Boots: " + stack);
         }
         MixedBootsData data = ModContent.getMixedBootsData(stack)
-                .orElseThrow(() -> new AssertionError("Crafted stack has no source data"));
+                                        .orElseThrow(() -> new AssertionError("Crafted stack has no source data"));
         if (!data.left().source().is(Items.LEATHER_BOOTS)
                 || !data.right().source().is(Items.CHAINMAIL_BOOTS)) {
             throw new AssertionError("Crafted stack has the wrong orientation: " + data);
@@ -67,7 +67,7 @@ public final class NetworkAcceptanceStacks {
 
     public static void assertInverse(ItemStack stack) {
         MixedBootsData data = ModContent.getMixedBootsData(stack)
-                .orElseThrow(() -> new AssertionError("Crafting did not leave inverse Mismatched Boots"));
+                                        .orElseThrow(() -> new AssertionError("Crafting did not leave inverse Mismatched Boots"));
         if (!data.left().source().is(Items.CHAINMAIL_BOOTS)
                 || !data.right().source().is(Items.LEATHER_BOOTS)) {
             throw new AssertionError("Crafting left the wrong inverse orientation: " + data);
@@ -91,18 +91,20 @@ public final class NetworkAcceptanceStacks {
     private static ItemStack source(Item item, double amount) {
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
-                .add(Attributes.MOVEMENT_SPEED,
-                        new AttributeModifier(MOVEMENT_MODIFIER, amount, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.FEET)
-                .build());
+                                                                            .add(Attributes.MOVEMENT_SPEED,
+                                                                                 new AttributeModifier(MOVEMENT_MODIFIER,
+                                                                                                       amount,
+                                                                                                       AttributeModifier.Operation.ADD_VALUE),
+                                                                                 EquipmentSlotGroup.FEET)
+                                                                            .build());
         return stack;
     }
 
     private static ItemAttributeModifiers.Entry movementEntry(ItemStack stack) {
         var entries = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
-                .modifiers().stream()
-                .filter(entry -> entry.attribute().equals(Attributes.MOVEMENT_SPEED))
-                .toList();
+                           .modifiers().stream()
+                           .filter(entry -> entry.attribute().equals(Attributes.MOVEMENT_SPEED))
+                           .toList();
         if (entries.size() != 1) {
             throw new AssertionError("Expected exactly one movement modifier, found " + entries);
         }

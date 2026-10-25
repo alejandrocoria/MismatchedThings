@@ -1,16 +1,16 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.iceandfire",
-  "plugin": "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideMixinPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": [
-    "IceAndFireTideArmorAccess",
-    "IceAndFireTideBaseMixin",
-    "IceAndFireTideEntryMixin",
-    "IceAndFireTideFeetMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.iceandfire",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "IceAndFireTideArmorAccess",
+        "IceAndFireTideBaseMixin",
+        "IceAndFireTideEntryMixin",
+        "IceAndFireTideFeetMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

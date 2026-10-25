@@ -13,5 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(targets = "com.direwolf20.justdirethings.client.overlays.AbilityCooldownOverlay", priority = 1500, remap = false)
 abstract class JustDireCooldownHudHighMixin {
     @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getItemBySlot(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;"))
-    private ItemStack fixtureHigh(Player player, EquipmentSlot slot, Operation<ItemStack> original) { return original.call(player, slot); }
+    private ItemStack fixtureHigh(Player player, EquipmentSlot slot, Operation<ItemStack> original) {
+        return original.call(player, slot);
+    }
 }

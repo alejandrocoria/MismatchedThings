@@ -31,9 +31,9 @@ public final class PersistenceClientGameTest implements FabricClientGameTest {
             context.waitFor(client -> client.player != null
                     && client.player.getInventory().contains(PersistenceClientGameTest::hasExpectedData)
                     && client.level.getEntitiesOfClass(
-                            ItemEntity.class,
-                            new AABB(client.player.blockPosition()).inflate(6.0),
-                            entity -> hasExpectedData(entity.getItem())).size() == 1);
+                    ItemEntity.class,
+                    new AABB(client.player.blockPosition()).inflate(6.0),
+                    entity -> hasExpectedData(entity.getItem())).size() == 1);
             context.runOnClient(client -> {
                 ItemStack equipped = client.player.getItemBySlot(EquipmentSlot.FEET);
                 if (!equipped.isEmpty()) {
@@ -53,9 +53,9 @@ public final class PersistenceClientGameTest implements FabricClientGameTest {
         return stack.is(ModContent.MIXED_BOOTS_KEY)
                 && OPAQUE_VALUE.equals(stack.get(TestContent.requireOpaqueComponent()))
                 && ModContent.getMixedBootsData(stack)
-                        .filter(data -> data.left().source().is(TestContent.requireComponentBoots())
-                                && OPAQUE_VALUE.equals(data.left().source().get(TestContent.requireOpaqueComponent()))
-                                && data.right().source().is(Items.DIAMOND_BOOTS))
-                        .isPresent();
+                             .filter(data -> data.left().source().is(TestContent.requireComponentBoots())
+                                     && OPAQUE_VALUE.equals(data.left().source().get(TestContent.requireOpaqueComponent()))
+                                     && data.right().source().is(Items.DIAMOND_BOOTS))
+                             .isPresent();
     }
 }

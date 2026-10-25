@@ -118,9 +118,9 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
         MixedBootsPair pair = MixedBootsFactory.createPair(
                 source, Items.IRON_BOOTS.getDefaultInstance());
         assertMixedContribution(client, pair.primary(), source, contribution, true,
-                description + " left source");
+                                description + " left source");
         assertMixedContribution(client, pair.inverse(), source, contribution, false,
-                description + " right source");
+                                description + " right source");
         require(ItemStack.matches(sourceBefore, source),
                 description + " source changed during tooltip compatibility verification");
         return contribution;
@@ -263,9 +263,9 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
         MixedBootsPair pair = MixedBootsFactory.createPair(
                 source, Items.IRON_BOOTS.getDefaultInstance());
         assertMixedContribution(client, pair.primary(), source, contribution, true,
-                "Registry-driven left source");
+                                "Registry-driven left source");
         assertMixedContribution(client, pair.inverse(), source, contribution, false,
-                "Registry-driven right source");
+                                "Registry-driven right source");
     }
 
     private static List<Component> tooltip(Minecraft client, ItemStack stack) {
@@ -322,7 +322,7 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
             }
         }
         return component.getSiblings().stream()
-                .anyMatch(sibling -> containsTranslation(sibling, key));
+                        .anyMatch(sibling -> containsTranslation(sibling, key));
     }
 
     private static int count(List<Component> lines, Component expected) {
@@ -331,7 +331,7 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
 
     private static MixedBootsData mixedData(ItemStack stack) {
         return ModContent.getMixedBootsData(stack)
-                .orElseThrow(() -> new AssertionError("Missing mixed-boots source data"));
+                         .orElseThrow(() -> new AssertionError("Missing mixed-boots source data"));
     }
 
     private static void registerForeignTooltipHook() {

@@ -15,8 +15,18 @@ abstract class JustDireCooldownDrawMixin {
     private void fixtureDraw(RenderPipeline pipeline, Identifier texture, int x, int y, float u, float v,
                              int width, int height, int srcWidth, int srcHeight, int textureWidth, int textureHeight, int color, CallbackInfo ci) {
         if (JustDireCooldownFeedbackTestSupport.capturingDraws) {
-            JustDireCooldownFeedbackTestSupport.draws.add(new JustDireCooldownFeedbackTestSupport.Draw(texture, x, y, u, v, width, height,
-                    srcWidth, srcHeight, textureWidth, textureHeight, color));
+            JustDireCooldownFeedbackTestSupport.draws.add(new JustDireCooldownFeedbackTestSupport.Draw(texture,
+                                                                                                       x,
+                                                                                                       y,
+                                                                                                       u,
+                                                                                                       v,
+                                                                                                       width,
+                                                                                                       height,
+                                                                                                       srcWidth,
+                                                                                                       srcHeight,
+                                                                                                       textureWidth,
+                                                                                                       textureHeight,
+                                                                                                       color));
         }
     }
 }

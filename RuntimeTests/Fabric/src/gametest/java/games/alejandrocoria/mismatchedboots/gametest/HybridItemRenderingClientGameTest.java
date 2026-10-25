@@ -82,9 +82,9 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         }
 
         ItemStackRenderState leatherBaseline = resolve(client,
-                MixedBootsItemRenderer.sourceView(leather, true), ItemDisplayContext.FIXED);
+                                                       MixedBootsItemRenderer.sourceView(leather, true), ItemDisplayContext.FIXED);
         ItemStackRenderState ironBaseline = resolve(client,
-                MixedBootsItemRenderer.sourceView(iron, true), ItemDisplayContext.FIXED);
+                                                    MixedBootsItemRenderer.sourceView(iron, true), ItemDisplayContext.FIXED);
         ItemLayerResolutionProbe.arm(Set.of(leatherModel, ironModel));
         ItemStack mixed = MixedBootsFactory.createPair(leather, iron).primary();
         mixed.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
@@ -93,8 +93,8 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (ItemLayerResolutionProbe.count(leatherModel) != 1
                 || ItemLayerResolutionProbe.count(ironModel) != 1) {
             throw new AssertionError("A source model was resolved more than once: leather="
-                    + ItemLayerResolutionProbe.count(leatherModel) + ", iron="
-                    + ItemLayerResolutionProbe.count(ironModel));
+                                             + ItemLayerResolutionProbe.count(leatherModel) + ", iron="
+                                             + ItemLayerResolutionProbe.count(ironModel));
         }
         ItemLayerResolutionProbe.clear();
 
@@ -110,7 +110,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         ItemStackRenderState animatedBaseline = resolve(client, animated, ItemDisplayContext.FIXED);
         ItemStackRenderState ordinaryBaseline = resolve(client, ordinary, ItemDisplayContext.FIXED);
         ItemStackRenderState animatedOutput = resolve(client,
-                MixedBootsFactory.createPair(animated, ordinary).primary(), ItemDisplayContext.FIXED);
+                                                      MixedBootsFactory.createPair(animated, ordinary).primary(), ItemDisplayContext.FIXED);
         if (!animatedBaseline.isAnimated()
                 || animatedOutput.isAnimated() != (animatedBaseline.isAnimated() || ordinaryBaseline.isAnimated())) {
             throw new AssertionError("Clipping did not preserve the source animation flag");
@@ -123,26 +123,26 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         ItemStackRenderState leftBaseline = resolve(client, left, ItemDisplayContext.FIXED);
         ItemStackRenderState rightBaseline = resolve(client, right, ItemDisplayContext.FIXED);
         ItemStackRenderState output = resolve(client,
-                MixedBootsFactory.createPair(left, right).primary(), ItemDisplayContext.FIXED);
+                                              MixedBootsFactory.createPair(left, right).primary(), ItemDisplayContext.FIXED);
 
         if (layerCount(leftBaseline) != 2 || layerCount(rightBaseline) != 1 || layerCount(output) != 3) {
             throw new AssertionError("The multi-layer rotated fixture resolved unexpected layer counts");
         }
         assertClippedLayer(output, 0, QuadClipper.Side.RIGHT, false,
-                "ordinary layer before rotated layer");
+                           "ordinary layer before rotated layer");
         assertClippedLayer(output, 1, QuadClipper.Side.RIGHT, false,
-                "rotated layer");
+                           "rotated layer");
         assertClippedLayer(output, 2, QuadClipper.Side.LEFT, false,
-                "opposite source after rotated layer");
+                           "opposite source after rotated layer");
         assertMatrix(layer(output, 0).mismatchedboots$getLocalTransform(),
-                layer(leftBaseline, 0).mismatchedboots$getLocalTransform(),
-                "ordinary clipped layer transform");
+                     layer(leftBaseline, 0).mismatchedboots$getLocalTransform(),
+                     "ordinary clipped layer transform");
         assertMatrix(layer(output, 1).mismatchedboots$getLocalTransform(),
-                layer(leftBaseline, 1).mismatchedboots$getLocalTransform(),
-                "rotated clipped layer transform");
+                     layer(leftBaseline, 1).mismatchedboots$getLocalTransform(),
+                     "rotated clipped layer transform");
         assertMatrix(layer(output, 2).mismatchedboots$getLocalTransform(),
-                layer(rightBaseline, 0).mismatchedboots$getLocalTransform(),
-                "opposite clipped layer transform");
+                     layer(rightBaseline, 0).mismatchedboots$getLocalTransform(),
+                     "opposite clipped layer transform");
     }
 
     private static void verifySpecialRendererFallback(Minecraft client) {
@@ -159,14 +159,14 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 throw new AssertionError("The special-renderer fixture did not reach atomic fallback");
             }
             assertFallbackLayer(layer(specialBaseline, 0), layer(output, 0), FALLBACK_ANGLE,
-                    "special renderer " + displayContext);
+                                "special renderer " + displayContext);
             assertFallbackLayer(layer(ordinaryBaseline, 0), layer(output, 1), -FALLBACK_ANGLE,
-                    "ordinary layer paired with special renderer " + displayContext);
+                                "ordinary layer paired with special renderer " + displayContext);
             ItemStackRenderState inverse = resolve(client, pair.inverse(), displayContext);
             assertFallbackLayer(layer(ordinaryBaseline, 0), layer(inverse, 0), FALLBACK_ANGLE,
-                    "inverse ordinary layer " + displayContext);
+                                "inverse ordinary layer " + displayContext);
             assertFallbackLayer(layer(specialBaseline, 0), layer(inverse, 1), -FALLBACK_ANGLE,
-                    "inverse special renderer " + displayContext);
+                                "inverse special renderer " + displayContext);
         }
     }
 
@@ -196,17 +196,17 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         ItemStackRenderState extendedBaseline = resolve(client, extended, ItemDisplayContext.FIXED);
         ItemStackRenderState ordinaryBaseline = resolve(client, ordinary, ItemDisplayContext.FIXED);
         ItemStackRenderState output = resolve(client,
-                MixedBootsFactory.createPair(extended, ordinary).primary(), ItemDisplayContext.FIXED);
+                                              MixedBootsFactory.createPair(extended, ordinary).primary(), ItemDisplayContext.FIXED);
 
         if (!(rawLayer(output, 0) instanceof LayerGeometryExtension metadata)
                 || metadata.mismatchedboots$planGeometry(
-                        layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.RIGHT).compatible()) {
+                layer(output, 0).mismatchedboots$getLocalTransform(), QuadClipper.Side.RIGHT).compatible()) {
             throw new AssertionError("The unsupported nonplanar Fabric mesh was not retained for fallback");
         }
         assertFallbackLayer(layer(extendedBaseline, 0), layer(output, 0), FALLBACK_ANGLE,
-                "Fabric extension layer");
+                            "Fabric extension layer");
         assertFallbackLayer(layer(ordinaryBaseline, 0), layer(output, 1), -FALLBACK_ANGLE,
-                "ordinary layer paired with Fabric extension");
+                            "ordinary layer paired with Fabric extension");
     }
 
     private static void verifyEmptyAndDiscardedSides(Minecraft client) {
@@ -214,7 +214,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         noModel.remove(DataComponents.ITEM_MODEL);
         ItemStack right = modelBoot(Items.GOLDEN_BOOTS, FULL_MODEL);
         ItemStackRenderState oneSided = resolve(client,
-                MixedBootsFactory.createPair(noModel, right).primary(), ItemDisplayContext.FIXED);
+                                                MixedBootsFactory.createPair(noModel, right).primary(), ItemDisplayContext.FIXED);
         if (layerCount(oneSided) != 1) {
             throw new AssertionError("A model-less source produced unexpected layers: " + layerCount(oneSided));
         }
@@ -222,7 +222,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
 
         ItemStack rightOnlyRight = modelBoot(Items.IRON_BOOTS, RIGHT_ONLY_MODEL);
         ItemStackRenderState discarded = resolve(client,
-                MixedBootsFactory.createPair(right, rightOnlyRight).primary(), ItemDisplayContext.FIXED);
+                                                 MixedBootsFactory.createPair(right, rightOnlyRight).primary(), ItemDisplayContext.FIXED);
         if (layerCount(discarded) != 2 || !layer(discarded, 1).mismatchedboots$getQuads().isEmpty()) {
             throw new AssertionError("A completely discarded source layer was not retained as empty");
         }
@@ -232,11 +232,11 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         assertClippedLayer(discarded, 0, QuadClipper.Side.RIGHT, false, "discarded right source");
 
         ItemStackRenderState repeated = resolve(client,
-                MixedBootsFactory.createPair(right, rightOnlyRight).primary(), ItemDisplayContext.FIXED);
+                                                MixedBootsFactory.createPair(right, rightOnlyRight).primary(), ItemDisplayContext.FIXED);
         if (!layer(discarded, 0).mismatchedboots$getQuads()
-                .equals(layer(repeated, 0).mismatchedboots$getQuads())
+                                .equals(layer(repeated, 0).mismatchedboots$getQuads())
                 || !layer(discarded, 1).mismatchedboots$getQuads()
-                .equals(layer(repeated, 1).mismatchedboots$getQuads())) {
+                                       .equals(layer(repeated, 1).mismatchedboots$getQuads())) {
             throw new AssertionError("Empty-side clipping was not deterministic");
         }
     }
@@ -244,20 +244,20 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
     private static void verifyMissingAndRecursiveModelsStayBounded(Minecraft client) {
         ItemStack missing = modelBoot(Items.IRON_BOOTS, testId("missing_hybrid_source"));
         ItemStackRenderState missingOutput = resolve(client,
-                MixedBootsFactory.createPair(missing, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                ItemDisplayContext.FIXED);
+                                                     MixedBootsFactory.createPair(missing, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
+                                                     ItemDisplayContext.FIXED);
         if (layerCount(missingOutput) < 1 || layerCount(missingOutput) > 3) {
             throw new AssertionError("Missing-model handling produced an unbounded layer count: "
-                    + layerCount(missingOutput));
+                                             + layerCount(missingOutput));
         }
 
         ItemStack recursive = modelBoot(Items.IRON_BOOTS, ModContent.MIXED_BOOTS_ID);
         ItemStackRenderState recursiveOutput = resolve(client,
-                MixedBootsFactory.createPair(recursive, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
-                ItemDisplayContext.FIXED);
+                                                       MixedBootsFactory.createPair(recursive, new ItemStack(Items.GOLDEN_BOOTS)).primary(),
+                                                       ItemDisplayContext.FIXED);
         if (layerCount(recursiveOutput) < 2 || layerCount(recursiveOutput) > 4) {
             throw new AssertionError("Recursive item-model handling produced an unbounded layer count: "
-                    + layerCount(recursiveOutput));
+                                             + layerCount(recursiveOutput));
         }
     }
 
@@ -366,14 +366,14 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         LayerRenderStateTestAccessor expectedTest = (LayerRenderStateTestAccessor) expected;
         LayerRenderStateTestAccessor actualTest = (LayerRenderStateTestAccessor) actual;
         if (actual.mismatchedboots$getFoilType() != (expectedFoil
-                ? ItemStackRenderState.FoilType.STANDARD
-                : ItemStackRenderState.FoilType.NONE)
+                                                     ? ItemStackRenderState.FoilType.STANDARD
+                                                     : ItemStackRenderState.FoilType.NONE)
                 || expectedTest.mismatchedboots$usesBlockLight()
                 != actualTest.mismatchedboots$usesBlockLight()
                 || expectedTest.mismatchedboots$getParticleMaterial()
                 != actualTest.mismatchedboots$getParticleMaterial()
                 || !expectedTest.mismatchedboots$getItemTransform()
-                .equals(actualTest.mismatchedboots$getItemTransform())
+                                .equals(actualTest.mismatchedboots$getItemTransform())
                 || !tints(expectedTest).equals(tints(actualTest))) {
             throw new AssertionError(scenario + " changed layer metadata");
         }
@@ -390,10 +390,10 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
             float angle,
             String scenario) {
         Matrix4f expectedTransform = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
-                .rotateY(angle).translate(-0.5F, -0.5F, -0.5F)
-                .mul(baseline.mismatchedboots$getLocalTransform());
+                                                   .rotateY(angle).translate(-0.5F, -0.5F, -0.5F)
+                                                   .mul(baseline.mismatchedboots$getLocalTransform());
         assertMatrix(actual.mismatchedboots$getLocalTransform(), expectedTransform,
-                scenario + " transform");
+                     scenario + " transform");
         if (!actual.mismatchedboots$getQuads().equals(baseline.mismatchedboots$getQuads())) {
             throw new AssertionError(scenario + " partially committed clipped geometry");
         }
@@ -408,7 +408,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 || baselineTest.mismatchedboots$getParticleMaterial()
                 != actualTest.mismatchedboots$getParticleMaterial()
                 || !baselineTest.mismatchedboots$getItemTransform()
-                .equals(actualTest.mismatchedboots$getItemTransform())
+                                .equals(actualTest.mismatchedboots$getItemTransform())
                 || !tints(baselineTest).equals(tints(actualTest))) {
             throw new AssertionError(scenario + " changed metadata during fallback");
         }
@@ -442,8 +442,8 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
 
     private static void assertSprite(List<BakedQuad> quads, String expected, String scenario) {
         if (quads.stream()
-                .map(quad -> quad.materialInfo().sprite().contents().name().getPath())
-                .noneMatch(path -> path.contains(expected))) {
+                 .map(quad -> quad.materialInfo().sprite().contents().name().getPath())
+                 .noneMatch(path -> path.contains(expected))) {
             throw new AssertionError(scenario + " did not retain sprite " + expected);
         }
     }

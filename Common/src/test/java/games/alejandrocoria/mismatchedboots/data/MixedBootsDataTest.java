@@ -130,8 +130,8 @@ class MixedBootsDataTest {
 
     private static void bindEquippable(Item item, EquipmentSlot slot) {
         item.builtInRegistryHolder().bindComponents(DataComponentMap.builder()
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(slot).build())
-                .build());
+                                                                    .set(DataComponents.EQUIPPABLE, Equippable.builder(slot).build())
+                                                                    .build());
     }
 
     private static RegistryAccess builtInRegistryAccess() {

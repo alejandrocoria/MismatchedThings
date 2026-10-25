@@ -12,8 +12,15 @@ import org.spongepowered.asm.mixin.injection.At;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.event.GearEvents", remap = false)
 abstract class SilentGearBounceMixin {
-    @Unique private static boolean mismatchedboots$sgBounceFallReady() { return false; }
-    @Unique private static boolean mismatchedboots$sgRetaliationReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgBounceFallReady() {
+        return false;
+    }
+
+    @Unique
+    private static boolean mismatchedboots$sgRetaliationReady() {
+        return false;
+    }
 
     @ModifyExpressionValue(method = "onLivingFall", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearDefenseInjectionPoint", args = "site=fall-level"), require = 0, expect = 0, allow = 1)
     private static int mismatchedboots$sgBounceFallLevel(int original, LivingFallEvent event) {

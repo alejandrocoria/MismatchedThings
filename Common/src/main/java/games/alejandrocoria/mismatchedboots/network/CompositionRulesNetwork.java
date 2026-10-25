@@ -21,11 +21,11 @@ public final class CompositionRulesNetwork {
             return;
         }
         Network.registerPacket(ClientReadyPayload.TYPE, ClientReadyPayload.class, ClientReadyPayload.STREAM_CODEC,
-                CompositionRulesNetwork::handleClientReady);
+                               CompositionRulesNetwork::handleClientReady);
         Network.registerPacket(AttributeRulesPayload.TYPE, AttributeRulesPayload.class, AttributeRulesPayload.STREAM_CODEC,
-                CompositionRulesNetwork::handleAttributeRules);
+                               CompositionRulesNetwork::handleAttributeRules);
         Network.registerPacket(ComponentRulesPayload.TYPE, ComponentRulesPayload.class, ComponentRulesPayload.STREAM_CODEC,
-                CompositionRulesNetwork::handleComponentRules);
+                               CompositionRulesNetwork::handleComponentRules);
     }
 
     private static void handleClientReady(PacketContext<ClientReadyPayload> context) {

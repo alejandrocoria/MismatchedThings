@@ -37,8 +37,8 @@ class AetherRecognitionShapeTest {
             var method = queryMethod(node);
             boolean sets = target.equals(AetherRecognitionShape.EQUIPMENT);
             var query = java.util.Arrays.stream(method.instructions.toArray())
-                    .filter(n -> n instanceof MethodInsnNode call && call.owner.equals(AetherRecognitionShape.STACK)
-                            && call.name.equals(sets ? "get" : "is")).findFirst().orElseThrow();
+                                        .filter(n -> n instanceof MethodInsnNode call && call.owner.equals(AetherRecognitionShape.STACK)
+                                                && call.name.equals(sets ? "get" : "is")).findFirst().orElseThrow();
             String descriptor = sets ? "(Ljava/lang/Object;)Ljava/lang/Object;" : "(Z)Z";
             method.instructions.insert(query, new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Peer", "second", descriptor, false));
             method.instructions.insert(query, new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Peer", "first", descriptor, false));
@@ -46,7 +46,7 @@ class AetherRecognitionShapeTest {
                 for (var instruction : method.instructions.toArray()) {
                     if (instruction.getOpcode() == Opcodes.IRETURN) {
                         method.instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC,
-                                "fixture/Peer", "finalCount", "(I)I", false));
+                                                                                         "fixture/Peer", "finalCount", "(I)I", false));
                     }
                     if (instruction instanceof VarInsnNode store && store.getOpcode() == Opcodes.ISTORE
                             && instruction.getPrevious().getOpcode() == Opcodes.ICONST_0) {
@@ -64,9 +64,15 @@ class AetherRecognitionShapeTest {
             var node = nativeClass(AetherRecognitionShape.EQUIPMENT);
             var method = queryMethod(node);
             for (var instruction : method.instructions) {
-                if (fault.equals("component") && instruction instanceof FieldInsnNode field && field.name.equals("ARMOR_SET")) { field.name = "OTHER_COMPONENT"; }
-                if (fault.equals("increment") && instruction instanceof IincInsnNode increment) { increment.incr = 2; }
-                if (fault.equals("equipment") && instruction instanceof MethodInsnNode call && call.name.equals("getEquipment")) { call.name = "foreignEquipment"; }
+                if (fault.equals("component") && instruction instanceof FieldInsnNode field && field.name.equals("ARMOR_SET")) {
+                    field.name = "OTHER_COMPONENT";
+                }
+                if (fault.equals("increment") && instruction instanceof IincInsnNode increment) {
+                    increment.incr = 2;
+                }
+                if (fault.equals("equipment") && instruction instanceof MethodInsnNode call && call.name.equals("getEquipment")) {
+                    call.name = "foreignEquipment";
+                }
             }
             assertFalse(AetherRecognitionShape.apply(node), fault);
         }
@@ -77,9 +83,15 @@ class AetherRecognitionShapeTest {
         for (String fault : new String[]{"item", "slot", "actor"}) {
             var node = nativeClass(AetherRecognitionShape.SENTRY);
             for (var instruction : queryMethod(node).instructions) {
-                if (fault.equals("item") && instruction instanceof FieldInsnNode field && field.name.equals("SENTRY_BOOTS")) { field.name = "NEPTUNE_BOOTS"; }
-                if (fault.equals("slot") && instruction instanceof FieldInsnNode field && field.name.equals("FEET")) { field.name = "HEAD"; }
-                if (fault.equals("actor") && instruction instanceof MethodInsnNode call && call.name.equals("getEntity")) { call.name = "foreignEntity"; }
+                if (fault.equals("item") && instruction instanceof FieldInsnNode field && field.name.equals("SENTRY_BOOTS")) {
+                    field.name = "NEPTUNE_BOOTS";
+                }
+                if (fault.equals("slot") && instruction instanceof FieldInsnNode field && field.name.equals("FEET")) {
+                    field.name = "HEAD";
+                }
+                if (fault.equals("actor") && instruction instanceof MethodInsnNode call && call.name.equals("getEntity")) {
+                    call.name = "foreignEntity";
+                }
             }
             assertFalse(AetherRecognitionShape.apply(node), fault);
         }
@@ -87,13 +99,16 @@ class AetherRecognitionShapeTest {
 
     private static MethodNode queryMethod(ClassNode node) {
         return node.methods.stream().filter(m -> m.name.equals(node.name.equals(AetherRecognitionShape.EQUIPMENT)
-                ? "getArmorCount" : "playerFall")).findFirst().orElseThrow();
+                                                               ? "getArmorCount" : "playerFall")).findFirst().orElseThrow();
     }
+
     private static ClassNode nativeClass(String name) throws Exception {
         String path = System.getProperty("mismatchedboots.test.aetherGuardJar");
         assumeTrue(path != null, "Native Aether shape characterization is opt-in");
         try (var jar = new JarFile(path); var stream = jar.getInputStream(jar.getJarEntry(name + ".class"))) {
-            var node = new ClassNode(); new ClassReader(stream).accept(node, 0); return node;
+            var node = new ClassNode();
+            new ClassReader(stream).accept(node, 0);
+            return node;
         }
     }
 }

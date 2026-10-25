@@ -89,7 +89,7 @@ class MixedBootsTooltipFormatterTest {
 
         assertEquals(componentDetails(left, DataComponents.TRIM), lines.subList(1, firstSeparator));
         assertEquals(componentDetails(right, DataComponents.TRIM),
-                lines.subList(firstSeparator + 2, secondSeparator));
+                     lines.subList(firstSeparator + 2, secondSeparator));
         assertEquals(2, countTranslation(lines, TRIM_TITLE));
         assertTrue(indexContaining(lines, "Left Pattern") < indexContaining(lines, "Right Pattern"));
     }
@@ -123,7 +123,7 @@ class MixedBootsTooltipFormatterTest {
         assertTrue(hasTranslation(lines, "item.dyed"));
         assertTrue(lines.stream().anyMatch(line -> line.getString().equals(lore.getString())));
         assertTrue(lines.contains(((DiscFragmentItem) right.getItem()).getDisplayName()
-                .withStyle(ChatFormatting.GRAY)));
+                                                                      .withStyle(ChatFormatting.GRAY)));
     }
 
     @Test
@@ -165,7 +165,7 @@ class MixedBootsTooltipFormatterTest {
         ItemStack left = boots(Items.IRON_BOOTS, 2.0);
         left.set(DataComponents.TRIM, trim("Hidden Pattern", "Hidden Material"));
         left.set(DataComponents.TOOLTIP_DISPLAY,
-                new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
+                 new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
 
         for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
             List<Component> lines = format(left, boots(Items.GOLDEN_BOOTS, 1.0), flag);
@@ -185,9 +185,12 @@ class MixedBootsTooltipFormatterTest {
         MixedBootsData data = data(left, right);
         List<Component> lines = new ArrayList<>();
         MixedBootsTooltipFormatter.appendSourceSections(data, Item.TooltipContext.EMPTY, TooltipFlag.NORMAL,
-                lines::add, (source, output) -> line -> {
-                    if (source.is(Items.LEATHER_BOOTS)) { output.accept(Component.literal("Adapted detail")); }
-                    else { output.accept(line); }
+                                                        lines::add, (source, output) -> line -> {
+                    if (source.is(Items.LEATHER_BOOTS)) {
+                        output.accept(Component.literal("Adapted detail"));
+                    } else {
+                        output.accept(line);
+                    }
                 });
         assertSide(lines.getFirst(), LEFT_KEY, left.getHoverName());
         assertTrue(lines.contains(Component.literal("Adapted detail")));
@@ -196,10 +199,10 @@ class MixedBootsTooltipFormatterTest {
         assertEquals(data(left, right), data);
 
         left.set(DataComponents.TOOLTIP_DISPLAY,
-                new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
+                 new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
         lines.clear();
         MixedBootsTooltipFormatter.appendSourceSections(data(left, right), Item.TooltipContext.EMPTY,
-                TooltipFlag.NORMAL, lines::add, (source, output) -> {
+                                                        TooltipFlag.NORMAL, lines::add, (source, output) -> {
                     assertFalse(source.is(Items.LEATHER_BOOTS), "Hidden source reached the detail adapter");
                     return output;
                 });
@@ -213,7 +216,7 @@ class MixedBootsTooltipFormatterTest {
         for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
             List<Component> lines = new ArrayList<>();
             MixedBootsTooltipFormatter.appendSourceSections(data(left, right), Item.TooltipContext.EMPTY, flag,
-                    lines::add, (source, output) -> {
+                                                            lines::add, (source, output) -> {
                         output.accept(Component.literal(source.is(Items.IRON_BOOTS) ? "Left block" : "Right block"));
                         return output;
                     });
@@ -227,9 +230,9 @@ class MixedBootsTooltipFormatterTest {
             assertInstanceOf(TooltipSeparator.class, lines.get(5 + 2 * idLines));
             if (flag.isAdvanced()) {
                 assertEquals(Component.literal("minecraft:iron_boots").withStyle(ChatFormatting.DARK_GRAY),
-                        lines.get(1));
+                             lines.get(1));
                 assertEquals(Component.literal("minecraft:golden_boots").withStyle(ChatFormatting.DARK_GRAY),
-                        lines.get(5));
+                             lines.get(5));
             }
         }
     }
@@ -367,31 +370,31 @@ class MixedBootsTooltipFormatterTest {
 
     private static ItemStack feetItem(Item item) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
-                .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(item))
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
+                                                      .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(item))
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 
     private static ItemStack boots(Item item, double armor) {
         ItemAttributeModifiers attributes = ItemAttributeModifiers.builder()
-                .add(Attributes.ARMOR, new AttributeModifier(
-                        Identifier.fromNamespaceAndPath("mismatchedboots_test", "armor"),
-                        armor,
-                        AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET)
-                .build();
+                                                                  .add(Attributes.ARMOR, new AttributeModifier(
+                                                                          Identifier.fromNamespaceAndPath("mismatchedboots_test", "armor"),
+                                                                          armor,
+                                                                          AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.FEET)
+                                                                  .build();
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.MAX_DAMAGE, 100)
-                .set(DataComponents.DAMAGE, 0)
-                .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
-                .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(item))
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .set(DataComponents.ATTRIBUTE_MODIFIERS, attributes)
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.MAX_DAMAGE, 100)
+                                                      .set(DataComponents.DAMAGE, 0)
+                                                      .set(DataComponents.ITEM_NAME, Component.translatable(item.getDescriptionId()))
+                                                      .set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(item))
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                      .set(DataComponents.ATTRIBUTE_MODIFIERS, attributes)
+                                                      .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 

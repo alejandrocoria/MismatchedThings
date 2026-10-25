@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Unique;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.lib.event.ServerTicks", remap = false)
 abstract class SilentGearBounceScheduleProofMixin {
-    @Unique private static boolean mismatchedboots$sgScheduleReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgScheduleReady() {
+        return false;
+    }
 }

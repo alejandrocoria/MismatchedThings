@@ -23,7 +23,7 @@ public enum AttributePolicy {
 
     public static Optional<AttributePolicy> fromSerializedName(String value) {
         return Arrays.stream(values())
-                .filter(policy -> policy.serializedName.equals(value))
-                .findFirst();
+                     .filter(policy -> policy.serializedName.equals(value))
+                     .findFirst();
     }
 }

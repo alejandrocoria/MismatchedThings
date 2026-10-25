@@ -14,15 +14,26 @@ import java.util.List;
 import java.util.Set;
 
 public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, IExtension {
-    @Override public void onLoad(String name) {
+    @Override
+    public void onLoad(String name) {
         Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
-        if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) { extensions.add(this); }
+        if (transformer instanceof IMixinTransformer mixin && mixin.getExtensions() instanceof Extensions extensions) {
+            extensions.add(this);
+        }
     }
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
-        try { MixinService.getService().getBytecodeProvider().getClassNode(target); return true; }
-        catch (Exception | LinkageError absent) { return false; }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        try {
+            MixinService.getService().getBytecodeProvider().getClassNode(target);
+            return true;
+        } catch (Exception | LinkageError absent) {
+            return false;
+        }
     }
-    @Override public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+
+    @Override
+    public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         SilentGearDefenseShape.publish(node);
         SilentGearWielderShape.publish(node);
         SilentGearMagnetShape.publish(node);
@@ -40,12 +51,39 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
             SilentGearEffectShape.publish(node, "mismatchedboots$sgVoidReady", SilentGearRecognitionShape.voidWard(node));
         }
     }
-    @Override public boolean checkActive(MixinEnvironment environment) { return true; }
-    @Override public void preApply(ITargetClassContext context) {}
-    @Override public void postApply(ITargetClassContext context) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+
+    @Override
+    public boolean checkActive(MixinEnvironment environment) {
+        return true;
+    }
+
+    @Override
+    public void preApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public void postApply(ITargetClassContext context) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

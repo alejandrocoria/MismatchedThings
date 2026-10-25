@@ -34,7 +34,7 @@ public final class MixedBootsGuiRenderState extends TrackingItemStackRenderState
     @Override
     public boolean usesBlockLight() {
         return sources.stream().filter(source -> !source.isEmpty()).findFirst()
-                .map(TrackingItemStackRenderState::usesBlockLight).orElse(false);
+                      .map(TrackingItemStackRenderState::usesBlockLight).orElse(false);
     }
 
     @Override

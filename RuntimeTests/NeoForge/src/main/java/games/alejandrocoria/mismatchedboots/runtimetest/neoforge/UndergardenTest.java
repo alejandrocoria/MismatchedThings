@@ -43,16 +43,22 @@ public final class UndergardenTest {
     private static int peers, cases;
     private static final StringBuilder REPORT = new StringBuilder();
 
-    private UndergardenTest() {}
+    private UndergardenTest() {
+    }
 
-    public static boolean observe(boolean original) { peers++; return original; }
+    public static boolean observe(boolean original) {
+        peers++;
+        return original;
+    }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> run(event.getServer()));
     }
 
     private static void run(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         finished = true;
         try {
             boolean absent = MODE.equals("absent"), refused = MODE.equals("refused");
@@ -61,7 +67,9 @@ public final class UndergardenTest {
             var owner = player(level);
             var ordinary = paid(owner, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
             snow(owner, new ItemStack(Items.LEATHER_BOOTS), true);
-            for (var boots : ordinary) { snow(owner, boots, false); }
+            for (var boots : ordinary) {
+                snow(owner, boots, false);
+            }
             if (!absent) {
                 ItemStack cloggrum = boot("cloggrum"), froststeel = boot("froststeel"), utherium = boot("utherium");
                 var stacks = new ArrayList<ItemStack>(List.of(cloggrum, froststeel, utherium));
@@ -73,12 +81,21 @@ public final class UndergardenTest {
                 stacks.addAll(paid(owner, froststeel, froststeel));
                 stacks.addAll(ordinary);
                 ItemStack used = stacks.get(3);
-                ItemStack count = used.copy(); count.setCount(2); stacks.add(count);
-                ItemStack bare = used.copy(); bare.remove(ModContent.mixedBootsDataType().orElseThrow()); stacks.add(bare);
+                ItemStack count = used.copy();
+                count.setCount(2);
+                stacks.add(count);
+                ItemStack bare = used.copy();
+                bare.remove(ModContent.mixedBootsDataType().orElseThrow());
+                stacks.add(bare);
                 ItemStack spoof = new ItemStack(Items.STICK);
-                spoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(used).orElseThrow()); stacks.add(spoof);
-                ItemStack badSnow = stacks.get(5).copy(); badSnow.setCount(2); stacks.add(badSnow);
-                ItemStack bareSnow = stacks.get(5).copy(); bareSnow.remove(ModContent.mixedBootsDataType().orElseThrow()); stacks.add(bareSnow);
+                spoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(used).orElseThrow());
+                stacks.add(spoof);
+                ItemStack badSnow = stacks.get(5).copy();
+                badSnow.setCount(2);
+                stacks.add(badSnow);
+                ItemStack bareSnow = stacks.get(5).copy();
+                bareSnow.remove(ModContent.mixedBootsDataType().orElseThrow());
+                stacks.add(bareSnow);
                 Block layer = block("goo"), full = block("goo_block");
                 for (ItemStack boots : stacks) {
                     boolean mixed = ModContent.getMixedBootsData(boots).isPresent() && boots.getCount() == 1
@@ -99,21 +116,27 @@ public final class UndergardenTest {
                 // A real native Snow Walker root proves that the edited hook retains SG, even after goo refusal.
                 var api = new NeoForgeSilentGearTest.NativeApi();
                 var sg = api.boot("leather");
-                for (var root : paid(owner, sg, new ItemStack(Items.DIAMOND_BOOTS))) { snow(owner, root, true); }
+                for (var root : paid(owner, sg, new ItemStack(Items.DIAMOND_BOOTS))) {
+                    snow(owner, root, true);
+                }
                 require(!MODE.equals("chains") || peers > 0, "Competing result chains did not execute");
             }
             REPORT.append("PASS ").append(cases).append(" native-handler/collision cases; mode=").append(MODE)
-                    .append("; peer calls=").append(peers).append("\n");
+                  .append("; peer calls=").append(peers).append("\n");
             NetworkAcceptanceFiles.write("undergarden-report.txt", REPORT.toString());
             NetworkAcceptanceFiles.write("undergarden-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("undergarden", failure);
-        } finally { server.halt(false); }
+        } finally {
+            server.halt(false);
+        }
     }
 
     private static FakePlayer player(ServerLevel level) {
         var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "UndergardenTest"));
-        player.setGameMode(GameType.SURVIVAL); player.setPos(.5, 81, .5); return player;
+        player.setGameMode(GameType.SURVIVAL);
+        player.setPos(.5, 81, .5);
+        return player;
     }
 
     private static List<ItemStack> paid(FakePlayer player, ItemStack left, ItemStack right) {
@@ -136,8 +159,12 @@ public final class UndergardenTest {
 
     private static void snow(FakePlayer player, ItemStack input, boolean expected) {
         ItemStack boots = input.copy(), before = boots.copy();
-        for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
-        player.setItemSlot(EquipmentSlot.FEET, boots); player.setShiftKeyDown(false); player.setPos(.5, 81, .5);
+        for (var slot : EquipmentSlot.values()) {
+            player.setItemSlot(slot, ItemStack.EMPTY);
+        }
+        player.setItemSlot(EquipmentSlot.FEET, boots);
+        player.setShiftKeyDown(false);
+        player.setPos(.5, 81, .5);
         require(PowderSnowBlock.canEntityWalkOnPowderSnow(player) == expected, "Wrong native snow decision: " + input);
         require(!Blocks.POWDER_SNOW.defaultBlockState().getCollisionShape(player.level(), POS, CollisionContext.of(player)).isEmpty() == expected,
                 "Wrong powder-snow surface collision: " + input);
@@ -149,21 +176,33 @@ public final class UndergardenTest {
         cases++;
     }
 
-    private static void goo(LivingEntity entity, ItemStack boots, Block block, boolean gooey, boolean grounded, boolean protectedGoo) throws Exception {
+    private static void goo(LivingEntity entity,
+                            ItemStack boots,
+                            Block block,
+                            boolean gooey,
+                            boolean grounded,
+                            boolean protectedGoo) throws Exception {
         goo(entity, boots, block, gooey, grounded, protectedGoo, EquipmentSlot.FEET);
     }
 
     private static void goo(LivingEntity entity, ItemStack input, Block block, boolean gooey, boolean grounded,
                             boolean protectedGoo, EquipmentSlot slot) throws Exception {
-        for (var empty : EquipmentSlot.values()) { entity.setItemSlot(empty, ItemStack.EMPTY); }
+        for (var empty : EquipmentSlot.values()) {
+            entity.setItemSlot(empty, ItemStack.EMPTY);
+        }
         ItemStack boots = input.copy(), before = boots.copy();
-        entity.setItemSlot(slot, boots); entity.setOnGround(grounded);
+        entity.setItemSlot(slot, boots);
+        entity.setOnGround(grounded);
         var effect = BuiltInRegistries.MOB_EFFECT.get(Identifier.fromNamespaceAndPath("undergarden", "gooey")).orElseThrow();
         entity.removeEffect(effect);
-        if (gooey) { require(entity.addEffect(new MobEffectInstance(effect, 100)), "Native Gooey did not apply"); }
-        Field stuck = Entity.class.getDeclaredField("stuckSpeedMultiplier"); stuck.setAccessible(true); stuck.set(entity, Vec3.ZERO);
+        if (gooey) {
+            require(entity.addEffect(new MobEffectInstance(effect, 100)), "Native Gooey did not apply");
+        }
+        Field stuck = Entity.class.getDeclaredField("stuckSpeedMultiplier");
+        stuck.setAccessible(true);
+        stuck.set(entity, Vec3.ZERO);
         var contact = block.getClass().getDeclaredMethod("entityInside", BlockState.class, Level.class, BlockPos.class,
-                Entity.class, InsideBlockEffectApplier.class, boolean.class);
+                                                         Entity.class, InsideBlockEffectApplier.class, boolean.class);
         contact.setAccessible(true);
         contact.invoke(block, block.defaultBlockState(), entity.level(), POS, entity, InsideBlockEffectApplier.NOOP, false);
         Vec3 expected = protectedGoo ? Vec3.ZERO : block == block("goo") ? new Vec3(.45, .45, .45) : new Vec3(2, 0, 2);
@@ -174,6 +213,8 @@ public final class UndergardenTest {
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new AssertionError(message); }
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 }

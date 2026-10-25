@@ -1,9 +1,9 @@
 {
-  "type": "minecraft:smithing_transform",
-  "addition": "minecraft:flint",
-  "base": "mismatchedboots-test:component_boots",
-  "result": {
-    "id": "minecraft:apple"
-  },
-  "template": "minecraft:brick"
+    "type": "minecraft:smithing_transform",
+    "addition": "minecraft:flint",
+    "base": "mismatchedboots-test:component_boots",
+    "result": {
+        "id": "minecraft:apple"
+    },
+    "template": "minecraft:brick"
 }

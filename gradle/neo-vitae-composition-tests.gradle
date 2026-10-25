@@ -7,9 +7,9 @@ def loaderVersion = neoforge_version.toString()
 def reports = layout.buildDirectory.dir("reports/neo-vitae-composition/${loaderVersion}")
 def runs = layout.buildDirectory.dir("run/neoVitaeComposition/${loaderVersion}")
 def nativeArtifacts = [
-        'neovitae-26.1.2-1.1.31.jar': '55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92',
+        'neovitae-26.1.2-1.1.31.jar'            : '55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92',
         'modonomicon-26.1.2-neoforge-2.16.0.jar': '658d75ac71ef2e49eaeaa944f7ee82f407424df09f42adf459dd20cc98a57710',
-        'geckolib-neoforge-26.1.2-5.5.2.jar': 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d'
+        'geckolib-neoforge-26.1.2-5.5.2.jar'    : 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d'
 ].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
 
 ['Live', 'Absent'].each { variant ->
@@ -42,7 +42,9 @@ def nativeArtifacts = [
             fixtureFiles.delete { delete directory, markers }
             fixtureFiles.copy {
                 from(productionJar, fixtureJar)
-                if (variant == 'Live') { from(nativeArtifacts.keySet()) }
+                if (variant == 'Live') {
+                    from(nativeArtifacts.keySet())
+                }
                 into(new File(directory.get().asFile, 'mods'))
             }
             new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
@@ -66,7 +68,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             runBounded(":RuntimeTests:NeoForge:runNeoVitaeComposition${variant}", processLog, 240)
             def result = markers.get().asFile
             def failure = new File(result, 'neo-vitae-composition-failure.txt')
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             def report = new File(result, 'neo-vitae-composition-report.txt')
             if (!new File(result, 'neo-vitae-composition-success.txt').isFile() || !report.isFile()) {
                 throw new GradleException("Missing Neo Vitae composition result; see ${processLog}")
@@ -76,7 +80,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 runBounded(':RuntimeTests:NeoForge:runNeoVitaeCompositionRestart',
                         new File(reports.get().asFile, 'restart-process.log'), 240)
                 def restartFailure = new File(result, 'neo-vitae-composition-restart-failure.txt')
-                if (restartFailure.isFile()) { throw new GradleException(restartFailure.text) }
+                if (restartFailure.isFile()) {
+                    throw new GradleException(restartFailure.text)
+                }
                 def restartReport = new File(result, 'neo-vitae-composition-restart-report.txt')
                 def lifecycleReport = new File(result, 'neo-vitae-composition-lifecycle-report.txt')
                 if (!new File(result, 'neo-vitae-composition-restart-success.txt').isFile()

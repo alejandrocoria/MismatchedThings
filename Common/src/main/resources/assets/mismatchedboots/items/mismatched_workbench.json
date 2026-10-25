@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "mismatchedboots:block/mismatched_workbench"
-  }
+    "model": {
+        "type": "minecraft:model",
+        "model": "mismatchedboots:block/mismatched_workbench"
+    }
 }

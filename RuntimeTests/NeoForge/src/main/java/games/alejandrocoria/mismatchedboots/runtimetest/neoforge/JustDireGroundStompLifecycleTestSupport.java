@@ -32,19 +32,40 @@ final class JustDireGroundStompLifecycleTestSupport {
     private static final BlockPos STORAGE = new BlockPos(0, 80, 0);
     private static final String PREFIX = "just-dire-ground-stomp-lifecycle";
     private static final JsonArray saved = new JsonArray(), packets = new JsonArray();
-    private static final List<String> CONTROLS = List.of("ability_bindings", "ability_cooldowns",
-            "groundstomp_custom_setting", "tool_enabled", "groundstomp_upgrade_installed", "groundstomp_toggle", "groundstomp_value",
-            "groundstomp_bindingmode", "stepheight_upgrade_installed", "stepheight_toggle", "stepheight_bindingmode",
-            "jumpboost_upgrade_installed", "jumpboost_toggle", "jumpboost_value", "jumpboost_bindingmode",
-            "negatefalldamage_upgrade_installed", "negatefalldamage_toggle", "negatefalldamage_bindingmode",
-            "earthquake_upgrade_installed", "earthquake_toggle", "earthquake_value", "earthquake_bindingmode", "earthquake_custom_setting",
-            "lavarepair_toggle", "lavarepair_bindingmode");
+    private static final List<String> CONTROLS = List.of("ability_bindings",
+                                                         "ability_cooldowns",
+                                                         "groundstomp_custom_setting",
+                                                         "tool_enabled",
+                                                         "groundstomp_upgrade_installed",
+                                                         "groundstomp_toggle",
+                                                         "groundstomp_value",
+                                                         "groundstomp_bindingmode",
+                                                         "stepheight_upgrade_installed",
+                                                         "stepheight_toggle",
+                                                         "stepheight_bindingmode",
+                                                         "jumpboost_upgrade_installed",
+                                                         "jumpboost_toggle",
+                                                         "jumpboost_value",
+                                                         "jumpboost_bindingmode",
+                                                         "negatefalldamage_upgrade_installed",
+                                                         "negatefalldamage_toggle",
+                                                         "negatefalldamage_bindingmode",
+                                                         "earthquake_upgrade_installed",
+                                                         "earthquake_toggle",
+                                                         "earthquake_value",
+                                                         "earthquake_bindingmode",
+                                                         "earthquake_custom_setting",
+                                                         "lavarepair_toggle",
+                                                         "lavarepair_bindingmode");
 
-    private JustDireGroundStompLifecycleTestSupport() {}
+    private JustDireGroundStompLifecycleTestSupport() {
+    }
 
     static BarrelBlockEntity storage(ServerPlayer player, boolean create) {
         player.level().getChunk(STORAGE);
-        if (create) { player.level().setBlock(STORAGE, Blocks.BARREL.defaultBlockState(), 3); }
+        if (create) {
+            player.level().setBlock(STORAGE, Blocks.BARREL.defaultBlockState(), 3);
+        }
         var barrel = (BarrelBlockEntity) player.level().getBlockEntity(STORAGE);
         require(barrel != null, "Missing lifecycle world container");
         return barrel;
@@ -53,9 +74,13 @@ final class JustDireGroundStompLifecycleTestSupport {
     static void save(ServerPlayer player, int slot, ItemStack root,
                      JustDireActiveNetwork.Activate consumed, JustDireActiveNetwork.Activate unconsumed) {
         var barrel = storage(player, slot == 0);
-        barrel.setItem(slot, root); barrel.setChanged();
+        barrel.setItem(slot, root);
+        barrel.setChanged();
         saved.add(ItemStack.CODEC.encodeStart(player.registryAccess().createSerializationContext(JsonOps.INSTANCE), root).getOrThrow());
-        var pair = new JsonArray(); pair.add(packet(consumed)); pair.add(packet(unconsumed)); packets.add(pair);
+        var pair = new JsonArray();
+        pair.add(packet(consumed));
+        pair.add(packet(unconsumed));
+        packets.add(pair);
         NetworkAcceptanceFiles.write(PREFIX + "-saved.json", saved.toString());
         NetworkAcceptanceFiles.write(PREFIX + "-packets.json", packets.toString());
     }
@@ -67,7 +92,8 @@ final class JustDireGroundStompLifecycleTestSupport {
         JustDireEarthquakeTestSupport.bind();
         for (int slot = 0; slot < 4; slot++) {
             var root = barrel.getItem(slot);
-            var decoded = ItemStack.CODEC.parse(player.registryAccess().createSerializationContext(JsonOps.INSTANCE), expected.get(slot)).getOrThrow();
+            var decoded = ItemStack.CODEC.parse(player.registryAccess().createSerializationContext(JsonOps.INSTANCE), expected.get(slot))
+                                         .getOrThrow();
             require(ItemStack.matches(decoded, root), "Disk-loaded stack differs in orientation " + slot);
             inventoryPreferences(root, slot);
             require(JustDireGroundStompTestSupport.timer(root) > 0, "Disk cooldown was lost");
@@ -83,15 +109,15 @@ final class JustDireGroundStompLifecycleTestSupport {
         var bindings = root.getOrDefault(JustDireAttributeTestSupport.<List<Object>>component("ability_bindings"), List.of());
         if (slot == 0 || slot == 2) {
             require(bindings.contains(JustDireEarthquakeTestSupport.binding("groundstomp", 71, false, false))
-                    && bindings.contains(JustDireEarthquakeTestSupport.binding("stepheight", 4, true, false)),
+                            && bindings.contains(JustDireEarthquakeTestSupport.binding("stepheight", 4, true, false)),
                     "Disk/tier lost inventory-enabled active/passive bindings");
             if (slot == 0) {
                 require(bindings.contains(JustDireEarthquakeTestSupport.binding("jumpboost", 4, true, true))
-                        && bindings.contains(JustDireEarthquakeTestSupport.binding("lavarepair", 86, false, false)),
+                                && bindings.contains(JustDireEarthquakeTestSupport.binding("lavarepair", 86, false, false)),
                         "Disk/tier conflated per-ability locations");
             } else {
                 require(bindings.contains(JustDireEarthquakeTestSupport.binding("earthquake", 74, false, false))
-                        && bindings.contains(JustDireEarthquakeTestSupport.binding("negatefalldamage", -1, false, false)),
+                                && bindings.contains(JustDireEarthquakeTestSupport.binding("negatefalldamage", -1, false, false)),
                         "Disk/tier lost Earthquake or unbound inventory preference");
             }
         } else {
@@ -102,19 +128,25 @@ final class JustDireGroundStompLifecycleTestSupport {
 
     static JustDireActiveNetwork.Activate oldPacket(int slot, boolean unconsumed) throws Exception {
         var packet = JsonParser.parseString(Files.readString(marker("packets.json"))).getAsJsonArray()
-                .get(slot).getAsJsonArray().get(unconsumed ? 1 : 0).getAsJsonObject();
+                               .get(slot).getAsJsonArray().get(unconsumed ? 1 : 0).getAsJsonObject();
         var slots = new ArrayList<Integer>();
-        for (var value : packet.getAsJsonArray("slots")) { slots.add(value.getAsInt()); }
+        for (var value : packet.getAsJsonArray("slots")) {
+            slots.add(value.getAsInt());
+        }
         return new JustDireActiveNetwork.Activate(packet.get("sequence").getAsInt(), UUID.fromString(packet.get("nonce").getAsString()),
-                packet.get("key").getAsInt(), packet.get("mouse").getAsBoolean(), slots);
+                                                  packet.get("key").getAsInt(), packet.get("mouse").getAsBoolean(), slots);
     }
 
     private static JsonObject packet(JustDireActiveNetwork.Activate packet) {
         require(packet != null && !packet.nonce().equals(JustDireActiveNetwork.NONE), "No genuine permit to persist");
         var json = new JsonObject();
-        json.addProperty("sequence", packet.sequence()); json.addProperty("nonce", packet.nonce().toString());
-        json.addProperty("key", packet.key()); json.addProperty("mouse", packet.mouse());
-        var slots = new JsonArray(); packet.slots().forEach(slots::add); json.add("slots", slots);
+        json.addProperty("sequence", packet.sequence());
+        json.addProperty("nonce", packet.nonce().toString());
+        json.addProperty("key", packet.key());
+        json.addProperty("mouse", packet.mouse());
+        var slots = new JsonArray();
+        packet.slots().forEach(slots::add);
+        json.add("slots", slots);
         return json;
     }
 
@@ -142,11 +174,12 @@ final class JustDireGroundStompLifecycleTestSupport {
         var outputData = ModContent.getMixedBootsData(preview).orElseThrow();
         boolean left = originalData.left().source().is(nativeItem(from + "_boots").getItem());
         require((left ? outputData.left().source() : outputData.right().source()).is(nativeItem(to + "_boots").getItem())
-                && ItemStack.matches(left ? originalData.right().source() : originalData.left().source(),
-                left ? outputData.right().source() : outputData.left().source()), "Tier recipe transformed the wrong source");
+                        && ItemStack.matches(left ? originalData.right().source() : originalData.left().source(),
+                                             left ? outputData.right().source() : outputData.left().source()),
+                "Tier recipe transformed the wrong source");
         require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
-                .intValue() == before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).intValue()
-                && preview.getDamageValue() == Math.min(before.getDamageValue(), preview.getMaxDamage()),
+                       .intValue() == before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).intValue()
+                        && preview.getDamageValue() == Math.min(before.getDamageValue(), preview.getMaxDamage()),
                 "Tier preview refilled root resources/wear: FE " + before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
                         + " -> " + preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
                         + ", damage " + before.getDamageValue() + " -> " + preview.getDamageValue()
@@ -154,10 +187,10 @@ final class JustDireGroundStompLifecycleTestSupport {
         sameControls(before, preview, true);
         menu.clicked(SmithingMenu.RESULT_SLOT, 0, quick ? ContainerInput.QUICK_MOVE : ContainerInput.PICKUP, player);
         var taken = quick ? player.getInventory().getNonEquipmentItems().stream()
-                .filter(stack -> ItemStack.matches(preview, stack)).findFirst().orElseThrow().copy() : menu.getCarried().copy();
+                                  .filter(stack -> ItemStack.matches(preview, stack)).findFirst().orElseThrow().copy() : menu.getCarried().copy();
         require(ItemStack.matches(preview, taken) && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
-                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Tier take/result/one-input consumption mismatch");
+                        && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Tier take/result/one-input consumption mismatch");
         require(ItemStack.matches(before, root), "Tier take mutated the old root");
         return taken;
     }
@@ -167,7 +200,9 @@ final class JustDireGroundStompLifecycleTestSupport {
         require(Objects.equals(before.get(JustDireRefundCompatibility.component()), after.get(JustDireRefundCompatibility.component())),
                 "Live preservation changed purchase credits");
         for (String name : CONTROLS) {
-            if (!timer && name.equals("ability_cooldowns")) { continue; }
+            if (!timer && name.equals("ability_cooldowns")) {
+                continue;
+            }
             var component = JustDireAttributeTestSupport.component(name);
             require(before.has(component) == after.has(component) && Objects.equals(before.get(component), after.get(component)),
                     "Live preservation changed " + name);
@@ -184,22 +219,37 @@ final class JustDireGroundStompLifecycleTestSupport {
         var preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
         require(!preview.isEmpty() && preview.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("earthquake_upgrade_installed"), false),
                 "Root Earthquake installation produced no preview");
-        var allowed = before.copy(); JustDireAttributeTestSupport.set(allowed, "earthquake_upgrade_installed", true);
+        var allowed = before.copy();
+        JustDireAttributeTestSupport.set(allowed, "earthquake_upgrade_installed", true);
         var credit = before.get(JustDireRefundCompatibility.component());
-        var names = new ArrayList<>(credit == null ? List.<String>of() : credit.names()); names.add("earthquake");
+        var names = new ArrayList<>(credit == null ? List.<String>of() : credit.names());
+        names.add("earthquake");
         allowed.set(JustDireRefundCompatibility.component(), new JustDireRefundCredits(names));
         sameControls(allowed, preview, true);
-        require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0).equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0))
-                && preview.getDamageValue() == before.getDamageValue()
-                && ModContent.getMixedBootsData(preview).equals(ModContent.getMixedBootsData(before)), "Upgrade refilled resources or rewrote history");
+        require(preview.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0)
+                       .equals(before.getOrDefault(JustDireResourceTestSupport.energyComponent(), 0))
+                        && preview.getDamageValue() == before.getDamageValue()
+                        && ModContent.getMixedBootsData(preview).equals(ModContent.getMixedBootsData(before)),
+                "Upgrade refilled resources or rewrote history");
         menu.clicked(SmithingMenu.RESULT_SLOT, 0, ContainerInput.PICKUP, player);
         var taken = menu.getCarried().copy();
         require(ItemStack.matches(preview, taken) && ItemStack.matches(before, root)
-                && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
-                && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Upgrade take/consumption/input preservation mismatch");
+                        && menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty()
+                        && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty(), "Upgrade take/consumption/input preservation mismatch");
         return taken;
     }
-    private static ItemStack nativeItem(String name) { return new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", name))); }
-    private static Path marker(String suffix) { return Path.of(System.getProperty("mismatchedboots.runtimetest.markers"), PREFIX + "-" + suffix); }
-    private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+
+    private static ItemStack nativeItem(String name) {
+        return new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", name)));
+    }
+
+    private static Path marker(String suffix) {
+        return Path.of(System.getProperty("mismatchedboots.runtimetest.markers"), PREFIX + "-" + suffix);
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

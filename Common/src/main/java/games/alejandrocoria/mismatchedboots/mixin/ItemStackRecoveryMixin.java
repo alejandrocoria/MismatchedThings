@@ -19,12 +19,15 @@ import java.util.function.Function;
 /** Required persistence boundary: unlike optional gameplay adapters, native data loss is not a fallback. */
 @Mixin(ItemStack.class)
 abstract class ItemStackRecoveryMixin {
-    @Unique private static boolean mismatchedboots$recoveryInstalled;
+    @Unique
+    private static boolean mismatchedboots$recoveryInstalled;
+
     @WrapOperation(method = "<clinit>", at = @At(value = "INVOKE", target =
             "Lcom/mojang/serialization/MapCodec;recursive(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;"),
             require = 1, expect = 1, allow = 1)
     private static MapCodec<ItemStack> mismatchedboots$capture(String name,
-            Function<Codec<ItemStack>, MapCodec<ItemStack>> factory, Operation<MapCodec<ItemStack>> original) {
+                                                               Function<Codec<ItemStack>, MapCodec<ItemStack>> factory,
+                                                               Operation<MapCodec<ItemStack>> original) {
         var result = original.call(name, (Function<Codec<ItemStack>, MapCodec<ItemStack>>) self -> {
             var capture = new SuspendedBootsItemCodec(factory.apply(self));
             mismatchedboots$recoveryInstalled = true;

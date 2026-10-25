@@ -12,17 +12,43 @@ import java.util.Set;
 public final class JustDireEarthquakeServerGuardPlugin implements IMixinConfigPlugin {
     public static int fault, debits, failAt, heavySounds, particles;
     public static ServerPlayer player;
-    public static void changeToggle() { JustDireAttributeTestSupport.set(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET), "earthquake_toggle", false); }
-    public static final class PostCommitFailure extends RuntimeException {}
 
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
+    public static void changeToggle() {
+        JustDireAttributeTestSupport.set(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET), "earthquake_toggle", false);
+    }
+
+    public static final class PostCommitFailure extends RuntimeException {
+    }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
         return Boolean.getBoolean("mismatchedboots.runtimetest.justDireEarthquakeServerTest")
                 && System.getProperty("mismatchedboots.runtimetest.justDireEarthquakeStateVariant", "live").equals("live");
     }
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

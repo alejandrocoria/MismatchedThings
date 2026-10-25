@@ -28,7 +28,8 @@ public final class NeoForgeOritechFallTest {
     private static int sounds;
     private static int cases;
 
-    private NeoForgeOritechFallTest() {}
+    private NeoForgeOritechFallTest() {
+    }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(NeoForgeOritechFallTest::sound);
@@ -37,15 +38,17 @@ public final class NeoForgeOritechFallTest {
 
     private static void sound(PlayLevelSoundEvent.AtPosition event) {
         if (capture && event.getSound() != null && Identifier.fromNamespaceAndPath("oritech", "short_servo")
-                .equals(BuiltInRegistries.SOUND_EVENT.getKey(event.getSound().value()))) {
+                                                             .equals(BuiltInRegistries.SOUND_EVENT.getKey(event.getSound().value()))) {
             require(event.getSource() == SoundSource.PLAYERS && event.getOriginalVolume() == .2F
-                    && event.getOriginalPitch() == 1F, "Native landing sound parameters changed");
+                            && event.getOriginalPitch() == 1F, "Native landing sound parameters changed");
             sounds++;
         }
     }
 
     private static void tick(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         finished = true;
         try {
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.oritechAbsent");
@@ -56,23 +59,24 @@ public final class NeoForgeOritechFallTest {
             check(level, plain.inverse(), EquipmentSlot.FEET, false, false);
             if (!absent) {
                 var exoItem = BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("oritech", "exo_boots"))
-                        .orElseThrow().value();
+                                                    .orElseThrow().value();
                 var exo = new ItemStack(exoItem);
                 var pair = MixedBootsFactory.createPair(exo, new ItemStack(Items.DIAMOND_BOOTS));
                 require(ItemStack.matches(exo, new ItemStack(exoItem)), "Creation mutated the native input");
                 require(pair.primary().get(DataComponents.EQUIPPABLE).equipSound()
-                        .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()), "Left equip sound changed");
+                            .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()), "Left equip sound changed");
                 require(pair.inverse().get(DataComponents.EQUIPPABLE).equipSound()
-                        .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()),
+                            .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()),
                         "Right Exo did not supply the only custom equip sound");
                 for (ItemStack boots : List.of(exo, pair.primary(), pair.inverse(),
-                        MixedBootsFactory.createPair(exo, exo).primary())) {
+                                               MixedBootsFactory.createPair(exo, exo).primary())) {
                     check(level, boots, EquipmentSlot.FEET, false, true);
                     check(level, boots, EquipmentSlot.FEET, true, false);
                 }
                 check(level, pair.primary(), EquipmentSlot.OFFHAND, false, false);
                 check(level, pair.inverse(), EquipmentSlot.MAINHAND, false, false);
-                ItemStack badCount = pair.primary().copy(); badCount.setCount(2);
+                ItemStack badCount = pair.primary().copy();
+                badCount.setCount(2);
                 check(level, badCount, EquipmentSlot.FEET, false, false);
                 ItemStack missingData = pair.primary().copy();
                 missingData.remove(ModContent.mixedBootsDataType().orElseThrow());
@@ -83,13 +87,16 @@ public final class NeoForgeOritechFallTest {
             }
             NetworkAcceptanceFiles.write("oritech-fall-report.txt", cases + " real damage cases; "
                     + (absent ? "optional absence, ordinary inverse pair\n"
-                    : "native Exo + both mixed orientations + two Exo; repeated falls; non-fall damage; "
-                    + "wrong slots, missing data, bad count and spoof rejection; single native servo emission; "
-                    + "shared custom equip sound and immutable provenance\n"));
+                              : "native Exo + both mixed orientations + two Exo; repeated falls; non-fall damage; "
+                                + "wrong slots, missing data, bad count and spoof rejection; single native servo emission; "
+                                + "shared custom equip sound and immutable provenance\n"));
             NetworkAcceptanceFiles.write("oritech-fall-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure("oritech-fall", failure);
-        } finally { capture = false; server.halt(false); }
+        } finally {
+            capture = false;
+            server.halt(false);
+        }
     }
 
     private static void check(ServerLevel level, ItemStack input, EquipmentSlot slot, boolean generic, boolean protectedFall) {
@@ -103,8 +110,11 @@ public final class NeoForgeOritechFallTest {
         capture = true;
         try {
             float before = subject.getHealth();
-            if (generic) { subject.hurtServer(level, level.damageSources().generic(), 6); }
-            else { subject.causeFallDamage(9, 1, level.damageSources().fall()); }
+            if (generic) {
+                subject.hurtServer(level, level.damageSources().generic(), 6);
+            } else {
+                subject.causeFallDamage(9, 1, level.damageSources().fall());
+            }
             require(protectedFall ? subject.getHealth() == before : subject.getHealth() < before,
                     "Wrong damage result: slot=" + slot + ", generic=" + generic + ", stack=" + input);
             require(sounds == (protectedFall ? 1 : 0), "Wrong native servo emission count: " + sounds);
@@ -117,10 +127,15 @@ public final class NeoForgeOritechFallTest {
             require(history == null || history.equals(ModContent.getMixedBootsData(boots).orElseThrow()),
                     "Damage mutated source provenance");
             cases++;
-        } finally { capture = false; subject.discard(); }
+        } finally {
+            capture = false;
+            subject.discard();
+        }
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) { throw new AssertionError(message); }
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 }

@@ -24,15 +24,15 @@ public final class SmithingGameTests {
         SmithingMenu menu = menu(helper, player);
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         helper.assertTrue(menu.getSlot(SmithingMenu.BASE_SLOT).mayPlace(mixed),
-                "Mixed boots are not accepted in the smithing base slot");
+                          "Mixed boots are not accepted in the smithing base slot");
         helper.assertTrue(!menu.getSlot(SmithingMenu.TEMPLATE_SLOT).mayPlace(mixed),
-                "Mixed boots are accepted as a smithing template");
+                          "Mixed boots are accepted as a smithing template");
         helper.assertTrue(!menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).mayPlace(mixed),
-                "Mixed boots are accepted as a smithing addition");
+                          "Mixed boots are accepted as a smithing addition");
         menu.getSlot(4).set(mixed);
         menu.quickMoveStack(player, 4);
         helper.assertTrue(menu.getSlot(SmithingMenu.BASE_SLOT).getItem().is(ModContent.MIXED_BOOTS_KEY),
-                "Shift-click did not route mixed boots to the smithing base slot");
+                          "Shift-click did not route mixed boots to the smithing base slot");
         helper.succeed();
     }
 
@@ -46,29 +46,29 @@ public final class SmithingGameTests {
         mixed.set(DataComponents.REPAIR_COST, 11);
         mixed.set(TestContent.requireOpaqueComponent(), "root-only");
         var unbreaking = helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
-                .getOrThrow(Enchantments.UNBREAKING);
+                               .getOrThrow(Enchantments.UNBREAKING);
         ItemEnchantments.Mutable enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         enchantments.set(unbreaking, 2);
         mixed.set(DataComponents.ENCHANTMENTS, enchantments.toImmutable());
         ItemStack original = mixed.copy();
         SmithingMenu menu = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, 2), mixed,
-                new ItemStack(Items.DIAMOND, 2));
+                                     new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, 2), mixed,
+                                     new ItemStack(Items.DIAMOND, 2));
 
         ItemStack preview = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem();
         assertTrims(helper, preview, true, true);
         helper.assertValueEqual(preview.getDamageValue(), 9, "preview raw damage");
         helper.assertValueEqual(preview.get(DataComponents.REPAIR_COST), 11, "preview prior work");
         helper.assertValueEqual(preview.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .getLevel(unbreaking), 2, "live root enchantment");
+                                       .getLevel(unbreaking), 2, "live root enchantment");
         helper.assertValueEqual(preview.get(TestContent.requireOpaqueComponent()), "root-only", "root-only component");
         helper.assertTrue(preview.getHoverName().equals(Component.literal("Anvil name")),
-                "Smithing lost the live root name");
+                          "Smithing lost the live root name");
         helper.assertTrue(!preview.has(DataComponents.TRIM), "Source trim leaked onto the root");
         helper.assertTrue(ItemStack.matches(original, mixed), "Preview mutated the input root");
         helper.assertTrue(!before.left().source().has(DataComponents.TRIM)
-                        && !before.right().source().has(DataComponents.TRIM),
-                "Preview mutated the original source snapshots");
+                                  && !before.right().source().has(DataComponents.TRIM),
+                          "Preview mutated the original source snapshots");
 
         ResultContainer resultSlots = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
         helper.assertTrue(resultSlots.getRecipeUsed() != null, "Smithing preview has no primary recipe");
@@ -77,11 +77,11 @@ public final class SmithingGameTests {
         ItemStack taken = menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT);
         assertTrims(helper, taken, true, true);
         helper.assertValueEqual(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().getCount(), 1,
-                "Smithing template consumption");
+                                "Smithing template consumption");
         helper.assertTrue(menu.getSlot(SmithingMenu.BASE_SLOT).getItem().isEmpty(),
-                "Smithing did not consume its base");
+                          "Smithing did not consume its base");
         helper.assertValueEqual(menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount(), 1,
-                "Smithing addition consumption");
+                                "Smithing addition consumption");
         helper.succeed();
     }
 
@@ -102,9 +102,9 @@ public final class SmithingGameTests {
         ItemStack gold = ordinaryTrim(helper, player, Items.GOLDEN_BOOTS);
         ItemStack mixed = GameTestStacks.pair(iron, gold).primary();
         SmithingMenu menu = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), mixed, new ItemStack(Items.DIAMOND));
+                                     new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), mixed, new ItemStack(Items.DIAMOND));
         helper.assertTrue(menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Repeating the same trim on both sources produced an output");
+                          "Repeating the same trim on both sources produced an output");
         helper.succeed();
     }
 
@@ -112,18 +112,18 @@ public final class SmithingGameTests {
     public void foreignSmithingResultTakesPrecedence(GameTestHelper helper) {
         var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         SmithingMenu menu = smithing(helper, player,
-                new ItemStack(Items.SHEARS), GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS),
-                new ItemStack(Items.FLINT));
+                                     new ItemStack(Items.SHEARS), GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS),
+                                     new ItemStack(Items.FLINT));
         helper.assertTrue(menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().is(Items.IRON_BOOTS),
-                "A loaded recipe for the mixed base lost to the source-wise fallback");
+                          "A loaded recipe for the mixed base lost to the source-wise fallback");
         helper.succeed();
     }
 
     private static void assertSingleEligibleSource(GameTestHelper helper, Item left, Item right, boolean leftChanges) {
         var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
         SmithingMenu menu = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
-                GameTestStacks.mixed(left, right), new ItemStack(Items.DIAMOND));
+                                     new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
+                                     GameTestStacks.mixed(left, right), new ItemStack(Items.DIAMOND));
         assertTrims(helper, menu.getSlot(SmithingMenu.RESULT_SLOT).getItem(), leftChanges, !leftChanges);
         helper.succeed();
     }
@@ -131,8 +131,8 @@ public final class SmithingGameTests {
     private static ItemStack ordinaryTrim(
             GameTestHelper helper, net.minecraft.world.entity.player.Player player, Item item) {
         SmithingMenu menu = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
-                new ItemStack(item), new ItemStack(Items.DIAMOND));
+                                     new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
+                                     new ItemStack(item), new ItemStack(Items.DIAMOND));
         ItemStack result = menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().copy();
         helper.assertTrue(result.has(DataComponents.TRIM), "Ordinary smithing did not apply the trim");
         return result;
@@ -158,6 +158,6 @@ public final class SmithingGameTests {
 
     private static SmithingMenu menu(GameTestHelper helper, net.minecraft.world.entity.player.Player player) {
         return new SmithingMenu(1, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
+                                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
     }
 }

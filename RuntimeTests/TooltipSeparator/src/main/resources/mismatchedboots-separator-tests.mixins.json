@@ -1,11 +1,13 @@
 {
-  "required": true,
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.separator.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "client": [
-    "BundleObservationMixin",
-    "SeparatorObservationMixin",
-    "TooltipInputsMixin"
-  ],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.separator.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "BundleObservationMixin",
+        "SeparatorObservationMixin",
+        "TooltipInputsMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

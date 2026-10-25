@@ -52,12 +52,12 @@ class MismatchedWorkbenchJeiCycleTest {
                 stack -> stack.getItem().toString());
 
         assertEquals(List.of(
-                        Items.DIAMOND_BOOTS,
-                        Items.IRON_BOOTS,
-                        Items.IRON_BOOTS),
-                candidates.stream().map(ItemStack::getItem).toList());
+                             Items.DIAMOND_BOOTS,
+                             Items.IRON_BOOTS,
+                             Items.IRON_BOOTS),
+                     candidates.stream().map(ItemStack::getItem).toList());
         assertEquals(List.of("second iron", "first iron"),
-                candidates.subList(1, 3).stream().map(stack -> stack.getHoverName().getString()).toList());
+                     candidates.subList(1, 3).stream().map(stack -> stack.getHoverName().getString()).toList());
         assertTrue(candidates.stream().allMatch(stack -> stack.getCount() == 1));
     }
 
@@ -73,19 +73,19 @@ class MismatchedWorkbenchJeiCycleTest {
                 MismatchedWorkbenchJeiCycleTest::orderedResult).orElseThrow();
 
         assertEquals(List.of(Items.DIAMOND_BOOTS, Items.GOLDEN_BOOTS, Items.IRON_BOOTS),
-                example.leftInputs().stream().map(ItemStack::getItem).toList());
+                     example.leftInputs().stream().map(ItemStack::getItem).toList());
         assertEquals(List.of(Items.GOLDEN_BOOTS, Items.IRON_BOOTS, Items.DIAMOND_BOOTS),
-                example.rightInputs().stream().map(ItemStack::getItem).toList());
+                     example.rightInputs().stream().map(ItemStack::getItem).toList());
         assertEquals(example.leftInputs().stream().map(ItemStack::getItem).toList(),
-                example.primaryOutputs().stream().map(ItemStack::getItem).toList());
+                     example.primaryOutputs().stream().map(ItemStack::getItem).toList());
         assertEquals(example.rightInputs().stream().map(ItemStack::getItem).toList(),
-                example.inverseOutputs().stream().map(ItemStack::getItem).toList());
+                     example.inverseOutputs().stream().map(ItemStack::getItem).toList());
     }
 
     @Test
     void emptyAndRejectedCyclesDoNotPublishAnExample() {
         assertTrue(MismatchedWorkbenchJeiCycle.create(List.of(),
-                MismatchedWorkbenchJeiCycleTest::orderedResult).isEmpty());
+                                                      MismatchedWorkbenchJeiCycleTest::orderedResult).isEmpty());
         assertTrue(MismatchedWorkbenchJeiCycle.create(
                 List.of(boots(Items.IRON_BOOTS), boots(Items.GOLDEN_BOOTS)),
                 (left, right) -> MismatchedWorkbenchResult.EMPTY).isEmpty());
@@ -108,13 +108,13 @@ class MismatchedWorkbenchJeiCycleTest {
         MismatchedWorkbenchJeiExample withRejectedPair = MismatchedWorkbenchJeiCycle.create(
                 boots,
                 (left, right) -> left.is(Items.GOLDEN_BOOTS)
-                        ? MismatchedWorkbenchResult.EMPTY
-                        : orderedResult(left, right)).orElseThrow();
+                                 ? MismatchedWorkbenchResult.EMPTY
+                                 : orderedResult(left, right)).orElseThrow();
 
         assertEquals(List.of(Items.DIAMOND_BOOTS, Items.IRON_BOOTS),
-                withRejectedPair.leftInputs().stream().map(ItemStack::getItem).toList());
+                     withRejectedPair.leftInputs().stream().map(ItemStack::getItem).toList());
         assertEquals(List.of(Items.GOLDEN_BOOTS, Items.DIAMOND_BOOTS),
-                withRejectedPair.rightInputs().stream().map(ItemStack::getItem).toList());
+                     withRejectedPair.rightInputs().stream().map(ItemStack::getItem).toList());
     }
 
     @Test
@@ -149,10 +149,10 @@ class MismatchedWorkbenchJeiCycleTest {
 
     private static ItemStack equippable(Item item, EquipmentSlot slot) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(slot).build())
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(slot).build())
+                                                      .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 }

@@ -100,7 +100,7 @@ public final class NetworkAcceptanceServerTest {
                 || components.repairCost() != RepairCostPolicy.OWNER
                 || !ComponentRule.of(ComponentPolicy.OWNER).equals(components.declarations().get(ENCHANTABLE))
                 || !ComponentRule.of(ComponentPolicy.SHARE).equals(
-                        components.declarations().get(DORMANT_COMPONENT))
+                components.declarations().get(DORMANT_COMPONENT))
                 || components.components().rules().containsKey(DORMANT_COMPONENT)) {
             throw new AssertionError("Server did not load the isolated component rules: " + components);
         }
@@ -131,7 +131,7 @@ public final class NetworkAcceptanceServerTest {
             throw new AssertionError("Mismatched Boots item is not registered");
         }
         if (Arrays.stream(mixedBoots.getClass().getInterfaces())
-                .anyMatch(type -> hookClass.equals(type.getName()))) {
+                  .anyMatch(type -> hookClass.equals(type.getName()))) {
             throw new AssertionError("Optional Advanced Netherite interface was applied while its API was absent");
         }
     }
@@ -147,7 +147,7 @@ public final class NetworkAcceptanceServerTest {
         NetworkAcceptanceStacks.assertInverse(inverse);
         assertEquipmentRoutes(player, crafted);
         if (menu.slots.subList(MismatchedWorkbenchMenu.INPUT_START, MismatchedWorkbenchMenu.RESULT_END)
-                .stream().anyMatch(slot -> !slot.getItem().isEmpty())) {
+                      .stream().anyMatch(slot -> !slot.getItem().isEmpty())) {
             throw new AssertionError("Workbench transaction retained inputs or outputs after both were taken");
         }
         if (!player.getInventory().add(crafted.copy())) {
@@ -196,12 +196,12 @@ public final class NetworkAcceptanceServerTest {
             }
             // Exercise the actual dispenser selection path, not merely the component predicate.
             player.level().setBlockAndUpdate(pos, Blocks.DISPENSER.defaultBlockState()
-                    .setValue(DispenserBlock.FACING, Direction.SOUTH));
+                                                                  .setValue(DispenserBlock.FACING, Direction.SOUTH));
             var dispenser = (DispenserBlockEntity) player.level().getBlockEntity(pos);
             dispenser.setItem(0, bare.copy());
             player.level().getBlockState(pos).tick(player.level(), pos, player.level().getRandom());
             var ejected = player.level().getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3),
-                    entity -> ItemStack.matches(entity.getItem(), bare));
+                                                            entity -> ItemStack.matches(entity.getItem(), bare));
             if (!target.getItemBySlot(EquipmentSlot.FEET).isEmpty() || !dispenser.isEmpty() || ejected.size() != 1) {
                 throw new AssertionError("Dispenser did not eject exactly one unequipped bare shell");
             }
@@ -220,7 +220,7 @@ public final class NetworkAcceptanceServerTest {
             player.inventoryMenu.setCarried(previousCarried);
             // Shift-click can route an unequippable shell into a normal inventory slot.
             player.getInventory().getNonEquipmentItems().replaceAll(stack -> ItemStack.matches(stack, bare)
-                    ? ItemStack.EMPTY : stack);
+                                                                             ? ItemStack.EMPTY : stack);
         }
     }
 

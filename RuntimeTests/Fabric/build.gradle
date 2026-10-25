@@ -155,8 +155,8 @@ def viewerCases = [
                 'jei-26.1.2-fabric-29.43.0.106.jar': '352C594FECC491E30ED96E427E6C0617EA95EC134CB3482FCE0C57FF9E65E739']],
         Rei: [id: 'rei', artifacts: [
                 'RoughlyEnoughItems-26.1.819 (Fabric).jar': '45D8F488D3C295E97C88A0AD8D0167348F1E3453F22F274F9D7F7C7C97D799CC',
-                'architectury-fabric-20.1.16.jar': 'A6641789CD7DB92D73D3BA7B6B334CC2A2B0FE668475230AB9276BE4EA112A5E',
-                'cloth-config-26.1.154 (Fabric).jar': 'FB7A5D869CE10EAAC2C2FE9AB84B4FC011A1FBFA575A93BE9845A386A7F0C7D3']]
+                'architectury-fabric-20.1.16.jar'         : 'A6641789CD7DB92D73D3BA7B6B334CC2A2B0FE668475230AB9276BE4EA112A5E',
+                'cloth-config-26.1.154 (Fabric).jar'      : 'FB7A5D869CE10EAAC2C2FE9AB84B4FC011A1FBFA575A93BE9845A386A7F0C7D3']]
 ]
 viewerCases.each { suffix, fixture ->
     def runDirectory = fixtureBuildDirectory.dir("run/${fixture.id}RecipeReloadClient")
@@ -781,7 +781,7 @@ max-tick-time=-1
     }
     betterXCompatibilityPreparations[spec.suffix] = [
             preparation: preparation,
-            report: report
+            report     : report
     ]
     tasks.named("runBetterXCompatibility${spec.suffix}") {
         dependsOn preparation
@@ -891,11 +891,11 @@ tasks.register('verifyBetterXCompatibility') {
                     'mismatchedboots.betterx.mixins.json',
                     'games/alejandrocoria/mismatchedboots/compatibility/betterx/BetterXMixinPlugin.class',
                     'games/alejandrocoria/mismatchedboots/compatibility/betterx/'
-                            + 'BetterNetherPiglinArmorAdapter.class',
+                    +'BetterNetherPiglinArmorAdapter.class',
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
-                            + 'BetterEndMobEffectApplierMixin.class',
+                    +'BetterEndMobEffectApplierMixin.class',
                     'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
-                            + 'BetterNetherPiglinArmorMixin.class'
+                    +'BetterNetherPiglinArmorMixin.class'
             ]
             def missingEntries = requiredEntries.findAll { productionZip.getEntry(it) == null }
             if (!missingEntries.isEmpty()) {
@@ -1174,7 +1174,7 @@ tasks.register('verifyGameTestContextGuard') {
         def failures = document.getElementsByTagName('failure')
         if (document.getElementsByTagName('testcase').length != 1 || failures.length != 1
                 || !failures.item(0).getAttribute('message').contains(
-                        'Focused GameTest is missing its required context: mismatchedboots.test.componentRules')) {
+                'Focused GameTest is missing its required context: mismatchedboots.test.componentRules')) {
             throw new GradleException("Missing-context run failed for an unexpected reason; see ${log}")
         }
         logger.lifecycle('Focused GameTest missing-context guard rejected the invalid run')

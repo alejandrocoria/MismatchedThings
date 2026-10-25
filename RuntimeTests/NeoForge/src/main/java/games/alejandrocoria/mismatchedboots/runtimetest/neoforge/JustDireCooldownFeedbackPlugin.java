@@ -17,22 +17,39 @@ public final class JustDireCooldownFeedbackPlugin implements IMixinConfigPlugin 
     private boolean enabled;
     private boolean lifecycle;
 
-    @Override public void onLoad(String mixinPackage) {
+    @Override
+    public void onLoad(String mixinPackage) {
         lifecycle = !System.getProperty("mismatchedboots.runtimetest.justDireGroundStompLifecycle", "").isEmpty();
         enabled = (lifecycle || Boolean.getBoolean("mismatchedboots.runtimetest.justDireCooldownHudTest"))
                 && !JustDireCooldownFeedbackTestSupport.VARIANT.equals("absent");
     }
-    @Override public boolean shouldApplyMixin(String target, String mixin) {
-        if (!enabled) { return false; }
+
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        if (!enabled) {
+            return false;
+        }
         String variant = JustDireCooldownFeedbackTestSupport.VARIANT;
-        if (mixin.endsWith("HudMissingMixin")) { return !lifecycle && variant.equals("hooksMissing"); }
-        if (mixin.endsWith("MetadataMissingMixin")) { return !lifecycle && variant.equals("parametersMissing"); }
-        if (mixin.endsWith("HighMixin")) { return !lifecycle && variant.equals("high"); }
-        if (mixin.endsWith("LowMixin")) { return !lifecycle && variant.equals("low"); }
+        if (mixin.endsWith("HudMissingMixin")) {
+            return !lifecycle && variant.equals("hooksMissing");
+        }
+        if (mixin.endsWith("MetadataMissingMixin")) {
+            return !lifecycle && variant.equals("parametersMissing");
+        }
+        if (mixin.endsWith("HighMixin")) {
+            return !lifecycle && variant.equals("high");
+        }
+        if (mixin.endsWith("LowMixin")) {
+            return !lifecycle && variant.equals("low");
+        }
         return mixin.endsWith("DrawMixin") || mixin.endsWith("SoundMixin");
     }
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        if (!mixin.endsWith("HudMissingMixin")) { return; }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (!mixin.endsWith("HudMissingMixin")) {
+            return;
+        }
         for (var method : node.methods) {
             for (var instruction : method.instructions) {
                 if (instruction instanceof MethodInsnNode call && call.owner.equals(
@@ -46,8 +63,22 @@ public final class JustDireCooldownFeedbackPlugin implements IMixinConfigPlugin 
             }
         }
     }
-    @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
+
+    @Override
+    public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
 }

@@ -14,7 +14,7 @@ public class MismatchedBootsClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         MenuScreens.register(ModContent.mismatchedWorkbenchMenuType().orElseThrow(),
-                MismatchedWorkbenchScreen::new);
+                             MismatchedWorkbenchScreen::new);
         ClientPlayConnectionEvents.JOIN.register(
                 (handler, sender, client) -> CompositionRulesClientLifecycle.onConnected());
         ClientRecipeSynchronizedEvent.EVENT.register((client, recipes) -> {

@@ -31,14 +31,17 @@ import java.util.function.Consumer;
 public final class NeoForgeNeoVitaeCompositionTest {
     private static boolean finished;
 
-    private NeoForgeNeoVitaeCompositionTest() {}
+    private NeoForgeNeoVitaeCompositionTest() {
+    }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
     }
 
     private static void tick(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         finished = true;
         try {
             if (Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeRestart")) {
@@ -48,23 +51,26 @@ public final class NeoForgeNeoVitaeCompositionTest {
             }
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeAbsent");
             require(ModList.get().isLoaded("neovitae") != absent, "Wrong optional-mod environment");
-            if (absent) { verifyAbsent(server.overworld()); }
-            else {
+            if (absent) {
+                verifyAbsent(server.overworld());
+            } else {
                 verifyNative(server.overworld());
                 NeoVitaeCompositionLifecycleTest.save(server);
             }
             NetworkAcceptanceFiles.write("neo-vitae-composition-report.txt", absent
-                    ? "optional absent: production pair, inverse provenance, ordinary durability, immutable inputs, tier recomposition preview\n"
-                    : "native components + production creation finalizer: one-sided, same-type, conflicting positive types, "
-                    + "empty/defaulted, no container/orphan charge; marker union including false; "
-                    + "both orientations, swapped inputs, repeated previews, immutable provenance, malformed rejection; "
-                    + "live tuple/marker preservation: 8 states x 2 orientations with synthetic source replacement and repeat; "
-                    + "root-only installation/absence, invalid live rejection; paid native menus covered by lifecycle report\n");
+                                                                             ? "optional absent: production pair, inverse provenance, ordinary durability, immutable inputs, tier recomposition preview\n"
+                                                                             : "native components + production creation finalizer: one-sided, same-type, conflicting positive types, "
+                                                                               + "empty/defaulted, no container/orphan charge; marker union including false; "
+                                                                               + "both orientations, swapped inputs, repeated previews, immutable provenance, malformed rejection; "
+                                                                               + "live tuple/marker preservation: 8 states x 2 orientations with synthetic source replacement and repeat; "
+                                                                               + "root-only installation/absence, invalid live rejection; paid native menus covered by lifecycle report\n");
             NetworkAcceptanceFiles.write("neo-vitae-composition-success.txt", "neoforge\n");
         } catch (Throwable failure) {
             NetworkAcceptanceFiles.failure(Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeRestart")
-                    ? "neo-vitae-composition-restart" : "neo-vitae-composition", failure);
-        } finally { server.halt(false); }
+                                           ? "neo-vitae-composition-restart" : "neo-vitae-composition", failure);
+        } finally {
+            server.halt(false);
+        }
     }
 
     private static void verifyAbsent(ServerLevel level) {
@@ -73,7 +79,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
         var pair = MixedBootsFactory.createPair(first, second);
         int expectedDurability = (first.getMaxDamage() + second.getMaxDamage()) / 2;
         require(pair.primary().getMaxDamage() == expectedDurability
-                && pair.inverse().getMaxDamage() == expectedDurability, "Ordinary average durability changed");
+                        && pair.inverse().getMaxDamage() == expectedDurability, "Ordinary average durability changed");
         require(ItemStack.matches(ModContent.getMixedBootsData(pair.inverse()).orElseThrow().left().source(), second),
                 "Absent inverse provenance changed");
         require(ItemStack.matches(before, first) && ItemStack.matches(secondBefore, second), "Absent source mutated");
@@ -95,7 +101,10 @@ public final class NeoForgeNeoVitaeCompositionTest {
         Object raw = type.codec().parse(JsonOps.INSTANCE, new JsonPrimitive("raw")).getOrThrow();
         Object ruina = type.codec().parse(JsonOps.INSTANCE, new JsonPrimitive("ruina")).getOrThrow();
         ItemStack first = new ItemStack(Items.IRON_BOOTS), plain = new ItemStack(Items.DIAMOND_BOOTS);
-        first.set(capacity, 100D); first.set(amount, 60D); first.set(type, ruina); first.set(blood, false);
+        first.set(capacity, 100D);
+        first.set(amount, 60D);
+        first.set(type, ruina);
+        first.set(blood, false);
         ItemStack before = first.copy(), plainBefore = plain.copy();
         for (int preview = 0; preview < 2; preview++) {
             for (boolean swap : List.of(false, true)) {
@@ -105,16 +114,20 @@ public final class NeoForgeNeoVitaeCompositionTest {
                     require(Boolean.TRUE.equals(root.get(blood)), "Presence-based marker union failed");
                     var data = ModContent.getMixedBootsData(root).orElseThrow();
                     require(ItemStack.matches(data.left().source(), root == pair.primary()
-                            ? (swap ? plainBefore : before) : (swap ? before : plainBefore)), "Owner provenance changed");
+                                                                    ? (swap ? plainBefore : before) : (swap ? before : plainBefore)),
+                            "Owner provenance changed");
                     require(ItemStack.matches(data.right().source(), root == pair.primary()
-                            ? (swap ? before : plainBefore) : (swap ? plainBefore : before)), "Other provenance changed");
+                                                                     ? (swap ? before : plainBefore) : (swap ? plainBefore : before)),
+                            "Other provenance changed");
                 }
             }
         }
         require(ItemStack.matches(before, first) && ItemStack.matches(plainBefore, plain), "Preview mutated inputs");
 
         ItemStack second = plain.copy();
-        second.set(capacity, 200D); second.set(amount, 90D); second.set(type, raw);
+        second.set(capacity, 200D);
+        second.set(amount, 90D);
+        second.set(type, raw);
         var conflict = MixedBootsFactory.createPair(first, second);
         tuple(conflict.primary(), capacity, amount, type, 200, 60, ruina);
         tuple(conflict.inverse(), capacity, amount, type, 200, 90, raw);
@@ -127,13 +140,16 @@ public final class NeoForgeNeoVitaeCompositionTest {
         for (ItemStack root : List.of(compatible.primary(), compatible.inverse())) {
             tuple(root, capacity, amount, type, 200, 75, ruina);
         }
-        first.remove(amount); first.remove(type); first.remove(blood);
+        first.remove(amount);
+        first.remove(type);
+        first.remove(blood);
         var empty = MixedBootsFactory.createPair(first, plain);
         for (ItemStack root : List.of(empty.primary(), empty.inverse())) {
             tuple(root, capacity, amount, type, 100, 0, raw);
             require(!root.has(blood), "Absent marker manufactured");
         }
-        plain.set(amount, 500D); plain.set(type, ruina);
+        plain.set(amount, 500D);
+        plain.set(type, ruina);
         var uninfused = MixedBootsFactory.createPair(plain, new ItemStack(Items.GOLDEN_BOOTS));
         for (ItemStack root : List.of(uninfused.primary(), uninfused.inverse())) {
             require(!root.has(capacity) && !root.has(amount) && !root.has(type), "Orphan charge installed container");
@@ -141,8 +157,11 @@ public final class NeoForgeNeoVitaeCompositionTest {
         first.set(amount, 101D);
         ItemStack invalidBefore = first.copy(), otherBefore = plain.copy();
         boolean rejected = false;
-        try { MixedBootsFactory.createPair(plain, first); }
-        catch (IllegalArgumentException expected) { rejected = true; }
+        try {
+            MixedBootsFactory.createPair(plain, first);
+        } catch (IllegalArgumentException expected) {
+            rejected = true;
+        }
         require(rejected && ItemStack.matches(first, invalidBefore) && ItemStack.matches(plain, otherBefore),
                 "Malformed pair was published or consumed inputs");
         verifyPreservation(level, capacity, amount, type, blood, raw, ruina);
@@ -152,17 +171,39 @@ public final class NeoForgeNeoVitaeCompositionTest {
                                            DataComponentType<Double> amount, DataComponentType<Object> type,
                                            DataComponentType<Boolean> blood, Object raw, Object ruina) {
         ItemStack first = new ItemStack(Items.DIAMOND_BOOTS), second = new ItemStack(Items.IRON_BOOTS);
-        first.set(capacity, 100D); first.set(amount, 60D); first.set(type, raw); first.set(blood, false);
+        first.set(capacity, 100D);
+        first.set(amount, 60D);
+        first.set(type, raw);
+        first.set(blood, false);
         var pair = MixedBootsFactory.createPair(first, second);
-        record Case(String name, Consumer<ItemStack> change) {}
+        record Case(String name, Consumer<ItemStack> change) {
+        }
         var cases = List.of(
                 new Case("spent", root -> root.set(amount, 7.25)),
                 new Case("depleted", root -> root.set(amount, 0D)),
-                new Case("refilled different type", root -> { root.set(amount, 12.5); root.set(type, ruina); }),
-                new Case("equal old projection", root -> { root.set(amount, 60D); root.set(blood, false); }),
-                new Case("larger live container", root -> { root.set(capacity, 4096D); root.set(amount, 512D); root.set(type, ruina); }),
-                new Case("removed tuple/marker", root -> { root.remove(capacity); root.remove(amount); root.remove(type); root.remove(blood); }),
-                new Case("defaulted fields", root -> { root.remove(amount); root.remove(type); }),
+                new Case("refilled different type", root -> {
+                    root.set(amount, 12.5);
+                    root.set(type, ruina);
+                }),
+                new Case("equal old projection", root -> {
+                    root.set(amount, 60D);
+                    root.set(blood, false);
+                }),
+                new Case("larger live container", root -> {
+                    root.set(capacity, 4096D);
+                    root.set(amount, 512D);
+                    root.set(type, ruina);
+                }),
+                new Case("removed tuple/marker", root -> {
+                    root.remove(capacity);
+                    root.remove(amount);
+                    root.remove(type);
+                    root.remove(blood);
+                }),
+                new Case("defaulted fields", root -> {
+                    root.remove(amount);
+                    root.remove(type);
+                }),
                 new Case("present false marker", root -> root.set(blood, false)));
         for (ItemStack orientation : List.of(pair.primary(), pair.inverse())) {
             for (Case example : cases) {
@@ -173,17 +214,20 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 var data = ModContent.getMixedBootsData(root).orElseThrow();
                 ItemStack changed = data.left().source(), unchanged = data.right().source();
                 // Deliberate synthetic source replacement, not a native recipe: expose three-way equality mistakes.
-                changed.set(capacity, 200D); changed.set(amount, 90D); changed.set(type, ruina); changed.set(blood, true);
+                changed.set(capacity, 200D);
+                changed.set(amount, 90D);
+                changed.set(type, ruina);
+                changed.set(blood, true);
                 ItemStack changedBefore = changed.copy(), unchangedBefore = unchanged.copy();
                 ItemStack output = MixedBootsRecomposer.recompose(root, changed, unchanged);
                 sameLiveState(root, output, capacity, amount, type, blood, example.name);
                 sameLiveState(root, MixedBootsRecomposer.recompose(output, changed, unchanged),
-                        capacity, amount, type, blood, example.name + " repeated");
+                              capacity, amount, type, blood, example.name + " repeated");
                 var projected = ModContent.getMixedBootsData(output).orElseThrow();
                 require(ItemStack.matches(projected.left().source(), changedBefore)
-                        && ItemStack.matches(projected.right().source(), unchangedBefore), "Transformed provenance mismatch");
+                                && ItemStack.matches(projected.right().source(), unchangedBefore), "Transformed provenance mismatch");
                 require(ItemStack.matches(before, root) && ItemStack.matches(changedBefore, changed)
-                        && ItemStack.matches(unchangedBefore, unchanged), "Recomposition mutated an input");
+                                && ItemStack.matches(unchangedBefore, unchanged), "Recomposition mutated an input");
             }
         }
         // Neither historical source had storage: preserve a later root-only install, or exact absence.
@@ -191,24 +235,35 @@ public final class NeoForgeNeoVitaeCompositionTest {
             ItemStack root = MixedBootsFactory.createPair(new ItemStack(Items.DIAMOND_BOOTS), second).primary();
             decorate(level, root);
             if (installed) {
-                root.set(capacity, 4096D); root.set(amount, 512D); root.set(type, ruina); root.set(blood, true);
+                root.set(capacity, 4096D);
+                root.set(amount, 512D);
+                root.set(type, ruina);
+                root.set(blood, true);
             }
             sameLiveState(root, MixedBootsRecomposer.recompose(root, first, second),
-                    capacity, amount, type, blood, "root-only installation/absence");
+                          capacity, amount, type, blood, "root-only installation/absence");
         }
 
         ItemStack live = pair.primary().copy();
         decorate(level, live);
-        live.set(capacity, 4096D); live.set(amount, 12.5); live.set(type, ruina); live.set(blood, false);
+        live.set(capacity, 4096D);
+        live.set(amount, 12.5);
+        live.set(type, ruina);
+        live.set(blood, false);
         // C's paid native menu takes replace the former duplicate positive recipe previews.
         live.set(amount, 4097D);
         ItemStack invalidBefore = live.copy();
         boolean rejected = false;
-        try { MixedBootsRecomposer.recompose(live, first, second); }
-        catch (IllegalArgumentException expected) { rejected = true; }
+        try {
+            MixedBootsRecomposer.recompose(live, first, second);
+        } catch (IllegalArgumentException expected) {
+            rejected = true;
+        }
         require(rejected && MixedBootsSmithingPolicy.evaluate(level,
-                new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), live, new ItemStack(Items.NETHERITE_INGOT)).isEmpty()
-                && ItemStack.matches(invalidBefore, live), "Invalid live tuple was published or mutated");
+                                                              new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                                                              live,
+                                                              new ItemStack(Items.NETHERITE_INGOT)).isEmpty()
+                        && ItemStack.matches(invalidBefore, live), "Invalid live tuple was published or mutated");
     }
 
     static void decorate(ServerLevel level, ItemStack root) {
@@ -221,16 +276,17 @@ public final class NeoForgeNeoVitaeCompositionTest {
     private static ItemStack smithing(ServerLevel level, ItemStack root, Item template, Item addition) {
         ItemStack before = root.copy();
         ItemStack result = MixedBootsSmithingPolicy.evaluate(level, new ItemStack(template), root, new ItemStack(addition))
-                .orElseThrow(() -> new IllegalStateException("Missing loaded smithing preview: " + template)).output();
+                                                   .orElseThrow(() -> new IllegalStateException("Missing loaded smithing preview: " + template))
+                                                   .output();
         require(ItemStack.matches(before, root), "Recipe preview mutated root/provenance");
         return result;
     }
 
     static void sameLiveState(ItemStack previous, ItemStack output, DataComponentType<Double> capacity,
-                                       DataComponentType<Double> amount, DataComponentType<Object> type,
-                                       DataComponentType<Boolean> blood, String context) {
+                              DataComponentType<Double> amount, DataComponentType<Object> type,
+                              DataComponentType<Boolean> blood, String context) {
         for (var field : List.of(capacity, amount, type, blood, DataComponents.DAMAGE, DataComponents.CUSTOM_NAME,
-                DataComponents.ENCHANTMENTS, DataComponents.REPAIR_COST)) {
+                                 DataComponents.ENCHANTMENTS, DataComponents.REPAIR_COST)) {
             require(previous.has(field) == output.has(field) && Objects.equals(previous.get(field), output.get(field)),
                     "Live state changed during " + context + ": " + BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(field));
         }
@@ -239,7 +295,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
     private static void tuple(ItemStack root, DataComponentType<Double> capacity, DataComponentType<Double> amount,
                               DataComponentType<Object> type, double expectedCapacity, double expectedAmount, Object expectedType) {
         require(Double.valueOf(expectedCapacity).equals(root.get(capacity))
-                && Double.valueOf(expectedAmount).equals(root.get(amount)) && expectedType.equals(root.get(type)),
+                        && Double.valueOf(expectedAmount).equals(root.get(amount)) && expectedType.equals(root.get(type)),
                 "Unexpected native tuple: " + root);
     }
 
@@ -250,6 +306,8 @@ public final class NeoForgeNeoVitaeCompositionTest {
     }
 
     private static void require(boolean valid, String message) {
-        if (!valid) { throw new IllegalStateException(message); }
+        if (!valid) {
+            throw new IllegalStateException(message);
+        }
     }
 }

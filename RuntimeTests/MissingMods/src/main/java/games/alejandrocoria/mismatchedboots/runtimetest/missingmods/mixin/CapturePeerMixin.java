@@ -21,17 +21,26 @@ abstract class CapturePeerMixin {
     @WrapOperation(method = "<clinit>", at = @At(value = "INVOKE", target =
             "Lcom/mojang/serialization/MapCodec;recursive(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;"))
     private static MapCodec<ItemStack> peer(String name, Function<Codec<ItemStack>, MapCodec<ItemStack>> factory,
-            Operation<MapCodec<ItemStack>> original) {
+                                            Operation<MapCodec<ItemStack>> original) {
         // A real competing wrapper which skips its operation must trigger production's independent startup witness.
-        if (Boolean.getBoolean("mismatchedboots.test.missingModsBypass")) { return MapCodec.unit(() -> ItemStack.EMPTY); }
+        if (Boolean.getBoolean("mismatchedboots.test.missingModsBypass")) {
+            return MapCodec.unit(() -> ItemStack.EMPTY);
+        }
         Function<Codec<ItemStack>, MapCodec<ItemStack>> wrapped = self -> {
             var delegate = factory.apply(self);
             return new MapCodec<>() {
-                @Override public <T> Stream<T> keys(DynamicOps<T> ops) { return delegate.keys(ops); }
-                @Override public <T> RecordBuilder<T> encode(ItemStack value, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+                @Override
+                public <T> Stream<T> keys(DynamicOps<T> ops) {
+                    return delegate.keys(ops);
+                }
+
+                @Override
+                public <T> RecordBuilder<T> encode(ItemStack value, DynamicOps<T> ops, RecordBuilder<T> prefix) {
                     return delegate.encode(value, ops, prefix);
                 }
-                @Override public <T> DataResult<ItemStack> decode(DynamicOps<T> ops, MapLike<T> input) {
+
+                @Override
+                public <T> DataResult<ItemStack> decode(DynamicOps<T> ops, MapLike<T> input) {
                     CaptureWitness.peerDecodes++;
                     return delegate.decode(ops, input);
                 }

@@ -48,17 +48,21 @@ public final class ComponentCompositionGameTests {
         ItemStack rightBefore = right.copy();
         rejects(helper, () -> create(left, right, rules));
         rejects(helper, () -> create(right, left, rules));
-        rejects(helper, () -> MixedBootsRecomposer.recompose(root, left, right,
-                ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), withComponents(rules)));
+        rejects(helper, () -> MixedBootsRecomposer.recompose(root,
+                                                             left,
+                                                             right,
+                                                             ModContent.mixedBootsDataType().orElseThrow(),
+                                                             AttributeRuleDefaults.ruleSet(),
+                                                             withComponents(rules)));
         helper.assertTrue(ItemStack.matches(before, root), "Rejected recomposition mutated live root");
         helper.assertTrue(ItemStack.matches(leftBefore, left) && ItemStack.matches(rightBefore, right),
-                "Rejected composition changed or consumed inputs");
+                          "Rejected composition changed or consumed inputs");
         helper.succeed();
     }
 
     private static MixedBootsPair create(ItemStack left, ItemStack right, ComponentRuleSet rules) {
         return MixedBootsFactory.createPair(left, right, BuiltInRegistries.ITEM.getOrThrow(ModContent.MIXED_BOOTS_KEY),
-                ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), withComponents(rules));
+                                            ModContent.mixedBootsDataType().orElseThrow(), AttributeRuleDefaults.ruleSet(), withComponents(rules));
     }
 
     private static ComponentRules withComponents(ComponentRuleSet components) {

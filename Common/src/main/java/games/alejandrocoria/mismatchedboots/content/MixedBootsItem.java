@@ -28,18 +28,18 @@ public class MixedBootsItem extends Item {
         if (recovery != null) {
             String state = recovery.quarantined() ? "quarantined" : recovery.conflicted() ? "conflicted" : "suspended";
             tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots." + state)
-                    .withStyle(ChatFormatting.RED));
+                                    .withStyle(ChatFormatting.RED));
             return;
         }
         MixedBootsData data = ModContent.getMixedBootsData(stack).orElse(null);
         if (data == null) {
             tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots.invalid")
-                    .withStyle(ChatFormatting.RED));
+                                    .withStyle(ChatFormatting.RED));
             return;
         }
 
         MixedBootsTooltipFormatter.appendSourceSections(data, context, flag, tooltip,
-                (source, output) -> sourceTooltip(source, flag, output));
+                                                        (source, output) -> sourceTooltip(source, flag, output));
     }
 
     /** Optional item-local adaptation of source information; stored sources remain read-only provenance. */

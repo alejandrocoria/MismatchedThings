@@ -25,7 +25,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class RecipeViewerReloadClientGameTest implements FabricClientGameTest {
     public interface Probe {
         boolean ready();
+
         List<Cycle> cycles();
+
         void open();
     }
 
@@ -63,14 +65,14 @@ public final class RecipeViewerReloadClientGameTest implements FabricClientGameT
         context.waitTicks(10);
         try {
             context.waitFor(client -> CompositionRulesClientLifecycle.areRulesSynchronized() && probe.ready()
-                && (mode == 1 ? !MismatchedWorkbenchClientRecipes.hasRecipes() && probe.cycles().isEmpty()
-                : MismatchedWorkbenchClientRecipes.hasRecipes() && matches(probe.cycles(), mode == 2)));
+                    && (mode == 1 ? !MismatchedWorkbenchClientRecipes.hasRecipes() && probe.cycles().isEmpty()
+                                  : MismatchedWorkbenchClientRecipes.hasRecipes() && matches(probe.cycles(), mode == 2)));
         } catch (AssertionError failure) {
             context.runOnClient(client -> {
                 throw new AssertionError("Viewer phase " + mode + ": rules="
-                        + CompositionRulesClientLifecycle.areRulesSynchronized() + ", ready=" + probe.ready()
-                        + ", recipes=" + MismatchedWorkbenchClientRecipes.hasRecipes()
-                        + ", cycles=" + probe.cycles().size(), failure);
+                                                 + CompositionRulesClientLifecycle.areRulesSynchronized() + ", ready=" + probe.ready()
+                                                 + ", recipes=" + MismatchedWorkbenchClientRecipes.hasRecipes()
+                                                 + ", cycles=" + probe.cycles().size(), failure);
             });
             throw failure;
         }
@@ -105,7 +107,9 @@ public final class RecipeViewerReloadClientGameTest implements FabricClientGameT
     }
 
     private static boolean matches(List<Cycle> cycles, boolean reversed) {
-        if (cycles.size() != 1) return false;
+        if (cycles.size() != 1) {
+            return false;
+        }
         Cycle cycle = cycles.getFirst();
         if (cycle.left().isEmpty() || cycle.left().size() != cycle.right().size()
                 || cycle.left().size() != cycle.primary().size() || cycle.left().size() != cycle.inverse().size()) {
@@ -137,10 +141,10 @@ public final class RecipeViewerReloadClientGameTest implements FabricClientGameT
                             "min_format":[%d,%d],"max_format":[%d,%d]}}
                             """.formatted(format.major(), format.minor(), format.major(), format.minor()));
                     Files.writeString(pack.resolve("data/mismatchedboots/recipe/mixed_boots_workbench.json"),
-                            mode == 1 ? """
-                            {"fabric:load_conditions":[{"condition":"fabric:false"}],
-                            "type":"mismatchedboots:mixed_boots_workbench"}
-                            """ : "{\"type\":\"mismatchedboots-test:reversed_workbench\"}");
+                                      mode == 1 ? """
+                                              {"fabric:load_conditions":[{"condition":"fabric:false"}],
+                                              "type":"mismatchedboots:mixed_boots_workbench"}
+                                              """ : "{\"type\":\"mismatchedboots-test:reversed_workbench\"}");
                 } catch (IOException exception) {
                     throw new UncheckedIOException(exception);
                 }

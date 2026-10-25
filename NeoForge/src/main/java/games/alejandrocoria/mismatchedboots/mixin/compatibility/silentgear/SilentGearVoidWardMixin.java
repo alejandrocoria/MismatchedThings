@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.event.GearEvents", remap = false)
 abstract class SilentGearVoidWardMixin {
-    @Unique private static boolean mismatchedboots$sgVoidReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgVoidReady() {
+        return false;
+    }
 
     @ModifyExpressionValue(method = "onPlayerTick", at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearVoidWardInjectionPoint"), require = 0, expect = 0, allow = 1)
     private static boolean mismatchedboots$sgVoidWard(boolean original, PlayerTickEvent.Pre event) {

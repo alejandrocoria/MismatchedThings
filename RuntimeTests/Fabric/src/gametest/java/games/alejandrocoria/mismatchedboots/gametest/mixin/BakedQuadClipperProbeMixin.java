@@ -19,7 +19,7 @@ abstract class BakedQuadClipperProbeMixin {
     private static BakedQuadClipper.ExtensionMetadata mismatchedboots$forceVisualFallback(
             BakedQuadClipper.ExtensionMetadata metadata) {
         return HybridItemRenderingRuntimeClientGameTest.forceVisualFallback
-                ? BakedQuadClipper.ExtensionMetadata.UNSUPPORTED : metadata;
+               ? BakedQuadClipper.ExtensionMetadata.UNSUPPORTED : metadata;
     }
 
     @Inject(method = "clip", at = @At("HEAD"))

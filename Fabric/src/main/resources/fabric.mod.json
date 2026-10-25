@@ -13,10 +13,8 @@
         "issues": "${mod_issues}",
         "sources": "${mod_sources}"
     },
-
     "license": "${mod_license}",
     "icon": "${mod_logo}",
-
     "environment": "*",
     "accessWidener": "mismatchedboots.accesswidener",
     "entrypoints": {
@@ -33,7 +31,6 @@
             "games.alejandrocoria.mismatchedboots.compatibility.rei.MismatchedBootsReiClientPlugin"
         ]
     },
-
     "mixins": [
         "mismatchedboots.mixins.json",
         "mismatchedboots.recovery.mixins.json",
@@ -43,7 +40,6 @@
         "mismatchedboots.createfly.mixins.json",
         "mismatchedboots.client.mixins.json"
     ],
-
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": ">=${fabric_api_min_version}",

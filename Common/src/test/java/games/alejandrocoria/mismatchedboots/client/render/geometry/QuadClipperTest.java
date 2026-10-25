@@ -142,9 +142,9 @@ class QuadClipperTest {
                 assertEquals(3, left.vertices().size());
                 assertEquals(5, right.vertices().size());
                 assertTrue(normal(left).dot(inputNormal) > 0.0F,
-                        "Left winding changed at rotation " + rotation);
+                           "Left winding changed at rotation " + rotation);
                 assertTrue(normal(right).dot(inputNormal) > 0.0F,
-                        "Right winding changed at rotation " + rotation);
+                           "Right winding changed at rotation " + rotation);
             }
         }
     }
@@ -179,7 +179,7 @@ class QuadClipperTest {
                 for (QuadClipper.Side side : QuadClipper.Side.values()) {
                     QuadClipper.Quad output = split(input, side);
                     assertTrue(normal(output).dot(inputNormal) > 0.0F,
-                            "Winding changed for " + side + " at rotation " + rotation);
+                               "Winding changed for " + side + " at rotation " + rotation);
                 }
             }
         }
@@ -267,59 +267,59 @@ class QuadClipperTest {
     static Stream<Arguments> invalidCrossingShapes() {
         return Stream.of(
                 Arguments.of(new QuadClipper.Quad(
-                                vertex(-1.0F, -1.0F, 0.0F),
-                                vertex(1.0F, -1.0F, 0.0F),
-                                vertex(0.5F, 1.0F, 0.0F),
-                                vertex(-1.0F, 1.0F, 0.0F)),
-                        QuadClipper.Incompatibility.NOT_RECTANGLE),
+                                     vertex(-1.0F, -1.0F, 0.0F),
+                                     vertex(1.0F, -1.0F, 0.0F),
+                                     vertex(0.5F, 1.0F, 0.0F),
+                                     vertex(-1.0F, 1.0F, 0.0F)),
+                             QuadClipper.Incompatibility.NOT_RECTANGLE),
                 Arguments.of(new QuadClipper.Quad(
-                                vertex(-1.0F, -1.0F, 0.0F),
-                                vertex(1.0F, -1.0F, 0.0F),
-                                vertex(-0.25F, 0.0F, 0.0F),
-                                vertex(1.0F, 1.0F, 0.0F)),
-                        QuadClipper.Incompatibility.NOT_RECTANGLE),
+                                     vertex(-1.0F, -1.0F, 0.0F),
+                                     vertex(1.0F, -1.0F, 0.0F),
+                                     vertex(-0.25F, 0.0F, 0.0F),
+                                     vertex(1.0F, 1.0F, 0.0F)),
+                             QuadClipper.Incompatibility.NOT_RECTANGLE),
                 Arguments.of(new QuadClipper.Quad(
-                                vertex(-1.0F, -1.0F, 0.0F),
-                                vertex(1.0F, 1.0F, 0.0F),
-                                vertex(-1.0F, 1.0F, 0.0F),
-                                vertex(1.0F, -1.0F, 0.0F)),
-                        QuadClipper.Incompatibility.NOT_RECTANGLE),
+                                     vertex(-1.0F, -1.0F, 0.0F),
+                                     vertex(1.0F, 1.0F, 0.0F),
+                                     vertex(-1.0F, 1.0F, 0.0F),
+                                     vertex(1.0F, -1.0F, 0.0F)),
+                             QuadClipper.Incompatibility.NOT_RECTANGLE),
                 Arguments.of(warpedRectangle(0.01F), QuadClipper.Incompatibility.NOT_RECTANGLE),
                 Arguments.of(new QuadClipper.Quad(
-                                vertex(-1.0F, -1.0F, 0.0F),
-                                vertex(1.0F, -1.0F, 0.0F),
-                                vertex(1.0F, -1.0F, 0.0F),
-                                vertex(-1.0F, 1.0F, 0.0F)),
-                        QuadClipper.Incompatibility.NOT_RECTANGLE),
+                                     vertex(-1.0F, -1.0F, 0.0F),
+                                     vertex(1.0F, -1.0F, 0.0F),
+                                     vertex(1.0F, -1.0F, 0.0F),
+                                     vertex(-1.0F, 1.0F, 0.0F)),
+                             QuadClipper.Incompatibility.NOT_RECTANGLE),
                 Arguments.of(rotatedAndTranslatedRectangle(),
-                        QuadClipper.Incompatibility.UNSUPPORTED_TOPOLOGY));
+                             QuadClipper.Incompatibility.UNSUPPORTED_TOPOLOGY));
     }
 
     @ParameterizedTest
     @MethodSource("nonFiniteQuads")
     void rejectsNonFinitePositionsClippingCoordinatesAndUvs(QuadClipper.Quad input) {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> QuadClipper.clip(input, QuadClipper.Side.LEFT));
+                                                          () -> QuadClipper.clip(input, QuadClipper.Side.LEFT));
         assertTrue(exception.getMessage().contains("non-finite"));
     }
 
     static Stream<QuadClipper.Quad> nonFiniteQuads() {
         return Stream.of(
                 replacingVertex(rectangle(-1.0F, 1.0F, -1.0F, 1.0F), 0,
-                        new QuadClipper.Vertex(
-                                new QuadClipper.Point(Float.NaN, 0.0F, 0.0F),
-                                new QuadClipper.Uv(0.0F, 0.0F),
-                                new QuadClipper.Point(-1.0F, -1.0F, 0.0F))),
+                                new QuadClipper.Vertex(
+                                        new QuadClipper.Point(Float.NaN, 0.0F, 0.0F),
+                                        new QuadClipper.Uv(0.0F, 0.0F),
+                                        new QuadClipper.Point(-1.0F, -1.0F, 0.0F))),
                 replacingVertex(rectangle(-1.0F, 1.0F, -1.0F, 1.0F), 0,
-                        new QuadClipper.Vertex(
-                                new QuadClipper.Point(-1.0F, -1.0F, 0.0F),
-                                new QuadClipper.Uv(0.0F, 0.0F),
-                                new QuadClipper.Point(Float.POSITIVE_INFINITY, 0.0F, 0.0F))),
+                                new QuadClipper.Vertex(
+                                        new QuadClipper.Point(-1.0F, -1.0F, 0.0F),
+                                        new QuadClipper.Uv(0.0F, 0.0F),
+                                        new QuadClipper.Point(Float.POSITIVE_INFINITY, 0.0F, 0.0F))),
                 replacingVertex(rectangle(-1.0F, 1.0F, -1.0F, 1.0F), 0,
-                        new QuadClipper.Vertex(
-                                new QuadClipper.Point(-1.0F, -1.0F, 0.0F),
-                                new QuadClipper.Uv(0.0F, Float.NEGATIVE_INFINITY),
-                                new QuadClipper.Point(-1.0F, -1.0F, 0.0F))));
+                                new QuadClipper.Vertex(
+                                        new QuadClipper.Point(-1.0F, -1.0F, 0.0F),
+                                        new QuadClipper.Uv(0.0F, Float.NEGATIVE_INFINITY),
+                                        new QuadClipper.Point(-1.0F, -1.0F, 0.0F))));
     }
 
     @Test
@@ -386,7 +386,7 @@ class QuadClipperTest {
             float x = vertex.clippingPosition().x();
             float y = vertex.clippingPosition().y();
             vertices.add(vertex(x * cosine - y * sine + 0.9F,
-                    x * sine + y * cosine, 0.0F));
+                                x * sine + y * cosine, 0.0F));
         }
         return new QuadClipper.Quad(vertices);
     }
@@ -416,15 +416,15 @@ class QuadClipperTest {
 
     private static QuadClipper.Quad copy(QuadClipper.Quad input) {
         return new QuadClipper.Quad(input.vertices().stream()
-                .map(vertex -> new QuadClipper.Vertex(
-                        new QuadClipper.Point(
-                                vertex.position().x(), vertex.position().y(), vertex.position().z()),
-                        new QuadClipper.Uv(vertex.uv().u(), vertex.uv().v()),
-                        new QuadClipper.Point(
-                                vertex.clippingPosition().x(),
-                                vertex.clippingPosition().y(),
-                                vertex.clippingPosition().z())))
-                .toList());
+                                         .map(vertex -> new QuadClipper.Vertex(
+                                                 new QuadClipper.Point(
+                                                         vertex.position().x(), vertex.position().y(), vertex.position().z()),
+                                                 new QuadClipper.Uv(vertex.uv().u(), vertex.uv().v()),
+                                                 new QuadClipper.Point(
+                                                         vertex.clippingPosition().x(),
+                                                         vertex.clippingPosition().y(),
+                                                         vertex.clippingPosition().z())))
+                                         .toList());
     }
 
     private static List<QuadClipper.Vertex> rotate(List<QuadClipper.Vertex> input, int distance) {
@@ -435,14 +435,14 @@ class QuadClipperTest {
 
     private static QuadClipper.Point normal(QuadClipper.Quad quad) {
         return quad.vertex(1).clippingPosition().subtract(quad.vertex(0).clippingPosition())
-                .cross(quad.vertex(2).clippingPosition().subtract(quad.vertex(1).clippingPosition()));
+                   .cross(quad.vertex(2).clippingPosition().subtract(quad.vertex(1).clippingPosition()));
     }
 
     private static QuadClipper.Point normal(QuadClipper.Polygon polygon) {
         QuadClipper.Point origin = polygon.vertex(0).clippingPosition();
         for (int index = 1; index < polygon.vertices().size() - 1; index++) {
             QuadClipper.Point result = polygon.vertex(index).clippingPosition().subtract(origin)
-                    .cross(polygon.vertex(index + 1).clippingPosition().subtract(origin));
+                                              .cross(polygon.vertex(index + 1).clippingPosition().subtract(origin));
             if (result.lengthSquared() > EPSILON * EPSILON) {
                 return result;
             }

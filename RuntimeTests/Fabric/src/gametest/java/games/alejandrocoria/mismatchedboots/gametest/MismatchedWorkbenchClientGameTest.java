@@ -44,14 +44,14 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                 player.getInventory().clearContent();
                 BlockPos pos = player.blockPosition().relative(Direction.NORTH, 2);
                 player.level().setBlock(pos,
-                        ModContent.mismatchedWorkbenchBlock().orElseThrow().defaultBlockState(), 3);
+                                        ModContent.mismatchedWorkbenchBlock().orElseThrow().defaultBlockState(), 3);
                 workbenchPos.set(pos.immutable());
             });
             singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.level != null
                     && workbenchPos.get() != null
                     && client.level.getBlockState(workbenchPos.get())
-                    .is(ModContent.mismatchedWorkbenchBlock().orElseThrow()));
+                                   .is(ModContent.mismatchedWorkbenchBlock().orElseThrow()));
 
             NetworkTrafficProbe.reset();
             openWorkbench(context, workbenchPos.get());
@@ -68,16 +68,16 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
 
             setServerInputs(singleplayer, Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
             context.waitFor(client -> hasOrientation(clientMenu(client).getSlot(2).getItem(),
-                            Items.IRON_BOOTS, Items.GOLDEN_BOOTS)
+                                                     Items.IRON_BOOTS, Items.GOLDEN_BOOTS)
                     && hasOrientation(clientMenu(client).getSlot(3).getItem(),
-                            Items.GOLDEN_BOOTS, Items.IRON_BOOTS));
+                                      Items.GOLDEN_BOOTS, Items.IRON_BOOTS));
             assertPreviewRendering(context);
             assertOccupiedInputGlyphsDisappear(context);
             context.runOnClient(client -> {
                 assertTooltipOrientation(client, clientMenu(client).getSlot(2).getItem(),
-                        Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
+                                         Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
                 assertTooltipOrientation(client, clientMenu(client).getSlot(3).getItem(),
-                        Items.GOLDEN_BOOTS, Items.IRON_BOOTS);
+                                         Items.GOLDEN_BOOTS, Items.IRON_BOOTS);
             });
             context.takeScreenshot("mismatched-workbench-screen");
 
@@ -89,7 +89,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                     && countMixed(client.player) == 0);
 
             singleplayer.getServer().runOnServer(server ->
-                    server.getPlayerList().getPlayers().getFirst().getInventory().clearContent());
+                                                         server.getPlayerList().getPlayers().getFirst().getInventory().clearContent());
             context.waitFor(client -> client.player != null
                     && count(client.player, Items.IRON_BOOTS) == 0
                     && count(client.player, Items.GOLDEN_BOOTS) == 0);
@@ -179,9 +179,9 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
         context.runOnClient(client -> {
             GuiSpriteSubmissionProbe.Snapshot snapshot = GuiSpriteSubmissionProbe.takeSnapshot();
             assertSprite(snapshot, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS, 69, 22,
-                    "left boots input glyph");
+                         "left boots input glyph");
             assertSprite(snapshot, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS, 91, 22,
-                    "right boots input glyph");
+                         "right boots input glyph");
         });
     }
 
@@ -215,10 +215,10 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
     private static ItemStack decorationAt(
             List<GuiItemSubmissionProbe.Decoration> decorations, int x, int y) {
         return decorations.stream()
-                .filter(decoration -> decoration.x() == x && decoration.y() == y)
-                .map(GuiItemSubmissionProbe.Decoration::stack)
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("No rendered item decoration at " + x + "," + y));
+                          .filter(decoration -> decoration.x() == x && decoration.y() == y)
+                          .map(GuiItemSubmissionProbe.Decoration::stack)
+                          .findFirst()
+                          .orElseThrow(() -> new AssertionError("No rendered item decoration at " + x + "," + y));
     }
 
     private static void assertSprite(
@@ -238,11 +238,11 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
             int x,
             int y) {
         return snapshot.submissions().stream().anyMatch(submission ->
-                submission.sprite().equals(sprite)
-                        && submission.x() == x
-                        && submission.y() == y
-                        && submission.width() == 16
-                        && submission.height() == 16);
+                                                                submission.sprite().equals(sprite)
+                                                                        && submission.x() == x
+                                                                        && submission.y() == y
+                                                                        && submission.width() == 16
+                                                                        && submission.height() == 16);
     }
 
     private static MismatchedWorkbenchMenu clientMenu(Minecraft client) {
@@ -254,8 +254,8 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
 
     private static boolean hasOrientation(ItemStack stack, Item left, Item right) {
         return ModContent.getMixedBootsData(stack)
-                .filter(data -> data.left().source().is(left) && data.right().source().is(right))
-                .isPresent();
+                         .filter(data -> data.left().source().is(left) && data.right().source().is(right))
+                         .isPresent();
     }
 
     private static void assertTooltipOrientation(
@@ -264,7 +264,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                 Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
         if (!hasTooltipLine(tooltip, "tooltip.mismatchedboots.mixed_boots.left", left.getDescriptionId())
                 || !hasTooltipLine(tooltip,
-                "tooltip.mismatchedboots.mixed_boots.right", right.getDescriptionId())) {
+                                   "tooltip.mismatchedboots.mixed_boots.right", right.getDescriptionId())) {
             throw new AssertionError("Natural output tooltip did not identify its orientation: " + tooltip);
         }
     }
@@ -272,7 +272,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
     private static boolean hasTooltipLine(
             List<Component> tooltip, String lineKey, String sourceKey) {
         return tooltip.stream().anyMatch(line ->
-                containsBoldTranslation(line, lineKey) && containsTranslation(line, sourceKey));
+                                                 containsBoldTranslation(line, lineKey) && containsTranslation(line, sourceKey));
     }
 
     private static boolean containsBoldTranslation(Component component, String key) {
@@ -282,7 +282,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
             return true;
         }
         return component.getSiblings().stream()
-                .anyMatch(sibling -> containsBoldTranslation(sibling, key));
+                        .anyMatch(sibling -> containsBoldTranslation(sibling, key));
     }
 
     private static boolean containsTranslation(Component component, String key) {
@@ -301,15 +301,15 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
 
     private static int count(net.minecraft.world.entity.player.Player player, Item item) {
         return player.getInventory().getNonEquipmentItems().stream()
-                .filter(stack -> stack.is(item))
-                .mapToInt(ItemStack::getCount)
-                .sum();
+                     .filter(stack -> stack.is(item))
+                     .mapToInt(ItemStack::getCount)
+                     .sum();
     }
 
     private static int countMixed(net.minecraft.world.entity.player.Player player) {
         return player.getInventory().getNonEquipmentItems().stream()
-                .filter(ModContent::isMixedBoots)
-                .mapToInt(ItemStack::getCount)
-                .sum();
+                     .filter(ModContent::isMixedBoots)
+                     .mapToInt(ItemStack::getCount)
+                     .sum();
     }
 }

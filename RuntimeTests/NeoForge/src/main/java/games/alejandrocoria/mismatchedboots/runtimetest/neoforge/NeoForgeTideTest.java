@@ -70,7 +70,7 @@ final class NeoForgeTideTest {
                 event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
             }
             TRACE.add("applicable:" + state(event.getEffectInstance()) + ":" + event.getResult()
-                    + ":source=" + (event.getEffectSource() == null));
+                              + ":source=" + (event.getEffectSource() == null));
             attempts++;
         }
     }
@@ -78,12 +78,14 @@ final class NeoForgeTideTest {
     private static void added(MobEffectEvent.Added event) {
         if (event.getEntity() == observed && tide(event.getEffectInstance())) {
             TRACE.add("added:" + state(event.getEffectInstance()) + ":old=" + state(event.getOldEffectInstance())
-                    + ":source=" + (event.getEffectSource() == null));
+                              + ":source=" + (event.getEffectSource() == null));
         }
     }
 
     private static void expired(MobEffectEvent.Expired event) {
-        if (event.getEntity() == observed && tide(event.getEffectInstance())) { TRACE.add("expired:" + state(event.getEffectInstance())); }
+        if (event.getEntity() == observed && tide(event.getEffectInstance())) {
+            TRACE.add("expired:" + state(event.getEffectInstance()));
+        }
     }
 
     private static String state(MobEffectInstance effect) {
@@ -92,26 +94,34 @@ final class NeoForgeTideTest {
     }
 
     private static void run(MinecraftServer server) {
-        if (finished) { return; }
+        if (finished) {
+            return;
+        }
         boolean damageOwnsShutdown = false;
         try {
             installed = MODE.equals("feet") ? 8 : 9;
             boolean apiUnavailable = MODE.startsWith("api");
-            ready = MODE.equals("late") || apiUnavailable || MODE.startsWith("base") || MODE.startsWith("predicate") || MODE.equals("extraWork") ? 0 : MODE.equals("missingHead") || MODE.startsWith("headReceiver") ? 8
-                    : MODE.equals("publicationChanged") || MODE.startsWith("feetReceiver") ? 1 : installed;
+            ready = MODE.equals("late") || apiUnavailable || MODE.startsWith("base") || MODE.startsWith("predicate") || MODE.equals("extraWork")
+                    ? 0
+                    : MODE.equals("missingHead") || MODE.startsWith("headReceiver") ? 8
+                                                                                    : MODE.equals("publicationChanged") || MODE.startsWith(
+                                                                                            "feetReceiver") ? 1 : installed;
             require(ModList.get().isLoaded("tide_head_owner") == ((installed & 1) != 0), "HEAD artifact presence");
             require(ModList.get().isLoaded("mismatchedboots_tide_test") == ((installed & 8) != 0), "Production instrumentation presence");
             for (int bit : new int[]{1, 8}) {
                 String owner = bit == 1 ? HEAD : FEET;
                 if ((installed & bit) == 0) {
-                    try { Class.forName(owner, false, NeoForgeTideTest.class.getClassLoader()); throw new AssertionError("Absent owner class available: " + owner); }
-                    catch (ClassNotFoundException expected) { /* Physically absent, not just disabled. */ }
+                    try {
+                        Class.forName(owner, false, NeoForgeTideTest.class.getClassLoader());
+                        throw new AssertionError("Absent owner class available: " + owner);
+                    } catch (ClassNotFoundException expected) { /* Physically absent, not just disabled. */ }
                 } else {
                     String prefix = bit == 1 ? "tideHead$" : "mismatchedboots$tide";
                     String entryGetter = prefix + (bit == 8 ? "EntryReady" : "entryReady");
                     String baseGetter = prefix + (bit == 8 ? "BaseReady" : "baseReady");
                     String armorGetter = prefix + (bit == 8 ? "ArmorType" : "armorType");
-                    require(diagnostic(bit, bit == 1 ? "apiAvailable" : "ownerApiAvailable") == (apiUnavailable ? 0 : 1), "Own early API selection " + owner);
+                    require(diagnostic(bit, bit == 1 ? "apiAvailable" : "ownerApiAvailable") == (apiUnavailable ? 0 : 1),
+                            "Own early API selection " + owner);
                     if (apiUnavailable) {
                         missingMethod(Item.class, baseGetter);
                         if (!MODE.equals("apiAbsent")) {
@@ -122,34 +132,47 @@ final class NeoForgeTideTest {
                     } else {
                         Item receiver = nativeArmor(bit == 1 ? 0 : 3, "blue");
                         int transformedReady = MODE.contains("Receiver") || MODE.startsWith("base") ? installed : ready;
-                        require((boolean) receiver.getClass().getMethod(entryGetter).invoke(receiver) == ((transformedReady & bit) != 0), "Own entry readiness " + owner);
-                        require((boolean) receiver.getClass().getMethod(baseGetter).invoke(receiver) == !MODE.startsWith("base"), "Own base readiness " + owner);
+                        require((boolean) receiver.getClass().getMethod(entryGetter).invoke(receiver) == ((transformedReady & bit) != 0),
+                                "Own entry readiness " + owner);
+                        require((boolean) receiver.getClass().getMethod(baseGetter).invoke(receiver) == !MODE.startsWith("base"),
+                                "Own base readiness " + owner);
                     }
                 }
             }
             level = server.overworld();
             level.getChunk(0, 0);
-            for (BlockPos pos : BlockPos.betweenClosed(0, -60, 0, 2, -57, 2)) { level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState()); }
-            level.getWeatherData().setRaining(false); level.setRainLevel(0);
-            control = player(server, "OwnersControl"); mixed = player(server, "OwnersMixed");
-            if (MODE.equals("apiAbsent")) { absence(); }
-            else {
+            for (BlockPos pos : BlockPos.betweenClosed(0, -60, 0, 2, -57, 2)) {
+                level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+            }
+            level.getWeatherData().setRaining(false);
+            level.setRainLevel(0);
+            control = player(server, "OwnersControl");
+            mixed = player(server, "OwnersMixed");
+            if (MODE.equals("apiAbsent")) {
+                absence();
+            } else {
                 if (MODE.equals("both")) {
                     // Full gameplay matrix once. Other processes exercise their distinct transformation/failure.
                     for (int pieces = 1; pieces < 16; pieces++) {
                         for (boolean wet : List.of(false, true)) {
                             for (boolean inverse : List.of(false, true)) {
-                                for (boolean both : List.of(false, true)) { scenario(pieces, wet, inverse, both); }
+                                for (boolean both : List.of(false, true)) {
+                                    scenario(pieces, wet, inverse, both);
+                                }
                             }
                         }
                     }
                 } else {
                     for (int pieces : new int[]{1, 8, 9, 15}) {
-                        for (boolean wet : List.of(false, true)) { scenario(pieces, wet, false, false); }
+                        for (boolean wet : List.of(false, true)) {
+                            scenario(pieces, wet, false, false);
+                        }
                     }
                     if (MODE.equals("feet")) {
                         for (boolean inverse : List.of(false, true)) {
-                            for (boolean both : List.of(false, true)) { scenario(8, true, inverse, both); }
+                            for (boolean both : List.of(false, true)) {
+                                scenario(8, true, inverse, both);
+                            }
                         }
                     }
                 }
@@ -160,13 +183,19 @@ final class NeoForgeTideTest {
                         control.setItemSlot(SLOTS[i], new ItemStack(nativeArmor(i, "blue")));
                         mixed.setItemSlot(SLOTS[i], new ItemStack(nativeArmor(i, "blue")));
                     }
-                    compare(wet, 0, "ordinary full set"); cases++;
+                    compare(wet, 0, "ordinary full set");
+                    cases++;
                     require(mixed.hasEffect(MobEffects.WATER_BREATHING), "Native full set keeps Water Breathing");
                     require(mixed.hasEffect(MobEffects.STRENGTH) == wet, "Native full set wetness gate");
-                    if (wet) { require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == nativeCount(15) - 1, "Native full set keeps native contributions"); }
+                    if (wet) {
+                        require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == nativeCount(15) - 1,
+                                "Native full set keeps native contributions");
+                    }
                 }
                 negatives();
-                if (MODE.equals("both")) { productionEffects(); }
+                if (MODE.equals("both")) {
+                    productionEffects();
+                }
             }
             int headWarnings = diagnostic(1, "warnings"), feetWarnings = diagnostic(8, "ownerWarnings");
             Class.forName(FEET).getMethod("verifyMutation").invoke(null);
@@ -175,27 +204,39 @@ final class NeoForgeTideTest {
             int headBindings = diagnostic(1, "bindingAttempts"), feetBindings = diagnostic(8, "ownerBindingAttempts");
             require(headBindings == (!apiUnavailable && (installed & 1) != 0 ? 1 : 0), "HEAD binding cached, not retried after rejection");
             require(feetBindings == (!apiUnavailable && (installed & 8) != 0 ? 1 : 0), "FEET binding cached, not retried after rejection");
-            NetworkAcceptanceFiles.write("tide-owners-report.txt", "owners=" + MODE + "; production FEET=true; installed=" + installed + "; ready=" + ready
-                    + "; scenarios=" + cases + "; player ticks=" + ticks + "; Applicable attempts=" + attempts
-                    + "; HEAD activations=" + diagnostic(1, "activations") + "; FEET activations=" + diagnostic(8, "ownerActivations")
-                    + "; HEAD warnings=" + headWarnings + "; FEET warnings=" + feetWarnings
-                    + "; HEAD bindings=" + headBindings + "; FEET bindings=" + feetBindings + "\n"
-                    + (apiUnavailable ? "early optional API rejection; no installed entry/base getters; no receiver binding\n"
-                            : "own entry/base getters independent of receiver binding; exact native traces/states; no original HEAD/FEET anchor when both present\n")
-                    + "unchanged roots/source envelopes; cached binding failures never retry or invoke a fallback\n"
-                    + "TEST-ONLY: HEAD has its own data, receiver, tick, verifier and constants; coordinator requires production Mismatched Boots but HEAD JAR does not\n");
+            NetworkAcceptanceFiles.write("tide-owners-report.txt",
+                                         "owners=" + MODE + "; production FEET=true; installed=" + installed + "; ready=" + ready
+                                                 + "; scenarios=" + cases + "; player ticks=" + ticks + "; Applicable attempts=" + attempts
+                                                 + "; HEAD activations=" + diagnostic(1, "activations") + "; FEET activations=" + diagnostic(8,
+                                                                                                                                             "ownerActivations")
+                                                 + "; HEAD warnings=" + headWarnings + "; FEET warnings=" + feetWarnings
+                                                 + "; HEAD bindings=" + headBindings + "; FEET bindings=" + feetBindings + "\n"
+                                                 + (apiUnavailable
+                                                    ? "early optional API rejection; no installed entry/base getters; no receiver binding\n"
+                                                    : "own entry/base getters independent of receiver binding; exact native traces/states; no original HEAD/FEET anchor when both present\n")
+                                                 + "unchanged roots/source envelopes; cached binding failures never retry or invoke a fallback\n"
+                                                 + "TEST-ONLY: HEAD has its own data, receiver, tick, verifier and constants; coordinator requires production Mismatched Boots but HEAD JAR does not\n");
             NetworkAcceptanceFiles.write("tide-owners-success.txt", "neoforge\n");
             if (Boolean.getBoolean("mismatchedboots.runtimetest.tideDamageCoexistence")) {
                 NeoForgeIceAndFireDamageTest.register();
                 damageOwnsShutdown = true;
             }
-        } catch (Throwable failure) { NetworkAcceptanceFiles.failure("tide-owners", failure); }
-        finally { observed = null; finished = true; if (!damageOwnsShutdown) { server.halt(false); } }
+        } catch (Throwable failure) {
+            NetworkAcceptanceFiles.failure("tide-owners", failure);
+        } finally {
+            observed = null;
+            finished = true;
+            if (!damageOwnsShutdown) {
+                server.halt(false);
+            }
+        }
     }
 
     private static void missingMethod(Class<?> type, String name) throws Exception {
-        try { type.getMethod(name); throw new AssertionError("Rejected API installed " + name); }
-        catch (NoSuchMethodException expected) { /* No readiness/accessor selection, not merely a false getter. */ }
+        try {
+            type.getMethod(name);
+            throw new AssertionError("Rejected API installed " + name);
+        } catch (NoSuchMethodException expected) { /* No readiness/accessor selection, not merely a false getter. */ }
     }
 
     private static void absence() throws Exception {
@@ -213,13 +254,21 @@ final class NeoForgeTideTest {
                         case "carried" -> mixed.getInventory().add(root);
                         case "wrongSlot" -> mixed.setItemSlot(index == 0 ? EquipmentSlot.FEET : EquipmentSlot.HEAD, root);
                         case "bare" -> mixed.setItemSlot(SLOTS[index], new ItemStack(root.getItem()));
-                        case "count" -> { root.setCount(2); mixed.setItemSlot(SLOTS[index], root); }
+                        case "count" -> {
+                            root.setCount(2);
+                            mixed.setItemSlot(SLOTS[index], root);
+                        }
                         default -> mixed.setItemSlot(SLOTS[index], root);
                     }
-                    require(!(boolean) Class.forName(index == 0 ? HEAD : "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility").getMethod("recognizes",
-                            net.minecraft.world.entity.Entity.class, EquipmentSlot.class).invoke(null, mixed, SLOTS[index]), "Absent API recognizes no root");
+                    require(!(boolean) Class.forName(index == 0
+                                                     ? HEAD
+                                                     : "games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility")
+                                            .getMethod("recognizes",
+                                                       net.minecraft.world.entity.Entity.class, EquipmentSlot.class)
+                                            .invoke(null, mixed, SLOTS[index]), "Absent API recognizes no root");
                 }
-                compare(wet, 0, "absent API " + kind); cases++;
+                compare(wet, 0, "absent API " + kind);
+                cases++;
                 require(!mixed.hasEffect(MobEffects.WATER_BREATHING) && !mixed.hasEffect(MobEffects.STRENGTH), "Absent API has no native effects");
             }
         }
@@ -229,10 +278,14 @@ final class NeoForgeTideTest {
         reset();
         for (int i = 0; i < 4; i++) {
             int bit = 1 << i;
-            if ((pieces & bit) == 0) { continue; }
+            if ((pieces & bit) == 0) {
+                continue;
+            }
             if ((installed & bit) != 0) {
                 mixed.setItemSlot(SLOTS[i], root(i, inverse, both));
-                if ((ready & bit) != 0) { control.setItemSlot(SLOTS[i], new ItemStack(nativeArmor(i, "blue"))); }
+                if ((ready & bit) != 0) {
+                    control.setItemSlot(SLOTS[i], new ItemStack(nativeArmor(i, "blue")));
+                }
             } else {
                 control.setItemSlot(SLOTS[i], new ItemStack(nativeArmor(i, "blue")));
                 mixed.setItemSlot(SLOTS[i], new ItemStack(nativeArmor(i, "blue")));
@@ -242,15 +295,21 @@ final class NeoForgeTideTest {
         int count = nativeCount(pieces & ~(installed & ~ready));
         require(mixed.hasEffect(MobEffects.WATER_BREATHING) == (count > 0), "Water contribution count");
         require(mixed.hasEffect(MobEffects.STRENGTH) == (count > 0 && wet), "Strength wetness/count");
-        if (wet && count > 0) { require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == count - 1, "One contribution per owner, not per source"); }
+        if (wet && count > 0) {
+            require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == count - 1, "One contribution per owner, not per source");
+        }
         cases++;
     }
 
     private static int nativeCount(int mask) {
         int count = Integer.bitCount(mask);
         if (MODE.equals("predicateReplaced") || MODE.equals("predicateChanged")) {
-            if ((mask & 8) != 0) { count--; }
-            if (MODE.equals("predicateChanged") && (mask & 4) != 0) { count++; }
+            if ((mask & 8) != 0) {
+                count--;
+            }
+            if (MODE.equals("predicateChanged") && (mask & 4) != 0) {
+                count++;
+            }
         }
         return count;
     }
@@ -265,7 +324,8 @@ final class NeoForgeTideTest {
                     ItemStack tide = new ItemStack(nativeArmor(3, color));
                     ItemStack other = new ItemStack(both ? nativeArmor(3, "red") : Items.IRON_BOOTS);
                     mixed.setItemSlot(EquipmentSlot.FEET, MixedBootsFactory.createPair(inverse ? other : tide, inverse ? tide : other).primary());
-                    compare(true, 8, "production color " + color); cases++;
+                    compare(true, 8, "production color " + color);
+                    cases++;
                 }
             }
         }
@@ -275,53 +335,86 @@ final class NeoForgeTideTest {
                 player.addEffect(new MobEffectInstance(MobEffects.STRENGTH, duration, 5, true, true, true));
                 player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, duration, 2, true, true, true));
             }
-            for (int step = 0; step < 10; step++) { compare(true, installed, "production stronger/hidden duration=" + duration); }
-            require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == (duration == 15 ? 3 : 5), "Production preserves native stronger/hidden effects");
+            for (int step = 0; step < 10; step++) {
+                compare(true, installed, "production stronger/hidden duration=" + duration);
+            }
+            require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == (duration == 15 ? 3 : 5),
+                    "Production preserves native stronger/hidden effects");
             cases++;
         }
         scenario(15, true, false, false);
         for (ServerPlayer player : List.of(control, mixed)) {
-            for (int i = 0; i < 3; i++) { player.setItemSlot(SLOTS[i], ItemStack.EMPTY); }
+            for (int i = 0; i < 3; i++) {
+                player.setItemSlot(SLOTS[i], ItemStack.EMPTY);
+            }
         }
-        for (int step = 0; step < 10; step++) { compare(true, 8, "production fewer pieces/hidden weaker tail"); }
-        for (int step = 0; step < 20; step++) { compare(false, 8, "production dry Strength expiry"); }
+        for (int step = 0; step < 10; step++) {
+            compare(true, 8, "production fewer pieces/hidden weaker tail");
+        }
+        for (int step = 0; step < 20; step++) {
+            compare(false, 8, "production dry Strength expiry");
+        }
         require(!mixed.hasEffect(MobEffects.STRENGTH), "Dry native Strength expires");
-        for (ServerPlayer player : List.of(control, mixed)) { player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY); }
-        for (int step = 0; step < 20; step++) { compare(false, 0, "production equipment removal/expiry"); }
-        require(!mixed.hasEffect(MobEffects.WATER_BREATHING), "Native Water Breathing expires after removal"); cases++;
+        for (ServerPlayer player : List.of(control, mixed)) {
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+        }
+        for (int step = 0; step < 20; step++) {
+            compare(false, 0, "production equipment removal/expiry");
+        }
+        require(!mixed.hasEffect(MobEffects.WATER_BREATHING), "Native Water Breathing expires after removal");
+        cases++;
 
         reset();
         control.setItemSlot(EquipmentSlot.FEET, new ItemStack(nativeArmor(3, "blue")));
         mixed.setItemSlot(EquipmentSlot.FEET, root(3, false, false));
-        level.getWeatherData().setRaining(true); level.getWeatherData().setRainTime(6000); level.setRainLevel(1);
+        level.getWeatherData().setRaining(true);
+        level.getWeatherData().setRainTime(6000);
+        level.setRainLevel(1);
         raining = true;
-        try { compare(true, 8, "production rain without immersion"); require(mixed.hasEffect(MobEffects.STRENGTH), "Rain activates native Strength"); cases++; }
-        finally { raining = false; level.getWeatherData().setRaining(false); level.setRainLevel(0); }
+        try {
+            compare(true, 8, "production rain without immersion");
+            require(mixed.hasEffect(MobEffects.STRENGTH), "Rain activates native Strength");
+            cases++;
+        } finally {
+            raining = false;
+            level.getWeatherData().setRaining(false);
+            level.setRainLevel(0);
+        }
         veto = true;
         try {
             reset();
             control.setItemSlot(EquipmentSlot.FEET, new ItemStack(nativeArmor(3, "blue")));
             mixed.setItemSlot(EquipmentSlot.FEET, root(3, false, false));
             compare(true, 8, "production native effect veto");
-            require(!mixed.hasEffect(MobEffects.STRENGTH), "Production respects native effect veto"); cases++;
-        } finally { veto = false; }
+            require(!mixed.hasEffect(MobEffects.STRENGTH), "Production respects native effect veto");
+            cases++;
+        } finally {
+            veto = false;
+        }
         for (boolean useMixed : List.of(false, true)) {
             var mob = EntityType.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
             require(mob != null, "Non-player fixture created");
             ItemStack boots = useMixed ? root(3, false, false) : new ItemStack(nativeArmor(3, "blue"));
             mob.setItemSlot(EquipmentSlot.FEET, boots);
             int before = diagnostic(8, "ownerActivations");
-            for (int tick = 0; tick < 3; tick++) { mob.tick(); }
+            for (int tick = 0; tick < 3; tick++) {
+                mob.tick();
+            }
             require(diagnostic(8, "ownerActivations") == before && !mob.hasEffect(MobEffects.WATER_BREATHING)
-                    && !mob.hasEffect(MobEffects.STRENGTH) && mob.getItemBySlot(EquipmentSlot.FEET) == boots, "Non-player has no production activation");
-            mob.discard(); cases++;
+                            && !mob.hasEffect(MobEffects.STRENGTH) && mob.getItemBySlot(EquipmentSlot.FEET) == boots,
+                    "Non-player has no production activation");
+            mob.discard();
+            cases++;
         }
         reset();
-        for (ServerPlayer player : List.of(control, mixed)) { player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(nativeArmor(1, "blue"))); }
+        for (ServerPlayer player : List.of(control, mixed)) {
+            player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(nativeArmor(1, "blue")));
+        }
         ItemStack wrongType = new ItemStack(nativeArmor(0, "blue"));
         wrongType.set(DataComponents.EQUIPPABLE, Items.IRON_BOOTS.components().get(DataComponents.EQUIPPABLE));
         mixed.setItemSlot(EquipmentSlot.FEET, MixedBootsFactory.createPair(wrongType, new ItemStack(Items.IRON_BOOTS)).primary());
-        compare(true, 0, "source claims FEET component but native ArmorType is HEAD"); cases++;
+        compare(true, 0, "source claims FEET component but native ArmorType is HEAD");
+        cases++;
         reset();
         for (ServerPlayer player : List.of(control, mixed)) {
             player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(nativeArmor(3, "blue")));
@@ -329,25 +422,37 @@ final class NeoForgeTideTest {
         control.setItemSlot(EquipmentSlot.FEET, new ItemStack(nativeArmor(3, "blue")));
         mixed.setItemSlot(EquipmentSlot.FEET, root(3, false, false));
         compare(true, 8, "native wrong-slot class contribution preserved");
-        require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == 1, "Native wrong-slot class still counts"); cases++;
+        require(mixed.getEffect(MobEffects.STRENGTH).getAmplifier() == 1, "Native wrong-slot class still counts");
+        cases++;
     }
 
     private static void negatives() throws Exception {
         for (int i : new int[]{0, 3}) {
-            if ((installed & (1 << i)) == 0) { continue; }
+            if ((installed & (1 << i)) == 0) {
+                continue;
+            }
             for (String kind : List.of("count", "bare", "wrongSlot", "carried", "foreign")) {
                 reset();
-                for (ServerPlayer player : List.of(control, mixed)) { player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(nativeArmor(1, "blue"))); }
+                for (ServerPlayer player : List.of(control, mixed)) {
+                    player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(nativeArmor(1, "blue")));
+                }
                 ItemStack root = root(i, false, false);
                 switch (kind) {
                     case "count" -> root.setCount(2);
                     case "bare" -> root = new ItemStack(root.getItem());
                     case "wrongSlot" -> mixed.setItemSlot(i == 0 ? EquipmentSlot.FEET : EquipmentSlot.HEAD, root);
                     case "carried" -> mixed.getInventory().add(root);
-                    case "foreign" -> { ItemStack spoof = new ItemStack(i == 0 ? Items.IRON_HELMET : Items.IRON_BOOTS); spoof.applyComponents(root.getComponents()); root = spoof; }
+                    case "foreign" -> {
+                        ItemStack spoof = new ItemStack(i == 0 ? Items.IRON_HELMET : Items.IRON_BOOTS);
+                        spoof.applyComponents(root.getComponents());
+                        root = spoof;
+                    }
                 }
-                if (!kind.equals("wrongSlot") && !kind.equals("carried")) { mixed.setItemSlot(SLOTS[i], root); }
-                compare(true, 0, "invalid own root " + i + "/" + kind); cases++;
+                if (!kind.equals("wrongSlot") && !kind.equals("carried")) {
+                    mixed.setItemSlot(SLOTS[i], root);
+                }
+                compare(true, 0, "invalid own root " + i + "/" + kind);
+                cases++;
             }
         }
     }
@@ -355,8 +460,14 @@ final class NeoForgeTideTest {
     private static ItemStack root(int index, boolean inverse, boolean both) {
         Item first = MODE.equals("apiAbsent") ? (index == 0 ? Items.DIAMOND_HELMET : Items.DIAMOND_BOOTS) : nativeArmor(index, "blue");
         Item second = both ? nativeArmor(index, "red") : index == 0 ? Items.IRON_HELMET : Items.IRON_BOOTS;
-        if (inverse) { Item swap = first; first = second; second = swap; }
-        if (index == 3) { return MixedBootsFactory.createPair(new ItemStack(first), new ItemStack(second)).primary(); }
+        if (inverse) {
+            Item swap = first;
+            first = second;
+            second = swap;
+        }
+        if (index == 3) {
+            return MixedBootsFactory.createPair(new ItemStack(first), new ItemStack(second)).primary();
+        }
         ItemStack root = new ItemStack(item("tide_head_owner:mixed_head"));
         CompoundTag tag = new CompoundTag();
         tag.putString("primary_head", BuiltInRegistries.ITEM.getKey(first).toString());
@@ -369,7 +480,9 @@ final class NeoForgeTideTest {
         return item("iceandfire:tide_" + color + "_" + new String[]{"helmet", "chestplate", "leggings", "boots"}[index]);
     }
 
-    private static Item item(String id) { return BuiltInRegistries.ITEM.get(Identifier.parse(id)).orElseThrow().value(); }
+    private static Item item(String id) {
+        return BuiltInRegistries.ITEM.get(Identifier.parse(id)).orElseThrow().value();
+    }
 
     private static int diagnostic(int bit, String method) throws Exception {
         return (installed & bit) == 0 ? 0 : (int) Class.forName(bit == 1 ? HEAD : FEET).getMethod(method).invoke(null);
@@ -377,9 +490,15 @@ final class NeoForgeTideTest {
 
     private static ServerPlayer player(MinecraftServer server, String name) {
         ServerPlayer player = new ServerPlayer(server, level, new GameProfile(UUID.randomUUID(), name), ClientInformation.createDefault()) {
-            @Override public GameType gameMode() { return GameType.SURVIVAL; }
+            @Override
+            public GameType gameMode() {
+                return GameType.SURVIVAL;
+            }
         };
-        new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player, CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        new ServerGamePacketListenerImpl(server,
+                                         new Connection(PacketFlow.SERVERBOUND),
+                                         player,
+                                         CommonListenerCookie.createInitial(player.getGameProfile(), false));
         GameType.SURVIVAL.updatePlayerAbilities(player.getAbilities());
         return player; // Not world-inserted: only doTick below advances these two players.
     }
@@ -387,15 +506,19 @@ final class NeoForgeTideTest {
     private static void reset() {
         observed = null;
         for (ServerPlayer player : List.of(control, mixed)) {
-            player.removeAllEffects(); player.getInventory().clearContent();
-            for (EquipmentSlot slot : SLOTS) { player.setItemSlot(slot, ItemStack.EMPTY); }
+            player.removeAllEffects();
+            player.getInventory().clearContent();
+            for (EquipmentSlot slot : SLOTS) {
+                player.setItemSlot(slot, ItemStack.EMPTY);
+            }
         }
     }
 
     private static void compare(boolean wet, int activeRoots, String label) throws Exception {
         ItemStack[] roots = new ItemStack[4], snapshots = new ItemStack[4];
         for (int i = 0; i < 4; i++) {
-            roots[i] = mixed.getItemBySlot(SLOTS[i]); snapshots[i] = roots[i].copy();
+            roots[i] = mixed.getItemBySlot(SLOTS[i]);
+            snapshots[i] = roots[i].copy();
             if (MODE.equals("baseMutate") && !snapshots[i].isEmpty()
                     && snapshots[i].getItem().getClass().getName().equals("com.iafenvoy.iceandfire.item.armor.SeaSerpentArmorItem")) {
                 snapshots[i].set(DataComponents.REPAIR_COST, snapshots[i].getOrDefault(DataComponents.REPAIR_COST, 0) + 3);
@@ -405,20 +528,33 @@ final class NeoForgeTideTest {
             List<String> nativeTrace = step(control, wet, 0);
             String water = state(control.getEffect(MobEffects.WATER_BREATHING)), strength = state(control.getEffect(MobEffects.STRENGTH));
             require(nativeTrace.equals(step(mixed, wet, activeRoots)), label + ": native hook mismatch");
-            require(water.equals(state(mixed.getEffect(MobEffects.WATER_BREATHING))) && strength.equals(state(mixed.getEffect(MobEffects.STRENGTH))), label + ": effect state mismatch");
+            require(water.equals(state(mixed.getEffect(MobEffects.WATER_BREATHING))) && strength.equals(state(mixed.getEffect(MobEffects.STRENGTH))),
+                    label + ": effect state mismatch");
             require(mixed.isInWaterOrRain() == wet && control.isInWaterOrRain() == wet, label + ": actual wetness");
         }
-        for (int i = 0; i < 4; i++) { require(mixed.getItemBySlot(SLOTS[i]) == roots[i] && ItemStack.matches(roots[i], snapshots[i]), label + ": equipment/source mutation"); }
+        for (int i = 0; i < 4; i++) {
+            require(mixed.getItemBySlot(SLOTS[i]) == roots[i] && ItemStack.matches(roots[i], snapshots[i]), label + ": equipment/source mutation");
+        }
     }
 
     private static List<String> step(ServerPlayer player, boolean wet, int roots) throws Exception {
-        player.setPos(raining ? 8.5 : wet ? 1.5 : 8.5, raining ? -55.5 : -59.5, raining ? 8.5 : wet ? 1.5 : 8.5); player.setDeltaMovement(Vec3.ZERO); player.setAirSupply(300);
+        player.setPos(raining ? 8.5 : wet ? 1.5 : 8.5, raining ? -55.5 : -59.5, raining ? 8.5 : wet ? 1.5 : 8.5);
+        player.setDeltaMovement(Vec3.ZERO);
+        player.setAirSupply(300);
         int head = diagnostic(1, "activations"), feet = diagnostic(8, "ownerActivations");
-        observed = player; TRACE.clear(); player.doTick(); ticks++; observed = null;
+        observed = player;
+        TRACE.clear();
+        player.doTick();
+        ticks++;
+        observed = null;
         require(diagnostic(1, "activations") - head == ((roots & 1) != 0 ? 1 : 0), "Exactly one own HEAD activation");
         require(diagnostic(8, "ownerActivations") - feet == ((roots & 8) != 0 ? 1 : 0), "Exactly one own FEET activation");
         return List.copyOf(TRACE);
     }
 
-    private static void require(boolean condition, String message) { if (!condition) { throw new AssertionError(message); } }
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
 }

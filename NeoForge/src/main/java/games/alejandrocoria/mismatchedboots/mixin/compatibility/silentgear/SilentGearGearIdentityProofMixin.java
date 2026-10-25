@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Unique;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.util.GearHelper", remap = false)
 abstract class SilentGearGearIdentityProofMixin {
-    @Unique private static boolean mismatchedboots$sgGearIdentityReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgGearIdentityReady() {
+        return false;
+    }
 }

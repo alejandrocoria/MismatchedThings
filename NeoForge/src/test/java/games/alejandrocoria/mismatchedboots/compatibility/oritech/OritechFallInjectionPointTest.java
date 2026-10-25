@@ -31,13 +31,15 @@ class OritechFallInjectionPointTest {
                 new ClassReader(stream).accept(target, 0);
             }
             var method = target.methods.stream().filter(node -> node.name.equals(OritechFallInjectionPoint.METHOD))
-                    .findFirst().orElseThrow();
+                                       .findFirst().orElseThrow();
             var selected = OritechFallInjectionPoint.select(method.desc, method.instructions);
             assertNotNull(selected);
             method.instructions.insert(new InsnNode(Opcodes.NOP));
             method.instructions.insert(new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Observer", "tick", "()V", false));
             for (var node : method.instructions) {
-                if (node instanceof LdcInsnNode constant && Float.valueOf(.2F).equals(constant.cst)) { constant.cst = .25F; }
+                if (node instanceof LdcInsnNode constant && Float.valueOf(.2F).equals(constant.cst)) {
+                    constant.cst = .25F;
+                }
             }
             assertSame(selected, OritechFallInjectionPoint.select(method.desc, method.instructions));
         }
@@ -77,23 +79,26 @@ class OritechFallInjectionPointTest {
 
     private static MethodNode fixture() {
         var method = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, OritechFallInjectionPoint.METHOD,
-                OritechFallInjectionPoint.DESCRIPTOR, null, null);
+                                    OritechFallInjectionPoint.DESCRIPTOR, null, null);
         LabelNode reject = new LabelNode();
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
         method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/world/damagesource/DamageTypes",
-                "FALL", "Lnet/minecraft/resources/ResourceKey;"));
+                                                  "FALL", "Lnet/minecraft/resources/ResourceKey;"));
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/damagesource/DamageSource",
-                "is", "(Lnet/minecraft/resources/ResourceKey;)Z", false));
+                                                   "is", "(Lnet/minecraft/resources/ResourceKey;)Z", false));
         method.instructions.add(new JumpInsnNode(Opcodes.IFEQ, reject));
         method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
         method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/world/entity/EquipmentSlot",
-                "FEET", "Lnet/minecraft/world/entity/EquipmentSlot;"));
-        method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/entity/LivingEntity",
-                "getItemBySlot", "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;", false));
+                                                  "FEET", "Lnet/minecraft/world/entity/EquipmentSlot;"));
+        method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                                                   "net/minecraft/world/entity/LivingEntity",
+                                                   "getItemBySlot",
+                                                   "(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;",
+                                                   false));
         method.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, "rearth/oritech/init/ToolsContent",
-                "EXO_BOOTS", "Lnet/neoforged/neoforge/registries/DeferredItem;"));
+                                                  "EXO_BOOTS", "Lnet/neoforged/neoforge/registries/DeferredItem;"));
         method.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/item/ItemStack",
-                "is", "(Lnet/minecraft/core/Holder;)Z", false));
+                                                   "is", "(Lnet/minecraft/core/Holder;)Z", false));
         method.instructions.add(new JumpInsnNode(Opcodes.IFEQ, reject));
         method.instructions.add(new InsnNode(Opcodes.ICONST_1));
         method.instructions.add(new InsnNode(Opcodes.IRETURN));

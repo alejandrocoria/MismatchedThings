@@ -41,19 +41,19 @@ class ComponentRulesLifecycleTest {
     @Test
     void serverLifecycleDoesNotOverwriteClientRules() throws IOException {
         ComponentRules client = new ComponentRules(DurabilityPolicy.SEPARATE,
-                RepairCostPolicy.AVERAGE, ComponentRuleDefaults.ruleSet());
+                                                   RepairCostPolicy.AVERAGE, ComponentRuleDefaults.ruleSet());
         ComponentRuleState.install(client);
         Path path = directory.resolve(ComponentRulesConfig.FILE_NAME);
         Files.writeString(path, """
                 [durability]
                 policy = "separate"
-
+                
                 [repair_cost]
                 policy = "owner"
-
+                
                 [components."minecraft:rarity"]
                 policy = "owner"
-
+                
                 [components."futuremod:dormant"]
                 policy = "share"
                 """);
@@ -65,9 +65,9 @@ class ComponentRulesLifecycleTest {
         assertEquals(DurabilityPolicy.SEPARATE, loaded.durability());
         assertEquals(RepairCostPolicy.OWNER, loaded.repairCost());
         assertEquals(ComponentRule.of(ComponentPolicy.OWNER),
-                loaded.declarations().get(Identifier.withDefaultNamespace("rarity")));
+                     loaded.declarations().get(Identifier.withDefaultNamespace("rarity")));
         assertEquals(ComponentRule.of(ComponentPolicy.SHARE),
-                loaded.declarations().get(Identifier.parse("futuremod:dormant")));
+                     loaded.declarations().get(Identifier.parse("futuremod:dormant")));
 
         ComponentRulesLifecycle.onServerStopped();
         assertSame(client, ComponentRuleState.current());

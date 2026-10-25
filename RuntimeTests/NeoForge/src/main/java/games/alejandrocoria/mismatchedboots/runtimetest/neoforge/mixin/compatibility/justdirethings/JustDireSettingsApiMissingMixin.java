@@ -8,5 +8,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(JustDireSettingsCompatibility.class)
 abstract class JustDireSettingsApiMissingMixin {
     @ModifyVariable(method = "component", at = @At("HEAD"), argsOnly = true)
-    private static String fail(String path) { return "missing_mixed_settings_fixture_component"; }
+    private static String fail(String path) {
+        return "missing_mixed_settings_fixture_component";
+    }
 }

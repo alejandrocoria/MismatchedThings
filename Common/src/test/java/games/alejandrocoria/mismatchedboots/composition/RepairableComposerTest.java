@@ -62,8 +62,8 @@ class RepairableComposerTest {
 
     private static Set<Item> acceptedItems(ItemStack first, ItemStack second) {
         return RepairableComposer.compose(first, second).orElseThrow().items().stream()
-                .map(Holder::value)
-                .collect(Collectors.toUnmodifiableSet());
+                                 .map(Holder::value)
+                                 .collect(Collectors.toUnmodifiableSet());
     }
 
     private static Repairable repairable(Item... items) {

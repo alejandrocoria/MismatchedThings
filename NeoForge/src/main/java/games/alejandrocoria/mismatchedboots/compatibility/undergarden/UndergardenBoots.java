@@ -13,7 +13,8 @@ public final class UndergardenBoots {
     private static final ResourceKey<Item> CLOGGRUM = key("cloggrum_boots");
     private static final ResourceKey<Item> FROSTSTEEL = key("froststeel_boots");
 
-    private UndergardenBoots() {}
+    private UndergardenBoots() {
+    }
 
     public static boolean goo(boolean original, ItemStack boots, Holder<Item> item) {
         // Only extend the boot predicate: native Gooey and full-block behavior stay untouched.

@@ -13,8 +13,8 @@ public final class Services {
 
     private static <T> T load(Class<T> clazz) {
         final T loadedService = ServiceLoader.load(clazz, Services.class.getClassLoader())
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Failed to load service for " + clazz.getName()));
+                                             .findFirst()
+                                             .orElseThrow(() -> new IllegalStateException("Failed to load service for " + clazz.getName()));
         Constants.LOG.debug("Loaded {} for service {}", loadedService, clazz);
         return loadedService;
     }

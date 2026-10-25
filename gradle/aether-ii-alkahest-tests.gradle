@@ -28,7 +28,9 @@ variants.each { name ->
             fixtureFiles.delete { delete fileTree(reports) { include '*.txt' } }
             fixtureFiles.copy {
                 from(productionJar, fixtureJar)
-                if (mode != 'absent') { from artifact }
+                if (mode != 'absent') {
+                    from artifact
+                }
                 into(new File(directory.get().asFile, 'mods'))
             }
             new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
@@ -51,7 +53,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             def log = new File(reports.get().asFile, 'process.log')
             runBounded(":RuntimeTests:NeoForge:runAetherIIAlkahest${name}", log, 240)
             def failure = new File(reports.get().asFile, 'aether-alkahest-failure.txt')
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             def success = new File(reports.get().asFile, 'aether-alkahest-success.txt')
             def report = new File(reports.get().asFile, 'aether-alkahest-report.txt')
             def nativeErrors = log.readLines().findAll { it.contains('/ERROR]') && it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
@@ -81,5 +85,7 @@ tasks.register('verifyAetherIIAlkahestGuards') {
 }
 tasks.named('verifyAetherIIAlkahestAbsent') { mustRunAfter('verifyAetherIIAlkahestLive') }
 variants.eachWithIndex { name, index ->
-    if (index > 0) { tasks.named("verifyAetherIIAlkahest${name}") { mustRunAfter("verifyAetherIIAlkahest${variants[index - 1]}") } }
+    if (index > 0) {
+        tasks.named("verifyAetherIIAlkahest${name}") { mustRunAfter("verifyAetherIIAlkahest${variants[index - 1]}") }
+    }
 }

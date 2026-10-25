@@ -27,7 +27,7 @@ public final class CrafterGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void crafterCannotComposeBootsInRepresentativeLayouts(GameTestHelper helper) {
         helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
-                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+                                               .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
         helper.setBlock(OUTPUT, Blocks.BARREL);
         CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
         Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
@@ -41,9 +41,9 @@ public final class CrafterGameTests {
             helper.tickBlock(CRAFTER);
 
             assertInputsUnchanged(helper, crafter, layout[0], layout[1],
-                    "Crafter layout " + layout[0] + "/" + layout[1]);
+                                  "Crafter layout " + layout[0] + "/" + layout[1]);
             helper.assertTrue(barrel.isEmpty(),
-                    "Crafter layout " + layout[0] + "/" + layout[1] + " inserted an output");
+                              "Crafter layout " + layout[0] + "/" + layout[1] + " inserted an output");
             assertNoMixedDrops(helper, "Crafter layout " + layout[0] + "/" + layout[1]);
         }
         helper.succeed();
@@ -52,7 +52,7 @@ public final class CrafterGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void redstonePulseLeavesInputsAndDisabledSlotsUnchanged(GameTestHelper helper) {
         helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
-                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+                                               .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
         CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
         crafter.setItem(0, GameTestStacks.ownerDivergentBoots(Items.IRON_BOOTS, 2.0D));
         crafter.setItem(8, GameTestStacks.ownerDivergentBoots(Items.GOLDEN_BOOTS, 6.0D));
@@ -65,7 +65,7 @@ public final class CrafterGameTests {
             assertInputsUnchanged(helper, crafter, 0, 8, "Redstone-triggered Crafter");
             for (int slot = 1; slot < 8; slot++) {
                 helper.assertTrue(crafter.isSlotDisabled(slot),
-                        "Crafter slot " + slot + " became enabled");
+                                  "Crafter slot " + slot + " became enabled");
             }
             assertNoMixedDrops(helper, "Redstone-triggered Crafter");
             helper.pulseRedstone(POWER, 1);
@@ -80,7 +80,7 @@ public final class CrafterGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void crafterRepairsAcrossRepeatedPulsesAndPreservesDisabledSlots(GameTestHelper helper) {
         helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
-                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+                                               .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
         helper.setBlock(OUTPUT, Blocks.BARREL);
         CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
         Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
@@ -102,9 +102,9 @@ public final class CrafterGameTests {
             List<ItemStack> firstOutputs = mixedOutputs(barrel);
             helper.assertValueEqual(firstOutputs.size(), 1, "first Crafter repair output count");
             helper.assertValueEqual(firstOutputs.getFirst().getDamageValue(), firstExpectedDamage,
-                    "first Crafter repair damage");
+                                    "first Crafter repair damage");
             helper.assertTrue(GameTestStacks.data(firstOutputs.getFirst()).equals(firstSources),
-                    "First Crafter repair changed source snapshots");
+                              "First Crafter repair changed source snapshots");
             assertCrafterConsumed(helper, crafter, "first repair pulse");
             assertDisabledSlots(helper, crafter);
 
@@ -120,12 +120,12 @@ public final class CrafterGameTests {
                 ItemStack secondOutput = outputs.get(1);
                 helper.assertValueEqual(secondOutput.getDamageValue(), 0, "saturated Crafter repair damage");
                 helper.assertTrue(GameTestStacks.data(secondOutput).equals(secondSources),
-                        "Second Crafter repair changed source snapshots");
+                                  "Second Crafter repair changed source snapshots");
                 assertCrafterConsumed(helper, crafter, "second repair pulse");
                 assertDisabledSlots(helper, crafter);
                 helper.assertTrue(helper.getLevel().getEntities(
-                                EntityType.EXPERIENCE_ORB, helper.getBounds(), Entity::isAlive).isEmpty(),
-                        "Crafter repair created experience");
+                                          EntityType.EXPERIENCE_ORB, helper.getBounds(), Entity::isAlive).isEmpty(),
+                                  "Crafter repair created experience");
                 helper.succeed();
             });
         });
@@ -134,7 +134,7 @@ public final class CrafterGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void fullOutputContainerEjectsRepairWithoutLosingIt(GameTestHelper helper) {
         helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
-                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+                                               .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
         helper.setBlock(OUTPUT, Blocks.BARREL);
         CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
         Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
@@ -150,15 +150,15 @@ public final class CrafterGameTests {
         helper.runAfterDelay(6, () -> {
             assertCrafterConsumed(helper, crafter, "repair with full output container");
             helper.assertTrue(barrel.countItem(Items.STONE) == barrel.getContainerSize() * 64,
-                    "Crafter changed a full output container");
+                              "Crafter changed a full output container");
             List<ItemStack> drops = helper.getLevel().getEntitiesOfClass(
-                            ItemEntity.class, helper.getBounds().inflate(3.0), Entity::isAlive).stream()
-                    .map(ItemEntity::getItem)
-                    .filter(ModContent::isMixedBoots)
-                    .toList();
+                                                  ItemEntity.class, helper.getBounds().inflate(3.0), Entity::isAlive).stream()
+                                          .map(ItemEntity::getItem)
+                                          .filter(ModContent::isMixedBoots)
+                                          .toList();
             helper.assertValueEqual(drops.size(), 1, "ejected Crafter repair count");
             helper.assertTrue(GameTestStacks.data(drops.getFirst()).equals(sources),
-                    "Ejected Crafter repair changed source snapshots");
+                              "Ejected Crafter repair changed source snapshots");
             helper.succeed();
         });
     }
@@ -166,7 +166,7 @@ public final class CrafterGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void crafterRejectsInvalidRepairInputsWithoutConsumption(GameTestHelper helper) {
         helper.setBlock(CRAFTER, Blocks.CRAFTER.defaultBlockState()
-                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
+                                               .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP));
         helper.setBlock(OUTPUT, Blocks.BARREL);
         CrafterBlockEntity crafter = helper.getBlockEntity(CRAFTER, CrafterBlockEntity.class);
         Container barrel = (Container) helper.getLevel().getBlockEntity(helper.absolutePos(OUTPUT));
@@ -175,9 +175,9 @@ public final class CrafterGameTests {
                 new SlottedStack(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS)),
                 new SlottedStack(8, new ItemStack(Items.DIAMOND_BOOTS))), "unrelated donor");
         assertCrafterRejected(helper, crafter, barrel, List.of(
-                new SlottedStack(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS)),
-                new SlottedStack(8, GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).inverse())),
-                "Mixed/Mixed");
+                                      new SlottedStack(0, GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS)),
+                                      new SlottedStack(8, GameTestStacks.pair(Items.IRON_BOOTS, Items.GOLDEN_BOOTS).inverse())),
+                              "Mixed/Mixed");
         assertCrafterRejected(helper, crafter, barrel, List.of(
                 new SlottedStack(0, new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID))),
                 new SlottedStack(8, new ItemStack(Items.IRON_BOOTS))), "bare mixed stack");
@@ -195,22 +195,22 @@ public final class CrafterGameTests {
             int secondSlot,
             String description) {
         helper.assertTrue(crafter.getItem(firstSlot).is(Items.IRON_BOOTS)
-                        && crafter.getItem(firstSlot).getCount() == 1,
-                description + " consumed the first input");
+                                  && crafter.getItem(firstSlot).getCount() == 1,
+                          description + " consumed the first input");
         helper.assertTrue(crafter.getItem(secondSlot).is(Items.GOLDEN_BOOTS)
-                        && crafter.getItem(secondSlot).getCount() == 1,
-                description + " consumed the second input");
+                                  && crafter.getItem(secondSlot).getCount() == 1,
+                          description + " consumed the second input");
         helper.assertValueEqual(crafter.countItem(Items.IRON_BOOTS), 1,
-                description + " iron boots count");
+                                description + " iron boots count");
         helper.assertValueEqual(crafter.countItem(Items.GOLDEN_BOOTS), 1,
-                description + " golden boots count");
+                                description + " golden boots count");
     }
 
     private static void assertNoMixedDrops(GameTestHelper helper, String description) {
         helper.assertTrue(helper.getLevel().getEntitiesOfClass(
-                        ItemEntity.class, helper.getBounds().inflate(3.0), Entity::isAlive).stream()
-                        .noneMatch(entity -> ModContent.isMixedBoots(entity.getItem())),
-                description + " dispensed mixed boots");
+                                        ItemEntity.class, helper.getBounds().inflate(3.0), Entity::isAlive).stream()
+                                .noneMatch(entity -> ModContent.isMixedBoots(entity.getItem())),
+                          description + " dispensed mixed boots");
     }
 
     private static void assertCrafterRejected(
@@ -232,7 +232,7 @@ public final class CrafterGameTests {
         for (int index = 0; index < inputs.size(); index++) {
             SlottedStack input = inputs.get(index);
             helper.assertTrue(ItemStack.matches(before.get(index), crafter.getItem(input.slot())),
-                    "Crafter " + description + " changed input " + input.slot());
+                              "Crafter " + description + " changed input " + input.slot());
         }
         helper.assertTrue(output.isEmpty(), "Crafter " + description + " inserted an output");
         assertNoMixedDrops(helper, "Crafter " + description);
@@ -241,7 +241,7 @@ public final class CrafterGameTests {
     private static void assertCrafterConsumed(
             GameTestHelper helper, CrafterBlockEntity crafter, String description) {
         helper.assertTrue(crafter.getItem(0).isEmpty() && crafter.getItem(8).isEmpty(),
-                "Crafter did not consume both inputs after " + description);
+                          "Crafter did not consume both inputs after " + description);
     }
 
     private static void assertDisabledSlots(GameTestHelper helper, CrafterBlockEntity crafter) {

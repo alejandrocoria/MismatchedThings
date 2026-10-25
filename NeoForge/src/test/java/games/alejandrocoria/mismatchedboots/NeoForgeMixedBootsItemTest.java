@@ -28,10 +28,10 @@ class NeoForgeMixedBootsItemTest {
     @Test
     void productionRegistrationUsesTheNeoForgeItemHook() {
         assertInstanceOf(NeoForgeMixedBootsItem.class,
-                BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+                         BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
         assertTrue(BuiltInRegistries.RECIPE_SERIALIZER.getValue(
-                        ModContent.MIXED_BOOTS_REPAIR_RECIPE_ID) == MixedBootsRepairRecipe.SERIALIZER,
-                "Crafting repair serializer is not registered");
+                           ModContent.MIXED_BOOTS_REPAIR_RECIPE_ID) == MixedBootsRepairRecipe.SERIALIZER,
+                   "Crafting repair serializer is not registered");
     }
 
     @Test
@@ -74,9 +74,9 @@ class NeoForgeMixedBootsItemTest {
 
     private static DataComponentMap baseComponents() {
         return DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .build();
+                               .set(DataComponents.MAX_STACK_SIZE, 1)
+                               .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                               .build();
     }
 
     private static Enchantment enchantmentFor(ItemStack supported) {
@@ -89,6 +89,6 @@ class NeoForgeMixedBootsItemTest {
                 1,
                 EquipmentSlotGroup.FEET);
         return new Enchantment(Component.literal("NeoForge hook test"), definition,
-                HolderSet.empty(), DataComponentMap.EMPTY);
+                               HolderSet.empty(), DataComponentMap.EMPTY);
     }
 }

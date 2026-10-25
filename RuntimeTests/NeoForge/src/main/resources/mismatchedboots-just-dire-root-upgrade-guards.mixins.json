@@ -1,9 +1,14 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.justdirethings",
-  "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireRootUpgradeGuardPlugin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": ["JustDireRootUpgradeApiMissingMixin", "JustDireRootUpgradeRecipeChangedMixin"],
-  "injectors": {"defaultRequire": 1}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.mixin.compatibility.justdirethings",
+    "plugin": "games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDireRootUpgradeGuardPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "JustDireRootUpgradeApiMissingMixin",
+        "JustDireRootUpgradeRecipeChangedMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

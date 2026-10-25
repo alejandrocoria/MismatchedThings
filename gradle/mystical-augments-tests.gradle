@@ -16,14 +16,16 @@ def reports = layout.buildDirectory.dir("reports/mystical-augments/${baseline}")
 def bounded = rootProject.ext.runBoundedGradleTask
 def pins = fabric ? [
         'MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar': '58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278',
-        'Cucumber-Fabric-26.1.2-9.0.6.2.jar': '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
+        'Cucumber-Fabric-26.1.2-9.0.6.2.jar'            : '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
 ] : [
         'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
-        'Cucumber-26.1.2-9.0.7.jar': '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821'
+        'Cucumber-26.1.2-9.0.7.jar'            : '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821'
 ]
 def effectVariants = ['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Absent']
 def refundVariants = ['Refunds', 'RefundInner', 'RefundOuter', 'RefundMissing', 'RefundExtra']
-if (!fabric) { refundVariants.add('RefundCoexist') }
+if (!fabric) {
+    refundVariants.add('RefundCoexist')
+}
 (effectVariants + refundVariants).each { variant ->
     def name = variant.toLowerCase(Locale.ROOT)
     def directory = runs.map { it.dir(name) }
@@ -97,40 +99,44 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     tasks.named("runMysticalAugments${variant}") { dependsOn prepare }
 }
 def verifyVariants = { variants ->
-        variants.each { variant ->
-            def name = variant.toLowerCase(Locale.ROOT)
-            def log = new File(reports.get().asFile, "${name}-process.log")
-            bounded(":RuntimeTests:${loader}:runMysticalAugments${variant}", log, 240)
-            if (variant == 'Absent' && log.text.readLines().any {
-                it =~ /(?i)(WARN|ERROR|Exception)/ && it =~ /(?i)(mysticalagriculture|cucumber)/
-            }) {
-                throw new GradleException("Optional absence emitted a MA/Cucumber diagnostic; see ${log}")
-            }
-            int expectedRefusals = variant == 'NoEquipment' ? 3 : variant == 'NoJump' ? 1 : 0
-            if ((log.text =~ /Mystical Agriculture mixed augment disabled:/).count != expectedRefusals) {
-                throw new GradleException("Unexpected MA feature refusal count; see ${log}")
-            }
-            int expectedRefundRefusals = variant in ['RefundMissing', 'RefundExtra'] ? 1 : 0
-            if ((log.text =~ /Mystical Agriculture refund flow incompatible/).count != expectedRefundRefusals
-                    || log.text.contains('Just Dire Things refund flow incompatible')) {
-                throw new GradleException("Unexpected refund readiness diagnostic; see ${log}")
-            }
-            def markers = reports.get().dir(name).asFile
-            def failure = new File(markers, 'mystical-augments-failure.txt')
-            if (failure.isFile()) { throw new GradleException(failure.text) }
-            def report = new File(markers, 'mystical-augments-report.txt')
-            if (!new File(markers, 'mystical-augments-success.txt').isFile() || !report.isFile()) {
-                throw new GradleException("Missing MA test evidence; see ${log}")
-            }
-            logger.lifecycle(report.text)
+    variants.each { variant ->
+        def name = variant.toLowerCase(Locale.ROOT)
+        def log = new File(reports.get().asFile, "${name}-process.log")
+        bounded(":RuntimeTests:${loader}:runMysticalAugments${variant}", log, 240)
+        if (variant == 'Absent' && log.text.readLines().any {
+            it =~ /(?i)(WARN|ERROR|Exception)/ && it =~ /(?i)(mysticalagriculture|cucumber)/
+        }) {
+            throw new GradleException("Optional absence emitted a MA/Cucumber diagnostic; see ${log}")
         }
+        int expectedRefusals = variant == 'NoEquipment' ? 3 : variant == 'NoJump' ? 1 : 0
+        if ((log.text =~ /Mystical Agriculture mixed augment disabled:/).count != expectedRefusals) {
+            throw new GradleException("Unexpected MA feature refusal count; see ${log}")
+        }
+        int expectedRefundRefusals = variant in ['RefundMissing', 'RefundExtra'] ? 1 : 0
+        if ((log.text =~ /Mystical Agriculture refund flow incompatible/).count != expectedRefundRefusals
+                || log.text.contains('Just Dire Things refund flow incompatible')) {
+            throw new GradleException("Unexpected refund readiness diagnostic; see ${log}")
+        }
+        def markers = reports.get().dir(name).asFile
+        def failure = new File(markers, 'mystical-augments-failure.txt')
+        if (failure.isFile()) {
+            throw new GradleException(failure.text)
+        }
+        def report = new File(markers, 'mystical-augments-report.txt')
+        if (!new File(markers, 'mystical-augments-success.txt').isFile() || !report.isFile()) {
+            throw new GradleException("Missing MA test evidence; see ${log}")
+        }
+        logger.lifecycle(report.text)
+    }
 }
 tasks.register('verifyMysticalAugments') {
     group = 'verification'
     description = 'Production MA effects, compatible peers, independent local refusals and optional absence'
     doLast {
         def selected = providers.gradleProperty('mysticalEffectVariants').getOrElse(effectVariants.join(',')).split(',').toList()
-        if (!selected.every { it in effectVariants }) { throw new GradleException('Unknown MA effect variant') }
+        if (!selected.every { it in effectVariants }) {
+            throw new GradleException('Unknown MA effect variant')
+        }
         verifyVariants(selected)
     }
 }
@@ -139,7 +145,9 @@ tasks.register('verifyMysticalAugmentsRefunds') {
     description = 'Production conserved owner refunds after consumption, reentry, local refusals and optional absence'
     doLast {
         def selected = providers.gradleProperty('mysticalRefundVariants').getOrElse((refundVariants + ['Absent']).join(',')).split(',').toList()
-        if (!selected.every { it in refundVariants + ['Absent'] }) { throw new GradleException('Unknown MA refund variant') }
+        if (!selected.every { it in refundVariants + ['Absent'] }) {
+            throw new GradleException('Unknown MA refund variant')
+        }
         verifyVariants(selected)
     }
 }
@@ -151,11 +159,11 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
     def connected = phase != 'Seed'
     def directory = lifecycleRuns.map { it.dir(connected ? 'client' : 'seed') }
     def properties = [
-            'mismatchedboots.test.mysticalLifecycle': phase.toLowerCase(Locale.ROOT),
-            'mismatchedboots.test.mysticalClientCache': fabric ? 'false' : 'true',
-            'mismatchedboots.test.hideClientWindow': 'true',
+            'mismatchedboots.test.mysticalLifecycle'     : phase.toLowerCase(Locale.ROOT),
+            'mismatchedboots.test.mysticalClientCache'   : fabric ? 'false' : 'true',
+            'mismatchedboots.test.hideClientWindow'      : 'true',
             'mismatchedboots.runtimetest.dismissWarnings': 'true',
-            'mismatchedboots.runtimetest.markers': lifecycleReports.get().asFile.absolutePath
+            'mismatchedboots.runtimetest.markers'        : lifecycleReports.get().asFile.absolutePath
     ]
     if (fabric) {
         loom.runs.create("mysticalLifecycle${phase}") {
@@ -163,8 +171,11 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
             source('networkTest'); ideConfigGenerated(false)
             runDir("build/run/mysticalLifecycle/${baseline}/${connected ? 'client' : 'seed'}")
             properties.each { key, value -> property(key, value) }
-            if (connected) { programArgs('--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080') }
-            else { programArgs('--nogui') }
+            if (connected) {
+                programArgs('--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080')
+            } else {
+                programArgs('--nogui')
+            }
             vmArg('-Xmx1G')
         }
     } else {
@@ -172,8 +183,11 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
             disableIdeRun(); gameDirectory = directory.get().asFile
             properties.each { key, value -> systemProperty(key, value) }
             if (connected) {
-                client(); ['--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080'].each { programArgument(it) }
-            } else { server(); programArgument('--nogui') }
+                client();
+                ['--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080'].each { programArgument(it) }
+            } else {
+                server(); programArgument('--nogui')
+            }
             jvmArgument('-Xmx1G')
         }
     }
@@ -182,7 +196,9 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
         doLast {
             def buildRoot = layout.buildDirectory.get().asFile.canonicalFile.toPath()
             [directory.get().asFile, lifecycleReports.get().asFile].each { target ->
-                if (!target.canonicalFile.toPath().startsWith(buildRoot)) { throw new GradleException('MA lifecycle paths must remain in runtime build') }
+                if (!target.canonicalFile.toPath().startsWith(buildRoot)) {
+                    throw new GradleException('MA lifecycle paths must remain in runtime build')
+                }
             }
             def target = directory.get().asFile
             if (phase == 'Seed') {
@@ -194,7 +210,8 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
                     }
                     artifact
                 }
-                filesService.copy { from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts; into new File(target, 'mods') }
+                filesService.copy { from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts;
+                    into new File(target, 'mods') }
                 new File(target, 'eula.txt').text = 'eula=true\n'
                 new File(target, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -233,8 +250,12 @@ tasks.register('diagnoseMysticalAugmentsHealthBreak') {
             def output = phase == 'Seed' ? 'mystical-seed' : 'mystical-health-break'
             def directory = lifecycleReports.get().asFile
             def failure = new File(directory, "${output}-failure.txt")
-            if (failure.isFile()) { throw new GradleException(failure.text) }
-            if (!new File(directory, "${output}-success.txt").isFile()) { throw new GradleException("Incomplete MA Health V diagnostic: ${log}") }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
+            if (!new File(directory, "${output}-success.txt").isFile()) {
+                throw new GradleException("Incomplete MA Health V diagnostic: ${log}")
+            }
             logger.lifecycle(new File(directory, "${output}-report.txt").text)
         }
     }
@@ -244,7 +265,9 @@ tasks.register('verifyMysticalAugmentsLifecycle') {
     description = 'MA native-style tooltips, real connected equip/jump/respawn and different-JVM ownership/refunds'
     doLast {
         def selected = providers.gradleProperty('mysticalLifecyclePhases').getOrElse('Seed,Client,Rejoin').split(',').toList()
-        if (!selected.every { it in ['Seed', 'Client', 'Rejoin'] }) { throw new GradleException('Unknown MA lifecycle phase') }
+        if (!selected.every { it in ['Seed', 'Client', 'Rejoin'] }) {
+            throw new GradleException('Unknown MA lifecycle phase')
+        }
         selected.each { phase ->
             def name = phase.toLowerCase(Locale.ROOT)
             // Keep process logs outside the report directory reset by Seed.
@@ -252,7 +275,9 @@ tasks.register('verifyMysticalAugmentsLifecycle') {
             bounded(":RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, phase == 'Seed' ? 240 : 360)
             def directory = lifecycleReports.get().asFile
             def failure = new File(directory, "mystical-${name}-failure.txt")
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             if (!new File(directory, "mystical-${name}-success.txt").isFile()
                     || log.text.contains('Mystical Agriculture mixed augment disabled:') || log.text.contains('Mystical Agriculture refund flow incompatible')) {
                 throw new GradleException("Incomplete/refused MA lifecycle ${name}: ${log}")

@@ -24,7 +24,8 @@ public final class MixedBootsRecomposer {
     /** Gameplay entrypoint, independent of integrated-client synchronization state. */
     public static ItemStack recompose(ItemStack root, ItemStack newLeft, ItemStack newRight) {
         DataComponentType<MixedBootsData> dataType = ModContent.mixedBootsDataType()
-                .orElseThrow(() -> new IllegalStateException("MismatchedBoots data component is not registered"));
+                                                               .orElseThrow(() -> new IllegalStateException(
+                                                                       "MismatchedBoots data component is not registered"));
         AttributeRuleSet attributeRules = AttributeRulesLifecycle.serverRules();
         ComponentRules componentRules = ComponentRulesLifecycle.serverRules();
         return recompose(root, newLeft, newRight, dataType, attributeRules, componentRules);
@@ -37,7 +38,7 @@ public final class MixedBootsRecomposer {
             throw new IllegalArgumentException("Suspended mixed boots cannot be recomposed");
         }
         MixedBootsData previous = Optional.ofNullable(root.get(dataType))
-                .orElseThrow(() -> new IllegalArgumentException("Missing mixed boots data"));
+                                          .orElseThrow(() -> new IllegalArgumentException("Missing mixed boots data"));
         BootHalf left = new BootHalf(newLeft);
         BootHalf right = new BootHalf(newRight);
         ItemStack leftSource = left.source();
@@ -57,7 +58,7 @@ public final class MixedBootsRecomposer {
             output.set(DataComponents.DAMAGE, Math.clamp(root.getDamageValue(), 0, maximum));
         }
         output.set(DataComponents.ATTRIBUTE_MODIFIERS,
-                AttributeComposer.compose(leftSource, rightSource, rules).primary());
+                   AttributeComposer.compose(leftSource, rightSource, rules).primary());
         output.set(DataComponents.EQUIPPABLE, MixedBootsFactory.projectEquippable(leftSource, rightSource));
         output.set(DataComponents.MAX_STACK_SIZE, 1);
         output.set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"));

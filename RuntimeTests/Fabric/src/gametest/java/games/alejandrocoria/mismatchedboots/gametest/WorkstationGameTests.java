@@ -42,7 +42,7 @@ public final class WorkstationGameTests {
         GrindstoneMenu menu = new GrindstoneMenu(1, player.getInventory());
         menu.getSlot(GrindstoneMenu.INPUT_SLOT).set(mixed);
         helper.assertTrue(!menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Grindstone did not preview disenchantment before close");
+                          "Grindstone did not preview disenchantment before close");
         menu.removed(player);
 
         ItemStack paired = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
@@ -51,7 +51,7 @@ public final class WorkstationGameTests {
         repair.getSlot(GrindstoneMenu.INPUT_SLOT).set(paired);
         repair.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_BOOTS));
         helper.assertTrue(!repair.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Grindstone did not preview repair before close");
+                          "Grindstone did not preview repair before close");
         repair.removed(player);
         helper.assertValueEqual(grindstoneExperience(helper), 0, "experience after closing grindstone");
         helper.succeed();
@@ -78,8 +78,8 @@ public final class WorkstationGameTests {
         assertNoGrindstoneResult(helper, reversed, "unrelated boots paired with mixed boots");
 
         helper.assertTrue(helper.getLevel().getEntities(net.minecraft.world.entity.EntityType.EXPERIENCE_ORB,
-                helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).isEmpty(),
-                "Rejected grindstone input created experience");
+                                                        helper.getBounds(), net.minecraft.world.entity.Entity::isAlive).isEmpty(),
+                          "Rejected grindstone input created experience");
         helper.succeed();
     }
 
@@ -148,7 +148,7 @@ public final class WorkstationGameTests {
         GrindstoneMenu menu = grindstone(helper, player, mixedSlot + 1);
         menu.getSlot(mixedSlot).set(mixed);
         menu.getSlot(mixedSlot == GrindstoneMenu.INPUT_SLOT
-                ? GrindstoneMenu.ADDITIONAL_SLOT : GrindstoneMenu.INPUT_SLOT).set(donor);
+                     ? GrindstoneMenu.ADDITIONAL_SLOT : GrindstoneMenu.INPUT_SLOT).set(donor);
         ItemStack preview = menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
         int expectedDamage = Math.max(0, rootMaximum - (rootMaximum - mixed.getDamageValue()
                 + donor.getMaxDamage() - donor.getDamageValue() + rootMaximum * 5 / 100));
@@ -158,12 +158,12 @@ public final class WorkstationGameTests {
         helper.assertValueEqual(preview.getDamageValue(), expectedDamage, "grindstone repair damage");
         helper.assertTrue(GameTestStacks.data(preview).equals(sources), "Grindstone changed source snapshots");
         helper.assertTrue(preview.getHoverName().equals(Component.literal("Repair target")),
-                "Grindstone changed the target's custom name");
+                          "Grindstone changed the target's custom name");
         ItemEnchantments resultEnchantments = preview.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         helper.assertValueEqual(resultEnchantments.getLevel(protection), 0, "removed donor Protection level");
         helper.assertValueEqual(resultEnchantments.getLevel(curse), 1, "retained donor curse level");
         helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
-                "grindstone donor prior-work cost");
+                                "grindstone donor prior-work cost");
         helper.assertValueEqual(grindstoneExperience(helper), 0, "experience before donor extraction");
         int mixedPotential = grindstoneExperiencePotential(mixed);
         int totalPotential = MixedBootsGrindstoneXpPolicy.adjustPotential(mixed, mixedPotential)
@@ -175,15 +175,15 @@ public final class WorkstationGameTests {
         helper.assertValueEqual(taken.getDamageValue(), expectedDamage, "extracted donor repair damage");
         helper.assertTrue(GameTestStacks.data(taken).equals(sources), "Donor extraction changed snapshots");
         helper.assertTrue(menu.getSlot(GrindstoneMenu.INPUT_SLOT).getItem().isEmpty(),
-                "Grindstone did not consume its first input");
+                          "Grindstone did not consume its first input");
         helper.assertTrue(menu.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
-                "Grindstone did not consume its second input");
+                          "Grindstone did not consume its second input");
         int minimumXp = (totalPotential + 1) / 2;
         int experience = grindstoneExperience(helper);
         helper.assertTrue(experience >= minimumXp && experience < minimumXp * 2,
-                "Mixed target and ordinary donor XP " + experience + " was outside vanilla range "
-                        + minimumXp + ".." + (minimumXp * 2 - 1)
-                        + " for potential " + totalPotential);
+                          "Mixed target and ordinary donor XP " + experience + " was outside vanilla range "
+                                  + minimumXp + ".." + (minimumXp * 2 - 1)
+                                  + " for potential " + totalPotential);
         helper.succeed();
     }
 
@@ -198,7 +198,7 @@ public final class WorkstationGameTests {
         ItemStack mixed = GameTestStacks.pair(left, right).primary();
         MixedBootsData sources = GameTestStacks.data(mixed);
         helper.assertValueEqual(mixed.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .getLevel(protection), 2, "merged Protection level");
+                                     .getLevel(protection), 2, "merged Protection level");
         int originalDamage = Math.min(7, mixed.getMaxDamage() - 1);
         mixed.setDamageValue(originalDamage);
         mixed.set(DataComponents.CUSTOM_NAME, Component.literal("Custom pair"));
@@ -213,9 +213,9 @@ public final class WorkstationGameTests {
         helper.assertValueEqual(resultEnchantments.getLevel(curse), 1, "preserved curse level");
         helper.assertValueEqual(preview.getDamageValue(), originalDamage, "grindstone preview damage");
         helper.assertTrue(preview.getHoverName().equals(Component.literal("Custom pair")),
-                "Grindstone changed the custom name");
+                          "Grindstone changed the custom name");
         helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
-                "grindstone preview prior-work cost");
+                                "grindstone preview prior-work cost");
         helper.assertTrue(GameTestStacks.data(preview).equals(sources), "Grindstone changed source snapshots");
         helper.assertValueEqual(grindstoneExperience(helper), 0, "experience before extraction");
 
@@ -224,11 +224,11 @@ public final class WorkstationGameTests {
         helper.assertTrue(GameTestStacks.data(taken).equals(sources), "Extraction changed source snapshots");
         helper.assertValueEqual(taken.getDamageValue(), originalDamage, "extracted grindstone damage");
         helper.assertTrue(menu.getSlot(GrindstoneMenu.INPUT_SLOT).getItem().isEmpty(),
-                "Grindstone did not clear the first input");
+                          "Grindstone did not clear the first input");
         helper.assertTrue(menu.getSlot(GrindstoneMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
-                "Grindstone did not clear the second input");
+                          "Grindstone did not clear the second input");
         helper.assertValueEqual(grindstoneExperience(helper), 1,
-                "bounded experience from two Protection I sources");
+                                "bounded experience from two Protection I sources");
         helper.succeed();
     }
 
@@ -244,7 +244,7 @@ public final class WorkstationGameTests {
         ItemStack result = menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
         helper.assertTrue(result.is(Items.IRON_BOOTS), "Ordinary grindstone operation produced no result");
         helper.assertTrue(result.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).isEmpty(),
-                "Ordinary grindstone result retained a removable enchantment");
+                          "Ordinary grindstone result retained a removable enchantment");
 
         ItemStack first = new ItemStack(Items.IRON_BOOTS);
         ItemStack second = new ItemStack(Items.IRON_BOOTS);
@@ -256,8 +256,8 @@ public final class WorkstationGameTests {
         ItemStack repaired = repair.getSlot(GrindstoneMenu.RESULT_SLOT).getItem();
         helper.assertTrue(repaired.is(Items.IRON_BOOTS), "Ordinary grindstone repair produced no result");
         helper.assertValueEqual(repaired.getDamageValue(),
-                first.getMaxDamage() - (20 + 10 + first.getMaxDamage() * 5 / 100),
-                "ordinary grindstone repair damage");
+                                first.getMaxDamage() - (20 + 10 + first.getMaxDamage() * 5 / 100),
+                                "ordinary grindstone repair damage");
         helper.succeed();
     }
 
@@ -286,7 +286,7 @@ public final class WorkstationGameTests {
         ItemStack ordinary = control.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         helper.assertTrue(ordinary.is(Items.IRON_BOOTS), "Ordinary anvil rename produced no result");
         helper.assertTrue(ordinary.getHoverName().equals(Component.literal("Ordinary name")),
-                "Ordinary anvil rename was not applied");
+                          "Ordinary anvil rename was not applied");
         helper.succeed();
     }
 
@@ -302,26 +302,26 @@ public final class WorkstationGameTests {
         ItemStack accepted = compatible.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         helper.assertTrue(!accepted.isEmpty(), "Anvil rejected an enchantment supported by one source");
         helper.assertValueEqual(accepted.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .getLevel(sharpness), 1, "accepted Sharpness level");
+                                        .getLevel(sharpness), 1, "accepted Sharpness level");
         helper.assertTrue(GameTestStacks.data(accepted).equals(GameTestStacks.data(mixed)),
-                "Anvil book application changed source snapshots");
+                          "Anvil book application changed source snapshots");
 
         AnvilMenu ordinaryControl = new AnvilMenu(2, player.getInventory());
         ordinaryControl.getSlot(AnvilMenu.INPUT_SLOT).set(new ItemStack(Items.IRON_SWORD));
         ordinaryControl.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(enchantedBook(sharpness));
         ItemStack ordinaryAccepted = ordinaryControl.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         helper.assertTrue(ordinaryAccepted.is(Items.IRON_SWORD),
-                "Ordinary anvil enchantment application produced no result");
+                          "Ordinary anvil enchantment application produced no result");
         helper.assertValueEqual(ordinaryAccepted
-                .getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(sharpness),
-                1, "ordinary accepted Sharpness level");
+                                        .getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(sharpness),
+                                1, "ordinary accepted Sharpness level");
 
         Holder<Enchantment> bane = enchantment(helper, Enchantments.BANE_OF_ARTHROPODS);
         AnvilMenu incompatible = new AnvilMenu(3, player.getInventory());
         incompatible.getSlot(AnvilMenu.INPUT_SLOT).set(GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS));
         incompatible.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(enchantedBook(bane));
         helper.assertTrue(incompatible.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil accepted an enchantment unsupported by both sources");
+                          "Anvil accepted an enchantment unsupported by both sources");
         helper.succeed();
     }
 
@@ -339,7 +339,7 @@ public final class WorkstationGameTests {
         unrelated.getSlot(AnvilMenu.INPUT_SLOT).set(mixed);
         unrelated.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.DIAMOND));
         helper.assertTrue(unrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil repaired mixed boots with an unrelated material");
+                          "Anvil repaired mixed boots with an unrelated material");
 
         ItemStack ordinary = new ItemStack(Items.IRON_BOOTS);
         ordinary.setDamageValue(Math.max(1, ordinary.getMaxDamage() / 4));
@@ -347,7 +347,7 @@ public final class WorkstationGameTests {
         control.getSlot(AnvilMenu.INPUT_SLOT).set(ordinary);
         control.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(new ItemStack(Items.IRON_INGOT));
         helper.assertTrue(control.getSlot(AnvilMenu.RESULT_SLOT).getItem().is(Items.IRON_BOOTS),
-                "Ordinary material repair stopped working");
+                          "Ordinary material repair stopped working");
         helper.succeed();
     }
 
@@ -383,17 +383,17 @@ public final class WorkstationGameTests {
 
         ItemStack incompatibleResult = incompatible.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         helper.assertTrue(!incompatibleResult.isEmpty(),
-                "Anvil discarded the donor's valid durability repair");
+                          "Anvil discarded the donor's valid durability repair");
         ItemEnchantments incompatibleEnchantments = incompatibleResult.getOrDefault(
                 DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         helper.assertValueEqual(incompatibleEnchantments.getLevel(frostWalker), 1,
-                "retained Frost Walker level");
+                                "retained Frost Walker level");
         helper.assertValueEqual(incompatibleEnchantments.getLevel(depthStrider), 0,
-                "rejected incompatible Depth Strider level");
+                                "rejected incompatible Depth Strider level");
         helper.assertValueEqual(incompatibleEnchantments.getLevel(unbreaking), 1,
-                "accepted compatible Unbreaking level");
+                                "accepted compatible Unbreaking level");
         helper.assertTrue(GameTestStacks.data(incompatibleResult).equals(rejectsDepthData),
-                "Incompatible donor changed source snapshots");
+                          "Incompatible donor changed source snapshots");
 
         ItemStack frost = new ItemStack(Items.IRON_BOOTS);
         setEnchantment(frost, frostWalker, 1, false);
@@ -409,13 +409,13 @@ public final class WorkstationGameTests {
         compatible.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(compatibleDonor);
 
         ItemEnchantments compatibleEnchantments = compatible.getSlot(AnvilMenu.RESULT_SLOT).getItem()
-                .getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+                                                            .getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         helper.assertValueEqual(compatibleEnchantments.getLevel(frostWalker), 1,
-                "existing Frost Walker level");
+                                "existing Frost Walker level");
         helper.assertValueEqual(compatibleEnchantments.getLevel(depthStrider), 1,
-                "existing Depth Strider level");
+                                "existing Depth Strider level");
         helper.assertValueEqual(compatibleEnchantments.getLevel(unbreaking), 1,
-                "compatible donor Unbreaking level");
+                                "compatible donor Unbreaking level");
         helper.succeed();
     }
 
@@ -430,20 +430,20 @@ public final class WorkstationGameTests {
         combine.getSlot(AnvilMenu.INPUT_SLOT).set(mixed);
         combine.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(inverse);
         helper.assertTrue(combine.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil combined two mixed orientations");
+                          "Anvil combined two mixed orientations");
 
         AnvilMenu sameOrientation = new AnvilMenu(2, player.getInventory());
         sameOrientation.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
         sameOrientation.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(mixed.copy());
         helper.assertTrue(sameOrientation.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil combined the same mixed orientation");
+                          "Anvil combined the same mixed orientation");
 
         AnvilMenu unrelated = new AnvilMenu(3, player.getInventory());
         unrelated.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
         unrelated.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(
                 GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.LEATHER_BOOTS));
         helper.assertTrue(unrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil combined unrelated mixed boots");
+                          "Anvil combined unrelated mixed boots");
 
         ItemStack diamondDonor = new ItemStack(Items.DIAMOND_BOOTS);
         diamondDonor.setDamageValue(Math.max(1, diamondDonor.getMaxDamage() - 10));
@@ -451,7 +451,7 @@ public final class WorkstationGameTests {
         ordinaryUnrelated.getSlot(AnvilMenu.INPUT_SLOT).set(mixed.copy());
         ordinaryUnrelated.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(diamondDonor);
         helper.assertTrue(ordinaryUnrelated.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil repaired mixed boots with an unrelated ordinary donor");
+                          "Anvil repaired mixed boots with an unrelated ordinary donor");
 
         ItemStack ordinaryTarget = new ItemStack(Items.IRON_BOOTS);
         ordinaryTarget.setDamageValue(Math.max(1, ordinaryTarget.getMaxDamage() * 3 / 4));
@@ -459,7 +459,7 @@ public final class WorkstationGameTests {
         reverse.getSlot(AnvilMenu.INPUT_SLOT).set(ordinaryTarget);
         reverse.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(mixed.copy());
         helper.assertTrue(reverse.getSlot(AnvilMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Anvil accepted mixed boots as a donor for ordinary boots");
+                          "Anvil accepted mixed boots as a donor for ordinary boots");
 
         ItemStack ordinaryDonor = new ItemStack(Items.IRON_BOOTS);
         ordinaryDonor.setDamageValue(Math.max(1, ordinaryDonor.getMaxDamage() - 10));
@@ -467,7 +467,7 @@ public final class WorkstationGameTests {
         ordinaryControl.getSlot(AnvilMenu.INPUT_SLOT).set(ordinaryTarget.copy());
         ordinaryControl.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(ordinaryDonor);
         helper.assertTrue(ordinaryControl.getSlot(AnvilMenu.RESULT_SLOT).getItem().is(Items.IRON_BOOTS),
-                "Ordinary boot combination stopped working");
+                          "Ordinary boot combination stopped working");
         helper.succeed();
     }
 
@@ -477,75 +477,78 @@ public final class WorkstationGameTests {
         ItemStack mixed = GameTestStacks.mixed(Items.DIAMOND_BOOTS, Items.IRON_BOOTS);
 
         SmithingMenu upgrade = smithing(helper, player,
-                new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), mixed, new ItemStack(Items.NETHERITE_INGOT));
+                                        new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), mixed, new ItemStack(Items.NETHERITE_INGOT));
         ItemStack upgradedMixed = upgrade.getSlot(SmithingMenu.RESULT_SLOT).getItem();
         helper.assertTrue(upgradedMixed.is(mixed.getItem())
-                        && GameTestStacks.data(upgradedMixed).left().source().is(Items.NETHERITE_BOOTS)
-                        && GameTestStacks.data(upgradedMixed).right().source().is(Items.IRON_BOOTS),
-                "Smithing upgrade did not transform the eligible mixed boot source");
+                                  && GameTestStacks.data(upgradedMixed).left().source().is(Items.NETHERITE_BOOTS)
+                                  && GameTestStacks.data(upgradedMixed).right().source().is(Items.IRON_BOOTS),
+                          "Smithing upgrade did not transform the eligible mixed boot source");
 
         SmithingMenu trim = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), mixed, new ItemStack(Items.DIAMOND));
+                                     new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), mixed, new ItemStack(Items.DIAMOND));
         ItemStack trimmedMixed = trim.getSlot(SmithingMenu.RESULT_SLOT).getItem();
         helper.assertTrue(trimmedMixed.is(mixed.getItem())
-                        && GameTestStacks.data(trimmedMixed).left().source().has(DataComponents.TRIM)
-                        && GameTestStacks.data(trimmedMixed).right().source().has(DataComponents.TRIM),
-                "Smithing trim did not transform both mixed boot sources");
+                                  && GameTestStacks.data(trimmedMixed).left().source().has(DataComponents.TRIM)
+                                  && GameTestStacks.data(trimmedMixed).right().source().has(DataComponents.TRIM),
+                          "Smithing trim did not transform both mixed boot sources");
 
         SmithingMenu upgradeMixedTemplate = smithing(helper, player,
-                mixed, new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.NETHERITE_INGOT));
-        SmithingMenu upgradeMixedAddition = smithing(helper, player,
-                new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), new ItemStack(Items.DIAMOND_BOOTS), mixed);
+                                                     mixed, new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.NETHERITE_INGOT));
+        SmithingMenu upgradeMixedAddition = smithing(helper,
+                                                     player,
+                                                     new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                                                     new ItemStack(Items.DIAMOND_BOOTS),
+                                                     mixed);
         helper.assertTrue(upgradeMixedTemplate.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Smithing upgrade accepted mixed boots as a template");
+                          "Smithing upgrade accepted mixed boots as a template");
         helper.assertTrue(upgradeMixedAddition.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Smithing upgrade accepted mixed boots as an addition");
+                          "Smithing upgrade accepted mixed boots as an addition");
 
         SmithingMenu trimMixedTemplate = smithing(helper, player,
-                mixed, new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.DIAMOND));
+                                                  mixed, new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.DIAMOND));
         SmithingMenu trimMixedAddition = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), new ItemStack(Items.DIAMOND_BOOTS), mixed);
+                                                  new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), new ItemStack(Items.DIAMOND_BOOTS), mixed);
         helper.assertTrue(trimMixedTemplate.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Smithing trim accepted mixed boots as a template");
+                          "Smithing trim accepted mixed boots as a template");
         helper.assertTrue(trimMixedAddition.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Smithing trim accepted mixed boots as an addition");
+                          "Smithing trim accepted mixed boots as an addition");
 
         SmithingMenu control = smithing(helper, player,
-                new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
-                new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.NETHERITE_INGOT));
+                                        new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                                        new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.NETHERITE_INGOT));
         helper.assertTrue(control.getSlot(SmithingMenu.RESULT_SLOT).getItem().is(Items.NETHERITE_BOOTS),
-                "Ordinary Netherite upgrade stopped working");
+                          "Ordinary Netherite upgrade stopped working");
 
         SmithingMenu trimControl = smithing(helper, player,
-                new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
-                new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.DIAMOND));
+                                            new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE),
+                                            new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.DIAMOND));
         ItemStack trimmed = trimControl.getSlot(SmithingMenu.RESULT_SLOT).getItem();
         helper.assertTrue(trimmed.is(Items.DIAMOND_BOOTS) && trimmed.has(DataComponents.TRIM),
-                "Ordinary armor trim stopped working");
+                          "Ordinary armor trim stopped working");
         helper.succeed();
     }
 
     private static void assertNoGrindstoneResult(
             GameTestHelper helper, GrindstoneMenu menu, String scenario) {
         helper.assertTrue(menu.getSlot(GrindstoneMenu.RESULT_SLOT).getItem().isEmpty(),
-                "Grindstone accepted " + scenario);
+                          "Grindstone accepted " + scenario);
     }
 
     private static GrindstoneMenu grindstone(
             GameTestHelper helper, net.minecraft.world.entity.player.Player player, int menuId) {
         return new GrindstoneMenu(menuId, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
+                                  ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
     }
 
     private static int grindstoneExperience(GameTestHelper helper) {
         // Orbs may drift outside the structure; award() can also group equal-value orbs at spawn.
         return helper.getLevel().getEntities(net.minecraft.world.entity.EntityType.EXPERIENCE_ORB,
-                        helper.getBounds().inflate(1.0), net.minecraft.world.entity.Entity::isAlive).stream()
-                .mapToInt(orb -> {
-                    var saved = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, helper.getLevel().registryAccess());
-                    orb.saveWithoutId(saved);
-                    return orb.getValue() * saved.buildResult().getIntOr("Count", 1);
-                }).sum();
+                                             helper.getBounds().inflate(1.0), net.minecraft.world.entity.Entity::isAlive).stream()
+                     .mapToInt(orb -> {
+                         var saved = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, helper.getLevel().registryAccess());
+                         orb.saveWithoutId(saved);
+                         return orb.getValue() * saved.buildResult().getIntOr("Count", 1);
+                     }).sum();
     }
 
     private static int grindstoneExperiencePotential(ItemStack stack) {
@@ -576,7 +579,7 @@ public final class WorkstationGameTests {
         helper.assertTrue(!preview.isEmpty(), "Anvil rejected source repair material " + material);
         helper.assertValueEqual(preview.getDamageValue(), 0, "material repair preview damage");
         helper.assertTrue(GameTestStacks.data(preview).equals(originalData),
-                "Material repair preview changed source snapshots");
+                          "Material repair preview changed source snapshots");
         int cost = menu.getCost();
         helper.assertTrue(cost > 0, "Material repair had no experience cost");
         int levelsBefore = player.experienceLevel;
@@ -586,13 +589,13 @@ public final class WorkstationGameTests {
         helper.assertTrue(!taken.isEmpty(), "Material repair result could not be extracted");
         helper.assertValueEqual(taken.getDamageValue(), 0, "extracted material repair damage");
         helper.assertTrue(GameTestStacks.data(taken).equals(originalData),
-                "Extracted material repair changed source snapshots");
+                          "Extracted material repair changed source snapshots");
         helper.assertTrue(menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().isEmpty(),
-                "Material repair did not consume the mixed input");
+                          "Material repair did not consume the mixed input");
         helper.assertValueEqual(menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().getCount(), 1,
-                "material items remaining after repair");
+                                "material items remaining after repair");
         helper.assertValueEqual(player.experienceLevel, levelsBefore - cost,
-                "experience levels after material repair");
+                                "experience levels after material repair");
     }
 
     private static void assertOrdinaryDonorRepair(
@@ -623,11 +626,11 @@ public final class WorkstationGameTests {
         helper.assertValueEqual(preview.getMaxDamage(), originalMaximum, "ordinary donor result maximum");
         helper.assertValueEqual(preview.getDamageValue(), expectedDamage, "ordinary donor result damage");
         helper.assertValueEqual(preview.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .getLevel(donorEnchantment), 1, "ordinary donor enchantment level");
+                                       .getLevel(donorEnchantment), 1, "ordinary donor enchantment level");
         helper.assertValueEqual(preview.getOrDefault(DataComponents.REPAIR_COST, 0), 1,
-                "ordinary donor prior-work cost");
+                                "ordinary donor prior-work cost");
         helper.assertTrue(GameTestStacks.data(preview).equals(originalData),
-                "Ordinary donor preview changed source snapshots");
+                          "Ordinary donor preview changed source snapshots");
         int cost = menu.getCost();
         helper.assertTrue(cost > 0, "Ordinary donor repair had no experience cost");
         int levelsBefore = player.experienceLevel;
@@ -637,13 +640,13 @@ public final class WorkstationGameTests {
         helper.assertTrue(!taken.isEmpty(), "Ordinary donor result could not be extracted");
         helper.assertValueEqual(taken.getDamageValue(), expectedDamage, "extracted ordinary donor damage");
         helper.assertTrue(GameTestStacks.data(taken).equals(originalData),
-                "Extracted ordinary donor changed source snapshots");
+                          "Extracted ordinary donor changed source snapshots");
         helper.assertTrue(menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().isEmpty(),
-                "Ordinary donor repair did not consume the mixed input");
+                          "Ordinary donor repair did not consume the mixed input");
         helper.assertTrue(menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().isEmpty(),
-                "Ordinary donor repair did not consume the donor");
+                          "Ordinary donor repair did not consume the donor");
         helper.assertValueEqual(player.experienceLevel, levelsBefore - cost,
-                "experience levels after ordinary donor repair");
+                                "experience levels after ordinary donor repair");
     }
 
     private static SmithingMenu smithing(
@@ -653,7 +656,7 @@ public final class WorkstationGameTests {
             ItemStack base,
             ItemStack addition) {
         SmithingMenu menu = new SmithingMenu(1, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
+                                             ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO)));
         menu.getSlot(SmithingMenu.TEMPLATE_SLOT).set(template);
         menu.getSlot(SmithingMenu.BASE_SLOT).set(base);
         menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).set(addition);
@@ -676,7 +679,7 @@ public final class WorkstationGameTests {
         ItemEnchantments.Mutable enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         enchantments.set(enchantment, level);
         stack.set(stored ? DataComponents.STORED_ENCHANTMENTS : DataComponents.ENCHANTMENTS,
-                enchantments.toImmutable());
+                  enchantments.toImmutable());
     }
 
     private static void setEnchantments(

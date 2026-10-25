@@ -5,7 +5,9 @@ def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
 if (!(effectVariant in ['', 'defense-bounce', 'defense-bounce-compatible', 'defense-bounce-query', 'defense-joint', 'defense-data', 'defense-throw', 'defense-reload', 'defense-foundation', 'defense-compatible', 'defense-fall', 'defense-incoming', 'defense-negate', 'defense-retaliation', 'magnet-server', 'magnet-compatible', 'magnet-effect', 'magnet-queue', 'magnet-definition', 'magnet-throw', 'magnet-reload', 'repair', 'wear', 'compatible', 'state', 'joint', 'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait',
-                       'wearer-effect', 'wearer-definition', 'wearer-throw', 'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker', 'parts-audit'])) { throw new GradleException('Unknown SG effect test variant') }
+                        'wearer-effect', 'wearer-definition', 'wearer-throw', 'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker', 'parts-audit'])) {
+    throw new GradleException('Unknown SG effect test variant')
+}
 def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
@@ -69,34 +71,52 @@ tasks.register('verifySilentGear') {
         runBounded(':RuntimeTests:NeoForge:runSilentGearStats', log, 240)
         def markers = reports.get().asFile
         def failure = new File(markers, 'silent-gear-stats-failure.txt')
-        if (failure.isFile()) { throw new GradleException(failure.text) }
+        if (failure.isFile()) {
+            throw new GradleException(failure.text)
+        }
         def report = new File(markers, 'silent-gear-stats-report.txt')
         if (!new File(markers, 'silent-gear-stats-success.txt').isFile() || !report.isFile()) {
             throw new GradleException("Missing Silent Gear results; see ${log}")
         }
         int warnings = (log.text =~ /Silent Gear mixed (repair|wear) disabled:/).count
         int expected = effectVariant in ['repair', 'wear'] ? 1 : 0
-        if (warnings != expected) { throw new GradleException("Unexpected SG effect warnings ${warnings} vs ${expected}: ${log}") }
+        if (warnings != expected) {
+            throw new GradleException("Unexpected SG effect warnings ${warnings} vs ${expected}: ${log}")
+        }
         int stateWarnings = (log.text =~ /Silent Gear mixed state disabled:/).count
-        if (stateWarnings != (effectVariant == 'state' ? 1 : 0)) { throw new GradleException("Unexpected SG live-state warnings: ${stateWarnings}: ${log}") }
+        if (stateWarnings != (effectVariant == 'state' ? 1 : 0)) {
+            throw new GradleException("Unexpected SG live-state warnings: ${stateWarnings}: ${log}")
+        }
         int recognitionWarnings = (log.text =~ /Silent Gear mixed (brilliant|moonwalker) disabled:/).count
         int expectedRecognition = effectVariant in ['recognition-brilliant', 'recognition-moonwalker'] ? 1 : 0
-        if (recognitionWarnings != expectedRecognition) { throw new GradleException("Unexpected SG recognition warnings ${recognitionWarnings} vs ${expectedRecognition}: ${log}") }
+        if (recognitionWarnings != expectedRecognition) {
+            throw new GradleException("Unexpected SG recognition warnings ${recognitionWarnings} vs ${expectedRecognition}: ${log}")
+        }
         int wielderWarnings = (log.text =~ /Silent Gear mixed wielder disabled:/).count
         int expectedWielder = effectVariant in ['wearer-type', 'wearer-trait', 'wearer-effect', 'wearer-definition', 'wearer-throw'] ? 1 : 0
-        if (wielderWarnings != expectedWielder) { throw new GradleException("Unexpected SG Wielder warnings ${wielderWarnings} vs ${expectedWielder}: ${log}") }
+        if (wielderWarnings != expectedWielder) {
+            throw new GradleException("Unexpected SG Wielder warnings ${wielderWarnings} vs ${expectedWielder}: ${log}")
+        }
         int magnetWarnings = (log.text =~ /Silent Gear mixed magnet disabled:/).count
         if (magnetWarnings != (effectVariant in ['magnet-effect', 'magnet-queue', 'magnet-definition', 'magnet-throw', 'magnet-reload'] ? 1 : 0)) {
             throw new GradleException("Unexpected SG magnet warnings ${magnetWarnings}: ${log}")
         }
         int defenseWarnings = (log.text =~ /Silent Gear mixed safe fall disabled:/).count
-        if (defenseWarnings != (effectVariant == 'defense-fall' ? 1 : 0)) { throw new GradleException("Unexpected safe fall warnings: ${defenseWarnings}: ${log}") }
+        if (defenseWarnings != (effectVariant == 'defense-fall' ? 1 : 0)) {
+            throw new GradleException("Unexpected safe fall warnings: ${defenseWarnings}: ${log}")
+        }
         int incomingWarnings = (log.text =~ /Silent Gear mixed incoming disabled:/).count
-        if (incomingWarnings != (effectVariant in ['defense-incoming', 'defense-negate', 'defense-throw'] ? 1 : 0)) { throw new GradleException("Unexpected incoming warnings: ${incomingWarnings}: ${log}") }
+        if (incomingWarnings != (effectVariant in ['defense-incoming', 'defense-negate', 'defense-throw'] ? 1 : 0)) {
+            throw new GradleException("Unexpected incoming warnings: ${incomingWarnings}: ${log}")
+        }
         int traitWarnings = (log.text =~ /Silent Gear mixed incoming trait disabled:/).count
-        if (traitWarnings != (effectVariant == 'defense-data' ? 1 : 0)) { throw new GradleException("Unexpected incoming trait warnings: ${traitWarnings}: ${log}") }
+        if (traitWarnings != (effectVariant == 'defense-data' ? 1 : 0)) {
+            throw new GradleException("Unexpected incoming trait warnings: ${traitWarnings}: ${log}")
+        }
         int bounceWarnings = (log.text =~ /Silent Gear mixed (bounce recognition|retaliation) disabled:/).count
-        if (bounceWarnings != (effectVariant in ['defense-bounce-query', 'defense-retaliation'] ? 1 : 0)) { throw new GradleException("Unexpected Bounce query warnings: ${bounceWarnings}: ${log}") }
+        if (bounceWarnings != (effectVariant in ['defense-bounce-query', 'defense-retaliation'] ? 1 : 0)) {
+            throw new GradleException("Unexpected Bounce query warnings: ${bounceWarnings}: ${log}")
+        }
         if (log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')) {
             throw new GradleException("Unexpected SG binding/read refusal: ${log}")
         }
@@ -133,8 +153,12 @@ tasks.register('verifySilentGearAbsent') {
         runBounded(':RuntimeTests:NeoForge:runSilentGearStatsAbsent', log, 240)
         def markers = reports.get().dir('absent').asFile
         def failure = new File(markers, 'silent-gear-stats-failure.txt')
-        if (failure.isFile()) { throw new GradleException(failure.text) }
-        if (!new File(markers, 'silent-gear-stats-success.txt').isFile()) { throw new GradleException("Missing SG absence result: ${log}") }
+        if (failure.isFile()) {
+            throw new GradleException(failure.text)
+        }
+        if (!new File(markers, 'silent-gear-stats-success.txt').isFile()) {
+            throw new GradleException("Missing SG absence result: ${log}")
+        }
         if (log.text.contains('Could not bind Silent Gear') || log.text.contains('Could not read Silent Gear')
                 || log.text.contains('Silent Gear mixed ') || log.text.contains('Error loading class: net/silentchaos512/gear')) {
             throw new GradleException("SG absence is not quiet: ${log}")
@@ -149,7 +173,9 @@ def clientRun = layout.buildDirectory.dir("run/silentGearLifecycle/${neoforge_ve
 def lifecycleReports = layout.buildDirectory.dir("reports/silent-gear-lifecycle/${neoforge_version}")
 // Production remaining-effects controls, separate from lifecycle gates.
 def voidVariant = providers.gradleProperty('silentGearVoidVariant').getOrElse('')
-if (!(voidVariant in ['', 'compatible', 'refused'])) { throw new GradleException('Unknown Void Ward test variant') }
+if (!(voidVariant in ['', 'compatible', 'refused'])) {
+    throw new GradleException('Unknown Void Ward test variant')
+}
 def voidPath = voidVariant ? "-void-${voidVariant}" : ''
 def voidLog = voidVariant ? "-void-${voidVariant}" : ''
 def remainingRun = layout.buildDirectory.dir("run/silentGearRemaining/${neoforge_version}${voidPath}")
@@ -220,7 +246,9 @@ tasks.named('runSilentGearRemaining') { dependsOn('prepareSilentGearRemaining') 
 // Production tooltip proof, including isolated presentation-only faults.
 // Reuses the disposable flat-world seed/preparation, not the gameplay driver.
 def tooltipVariant = providers.gradleProperty('silentGearTooltipVariant').getOrElse('normal')
-if (!(tooltipVariant in ['normal', 'binding', 'formatter'])) { throw new GradleException('Unknown SG tooltip test variant') }
+if (!(tooltipVariant in ['normal', 'binding', 'formatter'])) {
+    throw new GradleException('Unknown SG tooltip test variant')
+}
 def tooltipPrefix = "silent-gear-tooltip-${tooltipVariant}"
 def tooltipReports = layout.buildDirectory.dir("reports/silent-gear-tooltip/${neoforge_version}")
 neoForge.runs.create('silentGearTooltip') {
@@ -245,9 +273,11 @@ tasks.register('prepareSilentGearTooltip') {
             }
             fixtureFiles.copy { from(jar); into(remainingRun.get().dir('client/mods')) }
         }
-        fixtureFiles.delete { delete(['success', 'failure', 'report', 'compact'].collect {
-            new File(remainingReports.get().asFile, "${tooltipPrefix}-${it}.txt")
-        }) }
+        fixtureFiles.delete {
+            delete(['success', 'failure', 'report', 'compact'].collect {
+                new File(remainingReports.get().asFile, "${tooltipPrefix}-${it}.txt")
+            })
+        }
     }
 }
 tasks.named('runSilentGearTooltip') { dependsOn('prepareSilentGearTooltip') }
@@ -261,7 +291,9 @@ tasks.register('verifySilentGearTooltip') {
             def result = remainingReports.get().asFile
             def failure = new File(result, "${tooltipPrefix}-failure.txt")
             def marker = phase == 'Seed' ? 'silent-gear-remaining-seed-success.txt' : "${tooltipPrefix}-success.txt"
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             int expectedData = phase == 'Client' && tooltipVariant == 'normal' ? 1 : 0
             int expectedDisabled = phase == 'Client' && tooltipVariant != 'normal' ? 1 : 0
             if (!new File(result, marker).isFile() || log.text.contains('Silent Gear mixed ')
@@ -285,7 +317,9 @@ tasks.register('verifySilentGearRemaining') {
             runBounded(":RuntimeTests:NeoForge:runSilentGearRemaining${phase == 'Seed' ? 'Seed' : ''}", log, 300)
             def result = remainingReports.get().asFile
             def failure = new File(result, 'silent-gear-remaining-failure.txt')
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             if (!new File(result, "silent-gear-remaining-${phase == 'Seed' ? 'seed-success' : 'success'}.txt").isFile()) {
                 throw new GradleException("Missing remaining ${phase} evidence: ${log}")
             }
@@ -299,7 +333,9 @@ tasks.register('verifySilentGearRemaining') {
             }
         }
         def report = new File(remainingReports.get().asFile, 'silent-gear-remaining-report.txt')
-        if (!report.isFile() || report.readLines().size() != (voidVariant == 'refused' ? 3 : voidVariant == 'compatible' ? 5 : 23)) { throw new GradleException("Incomplete remaining-effects evidence: ${report}") }
+        if (!report.isFile() || report.readLines().size() != (voidVariant == 'refused' ? 3 : voidVariant == 'compatible' ? 5 : 23)) {
+            throw new GradleException("Incomplete remaining-effects evidence: ${report}")
+        }
         logger.lifecycle(report.text)
     }
 }
@@ -368,8 +404,10 @@ tasks.register('prepareSilentGearClient') {
             throw new GradleException('SG Client requires the completed Restart world')
         }
         fixtureFiles.delete { delete clientRun }
-        fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'world')); into(new File(clientRun.get().asFile, 'saves/silentgear')) }
-        fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'mods')); into(new File(clientRun.get().asFile, 'mods')) }
+        fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'world'));
+            into(new File(clientRun.get().asFile, 'saves/silentgear')) }
+        fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'mods'));
+            into(new File(clientRun.get().asFile, 'mods')) }
         fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(clientRun.get().asFile, 'mods')) }
         new File(clientRun.get().asFile, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
         def config = new File(clientRun.get().asFile, 'config'); config.mkdirs()
@@ -402,7 +440,9 @@ tasks.register('verifySilentGearLifecycle') {
             runBounded(":RuntimeTests:NeoForge:runSilentGear${phase}", log, phase in ['Client', 'Rejoin'] ? 300 : 240)
             def result = lifecycleReports.get().asFile
             def failure = new File(result, "silent-gear-${name}-failure.txt")
-            if (failure.isFile()) { throw new GradleException(failure.text) }
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
             if (!new File(result, "silent-gear-${name}-success.txt").isFile()
                     || !new File(result, "silent-gear-${name}-report.txt").isFile()
                     || log.text.contains('Silent Gear mixed ') || log.text.contains('Could not bind Silent Gear')

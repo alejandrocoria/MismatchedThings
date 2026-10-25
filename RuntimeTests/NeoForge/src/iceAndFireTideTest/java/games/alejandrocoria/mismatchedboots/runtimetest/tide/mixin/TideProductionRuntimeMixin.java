@@ -31,7 +31,9 @@ abstract class TideProductionRuntimeMixin {
         previousCarrier = carrier;
         ItemStack before = carrier.copy();
         original.call(receiver, carrier, level, entity, slot);
-        if (!ItemStack.matches(before, carrier)) { throw new AssertionError("Production carrier mutated"); }
+        if (!ItemStack.matches(before, carrier)) {
+            throw new AssertionError("Production carrier mutated");
+        }
         TideProductionProbe.activations++;
     }
 
@@ -39,7 +41,9 @@ abstract class TideProductionRuntimeMixin {
     private static Item resolve(Operation<Item> original) {
         TideProductionProbe.bindings++;
         String fault = System.getProperty("mismatchedboots.runtimetest.tideFeetReceiver", "");
-        if (fault.equals("linkage")) { throw new NoSuchMethodError("Injected production receiver preflight failure"); }
+        if (fault.equals("linkage")) {
+            throw new NoSuchMethodError("Injected production receiver preflight failure");
+        }
         return fault.equals("replaced") ? Items.IRON_BOOTS : original.call();
     }
 

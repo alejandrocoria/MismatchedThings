@@ -27,7 +27,7 @@ class TomlConfigIO {
             dirty = part.load(read(path));
         } catch (IOException | SecurityException exception) {
             Constants.LOG.warn("Cannot read config file {}. Using in-memory defaults without changing the file.",
-                    path, exception);
+                               path, exception);
             part.reset();
             return;
         } catch (ParsingException exception) {
@@ -38,7 +38,7 @@ class TomlConfigIO {
                 Constants.LOG.warn("Copied malformed config file {} to {}", path, backup);
             } catch (IOException | SecurityException backupFailure) {
                 Constants.LOG.warn("Cannot back up config file {}. Using in-memory defaults without changing the file.",
-                        path, backupFailure);
+                                   path, backupFailure);
                 return;
             }
             // Only a successfully preserved malformed file may be replaced with defaults.

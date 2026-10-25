@@ -30,9 +30,9 @@ class MixedBootsItemTooltipFlagTest {
         MethodNode outer = owner.methods.stream().filter(method -> method.name.equals("appendHoverText")).findFirst().orElseThrow();
         var code = code(outer);
         InvokeDynamicInsnNode lambda = code.stream().filter(InvokeDynamicInsnNode.class::isInstance)
-                .map(InvokeDynamicInsnNode.class::cast)
-                .filter(site -> site.bsmArgs.length > 1 && site.bsmArgs[1] instanceof Handle target
-                        && target.getOwner().equals(owner.name)).findFirst().orElseThrow();
+                                           .map(InvokeDynamicInsnNode.class::cast)
+                                           .filter(site -> site.bsmArgs.length > 1 && site.bsmArgs[1] instanceof Handle target
+                                                   && target.getOwner().equals(owner.name)).findFirst().orElseThrow();
         int site = code.indexOf(lambda);
         assertEquals(0, assertInstanceOf(VarInsnNode.class, code.get(site - 2)).var);
         assertEquals(5, assertInstanceOf(VarInsnNode.class, code.get(site - 1)).var, "Capture the actual flag, not a default/global value");
@@ -41,16 +41,24 @@ class MixedBootsItemTooltipFlagTest {
                 && method.desc.equals(target.getDesc())).findFirst().orElseThrow();
         var forwardingCode = code(forwarding);
         var invocation = forwardingCode.stream().filter(MethodInsnNode.class::isInstance)
-                .map(MethodInsnNode.class::cast).filter(call -> call.name.equals("sourceTooltip")).findFirst().orElseThrow();
+                                       .map(MethodInsnNode.class::cast).filter(call -> call.name.equals("sourceTooltip")).findFirst().orElseThrow();
         assertEquals(Opcodes.INVOKEVIRTUAL, invocation.getOpcode());
-        assertEquals("(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/TooltipFlag;Ljava/util/function/Consumer;)Ljava/util/function/Consumer;", invocation.desc);
-        assertEquals(List.of(0, 2, 1, 3), forwardingCode.stream().filter(VarInsnNode.class::isInstance)
-                .map(VarInsnNode.class::cast).map(load -> load.var).toList(), "Forward this/source/captured flag/output in that order");
+        assertEquals(
+                "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/TooltipFlag;Ljava/util/function/Consumer;)Ljava/util/function/Consumer;",
+                invocation.desc);
+        assertEquals(List.of(0, 2, 1, 3),
+                     forwardingCode.stream().filter(VarInsnNode.class::isInstance)
+                                   .map(VarInsnNode.class::cast).map(load -> load.var).toList(),
+                     "Forward this/source/captured flag/output in that order");
     }
 
     private static List<AbstractInsnNode> code(MethodNode method) {
         var result = new ArrayList<AbstractInsnNode>();
-        for (var instruction : method.instructions) { if (instruction.getOpcode() >= 0) { result.add(instruction); } }
+        for (var instruction : method.instructions) {
+            if (instruction.getOpcode() >= 0) {
+                result.add(instruction);
+            }
+        }
         return result;
     }
 }

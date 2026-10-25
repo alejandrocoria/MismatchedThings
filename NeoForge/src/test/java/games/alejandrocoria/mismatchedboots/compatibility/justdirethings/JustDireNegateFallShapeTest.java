@@ -27,12 +27,14 @@ class JustDireNegateFallShapeTest implements Opcodes {
             ClassNode handler = read(jar, JustDireJumpShape.HANDLER);
             assertTrue(JustDireNegateFallShape.flow(handler, false));
             MethodNode unrelated = new MethodNode(ACC_PUBLIC | ACC_STATIC, "unrelated", "()V", null, null);
-            unrelated.instructions.add(new InsnNode(RETURN)); handler.methods.add(unrelated);
+            unrelated.instructions.add(new InsnNode(RETURN));
+            handler.methods.add(unrelated);
             assertTrue(JustDireNegateFallShape.flow(handler, false));
             MethodNode fall = JustDireJumpShape.method(handler, "LivingFallDamage", JustDireJumpShape.FALL);
             for (var node : fall.instructions) {
                 if (node instanceof FieldInsnNode field && field.name.equals("NEGATEFALLDAMAGE")) {
-                    field.name = "JUMPBOOST"; break;
+                    field.name = "JUMPBOOST";
+                    break;
                 }
             }
             assertFalse(JustDireNegateFallShape.flow(handler, false));
@@ -40,20 +42,29 @@ class JustDireNegateFallShapeTest implements Opcodes {
             handler = read(jar, JustDireJumpShape.HANDLER);
             fall = JustDireJumpShape.method(handler, "LivingFallDamage", JustDireJumpShape.FALL);
             for (var node : fall.instructions) {
-                if (node.getOpcode() == D2I) { fall.instructions.set(node, new InsnNode(DNEG)); break; }
+                if (node.getOpcode() == D2I) {
+                    fall.instructions.set(node, new InsnNode(DNEG));
+                    break;
+                }
             }
             assertFalse(JustDireNegateFallShape.flow(handler, false), "Changed native payment multiplier");
             handler = read(jar, JustDireJumpShape.HANDLER);
             fall = JustDireJumpShape.method(handler, "LivingFallDamage", JustDireJumpShape.FALL);
             var feetRead = JustDireJumpShape.feetRead(fall.desc, fall.instructions);
             var feet = feetRead.getPrevious();
-            while (feet.getOpcode() < 0) { feet = feet.getPrevious(); }
+            while (feet.getOpcode() < 0) {
+                feet = feet.getPrevious();
+            }
             var player = feet.getPrevious();
-            while (player.getOpcode() < 0) { player = player.getPrevious(); }
-            LabelNode bypass = new LabelNode(); fall.instructions.insertBefore(player, bypass);
+            while (player.getOpcode() < 0) {
+                player = player.getPrevious();
+            }
+            LabelNode bypass = new LabelNode();
+            fall.instructions.insertBefore(player, bypass);
             for (var node : fall.instructions) {
                 if (node instanceof MethodInsnNode call && call.name.equals("getMainHandItem")) {
-                    fall.instructions.insertBefore(call.getPrevious(), new JumpInsnNode(GOTO, bypass)); break;
+                    fall.instructions.insertBefore(call.getPrevious(), new JumpInsnNode(GOTO, bypass));
+                    break;
                 }
             }
             assertFalse(JustDireNegateFallShape.flow(handler, false), "A prelude cannot bypass native hand precedence");
@@ -81,10 +92,15 @@ class JustDireNegateFallShapeTest implements Opcodes {
         ClassNode handler = read(bytes);
         reset(handler);
         assertTrue(JustDireNegateFallShape.publish(handler, true), "Actual transformed local flow");
-        handler = read(bytes); reset(handler);
+        handler = read(bytes);
+        reset(handler);
         assertFalse(JustDireNegateFallShape.publish(handler, false));
-        assertEquals(ICONST_0, JustDireJumpShape.code(JustDireJumpShape.method(handler, JustDireNegateFallShape.GETTER, "()Z").instructions).getFirst().getOpcode());
-        handler = read(bytes); reset(handler);
+        assertEquals(ICONST_0,
+                     JustDireJumpShape.code(JustDireJumpShape.method(handler, JustDireNegateFallShape.GETTER, "()Z").instructions)
+                                      .getFirst()
+                                      .getOpcode());
+        handler = read(bytes);
+        reset(handler);
         for (MethodNode method : handler.methods) {
             for (var node : method.instructions) {
                 if (node instanceof MethodInsnNode call && call.name.equals(JustDireNegateFallShape.GETTER)) {
@@ -111,10 +127,14 @@ class JustDireNegateFallShapeTest implements Opcodes {
     }
 
     private static ClassNode read(JarFile jar, String name) throws Exception {
-        try (var stream = jar.getInputStream(jar.getJarEntry(name + ".class"))) { return read(stream.readAllBytes()); }
+        try (var stream = jar.getInputStream(jar.getJarEntry(name + ".class"))) {
+            return read(stream.readAllBytes());
+        }
     }
 
     private static ClassNode read(byte[] bytes) {
-        ClassNode result = new ClassNode(); new ClassReader(bytes).accept(result, 0); return result;
+        ClassNode result = new ClassNode();
+        new ClassReader(bytes).accept(result, 0);
+        return result;
     }
 }

@@ -14,7 +14,10 @@ import org.spongepowered.asm.mixin.injection.At;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.gear.trait.effect.SelfRepairTraitEffect", remap = false)
 abstract class SilentGearSelfRepairMixin implements SilentGearEffectReadiness {
-    @Unique public boolean mismatchedboots$sgRepairReady() { return false; }
+    @Unique
+    public boolean mismatchedboots$sgRepairReady() {
+        return false;
+    }
 
     @WrapWithCondition(method = "inventoryTick", require = 0, expect = 0, allow = 1,
             at = @At(value = "games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearRepairInjectionPoint"))

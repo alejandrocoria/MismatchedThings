@@ -18,10 +18,15 @@ import java.util.function.Consumer;
 @Mixin(targets = "com.aetherteam.aetherii.item.components.ReinforcementTier", remap = false)
 abstract class AetherTierFaultMixin {
     @Inject(method = "addToTooltip", at = @At("RETURN"))
-    private void populated(Item.TooltipContext context, Consumer<Component> lines, TooltipFlag flag, DataComponentGetter stack, CallbackInfo callback) {
+    private void populated(Item.TooltipContext context,
+                           Consumer<Component> lines,
+                           TooltipFlag flag,
+                           DataComponentGetter stack,
+                           CallbackInfo callback) {
         // Only our audited source provider uses EMPTY; preserve the ordinary original native event/context.
         if (context == Item.TooltipContext.EMPTY) {
-            AetherTooltipTestControl.tierScratchCalls++; lines.accept(AetherTooltipTestControl.TIER_SCRATCH);
+            AetherTooltipTestControl.tierScratchCalls++;
+            lines.accept(AetherTooltipTestControl.TIER_SCRATCH);
             throw new IllegalStateException("Controlled populated source tier failure");
         }
     }

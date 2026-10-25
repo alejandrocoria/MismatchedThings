@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "mismatchedboots-test:item/geometry_full"
-  }
+    "model": {
+        "type": "minecraft:model",
+        "model": "mismatchedboots-test:item/geometry_full"
+    }
 }

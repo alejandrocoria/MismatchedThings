@@ -205,7 +205,7 @@ class MixedBootsWorkbenchRecipeTest {
         assertSame(recipe.getType(), ModContent.mismatchedWorkbenchRecipeType());
         assertSame(MixedBootsWorkbenchRecipe.SERIALIZER, recipe.getSerializer());
         assertSame(MixedBootsWorkbenchRecipe.SERIALIZER,
-                ModContent.createMixedBootsWorkbenchRecipeSerializer());
+                   ModContent.createMixedBootsWorkbenchRecipeSerializer());
         assertNotSame(recipe.getSerializer(), alternate.getSerializer());
         assertEquals(ModContent.MISMATCHED_WORKBENCH_ID.toString(), recipe.getType().toString());
         assertTrue(recipe.isSpecial());
@@ -220,9 +220,9 @@ class MixedBootsWorkbenchRecipeTest {
         RecipeSerializer<MixedBootsWorkbenchRecipe> serializer =
                 ModContent.createMixedBootsWorkbenchRecipeSerializer();
         JsonElement encoded = serializer.codec().codec()
-                .encodeStart(JsonOps.INSTANCE, new MixedBootsWorkbenchRecipe()).getOrThrow();
+                                        .encodeStart(JsonOps.INSTANCE, new MixedBootsWorkbenchRecipe()).getOrThrow();
         MixedBootsWorkbenchRecipe persistent = serializer.codec().codec()
-                .parse(JsonOps.INSTANCE, encoded).getOrThrow();
+                                                         .parse(JsonOps.INSTANCE, encoded).getOrThrow();
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
                 Unpooled.buffer(), builtInRegistryAccess());
 
@@ -247,10 +247,10 @@ class MixedBootsWorkbenchRecipeTest {
 
     private static ItemStack boots(Item item) {
         DataComponentMap components = DataComponentMap.builder()
-                .set(DataComponents.MAX_STACK_SIZE, 1)
-                .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
-                .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
-                .build();
+                                                      .set(DataComponents.MAX_STACK_SIZE, 1)
+                                                      .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build())
+                                                      .set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)
+                                                      .build();
         return new ItemStack(Holder.direct(item, components), 1);
     }
 

@@ -30,8 +30,8 @@ public final class IceAndFireCoexistencePlugin implements IMixinConfigPlugin {
             }
             // Direct executable insertion: the former full-body hash rejected this harmless log-like call.
             method.instructions.insert(new MethodInsnNode(Opcodes.INVOKESTATIC,
-                    "games/alejandrocoria/mismatchedboots/runtimetest/neoforge/IceAndFireCoexistencePlugin",
-                    "observe", "()V", false));
+                                                          "games/alejandrocoria/mismatchedboots/runtimetest/neoforge/IceAndFireCoexistencePlugin",
+                                                          "observe", "()V", false));
             if (System.getProperty("mismatchedboots.runtimetest.iceAndFireCoexistence").equals("incompatible")
                     && method.name.equals("onEntityDamage")) {
                 // Replace only the FEET Troll type test with a non-armor type before injectors prepare.
@@ -51,9 +51,25 @@ public final class IceAndFireCoexistencePlugin implements IMixinConfigPlugin {
         IceAndFireCoexistenceFixture.logCalls++;
     }
 
-    @Override public void onLoad(String mixinPackage) {}
-    @Override public String getRefMapperConfig() { return null; }
-    @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
-    @Override public List<String> getMixins() { return null; }
-    @Override public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
+    @Override
+    public void onLoad(String mixinPackage) {
+    }
+
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> mine, Set<String> others) {
+    }
+
+    @Override
+    public List<String> getMixins() {
+        return null;
+    }
+
+    @Override
+    public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+    }
 }

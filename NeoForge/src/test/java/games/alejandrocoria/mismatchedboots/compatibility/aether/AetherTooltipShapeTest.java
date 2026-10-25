@@ -22,7 +22,8 @@ class AetherTooltipShapeTest {
     void nativeProducerCallsAreGuardedIndependentlyAndExactlyOnce() throws Exception {
         var owner = nativeEvents();
         var peer = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "foreignObservation", "()V", null, null);
-        peer.instructions.add(new InsnNode(Opcodes.RETURN)); owner.methods.add(peer);
+        peer.instructions.add(new InsnNode(Opcodes.RETURN));
+        owner.methods.add(peer);
         for (boolean attributes : new boolean[]{true, false}) {
             assertTrue(AetherTooltipShape.producer(owner, attributes));
             assertFalse(AetherTooltipShape.producer(owner, attributes), "No duplicate insertion");
@@ -34,26 +35,33 @@ class AetherTooltipShapeTest {
     void finalArgumentChainsAndUnrelatedEditsDoNotRequireWholeMethodIdentity() throws Exception {
         var owner = nativeEvents();
         for (var method : owner.methods) {
-            if (!method.name.equals("onAddAttributeTooltips") && !method.name.equals("onAddTooltipsLowest")) { continue; }
+            if (!method.name.equals("onAddAttributeTooltips") && !method.name.equals("onAddTooltipsLowest")) {
+                continue;
+            }
             method.instructions.insert(new InsnNode(Opcodes.NOP));
             var observation = new InsnList();
             observation.add(new MethodInsnNode(Opcodes.INVOKESTATIC, AetherTooltipShape.STATE, "tiersReady", "()Z", false));
-            observation.add(new InsnNode(Opcodes.POP)); method.instructions.insert(observation);
+            observation.add(new InsnNode(Opcodes.POP));
+            method.instructions.insert(observation);
             for (var node : method.instructions.toArray()) {
                 if (node instanceof MethodInsnNode call && (call.name.equals("getStack") || call.name.equals("getItemStack"))) {
                     method.instructions.insert(call, new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Peer", "identity",
-                            "(" + AetherTooltipShape.STACK + ")" + AetherTooltipShape.STACK, false));
+                                                                        "(" + AetherTooltipShape.STACK + ")" + AetherTooltipShape.STACK, false));
                 }
             }
         }
-        assertTrue(AetherTooltipShape.producer(owner, true)); assertTrue(AetherTooltipShape.producer(owner, false));
+        assertTrue(AetherTooltipShape.producer(owner, true));
+        assertTrue(AetherTooltipShape.producer(owner, false));
     }
 
     @Test
     void opaqueEventSourcesRefuseOnlyTheirOwnProducer() throws Exception {
         for (boolean attributes : new boolean[]{true, false}) {
             var owner = nativeEvents();
-            var method = owner.methods.stream().filter(m -> m.name.equals(attributes ? "onAddAttributeTooltips" : "onAddTooltipsLowest")).findFirst().orElseThrow();
+            var method = owner.methods.stream()
+                                      .filter(m -> m.name.equals(attributes ? "onAddAttributeTooltips" : "onAddTooltipsLowest"))
+                                      .findFirst()
+                                      .orElseThrow();
             for (var node : method.instructions) {
                 if (node instanceof MethodInsnNode call && call.name.equals(attributes ? "getStack" : "getItemStack")) {
                     call.name = "foreignStack";
@@ -67,12 +75,16 @@ class AetherTooltipShapeTest {
     @Test
     void bothOwnedDetailBranchesAreScopedAtomicallyWithoutChangingCommonSource() throws Exception {
         var owner = formatter();
-        assertTrue(AetherTooltipShape.sourceScope(owner)); assertFalse(AetherTooltipShape.sourceScope(owner));
+        assertTrue(AetherTooltipShape.sourceScope(owner));
+        assertFalse(AetherTooltipShape.sourceScope(owner));
         assertEquals(2, calls(owner, AetherTooltipShape.STATE));
         var changed = formatter();
         for (var method : changed.methods) {
             for (var node : method.instructions) {
-                if (node instanceof MethodInsnNode call && call.name.equals("addDetailsToTooltip")) { call.name = "foreignDetails"; break; }
+                if (node instanceof MethodInsnNode call && call.name.equals("addDetailsToTooltip")) {
+                    call.name = "foreignDetails";
+                    break;
+                }
             }
         }
         assertFalse(AetherTooltipShape.sourceScope(changed));
@@ -81,18 +93,24 @@ class AetherTooltipShapeTest {
 
     private static long calls(ClassNode owner, String target) {
         return owner.methods.stream().flatMap(method -> java.util.Arrays.stream(method.instructions.toArray()))
-                .filter(node -> node instanceof MethodInsnNode call && call.owner.equals(target)).count();
+                            .filter(node -> node instanceof MethodInsnNode call && call.owner.equals(target)).count();
     }
+
     private static ClassNode nativeEvents() throws Exception {
         String path = System.getProperty("mismatchedboots.test.aetherGuardJar");
         assumeTrue(path != null, "Native Aether characterization is opt-in");
         try (var jar = new JarFile(path); var stream = jar.getInputStream(jar.getJarEntry(AetherTooltipShape.EVENTS + ".class"))) {
-            var node = new ClassNode(); new ClassReader(stream).accept(node, 0); return node;
+            var node = new ClassNode();
+            new ClassReader(stream).accept(node, 0);
+            return node;
         }
     }
+
     private static ClassNode formatter() throws Exception {
         try (var stream = MixedBootsTooltipFormatter.class.getResourceAsStream("MixedBootsTooltipFormatter.class")) {
-            var node = new ClassNode(); new ClassReader(stream).accept(node, 0); return node;
+            var node = new ClassNode();
+            new ClassReader(stream).accept(node, 0);
+            return node;
         }
     }
 }

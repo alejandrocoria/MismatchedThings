@@ -12,14 +12,18 @@ import net.minecraft.world.item.TooltipFlag;
 
 /** Collects the real production tooltip in a dedicated-server JVM, without touching client rendering. */
 public final class SeparatorServerProbe {
-    private SeparatorServerProbe() {}
+    private SeparatorServerProbe() {
+    }
 
     public static void run(MinecraftServer server) {
         try {
             var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(
                     new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
-            if (!pair.isComplete()) { throw new AssertionError("Server recipe rejected"); }
-            var root = pair.primary(); var before = root.copy();
+            if (!pair.isComplete()) {
+                throw new AssertionError("Server recipe rejected");
+            }
+            var root = pair.primary();
+            var before = root.copy();
             var lines = root.getTooltipLines(Item.TooltipContext.of(server.overworld()), null, TooltipFlag.NORMAL);
             if (lines.stream().filter(TooltipSeparator.class::isInstance).count() != 2
                     || lines.stream().filter(TooltipSeparator.class::isInstance).anyMatch(line -> !line.getString().isEmpty())
@@ -27,7 +31,10 @@ public final class SeparatorServerProbe {
                 throw new AssertionError("Server tooltip boundaries/fallback/immutability failed");
             }
             NetworkAcceptanceFiles.write("separator-server-success.txt", "production markers collected in dedicated server\n");
-        } catch (Throwable failure) { NetworkAcceptanceFiles.failure("separator", failure); }
-        finally { server.halt(false); }
+        } catch (Throwable failure) {
+            NetworkAcceptanceFiles.failure("separator", failure);
+        } finally {
+            server.halt(false);
+        }
     }
 }

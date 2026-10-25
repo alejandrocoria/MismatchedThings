@@ -13,7 +13,9 @@ abstract class JustDireArmorWearDebitMixin {
     private int fault(int receipt, int amount, TransactionContext transaction) {
         boolean staged = JustDireArmorWearFaults.fault.equals("staged") && receipt > 0;
         int reported = JustDireArmorWearFaults.extracted(receipt);
-        if (staged && ((EnergyHandler) (Object) this).extract(1, transaction) != 1) { throw new AssertionError("Real extra staged debit failed"); }
+        if (staged && ((EnergyHandler) (Object) this).extract(1, transaction) != 1) {
+            throw new AssertionError("Real extra staged debit failed");
+        }
         return reported;
     }
 }

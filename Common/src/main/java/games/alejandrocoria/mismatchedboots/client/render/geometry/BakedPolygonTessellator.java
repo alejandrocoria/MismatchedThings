@@ -21,8 +21,8 @@ public final class BakedPolygonTessellator {
         List<BakedQuad> result = new ArrayList<>(2);
         for (PolygonTessellator.Primitive primitive : PolygonTessellator.tessellate(polygon)) {
             result.add(rebuild(source,
-                    polygon.vertex(primitive.first()), polygon.vertex(primitive.second()),
-                    polygon.vertex(primitive.third()), polygon.vertex(primitive.fourth())));
+                               polygon.vertex(primitive.first()), polygon.vertex(primitive.second()),
+                               polygon.vertex(primitive.third()), polygon.vertex(primitive.fourth())));
         }
         return List.copyOf(result);
     }

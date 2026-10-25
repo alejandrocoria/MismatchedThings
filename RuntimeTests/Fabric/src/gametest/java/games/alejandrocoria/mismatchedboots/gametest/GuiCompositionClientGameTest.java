@@ -113,7 +113,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     GuiItemSubmissionProbe.EventType.DECORATION,
                     GuiItemSubmissionProbe.EventType.ITEM))) {
                 throw new AssertionError("GUI item/decorations were submitted in the wrong order: "
-                        + snapshot.events());
+                                                 + snapshot.events());
             }
             if (snapshot.decorations().size() != 1
                     || !ItemStack.matches(snapshot.decorations().getFirst().stack(), mixed)
@@ -126,7 +126,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             ScreenRectangle parent = transformedRectangle(
                     ITEM_X + 2, ITEM_Y, 12, ITEM_SIZE, expectedPose);
             assertSubmission(snapshot.submissions().get(0), expectedPose, parent,
-                    "red_concrete", "context left");
+                             "red_concrete", "context left");
             assertSourceSprite(snapshot.submissions().get(0).itemStackRenderState(), "blue_concrete", "context right");
             assertClippedComposition(snapshot.submissions().get(0));
             assertPose(snapshot.submissions().get(1).pose(), expectedPose, "post-clip control");
@@ -275,7 +275,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
         ItemStack second = clippingPair(false);
         int secondX = ITEM_X + 40;
         GuiItemSubmissionProbe.armTargets(4, 0,
-                ITEM_X, ITEM_Y, secondX, ITEM_Y, secondX + 40, ITEM_Y, secondX + 80, ITEM_Y);
+                                          ITEM_X, ITEM_Y, secondX, ITEM_Y, secondX + 40, ITEM_Y, secondX + 80, ITEM_Y);
         context.setScreen(() -> new RepeatedPairsScreen(first, second, secondX));
         context.waitFor(client -> GuiItemSubmissionProbe.isComplete());
         context.runOnClient(client -> {
@@ -292,11 +292,11 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     || Objects.equals(firstIdentity, inverseIdentity)
                     || Objects.equals(firstIdentity, fullSourceIdentity)
                     || composition(submissions.get(0)).sources().stream()
-                    .anyMatch(source -> Objects.equals(firstIdentity, source.getModelIdentity()))) {
+                                                      .anyMatch(source -> Objects.equals(firstIdentity, source.getModelIdentity()))) {
                 throw new AssertionError("Repeated pairs produced unstable or collapsed model identities");
             }
             if (!Objects.equals(fullSourceIdentity,
-                    composition(submissions.get(0)).sources().getFirst().getModelIdentity())) {
+                                composition(submissions.get(0)).sources().getFirst().getModelIdentity())) {
                 throw new AssertionError("The ordinary source did not exercise the same native model identity");
             }
         });
@@ -326,7 +326,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             }
             if (layerCount(submission.itemStackRenderState()) != 2
                     || Math.abs(layer(submission.itemStackRenderState(), 0)
-                    .mismatchedboots$getLocalTransform().m00() - (float) Math.cos(Math.toRadians(1.0))) > EPSILON) {
+                                        .mismatchedboots$getLocalTransform().m00() - (float) Math.cos(Math.toRadians(1.0))) > EPSILON) {
                 throw new AssertionError("Unsupported rotated GUI pose did not use overlapping rendering");
             }
         });
@@ -391,8 +391,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     var faces = MeshSubmissionProbe.fingerprint(mesh);
                     var quads = layer(source, 0).mismatchedboots$getQuads();
                     long triangles = extended ? faces.stream().filter(face ->
-                            face.vertices().get(2).equals(face.vertices().get(3))).count()
-                            : quads.stream().filter(quad -> quad.position2().equals(quad.position3())).count();
+                                                                              face.vertices().get(2).equals(face.vertices().get(3))).count()
+                                              : quads.stream().filter(quad -> quad.position2().equals(quad.position3())).count();
                     if ((extended ? faces.size() : quads.size()) != 12 || triangles != 4) {
                         throw new AssertionError("Oblique GUI ownership did not keep its characterized 12 primitives/4 triangles");
                     }
@@ -406,9 +406,9 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     }
                     TrackingItemStackRenderState baseline = new TrackingItemStackRenderState();
                     client.getItemModelResolver().updateForTopItem(baseline,
-                            side == 0 ? left : right, ItemDisplayContext.GUI, client.level, null, 0);
+                                                                   side == 0 ? left : right, ItemDisplayContext.GUI, client.level, null, 0);
                     if (!testLayer(source, 0).mismatchedboots$getItemTransform()
-                            .equals(testLayer(baseline, 0).mismatchedboots$getItemTransform())) {
+                                             .equals(testLayer(baseline, 0).mismatchedboots$getItemTransform())) {
                         throw new AssertionError("Canonical clipping changed the oblique GUI display transform");
                     }
                     MeshSubmissionProbe.arm();
@@ -435,9 +435,9 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                 }
                 ItemLayerResolutionProbe.clear();
                 if (items.size() != 2 || items.stream().anyMatch(item ->
-                        !(item.itemStackRenderState() instanceof MixedBootsGuiRenderState))
+                                                                         !(item.itemStackRenderState() instanceof MixedBootsGuiRenderState))
                         || Objects.equals(items.get(0).itemStackRenderState().getModelIdentity(),
-                        items.get(1).itemStackRenderState().getModelIdentity())) {
+                                          items.get(1).itemStackRenderState().getModelIdentity())) {
                     throw new AssertionError("Rotated GUI composition or inverse-pair cache identity collapsed");
                 }
             });
@@ -475,9 +475,9 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             for (int side = 0; side < 2; side++) {
                 TrackingItemStackRenderState baseline = new TrackingItemStackRenderState();
                 client.getItemModelResolver().updateForTopItem(baseline,
-                        modelBoot(side == 0 ? Items.IRON_BOOTS : Items.GOLDEN_BOOTS,
-                                side == 0 ? RED_MODEL : BLUE_MODEL),
-                        ItemDisplayContext.GUI, client.level, null, 0);
+                                                               modelBoot(side == 0 ? Items.IRON_BOOTS : Items.GOLDEN_BOOTS,
+                                                                         side == 0 ? RED_MODEL : BLUE_MODEL),
+                                                               ItemDisplayContext.GUI, client.level, null, 0);
                 ItemStackRenderState actual = items.get(side).itemStackRenderState();
                 if (!layer(actual, 0).mismatchedboots$getQuads().equals(layer(baseline, 0).mismatchedboots$getQuads())
                         || !MeshSubmissionProbe.fingerprint(((LayerRenderStateExtension) (Object)
@@ -485,9 +485,9 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                         MeshSubmissionProbe.fingerprint(((LayerRenderStateExtension) (Object)
                                 rawLayer(baseline, 0)).fabric_getMutableMesh()))
                         || !layer(actual, 0).mismatchedboots$getLocalTransform()
-                        .equals(layer(baseline, 0).mismatchedboots$getLocalTransform(), EPSILON)
+                                            .equals(layer(baseline, 0).mismatchedboots$getLocalTransform(), EPSILON)
                         || !Objects.equals(actual instanceof TrackingItemStackRenderState tracking
-                        ? tracking.getModelIdentity() : null, baseline.getModelIdentity())) {
+                                           ? tracking.getModelIdentity() : null, baseline.getModelIdentity())) {
                     throw new AssertionError("Late incompatible mesh partially clipped or transformed a GUI source");
                 }
             }
@@ -569,7 +569,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
         assertPose(submission.pose(), expectedPose, scenario);
         if (!Objects.equals(submission.scissorArea(), expectedScissor)) {
             throw new AssertionError(scenario + " has incorrect scissor: " + submission.scissorArea()
-                    + ", expected " + expectedScissor);
+                                             + ", expected " + expectedScissor);
         }
         assertSourceSprite(submission.itemStackRenderState(), expectedSprite, scenario);
     }
@@ -669,7 +669,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             int minimum = 8 * scale * scale;
             if (leftVisible < minimum || rightVisible < minimum) {
                 throw new AssertionError(scenario + " did not render both clipped halves: "
-                        + leftVisible + ", " + rightVisible);
+                                                 + leftVisible + ", " + rightVisible);
             }
         } catch (IOException exception) {
             throw new AssertionError("Could not inspect " + scenario + " screenshot", exception);
@@ -709,8 +709,8 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
         int minimum = 20 * scale * scale;
         if (rightRed < minimum || leftBlue < minimum || misplacedRed != 0 || misplacedBlue != 0) {
             throw new AssertionError("GUI composition colored pixels violated its front-view bounds: right red="
-                    + rightRed + ", left blue=" + leftBlue + ", misplaced red=" + misplacedRed
-                    + ", misplaced blue=" + misplacedBlue);
+                                             + rightRed + ", left blue=" + leftBlue + ", misplaced red=" + misplacedRed
+                                             + ", misplaced blue=" + misplacedBlue);
         }
     }
 
@@ -732,8 +732,11 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     int blue = color & 0xFF;
                     boolean redPixel = red > green + 30 && red > blue + 30;
                     boolean bluePixel = blue > red + 30 && blue > green + 30;
-                    if (x < (xOrigin + ITEM_HALF) * scale) left += redPixel ? 1 : 0;
-                    else right += (splitColors ? bluePixel : redPixel) ? 1 : 0;
+                    if (x < (xOrigin + ITEM_HALF) * scale) {
+                        left += redPixel ? 1 : 0;
+                    } else {
+                        right += (splitColors ? bluePixel : redPixel) ? 1 : 0;
+                    }
                 }
             }
         } catch (IOException exception) {
@@ -776,15 +779,15 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
 
     private static int layerCount(ItemStackRenderState state) {
         return state instanceof MixedBootsGuiRenderState combined
-                ? combined.sources().stream().mapToInt(GuiCompositionClientGameTest::layerCount).sum()
-                : access(state).mismatchedboots$getActiveLayerCount();
+               ? combined.sources().stream().mapToInt(GuiCompositionClientGameTest::layerCount).sum()
+               : access(state).mismatchedboots$getActiveLayerCount();
     }
 
     private static ItemStackRenderState.LayerRenderState rawLayer(ItemStackRenderState state, int index) {
         if (state instanceof MixedBootsGuiRenderState combined) {
             int leftCount = layerCount(combined.sources().getFirst());
             return index < leftCount ? rawLayer(combined.sources().getFirst(), index)
-                    : rawLayer(combined.sources().getLast(), index - leftCount);
+                                     : rawLayer(combined.sources().getLast(), index - leftCount);
         }
         return access(state).mismatchedboots$getLayers()[index];
     }
@@ -924,7 +927,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
             graphics.item(second, secondX, ITEM_Y);
             var data = ModContent.getMixedBootsData(first).orElseThrow();
             graphics.item(MixedBootsFactory.createPair(data.right().source(), data.left().source()).primary(),
-                    secondX + 40, ITEM_Y);
+                          secondX + 40, ITEM_Y);
             ItemStack fullSource = data.left().source().copy();
             fullSource.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, first.hasFoil());
             graphics.item(fullSource, secondX + 80, ITEM_Y);

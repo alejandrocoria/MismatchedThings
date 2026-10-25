@@ -12,6 +12,8 @@ abstract class JustDireRefundInnerMixin {
     @WrapOperation(method = "applyDamage(ILnet/minecraft/world/entity/LivingEntity;Ljava/util/function/Consumer;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V"))
     private void refundTest$inner(ItemStack root, int count, Operation<Void> original) {
-        JustDireRefundFaults.before(); original.call(root, count); JustDireRefundFaults.after();
+        JustDireRefundFaults.before();
+        original.call(root, count);
+        JustDireRefundFaults.after();
     }
 }

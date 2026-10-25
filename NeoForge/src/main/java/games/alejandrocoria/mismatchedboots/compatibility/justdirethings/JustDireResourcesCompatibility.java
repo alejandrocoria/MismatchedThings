@@ -30,10 +30,13 @@ import java.lang.invoke.MethodType;
 public final class JustDireResourcesCompatibility {
     private static volatile Api api;
 
-    private JustDireResourcesCompatibility() {}
+    private JustDireResourcesCompatibility() {
+    }
 
     public static void initialize(IEventBus bus) {
-        if (ModList.get().isLoaded("justdirethings")) { bus.addListener(JustDireResourcesCompatibility::register); }
+        if (ModList.get().isLoaded("justdirethings")) {
+            bus.addListener(JustDireResourcesCompatibility::register);
+        }
     }
 
     private static void register(RegisterCapabilitiesEvent event) {
@@ -46,12 +49,12 @@ public final class JustDireResourcesCompatibility {
             }
             DataComponentType<Integer> energy = energyComponent();
             if (energy == null || energy.codec() == null || !(energy.codec().parse(JsonOps.INSTANCE, new JsonPrimitive(0))
-                    .getOrThrow() instanceof Integer)) {
+                                                                    .getOrThrow() instanceof Integer)) {
                 throw new IllegalStateException("Unsupported native FE component");
             }
             api = new Api(energy, celestigem, eclipsealloy, MethodHandles.publicLookup()
-                    .findVirtual(powered, "getMaxEnergy", MethodType.methodType(int.class))
-                    .asType(MethodType.methodType(int.class, Item.class)));
+                                                                         .findVirtual(powered, "getMaxEnergy", MethodType.methodType(int.class))
+                                                                         .asType(MethodType.methodType(int.class, Item.class)));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things storage API; compatibility disabled", failure);
             return;
@@ -61,27 +64,35 @@ public final class JustDireResourcesCompatibility {
             int capacity = binding == null ? 0 : rootCapacity(stack, binding);
             // Lookup uses a count-one ItemResource, not the access's actual slot amount.
             return api == binding && capacity > 0 && access.getAmount() == 1 && validCharge(stack, binding, capacity)
-                    ? new LiveHandler(access) : null;
+                   ? new LiveHandler(access) : null;
         }, BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
     }
 
     public static void initializeCharge(ItemStack output) {
         Api binding = api;
-        if (binding == null) { return; }
+        if (binding == null) {
+            return;
+        }
         MixedBootsData data = output.get(ModContent.mixedBootsDataType().orElseThrow());
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         int leftCapacity = sourceCapacity(left, binding);
         int rightCapacity = sourceCapacity(right, binding);
-        if (api != binding) { return; } // Optional read failed before charge validation or mutation.
+        if (api != binding) {
+            return;
+        } // Optional read failed before charge validation or mutation.
         int charge = (int) (((long) sourceCharge(left, binding, leftCapacity)
                 + sourceCharge(right, binding, rightCapacity)) / 2);
-        if (Math.max(leftCapacity, rightCapacity) > 0) { output.set(binding.energy, charge); }
+        if (Math.max(leftCapacity, rightCapacity) > 0) {
+            output.set(binding.energy, charge);
+        }
     }
 
     public static void preserveCharge(ItemStack previous, ItemStack output) {
         Api binding = api;
-        if (binding == null) { return; }
+        if (binding == null) {
+            return;
+        }
         int oldCapacity = rootCapacity(previous, binding);
         int newCapacity = rootCapacity(output, binding);
         var data = output.get(ModContent.mixedBootsDataType().orElseThrow());
@@ -90,10 +101,14 @@ public final class JustDireResourcesCompatibility {
         ItemStack right = data.right().source();
         int leftCapacity = sourceCapacity(left, binding);
         int rightCapacity = sourceCapacity(right, binding);
-        if (api != binding) { return; }
+        if (api != binding) {
+            return;
+        }
         sourceCharge(left, binding, leftCapacity);
         sourceCharge(right, binding, rightCapacity);
-        if (oldCapacity == 0 && newCapacity == 0) { return; }
+        if (oldCapacity == 0 && newCapacity == 0) {
+            return;
+        }
         if (!validCharge(previous, binding, oldCapacity) && oldCapacity > 0) {
             throw new IllegalArgumentException("Invalid live Just Dire Things FE charge");
         }
@@ -101,14 +116,18 @@ public final class JustDireResourcesCompatibility {
         // An unrelated root's forged FE is not seed energy when it gains its first powered source.
         if (newCapacity > 0 && oldCapacity > 0 && previous.has(binding.energy)) {
             output.set(binding.energy, Math.min(previous.get(binding.energy), newCapacity));
-        } else { output.remove(binding.energy); }
+        } else {
+            output.remove(binding.energy);
+        }
     }
 
     /** Read-only native formatting receiver; the displayed stack remains the actual root wallet. */
     public static Item energyBarReceiver(ItemStack root) {
         Api binding = api;
         int capacity = binding == null ? 0 : rootCapacity(root, binding);
-        if (api != binding || capacity <= 0 || !validCharge(root, binding, capacity)) { return null; }
+        if (api != binding || capacity <= 0 || !validCharge(root, binding, capacity)) {
+            return null;
+        }
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         Item left = data.left().source().getItem();
         return left == binding.celestigem || left == binding.eclipsealloy ? left : data.right().source().getItem();
@@ -117,38 +136,57 @@ public final class JustDireResourcesCompatibility {
     /** Wear reuses storage's audited identities/schema; it must not bind a second optional wallet. */
     static WearProfile wearProfile(ItemStack root) {
         Api binding = api;
-        if (binding == null || rootCapacity(root, binding) <= 0 || api != binding) { return null; }
+        if (binding == null || rootCapacity(root, binding) <= 0 || api != binding) {
+            return null;
+        }
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         int providers = 0;
         for (var source : java.util.List.of(data.left().source(), data.right().source())) {
-            if (source.getItem() == binding.celestigem || source.getItem() == binding.eclipsealloy) { providers++; }
+            if (source.getItem() == binding.celestigem || source.getItem() == binding.eclipsealloy) {
+                providers++;
+            }
         }
         return new WearProfile(providers, binding.energy, binding);
     }
 
-    static boolean current(WearProfile profile) { return api == profile.binding; }
+    static boolean current(WearProfile profile) {
+        return api == profile.binding;
+    }
 
-    record WearProfile(int providers, DataComponentType<Integer> energy, Object binding) {}
+    record WearProfile(int providers, DataComponentType<Integer> energy, Object binding) {
+    }
 
     private static int rootCapacity(ItemStack root, Api binding) {
-        if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) { return 0; }
+        if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) {
+            return 0;
+        }
         var data = ModContent.suspendedBootsData(root).isPresent() ? null
-                : ModContent.mixedBootsDataType().map(root::get).orElse(null);
-        if (data == null) { return 0; }
+                                                                   : ModContent.mixedBootsDataType().map(root::get).orElse(null);
+        if (data == null) {
+            return 0;
+        }
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
-        if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) { return 0; }
+        if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
+            return 0;
+        }
         return Math.max(sourceCapacity(left, binding), sourceCapacity(right, binding));
     }
 
     private static int sourceCapacity(ItemStack source, Api binding) {
-        if (source.getItem() != binding.celestigem && source.getItem() != binding.eclipsealloy) { return 0; }
+        if (source.getItem() != binding.celestigem && source.getItem() != binding.eclipsealloy) {
+            return 0;
+        }
         try {
             int capacity = (int) binding.capacity.invokeExact(source.getItem());
-            if (capacity <= 0) { throw new IllegalStateException("Invalid native FE capacity"); }
+            if (capacity <= 0) {
+                throw new IllegalStateException("Invalid native FE capacity");
+            }
             return capacity;
         } catch (Throwable failure) {
-            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) { throw fatal; }
+            if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
+                throw fatal;
+            }
             synchronized (JustDireResourcesCompatibility.class) {
                 if (api != null) {
                     api = null;
@@ -160,8 +198,12 @@ public final class JustDireResourcesCompatibility {
     }
 
     private static int sourceCharge(ItemStack source, Api binding, int capacity) {
-        if (capacity == 0) { return 0; }
-        if (!validCharge(source, binding, capacity)) { throw new IllegalArgumentException("Invalid native Just Dire Things FE charge"); }
+        if (capacity == 0) {
+            return 0;
+        }
+        if (!validCharge(source, binding, capacity)) {
+            throw new IllegalArgumentException("Invalid native Just Dire Things FE charge");
+        }
         return source.getOrDefault(binding.energy, 0);
     }
 
@@ -180,26 +222,43 @@ public final class JustDireResourcesCompatibility {
                 .get(Identifier.fromNamespaceAndPath("justdirethings", "forge_energy")).orElseThrow().value();
     }
 
-    private record Api(DataComponentType<Integer> energy, Item celestigem, Item eclipsealloy, MethodHandle capacity) {}
+    private record Api(DataComponentType<Integer> energy, Item celestigem, Item eclipsealloy, MethodHandle capacity) {
+    }
 
     /** A retained handler follows the current resource/tier/count of its access, never a captured stack. */
     private record LiveHandler(ItemAccess access) implements EnergyHandler {
         private EnergyHandler current() {
             Api binding = api;
-            if (binding == null || access.getAmount() != 1) { return null; }
+            if (binding == null || access.getAmount() != 1) {
+                return null;
+            }
             ItemStack root = access.getResource().toStack();
             int capacity = rootCapacity(root, binding);
             return api == binding && capacity > 0 && validCharge(root, binding, capacity)
-                    ? new ItemAccessEnergyHandler(access, binding.energy, capacity) : null;
+                   ? new ItemAccessEnergyHandler(access, binding.energy, capacity) : null;
         }
-        @Override public long getAmountAsLong() { var handler = current(); return handler == null ? 0 : handler.getAmountAsLong(); }
-        @Override public long getCapacityAsLong() { var handler = current(); return handler == null ? 0 : handler.getCapacityAsLong(); }
-        @Override public int insert(int amount, TransactionContext transaction) {
+
+        @Override
+        public long getAmountAsLong() {
+            var handler = current();
+            return handler == null ? 0 : handler.getAmountAsLong();
+        }
+
+        @Override
+        public long getCapacityAsLong() {
+            var handler = current();
+            return handler == null ? 0 : handler.getCapacityAsLong();
+        }
+
+        @Override
+        public int insert(int amount, TransactionContext transaction) {
             TransferPreconditions.checkNonNegative(amount);
             var handler = current();
             return handler == null ? 0 : handler.insert(amount, transaction);
         }
-        @Override public int extract(int amount, TransactionContext transaction) {
+
+        @Override
+        public int extract(int amount, TransactionContext transaction) {
             TransferPreconditions.checkNonNegative(amount);
             var handler = current();
             return handler == null ? 0 : handler.extract(amount, transaction);

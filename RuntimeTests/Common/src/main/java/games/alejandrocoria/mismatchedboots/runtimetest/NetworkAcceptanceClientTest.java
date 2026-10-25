@@ -55,21 +55,21 @@ public final class NetworkAcceptanceClientTest {
                     || componentRules.durability() != DurabilityPolicy.SEPARATE
                     || componentRules.repairCost() != RepairCostPolicy.OWNER
                     || !ComponentRule.of(ComponentPolicy.OWNER).equals(
-                            componentRules.declarations().get(ENCHANTABLE))
+                    componentRules.declarations().get(ENCHANTABLE))
                     || !ComponentRule.of(ComponentPolicy.SHARE).equals(
-                            componentRules.declarations().get(DORMANT_COMPONENT))
+                    componentRules.declarations().get(DORMANT_COMPONENT))
                     || componentRules.components().rules().containsKey(DORMANT_COMPONENT)) {
                 if (ticks > TIMEOUT_TICKS) {
                     throw new AssertionError("Client did not receive the server rule snapshots: "
-                            + rules + "; " + componentRules);
+                                                     + rules + "; " + componentRules);
                 }
                 return;
             }
 
             ItemStack received = client.player.getInventory().getNonEquipmentItems().stream()
-                    .filter(ModContent::isMixedBoots)
-                    .findFirst()
-                    .orElse(ItemStack.EMPTY);
+                                              .filter(ModContent::isMixedBoots)
+                                              .findFirst()
+                                              .orElse(ItemStack.EMPTY);
             if (received.isEmpty()) {
                 if (ticks > TIMEOUT_TICKS) {
                     throw new AssertionError("Client did not receive the server-crafted stack");
@@ -84,12 +84,12 @@ public final class NetworkAcceptanceClientTest {
                 return;
             }
             ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
-                    NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()), client.level,
-                    rules, componentRules).primary();
+                                                                                      NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()), client.level,
+                                                                              rules, componentRules).primary();
             if (!preview.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
-                            net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY)
-                    .equals(received.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
-                            net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY))) {
+                                      net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY)
+                        .equals(received.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
+                                                      net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY))) {
                 throw new AssertionError("Client recipe preview differs from the server-crafted result");
             }
             String receivedDescription = NetworkAcceptanceStacks.describePrimary(received);
@@ -101,15 +101,19 @@ public final class NetworkAcceptanceClientTest {
             if (!games.alejandrocoria.mismatchedboots.runtimetest.missingmods.MissingModsWireChecks.receive(
                     client.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET),
                     client.player.getInventory().getItem(1), client.level.registryAccess())) {
-                if (ticks > TIMEOUT_TICKS) { throw new AssertionError("TCP suspended-root equipment/inventory packets absent"); }
+                if (ticks > TIMEOUT_TICKS) {
+                    throw new AssertionError("TCP suspended-root equipment/inventory packets absent");
+                }
                 return;
             }
-            if (client.player.getArmorValue() != 0) { throw new AssertionError("TCP suspended boots grant armor"); }
+            if (client.player.getArmorValue() != 0) {
+                throw new AssertionError("TCP suspended boots grant armor");
+            }
             NetworkAcceptanceFiles.write(
                     "client-snapshot.txt", NetworkAcceptanceFiles.snapshot(rules, componentRules));
             NetworkAcceptanceFiles.write("client-result.txt", receivedDescription);
             NetworkAcceptanceFiles.write("client-success.txt",
-                    System.getProperty("mismatchedboots.runtimetest.loader", "unknown"));
+                                         System.getProperty("mismatchedboots.runtimetest.loader", "unknown"));
             finished = true;
             client.stop();
         } catch (Throwable throwable) {

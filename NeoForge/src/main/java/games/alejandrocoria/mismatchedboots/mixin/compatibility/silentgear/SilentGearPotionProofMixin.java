@@ -7,5 +7,8 @@ import org.spongepowered.asm.mixin.Unique;
 @Pseudo
 @Mixin(targets = "net.silentchaos512.gear.gear.trait.effect.WielderEffectTraitEffect$PotionData", remap = false)
 abstract class SilentGearPotionProofMixin {
-    @Unique private static boolean mismatchedboots$sgPotionReady() { return false; }
+    @Unique
+    private static boolean mismatchedboots$sgPotionReady() {
+        return false;
+    }
 }

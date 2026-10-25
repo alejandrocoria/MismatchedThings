@@ -30,11 +30,14 @@ final class RootsTickShape implements Opcodes {
     static final String ENTRY_PROOF = "mismatchedboots$rootsTickReady";
     static final String REPAIR_PROOF = "mismatchedboots$rootsRepairReady";
 
-    private RootsTickShape() {}
+    private RootsTickShape() {
+    }
 
     static boolean tick(ClassNode owner) {
         MethodNode method = method(owner, "inventoryTick", TICK);
-        if (!ITEM.equals(owner.superName) || !api(method, false) || writesInputs(method, 1, 4)) { return false; }
+        if (!ITEM.equals(owner.superName) || !api(method, false) || writesInputs(method, 1, 4)) {
+            return false;
+        }
         List<AbstractInsnNode> code = code(method);
         int repairs = 0, stackLoads = 0;
         for (int i = 0; i < code.size(); i++) {
@@ -45,7 +48,9 @@ final class RootsTickShape implements Opcodes {
                     return false; // No cast, alias, snapshot, item query or unknown stack consumer is safe here.
                 }
             }
-            if (!call(node, INVOKESTATIC, UTIL, "randomlyRepair", REPAIR)) { continue; }
+            if (!call(node, INVOKESTATIC, UTIL, "randomlyRepair", REPAIR)) {
+                continue;
+            }
             repairs++;
             if (i < 9 || !var(code.get(i - 9), ALOAD, 4)
                     || !(code.get(i - 8) instanceof JumpInsnNode absent) || absent.getOpcode() != IFNULL
@@ -56,48 +61,64 @@ final class RootsTickShape implements Opcodes {
                     || next(absent.label) != next(outside.label) || !returns(absent)
                     || !var(code.get(i - 3), ALOAD, 2)
                     || !call(code.get(i - 2), INVOKEVIRTUAL, LEVEL, "getRandom", "()Lnet/minecraft/util/RandomSource;")
-                    || !var(code.get(i - 1), ALOAD, 1)) { return false; }
+                    || !var(code.get(i - 1), ALOAD, 1)) {
+                return false;
+            }
         }
         return repairs == 1 && stackLoads == 1;
     }
 
     static boolean repair(ClassNode owner) {
         MethodNode method = method(owner, "randomlyRepair", REPAIR);
-        if (!api(method, true) || writesInputs(method, 0, 1)) { return false; }
+        if (!api(method, true) || writesInputs(method, 0, 1)) {
+            return false;
+        }
         List<AbstractInsnNode> code = code(method);
         int writes = 0, damaged = 0, stackLoads = 0;
         for (int i = 0; i < code.size(); i++) {
             AbstractInsnNode node = code.get(i);
             if (var(node, ALOAD, 1)) {
                 stackLoads++;
-                if (i + 1 >= code.size()) { return false; }
+                if (i + 1 >= code.size()) {
+                    return false;
+                }
                 AbstractInsnNode consumer = code.get(i + 1);
                 boolean read = call(consumer, INVOKEVIRTUAL, STACK, "isDamaged", "()Z")
                         || call(consumer, INVOKEVIRTUAL, STACK, "getDamageValue", "()I");
                 boolean destination = var(consumer, ALOAD, 1) && i + 2 < code.size()
                         && call(code.get(i + 2), INVOKEVIRTUAL, STACK, "getDamageValue", "()I");
-                if (!read && !destination) { return false; }
+                if (!read && !destination) {
+                    return false;
+                }
             }
             if (call(node, INVOKEVIRTUAL, STACK, "isDamaged", "()Z")) {
                 damaged++;
                 if (i == 0 || !var(code.get(i - 1), ALOAD, 1) || i + 1 >= code.size()
                         || !(code.get(i + 1) instanceof JumpInsnNode healthy) || healthy.getOpcode() != IFEQ
-                        || !returns(healthy)) { return false; }
+                        || !returns(healthy)) {
+                    return false;
+                }
             }
-            if (!call(node, INVOKEVIRTUAL, STACK, "setDamageValue", "(I)V")) { continue; }
+            if (!call(node, INVOKEVIRTUAL, STACK, "setDamageValue", "(I)V")) {
+                continue;
+            }
             writes++;
             if (i < 6 || !(code.get(i - 6) instanceof JumpInsnNode miss) || miss.getOpcode() != IFNE
                     || !returns(miss)
                     || !var(code.get(i - 5), ALOAD, 1) || !var(code.get(i - 4), ALOAD, 1)
                     || !call(code.get(i - 3), INVOKEVIRTUAL, STACK, "getDamageValue", "()I")
-                    || integer(code.get(i - 2)) <= 0 || code.get(i - 1).getOpcode() != ISUB) { return false; }
+                    || integer(code.get(i - 2)) <= 0 || code.get(i - 1).getOpcode() != ISUB) {
+                return false;
+            }
         }
         return writes == 1 && damaged == 1 && stackLoads == 3;
     }
 
     static void publish(ClassNode owner, String getter, boolean isStatic, boolean valid) {
         MethodNode method = method(owner, getter, "()Z");
-        if (method == null) { return; }
+        if (method == null) {
+            return;
+        }
         int access = ACC_PUBLIC | (isStatic ? ACC_STATIC : 0);
         List<AbstractInsnNode> code = code(method);
         int initialAccess = isStatic ? ACC_PRIVATE | ACC_STATIC : ACC_PUBLIC;
@@ -108,8 +129,10 @@ final class RootsTickShape implements Opcodes {
         method.instructions.clear();
         method.instructions.add(new InsnNode(untouched && valid ? ICONST_1 : ICONST_0));
         method.instructions.add(new InsnNode(IRETURN));
-        method.tryCatchBlocks.clear(); method.localVariables = null;
-        method.visibleLocalVariableAnnotations = null; method.invisibleLocalVariableAnnotations = null;
+        method.tryCatchBlocks.clear();
+        method.localVariables = null;
+        method.visibleLocalVariableAnnotations = null;
+        method.invisibleLocalVariableAnnotations = null;
         method.maxStack = Math.max(method.maxStack, 1);
         method.maxLocals = isStatic ? 0 : 1;
     }
@@ -122,8 +145,12 @@ final class RootsTickShape implements Opcodes {
     private static boolean writesInputs(MethodNode method, int first, int last) {
         for (AbstractInsnNode node : method.instructions) {
             if (node instanceof VarInsnNode variable && variable.var >= first && variable.var <= last
-                    && variable.getOpcode() >= ISTORE && variable.getOpcode() <= ASTORE) { return true; }
-            if (node instanceof IincInsnNode increment && increment.var >= first && increment.var <= last) { return true; }
+                    && variable.getOpcode() >= ISTORE && variable.getOpcode() <= ASTORE) {
+                return true;
+            }
+            if (node instanceof IincInsnNode increment && increment.var >= first && increment.var <= last) {
+                return true;
+            }
         }
         return false;
     }
@@ -136,13 +163,17 @@ final class RootsTickShape implements Opcodes {
     private static List<AbstractInsnNode> code(MethodNode method) {
         List<AbstractInsnNode> result = new ArrayList<>();
         for (AbstractInsnNode node : method.instructions) {
-            if (node.getOpcode() >= 0 && node.getOpcode() != NOP) { result.add(node); }
+            if (node.getOpcode() >= 0 && node.getOpcode() != NOP) {
+                result.add(node);
+            }
         }
         return result;
     }
 
     private static AbstractInsnNode next(AbstractInsnNode node) {
-        do { node = node.getNext(); } while (node != null && (node.getOpcode() < 0 || node.getOpcode() == NOP));
+        do {
+            node = node.getNext();
+        } while (node != null && (node.getOpcode() < 0 || node.getOpcode() == NOP));
         return node;
     }
 
@@ -161,9 +192,15 @@ final class RootsTickShape implements Opcodes {
     }
 
     private static int integer(AbstractInsnNode node) {
-        if (node.getOpcode() >= ICONST_M1 && node.getOpcode() <= ICONST_5) { return node.getOpcode() - ICONST_0; }
-        if (node instanceof IntInsnNode operand) { return operand.operand; }
-        if (node instanceof LdcInsnNode constant && constant.cst instanceof Integer value) { return value; }
+        if (node.getOpcode() >= ICONST_M1 && node.getOpcode() <= ICONST_5) {
+            return node.getOpcode() - ICONST_0;
+        }
+        if (node instanceof IntInsnNode operand) {
+            return operand.operand;
+        }
+        if (node instanceof LdcInsnNode constant && constant.cst instanceof Integer value) {
+            return value;
+        }
         return Integer.MIN_VALUE;
     }
 }

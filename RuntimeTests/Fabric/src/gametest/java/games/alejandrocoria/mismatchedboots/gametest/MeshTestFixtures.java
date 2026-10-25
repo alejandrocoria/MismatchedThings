@@ -20,7 +20,7 @@ public final class MeshTestFixtures {
     private MeshTestFixtures() {
     }
 
-    public enum Mode { MESH_ONLY, BOTH, EMPTY, DROP, ANIMATED, INVALID_LATE, INVALID_NORMAL, DEGENERATE_CUT }
+    public enum Mode {MESH_ONLY, BOTH, EMPTY, DROP, ANIMATED, INVALID_LATE, INVALID_NORMAL, DEGENERATE_CUT}
 
     public static void append(Identifier model, ItemStackRenderState.LayerRenderState layer, boolean lastLayer) {
         Mode mode = models.get(model);
@@ -35,7 +35,9 @@ public final class MeshTestFixtures {
         for (BakedQuad quad : List.copyOf(accessor.mismatchedboots$getQuads())) {
             if (mode != Mode.EMPTY) {
                 emitter.fromBakedQuad(quad).tag(tag(quad));
-                if (mode == Mode.ANIMATED) emitter.animated(true);
+                if (mode == Mode.ANIMATED) {
+                    emitter.animated(true);
+                }
                 if (mode == Mode.DROP) {
                     for (int index = 0; index < 4; index++) {
                         emitter.pos(index, emitter.x(index) + 2.0F, emitter.y(index), emitter.z(index));
@@ -46,7 +48,7 @@ public final class MeshTestFixtures {
         }
         if (lastLayer && (mode == Mode.INVALID_LATE || mode == Mode.INVALID_NORMAL)) {
             emitter.pos(0, 0, 0, 0.5F).pos(1, 1, 0, 0.5F)
-                    .pos(2, 1, 1, mode == Mode.INVALID_LATE ? 0.6F : 0.5F).pos(3, 0, 1, 0.5F);
+                   .pos(2, 1, 1, mode == Mode.INVALID_LATE ? 0.6F : 0.5F).pos(3, 0, 1, 0.5F);
             if (mode == Mode.INVALID_NORMAL) {
                 // Invalid regardless of where a later layer's transform cuts.
                 // Cancellation at an interpolated midpoint has its own test.
@@ -58,9 +60,9 @@ public final class MeshTestFixtures {
             float d = 2.0F * QuadClipper.GEOMETRY_EPSILON;
             for (float mirror : new float[]{-1.0F, 1.0F}) {
                 emitter.pos(0, 0.5F - d * mirror, 0.5F, 0.5F)
-                        .pos(1, 0.5F + (0.5F - d) * mirror, 1, 0.5F)
-                        .pos(2, 0.5F + (1.0F - d) * mirror, 0.5F, 0.5F)
-                        .pos(3, 0.5F + (0.5F - d) * mirror, 0, 0.5F).emit();
+                       .pos(1, 0.5F + (0.5F - d) * mirror, 1, 0.5F)
+                       .pos(2, 0.5F + (1.0F - d) * mirror, 0.5F, 0.5F)
+                       .pos(3, 0.5F + (0.5F - d) * mirror, 0, 0.5F).emit();
             }
         }
         if (mode != Mode.BOTH && mode != Mode.INVALID_LATE && mode != Mode.INVALID_NORMAL) {

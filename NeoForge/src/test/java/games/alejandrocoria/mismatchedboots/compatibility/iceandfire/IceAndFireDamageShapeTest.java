@@ -41,10 +41,10 @@ class IceAndFireDamageShapeTest {
         try (JarFile jar = new JarFile(Path.of(artifact).toFile())) {
             ClassNode handler = read(jar, IceAndFireDamageShape.HANDLER);
             MethodNode method = handler.methods.stream()
-                    .filter(node -> IceAndFireDamageShape.METHOD.equals(node.name)).findFirst().orElseThrow();
+                                               .filter(node -> IceAndFireDamageShape.METHOD.equals(node.name)).findFirst().orElseThrow();
             assertEquals("05b8d47b296aa4ad4de6e3aa9c1a477fc14789d5265617a5c518b1553d1bbdc9", fingerprint(method));
             assertTrue(IceAndFireDamageShape.isCompatible(handler, read(jar, IceAndFireDamageShape.SCALE),
-                    read(jar, IceAndFireDamageShape.STEEL), read(jar, IceAndFireDamageShape.TROLL)));
+                                                          read(jar, IceAndFireDamageShape.STEEL), read(jar, IceAndFireDamageShape.TROLL)));
             assertTrue(IceAndFireDamageFeetInjectionPoint.matchesLocalContract(method.desc, method.instructions));
             String before = fingerprint(method);
             for (var node : method.instructions) {
@@ -87,7 +87,7 @@ class IceAndFireDamageShapeTest {
         method.instructions.insert(debug, new LineNumberNode(999, debug));
         method.instructions.insertBefore(method.instructions.getLast(), new InsnNode(Opcodes.NOP));
         method.instructions.insertBefore(method.instructions.getLast(),
-                new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Logger", "tick", "()V", false));
+                                         new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Logger", "tick", "()V", false));
         for (var node : method.instructions) {
             if (node instanceof VarInsnNode variable && variable.var == 1) {
                 variable.var = 9;
@@ -98,8 +98,8 @@ class IceAndFireDamageShapeTest {
         for (var node : method.instructions) {
             if (node instanceof TypeInsnNode check && check.getOpcode() == Opcodes.INSTANCEOF) {
                 method.instructions.set(check,
-                        new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Helmet", "recognize",
-                                "(Ljava/lang/Object;)Z", false));
+                                        new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Helmet", "recognize",
+                                                           "(Ljava/lang/Object;)Z", false));
                 break;
             }
         }
@@ -135,7 +135,7 @@ class IceAndFireDamageShapeTest {
         reassignment.add(new FieldInsnNode(Opcodes.GETSTATIC, "fixture/OtherEntity", "subject", "L" + ENTITY + ";"));
         reassignment.add(new VarInsnNode(Opcodes.ASTORE, 1));
         method.instructions.insertBefore(IceAndFireDamageShape.feetChecks(method.instructions).getFirst().getPrevious()
-                .getPrevious().getPrevious().getPrevious(), reassignment);
+                                                              .getPrevious().getPrevious().getPrevious(), reassignment);
         assertFalse(accepts(method));
         assertFalse(IceAndFireDamageFeetInjectionPoint.matchesLocalContract("(Ljava/lang/Object;)V", damage().instructions));
     }
