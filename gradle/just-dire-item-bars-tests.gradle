@@ -1,0 +1,181 @@
+// JDT production energy/durability bars with isolated server/client fixtures.
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
+def testMods = rootProject.ext.testModArtifacts
+
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+
+def fixtureBuildDirectory = layout.buildDirectory
+
+def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+
+def justDireItemBarsDirectory = fixtureBuildDirectory.dir("run/justDireItemBarsProduction/${neoforge_version}")
+
+def justDireItemBarsMarkers = fixtureBuildDirectory.dir("reports/just-dire-item-bars-production/${neoforge_version}")
+
+def justDireItemBarVariants = ['Live', 'Absent', 'StorageMissing', 'QueryFailure', 'InvalidWidth', 'LinkageFailure']
+
+def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
+
+def justDireArtifactOverride = providers.gradleProperty('justDireThingsTestJar').isPresent()
+
+def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+
+neoForge.runs {
+    justDireItemBarsServer {
+        server()
+        disableIdeRun()
+        gameDirectory = justDireItemBarsDirectory.map { it.dir('server') }.get().asFile
+        programArgument('--nogui')
+        systemProperty('mismatchedboots.runtimetest.markers', justDireItemBarsMarkers.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.justDireItemBarsTest', 'true')
+        jvmArgument('-Xlog:class+load=info:file=classes.log')
+        jvmArgument('-Xmx1G')
+    }
+
+    justDireItemBarVariants.each { variant ->
+        register("justDireItemBars${variant}") {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireItemBarsDirectory.map { it.dir(variant) }.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('bars')
+            programArgument('--width')
+            programArgument('1280')
+            programArgument('--height')
+            programArgument('800')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireItemBarsMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireItemBarsTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireItemBarsVariant', variant.uncapitalize())
+            if (variant == 'StorageMissing') {
+                systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing')
+            }
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
+    }
+}
+
+// Production decoration acceptance: no test decorator/provider or user's run directory.
+tasks.register('prepareJustDireItemBarsServer') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!justDireArtifactOverride) {
+            testMods.resolve('NeoForge', justDireSmithingArtifact.name)
+        }
+        if (!justDireSmithingArtifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+                .digest(justDireSmithingArtifact.bytes).encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
+            throw new GradleException("Missing/unexpected pinned JDT fixture: ${justDireSmithingArtifact}")
+        }
+
+        def directory = justDireItemBarsDirectory.get().dir('server').asFile
+        def success = new File(justDireItemBarsMarkers.get().asFile, 'just-dire-item-bars-server-success.txt')
+        fixtureFileOperations.delete { spec -> spec.delete(directory, success) }
+        fixtureFileOperations.copy {
+            from(productionArchive, justDireSmithingFixtureArchive, justDireSmithingArtifact)
+            into(new File(directory, 'mods'))
+        }
+        justDireItemBarsMarkers.get().asFile.mkdirs()
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"},{"height":2,"block":"minecraft:dirt"},{"height":1,"block":"minecraft:grass_block"}],"structure_overrides":[]}
+max-tick-time=-1
+'''
+    }
+}
+
+tasks.named('runJustDireItemBarsServer') { dependsOn 'prepareJustDireItemBarsServer' }
+
+justDireItemBarVariants.each { variant ->
+    def prepare = tasks.register("prepareJustDireItemBars${variant}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            def world = justDireItemBarsDirectory.get().dir('server/world').asFile
+            if (!new File(world, 'level.dat').isFile()) {
+                throw new GradleException('Run runJustDireItemBarsServer first')
+            }
+
+            def directory = justDireItemBarsDirectory.get().dir(variant).asFile
+            def staleMarkers = ['failure', 'report', 'success'].collect { suffix ->
+                new File(justDireItemBarsMarkers.get().asFile, "just-dire-item-bars-${suffix}.txt")
+            }
+            if (variant == 'Live') {
+                staleMarkers += [1, 2].collectMany { scale ->
+                    ['healthy', 'worn', 'repaired'].collect { state ->
+                        new File(justDireItemBarsMarkers.get().asFile, "live-scale-${scale}-${state}.png")
+                    }
+                }
+            }
+            fixtureFileOperations.delete { spec ->
+                spec.delete(directory)
+                spec.delete(staleMarkers)
+            }
+            fixtureFileOperations.copy {
+                from(world)
+                into(new File(directory, 'saves/bars'))
+            }
+            fixtureFileOperations.copy {
+                from(productionArchive, justDireSmithingFixtureArchive)
+                if (variant != 'Absent') {
+                    from(justDireSmithingArtifact)
+                }
+                into(new File(directory, 'mods'))
+            }
+            new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\nguiScale:1\n'
+            def config = new File(directory, 'config')
+            config.mkdirs()
+            new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+        }
+    }
+    tasks.named("runJustDireItemBars${variant}") { dependsOn prepare }
+}
+
+tasks.register('verifyJustDireItemBars') {
+    group = 'verification'
+    description = 'Verifies production dynamic FE decoration, native queries, ordinary packets and bounded optional failures.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def directory = justDireItemBarsMarkers.get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireItemBarsServer', new File(directory, 'server-process.log'), 240)
+        def classes = new File(justDireItemBarsDirectory.get().dir('server').asFile, 'classes.log')
+        if (!new File(directory, 'just-dire-item-bars-server-success.txt').isFile()
+                || !classes.isFile() || classes.text.contains('NeoForgeJustDireItemBarsTest')
+                || classes.text.contains('JustDireEnergyBarDecorator')
+                || classes.text.contains('JustDireItemBarRenderingTest')
+                || new File(directory, 'server-process.log').text.contains('/ERROR]')) {
+            throw new GradleException('Production item bar dedicated-server/client-class isolation failed')
+        }
+        new java.util.zip.ZipFile(productionArchive.get().asFile).withCloseable { archive ->
+            def names = archive.entries().toList().collect { it.name }
+            if (names.any { it.contains('/runtimetest/') || it.startsWith('com/direwolf20/justdirethings/') }
+                    || !names.any { it.endsWith('/JustDireEnergyBarDecorator.class') }) {
+                throw new GradleException('Production item bar archive isolation failed')
+            }
+        }
+        justDireItemBarVariants.each { variant ->
+            def log = new File(directory, "${variant}-process.log")
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireItemBars${variant}", log, 300)
+            def failure = new File(directory, 'just-dire-item-bars-failure.txt')
+            def report = new File(directory, 'just-dire-item-bars-report.txt')
+            def success = new File(directory, 'just-dire-item-bars-success.txt')
+            def warnings = log.readLines().count { it.contains('Could not bind Just Dire Things storage API; compatibility disabled') }
+            def barWarnings = log.readLines().count { it.contains('Just Dire Things energy bar query failed; FE decoration disabled') }
+            def missingCaptures = variant == 'Live' && [1, 2].any { scale ->
+                ['healthy', 'worn', 'repaired'].any { state -> !new File(directory, "live-scale-${scale}-${state}.png").isFile() }
+            }
+            if (failure.isFile() || !report.isFile() || !success.isFile() || success.text != variant.uncapitalize() + '\n'
+                    || log.text.contains('/ERROR]') || warnings != (variant == 'StorageMissing' ? 1 : 0)
+                    || barWarnings != (['QueryFailure', 'InvalidWidth', 'LinkageFailure'].contains(variant) ? 1 : 0)
+                    || missingCaptures || (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings'))) {
+                throw new GradleException("Item bars ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(directory, "${variant}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}

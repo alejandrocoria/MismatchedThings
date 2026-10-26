@@ -63,6 +63,36 @@ only for compilation; test classes, metadata, and fixtures are not included in
 the production artifacts. No runtime test infrastructure is installed in the
 normal indev client/server runs.
 
+### NeoForge Gradle scripts
+
+[NeoForge/build.gradle](NeoForge/build.gradle) keeps the project/source-set setup,
+network runs and the remaining geometry, tooltip, Ice and Fire and Advanced
+Netherite suites. JDT suites use the existing applied-script pattern under the
+root `gradle/` directory; each keeps its run configurations, preparation and
+verification together:
+
+- [just-dire-items-tests.gradle](../gradle/just-dire-items-tests.gradle): smithing,
+  root upgrades, refunds and armor wear; owns `prepareJustDireSmithing`.
+- [just-dire-resources-tests.gradle](../gradle/just-dire-resources-tests.gradle):
+  energy storage, attributes and resource-client save/restart checks.
+- [just-dire-movement-tests.gradle](../gradle/just-dire-movement-tests.gradle):
+  Jump, Negate Fall Damage, cooldown HUD and completion sounds; owns
+  `prepareJustDireJumpClient`.
+- [just-dire-abilities-tests.gradle](../gradle/just-dire-abilities-tests.gradle):
+  Ground Stomp, Earthquake, native settings/input and connected lifecycle;
+  owns `prepareJustDireGroundStompStateAbsent`.
+- [just-dire-lava-repair-tests.gradle](../gradle/just-dire-lava-repair-tests.gradle):
+  Lava Repair, native settings and save/restart checks.
+- [just-dire-item-bars-tests.gradle](../gradle/just-dire-item-bars-tests.gradle):
+  production FE/durability rendering and its isolated server/client fixtures.
+
+Providers remain local to each script, without a new global context object.
+Shared JDT paths intentionally name the same disposable worlds and markers;
+preparation is registered once and reused by task name. Keep the application
+order in `NeoForge/build.gradle`: items and movement provide preparation used
+by later suites, and abilities registers client variants configured by Lava
+Repair. Existing task names, commands, overrides and run/report paths are unchanged.
+
 ## Missing-mod recovery — production capture
 
 **Current implementation: C native readiness, with D lifecycle coverage.** Check raw source-item

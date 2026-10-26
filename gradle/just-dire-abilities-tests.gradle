@@ -1,0 +1,434 @@
+// JDT Ground Stomp, Earthquake, native screen/input and connected lifecycle.
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
+def testMods = rootProject.ext.testModArtifacts
+
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+
+def fixtureBuildDirectory = layout.buildDirectory
+
+def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
+
+def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
+
+def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
+
+def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+
+neoForge.runs {
+    justDireGroundStompTransport {
+        client()
+        disableIdeRun()
+        gameDirectory = justDireJumpClientDirectory.get().asFile
+        programArgument('--quickPlaySingleplayer')
+        programArgument('jump')
+        systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.justDireGroundStompTransportTest', 'true')
+        systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+        systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+        jvmArgument('-Xmx1G')
+    }
+
+    ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent', 'Lava', 'LavaSettingsFailure'].each { variant ->
+        register("justDireGroundStompClient${variant}") {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientVariant', variant.uncapitalize())
+            systemProperty('mixin.debug.export', 'true')
+            if (variant == 'ApiMissing') {
+                systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerVariant', 'settingsMissing')
+            }
+            if (variant == 'EarthquakeMissing') {
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'apiMissing')
+            }
+            if (variant == 'EarthquakeSettingsFailure') {
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', 'settingsFailure')
+            }
+            if (variant == 'LavaSettingsFailure') {
+                systemProperty('mismatchedboots.runtimetest.justDireLavaRepairSettingsFailure', 'true')
+            }
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    ['Save', 'Restart'].each { mode ->
+        register("justDireGroundStompLifecycle${mode}") {
+            client()
+            disableIdeRun()
+            gameDirectory = justDireJumpClientDirectory.get().asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('jump')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompClientVariant', mode.uncapitalize())
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompLifecycle', mode.uncapitalize())
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+        register("justDireEarthquakeState${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', variant ? variant.uncapitalize() : 'live')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+        register("justDireEarthquakeServer${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireEarthquakeStateVariant', variant ? variant.uncapitalize() : 'live')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+        register("justDireGroundStompState${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompStateTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompStateVariant', variant ? variant.uncapitalize() : 'live')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    ['', 'ApiMissing', 'QueryFailure', 'SettingsMissing', 'Absent'].each { variant ->
+        register("justDireGroundStompServer${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompServerVariant', variant ? variant.uncapitalize() : 'live')
+            systemProperty('mismatchedboots.runtimetest.justDireGroundStompStateVariant', variant ? variant.uncapitalize() : 'live')
+            jvmArgument('-Xmx1G')
+        }
+    }
+}
+
+['', 'ApiMissing', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireGroundStompState${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+
+tasks.register('prepareJustDireGroundStompStateAbsent') {
+    dependsOn tasks.named('prepareJustDireSmithing')
+    doLast {
+        def copiedArtifact = new File(justDireSmithingRunDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}")
+        if (!copiedArtifact.isFile()) {
+            throw new GradleException("Missing copied JDT artifact: ${copiedArtifact}")
+        }
+        fixtureFileOperations.delete { delete copiedArtifact }
+    }
+}
+
+tasks.named('runJustDireGroundStompStateAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+
+['', 'ApiMissing', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireEarthquakeState${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+
+tasks.named('runJustDireEarthquakeStateAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+
+tasks.register('verifyJustDireEarthquakeState') {
+    group = 'verification'
+    description = 'Verifies production Earthquake read-only quotes, phase-aware creation import and root preservation; no action/input.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-state/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireEarthquakeState${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-earthquake-state-failure.txt')
+            def success = new File(directory, 'just-dire-earthquake-state-success.txt')
+            def report = new File(directory, 'just-dire-earthquake-state-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake queries failed; Earthquake compatibility disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Earthquake production state ${label} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT emitted an optional loading warning: ${log}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+['', 'ApiMissing', 'QueryFailure'].each { variant ->
+    tasks.named("runJustDireEarthquakeServer${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+
+tasks.named('runJustDireEarthquakeServerAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+
+tasks.register('verifyJustDireEarthquakeServer') {
+    group = 'verification'
+    description = 'Verifies production Earthquake per-target effects/payment, two-phase worn clock, shared paid permits and server settings.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-server/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireEarthquakeServer${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-earthquake-server-failure.txt')
+            def success = new File(directory, 'just-dire-earthquake-server-success.txt')
+            def report = new File(directory, 'just-dire-earthquake-server-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake queries failed; Earthquake compatibility disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Earthquake production server ${label} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT emitted an optional loading warning: ${log}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+['', 'ApiMissing', 'QueryFailure', 'SettingsMissing'].each { variant ->
+    tasks.named("runJustDireGroundStompServer${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+
+tasks.named('runJustDireGroundStompServerAbsent') { dependsOn tasks.named('prepareJustDireGroundStompStateAbsent') }
+
+tasks.register('verifyJustDireGroundStompServer') {
+    group = 'verification'
+    description = 'Verifies production Ground Stomp effects, payment, timers, one-use permits and native-menu server edits.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'SettingsMissing', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-server/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompServer${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-ground-stomp-server-failure.txt')
+            def success = new File(directory, 'just-dire-ground-stomp-server-success.txt')
+            def report = new File(directory, 'just-dire-ground-stomp-server-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Ground Stomp API; active compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp queries failed; active compatibility disabled') }
+            def settingsWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things mixed settings API; new settings/input routes disabled') }
+            def settingsQueryWarnings = log.readLines().count { it.contains('Just Dire Things mixed settings queries failed; new settings/input routes disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || settingsWarnings != (variant == 'SettingsMissing' ? 1 : 0) || settingsQueryWarnings != 0
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Ground Stomp production server ${label} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireGroundStompState') {
+    group = 'verification'
+    description = 'Verifies production Ground Stomp timer import, root preservation and read-only strongest-usable quotes.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
+            def label = variant ? variant.uncapitalize() : 'live'
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-state/${neoforge_version}/${label}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompState${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-ground-stomp-state-failure.txt')
+            def success = new File(directory, 'just-dire-ground-stomp-state-success.txt')
+            def report = new File(directory, 'just-dire-ground-stomp-state-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things Ground Stomp API; active compatibility disabled') }
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp queries failed; active compatibility disabled') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Ground Stomp retained an unsupported cooldown; activation denied') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0)
+                    || queryWarnings != (variant == 'QueryFailure' ? 1 : 0)
+                    || timerWarnings != (variant == '' ? 1 : 0)) {
+                throw new GradleException("Ground Stomp state ${label} failed: ${failure.isFile() ? failure.text : log}; binding=${bindingWarnings}, query=${queryWarnings}, timer=${timerWarnings}")
+            }
+            new File(log.parentFile, "${label}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('prepareJustDireGroundStompTransport') {
+    dependsOn tasks.named('prepareJustDireJumpClient')
+    doLast {
+        fixtureFileOperations.delete { spec ->
+            spec.delete(['failure', 'success', 'report'].collect { suffix ->
+                new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-transport-${suffix}.txt")
+            })
+        }
+    }
+}
+
+tasks.named('runJustDireGroundStompTransport') { dependsOn tasks.named('prepareJustDireGroundStompTransport') }
+
+tasks.register('prepareJustDireGroundStompClient') {
+    dependsOn tasks.named('prepareJustDireJumpClient')
+    doLast {
+        fixtureFileOperations.delete { spec ->
+            spec.delete(['failure', 'success', 'report'].collect { suffix ->
+                new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-client-${suffix}.txt")
+            })
+        }
+    }
+}
+
+['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
+    def prepare = tasks.register("prepareJustDireGroundStompClient${variant}") {
+        dependsOn('prepareJustDireGroundStompClient')
+        doLast {
+            if (variant == 'Absent') {
+                fixtureFileOperations.delete { delete new File(justDireJumpClientDirectory.get().asFile, "mods/${justDireSmithingArtifact.name}") }
+            }
+        }
+    }
+    tasks.named("runJustDireGroundStompClient${variant}") { dependsOn prepare }
+}
+
+tasks.register('verifyJustDireGroundStompClient') {
+    group = 'verification'
+    description = 'Verifies native JDT mixed widgets/capture and production location-aware keyboard/mouse batch transport.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-client/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-ground-stomp-client-failure.txt')
+            def success = new File(directory, 'just-dire-ground-stomp-client-success.txt')
+            def report = new File(directory, 'just-dire-ground-stomp-client-report.txt')
+            def warnings = log.readLines().findAll { it.contains('mixed screen bridge disabled') || it.contains('mixed settings API; new settings/input routes disabled') }
+            def earthquakeWarnings = log.readLines().count {
+                it.contains('Could not bind Just Dire Things Earthquake API; Earthquake compatibility disabled')
+                        || it.contains('Just Dire Things Earthquake mixed settings unavailable; Earthquake metadata/input disabled')
+            }
+            def lavaWarnings = log.readLines().count { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }
+            if (failure.isFile() || !success.isFile() || success.text != "${variant.uncapitalize()}\n" || !report.isFile()
+                    || warnings.size() != (variant in ['HooksMissing', 'ApiMissing'] ? 1 : 0)
+                    || earthquakeWarnings != (variant in ['EarthquakeMissing', 'EarthquakeSettingsFailure'] ? 1 : 0) || lavaWarnings != 0) {
+                throw new GradleException("Production JDT active native client failed: ${failure.isFile() ? failure.text : log}")
+            }
+            if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Absent JDT emitted a class loading warning: ${log}")
+            }
+            if (log.text.contains('/ERROR]')) {
+                throw new GradleException("JDT active native client emitted an error: ${log}")
+            }
+            new File(log.parentFile, "${variant.uncapitalize()}-report.txt").text = report.text
+            if (variant == 'Live') {
+                fixtureFileOperations.copy {
+                    from(new File(justDireJumpClientDirectory.get().asFile,
+                            '.mixin.out/class/com/direwolf20/justdirethings/client/screens/ToolSettingScreen.class'))
+                    into(log.parentFile)
+                }
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireGroundStompTransport') {
+    group = 'verification'
+    description = 'Verifies bundled production JDT settings/activation transport, ordinary stack packets and natural equipped timer lifecycle.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-server/${neoforge_version}/transport-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireGroundStompTransport', log, 300)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-ground-stomp-transport-failure.txt')
+        def success = new File(directory, 'just-dire-ground-stomp-transport-success.txt')
+        def report = new File(directory, 'just-dire-ground-stomp-transport-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile() || log.text.contains('/ERROR]')) {
+            throw new GradleException("Production JDT active transport failed: ${failure.isFile() ? failure.text : log}")
+        }
+        new File(log.parentFile, 'transport-report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
+}
+
+tasks.register('prepareJustDireGroundStompLifecycle') {
+    dependsOn('prepareJustDireGroundStompClient')
+    doLast {
+        def lifecycleMarkers = ['save-report.txt', 'save-success.txt', 'save-failure.txt', 'restart-report.txt',
+                                'restart-success.txt', 'restart-failure.txt', 'saved.json', 'packets.json'].collect { suffix ->
+            new File(justDireSmithingMarkers.get().asFile, "just-dire-ground-stomp-lifecycle-${suffix}")
+        }
+        fixtureFileOperations.delete { delete lifecycleMarkers }
+        if (lifecycleMarkers.any { it.exists() }) {
+            throw new GradleException('Lifecycle preparation retained stale markers')
+        }
+    }
+}
+
+tasks.named('runJustDireGroundStompLifecycleSave') { dependsOn('prepareJustDireGroundStompLifecycle') }
+
+tasks.named('runJustDireGroundStompLifecycleRestart') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doFirst {
+        // No world-copy/reset preparation here: this JVM must open the preceding saved world.
+        if (!new File(justDireJumpClientDirectory.get().asFile, 'saves/jump/level.dat').isFile()
+                || !new File(justDireSmithingMarkers.get().asFile, 'just-dire-ground-stomp-lifecycle-save-success.txt').isFile()) {
+            throw new GradleException('Run the Ground Stomp lifecycle save process before restart')
+        }
+    }
+}
+
+tasks.register('verifyJustDireGroundStompLifecycle') {
+    group = 'verification'
+    description = 'Verifies production JDT controls, FE/wear, HUD and sounds across actual world restart, native tier smithing and reconnect.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['Save', 'Restart'].each { mode ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-lifecycle/${neoforge_version}/${mode.uncapitalize()}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompLifecycle${mode}", log, 300)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = "just-dire-ground-stomp-lifecycle-${mode.uncapitalize()}"
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || log.text.contains('mixed screen bridge disabled')
+                    || log.text.contains('mixed settings API; new settings/input routes disabled')
+                    || log.text.contains('Just Dire Things cooldown HUD')
+                    || log.readLines().any { it.contains('/WARN]') && it.contains('Just Dire Things Lava Repair') }) {
+                throw new GradleException("Ground Stomp lifecycle ${mode} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${mode.uncapitalize()}-report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}

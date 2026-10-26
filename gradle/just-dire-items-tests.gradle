@@ -1,0 +1,299 @@
+// JDT smithing, root upgrades, refunds and ordinary armor wear.
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
+def testMods = rootProject.ext.testModArtifacts
+
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+
+def fixtureBuildDirectory = layout.buildDirectory
+
+def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+
+def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
+
+def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithing')
+
+def justDireRefundVariants = ['Live', 'ItemsMissing', 'MetadataMissing', 'Absent', 'Inner', 'Outer', 'Missing', 'Extra', 'Count', 'Entity', 'Operation', 'Publication', 'Router']
+
+def justDireArmorWearVariants = ['Live', 'Missing', 'Absent', 'WrapperBefore', 'WrapperAfter', 'Amount', 'Entry', 'Slot', 'Entity',
+                                 'Cancellation', 'Association', 'Router', 'Publication', 'Transactions', 'QueryFailure', 'StorageMissing', 'Abilities']
+
+def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
+
+def justDireArtifactOverride = providers.gradleProperty('justDireThingsTestJar').isPresent()
+
+def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+
+neoForge.runs {
+    justDireRootUpgrades {
+        server()
+        disableIdeRun()
+        gameDirectory = justDireSmithingRunDirectory.get().asFile
+        programArgument('--nogui')
+        systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeTest', 'true')
+        jvmArgument('-Xmx1G')
+    }
+
+    ['ApiMissing', 'RecipeChanged'].each { variant ->
+        register("justDireRootUpgrades${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireRootUpgradeGuard', variant.uncapitalize())
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    justDireRefundVariants.each { variant ->
+        register("justDireRefunds${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireRefunds', variant.uncapitalize())
+            systemProperty('mixin.debug.export', 'true')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    justDireArmorWearVariants.each { variant ->
+        register("justDireArmorWear${variant}") {
+            server()
+            disableIdeRun()
+            gameDirectory = justDireSmithingRunDirectory.get().asFile
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+            systemProperty('mismatchedboots.runtimetest.justDireArmorWearTest', 'true')
+            systemProperty('mismatchedboots.runtimetest.justDireArmorWearVariant', variant.uncapitalize())
+            if (variant == 'StorageMissing') {
+                systemProperty('mismatchedboots.runtimetest.justDireResourcesGuard', 'apiMissing')
+            }
+            if (variant == 'Abilities') {
+                systemProperty('mismatchedboots.runtimetest.justDireEarthquakeServerTest', 'true')
+            }
+            systemProperty('mixin.debug.export', 'true')
+            jvmArgument('-Xmx1G')
+        }
+    }
+
+    justDireSmithing {
+        server()
+        disableIdeRun()
+        gameDirectory = justDireSmithingRunDirectory.get().asFile
+        programArgument('--nogui')
+        systemProperty('mismatchedboots.runtimetest.markers', justDireSmithingMarkers.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.justDireSmithingTest', 'true')
+        jvmArgument('-Xmx1G')
+    }
+}
+
+tasks.register('prepareJustDireSmithing') {
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        if (!justDireArtifactOverride) {
+            testMods.resolve('NeoForge', justDireSmithingArtifact.name)
+        }
+        if (!justDireSmithingArtifact.isFile()) {
+            throw new GradleException("Missing optional Just Dire Things fixture: ${justDireSmithingArtifact}")
+        }
+
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        justDireSmithingArtifact.withInputStream { stream ->
+            byte[] buffer = new byte[8192]
+            int count
+            while ((count = stream.read(buffer)) != -1) {
+                digest.update(buffer, 0, count)
+            }
+        }
+        if (digest.digest().encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
+            throw new GradleException("Unexpected Just Dire Things fixture: ${justDireSmithingArtifact}")
+        }
+        fixtureFileOperations.delete { delete justDireSmithingMarkers, justDireSmithingRunDirectory }
+        def directory = justDireSmithingRunDirectory.get().asFile
+        fixtureFileOperations.copy {
+            from(productionArchive, justDireSmithingFixtureArchive, justDireSmithingArtifact)
+            into(new File(directory, 'mods'))
+        }
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"},{"height":2,"block":"minecraft:dirt"},{"height":1,"block":"minecraft:grass_block"}],"structure_overrides":[]}
+server-ip=127.0.0.1
+server-port=0
+spawn-protection=0
+'''
+    }
+}
+
+tasks.named('runJustDireSmithing') {
+    dependsOn tasks.named('prepareJustDireSmithing')
+}
+
+justDireRefundVariants.each { variant ->
+    tasks.named("runJustDireRefunds${variant}") { dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing' }
+}
+
+tasks.register('verifyJustDireRefunds') {
+    group = 'verification'
+    description = 'Verifies production conserved credits, guarded actual-break refunds and bounded foreign transformations.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def supported = justDireRefundVariants
+        def variants = providers.gradleProperty('refundVariants').getOrElse(supported.join(',')).split(',')
+        if (!variants.every { it in supported }) {
+            throw new GradleException('Unknown production refund variant')
+        }
+        variants.each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-refunds-production/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireRefunds${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-refunds-failure.txt')
+            def success = new File(directory, 'just-dire-refunds-success.txt')
+            def report = new File(directory, 'just-dire-refunds-report.txt')
+            def warnings = log.readLines().count { it.contains('Could not bind Just Dire Things refund items') }
+            def flowWarnings = log.readLines().count { it.contains('Just Dire Things refund flow incompatible') }
+            def refused = ['Missing', 'Extra', 'Count', 'Entity', 'Operation', 'Publication', 'Router'].contains(variant)
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || warnings != (variant in ['ItemsMissing', 'MetadataMissing'] ? 1 : 0) || flowWarnings != (refused ? 1 : 0)
+                    || variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
+                throw new GradleException("Production JDT credits ${variant} failed: ${failure.isFile() ? failure.text : log}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/minecraft/world/item/ItemStack.class')
+            if (variant != 'Absent') {
+                if (!exported.isFile()) {
+                    throw new GradleException('Missing final ItemStack export')
+                }
+                fixtureFileOperations.copy {
+                    from exported
+                    into log.parentFile
+                    rename { "${variant}-ItemStack.class" }
+                }
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+justDireArmorWearVariants.each { variant ->
+    tasks.named("runJustDireArmorWear${variant}") { dependsOn variant == 'Absent' ? 'prepareJustDireGroundStompStateAbsent' : 'prepareJustDireSmithing' }
+}
+
+tasks.register('verifyJustDireArmorWear') {
+    group = 'verification'
+    description = 'Verifies packaged production JDT armor-wear conversion and independent ordinary/ability consumers.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def supported = justDireArmorWearVariants
+        def variants = providers.gradleProperty('armorWearVariants').getOrElse(supported.join(',')).split(',')
+        if (!variants.every { it in supported }) {
+            throw new GradleException('Unknown production armor-wear variant')
+        }
+        variants.each { variant ->
+            def log = fixtureBuildDirectory.file("reports/just-dire-armor-wear-production/${neoforge_version}/${variant}-process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireArmorWear${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def prefix = variant == 'Abilities' ? 'just-dire-earthquake-server' : 'just-dire-armor-wear'
+            def failure = new File(directory, "${prefix}-failure.txt")
+            def success = new File(directory, "${prefix}-success.txt")
+            def report = new File(directory, "${prefix}-report.txt")
+            def warnings = log.readLines().count { it.contains('Just Dire Things armor wear flow incompatible') }
+            def unsafe = ['Missing', 'Amount', 'Entry', 'Slot', 'Entity', 'Cancellation', 'Association', 'Router', 'Publication'].contains(variant)
+            def queryWarnings = log.readLines().count { it.contains('Just Dire Things armor wear query failed') }
+            def storageWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things storage API') }
+            def timerWarnings = log.readLines().count { it.contains('Just Dire Things Earthquake retained an unsupported cooldown') }
+            def witnessFailure = new File(directory, 'just-dire-armor-wear-failure.txt')
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || log.text.contains('/ERROR]') || warnings != (unsafe ? 1 : 0)
+                    || queryWarnings != (variant == 'QueryFailure' ? 1 : 0) || storageWarnings != (variant == 'StorageMissing' ? 1 : 0)
+                    || timerWarnings != (variant == 'Abilities' ? 1 : 0)
+                    || witnessFailure.isFile()
+                    || variant == 'Abilities' && !new File(directory, 'just-dire-armor-wear-armed.txt').isFile()) {
+                throw new GradleException("Production armor wear ${variant} failed: ${failure.isFile() ? failure.text : witnessFailure.isFile() ? witnessFailure.text : log}")
+            }
+            new File(log.parentFile, "${variant}-report.txt").text = report.text
+            if (variant == 'Abilities') {
+                new File(log.parentFile, 'Abilities-armed.txt').text = new File(directory, 'just-dire-armor-wear-armed.txt').text
+            }
+
+            def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/neoforged/neoforge/common/CommonHooks.class')
+            if (variant == 'Live') {
+                if (!exported.isFile()) {
+                    throw new GradleException('Missing final CommonHooks export')
+                }
+                fixtureFileOperations.copy {
+                    from exported
+                    into log.parentFile
+                }
+            }
+            if (variant.startsWith('Wrapper')) {
+                fixtureFileOperations.copy {
+                    from exported
+                    into log.parentFile
+                    rename { "${variant}-CommonHooks.class" }
+                }
+            }
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.named('runJustDireRootUpgrades') { dependsOn tasks.named('prepareJustDireSmithing') }
+
+['ApiMissing', 'RecipeChanged'].each { variant ->
+    tasks.named("runJustDireRootUpgrades${variant}") { dependsOn tasks.named('prepareJustDireSmithing') }
+}
+
+tasks.register('verifyJustDireRootUpgrades') {
+    group = 'verification'
+    description = 'Verifies production root-owned JDT upgrades against real native recipes and consumers.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        ['', 'ApiMissing', 'RecipeChanged'].each { variant ->
+            def prefix = variant ? "${variant}-" : ''
+            def log = fixtureBuildDirectory.file("reports/just-dire-root-upgrades/${neoforge_version}/${prefix}process.log").get().asFile
+            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireRootUpgrades${variant}", log, 240)
+            def directory = justDireSmithingMarkers.get().asFile
+            def failure = new File(directory, 'just-dire-root-upgrades-failure.txt')
+            def success = new File(directory, 'just-dire-root-upgrades-success.txt')
+            def report = new File(directory, 'just-dire-root-upgrades-report.txt')
+            def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things upgrade API; root upgrade compatibility disabled') }
+            def shapeWarnings = log.readLines().count { it.contains('Just Dire Things upgrade recipe returned an unsupported result; root installation rejected') }
+            if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                    || bindingWarnings != (variant == 'ApiMissing' ? 1 : 0)
+                    || shapeWarnings != (variant == 'RecipeChanged' ? 1 : 0)) {
+                throw new GradleException("Just Dire Things root-upgrade ${variant ?: 'Live'} failed: ${failure.isFile() ? failure.text : log}; binding=${bindingWarnings}, shape=${shapeWarnings}")
+            }
+            new File(log.parentFile, "${prefix}report.txt").text = report.text
+            logger.lifecycle(report.text)
+        }
+    }
+}
+
+tasks.register('verifyJustDireSmithing') {
+    group = 'verification'
+    description = 'Runs bounded real Just Dire Things 1.6.11 template-free smithing acceptance.'
+    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    doLast {
+        def processLog = fixtureBuildDirectory.file("reports/just-dire-smithing/${neoforge_version}/neoforge-process.log").get().asFile
+        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireSmithing', processLog, 240)
+        def directory = justDireSmithingMarkers.get().asFile
+        def failure = new File(directory, 'just-dire-smithing-failure.txt')
+        def success = new File(directory, 'just-dire-smithing-success.txt')
+        def report = new File(directory, 'just-dire-smithing-report.txt')
+        if (failure.isFile() || !success.isFile() || success.text != 'neoforge\n' || !report.isFile()
+                || !report.text.contains('14 real installation recipes') || !report.text.contains('28 ordinary/shift-click takes')) {
+            throw new GradleException("Just Dire Things smithing failed: ${failure.isFile() ? failure.text : processLog}")
+        }
+        // Other JDT gates reset shared markers; retain the accepted report beside its process log.
+        new File(processLog.parentFile, 'report.txt').text = report.text
+        logger.lifecycle(report.text)
+    }
+}
