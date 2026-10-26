@@ -84,6 +84,7 @@ final class AttributeRulesConfigPart implements DynamicConfigPart {
         customRules.sort(Map.Entry.comparingByKey(Comparator.comparing(Identifier::toString)));
         customRules.forEach(entry -> rules.put(entry.getKey(), entry.getValue()));
         resolved = new AttributeRuleSet(fallback.get(), rules);
+
         return dirty;
     }
 
@@ -96,6 +97,7 @@ final class AttributeRulesConfigPart implements DynamicConfigPart {
             category.set(POLICY, rule.getValue().serializedName());
             attributes.set(List.of(rule.getKey().toString()), category);
         }
+
         root.set(SECTION, attributes);
         root.setComment(SECTION, SECTION_COMMENT);
     }
@@ -115,6 +117,7 @@ final class AttributeRulesConfigPart implements DynamicConfigPart {
         if (separator <= 0 || separator != value.lastIndexOf(':') || separator == value.length() - 1) {
             return null;
         }
+
         try {
             return Identifier.parse(value);
         } catch (RuntimeException ignored) {

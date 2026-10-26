@@ -18,6 +18,7 @@ final class RepairCostMerger {
         Objects.requireNonNull(first, "first");
         Objects.requireNonNull(second, "second");
         Objects.requireNonNull(policy, "policy");
+
         int left = first.getOrDefault(DataComponents.REPAIR_COST, 0);
         int right = second.getOrDefault(DataComponents.REPAIR_COST, 0);
         if (left < 0 || right < 0) {
@@ -26,6 +27,7 @@ final class RepairCostMerger {
             }
             throw new IllegalArgumentException("Invalid negative repair-cost input");
         }
+
         return switch (policy) {
             case OWNER -> new Results(left, right);
             case AVERAGE -> shared((int) (((long) left + right + 1L) / 2L));

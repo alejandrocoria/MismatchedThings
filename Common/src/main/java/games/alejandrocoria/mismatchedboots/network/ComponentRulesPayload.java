@@ -50,6 +50,7 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
         if (count > MAX_RULE_COUNT) {
             throw new EncoderException("Too many component-rule declarations: " + count);
         }
+
         buffer.writeVarInt(count);
         payload.rules.declarations().forEach((id, rule) -> {
             buffer.writeUtf(id.toString(), MAX_IDENTIFIER_LENGTH);
@@ -79,14 +80,16 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
             if (declarations.putIfAbsent(id, rule) != null) {
                 throw new DecoderException("Duplicate component ID: " + id);
             }
+
             var registered = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(id);
             validateShape(id, registered.orElse(null), rule);
-            registered
-                    .ifPresent(type -> validateRegistered(id, type, rule, effective));
+            registered.ifPresent(type -> validateRegistered(id, type, rule, effective));
         }
+
         if (buffer.isReadable()) {
             throw new DecoderException("Component-rules payload contains trailing data");
         }
+
         return new ComponentRulesPayload(new ComponentRules(
                 durability, repairCost, declarations, new ComponentRuleSet(effective)));
     }
@@ -109,6 +112,7 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
         if (separator <= 0 || separator != serialized.lastIndexOf(':') || separator == serialized.length() - 1) {
             throw new DecoderException("Invalid component ID: " + serialized);
         }
+
         try {
             return Identifier.parse(serialized);
         } catch (RuntimeException exception) {
@@ -120,22 +124,26 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
         String serializedPolicy = buffer.readUtf(MAX_POLICY_LENGTH);
         ComponentPolicy policy = ComponentPolicy.fromSerializedName(serializedPolicy)
                                                 .orElseThrow(() -> new DecoderException("Invalid component policy: " + serializedPolicy));
+
         int marker = buffer.readUnsignedByte();
         if (marker != 0 && marker != 1) {
             throw new DecoderException("Invalid component numeric-kind marker: " + marker);
         }
+
         ComponentNumericKind number = null;
         if (marker == 1) {
             String serializedNumber = buffer.readUtf(MAX_NUMBER_LENGTH);
             number = ComponentNumericKind.fromSerializedName(serializedNumber)
                                          .orElseThrow(() -> new DecoderException("Invalid component numeric kind: " + serializedNumber));
         }
+
         if (policy.isNumeric() && number == null) {
             return ComponentRule.of(policy);
         }
         if (!policy.isNumeric() && number != null) {
             throw new DecoderException("Non-numeric component policy has a numeric kind: " + policy.serializedName());
         }
+
         return number == null ? ComponentRule.of(policy) : ComponentRule.numeric(policy, number);
     }
 
@@ -164,6 +172,7 @@ public record ComponentRulesPayload(ComponentRules rules) implements CustomPacke
         if (!resolved.orElseThrow().equals(rule)) {
             throw new DecoderException("Unsupported component rule for " + id + ": " + rule);
         }
+
         effective.put(id, rule);
     }
 }

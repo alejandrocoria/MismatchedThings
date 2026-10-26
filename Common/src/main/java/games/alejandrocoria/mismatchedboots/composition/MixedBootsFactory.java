@@ -57,6 +57,7 @@ public final class MixedBootsFactory {
         BootHalf secondHalf = new BootHalf(second);
         ItemStack firstSource = firstHalf.source();
         ItemStack secondSource = secondHalf.source();
+
         ComponentProjection.Result components = ComponentProjection.project(
                 firstSource, secondSource, componentRules.components());
         DurabilityMerger.Results durability = DurabilityMerger.merge(
@@ -73,6 +74,7 @@ public final class MixedBootsFactory {
         ItemStack inverse = createOrientation(
                 secondHalf, firstHalf, mixedBoots, dataType, durability.inverse(), repairCost.inverse(),
                 attributes.inverse(), enchantments, repairable, components.inverse(), components.managedTypes(), rules);
+
         return new MixedBootsPair(primary, inverse);
     }
 
@@ -127,6 +129,7 @@ public final class MixedBootsFactory {
         if (error.isPresent()) {
             throw new IllegalArgumentException("Invalid mixed boots output: " + error.get().message());
         }
+
         return output;
     }
 
@@ -136,12 +139,14 @@ public final class MixedBootsFactory {
         if (source == null || other == null) {
             throw new IllegalArgumentException("Mixed boots sources are not feet-equippable");
         }
+
         var sound = source.equipSound();
         // Classify the sound, not the item: supports native/inline holders and keeps the chosen holder's range intact.
         if ("minecraft".equals(sound.value().location().getNamespace())
                 && !"minecraft".equals(other.equipSound().value().location().getNamespace())) {
             sound = other.equipSound();
         }
+
         return new Equippable(
                 EquipmentSlot.FEET,
                 sound,

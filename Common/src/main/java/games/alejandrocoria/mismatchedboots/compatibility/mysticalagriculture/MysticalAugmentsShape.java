@@ -32,7 +32,10 @@ public final class MysticalAugmentsShape implements Opcodes {
         var pending = new ArrayDeque<MethodNode>();
         pending.add(roots.getFirst());
         var seen = new HashSet<MethodNode>();
-        int reads = 0, nativeQueries = 0, bridges = 0;
+        int reads = 0;
+        int nativeQueries = 0;
+        int bridges = 0;
+
         while (!pending.isEmpty()) {
             var method = pending.removeFirst();
             if (!seen.add(method)) {
@@ -79,7 +82,9 @@ public final class MysticalAugmentsShape implements Opcodes {
         var pending = new ArrayDeque<MethodNode>();
         pending.add(roots.getFirst());
         var seen = new HashSet<MethodNode>();
-        int registrations = 0, bridges = 0;
+        int registrations = 0;
+        int bridges = 0;
+
         while (!pending.isEmpty()) {
             var method = pending.removeFirst();
             if (!seen.add(method)) {
@@ -113,8 +118,9 @@ public final class MysticalAugmentsShape implements Opcodes {
 
     public static boolean armorTick(ClassNode owner) {
         var methods = owner.methods.stream()
-                                   .filter(m -> m.name.equals("onArmorTick") && m.desc.equals("(" + STACK
-                                                                                                      + "Lnet/minecraft/server/level/ServerLevel;" + PLAYER + ")V") && (m.access & ACC_STATIC) == 0)
+                                   .filter(method -> method.name.equals("onArmorTick")
+                                           && method.desc.equals("(" + STACK + "Lnet/minecraft/server/level/ServerLevel;" + PLAYER + ")V")
+                                           && (method.access & ACC_STATIC) == 0)
                                    .toList();
         if (methods.size() != 1) {
             return false;

@@ -41,11 +41,13 @@ public final class MysticalRefundCompatibility {
             ordinary.call(root, count);
             return;
         }
+
         Set<ItemStack> active = IN_FLIGHT.get();
         if (!active.add(root)) {
             ordinary.call(root, count);
             return;
         }
+
         try {
             ordinary.call(root, count);
             complete(capture); // No delivery before the actual one-item break consumption returns.
@@ -63,6 +65,7 @@ public final class MysticalRefundCompatibility {
                 || root.getMaxDamage() <= 0 || root.getDamageValue() < root.getMaxDamage()) {
             return null;
         }
+
         int slot = -1;
         Inventory inventory = player.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {

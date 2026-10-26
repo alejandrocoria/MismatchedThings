@@ -160,15 +160,17 @@ public final class MysticalAugmentsCompatibility {
     public static void refreshHealthCleanup(Object cache, Object augment, Player player) {
         var specs = selected(player.getItemBySlot(EquipmentSlot.FEET));
         Binding api = binding;
-        if (api == null || api.health == null || specs.stream().noneMatch(spec ->
-                                                                                  spec.family() == MysticalAugments.Family.HEALTH_BOOST && api.augments.get(
-                                                                                          spec.id()) == augment)) {
+        if (api == null || api.health == null
+                || specs.stream().noneMatch(spec -> spec.family() == MysticalAugments.Family.HEALTH_BOOST
+                        && api.augments.get(spec.id()) == augment)) {
             return;
         }
+
         try {
             if (!Boolean.TRUE.equals(api.health.cached.invoke(cache, augment, player))) {
                 return;
             }
+
             // Also refresh an existing native entry: swapping native -> mixed with the same
             // augment does not recreate MA's cache entry or rerun its registration branch.
             Runnable cleanup = () -> {
@@ -176,6 +178,7 @@ public final class MysticalAugmentsCompatibility {
                 if (health == null) {
                     return;
                 }
+
                 // A synced client may already lack the bonus. Subtracting it again can
                 // cause a client-only death that the server cannot respawn.
                 health.removeModifier(api.health.attribute);
@@ -194,10 +197,12 @@ public final class MysticalAugmentsCompatibility {
         if (slot != EquipmentSlot.FEET || !(entity instanceof Player player) || player.getItemBySlot(slot) != root) {
             return;
         }
+
         for (var spec : selected(root)) {
             if (spec.family().route != MysticalAugments.Route.ARMOR) {
                 continue;
             }
+
             try {
                 binding.armorTick.invoke(binding.augments.get(spec.id()), root, level, player);
             } catch (InvocationTargetException failure) {

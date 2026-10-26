@@ -103,6 +103,7 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
         } finally {
             mismatchedboots$clearAdditionalRecipe();
         }
+
         if (matchesPreview) {
             player.triggerRecipeCrafted(additional, inputs);
             if (!additional.value().isSpecial()) {
@@ -116,6 +117,7 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
         if (inputs.size() != snapshot.size()) {
             return false;
         }
+
         for (int index = 0; index < inputs.size(); index++) {
             if (!ItemStack.matches(inputs.get(index), snapshot.get(index))) {
                 return false;

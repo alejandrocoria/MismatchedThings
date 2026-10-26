@@ -68,7 +68,8 @@ public final class ModContent {
     /** Opaque owned archive, independent of foreign component registrations. */
     public static DataComponentType<SuspendedBootsData> createSuspendedBootsType() {
         return DataComponentType.<SuspendedBootsData>builder().persistent(SuspendedBootsData.CODEC)
-                                .networkSynchronized(SuspendedBootsData.STREAM_CODEC).build();
+                                .networkSynchronized(SuspendedBootsData.STREAM_CODEC)
+                                .build();
     }
 
     public static RecipeSerializer<MixedBootsSmithingBaseRecipe> createSmithingBaseRecipeSerializer() {
@@ -134,10 +135,12 @@ public final class ModContent {
         if (suspendedBootsData(stack).isPresent()) {
             return Optional.empty();
         }
+
         Optional<MixedBootsData> registeredData = mixedBootsDataType().map(stack::get);
         if (registeredData.isPresent()) {
             return registeredData;
         }
+
         for (TypedDataComponent<?> component : stack.getComponents()) {
             if (component.value() instanceof MixedBootsData data) {
                 return Optional.of(data);

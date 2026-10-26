@@ -39,9 +39,11 @@ class ClippedVertexOriginTest {
                 }
                 Collections.rotate(vertices, rotation);
                 var source = new QuadClipper.Quad(vertices);
+
                 for (QuadClipper.Side side : QuadClipper.Side.values()) {
                     var traced = QuadClipper.clipPolygonWithOrigins(source, side);
                     assertEquals(QuadClipper.clipPolygon(source, side), traced.geometry());
+
                     for (int index = 0; index < traced.origins().size(); index++) {
                         var origin = traced.origins().get(index);
                         var actual = traced.geometry().polygon().vertex(index);

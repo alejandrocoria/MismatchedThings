@@ -212,7 +212,9 @@ class MixedBootsTooltipFormatterTest {
 
     @Test
     void sourceBlockCanBeAppendedBeforeDetailsEvenWhenBothSourcesHaveNoOrdinaryLines() {
-        ItemStack left = boots(Items.IRON_BOOTS, 2), right = boots(Items.GOLDEN_BOOTS, 1);
+        ItemStack left = boots(Items.IRON_BOOTS, 2);
+        ItemStack right = boots(Items.GOLDEN_BOOTS, 1);
+
         for (TooltipFlag flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
             List<Component> lines = new ArrayList<>();
             MixedBootsTooltipFormatter.appendSourceSections(data(left, right), Item.TooltipContext.EMPTY, flag,
@@ -220,6 +222,7 @@ class MixedBootsTooltipFormatterTest {
                         output.accept(Component.literal(source.is(Items.IRON_BOOTS) ? "Left block" : "Right block"));
                         return output;
                     });
+
             int idLines = flag.isAdvanced() ? 1 : 0;
             assertEquals(6 + 2 * idLines, lines.size());
             assertSide(lines.get(0), LEFT_KEY, left.getHoverName());

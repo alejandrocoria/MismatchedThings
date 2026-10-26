@@ -15,10 +15,12 @@ public record MixedBootsData(BootHalf left, BootHalf right) {
     private static final int MAX_CODEC_DEPTH = 1;
     private static final ThreadLocal<Integer> PERSISTENT_CODEC_DEPTH = ThreadLocal.withInitial(() -> 0);
     private static final ThreadLocal<Integer> NETWORK_CODEC_DEPTH = ThreadLocal.withInitial(() -> 0);
-    private static final Codec<MixedBootsData> UNGUARDED_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                                                                                                                       BootHalf.CODEC.fieldOf("left").forGetter(MixedBootsData::left),
-                                                                                                                       BootHalf.CODEC.fieldOf("right").forGetter(MixedBootsData::right))
-                                                                                                               .apply(instance, MixedBootsData::new));
+    private static final Codec<MixedBootsData> UNGUARDED_CODEC = RecordCodecBuilder.create(instance -> {
+        return instance.group(
+                BootHalf.CODEC.fieldOf("left").forGetter(MixedBootsData::left),
+                BootHalf.CODEC.fieldOf("right").forGetter(MixedBootsData::right))
+                       .apply(instance, MixedBootsData::new);
+    });
     public static final Codec<MixedBootsData> CODEC = new Codec<>() {
         @Override
         public <T> DataResult<Pair<MixedBootsData, T>> decode(DynamicOps<T> ops, T input) {
@@ -53,6 +55,7 @@ public record MixedBootsData(BootHalf left, BootHalf right) {
         if (depth >= MAX_CODEC_DEPTH) {
             return DataResult.error(() -> "Mixed boots data cannot be nested");
         }
+
         PERSISTENT_CODEC_DEPTH.set(depth + 1);
         try {
             return operation.get();
@@ -66,6 +69,7 @@ public record MixedBootsData(BootHalf left, BootHalf right) {
         if (depth >= MAX_CODEC_DEPTH) {
             throw new IllegalArgumentException("Mixed boots data cannot be nested");
         }
+
         NETWORK_CODEC_DEPTH.set(depth + 1);
         try {
             return operation.get();

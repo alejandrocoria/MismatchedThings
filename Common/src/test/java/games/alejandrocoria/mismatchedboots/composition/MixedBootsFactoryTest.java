@@ -127,6 +127,7 @@ class MixedBootsFactoryTest {
         assertEquals(ModContent.MIXED_BOOTS_ID, primary.get(DataComponents.ITEM_MODEL));
         assertRepairableAccepts(primary, Items.IRON_INGOT, Items.GOLD_INGOT);
         assertRepairableAccepts(inverse, Items.IRON_INGOT, Items.GOLD_INGOT);
+
         assertEquals("alpha", primary.get(opaqueType));
         assertEquals("beta", inverse.get(opaqueType));
         assertNull(primary.get(rightOnlyType));
@@ -172,8 +173,11 @@ class MixedBootsFactoryTest {
                 new Case(customA, sameIdDifferentRange, customA, sameIdDifferentRange))) {
             ItemStack left = boots(Items.IRON_BOOTS, Equippable.builder(EquipmentSlot.FEET).setEquipSound(example.left()).build());
             ItemStack right = boots(Items.DIAMOND_BOOTS, Equippable.builder(EquipmentSlot.FEET).setEquipSound(example.right()).build());
-            ItemStack leftBefore = left.copy(), rightBefore = right.copy();
+            ItemStack leftBefore = left.copy();
+            ItemStack rightBefore = right.copy();
+
             var pair = create(left, right);
+
             assertEquals(example.primary(), pair.primary().get(DataComponents.EQUIPPABLE).equipSound());
             assertEquals(example.inverse(), pair.inverse().get(DataComponents.EQUIPPABLE).equipSound());
             assertTrue(ItemStack.matches(leftBefore, left));
@@ -416,18 +420,15 @@ class MixedBootsFactoryTest {
                      primary.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
         assertEquals(List.of(-0.1, 3.0),
                      inverse.modifiers().stream().map(entry -> entry.modifier().amount()).sorted().toList());
-        assertTrue(primary.modifiers().stream().anyMatch(entry ->
-                                                                 entry.slot() == EquipmentSlotGroup.ANY
-                                                                         && entry.display().equals(ItemAttributeModifiers.Display.hidden())));
+        assertTrue(primary.modifiers().stream().anyMatch(entry -> entry.slot() == EquipmentSlotGroup.ANY
+                && entry.display().equals(ItemAttributeModifiers.Display.hidden())));
         assertTrue(primary.modifiers().stream().anyMatch(entry -> entry.display().equals(customDisplay)));
         assertTrue(inverse.modifiers().stream().noneMatch(entry -> entry.display().equals(customDisplay)));
         assertEquals(primary, repeated);
         assertEquals(List.of(sharedId, Identifier.fromNamespaceAndPath("test", "mana"), sharedId),
                      primary.modifiers().stream().map(entry -> entry.modifier().id()).toList());
-        assertTrue(primary.modifiers().stream().noneMatch(entry ->
-                                                                  entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
-        assertTrue(inverse.modifiers().stream().noneMatch(entry ->
-                                                                  entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+        assertTrue(primary.modifiers().stream().noneMatch(entry -> entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+        assertTrue(inverse.modifiers().stream().noneMatch(entry -> entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
     }
 
     @Test
@@ -667,10 +668,12 @@ class MixedBootsFactoryTest {
         left.set(rightOnlyType, "removed");
         right.set(DataComponents.REPAIRABLE,
                   new Repairable(HolderSet.direct(Holder.direct(Items.GOLD_INGOT))));
+
         ItemStack root = create(left, right).primary();
         root.set(DataComponents.CUSTOM_NAME, Component.literal("Anvil name"));
         root.set(DataComponents.REPAIR_COST, 13);
         root.setDamageValue(17);
+
         ItemStack replacement = left.copy();
         replacement.set(opaqueType, "new");
         replacement.remove(rightOnlyType);

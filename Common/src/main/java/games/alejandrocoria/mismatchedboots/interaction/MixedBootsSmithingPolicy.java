@@ -27,6 +27,7 @@ public final class MixedBootsSmithingPolicy {
                 || ItemStack.validateStrict(root).error().isPresent()) {
             return Optional.empty();
         }
+
         Optional<MixedBootsData> data = ModContent.getMixedBootsData(root);
         if (data.isEmpty()) {
             return Optional.empty();
@@ -50,6 +51,7 @@ public final class MixedBootsSmithingPolicy {
             RecipeHolder<SmithingRecipe> primary = left.recipe() != null ? left.recipe() : right.recipe();
             RecipeHolder<SmithingRecipe> additional = left.recipe() != null && right.recipe() != null
                                                               && !left.recipe().id().equals(right.recipe().id()) ? right.recipe() : null;
+
             return Optional.of(new Result(result, primary, additional));
         } catch (IllegalArgumentException exception) {
             Constants.LOG.debug("Rejected mixed boots smithing recomposition: {}", exception.getMessage());
@@ -70,6 +72,7 @@ public final class MixedBootsSmithingPolicy {
         if (!isValidChange(source, assembled)) {
             return new Side(source, null);
         }
+
         return new Side(assembled, match.get());
     }
 

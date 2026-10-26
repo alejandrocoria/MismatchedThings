@@ -58,6 +58,7 @@ public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecip
                                     BuiltInRegistries.ITEM.getKey(input.right().getItem()));
                 return MismatchedWorkbenchResult.EMPTY;
             }
+
             return new MismatchedWorkbenchResult(pair.primary(), pair.inverse());
         } catch (IllegalArgumentException exception) {
             Constants.LOG.debug("Rejected workbench composition for {} and {}: {}",

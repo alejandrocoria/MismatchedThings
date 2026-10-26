@@ -26,11 +26,20 @@ public class MixedBootsItem extends Item {
             TooltipFlag flag) {
         var recovery = ModContent.suspendedBootsData(stack).orElse(null);
         if (recovery != null) {
-            String state = recovery.quarantined() ? "quarantined" : recovery.conflicted() ? "conflicted" : "suspended";
+            String state;
+            if (recovery.quarantined()) {
+                state = "quarantined";
+            } else if (recovery.conflicted()) {
+                state = "conflicted";
+            } else {
+                state = "suspended";
+            }
+
             tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots." + state)
                                     .withStyle(ChatFormatting.RED));
             return;
         }
+
         MixedBootsData data = ModContent.getMixedBootsData(stack).orElse(null);
         if (data == null) {
             tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots.invalid")

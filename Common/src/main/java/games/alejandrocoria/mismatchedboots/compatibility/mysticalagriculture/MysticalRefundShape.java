@@ -72,7 +72,10 @@ public final class MysticalRefundShape implements Opcodes {
                 getter.instructions.set(getter.instructions.getFirst(), new InsnNode(ICONST_1));
                 return true;
             }
-        } catch (AnalyzerException | RuntimeException incompatible) { /* Keep independent ordinary consumption. */ }
+        } catch (AnalyzerException | RuntimeException incompatible) {
+            // Keep independent ordinary consumption.
+        }
+
         // A changed router could bypass the getter. Neutralize only our merged method, never foreign code.
         for (var handler : node.methods) {
             if (!handler.desc.equals(HANDLER) || !owned(handler)) {
@@ -104,7 +107,11 @@ public final class MysticalRefundShape implements Opcodes {
             return false;
         }
         var flow = new Flow(node, apply);
-        MethodInsnNode site = null, write = null, callback = null, itemRead = null;
+        MethodInsnNode site = null;
+        MethodInsnNode write = null;
+        MethodInsnNode callback = null;
+        MethodInsnNode itemRead = null;
+
         for (var instruction : apply.instructions) {
             if (!(instruction instanceof MethodInsnNode call)) {
                 continue;
@@ -190,11 +197,10 @@ public final class MysticalRefundShape implements Opcodes {
         }
         // Same-mod peer, not shared eligibility: JDT retains its own readiness/credits/delivery.
         String peer = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireRefundMixin";
-        if (ENTITY.contains("ServerPlayer") || handler.visibleAnnotations == null || handler.visibleAnnotations.stream()
-                                                                                                               .noneMatch(a -> a.desc.equals(
-                                                                                                                       "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
-                                                                                                                       && a.values != null && a.values.contains(
-                                                                                                                       peer))) {
+        if (ENTITY.contains("ServerPlayer") || handler.visibleAnnotations == null
+                || handler.visibleAnnotations.stream().noneMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(peer))) {
             return false;
         }
         return routerCode(handler, "mismatchedboots$justDireRefundReady",
@@ -388,8 +394,8 @@ public final class MysticalRefundShape implements Opcodes {
             if (flow.origin(value) instanceof MethodInsnNode box && box.owner.equals("java/lang/Integer") && box.name.equals("valueOf")) {
                 value = flow.argument(box, 0, 1);
             }
-            if (index < 0 || index > 1 || !slots.add(index) || flow.origin(flow.argument(instruction, 0, 3)) != array || !flow.parameter(value,
-                                                                                                                                         index + 1)
+            if (index < 0 || index > 1 || !slots.add(index) || flow.origin(flow.argument(instruction, 0, 3)) != array
+                    || !flow.parameter(value, index + 1)
                     || handler.instructions.indexOf(instruction) >= handler.instructions.indexOf(forwarded)) {
                 return false;
             }
@@ -420,16 +426,20 @@ public final class MysticalRefundShape implements Opcodes {
     }
 
     private boolean owned(MethodNode method) {
-        return method.visibleAnnotations != null && method.visibleAnnotations.stream()
-                                                                             .anyMatch(a -> a.desc.equals(
-                                                                                     "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(
-                                                                                     MIXIN));
+        return method.visibleAnnotations != null
+                && method.visibleAnnotations.stream().anyMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(MIXIN));
     }
 
     private boolean straight(MethodNode method) {
-        return method.tryCatchBlocks.isEmpty() && real(method).stream()
-                                                              .noneMatch(n -> n instanceof JumpInsnNode || n instanceof TableSwitchInsnNode || n instanceof LookupSwitchInsnNode || n.getOpcode() == ATHROW) && real(
-                method).stream().filter(n -> n.getOpcode() >= IRETURN && n.getOpcode() <= RETURN).count() == 1;
+        return method.tryCatchBlocks.isEmpty()
+                && real(method).stream().noneMatch(instruction -> instruction instanceof JumpInsnNode
+                        || instruction instanceof TableSwitchInsnNode || instruction instanceof LookupSwitchInsnNode
+                        || instruction.getOpcode() == ATHROW)
+                && real(method).stream()
+                               .filter(instruction -> instruction.getOpcode() >= IRETURN && instruction.getOpcode() <= RETURN)
+                               .count() == 1;
     }
 
     private boolean reachable(MethodNode method, AbstractInsnNode start, AbstractInsnNode end, AbstractInsnNode blocked) {
@@ -490,8 +500,8 @@ public final class MysticalRefundShape implements Opcodes {
         }
 
         SourceValue argument(AbstractInsnNode node, int argument, int count) {
-            var f = at(node);
-            return f == null ? null : f.getStack(f.getStackSize() - count + argument);
+            var frame = at(node);
+            return frame == null ? null : frame.getStack(frame.getStackSize() - count + argument);
         }
 
         SourceValue receiver(AbstractInsnNode node, int count) {
@@ -514,7 +524,8 @@ public final class MysticalRefundShape implements Opcodes {
                 var previous = at(source).getLocal(local.var);
                 return previous.insns.isEmpty() ? source : origin(previous, seen);
             }
-            if (source instanceof VarInsnNode && source.getOpcode() >= ISTORE && source.getOpcode() <= ASTORE || source.getOpcode() == CHECKCAST) {
+            if ((source instanceof VarInsnNode && source.getOpcode() >= ISTORE && source.getOpcode() <= ASTORE)
+                    || source.getOpcode() == CHECKCAST) {
                 return origin(top(source), seen);
             }
             return source;
@@ -527,11 +538,12 @@ public final class MysticalRefundShape implements Opcodes {
 
         int constant(SourceValue value) {
             var source = origin(value);
-            return source instanceof IntInsnNode number
-                   ? number.operand
-                   : source != null && source.getOpcode() >= ICONST_M1 && source.getOpcode() <= ICONST_5
-                     ? source.getOpcode() - ICONST_0
-                     : Integer.MIN_VALUE;
+            if (source instanceof IntInsnNode number) {
+                return number.operand;
+            }
+
+            return source != null && source.getOpcode() >= ICONST_M1 && source.getOpcode() <= ICONST_5
+                    ? source.getOpcode() - ICONST_0 : Integer.MIN_VALUE;
         }
 
         boolean arrayElement(SourceValue value, int index, int slot) {

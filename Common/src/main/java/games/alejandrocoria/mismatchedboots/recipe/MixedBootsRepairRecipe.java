@@ -70,6 +70,7 @@ public final class MixedBootsRepairRecipe extends CustomRecipe {
                                 error.get().message());
             return ItemStack.EMPTY;
         }
+
         return result;
     }
 
@@ -112,6 +113,7 @@ public final class MixedBootsRepairRecipe extends CustomRecipe {
                 || !combineRepairable.test(mixed) || !combineRepairable.test(donor)) {
             return null;
         }
+
         return new Match(mixed, donor);
     }
 

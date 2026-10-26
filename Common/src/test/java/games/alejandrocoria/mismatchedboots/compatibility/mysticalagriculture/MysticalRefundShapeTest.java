@@ -50,6 +50,7 @@ class MysticalRefundShapeTest implements Opcodes {
                     }
                 }
             }
+
             assertEquals(1, changed, fault);
             assertFalse(shape.entry(node), fault);
         }

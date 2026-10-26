@@ -44,6 +44,7 @@ final class ProjectedComponentMerger {
         if (!ComponentProjection.equivalentValues(type, currentRoot.get(type), previous.get(type))) {
             return;
         }
+
         T value = replacement.get(type);
         if (value == null) {
             target.remove(type);

@@ -34,11 +34,13 @@ public final class MixedBootsSources {
         if (data == null) {
             return false;
         }
+
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
             return false;
         }
+
         return predicate.test(left) || predicate.test(right);
     }
 }

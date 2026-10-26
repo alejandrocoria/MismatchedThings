@@ -38,6 +38,7 @@ public record AttributeRulesPayload(AttributeRuleSet rules) implements CustomPac
         if (count > MAX_RULE_COUNT) {
             throw new EncoderException("Too many attribute rules: " + count);
         }
+
         writePolicy(buffer, payload.rules.fallback());
         buffer.writeVarInt(count);
         payload.rules.rules().forEach((id, policy) -> {
@@ -62,20 +63,24 @@ public record AttributeRulesPayload(AttributeRuleSet rules) implements CustomPac
                     || separator == serializedId.length() - 1) {
                 throw new DecoderException("Invalid attribute ID: " + serializedId);
             }
+
             Identifier id;
             try {
                 id = Identifier.parse(serializedId);
             } catch (RuntimeException exception) {
                 throw new DecoderException("Invalid attribute ID: " + serializedId, exception);
             }
+
             AttributePolicy policy = readPolicy(buffer);
             if (rules.putIfAbsent(id, policy) != null) {
                 throw new DecoderException("Duplicate attribute ID: " + id);
             }
         }
+
         if (buffer.isReadable()) {
             throw new DecoderException("Attribute-rules payload contains trailing data");
         }
+
         return new AttributeRulesPayload(new AttributeRuleSet(fallback, rules));
     }
 

@@ -28,6 +28,7 @@ final class EnchantmentMerger {
             int rightLevel = rightEnchantments.getLevel(enchantment);
             result.set(enchantment, mergeLevel(enchantment, leftLevel, rightLevel));
         }
+
         return result.toImmutable();
     }
 
@@ -45,6 +46,7 @@ final class EnchantmentMerger {
         if (leftLevel == 0) {
             return rightLevel;
         }
+
         if (rightLevel == 0 || leftLevel != rightLevel) {
             return Math.max(leftLevel, rightLevel);
         }

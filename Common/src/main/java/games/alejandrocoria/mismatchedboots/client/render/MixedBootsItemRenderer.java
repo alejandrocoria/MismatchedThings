@@ -58,6 +58,7 @@ public final class MixedBootsItemRenderer {
             applyOverlappingFallback(output, left);
             applyOverlappingFallback(output, right);
         }
+
         ((ItemStackRenderStateAccessor) (Object) output).mismatchedboots$setCachedModelBoundingBox(null);
         output.setOversizedInGui(displayContext == ItemDisplayContext.GUI && oversized);
         return true;
@@ -130,6 +131,8 @@ public final class MixedBootsItemRenderer {
         if (!planRange(leftOutput, left, plans) || !planRange(rightOutput, right, plans)) {
             return false;
         }
+
+        // Planning both sources first keeps fallback from mixing clipped and untouched geometry.
         for (LayerPlan plan : plans) {
             List<BakedQuad> quads = plan.layer().prepareQuadList();
             quads.clear();
@@ -140,6 +143,7 @@ public final class MixedBootsItemRenderer {
                 plan.output().setAnimated();
             }
         }
+
         ((ItemStackRenderStateAccessor) (Object) leftOutput).mismatchedboots$setCachedModelBoundingBox(null);
         ((ItemStackRenderStateAccessor) (Object) rightOutput).mismatchedboots$setCachedModelBoundingBox(null);
         return true;
@@ -171,6 +175,7 @@ public final class MixedBootsItemRenderer {
                     }
                 }
             }
+
             LayerGeometryExtension.Plan extension = layer instanceof LayerGeometryExtension metadata
                                                     ? metadata.mismatchedboots$planGeometry(accessor.mismatchedboots$getLocalTransform(),
                                                                                             range.side())
@@ -178,6 +183,7 @@ public final class MixedBootsItemRenderer {
             if (!extension.compatible()) {
                 return false;
             }
+
             plans.add(new LayerPlan(output, layer, List.copyOf(replacement), extents(replacement), extension));
         }
         return true;
@@ -225,6 +231,7 @@ public final class MixedBootsItemRenderer {
         float angle = range.side() == QuadClipper.Side.LEFT ? FALLBACK_ANGLE : -FALLBACK_ANGLE;
         Matrix4f sideTransform = new Matrix4f().translation(0.5F, 0.5F, 0.5F)
                                                .rotateY(angle).translate(-0.5F, -0.5F, -0.5F);
+
         for (int index = range.firstLayer(); index < range.lastLayer(); index++) {
             ItemStackRenderState.LayerRenderState layer = state.mismatchedboots$getLayers()[index];
             Matrix4f localTransform = ((LayerRenderStateAccessor) (Object) layer)

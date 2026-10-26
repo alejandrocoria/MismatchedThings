@@ -110,6 +110,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         if (isCommitted() || !(owner.level() instanceof ServerLevel level)) {
             return true;
         }
+
         MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(inputs.getItem(0), inputs.getItem(1));
         RecipeHolder<MismatchedWorkbenchRecipe> current = level.recipeAccess()
                                                                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, level).orElse(null);
@@ -121,6 +122,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         if (current == results.getRecipeUsed()) {
             return true;
         }
+
         MismatchedWorkbenchResult refreshed = current.value().assemblePair(input);
         if (refreshed.isComplete()
                 && ItemStack.matches(results.getItem(0), refreshed.primary())
@@ -129,6 +131,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
             results.setRecipeUsed(current);
             return true;
         }
+
         if (refreshed.isComplete()) {
             results.setRecipeUsed(current);
             results.setItem(0, refreshed.primary());
@@ -136,6 +139,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         } else {
             clearPreview();
         }
+
         this.broadcastChanges();
         // Reject the old click before removal/transfer; the next click sees the new preview.
         return false;
@@ -147,6 +151,7 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         if (player.level().isClientSide()) {
             return;
         }
+
         if (!isCommitted()) {
             List<ItemStack> sources = List.of(inputs.getItem(0).copy(), inputs.getItem(1).copy());
             committed.set(1);
@@ -214,11 +219,13 @@ public final class MismatchedWorkbenchMenu extends AbstractContainerMenu {
         if (!moved) {
             return ItemStack.EMPTY;
         }
+
         if (source.isEmpty()) {
             slot.setByPlayer(ItemStack.EMPTY, original);
         } else {
             slot.setChanged();
         }
+
         if (source.getCount() == original.getCount()) {
             return ItemStack.EMPTY;
         }

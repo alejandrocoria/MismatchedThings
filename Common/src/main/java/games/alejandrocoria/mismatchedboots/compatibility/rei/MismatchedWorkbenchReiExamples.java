@@ -49,14 +49,14 @@ final class MismatchedWorkbenchReiExamples {
 
         var attributes = AttributeRuleState.current();
         var components = ComponentRuleState.current();
-        return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) ->
-                                                      MismatchedWorkbenchClientRecipes.assemblePair(
-                                                              new MismatchedWorkbenchInput(left, right), level, attributes, components))
-                                              .map(example -> MismatchedWorkbenchReiDisplay.create(
-                                                      example.leftInputs(),
-                                                      example.rightInputs(),
-                                                      example.primaryOutputs(),
-                                                      example.inverseOutputs()));
+        return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) -> {
+            return MismatchedWorkbenchClientRecipes.assemblePair(
+                    new MismatchedWorkbenchInput(left, right), level, attributes, components);
+        }).map(example -> MismatchedWorkbenchReiDisplay.create(
+                example.leftInputs(),
+                example.rightInputs(),
+                example.primaryOutputs(),
+                example.inverseOutputs()));
     }
 
     private static List<ItemStack> collectCandidates() {

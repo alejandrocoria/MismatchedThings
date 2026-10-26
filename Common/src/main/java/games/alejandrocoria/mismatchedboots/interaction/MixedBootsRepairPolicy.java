@@ -14,6 +14,7 @@ public final class MixedBootsRepairPolicy {
                 || !mixed.isDamageableItem() || donor.isEmpty()) {
             return false;
         }
+
         MixedBootsData data = ModContent.getMixedBootsData(mixed).orElse(null);
         return data != null && (donor.getItem() == data.left().source().getItem()
                 || donor.getItem() == data.right().source().getItem());
@@ -23,10 +24,12 @@ public final class MixedBootsRepairPolicy {
         if (result.isEmpty()) {
             return result;
         }
+
         int maximum = mixed.getMaxDamage();
         long remaining = Math.min(
                 maximum,
                 remaining(mixed) + remaining(donor) + maximum * 5L / 100L);
+
         result.set(DataComponents.MAX_DAMAGE, maximum);
         result.setDamageValue((int) Math.max(0L, (long) maximum - remaining));
         return result;

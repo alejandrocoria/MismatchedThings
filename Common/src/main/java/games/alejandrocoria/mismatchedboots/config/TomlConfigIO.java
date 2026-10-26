@@ -45,6 +45,7 @@ class TomlConfigIO {
             save(path, part);
             return;
         }
+
         if (dirty) {
             save(path, part);
         }
@@ -68,11 +69,13 @@ class TomlConfigIO {
     Path backup(Path path) throws IOException {
         Path parent = path.toAbsolutePath().getParent();
         String baseName = path.getFileName() + "." + BACKUP_TIMESTAMP.format(LocalDateTime.now());
+
         Path backup = parent.resolve(baseName + ".bak");
         int suffix = 2;
         while (Files.exists(backup)) {
             backup = parent.resolve(baseName + "-" + suffix++ + ".bak");
         }
+
         // Never replace an existing backup, even if another writer won the suffix race.
         return Files.copy(path, backup);
     }

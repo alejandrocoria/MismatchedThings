@@ -27,6 +27,7 @@ class MixedBootsItemTooltipFlagTest {
         try (var bytes = MixedBootsItem.class.getResourceAsStream("MixedBootsItem.class")) {
             new ClassReader(bytes).accept(owner, 0);
         }
+
         MethodNode outer = owner.methods.stream().filter(method -> method.name.equals("appendHoverText")).findFirst().orElseThrow();
         var code = code(outer);
         InvokeDynamicInsnNode lambda = code.stream().filter(InvokeDynamicInsnNode.class::isInstance)
@@ -36,12 +37,14 @@ class MixedBootsItemTooltipFlagTest {
         int site = code.indexOf(lambda);
         assertEquals(0, assertInstanceOf(VarInsnNode.class, code.get(site - 2)).var);
         assertEquals(5, assertInstanceOf(VarInsnNode.class, code.get(site - 1)).var, "Capture the actual flag, not a default/global value");
+
         Handle target = assertInstanceOf(Handle.class, lambda.bsmArgs[1]);
         MethodNode forwarding = owner.methods.stream().filter(method -> method.name.equals(target.getName())
                 && method.desc.equals(target.getDesc())).findFirst().orElseThrow();
         var forwardingCode = code(forwarding);
         var invocation = forwardingCode.stream().filter(MethodInsnNode.class::isInstance)
                                        .map(MethodInsnNode.class::cast).filter(call -> call.name.equals("sourceTooltip")).findFirst().orElseThrow();
+
         assertEquals(Opcodes.INVOKEVIRTUAL, invocation.getOpcode());
         assertEquals(
                 "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/TooltipFlag;Ljava/util/function/Consumer;)Ljava/util/function/Consumer;",

@@ -69,6 +69,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
         } else {
             dirty = true;
         }
+
         if (!presentDefaults.containsAll(ComponentRuleDefaults.rules().keySet())) {
             dirty = true;
         }
@@ -81,6 +82,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             if (registered.isEmpty()) {
                 continue;
             }
+
             var selected = ComponentRuleSupport.resolve(registered.orElseThrow(), entry.getValue());
             if (selected.isEmpty()) {
                 Constants.LOG.warn("Discarding component rule '{}' because the field is fixed by MismatchedBoots",
@@ -89,6 +91,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
                 dirty = true;
                 continue;
             }
+
             ComponentRule rule = selected.orElseThrow();
             if (!rule.equals(entry.getValue())) {
                 Constants.LOG.warn("Normalizing unsupported component rule '{}' to {}", entry.getKey(), rule);
@@ -97,9 +100,11 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             }
             effective.put(entry.getKey(), rule);
         }
+
         discarded.forEach(orderedDeclarations::remove);
         resolved = new ComponentRules(
                 durability.value(), repairCost.value(), orderedDeclarations, new ComponentRuleSet(effective));
+
         return dirty;
     }
 
@@ -124,6 +129,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             }
             components.set(List.of(entry.getKey().toString()), category);
         }
+
         root.set(COMPONENTS, components);
         root.setComment(COMPONENTS, "Root data-component composition rules keyed by full component ID.");
     }
@@ -150,12 +156,14 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             Constants.LOG.warn("Cleaning invalid '{}' component-rule section", sectionName);
             return new Parsed<>(fallback, true);
         }
+
         Object rawPolicy = section.valueMap().get(POLICY);
         T policy = rawPolicy instanceof String value ? parser.apply(value).orElse(null) : null;
         if (policy == null) {
             Constants.LOG.warn("Cleaning invalid policy in '{}' component-rule section", sectionName);
             return new Parsed<>(fallback, true);
         }
+
         return new Parsed<>(policy, false);
     }
 
@@ -164,12 +172,14 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             Constants.LOG.warn("Cleaning component rule '{}' because it is not a TOML table", id);
             return new Parsed<>(fallback, true);
         }
+
         boolean dirty = category.valueMap().keySet().stream()
                                 .anyMatch(key -> !POLICY.equals(key) && !NUMBER.equals(key));
         if (dirty) {
             warnRule(id);
             return new Parsed<>(fallback, true);
         }
+
         Object rawPolicy = category.valueMap().get(POLICY);
         ComponentPolicy policy = rawPolicy instanceof String value
                                  ? ComponentPolicy.fromSerializedName(value).orElse(null) : null;
@@ -197,6 +207,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
             }
             rule = ComponentRule.of(policy);
         }
+
         return new Parsed<>(rule, false);
     }
 
@@ -211,10 +222,12 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
                 ordered.put(id, declarations.get(id));
             }
         });
+
         declarations.entrySet().stream()
                     .filter(entry -> !ComponentRuleDefaults.rules().containsKey(entry.getKey()))
                     .sorted(Map.Entry.comparingByKey(Comparator.comparing(Identifier::toString)))
                     .forEach(entry -> ordered.put(entry.getKey(), entry.getValue()));
+
         return ordered;
     }
 
@@ -223,6 +236,7 @@ final class ComponentRulesConfigPart implements DynamicConfigPart {
         if (separator <= 0 || separator != value.lastIndexOf(':') || separator == value.length() - 1) {
             return null;
         }
+
         try {
             return Identifier.parse(value);
         } catch (RuntimeException ignored) {

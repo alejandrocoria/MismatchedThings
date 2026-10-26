@@ -55,9 +55,11 @@ public final class CompositionRulesClientLifecycle {
             SYNCHRONIZED_LISTENERS.add(listener);
             notifyImmediately = attributeRulesSynchronized && componentRulesSynchronized;
         }
+
         if (notifyImmediately) {
             runListener(listener);
         }
+
         return () -> {
             synchronized (SYNCHRONIZATION_LOCK) {
                 SYNCHRONIZED_LISTENERS.remove(listener);
@@ -85,6 +87,7 @@ public final class CompositionRulesClientLifecycle {
                 listeners = List.copyOf(SYNCHRONIZED_LISTENERS);
             }
         }
+
         listeners.forEach(CompositionRulesClientLifecycle::runListener);
     }
 

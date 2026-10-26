@@ -42,6 +42,7 @@ public final class ComponentRuleSupport {
         if (supports(type, requested)) {
             return Optional.of(requested);
         }
+
         return Optional.of(ComponentRuleDefaults.ruleSet()
                                                 .ruleFor(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type)));
     }

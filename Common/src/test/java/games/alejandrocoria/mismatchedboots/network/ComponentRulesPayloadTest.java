@@ -103,12 +103,14 @@ class ComponentRulesPayloadTest {
     void codecRejectsInvalidPoliciesNumericKindsAndMarkers() {
         assertMalformed(buffer -> writeHeader(buffer, "unknown", "maximum", 0));
         assertMalformed(buffer -> writeHeader(buffer, "average", "unknown", 0));
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             buffer.writeUtf("futuremod:dormant");
             buffer.writeUtf("unknown");
             buffer.writeByte(0);
         });
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             buffer.writeUtf("futuremod:dormant");
@@ -116,6 +118,7 @@ class ComponentRulesPayloadTest {
             buffer.writeByte(1);
             buffer.writeUtf("double");
         });
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             buffer.writeUtf("futuremod:dormant");
@@ -130,18 +133,22 @@ class ComponentRulesPayloadTest {
             writeHeader(buffer, "average", "maximum", 1);
             writeRule(buffer, "futuremod:dormant", "average", null);
         });
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             writeRule(buffer, "futuremod:dormant", "share", "int");
         });
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             writeRule(buffer, "minecraft:enchantable", "average", "int");
         });
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             writeRule(buffer, "minecraft:rarity", "intersection", null);
         });
+
         assertMalformed(buffer -> {
             writeHeader(buffer, "average", "maximum", 1);
             writeRule(buffer, "minecraft:repair_cost", "owner", null);

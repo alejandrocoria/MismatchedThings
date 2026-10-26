@@ -61,6 +61,7 @@ class AttributeComposerTest {
         ItemStack gold = vanillaBoots(Items.GOLDEN_BOOTS, 1.0D);
         ItemAttributeModifiers.Entry ironArmor = modifiers(iron).modifiers().getFirst();
         ItemAttributeModifiers.Entry goldArmor = modifiers(gold).modifiers().getFirst();
+
         assertEquals(ironArmor.modifier().id(), goldArmor.modifier().id());
 
         AttributeComposer.Result result = AttributeComposer.compose(
@@ -68,6 +69,7 @@ class AttributeComposerTest {
 
         assertEquals(result.primary(), result.inverse());
         assertEquals(1, result.primary().modifiers().size());
+
         ItemAttributeModifiers.Entry composed = result.primary().modifiers().getFirst();
         assertEquals(Attributes.ARMOR, composed.attribute());
         assertEquals(ironArmor.modifier().id(), composed.modifier().id());
@@ -101,6 +103,7 @@ class AttributeComposerTest {
                         Arguments.of(AttributePolicy.MINIMUM, operation, 0.5D, 1.0D, 0.5D),
                         Arguments.of(AttributePolicy.MAXIMUM, operation, 0.5D, 1.0D, 1.0D));
             }
+
             return Stream.of(
                     Arguments.of(AttributePolicy.AVERAGE, operation, 2.0D, 4.0D, 3.0D),
                     Arguments.of(AttributePolicy.COMBINE, operation, 2.0D, 4.0D, 6.0D),
@@ -125,6 +128,7 @@ class AttributeComposerTest {
         if (!omitted) {
             assertEquals(expectedAmount, onlyAmount(result.primary()), 1.0E-12D);
         }
+
         assertEquals(result.primary(), result.inverse());
     }
 
@@ -139,6 +143,7 @@ class AttributeComposerTest {
                         Arguments.of(AttributePolicy.MINIMUM, operation, -0.5D, -0.5D, false),
                         Arguments.of(AttributePolicy.MAXIMUM, operation, -0.5D, 0.0D, true));
             }
+
             return Stream.of(
                     Arguments.of(AttributePolicy.AVERAGE, operation, 4.0D, 2.0D, false),
                     Arguments.of(AttributePolicy.COMBINE, operation, 4.0D, 4.0D, false),
@@ -155,14 +160,17 @@ class AttributeComposerTest {
                 AttributePolicy.AVERAGE,
                 entry(SHARED_ID, -2.0D, AttributeModifier.Operation.ADD_VALUE),
                 entry(SHARED_ID, 0.5D, AttributeModifier.Operation.ADD_VALUE)).primary()));
+
         assertEquals(0.375D, onlyAmount(compose(
                 AttributePolicy.AVERAGE,
                 entry(SHARED_ID, 0.25D, AttributeModifier.Operation.ADD_MULTIPLIED_BASE),
                 entry(SHARED_ID, 0.5D, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)).primary()));
+
         assertTrue(compose(
                 AttributePolicy.AVERAGE,
                 entry(SHARED_ID, -0.0D, AttributeModifier.Operation.ADD_VALUE),
                 entry(SHARED_ID, 0.0D, AttributeModifier.Operation.ADD_VALUE)).primary().modifiers().isEmpty());
+
         assertEquals(Double.MAX_VALUE, onlyAmount(compose(
                 AttributePolicy.AVERAGE,
                 entry(SHARED_ID, Double.MAX_VALUE, AttributeModifier.Operation.ADD_VALUE),
@@ -179,6 +187,7 @@ class AttributeComposerTest {
 
         assertThrows(IllegalArgumentException.class,
                      () -> AttributeComposer.compose(first, second, rules(AttributePolicy.AVERAGE)));
+
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
     }
@@ -193,6 +202,7 @@ class AttributeComposerTest {
                 AttributePolicy.COMBINE,
                 entry(SHARED_ID, Double.MAX_VALUE, AttributeModifier.Operation.ADD_VALUE),
                 entry(SHARED_ID, Double.MAX_VALUE, AttributeModifier.Operation.ADD_VALUE)));
+
         assertThrows(IllegalArgumentException.class, () -> compose(
                 AttributePolicy.COMBINE,
                 entry(SHARED_ID, Double.MAX_VALUE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
@@ -203,6 +213,7 @@ class AttributeComposerTest {
     void validatesNonFiniteInputBeforeSeparateOrRejectCanBypassArithmetic() {
         ItemStack invalid = stack(entry(
                 SHARED_ID, Double.NaN, AttributeModifier.Operation.ADD_VALUE));
+
         for (AttributePolicy policy : List.of(AttributePolicy.SEPARATE, AttributePolicy.REJECT)) {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                                                               () -> AttributeComposer.compose(invalid, stack(), rules(policy)));
@@ -252,6 +263,7 @@ class AttributeComposerTest {
 
         assertEquals(List.of(additiveId, totalId), modifierIds(result.primary()));
         assertEquals(List.of(3.0D, 0.75D), amounts(result.primary()));
+
         assertEquals(List.of(
                              AttributeModifier.Operation.ADD_VALUE,
                              AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
@@ -277,19 +289,21 @@ class AttributeComposerTest {
         AttributeRuleSet override = new AttributeRuleSet(
                 AttributePolicy.SEPARATE, Map.of(attributeId, AttributePolicy.AVERAGE));
         AttributeComposer.Result averaged = AttributeComposer.compose(first, second, override);
+
         assertEquals(3.0D, onlyAmount(averaged.primary()));
         assertEquals(averaged.primary(), averaged.inverse());
     }
 
     @Test
     void readsTheEffectiveStackComponentInsteadOfCombiningItWithThePrototype() {
-        ItemStack first = stack(Items.IRON_BOOTS, ItemAttributeModifiers.builder()
-                                                                        .add(Attributes.ARMOR,
-                                                                             new AttributeModifier(SHARED_ID,
-                                                                                                   10.0D,
-                                                                                                   AttributeModifier.Operation.ADD_VALUE),
-                                                                             EquipmentSlotGroup.FEET)
-                                                                        .build());
+        ItemAttributeModifiers prototypeModifiers = ItemAttributeModifiers.builder()
+                                                                          .add(Attributes.ARMOR,
+                                                                               new AttributeModifier(SHARED_ID,
+                                                                                                     10.0D,
+                                                                                                     AttributeModifier.Operation.ADD_VALUE),
+                                                                               EquipmentSlotGroup.FEET)
+                                                                          .build();
+        ItemStack first = stack(Items.IRON_BOOTS, prototypeModifiers);
         first.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
                                                                             .add(Attributes.ARMOR,
                                                                                  new AttributeModifier(SHARED_ID,
@@ -320,6 +334,7 @@ class AttributeComposerTest {
                         stack(entry(SHARED_ID, 4.0D, AttributeModifier.Operation.ADD_VALUE, slot, display)),
                         stack(entry(SHARED_ID, 2.0D, AttributeModifier.Operation.ADD_VALUE, slot, display)),
                         rules(AttributePolicy.AVERAGE));
+
                 ItemAttributeModifiers.Entry composed = result.primary().modifiers().getFirst();
                 assertEquals(3.0D, composed.modifier().amount());
                 assertEquals(slot, composed.slot());
@@ -418,15 +433,18 @@ class AttributeComposerTest {
         assertEquals(result, repeated);
         assertEquals(result.primary(), swapped.inverse());
         assertEquals(result.inverse(), swapped.primary());
+
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
-        assertTrue(Stream.concat(
-                                 result.primary().modifiers().stream(), result.inverse().modifiers().stream())
-                         .noneMatch(entry -> entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
+
+        Stream<ItemAttributeModifiers.Entry> outputModifiers = Stream.concat(
+                result.primary().modifiers().stream(), result.inverse().modifiers().stream());
+        assertTrue(outputModifiers.noneMatch(entry -> entry.modifier().id().toString().startsWith("mismatchedboots:attribute/")));
 
         RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, builtInRegistryAccess());
         JsonElement encoded = ItemAttributeModifiers.CODEC.encodeStart(ops, result.primary()).getOrThrow();
         ItemAttributeModifiers decoded = ItemAttributeModifiers.CODEC.parse(ops, encoded).getOrThrow();
+
         assertEquals(result.primary(), decoded);
     }
 
@@ -456,6 +474,7 @@ class AttributeComposerTest {
             ItemAttributeModifiers.Entry firstEntry, ItemAttributeModifiers.Entry secondEntry) {
         ItemStack first = stack(firstEntry);
         ItemStack second = stack(secondEntry);
+
         AttributeComposer.Result result = AttributeComposer.compose(first, second, rules(AttributePolicy.AVERAGE));
 
         assertEquals(modifiers(first), result.primary());
@@ -478,6 +497,7 @@ class AttributeComposerTest {
         ItemAttributeModifiers.Builder modifiers = ItemAttributeModifiers.builder();
         Arrays.stream(entries).forEach(entry -> modifiers.add(
                 entry.attribute(), entry.modifier(), entry.slot(), entry.display()));
+
         return stack(Items.IRON_BOOTS, modifiers.build());
     }
 
@@ -491,6 +511,7 @@ class AttributeComposerTest {
                                                                                  AttributeModifier.Operation.ADD_VALUE),
                                                                          EquipmentSlotGroup.FEET)
                                                                  .build();
+
         return stack(item, modifiers);
     }
 
@@ -498,6 +519,7 @@ class AttributeComposerTest {
         DataComponentMap components = DataComponentMap.builder()
                                                       .set(DataComponents.ATTRIBUTE_MODIFIERS, modifiers)
                                                       .build();
+
         return new ItemStack(Holder.direct(item, components), 1);
     }
 

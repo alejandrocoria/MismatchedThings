@@ -38,14 +38,17 @@ public final class ComponentProjection {
 
         DataComponentMap.Builder primary = DataComponentMap.builder();
         DataComponentMap.Builder inverse = DataComponentMap.builder();
+
         Set<DataComponentType<?>> types = Collections.newSetFromMap(new IdentityHashMap<>());
         types.addAll(first.getComponents().keySet());
         types.addAll(second.getComponents().keySet());
         rules.rules().keySet().forEach(id -> BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(id).ifPresent(types::add));
         types.removeIf(type -> !ComponentRuleSupport.isManaged(type));
+
         for (DataComponentType<?> type : types) {
             projectType(first, second, rules, type, primary, inverse);
         }
+
         return new Result(primary.build(), inverse.build(), types);
     }
 
@@ -73,10 +76,12 @@ public final class ComponentProjection {
         if (resolved.isEmpty()) {
             return new Values<>(null, null);
         }
+
         if (!rule.equals(resolved.orElseThrow())) {
             warnOnce(type, "unsupported rule " + rule + "; using default " + resolved.orElseThrow());
             rule = resolved.orElseThrow();
         }
+
         return switch (rule.policy()) {
             case OWNER -> owner(first, second);
             case OMIT -> new Values<>(null, null);
@@ -99,6 +104,7 @@ public final class ComponentProjection {
         if (second == null || equivalentValues(type, first, second)) {
             return shared(type, first);
         }
+
         warnOnce(type, "share conflict; retaining owner values");
         return owner(first, second);
     }
@@ -107,6 +113,7 @@ public final class ComponentProjection {
         if (first == null || second == null) {
             return new Values<>(null, null);
         }
+
         DamageResistant overlap = intersectDamage((DamageResistant) first, (DamageResistant) second);
         @SuppressWarnings("unchecked") T value = (T) overlap;
         return new Values<>(value, value);
@@ -119,6 +126,7 @@ public final class ComponentProjection {
             if (firstTag.isPresent() && firstTag.equals(secondTag)) {
                 return first;
             }
+
             warnOnce(DataComponents.DAMAGE_RESISTANT, "dynamic tag overlap cannot be represented; omitting resistance");
             return null;
         }
@@ -129,6 +137,7 @@ public final class ComponentProjection {
             warnOnce(DataComponents.DAMAGE_RESISTANT, "unkeyed damage type; omitting resistance");
             return null;
         }
+
         left.keySet().retainAll(right.keySet());
         return left.isEmpty() ? null : orderedDamage(left);
     }
@@ -150,6 +159,7 @@ public final class ComponentProjection {
                 }
             }
         }
+
         return new Values<>(value, value);
     }
 
@@ -162,6 +172,7 @@ public final class ComponentProjection {
             }
             ids.putIfAbsent(key.orElseThrow(), holder);
         }
+
         return ids;
     }
 
@@ -176,6 +187,7 @@ public final class ComponentProjection {
         if (type != DataComponents.DAMAGE_RESISTANT) {
             return Objects.equals(first, second);
         }
+
         HolderSet<DamageType> left = ((DamageResistant) first).types();
         HolderSet<DamageType> right = ((DamageResistant) second).types();
         var leftTag = left.unwrapKey();
@@ -183,6 +195,7 @@ public final class ComponentProjection {
         if (leftTag.isPresent() || rightTag.isPresent()) {
             return leftTag.isPresent() && leftTag.equals(rightTag);
         }
+
         Map<ResourceKey<DamageType>, Holder<DamageType>> leftIds = damageIds(left);
         Map<ResourceKey<DamageType>, Holder<DamageType>> rightIds = damageIds(right);
         return leftIds != null && rightIds != null && leftIds.keySet().equals(rightIds.keySet());
@@ -196,6 +209,7 @@ public final class ComponentProjection {
             warnOnce(type, "numeric type mismatch; retaining owner values");
             return owner(first, second);
         }
+
         validateInput(type, first);
         validateInput(type, second);
         if (first == null || second == null) {
@@ -211,11 +225,13 @@ public final class ComponentProjection {
             warnOnce(type, "numeric type mismatch; retaining owner values");
             return owner(first, second);
         }
+
         @SuppressWarnings("unchecked") T projected = (T) value;
         if (!codecAccepts(type, projected)) {
             warnOnce(type, "numeric codec rejected result; retaining owner values");
             return owner(first, second);
         }
+
         return new Values<>(projected, projected);
     }
 
@@ -225,6 +241,7 @@ public final class ComponentProjection {
         if (first == null || second == null) {
             return new Values<>(null, null);
         }
+
         int left = ((Enchantable) first).value();
         int right = ((Enchantable) second).value();
         int result = calculate(left, right, rule.policy()).intValueExact();
@@ -233,6 +250,7 @@ public final class ComponentProjection {
             warnOnce(type, "enchantable codec rejected result; retaining owner values");
             return owner(first, second);
         }
+
         return new Values<>(projected, projected);
     }
 

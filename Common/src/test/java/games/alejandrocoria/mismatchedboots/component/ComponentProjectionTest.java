@@ -67,10 +67,9 @@ class ComponentProjectionTest {
         assertEquals(ComponentPolicy.OWNER, defaults.ruleFor(minecraft("custom_data")).policy());
         assertEquals(ComponentPolicy.OWNER, defaults.ruleFor(testId("unknown")).policy());
         assertEquals(ComponentPolicy.OMIT, defaults.ruleFor(Identifier.parse("aether_ii:charms")).policy());
-        defaults.rules().keySet().stream().filter(id -> id.getNamespace().equals("minecraft")).forEach(id ->
-                                                                                                               assertTrue(BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(
-                                                                                                                                  id).isPresent(),
-                                                                                                                          id.toString()));
+        defaults.rules().keySet().stream()
+                .filter(id -> id.getNamespace().equals("minecraft"))
+                .forEach(id -> assertTrue(BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(id).isPresent(), id.toString()));
 
         Map<Identifier, ComponentRule> source = new LinkedHashMap<>();
         source.put(testId("energy"), ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.LONG));
@@ -112,16 +111,20 @@ class ComponentProjectionTest {
 
         ItemStack firstBefore = first.copy();
         ItemStack secondBefore = second.copy();
+
         ComponentProjection.Result result = ComponentProjection.project(
                 first, second, ComponentRuleDefaults.ruleSet());
+
         assertEquals(Rarity.RARE, result.primary().get(DataComponents.RARITY));
         assertEquals(Rarity.RARE, result.inverse().get(DataComponents.RARITY));
+
         assertNull(result.primary().get(DataComponents.LORE));
         assertNull(result.inverse().get(DataComponents.LORE));
         assertNull(result.primary().get(DataComponents.UNBREAKABLE));
         assertNull(result.inverse().get(DataComponents.UNBREAKABLE));
         assertEquals(new Enchantable(9), result.primary().get(DataComponents.ENCHANTABLE));
         assertEquals(new Enchantable(9), result.inverse().get(DataComponents.ENCHANTABLE));
+
         assertFalse(result.primary().has(DataComponents.REPAIR_COST));
         assertFalse(result.inverse().has(DataComponents.REPAIR_COST));
         assertEquals(first.get(DataComponents.CUSTOM_DATA), result.primary().get(DataComponents.CUSTOM_DATA));
@@ -130,10 +133,12 @@ class ComponentProjectionTest {
         assertEquals(secondLore, second.get(DataComponents.LORE));
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
+
         assertTrue(result.managedTypes().contains(DataComponents.LORE));
         assertTrue(result.managedTypes().contains(DataComponents.TRIM)); // Explicit rule, absent on both sources.
         assertFalse(result.managedTypes().contains(DataComponents.REPAIR_COST));
         assertThrows(UnsupportedOperationException.class, () -> result.managedTypes().clear());
+
         ComponentProjection.Result swapped = ComponentProjection.project(
                 second, first, ComponentRuleDefaults.ruleSet());
         assertEquals(result.managedTypes(), swapped.managedTypes());
@@ -194,6 +199,7 @@ class ComponentProjectionTest {
                 limited, null, 12, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
         assertThrows(IllegalArgumentException.class, () -> ComponentProjection.projectValues(
                 limited, -2, null, ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT)));
+
         DataComponentType<Integer> even = DataComponentType.<Integer>builder()
                                                            .persistent(Codec.INT.validate(value -> value % 2 == 0
                                                                                                    ? DataResult.success(value)

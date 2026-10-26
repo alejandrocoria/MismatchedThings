@@ -39,6 +39,7 @@ public final class AttributeComposer {
         ItemAttributeModifiers.Builder inverse = ItemAttributeModifiers.builder();
         attributes.forEach((attributeId, group) -> composeAttribute(
                 primary, inverse, rules.policyFor(attributeId), attributeId, group));
+
         return new Result(primary.build(), inverse.build());
     }
 
@@ -50,6 +51,7 @@ public final class AttributeComposer {
                 throw new IllegalArgumentException(
                         "Non-finite attribute modifier at " + side.serializedName + " index " + index);
             }
+
             Identifier attributeId = entry.attribute()
                                           .unwrapKey()
                                           .map(key -> key.identifier())
@@ -69,6 +71,7 @@ public final class AttributeComposer {
         if (policy == AttributePolicy.REJECT) {
             throw new IllegalArgumentException("Attribute is rejected by policy: " + attributeId);
         }
+
         if (policy == AttributePolicy.SEPARATE) {
             copy(primary, group.firstEntries);
             copy(inverse, group.secondEntries);
@@ -88,11 +91,13 @@ public final class AttributeComposer {
             AttributeModifier.Operation operation = metadata.modifier().operation();
             double firstContribution = contribution(first, operation);
             double secondContribution = contribution(second, operation);
+
             double amount = composeAmount(policy, operation, firstContribution, secondContribution);
             if (!Double.isFinite(amount)) {
                 throw new IllegalArgumentException(
                         "Non-finite attribute result for " + attributeId + " and " + modifierId);
             }
+
             amount = canonicalZero(amount);
             if (amount == 0.0D) {
                 return;
@@ -107,8 +112,10 @@ public final class AttributeComposer {
     private static double contribution(
             ItemAttributeModifiers.Entry entry, AttributeModifier.Operation operation) {
         if (entry == null) {
+            // Total multipliers are composed as factors, so an absent modifier contributes 1, not 0.
             return operation == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL ? 1.0D : 0.0D;
         }
+
         double amount = entry.modifier().amount();
         if (operation == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) {
             double factor = 1.0D + amount;
@@ -117,6 +124,7 @@ public final class AttributeComposer {
             }
             return factor;
         }
+
         return amount;
     }
 
@@ -134,12 +142,14 @@ public final class AttributeComposer {
             case MAXIMUM -> Math.max(first, second);
             case SEPARATE, REJECT -> throw new IllegalStateException("Non-arithmetic attribute policy: " + policy);
         };
+
         if (!Double.isFinite(result)) {
             throw new IllegalArgumentException("Non-finite attribute arithmetic result");
         }
         if (operation == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) {
             result -= 1.0D;
         }
+
         return result;
     }
 
@@ -187,13 +197,14 @@ public final class AttributeComposer {
             if (firstEntries.size() > 1 || secondEntries.size() > 1) {
                 return false;
             }
+
             ItemAttributeModifiers.Entry first = firstEntry();
             ItemAttributeModifiers.Entry second = secondEntry();
             return first == null
                     || second == null
-                    || first.modifier().operation() == second.modifier().operation()
-                    && first.slot() == second.slot()
-                    && first.display().equals(second.display());
+                    || (first.modifier().operation() == second.modifier().operation()
+                        && first.slot() == second.slot()
+                        && first.display().equals(second.display()));
         }
 
         private ItemAttributeModifiers.Entry firstEntry() {

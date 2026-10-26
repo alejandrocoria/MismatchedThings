@@ -35,6 +35,7 @@ public final class MixedBootsGrindstoneXpPolicy {
         if (root <= 0 || baseline < 0 || sources < 0) {
             return 0;
         }
+
         long live = root;
         long initial = baseline;
         long original = sources;
@@ -56,6 +57,7 @@ public final class MixedBootsGrindstoneXpPolicy {
                 }
             }
         }
+
         return (int) total;
     }
 }

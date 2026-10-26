@@ -39,6 +39,7 @@ public final class PolygonTessellator {
                     || !vertex.uv().isFinite()) {
                 throw new IllegalArgumentException("Polygon vertex " + index + " contains a non-finite value");
             }
+
             for (int other = index + 1; other < polygon.vertices().size(); other++) {
                 if (vertex.position().distanceSquared(polygon.vertex(other).position()) <= epsilonSquared) {
                     throw new IllegalArgumentException("Polygon contains duplicate rendered positions");
@@ -56,6 +57,7 @@ public final class PolygonTessellator {
                 break;
             }
         }
+
         if (normal == null) {
             throw new IllegalArgumentException("Polygon has no renderable area");
         }

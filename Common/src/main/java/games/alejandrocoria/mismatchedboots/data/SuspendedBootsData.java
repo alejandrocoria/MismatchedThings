@@ -35,6 +35,7 @@ public final class SuspendedBootsData {
                 if (buffer.remaining() > MAX_BYTES) {
                     throw new RecoveryRefusalException("Recovery payload exceeds byte budget");
                 }
+
                 byte[] bytes = new byte[buffer.remaining()];
                 buffer.duplicate().get(bytes);
                 return fromBytes(bytes);
@@ -44,6 +45,7 @@ public final class SuspendedBootsData {
         public <T> DataResult<Pair<SuspendedBootsData, T>> decode(DynamicOps<T> ops, T input) {
             Tag raw = input instanceof Tag tag ? tag : ops.convertTo(NbtOps.INSTANCE, input);
             validateBudget(raw, MAX_BYTES, MAX_DEPTH);
+
             try {
                 var result = BINARY_CODEC.decode(ops, input);
                 if (result.result().isPresent()) {
@@ -52,6 +54,7 @@ public final class SuspendedBootsData {
             } catch (RuntimeException failure) {
                 // BlockEntity.loadStatic catches Throwable and drops the container: never throw for bounded bad archive bytes.
             }
+
             CompoundTag original = new CompoundTag();
             original.put(SuspendedBootsItemCodec.ARCHIVE, raw);
             return DataResult.success(Pair.of(create(original, new CompoundTag(), new CompoundTag(), true), ops.empty()));
@@ -72,6 +75,7 @@ public final class SuspendedBootsData {
                 if (length < 0 || length > MAX_BYTES || length > buffer.readableBytes()) {
                     throw new RecoveryRefusalException("Invalid recovery network length");
                 }
+
                 byte[] bytes = new byte[length];
                 buffer.readBytes(bytes);
                 return CODEC.parse(NbtOps.INSTANCE, new ByteArrayTag(bytes)).getOrThrow();
@@ -101,6 +105,7 @@ public final class SuspendedBootsData {
         envelope.put("conflicts", conflicts);
         envelope.putBoolean("quarantined", quarantined);
         validateBudget(envelope, MAX_BYTES, MAX_DEPTH);
+
         try {
             var bytes = new ByteArrayOutputStream();
             NbtIo.write(envelope, new DataOutputStream(bytes));
@@ -117,6 +122,7 @@ public final class SuspendedBootsData {
         if (input.length > MAX_BYTES) {
             throw new RecoveryRefusalException("Recovery payload exceeds byte budget");
         }
+
         try {
             var stream = new ByteArrayInputStream(input);
             CompoundTag data = NbtIo.read(new DataInputStream(stream), new NbtAccounter(MAX_BYTES, MAX_DEPTH));
@@ -127,11 +133,13 @@ public final class SuspendedBootsData {
                     || !(data.get("quarantined") instanceof ByteTag)) {
                 throw new RecoveryRefusalException("Malformed recovery envelope");
             }
+
             validateBudget(data, MAX_BYTES, MAX_DEPTH);
             CompoundTag projection = data.getCompoundOrEmpty("projection");
             if (!projection.isEmpty() && !projection.equals(equipmentProjection())) {
                 throw new RecoveryRefusalException("Unrecognized recovery projection");
             }
+
             for (String part : Set.of("original", "conflicts")) {
                 CompoundTag fields = data.getCompoundOrEmpty(part);
                 if (!data.getBooleanOr("quarantined", false)
@@ -139,6 +147,7 @@ public final class SuspendedBootsData {
                     throw new RecoveryRefusalException("A recovery archive cannot contain another recovery archive");
                 }
             }
+
             return new SuspendedBootsData(input.clone(), data);
         } catch (IOException | net.minecraft.nbt.NbtAccounterException failure) {
             throw new RecoveryRefusalException("Cannot read bounded recovery NBT", failure);
@@ -197,6 +206,7 @@ public final class SuspendedBootsData {
         if (depth < 0) {
             throw new RecoveryRefusalException("Recovery NBT exceeds depth budget");
         }
+
         long own;
         if (value instanceof CompoundTag compound) {
             own = 48;
