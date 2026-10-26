@@ -1,5 +1,5 @@
 // Exact third-party runtime fixtures; isolated from production dependencies/publication.
-def modPath = ':MismatchedBoots'
+def modPath = mismatchedModProject.path
 
 def pins = new groovy.json.JsonSlurper().parse(project("${modPath}:RuntimeTests").file('mod-artifacts.json'))
 def artifacts = [:]

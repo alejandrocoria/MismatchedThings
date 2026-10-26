@@ -1,0 +1,196 @@
+// Publication and packaged-artifact verification belong to this mod only.
+def modPath = mismatchedModProject.path
+
+tasks.configureEach { task ->
+    if (task instanceof Copy || task instanceof AbstractArchiveTask) {
+        task.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+}
+
+tasks.register("publishMod") {
+    group = "release"
+    description = "Publishes Fabric and NeoForge builds to CurseForge and Modrinth."
+    dependsOn(
+            "${modPath}:Fabric:publishCurseForge",
+            "${modPath}:NeoForge:publishCurseForge",
+            "${modPath}:Fabric:modrinth",
+            "${modPath}:NeoForge:modrinth"
+    )
+}
+
+def packagedVerification = tasks.register("verifyPackagedDependencies") {
+    group = "verification"
+    description = "Verifies loader-specific bundled libraries and dependency metadata."
+}
+
+// Child plugins create these tasks after this script; capture their providers at configuration time.
+gradle.projectsEvaluated {
+    def producers = [fabric  : project("${modPath}:Fabric").tasks.named('jar'),
+                     neoforge: project("${modPath}:NeoForge").tasks.named('jar')]
+    def archives = producers.collectEntries { loader, producer ->
+        [(loader): producer.flatMap { it.archiveFile }]
+    }
+    def networkingVersion = common_networking_version.toString()
+    def nightConfigVersion = nightconfig_version.toString()
+    def fabricApiMinimum = fabric_api_min_version.toString()
+    def neoForgeRange = neoforge_version_range.toString()
+    def entryPrefixes = [fabric: "META-INF/jars/", neoforge: "META-INF/jarjar/"]
+    def verifyArtifact = { String loader, File artifact ->
+        if (!artifact.isFile()) {
+            throw new GradleException("Missing ${loader} artifact: ${artifact}")
+        }
+
+        def zip = new java.util.zip.ZipFile(artifact)
+        try {
+            def entries = []
+            def enumeration = zip.entries()
+            while (enumeration.hasMoreElements()) {
+                entries.add(enumeration.nextElement().name)
+            }
+
+            def prefix = entryPrefixes[loader]
+            def expectedBackend = "${prefix}common-networking-${loader}-${networkingVersion}.jar".toString()
+            def bundledBackends = entries.findAll {
+                it.substring(it.lastIndexOf('/') + 1).startsWith("common-networking-")
+            }
+            if (bundledBackends != [expectedBackend]) {
+                throw new GradleException("${artifact} must contain only ${expectedBackend}; found ${bundledBackends}")
+            }
+
+            def expectedNightConfig = [
+                    "${prefix}core-${nightConfigVersion}.jar",
+                    "${prefix}toml-${nightConfigVersion}.jar"
+            ].collect { it.toString() }
+            expectedNightConfig.each { expected ->
+                if (!entries.contains(expected)) {
+                    throw new GradleException("${artifact.name} does not contain ${expected}")
+                }
+            }
+            def bundledNightConfig = entries.findAll {
+                def fileName = it.substring(it.lastIndexOf('/') + 1)
+                (fileName.startsWith("core-") || fileName.startsWith("toml-")) && fileName.endsWith(".jar")
+            }
+            if (bundledNightConfig.size() != expectedNightConfig.size()
+                    || !bundledNightConfig.containsAll(expectedNightConfig)) {
+                throw new GradleException("${artifact.name} contains unexpected NightConfig libraries: ${bundledNightConfig}")
+            }
+
+            def descriptorPath = loader == "fabric" ? "fabric.mod.json"
+                    : "META-INF/neoforge.mods.toml"
+            def descriptorEntry = zip.getEntry(descriptorPath)
+            if (descriptorEntry == null) {
+                throw new GradleException("${artifact.name} is missing ${descriptorPath}")
+            }
+
+            def descriptor = zip.getInputStream(descriptorEntry).getText("UTF-8")
+            if (!descriptor.contains("commonnetworking") || !descriptor.contains(networkingVersion)) {
+                throw new GradleException("${artifact.name} does not require CommonNetworking ${networkingVersion}")
+            }
+            if (loader == 'fabric') {
+                def metadata = new groovy.json.JsonSlurper().parseText(descriptor)
+                if (metadata.depends['fabric-api'] != ">=${fabricApiMinimum}".toString()) {
+                    throw new GradleException("${artifact.name} does not require Fabric API ${fabricApiMinimum}")
+                }
+            } else {
+                def dependency = descriptor.split(/\[\[dependencies\.[^\]]+\]\]/)
+                        .find { it.contains('modId="neoforge"') }
+                if (dependency == null || !dependency.contains("versionRange=\"${neoForgeRange}\"")) {
+                    throw new GradleException("${artifact.name} must declare NeoForge ${neoForgeRange}, not JavaFML's range")
+                }
+            }
+        } finally {
+            zip.close()
+        }
+    }
+    packagedVerification.configure {
+        dependsOn producers.values()
+        inputs.files(archives.values())
+        doLast {
+            archives.each { loader, archive -> verifyArtifact(loader, archive.get().asFile) }
+        }
+    }
+
+    // Exercise the actual verifier against disposable corrupted copies, never the release JARs.
+    def controlDirectory = layout.buildDirectory.dir('packaged-dependency-controls')
+    tasks.register('verifyPackagedDependencyChecks') {
+        group = 'verification'
+        description = 'Proves packaged dependency/descriptor checks reject missing and mismatched contents.'
+        dependsOn producers.values()
+        doLast {
+            File directory = controlDirectory.get().asFile
+            directory.mkdirs()
+            archives.each { loader, archive ->
+                verifyArtifact(loader, archive.get().asFile)
+                def prefix = entryPrefixes[loader]
+                def backend = "${prefix}common-networking-${loader}-${networkingVersion}.jar".toString()
+                def descriptor = loader == 'fabric' ? 'fabric.mod.json' : 'META-INF/neoforge.mods.toml'
+                def cases = [
+                        missingBackend    : [omit: backend, error: 'must contain only'],
+                        wrongBackend      : [rename: backend, error: 'must contain only'],
+                        missingNightConfig: [omit : "${prefix}core-${nightConfigVersion}.jar".toString(),
+                                             error: 'does not contain'],
+                        extraNightConfig  : [extra: "${prefix}core-0.jar".toString(),
+                                             error: 'unexpected NightConfig'],
+                        missingDescriptor : [omit: descriptor, error: "is missing ${descriptor}".toString()],
+                        wrongMinimum      : [change: descriptor,
+                                             error : loader == 'fabric' ? 'does not require Fabric API'
+                                                     : 'must declare NeoForge']
+                ]
+                cases.each { name, control ->
+                    File fixture = new File(directory, "${loader}-${name}.jar")
+                    def original = new java.util.zip.ZipFile(archive.get().asFile)
+                    try {
+                        fixture.withOutputStream { stream ->
+                            def output = new java.util.zip.ZipOutputStream(stream)
+                            try {
+                                original.entries().each { entry ->
+                                    if (entry.name != control.omit) {
+                                        def target = entry.name == control.rename
+                                                ? "${prefix}common-networking-wrong-loader.jar" : entry.name
+                                        output.putNextEntry(new java.util.zip.ZipEntry(target))
+                                        byte[] bytes = original.getInputStream(entry).withCloseable { it.readAllBytes() }
+                                        if (entry.name == control.change) {
+                                            def text = new String(bytes, java.nio.charset.StandardCharsets.UTF_8)
+                                            if (loader == 'fabric') {
+                                                def metadata = new groovy.json.JsonSlurper().parseText(text)
+                                                metadata.depends['fabric-api'] = '*'
+                                                text = groovy.json.JsonOutput.toJson(metadata)
+                                            } else {
+                                                text = text.replace(neoForgeRange, '[1,)')
+                                            }
+                                            bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+                                        }
+                                        output.write(bytes)
+                                        output.closeEntry()
+                                    }
+                                }
+                                if (control.extra != null) {
+                                    output.putNextEntry(new java.util.zip.ZipEntry(control.extra))
+                                    output.closeEntry()
+                                }
+                            } finally {
+                                output.close()
+                            }
+                        }
+                    } finally {
+                        original.close()
+                    }
+
+                    boolean rejected = false
+                    try {
+                        verifyArtifact(loader, fixture)
+                    } catch (GradleException expected) {
+                        if (!expected.message.contains(control.error)) {
+                            throw expected
+                        }
+                        rejected = true
+                    }
+                    if (!rejected) {
+                        throw new GradleException("Packaged verification accepted the ${loader}/${name} negative control")
+                    }
+                }
+            }
+            logger.lifecycle('Packaged verification rejected all 12 corrupted-artifact controls')
+        }
+    }
+}

@@ -7,7 +7,7 @@ def fixtureBuildDirectory = layout.buildDirectory
 
 def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
 
-def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
 def createFlyCompatibilityServerRunDirectory =
         fixtureBuildDirectory.dir('run/createFlyCompatibilityServer')

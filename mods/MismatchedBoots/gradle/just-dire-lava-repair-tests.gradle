@@ -1,7 +1,7 @@
 // JDT Lava Repair, native settings and save/restart lifecycle.
 def modPath = mismatchedModProject.path
 
-def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
 def fixtureBuildDirectory = layout.buildDirectory
 

@@ -9,7 +9,8 @@ Run all commands below from the **repository root**, where the Gradle wrapper
 lives. Boots projects use the `:MismatchedBoots` namespace; the earlier root-level
 project aliases no longer exist. Unless otherwise specified,
 `Common/`, `Fabric/`, `NeoForge/`, `RuntimeTests/` and `gradle/` paths in this guide
-are relative to the mod root; root `build/test-mods/` remains repository-relative.
+are relative to the mod root, including `build/test-mods/` and
+`build/network-acceptance/`.
 Explicit file-path `-P` overrides are repository-relative or absolute, as before.
 
 ## Third-party test artifacts
@@ -18,14 +19,14 @@ Maintained tests do not depend on JARs in the indev instances. Third-party mods
 are downloaded on demand from exact Modrinth/CurseForge publications and checked
 against their SHA-256 pins. The formerly local fixtures are registered in
 [mod-artifacts.json](mod-artifacts.json), resolved through Gradle's artifact
-cache and staged in `build/test-mods/<loader>/` at the repository root. Other
+cache and staged in `mods/MismatchedBoots/build/test-mods/<loader>/`. Other
 existing test configurations retain their exact Maven coordinates.
 
 To prefetch and verify the entire fixture catalog:
 
 ```powershell
-.\gradlew.bat prepareTestModArtifacts
-.\gradlew.bat verifyTestModArtifacts --offline
+.\gradlew.bat :MismatchedBoots:prepareTestModArtifacts
+.\gradlew.bat :MismatchedBoots:verifyTestModArtifacts --offline
 ```
 
 Each suite copies only its required artifacts into its disposable run. It never
@@ -36,6 +37,15 @@ default JARs automatically; transformed-class witnesses still come from their
 dedicated runtime checks. After all required Gradle/game artifacts are cached,
 tests can run offline. Adding a maintained compatibility test requires a pinned,
 automatically resolved artifact, not an implicit dependency on an indev JAR.
+
+The mod parent owns these services and the canonical `verifyPackagedDependencies`,
+`verifyPackagedDependencyChecks`, `verifyLoaderServerStartup` and
+`verifyLoaderNetworking` tasks, all under `:MismatchedBoots:`. The repository root
+keeps explicit delegators for those four tasks and the two catalog tasks above.
+There is no root publication delegator; use `:MismatchedBoots:publishMod`.
+Nested Gradle processes still use the repository wrapper and working directory;
+explicit file-path overrides retain repository-relative semantics. Previous root
+build evidence/cache trees are neither migrated nor read as staging defaults.
 
 ## Layout
 
@@ -1352,7 +1362,7 @@ checks actual loader identity and XML results. `runQuiltSmoke` is its internal
 launch task. No Quilt library enters production artifacts or ordinary tests.
 
 `verifyPackagedDependencies` declares and builds its final packaged JAR inputs.
-Its companion negative-control task checks corrupted copies in the root build
+Its companion negative-control task checks corrupted copies in the mod's build
 directory, never modifies release JARs, and verifies rejection diagnostics.
 
 Optional recipe-viewer regressions run individually:
@@ -1399,7 +1409,7 @@ with `-PshowClientGameTestWindow=true`, but remain muted. Servers have no GUI.
 
 Reports, screenshots, and run directories are under each runtime project's
 `build` directory. Network acceptance result markers and process logs remain
-under the root `build/network-acceptance` directory. Old `CrossLoader*` build
+under `mods/MismatchedBoots/build/network-acceptance`. Old `CrossLoader*` build
 directories and old Fabric test reports are not migrated or deleted.
 
 ## Neo Vitae infusion composition — production creation gate

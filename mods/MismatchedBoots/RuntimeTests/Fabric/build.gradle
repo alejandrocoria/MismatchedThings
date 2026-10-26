@@ -13,7 +13,7 @@ evaluationDependsOn("${modPath}:Fabric")
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def fixtureBuildDirectory = layout.buildDirectory
 def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
-def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"

@@ -1,11 +1,11 @@
 // Pinned native handlers, real competing transformations and quiet absence in disposable servers.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def artifacts = [
         'The_Undergarden-26.1.2-0.9.8.jar'     : '5a9c449b01327b8f368bfd8a70e5dd5707362a3e3211ea7735e751dff4c258dc',
         'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',

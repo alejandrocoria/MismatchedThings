@@ -1,11 +1,11 @@
 // Production presentation acceptance. Native artifacts are isolated fixtures, not publication dependencies.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
 def variant = providers.gradleProperty('aetherTooltipVariant').getOrElse('live')
 if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged', 'charmfactorymissing', 'charmfactoryfailure', 'charmpopulatedfailure',

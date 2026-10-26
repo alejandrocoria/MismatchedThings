@@ -1,11 +1,11 @@
 // Independent production charm and locally guarded recognition acceptance.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def artifact = testMods.path('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar')
 
 def recognitionVariants = ['Live', 'Chains', 'SetChanged', 'SentryChanged']

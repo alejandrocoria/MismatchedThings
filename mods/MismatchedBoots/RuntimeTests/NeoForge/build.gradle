@@ -10,12 +10,12 @@ base.archivesName = "mismatchedboots-runtime-test-neoforge"
 evaluationDependsOn("${modPath}:NeoForge")
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def fixtureBuildDirectory = layout.buildDirectory
 def productionArchive = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
-def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
 dependencies {
     // Expose Common's source module to IDEs; NeoForge also compiles these classes into its own output.
@@ -83,7 +83,7 @@ def rootsRenderingArtifact = testMods.path('NeoForge', 'RootsClassic-26.1.2-1.6.
 def iceAndFireModsOverride = providers.gradleProperty('iceAndFireTestModsDirectory').isPresent()
 
 def iceAndFireModsDirectory = providers.gradleProperty('iceAndFireTestModsDirectory')
-        .map { rootProject.file(it) }.getOrElse(rootProject.layout.buildDirectory.dir('test-mods/NeoForge').get().asFile)
+        .map { rootProject.file(it) }.getOrElse(mismatchedModProject.layout.buildDirectory.dir('test-mods/NeoForge').get().asFile)
 def iceAndFireArtifacts = [
         'iceandfire-2.2-beta.3.jar'         : 'ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2',
         'uranus-3.0-alpha.1.jar'            : 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',

@@ -1,7 +1,7 @@
 // Packaged production capture; fixtures supply scenarios, peers and an explicit native-loss control only.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def baseline = fabric ? minecraft_version : neoforge_version
@@ -15,7 +15,7 @@ def fixtureTask = fabric ? tasks.register('missingModsTestJar', Jar) {
     from sources.output
 } : tasks.named('jar')
 def fixtureJar = fixtureTask.flatMap { it.archiveFile }
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def artifacts = (fabric ? [
         'MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar': '58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278',
         'Cucumber-Fabric-26.1.2-9.0.6.2.jar'            : '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'

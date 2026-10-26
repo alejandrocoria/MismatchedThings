@@ -1,7 +1,7 @@
 // Isolated production presentation checks. No test-owned separator producer, factory or renderer.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def fixtureSources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -17,7 +17,7 @@ def baseline = fabric ? minecraft_version : neoforge_version
 def reports = layout.buildDirectory.dir("reports/tooltip-separators/${baseline}")
 def runs = layout.buildDirectory.dir("run/tooltipSeparators/${baseline}")
 def plainOnly = providers.gradleProperty('tooltipSeparatorPlainOnly').map { it.toBoolean() }.getOrElse(false)
-def bounded = rootProject.ext.runBoundedGradleTask
+def bounded = mismatchedModProject.ext.runBoundedGradleTask
 def artifacts = fabric ? [
         'LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar': '1f464710ca16c7dd069aa0c54088ddd1b72c1fff33609c13fce547f1ae444d41',
         'Iceberg-26.1.2-fabric-1.4.1.2.jar'          : 'c0ec9b2f7659183c5c44ea83007c6653eb7ca9ddd3c4dd9cdab5c6f08e97a9a9',

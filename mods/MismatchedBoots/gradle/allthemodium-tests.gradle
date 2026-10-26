@@ -1,7 +1,7 @@
 // Real native handlers and hooks, cooperating returns and quiet absence; never use indev JARs.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 
@@ -9,7 +9,7 @@ def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { 
 
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 
 def artifacts = ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar', 'geckolib-neoforge-26.1.2-5.5.2.jar']
 

@@ -1,11 +1,11 @@
 // Pinned, disposable native/absent server checks. Production optional bindings remain unmodified.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def reports = layout.buildDirectory.dir("reports/roots-ticks/${neoforge_version}")
 def runs = layout.buildDirectory.dir("run/rootsTicks/${neoforge_version}")
 def artifact = testMods.path('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar')

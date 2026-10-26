@@ -1,7 +1,7 @@
 // Fabric JEI/REI recipe reload and repeated-opening acceptance.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 

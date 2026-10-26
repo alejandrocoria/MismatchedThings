@@ -1,9 +1,9 @@
 // JDT Ground Stomp, Earthquake, native screen/input and connected lifecycle.
 def modPath = mismatchedModProject.path
 
-def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 

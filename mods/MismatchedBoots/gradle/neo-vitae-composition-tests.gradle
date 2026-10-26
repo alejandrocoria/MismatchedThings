@@ -1,11 +1,11 @@
 // Disposable state stays in this fixture project's build directory, never the owner's indev client.
 def modPath = mismatchedModProject.path
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
-def runBounded = rootProject.ext.runBoundedGradleTask
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def loaderVersion = neoforge_version.toString()
 def reports = layout.buildDirectory.dir("reports/neo-vitae-composition/${loaderVersion}")
 def runs = layout.buildDirectory.dir("run/neoVitaeComposition/${loaderVersion}")

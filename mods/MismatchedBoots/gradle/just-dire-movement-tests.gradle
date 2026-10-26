@@ -1,9 +1,9 @@
 // JDT Jump, Negate Fall Damage, cooldown HUD and completion sounds.
 def modPath = mismatchedModProject.path
 
-def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
-def testMods = rootProject.ext.testModArtifacts
+def testMods = mismatchedModProject.ext.testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
