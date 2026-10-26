@@ -1,0 +1,322 @@
+// Fabric Create Fly server/client compatibility and packaging boundaries.
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+
+def fixtureBuildDirectory = layout.buildDirectory
+
+def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
+def createFlyCompatibilityServerRunDirectory =
+        fixtureBuildDirectory.dir('run/createFlyCompatibilityServer')
+
+def createFlyCompatibilityClientRunDirectory =
+        fixtureBuildDirectory.dir('run/createFlyCompatibilityClient')
+
+def createFlyCompatibilityReport =
+        fixtureBuildDirectory.file('reports/gametest/create-fly-compatibility.xml')
+
+def createFlyCompatibilityTestJar = tasks.register('createFlyCompatibilityTestJar', Jar) {
+    archiveClassifier = 'create-fly-compatibility-test'
+    from sourceSets.createFlyCompatibilityTest.output
+}
+
+loom.runs {
+    createFlyCompatibilityServer {
+        inherit server
+        setConfigName('Fabric Create Fly Compatibility Server')
+        ideConfigGenerated(false)
+        property('fabric-api.gametest')
+        property(
+                'fabric-api.gametest.report-file',
+                fixtureBuildDirectory.file(
+                        'reports/gametest/create-fly-compatibility.xml').get().asFile.absolutePath)
+        runDir('build/run/createFlyCompatibilityServer')
+        source('main')
+        vmArg('-Xmx1G')
+    }
+
+    createFlyCompatibilityClient {
+        inherit client
+        setConfigName('Fabric Create Fly Compatibility Client')
+        ideConfigGenerated(false)
+        property('fabric.client.gametest')
+        property('fabric.client.gametest.modid',
+                'mismatchedboots_create_fly_compatibility_test')
+        property('mismatchedboots.test.hideClientWindow', 'true')
+        property('mismatchedboots.test.createFly.clientMarker',
+                fixtureBuildDirectory.file(
+                        'run/createFlyCompatibilityClient/client-compatibility.ok')
+                        .get().asFile.absolutePath)
+        runDir('build/run/createFlyCompatibilityClient')
+        source('gametest')
+        vmArg('-Xmx1G')
+    }
+}
+
+tasks.register('prepareCreateFlyCompatibilityServer', Delete) {
+    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    delete createFlyCompatibilityServerRunDirectory, createFlyCompatibilityReport
+    doLast {
+        def runDirectory = createFlyCompatibilityServerRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        fixtureBuildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+        fixtureBuildDirectory.dir('resources/main').get().asFile.mkdirs()
+        fixtureFileOperations.copy {
+            from(productionArchive)
+            from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
+            from(configurations.createFlyFabric)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+'''
+    }
+}
+
+tasks.register('prepareCreateFlyCompatibilityClient', Delete) {
+    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    delete createFlyCompatibilityClientRunDirectory
+    doLast {
+        def runDirectory = createFlyCompatibilityClientRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        def configDirectory = new File(runDirectory, 'config')
+        modsDirectory.mkdirs()
+        configDirectory.mkdirs()
+        fixtureFileOperations.copy {
+            from(createFlyCompatibilityTestJar.flatMap { it.archiveFile })
+            from(configurations.createFlyFabric)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'
+        new File(configDirectory, 'flywheel-client.json').text = '''{
+  "backend": {
+    "comment": [
+      "Select the backend to use. Set to 'DEFAULT' to let Flywheel decide.",
+      "Allowed Values: DEFAULT, OFF, namespace:path"
+    ],
+    "value": "DEFAULT"
+  },
+  "limitUpdates": {
+    "comment": "Enable or disable instance update limiting with distance.",
+    "value": true
+  },
+  "workerThreads": {
+    "comment": [
+      "The number of worker threads to use. Set to -1 to let Flywheel decide. Set to 0 to disable parallelism. Requires a game restart to take effect.",
+      "Default: -1",
+      "Range: -1 ~ 12"
+    ],
+    "value": 0
+  },
+  "flwBackends": {
+    "comment": "Config options for Flywheel's built-in backends.",
+    "lightSmoothness": {
+      "comment": [
+        "How smooth Flywheel's shader-based lighting should be. May have a large performance impact.",
+        "Allowed Values: FLAT, TRI_LINEAR, SMOOTH, SMOOTH_INNER_FACE_CORRECTED"
+      ],
+      "value": "SMOOTH"
+    }
+  }
+}
+'''
+    }
+}
+
+tasks.named('runCreateFlyCompatibilityServer') {
+    dependsOn tasks.named('prepareCreateFlyCompatibilityServer')
+}
+
+tasks.named('runCreateFlyCompatibilityClient') {
+    dependsOn tasks.named('prepareCreateFlyCompatibilityClient')
+}
+
+tasks.register('verifyCreateFlyCompatibility') {
+    group = 'verification'
+    description = 'Verifies compatibility with the exact Create Fly 6.0.9-4 artifact.'
+    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    doLast {
+        def artifact = configurations.createFlyFabric.resolvedConfiguration.resolvedArtifacts.find {
+            it.moduleVersion.id.group == 'maven.modrinth' &&
+                    it.moduleVersion.id.name == 'dKvj0eNn' &&
+                    it.moduleVersion.id.version == 'wV5IQLKg'
+        }
+        def createFlyJar = artifact?.file
+        if (createFlyJar == null) {
+            throw new GradleException('Exact Create Fly artifact is missing')
+        }
+
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        def actualHash = createFlyJar.withInputStream { input ->
+            byte[] buffer = new byte[8192]
+            int count
+            while ((count = input.read(buffer)) >= 0) {
+                digest.update(buffer, 0, count)
+            }
+            digest.digest().encodeHex().toString().toUpperCase(Locale.ROOT)
+        }
+        def expectedHash = 'DE1633A2DE5DC93878CA660BBDFDEB682A9A1AC1EDCDE97CB8B52624CC9FE42D'
+        if (actualHash != expectedHash) {
+            throw new GradleException("Unexpected Create Fly artifact hash: ${actualHash}")
+        }
+
+        def classReferences = { java.util.zip.ZipFile zip, String owner ->
+            def references = []
+            zip.entries().each { entry ->
+                if (entry.name.endsWith('.class')) {
+                    byte[] bytes = zip.getInputStream(entry).readAllBytes()
+                    def constants = new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                    if (constants.contains(owner)) {
+                        references.add(entry.name)
+                    }
+                }
+            }
+            references.sort()
+        }
+        def zip = new java.util.zip.ZipFile(createFlyJar)
+        try {
+            def cardboardReferences = classReferences(
+                    zip, 'com/zurrtum/create/content/equipment/armor/CardboardArmorHandler')
+            def expectedCardboardReferences = [
+                    'com/zurrtum/create/client/content/equipment/armor/CardboardArmorHandlerClient.class',
+                    'com/zurrtum/create/client/content/equipment/armor/CardboardArmorStealthOverlay.class',
+                    'com/zurrtum/create/client/mixin/ClientLevelMixin.class',
+                    'com/zurrtum/create/content/equipment/armor/CardboardArmorHandler.class',
+                    'com/zurrtum/create/content/kinetics/belt/transport/BeltMovementHandler.class',
+                    'com/zurrtum/create/mixin/EntityMixin.class',
+                    'com/zurrtum/create/mixin/LivingEntityMixin.class',
+                    'com/zurrtum/create/mixin/ServerLevelMixin.class'
+            ].sort()
+            if (cardboardReferences != expectedCardboardReferences) {
+                throw new GradleException(
+                        "Unexpected Cardboard helper consumers: ${cardboardReferences}")
+            }
+
+            def divingReferences = classReferences(
+                    zip, 'com/zurrtum/create/content/equipment/armor/DivingBootsItem')
+            def expectedDivingReferences = [
+                    'com/zurrtum/create/AllCreativeModeTabs.class',
+                    'com/zurrtum/create/AllItems.class',
+                    'com/zurrtum/create/client/AllItemTooltips.class',
+                    'com/zurrtum/create/client/mixin/ClientLevelMixin.class',
+                    'com/zurrtum/create/content/equipment/armor/DivingBootsItem.class',
+                    'com/zurrtum/create/content/kinetics/belt/BeltBlock.class',
+                    'com/zurrtum/create/mixin/EntityMixin.class',
+                    'com/zurrtum/create/mixin/LivingEntityMixin.class',
+                    'com/zurrtum/create/mixin/ServerLevelMixin.class'
+            ].sort()
+            if (divingReferences != expectedDivingReferences) {
+                throw new GradleException(
+                        "Unexpected Diving Boots consumers: ${divingReferences}")
+            }
+
+            def beltEntry = zip.getEntry('com/zurrtum/create/content/kinetics/belt/BeltBlock.class')
+            def beltConstants = new String(
+                    zip.getInputStream(beltEntry).readAllBytes(),
+                    java.nio.charset.StandardCharsets.ISO_8859_1)
+            for (def required : [
+                    'com/zurrtum/create/AllItems',
+                    'CARDBOARD_BOOTS',
+                    'com/zurrtum/create/content/equipment/armor/DivingBootsItem',
+                    'isWornBy']) {
+                if (!beltConstants.contains(required)) {
+                    throw new GradleException("Create Fly BeltBlock lost ${required}")
+                }
+            }
+
+            def tooltipEntry = zip.getEntry('com/zurrtum/create/client/mixin/ItemStackMixin.class')
+            def tooltipConstants = new String(
+                    zip.getInputStream(tooltipEntry).readAllBytes(),
+                    java.nio.charset.StandardCharsets.ISO_8859_1)
+            for (def required : [
+                    'com/zurrtum/create/client/foundation/item/TooltipModifier',
+                    'REGISTRY',
+                    'modify']) {
+                if (!tooltipConstants.contains(required)) {
+                    throw new GradleException("Create Fly tooltip hook lost ${required}")
+                }
+            }
+        } finally {
+            zip.close()
+        }
+
+        def fabricJar = productionArchive.get().asFile
+        def fabricZip = new java.util.zip.ZipFile(fabricJar)
+        try {
+            def entries = fabricZip.entries().collect { it.name }
+            for (def required : [
+                    'mismatchedboots.createfly.mixins.json',
+                    'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
+                            + 'CreateFlyMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
+                            + 'CreateFlyBeltShape.class',
+                    'games/alejandrocoria/mismatchedboots/compatibility/createfly/'
+                            + 'CreateFlyBeltInjectionPoint.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyCardboardArmorHandlerMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyBeltBlockMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyDivingBootsItemMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/createfly/'
+                            + 'CreateFlyMixedBootsTooltipFormatterMixin.class']) {
+                if (!entries.contains(required)) {
+                    throw new GradleException("Fabric output is missing ${required}")
+                }
+            }
+            if (entries.any { it.startsWith('com/zurrtum/create/') }) {
+                throw new GradleException('Fabric output accidentally includes Create Fly classes')
+            }
+            if (entries.any {
+                def lower = it.toLowerCase(Locale.ROOT)
+                lower.endsWith('.jar')
+                        && (lower.contains('create-fly') || lower.contains('dkvj0enn'))
+            }) {
+                throw new GradleException('Fabric output accidentally nests the Create Fly artifact')
+            }
+            if (entries.any {
+                it.startsWith('games/alejandrocoria/mismatchedboots/runtimetest/createfly/')
+            }) {
+                throw new GradleException('Fabric output accidentally includes Create Fly test classes')
+            }
+
+            def metadataEntry = fabricZip.getEntry('fabric.mod.json')
+            def metadata = new groovy.json.JsonSlurper().parse(
+                    fabricZip.getInputStream(metadataEntry))
+            for (def dependencyGroup : ['depends', 'recommends', 'suggests']) {
+                if (metadata[dependencyGroup] instanceof Map
+                        && metadata[dependencyGroup].containsKey('create')) {
+                    throw new GradleException(
+                            "Fabric metadata accidentally declares Create Fly in ${dependencyGroup}")
+                }
+            }
+        } finally {
+            fabricZip.close()
+        }
+
+        def serverLog = fixtureBuildDirectory.file(
+                'reports/create-fly-compatibility/fabric-server-process.log').get().asFile
+        runBoundedGradleTask(
+                ':RuntimeTests:Fabric:runCreateFlyCompatibilityServer', serverLog, 240)
+        if (!createFlyCompatibilityReport.get().asFile.isFile()) {
+            throw new GradleException(
+                    "Create Fly compatibility report is missing; see ${serverLog}")
+        }
+
+        def clientLog = fixtureBuildDirectory.file(
+                'reports/create-fly-compatibility/fabric-client-process.log').get().asFile
+        runBoundedGradleTask(
+                ':RuntimeTests:Fabric:runCreateFlyCompatibilityClient', clientLog, 300)
+        def clientMarker = fixtureBuildDirectory.file(
+                'run/createFlyCompatibilityClient/client-compatibility.ok').get().asFile
+        if (!clientMarker.isFile()
+                || clientMarker.getText('UTF-8') != 'create-fly-compatibility-passed\n') {
+            throw new GradleException(
+                    "Create Fly client compatibility marker is missing; see ${clientLog}")
+        }
+    }
+}

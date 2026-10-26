@@ -63,6 +63,26 @@ only for compilation; test classes, metadata, and fixtures are not included in
 the production artifacts. No runtime test infrastructure is installed in the
 normal indev client/server runs.
 
+### Fabric Gradle scripts
+
+[Fabric/build.gradle](Fabric/build.gradle) keeps plugins, dependency configurations,
+source sets, Loom/Fabric API setup, core GameTests (including persistence,
+reloads and context/report handling) and network runs. Optional compatibility
+suites use four applied scripts, each with its runs, preparation and verification:
+
+- [fabric-recipe-viewer-tests.gradle](../gradle/fabric-recipe-viewer-tests.gradle):
+  real JEI/REI recipe reload and repeated reopening, with pinned viewer artifacts.
+- [fabric-advanced-netherite-tests.gradle](../gradle/fabric-advanced-netherite-tests.gradle):
+  Advanced Netherite gameplay acceptance and its isolated fixture JAR.
+- [fabric-betterx-tests.gradle](../gradle/fabric-betterx-tests.gradle): BetterX
+  enabled/disabled piglin recognition and production-packaging checks.
+- [fabric-create-fly-tests.gradle](../gradle/fabric-create-fly-tests.gradle):
+  Create Fly server/client acceptance, fault controls and packaging checks.
+
+Apply these after the shared Loom/Fabric API setup and source-set declarations.
+Their providers remain local, without a new global context object; existing
+task names, commands, artifact coordinates and run/report paths are unchanged.
+
 ### NeoForge Gradle scripts
 
 [NeoForge/build.gradle](NeoForge/build.gradle) keeps the project/source-set setup,

@@ -1,0 +1,74 @@
+// Fabric Advanced Netherite compatibility with exact native artifacts.
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+
+def fixtureBuildDirectory = layout.buildDirectory
+
+def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
+def advancedNetheriteRunDirectory = fixtureBuildDirectory.dir('run/advancedNetheriteCompatibility')
+
+def advancedNetheriteReport = fixtureBuildDirectory.file('reports/gametest/advanced-netherite.xml')
+
+def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
+    archiveClassifier = 'advanced-netherite-test'
+    from sourceSets.advancedNetheriteTest.output
+}
+
+loom.runs {
+    advancedNetheriteCompatibility {
+        inherit server
+        setConfigName('Fabric Advanced Netherite Compatibility')
+        ideConfigGenerated(false)
+        property('fabric-api.gametest')
+        property(
+                'fabric-api.gametest.report-file',
+                fixtureBuildDirectory.file(
+                        'reports/gametest/advanced-netherite.xml').get().asFile.absolutePath)
+        runDir('build/run/advancedNetheriteCompatibility')
+        source('main')
+        vmArg('-Xmx1G')
+    }
+}
+
+tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
+    dependsOn(':Fabric:jar', advancedNetheriteTestJar)
+    delete advancedNetheriteRunDirectory, advancedNetheriteReport
+    doLast {
+        def runDirectory = advancedNetheriteRunDirectory.get().asFile
+        def modsDirectory = new File(runDirectory, 'mods')
+        modsDirectory.mkdirs()
+        fixtureBuildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+        fixtureBuildDirectory.dir('resources/main').get().asFile.mkdirs()
+        fixtureFileOperations.copy {
+            from(productionArchive)
+            from(advancedNetheriteTestJar.flatMap { it.archiveFile })
+            from(configurations.advancedNetheriteFabric)
+            into(modsDirectory)
+        }
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+        new File(runDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+'''
+    }
+}
+
+tasks.named('runAdvancedNetheriteCompatibility') {
+    dependsOn tasks.named('prepareAdvancedNetheriteCompatibility')
+}
+
+tasks.register('verifyAdvancedNetheriteCompatibility') {
+    group = 'verification'
+    description = 'Runs bounded Fabric acceptance against Advanced Netherite 2.4.1.'
+    dependsOn(':Fabric:jar', advancedNetheriteTestJar)
+    doLast {
+        def processLog = fixtureBuildDirectory.file(
+                'reports/advanced-netherite/fabric-process.log').get().asFile
+        runBoundedGradleTask(
+                ':RuntimeTests:Fabric:runAdvancedNetheriteCompatibility', processLog, 240)
+        if (!advancedNetheriteReport.get().asFile.isFile()) {
+            throw new GradleException("Fabric Advanced Netherite GameTest report is missing; see ${processLog}")
+        }
+    }
+}

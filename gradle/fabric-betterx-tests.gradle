@@ -1,0 +1,234 @@
+// Fabric BetterX compatibility with enabled/disabled piglin recognition.
+def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
+
+def fixtureBuildDirectory = layout.buildDirectory
+
+def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+
+def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
+
+def betterXCompatibilityCases = [
+        [suffix: 'Enabled', enabled: true],
+        [suffix: 'Disabled', enabled: false]
+]
+
+def betterXCompatibilityTestJar = tasks.register('betterXCompatibilityTestJar', Jar) {
+    archiveClassifier = 'betterx-compatibility-test'
+    from sourceSets.betterXCompatibilityTest.output
+}
+
+def betterXCompatibilityPreparations = [:]
+
+loom.runs {
+    betterXCompatibilityEnabled {
+        inherit server
+        setConfigName('Fabric BetterX Compatibility (Piglin Enabled)')
+        ideConfigGenerated(false)
+        property('fabric-api.gametest')
+        property('mismatchedboots.test.betterNether.enabled', 'true')
+        property(
+                'fabric-api.gametest.report-file',
+                fixtureBuildDirectory.file(
+                        'reports/gametest/betterx-compatibility-enabled.xml').get().asFile.absolutePath)
+        runDir('build/run/betterXCompatibilityEnabled')
+        source('main')
+        vmArg('-Xmx1G')
+    }
+
+    betterXCompatibilityDisabled {
+        inherit server
+        setConfigName('Fabric BetterX Compatibility (Piglin Disabled)')
+        ideConfigGenerated(false)
+        property('fabric-api.gametest')
+        property('mismatchedboots.test.betterNether.enabled', 'false')
+        property(
+                'fabric-api.gametest.report-file',
+                fixtureBuildDirectory.file(
+                        'reports/gametest/betterx-compatibility-disabled.xml').get().asFile.absolutePath)
+        runDir('build/run/betterXCompatibilityDisabled')
+        source('main')
+        vmArg('-Xmx1G')
+    }
+}
+
+betterXCompatibilityCases.each { spec ->
+    def runDirectory = fixtureBuildDirectory.dir("run/betterXCompatibility${spec.suffix}")
+    def report = fixtureBuildDirectory.file(
+            "reports/gametest/betterx-compatibility-${spec.suffix.toLowerCase(Locale.ROOT)}.xml")
+    def preparation = tasks.register("prepareBetterXCompatibility${spec.suffix}", Delete) {
+        dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
+        delete runDirectory, report
+        doLast {
+            def targetDirectory = runDirectory.get().asFile
+            def modsDirectory = new File(targetDirectory, 'mods')
+            modsDirectory.mkdirs()
+            fixtureBuildDirectory.dir('classes/java/main').get().asFile.mkdirs()
+            fixtureBuildDirectory.dir('resources/main').get().asFile.mkdirs()
+            fixtureFileOperations.copy {
+                from(productionArchive)
+                from(betterXCompatibilityTestJar.flatMap { it.archiveFile })
+                from(configurations.betterXFabric)
+                into(modsDirectory)
+            }
+            new File(targetDirectory, 'eula.txt').text = 'eula=true\n'
+            new File(targetDirectory, 'server.properties').text = '''online-mode=false
+max-tick-time=-1
+'''
+            def configFile = new File(
+                    targetDirectory, 'config/betternether/default_game_rules.json')
+            configFile.parentFile.mkdirs()
+            configFile.text = """{
+  \"create_version\": \"26.101.2\",
+  \"egg_plant\": {
+    \"mob_damage\": true,
+    \"player_damage\": true
+  },
+  \"piglin\": {
+    \"ignore_nether_armor\": ${spec.enabled},
+    \"wear_nether_armor\": true
+  },
+  \"modify_version\": \"26.101.2\"
+}
+"""
+        }
+    }
+    betterXCompatibilityPreparations[spec.suffix] = [
+            preparation: preparation,
+            report     : report
+    ]
+    tasks.named("runBetterXCompatibility${spec.suffix}") {
+        dependsOn preparation
+    }
+}
+
+tasks.register('verifyBetterXCompatibility') {
+    group = 'verification'
+    description = 'Runs production compatibility acceptance against exact BetterX 26.101.2 artifacts.'
+    dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
+    doLast {
+        def betterEndArtifact = configurations.betterEndFabric.resolvedConfiguration.resolvedArtifacts.find {
+            it.moduleVersion.id.group == 'maven.modrinth' &&
+                    it.moduleVersion.id.name == 'gc8OEnCC' &&
+                    it.moduleVersion.id.version == 'tBdZGZeX'
+        }
+        def betterEndJar = betterEndArtifact?.file
+        if (betterEndJar == null) {
+            throw new GradleException('Exact Better End artifact is missing from the tag-consumer audit')
+        }
+
+        def betterNetherArtifact = configurations.betterXFabric.resolvedConfiguration.resolvedArtifacts.find {
+            it.moduleVersion.id.group == 'maven.modrinth' &&
+                    it.moduleVersion.id.name == 'MpzVLzy5' &&
+                    it.moduleVersion.id.version == 'gDLNJy17'
+        }
+        if (betterNetherArtifact == null) {
+            throw new GradleException(
+                    'Exact Better Nether artifact is missing from the piglin adapter audit')
+        }
+
+        def owner = 'org/betterx/betterend/registry/EndTags'
+        def field = 'CRYSTALITE_SET'
+        def references = []
+        def zip = new java.util.zip.ZipFile(betterEndJar)
+        try {
+            zip.entries().each { entry ->
+                if (entry.name.endsWith('.class')) {
+                    byte[] bytes = zip.getInputStream(entry).readAllBytes()
+                    def constants = new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                    if (constants.contains(owner) && constants.contains(field)) {
+                        references.add(entry.name)
+                    }
+                }
+            }
+        } finally {
+            zip.close()
+        }
+
+        def expectedReferences = [
+                'org/betterx/betterend/client/BetterEndClient.class',
+                'org/betterx/betterend/item/CrystaliteArmor.class',
+                'org/betterx/betterend/registry/EndTags.class',
+                'org/betterx/betterend/registry/item/EndEquipmentItems.class'
+        ]
+        if (references.sort() != expectedReferences.sort()) {
+            throw new GradleException("Unexpected Crystalite tag consumers: ${references}")
+        }
+
+        betterXCompatibilityCases.each { spec ->
+            def details = betterXCompatibilityPreparations[spec.suffix]
+            def processLog = fixtureBuildDirectory.file(
+                    "reports/betterx-compatibility/fabric-${spec.suffix.toLowerCase(Locale.ROOT)}-process.log")
+                    .get().asFile
+            runBoundedGradleTask(
+                    ":RuntimeTests:Fabric:runBetterXCompatibility${spec.suffix}",
+                    processLog,
+                    300)
+            if (!details.report.get().asFile.isFile()) {
+                throw new GradleException(
+                        "BetterX ${spec.suffix} GameTest report is missing; see ${processLog}")
+            }
+
+            def logText = processLog.getText('UTF-8')
+            def adapterWarnings = [
+                    'Better Nether is present with an incompatible API',
+                    'Better Nether is present without its expected API',
+                    'Could not inspect Better Nether API',
+                    'Could not resolve Better Nether runtime API',
+                    'Could not read Better Nether piglin configuration',
+                    'Could not query Better Nether armor sets'
+            ].findAll { logText.contains(it) }
+            if (!adapterWarnings.isEmpty()) {
+                throw new GradleException(
+                        "BetterX ${spec.suffix} emitted adapter warnings: ${adapterWarnings}")
+            }
+        }
+
+        def productionJar = productionArchive.get().asFile
+        def productionZip = new java.util.zip.ZipFile(productionJar)
+        try {
+            def forbiddenEntries = productionZip.entries().findAll { entry ->
+                def name = entry.name.toLowerCase(Locale.ROOT)
+                name.startsWith('org/betterx/')
+                        || name.startsWith('games/alejandrocoria/mismatchedboots/runtimetest/')
+                        || (name.endsWith('.jar') && (name.contains('better-end')
+                        || name.contains('betterend')
+                        || name.contains('better-nether')
+                        || name.contains('betternether')
+                        || name.contains('bclib')
+                        || name.contains('worldweaver')
+                        || name.contains('wover')))
+            }
+            if (!forbiddenEntries.isEmpty()) {
+                throw new GradleException(
+                        "Production Fabric JAR contains forbidden compatibility artifacts: ${forbiddenEntries}")
+            }
+
+            def requiredEntries = [
+                    'mismatchedboots.betterx.mixins.json',
+                    'games/alejandrocoria/mismatchedboots/compatibility/betterx/BetterXMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedboots/compatibility/betterx/'
+                    +'BetterNetherPiglinArmorAdapter.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
+                    +'BetterEndMobEffectApplierMixin.class',
+                    'games/alejandrocoria/mismatchedboots/mixin/compatibility/betterx/'
+                    +'BetterNetherPiglinArmorMixin.class'
+            ]
+            def missingEntries = requiredEntries.findAll { productionZip.getEntry(it) == null }
+            if (!missingEntries.isEmpty()) {
+                throw new GradleException(
+                        "Production Fabric JAR is missing BetterX integration entries: ${missingEntries}")
+            }
+
+            def descriptor = productionZip.getInputStream(
+                    productionZip.getEntry('fabric.mod.json')).getText('UTF-8')
+            if (descriptor.contains('"betterend"')
+                    || descriptor.contains('"betternether"')
+                    || descriptor.contains('"bclib"')
+                    || descriptor.contains('"wover"')) {
+                throw new GradleException('Production Fabric metadata unexpectedly requires BetterX')
+            }
+        } finally {
+            productionZip.close()
+        }
+    }
+}
