@@ -38,13 +38,9 @@ plugins {
 
 // The family build name is independent of the Minecraft-version checkout directory.
 rootProject.name = 'MismatchedThings'
-include("Common")
-include("Fabric")
-include("NeoForge")
-include("RuntimeTests:Fabric")
-include("RuntimeTests:NeoForge")
+include('MismatchedBoots')
+project(':MismatchedBoots').projectDir = file('mods/MismatchedBoots')
 
-// Group Boots physically first; its logical project paths stay unchanged in this stage.
-['Common', 'Fabric', 'NeoForge', 'RuntimeTests', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
-    project(":${path}").projectDir = file("mods/MismatchedBoots/${path.replace(':', '/')}")
+['Common', 'Fabric', 'NeoForge', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
+    include("MismatchedBoots:${path}")
 }

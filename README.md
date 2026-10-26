@@ -11,9 +11,11 @@ This branch targets Minecraft 26.1.2 with Fabric and NeoForge.
 ## Development
 
 Run Gradle from this repository root using the checked-in wrapper. Boots sources,
-resources and test fixtures live under `mods/MismatchedBoots/`; its existing
-logical Gradle paths (`:Common`, `:Fabric`, `:NeoForge`, `:RuntimeTests:Fabric`
-and `:RuntimeTests:NeoForge`) remain unchanged during the first layout stage.
+resources and test fixtures live under `mods/MismatchedBoots/`, with projects
+under `:MismatchedBoots` such as `:MismatchedBoots:Fabric` and
+`:MismatchedBoots:RuntimeTests:NeoForge`. Mod identity and release metadata live
+in [mod.properties](mods/MismatchedBoots/mod.properties); root `gradle.properties`
+contains the technical baseline, not a default mod identity.
 
 See [the runtime test guide](mods/MismatchedBoots/RuntimeTests/README.md) for
 maintained validation commands. Production artifacts remain separate Fabric

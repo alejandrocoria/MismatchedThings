@@ -1,4 +1,6 @@
 // JDT production energy/durability bars with isolated server/client fixtures.
+def modPath = mismatchedModProject.path
+
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 def testMods = rootProject.ext.testModArtifacts
@@ -7,7 +9,7 @@ def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
 def fixtureBuildDirectory = layout.buildDirectory
 
-def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 
 def justDireItemBarsDirectory = fixtureBuildDirectory.dir("run/justDireItemBarsProduction/${neoforge_version}")
 
@@ -60,7 +62,7 @@ neoForge.runs {
 
 // Production decoration acceptance: no test decorator/provider or user's run directory.
 tasks.register('prepareJustDireItemBarsServer') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
@@ -93,7 +95,7 @@ tasks.named('runJustDireItemBarsServer') { dependsOn 'prepareJustDireItemBarsSer
 
 justDireItemBarVariants.each { variant ->
     def prepare = tasks.register("prepareJustDireItemBars${variant}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             def world = justDireItemBarsDirectory.get().dir('server/world').asFile
             if (!new File(world, 'level.dat').isFile()) {
@@ -138,10 +140,10 @@ justDireItemBarVariants.each { variant ->
 tasks.register('verifyJustDireItemBars') {
     group = 'verification'
     description = 'Verifies production dynamic FE decoration, native queries, ordinary packets and bounded optional failures.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def directory = justDireItemBarsMarkers.get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireItemBarsServer', new File(directory, 'server-process.log'), 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireItemBarsServer", new File(directory, 'server-process.log'), 240)
         def classes = new File(justDireItemBarsDirectory.get().dir('server').asFile, 'classes.log')
         if (!new File(directory, 'just-dire-item-bars-server-success.txt').isFile()
                 || !classes.isFile() || classes.text.contains('NeoForgeJustDireItemBarsTest')
@@ -159,7 +161,7 @@ tasks.register('verifyJustDireItemBars') {
         }
         justDireItemBarVariants.each { variant ->
             def log = new File(directory, "${variant}-process.log")
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireItemBars${variant}", log, 300)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireItemBars${variant}", log, 300)
             def failure = new File(directory, 'just-dire-item-bars-failure.txt')
             def report = new File(directory, 'just-dire-item-bars-report.txt')
             def success = new File(directory, 'just-dire-item-bars-success.txt')

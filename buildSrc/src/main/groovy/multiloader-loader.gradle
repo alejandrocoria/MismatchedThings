@@ -11,19 +11,22 @@ configurations {
     }
 }
 
+def commonProject = mismatchedModProject.project('Common')
+def docsDirectory = mismatchedModProject.file('doc')
+
 dependencies {
-    compileOnly(project(':Common')) {
+    compileOnly(project(path: commonProject.path)) {
         capabilities {
             requireCapability "$group:$mod_id"
         }
     }
-    commonJava project(path: ':Common', configuration: 'commonJava')
-    commonResources project(path: ':Common', configuration: 'commonResources')
+    commonJava project(path: commonProject.path, configuration: 'commonJava')
+    commonResources project(path: commonProject.path, configuration: 'commonResources')
 }
 
 ext.registerProcessDocsTask = { String loaderName, String loaderVersion, String extraDocRequirements ->
     tasks.register('processDocs', Copy) {
-        from(file('../doc')) {
+        from(docsDirectory) {
             include '*.md'
             expand(
                     loaderversion: loaderVersion,

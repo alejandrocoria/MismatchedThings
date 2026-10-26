@@ -102,16 +102,6 @@ repositories {
     }
 }
 
-if (project.path in [':Common', ':Fabric', ':NeoForge']) {
-    dependencies {
-        // Advanced Netherite 2.4.1 Fabric, exact Modrinth version: https://modrinth.com/mod/CFX9ftUJ/version/vudH2Rjv
-        compileOnly('maven.modrinth:CFX9ftUJ:vudH2Rjv') {
-            transitive = false
-        }
-        compileOnly 'org.ow2.asm:asm-tree:9.9.1'
-    }
-}
-
 // Declare capabilities on the outgoing configurations.
 // Read more about capabilities here: https://docs.gradle.org/current/userguide/component_capabilities.html#sec:declaring-additional-capabilities-for-a-local-component
 ['apiElements', 'runtimeElements', 'sourcesElements'/*, 'javadocElements'*/].each { variant ->

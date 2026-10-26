@@ -1,7 +1,9 @@
 // Disposable state stays in this fixture project's build directory, never the owner's indev client.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def loaderVersion = neoforge_version.toString()
@@ -27,7 +29,7 @@ def nativeArtifacts = [
         jvmArgument('-Xmx1G')
     }
     def prepare = tasks.register("prepareNeoVitaeComposition${variant}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             if (variant == 'Live') {
                 if (loaderVersion.tokenize('.').last().toInteger() < 109) {
@@ -67,7 +69,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         description = "Production Neo Vitae composition (${variant.toLowerCase(Locale.ROOT)}); Live includes native lifecycle/restart"
         doLast {
             def processLog = new File(reports.get().asFile, "${variant.toLowerCase(Locale.ROOT)}-process.log")
-            runBounded(":RuntimeTests:NeoForge:runNeoVitaeComposition${variant}", processLog, 240)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runNeoVitaeComposition${variant}", processLog, 240)
             def result = markers.get().asFile
             def failure = new File(result, 'neo-vitae-composition-failure.txt')
             if (failure.isFile()) {
@@ -80,7 +82,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             }
             logger.lifecycle(report.text)
             if (variant == 'Live') {
-                runBounded(':RuntimeTests:NeoForge:runNeoVitaeCompositionRestart',
+                runBounded("${modPath}:RuntimeTests:NeoForge:runNeoVitaeCompositionRestart",
                         new File(reports.get().asFile, 'restart-process.log'), 240)
                 def restartFailure = new File(result, 'neo-vitae-composition-restart-failure.txt')
                 if (restartFailure.isFile()) {
@@ -110,7 +112,7 @@ neoForge.runs.create('neoVitaeCompositionRestart') {
     jvmArgument('-Xmx1G')
 }
 tasks.named('runNeoVitaeCompositionRestart') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doFirst {
         def saved = reports.map { it.dir('live') }.get().asFile
         if (!new File(saved, 'neo-vitae-composition-success.txt').isFile()

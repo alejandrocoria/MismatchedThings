@@ -1,8 +1,10 @@
 // Minimal Quilt acceptance of the packaged Fabric artifact, not a third production module.
 // Launcher libraries pinned from https://meta.quiltmc.org/v3/versions/loader/26.1.2/0.31.0-beta.4
+def modPath = mismatchedModProject.path
+
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def testBuildDirectory = layout.buildDirectory
-def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
 def gameTestOutput = sourceSets.gametest.output
 def gameRuntime = sourceSets.gametest.runtimeClasspath
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
@@ -42,7 +44,7 @@ def fixtureJar = tasks.register('quiltSmokeFixtureJar', Jar) {
     from gameTestOutput
 }
 def prepare = tasks.register('prepareQuiltSmoke', Delete) {
-    dependsOn ':Fabric:jar', fixtureJar
+    dependsOn "${modPath}:Fabric:jar", fixtureJar
     delete quiltRunDirectory, report
     doLast {
         def directory = quiltRunDirectory.get().asFile
@@ -76,10 +78,10 @@ tasks.register('runQuiltSmoke', JavaExec) {
 tasks.register('verifyQuiltSmoke') {
     group = 'verification'
     description = 'Runs the packaged Fabric mod on real Quilt Loader: startup and Workbench transactions.'
-    dependsOn ':Fabric:jar', fixtureJar
+    dependsOn "${modPath}:Fabric:jar", fixtureJar
     doLast {
         def processLog = testBuildDirectory.file('reports/quilt-smoke/process.log').get().asFile
-        runBoundedGradleTask(':RuntimeTests:Fabric:runQuiltSmoke', processLog, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:Fabric:runQuiltSmoke", processLog, 240)
         def parser = javax.xml.parsers.DocumentBuilderFactory.newInstance()
         parser.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
         def document = parser.newDocumentBuilder().parse(report.get().asFile)

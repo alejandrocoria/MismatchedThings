@@ -1,6 +1,8 @@
 // Opt-in visual probe: narrow client entrypoints, then restore generated metadata.
+def modPath = ':MismatchedBoots'
+
 gradle.projectsEvaluated {
-    def fixture = gradle.rootProject.findProject(':RuntimeTests:Fabric')
+    def fixture = gradle.rootProject.findProject("${modPath}:RuntimeTests:Fabric")
     if (fixture == null) {
         return
     }

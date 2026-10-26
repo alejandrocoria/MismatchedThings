@@ -5,6 +5,8 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.141' apply false
 }
 
+def modPath = ':MismatchedBoots'
+
 def bootsDirectory = layout.projectDirectory.dir('mods/MismatchedBoots')
 apply from: bootsDirectory.file('gradle/test-mod-artifacts.gradle')
 apply from: bootsDirectory.file('gradle/network-acceptance-tests.gradle')
@@ -19,10 +21,10 @@ tasks.register("publishMod") {
     group = "release"
     description = "Publishes Fabric and NeoForge builds to CurseForge and Modrinth."
     dependsOn(
-            ":Fabric:publishCurseForge",
-            ":NeoForge:publishCurseForge",
-            ":Fabric:modrinth",
-            ":NeoForge:modrinth"
+            "${modPath}:Fabric:publishCurseForge",
+            "${modPath}:NeoForge:publishCurseForge",
+            "${modPath}:Fabric:modrinth",
+            "${modPath}:NeoForge:modrinth"
     )
 }
 
@@ -33,8 +35,8 @@ def packagedVerification = tasks.register("verifyPackagedDependencies") {
 
 // Child plugins create these tasks after this script; capture their providers at configuration time.
 gradle.projectsEvaluated {
-    def producers = [fabric  : project(':Fabric').tasks.named('jar'),
-                     neoforge: project(':NeoForge').tasks.named('jar')]
+    def producers = [fabric  : project("${modPath}:Fabric").tasks.named('jar'),
+                     neoforge: project("${modPath}:NeoForge").tasks.named('jar')]
     def archives = producers.collectEntries { loader, producer ->
         [(loader): producer.flatMap { it.archiveFile }]
     }

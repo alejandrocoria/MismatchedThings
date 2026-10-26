@@ -1,4 +1,6 @@
 // Fabric JEI/REI recipe reload and repeated-opening acceptance.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
@@ -34,7 +36,7 @@ viewerCases.each { suffix, fixture ->
         vmArg('-Xmx1G')
     }
     def prepare = tasks.register("prepare${suffix}RecipeReloadClient", Delete) {
-        dependsOn viewerCompatibilityTestJar, ':Fabric:jar'
+        dependsOn viewerCompatibilityTestJar, "${modPath}:Fabric:jar"
         delete runDirectory
         doLast {
             fixtureFiles.each { artifact ->

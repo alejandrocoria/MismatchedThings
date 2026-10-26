@@ -67,3 +67,7 @@ dispenser; valid crafted pairs remain equippable.
 This mod lives in the [MismatchedThings repository](../../README.md). Run the
 Gradle wrapper from the repository root, not this directory. See
 [the runtime test guide](RuntimeTests/README.md) for validation commands and paths.
+
+The production client tasks are `:MismatchedBoots:Fabric:runClient` and
+`:MismatchedBoots:NeoForge:runClient`. Generated IntelliJ launch names identify
+the mod, loader and side. Release metadata belongs to [mod.properties](mod.properties).

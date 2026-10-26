@@ -1,7 +1,9 @@
 // Pinned native handlers, real competing transformations and quiet absence in disposable servers.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def artifacts = [
@@ -24,7 +26,7 @@ def artifacts = [
         jvmArgument('-Xmx1G')
     }
     def prepare = tasks.register("prepareUndergarden${variant}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             if (mode != 'absent') {
                 artifacts.each { artifact, hash ->
@@ -61,7 +63,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         description = "Native Undergarden boots (${mode})"
         doLast {
             def log = new File(reports.get().asFile, 'process.log')
-            runBounded(":RuntimeTests:NeoForge:runUndergarden${variant}", log, 240)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runUndergarden${variant}", log, 240)
             def result = reports.get().asFile
             def failure = new File(result, 'undergarden-failure.txt')
             if (failure.isFile()) {

@@ -1,9 +1,11 @@
 // Fabric BetterX compatibility with enabled/disabled piglin recognition.
+def modPath = mismatchedModProject.path
+
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
 def fixtureBuildDirectory = layout.buildDirectory
 
-def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
 
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
@@ -56,7 +58,7 @@ betterXCompatibilityCases.each { spec ->
     def report = fixtureBuildDirectory.file(
             "reports/gametest/betterx-compatibility-${spec.suffix.toLowerCase(Locale.ROOT)}.xml")
     def preparation = tasks.register("prepareBetterXCompatibility${spec.suffix}", Delete) {
-        dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
+        dependsOn("${modPath}:Fabric:jar", betterXCompatibilityTestJar)
         delete runDirectory, report
         doLast {
             def targetDirectory = runDirectory.get().asFile
@@ -104,7 +106,7 @@ max-tick-time=-1
 tasks.register('verifyBetterXCompatibility') {
     group = 'verification'
     description = 'Runs production compatibility acceptance against exact BetterX 26.101.2 artifacts.'
-    dependsOn(':Fabric:jar', betterXCompatibilityTestJar)
+    dependsOn("${modPath}:Fabric:jar", betterXCompatibilityTestJar)
     doLast {
         def betterEndArtifact = configurations.betterEndFabric.resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == 'maven.modrinth' &&
@@ -160,7 +162,7 @@ tasks.register('verifyBetterXCompatibility') {
                     "reports/betterx-compatibility/fabric-${spec.suffix.toLowerCase(Locale.ROOT)}-process.log")
                     .get().asFile
             runBoundedGradleTask(
-                    ":RuntimeTests:Fabric:runBetterXCompatibility${spec.suffix}",
+                    "${modPath}:RuntimeTests:Fabric:runBetterXCompatibility${spec.suffix}",
                     processLog,
                     300)
             if (!details.report.get().asFile.isFile()) {

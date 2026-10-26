@@ -3,22 +3,24 @@ plugins {
     id 'net.fabricmc.fabric-loom'
 }
 
+def modPath = mismatchedModProject.path
+
 base.archivesName = "mismatchedboots-runtime-test-fabric"
 
-evaluationDependsOn(':Fabric')
+evaluationDependsOn("${modPath}:Fabric")
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def fixtureBuildDirectory = layout.buildDirectory
-def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-    compileOnly files(project(':Fabric').sourceSets.main.output)
-    compileOnly files(project(':Fabric').sourceSets.main.compileClasspath)
+    compileOnly files(project("${modPath}:Fabric").sourceSets.main.output)
+    compileOnly files(project("${modPath}:Fabric").sourceSets.main.compileClasspath)
     testImplementation files(productionArchive)
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -79,32 +81,32 @@ dependencies {
 
 sourceSets {
     networkTest {
-        java.srcDir project(':RuntimeTests').file('Common/src/main/java')
+        java.srcDir project("${modPath}:RuntimeTests").file('Common/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.runtimeClasspath - sourceSets.main.output
     }
     advancedNetheriteTest {
-        java.srcDir project(':RuntimeTests').file('AdvancedNetherite/src/main/java')
+        java.srcDir project("${modPath}:RuntimeTests").file('AdvancedNetherite/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':Fabric').sourceSets.main.output)
+        compileClasspath += files(project("${modPath}:Fabric").sourceSets.main.output)
         compileClasspath += configurations.advancedNetheriteFabric
         runtimeClasspath += output + compileClasspath
     }
     betterXCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':Fabric').sourceSets.main.output)
+        compileClasspath += files(project("${modPath}:Fabric").sourceSets.main.output)
         runtimeClasspath += output + compileClasspath
     }
     createFlyCompatibilityTest {
         compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':Fabric').sourceSets.main.output)
+        compileClasspath += files(project("${modPath}:Fabric").sourceSets.main.output)
         compileClasspath += configurations.createFlyFabric
         runtimeClasspath += output + compileClasspath
     }
 }
 
 loom {
-    def aw = project(':Common').file("src/main/resources/${mod_id}.accesswidener")
+    def aw = project("${modPath}:Common").file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
@@ -505,14 +507,14 @@ tasks.named('runMissingGameTestContext') {
 tasks.register('verifyGameTestContextGuard') {
     group = 'verification'
     description = 'Proves a focused GameTest without its required fixture fails instead of passing a no-op.'
-    dependsOn ':Fabric:jar', tasks.named('gametestClasses')
+    dependsOn "${modPath}:Fabric:jar", tasks.named('gametestClasses')
     doLast {
         // The child might fail before its preparation task; never accept an old negative report.
         fixtureFileOperations.delete { delete contextGuardReport }
         def log = fixtureBuildDirectory.file('context-guard/process.log').get().asFile
         boolean failed = false
         try {
-            runBoundedGradleTask(':RuntimeTests:Fabric:runMissingGameTestContext', log, 120)
+            runBoundedGradleTask("${modPath}:RuntimeTests:Fabric:runMissingGameTestContext", log, 120)
         } catch (GradleException expected) {
             failed = expected.message.contains('exited with 1;')
         }

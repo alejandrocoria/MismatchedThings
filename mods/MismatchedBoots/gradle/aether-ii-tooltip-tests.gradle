@@ -1,7 +1,9 @@
 // Production presentation acceptance. Native artifacts are isolated fixtures, not publication dependencies.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
@@ -48,7 +50,7 @@ def artifacts = absent ? [:] : [
     }
 }
 tasks.register('prepareAetherTooltipSeed') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def seed = directory.get().dir('seed').asFile
         fixtureFiles.delete { delete seed }
@@ -71,7 +73,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 }
 tasks.named('runAetherTooltipSeed') { dependsOn('prepareAetherTooltipSeed') }
 tasks.register('prepareAetherTooltipClient') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def seed = directory.get().dir('seed').asFile
         def client = directory.get().dir('client').asFile
@@ -108,7 +110,7 @@ tasks.register('verifyAetherIITooltips') {
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = new File(reports.get().asFile, "${phase.toLowerCase(Locale.ROOT)}-process.log")
-            runBounded(":RuntimeTests:NeoForge:runAetherTooltip${phase}", log, 300)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runAetherTooltip${phase}", log, 300)
             if (phase == 'Client') {
                 def failure = new File(reports.get().asFile, 'aether-ii-tooltip-failure.txt')
                 if (failure.isFile()) {

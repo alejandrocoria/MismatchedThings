@@ -1,7 +1,9 @@
 // Isolated, pinned native/absent checks; never mutate the owner's client mods/worlds.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def reports = layout.buildDirectory.dir("reports/oritech-fall/${neoforge_version}")
@@ -26,7 +28,7 @@ def artifacts = [
         jvmArgument('-Xmx1G')
     }
     def prepare = tasks.register("prepareOritechFall${variant}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             if (variant == 'Live') {
                 artifacts.each { artifact, hash ->
@@ -63,7 +65,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         description = "Native Oritech Exo fall recognition (${variant.toLowerCase(Locale.ROOT)})"
         doLast {
             def processLog = new File(reports.get().asFile, "${variant.toLowerCase(Locale.ROOT)}-process.log")
-            runBounded(":RuntimeTests:NeoForge:runOritechFall${variant}", processLog, 240)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runOritechFall${variant}", processLog, 240)
             def result = markers.get().asFile
             def failure = new File(result, 'oritech-fall-failure.txt')
             if (failure.isFile()) {

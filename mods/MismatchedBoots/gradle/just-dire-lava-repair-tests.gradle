@@ -1,4 +1,6 @@
 // JDT Lava Repair, native settings and save/restart lifecycle.
+def modPath = mismatchedModProject.path
+
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 def fixtureBuildDirectory = layout.buildDirectory
@@ -66,7 +68,7 @@ tasks.named('runJustDireLavaLifecycleSave') {
 }
 
 tasks.named('runJustDireLavaLifecycleRestart') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doFirst {
         if (!new File(justDireSmithingMarkers.get().asFile, 'just-dire-lava-lifecycle-save-success.txt').isFile()) {
             throw new GradleException('Run Lava lifecycle Save before Restart; its world must not be reset')
@@ -77,11 +79,11 @@ tasks.named('runJustDireLavaLifecycleRestart') {
 tasks.register('verifyJustDireLavaLifecycle') {
     group = 'verification'
     description = 'Verifies scheduler-owned Lava entities, chunk unload, pickup/redrop, dimension transfer and actual world restart.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Save', 'Restart'].each { mode ->
             def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/lifecycle${mode}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireLavaLifecycle${mode}", log, 300)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireLavaLifecycle${mode}", log, 300)
             def directory = justDireSmithingMarkers.get().asFile
             def prefix = "just-dire-lava-lifecycle-${mode.uncapitalize()}"
             def failure = new File(directory, "${prefix}-failure.txt")
@@ -100,11 +102,11 @@ tasks.register('verifyJustDireLavaLifecycle') {
 tasks.register('verifyJustDireLavaRepair') {
     group = 'verification'
     description = 'Verifies production intrinsic Lava Repair and native particle delivery, not the research candidate.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['', 'Client'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/production${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireLavaRepair${variant}", log, variant ? 300 : 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireLavaRepair${variant}", log, variant ? 300 : 240)
             def directory = justDireSmithingMarkers.get().asFile
             def prefix = variant ? 'just-dire-lava-repair-client' : 'just-dire-lava-repair'
             def failure = new File(directory, "${prefix}-failure.txt")
@@ -128,11 +130,11 @@ tasks.register('verifyJustDireLavaRepair') {
 tasks.register('verifyJustDireLavaRepairGuards') {
     group = 'verification'
     description = 'Verifies isolated Lava API/query/particle failure and quiet JDT absence.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['ApiMissing', 'ParticlesMissing', 'EmissionFailure', 'QueryFailure', 'Absent'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireLavaRepair${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireLavaRepair${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-lava-repair-failure.txt')
             def report = new File(directory, 'just-dire-lava-repair-report.txt')
@@ -155,12 +157,12 @@ tasks.register('verifyJustDireLavaRepairGuards') {
 tasks.register('verifyJustDireLavaRepairSettings') {
     group = 'verification'
     description = 'Verifies intrinsic Lava native widgets/transport, equipped keyboard/mouse and isolated metadata failure.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Lava', 'LavaSettingsFailure', 'ApiMissing'].each { variant ->
             def label = variant == 'ApiMissing' ? 'CommonSettingsMissing' : variant
             def log = fixtureBuildDirectory.file("reports/just-dire-lava-repair/${neoforge_version}/${label}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-ground-stomp-client-failure.txt')
             def report = new File(directory, 'just-dire-ground-stomp-client-report.txt')

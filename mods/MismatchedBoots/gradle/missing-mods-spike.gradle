@@ -1,13 +1,15 @@
 // Packaged production capture; fixtures supply scenarios, peers and an explicit native-loss control only.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def baseline = fabric ? minecraft_version : neoforge_version
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
-sources.java.srcDir project(':RuntimeTests').file('MissingMods/src/main/java')
-sources.resources.srcDir project(':RuntimeTests').file('MissingMods/src/main/resources')
+sources.java.srcDir project("${modPath}:RuntimeTests").file('MissingMods/src/main/java')
+sources.resources.srcDir project("${modPath}:RuntimeTests").file('MissingMods/src/main/resources')
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(":${loader}").tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:${loader}").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureTask = fabric ? tasks.register('missingModsTestJar', Jar) {
     archiveClassifier = 'missing-mods-tests'
     from sources.output
@@ -67,7 +69,7 @@ def artifactsForStage = { String stage ->
         }
 
         def prepare = tasks.register("prepareMissingMods${variant}${phase}") {
-            dependsOn(":${loader}:jar", fixtureTask)
+            dependsOn("${modPath}:${loader}:jar", fixtureTask)
             doLast {
                 def selectedArtifacts = artifactsForStage(stage)
                 if (!selectedArtifacts.isEmpty()) {
@@ -138,7 +140,7 @@ tasks.register('verifyMissingModsRecovery') {
                 def log = new File(markers, 'process.log')
                 boolean failed = false
                 try {
-                    runBounded(":RuntimeTests:${loader}:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
+                    runBounded("${modPath}:RuntimeTests:${loader}:runMissingMods${mode.capitalize()}${stage.capitalize()}", log, 240)
                 } catch (GradleException failure) {
                     if (!refusal) {
                         throw failure
@@ -216,7 +218,7 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
     }
 
     def prepare = tasks.register("prepareMissingMods${phase}") {
-        dependsOn(":${loader}:jar", fixtureTask)
+        dependsOn("${modPath}:${loader}:jar", fixtureTask)
         doLast {
             def target = clientDirectory.get().asFile
             if (!target.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
@@ -272,7 +274,7 @@ tasks.register('verifyMissingModsClients') {
 
             def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/clients/${phase.toLowerCase(Locale.ROOT)}").get().asFile
             def log = new File(markers, 'process.log')
-            runBounded(":RuntimeTests:${loader}:runMissingMods${phase}", log, 360)
+            runBounded("${modPath}:RuntimeTests:${loader}:runMissingMods${phase}", log, 360)
             def failure = new File(markers, 'missing-mods-failure.txt')
             if (failure.isFile()) {
                 throw new GradleException(failure.text)

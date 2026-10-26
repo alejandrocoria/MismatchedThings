@@ -2,6 +2,8 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 
+def modPath = ':MismatchedBoots'
+
 def networkAcceptanceRoot = layout.buildDirectory.dir('network-acceptance')
 def gradleLauncher = rootProject.file('gradlew.bat')
 def acceptanceFileOperations = objects.newInstance(FixtureFileOperations).files
@@ -21,13 +23,13 @@ def baselineArguments = [
 
 gradle.projectsEvaluated {
     ['fabric': 'Fabric', 'neoforge': 'NeoForge'].each { loader, name ->
-        archiveProviders[loader] = project(":${name}").tasks.named('jar').flatMap { it.archiveFile }
-        def runtimeProject = project(":RuntimeTests:${name}")
+        archiveProviders[loader] = project("${modPath}:${name}").tasks.named('jar').flatMap { it.archiveFile }
+        def runtimeProject = project("${modPath}:RuntimeTests:${name}")
         endpointDirectories[loader] = ['server', 'client'].collectEntries { endpoint ->
             [(endpoint): runtimeProject.layout.buildDirectory.dir("run/${endpoint}")]
         }
     }
-    journeyMapConfiguration = project(':RuntimeTests:NeoForge').configurations.journeyMapNeoForge
+    journeyMapConfiguration = project("${modPath}:RuntimeTests:NeoForge").configurations.journeyMapNeoForge
 }
 
 def productionArtifact = { String loader ->
@@ -102,7 +104,7 @@ narrator:0
 
 def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady ->
     String projectName = loader == 'fabric' ? 'Fabric' : 'NeoForge'
-    String taskName = ":RuntimeTests:${projectName}:runNetworkTest${endpoint.capitalize()}"
+    String taskName = "${modPath}:RuntimeTests:${projectName}:runNetworkTest${endpoint.capitalize()}"
     List<String> gradleArguments = [
             gradleLauncher.absolutePath,
             '--no-daemon',
@@ -352,7 +354,7 @@ def runServerStartup = { String loader, int port ->
 tasks.register('verifyLoaderServerStartup') {
     group = 'verification'
     description = 'Starts loader servers without optional mods and stops them after readiness.'
-    dependsOn ':Fabric:jar', ':NeoForge:jar'
+    dependsOn "${modPath}:Fabric:jar", "${modPath}:NeoForge:jar"
 
     doLast {
         String selectedLoader = providers.gradleProperty('serverStartupLoader').getOrElse('all')
@@ -371,7 +373,7 @@ tasks.register('verifyLoaderServerStartup') {
 tasks.register('verifyLoaderNetworking') {
     group = 'verification'
     description = 'Runs separate-process same-loader rule synchronization acceptance tests.'
-    dependsOn ':Fabric:jar', ':NeoForge:jar'
+    dependsOn "${modPath}:Fabric:jar", "${modPath}:NeoForge:jar"
 
     doLast {
         String selectedCase = providers.gradleProperty('networkAcceptanceCase').getOrElse('all')

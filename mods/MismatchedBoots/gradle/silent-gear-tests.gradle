@@ -1,7 +1,9 @@
 // Opt-in production acceptance: native jars are neither compile nor publication dependencies.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
@@ -47,7 +49,7 @@ neoForge.runs.create('silentGearStats') {
 }
 
 tasks.register('prepareSilentGearStats') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def jars = artifacts.collect { filename, hash ->
             def jar = testMods.resolve('NeoForge', filename)
@@ -83,7 +85,7 @@ tasks.register('verifySilentGear') {
         // Keep the child log outside the markers directory cleared by prepare.
         def suffix = effectVariant ? "-${effectVariant}" : ''
         def log = layout.buildDirectory.file("reports/silent-gear-stats-${neoforge_version}${suffix}-process.log").get().asFile
-        runBounded(':RuntimeTests:NeoForge:runSilentGearStats', log, 240)
+        runBounded("${modPath}:RuntimeTests:NeoForge:runSilentGearStats", log, 240)
         def markers = reports.get().asFile
         def failure = new File(markers, 'silent-gear-stats-failure.txt')
         if (failure.isFile()) {
@@ -160,7 +162,7 @@ neoForge.runs.create('silentGearStatsAbsent') {
 }
 
 tasks.register('prepareSilentGearStatsAbsent') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def absentRun = directory.get().dir('absent').asFile
         fixtureFiles.delete { delete absentRun, reports.get().dir('absent') }
@@ -179,7 +181,7 @@ tasks.register('verifySilentGearAbsent') {
     description = 'Quiet SG absence, ordinary production composition and independent state codec'
     doLast {
         def log = layout.buildDirectory.file("reports/silent-gear-absent-${neoforge_version}-process.log").get().asFile
-        runBounded(':RuntimeTests:NeoForge:runSilentGearStatsAbsent', log, 240)
+        runBounded("${modPath}:RuntimeTests:NeoForge:runSilentGearStatsAbsent", log, 240)
         def markers = reports.get().dir('absent').asFile
         def failure = new File(markers, 'silent-gear-stats-failure.txt')
         if (failure.isFile()) {
@@ -235,7 +237,7 @@ neoForge.runs.create('silentGearRemaining') {
     jvmArgument('-Xmx1G')
 }
 tasks.register('prepareSilentGearRemainingSeed') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def jars = artifacts.findAll { name, hash -> name.startsWith('silent-') }.collect { name, hash ->
             def jar = testMods.resolve('NeoForge', name)
@@ -264,7 +266,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 }
 tasks.named('runSilentGearRemainingSeed') { dependsOn('prepareSilentGearRemainingSeed') }
 tasks.register('prepareSilentGearRemaining') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         if (!new File(remainingReports.get().asFile, 'silent-gear-remaining-seed-success.txt').isFile()) {
             throw new GradleException('Remaining-effects test requires fresh seed')
@@ -338,7 +340,7 @@ tasks.register('verifySilentGearTooltip') {
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = new File(tooltipReports.get().asFile, "${tooltipVariant}-${phase.toLowerCase(Locale.ROOT)}-process.log")
-            runBounded(phase == 'Seed' ? ':RuntimeTests:NeoForge:runSilentGearRemainingSeed' : ':RuntimeTests:NeoForge:runSilentGearTooltip', log, 300)
+            runBounded(phase == 'Seed' ? "${modPath}:RuntimeTests:NeoForge:runSilentGearRemainingSeed" : "${modPath}:RuntimeTests:NeoForge:runSilentGearTooltip", log, 300)
             def result = remainingReports.get().asFile
             def failure = new File(result, "${tooltipPrefix}-failure.txt")
             def marker = phase == 'Seed' ? 'silent-gear-remaining-seed-success.txt' : "${tooltipPrefix}-success.txt"
@@ -366,7 +368,7 @@ tasks.register('verifySilentGearRemaining') {
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = layout.buildDirectory.file("reports/silent-gear-remaining-${neoforge_version}${voidLog}-${phase.toLowerCase(Locale.ROOT)}-process.log").get().asFile
-            runBounded(":RuntimeTests:NeoForge:runSilentGearRemaining${phase == 'Seed' ? 'Seed' : ''}", log, 300)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runSilentGearRemaining${phase == 'Seed' ? 'Seed' : ''}", log, 300)
             def result = remainingReports.get().asFile
             def failure = new File(result, 'silent-gear-remaining-failure.txt')
             if (failure.isFile()) {
@@ -421,7 +423,7 @@ tasks.register('verifySilentGearRemaining') {
     }
 }
 tasks.register('prepareSilentGearSave') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def jars = (artifacts + justDireArtifact).collect { name, hash ->
             def jar = testMods.resolve('NeoForge', name)
@@ -449,7 +451,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 }
 tasks.named('runSilentGearSave') { dependsOn('prepareSilentGearSave') }
 tasks.named('runSilentGearRestart') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doFirst {
         if (!new File(lifecycleReports.get().asFile, 'silent-gear-save-success.txt').isFile()
                 || !new File(lifecycleRun.get().asFile, 'world/level.dat').isFile()) {
@@ -458,7 +460,7 @@ tasks.named('runSilentGearRestart') {
     }
 }
 tasks.register('prepareSilentGearClient') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         if (!new File(lifecycleReports.get().asFile, 'silent-gear-restart-success.txt').isFile()) {
             throw new GradleException('SG Client requires the completed Restart world')
@@ -505,7 +507,7 @@ tasks.register('verifySilentGearLifecycle') {
         ['Save', 'Restart', 'Client', 'Rejoin'].each { phase ->
             def name = phase.toLowerCase(Locale.ROOT)
             def log = layout.buildDirectory.file("reports/silent-gear-lifecycle-${neoforge_version}-${name}-process.log").get().asFile
-            runBounded(":RuntimeTests:NeoForge:runSilentGear${phase}", log, phase in ['Client', 'Rejoin'] ? 300 : 240)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runSilentGear${phase}", log, phase in ['Client', 'Rejoin'] ? 300 : 240)
             def result = lifecycleReports.get().asFile
             def failure = new File(result, "silent-gear-${name}-failure.txt")
             if (failure.isFile()) {

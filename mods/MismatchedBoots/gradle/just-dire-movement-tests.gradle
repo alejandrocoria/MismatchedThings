@@ -1,4 +1,6 @@
 // JDT Jump, Negate Fall Damage, cooldown HUD and completion sounds.
+def modPath = mismatchedModProject.path
+
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 def testMods = rootProject.ext.testModArtifacts
@@ -7,7 +9,7 @@ def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
 def fixtureBuildDirectory = layout.buildDirectory
 
-def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 
 def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
 
@@ -119,7 +121,7 @@ tasks.named('runJustDireNegateFall') { dependsOn tasks.named('prepareJustDireSmi
 }
 
 tasks.register('prepareJustDireJumpClient') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
@@ -166,11 +168,11 @@ tasks.named('runJustDireJumpClient') { dependsOn tasks.named('prepareJustDireJum
 tasks.register('verifyJustDireCooldownHud') {
     group = 'verification'
     description = 'Checks production-only JDT HUD reads, local guards, committed completion sounds and ordinary equipment synchronization.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Live', 'High', 'Low', 'HooksMissing', 'ParametersMissing', 'Absent'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-cooldown-hud/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireCooldownHud${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireCooldownHud${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-cooldown-hud-failure.txt')
             def success = new File(directory, 'just-dire-cooldown-hud-success.txt')
@@ -220,11 +222,11 @@ tasks.register('verifyJustDireCooldownHud') {
 tasks.register('verifyJustDireJumpGuards') {
     group = 'verification'
     description = 'Runs real compatible wrapper, missing fall companion and quiet optional absence.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Compatible', 'MissingFall', 'Absent'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireJump${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireJump${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-jump-failure.txt')
             def success = new File(directory, 'just-dire-jump-success.txt')
@@ -247,10 +249,10 @@ tasks.register('verifyJustDireJumpGuards') {
 tasks.register('verifyJustDireJump') {
     group = 'verification'
     description = 'Runs bounded production Just Dire Things Jump/fall acceptance with native FE/wear controls.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/neoforge-process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireJump', log, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireJump", log, 240)
         def directory = justDireSmithingMarkers.get().asFile
         def failure = new File(directory, 'just-dire-jump-failure.txt')
         def report = new File(directory, 'just-dire-jump-report.txt')
@@ -261,7 +263,7 @@ tasks.register('verifyJustDireJump') {
         new File(log.parentFile, 'server-report.txt').text = report.text
         logger.lifecycle(report.text)
         def clientLog = fixtureBuildDirectory.file("reports/just-dire-jump/${neoforge_version}/client-process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireJumpClient', clientLog, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireJumpClient", clientLog, 240)
         def clientFailure = new File(directory, 'just-dire-jump-client-failure.txt')
         def clientSuccess = new File(directory, 'just-dire-jump-client-success.txt')
         if (clientFailure.isFile() || !clientSuccess.isFile() || clientSuccess.text != 'neoforge\n') {
@@ -280,10 +282,10 @@ tasks.register('verifyJustDireJump') {
 tasks.register('verifyJustDireNegateFall') {
     group = 'verification'
     description = 'Verifies native controls and production mixed Negate Fall Damage with actual equipped FE payment.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-negate-fall/${neoforge_version}/neoforge-process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireNegateFall', log, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireNegateFall", log, 240)
         def directory = justDireSmithingMarkers.get().asFile
         def failure = new File(directory, 'just-dire-negate-fall-failure.txt')
         def success = new File(directory, 'just-dire-negate-fall-success.txt')
@@ -302,11 +304,11 @@ tasks.register('verifyJustDireNegateFall') {
 tasks.register('verifyJustDireNegateGuards') {
     group = 'verification'
     description = 'Checks independent Negate fallback with real compatible/unsafe consumers, publication, binding and capability failures.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Compatible', 'ConsumerChanged', 'PublicationChanged', 'ApiMissing', 'MissingFall', 'CapabilityMissing'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-negate-fall/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireNegate${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireNegate${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-negate-fall-failure.txt')
             def success = new File(directory, 'just-dire-negate-fall-success.txt')

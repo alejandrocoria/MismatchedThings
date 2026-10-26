@@ -1,12 +1,14 @@
 // Targeted production effect/refund gates; fixture code is never packaged in production.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
-sources.java.srcDir project(':RuntimeTests').file('MysticalAugments/src/main/java')
-sources.resources.srcDir project(':RuntimeTests').file('MysticalAugments/src/main/resources')
+sources.java.srcDir project("${modPath}:RuntimeTests").file('MysticalAugments/src/main/java')
+sources.resources.srcDir project("${modPath}:RuntimeTests").file('MysticalAugments/src/main/resources')
 def filesService = objects.newInstance(FixtureFileOperations).files
-def production = project(":${loader}").tasks.named('jar')
+def production = project("${modPath}:${loader}").tasks.named('jar')
 def fixture = fabric ? tasks.register('mysticalAugmentsTestJar', Jar) {
     archiveClassifier = 'mystical-augments-tests'
     from sources.output
@@ -108,7 +110,7 @@ def verifyVariants = { variants ->
     variants.each { variant ->
         def name = variant.toLowerCase(Locale.ROOT)
         def log = new File(reports.get().asFile, "${name}-process.log")
-        bounded(":RuntimeTests:${loader}:runMysticalAugments${variant}", log, 240)
+        bounded("${modPath}:RuntimeTests:${loader}:runMysticalAugments${variant}", log, 240)
         if (variant == 'Absent' && log.text.readLines().any {
             it =~ /(?i)(WARN|ERROR|Exception)/ && it =~ /(?i)(mysticalagriculture|cucumber)/
         }) {
@@ -269,7 +271,7 @@ tasks.register('diagnoseMysticalAugmentsHealthBreak') {
     doLast {
         ['Seed', 'HealthBreak'].each { phase ->
             def log = layout.buildDirectory.file("reports/mystical-health-break-${baseline}-${phase}-process.log").get().asFile
-            bounded(":RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, 240)
+            bounded("${modPath}:RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, 240)
             def output = phase == 'Seed' ? 'mystical-seed' : 'mystical-health-break'
             def directory = lifecycleReports.get().asFile
             def failure = new File(directory, "${output}-failure.txt")
@@ -295,7 +297,7 @@ tasks.register('verifyMysticalAugmentsLifecycle') {
             def name = phase.toLowerCase(Locale.ROOT)
             // Keep process logs outside the report directory reset by Seed.
             def log = layout.buildDirectory.file("reports/mystical-lifecycle-${baseline}-${name}-process.log").get().asFile
-            bounded(":RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, phase == 'Seed' ? 240 : 360)
+            bounded("${modPath}:RuntimeTests:${loader}:runMysticalLifecycle${phase}", log, phase == 'Seed' ? 240 : 360)
             def directory = lifecycleReports.get().asFile
             def failure = new File(directory, "mystical-${name}-failure.txt")
             if (failure.isFile()) {

@@ -1,9 +1,11 @@
 // Fabric Create Fly server/client compatibility and packaging boundaries.
+def modPath = mismatchedModProject.path
+
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
 def fixtureBuildDirectory = layout.buildDirectory
 
-def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
 
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
@@ -55,7 +57,7 @@ loom.runs {
 }
 
 tasks.register('prepareCreateFlyCompatibilityServer', Delete) {
-    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    dependsOn("${modPath}:Fabric:jar", createFlyCompatibilityTestJar)
     delete createFlyCompatibilityServerRunDirectory, createFlyCompatibilityReport
     doLast {
         def runDirectory = createFlyCompatibilityServerRunDirectory.get().asFile
@@ -77,7 +79,7 @@ max-tick-time=-1
 }
 
 tasks.register('prepareCreateFlyCompatibilityClient', Delete) {
-    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    dependsOn("${modPath}:Fabric:jar", createFlyCompatibilityTestJar)
     delete createFlyCompatibilityClientRunDirectory
     doLast {
         def runDirectory = createFlyCompatibilityClientRunDirectory.get().asFile
@@ -138,7 +140,7 @@ tasks.named('runCreateFlyCompatibilityClient') {
 tasks.register('verifyCreateFlyCompatibility') {
     group = 'verification'
     description = 'Verifies compatibility with the exact Create Fly 6.0.9-4 artifact.'
-    dependsOn(':Fabric:jar', createFlyCompatibilityTestJar)
+    dependsOn("${modPath}:Fabric:jar", createFlyCompatibilityTestJar)
     doLast {
         def artifact = configurations.createFlyFabric.resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == 'maven.modrinth' &&
@@ -301,7 +303,7 @@ tasks.register('verifyCreateFlyCompatibility') {
         def serverLog = fixtureBuildDirectory.file(
                 'reports/create-fly-compatibility/fabric-server-process.log').get().asFile
         runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runCreateFlyCompatibilityServer', serverLog, 240)
+                "${modPath}:RuntimeTests:Fabric:runCreateFlyCompatibilityServer", serverLog, 240)
         if (!createFlyCompatibilityReport.get().asFile.isFile()) {
             throw new GradleException(
                     "Create Fly compatibility report is missing; see ${serverLog}")
@@ -310,7 +312,7 @@ tasks.register('verifyCreateFlyCompatibility') {
         def clientLog = fixtureBuildDirectory.file(
                 'reports/create-fly-compatibility/fabric-client-process.log').get().asFile
         runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runCreateFlyCompatibilityClient', clientLog, 300)
+                "${modPath}:RuntimeTests:Fabric:runCreateFlyCompatibilityClient", clientLog, 300)
         def clientMarker = fixtureBuildDirectory.file(
                 'run/createFlyCompatibilityClient/client-compatibility.ok').get().asFile
         if (!clientMarker.isFile()

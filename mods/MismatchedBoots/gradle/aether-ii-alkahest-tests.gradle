@@ -1,7 +1,9 @@
 // Production only: optional peers/failures never implement another protection path.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def artifact = testMods.path('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar')
@@ -21,7 +23,7 @@ variants.each { name ->
         jvmArgument('-Xmx1G')
     }
     def prepare = tasks.register("prepareAetherIIAlkahest${name}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             if (mode != 'absent') {
                 testMods.resolve('NeoForge', artifact.name)
@@ -57,7 +59,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         description = "Production Alkahest protection (${mode})"
         doLast {
             def log = new File(reports.get().asFile, 'process.log')
-            runBounded(":RuntimeTests:NeoForge:runAetherIIAlkahest${name}", log, 240)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runAetherIIAlkahest${name}", log, 240)
             def failure = new File(reports.get().asFile, 'aether-alkahest-failure.txt')
             if (failure.isFile()) {
                 throw new GradleException(failure.text)

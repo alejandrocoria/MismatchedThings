@@ -1,9 +1,11 @@
 // Real native handlers and hooks, cooperating returns and quiet absence; never use indev JARs.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 
@@ -25,7 +27,7 @@ def artifacts = ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar', 'gecko
         jvmArgument('-Xmx1G')
     }
     def prepare = tasks.register("prepareAllTheModium${variant}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             def nativeJars = mode == 'absent' ? [] : artifacts.collect { testMods.resolve('NeoForge', it) }
             fixtureFiles.delete { delete directory }
@@ -52,7 +54,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         description = "Native AllTheModium boot recognition (${mode})"
         doLast {
             def log = new File(reports.get().asFile, 'process.log')
-            runBounded(":RuntimeTests:NeoForge:runAllTheModium${variant}", log, 240)
+            runBounded("${modPath}:RuntimeTests:NeoForge:runAllTheModium${variant}", log, 240)
             def result = reports.get().asFile
             def failure = new File(result, 'allthemodium-failure.txt')
             if (failure.isFile()) {

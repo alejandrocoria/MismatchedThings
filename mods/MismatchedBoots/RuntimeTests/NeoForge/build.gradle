@@ -3,27 +3,29 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+def modPath = mismatchedModProject.path
+
 base.archivesName = "mismatchedboots-runtime-test-neoforge"
 
-evaluationDependsOn(':NeoForge')
+evaluationDependsOn("${modPath}:NeoForge")
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
 def testMods = rootProject.ext.testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def fixtureBuildDirectory = layout.buildDirectory
-def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 dependencies {
     // Expose Common's source module to IDEs; NeoForge also compiles these classes into its own output.
-    compileOnly(project(':Common')) {
+    compileOnly(project("${modPath}:Common")) {
         transitive = false
         capabilities {
             requireCapability "$group:$mod_id"
         }
     }
-    compileOnly files(project(':NeoForge').sourceSets.main.output)
+    compileOnly files(project("${modPath}:NeoForge").sourceSets.main.output)
     compileOnly "mysticdrew:common-networking-neoforge:${common_networking_version}"
 }
 
@@ -57,18 +59,18 @@ sourceSets {
     iceAndFireTideTest {
         compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
         // Common is an IDE/compile dependency; gameplay still uses the packaged production mod.
-        runtimeClasspath += output + (compileClasspath - project(':Common').sourceSets.main.output)
+        runtimeClasspath += output + (compileClasspath - project("${modPath}:Common").sourceSets.main.output)
     }
     advancedNetheriteTest {
-        java.srcDir project(':RuntimeTests').file('AdvancedNetherite/src/main/java')
+        java.srcDir project("${modPath}:RuntimeTests").file('AdvancedNetherite/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
-        compileClasspath += files(project(':NeoForge').sourceSets.main.output)
+        compileClasspath += files(project("${modPath}:NeoForge").sourceSets.main.output)
         compileClasspath += configurations.advancedNetheriteNeoForge
-        runtimeClasspath += output + (compileClasspath - project(':Common').sourceSets.main.output)
+        runtimeClasspath += output + (compileClasspath - project("${modPath}:Common").sourceSets.main.output)
     }
 }
 
-sourceSets.main.java.srcDir project(':RuntimeTests').file('Common/src/main/java')
+sourceSets.main.java.srcDir project("${modPath}:RuntimeTests").file('Common/src/main/java')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
@@ -254,7 +256,7 @@ def tideTestJar = tasks.register('iceAndFireTideTestJar', Jar) {
 }
 
 tasks.register('prepareIceAndFireTideProduction') {
-    dependsOn(':NeoForge:jar', tideTestJar)
+    dependsOn("${modPath}:NeoForge:jar", tideTestJar)
     doLast {
         def artifacts = verifiedIceAndFireArtifacts()
         fixtureFileOperations.delete { delete tideMarkers, tideRunDirectory }
@@ -321,7 +323,7 @@ tideProductionVariants.each { variant ->
 tasks.register('verifyIceAndFireTideProduction') {
     group = 'verification'
     description = 'Unmodified production FEET adapter: native traces, effects, independent HEAD, real guards and damage regression.'
-    dependsOn(':NeoForge:jar', tideHeadJar, tideTestJar)
+    dependsOn("${modPath}:NeoForge:jar", tideHeadJar, tideTestJar)
     doLast {
         def head = new java.util.zip.ZipFile(tideHeadJar.get().archiveFile.get().asFile)
         try {
@@ -343,7 +345,7 @@ tasks.register('verifyIceAndFireTideProduction') {
         }
         tideProductionVariants.each { variant ->
             def log = fixtureBuildDirectory.file("reports/tide-production/${neoforge_version}/${variant}.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runIceAndFireTideProduction${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runIceAndFireTideProduction${variant}", log, 240)
             def directory = tideMarkers.get().asFile
             def failure = new File(directory, 'tide-owners-failure.txt')
             def report = new File(directory, 'tide-owners-report.txt')
@@ -377,7 +379,7 @@ def advancedNetheriteTestJar = tasks.register('advancedNetheriteTestJar', Jar) {
 }
 
 tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
-    dependsOn(':NeoForge:jar', advancedNetheriteTestJar)
+    dependsOn("${modPath}:NeoForge:jar", advancedNetheriteTestJar)
     delete advancedNetheriteMarkers, advancedNetheriteRunDirectory
     doLast {
         def runDirectory = advancedNetheriteRunDirectory.get().asFile
@@ -403,12 +405,12 @@ tasks.named('runAdvancedNetheriteCompatibility') {
 tasks.register('verifyAdvancedNetheriteCompatibility') {
     group = 'verification'
     description = 'Runs bounded NeoForge acceptance against Advanced Netherite 2.4.1.'
-    dependsOn(':NeoForge:jar', advancedNetheriteTestJar)
+    dependsOn("${modPath}:NeoForge:jar", advancedNetheriteTestJar)
     doLast {
         def processLog = fixtureBuildDirectory.file(
                 'reports/advanced-netherite/neoforge-process.log').get().asFile
         runBoundedGradleTask(
-                ':RuntimeTests:NeoForge:runAdvancedNetheriteCompatibility', processLog, 240)
+                "${modPath}:RuntimeTests:NeoForge:runAdvancedNetheriteCompatibility", processLog, 240)
         def markerDirectory = advancedNetheriteMarkers.get().asFile
         def failure = new File(markerDirectory, 'advanced-netherite-failure.txt')
         if (failure.isFile()) {
@@ -423,7 +425,7 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
 }
 
 tasks.register('prepareGeometryClient') {
-    dependsOn(':NeoForge:jar')
+    dependsOn("${modPath}:NeoForge:jar")
     doLast {
         def compatibilityArtifacts = []
         if (iceAndFireTest) {
@@ -457,7 +459,7 @@ tasks.register('prepareGeometryClient') {
 }
 
 tasks.register('prepareIceAndFireDamageCompatibility') {
-    dependsOn(':NeoForge:jar')
+    dependsOn("${modPath}:NeoForge:jar")
     doLast {
         def compatibilityArtifacts = verifiedIceAndFireArtifacts()
         fixtureFileOperations.delete { delete iceAndFireDamageMarkers, iceAndFireDamageRunDirectory }
@@ -494,11 +496,11 @@ tasks.named('runIceAndFireDamageCompatibility') {
 tasks.register('verifyIceAndFireMixinCoexistence') {
     group = 'verification'
     description = 'Exercises real competing Ice and Fire mixins above/below production priority and late fail-closed guards.'
-    dependsOn(':NeoForge:jar')
+    dependsOn("${modPath}:NeoForge:jar")
     doLast {
         ['High', 'Low', 'Incompatible'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/ice-and-fire-coexistence/${variant}.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runIceAndFireCoexistence${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runIceAndFireCoexistence${variant}", log, 240)
             def warnings = log.readLines().findAll { it.contains('Ice and Fire') && it.contains('boot compatibility disabled') }
             if (variant == 'Incompatible' ? warnings.size() != 1 || !warnings.first().contains('projectile/dragon local')
                     : !warnings.isEmpty()) {
@@ -524,10 +526,10 @@ tasks.register('verifyIceAndFireMixinCoexistence') {
 tasks.register('verifyIceAndFireDamageCompatibility') {
     group = 'verification'
     description = 'Runs bounded real Ice and Fire CE dragon/projectile damage and Lightning-set acceptance.'
-    dependsOn(':NeoForge:jar')
+    dependsOn("${modPath}:NeoForge:jar")
     doLast {
         def processLog = fixtureBuildDirectory.file('reports/ice-and-fire-damage/neoforge-process.log').get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runIceAndFireDamageCompatibility', processLog, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runIceAndFireDamageCompatibility", processLog, 240)
         def markerDirectory = iceAndFireDamageMarkers.get().asFile
         def failure = new File(markerDirectory, 'ice-and-fire-damage-failure.txt')
         if (failure.isFile()) {
@@ -578,7 +580,7 @@ tasks.register('verifyGeometryCharacterization') {
 }
 
 tasks.register('prepareTooltipClient') {
-    dependsOn(':NeoForge:jar')
+    dependsOn("${modPath}:NeoForge:jar")
     doLast {
         fixtureFileOperations.delete { delete tooltipMarkers }
         fixtureFileOperations.delete { delete tooltipRunDirectory }

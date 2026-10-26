@@ -1,9 +1,11 @@
 // Fabric Advanced Netherite compatibility with exact native artifacts.
+def modPath = mismatchedModProject.path
+
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
 def fixtureBuildDirectory = layout.buildDirectory
 
-def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap { it.archiveFile }
 
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
@@ -33,7 +35,7 @@ loom.runs {
 }
 
 tasks.register('prepareAdvancedNetheriteCompatibility', Delete) {
-    dependsOn(':Fabric:jar', advancedNetheriteTestJar)
+    dependsOn("${modPath}:Fabric:jar", advancedNetheriteTestJar)
     delete advancedNetheriteRunDirectory, advancedNetheriteReport
     doLast {
         def runDirectory = advancedNetheriteRunDirectory.get().asFile
@@ -61,12 +63,12 @@ tasks.named('runAdvancedNetheriteCompatibility') {
 tasks.register('verifyAdvancedNetheriteCompatibility') {
     group = 'verification'
     description = 'Runs bounded Fabric acceptance against Advanced Netherite 2.4.1.'
-    dependsOn(':Fabric:jar', advancedNetheriteTestJar)
+    dependsOn("${modPath}:Fabric:jar", advancedNetheriteTestJar)
     doLast {
         def processLog = fixtureBuildDirectory.file(
                 'reports/advanced-netherite/fabric-process.log').get().asFile
         runBoundedGradleTask(
-                ':RuntimeTests:Fabric:runAdvancedNetheriteCompatibility', processLog, 240)
+                "${modPath}:RuntimeTests:Fabric:runAdvancedNetheriteCompatibility", processLog, 240)
         if (!advancedNetheriteReport.get().asFile.isFile()) {
             throw new GradleException("Fabric Advanced Netherite GameTest report is missing; see ${processLog}")
         }

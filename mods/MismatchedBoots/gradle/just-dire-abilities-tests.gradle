@@ -1,4 +1,6 @@
 // JDT Ground Stomp, Earthquake, native screen/input and connected lifecycle.
+def modPath = mismatchedModProject.path
+
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 def testMods = rootProject.ext.testModArtifacts
@@ -156,12 +158,12 @@ tasks.named('runJustDireEarthquakeStateAbsent') { dependsOn tasks.named('prepare
 tasks.register('verifyJustDireEarthquakeState') {
     group = 'verification'
     description = 'Verifies production Earthquake read-only quotes, phase-aware creation import and root preservation; no action/input.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
             def label = variant ? variant.uncapitalize() : 'live'
             def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-state/${neoforge_version}/${label}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireEarthquakeState${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireEarthquakeState${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-earthquake-state-failure.txt')
             def success = new File(directory, 'just-dire-earthquake-state-success.txt')
@@ -192,12 +194,12 @@ tasks.named('runJustDireEarthquakeServerAbsent') { dependsOn tasks.named('prepar
 tasks.register('verifyJustDireEarthquakeServer') {
     group = 'verification'
     description = 'Verifies production Earthquake per-target effects/payment, two-phase worn clock, shared paid permits and server settings.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
             def label = variant ? variant.uncapitalize() : 'live'
             def log = fixtureBuildDirectory.file("reports/just-dire-earthquake-server/${neoforge_version}/${label}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireEarthquakeServer${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireEarthquakeServer${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-earthquake-server-failure.txt')
             def success = new File(directory, 'just-dire-earthquake-server-success.txt')
@@ -228,12 +230,12 @@ tasks.named('runJustDireGroundStompServerAbsent') { dependsOn tasks.named('prepa
 tasks.register('verifyJustDireGroundStompServer') {
     group = 'verification'
     description = 'Verifies production Ground Stomp effects, payment, timers, one-use permits and native-menu server edits.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['', 'ApiMissing', 'QueryFailure', 'SettingsMissing', 'Absent'].each { variant ->
             def label = variant ? variant.uncapitalize() : 'live'
             def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-server/${neoforge_version}/${label}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompServer${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompServer${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-ground-stomp-server-failure.txt')
             def success = new File(directory, 'just-dire-ground-stomp-server-success.txt')
@@ -258,12 +260,12 @@ tasks.register('verifyJustDireGroundStompServer') {
 tasks.register('verifyJustDireGroundStompState') {
     group = 'verification'
     description = 'Verifies production Ground Stomp timer import, root preservation and read-only strongest-usable quotes.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['', 'ApiMissing', 'QueryFailure', 'Absent'].each { variant ->
             def label = variant ? variant.uncapitalize() : 'live'
             def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-state/${neoforge_version}/${label}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompState${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompState${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-ground-stomp-state-failure.txt')
             def success = new File(directory, 'just-dire-ground-stomp-state-success.txt')
@@ -322,11 +324,11 @@ tasks.register('prepareJustDireGroundStompClient') {
 tasks.register('verifyJustDireGroundStompClient') {
     group = 'verification'
     description = 'Verifies native JDT mixed widgets/capture and production location-aware keyboard/mouse batch transport.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-client/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-ground-stomp-client-failure.txt')
             def success = new File(directory, 'just-dire-ground-stomp-client-success.txt')
@@ -364,10 +366,10 @@ tasks.register('verifyJustDireGroundStompClient') {
 tasks.register('verifyJustDireGroundStompTransport') {
     group = 'verification'
     description = 'Verifies bundled production JDT settings/activation transport, ordinary stack packets and natural equipped timer lifecycle.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-server/${neoforge_version}/transport-process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireGroundStompTransport', log, 300)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompTransport", log, 300)
         def directory = justDireSmithingMarkers.get().asFile
         def failure = new File(directory, 'just-dire-ground-stomp-transport-failure.txt')
         def success = new File(directory, 'just-dire-ground-stomp-transport-success.txt')
@@ -397,7 +399,7 @@ tasks.register('prepareJustDireGroundStompLifecycle') {
 tasks.named('runJustDireGroundStompLifecycleSave') { dependsOn('prepareJustDireGroundStompLifecycle') }
 
 tasks.named('runJustDireGroundStompLifecycleRestart') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doFirst {
         // No world-copy/reset preparation here: this JVM must open the preceding saved world.
         if (!new File(justDireJumpClientDirectory.get().asFile, 'saves/jump/level.dat').isFile()
@@ -410,11 +412,11 @@ tasks.named('runJustDireGroundStompLifecycleRestart') {
 tasks.register('verifyJustDireGroundStompLifecycle') {
     group = 'verification'
     description = 'Verifies production JDT controls, FE/wear, HUD and sounds across actual world restart, native tier smithing and reconnect.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Save', 'Restart'].each { mode ->
             def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-lifecycle/${neoforge_version}/${mode.uncapitalize()}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireGroundStompLifecycle${mode}", log, 300)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompLifecycle${mode}", log, 300)
             def directory = justDireSmithingMarkers.get().asFile
             def prefix = "just-dire-ground-stomp-lifecycle-${mode.uncapitalize()}"
             def failure = new File(directory, "${prefix}-failure.txt")

@@ -1,7 +1,9 @@
 // Pinned, disposable native/absent server checks. Production optional bindings remain unmodified.
+def modPath = mismatchedModProject.path
+
 def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
-def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def reports = layout.buildDirectory.dir("reports/roots-ticks/${neoforge_version}")
@@ -23,7 +25,7 @@ def expectedHash = '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a9
         jvmArgument('-Xmx1G')
     }
     def prepare = tasks.register("prepareRootsTicks${variant}") {
-        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             if (variant != 'Absent') {
                 testMods.resolve('NeoForge', artifact.name)
@@ -58,7 +60,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 def verify = { String variant ->
     def name = variant.toLowerCase(Locale.ROOT)
     def processLog = new File(reports.get().asFile, "${name}-process.log")
-    runBounded(":RuntimeTests:NeoForge:runRootsTicks${variant}", processLog, 240)
+    runBounded("${modPath}:RuntimeTests:NeoForge:runRootsTicks${variant}", processLog, 240)
     def markers = reports.get().dir(name).asFile
     def failure = new File(markers, 'roots-ticks-failure.txt')
     if (failure.isFile()) {

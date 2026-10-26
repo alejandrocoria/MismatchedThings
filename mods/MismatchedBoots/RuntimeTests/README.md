@@ -6,8 +6,8 @@ mod root (`mods/MismatchedBoots/`). The fast Common JUnit suite remains in
 `Common/src/test/java` within that subtree.
 
 Run all commands below from the **repository root**, where the Gradle wrapper
-lives. The first monorepo layout stage retains the existing logical task paths
-such as `:RuntimeTests:Fabric:verifyGameplay`. Unless otherwise specified,
+lives. Boots projects use the `:MismatchedBoots` namespace; the earlier root-level
+project aliases no longer exist. Unless otherwise specified,
 `Common/`, `Fabric/`, `NeoForge/`, `RuntimeTests/` and `gradle/` paths in this guide
 are relative to the mod root; root `build/test-mods/` remains repository-relative.
 Explicit file-path `-P` overrides are repository-relative or absolute, as before.
@@ -133,8 +133,8 @@ The owner confirmed manual acceptance on Fabric and NeoForge on 2026-10-25; see
 [D's record](../local-docs/MISSING-MOD-PERSISTENCE-IMPLEMENTATION.md#104-block-d--lifecycle-and-network-consolidation--2026-10-24).
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMissingModsRecovery :RuntimeTests:NeoForge:verifyMissingModsClients
-.\gradlew.bat :RuntimeTests:Fabric:verifyMissingModsRecovery :RuntimeTests:Fabric:verifyMissingModsClients
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyMissingModsRecovery :MismatchedBoots:RuntimeTests:NeoForge:verifyMissingModsClients
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyMissingModsRecovery :MismatchedBoots:RuntimeTests:Fabric:verifyMissingModsClients
 ```
 
 Each disposable candidate world crosses seven independent servers: `write`,
@@ -237,9 +237,9 @@ No actual newer-third-party-release upgrade is claimed.
 ## Mystical Agriculture augments — production effects
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugments
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugments '-Pneoforge_version=26.1.2.99'
-.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugments
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyMysticalAugments
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyMysticalAugments '-Pneoforge_version=26.1.2.99'
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyMysticalAugments
 ```
 
 These targeted tasks run five isolated dedicated servers per loader/baseline,
@@ -279,9 +279,9 @@ candidate registrations have been retired rather than layered over production.
 ### Owner-side refunds — production consumption gate
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsRefunds
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsRefunds '-Pneoforge_version=26.1.2.99'
-.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsRefunds
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyMysticalAugmentsRefunds
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyMysticalAugmentsRefunds '-Pneoforge_version=26.1.2.99'
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyMysticalAugmentsRefunds
 ```
 
 The production adapter observes the one-item `ItemStack.applyDamage` consumption,
@@ -329,8 +329,8 @@ it is not substituted for the new consumption/reentry proof.
 ### Presentation and connected lifecycle — C
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyMysticalAugmentsLifecycle
-.\gradlew.bat :RuntimeTests:Fabric:verifyMysticalAugmentsLifecycle
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyMysticalAugmentsLifecycle
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyMysticalAugmentsLifecycle
 ```
 
 Use NeoForge `.114` for this client gate; `.99` A/B server evidence remains
@@ -376,8 +376,8 @@ producers/owners do not. Dated spike evidence stays in the exploration.
 #### Health Boost V breakage — controlled regression, manual acceptance separate
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:diagnoseMysticalAugmentsHealthBreak
-.\gradlew.bat :RuntimeTests:Fabric:diagnoseMysticalAugmentsHealthBreak
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:diagnoseMysticalAugmentsHealthBreak
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:diagnoseMysticalAugmentsHealthBreak
 ```
 
 This explicit hidden/muted client regression resets the disposable MA lifecycle
@@ -412,23 +412,23 @@ The maintained Lava Repair gates and retired research boundary are documented un
 [Just Dire Things Lava Repair production](#just-dire-things-lava-repair-production).
 
 ```powershell
-.\gradlew.bat :Common:test
-.\gradlew.bat :RuntimeTests:Fabric:test
-.\gradlew.bat :Fabric:verifyGameplay
-.\gradlew.bat :RuntimeTests:Fabric:verifyDamageTagReload
-.\gradlew.bat :Fabric:verifyPersistenceRestart
-.\gradlew.bat :Fabric:verifyClient
-.\gradlew.bat :Fabric:verifyGameTestContextGuard
-.\gradlew.bat :Fabric:verifyQuiltSmoke
-.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization
-.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipCharacterization
+.\gradlew.bat :MismatchedBoots:Common:test
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:test
+.\gradlew.bat :MismatchedBoots:Fabric:verifyGameplay
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyDamageTagReload
+.\gradlew.bat :MismatchedBoots:Fabric:verifyPersistenceRestart
+.\gradlew.bat :MismatchedBoots:Fabric:verifyClient
+.\gradlew.bat :MismatchedBoots:Fabric:verifyGameTestContextGuard
+.\gradlew.bat :MismatchedBoots:Fabric:verifyQuiltSmoke
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyGeometryCharacterization
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyTooltipCharacterization
 .\gradlew.bat verifyLoaderNetworking
 .\gradlew.bat verifyPackagedDependencies
 .\gradlew.bat verifyPackagedDependencyChecks
 ```
 
 The established Fabric verification, GameTest run, and GameTest compilation
-tasks delegate to `:RuntimeTests:Fabric`. Direct `:RuntimeTests:Fabric` commands
+tasks delegate to `:MismatchedBoots:RuntimeTests:Fabric`. Direct `:MismatchedBoots:RuntimeTests:Fabric` commands
 also work. `verifyGameplay` includes an isolated server run for changing a
 damage-type tag and reloading datapacks; the direct task above runs just that
 case. `build`/`check` include the Fabric server GameTests and loader-local JUnit, but do not
@@ -446,7 +446,7 @@ deferred submissions, not only the earlier recording-renderer fixture.
 An optional Ice and Fire CE probe uses the pinned downloaded candidate JARs:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -PiceAndFireTest=true
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyGeometryCharacterization -PiceAndFireTest=true
 ```
 
 It copies only Ice and Fire 2.2-beta.3, Uranus 3.0-alpha.1, and Jupiter
@@ -467,11 +467,11 @@ and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.m
 ### Aether II installed charms — production block A
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIICharms '-Pneoforge_version=26.1.2.99' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIICharms --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAetherIICharms '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAetherIICharms --console=plain
 ```
 
-For an optional-free fixture control, reuse `:RuntimeTests:NeoForge:verifyOritechFallAbsent`
+For an optional-free fixture control, reuse `:MismatchedBoots:RuntimeTests:NeoForge:verifyOritechFallAbsent`
 without competing recognition controls; no duplicate Aether absence driver is needed.
 Both production archives must remain free of native Aether classes, fixture
 drivers and experimental query mixins/config. The identifier-only Common default
@@ -514,7 +514,7 @@ error-free native-mod environment.
 ### Aether II sets and Sentry — production block B
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*AetherRecognitionShapeTest' :RuntimeTests:NeoForge:verifyAetherIIRecognition --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*AetherRecognitionShapeTest' :MismatchedBoots:RuntimeTests:NeoForge:verifyAetherIIRecognition --console=plain
 ```
 
 Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. The four native
@@ -569,7 +569,7 @@ not current production expectations or an executable fallback.
 ### Aether II lifecycle and connected smoke — production block C
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIILifecycle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAetherIILifecycle --console=plain
 ```
 
 Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. This follows the
@@ -616,8 +616,8 @@ topologies, native Forge screen UX or deferred presentation/transactions.
 ### Aether II Alkahest — production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahest --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAetherIIAlkahestGuards --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAetherIIAlkahest --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAetherIIAlkahestGuards --console=plain
 ```
 
 Repeat the normal aggregate with `'-Pneoforge_version=26.1.2.99'`, then restore
@@ -670,9 +670,9 @@ The production entry point is now `verifySilentGear`; the former
 retired, not retained as aliases. Run Gradle tasks sequentially:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearLifecycle --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearAbsent --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearLifecycle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearAbsent --console=plain
 ```
 
 Repeat with `'-Pneoforge_version=26.1.2.99'` for the supported floor; restore the
@@ -686,7 +686,7 @@ For the separate **diagnostic-only** parts/recipes investigation (no candidate
 adapter), run:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear '-PsilentGearEffectVariant=parts-audit' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear '-PsilentGearEffectVariant=parts-audit' --console=plain
 ```
 
 Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. This scope records
@@ -704,9 +704,9 @@ The separate **production source-tooltip acceptance**, without extra source
 headings, has three isolated scopes:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltip --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltip '-PsilentGearTooltipVariant=binding' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearTooltip '-PsilentGearTooltipVariant=formatter' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearTooltip --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearTooltip '-PsilentGearTooltipVariant=binding' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearTooltip '-PsilentGearTooltipVariant=formatter' --console=plain
 ```
 
 It reuses the disposable remaining-effects flat-world seed/preparation and its
@@ -779,13 +779,13 @@ D extends the same lifecycle/coexistence gates below; the owner accepted all
 final manual checks on 2026-10-20, separately from automation.
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-compatible --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-type --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-trait --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-effect --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-definition --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-throw --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-compatible --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-type --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-trait --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-effect --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-definition --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=wearer-throw --console=plain
 ```
 
 `wearer` extends the maintained native fixture with independent Adamant/Aquatic/
@@ -822,10 +822,10 @@ evidence, not the current scope of these commands.
 B's production recognition scopes use the same gate with research recognition off:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-compatible --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-brilliant --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-moonwalker --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-compatible --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-brilliant --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=recognition-moonwalker --console=plain
 ```
 
 These exercise both paid orientations, actual vanilla/native piglin armor checks,
@@ -853,13 +853,13 @@ uses actual mixed-item inventory ticks against independent native controls.
 The former `magnet-spike` command/candidate is retired:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-server --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-compatible --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-effect --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-queue --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-definition --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-throw --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-reload --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-server --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-compatible --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-effect --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-queue --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-definition --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-throw --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=magnet-reload --console=plain
 ```
 
 Run sequentially; repeat with `'-Pneoforge_version=26.1.2.99'` for the floor. It uses native
@@ -928,10 +928,10 @@ C's [production Bounce record](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLE
 uses these scopes (not another runner):
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce-compatible --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce-query --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-joint --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce-compatible --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-bounce-query --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear -PsilentGearEffectVariant=defense-joint --console=plain
 ```
 
 Primary/compatible scopes check real stock slime lining, paid inverse/duplicate
@@ -954,10 +954,10 @@ The remaining-effects gate now uses **production Void Ward, Snow Walker and
 Cure Poison/Wither**, with no research gameplay fallback:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining '-Pneoforge_version=26.1.2.99' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining '-PsilentGearVoidVariant=compatible' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifySilentGearRemaining '-PsilentGearVoidVariant=refused' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearRemaining --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearRemaining '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearRemaining '-PsilentGearVoidVariant=compatible' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifySilentGearRemaining '-PsilentGearVoidVariant=refused' --console=plain
 ```
 
 It creates a fresh SG/Silent Lib-only server seed and one hidden/muted integrated
@@ -1131,8 +1131,8 @@ and SG-style tooltips are not closed by this attributes/state gate.
 The opt-in native-model check runs in the disposable geometry client:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
 `rootsRenderingTest` downloads `RootsClassic-26.1.2-1.6.7.jar` and verifies its
@@ -1165,9 +1165,9 @@ The focused production B/C gates use the pinned Roots Classic artifact from the
 rendering check, with no external library. They never alter the owner's mods:
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*Roots*ShapeTest' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyRootsTicks --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyRootsTicksAbsent --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*Roots*ShapeTest' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyRootsTicks --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyRootsTicksAbsent --console=plain
 ```
 
 Repeat these commands with `'-Pneoforge_version=26.1.2.99'` for the support floor;
@@ -1214,8 +1214,8 @@ The independent damage/set gate opens a real dedicated-server world with the
 same pinned artifacts and does not need a client:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireDamageCompatibility
-.\gradlew.bat :NeoForge:test
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyIceAndFireDamageCompatibility
+.\gradlew.bat :MismatchedBoots:NeoForge:test
 ```
 
 The first task copies only the three SHA-256-verified mod JARs plus the packaged
@@ -1252,8 +1252,8 @@ fixture helmet source container, and an unrelated executable call inserted
 before injection preparation:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireMixinCoexistence
-.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireMixinCoexistence '-Pneoforge_version=26.1.2.99'
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyIceAndFireMixinCoexistence
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyIceAndFireMixinCoexistence '-Pneoforge_version=26.1.2.99'
 ```
 
 It runs the 340-case baseline plus 11 helmet/boots composition cases with the
@@ -1270,8 +1270,8 @@ and do not establish all 16 subsets or Tide activation.
 ### Production Tide FEET acceptance
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireTideProduction --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireTideProduction '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyIceAndFireTideProduction --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyIceAndFireTideProduction '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
 This is the sole maintained Tide runtime gate. The earlier logical-slot spike,
@@ -1329,8 +1329,8 @@ test-only mixin plugin. It proves Cardboard recognition remains local, the
 unrelated predicate retains its own true/false results, both orientations work,
 and ordinary/invalid/spoofed/crouching/flying/Diving controls retain native
 behavior. It does not require a powered belt or claim actual belt movement.
-Run it with `:RuntimeTests:Fabric:verifyCreateFlyCompatibility`; the three local
-shape JUnit regressions are part of `:RuntimeTests:Fabric:test`.
+Run it with `:MismatchedBoots:RuntimeTests:Fabric:verifyCreateFlyCompatibility`; the three local
+shape JUnit regressions are part of `:MismatchedBoots:RuntimeTests:Fabric:test`.
 
 The broad server GameTest XML reports mark context-only no-ops as skipped rather
 than successful coverage. `verifyGameTestContextGuard` deliberately starts one
@@ -1341,7 +1341,7 @@ GameTest reports. The focused fixture tasks enable their actual contexts.
 The Fabric JUnit task verifies Better Nether's live configuration and item-set
 queries, one warning and permanent boundary disablement after a reflective/API
 failure, and no per-tick retry. The real optional-mod gate remains
-`:RuntimeTests:Fabric:verifyBetterXCompatibility`; fake APIs do not replace it.
+`:MismatchedBoots:RuntimeTests:Fabric:verifyBetterXCompatibility`; fake APIs do not replace it.
 
 `verifyQuiltSmoke` uses real Quilt Loader 0.31.0-beta.4, its pinned launcher
 libraries, Fabric API, and the packaged production Fabric JAR in a disposable
@@ -1358,8 +1358,8 @@ directory, never modifies release JARs, and verifies rejection diagnostics.
 Optional recipe-viewer regressions run individually:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:Fabric:verifyJeiRecipeReload
-.\gradlew.bat :RuntimeTests:Fabric:verifyReiRecipeReload
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyJeiRecipeReload
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyReiRecipeReload
 ```
 
 These resolve the exact Fabric viewer JARs and dependencies from the test
@@ -1405,10 +1405,10 @@ directories and old Fabric test reports are not migrated or deleted.
 ## Neo Vitae infusion composition — production creation gate
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyNeoVitaeComposition --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent --console=plain
-.\gradlew.bat :NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' :RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeComposition --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
 Seven local policy tests cover the seven composition cases, both orientations,
@@ -1486,7 +1486,7 @@ from A; the existing gate is extended, not duplicated into a second suite.
 ## Oritech Exo fall recognition
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyOritechFall :RuntimeTests:NeoForge:verifyOritechFallAbsent --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyOritechFall :MismatchedBoots:RuntimeTests:NeoForge:verifyOritechFallAbsent --console=plain
 ```
 
 The opt-in server gate hash-checks the installed Oritech 2.0.0-exp6, GeckoLib 5.5.2
@@ -1521,8 +1521,8 @@ closing that bounded change without adding an automated run or manual loader mat
 ## AllTheModium boot recognition
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*AllTheModium*' :RuntimeTests:NeoForge:verifyAllTheModium --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyAllTheModiumChains --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*AllTheModium*' :MismatchedBoots:RuntimeTests:NeoForge:verifyAllTheModium --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAllTheModiumChains --console=plain
 ```
 
 Use `-Pneoforge_version=26.1.2.99` for the supported floor. Pinned AllTheModium,
@@ -1550,8 +1550,8 @@ an automated run or a manual loader-version matrix.
 ## Undergarden boot recognition
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*UndergardenGooShapeTest' :RuntimeTests:NeoForge:verifyUndergarden --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyUndergardenGuards --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*UndergardenGooShapeTest' :MismatchedBoots:RuntimeTests:NeoForge:verifyUndergarden --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyUndergardenGuards --console=plain
 ```
 
 Use `-Pneoforge_version=26.1.2.99` for the support floor. The native/absent
@@ -1590,8 +1590,8 @@ checks, all 12 corrupted-artifact negatives and production archive isolation pas
 ## Shared tooltip separators
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipSeparators :RuntimeTests:Fabric:verifyTooltipSeparators --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyTooltipSeparators '-Pneoforge_version=26.1.2.99' '-PtooltipSeparatorPlainOnly=true' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyTooltipSeparators :MismatchedBoots:RuntimeTests:Fabric:verifyTooltipSeparators --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyTooltipSeparators '-Pneoforge_version=26.1.2.99' '-PtooltipSeparatorPlainOnly=true' --console=plain
 ```
 
 These maintained commands observe production, not the
@@ -1639,7 +1639,7 @@ The opt-in [whole-model fallback visual trial](../local-docs/ITEM-FALLBACK-ROTAT
 runs only the hybrid structural suite and five task-specific fallback captures:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:Fabric:runClientGameTest -I RuntimeTests/Fabric/item-fallback-visual.init.gradle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:runClientGameTest -I mods/MismatchedBoots/RuntimeTests/Fabric/item-fallback-visual.init.gradle --console=plain
 ```
 
 It declares otherwise ordinary boot geometry unsupported through the test probe,
@@ -1682,9 +1682,9 @@ production). Override its location with `-PjustDireThingsTestJar=...` for direct
 run preparation. They are detached from ordinary `build`/`check`:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireJump
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireJumpGuards
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSmithing
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireJump
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireJumpGuards
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireSmithing
 ```
 
 The jump gate first runs a bounded server movement/actual-fall-health matrix,
@@ -1727,9 +1727,9 @@ local-docs, not inferred from successful installation recipes.
 ## Just Dire Things Negate Fall Damage (8.4)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateGuards --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireNegateFall "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireNegateFall --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireNegateGuards --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireNegateFall "-Pneoforge_version=26.1.2.99" --console=plain
 ```
 
 This opt-in server gate uses the same hash-pinned native JAR and isolated
@@ -1783,7 +1783,7 @@ property described above, with an active production or compatible export.
 Run existing gates sequentially; no second lifecycle/client harness is needed:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireNegateGuards :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResourcesGuards :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireNegateFall :NeoForge:test "-PjustDireTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResources :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireNegateGuards :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireJump :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireJumpGuards :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireAttributes :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResourcesGuards :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireSmithing :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireNegateFall :MismatchedBoots:NeoForge:test "-PjustDireTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
 ```
 
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the ordinary .114
@@ -1815,8 +1815,8 @@ the owner's separate checklist in local-docs; other powered abilities stay defer
 ## Just Dire Things production energy storage (8.3 A)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResourcesGuards --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResources --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResourcesGuards --console=plain
 ```
 
 These opt-in acceptance gates use the same hash-pinned native JAR and isolated
@@ -1889,8 +1889,8 @@ to exercise the supported loader floor.
 ## Just Dire Things production live attributes (8.3 B)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributes --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireAttributes "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireAttributes --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireAttributes "-Pneoforge_version=26.1.2.99" --console=plain
 ```
 
 This opt-in gate uses production lifecycle callbacks, component registration and
@@ -1926,7 +1926,7 @@ explicit managed edits through tier change/storage removal and actual native
 smithing upgrade/output extraction; each fallback process has two scenario groups.
 Warning counts are asserted. Four local bytecode regression tests exercise native
 entry/final owned flow, earlier transforms, wrong root/defaults, discarded router/
-event results, foreign routing and readiness edits (`:NeoForge:test`).
+event results, foreign routing and readiness edits (`:MismatchedBoots:NeoForge:test`).
 The separate resource gate above now includes non-default frozen attribute rules
 through a real world restart and actual client equipped armor/Step Assist at
 charged/depleted FE, in addition to production Workbench and packet agreement.
@@ -1942,10 +1942,10 @@ Use the existing isolated runs, sequentially (repeat with the .99 property for
 the supported floor):
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompServer --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompClientLive --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:runJustDireGroundStompTransport --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:runJustDireGroundStompServer --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:runJustDireGroundStompClientLive --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:runJustDireGroundStompTransport --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
 ```
 
 Four A location groups extend the server's existing 21 groups with real effects/FE,
@@ -1983,9 +1983,9 @@ Repeat the bounded regression matrix sequentially (never use `--parallel` for
 these gates, which share disposable run/marker directories):
 
 ```powershell
-.\gradlew.bat :Common:test :NeoForge:test :Fabric:verifyGameplay :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards verifyPackagedDependencies --console=plain
-.\gradlew.bat :NeoForge:test :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :NeoForge:test :RuntimeTests:NeoForge:verifyJustDireSmithing verifyPackagedDependencies --console=plain
+.\gradlew.bat :MismatchedBoots:Common:test :MismatchedBoots:NeoForge:test :MismatchedBoots:Fabric:verifyGameplay :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireSmithing :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireJump :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireJumpGuards :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireAttributes :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResources :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResourcesGuards verifyPackagedDependencies --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireAttributes :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResources :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResourcesGuards "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireSmithing verifyPackagedDependencies --console=plain
 ```
 
 The last command restores/verifies the normal .114 production artifact and its
@@ -2005,9 +2005,9 @@ This production acceptance gate tests the root-owned installation contract in
 without replacing production methods. Run sequentially with the other JDT gates:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRootUpgrades --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRootUpgrades "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireSmithing --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireRootUpgrades --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireRootUpgrades "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireSmithing --console=plain
 ```
 
 The final command restores the normal loader artifact and verifies the maintained
@@ -2083,7 +2083,7 @@ constructors/controls remain shared test helpers, without another mixed action.
 ## Just Dire Things Earthquake production state (block A)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireEarthquakeState --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireEarthquakeState --console=plain
 ```
 
 Uses production quotes/creation/preservation, never the research candidate's
@@ -2109,8 +2109,8 @@ See [the production record](../local-docs/JUST-DIRE-THINGS-EARTHQUAKE-IMPLEMENTA
 ## Just Dire Things Earthquake production server (block B)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireEarthquakeServer --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompTransport --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireEarthquakeServer --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompTransport --console=plain
 ```
 
 Reuses pinned/disposable JDT server preparation and the existing bundled transport
@@ -2157,7 +2157,7 @@ with `"-Pneoforge_version=26.1.2.99"`, then restore normal .114 artifacts. See
 ## Just Dire Things Ground Stomp production state (8.5 block A)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompState --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompState --console=plain
 ```
 
 Uses the pinned JDT artifact and disposable server preparation from the smithing
@@ -2184,7 +2184,7 @@ and claims no ordinary-client active-gameplay acceptance. See
 ## Just Dire Things Ground Stomp production server (8.5 block B)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompServer :RuntimeTests:NeoForge:verifyJustDireGroundStompTransport --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompServer :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompTransport --console=plain
 ```
 
 Run sequentially: the server gate prepares the disposable world needed by the
@@ -2229,7 +2229,7 @@ See [the block B record](../local-docs/JUST-DIRE-THINGS-GROUND-STOMP-IMPLEMENTAT
 ## Just Dire Things production native screen/input (8.5 block C)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompClient --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompClient --console=plain
 ```
 
 Requires the disposable server world prepared by the B server gate. Eight
@@ -2319,7 +2319,7 @@ now owns presentation changes and separate final acceptance.
 ## Just Dire Things Ground Stomp production lifecycle (8.5 E)
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
 ```
 
 Requires the disposable server-world prerequisite from the production server gate.
@@ -2438,8 +2438,8 @@ confirmed in full by the owner on 2026-10-17.
 ## Just Dire Things native cooldown HUD production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownHud verifyPackagedDependencies --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireCooldownHud verifyPackagedDependencies "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireCooldownHud verifyPackagedDependencies --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireCooldownHud verifyPackagedDependencies "-Pneoforge_version=26.1.2.99" --console=plain
 ```
 
 Six isolated client JVMs use the **production** HUD bridge, never the research
@@ -2522,8 +2522,8 @@ baseline/candidate probe/datapack were retired; historical evidence remains in
 ## Just Dire Things Lava Repair production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepair --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaRepairGuards --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireLavaRepair --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireLavaRepairGuards --console=plain
 ```
 
 Repeat each command with `"-Pneoforge_version=26.1.2.99"`, then restore the default
@@ -2561,7 +2561,7 @@ are retained under `RuntimeTests/NeoForge/build/reports/just-dire-lava-repair/<v
 with `production`, `productionClient` and per-guard files. The real lifecycle gate
 below complements the focused explicit-tick scenarios; it does not replace them.
 
-Block B's `:RuntimeTests:NeoForge:verifyJustDireLavaRepairSettings` reuses the native
+Block B's `:MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireLavaRepairSettings` reuses the native
 settings client harness with focused `Lava`/`LavaSettingsFailure` variants. It
 checks actual original widgets/selection/capture and production packets, one/two
 providers in both orientations without installations, root absent/false switches,
@@ -2588,8 +2588,8 @@ closing [section 9.3](../local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-IMPLEMENTATION.
 Block C adds a scheduler-owned entity gate:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireLavaLifecycle --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireLavaLifecycle --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireGroundStompLifecycle --console=plain
 ```
 
 Repeat on .99 as above. `verifyJustDireLavaLifecycle` runs two dedicated-server
@@ -2636,8 +2636,8 @@ not a substitute for production or manual acceptance.
 ## Just Dire Things armor wear / FE production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWear "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireArmorWear --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireArmorWear "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireArmorWear --console=plain
 ```
 
 Run sequentially and restore default .114 afterward. The maintained gate uses the
@@ -2698,7 +2698,7 @@ Live and both wrappers retain actual final `CommonHooks.class` exports for focus
 preflight/final-publication guard tests:
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests "*JustDireArmorWearShapeTest" "-PjustDireArmorWearTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/26.1.2.114/CommonHooks.class" --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests "*JustDireArmorWearShapeTest" "-PjustDireArmorWearTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/26.1.2.114/CommonHooks.class" --console=plain
 ```
 
 Supply the matching .99 export and loader property for minimum-version validation.
@@ -2723,9 +2723,9 @@ armor-wear/FE A/B/C plan.
 ### Conserved upgrade credits and actual-break refunds — production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefunds --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources --console=plain
-.\gradlew.bat :NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireRefunds --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResources --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
 ```
 
 Repeat on .99 and restore default .114. This maintained production gate uses the
@@ -2787,8 +2787,8 @@ inferred from these automated gates. See sections 6.1/10.3 of
 ### Dynamic JDT FE/durability item bars — production
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBars "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireItemBars --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireItemBars "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireItemBars --console=plain
 ```
 
 The [A/B plan](../local-docs/JUST-DIRE-THINGS-ITEM-BARS-IMPLEMENTATION.md) owns

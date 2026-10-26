@@ -1,0 +1,31 @@
+def metadata = new Properties()
+file('mod.properties').withInputStream { stream -> metadata.load(stream) }
+
+def owningMod = project
+
+// Nested properties files are not loaded by Gradle; initialize children before their plugins run.
+allprojects { child ->
+    child.version = metadata.getProperty('version')
+    child.group = metadata.getProperty('group')
+    child.ext.mismatchedModProject = owningMod
+
+    metadata.each { key, value ->
+        if (!(key in ['version', 'group'])) {
+            child.extensions.extraProperties.set(key.toString(), value)
+        }
+    }
+}
+
+// These optional source APIs belong to Boots, not every user of the build conventions.
+['Common', 'Fabric', 'NeoForge'].each { name ->
+    def targetProject = project(name)
+    targetProject.pluginManager.withPlugin('java-library') {
+        targetProject.dependencies {
+            // Advanced Netherite 2.4.1 Fabric, exact Modrinth version: https://modrinth.com/mod/CFX9ftUJ/version/vudH2Rjv
+            compileOnly('maven.modrinth:CFX9ftUJ:vudH2Rjv') {
+                transitive = false
+            }
+            compileOnly 'org.ow2.asm:asm-tree:9.9.1'
+        }
+    }
+}

@@ -1,4 +1,6 @@
 // JDT energy storage, attributes and resource-client lifecycle.
+def modPath = mismatchedModProject.path
+
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 def testMods = rootProject.ext.testModArtifacts
@@ -7,7 +9,7 @@ def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 
 def fixtureBuildDirectory = layout.buildDirectory
 
-def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+def productionArchive = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 
 def justDireSmithingMarkers = fixtureBuildDirectory.dir('just-dire-smithing-markers')
 
@@ -89,10 +91,10 @@ neoForge.runs {
 tasks.named('runJustDireResources') { dependsOn tasks.named('prepareJustDireSmithing') }
 
 // Restart must retain the first process's actual world/markers, never invoke destructive preparation.
-tasks.named('runJustDireResourcesRestart') { dependsOn(':NeoForge:jar', tasks.named('jar')) }
+tasks.named('runJustDireResourcesRestart') { dependsOn("${modPath}:NeoForge:jar", tasks.named('jar')) }
 
 tasks.register('prepareJustDireResourcesClient') {
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
@@ -138,11 +140,11 @@ tasks.named('runJustDireResourcesClient') { dependsOn tasks.named('prepareJustDi
 tasks.register('verifyJustDireResourcesGuards') {
     group = 'verification'
     description = 'Verifies quiet JDT absence and bounded invalid storage binding without disabling passive Jump.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Absent', 'ApiMissing'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-resources/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireResources${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireResources${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-resources-guard-failure.txt')
             def success = new File(directory, 'just-dire-resources-guard-success.txt')
@@ -168,11 +170,11 @@ tasks.register('verifyJustDireResourcesGuards') {
 tasks.register('verifyJustDireAttributes') {
     group = 'verification'
     description = 'Verifies production live powered attribute projections and absent-hook fallback with real Just Dire Things.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         ['Live', 'Absent', 'ApiMissing'].each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-attributes/${neoforge_version}/${variant}-process.log").get().asFile
-            runBoundedGradleTask(":RuntimeTests:NeoForge:runJustDireAttributes${variant}", log, 240)
+            runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireAttributes${variant}", log, 240)
             def directory = justDireSmithingMarkers.get().asFile
             def failure = new File(directory, 'just-dire-attributes-failure.txt')
             def success = new File(directory, 'just-dire-attributes-success.txt')
@@ -202,10 +204,10 @@ tasks.register('verifyJustDireAttributes') {
 tasks.register('verifyJustDireResources') {
     group = 'verification'
     description = 'Verifies production Just Dire Things maximum-capacity/live-root storage with the real native JAR.'
-    dependsOn(':NeoForge:jar', tasks.named('jar'))
+    dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
         def log = fixtureBuildDirectory.file("reports/just-dire-resources/${neoforge_version}/production-process.log").get().asFile
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireResources', log, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireResources", log, 240)
         def directory = justDireSmithingMarkers.get().asFile
         def failure = new File(directory, 'just-dire-resources-failure.txt')
         def success = new File(directory, 'just-dire-resources-success.txt')
@@ -221,7 +223,7 @@ tasks.register('verifyJustDireResources') {
         new File(log.parentFile, 'refund-lifecycle-report.txt').text = refundSave.text
         logger.lifecycle(report.text)
         def restartLog = new File(log.parentFile, 'restart-process.log')
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireResourcesRestart', restartLog, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireResourcesRestart", restartLog, 240)
         def restartSuccess = new File(directory, 'just-dire-resources-restart-success.txt')
         if (failure.isFile() || !restartSuccess.isFile() || restartSuccess.text != 'neoforge\n') {
             throw new GradleException("Just Dire Things actual restart failed: ${failure.isFile() ? failure.text : restartLog}")
@@ -239,7 +241,7 @@ tasks.register('verifyJustDireResources') {
         new File(log.parentFile, 'refund-restart-report.txt').text = refundRestart.text
         logger.lifecycle(restartReport.text)
         def clientLog = new File(log.parentFile, 'client-process.log')
-        runBoundedGradleTask(':RuntimeTests:NeoForge:runJustDireResourcesClient', clientLog, 240)
+        runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireResourcesClient", clientLog, 240)
         def clientFailure = new File(directory, 'just-dire-resources-client-failure.txt')
         def clientSuccess = new File(directory, 'just-dire-resources-client-success.txt')
         def clientReport = new File(directory, 'just-dire-resources-client-report.txt')

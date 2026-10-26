@@ -1,5 +1,7 @@
 // Exact third-party runtime fixtures; isolated from production dependencies/publication.
-def pins = new groovy.json.JsonSlurper().parse(project(':RuntimeTests').file('mod-artifacts.json'))
+def modPath = ':MismatchedBoots'
+
+def pins = new groovy.json.JsonSlurper().parse(project("${modPath}:RuntimeTests").file('mod-artifacts.json'))
 def artifacts = [:]
 pins.eachWithIndex { pin, index ->
     def uri = URI.create(pin.url)

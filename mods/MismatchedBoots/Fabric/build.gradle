@@ -9,6 +9,8 @@ plugins {
     id "com.modrinth.minotaur" version "2.9.0"
 }
 
+def modPath = mismatchedModProject.path
+
 base.archivesName = "${project.mod_name}-${project.minecraft_version}-fabric"
 
 dependencies {
@@ -37,7 +39,7 @@ dependencies {
 }
 
 loom {
-    def aw = project(":Common").file("src/main/resources/${mod_id}.accesswidener")
+    def aw = project("${modPath}:Common").file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
@@ -45,16 +47,19 @@ loom {
         useLegacyMixinAp = false
     }
     runs {
+        configureEach {
+            appendProjectPathToConfigName.set(false)
+        }
         client {
             client()
-            setConfigName("Fabric Client")
+            setConfigName("${mod_name} — Fabric Client")
             property("mixin.debug.export", "true")
             ideConfigGenerated(true)
             runDir("runs/client")
         }
         server {
             server()
-            setConfigName("Fabric Server")
+            setConfigName("${mod_name} — Fabric Server")
             property("mixin.debug.export", "true")
             ideConfigGenerated(true)
             runDir("runs/server")
@@ -70,12 +75,12 @@ loom {
     tasks.register(name) {
         group = 'verification'
         description = "Delegates to the isolated Fabric runtime test project."
-        dependsOn(":RuntimeTests:Fabric:${name}")
+        dependsOn("${modPath}:RuntimeTests:Fabric:${name}")
     }
 }
 
 tasks.named('check') {
-    dependsOn(':RuntimeTests:Fabric:verifyGameplay', ':RuntimeTests:Fabric:test')
+    dependsOn("${modPath}:RuntimeTests:Fabric:verifyGameplay", "${modPath}:RuntimeTests:Fabric:test")
 }
 
 idea {
