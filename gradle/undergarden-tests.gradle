@@ -15,7 +15,9 @@ def artifacts = [
     def reports = layout.buildDirectory.dir("reports/undergarden/${neoforge_version}/${mode}")
     def directory = layout.buildDirectory.dir("run/undergarden/${neoforge_version}/${mode}")
     neoForge.runs.create("undergarden${variant}") {
-        server(); disableIdeRun(); programArgument('--nogui')
+        server()
+        disableIdeRun()
+        programArgument('--nogui')
         gameDirectory = directory.get().asFile
         systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
         systemProperty('mismatchedboots.runtimetest.undergarden', mode)
@@ -65,6 +67,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             if (failure.isFile()) {
                 throw new GradleException(failure.text)
             }
+
             def report = new File(result, 'undergarden-report.txt')
             def lines = log.readLines()
             // SG ships this optional Bonsai recipe without a usable serializer when Bonsai is absent.

@@ -73,6 +73,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             if (failure.isFile()) {
                 throw new GradleException(failure.text)
             }
+
             def report = new File(result, 'neo-vitae-composition-report.txt')
             if (!new File(result, 'neo-vitae-composition-success.txt').isFile() || !report.isFile()) {
                 throw new GradleException("Missing Neo Vitae composition result; see ${processLog}")

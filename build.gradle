@@ -54,6 +54,7 @@ gradle.projectsEvaluated {
             while (enumeration.hasMoreElements()) {
                 entries.add(enumeration.nextElement().name)
             }
+
             def prefix = entryPrefixes[loader]
             def expectedBackend = "${prefix}common-networking-${loader}-${networkingVersion}.jar".toString()
             def bundledBackends = entries.findAll {
@@ -87,6 +88,7 @@ gradle.projectsEvaluated {
             if (descriptorEntry == null) {
                 throw new GradleException("${artifact.name} is missing ${descriptorPath}")
             }
+
             def descriptor = zip.getInputStream(descriptorEntry).getText("UTF-8")
             if (!descriptor.contains("commonnetworking") || !descriptor.contains(networkingVersion)) {
                 throw new GradleException("${artifact.name} does not require CommonNetworking ${networkingVersion}")
@@ -180,6 +182,7 @@ gradle.projectsEvaluated {
                     } finally {
                         original.close()
                     }
+
                     boolean rejected = false
                     try {
                         verifyArtifact(loader, fixture)

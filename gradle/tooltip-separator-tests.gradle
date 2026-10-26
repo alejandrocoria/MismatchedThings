@@ -40,7 +40,8 @@ def artifacts = fabric ? [
     if (fabric) {
         loom.runs.create("tooltipSeparator${phase}") {
             inherit phase == 'Seed' ? loom.runs.server : loom.runs.client
-            source('networkTest'); ideConfigGenerated(false)
+            source('networkTest')
+            ideConfigGenerated(false)
             runDir("build/run/tooltipSeparators/${baseline}/${phase.toLowerCase(Locale.ROOT)}")
             properties.each { key, value -> property(key, value) }
             if (phase == 'Seed') {
@@ -52,10 +53,12 @@ def artifacts = fabric ? [
         }
     } else {
         neoForge.runs.create("tooltipSeparator${phase}") {
-            disableIdeRun(); gameDirectory = directory.get().asFile
+            disableIdeRun()
+            gameDirectory = directory.get().asFile
             properties.each { key, value -> systemProperty(key, value) }
             if (phase == 'Seed') {
-                server(); programArgument('--nogui')
+                server()
+                programArgument('--nogui')
             } else {
                 client()
                 ['--quickPlaySingleplayer', 'tooltip', '--username', 'SeparatorTest', '--width', '1920', '--height', '1080'].each { programArgument(it) }
@@ -63,6 +66,7 @@ def artifacts = fabric ? [
             jvmArgument('-Xmx1G')
         }
     }
+
     def prepare = tasks.register("prepareTooltipSeparator${phase}") {
         dependsOn production, fixture
         doLast {
@@ -80,8 +84,10 @@ def artifacts = fabric ? [
                 }
                 artifact
             } : []
-            filesService.copy { from production, fixture.flatMap { it.archiveFile }, mods;
-                into new File(target, 'mods') }
+            filesService.copy {
+                from production, fixture.flatMap { it.archiveFile }, mods
+                into new File(target, 'mods')
+            }
             markers.get().asFile.mkdirs()
             if (phase == 'Seed') {
                 new File(target, 'eula.txt').text = 'eula=true\n'
@@ -99,9 +105,13 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (!world.isFile()) {
                     throw new GradleException('Run the disposable separator seed first')
                 }
-                filesService.copy { from world.parentFile; into new File(target, 'saves/tooltip') }
+                filesService.copy {
+                    from world.parentFile
+                    into new File(target, 'saves/tooltip')
+                }
                 new File(target, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\nguiScale:2\n'
-                def config = new File(target, 'config'); config.mkdirs()
+                def config = new File(target, 'config')
+                config.mkdirs()
                 new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
             }
         }
@@ -126,6 +136,7 @@ tasks.register('verifyTooltipSeparators') {
             if (phase != 'Seed' && !new File(markerDirectory, 'separator-success.txt').isFile()) {
                 throw new GradleException("Incomplete production separator checks: ${log}")
             }
+
             def errors = log.readLines().findAll { it.contains('/ERROR]') }
             if (!errors.isEmpty()) {
                 throw new GradleException("Unexpected separator errors: ${errors}")

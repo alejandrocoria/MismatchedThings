@@ -48,19 +48,24 @@ def artifactsForStage = { String stage ->
         if (fabric) {
             loom.runs.create("missingMods${variant}${phase}") {
                 inherit loom.runs.server
-                source('networkTest'); ideConfigGenerated(false)
+                source('networkTest')
+                ideConfigGenerated(false)
                 runDir("build/run/missing-mods/${baseline}/${mode}")
                 properties.each { key, value -> property(key, value) }
-                programArgs('--nogui'); vmArg('-Xmx1G')
+                programArgs('--nogui')
+                vmArg('-Xmx1G')
             }
         } else {
             neoForge.runs.create("missingMods${variant}${phase}") {
-                server(); disableIdeRun(); programArgument('--nogui')
+                server()
+                disableIdeRun()
+                programArgument('--nogui')
                 gameDirectory = directory.get().asFile
                 properties.each { key, value -> systemProperty(key, value) }
                 jvmArgument('-Xmx1G')
             }
         }
+
         def prepare = tasks.register("prepareMissingMods${variant}${phase}") {
             dependsOn(":${loader}:jar", fixtureTask)
             doLast {
@@ -73,6 +78,7 @@ def artifactsForStage = { String stage ->
                         }
                     }
                 }
+
                 def safeDelete = { File target ->
                     if (!target.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
                         throw new GradleException("Refusing fixture cleanup outside build: ${target}")
@@ -119,6 +125,7 @@ tasks.register('verifyMissingModsRecovery') {
             if (!(mode in ['control', 'candidate', 'refused', 'bypassed'])) {
                 throw new GradleException("Unknown case ${mode}")
             }
+
             def refusal = mode in ['refused', 'bypassed']
             def selectedStages = providers.gradleProperty('missingModsStages')
                     .getOrElse(mode == 'candidate' ? 'write,absent,absentagain,partial,sources,restore,reloaded' : 'write,absent,restore').split(',')
@@ -126,6 +133,7 @@ tasks.register('verifyMissingModsRecovery') {
                 if (!(stage in ['write', 'absent', 'absentagain', 'partial', 'sources', 'restore', 'reloaded'])) {
                     throw new GradleException("Unknown stage ${stage}")
                 }
+
                 def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/${mode}/${stage}").get().asFile
                 def log = new File(markers, 'process.log')
                 boolean failed = false
@@ -148,10 +156,12 @@ tasks.register('verifyMissingModsRecovery') {
                     logger.lifecycle("Required capture refusal passed before world open: ${log}")
                     return
                 }
+
                 def failure = new File(markers, 'missing-mods-failure.txt')
                 if (failure.isFile()) {
                     throw new GradleException(failure.text)
                 }
+
                 def report = new File(markers, 'missing-mods-report.txt')
                 if (!new File(markers, 'missing-mods-success.txt').isFile() || !report.isFile()) {
                     throw new GradleException("Missing spike result; see ${log}")
@@ -186,7 +196,9 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
     ]
     if (fabric) {
         loom.runs.create("missingMods${phase}") {
-            inherit loom.runs.client; source('networkTest'); ideConfigGenerated(false)
+            inherit loom.runs.client
+            source('networkTest')
+            ideConfigGenerated(false)
             runDir("build/run/missing-mods/${baseline}/client")
             properties.each { key, value -> property(key, value) }
             programArgs('--quickPlaySingleplayer', 'recovery', '--username', 'RecoveryFixture')
@@ -194,12 +206,15 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
         }
     } else {
         neoForge.runs.create("missingMods${phase}") {
-            client(); disableIdeRun(); gameDirectory = clientDirectory.get().asFile
+            client()
+            disableIdeRun()
+            gameDirectory = clientDirectory.get().asFile
             properties.each { key, value -> systemProperty(key, value) }
             ['--quickPlaySingleplayer', 'recovery', '--username', 'RecoveryFixture'].each { programArgument(it) }
             jvmArgument('-Xmx1G')
         }
     }
+
     def prepare = tasks.register("prepareMissingMods${phase}") {
         dependsOn(":${loader}:jar", fixtureTask)
         doLast {
@@ -234,7 +249,8 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
             markers.get().asFile.mkdirs()
             fixtureFiles.delete { delete fileTree(markers) { include 'missing-mods-*.txt' } }
             new File(target, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-            def config = new File(target, 'config'); config.mkdirs()
+            def config = new File(target, 'config')
+            config.mkdirs()
             def fmlConfig = new File(config, 'fml.toml')
             if (!fmlConfig.exists()) {
                 fmlConfig.text = 'earlyWindowControl = false\n'
@@ -253,6 +269,7 @@ tasks.register('verifyMissingModsClients') {
             if (!(phase in ['Clientwrite', 'Clientabsent', 'Clientrestore'])) {
                 throw new GradleException("Unknown connected phase ${phase}")
             }
+
             def markers = layout.buildDirectory.dir("reports/missing-mods/${baseline}/clients/${phase.toLowerCase(Locale.ROOT)}").get().asFile
             def log = new File(markers, 'process.log')
             runBounded(":RuntimeTests:${loader}:runMissingMods${phase}", log, 360)
@@ -260,6 +277,7 @@ tasks.register('verifyMissingModsClients') {
             if (failure.isFile()) {
                 throw new GradleException(failure.text)
             }
+
             def report = new File(markers, 'missing-mods-report.txt')
             if (!new File(markers, 'missing-mods-success.txt').isFile() || !report.isFile()
                     || log.readLines().any { it.contains('/ERROR]') || it.contains('Failed to decode value') }) {

@@ -92,6 +92,7 @@ tasks.named('test', Test).configure {
     if (justDireGuardArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireGuardJar', rootProject.file(justDireGuardArtifact.get()).absolutePath
     }
+
     def justDireTransformed = providers.gradleProperty('justDireTransformedClass')
     def justDireArmorWearTransformed = providers.gradleProperty('justDireArmorWearTransformedClass')
     def justDireRefundTransformed = providers.gradleProperty('justDireRefundTransformedClass')
@@ -104,18 +105,22 @@ tasks.named('test', Test).configure {
     if (justDireTransformed.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireTransformedClass', rootProject.file(justDireTransformed.get()).absolutePath
     }
+
     def justDireSettingsTransformed = providers.gradleProperty('justDireSettingsTransformedClass')
     if (justDireSettingsTransformed.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireSettingsTransformedClass', rootProject.file(justDireSettingsTransformed.get()).absolutePath
     }
+
     def justDireCooldownHudTransformed = providers.gradleProperty('justDireCooldownHudTransformedClass')
     if (justDireCooldownHudTransformed.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireCooldownHudTransformedClass', rootProject.file(justDireCooldownHudTransformed.get()).absolutePath
     }
+
     def guardArtifact = providers.gradleProperty('iceAndFireGuardJar')
     if (guardArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.iceAndFireGuardJar', rootProject.file(guardArtifact.get()).absolutePath
     }
+
     def oritechArtifact = providers.gradleProperty('oritechGuardJar')
     def aetherArtifact = providers.gradleProperty('aetherGuardJar')
     if (aetherArtifact.isPresent()) {
@@ -124,10 +129,12 @@ tasks.named('test', Test).configure {
     if (oritechArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.oritechGuardJar', rootProject.file(oritechArtifact.get()).absolutePath
     }
+
     def rootsArtifact = providers.gradleProperty('rootsGuardJar')
     if (rootsArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.rootsGuardJar', rootProject.file(rootsArtifact.get()).absolutePath
     }
+
     def undergardenArtifact = providers.gradleProperty('undergardenGuardJar')
     if (undergardenArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.undergardenGuardJar', rootProject.file(undergardenArtifact.get()).absolutePath

@@ -34,26 +34,31 @@ if (!fabric) {
     if (fabric) {
         loom.runs.create("mysticalAugments${variant}") {
             inherit loom.runs.server
-            source('networkTest'); ideConfigGenerated(false)
+            source('networkTest')
+            ideConfigGenerated(false)
             runDir("build/run/mysticalAugments/${baseline}/${name}")
             property('mismatchedboots.test.mysticalAugments', name)
             property('mixin.debug.export', 'true')
             property('mixin.debug.export.filter', 'net.minecraft.world.item.ItemStack')
             property('fabric-tag-conventions-v2.missingTagTranslationWarning', 'VERBOSE')
             property('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
-            programArgs('--nogui'); vmArg('-Xmx1G')
+            programArgs('--nogui')
+            vmArg('-Xmx1G')
         }
     } else {
         neoForge.runs.create("mysticalAugments${variant}") {
-            server(); disableIdeRun()
+            server()
+            disableIdeRun()
             gameDirectory = directory.get().asFile
             systemProperty('mismatchedboots.test.mysticalAugments', name)
             systemProperty('mixin.debug.export', 'true')
             systemProperty('mixin.debug.export.filter', 'net.minecraft.world.item.ItemStack')
             systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
-            programArgument('--nogui'); jvmArgument('-Xmx1G')
+            programArgument('--nogui')
+            jvmArgument('-Xmx1G')
         }
     }
+
     def prepare = tasks.register("prepareMysticalAugments${variant}") {
         dependsOn production, fixture
         doLast {
@@ -109,20 +114,24 @@ def verifyVariants = { variants ->
         }) {
             throw new GradleException("Optional absence emitted a MA/Cucumber diagnostic; see ${log}")
         }
+
         int expectedRefusals = variant == 'NoEquipment' ? 3 : variant == 'NoJump' ? 1 : 0
         if ((log.text =~ /Mystical Agriculture mixed augment disabled:/).count != expectedRefusals) {
             throw new GradleException("Unexpected MA feature refusal count; see ${log}")
         }
+
         int expectedRefundRefusals = variant in ['RefundMissing', 'RefundExtra'] ? 1 : 0
         if ((log.text =~ /Mystical Agriculture refund flow incompatible/).count != expectedRefundRefusals
                 || log.text.contains('Just Dire Things refund flow incompatible')) {
             throw new GradleException("Unexpected refund readiness diagnostic; see ${log}")
         }
+
         def markers = reports.get().dir(name).asFile
         def failure = new File(markers, 'mystical-augments-failure.txt')
         if (failure.isFile()) {
             throw new GradleException(failure.text)
         }
+
         def report = new File(markers, 'mystical-augments-report.txt')
         if (!new File(markers, 'mystical-augments-success.txt').isFile() || !report.isFile()) {
             throw new GradleException("Missing MA test evidence; see ${log}")
@@ -169,7 +178,8 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
     if (fabric) {
         loom.runs.create("mysticalLifecycle${phase}") {
             inherit connected ? loom.runs.client : loom.runs.server
-            source('networkTest'); ideConfigGenerated(false)
+            source('networkTest')
+            ideConfigGenerated(false)
             runDir("build/run/mysticalLifecycle/${baseline}/${connected ? 'client' : 'seed'}")
             properties.each { key, value -> property(key, value) }
             if (connected) {
@@ -181,17 +191,20 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
         }
     } else {
         neoForge.runs.create("mysticalLifecycle${phase}") {
-            disableIdeRun(); gameDirectory = directory.get().asFile
+            disableIdeRun()
+            gameDirectory = directory.get().asFile
             properties.each { key, value -> systemProperty(key, value) }
             if (connected) {
-                client();
+                client()
                 ['--quickPlaySingleplayer', 'mystical', '--username', 'MAFixture', '--width', '1920', '--height', '1080'].each { programArgument(it) }
             } else {
-                server(); programArgument('--nogui')
+                server()
+                programArgument('--nogui')
             }
             jvmArgument('-Xmx1G')
         }
     }
+
     def prepare = tasks.register("prepareMysticalLifecycle${phase}") {
         dependsOn production, fixture
         doLast {
@@ -211,8 +224,10 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
                     }
                     artifact
                 }
-                filesService.copy { from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts;
-                    into new File(target, 'mods') }
+                filesService.copy {
+                    from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts
+                    into new File(target, 'mods')
+                }
                 new File(target, 'eula.txt').text = 'eula=true\n'
                 new File(target, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -229,10 +244,17 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     throw new GradleException('MA Client requires saved Seed world')
                 }
                 filesService.delete { delete directory }
-                filesService.copy { from new File(seed, 'world'); into new File(target, 'saves/mystical') }
-                filesService.copy { from new File(seed, 'mods'); into new File(target, 'mods') }
+                filesService.copy {
+                    from new File(seed, 'world')
+                    into new File(target, 'saves/mystical')
+                }
+                filesService.copy {
+                    from new File(seed, 'mods')
+                    into new File(target, 'mods')
+                }
                 new File(target, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-                def config = new File(target, 'config'); config.mkdirs()
+                def config = new File(target, 'config')
+                config.mkdirs()
                 new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
             } else if (!new File(lifecycleReports.get().asFile, 'mystical-client-success.txt').isFile()) {
                 throw new GradleException('MA Rejoin requires saved real connected player')

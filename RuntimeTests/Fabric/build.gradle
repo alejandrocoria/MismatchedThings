@@ -805,6 +805,7 @@ tasks.register('verifyBetterXCompatibility') {
         if (betterEndJar == null) {
             throw new GradleException('Exact Better End artifact is missing from the tag-consumer audit')
         }
+
         def betterNetherArtifact = configurations.betterXFabric.resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == 'maven.modrinth' &&
                     it.moduleVersion.id.name == 'MpzVLzy5' &&
@@ -832,6 +833,7 @@ tasks.register('verifyBetterXCompatibility') {
         } finally {
             zip.close()
         }
+
         def expectedReferences = [
                 'org/betterx/betterend/client/BetterEndClient.class',
                 'org/betterx/betterend/item/CrystaliteArmor.class',
@@ -855,6 +857,7 @@ tasks.register('verifyBetterXCompatibility') {
                 throw new GradleException(
                         "BetterX ${spec.suffix} GameTest report is missing; see ${processLog}")
             }
+
             def logText = processLog.getText('UTF-8')
             def adapterWarnings = [
                     'Better Nether is present with an incompatible API',
@@ -1171,6 +1174,7 @@ tasks.register('verifyGameTestContextGuard') {
         if (!failed || !contextGuardReport.get().asFile.isFile()) {
             throw new GradleException("Missing-context negative control did not fail as intended; see ${log}")
         }
+
         def parser = javax.xml.parsers.DocumentBuilderFactory.newInstance()
         parser.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
         def document = parser.newDocumentBuilder().parse(contextGuardReport.get().asFile)

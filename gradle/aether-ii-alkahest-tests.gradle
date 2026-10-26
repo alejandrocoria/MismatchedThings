@@ -12,7 +12,9 @@ variants.each { name ->
     def reports = layout.buildDirectory.dir("reports/aether-ii-alkahest/${neoforge_version}/${mode}")
     def directory = layout.buildDirectory.dir("run/aetherIIAlkahest/${neoforge_version}/${mode}")
     neoForge.runs.create("aetherIIAlkahest${name}") {
-        server(); disableIdeRun(); programArgument('--nogui')
+        server()
+        disableIdeRun()
+        programArgument('--nogui')
         gameDirectory = directory.get().asFile
         systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
         systemProperty('mismatchedboots.runtimetest.aetherAlkahest', mode)
@@ -60,6 +62,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             if (failure.isFile()) {
                 throw new GradleException(failure.text)
             }
+
             def success = new File(reports.get().asFile, 'aether-alkahest-success.txt')
             def report = new File(reports.get().asFile, 'aether-alkahest-report.txt')
             def nativeErrors = log.readLines().findAll { it.contains('/ERROR]') && it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }

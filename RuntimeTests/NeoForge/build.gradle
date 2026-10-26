@@ -96,6 +96,7 @@ def verifiedIceAndFireArtifacts = {
         if (!artifact.isFile()) {
             throw new GradleException("Missing optional Ice and Fire fixture: ${artifact}")
         }
+
         def digest = java.security.MessageDigest.getInstance('SHA-256')
         artifact.withInputStream { stream ->
             byte[] buffer = new byte[8192]
@@ -158,8 +159,10 @@ neoForge {
                 gameDirectory = justDireItemBarsDirectory.map { it.dir(variant) }.get().asFile
                 programArgument('--quickPlaySingleplayer')
                 programArgument('bars')
-                programArgument('--width'); programArgument('1280')
-                programArgument('--height'); programArgument('800')
+                programArgument('--width')
+                programArgument('1280')
+                programArgument('--height')
+                programArgument('800')
                 systemProperty('mismatchedboots.runtimetest.markers', justDireItemBarsMarkers.get().asFile.absolutePath)
                 systemProperty('mismatchedboots.runtimetest.justDireItemBarsTest', 'true')
                 systemProperty('mismatchedboots.runtimetest.justDireItemBarsVariant', variant.uncapitalize())
@@ -630,6 +633,7 @@ tasks.register('prepareJustDireItemBarsServer') {
                 .digest(justDireSmithingArtifact.bytes).encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
             throw new GradleException("Missing/unexpected pinned JDT fixture: ${justDireSmithingArtifact}")
         }
+
         def directory = justDireItemBarsDirectory.get().dir('server').asFile
         def success = new File(justDireItemBarsMarkers.get().asFile, 'just-dire-item-bars-server-success.txt')
         fixtureFileOperations.delete { spec -> spec.delete(directory, success) }
@@ -657,6 +661,7 @@ justDireItemBarVariants.each { variant ->
             if (!new File(world, 'level.dat').isFile()) {
                 throw new GradleException('Run runJustDireItemBarsServer first')
             }
+
             def directory = justDireItemBarsDirectory.get().dir(variant).asFile
             def staleMarkers = ['failure', 'report', 'success'].collect { suffix ->
                 new File(justDireItemBarsMarkers.get().asFile, "just-dire-item-bars-${suffix}.txt")
@@ -672,7 +677,10 @@ justDireItemBarVariants.each { variant ->
                 spec.delete(directory)
                 spec.delete(staleMarkers)
             }
-            fixtureFileOperations.copy { from(world); into(new File(directory, 'saves/bars')) }
+            fixtureFileOperations.copy {
+                from(world)
+                into(new File(directory, 'saves/bars'))
+            }
             fixtureFileOperations.copy {
                 from(productionArchive, justDireSmithingFixtureArchive)
                 if (variant != 'Absent') {
@@ -681,7 +689,8 @@ justDireItemBarVariants.each { variant ->
                 into(new File(directory, 'mods'))
             }
             new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\nguiScale:1\n'
-            def config = new File(directory, 'config'); config.mkdirs()
+            def config = new File(directory, 'config')
+            config.mkdirs()
             new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
         }
     }
@@ -741,6 +750,7 @@ tasks.register('prepareJustDireSmithing') {
         if (!justDireSmithingArtifact.isFile()) {
             throw new GradleException("Missing optional Just Dire Things fixture: ${justDireSmithingArtifact}")
         }
+
         def digest = java.security.MessageDigest.getInstance('SHA-256')
         justDireSmithingArtifact.withInputStream { stream ->
             byte[] buffer = new byte[8192]
@@ -808,8 +818,11 @@ tasks.register('verifyJustDireRefunds') {
                 if (!exported.isFile()) {
                     throw new GradleException('Missing final ItemStack export')
                 }
-                fixtureFileOperations.copy { from exported; into log.parentFile;
-                    rename { "${variant}-ItemStack.class" } }
+                fixtureFileOperations.copy {
+                    from exported
+                    into log.parentFile
+                    rename { "${variant}-ItemStack.class" }
+                }
             }
             logger.lifecycle(report.text)
         }
@@ -855,16 +868,23 @@ tasks.register('verifyJustDireArmorWear') {
             if (variant == 'Abilities') {
                 new File(log.parentFile, 'Abilities-armed.txt').text = new File(directory, 'just-dire-armor-wear-armed.txt').text
             }
+
             def exported = new File(justDireSmithingRunDirectory.get().asFile, '.mixin.out/class/net/neoforged/neoforge/common/CommonHooks.class')
             if (variant == 'Live') {
                 if (!exported.isFile()) {
                     throw new GradleException('Missing final CommonHooks export')
                 }
-                fixtureFileOperations.copy { from exported; into log.parentFile }
+                fixtureFileOperations.copy {
+                    from exported
+                    into log.parentFile
+                }
             }
             if (variant.startsWith('Wrapper')) {
-                fixtureFileOperations.copy { from exported; into log.parentFile;
-                    rename { "${variant}-CommonHooks.class" } }
+                fixtureFileOperations.copy {
+                    from exported
+                    into log.parentFile
+                    rename { "${variant}-CommonHooks.class" }
+                }
             }
             logger.lifecycle(report.text)
         }
@@ -1190,19 +1210,24 @@ tasks.register('prepareJustDireResourcesClient') {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
         }
+
         def world = new File(justDireSmithingRunDirectory.get().asFile, 'world')
         if (!new File(world, 'level.dat').isFile()) {
             throw new GradleException('Run resource server/restart acceptance first')
         }
         fixtureFileOperations.delete { delete justDireResourcesClientDirectory }
         def directory = justDireResourcesClientDirectory.get().asFile
-        fixtureFileOperations.copy { from(world); into(new File(directory, 'saves/resources')) }
+        fixtureFileOperations.copy {
+            from(world)
+            into(new File(directory, 'saves/resources'))
+        }
         fixtureFileOperations.copy {
             from(productionArchive, justDireSmithingFixtureArchive, justDireSmithingArtifact)
             into(new File(directory, 'mods'))
         }
         new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-        def config = new File(directory, 'config'); config.mkdirs()
+        def config = new File(directory, 'config')
+        config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
     }
 }
@@ -1267,6 +1292,7 @@ tasks.register('verifyJustDireAttributes') {
             if (failure.isFile() || !success.isFile() || success.text != "${variant}\n" || !report.isFile()) {
                 throw new GradleException("Just Dire Things production attribute acceptance failed: ${failure.isFile() ? failure.text : log}")
             }
+
             def bindingWarnings = log.readLines().count { it.contains('Could not bind Just Dire Things attribute API; live attributes disabled') }
             def flowWarnings = log.readLines().count { it.contains('transformed attribute input flow incompatible; live attributes disabled') }
             if (bindingWarnings != (variant == 'ApiMissing' ? 1 : 0) || flowWarnings != (variant == 'Absent' ? 1 : 0)) {
@@ -1312,6 +1338,7 @@ tasks.register('verifyJustDireResources') {
         if (failure.isFile() || !restartSuccess.isFile() || restartSuccess.text != 'neoforge\n') {
             throw new GradleException("Just Dire Things actual restart failed: ${failure.isFile() ? failure.text : restartLog}")
         }
+
         def restartReport = new File(directory, 'just-dire-resources-restart-report.txt')
         if (!restartReport.isFile()) {
             throw new GradleException('Missing actual restart report')
@@ -1342,19 +1369,24 @@ tasks.register('prepareJustDireJumpClient') {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
         }
+
         def world = new File(justDireSmithingRunDirectory.get().asFile, 'world')
         if (!new File(world, 'level.dat').isFile()) {
             throw new GradleException('Run the passive-jump server gate first to prepare its disposable world')
         }
         fixtureFileOperations.delete { delete justDireJumpClientDirectory }
         def directory = justDireJumpClientDirectory.get().asFile
-        fixtureFileOperations.copy { from(world); into(new File(directory, 'saves/jump')) }
+        fixtureFileOperations.copy {
+            from(world)
+            into(new File(directory, 'saves/jump'))
+        }
         fixtureFileOperations.copy {
             from(productionArchive, justDireSmithingFixtureArchive, justDireSmithingArtifact)
             into(new File(directory, 'mods'))
         }
         new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-        def config = new File(directory, 'config'); config.mkdirs()
+        def config = new File(directory, 'config')
+        config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
     }
 }
@@ -1589,6 +1621,7 @@ tasks.register('verifyJustDireJumpGuards') {
             if (variant == 'Absent' && log.text.contains('Error loading class: com/direwolf20/justdirethings')) {
                 throw new GradleException("Absent optional target emitted a loading warning: ${log}")
             }
+
             def report = new File(directory, 'just-dire-jump-report.txt')
             new File(log.parentFile, "${variant}-report.txt").text = report.text
             logger.lifecycle(report.text)
@@ -1619,6 +1652,7 @@ tasks.register('verifyJustDireJump') {
         if (clientFailure.isFile() || !clientSuccess.isFile() || clientSuccess.text != 'neoforge\n') {
             throw new GradleException("Just Dire Things client jump failed: ${clientFailure.isFile() ? clientFailure.text : clientLog}")
         }
+
         def clientReport = new File(directory, 'just-dire-jump-client-report.txt')
         if (!clientReport.isFile()) {
             throw new GradleException("Missing client gameplay report: ${clientLog}")
@@ -1755,12 +1789,18 @@ tideProductionVariants.each { variant ->
         doLast {
             def mods = new File(tideRunDirectory.get().asFile, 'mods')
             if (variant != 'Feet') {
-                fixtureFileOperations.copy { from(tideHeadJar.flatMap { it.archiveFile }); into(mods) }
+                fixtureFileOperations.copy {
+                    from(tideHeadJar.flatMap { it.archiveFile })
+                    into(mods)
+                }
             }
             if (variant == 'ApiAbsent') {
                 fixtureFileOperations.delete { delete iceAndFireArtifacts.keySet().collect { new File(mods, it) } }
             } else if (variant == 'ApiField') {
-                fixtureFileOperations.copy { from(mutatedTideJar); into(mods) }
+                fixtureFileOperations.copy {
+                    from(mutatedTideJar)
+                    into(mods)
+                }
             }
         }
     }
@@ -1953,6 +1993,7 @@ tasks.register('verifyIceAndFireMixinCoexistence') {
                     : !warnings.isEmpty()) {
                 throw new GradleException("Unexpected Ice and Fire guard warnings in ${variant}: ${warnings}")
             }
+
             def directory = iceAndFireDamageMarkers.get().asFile
             def failure = new File(directory, 'ice-and-fire-damage-failure.txt')
             def success = new File(directory, 'ice-and-fire-damage-success.txt')
@@ -1961,6 +2002,7 @@ tasks.register('verifyIceAndFireMixinCoexistence') {
                     || !report.text.contains("coexistence=${variant.toLowerCase(Locale.ROOT)}")) {
                 throw new GradleException("Ice and Fire ${variant} coexistence failed; ${failure.isFile() ? failure.text : log}")
             }
+
             def evidence = fixtureBuildDirectory.file("reports/ice-and-fire-coexistence/${variant}-report.txt").get().asFile
             evidence.text = report.text + "guard warnings=${warnings.size()}\n"
             logger.lifecycle(report.text)
@@ -2003,6 +2045,7 @@ tasks.register('verifyGeometryCharacterization') {
         if (failure.exists()) {
             throw new GradleException("NeoForge geometry characterization failed:\n${failure.text}")
         }
+
         def success = new File(markerDirectory, 'geometry-success.txt')
         def report = new File(markerDirectory, 'geometry-report.txt')
         if (!success.exists() || !report.exists()) {

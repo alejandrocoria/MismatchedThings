@@ -42,6 +42,7 @@ if (!project.hasProperty("modrinthApiKey")) {
     ext.modrinthApiKey = project.findProperty("modrinth_api_key") ?: "notset"
 }
 
+// Compile Common into each loader's output rather than adding it as a separate runtime mod.
 tasks.named('compileJava', JavaCompile) {
     dependsOn(configurations.commonJava)
     source(configurations.commonJava)

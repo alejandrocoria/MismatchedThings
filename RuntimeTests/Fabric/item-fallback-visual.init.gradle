@@ -1,11 +1,18 @@
 // Opt-in visual probe: narrow client entrypoints, then restore generated metadata.
 gradle.projectsEvaluated {
     def fixture = gradle.rootProject.findProject(':RuntimeTests:Fabric')
-    if (fixture == null) return
+    if (fixture == null) {
+        return
+    }
+
     def metadata = new File(fixture.sourceSets.gametest.output.resourcesDir, 'fabric.mod.json')
     byte[] original
     def restore = fixture.tasks.register('restoreFallbackSpikeMetadata') {
-        doLast { if (original != null) metadata.bytes = original }
+        doLast {
+            if (original != null) {
+                metadata.bytes = original
+            }
+        }
     }
     fixture.tasks.named('runClientGameTest') {
         systemProperty 'mismatchedboots.test.fallbackVisualOnly', 'true'

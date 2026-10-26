@@ -59,6 +59,7 @@ tasks.register('verifyTestModArtifacts') {
         if (!java.util.Arrays.equals(target.bytes, original.target().bytes)) {
             throw new GradleException('Fixture resolver did not replace damaged staged bytes')
         }
+
         def rejected = new TestModArtifacts([(key): TestModArtifacts.entry(target,
                 original.configuration(), '0' * 64)])
         try {

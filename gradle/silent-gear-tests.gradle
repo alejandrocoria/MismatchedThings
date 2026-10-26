@@ -5,10 +5,23 @@ def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archive
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
 def effectVariant = providers.gradleProperty('silentGearEffectVariant').getOrElse('')
-if (!(effectVariant in ['', 'defense-bounce', 'defense-bounce-compatible', 'defense-bounce-query', 'defense-joint', 'defense-data', 'defense-throw', 'defense-reload', 'defense-foundation', 'defense-compatible', 'defense-fall', 'defense-incoming', 'defense-negate', 'defense-retaliation', 'magnet-server', 'magnet-compatible', 'magnet-effect', 'magnet-queue', 'magnet-definition', 'magnet-throw', 'magnet-reload', 'repair', 'wear', 'compatible', 'state', 'joint', 'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait',
-                        'wearer-effect', 'wearer-definition', 'wearer-throw', 'recognition', 'recognition-compatible', 'recognition-brilliant', 'recognition-moonwalker', 'parts-audit'])) {
+if (!(effectVariant in [
+        '',
+        'defense-bounce', 'defense-bounce-compatible', 'defense-bounce-query',
+        'defense-joint', 'defense-data', 'defense-throw', 'defense-reload',
+        'defense-foundation', 'defense-compatible', 'defense-fall', 'defense-incoming',
+        'defense-negate', 'defense-retaliation',
+        'magnet-server', 'magnet-compatible', 'magnet-effect', 'magnet-queue',
+        'magnet-definition', 'magnet-throw', 'magnet-reload',
+        'repair', 'wear', 'compatible', 'state', 'joint',
+        'wearer', 'wearer-compatible', 'wearer-type', 'wearer-trait',
+        'wearer-effect', 'wearer-definition', 'wearer-throw',
+        'recognition', 'recognition-compatible', 'recognition-brilliant',
+        'recognition-moonwalker', 'parts-audit'
+])) {
     throw new GradleException('Unknown SG effect test variant')
 }
+
 def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-effects/${neoforge_version}/${effectVariant}"
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
@@ -23,7 +36,8 @@ if (effectVariant in ['joint', 'magnet-server', 'defense-joint']) {
 }
 
 neoForge.runs.create('silentGearStats') {
-    server(); disableIdeRun()
+    server()
+    disableIdeRun()
     gameDirectory = directory.get().asFile
     programArgument('--nogui')
     systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
@@ -75,45 +89,55 @@ tasks.register('verifySilentGear') {
         if (failure.isFile()) {
             throw new GradleException(failure.text)
         }
+
         def report = new File(markers, 'silent-gear-stats-report.txt')
         if (!new File(markers, 'silent-gear-stats-success.txt').isFile() || !report.isFile()) {
             throw new GradleException("Missing Silent Gear results; see ${log}")
         }
+
         int warnings = (log.text =~ /Silent Gear mixed (repair|wear) disabled:/).count
         int expected = effectVariant in ['repair', 'wear'] ? 1 : 0
         if (warnings != expected) {
             throw new GradleException("Unexpected SG effect warnings ${warnings} vs ${expected}: ${log}")
         }
+
         int stateWarnings = (log.text =~ /Silent Gear mixed state disabled:/).count
         if (stateWarnings != (effectVariant == 'state' ? 1 : 0)) {
             throw new GradleException("Unexpected SG live-state warnings: ${stateWarnings}: ${log}")
         }
+
         int recognitionWarnings = (log.text =~ /Silent Gear mixed (brilliant|moonwalker) disabled:/).count
         int expectedRecognition = effectVariant in ['recognition-brilliant', 'recognition-moonwalker'] ? 1 : 0
         if (recognitionWarnings != expectedRecognition) {
             throw new GradleException("Unexpected SG recognition warnings ${recognitionWarnings} vs ${expectedRecognition}: ${log}")
         }
+
         int wielderWarnings = (log.text =~ /Silent Gear mixed wielder disabled:/).count
         int expectedWielder = effectVariant in ['wearer-type', 'wearer-trait', 'wearer-effect', 'wearer-definition', 'wearer-throw'] ? 1 : 0
         if (wielderWarnings != expectedWielder) {
             throw new GradleException("Unexpected SG Wielder warnings ${wielderWarnings} vs ${expectedWielder}: ${log}")
         }
+
         int magnetWarnings = (log.text =~ /Silent Gear mixed magnet disabled:/).count
         if (magnetWarnings != (effectVariant in ['magnet-effect', 'magnet-queue', 'magnet-definition', 'magnet-throw', 'magnet-reload'] ? 1 : 0)) {
             throw new GradleException("Unexpected SG magnet warnings ${magnetWarnings}: ${log}")
         }
+
         int defenseWarnings = (log.text =~ /Silent Gear mixed safe fall disabled:/).count
         if (defenseWarnings != (effectVariant == 'defense-fall' ? 1 : 0)) {
             throw new GradleException("Unexpected safe fall warnings: ${defenseWarnings}: ${log}")
         }
+
         int incomingWarnings = (log.text =~ /Silent Gear mixed incoming disabled:/).count
         if (incomingWarnings != (effectVariant in ['defense-incoming', 'defense-negate', 'defense-throw'] ? 1 : 0)) {
             throw new GradleException("Unexpected incoming warnings: ${incomingWarnings}: ${log}")
         }
+
         int traitWarnings = (log.text =~ /Silent Gear mixed incoming trait disabled:/).count
         if (traitWarnings != (effectVariant == 'defense-data' ? 1 : 0)) {
             throw new GradleException("Unexpected incoming trait warnings: ${traitWarnings}: ${log}")
         }
+
         int bounceWarnings = (log.text =~ /Silent Gear mixed (bounce recognition|retaliation) disabled:/).count
         if (bounceWarnings != (effectVariant in ['defense-bounce-query', 'defense-retaliation'] ? 1 : 0)) {
             throw new GradleException("Unexpected Bounce query warnings: ${bounceWarnings}: ${log}")
@@ -126,7 +150,8 @@ tasks.register('verifySilentGear') {
 }
 
 neoForge.runs.create('silentGearStatsAbsent') {
-    server(); disableIdeRun()
+    server()
+    disableIdeRun()
     gameDirectory = directory.get().dir('absent').asFile
     programArgument('--nogui')
     systemProperty('mismatchedboots.runtimetest.markers', reports.get().dir('absent').asFile.absolutePath)
@@ -139,7 +164,10 @@ tasks.register('prepareSilentGearStatsAbsent') {
     doLast {
         def absentRun = directory.get().dir('absent').asFile
         fixtureFiles.delete { delete absentRun, reports.get().dir('absent') }
-        fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(absentRun, 'mods')) }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar)
+            into(new File(absentRun, 'mods'))
+        }
         new File(absentRun, 'eula.txt').text = 'eula=true\n'
         new File(absentRun, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\n'
     }
@@ -177,12 +205,14 @@ def voidVariant = providers.gradleProperty('silentGearVoidVariant').getOrElse(''
 if (!(voidVariant in ['', 'compatible', 'refused'])) {
     throw new GradleException('Unknown Void Ward test variant')
 }
+
 def voidPath = voidVariant ? "-void-${voidVariant}" : ''
 def voidLog = voidVariant ? "-void-${voidVariant}" : ''
 def remainingRun = layout.buildDirectory.dir("run/silentGearRemaining/${neoforge_version}${voidPath}")
 def remainingReports = layout.buildDirectory.dir("reports/silent-gear-remaining/${neoforge_version}${voidPath}")
 neoForge.runs.create('silentGearRemainingSeed') {
-    server(); disableIdeRun()
+    server()
+    disableIdeRun()
     gameDirectory = remainingRun.get().dir('server').asFile
     programArgument('--nogui')
     systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
@@ -190,10 +220,13 @@ neoForge.runs.create('silentGearRemainingSeed') {
     jvmArgument('-Xmx1G')
 }
 neoForge.runs.create('silentGearRemaining') {
-    client(); disableIdeRun()
+    client()
+    disableIdeRun()
     gameDirectory = remainingRun.get().dir('client').asFile
-    programArgument('--quickPlaySingleplayer'); programArgument('remaining')
-    programArgument('--username'); programArgument('SGRemaining')
+    programArgument('--quickPlaySingleplayer')
+    programArgument('remaining')
+    programArgument('--username')
+    programArgument('SGRemaining')
     systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
     systemProperty('mismatchedboots.runtimetest.silentGearRemainingTest', 'true')
     systemProperty('mismatchedboots.runtimetest.silentGearVoidVariant', voidVariant)
@@ -213,7 +246,10 @@ tasks.register('prepareSilentGearRemainingSeed') {
         }
         fixtureFiles.delete { delete remainingRun, remainingReports }
         def server = remainingRun.get().dir('server').asFile
-        fixtureFiles.copy { from(productionJar, fixtureJar, jars); into(new File(server, 'mods')) }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar, jars)
+            into(new File(server, 'mods'))
+        }
         new File(server, 'eula.txt').text = 'eula=true\n'
         new File(server, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -235,10 +271,17 @@ tasks.register('prepareSilentGearRemaining') {
         }
         def client = remainingRun.get().dir('client').asFile
         fixtureFiles.delete { delete client }
-        fixtureFiles.copy { from(remainingRun.get().dir('server/world')); into(new File(client, 'saves/remaining')) }
-        fixtureFiles.copy { from(remainingRun.get().dir('server/mods')); into(new File(client, 'mods')) }
+        fixtureFiles.copy {
+            from(remainingRun.get().dir('server/world'))
+            into(new File(client, 'saves/remaining'))
+        }
+        fixtureFiles.copy {
+            from(remainingRun.get().dir('server/mods'))
+            into(new File(client, 'mods'))
+        }
         new File(client, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-        def config = new File(client, 'config'); config.mkdirs()
+        def config = new File(client, 'config')
+        config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
         fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(remainingReports.get().asFile, "silent-gear-remaining-${it}.txt") }) }
     }
@@ -250,13 +293,17 @@ def tooltipVariant = providers.gradleProperty('silentGearTooltipVariant').getOrE
 if (!(tooltipVariant in ['normal', 'binding', 'formatter'])) {
     throw new GradleException('Unknown SG tooltip test variant')
 }
+
 def tooltipPrefix = "silent-gear-tooltip-${tooltipVariant}"
 def tooltipReports = layout.buildDirectory.dir("reports/silent-gear-tooltip/${neoforge_version}")
 neoForge.runs.create('silentGearTooltip') {
-    client(); disableIdeRun()
+    client()
+    disableIdeRun()
     gameDirectory = remainingRun.get().dir('client').asFile
-    programArgument('--quickPlaySingleplayer'); programArgument('remaining')
-    programArgument('--username'); programArgument('SGTooltipTest')
+    programArgument('--quickPlaySingleplayer')
+    programArgument('remaining')
+    programArgument('--username')
+    programArgument('SGTooltipTest')
     systemProperty('mismatchedboots.runtimetest.markers', remainingReports.get().asFile.absolutePath)
     systemProperty('mismatchedboots.runtimetest.silentGearTooltipTest', 'true')
     systemProperty('mismatchedboots.runtimetest.silentGearTooltipVariant', tooltipVariant)
@@ -272,7 +319,10 @@ tasks.register('prepareSilentGearTooltip') {
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected JDT tooltip coexistence fixture: ${jar}")
             }
-            fixtureFiles.copy { from(jar); into(remainingRun.get().dir('client/mods')) }
+            fixtureFiles.copy {
+                from(jar)
+                into(remainingRun.get().dir('client/mods'))
+            }
         }
         fixtureFiles.delete {
             delete(['success', 'failure', 'report', 'compact'].collect {
@@ -295,6 +345,7 @@ tasks.register('verifySilentGearTooltip') {
             if (failure.isFile()) {
                 throw new GradleException(failure.text)
             }
+
             int expectedData = phase == 'Client' && tooltipVariant == 'normal' ? 1 : 0
             int expectedDisabled = phase == 'Client' && tooltipVariant != 'normal' ? 1 : 0
             if (!new File(result, marker).isFile() || log.text.contains('Silent Gear mixed ')
@@ -324,6 +375,7 @@ tasks.register('verifySilentGearRemaining') {
             if (!new File(result, "silent-gear-remaining-${phase == 'Seed' ? 'seed-success' : 'success'}.txt").isFile()) {
                 throw new GradleException("Missing remaining ${phase} evidence: ${log}")
             }
+
             int warnings = (log.text =~ /Silent Gear mixed void ward disabled:/).count
             int expected = phase == 'Client' && voidVariant == 'refused' ? 1 : 0
             int cureWarnings = phase == 'Client' && !voidVariant ? 1 : 0
@@ -342,7 +394,8 @@ tasks.register('verifySilentGearRemaining') {
 }
 ['Save', 'Restart'].each { phase ->
     neoForge.runs.create("silentGear${phase}") {
-        server(); disableIdeRun()
+        server()
+        disableIdeRun()
         gameDirectory = lifecycleRun.get().asFile
         programArgument('--nogui')
         systemProperty('mismatchedboots.runtimetest.markers', lifecycleReports.get().asFile.absolutePath)
@@ -352,10 +405,13 @@ tasks.register('verifySilentGearRemaining') {
 }
 ['Client', 'Rejoin'].each { phase ->
     neoForge.runs.create("silentGear${phase}") {
-        client(); disableIdeRun()
+        client()
+        disableIdeRun()
         gameDirectory = clientRun.get().asFile
-        programArgument('--quickPlaySingleplayer'); programArgument('silentgear')
-        programArgument('--username'); programArgument('SGWearerFixture')
+        programArgument('--quickPlaySingleplayer')
+        programArgument('silentgear')
+        programArgument('--username')
+        programArgument('SGWearerFixture')
         systemProperty('mismatchedboots.runtimetest.markers', lifecycleReports.get().asFile.absolutePath)
         systemProperty('mismatchedboots.runtimetest.silentGearClient', 'true')
         systemProperty('mismatchedboots.runtimetest.silentGearRejoin', (phase == 'Rejoin').toString())
@@ -375,7 +431,10 @@ tasks.register('prepareSilentGearSave') {
             jar
         }
         fixtureFiles.delete { delete lifecycleRun, lifecycleReports }
-        fixtureFiles.copy { from(productionJar, fixtureJar, jars); into(new File(lifecycleRun.get().asFile, 'mods')) }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar, jars)
+            into(new File(lifecycleRun.get().asFile, 'mods'))
+        }
         new File(lifecycleRun.get().asFile, 'eula.txt').text = 'eula=true\n'
         new File(lifecycleRun.get().asFile, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -405,13 +464,21 @@ tasks.register('prepareSilentGearClient') {
             throw new GradleException('SG Client requires the completed Restart world')
         }
         fixtureFiles.delete { delete clientRun }
-        fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'world'));
-            into(new File(clientRun.get().asFile, 'saves/silentgear')) }
-        fixtureFiles.copy { from(new File(lifecycleRun.get().asFile, 'mods'));
-            into(new File(clientRun.get().asFile, 'mods')) }
-        fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(clientRun.get().asFile, 'mods')) }
+        fixtureFiles.copy {
+            from(new File(lifecycleRun.get().asFile, 'world'))
+            into(new File(clientRun.get().asFile, 'saves/silentgear'))
+        }
+        fixtureFiles.copy {
+            from(new File(lifecycleRun.get().asFile, 'mods'))
+            into(new File(clientRun.get().asFile, 'mods'))
+        }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar)
+            into(new File(clientRun.get().asFile, 'mods'))
+        }
         new File(clientRun.get().asFile, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-        def config = new File(clientRun.get().asFile, 'config'); config.mkdirs()
+        def config = new File(clientRun.get().asFile, 'config')
+        config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
         fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "silent-gear-client-${it}.txt") }) }
         fixtureFiles.delete { delete(['client-report.txt', 'health-report.txt', 'player.json'].collect { new File(lifecycleReports.get().asFile, "silent-gear-defense-${it}") }) }

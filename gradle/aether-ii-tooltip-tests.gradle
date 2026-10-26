@@ -10,6 +10,7 @@ if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged', 'charmfac
                   'setbindingfailure', 'tierbindingfailure', 'charmbindingfailure', 'setpopulatedfailure', 'tierpopulatedfailure'])) {
     throw new GradleException('Unknown Aether tooltip variant')
 }
+
 def reports = layout.buildDirectory.dir("reports/aether-ii-tooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def directory = layout.buildDirectory.dir("run/aetherIITooltips/${neoforge_version}/${absent ? 'absent' : variant}")
 def artifacts = absent ? [:] : [
@@ -24,13 +25,19 @@ def artifacts = absent ? [:] : [
         gameDirectory = directory.get().dir(phase.toLowerCase(Locale.ROOT)).asFile
         systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
         if (phase == 'Seed') {
-            server(); programArgument('--nogui')
+            server()
+            programArgument('--nogui')
             systemProperty('mismatchedboots.runtimetest.aetherTooltipSeed', 'true')
         } else {
             client()
-            programArgument('--quickPlaySingleplayer'); programArgument('tooltip')
-            programArgument('--username'); programArgument('AetherTooltip')
-            programArgument('--width'); programArgument('1920'); programArgument('--height'); programArgument('1080')
+            programArgument('--quickPlaySingleplayer')
+            programArgument('tooltip')
+            programArgument('--username')
+            programArgument('AetherTooltip')
+            programArgument('--width')
+            programArgument('1920')
+            programArgument('--height')
+            programArgument('1080')
             systemProperty('mismatchedboots.runtimetest.aetherIITooltip', 'true')
             systemProperty('mismatchedboots.runtimetest.aetherTooltipAbsent', absent.toString())
             systemProperty('mismatchedboots.runtimetest.aetherTooltipVariant', variant)
@@ -46,7 +53,10 @@ tasks.register('prepareAetherTooltipSeed') {
         def seed = directory.get().dir('seed').asFile
         fixtureFiles.delete { delete seed }
         fixtureFiles.delete { delete fileTree(reports) { include '*.txt', '*.json', '*.png' } }
-        fixtureFiles.copy { from(productionJar, fixtureJar); into(new File(seed, 'mods')) }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar)
+            into(new File(seed, 'mods'))
+        }
         new File(seed, 'eula.txt').text = 'eula=true\n'
         new File(seed, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -68,6 +78,7 @@ tasks.register('prepareAetherTooltipClient') {
         if (!new File(seed, 'world/level.dat').isFile()) {
             throw new GradleException('Aether tooltip acceptance requires its disposable seed world')
         }
+
         def jars = artifacts.collect { name, hash ->
             def jar = testMods.resolve('NeoForge', name)
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
@@ -76,10 +87,17 @@ tasks.register('prepareAetherTooltipClient') {
             jar
         }
         fixtureFiles.delete { delete client }
-        fixtureFiles.copy { from(new File(seed, 'world')); into(new File(client, 'saves/tooltip')) }
-        fixtureFiles.copy { from(productionJar, fixtureJar, jars); into(new File(client, 'mods')) }
+        fixtureFiles.copy {
+            from(new File(seed, 'world'))
+            into(new File(client, 'saves/tooltip'))
+        }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar, jars)
+            into(new File(client, 'mods'))
+        }
         new File(client, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\nguiScale:2\n'
-        def config = new File(client, 'config'); config.mkdirs()
+        def config = new File(client, 'config')
+        config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
     }
 }
@@ -116,12 +134,14 @@ tasks.register('verifyAetherIITooltips') {
                     || refusedDomain != null && !refusals.first().contains("Aether II ${refusedDomain} tooltip containment")) {
                 throw new GradleException("Unexpected Aether tooltip refusal domains/count: ${refusals}")
             }
+
             def charmFailures = log.readLines().findAll { it.contains('Aether II source charm') && it.contains('disabled:') }
             def charmDomain = !absent && phase == 'Client' ? variant.startsWith('charmfactory') || variant == 'charmbindingfailure' ? 'graphics' : variant == 'charmpopulatedfailure' ? 'provenance' : null : null
             if (charmFailures.size() != (charmDomain == null ? 0 : 1)
                     || charmDomain != null && !charmFailures.first().contains(charmDomain == 'graphics' ? 'graphics disabled:' : 'charms disabled:')) {
                 throw new GradleException("Unexpected Aether source charm diagnostics: ${charmFailures}")
             }
+
             def textFailures = log.readLines().findAll { it.contains('Aether II ') && it.contains('tooltips disabled:') }
             def textDomain = !absent && phase == 'Client' ? variant.startsWith('set') ? 'set' : variant.startsWith('tier') && variant != 'tierchanged' ? 'tier' : null : null
             if (textFailures.size() != (textDomain == null ? 0 : 1)

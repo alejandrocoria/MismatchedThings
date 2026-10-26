@@ -74,12 +74,14 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     || !report.text.contains(recognition ? 'production recognition=passed' : 'production charms=passed')) {
                 throw new GradleException("Incomplete Aether II ${scope}; see ${processLog}")
             }
+
             def refusals = processLog.readLines().findAll { it.contains('Aether II mixed ') && it.contains('recognition disabled:') }
             def expectedRefusal = variant == 'setchanged' ? 'set' : variant == 'sentrychanged' ? 'Sentry' : null
             if (refusals.size() != (expectedRefusal == null ? 0 : 1)
                     || expectedRefusal != null && !refusals.first().contains("mixed ${expectedRefusal} recognition")) {
                 throw new GradleException("Unexpected local recognition diagnostics: ${refusals}")
             }
+
             def errors = processLog.readLines().findAll {
                 it.contains('/ERROR]')
                         && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server')
@@ -115,14 +117,17 @@ def lifecycleClient = layout.buildDirectory.dir("run/aetherIILifecycle/${neoforg
         if (connected) {
             client()
             gameDirectory = lifecycleClient.get().asFile
-            programArgument('--quickPlaySingleplayer'); programArgument('aether')
-            programArgument('--username'); programArgument('AetherFixture')
+            programArgument('--quickPlaySingleplayer')
+            programArgument('aether')
+            programArgument('--username')
+            programArgument('AetherFixture')
             systemProperty('mismatchedboots.runtimetest.aetherIIClient', 'true')
             systemProperty('mismatchedboots.runtimetest.aetherIIRejoin', (phase == 'Rejoin').toString())
             systemProperty('mismatchedboots.test.hideClientWindow', 'true')
             systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
         } else {
-            server(); gameDirectory = lifecycleServer.get().asFile
+            server()
+            gameDirectory = lifecycleServer.get().asFile
             programArgument('--nogui')
             systemProperty('mismatchedboots.runtimetest.aetherIILifecycle', phase.toLowerCase(Locale.ROOT))
         }
@@ -142,8 +147,10 @@ tasks.register('prepareAetherIISave') {
         fixtureFiles.delete { delete lifecycleServer }
         // Keep the outer task's raw process log intact while resetting only marker/manifest evidence.
         fixtureFiles.delete { delete fileTree(lifecycleReports) { include '*.txt', '*.json' } }
-        fixtureFiles.copy { from(productionJar, fixtureJar, artifact);
-            into(new File(lifecycleServer.get().asFile, 'mods')) }
+        fixtureFiles.copy {
+            from(productionJar, fixtureJar, artifact)
+            into(new File(lifecycleServer.get().asFile, 'mods'))
+        }
         new File(lifecycleServer.get().asFile, 'eula.txt').text = 'eula=true\n'
         new File(lifecycleServer.get().asFile, 'server.properties').text = '''online-mode=false
 server-ip=127.0.0.1
@@ -173,12 +180,17 @@ tasks.register('prepareAetherIIClient') {
             throw new GradleException('Aether Client requires the completed Restart world')
         }
         fixtureFiles.delete { delete lifecycleClient }
-        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'world'));
-            into(new File(lifecycleClient.get().asFile, 'saves/aether')) }
-        fixtureFiles.copy { from(new File(lifecycleServer.get().asFile, 'mods'));
-            into(new File(lifecycleClient.get().asFile, 'mods')) }
+        fixtureFiles.copy {
+            from(new File(lifecycleServer.get().asFile, 'world'))
+            into(new File(lifecycleClient.get().asFile, 'saves/aether'))
+        }
+        fixtureFiles.copy {
+            from(new File(lifecycleServer.get().asFile, 'mods'))
+            into(new File(lifecycleClient.get().asFile, 'mods'))
+        }
         new File(lifecycleClient.get().asFile, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
-        def config = new File(lifecycleClient.get().asFile, 'config'); config.mkdirs()
+        def config = new File(lifecycleClient.get().asFile, 'config')
+        config.mkdirs()
         new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
         fixtureFiles.delete { delete(['success', 'failure', 'report'].collect { new File(lifecycleReports.get().asFile, "aether-ii-client-${it}.txt") }) }
     }
@@ -210,6 +222,7 @@ tasks.register('verifyAetherIILifecycle') {
             if (failure.isFile()) {
                 throw new GradleException(failure.text)
             }
+
             def errors = log.readLines().findAll {
                 it.contains('/ERROR]')
                         && !it.contains('net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server')
