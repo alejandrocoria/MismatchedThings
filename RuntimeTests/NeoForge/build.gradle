@@ -16,6 +16,13 @@ def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.arc
 def runBoundedGradleTask = rootProject.ext.runBoundedGradleTask
 
 dependencies {
+    // Expose Common's source module to IDEs; NeoForge also compiles these classes into its own output.
+    compileOnly(project(':Common')) {
+        transitive = false
+        capabilities {
+            requireCapability "$group:$mod_id"
+        }
+    }
     compileOnly files(project(':NeoForge').sourceSets.main.output)
     compileOnly "mysticdrew:common-networking-neoforge:${common_networking_version}"
 }
@@ -49,14 +56,15 @@ sourceSets {
     }
     iceAndFireTideTest {
         compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
-        runtimeClasspath += output + compileClasspath
+        // Common is an IDE/compile dependency; gameplay still uses the packaged production mod.
+        runtimeClasspath += output + (compileClasspath - project(':Common').sourceSets.main.output)
     }
     advancedNetheriteTest {
         java.srcDir rootProject.file('RuntimeTests/AdvancedNetherite/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':NeoForge').sourceSets.main.output)
         compileClasspath += configurations.advancedNetheriteNeoForge
-        runtimeClasspath += output + compileClasspath
+        runtimeClasspath += output + (compileClasspath - project(':Common').sourceSets.main.output)
     }
 }
 
