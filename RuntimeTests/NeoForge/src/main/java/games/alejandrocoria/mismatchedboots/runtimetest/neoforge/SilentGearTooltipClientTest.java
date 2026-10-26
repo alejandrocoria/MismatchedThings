@@ -46,12 +46,24 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 /** Actual integrated connection/menu packets; deterministic window polling is restricted to capture scopes. */
 public final class SilentGearTooltipClientTest {
     private static Set<Integer> pressed;
-    private static boolean capturing, finished, presentation = true, expanded, faultActive;
+    private static boolean capturing;
+    private static boolean finished;
+    private static boolean presentation = true;
+    private static boolean expanded;
+    private static boolean faultActive;
     private static int faultCalls;
-    private static int ticks, events, captures, comparisons, maxLines, maxNativeLines, maxWidth;
+    private static int ticks;
+    private static int events;
+    private static int captures;
+    private static int comparisons;
+    private static int maxLines;
+    private static int maxNativeLines;
+    private static int maxWidth;
     private static Future<String> seed;
     private static JsonArray manifest;
-    private static KeyMapping properties, traits, construction;
+    private static KeyMapping properties;
+    private static KeyMapping traits;
+    private static KeyMapping construction;
     private static Object vanilla;
     private static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.silentGearTooltipVariant", "normal");
     private static final String OUTPUT = "silent-gear-tooltip-" + VARIANT;
@@ -97,6 +109,7 @@ public final class SilentGearTooltipClientTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 3_600, "SG tooltip acceptance timed out");
             if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
@@ -167,6 +180,7 @@ public final class SilentGearTooltipClientTest {
             if (!(client.player.containerMenu instanceof ChestMenu)) {
                 return;
             }
+
             var ops = client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE);
             for (int index = 0; index < manifest.size(); index++) {
                 ItemStack expected = ItemStack.CODEC.parse(ops, manifest.get(index)).getOrThrow();
@@ -203,7 +217,9 @@ public final class SilentGearTooltipClientTest {
                 vanilla.getClass().getMethod("set", Object.class).invoke(vanilla, simple);
                 // Distinct formatting branches, not the spike's full Cartesian product.
                 for (int mode : simple ? new int[]{0, 7} : new int[]{0, 1, 2, 3, 4, 7}) {
-                    boolean ctrl = (mode & 1) != 0, shift = (mode & 2) != 0, alt = (mode & 4) != 0;
+                    boolean ctrl = (mode & 1) != 0;
+                    boolean shift = (mode & 2) != 0;
+                    boolean alt = (mode & 4) != 0;
                     input(ctrl, shift, alt, false);
                     require((boolean) keys.getMethod("isDisplayPropertiesDown").invoke(null) == ctrl
                                     && (boolean) keys.getMethod("isDisplayConstructionDown").invoke(null) == alt
@@ -269,6 +285,7 @@ public final class SilentGearTooltipClientTest {
                 compare(client, probe, TooltipFlag.ADVANCED, false);
                 input(false, false, false, false);
             }
+
             ItemStack absent = data.left().source();
             absent.remove(props);
             require(SilentGearNativeTooltipControl.details(client, absent, TooltipFlag.NORMAL).isEmpty(), "Missing native cache reached formatters");
@@ -335,6 +352,7 @@ public final class SilentGearTooltipClientTest {
                 require(header >= 0, "Existing side identity disappeared");
                 expected.addAll(header + 1 + (flag.isAdvanced() ? 1 : 0), block);
             }
+
             var actual = capture(client, root, flag, true);
             require(expected.equals(actual), "Mixed order/style/root text differs from isolated native source insertion");
             if (sources.stream().anyMatch(source -> BuiltInRegistries.ITEM.getKey(source.getItem()).getNamespace().equals("justdirethings"))) {

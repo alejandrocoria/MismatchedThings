@@ -66,6 +66,7 @@ public final class NeoForgeJustDireResourcesClientTest {
         if (finished) {
             return;
         }
+
         try {
             if (++ticks > 3_600) {
                 throw new IllegalStateException("Resource client timed out at phase " + phase);
@@ -80,6 +81,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                 job.get();
                 job = null;
             }
+
             var player = client.player;
             var server = client.getSingleplayerServer();
             require(server != null, "Integrated server missing");
@@ -454,6 +456,7 @@ public final class NeoForgeJustDireResourcesClientTest {
             }
             require(ItemStack.matches(source, sourceBefore), "Tooltip matrix mutated native input");
         }
+
         Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config")
                                            .getField("AVAILABLE_ABILITY_MAP").get(null);
         var lavaRepair = (ModConfigSpec.BooleanValue) flags.entrySet().stream()
@@ -477,6 +480,7 @@ public final class NeoForgeJustDireResourcesClientTest {
         } finally {
             lavaRepair.set(original);
         }
+
         var step = (ModConfigSpec.BooleanValue) flags.entrySet().stream()
                                                      .filter(entry -> ((Enum<?>) entry.getKey()).name().equals("STEPHEIGHT"))
                                                      .findFirst().orElseThrow().getValue();
@@ -493,6 +497,7 @@ public final class NeoForgeJustDireResourcesClientTest {
         } finally {
             step.set(originalStep);
         }
+
         var abilityFlags = new java.util.LinkedHashMap<ModConfigSpec.BooleanValue, Boolean>();
         var noDetails = MixedBootsFactory.createPair(poweredBoots(), new ItemStack(Items.DIAMOND_BOOTS)).primary();
         try {
@@ -509,6 +514,7 @@ public final class NeoForgeJustDireResourcesClientTest {
         } finally {
             abilityFlags.forEach(ModConfigSpec.BooleanValue::set);
         }
+
         ItemStack hiddenIntrinsic = NeoForgeJustDireResourcesTest.boots("blazegold", 0);
         hiddenIntrinsic.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, TooltipDisplay.DEFAULT.hiddenComponents()));
         var hiddenIntrinsicRoot = MixedBootsFactory.createPair(hiddenIntrinsic, new ItemStack(Items.DIAMOND_BOOTS)).primary();
@@ -568,6 +574,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                 }
             }
         }
+
         var display = root.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
         var rows = new ArrayList<Component>();
         for (String name : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp", "earthquake")) {
@@ -598,6 +605,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                 if (showEnergy) {
                     JustDireTooltipTestSupport.energy(lines, amount, capacity, shift);
                 }
+
                 var global = lines.stream()
                                   .filter(line -> key(line).equals("justdirethings.enabled") || key(line).equals("justdirethings.disabled"))
                                   .toList();
@@ -619,6 +627,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                         require(lines.indexOf(energy.getFirst()) < lines.indexOf(global.getFirst()), "FE/global order changed");
                     }
                 }
+
                 var actualRows = lines.stream().filter(line -> key(line).startsWith("justdirethings.ability.")).toList();
                 require(actualRows.equals(shift ? rows : List.of()), "Supported row order/state/color differs: " + actualRows + " vs " + rows);
                 var hint = lines.stream().filter(line -> key(line).equals("justdirethings.shiftmoreinfo")).toList();
@@ -645,6 +654,7 @@ public final class NeoForgeJustDireResourcesClientTest {
         if (!ItemStack.matches(feet, expected)) {
             return false;
         }
+
         var modifiers = expected.getAttributeModifiers();
         for (var attribute : java.util.List.of(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR,
                                                net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT)) {
@@ -655,6 +665,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                 return false;
             }
         }
+
         return true;
     }
 }

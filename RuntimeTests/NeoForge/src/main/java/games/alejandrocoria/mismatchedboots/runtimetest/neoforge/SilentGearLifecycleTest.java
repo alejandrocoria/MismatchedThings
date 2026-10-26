@@ -77,7 +77,8 @@ final class SilentGearLifecycleTest {
         var api = new NeoForgeSilentGearTest.NativeApi();
         SilentGearTraitSpike.initialize(api);
         var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
-        ItemStack copper = api.boot("copper"), young = copper.copy();
+        ItemStack copper = api.boot("copper");
+        ItemStack young = copper.copy();
         copper.set(counter, 1198);
         young.set(counter, 10);
         var roots = new ArrayList<>(NeoForgeSilentGearTest.workbench(player, copper, young));
@@ -102,6 +103,7 @@ final class SilentGearLifecycleTest {
             close(armor(root), SilentGearLiveStateTest.expectedArmor(root, api, player, AttributePolicy.MAXIMUM), "Save native worn maximum");
             roots.add(root);
         }
+
         ItemStack overridden = roots.get(3);
         var modifiers = new ArrayList<>(overridden.getAttributeModifiers().modifiers().stream()
                                                   .filter(entry -> !entry.attribute().equals(Attributes.ARMOR)).toList());
@@ -120,6 +122,7 @@ final class SilentGearLifecycleTest {
             root.setDamageValue(12);
             roots.add(root);
         }
+
         ItemStack wearerCopper = api.boot("copper");
         wearerCopper.set(counter, 37);
         roots.addAll(NeoForgeSilentGearTest.workbench(player, api.boot("azure_silver"), wearerCopper));
@@ -165,6 +168,7 @@ final class SilentGearLifecycleTest {
             ItemStack expected = ItemStack.CODEC.parse(ops, saved.get(index)).getOrThrow();
             require(ItemStack.matches(expected, barrel.getItem(index)), "World reload changed root/source/projection/clock " + index);
         }
+
         var player = player(server);
         var api = new NeoForgeSilentGearTest.NativeApi();
         SilentGearTraitSpike.initialize(api);
@@ -186,9 +190,7 @@ final class SilentGearLifecycleTest {
                 root.hurtAndBreak(3, player, EquipmentSlot.FEET);
                 tick(player, root, 21, EquipmentSlot.FEET);
                 require(root.get(SilentGearCompatibility.state()).rules().stream().anyMatch(rule ->
-                                                                                                    rule.attribute()
-                                                                                                        .equals(Identifier.withDefaultNamespace(
-                                                                                                                "armor")) && rule.policy() == AttributePolicy.MAXIMUM),
+                                rule.attribute().equals(Identifier.withDefaultNamespace("armor")) && rule.policy() == AttributePolicy.MAXIMUM),
                         "Reload discarded captured policy");
                 close(armor(root), index == 3 ? 0 : SilentGearLiveStateTest.expectedArmor(root, api, player, AttributePolicy.MAXIMUM),
                       "Reload lost maximum or resurrected managed removal");
@@ -209,10 +211,10 @@ final class SilentGearLifecycleTest {
             }
         }
         // Paid trim recomposes under the current average rules, while live root state survives.
-        ItemStack original = barrel.getItem(2), trimmed = trim(player, original.copy());
+        ItemStack original = barrel.getItem(2);
+        ItemStack trimmed = trim(player, original.copy());
         require(trimmed.get(SilentGearCompatibility.state()).rules().stream().anyMatch(rule ->
-                                                                                               rule.attribute()
-                                                                                                   .equals(Identifier.withDefaultNamespace("armor")) && rule.policy() == AttributePolicy.AVERAGE),
+                        rule.attribute().equals(Identifier.withDefaultNamespace("armor")) && rule.policy() == AttributePolicy.AVERAGE),
                 "Paid recomposition did not capture current policy");
         close(armor(trimmed), SilentGearLiveStateTest.expectedArmor(trimmed, api, player, AttributePolicy.AVERAGE), "Trim worn armor");
         ItemStack repaired = repair(player, trimmed.copy());
@@ -227,7 +229,8 @@ final class SilentGearLifecycleTest {
                 player.setItemSlot(slot, ItemStack.EMPTY);
             }
             player.removeAllEffects();
-            ItemStack root = barrel.getItem(index), before = root.copy();
+            ItemStack root = barrel.getItem(index);
+            ItemStack before = root.copy();
             player.setItemSlot(EquipmentSlot.FEET, root);
             tick(player, root, 21, EquipmentSlot.FEET);
             require(ItemStack.matches(before, root), "Reloaded wearer root changed before its native cadence");
@@ -267,9 +270,7 @@ final class SilentGearLifecycleTest {
         player.removeAllEffects();
         barrel.setChanged();
         require(SilentGearCompatibility.effectiveTraits(barrel.getItem(8)).stream().anyMatch(trait ->
-                                                                                                     trait.id()
-                                                                                                          .toString()
-                                                                                                          .equals("silentgear:magnetic") && trait.level() == 5),
+                        trait.id().toString().equals("silentgear:magnetic") && trait.level() == 5),
                 "World restart lost prepared Magnetic V");
         SilentGearRemainingFixture.selected(player, List.of(barrel.getItem(9), barrel.getItem(10), barrel.getItem(11)));
         NetworkAcceptanceFiles.write("silent-gear-restart-report.txt",

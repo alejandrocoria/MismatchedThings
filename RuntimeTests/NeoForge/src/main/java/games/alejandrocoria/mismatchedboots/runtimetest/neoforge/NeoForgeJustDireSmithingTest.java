@@ -165,6 +165,7 @@ public final class NeoForgeJustDireSmithingTest {
                 menu.clicked(SmithingMenu.ADDITIONAL_SLOT, 0, ContainerInput.PICKUP, player);
                 require(menu.getCarried().isEmpty(), "Input insertion left an unexpected cursor remainder");
             }
+
             ItemStack preview = output(menu).copy();
             require(!preview.isEmpty() && preview.getOrDefault(flag(ability), false)
                             && data(preview).equals(originalSources), "Root-only installation changed snapshots or lost its flag");
@@ -180,6 +181,7 @@ public final class NeoForgeJustDireSmithingTest {
                         "Blocked take consumed or lost inputs");
                 player.getInventory().clearContent();
             }
+
             ItemStack taken;
             if (shiftClick) {
                 taken = menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT);

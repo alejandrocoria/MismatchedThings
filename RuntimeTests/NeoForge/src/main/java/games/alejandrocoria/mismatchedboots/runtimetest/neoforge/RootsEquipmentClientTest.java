@@ -64,6 +64,7 @@ public final class RootsEquipmentClientTest {
                                                            WorldPresets::createFlatWorldDimensions,
                                                            new TitleScreen());
         }
+
         return client.player != null && client.level != null && CompositionRulesClientLifecycle.areRulesSynchronized();
     }
 
@@ -136,6 +137,7 @@ public final class RootsEquipmentClientTest {
                                        "left_foot", "right_foot")) {
                 children.put(name, baked.getChild(name));
             }
+
             HumanoidModel<?> malformed = (HumanoidModel<?>) nativeModel.getClass()
                                                                        .getConstructor(ModelPart.class, ArmorType.class)
                                                                        .newInstance(new ModelPart(List.of(), children), ArmorType.BOOTS);
@@ -193,6 +195,7 @@ public final class RootsEquipmentClientTest {
                 || !firstGeometry.equals(assertNodes(first, leftPart, rightPart, leftModel, rightModel))) {
             throw new AssertionError("Queued cached Roots models lost animation or per-state reproducibility");
         }
+
         var stored = ModContent.getMixedBootsData(pair).orElseThrow();
         if (!ItemStack.matches(left, leftBefore) || !ItemStack.matches(right, rightBefore)
                 || !ItemStack.matches(stored.left().source(), leftBefore)
@@ -220,6 +223,7 @@ public final class RootsEquipmentClientTest {
             if (!isLeft && view.root() != right) {
                 throw new AssertionError("Production adapter lost side ownership");
             }
+
             HumanoidModel<?> nativeModel = isLeft ? leftModel : rightModel;
             ModelPart opposite = part(nativeModel, !isLeft);
             if (view.allParts().contains(opposite)) {
@@ -254,10 +258,12 @@ public final class RootsEquipmentClientTest {
             foundRight |= !isLeft;
             geometry.addAll(actual);
         }
+
         int expectedTrims = (isRootsModel(leftModel) ? 1 : 0) + (isRootsModel(rightModel) ? 1 : 0);
         if (!foundLeft || !foundRight || trims != expectedTrims || glints != 2) {
             throw new AssertionError("Production adapter lost a side, trim, or root glint");
         }
+
         return geometry;
     }
 

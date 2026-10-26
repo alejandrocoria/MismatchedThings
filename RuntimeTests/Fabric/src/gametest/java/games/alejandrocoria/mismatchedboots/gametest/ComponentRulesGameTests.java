@@ -40,6 +40,7 @@ public final class ComponentRulesGameTests {
                               "Shared tag became a frozen list");
             assertDamage(helper, root, true, false);
         }
+
         var registry = helper.getLevel().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE);
         var fire = registry.getOrThrow(DamageTypes.IN_FIRE);
         var cactus = registry.getOrThrow(DamageTypes.CACTUS);
@@ -80,6 +81,7 @@ public final class ComponentRulesGameTests {
             result.remove(DataComponents.DAMAGE_RESISTANT);
             assertDamage(helper, MixedBootsRecomposer.recompose(result, netherite, netherite), false, false);
         }
+
         ItemStack root = GameTestStacks.pair(netherite, netherite).primary();
         assertDamage(helper, MixedBootsRecomposer.recompose(root, netherite, iron), false, false);
         helper.succeed();

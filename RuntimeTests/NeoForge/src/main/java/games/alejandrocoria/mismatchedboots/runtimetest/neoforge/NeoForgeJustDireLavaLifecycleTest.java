@@ -35,17 +35,30 @@ import java.util.function.BooleanSupplier;
 final class NeoForgeJustDireLavaLifecycleTest {
     private static final String PREFIX = "just-dire-lava-lifecycle";
     private static final boolean RESTART = System.getProperty("mismatchedboots.runtimetest.justDireLavaLifecycle").equals("restart");
-    private static final BlockPos A = new BlockPos(1605, 80, 5), B = A.offset(6, 0, 0);
+    private static final BlockPos A = new BlockPos(1605, 80, 5);
+    private static final BlockPos B = A.offset(6, 0, 0);
     private static final ChunkPos CHUNK = new ChunkPos(A.getX() >> 4, A.getZ() >> 4);
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
-    private static ServerLevel level, nether;
-    private static ItemEntity item, old, completed, first, second, coalA, coalB;
+    private static ServerLevel level;
+    private static ServerLevel nether;
+    private static ItemEntity item;
+    private static ItemEntity old;
+    private static ItemEntity completed;
+    private static ItemEntity first;
+    private static ItemEntity second;
+    private static ItemEntity coalA;
+    private static ItemEntity coalB;
     private static ServerPlayer collector;
     private static ItemStack expected;
-    private static UUID unloadedId, importedWorkingId;
-    private static boolean initialized, started, finished, unloaded;
-    private static int wait, total;
+    private static UUID unloadedId;
+    private static UUID importedWorkingId;
+    private static boolean initialized;
+    private static boolean started;
+    private static boolean finished;
+    private static boolean unloaded;
+    private static int wait;
+    private static int total;
 
     private record Step(String name, Checked start, BooleanSupplier done, int limit) {
     }
@@ -78,6 +91,7 @@ final class NeoForgeJustDireLavaLifecycleTest {
         if (finished) {
             return;
         }
+
         try {
             if (++total > 3_000) {
                 throw new AssertionError("Lifecycle total deadline");
@@ -96,6 +110,7 @@ final class NeoForgeJustDireLavaLifecycleTest {
                     save(server);
                 }
             }
+
             Step step = steps.peek();
             if (step == null) {
                 // Inject immediately before shutdown so another normal tick cannot sanitize it before disk save.

@@ -6,7 +6,8 @@ import java.util.function.Supplier;
 
 /** Test-only observers/opaque identity controls, never another protection implementation. */
 public final class AetherAlkahestTestControl {
-    public static int observations, bindingFailures;
+    public static int observations;
+    public static int bindingFailures;
 
     private AetherAlkahestTestControl() {
     }

@@ -50,7 +50,10 @@ public final class AetherTooltipLifecycleTest {
     private static ItemStack oldFeet;
     private static MinecraftServer oldServer;
     private static Future<?> job;
-    private static int phase, targetSlot = -1, observed, ticks;
+    private static int phase;
+    private static int targetSlot = -1;
+    private static int observed;
+    private static int ticks;
     private static AbstractContainerScreen<?> hoverScreen;
     private static ItemStack hoverStack;
     private static List<Component> hoverLines;
@@ -260,6 +263,7 @@ public final class AetherTooltipLifecycleTest {
             oldServer = null;
             return true;
         }
+
         return false;
     }
 
@@ -332,6 +336,7 @@ public final class AetherTooltipLifecycleTest {
             client.player = oldPlayer;
             client.level = oldLevel;
         }
+
         var data = ModContent.getMixedBootsData(worn).orElseThrow();
         var left = data.left().source();
         var right = data.right().source();
@@ -340,6 +345,7 @@ public final class AetherTooltipLifecycleTest {
                 source.set(component("armor_set"), TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:armor/unknown_fixture_set")));
             }
         }
+
         var unknown = worn.copy();
         unknown.set(ModContent.mixedBootsDataType().orElseThrow(), new MixedBootsData(new BootHalf(left), new BootHalf(right)));
         var lines = AetherTooltipTestControl.capture(client, unknown, TooltipFlag.NORMAL, false).lines();

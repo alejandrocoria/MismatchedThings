@@ -81,7 +81,8 @@ final class SilentGearFoundationTest {
     static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         var stage = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_STAGE");
         var counter = NeoForgeSilentGearTest.NativeApi.component("OXIDATION_COUNTER");
-        ItemStack copper = api.boot("copper"), younger = copper.copy();
+        ItemStack copper = api.boot("copper");
+        ItemStack younger = copper.copy();
         copper.set(counter, 1199);
         younger.set(counter, 10);
         var nativeModifiers = copper.getAttributeModifiers();
@@ -172,6 +173,7 @@ final class SilentGearFoundationTest {
                                             .get(SilentGearCompatibility.state()).left().isEmpty(), "Historical source resurrected a removed lane");
             }
         }
+
         var strict = new AttributeRuleSet(AttributePolicy.SEPARATE, Map.of(Identifier.withDefaultNamespace("armor"), AttributePolicy.MAXIMUM));
         var composed = MixedBootsFactory.createPair(copper, new ItemStack(Items.DIAMOND_BOOTS), strict,
                                                     games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle.serverRules());
@@ -195,6 +197,7 @@ final class SilentGearFoundationTest {
             if (invalid.equals("stage")) {
                 malformed.set(stage, (byte) 127);
             }
+
             var menu = new MismatchedWorkbenchMenu(2, player.getInventory());
             menu.getSlot(0).set(malformed);
             menu.getSlot(1).set(new ItemStack(Items.DIAMOND_BOOTS));

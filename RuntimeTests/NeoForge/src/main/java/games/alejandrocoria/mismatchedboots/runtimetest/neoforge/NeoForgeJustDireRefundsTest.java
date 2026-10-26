@@ -52,7 +52,8 @@ final class NeoForgeJustDireRefundsTest {
     private static final List<String> NAMES = List.of("stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake");
     private static final StringBuilder report = new StringBuilder();
     private static boolean finished;
-    private static int groups, upgradeDrops;
+    private static int groups;
+    private static int upgradeDrops;
 
     private NeoForgeJustDireRefundsTest() {
     }
@@ -92,6 +93,7 @@ final class NeoForgeJustDireRefundsTest {
                         configured(server);
                         codecs(server);
                     }
+
                     var root = MixedBootsFactory.createPair(boot("ferricore", "stepheight"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
                     root.setDamageValue(root.getMaxDamage() - 1);
                     player.setItemSlot(EquipmentSlot.FEET, root);
@@ -248,6 +250,7 @@ final class NeoForgeJustDireRefundsTest {
                             && java.util.Objects.equals(state, restored.get(JustDireRefundCompatibility.component())),
                     "Dormancy/restoration reimported root credit");
         }
+
         var defaults = ComponentRulesLifecycle.serverRules();
         var declarations = new LinkedHashMap<>(defaults.components().rules());
         declarations.put(Identifier.fromNamespaceAndPath("mismatchedboots", "jdt_refundable_upgrades"), ComponentRule.of(ComponentPolicy.OMIT));

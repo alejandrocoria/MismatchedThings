@@ -28,7 +28,8 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 
 /** Production B only: no replacement event listener, damage dispatcher or ready-getter override. */
 public final class SilentGearIncomingTest {
-    private static int calls, failOn;
+    private static int calls;
+    private static int failOn;
     private static Reload reload;
 
     private SilentGearIncomingTest() {
@@ -76,6 +77,7 @@ public final class SilentGearIncomingTest {
             equip(player, root);
             event(player, player.damageSources().lava(), 20, 16);
         }
+
         var helmet = api.armor("helmet", "helmet_plates", "crimson_iron");
         for (var root : samples) {
             require(root.has(DataComponents.DAMAGE_RESISTANT) == (samples.indexOf(root) >= 2), "BOTH-source fireproofing changed");
@@ -145,6 +147,7 @@ public final class SilentGearIncomingTest {
             event(player, player.damageSources().lava(), 20, 20);
             require(calls == 0, "Malformed mixed incoming admitted");
         }
+
         var vanilla = NeoForgeSilentGearTest.workbench(player, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
         equip(player, vanilla);
         calls = 0;
@@ -338,6 +341,7 @@ public final class SilentGearIncomingTest {
             if (!selected.contains(id)) {
                 selected.add(id);
             }
+
             return server.reloadResources(selected);
         }
     }
@@ -360,6 +364,7 @@ public final class SilentGearIncomingTest {
         for (var slot : EquipmentSlot.values()) {
             require(ItemStack.matches(snapshots.get(slot.ordinal()), player.getItemBySlot(slot)), "Incoming changed equipment/root/source history");
         }
+
         return event;
     }
 

@@ -37,7 +37,8 @@ public final class NeoForgeJustDireLavaRepairTest {
     private static final BlockPos LAVA = new BlockPos(5, 80, 5);
     private static final StringBuilder report = new StringBuilder();
     private static boolean finished;
-    private static int warmup, groups;
+    private static int warmup;
+    private static int groups;
 
     private NeoForgeJustDireLavaRepairTest() {
     }
@@ -50,6 +51,7 @@ public final class NeoForgeJustDireLavaRepairTest {
         if (finished) {
             return;
         }
+
         ServerLevel level = server.overworld();
         if (++warmup == 1) {
             level.setChunkForced(0, 0, true);
@@ -356,6 +358,7 @@ public final class NeoForgeJustDireLavaRepairTest {
                         arguments[i] = java.lang.invoke.MethodHandles.dropArguments(throwing, 0, handle.type().parameterList());
                     }
                 }
+
                 var constructor = binding.getClass().getDeclaredConstructors()[0];
                 constructor.setAccessible(true);
                 api.set(null, constructor.newInstance(arguments));

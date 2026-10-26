@@ -356,6 +356,7 @@ public final class AetherIICompatibilityTest {
             fall(player, new ItemStack(Items.DIAMOND_BOOTS), 7.99, false);
             require(before.equals(snapshot(server, root)), "Fall modified root/history");
         }
+
         var duplicate = MixedBootsFactory.createPair(source, source).primary();
         player.setItemSlot(EquipmentSlot.FEET, duplicate);
         count(api, player, source.get(armorSet), 1);
@@ -420,6 +421,7 @@ public final class AetherIICompatibilityTest {
                 subject.setItemSlot(EquipmentSlot.HEAD, item("gravitite_helmet"));
                 subject.setItemSlot(EquipmentSlot.CHEST, item("gravitite_chestplate"));
             }
+
             Method update = LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates");
             update.setAccessible(true);
             update.invoke(subject);

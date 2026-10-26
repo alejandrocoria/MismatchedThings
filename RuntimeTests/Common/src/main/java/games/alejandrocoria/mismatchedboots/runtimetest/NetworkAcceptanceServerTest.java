@@ -53,6 +53,7 @@ public final class NetworkAcceptanceServerTest {
         if (stopping) {
             return;
         }
+
         try {
             ticks++;
             if (!ready) {
@@ -95,6 +96,7 @@ public final class NetworkAcceptanceServerTest {
                 || rules.policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM) {
             throw new AssertionError("Server did not load the isolated rules: " + rules);
         }
+
         var components = ComponentRulesLifecycle.serverRules();
         if (components.durability() != DurabilityPolicy.SEPARATE
                 || components.repairCost() != RepairCostPolicy.OWNER
@@ -168,6 +170,7 @@ public final class NetworkAcceptanceServerTest {
         if (player.level().getBlockEntity(pos) != null) {
             throw new AssertionError("Equipment fixture would replace a block entity");
         }
+
         ArmorStand target = new ArmorStand(player.level(), pos.getX() + 0.5, pos.getY(), pos.getZ() + 1.5);
         target.setNoGravity(true);
         player.level().addFreshEntity(target);

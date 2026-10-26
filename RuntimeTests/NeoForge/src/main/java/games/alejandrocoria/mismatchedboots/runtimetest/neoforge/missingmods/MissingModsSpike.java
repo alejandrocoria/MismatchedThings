@@ -44,11 +44,13 @@ public final class MissingModsSpike {
         if (retained == null || retained.getAmountAsLong() != 12_347) {
             throw new AssertionError("Active production FE capability unavailable");
         }
+
         var suspended = MissingModsInteractionChecks.suspend(server, active);
         player.getInventory().setItem(0, suspended);
         if (access.getCapability(Capabilities.Energy.ITEM) != null || retained.getCapacityAsLong() != 0 || retained.getAmountAsLong() != 0) {
             throw new AssertionError("Suspended production root exposes FE capability/wallet");
         }
+
         var before = suspended.copy();
         try (var transaction = Transaction.openRoot()) {
             if (retained.insert(5_000, transaction) != 0 || retained.extract(5_000, transaction) != 0) {
@@ -65,6 +67,7 @@ public final class MissingModsSpike {
         if (!MissingModsProof.fixturesPresent()) {
             return;
         }
+
         var attributes = DeferredRegister.create(Registries.ATTRIBUTE, MissingModsProof.MOD);
         attributes.register("temporary_attribute", () -> new RangedAttribute("missing-mod-proof", 0, -1024, 1024));
         attributes.register(bus);

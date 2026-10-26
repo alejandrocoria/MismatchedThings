@@ -13,8 +13,12 @@ import net.neoforged.neoforge.event.entity.living.ArmorHurtEvent;
 public final class JustDireArmorWearFaults {
     public static String fault = "";
     public static ServerPlayer player;
-    public static ItemStack root, replacement;
-    public static int extracted, before, after, surrounding;
+    public static ItemStack root;
+    public static ItemStack replacement;
+    public static int extracted;
+    public static int before;
+    public static int after;
+    public static int surrounding;
 
     public static final class CommittedFailure extends RuntimeException {
     }
@@ -47,6 +51,7 @@ public final class JustDireArmorWearFaults {
             extracted = receipt;
             return receipt;
         }
+
         String current = fault;
         fault = "";
         extracted = receipt;
@@ -61,6 +66,7 @@ public final class JustDireArmorWearFaults {
             case "staged" -> { /* handled by the mixin against its real access */ }
             default -> throw new AssertionError("Unknown extraction fault " + current);
         }
+
         return receipt;
     }
 }

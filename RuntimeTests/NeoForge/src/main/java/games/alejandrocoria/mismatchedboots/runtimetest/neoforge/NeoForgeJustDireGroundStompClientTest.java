@@ -71,18 +71,24 @@ final class NeoForgeJustDireGroundStompClientTest {
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
     private static Future<?> job;
-    private static boolean initialized, started, finished;
+    private static boolean initialized;
+    private static boolean started;
+    private static boolean finished;
     private static int wait;
-    private static ItemStack expected, before;
+    private static ItemStack expected;
+    private static ItemStack before;
     private static JustDireRefundCredits lifecycleRefundCredits;
     private static Object provenance;
     private static JustDireActiveNetwork.SettingsRequest stale;
     private static double enabledStep;
     private static boolean holdReply;
     private static JustDireActiveNetwork.ActivationReply observedActivation;
-    private static JustDireActiveNetwork.Activate consumed, held, issuedActivation;
+    private static JustDireActiveNetwork.Activate consumed;
+    private static JustDireActiveNetwork.Activate held;
+    private static JustDireActiveNetwork.Activate issuedActivation;
     private static Mob target;
-    private static Object previousServer, previousPlayer;
+    private static Object previousServer;
+    private static Object previousPlayer;
     private static ItemStack inputRoot;
     private static JsonElement reconnectExpected;
     private static JsonElement reconnectInventoryExpected;
@@ -102,6 +108,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         if (finished || !initialized && !joined(client)) {
             return;
         }
+
         try {
             if (!initialized) {
                 initialize(client);
@@ -114,6 +121,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 job.get();
                 job = null;
             }
+
             Step step = steps.peek();
             if (step == null) {
                 // Let final close/ordinary slot packets settle before stopping the local channel.
@@ -279,6 +287,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                     require(java.util.Arrays.stream(client.screen.getClass().getDeclaredMethods()).anyMatch(m -> m.getName().contains(hook)),
                             "Competing wrapper was not applied");
                 }
+
                 var names = maps(client, "buttonToAbilityMap").values().stream().map(Object::toString).toList();
                 require(names.size() == 6 && names.containsAll(List.of("GROUNDSTOMP",
                                                                        "STEPHEIGHT",
@@ -1363,7 +1372,8 @@ final class NeoForgeJustDireGroundStompClientTest {
         open(client);
         select(client, 36);
         for (int index = 0; index < names.size(); index++) {
-            String name = names.get(index), path = name.toLowerCase(java.util.Locale.ROOT);
+            String name = names.get(index);
+            String path = name.toLowerCase(java.util.Locale.ROOT);
             int key = GLFW.GLFW_KEY_J + index;
             reveal(client, name);
             add("mixed native " + name + " captures its keyboard binding", () -> {
@@ -1593,6 +1603,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 set(source, "jumpboost_toggle", false);
                 set(source, "jumpboost_bindingmode", 2);
             }
+
             var pair = MixedBootsFactory.createPair(eclipse, celestigem);
             expected = phase == 0 ? pair.primary() : pair.inverse();
             expected.setDamageValue(31);
@@ -2367,13 +2378,9 @@ final class NeoForgeJustDireGroundStompClientTest {
         add("fresh mouse after reconnect creates a new session and toggles supported passives", () -> {
             before = feet(client).copy();
             mousePress(4, GLFW.GLFW_PRESS);
-        }, () -> !reconnectPassives.isEmpty() && reconnectPassives.stream().allMatch(name ->
-                                                                                             flag(feet(client),
-                                                                                                  name + "_toggle",
-                                                                                                  true) != flag(before,
-                                                                                                                name + "_toggle",
-                                                                                                                true)) && charge(feet(client)) == charge(
-                before)
+        }, () -> !reconnectPassives.isEmpty()
+                && reconnectPassives.stream().allMatch(name -> flag(feet(client), name + "_toggle", true) != flag(before, name + "_toggle", true))
+                && charge(feet(client)) == charge(before)
                 && !flag(client.player.getInventory().getItem(9), "jumpboost_toggle", true)
                 && charge(client.player.getInventory().getItem(9)) == 4);
         open(client);
@@ -2748,6 +2755,7 @@ final class NeoForgeJustDireGroundStompClientTest {
         if (expected.getItem() != actual.getItem() || expected.getCount() != actual.getCount()) {
             return expected + " -> " + actual;
         }
+
         var changes = new StringBuilder();
         for (var component : expected.getComponents()) {
             if (!java.util.Objects.equals(component.value(), actual.get(component.type()))) {
@@ -2760,6 +2768,7 @@ final class NeoForgeJustDireGroundStompClientTest {
                 changes.append(net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(component.type())).append(" added;");
             }
         }
+
         return changes.toString();
     }
 

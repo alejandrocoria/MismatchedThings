@@ -31,7 +31,8 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 
 /** Production Bounce only; native motion runs through the ordinary next-server-pre-tick scheduler. */
 public final class SilentGearBounceTest {
-    public static int wearCalls, requestedWear;
+    public static int wearCalls;
+    public static int requestedWear;
     public static ItemStack protectedRoot;
 
     public static void recalculation(ItemStack stack) {
@@ -66,7 +67,9 @@ public final class SilentGearBounceTest {
         }
         listen();
         var details = new StringBuilder();
-        ItemStack heat = api.boot("crimson_iron"), bounce = lined(api.boot("crimson_iron"), api, owner), vanilla = new ItemStack(Items.DIAMOND_BOOTS);
+        ItemStack heat = api.boot("crimson_iron");
+        ItemStack bounce = lined(api.boot("crimson_iron"), api, owner);
+        ItemStack vanilla = new ItemStack(Items.DIAMOND_BOOTS);
         int heatLevel = api.traitLevel(heat, "heat_resistant");
         require(heatLevel > 0 && api.traitLevel(bounce, "bounce") == 1, "Stock material/lining traits missing");
         details.append("Native crimson iron Heat Resistant=")
@@ -271,6 +274,7 @@ public final class SilentGearBounceTest {
             wearCalls = 0;
             require(!fall(owner, 12).isCanceled() && wearCalls == 0 && ItemStack.matches(before, bad), "Invalid mixed Bounce admitted");
         }
+
         var mob = new Zombie(EntityType.ZOMBIE, owner.level());
         mob.setItemSlot(EquipmentSlot.FEET, root.copy());
         var mobBefore = mob.getItemBySlot(EquipmentSlot.FEET).copy();
@@ -289,6 +293,7 @@ public final class SilentGearBounceTest {
             require(!fall(owner, 12).isCanceled() && ItemStack.matches(before, plain) && wearCalls == 0,
                     "Foreign native components granted Bounce without an SG source");
         }
+
         var instance = SilentGearTraitSpike.view(source).get("silentgear:malleable");
         Object trait = SilentGearTraitSpike.traitOf(instance);
         var effect = ((List<?>) trait.getClass().getMethod("getEffects").invoke(trait)).stream()
@@ -318,6 +323,7 @@ public final class SilentGearBounceTest {
             require(event.isCanceled() && wearCalls == 1 && requestedWear == 3 && sample.getDamageValue() == 10 + (active ? 2 : 3)
                             && ItemStack.matches(sample, reference), "Bounce bypassed existing seeded Malleable/ordinary wear");
         }
+
         var enchanted = root.copy();
         enchanted.setDamageValue(10);
         enchanted.enchant(owner.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.UNBREAKING), 3);
@@ -354,7 +360,8 @@ public final class SilentGearBounceTest {
         field.setAccessible(true);
         nativeRandom = (Random) field.get(null);
         var source = lined(api.boot("crimson_iron"), api, owner);
-        boolean fall = !List.of("defense-fall", "defense-bounce-query").contains(variant), retaliate = !variant.equals("defense-retaliation");
+        boolean fall = !List.of("defense-fall", "defense-bounce-query").contains(variant);
+        boolean retaliate = !variant.equals("defense-retaliation");
         for (var root : NeoForgeSilentGearTest.workbench(owner, source, new ItemStack(Items.DIAMOND_BOOTS))) {
             clear(owner);
             owner.setItemSlot(EquipmentSlot.FEET, root);

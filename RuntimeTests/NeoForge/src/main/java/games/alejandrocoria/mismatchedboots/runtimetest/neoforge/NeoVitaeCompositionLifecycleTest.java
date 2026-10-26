@@ -56,6 +56,7 @@ final class NeoVitaeCompositionLifecycleTest {
             api.tuple(root, 1024, 70, api.raw);
             require(root.has(api.blood), "Inherited mark missing");
         }
+
         ItemStack live = compatible.getFirst();
         var provenance = ModContent.getMixedBootsData(live).orElseThrow();
         ItemStack beforeSimulation = live.copy();
@@ -148,6 +149,7 @@ final class NeoVitaeCompositionLifecycleTest {
             ItemStack expected = ItemStack.CODEC.parse(ops, saved.get(index)).getOrThrow();
             require(ItemStack.matches(expected, barrel.getItem(index)), "World restart changed root/provenance " + index);
         }
+
         var player = player(server);
         ItemStack live = barrel.removeItemNoUpdate(0);
         var history = ModContent.getMixedBootsData(live).orElseThrow();
@@ -173,10 +175,12 @@ final class NeoVitaeCompositionLifecycleTest {
 
     private static List<ItemStack> workbench(ServerPlayer player, ItemStack first, ItemStack second) {
         var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
-        ItemStack beforeFirst = first.copy(), beforeSecond = second.copy();
+        ItemStack beforeFirst = first.copy();
+        ItemStack beforeSecond = second.copy();
         menu.getSlot(0).set(first);
         menu.getSlot(1).set(second);
-        ItemStack primaryPreview = menu.getSlot(2).getItem().copy(), inversePreview = menu.getSlot(3).getItem().copy();
+        ItemStack primaryPreview = menu.getSlot(2).getItem().copy();
+        ItemStack inversePreview = menu.getSlot(3).getItem().copy();
         require(!primaryPreview.isEmpty() && !inversePreview.isEmpty() && !menu.isCommitted(), "Missing Workbench previews");
         var result = new ArrayList<ItemStack>();
         result.add(menu.getSlot(2).safeTake(1, 1, player));
@@ -192,6 +196,7 @@ final class NeoVitaeCompositionLifecycleTest {
                             && ItemStack.matches(data.right().source(), index == 0 ? beforeSecond : beforeFirst),
                     "Workbench lost original provenance");
         }
+
         return result;
     }
 
@@ -226,7 +231,12 @@ final class NeoVitaeCompositionLifecycleTest {
         final DataComponentType<Boolean> blood = NeoForgeNeoVitaeCompositionTest.component("blood_mending");
         final Object raw = type.codec().parse(JsonOps.INSTANCE, new com.google.gson.JsonPrimitive("raw")).getOrThrow();
         final Object ruina = type.codec().parse(JsonOps.INSTANCE, new com.google.gson.JsonPrimitive("ruina")).getOrThrow();
-        final Method fill, drain, maximum, tick, getSlot, setSlot;
+        final Method fill;
+        final Method drain;
+        final Method maximum;
+        final Method tick;
+        final Method getSlot;
+        final Method setSlot;
         final Class<?> forgeClass;
 
         NativeApi() throws ReflectiveOperationException {
@@ -280,6 +290,7 @@ final class NeoVitaeCompositionLifecycleTest {
             for (int index = 0; index < ingredients.size(); index++) {
                 setSlot.invoke(inventory, index, ingredients.get(index).copy());
             }
+
             ItemStack fuel = item("spiritus_gem_common");
             double full = (double) maximum.invoke(null, fuel);
             require(fill(fuel, raw, full, true) == full, "Could not seed full native fuel");
@@ -288,6 +299,7 @@ final class NeoVitaeCompositionLifecycleTest {
             for (int step = 0; step <= 100 && stack(inventory, 5).isEmpty(); step++) {
                 tick.invoke(null, level, FORGE, level.getBlockState(FORGE), forge);
             }
+
             ItemStack result = stack(inventory, 5).copy();
             require(!result.isEmpty() && stack(inventory, 4).get(amount) == full - cost, "Native forge did not complete/pay expected fuel");
             for (int index = 0; index < 4; index++) {

@@ -50,9 +50,13 @@ import java.util.UUID;
 public final class NeoForgeJustDireGroundStompServerTest {
     private static final String PREFIX = "just-dire-ground-stomp-server";
     private static final StringBuilder report = new StringBuilder();
-    private static int warmup, groups, sequence, selection;
+    private static int warmup;
+    private static int groups;
+    private static int sequence;
+    private static int selection;
     private static boolean finished;
-    private static boolean lastPrepared, lastAccepted;
+    private static boolean lastPrepared;
+    private static boolean lastAccepted;
 
     private NeoForgeJustDireGroundStompServerTest() {
     }
@@ -163,6 +167,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 set(source, name + "_upgrade_installed", true);
             }
         }
+
         var pair = MixedBootsFactory.createPair(left, right);
         for (var initial : List.of(pair.primary(), pair.inverse())) {
             for (boolean mouse : new boolean[]{false, true}) {
@@ -244,6 +249,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                     require(!JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse)).accepted(),
                             "Uninstalled passive accepted");
                 }
+
                 var root = initial.copy();
                 player.setItemSlot(EquipmentSlot.FEET, root);
                 var bindings = new ArrayList<Object>();
@@ -272,6 +278,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 for (String name : names) {
                     set(root, name + "_toggle", false);
                 }
+
                 var paidPermit = JustDireActiveNetwork.prepare(player, new JustDireActiveNetwork.Prepare(++sequence, key, mouse));
                 set(root, "forge_energy", 6_001);
                 require(!JustDireActiveNetwork.activate(player,
@@ -310,6 +317,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                         "Explicit mode absence/removal lost");
             }
         }
+
         var unsupported = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS)).primary();
         player.setItemSlot(EquipmentSlot.FEET, unsupported);
         set(unsupported, "jumpboost_upgrade_installed", true);
@@ -383,6 +391,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
             var after = root.copy();
             require(use(player, root, new double[]{2}).getFirst() == 0 && ItemStack.matches(root, after), "Duplicate mutated state");
         }
+
         var empty = root("eclipsealloy", 12_000);
         use(player, empty, new double[]{});
         require(lastAccepted && charge(empty) == 1_000 && timer(empty) == 200, "Empty targets skipped bill/cooldown");
@@ -619,6 +628,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
             if (fault == 2) {
                 set(root, "groundstomp_value", 1);
             }
+
             var before = root.copy();
             var rejected = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, fault != 0, java.util.List.of(36));
             var original = new JustDireActiveNetwork.Activate(issued.sequence(), issued.nonce(), 3, true, java.util.List.of(36));
@@ -731,6 +741,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
             require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 2, ability, 1, 71, false, true)).accepted(),
                     "Dead numeric setting accepted: " + ability);
         }
+
         var beforeRetiredToggle = combined.copy();
         // Global toggling belongs to the held shortcut; retired menu operation 5 must stay inert.
         require(!JustDireActiveNetwork.edit(player, request(menu, selection, number++, token, 5, "", 0, 71, false, true)).accepted()
@@ -799,6 +810,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                         set(root, "tool_enabled", false);
                         set(root, "jumpboost_toggle", false);
                     }
+
                     var before = root.copy();
                     root.setDamageValue(root.getMaxDamage());
                     require(JustDireSettingsCompatibility.metadata(root, "jumpboost").maximum() == maximum, "Wear shrank the permanent Jump range");
@@ -870,6 +882,7 @@ public final class NeoForgeJustDireGroundStompServerTest {
                 JustDireGroundStompServerGuardPlugin.fault = 0;
             }
         }
+
         var root = root("eclipsealloy", 12_000);
         player.setItemSlot(EquipmentSlot.FEET, root);
         JustDireGroundStompServerGuardPlugin.fault = 4;

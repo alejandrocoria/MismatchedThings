@@ -13,6 +13,7 @@ abstract class JustDireGroundStompDebitFailureMixin {
         if (extracted > 0) {
             JustDireGroundStompServerGuardPlugin.afterDebit();
         }
+
         int fault = JustDireGroundStompServerGuardPlugin.fault;
         if (extracted > 0 && fault > 0 && fault < 4) {
             JustDireGroundStompServerGuardPlugin.extracted = extracted;
@@ -27,6 +28,7 @@ abstract class JustDireGroundStompDebitFailureMixin {
                 JustDireGroundStompServerGuardPlugin.changeToggle();
             }
         }
+
         return extracted;
     }
 }

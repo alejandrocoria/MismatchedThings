@@ -14,7 +14,8 @@ import java.util.zip.ZipOutputStream;
 /** Build-only native API mutation; the original optional-mod JAR is never modified. */
 public final class TideJarMutation {
     public static void main(String[] args) throws Exception {
-        Path source = Path.of(args[0]), target = Path.of(args[1]);
+        Path source = Path.of(args[0]);
+        Path target = Path.of(args[1]);
         if (source.toAbsolutePath().normalize().equals(target.toAbsolutePath().normalize())) {
             throw new IllegalArgumentException("Never mutate the original fixture artifact");
         }
@@ -49,6 +50,7 @@ public final class TideJarMutation {
                     if (references < 2) {
                         throw new AssertionError("Expected native constructor and tick field references");
                     }
+
                     ClassWriter writer = new ClassWriter(0);
                     node.accept(writer);
                     bytes = writer.toByteArray();

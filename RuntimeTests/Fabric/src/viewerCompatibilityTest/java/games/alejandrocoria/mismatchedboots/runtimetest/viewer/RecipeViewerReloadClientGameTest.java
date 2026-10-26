@@ -110,6 +110,7 @@ public final class RecipeViewerReloadClientGameTest implements FabricClientGameT
         if (cycles.size() != 1) {
             return false;
         }
+
         Cycle cycle = cycles.getFirst();
         if (cycle.left().isEmpty() || cycle.left().size() != cycle.right().size()
                 || cycle.left().size() != cycle.primary().size() || cycle.left().size() != cycle.inverse().size()) {
@@ -125,6 +126,7 @@ public final class RecipeViewerReloadClientGameTest implements FabricClientGameT
                 return false;
             }
         }
+
         return true;
     }
 

@@ -238,6 +238,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                                                  + ItemLayerResolutionProbe.count(RED_MODEL) + ", blue="
                                                  + ItemLayerResolutionProbe.count(BLUE_MODEL));
             }
+
             int plannedQuads = QuadPlanningProbe.take();
             int expectedQuads = REPEATED_RESOLUTIONS * quadsPerResolution;
             if (plannedQuads != expectedQuads) {
@@ -377,6 +378,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
         if (stackSnapshot.get().isEmpty()) {
             throw new AssertionError("Resource-reload fixture contained no mixed world items");
         }
+
         AtomicReference<CompletableFuture<Void>> reload = new AtomicReference<>();
         context.runOnClient(client -> reload.set(client.reloadResourcePacks()));
         context.waitFor(client -> reload.get() != null && reload.get().isDone(), 1200);
@@ -446,6 +448,7 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
                 }
             }
         }
+
         return snapshot.get();
     }
 
@@ -456,16 +459,14 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             String rightSprite,
             boolean foil,
             String scenario) {
-        boolean left = snapshot.submissions().stream().anyMatch(submission ->
-                                                                        submission.displayContext() == context
-                                                                                && submission.sprite().equals(leftSprite)
-                                                                                && submission.minX() >= 0.5F - EPSILON
-                                                                                && hasFoil(submission) == foil);
-        boolean right = snapshot.submissions().stream().anyMatch(submission ->
-                                                                         submission.displayContext() == context
-                                                                                 && submission.sprite().equals(rightSprite)
-                                                                                 && submission.maxX() <= 0.5F + EPSILON
-                                                                                 && hasFoil(submission) == foil);
+        boolean left = snapshot.submissions().stream().anyMatch(submission -> submission.displayContext() == context
+                && submission.sprite().equals(leftSprite)
+                && submission.minX() >= 0.5F - EPSILON
+                && hasFoil(submission) == foil);
+        boolean right = snapshot.submissions().stream().anyMatch(submission -> submission.displayContext() == context
+                && submission.sprite().equals(rightSprite)
+                && submission.maxX() <= 0.5F + EPSILON
+                && hasFoil(submission) == foil);
         if (!left || !right) {
             throw new AssertionError(scenario + " did not submit complementary full-scale halves");
         }
@@ -478,16 +479,14 @@ public final class HybridItemRenderingRuntimeClientGameTest implements FabricCli
             String ordinarySprite,
             boolean foil,
             String scenario) {
-        boolean rotated = snapshot.submissions().stream().anyMatch(submission ->
-                                                                           submission.displayContext() == context
-                                                                                   && submission.sprite().equals(rotatedSprite)
-                                                                                   && submission.triangleCount() > 0
-                                                                                   && hasFoil(submission) == foil);
-        boolean ordinary = snapshot.submissions().stream().anyMatch(submission ->
-                                                                            submission.displayContext() == context
-                                                                                    && submission.sprite().equals(ordinarySprite)
-                                                                                    && submission.maxX() <= 0.5F + EPSILON
-                                                                                    && hasFoil(submission) == foil);
+        boolean rotated = snapshot.submissions().stream().anyMatch(submission -> submission.displayContext() == context
+                && submission.sprite().equals(rotatedSprite)
+                && submission.triangleCount() > 0
+                && hasFoil(submission) == foil);
+        boolean ordinary = snapshot.submissions().stream().anyMatch(submission -> submission.displayContext() == context
+                && submission.sprite().equals(ordinarySprite)
+                && submission.maxX() <= 0.5F + EPSILON
+                && hasFoil(submission) == foil);
         if (!rotated || !ordinary) {
             throw new AssertionError(scenario + " did not submit the tessellated rotated half");
         }

@@ -54,7 +54,8 @@ public final class RootsTickTestControl {
     public static final class Scope implements AutoCloseable {
         final int result;
         final List<Integer> bounds = new ArrayList<>();
-        int ticks, repairs;
+        int ticks;
+        int repairs;
 
         private Scope(int result) {
             this.result = result;

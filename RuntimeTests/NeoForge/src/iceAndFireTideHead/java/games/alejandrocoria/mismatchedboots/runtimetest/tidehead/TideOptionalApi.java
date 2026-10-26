@@ -15,6 +15,7 @@ final class TideOptionalApi {
         if (cached != null) {
             return cached;
         }
+
         boolean present = false;
         try {
             var provider = MixinService.getService().getBytecodeProvider();
@@ -36,6 +37,7 @@ final class TideOptionalApi {
         } catch (Exception | LinkageError failure) {
             cached = new Result(true, false, "Tide API inspection failed: " + failure.getClass().getSimpleName());
         }
+
         return cached;
     }
 

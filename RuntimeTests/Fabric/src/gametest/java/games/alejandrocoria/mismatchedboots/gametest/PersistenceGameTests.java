@@ -190,6 +190,7 @@ public final class PersistenceGameTests {
         if (!(blockEntity instanceof ChestBlockEntity chest)) {
             throw new AssertionError("Could not create the restart persistence chest");
         }
+
         MixedBootsPair pair = restartPair(token);
         assertProjectedRestartComponents(pair.primary(), token, "write-process primary");
         assertProjectedRestartComponents(pair.inverse(), token, "write-process inverse");

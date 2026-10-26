@@ -89,6 +89,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
             if (timers[1] > 0) {
                 b.set(timers(), new ArrayList<>(List.of(timer("groundstomp", timers[1], false), timer("airburst", 31, false))));
             }
+
             var beforeA = a.copy();
             var beforeB = b.copy();
             var outputs = workbench(player, a, b);
@@ -106,6 +107,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
                                 && outputs.getFirst().get(timers()) != outputs.getLast().get(timers()),
                         "Output timer lists alias native inputs/inverse");
             }
+
             var first = outputs.getFirst();
             var inverseBefore = outputs.getLast().copy();
             first.set(timers(), List.of(timer("groundstomp", 1, false)));
@@ -121,6 +123,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
         for (var root : workbench(player, forged, boots("blazegold", 0))) {
             require(remaining(root) == 0 && JustDireGroundStompCompatibility.quote(root) != null, "Ineligible timer prevented legitimate readiness");
         }
+
         var ferricore = boots("ferricore", 0);
         ferricore.set(timers(), List.of(timer("groundstomp", 199, false)));
         for (var root : workbench(player, ferricore, new ItemStack(Items.DIAMOND_BOOTS))) {
@@ -222,6 +225,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
                     checkQuote(root, Provider.BLAZEGOLD, 2);
                 }
             }
+
             var nativeSource = ModContent.getMixedBootsData(root).orElseThrow();
             var dormant = MixedBootsRecomposer.recompose(root, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
             rejected(dormant, "dormant tier");
@@ -229,6 +233,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
             restored.setDamageValue(0);
             checkQuote(restored, Provider.BLAZEGOLD, 2);
         }
+
         var config = config();
         boolean enabled = config.get();
         try {

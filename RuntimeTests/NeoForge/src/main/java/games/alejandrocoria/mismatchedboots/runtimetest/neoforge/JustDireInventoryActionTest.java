@@ -34,7 +34,10 @@ import java.util.List;
 /** Actual internal production actions and callbacks, without predicate overrides. */
 final class JustDireInventoryActionTest {
     private static final int KEY = 72;
-    private static Method stomp, earthquake, passives, stompTick;
+    private static Method stomp;
+    private static Method earthquake;
+    private static Method passives;
+    private static Method stompTick;
 
     private JustDireInventoryActionTest() {
     }
@@ -93,6 +96,7 @@ final class JustDireInventoryActionTest {
         for (int slot : slots) {
             roots.add(place(player, slot, 100_000, List.of("groundstomp", "earthquake", "stepheight")));
         }
+
         var history = roots.stream().map(ModContent::getMixedBootsData).toList();
         var victim = mob(player);
         try {
@@ -149,6 +153,7 @@ final class JustDireInventoryActionTest {
                                : charge(first) == (fault == 2 ? 101_000 : 100_000) && charge(second) == 95_000,
                     "Stale target followed/revived or funded peer skipped");
         }
+
         var player = player(server);
         var excluded = place(player, 9, 100_000, List.of("groundstomp"));
         var retained = place(player, 40, 100_000, List.of("groundstomp"));
@@ -214,6 +219,7 @@ final class JustDireInventoryActionTest {
             }
             require(!JustDireActiveNetwork.activate(player, packet) && charge(root) == 100_000, "Invalid batch context accepted");
         }
+
         var player = player(server);
         var root = place(player, 9, 100_000, List.of("groundstomp", "stepheight"));
         set(root, "ability_cooldowns", List.of(JustDireEarthquakeTestSupport.timer("groundstomp", 1, false)));
@@ -382,7 +388,9 @@ final class JustDireInventoryActionTest {
                     EnchantmentHelper.runLocationChangedEffects(player.level(), worn, player, EquipmentSlot.FEET);
                     require(!player.activeLocationDependentEnchantments(EquipmentSlot.FEET).isEmpty(), "Soul Speed witness did not activate");
                 }
-                double armor = player.getAttributeValue(Attributes.ARMOR), speed = player.getAttributeValue(Attributes.MOVEMENT_SPEED);
+
+                double armor = player.getAttributeValue(Attributes.ARMOR);
+                double speed = player.getAttributeValue(Attributes.MOVEMENT_SPEED);
                 var equipment = slot == 9 ? null : slot == 0 ? EquipmentSlot.MAINHAND : slot == 40 ? EquipmentSlot.OFFHAND : EquipmentSlot.FEET;
                 require(use(stomp, new JustDireAbilityTarget(player, slot, root), JustDireActiveState.snapshot(root)) && root.isEmpty()
                                 && player.callbacks == (equipment == null ? 0 : 1) && player.brokenSlot == equipment

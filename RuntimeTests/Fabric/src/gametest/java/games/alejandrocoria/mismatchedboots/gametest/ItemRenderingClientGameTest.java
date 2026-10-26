@@ -127,6 +127,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
                 || !(submissions.getFirst().itemStackRenderState() instanceof MixedBootsGuiRenderState combined)) {
             throw new AssertionError("GUI clipping expected one depth-sharing composition");
         }
+
         GuiItemRenderState item = submissions.getFirst();
         ScreenRectangle expectedScissor = nested
                                           ? new ScreenRectangle(CLIPPING_X + 2, CLIPPING_Y, 12, 16) : null;
@@ -344,6 +345,7 @@ public final class ItemRenderingClientGameTest implements FabricClientGameTest {
             if (level.getEntity(droppedId.get()) instanceof ItemEntity dropped) {
                 dropped.discard();
             }
+
             BlockPos center = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ() + 4.0);
             BlockPos support = center.relative(Direction.WEST);
             level.setBlockAndUpdate(support, Blocks.STONE.defaultBlockState());

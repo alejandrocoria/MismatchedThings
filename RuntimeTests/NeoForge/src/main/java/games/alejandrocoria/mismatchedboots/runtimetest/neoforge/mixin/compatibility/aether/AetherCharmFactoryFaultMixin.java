@@ -17,6 +17,7 @@ interface AetherCharmFactoryFaultMixin {
         if (!payload.getClass().getName().equals("com.aetherteam.aetherii.client.renderer.item.tooltip.ClientCharmTooltip$CharmTooltip")) {
             return;
         }
+
         var base = (ItemStack) payload.getClass().getMethod("base").invoke(payload);
         // Production's source-only renderer base deliberately has no holders; originals/root overrides still do.
         var type = net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(net.minecraft.resources.Identifier.parse(

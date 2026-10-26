@@ -51,6 +51,7 @@ final class MysticalTooltipChecks {
                 require(lines.stream().anyMatch(line -> line.getString().contains("MA source purchase")), "Source custom name lost");
                 require(ItemStack.matches(before, root), "Tooltip changed complete root/source history");
             }
+
             var type = BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.parse("mysticalagriculture:equipped_augments")).orElseThrow().value();
             var hidden = root.copy();
             hidden.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT.withHidden(type, true));
@@ -65,6 +66,7 @@ final class MysticalTooltipChecks {
             require(hidden.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL).isEmpty(),
                     "Hidden root tooltip rendered");
         }
+
         var empty = MixedBootsFactory.createPair(MysticalAugmentsProbe.item("inferium_boots"), new ItemStack(Items.DIAMOND_BOOTS)).primary();
         var emptyLines = empty.getTooltipLines(Item.TooltipContext.of(client.level), client.player, TooltipFlag.NORMAL);
         require(emptyLines.subList(emptyLines.lastIndexOf(TooltipSeparator.INSTANCE) + 1, emptyLines.size()).stream()

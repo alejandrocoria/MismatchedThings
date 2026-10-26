@@ -64,6 +64,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         if (FabricTooltipHookProbe.invocationCount() != 1) {
             throw new AssertionError("Fabric final callback ran more than once for a complete tooltip");
         }
+
         TestContent.ItemTooltipObservation item = onlyItemObservation();
         assertSame(stack, item.stack(), "item callback stack");
         assertSame(tooltipContext, item.context(), "item callback context");
@@ -72,6 +73,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         if (item.flag() != TooltipFlag.NORMAL) {
             throw new AssertionError("Fabric item callback lost the tooltip flag");
         }
+
         TestContent.ComponentTooltipObservation component = onlyComponentObservation();
         assertSame(tooltipContext, component.context(), "component provider context");
         if (component.flag() != TooltipFlag.NORMAL || !component.value().equals("fabric-component")) {
@@ -208,6 +210,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
                 || countTranslation(lines, COMPONENT_PROBE_KEY) != 2) {
             throw new AssertionError("Fabric contributions escaped their source/root regions: " + lines);
         }
+
         Component sourceIdentity = lines.get(sourceStart);
         if (!containsTranslation(sourceIdentity, NAME_WITH_NATURAL_KEY)) {
             throw new AssertionError("Custom source identity omitted its natural name: " + sourceIdentity);
@@ -349,6 +352,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
                 }
             }
         }
+
         return component.getSiblings().stream()
                         .anyMatch(sibling -> containsTranslation(sibling, key, argument));
     }

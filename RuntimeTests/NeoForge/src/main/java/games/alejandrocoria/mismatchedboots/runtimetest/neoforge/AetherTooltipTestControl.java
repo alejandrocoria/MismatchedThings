@@ -22,8 +22,14 @@ public final class AetherTooltipTestControl {
     private static List<Component> rejectedSetScratch;
     static boolean setScratchChecked;
     public static int tierScratchCalls;
-    static boolean capturing, nested, throwing, inProbe;
-    static int calls, added, start, peers;
+    static boolean capturing;
+    static boolean nested;
+    static boolean throwing;
+    static boolean inProbe;
+    static int calls;
+    static int added;
+    static int start;
+    static int peers;
     static ItemStack failedSource;
     static List<Component> nestedLines;
 

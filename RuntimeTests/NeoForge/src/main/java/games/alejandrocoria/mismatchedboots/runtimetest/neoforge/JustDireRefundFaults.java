@@ -19,7 +19,9 @@ public final class JustDireRefundFaults {
     private static ServerPlayer player;
     private static String fault = "none";
     private static boolean reentering;
-    private static int callbacks, before, after;
+    private static int callbacks;
+    private static int before;
+    private static int after;
     private static List<Object> mutable;
 
     private JustDireRefundFaults() {
@@ -88,6 +90,7 @@ public final class JustDireRefundFaults {
                                  .getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance("stepheight", 71, false, true));
                 JustDireAttributeTestSupport.set(root, "ability_bindings", mutable);
             }
+
             boolean threw = false;
             try {
                 root.hurtAndBreak(2, player, EquipmentSlot.FEET);
@@ -97,6 +100,7 @@ public final class JustDireRefundFaults {
                 }
                 threw = true;
             }
+
             boolean compatible = variant.equals("inner") || variant.equals("outer");
             boolean refunds = compatible && (selected.equals("none") || selected.equals("reenter"));
             JustDireRefundBreakTest.refunds(refunds ? new String[]{"stepheight"} : new String[0]);

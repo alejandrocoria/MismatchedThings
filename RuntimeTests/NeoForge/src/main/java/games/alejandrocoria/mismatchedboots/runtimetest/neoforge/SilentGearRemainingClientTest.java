@@ -38,8 +38,13 @@ final class SilentGearRemainingClientTest {
     private static final boolean VOID_REFUSED = VOID_VARIANT.equals("refused");
     private static final BlockPos SNOW = new BlockPos(8, 80, 8);
     private static final StringBuilder REPORT = new StringBuilder();
-    private static int ticks, mode, index;
-    private static boolean finished, initialized, released, reloaded;
+    private static int ticks;
+    private static int mode;
+    private static int index;
+    private static boolean finished;
+    private static boolean initialized;
+    private static boolean released;
+    private static boolean reloaded;
     private static Object oldPoisonEffect;
     private static Future<String> job;
     private static JsonObject state;
@@ -92,12 +97,14 @@ final class SilentGearRemainingClientTest {
                 return true;
             }
         }
+
         var server = client.getSingleplayerServer();
         var uuid = client.player.getUUID();
         if (state == null || !state.has("root")) {
             mode = lifecycleIndex;
             index = mode == 0 ? 1 : mode == 1 ? 6 : 1;
-            int nextMode = mode, nextSample = index;
+            int nextMode = mode;
+            int nextSample = index;
             job = server.submit(() -> {
                 try {
                     var owner = server.getPlayerList().getPlayer(uuid);
@@ -116,6 +123,7 @@ final class SilentGearRemainingClientTest {
         if (!observed(client)) {
             return false;
         }
+
         double clientY = client.player.getY();
         boolean last = ++lifecycleIndex == 3;
         job = server.submit(() -> {
@@ -136,6 +144,7 @@ final class SilentGearRemainingClientTest {
                     NetworkAcceptanceFiles.write("silent-gear-remaining-player.json", saved.toString());
                 }
             }
+
             return "{}";
         });
         lifecycleFinishing = last;
@@ -147,6 +156,7 @@ final class SilentGearRemainingClientTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 2400, "Remaining-effects client timeout mode=" + mode + " index=" + index + " state=" + state);
             if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
@@ -167,6 +177,7 @@ final class SilentGearRemainingClientTest {
                 state = JsonParser.parseString(job.get()).getAsJsonObject();
                 job = null;
             }
+
             var server = client.getSingleplayerServer();
             var uuid = client.player.getUUID();
             if (!initialized) {
@@ -195,7 +206,8 @@ final class SilentGearRemainingClientTest {
                 return;
             }
             if (state == null || !state.has("root")) {
-                int nextMode = mode, nextIndex = index;
+                int nextMode = mode;
+                int nextIndex = index;
                 job = server.submit(() -> {
                     try {
                         session = new Session(server.getPlayerList().getPlayer(uuid), nextMode, nextIndex);
@@ -209,6 +221,7 @@ final class SilentGearRemainingClientTest {
             if (!observed(client)) {
                 return;
             }
+
             int doneMode = mode;
             double clientY = client.player.getY();
             job = server.submit(() -> session.finish(clientY));
@@ -265,6 +278,7 @@ final class SilentGearRemainingClientTest {
                 job = server.submit(() -> session.poll());
                 return false;
             }
+
             boolean supported = index == 0 || index >= 5;
             require((client.player.getY() >= 80.95) == supported && (state.get("y").getAsDouble() >= 80.95) == supported,
                     "Powder-snow real collision differs index=" + index + " server=" + state + " clientY=" + client.player.getY());
@@ -277,7 +291,8 @@ final class SilentGearRemainingClientTest {
                 job = server.submit(() -> session.poll());
                 return false;
             }
-            boolean poison = index == 4, wither = index >= 3;
+            boolean poison = index == 4;
+            boolean wither = index >= 3;
             require(state.get("poison").getAsBoolean() == poison && state.get("wither").getAsBoolean() == wither
                             && state.get("night").getAsBoolean(), "Ordinary cure server ticks differ: " + state);
             if (client.player.hasEffect(MobEffects.POISON) != poison || client.player.hasEffect(MobEffects.WITHER) != wither
@@ -286,6 +301,7 @@ final class SilentGearRemainingClientTest {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -387,7 +403,8 @@ final class SilentGearRemainingClientTest {
         for (int sample = 0; sample < subjects.size(); sample++) {
             for (boolean below : List.of(false, true)) {
                 clean(owner);
-                ItemStack root = subjects.get(sample).copy(), before = root.copy();
+                ItemStack root = subjects.get(sample).copy();
+                ItemStack before = root.copy();
                 owner.setItemSlot(EquipmentSlot.FEET, root);
                 owner.setPos(8.5, owner.level().getMinY() - 32 - (below ? .5 : 0), 8.5);
                 if (ModContent.getMixedBootsData(root).isPresent()) {
@@ -452,7 +469,8 @@ final class SilentGearRemainingClientTest {
             for (int sample = 0; sample < samples.size(); sample++) {
                 for (EquipmentSlot slot : Arrays.asList(EquipmentSlot.FEET, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, null)) {
                     clean(owner);
-                    ItemStack root = samples.get(sample).copy(), before = root.copy();
+                    ItemStack root = samples.get(sample).copy();
+                    ItemStack before = root.copy();
                     if (slot != null) {
                         owner.setItemSlot(slot, root);
                     } else {
@@ -520,7 +538,8 @@ final class SilentGearRemainingClientTest {
         clean(owner);
         var api = new NeoForgeSilentGearTest.NativeApi();
         ItemStack root = NeoForgeSilentGearTest.workbench(owner, SilentGearRemainingFixture.injected(api, "cure_poison"),
-                                                          SilentGearRemainingFixture.injected(api, "cure_wither")).getFirst(), before = root.copy();
+                                                          SilentGearRemainingFixture.injected(api, "cure_wither")).getFirst();
+        ItemStack before = root.copy();
         Object effect = cureEffect(api, "cure_poison");
         var targets = effect.getClass().getDeclaredField("effects");
         targets.setAccessible(true);
@@ -550,8 +569,10 @@ final class SilentGearRemainingClientTest {
 
     private static final class Session {
         private final ServerPlayer owner;
-        private final int mode, sample;
-        private final ItemStack root, before;
+        private final int mode;
+        private final int sample;
+        private final ItemStack root;
+        private final ItemStack before;
         private final double startY;
         private int started;
 

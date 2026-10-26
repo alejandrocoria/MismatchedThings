@@ -48,10 +48,17 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.JustDire
 /** Real production root action/permits/clock; native controls and fault probes are not an alternate implementation. */
 final class NeoForgeJustDireEarthquakeServerTest {
     private static final String PREFIX = "just-dire-earthquake-server";
-    private static int warmup, sequence, groups, elapsed, paused;
-    private static boolean started, finished;
-    private static ServerPlayer clockPlayer, originalPlayer;
-    private static ItemStack clockRoot, nativeRoot;
+    private static int warmup;
+    private static int sequence;
+    private static int groups;
+    private static int elapsed;
+    private static int paused;
+    private static boolean started;
+    private static boolean finished;
+    private static ServerPlayer clockPlayer;
+    private static ServerPlayer originalPlayer;
+    private static ItemStack clockRoot;
+    private static ItemStack nativeRoot;
     private static Mob late;
     private static final StringBuilder report = new StringBuilder();
 
@@ -66,6 +73,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
         if (finished) {
             return;
         }
+
         try {
             if (!started) {
                 if (++warmup == 1) {
@@ -164,6 +172,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
             var before = root.copy();
             require(use(player, root, true, 1, false).affected == 0 && ItemStack.matches(root, before), "Disabled permission mutated root");
         }
+
         var config = config();
         boolean enabled = config.get();
         try {
@@ -200,6 +209,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
             } else {
                 JustDireEarthquakeTestSupport.nativeUse(player, root);
             }
+
             int affected = 0;
             for (Mob mob : targets) {
                 var effect = mob.getEffect(MobEffects.SLOWNESS);
@@ -208,6 +218,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
                     affected++;
                 }
             }
+
             return new Result(charge(root),
                               affected,
                               clock(root, "earthquake"),
@@ -239,6 +250,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
                     set(stack, "stepheight_bindingmode", 2);
                     set(stack, "ability_bindings", List.of(binding("earthquake", 72), binding("groundstomp", 72), binding("stepheight", 72)));
                 }
+
                 var active = (List<?>) tool.getMethod("getActiveAbilities", ItemStack.class).invoke(control.getItem(), control);
                 require(active.stream()
                               .map(value -> ((Enum<?>) value).name())
@@ -286,6 +298,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
             require(activate(player, permit, 71) && charge(root) == 145_000, "Unrelated phase/expiry rejected paid GS");
             require(!activate(player, permit, 71), "Consumed nonce replayed");
         }
+
         var root = mixed(150_000, false, false);
         root.set(timers(), List.of(timer("groundstomp", 1, false)));
         player.setItemSlot(EquipmentSlot.FEET, root);
@@ -362,10 +375,12 @@ final class NeoForgeJustDireEarthquakeServerTest {
                 case 3 -> root.set(timers(), List.of(timer("earthquake", -2, false), timer("airburst", 20, false)));
                 case 4 -> root.set(timers(), List.of(timer("airburst", 20, false), timer("earthquake", 76, false)));
             }
+
             var changed = root.copy();
             require(!activate(player, permit, 71) && ItemStack.matches(root, changed),
                     "Clock reset/excess/unsupported/removal/reorder admitted: " + kind);
         }
+
         var invalid = mixed(0, false, false);
         player.setItemSlot(EquipmentSlot.FEET, invalid);
         for (var records : List.of(List.of(timer("earthquake", 0, true)), List.of(timer("earthquake", -1, false)),
@@ -375,6 +390,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
             JustDireEarthquakeTestSupport.tick(player);
             require(ItemStack.matches(before, invalid), "Owned ticker repaired unsupported/duplicate evidence");
         }
+
         var dormant = MixedBootsFactory.createPair(new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.IRON_BOOTS)).primary();
         dormant.set(timers(), List.of(timer("earthquake", 1, true)));
         player.setItemSlot(EquipmentSlot.FEET, dormant);
@@ -452,12 +468,14 @@ final class NeoForgeJustDireEarthquakeServerTest {
             } finally {
                 JustDireEarthquakeServerGuardPlugin.fault = 0;
             }
+
             long affected = mobs.stream().filter(mob -> mob.hasEffect(MobEffects.SLOWNESS)).count();
             require(affected == (fault == 1 || fault == 4 ? 1 : 0) && charge(root) == (fault == 1 || fault == 4 ? 100_000 : 150_000)
                             && clock(root, "earthquake").ticks() == 200 && threw == (fault == 4), "Fault lost rollback/commit boundary: " + fault);
             history(before, root);
             mobs.forEach(Mob::discard);
         }
+
         var root = mixed(150_000, false, false);
         set(root, "groundstomp_upgrade_installed", true);
         set(root, "groundstomp_bindingmode", 2);
@@ -491,6 +509,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
             mob.setOnGround(true);
             changing.add(mob);
         }
+
         try {
             require(attempt(player, 72) && charge(root) == 100_000 && changing.stream().filter(mob -> mob.hasEffect(MobEffects.SLOWNESS)).count() == 1
                             && root.getOrDefault(JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle"), true),
@@ -529,6 +548,7 @@ final class NeoForgeJustDireEarthquakeServerTest {
         if (late != null) {
             late.setOnGround(true);
         }
+
         var nativeConfig = config();
         boolean enabled = nativeConfig.get();
         try {

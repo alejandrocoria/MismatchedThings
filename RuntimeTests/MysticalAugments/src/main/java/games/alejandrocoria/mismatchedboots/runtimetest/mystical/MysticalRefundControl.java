@@ -8,9 +8,14 @@ import net.minecraft.world.item.ItemStack;
 public final class MysticalRefundControl {
     public static ItemStack root;
     public static ServerPlayer owner;
-    public static Runnable before, after, duringDelivery;
-    public static boolean prevent, cancelDelivery, throwDelivery;
-    public static int deliveries, peerCalls;
+    public static Runnable before;
+    public static Runnable after;
+    public static Runnable duringDelivery;
+    public static boolean prevent;
+    public static boolean cancelDelivery;
+    public static boolean throwDelivery;
+    public static int deliveries;
+    public static int peerCalls;
 
     private MysticalRefundControl() {
     }
@@ -56,6 +61,7 @@ public final class MysticalRefundControl {
         if (throwDelivery) {
             throw new IllegalStateException("MA controlled delivery failure");
         }
+
         return cancelDelivery;
     }
 

@@ -46,8 +46,10 @@ public final class SilentGearRecognitionTest {
 
     private static void test(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report, String variant) throws Exception {
         SilentGearTraitSpike.initialize(api); // Fixture construction helpers only, not its run/recognition hooks.
-        boolean brilliant = !variant.equals("recognition-brilliant"), moonwalker = !variant.equals("recognition-moonwalker");
-        Class<?> nativeArmor = SilentGearTraitSpike.nativeClass("item.gear.GearArmorItem"), events = SilentGearTraitSpike.nativeClass(
+        boolean brilliant = !variant.equals("recognition-brilliant");
+        boolean moonwalker = !variant.equals("recognition-moonwalker");
+        Class<?> nativeArmor = SilentGearTraitSpike.nativeClass("item.gear.GearArmorItem");
+        Class<?> events = SilentGearTraitSpike.nativeClass(
                 "event.GearEvents");
         require(proof(nativeArmor, "mismatchedboots$sgBrilliantReady") == brilliant, "Final Brilliant proof differs");
         require(proof(events, "mismatchedboots$sgMoonReady") == moonwalker, "Final Moonwalker proof differs");
@@ -55,7 +57,10 @@ public final class SilentGearRecognitionTest {
             require((boolean) nativeArmor.getMethod("sgtest$recognitionChanged").invoke(null)
                             && (boolean) events.getMethod("sgtest$recognitionChanged").invoke(null), "Competing transform did not run");
         }
-        ItemStack gold = api.boot("gold"), moon = api.boot("azure_silver"), diamond = new ItemStack(Items.DIAMOND_BOOTS);
+
+        ItemStack gold = api.boot("gold");
+        ItemStack moon = api.boot("azure_silver");
+        ItemStack diamond = new ItemStack(Items.DIAMOND_BOOTS);
         ItemStack witness = api.boot("iron");
         observing = true;
         try {
@@ -154,12 +159,14 @@ public final class SilentGearRecognitionTest {
             }
         }
         // Controlled source-property instances, not stock survival materials or a separate compatibility engine.
-        ItemStack low = trait(moon, api, "moonwalker", 2), high = trait(moon, api, "moonwalker", 5);
+        ItemStack low = trait(moon, api, "moonwalker", 2);
+        ItemStack high = trait(moon, api, "moonwalker", 5);
         for (var root : NeoForgeSilentGearTest.workbench(player, low, high)) {
             clear(player);
             player.setItemSlot(EquipmentSlot.FEET, root);
             fall(player, 10, moonwalker ? 5 : 0, false);
         }
+
         ItemStack bounce = trait(api.boot("iron"), api, "bounce", 1);
         clear(player);
         player.setItemSlot(EquipmentSlot.FEET, bounce);

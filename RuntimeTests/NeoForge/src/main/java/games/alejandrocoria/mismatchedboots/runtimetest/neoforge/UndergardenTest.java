@@ -40,7 +40,8 @@ public final class UndergardenTest {
     private static final String MODE = System.getProperty("mismatchedboots.runtimetest.undergarden", "");
     private static final BlockPos POS = new BlockPos(0, 80, 0);
     private static boolean finished;
-    private static int peers, cases;
+    private static int peers;
+    private static int cases;
     private static final StringBuilder REPORT = new StringBuilder();
 
     private UndergardenTest() {
@@ -61,7 +62,8 @@ public final class UndergardenTest {
         }
         finished = true;
         try {
-            boolean absent = MODE.equals("absent"), refused = MODE.equals("refused");
+            boolean absent = MODE.equals("absent");
+            boolean refused = MODE.equals("refused");
             require(ModList.get().isLoaded("undergarden") != absent, "Wrong optional-mod environment");
             ServerLevel level = server.overworld();
             var owner = player(level);
@@ -71,7 +73,9 @@ public final class UndergardenTest {
                 snow(owner, boots, false);
             }
             if (!absent) {
-                ItemStack cloggrum = boot("cloggrum"), froststeel = boot("froststeel"), utherium = boot("utherium");
+                ItemStack cloggrum = boot("cloggrum");
+                ItemStack froststeel = boot("froststeel");
+                ItemStack utherium = boot("utherium");
                 var stacks = new ArrayList<ItemStack>(List.of(cloggrum, froststeel, utherium));
                 for (var nativeBoot : List.of(cloggrum, froststeel, utherium)) {
                     stacks.addAll(paid(owner, nativeBoot, new ItemStack(Items.DIAMOND_BOOTS)));
@@ -96,7 +100,8 @@ public final class UndergardenTest {
                 ItemStack bareSnow = stacks.get(5).copy();
                 bareSnow.remove(ModContent.mixedBootsDataType().orElseThrow());
                 stacks.add(bareSnow);
-                Block layer = block("goo"), full = block("goo_block");
+                Block layer = block("goo");
+                Block full = block("goo_block");
                 for (ItemStack boots : stacks) {
                     boolean mixed = ModContent.getMixedBootsData(boots).isPresent() && boots.getCount() == 1
                             && boots.getItem() instanceof games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
@@ -109,6 +114,7 @@ public final class UndergardenTest {
                     goo(owner, boots, layer, false, false, true);
                     goo(owner, boots, full, false, true, false);
                 }
+
                 var zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
                 require(zombie != null, "Could not create non-player control");
                 goo(zombie, cloggrum, layer, false, true, false);
@@ -158,7 +164,8 @@ public final class UndergardenTest {
     }
 
     private static void snow(FakePlayer player, ItemStack input, boolean expected) {
-        ItemStack boots = input.copy(), before = boots.copy();
+        ItemStack boots = input.copy();
+        ItemStack before = boots.copy();
         for (var slot : EquipmentSlot.values()) {
             player.setItemSlot(slot, ItemStack.EMPTY);
         }
@@ -190,7 +197,9 @@ public final class UndergardenTest {
         for (var empty : EquipmentSlot.values()) {
             entity.setItemSlot(empty, ItemStack.EMPTY);
         }
-        ItemStack boots = input.copy(), before = boots.copy();
+
+        ItemStack boots = input.copy();
+        ItemStack before = boots.copy();
         entity.setItemSlot(slot, boots);
         entity.setOnGround(grounded);
         var effect = BuiltInRegistries.MOB_EFFECT.get(Identifier.fromNamespaceAndPath("undergarden", "gooey")).orElseThrow();
@@ -198,6 +207,7 @@ public final class UndergardenTest {
         if (gooey) {
             require(entity.addEffect(new MobEffectInstance(effect, 100)), "Native Gooey did not apply");
         }
+
         Field stuck = Entity.class.getDeclaredField("stuckSpeedMultiplier");
         stuck.setAccessible(true);
         stuck.set(entity, Vec3.ZERO);

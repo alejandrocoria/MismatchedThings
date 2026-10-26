@@ -105,6 +105,7 @@ final class NeoForgeJustDireEarthquakeStateTest {
             if (pair[2] > 0) {
                 b.get(timers()).add(timer("earthquake", pair[2], pair[3] == 1));
             }
+
             var beforeA = a.copy();
             var beforeB = b.copy();
             long left = pair[0] == 0 ? 0 : (long) pair[0] + (pair[1] == 1 ? 800 : 0);
@@ -139,6 +140,7 @@ final class NeoForgeJustDireEarthquakeStateTest {
             require(!((java.util.Set<?>) tool.getMethod("getAllAbilities").invoke(forged.getItem()))
                     .contains(ability.getField("EARTHQUAKE").get(null)), "Unsupported tier unexpectedly has permanent Earthquake ability");
         }
+
         var forgedVanilla = new ItemStack(Items.DIAMOND_BOOTS);
         forgedVanilla.set(flag(), true);
         forgedVanilla.set(timers(), List.of(timer("earthquake", 199, true)));
@@ -147,6 +149,7 @@ final class NeoForgeJustDireEarthquakeStateTest {
         for (var root : workbench(player, forgedVanilla, eligible)) {
             require(earthquakes(root).equals(eligible.get(timers())), "Vanilla owner forged a longer supported timer");
         }
+
         var original = boots("eclipsealloy");
         original.set(flag(), false);
         original.set(timers(), List.of(timer("earthquake", 100, true)));
@@ -174,6 +177,7 @@ final class NeoForgeJustDireEarthquakeStateTest {
                 require(same(root, rebuild(root)), "Unsupported evidence lost in recomposition");
             }
         }
+
         var malformed = boots("eclipsealloy");
         malformed.set(timers(), List.of(timer("earthquake", -1, true)));
         for (var root : workbench(player, eligible, malformed)) {
@@ -236,6 +240,7 @@ final class NeoForgeJustDireEarthquakeStateTest {
                 rejected(root, "count two");
             }
         }
+
         var config = config();
         boolean enabled = config.get();
         try {
@@ -284,6 +289,7 @@ final class NeoForgeJustDireEarthquakeStateTest {
                     JustDireAttributeTestSupport.set(changed, "earthquake_custom_setting", 1);
                     changed.set(timers(), List.of(timer("earthquake", 200, true)));
                 }
+
                 var recomposed = MixedBootsRecomposer.recompose(current, left, right);
                 require(same(current, recomposed) && charge(recomposed) == 123 && recomposed.getDamageValue() == 31,
                         "Changed projection reset live state/absence/resources");

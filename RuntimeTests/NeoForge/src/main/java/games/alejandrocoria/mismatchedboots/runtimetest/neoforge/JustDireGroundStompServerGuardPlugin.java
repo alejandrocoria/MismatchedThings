@@ -11,7 +11,8 @@ import java.util.Set;
 
 /** Disposable failures of real mutation paths, not production fault switches. */
 public final class JustDireGroundStompServerGuardPlugin implements IMixinConfigPlugin {
-    public static int fault, extracted;
+    public static int fault;
+    public static int extracted;
     public static ServerPlayer player;
     public static ItemStack replacement;
     public static Runnable debitMutation;

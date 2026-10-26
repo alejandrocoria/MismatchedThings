@@ -172,6 +172,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
         if (events.stream().anyMatch(event -> !event.forced())) {
             throw new AssertionError("Rule synchronization did not use forced sends: " + events);
         }
+
         AttributeRulesPayload response = (AttributeRulesPayload) events.get(1).payload();
         if (response == null || !response.rules().equals(AttributeRuleState.current())) {
             throw new AssertionError("Client attribute rules differ from the complete server snapshot");
@@ -235,6 +236,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             stack.set(DataComponents.REPAIR_COST, 5);
             stack.set(TestContent.requireNumericComponent(), 6);
         }
+
         return stack;
     }
 

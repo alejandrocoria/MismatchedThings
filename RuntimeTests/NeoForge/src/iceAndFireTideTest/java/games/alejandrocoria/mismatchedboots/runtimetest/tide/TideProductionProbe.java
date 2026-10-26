@@ -6,7 +6,9 @@ import net.neoforged.fml.common.Mod;
 /** Test-only counters and adversaries, not a second armor owner or activation bridge. */
 @Mod("mismatchedboots_tide_test")
 public final class TideProductionProbe {
-    public static int activations, warnings, bindings;
+    public static int activations;
+    public static int warnings;
+    public static int bindings;
 
     public TideProductionProbe() {
         if (TideFixturePlugin.MODE.isEmpty()) {

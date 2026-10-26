@@ -88,8 +88,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                     && count(client.player, Items.GOLDEN_BOOTS) == 1
                     && countMixed(client.player) == 0);
 
-            singleplayer.getServer().runOnServer(server ->
-                                                         server.getPlayerList().getPlayers().getFirst().getInventory().clearContent());
+            singleplayer.getServer().runOnServer(server -> server.getPlayerList().getPlayers().getFirst().getInventory().clearContent());
             context.waitFor(client -> client.player != null
                     && count(client.player, Items.IRON_BOOTS) == 0
                     && count(client.player, Items.GOLDEN_BOOTS) == 0);
@@ -237,12 +236,11 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
             net.minecraft.resources.Identifier sprite,
             int x,
             int y) {
-        return snapshot.submissions().stream().anyMatch(submission ->
-                                                                submission.sprite().equals(sprite)
-                                                                        && submission.x() == x
-                                                                        && submission.y() == y
-                                                                        && submission.width() == 16
-                                                                        && submission.height() == 16);
+        return snapshot.submissions().stream().anyMatch(submission -> submission.sprite().equals(sprite)
+                && submission.x() == x
+                && submission.y() == y
+                && submission.width() == 16
+                && submission.height() == 16);
     }
 
     private static MismatchedWorkbenchMenu clientMenu(Minecraft client) {
@@ -271,8 +269,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
 
     private static boolean hasTooltipLine(
             List<Component> tooltip, String lineKey, String sourceKey) {
-        return tooltip.stream().anyMatch(line ->
-                                                 containsBoldTranslation(line, lineKey) && containsTranslation(line, sourceKey));
+        return tooltip.stream().anyMatch(line -> containsBoldTranslation(line, lineKey) && containsTranslation(line, sourceKey));
     }
 
     private static boolean containsBoldTranslation(Component component, String key) {

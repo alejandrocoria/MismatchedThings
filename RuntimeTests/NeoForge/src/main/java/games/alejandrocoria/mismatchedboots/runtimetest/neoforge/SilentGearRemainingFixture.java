@@ -17,7 +17,9 @@ import java.util.function.Supplier;
 
 /** Independent production witnesses and explicitly synthetic cure acquisition. No gameplay adapter. */
 public final class SilentGearRemainingFixture {
-    public static int queries, pushes, cureTicks;
+    public static int queries;
+    public static int pushes;
+    public static int cureTicks;
     public static final Map<String, Integer> cureCalls = new HashMap<>(); // Integrated-server thread only.
 
     private SilentGearRemainingFixture() {
@@ -41,6 +43,7 @@ public final class SilentGearRemainingFixture {
         for (EquipmentSlot slot : EquipmentSlot.values()) {
             player.setItemSlot(slot, ItemStack.EMPTY);
         }
+
         double y = player.getY();
         try {
             player.removeAllEffects();
@@ -85,6 +88,7 @@ public final class SilentGearRemainingFixture {
             for (var entry : encoded.getAsJsonObject("components").entrySet()) {
                 components.add(entry.getKey().startsWith("!") ? entry.getKey() : entry.getKey() + "=" + entry.getValue());
             }
+
             String item = encoded.get("id").getAsString() + "[" + String.join(",", components) + "]";
             player.getInventory().clearContent();
             player.getInventory().setSelectedSlot(0);
@@ -95,6 +99,7 @@ public final class SilentGearRemainingFixture {
             for (String name : names) {
                 SilentGearLifecycleTest.require(api.traitLevel(given, name) == 1, "Manual cure source lacks " + name);
             }
+
             var root = NeoForgeSilentGearTest.workbench(player, given, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
             player.addEffect(new MobEffectInstance(MobEffects.POISON, 200));
             player.addEffect(new MobEffectInstance(MobEffects.WITHER, 200));
@@ -116,12 +121,14 @@ public final class SilentGearRemainingFixture {
         Object props = source.get(api.properties);
         var values = new HashMap<>((Map<Object, Object>) props.getClass().getMethod("properties").invoke(props));
         var instances = new java.util.ArrayList<Object>();
-        Class<?> trait = SilentGearTraitSpike.nativeClass("gear.trait.Trait"), instance = SilentGearTraitSpike.nativeClass("api.traits.TraitInstance");
+        Class<?> trait = SilentGearTraitSpike.nativeClass("gear.trait.Trait");
+        Class<?> instance = SilentGearTraitSpike.nativeClass("api.traits.TraitInstance");
         for (String name : names) {
             Object ref = api.resource.getMethod("trait", String.class).invoke(null, "silentgear:" + name);
             Object definition = ((Supplier<?>) ref).get();
             instances.add(instance.getMethod("of", trait, int.class, java.util.Collection.class).invoke(null, definition, 1, List.of()));
         }
+
         Object key = ((Supplier<?>) SilentGearTraitSpike.nativeClass("setup.gear.GearProperties").getField("TRAITS").get(null)).get();
         values.put(key, SilentGearTraitSpike.nativeClass("api.property.TraitListPropertyValue").getConstructor(List.class).newInstance(instances));
         source.set(api.properties, props.getClass().getConstructor(Map.class).newInstance(values));
@@ -130,6 +137,7 @@ public final class SilentGearRemainingFixture {
                 throw new AssertionError("Invalid injected native trait: " + name);
             }
         }
+
         return source;
     }
 }

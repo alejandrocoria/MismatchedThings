@@ -39,7 +39,8 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 public final class SilentGearMagnetTest {
     private static boolean observing;
     private static int calls;
-    private static ItemStack observedCarrier, carrierBefore;
+    private static ItemStack observedCarrier;
+    private static ItemStack carrierBefore;
     private static boolean failAfterQueue;
     private static Reload reload;
     private final ServerPlayer player;
@@ -86,9 +87,11 @@ public final class SilentGearMagnetTest {
             clear(player);
             player.tickCount = 21;
             player.level().getChunk(0, 0);
-            ItemStack iron = api.boot("iron"), greedy = api.boot("blaze_gold");
+            ItemStack iron = api.boot("iron");
+            ItemStack greedy = api.boot("blaze_gold");
             ItemStack upgrade = new ItemStack(BuiltInRegistries.ITEM.getOptional(Identifier.parse("silentgear:magnetic_upgrade")).orElseThrow());
-            ItemStack before = iron.copy(), upgradeBefore = upgrade.copy();
+            ItemStack before = iron.copy();
+            ItemStack upgradeBefore = upgrade.copy();
             Object recipe = api.swapClass.getField("INSTANCE").get(null);
             var input = CraftingInput.of(2, 1, List.of(iron, upgrade));
             require((boolean) api.matches.invoke(recipe, input, player.level()), "Native grid refuses Magnetic Upgrade on boots");
@@ -187,7 +190,8 @@ public final class SilentGearMagnetTest {
             }
             // Explicit native-instance fixture for datapack levels, not a claim of a stock level-I recipe.
             ItemStack weaker = weakerGreedy(api, greedy);
-            int low = api.traitLevel(weaker, "greedy"), high = api.traitLevel(greedy, "greedy");
+            int low = api.traitLevel(weaker, "greedy");
+            int high = api.traitLevel(greedy, "greedy");
             require(low == 1 && low < high, "Supplied native Greedy control is not weaker");
             Object strongest = SilentGearTraitSpike.view(greedy).get("silentgear:greedy");
             float greedyRadius = spike.radius(spike.effect(strongest), strongest);
@@ -232,6 +236,7 @@ public final class SilentGearMagnetTest {
                 var idle = spike.measure(radius, () -> spike.mixedTick(root, null));
                 require(idle.calls == 0 && idle.pushes.stream().allMatch(Vec3.ZERO::equals), "Idle combination attracted items");
             }
+
             Object instance = SilentGearTraitSpike.view(magnetic).get("silentgear:magnetic");
             var noPlayer = spike.measure(radius, () -> spike.tick.invoke(spike.effect(instance),
                                                                          SilentGearTraitSpike.context(null, instance, magnetic.copy()),
@@ -355,6 +360,7 @@ public final class SilentGearMagnetTest {
             var result = measure(16, () -> mixedTick(value, EquipmentSlot.FEET));
             require(result.calls == 0 && result.pushes.stream().allMatch(Vec3.ZERO::equals), "Invalid/ordinary root attracted items");
         }
+
         var stand = new net.minecraft.world.entity.decoration.ArmorStand(player.level(), 0, 80, 0);
         ItemStack before = root.copy();
         var nonPlayer = measure(16, () -> root.inventoryTick(player.level(), stand, EquipmentSlot.FEET));
@@ -588,12 +594,14 @@ public final class SilentGearMagnetTest {
             if (!selected.contains(id)) {
                 selected.add(id);
             }
+
             return server.reloadResources(selected);
         }
     }
 
     private void definitions(NeoForgeSilentGearTest.NativeApi api, ItemStack greedy, StringBuilder report) throws Throwable {
-        Object instance = SilentGearTraitSpike.view(greedy).get("silentgear:greedy"), trait = SilentGearTraitSpike.traitOf(instance);
+        Object instance = SilentGearTraitSpike.view(greedy).get("silentgear:greedy");
+        Object trait = SilentGearTraitSpike.traitOf(instance);
         var field = trait.getClass().getDeclaredField("effects");
         field.setAccessible(true);
         var original = (List<?>) field.get(trait);
@@ -685,7 +693,8 @@ public final class SilentGearMagnetTest {
         try {
             for (int index = 0; index < stacks.size(); index++) {
                 var offset = offsets[index];
-                double x = player.getX() + offset[0], z = player.getZ() + offset[2];
+                double x = player.getX() + offset[0];
+                double z = player.getZ() + offset[2];
                 player.level().getChunk(BlockPos.containing(x, player.getY(), z));
                 var item = new ItemEntity(player.level(), x, player.getY() + offset[1], z, new ItemStack(stacks.get(index)));
                 item.setNoGravity(true);

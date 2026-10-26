@@ -29,6 +29,7 @@ public final class JustDireCooldownFeedbackPlugin implements IMixinConfigPlugin 
         if (!enabled) {
             return false;
         }
+
         String variant = JustDireCooldownFeedbackTestSupport.VARIANT;
         if (mixin.endsWith("HudMissingMixin")) {
             return !lifecycle && variant.equals("hooksMissing");
@@ -42,6 +43,7 @@ public final class JustDireCooldownFeedbackPlugin implements IMixinConfigPlugin 
         if (mixin.endsWith("LowMixin")) {
             return !lifecycle && variant.equals("low");
         }
+
         return mixin.endsWith("DrawMixin") || mixin.endsWith("SoundMixin");
     }
 

@@ -461,6 +461,7 @@ public final class CompatibilityGameTests {
                 }
             }
         }
+
         return component.getSiblings().stream()
                         .anyMatch(sibling -> containsBoldTranslation(sibling, key));
     }

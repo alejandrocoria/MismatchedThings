@@ -66,6 +66,7 @@ public final class RootsTickTestPlugin implements IMixinConfigPlugin {
                     && call.name.equals("foreignItem"))) {
                 return;
             }
+
             boolean feet = false;
             int feetLocal = -1;
             for (var instruction : method.instructions.toArray()) {

@@ -60,6 +60,7 @@ final class SilentGearMagnetClientTest {
             state = JsonParser.parseString(job.get()).getAsJsonObject();
             job = null;
         }
+
         var server = client.getSingleplayerServer();
         var uuid = client.player.getUUID();
         if (state == null) {
@@ -78,6 +79,7 @@ final class SilentGearMagnetClientTest {
                             require(ItemStack.matches(expected, persisted), "Player save/rejoin changed prepared magnet root/sources");
                         }
                     }
+
                     Sample sample = rejoin ? SAMPLES.get(1) : SAMPLES.get(index);
                     session = new Session(owner, sample, index == 6);
                     return session.poll();
@@ -87,6 +89,7 @@ final class SilentGearMagnetClientTest {
             });
             return false;
         }
+
         int stage = state.get("stage").getAsInt();
         var moving = client.level.getEntity(state.get("moving").getAsInt());
         if (moving != null && moving.getX() < state.get("startX").getAsDouble() - .15) {
@@ -192,11 +195,18 @@ final class SilentGearMagnetClientTest {
 
     private static final class Session {
         private final ServerPlayer owner;
-        private final ItemStack root, before;
+        private final ItemStack root;
+        private final ItemStack before;
         private final Sample sample;
-        private ItemEntity eligible, delayed, rejected, moving, idle;
-        private int stage, started;
-        private boolean delayChecked, serverMoved;
+        private ItemEntity eligible;
+        private ItemEntity delayed;
+        private ItemEntity rejected;
+        private ItemEntity moving;
+        private ItemEntity idle;
+        private int stage;
+        private int started;
+        private boolean delayChecked;
+        private boolean serverMoved;
 
         private Session(ServerPlayer owner, Sample sample, boolean inverse) throws Exception {
             this.owner = owner;
@@ -268,6 +278,7 @@ final class SilentGearMagnetClientTest {
                         "New item attracted while boots are idle");
                 done = elapsed >= 20;
             }
+
             var result = new JsonObject();
             result.addProperty("stage", stage);
             result.addProperty("done", done);
@@ -280,6 +291,7 @@ final class SilentGearMagnetClientTest {
             if (idle != null) {
                 result.addProperty("idle", idle.getId());
             }
+
             return result.toString();
         }
 

@@ -23,8 +23,13 @@ final class JustDireItemBarRenderingTest {
     private static final int BACKGROUND = 0xFF202020;
     private static final StringBuilder report = new StringBuilder();
     private static Scene scene;
-    private static int scale = 1, stage, waited, targetFrame;
-    private static boolean pending, captured, done;
+    private static int scale = 1;
+    private static int stage;
+    private static int waited;
+    private static int targetFrame;
+    private static boolean pending;
+    private static boolean captured;
+    private static boolean done;
     private static Throwable failure;
 
     private JustDireItemBarRenderingTest() {
@@ -212,6 +217,7 @@ final class JustDireItemBarRenderingTest {
                         if (clipped && (dx < 2 || dx >= 12 || dy < 0 || dy >= 16)) {
                             expected = BACKGROUND;
                         }
+
                         int actual = image.getPixel((x + dx) * scale + sx, (y + dy) * scale + sy);
                         require(actual == expected, "GPU icon " + x + "," + y + " pixel " + dx + "," + dy + " scale " + scale
                                 + ": " + Integer.toHexString(actual) + " != " + Integer.toHexString(expected));

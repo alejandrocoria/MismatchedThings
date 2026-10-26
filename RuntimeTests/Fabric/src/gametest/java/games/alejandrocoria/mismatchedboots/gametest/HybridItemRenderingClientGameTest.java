@@ -175,6 +175,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (ModContent.getMixedBootsData(invalid).isPresent()) {
             throw new AssertionError("Give-style fallback fixture unexpectedly has source data");
         }
+
         List<ItemStack> sources = List.of(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
         for (ItemDisplayContext displayContext : ItemDisplayContext.values()) {
             ItemStackRenderState output = resolve(client, invalid, displayContext);
@@ -294,6 +295,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         if (!allowEmpty && accessor.mismatchedboots$getQuads().isEmpty()) {
             throw new AssertionError(scenario + " has no clipped geometry");
         }
+
         Matrix4fc localTransform = accessor.mismatchedboots$getLocalTransform();
         for (BakedQuad quad : accessor.mismatchedboots$getQuads()) {
             for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
@@ -302,6 +304,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 assertOwnedX(canonical.x, side, scenario + " quad");
             }
         }
+
         Vector3fc[] extents = testLayer(state, layerIndex).mismatchedboots$getExtents().get();
         if (!allowEmpty && extents.length == 0) {
             throw new AssertionError(scenario + " has no clipped extents");
@@ -338,6 +341,7 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
                 maxZ = Math.max(maxZ, position.z());
             }
         }
+
         Vector3fc[] expected = {
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(minX, minY, maxZ),

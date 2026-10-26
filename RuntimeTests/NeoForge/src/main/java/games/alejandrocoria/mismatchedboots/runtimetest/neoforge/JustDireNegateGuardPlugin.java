@@ -31,6 +31,7 @@ public final class JustDireNegateGuardPlugin implements IMixinConfigPlugin, Opco
         if (!mixin.endsWith("JustDireNegateConsumerMixin")) {
             return;
         }
+
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireNegateGuard");
         if (variant.equals("publicationChanged")) {
             MethodNode getter = node.methods.stream().filter(m -> m.name.equals("mismatchedboots$justDireNegateFallReady")).findFirst().orElseThrow();

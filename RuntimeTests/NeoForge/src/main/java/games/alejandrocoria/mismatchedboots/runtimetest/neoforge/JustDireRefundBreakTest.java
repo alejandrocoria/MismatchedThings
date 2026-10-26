@@ -36,7 +36,8 @@ import java.util.Map;
 final class JustDireRefundBreakTest {
     private static final List<String> drops = new ArrayList<>();
     private static ServerPlayer observed;
-    private static ItemStack worn, reentrant;
+    private static ItemStack worn;
+    private static ItemStack reentrant;
     private static boolean cancel;
     private static Runnable refundCallback;
 
@@ -48,6 +49,7 @@ final class JustDireRefundBreakTest {
             if (observed == null || !(event.getEntity() instanceof ItemEntity item) || event.getLevel().isClientSide()) {
                 return;
             }
+
             var id = BuiltInRegistries.ITEM.getKey(item.getItem().getItem());
             if (!id.getNamespace().equals("justdirethings") || !id.getPath().startsWith("upgrade_")) {
                 return;

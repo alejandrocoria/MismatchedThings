@@ -244,6 +244,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
                     mob.tick();
                     near(1.6, mob.getAttributeValue(Attributes.STEP_HEIGHT), "Root Step control not restored");
                 }
+
                 var provenance = data(installed);
                 installed.remove(flag("stepheight"));
                 installed = MixedBootsRecomposer.recompose(installed, provenance.left().source(), provenance.right().source());
@@ -323,6 +324,7 @@ public final class NeoForgeJustDireRootUpgradeTest {
             root.remove(flag("jumpboost"));
             jump(server, root, 0);
         }
+
         var eclipse = boots("eclipsealloy", 2_000);
         eclipse.set(flag("jumpboost"), true);
         pair = MixedBootsFactory.createPair(eclipse, boots("ferricore", 0));

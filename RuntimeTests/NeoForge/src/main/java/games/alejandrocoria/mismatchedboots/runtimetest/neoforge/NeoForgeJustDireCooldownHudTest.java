@@ -35,18 +35,23 @@ final class NeoForgeJustDireCooldownHudTest {
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
     private static Future<?> job;
-    private static boolean initialized, started, finished;
+    private static boolean initialized;
+    private static boolean started;
+    private static boolean finished;
     private static int waiting;
     private static ItemStack expected;
     private static Object history;
     private static int expectedCharge;
-    private static double soundX, soundY, soundZ;
+    private static double soundX;
+    private static double soundY;
+    private static double soundZ;
 
     static void tick(Minecraft client) {
         if (finished || client.player == null || client.level == null || client.screen != null
                 || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
             return;
         }
+
         try {
             if (!initialized) {
                 initialize(client);
@@ -59,6 +64,7 @@ final class NeoForgeJustDireCooldownHudTest {
                 job.get();
                 job = null;
             }
+
             Step step = steps.peek();
             if (step == null) {
                 // As in the native-settings fixture, drain final ordinary slot/close packets
@@ -144,6 +150,7 @@ final class NeoForgeJustDireCooldownHudTest {
             saved.add(client.player.getItemBySlot(slot));
             client.player.setItemSlot(slot, ItemStack.EMPTY);
         }
+
         boolean hidden = client.options.hideGui;
         try {
             nativeEquipment(client);
@@ -165,6 +172,7 @@ final class NeoForgeJustDireCooldownHudTest {
                     setClocks(nativeRoot, full);
                     require(expectedDraws.size() == 20, "Native GS-only partial-failure control missing");
                 }
+
                 var pair = MixedBootsFactory.createPair(JustDireEarthquakeTestSupport.original(0), new ItemStack(Items.DIAMOND_BOOTS));
                 for (var root : List.of(pair.primary(), pair.inverse())) {
                     setClocks(root, nativeRoot.get(JustDireEarthquakeTestSupport.timers()));
@@ -186,6 +194,7 @@ final class NeoForgeJustDireCooldownHudTest {
                 for (var slot : EquipmentSlot.values()) {
                     client.player.setItemSlot(slot, ItemStack.EMPTY);
                 }
+
                 var root = JustDireEarthquakeTestSupport.mixed(0, false, false);
                 client.player.setItemSlot(EquipmentSlot.FEET, root);
                 setClocks(root,
@@ -214,12 +223,14 @@ final class NeoForgeJustDireCooldownHudTest {
                 } finally {
                     client.player = oldPlayer;
                 }
+
                 var config = Class.forName("com.direwolf20.justdirethings.setup.Config");
                 var offsetX = config.getField("OVERLAY_X").get(null);
                 var offsetY = config.getField("OVERLAY_Y").get(null);
                 var get = offsetX.getClass().getMethod("get");
                 var set = offsetX.getClass().getMethod("set", Object.class);
-                Object oldX = get.invoke(offsetX), oldY = get.invoke(offsetY);
+                Object oldX = get.invoke(offsetX);
+                Object oldY = get.invoke(offsetY);
                 try {
                     set.invoke(offsetX, (int) oldX + 17);
                     set.invoke(offsetY, (int) oldY + 13);
@@ -301,6 +312,7 @@ final class NeoForgeJustDireCooldownHudTest {
                 if (!ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(expected))) {
                     return false;
                 }
+
                 var clock = JustDireEarthquakeTestSupport.clock(root, "earthquake");
                 if (clock == null || !clock.active() || clock.ticks() >= 150) {
                     return false;
@@ -418,10 +430,12 @@ final class NeoForgeJustDireCooldownHudTest {
                 if (!ModContent.getMixedBootsData(root).equals(ModContent.getMixedBootsData(expected)) || root.getItem() != expected.getItem()) {
                     return false;
                 }
+
                 var clock = JustDireEarthquakeTestSupport.clock(root, "earthquake");
                 if (active ? clock == null || clock.active() : clock != null) {
                     return false;
                 }
+
                 boolean disabled = orientation >= 0 && (VARIANT.equals("hooksMissing") || VARIANT.equals("parametersMissing"));
                 var before = root.copy();
                 var draws = extract(client);
@@ -503,6 +517,7 @@ final class NeoForgeJustDireCooldownHudTest {
                     } finally {
                         JustDireCooldownFeedbackTestSupport.failNextSound = false;
                     }
+
                     var pending = JustDireEarthquakeTestSupport.clock(expected, earthquake ? "earthquake" : "groundstomp");
                     require(earthquake ? pending != null && !pending.active() && pending.ticks() == 800 : pending == null,
                             "Audio failure rolled back/reset the committed clock");

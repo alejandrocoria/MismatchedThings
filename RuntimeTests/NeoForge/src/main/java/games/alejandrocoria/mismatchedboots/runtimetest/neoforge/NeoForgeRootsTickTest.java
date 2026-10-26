@@ -56,7 +56,8 @@ public final class NeoForgeRootsTickTest {
                 check(player, plain.inverse(), false, false, 10, 0, 0, EquipmentSlot.OFFHAND, null);
             } else {
                 manaSupplier = Class.forName("elucent.rootsclassic.attachment.RootsAttachments").getField("MANA").get(null);
-                ItemStack sylvan = boot("sylvan_boots"), wildwood = boot("wildwood_boots");
+                ItemStack sylvan = boot("sylvan_boots");
+                ItemStack wildwood = boot("wildwood_boots");
                 // Native controls remain functional even when our readiness proof is intentionally unavailable.
                 check(player, sylvan, true, true, 10, 0, 0, EquipmentSlot.FEET, null);
                 check(player, wildwood, true, false, 10, 0, 0, EquipmentSlot.FEET, null);
@@ -73,6 +74,7 @@ public final class NeoForgeRootsTickTest {
                     boolean enabled = available(hasSylvan);
                     check(player, pair, enabled, hasSylvan, 10, 0, 0, EquipmentSlot.FEET, null);
                 }
+
                 boolean enabled = available(true);
                 check(player, s.primary(), enabled, true, 0, 0, 0, EquipmentSlot.FEET, null);
                 check(player, s.primary(), enabled, true, 10, 40, 0, EquipmentSlot.FEET, null);
@@ -99,6 +101,7 @@ public final class NeoForgeRootsTickTest {
                     int dispatches = check(player, sylvan, active, true, 10, 0, 0, EquipmentSlot.FEET, location, -1);
                     check(player, s.inverse(), enabled && active, true, 10, 0, 0, EquipmentSlot.FEET, location, dispatches);
                 }
+
                 var nonPlayer = EntityType.ZOMBIE.create(server.overworld(), EntitySpawnReason.COMMAND);
                 require(nonPlayer != null, "Missing non-player control");
                 ItemStack root = s.primary().copy();
@@ -116,6 +119,7 @@ public final class NeoForgeRootsTickTest {
                     check(player, s.primary(), false, true, 10, 0, 0, EquipmentSlot.FEET, null);
                 }
             }
+
             int setCases = absent ? 0 : NeoForgeRootsSetTest.run(player);
             NetworkAcceptanceFiles.write("roots-ticks-report.txt", VARIANT + ": " + cases
                     + (absent ? " ordinary inverse-item tick cases; quiet optional absence; no native Roots loaded\n"
@@ -150,6 +154,7 @@ public final class NeoForgeRootsTickTest {
                                                EquipmentSlot.HEAD, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
             player.setItemSlot(equipment, ItemStack.EMPTY);
         }
+
         ItemStack root = input.copy();
         root.setDamageValue(damage);
         root.set(DataComponents.CUSTOM_NAME, Component.literal("Roots native callback subject"));
@@ -170,6 +175,7 @@ public final class NeoForgeRootsTickTest {
                 default -> throw new AssertionError(location);
             }
         }
+
         try (var scope = RootsTickTestControl.begin(roll)) {
             if (location == null) {
                 root.inventoryTick(player.level(), player, slot);
@@ -181,6 +187,7 @@ public final class NeoForgeRootsTickTest {
                 dispatches = scope.ticks; // Match native engine dispatch; don't invent per-game-tick deduplication.
                 require(dispatches > 0, "Native location control never dispatched its item tick");
             }
+
             int delta = enabled && damage > 0 && roll == 0 ? dispatches : 0;
             require(root.getDamageValue() == damage - delta, "Root repair differs: " + location + "/" + input);
             if (attachment != null) {

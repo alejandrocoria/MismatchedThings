@@ -31,6 +31,7 @@ abstract class JustDireCooldownSoundMixin {
             if (player != null && ((Level) (Object) this).getPlayerByUUID(player.getUUID()) instanceof net.minecraft.server.level.ServerPlayer current) {
                 player = current;
             }
+
             var clocks = player == null
                          ? java.util.List.<JustDireCooldownFeedbackTestSupport.Clock>of()
                          : JustDireCooldownFeedbackTestSupport.before(player);

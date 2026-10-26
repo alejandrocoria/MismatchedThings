@@ -6,7 +6,8 @@ import java.util.function.Supplier;
 
 /** Observation/opaque-operand controls only; never recognize mixed sources or grant abilities. */
 public final class AetherRecognitionTestControl {
-    static int setReads, sentryReads;
+    static int setReads;
+    static int sentryReads;
 
     private AetherRecognitionTestControl() {
     }

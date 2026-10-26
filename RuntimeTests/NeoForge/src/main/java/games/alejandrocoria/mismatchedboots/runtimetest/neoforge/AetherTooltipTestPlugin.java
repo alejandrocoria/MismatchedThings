@@ -26,6 +26,7 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
                 || Boolean.getBoolean("mismatchedboots.runtimetest.aetherTooltipAbsent")) {
             return List.of();
         }
+
         var result = new ArrayList<>(List.of("AetherTooltipNativeProbeMixin", "AetherTooltipDetailsProbeMixin"));
         if (List.of("chains", "attributechanged", "tierchanged").contains(variant)) {
             result.add("AetherTooltipPeerMixin");
@@ -48,6 +49,7 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
         if (variant.equals("live")) {
             result.add("AetherTooltipMouseMixin");
         }
+
         return result;
     }
 

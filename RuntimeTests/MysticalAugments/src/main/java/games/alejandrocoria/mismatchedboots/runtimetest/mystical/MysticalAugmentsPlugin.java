@@ -45,6 +45,7 @@ public final class MysticalAugmentsPlugin implements IMixinConfigPlugin {
             }
             return selected;
         }
+
         return switch (variant) {
             case "compatible" -> List.of("MysticalEquipmentPeerMixin", "MysticalJumpPeerMixin");
             case "noequipment" -> List.of("MysticalEquipmentPeerMixin");

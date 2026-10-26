@@ -14,6 +14,7 @@ abstract class JustDireEarthquakeDebitFailureMixin {
                 || ++JustDireEarthquakeServerGuardPlugin.debits != JustDireEarthquakeServerGuardPlugin.failAt) {
             return extracted;
         }
+
         int fault = JustDireEarthquakeServerGuardPlugin.fault;
         var player = JustDireEarthquakeServerGuardPlugin.player;
         if (fault == 1) {
@@ -25,6 +26,7 @@ abstract class JustDireEarthquakeDebitFailureMixin {
         if (fault == 3) {
             JustDireEarthquakeServerGuardPlugin.changeToggle();
         }
+
         return extracted;
     }
 }

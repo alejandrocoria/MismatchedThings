@@ -33,10 +33,13 @@ final class SilentGearNativeTooltipControl {
         if (!gear.isInstance(source.getItem()) || !source.has(props) || !source.has(construction) || display.hideTooltip()) {
             return List.of();
         }
-        boolean showProps = display.shows(props), showParts = display.shows(construction);
+
+        boolean showProps = display.shows(props);
+        boolean showParts = display.shows(construction);
         if (!showProps && !showParts) {
             return List.of();
         }
+
         Class<?> flags = Class.forName("net.silentchaos512.gear.client.util.GearTooltipFlag");
         Object nativeFlag = flags.getMethod("withModifierKeys", boolean.class, boolean.class, boolean.class)
                                  .invoke(null, flag.isAdvanced(), showProps, showParts);
@@ -65,6 +68,7 @@ final class SilentGearNativeTooltipControl {
                 lines.removeFirst(); // Native's false showProperties flag still emits this one compact trait row.
             }
         }
+
         return List.copyOf(lines);
     }
 }

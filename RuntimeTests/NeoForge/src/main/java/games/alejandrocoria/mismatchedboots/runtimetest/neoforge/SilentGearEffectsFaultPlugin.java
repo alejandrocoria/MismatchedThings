@@ -52,6 +52,7 @@ public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, O
                 }
             }
         }
+
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$modified", "()Z", null, null);
         marker.instructions.add(new InsnNode(ICONST_1));
         marker.instructions.add(new InsnNode(IRETURN));
@@ -86,6 +87,7 @@ public final class SilentGearEffectsFaultPlugin implements IMixinConfigPlugin, O
             changed.owner = node.name;
             changed.name = alias.name;
         }
+
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$recognitionChanged", "()Z", null, null);
         marker.instructions.add(new InsnNode(ICONST_1));
         marker.instructions.add(new InsnNode(IRETURN));

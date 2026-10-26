@@ -81,12 +81,14 @@ final class VanillaArmorClassificationTest {
             require(protection.value().canEnchant(root), "Root-tag admission control does not actually admit Protection");
             anvil(player, root, protection, false);
         }
+
         var oneSource = MixedBootsFactory.createPair(feet(new ItemStack(Items.IRON_SWORD)), new ItemStack(Items.IRON_BOOTS));
         for (var root : List.of(oneSource.primary(), oneSource.inverse())) {
             require(!sharpness.value().canEnchant(root), "One-source Sharpness control is already root-native");
             anvil(player, root, sharpness, true);
             anvil(player, root, protection, true);
         }
+
         var bare = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
         // Give the malformed shell enchantment storage so rejection exercises admission, not vanilla's storage gate.
         bare.set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);

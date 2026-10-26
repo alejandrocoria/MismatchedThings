@@ -266,6 +266,7 @@ public final class NeoForgeJustDireResourcesTest {
             ItemStack invalidBefore = invalid.copy();
             require(energy(invalid) == null && ItemStack.matches(invalidBefore, invalid), "Invalid charge was usable or silently repaired");
         }
+
         ItemStack forged = iron.copy();
         forged.set(JustDireResourceTestSupport.energyComponent(), 9_999);
         creation(boots("celestigem", 6_000), forged, 10_000, 3_000);
@@ -395,6 +396,7 @@ public final class NeoForgeJustDireResourcesTest {
                 }
             }
         }
+
         ItemStack unpowered = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)).primary();
         unpowered.set(JustDireResourceTestSupport.energyComponent(), 9_999);
         ItemStack gained = MixedBootsRecomposer.recompose(unpowered, boots("celestigem", 6_000), new ItemStack(Items.GOLDEN_BOOTS));
@@ -479,6 +481,7 @@ public final class NeoForgeJustDireResourcesTest {
                                 && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().isEmpty()
                                 && menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().isEmpty(), "Negate smithing take lost live FE/payment");
             }
+
             int slot = inverse ? 6 : 4;
             var stepInstalled = JustDireAttributeTestSupport.<Boolean>component("stepheight_upgrade_installed");
             var negateInstalled = JustDireAttributeTestSupport.<Boolean>component("negatefalldamage_upgrade_installed");
@@ -504,6 +507,7 @@ public final class NeoForgeJustDireResourcesTest {
                 rootFlags.add(ItemStack.CODEC.encodeStart(ops, disabled).getOrThrow());
                 cases++;
             }
+
             ItemStack spent = root.copy();
             barrel.setItem(slot, spent);
             saved.add(ItemStack.CODEC.encodeStart(ops, spent).getOrThrow());
@@ -566,6 +570,7 @@ public final class NeoForgeJustDireResourcesTest {
             fallBalance(NeoForgeJustDireNegateFallTest.player(server, GameType.SURVIVAL), loaded, 9,
                         index % 2 == 0 ? 2_100 : 0, index % 2 == 0 ? 0 : 6);
         }
+
         var savedFlags = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(
                 System.getProperty("mismatchedboots.runtimetest.markers"), "just-dire-root-flags-saved.json"))).getAsJsonArray();
         require(savedFlags.size() == 4, "Missing false/absent root-permission restart fixtures");

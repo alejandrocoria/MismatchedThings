@@ -124,6 +124,7 @@ public final class AdvancedNetheriteCompatibilityAssertions {
             previousArmor.add(player.getItemBySlot(slot).copy());
             player.setItemSlot(slot, ItemStack.EMPTY);
         }
+
         try {
             player.setItemSlot(EquipmentSlot.FEET, output.copy());
             require(AdvancedUtil.isWearingEndermanPassiveArmor(player) == expected.endermen(),

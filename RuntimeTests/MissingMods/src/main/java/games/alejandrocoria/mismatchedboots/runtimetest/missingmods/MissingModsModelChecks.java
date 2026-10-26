@@ -148,6 +148,7 @@ final class MissingModsModelChecks {
             if (filtersUnknown) {
                 legacy.putString("unrecognized_reference", "future:removed");
             }
+
             var input = normalized.copy();
             var patch = input.getCompoundOrEmpty("components");
             patch.put(property, legacy.copy());
@@ -170,6 +171,7 @@ final class MissingModsModelChecks {
             } finally {
                 MissingModsProof.legacyReadable = true;
             }
+
             var retained = archive(server, suspended);
             require(legacy.equals(retained.original().get(property)), "Failed full read discarded original foreign data");
             require(legacy.equals(retained.original().getCompoundOrEmpty("mismatchedboots:mixed_boots_data")

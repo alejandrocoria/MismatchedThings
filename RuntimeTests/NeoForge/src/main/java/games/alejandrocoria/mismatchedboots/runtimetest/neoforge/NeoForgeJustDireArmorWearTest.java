@@ -107,6 +107,7 @@ public final class NeoForgeJustDireArmorWearTest {
         } catch (NoSuchMethodException absent) {
             ready = false;
         }
+
         boolean active = List.of("live", "wrapperBefore", "wrapperAfter", "transactions", "queryFailure", "storageMissing").contains(variant);
         require(ready == active, "Wrong final production permission: " + variant);
         if (variant.equals("absent")) {
@@ -174,6 +175,7 @@ public final class NeoForgeJustDireArmorWearTest {
                 player.jumpFromGround();
                 require(player.getDeltaMovement().y > .5, "Storage failure disabled independent Jump");
             }
+
             var lava = mixed("blazegold", "diamond", 0, false);
             require(JustDireLavaRepairCompatibility.eligible(lava)
                             && !lava.canBeHurtBy(player(server).damageSources().lava()), "Wear refusal disabled intrinsic Lava protection");
@@ -209,6 +211,7 @@ public final class NeoForgeJustDireArmorWearTest {
             enchant(server, root, level);
             hit(server, "Unbreaking " + level, root, 1_000 - (int) (200 - 200 * Math.min(1, level * .1)), 0);
         }
+
         var zero = mixed("celestigem", "diamond", 0, false);
         enchant(server, zero, 10);
         hit(server, "zero bill without base-FE threshold", zero, 0, 0);
@@ -338,6 +341,7 @@ public final class NeoForgeJustDireArmorWearTest {
             require(!player.hurtServer(server.overworld(), attack(player), 8) && ItemStack.matches(before, root), "Ordinary mode immunity lost");
             record(mode.toString(), "actual incoming hit rejected; FE/wear unchanged");
         }
+
         var root = mixed("celestigem", "diamond", 1_000, false);
         root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
         hit(server, "Unbreakable", root, 1_000, 0);
@@ -416,6 +420,7 @@ public final class NeoForgeJustDireArmorWearTest {
                     "GS paid armor-wear price or converted ordinary fallback");
             record("production GS powered=" + powered, "FE=" + charge(root) + "; ordinary wear=" + root.getDamageValue());
         }
+
         var root = mixed("celestigem", "diamond", 1_000, false);
         JustDireAttributeTestSupport.set(root, "negatefalldamage_upgrade_installed", true);
         var player = player(server);

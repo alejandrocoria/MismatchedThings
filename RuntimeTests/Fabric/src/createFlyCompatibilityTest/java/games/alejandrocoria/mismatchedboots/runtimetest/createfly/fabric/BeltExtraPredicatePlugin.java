@@ -23,6 +23,7 @@ public final class BeltExtraPredicatePlugin implements IMixinConfigPlugin {
         if (!mixin.endsWith("BeltExtraPredicateMixin")) {
             return;
         }
+
         MethodNode method = node.methods.stream().filter(candidate -> candidate.name.equals("entityInside"))
                                         .findFirst().orElseThrow();
         String player = "net/minecraft/world/entity/player/Player";

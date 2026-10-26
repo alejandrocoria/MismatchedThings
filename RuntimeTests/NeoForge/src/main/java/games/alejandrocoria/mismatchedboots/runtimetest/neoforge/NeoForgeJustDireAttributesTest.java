@@ -181,6 +181,7 @@ public final class NeoForgeJustDireAttributesTest {
             }
             cases++;
         }
+
         ItemStack rejected = boots("celestigem", 0, false);
         ItemStack rejectedBefore = rejected.copy();
         boolean rejectedPreparation = false;
@@ -445,6 +446,7 @@ public final class NeoForgeJustDireAttributesTest {
                                                                                                      0)));
             }
         }
+
         return JustDireAttributeTestSupport.composed(left, right, rules);
     }
 

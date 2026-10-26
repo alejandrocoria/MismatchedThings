@@ -33,6 +33,7 @@ public final class AetherAlkahestTestPlugin implements IMixinConfigPlugin, Opcod
         if (MODE.endsWith("binding") || !MODE.equals("chains") && !MODE.startsWith(armor ? "armor" : "fluid")) {
             return;
         }
+
         var method = node.methods.stream().filter(m -> m.name.equals(armor ? "onArmorDamaged" : "entityInside")).findFirst().orElseThrow();
         if (MODE.equals("chains")) {
             for (String suffix : new String[]{"First", "Second"}) {
@@ -41,6 +42,7 @@ public final class AetherAlkahestTestPlugin implements IMixinConfigPlugin, Opcod
                 peer(node, "result" + suffix, "Z", true);
             }
         }
+
         boolean changed = false;
         for (var n : method.instructions.toArray()) {
             if (!(n instanceof MethodInsnNode query) || !query.owner.equals(STACK) || !query.name.equals("has") || !query.desc.equals(

@@ -83,7 +83,8 @@ final class SilentGearWearerContracts {
               .append('\n');
         for (String[] family : List.of(new String[]{"adamant", "nickel"}, new String[]{"aquatic", "lead"},
                                        new String[]{"flame_ward", "crimson_steel"}, new String[]{"stellar", "refined_iron"})) {
-            String name = family[0], material = family[1];
+            String name = family[0];
+            String material = family[1];
             var armor = List.of(api.boot(material), api.armor("chestplate", "chestplate_plates", material),
                                 api.armor("helmet", "helmet_plates", material), api.armor("leggings", "legging_plates", material));
             Object instance = SilentGearTraitSpike.view(armor.getFirst()).get("silentgear:" + name);
@@ -104,7 +105,8 @@ final class SilentGearWearerContracts {
             Object weaponType = ((Supplier<?>) SilentGearTraitSpike.nativeClass("setup.gear.GearTypes").getField("SWORD").get(null)).get();
             require((int) counter.invoke(effect, SilentGearTraitSpike.context(player, instance, armor.getFirst()), weaponType, player) == 1,
                     "Non-armor branch was changed");
-            ItemStack sword = api.armor("sword", "sword_blade", material), swordBefore = sword.copy();
+            ItemStack sword = api.armor("sword", "sword_blade", material);
+            ItemStack swordBefore = sword.copy();
             equip(player, armor, 4);
             effect.getClass()
                   .getMethod("inventoryTick",
@@ -130,7 +132,9 @@ final class SilentGearWearerContracts {
                                                    .findFirst()
                                                    .orElseThrow();
                 SilentGearWearerFixture.active = true;
-                ItemStack carrier = SilentGearWearerFixture.carrier(root), before = root.copy(), carrierBefore = carrier.copy();
+                ItemStack carrier = SilentGearWearerFixture.carrier(root);
+                ItemStack before = root.copy();
+                ItemStack carrierBefore = carrier.copy();
                 if (!refused) {
                     boolean deniedRoot = false;
                     try {
@@ -242,7 +246,9 @@ final class SilentGearWearerContracts {
         var nativeBrilliant = api.boot("gold");
         for (var root : NeoForgeSilentGearTest.workbench(player, nativeBrilliant, new ItemStack(Items.DIAMOND_BOOTS))) {
             SilentGearWearerFixture.active = true;
-            ItemStack before = root.copy(), carrier = SilentGearWearerFixture.carrier(root), carrierBefore = carrier.copy();
+            ItemStack before = root.copy();
+            ItemStack carrier = SilentGearWearerFixture.carrier(root);
+            ItemStack carrierBefore = carrier.copy();
             require(carrier.getItem().makesPiglinsNeutral(carrier, player), "Bound native Brilliant receiver lost merged trait view");
             require(root.getItem().makesPiglinsNeutral(root, player), "B production Brilliant regressed");
             require(ItemStack.matches(before, root) && ItemStack.matches(carrierBefore, carrier), "Brilliant carrier mutated gear");
@@ -317,7 +323,8 @@ final class SilentGearWearerContracts {
                                         NeoForgeSilentGearTest.NativeApi api,
                                         StringBuilder report,
                                         boolean refused) throws Throwable {
-        ItemStack stellar = api.boot("refined_iron"), aquatic = api.boot("lead");
+        ItemStack stellar = api.boot("refined_iron");
+        ItemStack aquatic = api.boot("lead");
         var aquaticSet = List.of(api.armor("chestplate", "chestplate_plates", "lead"),
                                  api.armor("helmet", "helmet_plates", "lead"), api.armor("leggings", "legging_plates", "lead"));
         for (ItemStack second : List.of(stellar, aquatic)) {
@@ -349,6 +356,7 @@ final class SilentGearWearerContracts {
                 }
             }
         }
+
         ItemStack root = NeoForgeSilentGearTest.workbench(player, stellar, new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
         var invalidRoots = new ArrayList<ItemStack>();
         ItemStack invalid = root.copy();
@@ -574,6 +582,7 @@ final class SilentGearWearerContracts {
             require(api.traitLevel(coated, "aquatic") == 5, "Prismarine coating did not produce Aquatic V");
             armor.add(coated);
         }
+
         Object instance = SilentGearTraitSpike.view(armor.getFirst()).get("silentgear:aquatic");
         Object effect = SilentGearWearerFixture.effects(instance).stream().filter(SilentGearWearerFixture::isWielder).findFirst().orElseThrow();
         equip(player, armor, 4);

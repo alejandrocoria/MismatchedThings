@@ -38,19 +38,27 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 final class SilentGearDefenseClientTest {
     private static Future<String> job;
     private static JsonObject state;
-    private static int index, clientSounds, engineSounds;
-    private static boolean listening, released, finishing, landingsComplete;
-    private static double minimumY = Double.MAX_VALUE, reboundY;
+    private static int index;
+    private static int clientSounds;
+    private static int engineSounds;
+    private static boolean listening;
+    private static boolean released;
+    private static boolean finishing;
+    private static boolean landingsComplete;
+    private static double minimumY = Double.MAX_VALUE;
+    private static double reboundY;
     private static final StringBuilder report = new StringBuilder();
     // Integrated-server working state: accessed only by submitted jobs/server event callbacks.
     private static Session session;
     private static ItemStack persisted;
-    private static int nativeClientSounds, nativeEngineSounds;
+    private static int nativeClientSounds;
+    private static int nativeEngineSounds;
     private static Future<String> healthJob;
     private static JsonObject healthState;
     private static Health health;
     private static int healthIndex;
-    private static boolean healthCleanup, healthComplete;
+    private static boolean healthCleanup;
+    private static boolean healthComplete;
     private static final StringBuilder healthReport = new StringBuilder();
 
     private SilentGearDefenseClientTest() {
@@ -81,6 +89,7 @@ final class SilentGearDefenseClientTest {
             state = JsonParser.parseString(job.get()).getAsJsonObject();
             job = null;
         }
+
         var server = client.getSingleplayerServer();
         var uuid = client.player.getUUID();
         if (state == null) {
@@ -94,6 +103,7 @@ final class SilentGearDefenseClientTest {
             });
             return false;
         }
+
         var ops = client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         var expected = ItemStack.CODEC.parse(ops, state.get("root")).getOrThrow();
         if (finishing) {
@@ -104,6 +114,7 @@ final class SilentGearDefenseClientTest {
                 job = server.submit(() -> session.poll());
                 return false;
             }
+
             var before = actual.copy();
             actual.getAttributeModifiers();
             ModContent.getMixedBootsData(actual);
@@ -129,6 +140,7 @@ final class SilentGearDefenseClientTest {
                 state = null;
                 released = false;
             }
+
             return false;
         }
         if (!released) {
@@ -150,7 +162,9 @@ final class SilentGearDefenseClientTest {
             job = server.submit(() -> session.poll());
             return false;
         }
-        int sounds = clientSounds, engine = engineSounds;
+
+        int sounds = clientSounds;
+        int engine = engineSounds;
         double rise = reboundY;
         job = server.submit(() -> session.finish(sounds, engine, rise));
         finishing = true;
@@ -218,6 +232,7 @@ final class SilentGearDefenseClientTest {
                 healthState = null;
             }
         }
+
         var server = client.getSingleplayerServer();
         var id = client.player.getUUID();
         if (healthState == null) {
@@ -231,6 +246,7 @@ final class SilentGearDefenseClientTest {
             });
             return false;
         }
+
         var expected = ItemStack.CODEC.parse(client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE), healthState.get("root"))
                                       .getOrThrow();
         if (!ItemStack.matches(expected, client.player.getItemBySlot(EquipmentSlot.FEET))
@@ -240,11 +256,13 @@ final class SilentGearDefenseClientTest {
             healthJob = server.submit(() -> health.poll(observation));
             return false;
         }
+
         int stage = healthState.get("stage").getAsInt();
         if (stage < 3) {
             healthJob = server.submit(() -> health.hit());
             return false;
         }
+
         var attacker = client.level.getEntity(healthState.get("attacker").getAsInt());
         if (attacker == null || healthIndex > 0 && attacker.getX() < healthState.get("startX").getAsDouble() + .15) {
             String observation = "client attacker=" + (attacker == null ? "missing" : attacker.position());
@@ -268,9 +286,12 @@ final class SilentGearDefenseClientTest {
     /** Numeric armor is neutralized on the actor, not confused with the selected native incoming effects. */
     private static final class Health {
         private final ServerPlayer owner;
-        private final ItemStack root, before;
-        private final int sample, started;
-        private final double armorBase, toughnessBase;
+        private final ItemStack root;
+        private final ItemStack before;
+        private final int sample;
+        private final int started;
+        private final double armorBase;
+        private final double toughnessBase;
         private int stage;
         private Zombie attacker;
         private String clientObservation = "awaiting packets";
@@ -371,7 +392,8 @@ final class SilentGearDefenseClientTest {
 
     private static final class Session {
         private final ServerPlayer owner;
-        private final ItemStack root, before;
+        private final ItemStack root;
+        private final ItemStack before;
         private final int sample;
         private final int started;
         private LivingFallEvent fall;
@@ -395,6 +417,7 @@ final class SilentGearDefenseClientTest {
                     owner.level().setBlock(new BlockPos(x, 80, z), Blocks.STONE.defaultBlockState(), 3);
                 }
             }
+
             var api = new NeoForgeSilentGearTest.NativeApi();
             SilentGearTraitSpike.initialize(api);
             if (rejoin) {
@@ -468,7 +491,8 @@ final class SilentGearDefenseClientTest {
             require(fall != null && fall.isCanceled() && serverSounds == 1 && sounds == nativeClientSounds
                             && engine == nativeEngineSounds && engine == 1 && rise >= .15,
                     "Connected native rebound/sound differs: sample=" + sample + " serverSounds=" + serverSounds + " clientRequests=" + sounds + " engine=" + engine);
-            int bill = (int) (fall.getDistance() / 3) - 1, wear = root.getDamageValue() - before.getDamageValue();
+            int bill = (int) (fall.getDistance() / 3) - 1;
+            int wear = root.getDamageValue() - before.getDamageValue();
             require(owner.getHealth() == owner.getMaxHealth() && wear > 0 && wear <= bill, "Landing health or ordinary wear differs");
             if (sample != 0) {
                 require(SilentGearBounceTest.wearCalls == 1 && SilentGearBounceTest.requestedWear == bill

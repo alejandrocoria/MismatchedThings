@@ -5,7 +5,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public final class MysticalGuardControl {
-    public static int equipmentCalls, armorCalls;
+    public static int equipmentCalls;
+    public static int armorCalls;
 
     private MysticalGuardControl() {
     }

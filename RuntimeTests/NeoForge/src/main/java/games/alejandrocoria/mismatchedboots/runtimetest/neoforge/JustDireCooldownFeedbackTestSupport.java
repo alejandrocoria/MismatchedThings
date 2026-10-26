@@ -21,7 +21,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /** Test-only native draw/world-event observation; no alternate view, ticking or sound emission. */
 public final class JustDireCooldownFeedbackTestSupport {
     public static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.justDireCooldownHudVariant", "live");
-    public static volatile boolean capturingDraws, capturingSounds;
+    public static volatile boolean capturingDraws;
+    public static volatile boolean capturingSounds;
     public static ServerPlayer observedPlayer;
     public static boolean failNextSound;
 
@@ -30,7 +31,9 @@ public final class JustDireCooldownFeedbackTestSupport {
 
     public static final List<Draw> draws = new ArrayList<>();
     public static final ConcurrentLinkedQueue<Sound> sounds = new ConcurrentLinkedQueue<>();
-    private static Method name, ticks, active;
+    private static Method name;
+    private static Method ticks;
+    private static Method active;
     private static Constructor<?> timer;
 
     private JustDireCooldownFeedbackTestSupport() {

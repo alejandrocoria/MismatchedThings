@@ -116,6 +116,7 @@ final class NeoForgeRootsSetTest {
         if (headFixture) {
             player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.DIAMOND_HELMET));
         }
+
         var before = feet.copy();
         player.removeAllEffects();
         player.addEffect(new MobEffectInstance(MobEffects.POISON, 200, 0));

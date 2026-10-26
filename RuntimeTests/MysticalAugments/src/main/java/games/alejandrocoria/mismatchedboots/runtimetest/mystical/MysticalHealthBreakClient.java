@@ -26,7 +26,11 @@ public final class MysticalHealthBreakClient {
     private static final StringBuilder REPORT = new StringBuilder();
     private static Future<?> job;
     private static ItemStack boots;
-    private static int phase, next, age, ticks, scene;
+    private static int phase;
+    private static int next;
+    private static int age;
+    private static int ticks;
+    private static int scene;
     private static float minimumHealth;
     private static boolean deathScreen;
     private static boolean finished;
@@ -42,6 +46,7 @@ public final class MysticalHealthBreakClient {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 2000, "Health break diagnostic timeout");
             if (client.player == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {

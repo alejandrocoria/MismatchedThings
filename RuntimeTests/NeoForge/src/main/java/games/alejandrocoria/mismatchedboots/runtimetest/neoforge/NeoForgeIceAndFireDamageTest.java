@@ -68,6 +68,7 @@ public final class NeoForgeIceAndFireDamageTest {
         if (finished) {
             return;
         }
+
         try {
             if (IceAndFireCoexistenceFixture.CASE.equals("incompatible")) {
                 verifyIncompatibleConsumer(server.overworld());
@@ -205,6 +206,7 @@ public final class NeoForgeIceAndFireDamageTest {
         for (String element : List.of("fire", "ice", "lightning")) {
             boots.add(item("dragonsteel_" + element + "_boots"));
         }
+
         List<DamageSource> dragonDamage = List.of(damage(level, "dragon_fire"), damage(level, "dragon_ice"),
                                                   damage(level, "dragon_lightning"));
         for (DamageSource source : dragonDamage) {
@@ -217,6 +219,7 @@ public final class NeoForgeIceAndFireDamageTest {
                 var both = MixedBootsFactory.createPair(new ItemStack(boot), new ItemStack(boot));
                 hurt(level, source, both.primary(), 0.9F, name + " two identical sources");
             }
+
             var scaleSteel = MixedBootsFactory.createPair(new ItemStack(boots.getFirst()),
                                                           new ItemStack(boots.getLast()));
             hurt(level, source, scaleSteel.primary(), 0.9F, "Scale/Steel, not double-counted");
@@ -287,6 +290,7 @@ public final class NeoForgeIceAndFireDamageTest {
             hurt(level, arrow, MixedBootsFactory.createPair(new ItemStack(boot), new ItemStack(boot)).primary(),
                  0.9F, variant + " two Troll sources count once");
         }
+
         var colors = MixedBootsFactory.createPair(new ItemStack(item("forest_troll_leather_boots")),
                                                   new ItemStack(item("frost_troll_leather_boots")));
         hurt(level, arrow, colors.primary(), 0.9F, "two different Troll variants");

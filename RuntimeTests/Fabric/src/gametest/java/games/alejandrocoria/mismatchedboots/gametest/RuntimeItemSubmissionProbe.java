@@ -86,6 +86,7 @@ public final class RuntimeItemSubmissionProbe {
         if (!armed || mesh.size() == 0) {
             return;
         }
+
         float[] bounds = {Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY};
         int[] triangles = {0};
         String[] sprite = {null};

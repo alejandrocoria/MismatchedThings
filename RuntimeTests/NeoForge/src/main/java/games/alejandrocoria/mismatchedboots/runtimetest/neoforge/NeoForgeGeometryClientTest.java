@@ -67,6 +67,7 @@ public final class NeoForgeGeometryClientTest {
         if (finished) {
             return;
         }
+
         try {
             ticks++;
             assertUnattended(client);
@@ -207,6 +208,7 @@ public final class NeoForgeGeometryClientTest {
             if (candidate.direction() != input.direction() || candidate.materialInfo() != input.materialInfo()) {
                 throw new AssertionError("Candidate tessellation changed source metadata");
             }
+
             Vector3f normal = new Vector3f(candidate.position1()).sub(candidate.position0())
                                                                  .cross(new Vector3f(candidate.position2()).sub(candidate.position1()));
             if (!normal.isFinite() || normal.lengthSquared() <= EPSILON * EPSILON) {
@@ -221,6 +223,7 @@ public final class NeoForgeGeometryClientTest {
                 }
             }
         }
+
         return output;
     }
 
@@ -319,6 +322,7 @@ public final class NeoForgeGeometryClientTest {
         if (crossings != 2) {
             return Topology.OTHER_CROSSING;
         }
+
         return Math.floorMod(firstCrossing - secondCrossing, BakedQuad.VERTEX_COUNT) == 2
                ? Topology.OPPOSITE_EDGE_CROSSING
                : left == 1
@@ -392,6 +396,7 @@ public final class NeoForgeGeometryClientTest {
                 .mismatchedboots$getSpecialRenderer() == null) {
             throw new AssertionError("Genuinely incompatible fixture did not resolve a special layer");
         }
+
         LayerRenderStateAccessor ordinaryLayer = (LayerRenderStateAccessor) (Object)
                 accessor.mismatchedboots$getLayers()[0];
         LayerRenderStateAccessor baselineLayer = (LayerRenderStateAccessor) (Object)
@@ -399,6 +404,7 @@ public final class NeoForgeGeometryClientTest {
         if (!ordinaryLayer.mismatchedboots$getQuads().equals(baselineLayer.mismatchedboots$getQuads())) {
             throw new AssertionError("Late special-renderer failure partially committed the ordinary source");
         }
+
         Matrix4f left = new Matrix4f(((LayerRenderStateAccessor) (Object)
                 accessor.mismatchedboots$getLayers()[0]).mismatchedboots$getLocalTransform());
         Matrix4f right = new Matrix4f(((LayerRenderStateAccessor) (Object)
@@ -672,6 +678,7 @@ public final class NeoForgeGeometryClientTest {
                       .append(incompatibility.name().toLowerCase()).append('=')
                       .append(incompatibilities.getOrDefault(incompatibility, 0)).append('\n');
             }
+
             return result.toString();
         }
     }

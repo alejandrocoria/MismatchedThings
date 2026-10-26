@@ -19,6 +19,7 @@ final class TidePredicateMutation implements Opcodes {
         if (applied) {
             throw new AssertionError("Predicate mutation applied twice");
         }
+
         MethodNode entry = node.methods.stream().filter(method -> method.name.equals("inventoryTick")
                 && method.desc.equals(TideFixturePlugin.TICK)).findFirst().orElseThrow();
         for (var instruction : entry.instructions.toArray()) {
@@ -26,6 +27,7 @@ final class TidePredicateMutation implements Opcodes {
                     || !field.owner.equals("net/minecraft/world/entity/EquipmentSlot") || !field.name.equals("FEET")) {
                 continue;
             }
+
             AbstractInsnNode type = field;
             while (!(type instanceof TypeInsnNode)) {
                 type = type.getNext();
@@ -39,6 +41,7 @@ final class TidePredicateMutation implements Opcodes {
                 while (start.getOpcode() < 0) {
                     start = start.getPrevious();
                 }
+
                 InsnList duplicate = new InsnList();
                 for (AbstractInsnNode part = start; ; part = part.getNext()) {
                     if (part.getOpcode() >= 0) {

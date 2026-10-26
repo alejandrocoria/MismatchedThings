@@ -82,11 +82,13 @@ public final class TideHeadFixture {
             }
             receiver = fault.equals("replaced") ? Items.IRON_HELMET : item("iceandfire:tide_blue_helmet");
         }
+
         boolean result = nativeSource(receiver) && receiver instanceof Ready entry && entry.tideHead$entryReady()
                 && receiver instanceof Ready.Base base && base.tideHead$baseReady();
         if (!result) {
             disable("fixed receiver or entry/base readiness unavailable");
         }
+
         return result;
     }
 

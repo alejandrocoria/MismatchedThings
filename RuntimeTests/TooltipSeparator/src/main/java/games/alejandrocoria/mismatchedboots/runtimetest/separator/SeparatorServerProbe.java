@@ -22,6 +22,7 @@ public final class SeparatorServerProbe {
             if (!pair.isComplete()) {
                 throw new AssertionError("Server recipe rejected");
             }
+
             var root = pair.primary();
             var before = root.copy();
             var lines = root.getTooltipLines(Item.TooltipContext.of(server.overworld()), null, TooltipFlag.NORMAL);

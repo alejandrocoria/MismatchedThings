@@ -27,6 +27,7 @@ public final class TideSlotInjectionPoint extends InjectionPoint {
                     || !type.desc.equals("com/iafenvoy/iceandfire/item/armor/SeaSerpentArmorItem")) {
                 continue;
             }
+
             AbstractInsnNode read = instruction;
             for (int count = 0; count < 3 && read != null; count++) {
                 do {

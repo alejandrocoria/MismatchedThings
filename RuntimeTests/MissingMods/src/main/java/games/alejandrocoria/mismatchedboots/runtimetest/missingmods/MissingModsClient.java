@@ -33,11 +33,16 @@ import java.util.concurrent.Future;
 /** Three real connections in separate JVMs; native player/entity persistence and packets own the lifecycle. */
 public final class MissingModsClient {
     private static final String STAGE = MissingModsProof.stage();
-    private static final boolean ABSENT = STAGE.equals("clientabsent"), RESTORED = STAGE.equals("clientrestore");
-    private static UUID playerId, droppedId;
+    private static final boolean ABSENT = STAGE.equals("clientabsent");
+    private static final boolean RESTORED = STAGE.equals("clientrestore");
+    private static UUID playerId;
+    private static UUID droppedId;
     private static Vec3 deathPosition;
     private static Future<?> job;
-    private static int phase, next, ticks, age;
+    private static int phase;
+    private static int next;
+    private static int ticks;
+    private static int age;
     private static boolean finished;
 
     private MissingModsClient() {
@@ -47,6 +52,7 @@ public final class MissingModsClient {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 5000, "Connected recovery timed out: " + phase);
             if (client.screen instanceof BackupConfirmScreen backup) {
@@ -194,6 +200,7 @@ public final class MissingModsClient {
                             && owner.level().getEntitiesOfClass(ItemEntity.class, new AABB(-8, 77, -8, 24, 86, 8)).size() == 1,
                     "Reconnect duplicated/refunded archived resources");
         }
+
         var manifest = new CompoundTag();
         manifest.putLong("process", ProcessHandle.current().pid());
         manifest.putString("stage", STAGE);

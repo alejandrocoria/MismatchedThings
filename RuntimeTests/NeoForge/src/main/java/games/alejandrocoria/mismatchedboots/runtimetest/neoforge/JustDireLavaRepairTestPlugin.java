@@ -24,6 +24,7 @@ public final class JustDireLavaRepairTestPlugin implements IMixinConfigPlugin {
             String variant = System.getProperty("mismatchedboots.runtimetest.justDireLavaRepairVariant", "");
             return enabled && (variant.equals("apiMissing") || variant.equals("particlesMissing"));
         }
+
         return enabled;
     }
 
@@ -32,6 +33,7 @@ public final class JustDireLavaRepairTestPlugin implements IMixinConfigPlugin {
         if (!mixin.endsWith("ApiMixin")) {
             return;
         }
+
         boolean particles = System.getProperty("mismatchedboots.runtimetest.justDireLavaRepairVariant", "").equals("particlesMissing");
         String original = particles ? "com.direwolf20.justdirethings.client.particles.itemparticle.ItemFlowParticleData"
                                     : "com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool";

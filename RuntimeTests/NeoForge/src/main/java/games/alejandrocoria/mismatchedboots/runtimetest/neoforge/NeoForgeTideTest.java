@@ -48,10 +48,17 @@ final class NeoForgeTideTest {
     private static final String FEET = "games.alejandrocoria.mismatchedboots.runtimetest.tide.TideProductionProbe";
     private static final List<String> TRACE = new ArrayList<>();
     private static ServerLevel level;
-    private static ServerPlayer control, mixed, observed;
+    private static ServerPlayer control;
+    private static ServerPlayer mixed;
+    private static ServerPlayer observed;
     private static boolean finished;
-    private static boolean raining, veto;
-    private static int installed, ready, cases, ticks, attempts;
+    private static boolean raining;
+    private static boolean veto;
+    private static int installed;
+    private static int ready;
+    private static int cases;
+    private static int ticks;
+    private static int attempts;
 
     static void register() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, NeoForgeTideTest::applicable);
@@ -97,6 +104,7 @@ final class NeoForgeTideTest {
         if (finished) {
             return;
         }
+
         boolean damageOwnsShutdown = false;
         try {
             installed = MODE.equals("feet") ? 8 : 9;
@@ -197,11 +205,14 @@ final class NeoForgeTideTest {
                     productionEffects();
                 }
             }
-            int headWarnings = diagnostic(1, "warnings"), feetWarnings = diagnostic(8, "ownerWarnings");
+
+            int headWarnings = diagnostic(1, "warnings");
+            int feetWarnings = diagnostic(8, "ownerWarnings");
             Class.forName(FEET).getMethod("verifyMutation").invoke(null);
             require(headWarnings == (!MODE.equals("apiAbsent") && (installed & 1) != 0 && (ready & 1) == 0 ? 1 : 0), "Bounded HEAD warning");
             require(feetWarnings == (!MODE.equals("apiAbsent") && (installed & 8) != 0 && (ready & 8) == 0 ? 1 : 0), "Bounded FEET warning");
-            int headBindings = diagnostic(1, "bindingAttempts"), feetBindings = diagnostic(8, "ownerBindingAttempts");
+            int headBindings = diagnostic(1, "bindingAttempts");
+            int feetBindings = diagnostic(8, "ownerBindingAttempts");
             require(headBindings == (!apiUnavailable && (installed & 1) != 0 ? 1 : 0), "HEAD binding cached, not retried after rejection");
             require(feetBindings == (!apiUnavailable && (installed & 8) != 0 ? 1 : 0), "FEET binding cached, not retried after rejection");
             NetworkAcceptanceFiles.write("tide-owners-report.txt",
@@ -410,6 +421,7 @@ final class NeoForgeTideTest {
         for (ServerPlayer player : List.of(control, mixed)) {
             player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(nativeArmor(1, "blue")));
         }
+
         ItemStack wrongType = new ItemStack(nativeArmor(0, "blue"));
         wrongType.set(DataComponents.EQUIPPABLE, Items.IRON_BOOTS.components().get(DataComponents.EQUIPPABLE));
         mixed.setItemSlot(EquipmentSlot.FEET, MixedBootsFactory.createPair(wrongType, new ItemStack(Items.IRON_BOOTS)).primary());
@@ -436,6 +448,7 @@ final class NeoForgeTideTest {
                 for (ServerPlayer player : List.of(control, mixed)) {
                     player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(nativeArmor(1, "blue")));
                 }
+
                 ItemStack root = root(i, false, false);
                 switch (kind) {
                     case "count" -> root.setCount(2);
@@ -468,6 +481,7 @@ final class NeoForgeTideTest {
         if (index == 3) {
             return MixedBootsFactory.createPair(new ItemStack(first), new ItemStack(second)).primary();
         }
+
         ItemStack root = new ItemStack(item("tide_head_owner:mixed_head"));
         CompoundTag tag = new CompoundTag();
         tag.putString("primary_head", BuiltInRegistries.ITEM.getKey(first).toString());
@@ -515,7 +529,8 @@ final class NeoForgeTideTest {
     }
 
     private static void compare(boolean wet, int activeRoots, String label) throws Exception {
-        ItemStack[] roots = new ItemStack[4], snapshots = new ItemStack[4];
+        ItemStack[] roots = new ItemStack[4];
+        ItemStack[] snapshots = new ItemStack[4];
         for (int i = 0; i < 4; i++) {
             roots[i] = mixed.getItemBySlot(SLOTS[i]);
             snapshots[i] = roots[i].copy();
@@ -526,7 +541,8 @@ final class NeoForgeTideTest {
         }
         for (int tick = 0; tick < 3; tick++) {
             List<String> nativeTrace = step(control, wet, 0);
-            String water = state(control.getEffect(MobEffects.WATER_BREATHING)), strength = state(control.getEffect(MobEffects.STRENGTH));
+            String water = state(control.getEffect(MobEffects.WATER_BREATHING));
+            String strength = state(control.getEffect(MobEffects.STRENGTH));
             require(nativeTrace.equals(step(mixed, wet, activeRoots)), label + ": native hook mismatch");
             require(water.equals(state(mixed.getEffect(MobEffects.WATER_BREATHING))) && strength.equals(state(mixed.getEffect(MobEffects.STRENGTH))),
                     label + ": effect state mismatch");
@@ -541,7 +557,8 @@ final class NeoForgeTideTest {
         player.setPos(raining ? 8.5 : wet ? 1.5 : 8.5, raining ? -55.5 : -59.5, raining ? 8.5 : wet ? 1.5 : 8.5);
         player.setDeltaMovement(Vec3.ZERO);
         player.setAirSupply(300);
-        int head = diagnostic(1, "activations"), feet = diagnostic(8, "ownerActivations");
+        int head = diagnostic(1, "activations");
+        int feet = diagnostic(8, "ownerActivations");
         observed = player;
         TRACE.clear();
         player.doTick();

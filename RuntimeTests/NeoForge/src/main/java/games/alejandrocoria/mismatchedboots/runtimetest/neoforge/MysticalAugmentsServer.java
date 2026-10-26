@@ -50,6 +50,7 @@ final class MysticalAugmentsServer implements MysticalAugmentsProbe.Platform {
         if (credits == null || !credits.names().equals(java.util.List.of("stepheight"))) {
             throw new AssertionError("JDT coexist fixture lacks native purchase credit");
         }
+
         try {
             JustDireRefundBreakTest.direct(server, root, "stepheight");
         } finally {

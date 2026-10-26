@@ -31,6 +31,7 @@ public final class MeshTestFixtures {
         if (mode == null) {
             return;
         }
+
         QuadEmitter emitter = ((FabricLayerRenderState) (Object) layer).emitter();
         for (BakedQuad quad : List.copyOf(accessor.mismatchedboots$getQuads())) {
             if (mode != Mode.EMPTY) {

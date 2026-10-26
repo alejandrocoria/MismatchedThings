@@ -46,6 +46,7 @@ final class AetherTooltipFaultTest {
                     require(actual.lines().stream().filter(row::equals).count() == (sets ? 1 : 0), "Wrong bounded set formatter output");
                     require(!idle.lines().contains(row), "Failed formatter borrowed worn values for a copy");
                 }
+
                 var source = samples.get(24);
                 var lines = AetherTooltipTestControl.capture(client, source, flag, false).lines();
                 require(lines.stream().filter(line -> key(line, "aether_ii.tooltip.item.reinforcement")).count() == (tiers ? 2 : 0),

@@ -84,6 +84,7 @@ public final class NeoForgeNativeEquipmentClientTest {
         if (renderer == null) {
             throw new AssertionError("Native equipment renderer was not captured after reload");
         }
+
         HumanoidModel<HumanoidRenderState> original = model();
         AnimatedModel left = new AnimatedModel();
         AnimatedModel right = new AnimatedModel();
@@ -167,6 +168,7 @@ public final class NeoForgeNativeEquipmentClientTest {
         if (Boolean.getBoolean("mismatchedboots.runtimetest.rootsRenderingTest")) {
             report += RootsEquipmentClientTest.assertRoute(original);
         }
+
         return report;
     }
 
@@ -186,6 +188,7 @@ public final class NeoForgeNativeEquipmentClientTest {
             if (!(resolved instanceof HumanoidModel<?> humanoid)) {
                 throw new AssertionError(id + " did not resolve humanoid equipment");
             }
+
             ItemStack vanilla = source(Items.IRON_BOOTS, EquipmentAssets.IRON);
             assertRoots(renderPair(mixed(stack, vanilla), original),
                         humanoid.leftLeg, original.rightLeg, humanoid.rightLeg, original.leftLeg);
@@ -202,6 +205,7 @@ public final class NeoForgeNativeEquipmentClientTest {
         if (custom != 30 || ordinary != 1) {
             throw new AssertionError("Ice and Fire coverage changed: custom=" + custom + ", ordinary=" + ordinary);
         }
+
         return "equipment.iceAndFire.customBoots=30\nequipment.iceAndFire.ordinaryBoots=1\n"
                 + "equipment.iceAndFire.orderedPairs=93\n";
     }
@@ -218,6 +222,7 @@ public final class NeoForgeNativeEquipmentClientTest {
                                                       original, state, stack, new PoseStack(), storage, LIGHT, OUTLINE)) {
             throw new AssertionError("Native fixture declined the split route");
         }
+
         List<Node> nodes = nodes(storage);
         if (nodes.isEmpty()) {
             throw new AssertionError("Native fixture submitted no equipment nodes");
@@ -228,6 +233,7 @@ public final class NeoForgeNativeEquipmentClientTest {
                 throw new AssertionError("Native equipment submission parameters changed");
             }
         }
+
         return nodes;
     }
 

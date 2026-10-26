@@ -27,7 +27,15 @@ import java.util.concurrent.Future;
 /** Actual server-spawned entity, vanilla particle packets and JDT client factory, never manual particle construction. */
 public final class NeoForgeJustDireLavaRepairClientTest {
     private static final BlockPos SOURCE = new BlockPos(5, 80, 5);
-    private static int ticks, phase, wait, id, nativeParticles, mixedParticles, nativeHealthyParticles, mixedHealthyParticles, predictionChecks;
+    private static int ticks;
+    private static int phase;
+    private static int wait;
+    private static int id;
+    private static int nativeParticles;
+    private static int mixedParticles;
+    private static int nativeHealthyParticles;
+    private static int mixedHealthyParticles;
+    private static int predictionChecks;
     private static boolean finished;
     private static double highest;
     private static Future<?> job;
@@ -45,6 +53,7 @@ public final class NeoForgeJustDireLavaRepairClientTest {
         if (finished) {
             return;
         }
+
         try {
             if (++ticks > 3_600) {
                 throw new IllegalStateException("Lava client timeout, phase=" + phase + " particles=" + JustDireLavaRepairTestSupport.clientParticles);
@@ -69,6 +78,7 @@ public final class NeoForgeJustDireLavaRepairClientTest {
                 if (!(client.level.getEntity(id) instanceof ItemEntity item)) {
                     return;
                 }
+
                 boolean mixed = phase == 3 || phase == 7;
                 boolean healthy = phase >= 5;
                 if (client.level.getBlockState(SOURCE).is(Blocks.LAVA)) {
@@ -86,6 +96,7 @@ public final class NeoForgeJustDireLavaRepairClientTest {
                 if (mixed && item.getItem().isDamaged()) {
                     return;
                 }
+
                 String observation = "phase=" + phase + " highest=" + highest + " particles="
                         + JustDireLavaRepairTestSupport.clientParticles + " age=" + item.getAge()
                         + " chunkLoaded=" + client.level.hasChunkAt(SOURCE)
@@ -167,6 +178,7 @@ public final class NeoForgeJustDireLavaRepairClientTest {
             if (!healthy) {
                 stack.setDamageValue(100);
             }
+
             ItemEntity item = new ItemEntity(level, 5.5, 80.2, 5.5, stack);
             item.setDeltaMovement(Vec3.ZERO);
             require(level.addFreshEntity(item), "Could not spawn item");
@@ -208,7 +220,9 @@ public final class NeoForgeJustDireLavaRepairClientTest {
                             samples.add(sample);
                         }
                     }
-                    int drops = 0, gravityTicks = 0;
+
+                    int drops = 0;
+                    int gravityTicks = 0;
                     double largestDrop = 0;
                     for (int i = 0; i < samples.size(); i++) {
                         if (samples.get(i).vy < -.015) {
@@ -241,7 +255,8 @@ public final class NeoForgeJustDireLavaRepairClientTest {
     }
 
     private static void predictionBoundaries(Minecraft client, ItemEntity tracked) {
-        ItemStack root = tracked.getItem().copy(), before = root.copy();
+        ItemStack root = tracked.getItem().copy();
+        ItemStack before = root.copy();
         ItemEntity shadow = new ItemEntity(client.level, 5.5, 81.5, 5.5, root);
         shadow.setDeltaMovement(0, tracked.getDeltaMovement().y, 0);
         double initial = shadow.getY();
@@ -250,6 +265,7 @@ public final class NeoForgeJustDireLavaRepairClientTest {
         for (int i = 0; i < 210; i++) {
             JustDireLavaRepairCompatibility.tick(root, shadow);
         }
+
         double timedOut = shadow.getY();
         JustDireLavaRepairCompatibility.tick(root, shadow);
         require(shadow.getY() == timedOut && client.level.getBlockState(SOURCE).is(Blocks.LAVA)

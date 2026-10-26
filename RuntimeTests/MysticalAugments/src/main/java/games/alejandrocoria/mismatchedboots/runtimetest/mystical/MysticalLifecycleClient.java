@@ -42,14 +42,29 @@ public final class MysticalLifecycleClient {
     private static final boolean REJOIN = MysticalLifecycle.phase().equals("rejoin");
     private static final String OUTPUT = "mystical-" + MysticalLifecycle.phase();
     private static final StringBuilder REPORT = new StringBuilder();
-    private static List<ItemStack> roots, visuals;
+    private static List<ItemStack> roots;
+    private static List<ItemStack> visuals;
     private static ServerPlayer beforeDeath;
     private static JsonArray beforeDeathRoots;
     private static Object clientBeforeDeath;
     private static Future<?> job;
-    private static int phase, nextPhase, ticks, age, healthScene, jumpScene, settled, picture;
-    private static double expectedHealth, expectedStep, nativeHealth, nativeStep, baseStep, peak, nativePeak;
-    private static boolean finished, capturePending;
+    private static int phase;
+    private static int nextPhase;
+    private static int ticks;
+    private static int age;
+    private static int healthScene;
+    private static int jumpScene;
+    private static int settled;
+    private static int picture;
+    private static double expectedHealth;
+    private static double expectedStep;
+    private static double nativeHealth;
+    private static double nativeStep;
+    private static double baseStep;
+    private static double peak;
+    private static double nativePeak;
+    private static boolean finished;
+    private static boolean capturePending;
     private static volatile boolean captureDone;
     private static volatile Throwable captureFailure;
     private static Scene scene;
@@ -65,6 +80,7 @@ public final class MysticalLifecycleClient {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 4000, "MA connected timeout phase=" + phase + " age=" + age);
             if (client.screen instanceof BackupConfirmScreen backup) {

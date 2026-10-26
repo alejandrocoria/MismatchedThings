@@ -40,6 +40,7 @@ final class NeoForgeJustDireJumpClientTest {
         if (finished) {
             return;
         }
+
         try {
             if (++ticks > 3600) {
                 throw new AssertionError("Jump client timed out; screen="
@@ -61,6 +62,7 @@ final class NeoForgeJustDireJumpClientTest {
                     || GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) != GLFW.GLFW_FALSE) {
                 throw new AssertionError("Jump client was not hidden and muted");
             }
+
             var player = client.player;
             player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             player.setDeltaMovement(Vec3.ZERO);
@@ -154,6 +156,7 @@ final class NeoForgeJustDireJumpClientTest {
             if (peak <= 0 || player.getDeltaMovement().y > 0) {
                 return;
             }
+
             int value = VALUES[flightCase];
             if (flightCase < 5) {
                 nativeHeights[value] = peak;
@@ -222,6 +225,7 @@ final class NeoForgeJustDireJumpClientTest {
             equipped = equipped.copy();
             NeoForgeJustDireJumpTest.charge(equipped, (flightCase - 14) % 3 == 1 ? 0 : 3_000);
         }
+
         var server = client.getSingleplayerServer();
         var id = client.player.getUUID();
         job = server.submit(() -> {

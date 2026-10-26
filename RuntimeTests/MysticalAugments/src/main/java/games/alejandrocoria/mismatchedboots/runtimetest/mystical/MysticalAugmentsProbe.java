@@ -154,6 +154,7 @@ public final class MysticalAugmentsProbe {
                 require(subject.getMaxHealth() == 20 && subject.getAttributeValue(Attributes.STEP_HEIGHT) == base,
                         "Native cache cleanup after unequip failed");
             }
+
             var high = item("awakened_supremium_boots", "HEALTH_BOOST_V");
             var low = item("inferium_boots", "HEALTH_BOOST_I");
             subject.setItemSlot(EquipmentSlot.FEET, mixed ? MixedBootsFactory.createPair(high, low).inverse() : high);
@@ -265,6 +266,7 @@ public final class MysticalAugmentsProbe {
                 }
             }
         }
+
         var good = item("awakened_supremium_boots", "JUMP_BOOST_III");
         @SuppressWarnings("unchecked") var component = (net.minecraft.core.component.DataComponentType<List<Object>>) BuiltInRegistries.DATA_COMPONENT_TYPE
                 .get(Identifier.parse("mysticalagriculture:equipped_augments")).orElseThrow().value();
@@ -282,6 +284,7 @@ public final class MysticalAugmentsProbe {
             require(MysticalAugmentsCompatibility.selectedIds(pair.primary()).isEmpty()
                             && MysticalAugmentsCompatibility.selectedIds(pair.inverse()).isEmpty(), "Malformed native slots granted an effect");
         }
+
         var weak = item("inferium_boots");
         weak.set(component, List.of(constructor.newInstance(jump, 0)));
         require(MysticalAugmentsCompatibility.selectedIds(MixedBootsFactory.createPair(weak, new ItemStack(Items.DIAMOND_BOOTS)).primary()).isEmpty(),
@@ -340,6 +343,7 @@ public final class MysticalAugmentsProbe {
         } else {
             platform.logout(subject);
         }
+
         var cacheField = Class.forName("com.blakebr0.mysticalagriculture.handler.AugmentHandler").getDeclaredField("ABILITY_CACHE");
         cacheField.setAccessible(true);
         require(((java.util.Set<?>) MysticalNativeTestApi.invoke(cacheField.get(null), "getCachedAbilities",
@@ -432,6 +436,7 @@ public final class MysticalAugmentsProbe {
                     refunds += item.getCount();
                 }
             }
+
             boolean refused = System.getProperty("mismatchedboots.test.mysticalAugments").matches("refund(missing|extra)");
             require(refunds == (nativeSubject || stack == roots.primary() && !refused ? 1 : 0), "Unexpected physical refund: " + refunds);
         }
@@ -464,10 +469,12 @@ public final class MysticalAugmentsProbe {
             observations.append("Missing/ambiguous final consumption proof: only MA refunds refused, native controls/Jump intact.\n");
             return;
         }
+
         var nativePlayer = player(server);
         for (int slot = 0; slot < 36; slot++) {
             nativePlayer.getInventory().setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
         }
+
         var nativeBoots = item("inferium_boots", "HEALTH_BOOST_I");
         var expectedNative = physicalAugments(nativeBoots);
         nativePlayer.setItemSlot(EquipmentSlot.FEET, nativeBoots);
@@ -498,7 +505,8 @@ public final class MysticalAugmentsProbe {
     }
 
     private static void refundPair(MinecraftServer server, ItemStack left, ItemStack right, String label, boolean full) throws Exception {
-        ItemStack leftBefore = left.copy(), rightBefore = right.copy();
+        ItemStack leftBefore = left.copy();
+        ItemStack rightBefore = right.copy();
         var expectedOwners = List.of(physicalAugments(left), physicalAugments(right));
         var expectedTotal = new LinkedHashMap<Identifier, Integer>(expectedOwners.getFirst());
         expectedOwners.getLast().forEach((id, count) -> expectedTotal.merge(id, count, Integer::sum));
@@ -624,6 +632,7 @@ public final class MysticalAugmentsProbe {
                     player.getInventory().setItem(fault.equals("inventory") ? 14 : Inventory.SLOT_OFFHAND, root);
                 }
             }
+
             boolean threw = false;
             try {
                 if (fault.equals("command")) {
@@ -685,6 +694,7 @@ public final class MysticalAugmentsProbe {
                                                                                 net.minecraft.network.chat.Component.literal("unrelated name"));
                     case "throwShrink" -> MysticalRefundControl.after = () -> {throw new IllegalStateException("MA controlled shrink failure");};
                 }
+
                 try {
                     breakRoot(root, player);
                 } catch (IllegalStateException failure) {
@@ -692,6 +702,7 @@ public final class MysticalAugmentsProbe {
                         throw failure;
                     }
                 }
+
                 boolean declined = List.of("replace", "move", "entitlement", "throwShrink").contains(fault);
                 require(delivered(player).equals(declined ? Map.of() : expected),
                         "Foreign shrink callback failed " + variant + "/" + fault + ": " + delivered(player));

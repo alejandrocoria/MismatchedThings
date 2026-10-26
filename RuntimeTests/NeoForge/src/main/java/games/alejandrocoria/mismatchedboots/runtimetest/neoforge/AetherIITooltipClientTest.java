@@ -61,8 +61,15 @@ final class AetherIITooltipClientTest {
     private static List<ItemStack> serverSamples;
     private static Future<String> job;
     private static JsonObject expected;
-    private static int ticks, scene = AetherTooltipFaultTest.active() ? 3 : 0, phase, settled, screenshots;
-    private static boolean finished, backupConfirmed, screenshotPending, screenshotDone;
+    private static int ticks;
+    private static int scene = AetherTooltipFaultTest.active() ? 3 : 0;
+    private static int phase;
+    private static int settled;
+    private static int screenshots;
+    private static boolean finished;
+    private static boolean backupConfirmed;
+    private static boolean screenshotPending;
+    private static boolean screenshotDone;
     private static Throwable screenshotFailure;
     private static CompletableFuture<Void> reload;
     private static Scene screen;
@@ -88,6 +95,7 @@ final class AetherIITooltipClientTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 3000, "Aether tooltip timeout scene=" + scene + " phase=" + phase + "; see waiting marker");
             if (client.player == null && client.screen instanceof BackupConfirmScreen backup) {
@@ -276,6 +284,7 @@ final class AetherIITooltipClientTest {
             serverSamples.add(reinforced); // 30: native paid reinforcement, not synthetic presentation metadata.
             serverSamples.addAll(paidPair(owner, reinforced, new ItemStack(Items.DIAMOND_BOOTS))); // 31,32
         }
+
         var container = new SimpleContainer(54);
         for (int i = 0; i < serverSamples.size(); i++) {
             container.setItem(i, serverSamples.get(i));
@@ -317,6 +326,7 @@ final class AetherIITooltipClientTest {
                 owner.setItemSlot(EquipmentSlot.HEAD, item("burrukai_plate_helmet"));
             } // Two pieces, set inactive.
         }
+
         var result = new JsonObject();
         var roots = new JsonArray();
         var ops = owner.registryAccess().createSerializationContext(JsonOps.INSTANCE);
@@ -344,6 +354,7 @@ final class AetherIITooltipClientTest {
                 return false;
             }
         }
+
         return ABSENT || ItemStack.matches(ItemStack.CODEC.parse(ops, expected.get("feet")).getOrThrow(),
                                            client.player.getItemBySlot(EquipmentSlot.FEET));
     }
@@ -479,6 +490,7 @@ final class AetherIITooltipClientTest {
             dualRoot = worn.copy();
             dualActive = capture(client, worn, TooltipFlag.ADVANCED, false);
         }
+
         int matching = scene < 21 ? 7 + scene / 3 * 2 : 9;
         for (int index : new int[]{matching, matching + 1, 7 + ((scene + 1) % 7) * 2}) {
             var idle = capture(client, sample(client, index), TooltipFlag.NORMAL, false);
@@ -515,6 +527,7 @@ final class AetherIITooltipClientTest {
             } finally {
                 AetherTooltipTestControl.nested = false;
             }
+
             String before = AetherTooltipTestControl.encoded(client, root);
             AetherTooltipTestControl.throwing = true;
             try {
@@ -525,6 +538,7 @@ final class AetherIITooltipClientTest {
             } finally {
                 AetherTooltipTestControl.throwing = false;
             }
+
             var after = capture(client, AetherTooltipTestControl.failedSource, flag, false);
             require(after.nativeAttributes() == expectedNative.size(), "Source identity leaked after an ordinary provider exception");
             requireRows(after.lines(), expected, true);
@@ -568,6 +582,7 @@ final class AetherIITooltipClientTest {
             if (!AetherTooltipTestControl.FAMILIES.stream().anyMatch(family -> source.is(item(family + "_boots").getItem()))) {
                 continue;
             }
+
             var section = lines.subList((side == 0 ? left : right) + 1, side == 0 ? right : rootAttributes);
             String prefix = source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.";
             var set = (net.minecraft.tags.TagKey<net.minecraft.world.item.Item>) source.get(component("armor_set"));
@@ -621,6 +636,7 @@ final class AetherIITooltipClientTest {
                 }
             }
         }
+
         var root = sample(client, 24);
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         if (attributeReplacement()) {
@@ -655,6 +671,7 @@ final class AetherIITooltipClientTest {
                                .noneMatch(line -> translated(line, "aether_ii.tooltip.item.reinforcement")) || !tierReplacement(),
                     "Hidden source tiers still published");
         }
+
         var hidden = root.copy();
         hidden.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new java.util.LinkedHashSet<>()));
         var hiddenRootLines = capture(client, hidden, TooltipFlag.NORMAL, false).lines();
@@ -674,6 +691,7 @@ final class AetherIITooltipClientTest {
             require(before.equals(nativeSetRows(client, flag)) && feet == client.player.getItemBySlot(EquipmentSlot.FEET),
                     "Hover changed native player attributes/equipment");
         }
+
         var json = new JsonObject();
         json.addProperty("scene", scene);
         json.addProperty("advanced", flag.isAdvanced());

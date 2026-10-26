@@ -38,7 +38,10 @@ final class SilentGearDefenseTest {
     static void run(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report, String variant) throws Throwable {
         SilentGearTraitSpike.initialize(api);
         clear(player);
-        boolean safe = !variant.equals("defense-fall"), negate = !variant.equals("defense-negate"), incoming = !variant.equals("defense-incoming"), retaliation = !variant.equals(
+        boolean safe = !variant.equals("defense-fall");
+        boolean negate = !variant.equals("defense-negate");
+        boolean incoming = !variant.equals("defense-incoming");
+        boolean retaliation = !variant.equals(
                 "defense-retaliation");
         var proof = new StringBuilder();
         for (String[] pair : List.of(new String[]{"event.GearEvents", "mismatchedboots$sgSafeFallReady"},
@@ -139,6 +142,7 @@ final class SilentGearDefenseTest {
             observe(() -> NeoForge.EVENT_BUS.post(breaking));
             require(breaking.isCanceled() == safe && nearBreak.isEmpty() == safe, "Native peer changed ordinary mixed break/refusal");
         }
+
         var sourceBounce = SilentGearBounceTest.lined(heat, api, player);
         require(api.traitLevel(sourceBounce, "bounce") == 1, "Real native slime lining control missing");
         for (var root : NeoForgeSilentGearTest.workbench(player, sourceBounce, new ItemStack(Items.DIAMOND_BOOTS))) {
@@ -171,6 +175,7 @@ final class SilentGearDefenseTest {
             observe(() -> NeoForge.EVENT_BUS.post(denied));
             require(!denied.isCanceled() && sounds == 0 && ItemStack.matches(root, snapshot), "Malformed mixed target reached native wear");
         }
+
         var nativeBoot = SilentGearRecognitionTest.trait(api.boot("crimson_iron"), api, "bounce", 1);
         clear(player);
         player.setItemSlot(EquipmentSlot.FEET, nativeBoot);
@@ -244,6 +249,7 @@ final class SilentGearDefenseTest {
             }
             require(refused, "Unsupported native scale admitted");
         }
+
         var definition = traitOf(instance);
         var effects = definition.getClass().getDeclaredField("effects");
         effects.setAccessible(true);

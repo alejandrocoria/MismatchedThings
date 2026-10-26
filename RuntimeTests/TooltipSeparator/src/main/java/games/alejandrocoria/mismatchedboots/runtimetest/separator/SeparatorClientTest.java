@@ -36,10 +36,15 @@ public final class SeparatorClientTest {
     private static final StringBuilder REPORT = new StringBuilder();
     private static Scene scene;
     private static List<ItemStack> roots;
-    private static ItemStack bundle, bundleBefore;
-    private static int ticks, phase;
-    private static int compactWidth, wideWidth;
-    private static boolean finished, screenshotPending, screenshotDone;
+    private static ItemStack bundle;
+    private static ItemStack bundleBefore;
+    private static int ticks;
+    private static int phase;
+    private static int compactWidth;
+    private static int wideWidth;
+    private static boolean finished;
+    private static boolean screenshotPending;
+    private static boolean screenshotDone;
     private static Throwable screenshotFailure;
 
     private SeparatorClientTest() {
@@ -49,6 +54,7 @@ public final class SeparatorClientTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 2400, "Separator client timed out at phase " + phase);
             if (client.screen instanceof BackupConfirmScreen backup) {
@@ -99,6 +105,7 @@ public final class SeparatorClientTest {
             if (scene.frames < 8) {
                 return;
             }
+
             boolean plainFabric = System.getProperty("mismatchedboots.test.separatorLoader", "").equals("Fabric")
                     && !Boolean.getBoolean("mismatchedboots.test.separatorDecorated");
             if (phase == 5 && Boolean.getBoolean("mismatchedboots.test.separatorCapture") && !screenshotDone) {
@@ -202,7 +209,8 @@ public final class SeparatorClientTest {
             }
         }
         if (phase >= 4) {
-            int first = marked.indexOf(TooltipSeparator.INSTANCE), second = marked.lastIndexOf(TooltipSeparator.INSTANCE);
+            int first = marked.indexOf(TooltipSeparator.INSTANCE);
+            int second = marked.lastIndexOf(TooltipSeparator.INSTANCE);
             require(index(marked, "Left source detail 3") < first && first < index(marked, "Right source detail 1")
                             && index(marked, "Right source detail 2") < second && second < index(marked, "Root details survive after sources"),
                     "Multiline source/root boundaries changed");
@@ -246,7 +254,8 @@ public final class SeparatorClientTest {
     }
 
     private static final class Scene extends Screen {
-        private final ItemStack root, before;
+        private final ItemStack root;
+        private final ItemStack before;
         private final List<String> text;
         private int frames;
 

@@ -35,6 +35,7 @@ public final class IceAndFireFixtureInjectionPoint extends InjectionPoint {
             } else {
                 continue;
             }
+
             AbstractInsnNode read = instruction;
             for (int count = 0; count < offset && read != null; count++) {
                 do {
@@ -46,6 +47,7 @@ public final class IceAndFireFixtureInjectionPoint extends InjectionPoint {
                 nodes.add(instruction);
             }
         }
+
         return !nodes.isEmpty();
     }
 }

@@ -43,6 +43,7 @@ public final class SilentGearDefensePeer implements Opcodes {
             if (target == null) {
                 throw new IllegalStateException("Owned Bounce recognition route not found");
             }
+
             var alias = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$unprovedBounceRoute", target.desc, null, null);
             alias.instructions.add(new VarInsnNode(ILOAD, 0));
             alias.instructions.add(new VarInsnNode(ALOAD, 1));
@@ -91,11 +92,13 @@ public final class SilentGearDefensePeer implements Opcodes {
                     }
                 }
             }
+
             var unrelated = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$unrelated", "()V", null, null);
             unrelated.instructions.add(new InsnNode(RETURN));
             owner.methods.add(unrelated);
             return;
         }
+
         String target = variant.equals("defense-fall")
                         ? "onLivingFall"
                         : variant.equals("defense-retaliation") ? "onPlayerHurt" : "onEntityIncomingDamage";
@@ -123,6 +126,7 @@ public final class SilentGearDefensePeer implements Opcodes {
         if (selected == null) {
             return;
         }
+
         var alias = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$unprovedAlias", selected.desc, null, null);
         int slot = 0;
         for (var type : org.objectweb.asm.Type.getArgumentTypes(selected.desc)) {

@@ -77,6 +77,7 @@ final class TideEntryShape implements Opcodes {
                     if (entity) {
                         c.var(ALOAD, 3);
                     }
+
                     MethodInsnNode call = c.takeCall();
                     require((call.getOpcode() == INVOKEVIRTUAL || call.getOpcode() == INVOKESPECIAL) && call.owner.equals(ARMOR) && !call.itf
                                     && call.desc.equals(entity ? "(ZL" + ENTITY + ";)Z" : "(Z)Z"), "predicate result callback");
@@ -93,6 +94,7 @@ final class TideEntryShape implements Opcodes {
                 if (slots[index].equals(ownSlot)) {
                     installedOwnHook = ownHooks == 1;
                 }
+
                 int zero = c.jump(IFEQ);
                 c.constant(1);
                 int store = c.jump(GOTO);
@@ -157,6 +159,7 @@ final class TideEntryShape implements Opcodes {
         if (method == null || method.access != ACC_PUBLIC) {
             return false;
         }
+
         List<AbstractInsnNode> code = code(method);
         if (noHandlers(method) && code.size() == 2 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN) {
             return true;

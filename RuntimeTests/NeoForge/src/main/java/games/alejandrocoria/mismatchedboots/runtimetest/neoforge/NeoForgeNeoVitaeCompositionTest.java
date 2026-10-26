@@ -49,6 +49,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 NetworkAcceptanceFiles.write("neo-vitae-composition-restart-success.txt", "neoforge\n");
                 return;
             }
+
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeAbsent");
             require(ModList.get().isLoaded("neovitae") != absent, "Wrong optional-mod environment");
             if (absent) {
@@ -74,8 +75,10 @@ public final class NeoForgeNeoVitaeCompositionTest {
     }
 
     private static void verifyAbsent(ServerLevel level) {
-        ItemStack first = new ItemStack(Items.IRON_BOOTS), second = new ItemStack(Items.DIAMOND_BOOTS);
-        ItemStack before = first.copy(), secondBefore = second.copy();
+        ItemStack first = new ItemStack(Items.IRON_BOOTS);
+        ItemStack second = new ItemStack(Items.DIAMOND_BOOTS);
+        ItemStack before = first.copy();
+        ItemStack secondBefore = second.copy();
         var pair = MixedBootsFactory.createPair(first, second);
         int expectedDurability = (first.getMaxDamage() + second.getMaxDamage()) / 2;
         require(pair.primary().getMaxDamage() == expectedDurability
@@ -89,23 +92,27 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 return id != null && id.getNamespace().equals("neovitae");
             }), "Absent integration manufactured components");
         }
+
         ItemStack tier = smithing(level, pair.inverse(), Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Items.NETHERITE_INGOT);
         require(ModContent.getMixedBootsData(tier).orElseThrow().left().source().is(Items.NETHERITE_BOOTS),
                 "Absent tier recomposition failed");
     }
 
     private static void verifyNative(ServerLevel level) {
-        DataComponentType<Double> capacity = component("spiritus_max"), amount = component("spiritus_amount");
+        DataComponentType<Double> capacity = component("spiritus_max");
+        DataComponentType<Double> amount = component("spiritus_amount");
         DataComponentType<Object> type = component("spiritus_type");
         DataComponentType<Boolean> blood = component("blood_mending");
         Object raw = type.codec().parse(JsonOps.INSTANCE, new JsonPrimitive("raw")).getOrThrow();
         Object ruina = type.codec().parse(JsonOps.INSTANCE, new JsonPrimitive("ruina")).getOrThrow();
-        ItemStack first = new ItemStack(Items.IRON_BOOTS), plain = new ItemStack(Items.DIAMOND_BOOTS);
+        ItemStack first = new ItemStack(Items.IRON_BOOTS);
+        ItemStack plain = new ItemStack(Items.DIAMOND_BOOTS);
         first.set(capacity, 100D);
         first.set(amount, 60D);
         first.set(type, ruina);
         first.set(blood, false);
-        ItemStack before = first.copy(), plainBefore = plain.copy();
+        ItemStack before = first.copy();
+        ItemStack plainBefore = plain.copy();
         for (int preview = 0; preview < 2; preview++) {
             for (boolean swap : List.of(false, true)) {
                 var pair = MixedBootsFactory.createPair(swap ? plain : first, swap ? first : plain);
@@ -155,7 +162,8 @@ public final class NeoForgeNeoVitaeCompositionTest {
             require(!root.has(capacity) && !root.has(amount) && !root.has(type), "Orphan charge installed container");
         }
         first.set(amount, 101D);
-        ItemStack invalidBefore = first.copy(), otherBefore = plain.copy();
+        ItemStack invalidBefore = first.copy();
+        ItemStack otherBefore = plain.copy();
         boolean rejected = false;
         try {
             MixedBootsFactory.createPair(plain, first);
@@ -170,7 +178,8 @@ public final class NeoForgeNeoVitaeCompositionTest {
     private static void verifyPreservation(ServerLevel level, DataComponentType<Double> capacity,
                                            DataComponentType<Double> amount, DataComponentType<Object> type,
                                            DataComponentType<Boolean> blood, Object raw, Object ruina) {
-        ItemStack first = new ItemStack(Items.DIAMOND_BOOTS), second = new ItemStack(Items.IRON_BOOTS);
+        ItemStack first = new ItemStack(Items.DIAMOND_BOOTS);
+        ItemStack second = new ItemStack(Items.IRON_BOOTS);
         first.set(capacity, 100D);
         first.set(amount, 60D);
         first.set(type, raw);
@@ -212,13 +221,15 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 example.change.accept(root);
                 ItemStack before = root.copy();
                 var data = ModContent.getMixedBootsData(root).orElseThrow();
-                ItemStack changed = data.left().source(), unchanged = data.right().source();
+                ItemStack changed = data.left().source();
+                ItemStack unchanged = data.right().source();
                 // Deliberate synthetic source replacement, not a native recipe: expose three-way equality mistakes.
                 changed.set(capacity, 200D);
                 changed.set(amount, 90D);
                 changed.set(type, ruina);
                 changed.set(blood, true);
-                ItemStack changedBefore = changed.copy(), unchangedBefore = unchanged.copy();
+                ItemStack changedBefore = changed.copy();
+                ItemStack unchangedBefore = unchanged.copy();
                 ItemStack output = MixedBootsRecomposer.recompose(root, changed, unchanged);
                 sameLiveState(root, output, capacity, amount, type, blood, example.name);
                 sameLiveState(root, MixedBootsRecomposer.recompose(output, changed, unchanged),

@@ -31,11 +31,15 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.SilentGe
 
 /** Real integrated connection: only immutable JSON expectations cross threads; items/attributes arrive by vanilla packets. */
 final class SilentGearClientTest {
-    private static int ticks, phase;
-    private static boolean finished, magnetComplete, remainingComplete;
+    private static int ticks;
+    private static int phase;
+    private static boolean finished;
+    private static boolean magnetComplete;
+    private static boolean remainingComplete;
     private static Future<String> job;
     private static String expected;
-    private static int orientation, phaseStarted;
+    private static int orientation;
+    private static int phaseStarted;
     private static double nativeJump;
     private static int wearerStartTick; // Read/written only by integrated-server jobs, never shared ItemStacks.
     private static final boolean REJOIN = Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRejoin");
@@ -48,6 +52,7 @@ final class SilentGearClientTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 3_600, "Silent Gear client timeout at phase " + phase);
             if (client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
@@ -60,6 +65,7 @@ final class SilentGearClientTest {
                 expected = job.get();
                 job = null;
             }
+
             var server = client.getSingleplayerServer();
             require(server != null, "Integrated server missing");
             var id = client.player.getUUID();
@@ -280,7 +286,8 @@ final class SilentGearClientTest {
             phase = 8;
         } else if (phase == 8) {
             ItemStack root = client.player.getItemBySlot(EquipmentSlot.FEET);
-            double base = client.player.getAttributeBaseValue(Attributes.GRAVITY), expectedGravity = base;
+            double base = client.player.getAttributeBaseValue(Attributes.GRAVITY);
+            double expectedGravity = base;
             for (var entry : root.getAttributeModifiers().modifiers()) {
                 if (!entry.attribute().equals(Attributes.GRAVITY)) {
                     continue;
@@ -493,7 +500,8 @@ final class SilentGearClientTest {
 
     private static void queries(Minecraft client) {
         for (int index = 0; index < 4; index++) {
-            ItemStack stack = stack(client.player, index), before = stack.copy();
+            ItemStack stack = stack(client.player, index);
+            ItemStack before = stack.copy();
             for (int query = 0; query < 3; query++) {
                 stack.getAttributeModifiers();
                 ModContent.getMixedBootsData(stack);

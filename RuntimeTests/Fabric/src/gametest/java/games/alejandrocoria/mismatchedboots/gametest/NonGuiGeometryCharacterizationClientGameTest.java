@@ -164,6 +164,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
             throw new AssertionError(scenario + " resolved "
                                              + stateAccessor.mismatchedboots$getActiveLayerCount() + " layers instead of one");
         }
+
         ItemStackRenderState.LayerRenderState layer = stateAccessor.mismatchedboots$getLayers()[0];
         LayerRenderStateAccessor common = (LayerRenderStateAccessor) (Object) layer;
         LayerRenderStateTestAccessor test = (LayerRenderStateTestAccessor) (Object) layer;
@@ -176,10 +177,12 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         if (test.mismatchedboots$getParticleMaterial() == null) {
             throw new AssertionError(scenario + " lost its particle material");
         }
+
         MutableMesh extensionMesh = ((LayerRenderStateExtension) (Object) layer).fabric_getMutableMesh();
         if (extensionMesh != null && extensionMesh.size() != 0) {
             throw new AssertionError(scenario + " unexpectedly contains Fabric extension geometry");
         }
+
         return new LayerView(common, test);
     }
 
@@ -300,6 +303,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         if (material.tintIndex() < -1 || material.lightEmission() < 0) {
             throw new AssertionError(scenario + " has invalid material scalar metadata: " + material);
         }
+
         float minU = Math.min(material.sprite().getU0(), material.sprite().getU1()) - GEOMETRY_EPSILON;
         float maxU = Math.max(material.sprite().getU0(), material.sprite().getU1()) + GEOMETRY_EPSILON;
         float minV = Math.min(material.sprite().getV0(), material.sprite().getV1()) - GEOMETRY_EPSILON;
@@ -388,6 +392,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
             expected.scale(itemTransform.scale().x(), itemTransform.scale().y(), itemTransform.scale().z());
             expected.translate(-0.5F, -0.5F, -0.5F);
         }
+
         return expected.mul(localTransform);
     }
 
@@ -483,12 +488,15 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
                     && Math.floorMod(firstCrossingEdge - secondCrossingEdge, 4) == 2) {
                 return Classification.SAFE_RECTANGULAR_CROSSING;
             }
+
             return Classification.INCOMPATIBLE_CROSSING;
         }
+
         float centerX = 0.0F;
         for (Vector3f vertex : vertices) {
             centerX += vertex.x;
         }
+
         return centerX / 4.0F < 0.0F ? Classification.LEFT : Classification.RIGHT;
     }
 
@@ -526,6 +534,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
         if (!Float.isFinite(normalLength) || normalLength <= GEOMETRY_EPSILON) {
             return Float.POSITIVE_INFINITY;
         }
+
         float planarity = Math.abs(new Vector3f(vertices[3]).sub(vertices[0]).dot(normal)) / normalLength;
         return Math.max(Math.max(parallel02, parallel13), Math.max(orthogonal, planarity));
     }
@@ -556,6 +565,7 @@ public final class NonGuiGeometryCharacterizationClientGameTest implements Fabri
             addBits(coordinateBits, raw[index]);
             addBits(coordinateBits, canonical[index]);
         }
+
         BakedQuad.MaterialInfo material = quad.materialInfo();
         MaterialFingerprint materialFingerprint = new MaterialFingerprint(
                 material.sprite().contents().name(),

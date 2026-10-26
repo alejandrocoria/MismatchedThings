@@ -68,6 +68,7 @@ public final class SilentGearBounceJointTest {
                           .append(sgFirst ? "SG before JDT" : "JDT before SG")
                           .append('\n');
                 }
+
                 boolean negate = !sgFirst && (mode.equals("funded") || mode.equals("partial"));
                 int remaining = negate ? Math.max(0, charge - 600) : charge;
                 var expected = before.copy();
@@ -111,6 +112,7 @@ public final class SilentGearBounceJointTest {
                 owner.setShiftKeyDown(false);
                 equip(owner, root);
             }
+
             var before = root.copy();
             var canceled = new LivingFallEvent(owner, 12, 1);
             canceled.setCanceled(true);

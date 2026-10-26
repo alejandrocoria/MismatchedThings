@@ -99,18 +99,16 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
             player.setItemSlot(EquipmentSlot.FEET, mixed);
         });
         context.runOnClient(client -> EquippedRenderingProbe.reset());
-        context.waitFor(client -> calls().stream().anyMatch(call ->
-                                                                    call.side() == MixedBootsEquipmentRenderer.Side.LEFT
-                                                                            && call.item() == Items.LEATHER_BOOTS
-                                                                            && call.asset().equals(EquipmentAssets.LEATHER)
-                                                                            && call.foil()
-                                                                            && LEFT_DYE.equals(call.dye())
-                                                                            && expectedTrim[0].equals(call.trim()))
-                && calls().stream().anyMatch(call ->
-                                                     call.side() == MixedBootsEquipmentRenderer.Side.RIGHT
-                                                             && call.item() == Items.DIAMOND_BOOTS
-                                                             && call.asset().equals(EquipmentAssets.DIAMOND)
-                                                             && call.foil()));
+        context.waitFor(client -> calls().stream().anyMatch(call -> call.side() == MixedBootsEquipmentRenderer.Side.LEFT
+                && call.item() == Items.LEATHER_BOOTS
+                && call.asset().equals(EquipmentAssets.LEATHER)
+                && call.foil()
+                && LEFT_DYE.equals(call.dye())
+                && expectedTrim[0].equals(call.trim()))
+                && calls().stream().anyMatch(call -> call.side() == MixedBootsEquipmentRenderer.Side.RIGHT
+                        && call.item() == Items.DIAMOND_BOOTS
+                        && call.asset().equals(EquipmentAssets.DIAMOND)
+                        && call.foil()));
         context.runOnClient(client -> {
             ItemStack equipped = client.player.getItemBySlot(EquipmentSlot.FEET);
             ItemStack storedLeft = ModContent.getMixedBootsData(equipped).orElseThrow().left().source();
@@ -133,15 +131,13 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
         context.runOnClient(client -> EquippedRenderingProbe.reset());
         equip(singleplayer, MixedBootsFactory.createPair(
                 new ItemStack(Items.IRON_BOOTS), unsupported).primary());
-        context.waitFor(client -> calls().stream().anyMatch(call ->
-                                                                    call.side() == null
-                                                                            && call.mixedStack()
-                                                                            && call.asset().equals(EquipmentAssets.IRON)));
+        context.waitFor(client -> calls().stream().anyMatch(call -> call.side() == null
+                && call.mixedStack()
+                && call.asset().equals(EquipmentAssets.IRON)));
         context.runOnClient(client -> EquippedRenderingProbe.reset());
-        context.waitFor(client -> calls().stream().anyMatch(call ->
-                                                                    call.side() == null
-                                                                            && call.mixedStack()
-                                                                            && call.asset().equals(EquipmentAssets.IRON)));
+        context.waitFor(client -> calls().stream().anyMatch(call -> call.side() == null
+                && call.mixedStack()
+                && call.asset().equals(EquipmentAssets.IRON)));
         context.runOnClient(client -> {
             if (calls().stream().anyMatch(call -> call.side() != null)) {
                 throw new AssertionError("Unsupported equipment rendered a partial split before fallback");
@@ -252,8 +248,7 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
     }
 
     private static void equip(TestSingleplayerContext singleplayer, ItemStack stack) {
-        singleplayer.getServer().runOnServer(server ->
-                                                     server.getPlayerList().getPlayers().getFirst().setItemSlot(EquipmentSlot.FEET, stack));
+        singleplayer.getServer().runOnServer(server -> server.getPlayerList().getPlayers().getFirst().setItemSlot(EquipmentSlot.FEET, stack));
     }
 
     private static ItemStack mixed(Item left, Item right) {
@@ -266,14 +261,12 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
             Item rightItem,
             ResourceKey<EquipmentAsset> rightAsset) {
         List<EquippedRenderingProbe.Call> calls = calls();
-        return calls.stream().anyMatch(call ->
-                                               call.side() == MixedBootsEquipmentRenderer.Side.LEFT
-                                                       && call.item() == leftItem
-                                                       && call.asset().equals(leftAsset))
-                && calls.stream().anyMatch(call ->
-                                                   call.side() == MixedBootsEquipmentRenderer.Side.RIGHT
-                                                           && call.item() == rightItem
-                                                           && call.asset().equals(rightAsset));
+        return calls.stream().anyMatch(call -> call.side() == MixedBootsEquipmentRenderer.Side.LEFT
+                && call.item() == leftItem
+                && call.asset().equals(leftAsset))
+                && calls.stream().anyMatch(call -> call.side() == MixedBootsEquipmentRenderer.Side.RIGHT
+                        && call.item() == rightItem
+                        && call.asset().equals(rightAsset));
     }
 
     private static void assertOnlySplitSourceViews(boolean expectOutline) {
@@ -285,6 +278,7 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
                 || calls.stream().noneMatch(call -> call.side() == MixedBootsEquipmentRenderer.Side.RIGHT)) {
             throw new AssertionError("Standard mixed equipment did not submit both split sides");
         }
+
         List<Integer> outlineColors = calls.stream()
                                            .filter(call -> call.side() != null)
                                            .map(EquippedRenderingProbe.Call::outlineColor)

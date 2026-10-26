@@ -94,6 +94,7 @@ public final class SilentGearEffectsTest {
                 if (mode.equals("no-state")) {
                     root.remove(SilentGearCompatibility.state());
                 }
+
                 ItemStack before = root.copy();
                 random.setSeed(seed(chance, true));
                 observe(() -> root.inventoryTick(player.level(), player,
@@ -120,6 +121,7 @@ public final class SilentGearEffectsTest {
             if (sample[1].equals("bending")) {
                 source = bending(source, api);
             }
+
             Object instance = view(source).get("silentgear:" + sample[1]);
             Object effect = effect(instance, "DurabilityTraitEffect");
             int scale = sample[1].equals("brittle") || sample[1].equals("bending") ? 1 : -1;
@@ -146,7 +148,8 @@ public final class SilentGearEffectsTest {
             report.append("B WEAR ").append(sample[1]).append(": native hurtAndBreak and both mixed orientations; success/failure\n");
         }
         combined(player, api, report);
-        ItemStack renewSource = api.boot("amethyst"), stellarSource = api.boot("refined_iron");
+        ItemStack renewSource = api.boot("amethyst");
+        ItemStack stellarSource = api.boot("refined_iron");
         long bothRepair = 0;
         for (; bothRepair < 100_000; bothRepair++) {
             var oracle = new Random(bothRepair);
@@ -199,7 +202,8 @@ public final class SilentGearEffectsTest {
 
     private static void ordering(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, StringBuilder report) throws Exception {
         ItemStack source = api.boot("iron");
-        Object instance = view(source).get("silentgear:malleable"), effect = effect(instance, "DurabilityTraitEffect");
+        Object instance = view(source).get("silentgear:malleable");
+        Object effect = effect(instance, "DurabilityTraitEffect");
         long seed = seed(chance(effect) * level(instance), true);
         for (ItemStack root : pair(player, source, new ItemStack(Items.DIAMOND_BOOTS))) {
             root.setDamageValue(10);
@@ -234,6 +238,7 @@ public final class SilentGearEffectsTest {
             observe(() -> root.hurtAndBreak(4, player, EquipmentSlot.FEET));
             require(root.isEmpty(), "Mixed inherited native non-destructive broken state");
         }
+
         ItemStack nativeBroken = source.copy();
         nativeBroken.setDamageValue(nativeBroken.getMaxDamage() - 1);
         random.setSeed(seed);
@@ -262,8 +267,10 @@ public final class SilentGearEffectsTest {
     }
 
     private static void refusal(ServerPlayer player, NeoForgeSilentGearTest.NativeApi api, String variant, StringBuilder report) throws Exception {
-        ItemStack repairSource = api.boot("amethyst"), wearSource = api.boot("iron");
-        Object renew = view(repairSource).get("silentgear:renew"), malleable = view(wearSource).get("silentgear:malleable");
+        ItemStack repairSource = api.boot("amethyst");
+        ItemStack wearSource = api.boot("iron");
+        Object renew = view(repairSource).get("silentgear:renew");
+        Object malleable = view(wearSource).get("silentgear:malleable");
         for (int repeat = 0; repeat < 2; repeat++) {
             ItemStack root = pair(player, repairSource, wearSource).getFirst();
             root.setDamageValue(12);

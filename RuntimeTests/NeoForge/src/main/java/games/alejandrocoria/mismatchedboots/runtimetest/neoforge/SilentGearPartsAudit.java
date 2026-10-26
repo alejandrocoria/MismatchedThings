@@ -43,6 +43,7 @@ final class SilentGearPartsAudit {
             var menu = crafting(player, mixed.copy(), lining.copy());
             require(menu.getSlot(InventoryMenu.RESULT_SLOT).getItem().isEmpty(), "Mixed lining got a real crafting output");
         }
+
         var paid = crafting(player, iron.copy(), lining.copy());
         ItemStack taken = paid.getSlot(InventoryMenu.RESULT_SLOT).safeTake(1, 1, player);
         require(ItemStack.matches(taken, lined) && paid.getInputGridSlots().stream().allMatch(s -> s.getItem().isEmpty()),

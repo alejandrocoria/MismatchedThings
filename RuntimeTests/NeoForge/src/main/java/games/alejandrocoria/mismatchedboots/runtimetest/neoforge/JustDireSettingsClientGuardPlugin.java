@@ -26,6 +26,7 @@ public final class JustDireSettingsClientGuardPlugin implements IMixinConfigPlug
         if (!mixin.endsWith("MissingMixin")) {
             return;
         }
+
         var method = node.methods.stream()
                                  .filter(m -> m.name.equals("setSetting") && m.desc.equals("(Ljava/lang/String;I)V"))
                                  .findFirst()

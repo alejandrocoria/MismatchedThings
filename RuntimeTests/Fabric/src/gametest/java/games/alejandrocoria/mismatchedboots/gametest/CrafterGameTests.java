@@ -141,6 +141,7 @@ public final class CrafterGameTests {
         for (int slot = 0; slot < barrel.getContainerSize(); slot++) {
             barrel.setItem(slot, new ItemStack(Items.STONE, 64));
         }
+
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         var sources = GameTestStacks.data(mixed);
         crafter.setItem(0, mixed);

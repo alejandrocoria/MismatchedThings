@@ -70,6 +70,7 @@ public final class NeoForgeTooltipClientTest {
         if (finished) {
             return;
         }
+
         try {
             ticks++;
             assertUnattended(client);
@@ -188,6 +189,7 @@ public final class NeoForgeTooltipClientTest {
         if (mixedItem == null) {
             throw new AssertionError("Mismatched boots item is not registered");
         }
+
         DataComponentPatch components = DataComponentPatch.builder()
                                                           .set(DataComponents.MAX_STACK_SIZE, 1)
                                                           .set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"))

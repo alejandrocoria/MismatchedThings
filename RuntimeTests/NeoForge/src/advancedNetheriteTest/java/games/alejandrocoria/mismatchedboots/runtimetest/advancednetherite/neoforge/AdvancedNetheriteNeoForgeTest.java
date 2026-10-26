@@ -33,6 +33,7 @@ public final class AdvancedNetheriteNeoForgeTest {
         if (finished) {
             return;
         }
+
         MinecraftServer server = event.getServer();
         try {
             ticks++;

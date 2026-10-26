@@ -41,12 +41,14 @@ public final class NetworkAcceptanceStacks {
         if (!stack.is(ModContent.MIXED_BOOTS_KEY)) {
             throw new AssertionError("Crafted stack is not Mismatched Boots: " + stack);
         }
+
         MixedBootsData data = ModContent.getMixedBootsData(stack)
                                         .orElseThrow(() -> new AssertionError("Crafted stack has no source data"));
         if (!data.left().source().is(Items.LEATHER_BOOTS)
                 || !data.right().source().is(Items.CHAINMAIL_BOOTS)) {
             throw new AssertionError("Crafted stack has the wrong orientation: " + data);
         }
+
         ItemAttributeModifiers.Entry entry = movementEntry(stack);
         if (!entry.modifier().id().equals(MOVEMENT_MODIFIER)
                 || entry.modifier().operation() != AttributeModifier.Operation.ADD_VALUE

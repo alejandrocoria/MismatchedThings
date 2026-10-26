@@ -28,6 +28,7 @@ public final class JustDireAttributeTestSupport {
         if (!earlierOverride || !(root.getItem() instanceof MixedBootsItem)) {
             return defaults;
         }
+
         var result = new ArrayList<ItemAttributeModifiers.Entry>();
         for (var entry : defaults.modifiers()) {
             if (BuiltInRegistries.ATTRIBUTE.getKey(entry.attribute().value()).equals(Identifier.withDefaultNamespace("armor"))) {
@@ -41,6 +42,7 @@ public final class JustDireAttributeTestSupport {
                 result.add(entry);
             }
         }
+
         return new ItemAttributeModifiers(java.util.List.copyOf(result));
     }
 

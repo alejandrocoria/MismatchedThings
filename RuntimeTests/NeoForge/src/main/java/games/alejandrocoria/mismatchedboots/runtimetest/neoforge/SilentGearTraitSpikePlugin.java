@@ -60,6 +60,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
                         ? System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").equals("wearer-compatible")
                         : System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "").startsWith("wearer-"));
         }
+
         return (Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTest") || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearClient")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearRemainingTest")
                 || Boolean.getBoolean("mismatchedboots.runtimetest.silentGearTooltipTest"))
@@ -94,6 +95,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
             voidWard(node);
             return;
         }
+
         String variant = System.getProperty("mismatchedboots.runtimetest.silentGearEffectVariant", "");
         if (mixin.endsWith("SilentGearDefensePeerMixin")) {
             SilentGearDefensePeer.transform(node, variant);
@@ -168,6 +170,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
             alias.maxLocals = 2;
             node.methods.add(alias);
         }
+
         var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$modified", "()Z", null, null);
         marker.instructions.add(new InsnNode(ICONST_1));
         marker.instructions.add(new InsnNode(IRETURN));
@@ -180,6 +183,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
         if (variant.isEmpty()) {
             return;
         }
+
         var method = owner.methods.stream().filter(value -> value.name.equals("onPlayerTick")).findFirst().orElseThrow();
         MethodInsnNode query = null;
         for (var node : method.instructions) {
@@ -266,6 +270,7 @@ public final class SilentGearTraitSpikePlugin implements IMixinConfigPlugin, Opc
             if (original == null) {
                 throw new IllegalStateException("Native magnet fault site unavailable");
             }
+
             String descriptor = tracker ? "(Lnet/minecraft/world/entity/item/ItemEntity;DDD)V"
                                         : "(Lnet/minecraft/world/item/crafting/Ingredient;Lnet/minecraft/world/item/ItemStack;)Z";
             var alias = new MethodNode(ACC_PRIVATE | ACC_STATIC, "sgtest$unprovedAlias", descriptor, null, null);

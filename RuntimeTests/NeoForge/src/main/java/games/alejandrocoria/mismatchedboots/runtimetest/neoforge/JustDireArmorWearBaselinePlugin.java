@@ -42,6 +42,7 @@ public final class JustDireArmorWearBaselinePlugin implements IMixinConfigPlugin
         if (mixin.endsWith("JustDireArmorWearBaselineMixin")) {
             return variant.equals("missing") || variant.startsWith("wrapper");
         }
+
         return List.of("amount", "entry", "slot", "entity", "cancellation", "association", "router", "publication").contains(variant);
     }
 
@@ -50,6 +51,7 @@ public final class JustDireArmorWearBaselinePlugin implements IMixinConfigPlugin
         if (!variant().equals("missing")) {
             return;
         }
+
         int changed = 0;
         for (var method : node.methods) {
             if (!method.name.equals("lambda$onArmorHurt$0")) {
@@ -104,6 +106,7 @@ public final class JustDireArmorWearBaselinePlugin implements IMixinConfigPlugin
         if (!mixin.endsWith("JustDireArmorWearLateMixin")) {
             return;
         }
+
         var consumer = method(node, "lambda$onArmorHurt$0");
         int changed = 0;
         if (variant.equals("publication")) {

@@ -10,7 +10,11 @@ import java.util.Set;
 
 /** Test-only real debit/world-feedback probes. No production flags, callbacks or alternate handler. */
 public final class JustDireEarthquakeServerGuardPlugin implements IMixinConfigPlugin {
-    public static int fault, debits, failAt, heavySounds, particles;
+    public static int fault;
+    public static int debits;
+    public static int failAt;
+    public static int heavySounds;
+    public static int particles;
     public static ServerPlayer player;
 
     public static void changeToggle() {

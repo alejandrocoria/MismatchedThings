@@ -40,6 +40,7 @@ public final class JustDireRefundTestPlugin implements IMixinConfigPlugin {
         if (mixin.endsWith("JustDireRefundEarlyMixin")) {
             return List.of("missing", "extra", "count", "entity").contains(variant);
         }
+
         return List.of("operation", "publication", "router").contains(variant);
     }
 
@@ -66,6 +67,7 @@ public final class JustDireRefundTestPlugin implements IMixinConfigPlugin {
         if (!mixin.endsWith("JustDireRefundEarlyMixin")) {
             return;
         }
+
         int changed = 0;
         for (var method : node.methods) {
             if (!method.name.equals("applyDamage") || !method.desc.contains("LivingEntity")) {

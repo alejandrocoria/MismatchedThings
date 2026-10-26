@@ -141,6 +141,7 @@ public final class NeoForgeEquipmentRenderingClientTest {
                 0)) {
             throw new AssertionError("Center-crossing fixture declined the standard route");
         }
+
         List<Call> calls = renderer.calls();
         if (!calls.getFirst().model().allParts().contains(crossing)
                 || calls.get(1).model().allParts().contains(crossing)) {

@@ -35,6 +35,7 @@ public final class NetworkAcceptanceClientTest {
         if (finished) {
             return;
         }
+
         try {
             ticks++;
             assertUnattended(client);
@@ -83,6 +84,7 @@ public final class NetworkAcceptanceClientTest {
                 }
                 return;
             }
+
             ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
                                                                                       NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()), client.level,
                                                                               rules, componentRules).primary();
@@ -92,6 +94,7 @@ public final class NetworkAcceptanceClientTest {
                                                       net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY))) {
                 throw new AssertionError("Client recipe preview differs from the server-crafted result");
             }
+
             String receivedDescription = NetworkAcceptanceStacks.describePrimary(received);
             String previewDescription = NetworkAcceptanceStacks.describePrimary(preview);
             if (!receivedDescription.equals(previewDescription)) {

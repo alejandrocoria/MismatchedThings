@@ -55,6 +55,7 @@ public final class NeoForgeSilentGearTest {
                 NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
                 return;
             }
+
             var api = new NativeApi();
             var player = FakePlayerFactory.getMinecraft(server.overworld());
             player.setGameMode(GameType.SURVIVAL);
@@ -143,10 +144,12 @@ public final class NeoForgeSilentGearTest {
                 NetworkAcceptanceFiles.write("silent-gear-stats-success.txt", "neoforge\n");
                 return;
             }
+
             var profiles = new TreeMap<String, ItemStack>();
             for (String material : List.of("iron", "diamond", "leather", "gold")) {
                 profiles.put(material, api.boot(material));
             }
+
             ItemStack iron = profiles.get("iron");
             Object swap = api.swapClass.getField("INSTANCE").get(null);
             var liningInput = CraftingInput.of(2, 1, List.of(iron.copy(), api.part("lining", "wool")));
@@ -220,7 +223,8 @@ public final class NeoForgeSilentGearTest {
         int max = (first.getMaxDamage() + second.getMaxDamage()) / 2;
         int remaining = ((first.getMaxDamage() - first.getDamageValue()) + (second.getMaxDamage() - second.getDamageValue())) / 2;
         for (int index = 0; index < outputs.size(); index++) {
-            ItemStack root = outputs.get(index), owner = index == 0 ? first : second;
+            ItemStack root = outputs.get(index);
+            ItemStack owner = index == 0 ? first : second;
             require(root.getMaxDamage() == max && root.getDamageValue() == max - remaining, "Durability differs: " + label);
             var expected = new TreeMap<String, Double>();
             for (String id : ids) {
@@ -232,6 +236,7 @@ public final class NeoForgeSilentGearTest {
                     expected.put(id, value);
                 }
             }
+
             var actual = contributions(root);
             require(expected.keySet().equals(actual.keySet()), "Attribute set differs: " + label + ": " + expected + " vs " + actual);
             for (String id : expected.keySet()) {
@@ -302,6 +307,7 @@ public final class NeoForgeSilentGearTest {
             require(ItemStack.matches(data.left().source(), index == 0 ? first : second)
                             && ItemStack.matches(data.right().source(), index == 0 ? second : first), "Source data changed");
         }
+
         return result;
     }
 

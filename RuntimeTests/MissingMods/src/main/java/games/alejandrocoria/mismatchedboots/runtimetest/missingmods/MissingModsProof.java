@@ -162,6 +162,7 @@ public final class MissingModsProof {
                 jdt.set(MissingModsProof.<Boolean>component("justdirethings:" + upgrade), true);
             }
         }
+
         var recipe = new MixedBootsWorkbenchRecipe();
         var maPair = recipe.assemblePair(new MismatchedWorkbenchInput(ma, new ItemStack(Items.DIAMOND_BOOTS)));
         var jdtPair = recipe.assemblePair(new MismatchedWorkbenchInput(jdt, new ItemStack(Items.DIAMOND_BOOTS)));
@@ -183,6 +184,7 @@ public final class MissingModsProof {
         for (int i = 8; i < 10; i++) {
             roots.get(i).set(MissingModsProof.<Integer>component(MOD + ":temporary_energy"), 1_987_654_321);
         }
+
         var enchantmentRoot = vanillaPair.primary().copy();
         enchantmentRoot.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
                                       .get(Identifier.parse("mysticalagriculture:soul_siphoner")).orElseThrow(), 1);
@@ -208,6 +210,7 @@ public final class MissingModsProof {
                 root.set(MissingModsProof.<Boolean>component("justdirethings:tool_enabled"), false);
             }
         }
+
         ItemStack attributeRoot = roots.get(4);
         var attributes = ItemAttributeModifiers.builder();
         for (var entry : attributeRoot.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers()) {

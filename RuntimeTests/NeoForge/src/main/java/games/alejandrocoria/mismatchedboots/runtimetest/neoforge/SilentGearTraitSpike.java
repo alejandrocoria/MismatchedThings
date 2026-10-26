@@ -110,10 +110,12 @@ public final class SilentGearTraitSpike {
             subjects.add(nativeBoot);
             subjects.addAll(NeoForgeSilentGearTest.workbench(player, nativeBoot, new ItemStack(Items.DIAMOND_BOOTS)));
             for (int index = 0; index < subjects.size(); index++) {
-                ItemStack subject = subjects.get(index), before = subject.copy();
+                ItemStack subject = subjects.get(index);
+                ItemStack before = subject.copy();
                 clear(player);
                 update.invoke(player);
-                double base = player.getAttributeValue(attribute), expectedAmount = nativeEntry.modifier().amount() / (index == 0 ? 1 : 2);
+                double base = player.getAttributeValue(attribute);
+                double expectedAmount = nativeEntry.modifier().amount() / (index == 0 ? 1 : 2);
                 var entries = subject.getAttributeModifiers().modifiers().stream()
                                      .filter(entry -> entry.attribute().equals(attribute) && entry.slot().test(EquipmentSlot.FEET)).toList();
                 require(entries.size() == (index == 0 ? 2 : 1), "Normalized production modifier count differs");
@@ -121,6 +123,7 @@ public final class SilentGearTraitSpike {
                     require(entry.modifier().operation() == nativeEntry.modifier().operation(), "Modifier operation differs");
                     close(entry.modifier().amount(), expectedAmount, "Normalized trait amount");
                 }
+
                 double expected = switch (nativeEntry.modifier().operation()) {
                     case ADD_VALUE -> base + expectedAmount;
                     case ADD_MULTIPLIED_BASE -> base * (1 + expectedAmount);

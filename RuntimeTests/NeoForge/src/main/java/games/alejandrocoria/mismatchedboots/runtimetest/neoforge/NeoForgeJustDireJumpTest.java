@@ -156,6 +156,7 @@ public final class NeoForgeJustDireJumpTest {
             nativeWear.setDamageValue(nativeWear.getMaxDamage() - remaining);
             check(server, nativeWear, remaining > 0 ? 1 : 0);
         }
+
         ItemStack worn = ferricore.copy();
         worn.setDamageValue(worn.getMaxDamage());
         root = MixedBootsFactory.createPair(worn, iron).primary();
@@ -200,6 +201,7 @@ public final class NeoForgeJustDireJumpTest {
                 require(fall(swimmer, 9) == fall(player(server), 7), "Water/gliding wrongly suppressed fall companion");
             }
         }
+
         ItemStack negate = boots("celestigem", true);
         set(negate, "negatefalldamage_upgrade_installed", true);
         set(negate, "forge_energy", 1000);
@@ -347,6 +349,7 @@ public final class NeoForgeJustDireJumpTest {
                 cases++;
             }
         }
+
         var handRoot = fundedPair();
         var player = player(server);
         player.setItemSlot(EquipmentSlot.FEET, handRoot);

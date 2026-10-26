@@ -15,8 +15,13 @@ import java.util.List;
 
 /** Native controls/construction only; mixed action and ticking always call production. */
 final class JustDireEarthquakeTestSupport {
-    private static Method action, name, ticks, active, ownTick;
-    private static Constructor<?> timer, binding;
+    private static Method action;
+    private static Method name;
+    private static Method ticks;
+    private static Method active;
+    private static Method ownTick;
+    private static Constructor<?> timer;
+    private static Constructor<?> binding;
 
     private JustDireEarthquakeTestSupport() {
     }

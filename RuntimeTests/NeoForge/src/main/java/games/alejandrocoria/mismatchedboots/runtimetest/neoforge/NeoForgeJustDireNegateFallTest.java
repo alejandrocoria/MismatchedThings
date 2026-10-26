@@ -116,6 +116,7 @@ public final class NeoForgeJustDireNegateFallTest {
             };
             nativeFall(server, "Unbreaking " + level, boots, 9, 0, remaining, GameType.SURVIVAL);
         }
+
         ItemStack discounted = boots("celestigem", 49);
         discounted.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.UNBREAKING), 10);
         nativeFall(server, "discount does not lower eligibility", discounted, 9, 9, 49, GameType.SURVIVAL);
@@ -140,6 +141,7 @@ public final class NeoForgeJustDireNegateFallTest {
             JustDireAttributeTestSupport.set(boots, disabled, false);
             nativeFall(server, disabled + " false", boots, 9, 9, 1_000, GameType.SURVIVAL);
         }
+
         Map<?, ?> flags = (Map<?, ?>) Class.forName("com.direwolf20.justdirethings.setup.Config")
                                            .getField("AVAILABLE_ABILITY_MAP").get(null);
         ModConfigSpec.BooleanValue enabled = flags.entrySet().stream()
@@ -228,6 +230,7 @@ public final class NeoForgeJustDireNegateFallTest {
                 }
             }
         }
+
         ItemStack two = MixedBootsFactory.createPair(boots("celestigem", 1_000), boots("eclipsealloy", 1_000)).primary();
         nativeFall(server, "two authorizing sources pay once", two, 9, 0, 550, GameType.SURVIVAL);
         for (double distance : new double[]{0, .9, 2.5, 4.5}) {
@@ -240,6 +243,7 @@ public final class NeoForgeJustDireNegateFallTest {
             nativeFall(server, "mixed root Unbreaking " + level, root, 9, 0,
                        level == 1 ? 595 : level == 3 ? 685 : 1_000, GameType.SURVIVAL);
         }
+
         ItemStack root = mixed("eclipsealloy", 50, true);
         root.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.BINDING_CURSE), 1);
         root.setDamageValue(23);
@@ -256,6 +260,7 @@ public final class NeoForgeJustDireNegateFallTest {
             JustDireAttributeTestSupport.set(root, control, false);
             nativeFall(server, "mixed root " + control + " disabled", root, 9, 9, 1_000, GameType.SURVIVAL);
         }
+
         ItemStack source = boots("celestigem", 2_000);
         JustDireAttributeTestSupport.set(source, "negatefalldamage_toggle", false);
         root = MixedBootsFactory.createPair(source, new ItemStack(Items.IRON_BOOTS)).primary();
@@ -382,6 +387,7 @@ public final class NeoForgeJustDireNegateFallTest {
             record("guard " + guard + " repeat=" + repeat,
                    "distance=" + actual.distance + " healthLoss=" + actual.loss + "; one event; no rejected debit");
         }
+
         ServerPlayer movement = player(server, GameType.SURVIVAL);
         movement.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.IRON_BOOTS));
         movement.jumpFromGround();
@@ -402,6 +408,7 @@ public final class NeoForgeJustDireNegateFallTest {
             root.set(JustDireResourceTestSupport.energyComponent(), 0);
             require(!charged.equals(root.getAttributeModifiers()), "Negate guard disabled independent live armor selection");
         }
+
         var poweredOnly = MixedBootsFactory.createPair(NeoForgeJustDireJumpTest.poweredBoots("celestigem", 10), new ItemStack(Items.IRON_BOOTS))
                                            .primary();
         movement.setItemSlot(EquipmentSlot.FEET, poweredOnly);

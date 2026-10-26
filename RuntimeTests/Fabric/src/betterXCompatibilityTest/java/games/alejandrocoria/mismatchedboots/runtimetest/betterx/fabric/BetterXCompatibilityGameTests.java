@@ -371,6 +371,7 @@ public final class BetterXCompatibilityGameTests {
         } catch (InvocationTargetException exception) {
             throw new AssertionError("BetterX custom-stack setup failed", exception.getCause());
         }
+
         return stack;
     }
 

@@ -390,8 +390,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     var mesh = ((LayerRenderStateExtension) (Object) sourceLayer).fabric_getMutableMesh();
                     var faces = MeshSubmissionProbe.fingerprint(mesh);
                     var quads = layer(source, 0).mismatchedboots$getQuads();
-                    long triangles = extended ? faces.stream().filter(face ->
-                                                                              face.vertices().get(2).equals(face.vertices().get(3))).count()
+                    long triangles = extended ? faces.stream().filter(face -> face.vertices().get(2).equals(face.vertices().get(3))).count()
                                               : quads.stream().filter(quad -> quad.position2().equals(quad.position3())).count();
                     if ((extended ? faces.size() : quads.size()) != 12 || triangles != 4) {
                         throw new AssertionError("Oblique GUI ownership did not keep its characterized 12 primitives/4 triangles");
@@ -404,6 +403,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                             }
                         }
                     }
+
                     TrackingItemStackRenderState baseline = new TrackingItemStackRenderState();
                     client.getItemModelResolver().updateForTopItem(baseline,
                                                                    side == 0 ? left : right, ItemDisplayContext.GUI, client.level, null, 0);
@@ -434,8 +434,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     throw new AssertionError("GUI geometry selection re-resolved source models");
                 }
                 ItemLayerResolutionProbe.clear();
-                if (items.size() != 2 || items.stream().anyMatch(item ->
-                                                                         !(item.itemStackRenderState() instanceof MixedBootsGuiRenderState))
+                if (items.size() != 2 || items.stream().anyMatch(item -> !(item.itemStackRenderState() instanceof MixedBootsGuiRenderState))
                         || Objects.equals(items.get(0).itemStackRenderState().getModelIdentity(),
                                           items.get(1).itemStackRenderState().getModelIdentity())) {
                     throw new AssertionError("Rotated GUI composition or inverse-pair cache identity collapsed");
@@ -666,6 +665,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                     }
                 }
             }
+
             int minimum = 8 * scale * scale;
             if (leftVisible < minimum || rightVisible < minimum) {
                 throw new AssertionError(scenario + " did not render both clipped halves: "
@@ -706,6 +706,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
         } catch (IOException exception) {
             throw new AssertionError("Could not inspect GUI composition colored screenshot", exception);
         }
+
         int minimum = 20 * scale * scale;
         if (rightRed < minimum || leftBlue < minimum || misplacedRed != 0 || misplacedBlue != 0) {
             throw new AssertionError("GUI composition colored pixels violated its front-view bounds: right red="
@@ -876,6 +877,7 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
                 if (parentScissor) {
                     graphics.enableScissor(ITEM_X + 2, ITEM_Y, ITEM_X + 14, ITEM_Y + ITEM_SIZE);
                 }
+
                 try {
                     if (ownerAware) {
                         graphics.item(minecraft.player, stack, ITEM_X, ITEM_Y, seed);

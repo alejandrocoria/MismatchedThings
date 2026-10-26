@@ -19,7 +19,8 @@ import java.util.List;
 /** Native comparison and fixture construction only; mixed queries/action/ticking belong to production. */
 final class JustDireGroundStompTestSupport {
     private static Object stomp;
-    private static Method action, cooldown;
+    private static Method action;
+    private static Method cooldown;
 
     private JustDireGroundStompTestSupport() {
     }
@@ -51,6 +52,7 @@ final class JustDireGroundStompTestSupport {
                         "Native target is not visible to actual world query");
                 targets.add(mob);
             }
+
             boolean returned = (boolean) action.invoke(null, player.level(), player, boot);
             List<Double> motions = targets.stream().map(mob -> mob.getDeltaMovement().horizontalDistance()).toList();
             return new NativeResult(returned, motions.isEmpty() ? 0 : motions.getFirst(), motions);

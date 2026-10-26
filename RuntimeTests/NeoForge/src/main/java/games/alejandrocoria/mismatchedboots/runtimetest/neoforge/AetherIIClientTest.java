@@ -39,9 +39,16 @@ final class AetherIIClientTest {
     private static final boolean REJOIN = Boolean.getBoolean("mismatchedboots.runtimetest.aetherIIRejoin");
     private static final String OUTPUT = "aether-ii-" + (REJOIN ? "rejoin" : "client");
     private static final StringBuilder REPORT = new StringBuilder();
-    private static int ticks, scene, phase, age, settled;
-    private static boolean finished, boosted, backupConfirmed;
-    private static double peak, nativePeak;
+    private static int ticks;
+    private static int scene;
+    private static int phase;
+    private static int age;
+    private static int settled;
+    private static boolean finished;
+    private static boolean boosted;
+    private static boolean backupConfirmed;
+    private static double peak;
+    private static double nativePeak;
     private static Future<String> job;
     private static JsonObject expected;
     private static List<ItemStack> roots; // Integrated-server thread only; JSON expectations cross threads.
@@ -63,6 +70,7 @@ final class AetherIIClientTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 2400, "Aether client timeout: scene=" + scene + " phase=" + phase + " age=" + age
                     + " y=" + (client.player == null ? "none" : client.player.getY()) + " screen="
@@ -100,6 +108,7 @@ final class AetherIIClientTest {
                     return;
                 }
             }
+
             var server = client.getSingleplayerServer();
             var id = client.player.getUUID();
             if (phase == 0) {
@@ -135,6 +144,7 @@ final class AetherIIClientTest {
                                 server.overworld().setBlock(new BlockPos(x, 80, z), Blocks.STONE.defaultBlockState(), 3);
                             }
                         }
+
                         return prepare(owner);
                     } catch (Exception failure) {
                         throw new IllegalStateException(failure);
@@ -181,6 +191,7 @@ final class AetherIIClientTest {
             job = server.submit(() -> poll(server.getPlayerList().getPlayer(id)));
             return false;
         }
+
         var ops = client.level.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         var root = ItemStack.CODEC.parse(ops, expected.get("root")).getOrThrow();
         if (!ItemStack.matches(root, client.player.getItemBySlot(EquipmentSlot.FEET))) {
@@ -193,6 +204,7 @@ final class AetherIIClientTest {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -272,6 +284,7 @@ final class AetherIIClientTest {
                 for (int i = 0; i < 6; i++) {
                     owner.getInventory().setItem(9 + i, roots.get(i));
                 }
+
                 var manifest = new JsonObject();
                 manifest.addProperty("process", ProcessHandle.current().pid());
                 manifest.addProperty("uuid", id.toString());

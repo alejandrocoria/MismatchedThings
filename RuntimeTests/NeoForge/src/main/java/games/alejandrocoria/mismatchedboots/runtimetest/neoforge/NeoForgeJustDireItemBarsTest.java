@@ -29,8 +29,14 @@ public final class NeoForgeJustDireItemBarsTest {
     private static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.justDireItemBarsVariant", "live");
     private static final StringBuilder report = new StringBuilder();
     private static final List<ItemStack> packetStates = new ArrayList<>();
-    private static int ticks, phase, packetIndex, waiting, checks, queryFaults;
-    private static boolean finished, armed;
+    private static int ticks;
+    private static int phase;
+    private static int packetIndex;
+    private static int waiting;
+    private static int checks;
+    private static int queryFaults;
+    private static boolean finished;
+    private static boolean armed;
     private static Future<?> job;
 
     private NeoForgeJustDireItemBarsTest() {
@@ -52,6 +58,7 @@ public final class NeoForgeJustDireItemBarsTest {
         if (finished) {
             return;
         }
+
         try {
             require(++ticks < 1_800, "Item bar client timed out at phase " + phase + ", packet " + packetIndex);
             if (client.player == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
@@ -84,7 +91,8 @@ public final class NeoForgeJustDireItemBarsTest {
                     phase = 1;
                 }
             } else if (phase == 1) {
-                ItemStack expected = packetStates.get(packetIndex), received = client.player.getInventory().getItem(0);
+                ItemStack expected = packetStates.get(packetIndex);
+                ItemStack received = client.player.getInventory().getItem(0);
                 if (!ItemStack.matches(expected, received)) {
                     return;
                 }
@@ -152,6 +160,7 @@ public final class NeoForgeJustDireItemBarsTest {
                 }
             }
         }
+
         ItemStack root = mixed(nativeBoot("celestigem", 4_000), new ItemStack(Items.DIAMOND_BOOTS));
         root.setDamageValue(37);
         root.remove(JustDireResourceTestSupport.energyComponent());
@@ -270,6 +279,7 @@ public final class NeoForgeJustDireItemBarsTest {
             expected.add(new Rectangle(row, 13, 2, 0xFF000000));
             expected.add(new Rectangle(row, feWidth, 1, 0xFF40CFFF));
         }
+
         var state = new GuiRenderState();
         new GuiGraphicsExtractor(client, state, 0, 0).itemDecorations(client.font, root, 20, 20);
         var actual = new ArrayList<Rectangle>();

@@ -93,6 +93,7 @@ public final class SilentGearWearerFixture {
                 if (!(boolean) nativeApi.matches.invoke(recipe, input, player.level())) {
                     throw new AssertionError("Native main-part swap refused " + piece[0]);
                 }
+
                 ItemStack given = (ItemStack) nativeApi.assemble.invoke(recipe, input);
                 if (!given.is(nativeItem.getItem()) || nativeApi.traitLevel(given, family[0]) < 1) {
                     throw new AssertionError("Manual native gear command did not produce " + family[0] + " " + piece[0]);

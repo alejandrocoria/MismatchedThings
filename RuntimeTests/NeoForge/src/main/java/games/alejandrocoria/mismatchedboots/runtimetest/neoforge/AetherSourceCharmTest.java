@@ -71,6 +71,7 @@ final class AetherSourceCharmTest {
                             && menu.getSlot(1).getItem().isEmpty() && menu.getSlot(2).getItem().isEmpty(),
                     "Native reinforcement did not pay/update tier");
         }
+
         var reinforced = menu.getSlot(0).getItem().copy();
         require(original.equals(AetherIICompatibilityTest.snapshot(owner.level().getServer(), input)), "Reinforcement mutated native input/defaults");
         var result = install(owner, api, reinforced, "health", 0, true);
@@ -86,6 +87,7 @@ final class AetherSourceCharmTest {
         if (SOURCE_FAULT || FACTORY_FAULT || root.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT).hideTooltip()) {
             return 0;
         }
+
         int groups = 0;
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         for (var source : List.of(data.left().source(), data.right().source())) {
@@ -95,6 +97,7 @@ final class AetherSourceCharmTest {
                 groups++;
             }
         }
+
         return groups;
     }
 
@@ -127,10 +130,12 @@ final class AetherSourceCharmTest {
                 require(lines.stream().noneMatch(line -> line.getString().contains(item("charm_of_health_1").getHoverName().getString())),
                         "A populated source failure published a partial charm group");
             }
+
             String before = encoded(client, root);
             String defaults = encoded(client, item("neptune_boots")) + encoded(client, item("arkenium_boots"));
             var components = gather(client, root, lines);
-            int left = rawIndex("tooltip.mismatchedboots.mixed_boots.left"), right = rawIndex("tooltip.mismatchedboots.mixed_boots.right");
+            int left = rawIndex("tooltip.mismatchedboots.mixed_boots.left");
+            int right = rawIndex("tooltip.mismatchedboots.mixed_boots.right");
             var data = ModContent.getMixedBootsData(root).orElseThrow();
             int group = 0;
             for (int side = 0; side < 2; side++) {
@@ -175,6 +180,7 @@ final class AetherSourceCharmTest {
                                 && lines.stream().anyMatch(line -> line.getString().equals("Original lore retained")), "Native names/lore lost");
             }
         }
+
         var root = samples.get(24);
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         // Explicit root-holder override stays on Aether's native route, separate from the two source markers.
@@ -212,6 +218,7 @@ final class AetherSourceCharmTest {
                                                        .isPresent()).count();
             require(names == 5, "Oversize source did not render all five native names under its own side");
         }
+
         var nativePayload = (TooltipComponent) Class.forName(NATIVE + "$CharmTooltip").getConstructor(ItemStack.class, List.class)
                                                     .newInstance(item("neptune_boots"), List.of());
         var foreign = Either.<FormattedText, TooltipComponent>right(nativePayload);

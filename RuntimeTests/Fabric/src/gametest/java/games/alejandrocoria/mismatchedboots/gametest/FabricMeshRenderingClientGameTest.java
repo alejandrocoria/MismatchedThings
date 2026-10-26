@@ -99,6 +99,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                 }
             }
         }
+
         MutableMesh source = gradient(3, null, false);
         source.forEachMutable(quad -> quad.normal(1, 0, 0, -1));
         var original = MeshSubmissionProbe.fingerprint(source);
@@ -219,6 +220,7 @@ public final class FabricMeshRenderingClientGameTest implements FabricClientGame
                         "Whole-side or exact-plane ownership incorrect");
             }
         }
+
         MutableMesh source = gradient(0, null, false);
         require(!FabricMeshClipper.plan(source, new Matrix4f().scaling(Float.NaN), QuadClipper.Side.LEFT).compatible(),
                 "Nonfinite transform accepted");

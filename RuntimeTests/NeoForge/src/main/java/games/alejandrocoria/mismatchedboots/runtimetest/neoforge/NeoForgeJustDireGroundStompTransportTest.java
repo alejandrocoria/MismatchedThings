@@ -40,14 +40,19 @@ final class NeoForgeJustDireGroundStompTransportTest {
     private static final Queue<Step> steps = new ArrayDeque<>();
     private static final StringBuilder report = new StringBuilder();
     private static Future<?> job;
-    private static boolean initialized, started, finished;
-    private static int wait, paused, menuId;
+    private static boolean initialized;
+    private static boolean started;
+    private static boolean finished;
+    private static int wait;
+    private static int paused;
+    private static int menuId;
     private static ItemStack serverRoot;
     private static JustDireActiveNetwork.ActivationReply activation;
     private static JustDireActiveNetwork.SettingsReply settings;
     private static JustDireActiveNetwork.Activate consumed;
     private static UUID token;
-    private static boolean inputFlight, holdInput;
+    private static boolean inputFlight;
+    private static boolean holdInput;
     private static ItemStack inputRoot;
     private static JustDireActiveNetwork.ActivationReply heldInput;
     private static JustDireActiveNetwork.ActivationReply inputPrepared;
@@ -60,6 +65,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
         if (finished || client.player == null || client.level == null || !CompositionRulesClientLifecycle.areRulesSynchronized()) {
             return;
         }
+
         try {
             if (!initialized) {
                 initialize(client);
@@ -72,6 +78,7 @@ final class NeoForgeJustDireGroundStompTransportTest {
                 job.get();
                 job = null;
             }
+
             Step step = steps.peek();
             if (step == null) {
                 NetworkAcceptanceFiles.write(PREFIX + "-report.txt",

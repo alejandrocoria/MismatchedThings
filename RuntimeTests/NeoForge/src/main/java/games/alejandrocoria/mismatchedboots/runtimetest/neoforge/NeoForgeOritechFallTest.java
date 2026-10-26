@@ -49,42 +49,52 @@ public final class NeoForgeOritechFallTest {
         if (finished) {
             return;
         }
+
         finished = true;
         try {
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.oritechAbsent");
             require(ModList.get().isLoaded("oritech") != absent, "Wrong Oritech environment");
+
             ServerLevel level = server.overworld();
-            var plain = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
-            check(level, plain.primary(), EquipmentSlot.FEET, false, false);
-            check(level, plain.inverse(), EquipmentSlot.FEET, false, false);
+            var vanillaPair = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
+            check(level, vanillaPair.primary(), EquipmentSlot.FEET, false, false);
+            check(level, vanillaPair.inverse(), EquipmentSlot.FEET, false, false);
+
             if (!absent) {
                 var exoItem = BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("oritech", "exo_boots"))
                                                     .orElseThrow().value();
                 var exo = new ItemStack(exoItem);
                 var pair = MixedBootsFactory.createPair(exo, new ItemStack(Items.DIAMOND_BOOTS));
+
                 require(ItemStack.matches(exo, new ItemStack(exoItem)), "Creation mutated the native input");
                 require(pair.primary().get(DataComponents.EQUIPPABLE).equipSound()
                             .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()), "Left equip sound changed");
                 require(pair.inverse().get(DataComponents.EQUIPPABLE).equipSound()
                             .equals(exo.get(DataComponents.EQUIPPABLE).equipSound()),
                         "Right Exo did not supply the only custom equip sound");
+
                 for (ItemStack boots : List.of(exo, pair.primary(), pair.inverse(),
                                                MixedBootsFactory.createPair(exo, exo).primary())) {
                     check(level, boots, EquipmentSlot.FEET, false, true);
                     check(level, boots, EquipmentSlot.FEET, true, false);
                 }
+
                 check(level, pair.primary(), EquipmentSlot.OFFHAND, false, false);
                 check(level, pair.inverse(), EquipmentSlot.MAINHAND, false, false);
+
                 ItemStack badCount = pair.primary().copy();
                 badCount.setCount(2);
                 check(level, badCount, EquipmentSlot.FEET, false, false);
+
                 ItemStack missingData = pair.primary().copy();
                 missingData.remove(ModContent.mixedBootsDataType().orElseThrow());
                 check(level, missingData, EquipmentSlot.FEET, false, false);
+
                 ItemStack spoof = new ItemStack(Items.STICK);
                 spoof.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(pair.primary()).orElseThrow());
                 check(level, spoof, EquipmentSlot.FEET, false, false);
             }
+
             NetworkAcceptanceFiles.write("oritech-fall-report.txt", cases + " real damage cases; "
                     + (absent ? "optional absence, ordinary inverse pair\n"
                               : "native Exo + both mixed orientations + two Exo; repeated falls; non-fall damage; "
@@ -99,32 +109,37 @@ public final class NeoForgeOritechFallTest {
         }
     }
 
-    private static void check(ServerLevel level, ItemStack input, EquipmentSlot slot, boolean generic, boolean protectedFall) {
+    private static void check(ServerLevel level, ItemStack input, EquipmentSlot slot, boolean genericDamage, boolean expectFallProtection) {
         var subject = EntityType.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         require(subject != null, "Could not create damage subject");
         subject.setNoAi(true);
+
         ItemStack boots = input.copy();
-        var history = ModContent.getMixedBootsData(boots).orElse(null);
+        var sourceHistory = ModContent.getMixedBootsData(boots).orElse(null);
         subject.setItemSlot(slot, boots);
+
         sounds = 0;
         capture = true;
         try {
-            float before = subject.getHealth();
-            if (generic) {
+            float healthBefore = subject.getHealth();
+            if (genericDamage) {
                 subject.hurtServer(level, level.damageSources().generic(), 6);
             } else {
                 subject.causeFallDamage(9, 1, level.damageSources().fall());
             }
-            require(protectedFall ? subject.getHealth() == before : subject.getHealth() < before,
-                    "Wrong damage result: slot=" + slot + ", generic=" + generic + ", stack=" + input);
-            require(sounds == (protectedFall ? 1 : 0), "Wrong native servo emission count: " + sounds);
-            if (protectedFall) {
+
+            require(expectFallProtection ? subject.getHealth() == healthBefore : subject.getHealth() < healthBefore,
+                    "Wrong damage result: slot=" + slot + ", generic=" + genericDamage + ", stack=" + input);
+            require(sounds == (expectFallProtection ? 1 : 0), "Wrong native servo emission count: " + sounds);
+
+            if (expectFallProtection) {
                 subject.causeFallDamage(9, 1, level.damageSources().fall());
-                require(subject.getHealth() == before && sounds == 2, "Fall protection acquired a cooldown/payment");
+                require(subject.getHealth() == healthBefore && sounds == 2, "Fall protection acquired a cooldown/payment");
                 require(ItemStack.matches(input, boots), "Protected fall consumed or changed the root");
             }
+
             require(subject.getItemBySlot(slot) == boots, "Native equipment was substituted");
-            require(history == null || history.equals(ModContent.getMixedBootsData(boots).orElseThrow()),
+            require(sourceHistory == null || sourceHistory.equals(ModContent.getMixedBootsData(boots).orElseThrow()),
                     "Damage mutated source provenance");
             cases++;
         } finally {

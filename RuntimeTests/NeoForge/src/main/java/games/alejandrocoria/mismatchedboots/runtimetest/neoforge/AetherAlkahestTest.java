@@ -77,6 +77,7 @@ public final class AetherAlkahestTest {
         if (finished) {
             return;
         }
+
         try {
             if (reload != null) {
                 if (!reload.advance(server)) {
@@ -123,6 +124,7 @@ public final class AetherAlkahestTest {
             require(!boots.has(component("reinforcement_tier")), "Unexpected native default tier: " + family);
             profiles.add(new Profile(family, boots, family.equals("arkenium"), false));
         }
+
         var api = new AetherIICompatibilityTest.NativeApi();
         for (var family : List.of("beast_pelt", "burrukai_plate", "zanite", "arkenium", "gravitite")) {
             profiles.add(new Profile(family + "-I", reinforced(owner, api, family, 1), family.equals("arkenium"), true));
@@ -141,6 +143,7 @@ public final class AetherAlkahestTest {
             }
             require(before.equals(snapshot(server, original)), "Measurements changed original input/defaults");
         }
+
         var unequal = paidPair(owner, reinforced(owner, api, "zanite", 1), reinforced(owner, api, "arkenium", 2));
         for (int index = 0; index < unequal.size(); index++) {
             require(unequal.get(index).get(component("reinforcement_tier"))
@@ -149,6 +152,7 @@ public final class AetherAlkahestTest {
                                     .get(null), "Unequal native tiers were shared/normalized");
             verify(server, "unequal-I-II/" + index, unequal.get(index), true, true);
         }
+
         var inverse = paidPair(owner, reinforced(owner, api, "beast_pelt", 1), new ItemStack(Items.DIAMOND_BOOTS)).get(1);
         var missing = inverse.copy();
         missing.remove(ModContent.mixedBootsDataType().orElseThrow());
@@ -205,6 +209,7 @@ public final class AetherAlkahestTest {
             require(subject.getHealth() < subject.getMaxHealth(), "Protection accidentally grants health immunity");
             unchangedExceptWear(server, input, stack);
         }
+
         var subject = player(server.overworld());
         var worn = input.copy();
         subject.setItemSlot(EquipmentSlot.FEET, worn);
@@ -240,6 +245,7 @@ public final class AetherAlkahestTest {
         } finally {
             attacker.discard();
         }
+
         int afterPhysical = worn.getDamageValue() - first - second;
         require(afterPhysical == (armorTier ? 0 : 1),
                 "Native last-source carryover changed: " + label + " wear=" + afterPhysical + " events=" + armorEvents);
@@ -324,11 +330,13 @@ public final class AetherAlkahestTest {
         var roots = paidPair(owner, nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
         verify(server, "native-positive", nativeBoots, false, true);
         verify(server, "root-native-positive", roots.getFirst(), false, true);
-        boolean fluid = !MODE.startsWith("fluid"), armor = !MODE.startsWith("armor");
+        boolean fluid = !MODE.startsWith("fluid");
+        boolean armor = !MODE.startsWith("armor");
         for (int repeat = 0; repeat < 3; repeat++) {
             require(!roots.get(1).has(component("reinforcement_tier")), "Inverse unexpectedly has root tier");
             verify(server, "inverse/" + repeat, roots.get(1), false, fluid, armor);
         }
+
         var tagged = paidPair(owner, item("arkenium_boots"), new ItemStack(Items.DIAMOND_BOOTS));
         for (int index = 0; index < tagged.size(); index++) {
             verify(server, "tag-only/" + index, tagged.get(index), true, false);
@@ -453,6 +461,7 @@ public final class AetherAlkahestTest {
                                   .invoke(menu, owner.registryAccess(), tier), "Paid reinforcement rejected");
             require(menu.getSlot(1).getItem().isEmpty() && menu.getSlot(2).getItem().isEmpty(), "Reinforcement was not paid");
         }
+
         return menu.getSlot(0).getItem().copy();
     }
 }

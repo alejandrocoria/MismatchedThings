@@ -26,6 +26,7 @@ abstract class CapturePeerMixin {
         if (Boolean.getBoolean("mismatchedboots.test.missingModsBypass")) {
             return MapCodec.unit(() -> ItemStack.EMPTY);
         }
+
         Function<Codec<ItemStack>, MapCodec<ItemStack>> wrapped = self -> {
             var delegate = factory.apply(self);
             return new MapCodec<>() {

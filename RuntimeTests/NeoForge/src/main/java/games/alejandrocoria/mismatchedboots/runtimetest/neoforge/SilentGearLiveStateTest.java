@@ -301,6 +301,7 @@ public final class SilentGearLiveStateTest {
                         "Recomposition reset settled phase/counters");
             }
         }
+
         ItemStack terminal = terminal(api.boot("copper"), api);
         for (ItemStack root : NeoForgeSilentGearTest.workbench(player, terminal, new ItemStack(Items.DIAMOND_BOOTS))) {
             ItemStack before = root.copy();
@@ -375,13 +376,15 @@ public final class SilentGearLiveStateTest {
                                                       .toList()),
                             "SG refresh rebalanced unrelated frozen JDT groups");
                 }
+
                 int afterRefresh = recalculations;
                 for (int energy : List.of(0, 30_000)) {
                     for (boolean step : List.of(false, true)) {
                         root.set(JustDireResourceTestSupport.energyComponent(), energy);
                         JustDireAttributeTestSupport.set(root, "stepheight_toggle", step);
                         var data = ModContent.getMixedBootsData(root).orElseThrow();
-                        ItemStack a = data.left().source(), b = data.right().source();
+                        ItemStack a = data.left().source();
+                        ItemStack b = data.right().source();
                         for (ItemStack source : List.of(a, b)) {
                             if (api.gear.isInstance(source.getItem())) {
                                 source.setDamageValue((int) ((long) damage * source.getMaxDamage() / root.getMaxDamage()));
@@ -391,6 +394,7 @@ public final class SilentGearLiveStateTest {
                                 JustDireAttributeTestSupport.set(source, "stepheight_toggle", step);
                             }
                         }
+
                         var expected = games.alejandrocoria.mismatchedboots.composition.AttributeComposer.composePrimary(
                                 Services.PLATFORM.getCompositionAttributeModifiers(a),
                                 Services.PLATFORM.getCompositionAttributeModifiers(b),
@@ -409,6 +413,7 @@ public final class SilentGearLiveStateTest {
                     }
                 }
             }
+
             var toggle = JustDireAttributeTestSupport.<Boolean>component("stepheight_toggle");
             if (before.has(toggle)) {
                 root.set(toggle, before.get(toggle));
@@ -455,7 +460,8 @@ public final class SilentGearLiveStateTest {
                     require(ItemStack.matches(before, root) && recalculations == prior,
                             "SG wearer spent FE, rewrote JDT tables/state or recalculated gear");
                     var data = ModContent.getMixedBootsData(root).orElseThrow();
-                    ItemStack a = data.left().source(), b = data.right().source();
+                    ItemStack a = data.left().source();
+                    ItemStack b = data.right().source();
                     for (var source : List.of(a, b)) {
                         if (!api.gear.isInstance(source.getItem())) {
                             source.set(JustDireResourceTestSupport.energyComponent(), energy);
@@ -463,6 +469,7 @@ public final class SilentGearLiveStateTest {
                             JustDireAttributeTestSupport.set(source, "stepheight_toggle", true);
                         }
                     }
+
                     var nativeExpected = JustDireAttributeTestSupport.composed(a, b, AttributeRulesLifecycle.serverRules());
                     close(amount(root.getAttributeModifiers(), "step_height"),
                           amount(nativeExpected, "step_height"),
@@ -509,13 +516,15 @@ public final class SilentGearLiveStateTest {
 
     static double expectedArmor(ItemStack root, NeoForgeSilentGearTest.NativeApi api, ServerPlayer player, AttributePolicy policy) throws Exception {
         var data = ModContent.getMixedBootsData(root).orElseThrow();
-        ItemStack a = data.left().source(), b = data.right().source();
+        ItemStack a = data.left().source();
+        ItemStack b = data.right().source();
         for (ItemStack source : List.of(a, b)) {
             if (api.gear.isInstance(source.getItem())) {
                 source.setDamageValue((int) ((long) root.getDamageValue() * source.getMaxDamage() / root.getMaxDamage()));
                 recalc(source, player);
             }
         }
+
         return switch (policy) {
             case AVERAGE -> (armor(a) + armor(b)) / 2;
             case MAXIMUM -> Math.max(armor(a), armor(b));
@@ -594,7 +603,8 @@ public final class SilentGearLiveStateTest {
     }
 
     private static void protectedFields(ItemStack before, ItemStack after) {
-        ItemStack a = before.copy(), b = after.copy();
+        ItemStack a = before.copy();
+        ItemStack b = after.copy();
         for (var component : List.of(DataComponents.DAMAGE,
                                      DataComponents.ATTRIBUTE_MODIFIERS,
                                      SilentGearCompatibility.state(),

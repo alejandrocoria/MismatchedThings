@@ -31,7 +31,8 @@ import java.util.UUID;
 final class JustDireGroundStompLifecycleTestSupport {
     private static final BlockPos STORAGE = new BlockPos(0, 80, 0);
     private static final String PREFIX = "just-dire-ground-stomp-lifecycle";
-    private static final JsonArray saved = new JsonArray(), packets = new JsonArray();
+    private static final JsonArray saved = new JsonArray();
+    private static final JsonArray packets = new JsonArray();
     private static final List<String> CONTROLS = List.of("ability_bindings",
                                                          "ability_cooldowns",
                                                          "groundstomp_custom_setting",
