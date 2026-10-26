@@ -1510,6 +1510,35 @@ The later [shared equip-sound record](../local-docs/EQUIP-SOUND-COMPOSITION.md#5
 separately records the owner's successful manual confirmation on 2026-10-18,
 closing that bounded change without adding an automated run or manual loader matrix.
 
+## AllTheModium boot recognition
+
+```powershell
+.\gradlew.bat :NeoForge:test --tests '*AllTheModium*' :RuntimeTests:NeoForge:verifyAllTheModium --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyAllTheModiumChains --console=plain
+```
+
+Use `-Pneoforge_version=26.1.2.99` for the supported floor. Pinned AllTheModium,
+All the Ores and GeckoLib are resolved and hash-checked by the maintained artifact
+catalog, never copied from indev. Live/Absent are separate disposable servers;
+Chains adds a real cooperating native-slot return modifier. The fixture observes
+native fall/fire events, the fire-clearing side effect, piglin hooks and powder-snow
+decisions; it does not measure physical movement, health loss or natural piglin AI.
+Three tiers/both orientations, native/vanilla controls, wrong slots, malformed
+roots, unchanged equipment/history and item-component policies are covered.
+No game ERROR or own compatibility-refusal warning is allowed; Absent also
+rejects missing optional-target diagnostics. Reports/process logs are under
+`RuntimeTests/NeoForge/build/reports/allthemodium/<version>/<mode>/`; disposable
+worlds/mods are under that project's `build/run/allthemodium/`.
+The [integrated record and owner checklist](../local-docs/ALLTHEMODIUM-COMPATIBILITY-EXPLORATION.md)
+separate technical evidence from final ordinary-client acceptance.
+On 2026-10-26, 2 guard units and Live 37/Absent 5 cases passed on .99/.114;
+.114 additionally passed Chains 37 cases with 629 cooperating return observations.
+The default .114 output was restored; shared Undergarden/SG snow regression,
+focused units, packaging/negative controls and pinned artifact checks passed.
+The owner separately confirmed all four ordinary-client gameplay groups passed
+on 2026-10-26, completing the bounded boot review. This acceptance does not add
+an automated run or a manual loader-version matrix.
+
 ## Undergarden boot recognition
 
 ```powershell

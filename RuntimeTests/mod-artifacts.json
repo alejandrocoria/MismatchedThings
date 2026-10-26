@@ -166,5 +166,17 @@
     "filename": "LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar",
     "sha256": "1f464710ca16c7dd069aa0c54088ddd1b72c1fff33609c13fce547f1ae444d41",
     "url": "https://cdn.modrinth.com/data/atHH8NyV/versions/f02TIUcN/LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "allthemodium-26.1.2-4.1.1.jar",
+    "sha256": "59e24aa1f26e752faf86ced677547a72403d81c395b5193e9e2598bd23b033ff",
+    "url": "https://edge.forgecdn.net/files/9052/575/allthemodium-26.1.2-4.1.1.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "alltheores-4.0.4.jar",
+    "sha256": "c6f8c4bffcf41a650ce0bdb18235aa94cd579bae0e80c56e25f240f6157f3a4f",
+    "url": "https://edge.forgecdn.net/files/8023/670/alltheores-4.0.4.jar"
   }
 ]

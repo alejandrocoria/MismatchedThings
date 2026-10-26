@@ -20,6 +20,9 @@ license="MIT"
     config="mismatchedboots-undergarden-tests.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots-allthemodium-tests.mixins.json"
+
+[[mixins]]
     config="mismatchedboots-roots-tick-tests.mixins.json"
 
 [[mixins]]

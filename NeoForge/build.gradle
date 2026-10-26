@@ -75,7 +75,8 @@ def guardFixtures = [
         aetherGuardJar: 'aether_ii-26.1.2-alpha.4.1-neoforge.jar',
         oritechGuardJar: 'oritech-2.0.0-exp6.jar',
         rootsGuardJar: 'RootsClassic-26.1.2-1.6.7.jar',
-        undergardenGuardJar: 'The_Undergarden-26.1.2-0.9.8.jar'
+        undergardenGuardJar: 'The_Undergarden-26.1.2-0.9.8.jar',
+        allthemodiumGuardJar: 'allthemodium-26.1.2-4.1.1.jar'
 ].findAll { property, filename -> !providers.gradleProperty(property).isPresent() }
 def guardArtifactInputs = guardFixtures.collect { property, filename ->
     providers.provider { testMods.resolve('NeoForge', filename) }

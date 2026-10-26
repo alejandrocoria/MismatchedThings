@@ -1,0 +1,81 @@
+// Real native handlers and hooks, cooperating returns and quiet absence; never use indev JARs.
+def testMods = rootProject.ext.testModArtifacts
+
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+
+def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+
+def runBounded = rootProject.ext.runBoundedGradleTask
+
+def artifacts = ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar', 'geckolib-neoforge-26.1.2-5.5.2.jar']
+
+['Live', 'Chains', 'Absent'].each { variant ->
+    def mode = variant.toLowerCase(Locale.ROOT)
+    def reports = layout.buildDirectory.dir("reports/allthemodium/${neoforge_version}/${mode}")
+    def directory = layout.buildDirectory.dir("run/allthemodium/${neoforge_version}/${mode}")
+    neoForge.runs.create("allTheModium${variant}") {
+        server()
+        disableIdeRun()
+        programArgument('--nogui')
+        gameDirectory = directory.get().asFile
+        systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.allthemodium', mode)
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareAllTheModium${variant}") {
+        dependsOn(':NeoForge:jar', tasks.named('jar'))
+        doLast {
+            def nativeJars = mode == 'absent' ? [] : artifacts.collect { testMods.resolve('NeoForge', it) }
+            fixtureFiles.delete { delete directory }
+            fixtureFiles.delete { delete fileTree(reports) { include '*.txt' } }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar, nativeJars)
+                into(new File(directory.get().asFile, 'mods'))
+            }
+            new File(directory.get().asFile, 'eula.txt').text = 'eula=true\n'
+            new File(directory.get().asFile, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+        }
+    }
+    tasks.named("runAllTheModium${variant}") { dependsOn prepare }
+    tasks.register("verifyAllTheModium${variant}") {
+        group = 'verification'
+        description = "Native AllTheModium boot recognition (${mode})"
+        doLast {
+            def log = new File(reports.get().asFile, 'process.log')
+            runBounded(":RuntimeTests:NeoForge:runAllTheModium${variant}", log, 240)
+            def result = reports.get().asFile
+            def failure = new File(result, 'allthemodium-failure.txt')
+            if (failure.isFile()) {
+                throw new GradleException(failure.text)
+            }
+
+            def report = new File(result, 'allthemodium-report.txt')
+            def lines = log.readLines()
+            def errors = lines.findAll { it.contains('/ERROR]') }
+            def refusals = lines.findAll { it.contains('AllTheModium mixed damage protection disabled:') }
+            if (!new File(result, 'allthemodium-success.txt').isFile() || !report.isFile()
+                    || !errors.isEmpty() || !refusals.isEmpty()
+                    || mode == 'absent' && log.text.contains('Error loading class: net/allthemods/allthemodium')) {
+                throw new GradleException("Incomplete/unexpected AllTheModium diagnostics: ${errors}; see ${log}")
+            }
+            logger.lifecycle(report.text.trim() + "; report: ${report}")
+        }
+    }
+}
+
+tasks.register('verifyAllTheModium') {
+    group = 'verification'
+    dependsOn('verifyAllTheModiumLive', 'verifyAllTheModiumAbsent')
+}
+
+tasks.named('verifyAllTheModiumAbsent') { mustRunAfter('verifyAllTheModiumLive') }

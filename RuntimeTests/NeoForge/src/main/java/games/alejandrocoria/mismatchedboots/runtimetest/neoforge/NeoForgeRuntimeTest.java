@@ -49,6 +49,10 @@ public final class NeoForgeRuntimeTest {
             }
             return;
         }
+        if (!System.getProperty("mismatchedboots.runtimetest.allthemodium", "").isEmpty()) {
+            AllTheModiumTest.register();
+            return;
+        }
         if (!System.getProperty("mismatchedboots.runtimetest.undergarden", "").isEmpty()) {
             UndergardenTest.register();
             return;

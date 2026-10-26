@@ -623,6 +623,7 @@ tasks.register('verifyTooltipCharacterization') {
 apply from: rootProject.file('gradle/neo-vitae-composition-tests.gradle')
 apply from: rootProject.file('gradle/oritech-fall-tests.gradle')
 apply from: rootProject.file('gradle/undergarden-tests.gradle')
+apply from: rootProject.file('gradle/allthemodium-tests.gradle')
 apply from: rootProject.file('gradle/roots-classic-tick-tests.gradle')
 apply from: rootProject.file('gradle/mystical-augments-tests.gradle')
 apply from: rootProject.file('gradle/silent-gear-tests.gradle')
