@@ -1,0 +1,170 @@
+[
+  {
+    "loader": "Fabric",
+    "filename": "architectury-fabric-20.1.16.jar",
+    "sha256": "a6641789cd7db92d73d3ba7b6b334cc2a2b0fe668475230ab9276be4ea112a5e",
+    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/Y7kRthh0/architectury-fabric-20.1.16.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "cloth-config-26.1.154 (Fabric).jar",
+    "sha256": "fb7a5d869ce10eaac2c2fe9ab84b4fc011a1fbfa575a93be9845a386a7f0c7d3",
+    "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/GFM8zh9J/cloth-config-26.1.154.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "Cucumber-Fabric-26.1.2-9.0.6.2.jar",
+    "sha256": "7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2",
+    "url": "https://edge.forgecdn.net/files/9060/393/Cucumber-Fabric-26.1.2-9.0.6.2.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "Iceberg-26.1.2-fabric-1.4.1.2.jar",
+    "sha256": "c0ec9b2f7659183c5c44ea83007c6653eb7ca9ddd3c4dd9cdab5c6f08e97a9a9",
+    "url": "https://cdn.modrinth.com/data/5faXoLqX/versions/UujfCDsB/Iceberg-26.1.2-fabric-1.4.1.2.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "jei-26.1.2-fabric-29.43.0.106.jar",
+    "sha256": "352c594fecc491e30ed96e427e6c0617ea95ec134cb3482fce0c57ff9e65e739",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/nkjaeEro/jei-26.1.2-fabric-29.43.0.106.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar",
+    "sha256": "58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278",
+    "url": "https://edge.forgecdn.net/files/9300/969/MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "Prism-26.1.2-fabric-1.1.1.jar",
+    "sha256": "8b28502c7096f832253ea7ec4b968b5f608865a4009d2c37b96e67bfd26a2fc3",
+    "url": "https://cdn.modrinth.com/data/1OE8wbN0/versions/uxupbyjR/Prism-26.1.2-fabric-1.1.1.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "RoughlyEnoughItems-26.1.819 (Fabric).jar",
+    "sha256": "45d8f488d3c295e97c88a0ad8d0167348f1e3453f22f274f9d7f7c7c97d799cc",
+    "url": "https://cdn.modrinth.com/data/nfn13YXA/versions/EAlqUmgQ/RoughlyEnoughItems-26.1.819.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "aether_ii-26.1.2-alpha.4.1-neoforge.jar",
+    "sha256": "97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6",
+    "url": "https://cdn.modrinth.com/data/JD2NSu5O/versions/soZ6Sulf/aether_ii-26.1.2-alpha.4.1-neoforge.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "athena-4.7.3.jar",
+    "sha256": "e0cf1eb366d8ada36c3f03cddae01be2b11b90a6684849e829b89c0ffac15888",
+    "url": "https://cdn.modrinth.com/data/b1ZV3DIJ/versions/8KRMFzZ7/athena-4.7.3.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "Cucumber-26.1.2-9.0.7.jar",
+    "sha256": "8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821",
+    "url": "https://cdn.modrinth.com/data/Rw1NrDzF/versions/SSzjv5lL/Cucumber-26.1.2-9.0.7.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "geckolib-neoforge-26.1.2-5.5.2.jar",
+    "sha256": "e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d",
+    "url": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/xfVfPcoC/geckolib-neoforge-26.1.2-5.5.2.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "iceandfire-2.2-beta.3.jar",
+    "sha256": "ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2",
+    "url": "https://edge.forgecdn.net/files/8929/527/iceandfire-2.2-beta.3.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "Iceberg-26.1.2-neoforge-1.4.1.2.jar",
+    "sha256": "78435ca80bb18b2d49c7e9fd53226ad457cc50227cf84c8837673e47fe2f97fc",
+    "url": "https://cdn.modrinth.com/data/5faXoLqX/versions/cG60lq2b/Iceberg-26.1.2-neoforge-1.4.1.2.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "jupiter-2.4.3-26.1.2-universal.jar",
+    "sha256": "fc2f273c02788c5ff6736439de8cef9a7eb2662f768e8ee1ac23c57323ee740c",
+    "url": "https://edge.forgecdn.net/files/8621/734/jupiter-2.4.3-26.1.2-universal.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "justdirethings-1.6.11.jar",
+    "sha256": "27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436",
+    "url": "https://edge.forgecdn.net/files/8251/776/justdirethings-1.6.11.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "LegendaryTooltips-26.1.2-neoforge-1.6.1.jar",
+    "sha256": "6202faca671187b4deb6d25a4f7a75bb7155caeeb2502dc584d2ac636a59b5a5",
+    "url": "https://cdn.modrinth.com/data/atHH8NyV/versions/ZaJ1nyhV/LegendaryTooltips-26.1.2-neoforge-1.6.1.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "modonomicon-26.1.2-neoforge-2.16.0.jar",
+    "sha256": "658d75ac71ef2e49eaeaa944f7ee82f407424df09f42adf459dd20cc98a57710",
+    "url": "https://cdn.modrinth.com/data/692GClaE/versions/h0y6qRv4/modonomicon-26.1.2-neoforge-2.16.0.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "MysticalAgriculture-26.1.2-9.0.11.jar",
+    "sha256": "f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498",
+    "url": "https://cdn.modrinth.com/data/C95ReXie/versions/euEwsQlw/MysticalAgriculture-26.1.2-9.0.11.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "neovitae-26.1.2-1.1.31.jar",
+    "sha256": "55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92",
+    "url": "https://cdn.modrinth.com/data/rvaW4C93/versions/QJXvo8Q1/neovitae-26.1.2-1.1.31.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "oritech-2.0.0-exp6.jar",
+    "sha256": "caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b",
+    "url": "https://cdn.modrinth.com/data/4sYI62kA/versions/2xLWeZUn/oritech-2.0.0-exp6.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "Prism-26.1.2-neoforge-1.1.1.jar",
+    "sha256": "1b36583c1fd8cba02bdfee0e01c6be762cc030144c7f701f76741dcdea05f6b0",
+    "url": "https://cdn.modrinth.com/data/1OE8wbN0/versions/DQFL8qWA/Prism-26.1.2-neoforge-1.1.1.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "RootsClassic-26.1.2-1.6.7.jar",
+    "sha256": "1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d",
+    "url": "https://edge.forgecdn.net/files/8757/288/RootsClassic-26.1.2-1.6.7.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "silent-gear-26.1.2-neoforge-4.2.3.jar",
+    "sha256": "2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf",
+    "url": "https://cdn.modrinth.com/data/73mSSnCf/versions/eG4f2c3T/silent-gear-26.1.2-neoforge-4.2.3.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "silent-lib-26.1.2-neoforge-11.2.0.jar",
+    "sha256": "0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655",
+    "url": "https://cdn.modrinth.com/data/BQhuHQo4/versions/Rc4eCDXl/silent-lib-26.1.2-neoforge-11.2.0.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "The_Undergarden-26.1.2-0.9.8.jar",
+    "sha256": "5a9c449b01327b8f368bfd8a70e5dd5707362a3e3211ea7735e751dff4c258dc",
+    "url": "https://cdn.modrinth.com/data/Ejfl5qDL/versions/e8zLw9Sq/The_Undergarden-26.1.2-0.9.8.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "uranus-3.0-alpha.1.jar",
+    "sha256": "ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000",
+    "url": "https://edge.forgecdn.net/files/8689/800/uranus-3.0-alpha.1.jar"
+  },
+  {
+    "loader": "Fabric",
+    "filename": "LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar",
+    "sha256": "1f464710ca16c7dd069aa0c54088ddd1b72c1fff33609c13fce547f1ae444d41",
+    "url": "https://cdn.modrinth.com/data/atHH8NyV/versions/f02TIUcN/LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar"
+  }
+]

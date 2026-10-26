@@ -1,4 +1,5 @@
 // Targeted production effect/refund gates; fixture code is never packaged in production.
+def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -63,7 +64,7 @@ if (!fabric) {
                 }
             }
             def artifacts = variant == 'Absent' ? [] : pins.collect { namePinned, hash ->
-                def artifact = rootProject.file("${loader}/runs/client/mods/${namePinned}")
+                def artifact = testMods.resolve(loader, namePinned)
                 if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                         .digest(artifact.bytes).encodeHex().toString() != hash) {
                     throw new GradleException("Missing/unexpected MA test fixture: ${artifact}")
@@ -71,7 +72,7 @@ if (!fabric) {
                 artifact
             }
             if (variant == 'RefundCoexist') {
-                def peer = rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar')
+                def peer = testMods.resolve('NeoForge', 'justdirethings-1.6.11.jar')
                 if (!peer.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(peer.bytes).encodeHex().toString()
                         != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
                     throw new GradleException('Missing/unexpected JDT coexistence fixture')
@@ -204,7 +205,7 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
             if (phase == 'Seed') {
                 filesService.delete { delete lifecycleRuns, lifecycleReports }
                 def artifacts = pins.collect { name, hash ->
-                    def artifact = rootProject.file("${loader}/runs/client/mods/${name}")
+                    def artifact = testMods.resolve(loader, name)
                     if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
                         throw new GradleException("Missing/unexpected MA lifecycle artifact: ${artifact}")
                     }

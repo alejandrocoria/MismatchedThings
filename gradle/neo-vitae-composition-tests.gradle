@@ -1,4 +1,5 @@
 // Disposable state stays in this fixture project's build directory, never the owner's indev client.
+def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
@@ -10,7 +11,7 @@ def nativeArtifacts = [
         'neovitae-26.1.2-1.1.31.jar'            : '55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92',
         'modonomicon-26.1.2-neoforge-2.16.0.jar': '658d75ac71ef2e49eaeaa944f7ee82f407424df09f42adf459dd20cc98a57710',
         'geckolib-neoforge-26.1.2-5.5.2.jar'    : 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d'
-].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
+].collectEntries { name, hash -> [(testMods.path('NeoForge', name)): hash] }
 
 ['Live', 'Absent'].each { variant ->
     def directory = runs.map { it.dir(variant.toLowerCase(Locale.ROOT)) }
@@ -33,6 +34,7 @@ def nativeArtifacts = [
                     throw new GradleException('Pinned Modonomicon requires NeoForge 26.1.2.109+; use .114 for the native gate')
                 }
                 nativeArtifacts.each { artifact, hash ->
+                    testMods.resolve('NeoForge', artifact.name)
                     if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                             .digest(artifact.bytes).encodeHex().toString() != hash) {
                         throw new GradleException("Missing/unexpected pinned Neo Vitae fixture: ${artifact}")

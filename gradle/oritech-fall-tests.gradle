@@ -1,4 +1,5 @@
 // Isolated, pinned native/absent checks; never mutate the owner's client mods/worlds.
+def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
@@ -9,7 +10,7 @@ def artifacts = [
         'oritech-2.0.0-exp6.jar'            : 'caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b',
         'geckolib-neoforge-26.1.2-5.5.2.jar': 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d',
         'athena-4.7.3.jar'                  : 'e0cf1eb366d8ada36c3f03cddae01be2b11b90a6684849e829b89c0ffac15888'
-].collectEntries { name, hash -> [(rootProject.file("NeoForge/runs/client/mods/${name}")): hash] }
+].collectEntries { name, hash -> [(testMods.path('NeoForge', name)): hash] }
 
 ['Live', 'Absent'].each { variant ->
     def directory = runs.map { it.dir(variant.toLowerCase(Locale.ROOT)) }
@@ -29,6 +30,7 @@ def artifacts = [
         doLast {
             if (variant == 'Live') {
                 artifacts.each { artifact, hash ->
+                    testMods.resolve('NeoForge', artifact.name)
                     if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                             .digest(artifact.bytes).encodeHex().toString() != hash) {
                         throw new GradleException("Missing/unexpected pinned Oritech fixture: ${artifact}")

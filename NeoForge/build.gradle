@@ -68,8 +68,26 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+def testMods = rootProject.ext.testModArtifacts
+def guardFixtures = [
+        justDireGuardJar: 'justdirethings-1.6.11.jar',
+        iceAndFireGuardJar: 'iceandfire-2.2-beta.3.jar',
+        aetherGuardJar: 'aether_ii-26.1.2-alpha.4.1-neoforge.jar',
+        oritechGuardJar: 'oritech-2.0.0-exp6.jar',
+        rootsGuardJar: 'RootsClassic-26.1.2-1.6.7.jar',
+        undergardenGuardJar: 'The_Undergarden-26.1.2-0.9.8.jar'
+].findAll { property, filename -> !providers.gradleProperty(property).isPresent() }
+def guardArtifactInputs = guardFixtures.collect { property, filename ->
+    providers.provider { testMods.resolve('NeoForge', filename) }
+}
+
 tasks.named('test', Test).configure {
     useJUnitPlatform()
+    inputs.files(guardArtifactInputs).withPropertyName('nativeGuardArtifacts')
+            .withPathSensitivity(PathSensitivity.NONE)
+    guardFixtures.each { property, filename ->
+        systemProperty "mismatchedboots.test.${property}", testMods.path('NeoForge', filename).absolutePath
+    }
     def justDireGuardArtifact = providers.gradleProperty('justDireGuardJar')
     if (justDireGuardArtifact.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireGuardJar', rootProject.file(justDireGuardArtifact.get()).absolutePath

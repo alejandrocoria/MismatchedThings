@@ -8,6 +8,8 @@ base.archivesName = "mismatchedboots-runtime-test-fabric"
 evaluationDependsOn(':Fabric')
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
+def testMods = rootProject.ext.testModArtifacts
+
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def fixtureBuildDirectory = layout.buildDirectory
 def productionArchive = project(':Fabric').tasks.named('jar').flatMap { it.archiveFile }
@@ -160,7 +162,7 @@ def viewerCases = [
 ]
 viewerCases.each { suffix, fixture ->
     def runDirectory = fixtureBuildDirectory.dir("run/${fixture.id}RecipeReloadClient")
-    def fixtureFiles = fixture.artifacts.collect { name, hash -> rootProject.file("Fabric/runs/client/mods/${name}") }
+    def fixtureFiles = fixture.artifacts.collect { name, hash -> testMods.path('Fabric', name) }
     loom.runs.create("${fixture.id}RecipeReloadClient") {
         inherit loom.runs.client
         source('gametest')
@@ -177,6 +179,7 @@ viewerCases.each { suffix, fixture ->
         delete runDirectory
         doLast {
             fixtureFiles.each { artifact ->
+                testMods.resolve('Fabric', artifact.name)
                 if (!artifact.isFile()) {
                     throw new GradleException("Install the exact optional viewer fixture first: ${artifact}")
                 }

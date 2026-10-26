@@ -1,4 +1,5 @@
 // Opt-in production acceptance: native jars are neither compile nor publication dependencies.
+def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
@@ -35,7 +36,7 @@ tasks.register('prepareSilentGearStats') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def jars = artifacts.collect { filename, hash ->
-            def jar = rootProject.file("NeoForge/runs/client/mods/${filename}")
+            def jar = testMods.resolve('NeoForge', filename)
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                     .digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected pinned Silent Gear fixture: ${jar}")
@@ -204,7 +205,7 @@ tasks.register('prepareSilentGearRemainingSeed') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def jars = artifacts.findAll { name, hash -> name.startsWith('silent-') }.collect { name, hash ->
-            def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
+            def jar = testMods.resolve('NeoForge', name)
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected SG remaining fixture: ${jar}")
             }
@@ -267,7 +268,7 @@ tasks.register('prepareSilentGearTooltip') {
     dependsOn('prepareSilentGearRemaining')
     doLast {
         justDireArtifact.each { name, hash ->
-            def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
+            def jar = testMods.resolve('NeoForge', name)
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected JDT tooltip coexistence fixture: ${jar}")
             }
@@ -367,7 +368,7 @@ tasks.register('prepareSilentGearSave') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
         def jars = (artifacts + justDireArtifact).collect { name, hash ->
-            def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
+            def jar = testMods.resolve('NeoForge', name)
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected pinned SG lifecycle artifact: ${jar}")
             }

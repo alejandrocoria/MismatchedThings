@@ -1,4 +1,5 @@
 // Isolated production presentation checks. No test-owned separator producer, factory or renderer.
+def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def fixtureSources = fabric ? sourceSets.networkTest : sourceSets.main
@@ -73,7 +74,7 @@ def artifacts = fabric ? [
             }
             filesService.delete { delete target, markers.get().asFile }
             def mods = phase == 'Legendary' ? artifacts.collect { name, expected ->
-                def artifact = rootProject.file("${loader}/runs/client/mods/${name}")
+                def artifact = testMods.resolve(loader, name)
                 if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != expected) {
                     throw new GradleException("Missing/unexpected separator fixture: ${artifact}")
                 }

@@ -1,9 +1,10 @@
 // Independent production charm and locally guarded recognition acceptance.
+def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = rootProject.ext.runBoundedGradleTask
-def artifact = rootProject.file('NeoForge/runs/client/mods/aether_ii-26.1.2-alpha.4.1-neoforge.jar')
+def artifact = testMods.path('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar')
 
 def recognitionVariants = ['Live', 'Chains', 'SetChanged', 'SentryChanged']
 (['Charms'] + recognitionVariants.collect { "Recognition${it}" }).each { scope ->
@@ -27,6 +28,7 @@ def recognitionVariants = ['Live', 'Chains', 'SetChanged', 'SentryChanged']
     def prepare = tasks.register("prepareAetherII${scope}") {
         dependsOn(':NeoForge:jar', tasks.named('jar'))
         doLast {
+            testMods.resolve('NeoForge', artifact.name)
             if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                     .digest(artifact.bytes).encodeHex().toString() !=
                     '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6') {
@@ -132,6 +134,7 @@ def lifecycleClient = layout.buildDirectory.dir("run/aetherIILifecycle/${neoforg
 tasks.register('prepareAetherIISave') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
+        testMods.resolve('NeoForge', artifact.name)
         if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
                 != '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6') {
             throw new GradleException('Missing/unexpected pinned Aether II lifecycle artifact')

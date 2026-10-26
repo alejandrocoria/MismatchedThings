@@ -1,0 +1,76 @@
+// Exact third-party runtime fixtures; isolated from production dependencies/publication.
+def pins = new groovy.json.JsonSlurper().parse(file('RuntimeTests/mod-artifacts.json'))
+def artifacts = [:]
+pins.eachWithIndex { pin, index ->
+    def uri = URI.create(pin.url)
+    def filename = uri.path.substring(uri.path.lastIndexOf('/') + 1)
+    def module = "fixture-${index}"
+    def group = 'mismatchedboots.test-fixtures'
+    repositories.ivy {
+        name = "TestMod${index}"
+        url = pin.url.substring(0, pin.url.lastIndexOf('/') + 1)
+        patternLayout { artifact '[artifact].[ext]' }
+        metadataSources { artifact() }
+        content { includeModule(group, module) }
+    }
+    def configuration = configurations.create("testMod${index}") {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    dependencies.add(configuration.name, "${group}:${module}:1") {
+        artifact {
+            name = filename.substring(0, filename.length() - '.jar'.length())
+            extension = 'jar'
+            type = 'jar'
+        }
+    }
+    def target = layout.buildDirectory.file("test-mods/${pin.loader}/${pin.filename}").get().asFile
+    artifacts["${pin.loader}/${pin.filename}".toString()] =
+            TestModArtifacts.entry(target, configuration, pin.sha256)
+}
+
+def testMods = new TestModArtifacts(artifacts)
+ext.testModArtifacts = testMods
+
+tasks.register('prepareTestModArtifacts') {
+    group = 'verification'
+    description = 'Downloads and SHA-256-verifies every pinned optional runtime test mod'
+    doLast {
+        pins.each { pin -> testMods.resolve(pin.loader, pin.filename) }
+    }
+}
+
+tasks.register('verifyTestModArtifacts') {
+    group = 'verification'
+    description = 'Checks fixture download integrity, damaged staging recovery and checksum rejection'
+    dependsOn tasks.named('prepareTestModArtifacts')
+    def damaged = layout.buildDirectory.file('test-mod-checks/damaged.jar')
+    doLast {
+        def pin = pins.first()
+        def key = "${pin.loader}/${pin.filename}".toString()
+        def original = artifacts[key]
+        def target = damaged.get().asFile
+        target.parentFile.mkdirs()
+        target.bytes = [0, 1, 2] as byte[]
+        def repair = new TestModArtifacts([(key): TestModArtifacts.entry(target,
+                original.configuration(), pin.sha256)])
+        repair.resolve(pin.loader, pin.filename)
+        if (!java.util.Arrays.equals(target.bytes, original.target().bytes)) {
+            throw new GradleException('Fixture resolver did not replace damaged staged bytes')
+        }
+        def rejected = new TestModArtifacts([(key): TestModArtifacts.entry(target,
+                original.configuration(), '0' * 64)])
+        try {
+            rejected.resolve(pin.loader, pin.filename)
+            throw new GradleException('Fixture resolver accepted the wrong checksum')
+        } catch (GradleException expected) {
+            if (!expected.message.startsWith('Unexpected SHA-256 for test mod ')) {
+                throw expected
+            }
+        }
+        if (!java.util.Arrays.equals(target.bytes, original.target().bytes)) {
+            throw new GradleException('Rejected fixture changed staged bytes')
+        }
+    }
+}

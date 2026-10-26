@@ -5,6 +5,7 @@ import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
+import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.Holder;
@@ -13,7 +14,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.RegistryOps;
@@ -367,8 +367,8 @@ public final class CompatibilityGameTests {
                           description + " source labels were not bold: " + lines);
         helper.assertTrue(rootTrim > rightTrim && rootAttributes > rootTrim,
                           description + " live root region was misplaced: " + lines);
-        helper.assertTrue(hasEmptyBetween(lines, leftTrim, right)
-                                  && hasEmptyBetween(lines, rightTrim, rootTrim),
+        helper.assertTrue(hasSeparatorBetween(lines, leftTrim, right)
+                                  && hasSeparatorBetween(lines, rightTrim, rootTrim),
                           description + " source boundaries lacked separators: " + lines);
         helper.assertValueEqual(countTranslation(lines, "item.minecraft.smithing_template.upgrade"), 3L,
                                 description + " trim section count");
@@ -385,9 +385,9 @@ public final class CompatibilityGameTests {
         stack.set(DataComponents.ENCHANTMENTS, values.toImmutable());
     }
 
-    private static boolean hasEmptyBetween(List<Component> lines, int startExclusive, int endExclusive) {
+    private static boolean hasSeparatorBetween(List<Component> lines, int startExclusive, int endExclusive) {
         for (int index = startExclusive + 1; index < endExclusive; index++) {
-            if (CommonComponents.EMPTY.equals(lines.get(index))) {
+            if (lines.get(index) == TooltipSeparator.INSTANCE) {
                 return true;
             }
         }

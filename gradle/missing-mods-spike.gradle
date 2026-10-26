@@ -1,4 +1,5 @@
 // Packaged production capture; fixtures supply scenarios, peers and an explicit native-loss control only.
+def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def baseline = fabric ? minecraft_version : neoforge_version
@@ -20,7 +21,7 @@ def artifacts = (fabric ? [
         'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
         'Cucumber-26.1.2-9.0.7.jar'            : '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821',
         'justdirethings-1.6.11.jar'            : '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436'
-]).collectEntries { name, hash -> [(rootProject.file("${loader}/runs/client/mods/${name}")): hash] }
+]).collectEntries { name, hash -> [(testMods.path(loader, name)): hash] }
 def artifactsForStage = { String stage ->
     artifacts.findAll { artifact, hash ->
         !(stage in ['absent', 'absentagain', 'clientabsent']) && !(stage == 'partial' && artifact.name.startsWith('justdirethings-'))
@@ -66,6 +67,7 @@ def artifactsForStage = { String stage ->
                 def selectedArtifacts = artifactsForStage(stage)
                 if (!selectedArtifacts.isEmpty()) {
                     selectedArtifacts.each { artifact, hash ->
+                        testMods.resolve(loader, artifact.name)
                         if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
                             throw new GradleException("Missing/unexpected pinned missing-mod fixture: ${artifact}")
                         }
@@ -221,6 +223,7 @@ def candidateReports = layout.buildDirectory.dir("reports/missing-mods/${baselin
             fixtureFiles.copy {
                 from productionJar, fixtureJar
                 from artifactsForStage(stage).collect { artifact, hash ->
+                    testMods.resolve(loader, artifact.name)
                     if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
                         throw new GradleException("Missing/unexpected pinned connected fixture: ${artifact}")
                     }

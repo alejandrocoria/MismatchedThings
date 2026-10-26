@@ -8,6 +8,8 @@ base.archivesName = "mismatchedboots-runtime-test-neoforge"
 evaluationDependsOn(':NeoForge')
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
+def testMods = rootProject.ext.testModArtifacts
+
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 def fixtureBuildDirectory = layout.buildDirectory
 def productionArchive = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
@@ -67,9 +69,11 @@ def geometryMarkers = fixtureBuildDirectory.dir('geometry-markers')
 def geometryRunDirectory = fixtureBuildDirectory.dir('run/geometryClient')
 def iceAndFireTest = providers.gradleProperty('iceAndFireTest').map { it.toBoolean() }.getOrElse(false)
 def rootsRenderingTest = providers.gradleProperty('rootsRenderingTest').map { it.toBoolean() }.getOrElse(false)
-def rootsRenderingArtifact = rootProject.file('NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar')
+def rootsRenderingArtifact = testMods.path('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar')
+def iceAndFireModsOverride = providers.gradleProperty('iceAndFireTestModsDirectory').isPresent()
+
 def iceAndFireModsDirectory = providers.gradleProperty('iceAndFireTestModsDirectory')
-        .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods'))
+        .map { rootProject.file(it) }.getOrElse(rootProject.layout.buildDirectory.dir('test-mods/NeoForge').get().asFile)
 def iceAndFireArtifacts = [
         'iceandfire-2.2-beta.3.jar'         : 'ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2',
         'uranus-3.0-alpha.1.jar'            : 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',
@@ -78,6 +82,9 @@ def iceAndFireArtifacts = [
 def verifiedIceAndFireArtifacts = {
     iceAndFireArtifacts.collect { filename, expectedHash ->
         def artifact = new File(iceAndFireModsDirectory, filename)
+        if (!iceAndFireModsOverride) {
+            testMods.resolve('NeoForge', filename)
+        }
         if (!artifact.isFile()) {
             throw new GradleException("Missing optional Ice and Fire fixture: ${artifact}")
         }
@@ -117,8 +124,10 @@ def justDireItemBarsDirectory = fixtureBuildDirectory.dir("run/justDireItemBarsP
 def justDireItemBarsMarkers = fixtureBuildDirectory.dir("reports/just-dire-item-bars-production/${neoforge_version}")
 def justDireItemBarVariants = ['Live', 'Absent', 'StorageMissing', 'QueryFailure', 'InvalidWidth', 'LinkageFailure']
 def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile }
+def justDireArtifactOverride = providers.gradleProperty('justDireThingsTestJar').isPresent()
+
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
-        .map { rootProject.file(it) }.getOrElse(rootProject.file('NeoForge/runs/client/mods/justdirethings-1.6.11.jar'))
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
 
 neoForge {
     version = neoforge_version
@@ -606,6 +615,9 @@ neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideHead)
 tasks.register('prepareJustDireItemBarsServer') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
+        if (!justDireArtifactOverride) {
+            testMods.resolve('NeoForge', justDireSmithingArtifact.name)
+        }
         if (!justDireSmithingArtifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
                 .digest(justDireSmithingArtifact.bytes).encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
             throw new GradleException("Missing/unexpected pinned JDT fixture: ${justDireSmithingArtifact}")
@@ -715,6 +727,9 @@ tasks.register('verifyJustDireItemBars') {
 tasks.register('prepareJustDireSmithing') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
+        if (!justDireArtifactOverride) {
+            testMods.resolve('NeoForge', justDireSmithingArtifact.name)
+        }
         if (!justDireSmithingArtifact.isFile()) {
             throw new GradleException("Missing optional Just Dire Things fixture: ${justDireSmithingArtifact}")
         }
@@ -1164,6 +1179,9 @@ tasks.named('runJustDireResourcesRestart') { dependsOn(':NeoForge:jar', tasks.na
 tasks.register('prepareJustDireResourcesClient') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
+        if (!justDireArtifactOverride) {
+            testMods.resolve('NeoForge', justDireSmithingArtifact.name)
+        }
         def world = new File(justDireSmithingRunDirectory.get().asFile, 'world')
         if (!new File(world, 'level.dat').isFile()) {
             throw new GradleException('Run resource server/restart acceptance first')
@@ -1313,6 +1331,9 @@ tasks.register('verifyJustDireResources') {
 tasks.register('prepareJustDireJumpClient') {
     dependsOn(':NeoForge:jar', tasks.named('jar'))
     doLast {
+        if (!justDireArtifactOverride) {
+            testMods.resolve('NeoForge', justDireSmithingArtifact.name)
+        }
         def world = new File(justDireSmithingRunDirectory.get().asFile, 'world')
         if (!new File(world, 'level.dat').isFile()) {
             throw new GradleException('Run the passive-jump server gate first to prepare its disposable world')
@@ -1702,8 +1723,12 @@ spawn-protection=0
 }
 
 def mutatedTideJar = fixtureBuildDirectory.file('tide-api-field/iceandfire-2.2-beta.3.jar')
+def prepareTideMutationArtifact = tasks.register('prepareTideMutationArtifact') {
+    doLast { verifiedIceAndFireArtifacts() }
+}
+
 def mutateTideApi = tasks.register('mutateTideApi', JavaExec) {
-    dependsOn(tasks.named('iceAndFireTideTestClasses'))
+    dependsOn(tasks.named('iceAndFireTideTestClasses'), prepareTideMutationArtifact)
     classpath = sourceSets.iceAndFireTideTest.runtimeClasspath
     mainClass = 'games.alejandrocoria.mismatchedboots.runtimetest.tide.TideJarMutation'
     inputs.file(new File(iceAndFireModsDirectory, 'iceandfire-2.2-beta.3.jar'))
@@ -1846,6 +1871,7 @@ tasks.register('prepareGeometryClient') {
             compatibilityArtifacts = verifiedIceAndFireArtifacts()
         }
         if (rootsRenderingTest) {
+            testMods.resolve('NeoForge', rootsRenderingArtifact.name)
             if (!rootsRenderingArtifact.isFile()
                     || java.security.MessageDigest.getInstance('SHA-256').digest(rootsRenderingArtifact.bytes)
                     .encodeHex().toString() != '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d') {

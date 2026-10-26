@@ -5,6 +5,7 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.141' apply false
 }
 
+apply from: 'gradle/test-mod-artifacts.gradle'
 apply from: "gradle/network-acceptance-tests.gradle"
 
 tasks.configureEach { task ->

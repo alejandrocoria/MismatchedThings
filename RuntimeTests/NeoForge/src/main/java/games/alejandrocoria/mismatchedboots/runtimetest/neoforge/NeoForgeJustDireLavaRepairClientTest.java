@@ -86,7 +86,12 @@ public final class NeoForgeJustDireLavaRepairClientTest {
                 if (mixed && item.getItem().isDamaged()) {
                     return;
                 }
-                require(highest > 80.5 && JustDireLavaRepairTestSupport.clientParticles > 0, "No native factory particles or synchronized item rise");
+                String observation = "phase=" + phase + " highest=" + highest + " particles="
+                        + JustDireLavaRepairTestSupport.clientParticles + " age=" + item.getAge()
+                        + " chunkLoaded=" + client.level.hasChunkAt(SOURCE)
+                        + " screen=" + (client.screen == null ? "none" : client.screen.getClass().getSimpleName());
+                require(highest > 80.5, "No synchronized item rise; " + observation);
+                require(JustDireLavaRepairTestSupport.clientParticles > 0, "No native factory particles; " + observation);
                 boolean mixedCompleted = mixed;
                 var server = client.getSingleplayerServer();
                 job = server.submit(() -> {

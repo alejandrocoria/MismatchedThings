@@ -14,6 +14,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
@@ -71,7 +72,8 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         boolean oneItem = count == null || ops.getNumberValue(count).result().map(number -> number.doubleValue() == 1).orElse(false);
         boolean restoring = patch.contains(ARCHIVE);
         if (!restoring && oneItem && sourcesPresent(patch.get(SOURCES))) {
-            DataResult<ItemStack> active = read(ops, input, patch);
+            // Keep native JSON booleans/numbers intact; NBT is only the archive's storage representation.
+            DataResult<ItemStack> active = decodeNative(ops, input);
             if (ready(active)) {
                 return active;
             }
@@ -201,7 +203,7 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
                 continue;
             }
             try {
-                var readable = ItemStack.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, sources.get(side))).result();
+                var readable = ItemStack.CODEC.parse(nbtOps(ops), sources.get(side)).result();
                 // Missing registrations cannot prove gameplay readiness. Fully readable non-boots,
                 // however, are known invalid history and must not acquire an invented feet slot.
                 if (readable.isPresent() && !BootHalf.isValidSource(readable.get())) {
@@ -251,18 +253,33 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         CompoundTag singleton = new CompoundTag();
         singleton.put(key, value.copy());
         try {
-            return DataComponentPatch.CODEC.parse(ops, NbtOps.INSTANCE.convertTo(ops, singleton)).result().isPresent();
+            return DataComponentPatch.CODEC.parse(nbtOps(ops), singleton).result().isPresent();
         } catch (RuntimeException unreadable) {
             return false;
         }
     }
 
     private <T> DataResult<ItemStack> read(DynamicOps<T> ops, MapLike<T> input, CompoundTag patch) {
-        T replacement = NbtOps.INSTANCE.convertTo(ops, patch.copy());
-        T root = ops.createMap(input.entries().map(entry -> ops.getStringValue(entry.getFirst()).result().orElse("").equals("components")
-                                                            ? com.mojang.datafixers.util.Pair.of(entry.getFirst(), replacement) : entry));
+        // Decode typed archive values as NBT, retaining registry lookups. Converting them back to JSON
+        // would turn boolean bytes into numbers, which foreign codecs may reject or silently default.
+        CompoundTag root = new CompoundTag();
+        input.entries().forEach(entry -> {
+            String key = ops.getStringValue(entry.getFirst()).getOrThrow();
+            if (!key.equals("components")) {
+                root.put(key, ops.convertTo(NbtOps.INSTANCE, entry.getSecond()));
+            }
+        });
+        root.put("components", patch.copy());
+        return NbtOps.INSTANCE.getMap(root).flatMap(map -> decodeNative(nbtOps(ops), map));
+    }
+
+    private static <T> DynamicOps<Tag> nbtOps(DynamicOps<T> ops) {
+        return ops instanceof RegistryOps<?> registries ? registries.withParent(NbtOps.INSTANCE) : NbtOps.INSTANCE;
+    }
+
+    private <T> DataResult<ItemStack> decodeNative(DynamicOps<T> ops, MapLike<T> input) {
         try {
-            return ops.getMap(root).flatMap(map -> delegate.decode(ops, map));
+            return delegate.decode(ops, input);
         } catch (RuntimeException failure) {
             return DataResult.error(() -> "Native mixed root decoding failed");
         }

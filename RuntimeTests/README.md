@@ -4,6 +4,31 @@ This directory contains test-only mods and their Gradle run configurations.
 Production sources remain in `Common`, `Fabric`, and `NeoForge` at the
 repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
 
+## Third-party test artifacts
+
+Maintained tests do not depend on JARs in the indev instances. Third-party mods
+are downloaded on demand from exact Modrinth/CurseForge publications and checked
+against their SHA-256 pins. The formerly local fixtures are registered in
+[mod-artifacts.json](mod-artifacts.json), resolved through Gradle's artifact
+cache and staged in `build/test-mods/<loader>/` at the repository root. Other
+existing test configurations retain their exact Maven coordinates.
+
+To prefetch and verify the entire fixture catalog:
+
+```powershell
+.\gradlew.bat prepareTestModArtifacts
+.\gradlew.bat verifyTestModArtifacts --offline
+```
+
+Each suite copies only its required artifacts into its disposable run. It never
+reads or changes indev mods/configs/worlds by default. Existing explicit local
+path overrides remain available for deliberate development experiments, but
+are not required for normal tests. Native guard JUnit checks also resolve their
+default JARs automatically; transformed-class witnesses still come from their
+dedicated runtime checks. After all required Gradle/game artifacts are cached,
+tests can run offline. Adding a maintained compatibility test requires a pinned,
+automatically resolved artifact, not an implicit dependency on an indev JAR.
+
 ## Layout
 
 - `Common/src/main/java`: shared loader-server/network acceptance scenarios and helpers.
@@ -74,6 +99,10 @@ retention and a non-wearing feet shell. Bounded malformed archive values stay
 opaque in quarantine; real native barrel loading must preserve both the affected
 item and adjacent slot. Foreign throwing/read-error codecs remain suspended;
 successful native conversions/filtering and stable reload are checked separately.
+Candidate writes also check native JSON round-trips of active root/source
+booleans, suspended shells with opaque typed NBT payloads, and restoration with
+an enchantment requiring registry context. Active JSON is not transcoded through
+NBT; archived values decode as NBT with the original registry lookup.
 An actual compatible operation wrapper participates in
 decode; an altered factory or competing wrapper which bypasses capture must
 refuse startup before world creation. Loom can
@@ -156,7 +185,7 @@ No actual newer-third-party-release upgrade is claimed.
 ```
 
 These targeted tasks run five isolated dedicated servers per loader/baseline,
-using the exact installed MA/Cucumber artifacts pinned in
+using the exact downloaded MA/Cucumber artifacts pinned in
 [mystical-augments-tests.gradle](../gradle/mystical-augments-tests.gradle).
 Runs/reports are isolated under each runtime project's
 `build/run/mysticalAugments/<baseline>/` and
@@ -356,7 +385,7 @@ resolution per source, source immutability, native dye/overlay/trim/foil,
 extension texture, lighting, and outline parameters. These are actual native
 deferred submissions, not only the earlier recording-renderer fixture.
 
-An optional Ice and Fire CE probe uses the pinned installed candidate JARs:
+An optional Ice and Fire CE probe uses the pinned downloaded candidate JARs:
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -PiceAndFireTest=true
@@ -365,7 +394,7 @@ An optional Ice and Fire CE probe uses the pinned installed candidate JARs:
 It copies only Ice and Fire 2.2-beta.3, Uranus 3.0-alpha.1, and Jupiter
 2.4.3 into the disposable geometry client, verifies their SHA-256 pins before
 copying, and leaves the development mods directory unchanged. Source JARs
-default to `NeoForge/runs/client/mods`; override with
+default to the test artifact cache; override with
 `-PiceAndFireTestModsDirectory=<directory>` if needed. Integration 0.2 is nested
 in Ice and Fire, not another source JAR. The ordinary run needs none of these mods.
 
@@ -390,8 +419,8 @@ Both production archives must remain free of native Aether classes, fixture
 drivers and experimental query mixins/config. The identifier-only Common default
 is intentionally part of production, not a native dependency leak.
 
-The opt-in server fixture hash-checks the installed alpha.4.1 JAR (including its
-bundled Cumulus/Nitrogen) from `NeoForge/runs/client/mods`, without modifying it.
+The opt-in server fixture downloads and hash-checks alpha.4.1 (including its
+bundled Cumulus/Nitrogen) using the test artifact catalog.
 Ordinary compilation has no Aether dependency. This run uses **normal server
 rules**, no per-creation omission candidate, and never enables the observation/
 operand-fault mixins. `aether_ii:charms=omit` is now the configurable production
@@ -427,7 +456,7 @@ error-free native-mod environment.
 ### Aether II sets and Sentry — production block B
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*AetherRecognitionShapeTest' '-PaetherGuardJar=NeoForge/runs/client/mods/aether_ii-26.1.2-alpha.4.1-neoforge.jar' :RuntimeTests:NeoForge:verifyAetherIIRecognition --console=plain
+.\gradlew.bat :NeoForge:test --tests '*AetherRecognitionShapeTest' :RuntimeTests:NeoForge:verifyAetherIIRecognition --console=plain
 ```
 
 Repeat with `'-Pneoforge_version=26.1.2.99'`, then restore .114. The four native
@@ -589,9 +618,9 @@ retired, not retained as aliases. Run Gradle tasks sequentially:
 ```
 
 Repeat with `'-Pneoforge_version=26.1.2.99'` for the supported floor; restore the
-ordinary .114 artifacts before packaging. Preparation verifies the installed
-Silent Gear 4.2.3 and Silent Lib 11.2.0 SHA-256 pins from
-`NeoForge/runs/client/mods`. Only disposable fixture-project build directories
+ordinary .114 artifacts before packaging. Preparation resolves and verifies
+Silent Gear 4.2.3 and Silent Lib 11.2.0 from the test artifact catalog.
+Only disposable fixture-project build directories
 are cleared; development clients/mods/configs/worlds stay untouched.
 No new dependency of `build`/`check` is installed.
 
@@ -1048,8 +1077,8 @@ The opt-in native-model check runs in the disposable geometry client:
 .\gradlew.bat :RuntimeTests:NeoForge:verifyGeometryCharacterization -ProotsRenderingTest=true -PiceAndFireTest=true '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
-`rootsRenderingTest` verifies the installed `RootsClassic-26.1.2-1.6.7.jar`
-SHA-256 before copying it from the development mods directory; no external
+`rootsRenderingTest` downloads `RootsClassic-26.1.2-1.6.7.jar` and verifies its
+SHA-256 before copying it from the test artifact cache; no external
 library is needed. `iceAndFireTest` additionally runs the existing 93 ordered
 Ice and Fire pairs through the same production adapter. Neither option edits those JARs
 or the development client. The ordinary geometry command needs neither mod.
@@ -1078,7 +1107,7 @@ The focused production B/C gates use the pinned Roots Classic artifact from the
 rendering check, with no external library. They never alter the owner's mods:
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*Roots*ShapeTest' '-ProotsGuardJar=NeoForge/runs/client/mods/RootsClassic-26.1.2-1.6.7.jar' --console=plain
+.\gradlew.bat :NeoForge:test --tests '*Roots*ShapeTest' --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyRootsTicks --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyRootsTicksAbsent --console=plain
 ```
@@ -1128,7 +1157,7 @@ same pinned artifacts and does not need a client:
 
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyIceAndFireDamageCompatibility
-.\gradlew.bat :NeoForge:test '-PiceAndFireGuardJar=NeoForge/runs/client/mods/iceandfire-2.2-beta.3.jar'
+.\gradlew.bat :NeoForge:test
 ```
 
 The first task copies only the three SHA-256-verified mod JARs plus the packaged
@@ -1275,10 +1304,10 @@ Optional recipe-viewer regressions run individually:
 .\gradlew.bat :RuntimeTests:Fabric:verifyReiRecipeReload
 ```
 
-These require the exact existing Fabric client JARs named and SHA-256-pinned in
-[Fabric/build.gradle](Fabric/build.gradle). They copy those artifacts read-only
-from `Fabric/runs/client/mods` into disposable test runs; they do not download
-them, alter the indev client, or make viewers dependencies of ordinary tests.
+These resolve the exact Fabric viewer JARs and dependencies from the test
+artifact catalog, verify their SHA-256 pins and copy them into disposable test
+runs. They do not alter the indev client or make viewers dependencies of
+ordinary tests.
 Each run checks the actual viewer API and opening path, one aligned two-output
 cycle, repeated reopening, and datapack removal/replacement/restoration, followed
 by disconnect invalidation. Screens are closed before datapack reload; rendering
@@ -1374,8 +1403,8 @@ A/B/C plan. This does not establish a manual .99/.114 matrix.
 A/B's earlier creation-only/preview evidence remains historical; current C results
 and per-phase archived reports are in plan section 10.
 
-Live hash-checks the installed Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
-2.16.0 JARs, copying them read-only from `NeoForge/runs/client/mods` into disposable
+Live downloads and hash-checks Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
+2.16.0 from the test artifact catalog, copying them into disposable
 fixture directories. Pinned Modonomicon needs NeoForge .109+, so Live is checked
 on .114, **not .99**; Absent and local policy tests run on both .99/.114. Never
 bypass upstream metadata to fill that matrix cell. No new mandatory dependency,
@@ -1434,7 +1463,7 @@ closing that bounded change without adding an automated run or manual loader mat
 ## Undergarden boot recognition
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests '*UndergardenGooShapeTest' '-PundergardenGuardJar=NeoForge/runs/client/mods/The_Undergarden-26.1.2-0.9.8.jar' :RuntimeTests:NeoForge:verifyUndergarden --console=plain
+.\gradlew.bat :NeoForge:test --tests '*UndergardenGooShapeTest' :RuntimeTests:NeoForge:verifyUndergarden --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyUndergardenGuards --console=plain
 ```
 
@@ -1493,8 +1522,9 @@ Test marker insertion, drawing, gather/factory and conversion replacements were
 removed. Each task generates an isolated seed world and runs Plain and Legendary
 clients, hidden and muted. The dedicated seed server must also collect real
 production mixed tooltips and emit its own success marker.
-The three optional presentation JARs are hash-pinned from the corresponding
-loader's indev mod directory, read-only; no owner config/world is copied or edited.
+The three optional presentation JARs are downloaded and hash-checked using the
+corresponding loader's test artifact catalog; no indev JAR is required and no
+owner config/world is copied or edited.
 
 Six scenes per client check primary/inverse/advanced/ordinary controls, width
 changes/resizing, unchanged text/root/history, multiline source boundaries,
@@ -1599,8 +1629,8 @@ fixture directories; do not run these gates concurrently. Logs are under
 `RuntimeTests/NeoForge/build/reports/just-dire-jump/` (smithing has its own report
 directory). A successful marker is required, not merely a zero process exit.
 
-Native-bytecode guard unit checks are opt-in with
-`-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar`.
+Native-bytecode guard unit checks download their pinned JAR automatically;
+`-PjustDireGuardJar=<path>` is an optional explicit development override.
 The additional final-pair test accepts `-PjustDireTransformedClass=...` pointing
 at an active production/compatible MixinExtras export, not the absent/rejected
 variant. The API checks include powered wallet read-only dependencies, rejecting
@@ -1658,15 +1688,15 @@ with other JDT gates. Production behavior, selected access boundary, limitations
 and remaining manual acceptance are tracked in local-docs. The lifecycle/client
 outcomes belong to the extended resource gate below, not this server-only matrix.
 Guard/native unit checks use
-the same opt-in `justDireGuardJar`/`justDireTransformedClass` properties described
-above, with an active production or compatible export.
+the automatic pinned JDT artifact and the opt-in `justDireTransformedClass`
+property described above, with an active production or compatible export.
 
 ## Just Dire Things Negate consolidation and manual handoff (8.4 C)
 
 Run existing gates sequentially; no second lifecycle/client harness is needed:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireNegateGuards :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResourcesGuards :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireNegateFall :NeoForge:test "-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar" "-PjustDireTransformedClass=RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireNegateGuards :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResourcesGuards :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireNegateFall :NeoForge:test "-PjustDireTransformedClass=RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
 ```
 
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the ordinary .114
@@ -1867,8 +1897,8 @@ these gates, which share disposable run/marker directories):
 
 ```powershell
 .\gradlew.bat :Common:test :NeoForge:test :Fabric:verifyGameplay :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards verifyPackagedDependencies --console=plain
-.\gradlew.bat :NeoForge:test "-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar" :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards "-Pneoforge_version=26.1.2.99" --console=plain
-.\gradlew.bat :NeoForge:test "-PjustDireGuardJar=NeoForge/runs/client/mods/justdirethings-1.6.11.jar" :RuntimeTests:NeoForge:verifyJustDireSmithing verifyPackagedDependencies --console=plain
+.\gradlew.bat :NeoForge:test :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireResourcesGuards "-Pneoforge_version=26.1.2.99" --console=plain
+.\gradlew.bat :NeoForge:test :RuntimeTests:NeoForge:verifyJustDireSmithing verifyPackagedDependencies --console=plain
 ```
 
 The last command restores/verifies the normal .114 production artifact and its
@@ -2169,7 +2199,7 @@ Reports/process logs and the live final screen export are retained under
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 The final-export unit uses
 `-PjustDireSettingsTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/ToolSettingScreen.class`;
-native entry units use the existing `justDireGuardJar` opt-in.
+native entry units resolve the pinned JDT JAR automatically.
 Synthetic event-bus input is not a physical/manual acceptance. D.1 mouse input
 and D.2 passive-toggle bindings are implemented. Block E owns consolidated restart/
 reconnect and the final ordinary-client handoff; see

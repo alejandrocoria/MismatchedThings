@@ -1,4 +1,5 @@
 // Production presentation acceptance. Native artifacts are isolated fixtures, not publication dependencies.
+def testMods = rootProject.ext.testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(':NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
@@ -68,7 +69,7 @@ tasks.register('prepareAetherTooltipClient') {
             throw new GradleException('Aether tooltip acceptance requires its disposable seed world')
         }
         def jars = artifacts.collect { name, hash ->
-            def jar = rootProject.file("NeoForge/runs/client/mods/${name}")
+            def jar = testMods.resolve('NeoForge', name)
             if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
                 throw new GradleException("Missing/unexpected tooltip fixture: ${jar}")
             }

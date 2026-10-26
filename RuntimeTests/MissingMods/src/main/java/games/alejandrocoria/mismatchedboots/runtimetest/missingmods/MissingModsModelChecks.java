@@ -1,18 +1,24 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.missingmods;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.data.BootHalf;
+import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsData;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsItemCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -74,6 +80,7 @@ final class MissingModsModelChecks {
         require(removedShell.conflicts().contains("!minecraft:equippable"), "Removal of protected equip projection was ignored");
 
         nativeReadiness(server, encoded);
+        jsonRoundTrips(server, active);
         var notBoots = changed.copy();
         notBoots.getCompoundOrEmpty("components").getCompoundOrEmpty("mismatchedboots:mixed_boots_data")
                 .getCompoundOrEmpty("left").putString("id", "minecraft:stick");
@@ -184,6 +191,44 @@ final class MissingModsModelChecks {
             require(MissingModsProof.convertingReads == before, "Missing source reached foreign decoding before suspension");
             require(archive(server, missing).original().get(property).equals(legacy)
                             && ModContent.getMixedBootsData(missing).isEmpty(), "Missing source did not preserve the complete root");
+        }
+    }
+
+    private static void jsonRoundTrips(MinecraftServer server, ItemStack active) {
+        var nbt = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
+        var json = server.registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+        var root = active.copy();
+        // Opaque vanilla custom NBT has its own JSON normalization; this probe isolates typed components.
+        root.remove(DataComponents.CUSTOM_DATA);
+        root.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(Enchantments.UNBREAKING).orElseThrow(), 1);
+        var data = ModContent.getMixedBootsData(root).orElseThrow();
+        var left = data.left().source();
+        var right = data.right().source();
+        for (boolean enabled : new boolean[]{false, true}) {
+            var equipment = Equippable.builder(EquipmentSlot.FEET).setDamageOnHurt(enabled).build();
+            left.set(DataComponents.EQUIPPABLE, equipment);
+            right.set(DataComponents.EQUIPPABLE, equipment);
+            root.set(DataComponents.EQUIPPABLE, equipment);
+            root.set(ModContent.mixedBootsDataType().orElseThrow(), new MixedBootsData(new BootHalf(left), new BootHalf(right)));
+            var decoded = ItemStack.CODEC.parse(json, ItemStack.CODEC.encodeStart(json, root).getOrThrow()).getOrThrow();
+            require(ItemStack.matches(root, decoded), "JSON changed active root/source boolean components");
+
+            var encoded = (CompoundTag) ItemStack.CODEC.encodeStart(nbt, root).getOrThrow();
+            var unavailable = encoded.copy();
+            var opaque = new CompoundTag();
+            opaque.putBoolean("enabled", enabled);
+            opaque.putLongArray("values", new long[]{Long.MIN_VALUE, 9_007_199_254_740_993L, Long.MAX_VALUE});
+            unavailable.getCompoundOrEmpty("components").put("future:unavailable", opaque);
+            var suspended = ItemStack.CODEC.parse(nbt, unavailable).getOrThrow();
+            var reloaded = ItemStack.CODEC.parse(json, ItemStack.CODEC.encodeStart(json, suspended).getOrThrow()).getOrThrow();
+            require(ItemStack.matches(suspended, reloaded), "JSON changed the suspended archive or inert feet shell");
+
+            var original = ModContent.suspendedBootsData(suspended).orElseThrow().original();
+            original.remove("future:unavailable");
+            suspended.set(MissingModsProof.<SuspendedBootsData>component(SuspendedBootsItemCodec.ARCHIVE),
+                    SuspendedBootsData.of(original, SuspendedBootsData.equipmentProjection(), new CompoundTag()));
+            var restored = ItemStack.CODEC.parse(json, ItemStack.CODEC.encodeStart(json, suspended).getOrThrow()).getOrThrow();
+            require(ItemStack.matches(root, restored), "JSON restoration changed native root/source components");
         }
     }
 

@@ -245,7 +245,7 @@ public final class MissingModsProof {
                 + (fabric() ? "native MA Fabric augments and temporary foreign counter" : "native MA NeoForge augments and paid-root JDT charge")
                 + "; attribute/equip sound, typed arrays, vanilla/bare controls"
                 + (candidate()
-                   ? "; conflict/removal/native-normalization/conversion/filtering/source-presence/throwing-codec/native-container/invalid-equip checks; real rename/workstation/wear/XP/refund checks passed"
+                   ? "; conflict/removal/native-normalization/conversion/filtering/source-presence/throwing-codec/native-container/invalid-equip checks; JSON active/suspended/restored booleans; real rename/workstation/wear/XP/refund checks passed"
                      + (fabric() ? "" : "; actual FE and retained-handler denial passed")
                    : "") + "\n");
     }
@@ -407,7 +407,7 @@ public final class MissingModsProof {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> DataComponentType<T> component(String id) {
+    static <T> DataComponentType<T> component(String id) {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.parse(id)).orElseThrow().value();
     }
 
