@@ -5,8 +5,9 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.141' apply false
 }
 
-apply from: 'gradle/test-mod-artifacts.gradle'
-apply from: "gradle/network-acceptance-tests.gradle"
+def bootsDirectory = layout.projectDirectory.dir('mods/MismatchedBoots')
+apply from: bootsDirectory.file('gradle/test-mod-artifacts.gradle')
+apply from: bootsDirectory.file('gradle/network-acceptance-tests.gradle')
 
 tasks.configureEach { task ->
     if (task instanceof Copy || task instanceof AbstractArchiveTask) {

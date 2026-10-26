@@ -3,8 +3,8 @@ def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def fixtureSources = fabric ? sourceSets.networkTest : sourceSets.main
-fixtureSources.java.srcDir rootProject.file('RuntimeTests/TooltipSeparator/src/main/java')
-fixtureSources.resources.srcDir rootProject.file('RuntimeTests/TooltipSeparator/src/main/resources')
+fixtureSources.java.srcDir project(':RuntimeTests').file('TooltipSeparator/src/main/java')
+fixtureSources.resources.srcDir project(':RuntimeTests').file('TooltipSeparator/src/main/resources')
 def filesService = objects.newInstance(FixtureFileOperations).files
 def production = project(":${loader}").tasks.named('jar').flatMap { it.archiveFile }
 def fixture = fabric ? tasks.register('tooltipSeparatorTestJar', Jar) {

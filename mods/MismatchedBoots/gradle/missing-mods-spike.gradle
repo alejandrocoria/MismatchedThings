@@ -4,8 +4,8 @@ def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def baseline = fabric ? minecraft_version : neoforge_version
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
-sources.java.srcDir rootProject.file('RuntimeTests/MissingMods/src/main/java')
-sources.resources.srcDir rootProject.file('RuntimeTests/MissingMods/src/main/resources')
+sources.java.srcDir project(':RuntimeTests').file('MissingMods/src/main/java')
+sources.resources.srcDir project(':RuntimeTests').file('MissingMods/src/main/resources')
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project(":${loader}").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureTask = fabric ? tasks.register('missingModsTestJar', Jar) {

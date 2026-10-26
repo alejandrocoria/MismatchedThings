@@ -23,7 +23,7 @@ dependencies {
 
 ext.registerProcessDocsTask = { String loaderName, String loaderVersion, String extraDocRequirements ->
     tasks.register('processDocs', Copy) {
-        from(rootProject.file('doc')) {
+        from(file('../doc')) {
             include '*.md'
             expand(
                     loaderversion: loaderVersion,

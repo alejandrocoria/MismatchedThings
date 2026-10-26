@@ -2,7 +2,15 @@
 
 This directory contains test-only mods and their Gradle run configurations.
 Production sources remain in `Common`, `Fabric`, and `NeoForge` at the
-repository root. The fast Common JUnit suite remains in `Common/src/test/java`.
+mod root (`mods/MismatchedBoots/`). The fast Common JUnit suite remains in
+`Common/src/test/java` within that subtree.
+
+Run all commands below from the **repository root**, where the Gradle wrapper
+lives. The first monorepo layout stage retains the existing logical task paths
+such as `:RuntimeTests:Fabric:verifyGameplay`. Unless otherwise specified,
+`Common/`, `Fabric/`, `NeoForge/`, `RuntimeTests/` and `gradle/` paths in this guide
+are relative to the mod root; root `build/test-mods/` remains repository-relative.
+Explicit file-path `-P` overrides are repository-relative or absolute, as before.
 
 ## Third-party test artifacts
 
@@ -1775,7 +1783,7 @@ property described above, with an active production or compatible export.
 Run existing gates sequentially; no second lifecycle/client harness is needed:
 
 ```powershell
-.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireNegateGuards :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResourcesGuards :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireNegateFall :NeoForge:test "-PjustDireTransformedClass=RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
+.\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources :RuntimeTests:NeoForge:verifyJustDireNegateGuards :RuntimeTests:NeoForge:verifyJustDireJump :RuntimeTests:NeoForge:verifyJustDireJumpGuards :RuntimeTests:NeoForge:verifyJustDireAttributes :RuntimeTests:NeoForge:verifyJustDireResourcesGuards :RuntimeTests:NeoForge:verifyJustDireSmithing :RuntimeTests:NeoForge:verifyJustDireNegateFall :NeoForge:test "-PjustDireTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/run/justDireSmithing/.mixin.out/class/com/direwolf20/justdirethings/common/events/LivingEntityEvents.class" --console=plain
 ```
 
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the ordinary .114
@@ -2277,7 +2285,7 @@ Reports/process logs and the live final screen export are retained under
 `RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/`.
 Repeat with `"-Pneoforge_version=26.1.2.99"`, then restore the normal loader.
 The final-export unit uses
-`-PjustDireSettingsTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/ToolSettingScreen.class`;
+`-PjustDireSettingsTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-ground-stomp-client/<version>/ToolSettingScreen.class`;
 native entry units resolve the pinned JDT JAR automatically.
 Synthetic event-bus input is not a physical/manual acceptance. D.1 mouse input
 and D.2 passive-toggle bindings are implemented. Block E owns consolidated restart/
@@ -2690,7 +2698,7 @@ Live and both wrappers retain actual final `CommonHooks.class` exports for focus
 preflight/final-publication guard tests:
 
 ```powershell
-.\gradlew.bat :NeoForge:test --tests "*JustDireArmorWearShapeTest" "-PjustDireArmorWearTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/26.1.2.114/CommonHooks.class" --console=plain
+.\gradlew.bat :NeoForge:test --tests "*JustDireArmorWearShapeTest" "-PjustDireArmorWearTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-armor-wear-production/26.1.2.114/CommonHooks.class" --console=plain
 ```
 
 Supply the matching .99 export and loader property for minimum-version validation.
@@ -2717,7 +2725,7 @@ armor-wear/FE A/B/C plan.
 ```powershell
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireRefunds --console=plain
 .\gradlew.bat :RuntimeTests:NeoForge:verifyJustDireResources --console=plain
-.\gradlew.bat :NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
+.\gradlew.bat :NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
 ```
 
 Repeat on .99 and restore default .114. This maintained production gate uses the

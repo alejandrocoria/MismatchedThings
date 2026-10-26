@@ -79,12 +79,12 @@ dependencies {
 
 sourceSets {
     networkTest {
-        java.srcDir rootProject.file('RuntimeTests/Common/src/main/java')
+        java.srcDir project(':RuntimeTests').file('Common/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.runtimeClasspath - sourceSets.main.output
     }
     advancedNetheriteTest {
-        java.srcDir rootProject.file('RuntimeTests/AdvancedNetherite/src/main/java')
+        java.srcDir project(':RuntimeTests').file('AdvancedNetherite/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':Fabric').sourceSets.main.output)
         compileClasspath += configurations.advancedNetheriteFabric
@@ -264,10 +264,10 @@ loom {
 }
 
 // Each optional suite keeps its runs, preparation and verification together.
-apply from: rootProject.file('gradle/fabric-recipe-viewer-tests.gradle')
-apply from: rootProject.file('gradle/fabric-advanced-netherite-tests.gradle')
-apply from: rootProject.file('gradle/fabric-betterx-tests.gradle')
-apply from: rootProject.file('gradle/fabric-create-fly-tests.gradle')
+apply from: file('../../gradle/fabric-recipe-viewer-tests.gradle')
+apply from: file('../../gradle/fabric-advanced-netherite-tests.gradle')
+apply from: file('../../gradle/fabric-betterx-tests.gradle')
+apply from: file('../../gradle/fabric-create-fly-tests.gradle')
 tasks.register('preparePersistenceRestart', Delete) {
     group = 'verification'
     description = 'Deletes the dedicated persistence world before the write run.'
@@ -622,9 +622,9 @@ dependencies {
     gametestRuntimeOnly files(productionArchive)
 }
 
-apply from: rootProject.file('gradle/quilt-smoke.gradle')
-apply from: rootProject.file('gradle/tooltip-separator-tests.gradle')
-apply from: rootProject.file('gradle/mystical-augments-tests.gradle')
+apply from: file('../../gradle/quilt-smoke.gradle')
+apply from: file('../../gradle/tooltip-separator-tests.gradle')
+apply from: file('../../gradle/mystical-augments-tests.gradle')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
@@ -664,4 +664,4 @@ loom {
     }
 }
 
-apply from: rootProject.file('gradle/missing-mods-spike.gradle')
+apply from: file('../../gradle/missing-mods-spike.gradle')

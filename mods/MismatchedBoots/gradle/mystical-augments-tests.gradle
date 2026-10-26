@@ -3,8 +3,8 @@ def testMods = rootProject.ext.testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def sources = fabric ? sourceSets.networkTest : sourceSets.main
-sources.java.srcDir rootProject.file('RuntimeTests/MysticalAugments/src/main/java')
-sources.resources.srcDir rootProject.file('RuntimeTests/MysticalAugments/src/main/resources')
+sources.java.srcDir project(':RuntimeTests').file('MysticalAugments/src/main/java')
+sources.resources.srcDir project(':RuntimeTests').file('MysticalAugments/src/main/resources')
 def filesService = objects.newInstance(FixtureFileOperations).files
 def production = project(":${loader}").tasks.named('jar')
 def fixture = fabric ? tasks.register('mysticalAugmentsTestJar', Jar) {

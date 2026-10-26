@@ -60,7 +60,7 @@ sourceSets {
         runtimeClasspath += output + (compileClasspath - project(':Common').sourceSets.main.output)
     }
     advancedNetheriteTest {
-        java.srcDir rootProject.file('RuntimeTests/AdvancedNetherite/src/main/java')
+        java.srcDir project(':RuntimeTests').file('AdvancedNetherite/src/main/java')
         compileClasspath += sourceSets.main.compileClasspath
         compileClasspath += files(project(':NeoForge').sourceSets.main.output)
         compileClasspath += configurations.advancedNetheriteNeoForge
@@ -68,7 +68,7 @@ sourceSets {
     }
 }
 
-sourceSets.main.java.srcDir rootProject.file('RuntimeTests/Common/src/main/java')
+sourceSets.main.java.srcDir project(':RuntimeTests').file('Common/src/main/java')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
@@ -236,12 +236,12 @@ neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideTest)
 neoForge.addModdingDependenciesTo(sourceSets.iceAndFireTideHead)
 
 // JDT suites share disposable fixture paths; each script keeps its own local providers.
-apply from: rootProject.file('gradle/just-dire-items-tests.gradle')
-apply from: rootProject.file('gradle/just-dire-resources-tests.gradle')
-apply from: rootProject.file('gradle/just-dire-movement-tests.gradle')
-apply from: rootProject.file('gradle/just-dire-abilities-tests.gradle')
-apply from: rootProject.file('gradle/just-dire-lava-repair-tests.gradle')
-apply from: rootProject.file('gradle/just-dire-item-bars-tests.gradle')
+apply from: file('../../gradle/just-dire-items-tests.gradle')
+apply from: file('../../gradle/just-dire-resources-tests.gradle')
+apply from: file('../../gradle/just-dire-movement-tests.gradle')
+apply from: file('../../gradle/just-dire-abilities-tests.gradle')
+apply from: file('../../gradle/just-dire-lava-repair-tests.gradle')
+apply from: file('../../gradle/just-dire-item-bars-tests.gradle')
 
 def tideHeadJar = tasks.register('iceAndFireTideHeadJar', Jar) {
     archiveClassifier = 'tide-head-owner'
@@ -620,15 +620,15 @@ tasks.register('verifyTooltipCharacterization') {
     }
 }
 
-apply from: rootProject.file('gradle/neo-vitae-composition-tests.gradle')
-apply from: rootProject.file('gradle/oritech-fall-tests.gradle')
-apply from: rootProject.file('gradle/undergarden-tests.gradle')
-apply from: rootProject.file('gradle/allthemodium-tests.gradle')
-apply from: rootProject.file('gradle/roots-classic-tick-tests.gradle')
-apply from: rootProject.file('gradle/mystical-augments-tests.gradle')
-apply from: rootProject.file('gradle/silent-gear-tests.gradle')
-apply from: rootProject.file('gradle/aether-ii-tests.gradle')
-apply from: rootProject.file('gradle/aether-ii-tooltip-tests.gradle')
-apply from: rootProject.file('gradle/aether-ii-alkahest-tests.gradle')
-apply from: rootProject.file('gradle/tooltip-separator-tests.gradle')
-apply from: rootProject.file('gradle/missing-mods-spike.gradle')
+apply from: file('../../gradle/neo-vitae-composition-tests.gradle')
+apply from: file('../../gradle/oritech-fall-tests.gradle')
+apply from: file('../../gradle/undergarden-tests.gradle')
+apply from: file('../../gradle/allthemodium-tests.gradle')
+apply from: file('../../gradle/roots-classic-tick-tests.gradle')
+apply from: file('../../gradle/mystical-augments-tests.gradle')
+apply from: file('../../gradle/silent-gear-tests.gradle')
+apply from: file('../../gradle/aether-ii-tests.gradle')
+apply from: file('../../gradle/aether-ii-tooltip-tests.gradle')
+apply from: file('../../gradle/aether-ii-alkahest-tests.gradle')
+apply from: file('../../gradle/tooltip-separator-tests.gradle')
+apply from: file('../../gradle/missing-mods-spike.gradle')
