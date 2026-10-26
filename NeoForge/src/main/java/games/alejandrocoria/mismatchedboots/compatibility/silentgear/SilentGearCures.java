@@ -65,12 +65,14 @@ public final class SilentGearCures {
             if (cure == null || cure.disabled) {
                 continue;
             }
+
             try {
                 if (trait.level() != 1) {
                     throw new IllegalStateException("Changed cure level");
                 }
                 Object effect = binding.admitted(trait.nativeInstance(), cure.target);
-                ItemStack copy = root.copy(), before = copy.copy();
+                ItemStack copy = root.copy();
+                ItemStack before = copy.copy();
                 binding.tick(effect, trait.nativeInstance(), copy, level, player);
                 if (!ItemStack.matches(copy, before)) {
                     throw new IllegalStateException("Cancellation changed its disposable stack");

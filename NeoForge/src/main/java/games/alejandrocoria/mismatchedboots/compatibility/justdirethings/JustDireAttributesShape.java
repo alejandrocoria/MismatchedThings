@@ -40,12 +40,14 @@ public final class JustDireAttributesShape implements Opcodes {
         if (getter == null) {
             return false;
         }
+
         var code = new java.util.ArrayList<AbstractInsnNode>();
         for (var instruction : getter.instructions) {
             if (instruction.getOpcode() >= 0) {
                 code.add(instruction);
             }
         }
+
         boolean intact = owned(getter) && getter.access == (ACC_PRIVATE | ACC_STATIC) && code.size() == 2
                 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN;
         getter.instructions.clear();
@@ -65,9 +67,12 @@ public final class JustDireAttributesShape implements Opcodes {
         if (method == null || (method.access & ACC_STATIC) == 0) {
             return false;
         }
+
         try {
             Frame<SourceValue>[] frames = new Analyzer<>(new SourceInterpreter()).analyze(node.name, method);
-            MethodInsnNode constructor = null, router = null, build = null;
+            MethodInsnNode constructor = null;
+            MethodInsnNode router = null;
+            MethodInsnNode build = null;
             for (var instruction : method.instructions) {
                 if (instruction instanceof MethodInsnNode call && call.owner.equals(EVENT) && call.name.equals("<init>")
                         && call.desc.equals("(" + STACK + MODIFIERS + ")V")) {
@@ -94,6 +99,7 @@ public final class JustDireAttributesShape implements Opcodes {
             if (constructor == null || build == null || transformed && router == null) {
                 return false;
             }
+
             Frame<SourceValue> frame = frames[method.instructions.indexOf(constructor)];
             var buildFrame = frames[method.instructions.indexOf(build)];
             AbstractInsnNode created = frame == null ? null : creation(method, frames, frame.getStack(frame.getStackSize() - 3), new HashSet<>());
@@ -101,7 +107,9 @@ public final class JustDireAttributesShape implements Opcodes {
                                                                   buildFrame.getStack(buildFrame.getStackSize() - 1), new HashSet<>()) != created) {
                 return false;
             }
-            boolean posted = false, returned = false;
+
+            boolean posted = false;
+            boolean returned = false;
             for (var instruction : method.instructions) {
                 var at = frames[method.instructions.indexOf(instruction)];
                 if (at == null) {
@@ -129,6 +137,7 @@ public final class JustDireAttributesShape implements Opcodes {
             if (!transformed) {
                 return true;
             }
+
             MethodNode handler = method(node, router.name, router.desc);
             if (handler == null || !owned(handler)) {
                 return false;
@@ -136,6 +145,7 @@ public final class JustDireAttributesShape implements Opcodes {
             if (!adapterFlow(node, handler)) {
                 return false;
             }
+
             var routeFrame = frames[method.instructions.indexOf(router)];
             return routeFrame != null
                     && origin(method, frames, routeFrame.getStack(routeFrame.getStackSize() - 2), 0, null, new HashSet<>())
@@ -150,11 +160,10 @@ public final class JustDireAttributesShape implements Opcodes {
     }
 
     private static boolean owned(MethodNode method) {
-        return method.visibleAnnotations != null && method.visibleAnnotations.stream().anyMatch(annotation ->
-                                                                                                        annotation.desc.equals(
-                                                                                                                "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
-                                                                                                                && annotation.values != null && annotation.values.contains(
-                                                                                                                MIXIN));
+        return method.visibleAnnotations != null
+                && method.visibleAnnotations.stream().anyMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(MIXIN));
     }
 
     private static boolean adapterFlow(ClassNode owner, MethodNode handler) throws AnalyzerException {
@@ -165,6 +174,7 @@ public final class JustDireAttributesShape implements Opcodes {
                     || !call.name.equals("project") || !call.desc.equals(DESC)) {
                 continue;
             }
+
             var frame = frames[handler.instructions.indexOf(call)];
             if (frame == null || !origin(handler, frames, frame.getStack(frame.getStackSize() - 2), 0, null, new HashSet<>())
                     || !origin(handler, frames, frame.getStack(frame.getStackSize() - 1), 1, null, new HashSet<>())) {
@@ -184,6 +194,7 @@ public final class JustDireAttributesShape implements Opcodes {
                 }
             }
         }
+
         return false;
     }
 
@@ -192,10 +203,12 @@ public final class JustDireAttributesShape implements Opcodes {
         if (value == null || value.insns.size() != 1) {
             return null;
         }
+
         var source = value.insns.iterator().next();
         if (!seen.add(source)) {
             return null;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (source instanceof TypeInsnNode type && source.getOpcode() == NEW && type.desc.equals(EVENT)) {
             return source;
@@ -206,6 +219,7 @@ public final class JustDireAttributesShape implements Opcodes {
         if (source.getOpcode() == ASTORE || source.getOpcode() == DUP || source.getOpcode() == CHECKCAST) {
             return creation(method, frames, frame.getStack(frame.getStackSize() - 1), seen);
         }
+
         return null;
     }
 
@@ -218,6 +232,7 @@ public final class JustDireAttributesShape implements Opcodes {
         if (!seen.add(source)) {
             return false;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (source == required) {
             return true;
@@ -239,6 +254,7 @@ public final class JustDireAttributesShape implements Opcodes {
                 }
             }
         }
+
         return false;
     }
 }

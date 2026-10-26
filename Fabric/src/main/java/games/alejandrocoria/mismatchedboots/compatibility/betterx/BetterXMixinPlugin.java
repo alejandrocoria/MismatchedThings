@@ -188,6 +188,7 @@ public final class BetterXMixinPlugin implements IMixinConfigPlugin {
                 }
             }
         }
+
         return false;
     }
 
@@ -261,6 +262,7 @@ public final class BetterXMixinPlugin implements IMixinConfigPlugin {
                 Constants.LOG.warn("Could not inspect Better End API; compatibility disabled", exception);
             }
         }
+
         return betterEndCompatible;
     }
 
@@ -295,6 +297,7 @@ public final class BetterXMixinPlugin implements IMixinConfigPlugin {
                         "Could not inspect Better Nether API; compatibility disabled", exception);
             }
         }
+
         return betterNetherCompatible;
     }
 

@@ -16,14 +16,21 @@ import java.util.Set;
 
 /** Optional selected read-only effects; definitions and receivers are re-admitted for every hit. */
 public final class SilentGearDefenseApi {
-    private final Class<?> negate, fireproof;
-    private final MethodHandle definition, effects, id, level, incoming;
-    private final Field tag, scale;
+    private final Class<?> negate;
+    private final Class<?> fireproof;
+    private final MethodHandle definition;
+    private final MethodHandle effects;
+    private final MethodHandle id;
+    private final MethodHandle level;
+    private final MethodHandle incoming;
+    private final Field tag;
+    private final Field scale;
 
     public SilentGearDefenseApi() throws ReflectiveOperationException {
         negate = nativeClass("gear.trait.effect.NegateDamageTraitEffect");
         fireproof = nativeClass("gear.trait.effect.FireproofTraitEffect");
-        Class<?> instance = nativeClass("api.traits.TraitInstance"), trait = nativeClass("gear.trait.Trait");
+        Class<?> instance = nativeClass("api.traits.TraitInstance");
+        Class<?> trait = nativeClass("gear.trait.Trait");
         var lookup = MethodHandles.publicLookup();
         definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));
         effects = lookup.findVirtual(trait, "getEffects", MethodType.methodType(List.class));
@@ -45,6 +52,7 @@ public final class SilentGearDefenseApi {
         if (!Set.of("silentgear:heat_resistant", "silentgear:bounce").contains(name)) {
             throw new IllegalArgumentException("Unaudited defensive trait");
         }
+
         var list = (List<?>) effects.invoke(definition.invoke(instance));
         Object selected = null;
         int companions = 0;
@@ -60,6 +68,7 @@ public final class SilentGearDefenseApi {
                 || !parameters(scale.getFloat(selected), (int) level.invoke(instance))) {
             throw new IllegalStateException("Unsupported defensive effect parameters");
         }
+
         return selected;
     }
 

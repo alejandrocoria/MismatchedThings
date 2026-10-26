@@ -76,6 +76,7 @@ public final class BetterNetherPiglinArmorAdapter {
                 Field field = equipmentItems.getField(SET_FIELDS[index]);
                 sets[index] = field.get(null);
             }
+
             Method getArmorPieces = sets[0].getClass().getMethod("getArmorPieces");
             // Keep only API handles, not configuration results: Better Nether's toggle is live.
             boundary = new Boundary(enabled, getValue, sets, getArmorPieces,
@@ -85,6 +86,7 @@ public final class BetterNetherPiglinArmorAdapter {
             Constants.LOG.warn(
                     "Could not resolve Better Nether runtime API; compatibility disabled", exception);
         }
+
         return boundary;
     }
 
@@ -123,6 +125,7 @@ public final class BetterNetherPiglinArmorAdapter {
             if (disabled) {
                 return false;
             }
+
             try {
                 for (Object set : sets) {
                     Item[] armorPieces = (Item[]) getArmorPieces.invoke(set);

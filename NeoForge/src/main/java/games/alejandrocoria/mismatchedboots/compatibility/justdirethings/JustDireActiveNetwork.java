@@ -37,7 +37,12 @@ import java.util.function.Consumer;
 
 /** Held toggles, separate menu edit sessions and consumed-once bounded batches; server thread only. */
 public final class JustDireActiveNetwork {
-    public static final int SELECT = 0, TOGGLE = 1, VALUE = 2, PARTICLES = 3, BINDING = 4, DESELECT = 6;
+    public static final int SELECT = 0;
+    public static final int TOGGLE = 1;
+    public static final int VALUE = 2;
+    public static final int PARTICLES = 3;
+    public static final int BINDING = 4;
+    public static final int DESELECT = 6;
     public static final UUID NONE = new UUID(0, 0);
     private static final Map<UUID, State> states = new HashMap<>();
     private static final Set<ServerPlayer> executing = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -131,6 +136,7 @@ public final class JustDireActiveNetwork {
         if (executing.contains(player)) {
             return prepared(request.sequence, NONE);
         }
+
         State state = state(player);
         if (request.sequence <= state.activationSequence || request.sequence <= 0) {
             return prepared(request.sequence, NONE);
@@ -142,11 +148,13 @@ public final class JustDireActiveNetwork {
             if (!JustDireAbilityTarget.supportedSlot(slot)) {
                 continue;
             }
+
             var root = player.getInventory().getItem(slot);
             var target = new JustDireAbilityTarget(player, slot, root);
             if (!target.valid()) {
                 continue;
             }
+
             int actions = 0;
             if (JustDireSettingsCompatibility.groundStompBinding(target, request.key, request.mouse)
                     && JustDireGroundStompCompatibility.quote(root) != null) {
@@ -163,6 +171,7 @@ public final class JustDireActiveNetwork {
         if (targets.isEmpty()) {
             return prepared(request.sequence, NONE);
         }
+
         UUID nonce = UUID.randomUUID();
         long now = player.level().getGameTime();
         state.permit = new Permit(List.copyOf(targets), new HashSet<>(), player.level(), request.key, request.mouse, nonce, now, now + 40);
@@ -175,6 +184,7 @@ public final class JustDireActiveNetwork {
                 || state.activationSequence != request.sequence || !state.permit.nonce.equals(request.nonce)) {
             return false;
         }
+
         Permit permit = state.permit;
         state.permit = null; // Consume before validation/commit. No later expiry, failure or equipment can revive it.
         if (!(request.mouse == permit.mouse && request.key == permit.key && player.level().getGameTime() <= permit.expires
@@ -190,6 +200,7 @@ public final class JustDireActiveNetwork {
         if (!executing.add(player)) {
             return false;
         }
+
         try {
             boolean acted = false;
             for (Admission admission : permit.targets) {
@@ -227,6 +238,7 @@ public final class JustDireActiveNetwork {
         if (!target.valid() || target.player().level() != level || !ItemStack.matches(root, expected)) {
             return acted;
         }
+
         boolean toggled = JustDireSettingsCompatibility.toggleBoundPassives(target, request.key, request.mouse);
         return acted || toggled;
     }
@@ -253,6 +265,7 @@ public final class JustDireActiveNetwork {
             state.menu = new MenuSession(menu, root, settingsSnapshot(root), request.slot, UUID.randomUUID(), request.request);
             return settingsReply(request, state.menu.token, true);
         }
+
         MenuSession session = state.menu;
         if (session == null || session.menu != menu || state.selection != request.selection || !session.token.equals(request.token)
                 || session.slot != request.slot || player.getInventory().getItem(request.slot) != session.root
@@ -265,11 +278,13 @@ public final class JustDireActiveNetwork {
             state.permit = null;
             return settingsReply(request, NONE, true);
         }
+
         boolean accepted = JustDireSettingsCompatibility.edit(session.root, request);
         if (accepted) {
             session.snapshot = settingsSnapshot(session.root);
             state.permit = null;
         }
+
         return settingsReply(request, accepted ? session.token : NONE, accepted);
     }
 
@@ -340,6 +355,7 @@ public final class JustDireActiveNetwork {
         if (state.permit == null) {
             return;
         }
+
         var permit = state.permit;
         if (state.player.level() != permit.level || state.player.level().getGameTime() > permit.expires
                 || state.player.containerMenu != state.player.inventoryMenu) {
@@ -384,7 +400,8 @@ public final class JustDireActiveNetwork {
 
     private static final class State {
         final ServerPlayer player;
-        int activationSequence, selection;
+        int activationSequence;
+        int selection;
         Permit permit;
         MenuSession menu;
 
@@ -478,6 +495,7 @@ public final class JustDireActiveNetwork {
         if (size <= 0 || size > 41) {
             throw new DecoderException("Invalid mixed JDT slot count");
         }
+
         var slots = new ArrayList<Integer>(size);
         for (int i = 0; i < size; i++) {
             slots.add(buffer.readVarInt());
@@ -485,6 +503,7 @@ public final class JustDireActiveNetwork {
         if (!validSlots(slots)) {
             throw new DecoderException("Invalid mixed JDT slot subset");
         }
+
         return slots;
     }
 

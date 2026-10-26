@@ -14,7 +14,11 @@ import java.util.function.Consumer;
 /** Presentation readiness only. Gameplay recognition has its own independent guards/state. */
 public final class AetherTooltipState {
     private static final ThreadLocal<ItemStack> SOURCE = new ThreadLocal<>();
-    private static volatile boolean attributes, tiers, scope, refusedAttributes, refusedTiers;
+    private static volatile boolean attributes;
+    private static volatile boolean tiers;
+    private static volatile boolean scope;
+    private static volatile boolean refusedAttributes;
+    private static volatile boolean refusedTiers;
 
     private AetherTooltipState() {
     }
@@ -60,6 +64,7 @@ public final class AetherTooltipState {
         } else {
             refusedTiers = true;
         }
+
         String message = "Aether II " + (attributeDomain ? "set" : "tier") + " tooltip containment unavailable: local contract changed";
         if (failure == null) {
             Constants.LOG.warn(message);

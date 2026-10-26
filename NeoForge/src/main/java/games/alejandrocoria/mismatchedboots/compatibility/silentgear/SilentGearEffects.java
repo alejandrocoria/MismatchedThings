@@ -22,7 +22,8 @@ import java.util.List;
 /** Native effect math on disposable carriers; one validated root commit, never native gear wear. */
 public final class SilentGearEffects {
     private static Api api;
-    private static boolean repairDisabled, wearDisabled;
+    private static boolean repairDisabled;
+    private static boolean wearDisabled;
     private static final ThreadLocal<Repair> REPAIR = new ThreadLocal<>();
 
     private SilentGearEffects() {
@@ -49,15 +50,19 @@ public final class SilentGearEffects {
                 || !root.isDamaged() || player.hasInfiniteMaterials() || root.has(DataComponents.UNBREAKABLE)) {
             return;
         }
+
         try {
             var calls = binding.calls(root, true);
             if (calls.isEmpty()) {
                 return;
             }
-            ItemStack carrier = SilentGearCompatibility.carrier(root), before = carrier.copy();
+
+            ItemStack carrier = SilentGearCompatibility.carrier(root);
+            ItemStack before = carrier.copy();
             if (carrier.isEmpty() || REPAIR.get() != null) {
                 throw new IllegalStateException("Missing/reentrant repair carrier");
             }
+
             Repair capture = new Repair(carrier, player);
             REPAIR.set(capture);
             try {
@@ -105,15 +110,19 @@ public final class SilentGearEffects {
                 || entity != null && (entity.level().isClientSide() || entity.hasInfiniteMaterials())) {
             return amount;
         }
+
         try {
             var calls = binding.calls(root, false);
             if (calls.isEmpty()) {
                 return amount;
             }
-            ItemStack carrier = SilentGearCompatibility.carrier(root), before = carrier.copy();
+
+            ItemStack carrier = SilentGearCompatibility.carrier(root);
+            ItemStack before = carrier.copy();
             if (carrier.isEmpty()) {
                 throw new IllegalStateException("Missing wear carrier");
             }
+
             int result = amount;
             for (Call call : calls) {
                 // Native GearHelper creates wear contexts with player=null, including for player-owned gear.
@@ -123,6 +132,7 @@ public final class SilentGearEffects {
                 }
                 result = next;
             }
+
             return result; // Vanilla applies Unbreaking, creative exemptions and ordinary destruction afterwards.
         } catch (Throwable failure) {
             disable(false, "native durability contract unavailable", failure);
@@ -172,11 +182,15 @@ public final class SilentGearEffects {
     private static final class Api {
         private final RepairApi repair;
         private final WearApi wear;
-        private final MethodHandle context, definition, effects;
+        private final MethodHandle context;
+        private final MethodHandle definition;
+        private final MethodHandle effects;
 
         private Api() throws ReflectiveOperationException {
             var lookup = MethodHandles.publicLookup();
-            Class<?> instance = nativeClass("api.traits.TraitInstance"), trait = nativeClass("gear.trait.Trait"), ctx = nativeClass(
+            Class<?> instance = nativeClass("api.traits.TraitInstance");
+            Class<?> trait = nativeClass("gear.trait.Trait");
+            Class<?> ctx = nativeClass(
                     "api.traits.TraitActionContext");
             context = lookup.findConstructor(ctx, MethodType.methodType(void.class, Player.class, instance, ItemStack.class));
             definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));
@@ -227,6 +241,7 @@ public final class SilentGearEffects {
                     result.add(new Call(trait, effect));
                 }
             }
+
             return result;
         }
     }

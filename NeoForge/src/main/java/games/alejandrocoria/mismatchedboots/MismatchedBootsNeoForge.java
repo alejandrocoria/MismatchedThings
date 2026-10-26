@@ -46,6 +46,7 @@ public class MismatchedBootsNeoForge {
         JustDireHeldToggleCompatibility.initialize(eventBus);
         JustDireActiveNetwork.initialize();
         JustDireAttributesCompatibility.initialize(eventBus);
+
         NeoVitaeInfusionCompatibility.initialize(eventBus);
         SilentGearCompatibility.initialize(eventBus);
         SilentGearDefense.initialize(eventBus);
@@ -54,6 +55,7 @@ public class MismatchedBootsNeoForge {
         SilentGearWearer.initialize(eventBus);
         SilentGearMagnet.initialize(eventBus);
         SilentGearCures.initialize(eventBus);
+
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             AttributeRulesLifecycle.onServerStarting();
             ComponentRulesLifecycle.onServerStarting();
@@ -63,8 +65,8 @@ public class MismatchedBootsNeoForge {
             AttributeRulesLifecycle.onServerStopped();
             ComponentRulesLifecycle.onServerStopped();
         });
-        NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) ->
-                                               event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
+        NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) -> event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
+
         eventBus.addListener(MismatchedBootsClientNeoForge::onClientSetup);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerItemDecorations);

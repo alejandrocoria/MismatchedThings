@@ -39,6 +39,7 @@ public final class JustDireTooltipClient {
                 || JustDireUpgradesCompatibility.nativeBoot(data.right().source()))) {
             return;
         }
+
         boolean shift = Minecraft.getInstance().hasShiftDown();
         appendEnergy(root, display, tooltip, shift);
         var global = JustDireTooltipClient.<Boolean>component("tool_enabled");
@@ -53,6 +54,7 @@ public final class JustDireTooltipClient {
             }
             tooltip.accept(line);
         }
+
         var abilities = new ArrayList<Component>();
         for (String name : UPGRADES) {
             var installed = JustDireTooltipClient.<Boolean>component(name + "_upgrade_installed");
@@ -61,6 +63,7 @@ public final class JustDireTooltipClient {
                     || JustDireSettingsCompatibility.metadata(root, name) == null) {
                 continue;
             }
+
             var ability = Component.translatable("justdirethings.ability." + name);
             if (!root.getOrDefault(installed, false)) {
                 ability.append(Component.translatable("justdirethings.missingupgrade")).withStyle(ChatFormatting.GRAY);
@@ -70,6 +73,7 @@ public final class JustDireTooltipClient {
             }
             abilities.add(ability);
         }
+
         var lava = JustDireTooltipClient.<Boolean>component("lavarepair_toggle");
         if (lava != null && display.shows(lava) && JustDireLavaRepairCompatibility.eligible(root)) {
             abilities.add(Component.translatable("justdirethings.ability.lavarepair")
@@ -91,7 +95,8 @@ public final class JustDireTooltipClient {
         if (energy == null) {
             return;
         }
-        String amount = number(energy.getAmountAsInt(), shift), capacity = number(energy.getCapacityAsInt(), shift);
+        String amount = number(energy.getAmountAsInt(), shift);
+        String capacity = number(energy.getCapacityAsInt(), shift);
         if (amount != null && capacity != null) {
             tooltip.accept(Component.translatable("justdirethings.festored", amount, capacity).withStyle(ChatFormatting.GREEN));
         }
@@ -101,6 +106,7 @@ public final class JustDireTooltipClient {
         if (formatsFailed) {
             return null;
         }
+
         try {
             if (formats == null) {
                 var helpers = Class.forName("com.direwolf20.justdirethings.util.MagicHelpers");

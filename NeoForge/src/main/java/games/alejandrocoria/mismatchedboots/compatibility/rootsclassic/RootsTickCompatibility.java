@@ -26,12 +26,14 @@ public final class RootsTickCompatibility {
         if (equipped == null || equipped.slot() != EquipmentSlot.FEET) {
             return;
         }
+
         Identifier id = MixedBootsSources.anySource(root, source -> source.is(BuiltInRegistries.ITEM.getValue(SYLVAN)))
                         ? SYLVAN : MixedBootsSources.anySource(root, source -> source.is(BuiltInRegistries.ITEM.getValue(WILDWOOD)))
                                    ? WILDWOOD : null;
         if (id == null || disabled.contains(id)) {
             return;
         }
+
         Item receiver = BuiltInRegistries.ITEM.getValue(id);
         String expected = id.equals(SYLVAN) ? RootsTickShape.SYLVAN : RootsTickShape.WILDWOOD;
         boolean ready;

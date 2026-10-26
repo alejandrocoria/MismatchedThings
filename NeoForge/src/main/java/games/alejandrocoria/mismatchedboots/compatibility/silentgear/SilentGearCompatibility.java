@@ -61,7 +61,8 @@ public final class SilentGearCompatibility {
         if (binding == null || data == null) {
             return ItemStack.EMPTY;
         }
-        ItemStack left = data.left().source(), right = data.right().source();
+        ItemStack left = data.left().source();
+        ItemStack right = data.right().source();
         return binding.boot(left) ? left : binding.boot(right) ? right : ItemStack.EMPTY;
     }
 
@@ -95,12 +96,14 @@ public final class SilentGearCompatibility {
         if (binding == null) {
             return List.of();
         }
+
         var data = ModContent.getMixedBootsData(root).orElse(null);
         var equippable = root.get(DataComponents.EQUIPPABLE);
         if (root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem) || data == null
                 || equippable == null || equippable.slot() != EquipmentSlot.FEET) {
             return List.of();
         }
+
         var merged = new TreeMap<Identifier, Trait>();
         try {
             for (ItemStack source : List.of(data.left().source(), data.right().source())) {
@@ -112,6 +115,7 @@ public final class SilentGearCompatibility {
             disable(binding, failure);
             return List.of();
         }
+
         return List.copyOf(merged.values());
     }
 
@@ -133,7 +137,8 @@ public final class SilentGearCompatibility {
 
     private static void prepare(ItemStack previous, ItemStack output, AttributeRuleSet policies, SilentGearState old, Api binding) {
         var data = ModContent.getMixedBootsData(output).orElseThrow();
-        ItemStack left = data.left().source(), right = data.right().source();
+        ItemStack left = data.left().source();
+        ItemStack right = data.right().source();
         if (!binding.boot(left) && !binding.boot(right)) {
             return;
         }
@@ -141,7 +146,8 @@ public final class SilentGearCompatibility {
             return;
         } // No migration/reseed of absent live state.
 
-        Optional<SilentGearState.Oxidation> a = SilentGearLiveState.seed(left, binding), b = SilentGearLiveState.seed(right, binding);
+        Optional<SilentGearState.Oxidation> a = SilentGearLiveState.seed(left, binding);
+        Optional<SilentGearState.Oxidation> b = SilentGearLiveState.seed(right, binding);
         var keys = new LinkedHashSet<SilentGearState.Key>();
         for (ItemStack source : List.of(left, right)) {
             if (binding.boot(source)) {
@@ -149,6 +155,7 @@ public final class SilentGearCompatibility {
                                  .forEach(entry -> keys.add(SilentGearState.Key.of(entry)));
             }
         }
+
         var baseline = output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
         List<SilentGearState.Key> overrides = List.of();
         if (old != null) {
@@ -188,6 +195,7 @@ public final class SilentGearCompatibility {
             }
             baseline = new ItemAttributeModifiers(List.copyOf(result));
         }
+
         var rules = keys.stream().map(SilentGearState.Key::attribute).distinct().sorted()
                         .map(id -> new SilentGearState.Rule(id, policies.policyFor(id))).toList();
         var projection = new ItemAttributeModifiers(output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
@@ -255,9 +263,16 @@ public final class SilentGearCompatibility {
         private final Class<?> instance = nativeClass("api.traits.TraitInstance");
         private final Class<?> trait = nativeClass("gear.trait.Trait");
         private final Class<?> oxidation = nativeClass("gear.trait.effect.OxidationTraitEffect");
-        private final MethodHandle traits, id, level, definition, maxLevel, effects, times;
+        private final MethodHandle traits;
+        private final MethodHandle id;
+        private final MethodHandle level;
+        private final MethodHandle definition;
+        private final MethodHandle maxLevel;
+        private final MethodHandle effects;
+        private final MethodHandle times;
         private final DataComponentType<Object> construction = component("GEAR_CONSTRUCTION");
-        final DataComponentType<Object> stage = component("OXIDATION_STAGE"), counter = component("OXIDATION_COUNTER");
+        final DataComponentType<Object> stage = component("OXIDATION_STAGE");
+        final DataComponentType<Object> counter = component("OXIDATION_COUNTER");
 
         private Api() throws ReflectiveOperationException {
             if (construction == null || stage == null || counter == null || stage.codec() == null || counter.codec() == null
@@ -265,6 +280,7 @@ public final class SilentGearCompatibility {
                     || !(counter.codec().parse(JsonOps.INSTANCE, new JsonPrimitive(0)).getOrThrow() instanceof Integer)) {
                 throw new IllegalStateException("Unsupported native SG oxidation component schema");
             }
+
             var lookup = MethodHandles.publicLookup();
             traits = lookup.findStatic(nativeClass("util.TraitHelper"), "getTraits",
                                        MethodType.methodType(List.class, net.minecraft.world.item.ItemInstance.class));
@@ -286,6 +302,7 @@ public final class SilentGearCompatibility {
             if (!boot(stack)) {
                 return List.of();
             }
+
             try {
                 var result = new ArrayList<Trait>();
                 for (Object value : (List<?>) traits.invoke(stack.copy())) {
@@ -311,10 +328,13 @@ public final class SilentGearCompatibility {
             if (eligible.size() != 1) {
                 throw new IllegalArgumentException("Ambiguous native SG oxidation phase");
             }
-            Object rawStage = stack.getOrDefault(stage, (byte) 0), rawCounter = stack.getOrDefault(counter, 0);
+
+            Object rawStage = stack.getOrDefault(stage, (byte) 0);
+            Object rawCounter = stack.getOrDefault(counter, 0);
             if (!(rawStage instanceof Byte value) || !(rawCounter instanceof Integer count)) {
                 throw new IllegalArgumentException("Invalid native SG oxidation component types");
             }
+
             var lane = new SilentGearState.Oxidation(eligible.getFirst().id.getPath(), eligible.getFirst().level, value, count);
             validateLane(stack, lane);
             return Optional.of(lane);
@@ -325,6 +345,7 @@ public final class SilentGearCompatibility {
                 if (traits(source).stream().noneMatch(item -> List.of("silentgear:polished", "silentgear:oxidized").contains(item.id.toString()))) {
                     throw new IllegalArgumentException("Source has no native oxidation phase");
                 }
+
                 Object resource = nativeClass("api.util.DataResource").getMethod("trait", String.class).invoke(null, "silentgear:" + lane.phase());
                 Object nativeTrait = ((Supplier<?>) resource).get();
                 int limit = (int) maxLevel.invoke(nativeTrait);
@@ -332,11 +353,13 @@ public final class SilentGearCompatibility {
                 if (nativeEffects.size() != 1 || limit < 1 || limit > Byte.MAX_VALUE || lane.stage() > limit || lane.level() > limit) {
                     throw new IllegalArgumentException("Unsupported native SG oxidation definition/stage");
                 }
+
                 var thresholds = (List<?>) times.invoke(nativeEffects.getFirst());
-                if (thresholds.isEmpty() || thresholds.size() > 100 || thresholds.stream().anyMatch(item ->
-                                                                                                            !(item instanceof Integer time) || time < 1 || time == Integer.MAX_VALUE)) {
+                if (thresholds.isEmpty() || thresholds.size() > 100
+                        || thresholds.stream().anyMatch(item -> !(item instanceof Integer time) || time < 1 || time == Integer.MAX_VALUE)) {
                     throw new IllegalArgumentException("Invalid native SG oxidation thresholds");
                 }
+
                 int index = lane.level() - 1;
                 if (index >= thresholds.size()) {
                     throw new IllegalArgumentException("Unsupported native SG oxidation level/threshold");

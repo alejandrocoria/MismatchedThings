@@ -17,11 +17,19 @@ import java.util.List;
 /** Identifier-only optional bindings. Definitions/receivers are resolved anew on every dispatch. */
 final class SilentGearCureApi {
     private final Class<?> cancellation;
-    private final MethodHandle definition, effects, conditions, instanceConditions, maxLevel, targets, context, tick;
+    private final MethodHandle definition;
+    private final MethodHandle effects;
+    private final MethodHandle conditions;
+    private final MethodHandle instanceConditions;
+    private final MethodHandle maxLevel;
+    private final MethodHandle targets;
+    private final MethodHandle context;
+    private final MethodHandle tick;
 
     SilentGearCureApi() throws Throwable {
         var lookup = MethodHandles.publicLookup();
-        Class<?> instance = nativeClass("api.traits.TraitInstance"), trait = nativeClass("gear.trait.Trait");
+        Class<?> instance = nativeClass("api.traits.TraitInstance");
+        Class<?> trait = nativeClass("gear.trait.Trait");
         Class<?> ctx = nativeClass("api.traits.TraitActionContext");
         cancellation = nativeClass("gear.trait.effect.CancelEffectsTraitEffect");
         var privateLookup = MethodHandles.privateLookupIn(cancellation, MethodHandles.lookup());
@@ -46,12 +54,14 @@ final class SilentGearCureApi {
                 || calls.size() != 1 || calls.getFirst().getClass() != cancellation) {
             throw new IllegalStateException("Changed cure definition");
         }
+
         Object effect = calls.getFirst();
         var cleared = (List<?>) targets.invoke(effect);
         if (cleared.size() != 1 || !(cleared.getFirst() instanceof Holder<?> holder)
                 || !holder.is(Identifier.withDefaultNamespace(target))) {
             throw new IllegalStateException("Changed cure cancellation target");
         }
+
         return effect;
     }
 

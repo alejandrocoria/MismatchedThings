@@ -93,6 +93,7 @@ class JustDireArmorWearShapeTest implements Opcodes {
             assertFalse(JustDireArmorWearShape.publish(node), fieldName);
             assertEquals(ICONST_0, getter(node).instructions.getFirst().getOpcode());
         }
+
         var foreign = transformed();
         getter(foreign).visibleAnnotations.clear();
         assertFalse(JustDireArmorWearShape.publish(foreign));
@@ -158,12 +159,14 @@ class JustDireArmorWearShapeTest implements Opcodes {
                     labels.put(label, new LabelNode());
                 }
             }
+
             var second = new org.objectweb.asm.tree.InsnList();
             for (var instruction : wrapper.instructions) {
                 if (instruction.getOpcode() != RETURN) {
                     second.add(instruction.clone(labels));
                 }
             }
+
             var returned = java.util.stream.StreamSupport.stream(wrapper.instructions.spliterator(), false)
                                                          .filter(i -> i.getOpcode() == RETURN).findFirst().orElseThrow();
             wrapper.instructions.insertBefore(returned, second);

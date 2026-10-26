@@ -101,6 +101,7 @@ public final class JustDireRefundCompatibility {
             ordinary.call(root, count);
             return;
         }
+
         try {
             ordinary.call(root, count);
             complete(capture);
@@ -131,15 +132,18 @@ public final class JustDireRefundCompatibility {
         if (target == null) {
             return null;
         }
+
         try {
             if (ModContent.getMixedBootsData(root).isEmpty() || !root.isDamageableItem() || root.getMaxDamage() <= 0
                     || root.getDamageValue() < root.getMaxDamage()) {
                 return null;
             }
+
             var credits = root.get(component());
             if (credits == null || credits.names().isEmpty()) {
                 return null;
             }
+
             var items = new ArrayList<Item>();
             for (String name : credits.names()) {
                 var refund = binding.get(name);
@@ -160,6 +164,7 @@ public final class JustDireRefundCompatibility {
                 || !capture.target.present()) {
             return;
         }
+
         var shadow = new ItemStack(capture.before.getItem(), 1);
         List.copyOf(shadow.getComponents().keySet()).forEach(shadow::remove);
         shadow.applyComponents(capture.live);

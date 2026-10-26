@@ -42,11 +42,13 @@ final class AetherRecognitionShape implements Opcodes {
         if (!sets && !owner.name.equals(SENTRY)) {
             return false;
         }
+
         MethodNode method = method(owner, sets ? "getArmorCount" : "playerFall", sets ? COUNT : FALL);
         if (method == null || (method.access & ACC_STATIC) == 0
                 || Arrays.stream(method.instructions.toArray()).anyMatch(n -> n instanceof MethodInsnNode call && call.owner.equals(ADAPTER))) {
             return false;
         }
+
         Flow flow = new Flow(owner, method);
         Site selected = null;
         for (var instruction : method.instructions.toArray()) {
@@ -65,6 +67,7 @@ final class AetherRecognitionShape implements Opcodes {
         if (selected == null) {
             return false;
         }
+
         InsnList hook = new InsnList();
         if (sets) {
             hook.add(new VarInsnNode(ALOAD, selected.stackLocal));
@@ -91,6 +94,7 @@ final class AetherRecognitionShape implements Opcodes {
         if (branch.getOpcode() != IF_ACMPNE || !flow.parameter(flow.argument(branch, 1, 2), 1)) {
             return null;
         }
+
         MethodInsnNode query = flow.query(flow.argument(branch, 0, 2), STACK, "get", "(Ljava/util/function/Supplier;)Ljava/lang/Object;");
         if (query == null || !field(flow.origin(flow.argument(query, 1, 2)),
                                     "com/aetherteam/aetherii/item/components/AetherIIDataComponents",
@@ -98,15 +102,18 @@ final class AetherRecognitionShape implements Opcodes {
                                     "Lnet/neoforged/neoforge/registries/DeferredHolder;")) {
             return null;
         }
+
         SourceValue stack = flow.argument(query, 0, 2);
         AbstractInsnNode producer = flow.origin(stack);
         if (!call(producer, "java/util/Iterator", "next", "()Ljava/lang/Object;")) {
             return null;
         }
+
         AbstractInsnNode iterator = flow.origin(flow.argument(producer, 0, 1));
         if (!call(iterator, "java/util/List", "iterator", "()Ljava/util/Iterator;")) {
             return null;
         }
+
         AbstractInsnNode equipment = flow.origin(flow.argument(iterator, 0, 1));
         if (!call(equipment, EQUIPMENT, "getEquipment", "(L" + ENTITY + ";)Ljava/util/List;")
                 || !flow.parameter(flow.argument(equipment, 0, 1), 0)) {
@@ -125,26 +132,31 @@ final class AetherRecognitionShape implements Opcodes {
         if (branch.getOpcode() != IFEQ) {
             return null;
         }
+
         MethodInsnNode query = flow.query(flow.argument(branch, 0, 1), STACK, "is", "(Lnet/minecraft/core/Holder;)Z");
         if (query == null || !field(flow.origin(flow.argument(query, 1, 2)), "com/aetherteam/aetherii/item/AetherIIItems",
                                     "SENTRY_BOOTS", "Lnet/neoforged/neoforge/registries/DeferredItem;")) {
             return null;
         }
+
         AbstractInsnNode feet = flow.origin(flow.argument(query, 0, 2));
         if (!call(feet, ENTITY, "getItemBySlot", "(Lnet/minecraft/world/entity/EquipmentSlot;)L" + STACK + ";")
                 || !field(flow.origin(flow.argument(feet, 1, 2)), "net/minecraft/world/entity/EquipmentSlot", "FEET",
                           "Lnet/minecraft/world/entity/EquipmentSlot;")) {
             return null;
         }
+
         AbstractInsnNode actor = flow.origin(flow.argument(feet, 0, 2));
         if (!call(actor, EVENT, "getEntity", "()L" + ENTITY + ";") || !flow.parameter(flow.argument(actor, 0, 1), 0)) {
             return null;
         }
         // Require the boolean's true lane to reach the native distance check, without freezing its numeric threshold.
-        AbstractInsnNode actorRead = next(branch), distance = actorRead == null ? null : next(actorRead);
+        AbstractInsnNode actorRead = next(branch);
+        AbstractInsnNode distance = actorRead == null ? null : next(actorRead);
         if (!fieldValue(distance, ENTITY, "fallDistance", "D") || !flow.same(flow.argument(distance, 0, 1), flow.argument(feet, 0, 2))) {
             return null;
         }
+
         return new Site(branch, query, -1);
     }
 
@@ -182,6 +194,7 @@ final class AetherRecognitionShape implements Opcodes {
             if (value == null || value.insns.size() != 1) {
                 return null;
             }
+
             var n = value.insns.iterator().next();
             if (!seen.add(n)) {
                 return null;
@@ -193,6 +206,7 @@ final class AetherRecognitionShape implements Opcodes {
             if (n instanceof VarInsnNode && n.getOpcode() >= ISTORE && n.getOpcode() <= ASTORE || n.getOpcode() == CHECKCAST) {
                 return origin(argument(n, 0, 1), seen);
             }
+
             return n;
         }
 
@@ -234,6 +248,7 @@ final class AetherRecognitionShape implements Opcodes {
                 }
                 n = origin(argument(peer, 0, arguments.length));
             }
+
             return null;
         }
     }

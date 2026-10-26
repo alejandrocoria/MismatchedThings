@@ -39,7 +39,9 @@ public final class AetherTooltipClient {
     private static SetBindings sets;
     private static DataComponentType<Object> tierType;
     private static Class<?> tierClass;
-    private static boolean setsDisabled, tiersDisabled, warnedTierData;
+    private static boolean setsDisabled;
+    private static boolean tiersDisabled;
+    private static boolean warnedTierData;
 
     private AetherTooltipClient() {
     }
@@ -48,6 +50,7 @@ public final class AetherTooltipClient {
         if (setsDisabled || !AetherTooltipState.attributesReady() || !BootHalf.isValidSource(source)) {
             return;
         }
+
         List<Component> lines;
         try {
             if (sets == null) {
@@ -73,6 +76,7 @@ public final class AetherTooltipClient {
                 || !AetherTooltipState.managed(root)) {
             return;
         }
+
         List<Component> lines;
         try {
             if (sets == null) {
@@ -94,16 +98,19 @@ public final class AetherTooltipClient {
         if (tiersDisabled || !AetherTooltipState.tiersReady() || !BootHalf.isValidSource(source)) {
             return;
         }
+
         List<Component> lines = new ArrayList<>();
         try {
             if (tierType == null) {
                 tierType = component("reinforcement_tier");
                 tierClass = Class.forName("com.aetherteam.aetherii.item.components.ReinforcementTier");
             }
+
             var display = source.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
             if (display.hideTooltip() || !display.shows(tierType)) {
                 return;
             }
+
             Object tier = source.get(tierType);
             if (tier == null) {
                 return;
@@ -143,10 +150,12 @@ public final class AetherTooltipClient {
         if (family == null) {
             return lines;
         }
+
         String key = source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.";
         if (!family.equals("arkenium")) {
             lines.add(Component.translatable(key + "1"));
         }
+
         var client = Minecraft.getInstance();
         // Set progress describes the player's current equipment, even when this source is only being previewed.
         if (!family.equals("sentry") && client.player != null && client.level != null) {
@@ -154,6 +163,7 @@ public final class AetherTooltipClient {
             lines.add(Component.translatable(key + "2", Component.literal(count + "/3")
                                                                  .withStyle(count == 3 ? ChatFormatting.WHITE : ChatFormatting.GRAY)));
         }
+
         return lines;
     }
 
@@ -166,6 +176,7 @@ public final class AetherTooltipClient {
         if (player == null || client.level == null || root != player.getItemBySlot(EquipmentSlot.FEET)) {
             return lines;
         }
+
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         var families = new LinkedHashSet<String>();
         for (var source : List.of(data.left().source(), data.right().source())) {
@@ -174,6 +185,7 @@ public final class AetherTooltipClient {
                 families.add(family);
             }
         }
+
         var attributes = (Map<Holder<Attribute>, AttributeInstance>) sets.attributes.invoke(player.getAttributes());
         for (var family : families) {
             for (var attribute : attributes.entrySet()) {
@@ -185,6 +197,7 @@ public final class AetherTooltipClient {
                 }
             }
         }
+
         return lines;
     }
 

@@ -52,6 +52,7 @@ class RootsSetShapeTest implements Opcodes {
                 if (fault.equals("potency") && target.equals(RootsSetShape.EVENTS)) {
                     continue;
                 }
+
                 ClassNode node = nativeClass(target);
                 var method = consumer(node);
                 FieldInsnNode feet = java.util.Arrays.stream(method.instructions.toArray())
@@ -106,6 +107,7 @@ class RootsSetShapeTest implements Opcodes {
                     }
                     default -> throw new AssertionError(fault);
                 }
+
                 int size = method.instructions.size();
                 assertFalse(RootsSetShape.apply(node), target + ": " + fault);
                 assertEquals(size, method.instructions.size(), "rejection must leave native instructions unchanged");

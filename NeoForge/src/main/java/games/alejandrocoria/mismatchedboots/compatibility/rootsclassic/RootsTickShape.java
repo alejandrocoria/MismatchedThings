@@ -38,8 +38,10 @@ final class RootsTickShape implements Opcodes {
         if (!ITEM.equals(owner.superName) || !api(method, false) || writesInputs(method, 1, 4)) {
             return false;
         }
+
         List<AbstractInsnNode> code = code(method);
-        int repairs = 0, stackLoads = 0;
+        int repairs = 0;
+        int stackLoads = 0;
         for (int i = 0; i < code.size(); i++) {
             AbstractInsnNode node = code.get(i);
             if (var(node, ALOAD, 1)) {
@@ -65,6 +67,7 @@ final class RootsTickShape implements Opcodes {
                 return false;
             }
         }
+
         return repairs == 1 && stackLoads == 1;
     }
 
@@ -73,8 +76,11 @@ final class RootsTickShape implements Opcodes {
         if (!api(method, true) || writesInputs(method, 0, 1)) {
             return false;
         }
+
         List<AbstractInsnNode> code = code(method);
-        int writes = 0, damaged = 0, stackLoads = 0;
+        int writes = 0;
+        int damaged = 0;
+        int stackLoads = 0;
         for (int i = 0; i < code.size(); i++) {
             AbstractInsnNode node = code.get(i);
             if (var(node, ALOAD, 1)) {
@@ -111,6 +117,7 @@ final class RootsTickShape implements Opcodes {
                 return false;
             }
         }
+
         return writes == 1 && damaged == 1 && stackLoads == 3;
     }
 
@@ -119,6 +126,7 @@ final class RootsTickShape implements Opcodes {
         if (method == null) {
             return;
         }
+
         int access = ACC_PUBLIC | (isStatic ? ACC_STATIC : 0);
         List<AbstractInsnNode> code = code(method);
         int initialAccess = isStatic ? ACC_PRIVATE | ACC_STATIC : ACC_PUBLIC;

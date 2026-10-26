@@ -15,7 +15,8 @@ public final class AetherRecognition {
     private static final Identifier ARMOR_SET = Identifier.fromNamespaceAndPath("aether_ii", "armor_set");
     private static final ResourceKey<Item> SENTRY = ResourceKey.create(Registries.ITEM,
                                                                        Identifier.fromNamespaceAndPath("aether_ii", "sentry_boots"));
-    private static volatile boolean setsDisabled, sentryDisabled;
+    private static volatile boolean setsDisabled;
+    private static volatile boolean sentryDisabled;
 
     private AetherRecognition() {
     }
@@ -27,6 +28,7 @@ public final class AetherRecognition {
         if (setsDisabled || requested == null || !requested.registry().equals(Registries.ITEM)) {
             return false;
         }
+
         try {
             var type = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(ARMOR_SET).orElseThrow();
             // One boolean for this worn piece, even if both histories carry the same set.
@@ -58,6 +60,7 @@ public final class AetherRecognition {
         } else {
             sentryDisabled = true;
         }
+
         String message = "Aether II mixed " + (sets ? "set" : "Sentry") + " recognition disabled: local contract unavailable";
         if (failure == null) {
             Constants.LOG.warn(message);

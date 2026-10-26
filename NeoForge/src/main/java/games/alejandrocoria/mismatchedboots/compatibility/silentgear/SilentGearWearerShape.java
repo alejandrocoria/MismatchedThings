@@ -17,9 +17,11 @@ import java.util.List;
 public final class SilentGearWearerShape implements Opcodes {
     static final String OWNER = SilentGearEffectShape.PREFIX + "gear/trait/effect/WielderEffectTraitEffect";
     static final String ARMOR = SilentGearEffectShape.PREFIX + "api/item/GearArmor";
-    static final String STACK = SilentGearEffectShape.STACK, CONTEXT = SilentGearEffectShape.CONTEXT;
+    static final String STACK = SilentGearEffectShape.STACK;
+    static final String CONTEXT = SilentGearEffectShape.CONTEXT;
     static final String TRAIT = SilentGearEffectShape.PREFIX + "gear/trait/Trait";
-    static final String SLOT = "net/minecraft/world/entity/EquipmentSlot", PLAYER = "net/minecraft/world/entity/player/Player";
+    static final String SLOT = "net/minecraft/world/entity/EquipmentSlot";
+    static final String PLAYER = "net/minecraft/world/entity/player/Player";
     static final String COUNT = "(L" + CONTEXT + ";L" + SilentGearEffectShape.PREFIX + "api/item/GearType;L" + PLAYER + ";)I";
     static final String HAS = "(Lnet/minecraft/world/item/ItemInstance;L" + TRAIT + ";)Z";
 
@@ -50,6 +52,7 @@ public final class SilentGearWearerShape implements Opcodes {
                     || !call(code.get(i - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) {
                 continue;
             }
+
             int cursor = i + 1;
             cursor = handlers(code, cursor, "mismatchedboots$sgSetType", transformed);
             if (cursor < 0 || cursor + 5 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode typeNo) || typeNo.getOpcode() != IFEQ) {
@@ -60,6 +63,7 @@ public final class SilentGearWearerShape implements Opcodes {
                     || !call(code.get(cursor + 4), SilentGearEffectShape.PREFIX + "util/TraitHelper", "hasTrait", HAS)) {
                 continue;
             }
+
             AbstractInsnNode trait = code.get(cursor + 4);
             cursor += 5;
             cursor = handlers(code, cursor, "mismatchedboots$sgSetTrait", transformed);
@@ -75,6 +79,7 @@ public final class SilentGearWearerShape implements Opcodes {
             }
             found = new Pair(type, trait);
         }
+
         return found;
     }
 
@@ -94,6 +99,7 @@ public final class SilentGearWearerShape implements Opcodes {
             }
             index += 8;
         }
+
         return own > 1 || required && own != 1 ? -1 : index;
     }
 

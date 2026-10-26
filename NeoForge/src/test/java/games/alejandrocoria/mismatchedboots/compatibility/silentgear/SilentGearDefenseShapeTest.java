@@ -20,7 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SilentGearDefenseShapeTest implements Opcodes {
     @Test
     void bounceSelectionRequiresTheChosenIdAndTheCorrectArmorQueryScope() {
-        String p = SilentGearDefenseShape.P, ref = SilentGearRecognitionShape.RESOURCE;
+        String p = SilentGearDefenseShape.P;
+        String ref = SilentGearRecognitionShape.RESOURCE;
         var c = new InsnList();
         c.add(new VarInsnNode(ALOAD, 8));
         c.add(new FieldInsnNode(GETSTATIC, p + "util/Const$Traits", "MOONWALKER", ref));
@@ -127,6 +128,7 @@ class SilentGearDefenseShapeTest implements Opcodes {
         for (int i = 0; i < 6; i++) {
             bridge.instructions.add(new VarInsnNode(ALOAD, i));
         }
+
         var get = new MethodInsnNode(INVOKEINTERFACE, "com/llamalad7/mixinextras/sugar/ref/LocalFloatRef", "get", "()F", true);
         bridge.instructions.add(get);
         bridge.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, inner.name, inner.desc, false));

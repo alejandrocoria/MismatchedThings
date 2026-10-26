@@ -34,6 +34,7 @@ abstract class CreateFlyDivingBootsItemMixin {
                 || !(equipped.getItem() instanceof MixedBootsItem)) {
             return;
         }
+
         MixedBootsData data = ModContent.getMixedBootsData(equipped).orElse(null);
         if (data == null) {
             return;

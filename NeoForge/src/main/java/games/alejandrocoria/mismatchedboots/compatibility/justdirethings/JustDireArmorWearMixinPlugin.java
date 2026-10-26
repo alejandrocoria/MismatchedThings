@@ -15,7 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 public final class JustDireArmorWearMixinPlugin implements IMixinConfigPlugin, IExtension {
-    private boolean available, warned;
+    private boolean available;
+    private boolean warned;
 
     @Override
     public void onLoad(String mixinPackage) {

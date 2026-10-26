@@ -38,16 +38,19 @@ public final class JustDireAbilityInput {
         if (action != GLFW.GLFW_PRESS || client.player == null || client.screen != null) {
             return;
         }
+
         var targets = new ArrayList<Intent>();
         for (int slot = 0; slot <= 40; slot++) {
             if (!JustDireAbilityTarget.supportedSlot(slot)) {
                 continue;
             }
+
             var root = client.player.getInventory().getItem(slot);
             boolean equipped = slot == JustDireAbilityTarget.FEET_SLOT;
             if (!JustDireSettingsCompatibility.inputBinding(root, key, mouse, equipped)) {
                 continue;
             }
+
             int actions = 0;
             if (JustDireSettingsCompatibility.groundStompBinding(root, key, mouse, equipped)
                     && JustDireGroundStompCompatibility.quote(root) != null) {

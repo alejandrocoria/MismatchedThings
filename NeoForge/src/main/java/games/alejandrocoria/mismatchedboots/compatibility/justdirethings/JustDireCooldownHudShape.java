@@ -42,6 +42,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (render == null || (render.access & (ACC_STATIC | ACC_ABSTRACT | ACC_NATIVE)) != 0) {
             return false;
         }
+
         MethodInsnNode read = null;
         for (var instruction : render.instructions) {
             if (instruction instanceof MethodInsnNode call && call.owner.equals("net/minecraft/world/entity/player/Player")
@@ -52,6 +53,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
                 read = call;
             }
         }
+
         return read != null && flow(node, render, read);
     }
 
@@ -60,12 +62,14 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (ready == null) {
             return false;
         }
+
         var code = new ArrayList<AbstractInsnNode>();
         for (var instruction : ready.instructions) {
             if (instruction.getOpcode() >= 0) {
                 code.add(instruction);
             }
         }
+
         boolean intact = owned(ready) && ready.access == (ACC_PRIVATE | ACC_STATIC) && code.size() == 2
                 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN;
         ready.instructions.clear();
@@ -76,10 +80,12 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (!intact) {
             return false;
         }
+
         MethodNode render = method(node, "render", RENDER);
         if (render == null) {
             return false;
         }
+
         MethodInsnNode route = null;
         for (var instruction : render.instructions) {
             if (instruction instanceof MethodInsnNode call && call.owner.equals(node.name)
@@ -104,7 +110,11 @@ public final class JustDireCooldownHudShape implements Opcodes {
             if (frames[render.instructions.indexOf(source)] == null) {
                 return false;
             }
-            boolean clocks = false, item = false, active = false, cooldown = false;
+
+            boolean clocks = false;
+            boolean item = false;
+            boolean active = false;
+            boolean cooldown = false;
             for (var instruction : render.instructions) {
                 var frame = frames[render.instructions.indexOf(instruction)];
                 if (frame == null) {
@@ -139,6 +149,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
                     cooldown |= phase.name.equals("cooldown");
                 }
             }
+
             return clocks && item && active && cooldown;
         } catch (AnalyzerException | RuntimeException incompatible) {
             return false;
@@ -149,6 +160,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (handler == null || !owned(handler)) {
             return false;
         }
+
         try {
             var frames = frames(node, handler);
             MethodInsnNode view = null;
@@ -174,6 +186,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
             if (guard == null || view == null) {
                 return false;
             }
+
             boolean guarded = false;
             for (var instruction : handler.instructions) {
                 if (instruction instanceof JumpInsnNode branch && branch.getOpcode() == IFEQ
@@ -200,6 +213,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         } catch (AnalyzerException | RuntimeException incompatible) {
             return false;
         }
+
         return false;
     }
 
@@ -210,10 +224,12 @@ public final class JustDireCooldownHudShape implements Opcodes {
             if (at == null) {
                 return false;
             }
+
             var read = producer(render, frames, at.getStack(at.getStackSize() - 2), new HashSet<>());
             if (read == null || !Type.getReturnType(read.desc).getDescriptor().equals(STACK)) {
                 return false;
             }
+
             var arguments = Type.getArgumentTypes(read.desc);
             var readFrame = frames[render.instructions.indexOf(read)];
             if (readFrame == null) {
@@ -248,11 +264,13 @@ public final class JustDireCooldownHudShape implements Opcodes {
                         return true;
                     }
                 }
+
                 return false;
             }
         } catch (AnalyzerException | RuntimeException incompatible) {
             return false;
         }
+
         return false;
     }
 
@@ -277,6 +295,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
                 }
             }
         }
+
         return false;
     }
 
@@ -295,6 +314,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source == null) {
             return null;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (frame == null) {
             return null;
@@ -305,6 +325,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source.getOpcode() == ASTORE || source.getOpcode() == CHECKCAST) {
             return terminal(method, frames, frame.getStack(frame.getStackSize() - 1), seen);
         }
+
         return source;
     }
 
@@ -325,11 +346,10 @@ public final class JustDireCooldownHudShape implements Opcodes {
     }
 
     private static boolean owned(MethodNode method) {
-        return method.visibleAnnotations != null && method.visibleAnnotations.stream().anyMatch(annotation ->
-                                                                                                        annotation.desc.equals(
-                                                                                                                "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
-                                                                                                                && annotation.values != null && annotation.values.contains(
-                                                                                                                MIXIN));
+        return method.visibleAnnotations != null
+                && method.visibleAnnotations.stream().anyMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(MIXIN));
     }
 
     private static boolean from(MethodNode method, Frame<SourceValue>[] frames, SourceValue value,
@@ -341,6 +361,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source == required) {
             return true;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (frame == null) {
             return false;
@@ -367,6 +388,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
                 }
             }
         }
+
         return false;
     }
 
@@ -378,6 +400,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source == null) {
             return null;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (frame == null) {
             return null;
@@ -388,6 +411,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source.getOpcode() == ASTORE || source.getOpcode() == CHECKCAST) {
             return producer(method, frames, frame.getStack(frame.getStackSize() - 1), seen);
         }
+
         return null;
     }
 
@@ -396,6 +420,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source == null) {
             return false;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (frame == null) {
             return false;
@@ -407,6 +432,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source.getOpcode() == ASTORE || source.getOpcode() == CHECKCAST) {
             return parameter(method, frames, frame.getStack(frame.getStackSize() - 1), local, seen);
         }
+
         return false;
     }
 
@@ -423,6 +449,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source == null) {
             return false;
         }
+
         var frame = frames[method.instructions.indexOf(source)];
         if (frame == null) {
             return false;
@@ -430,6 +457,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
         if (source instanceof VarInsnNode variable && source.getOpcode() == ALOAD) {
             return field(method, frames, frame.getLocal(variable.var), owner, name, seen);
         }
+
         return source.getOpcode() == ASTORE && field(method, frames, frame.getStack(frame.getStackSize() - 1), owner, name, seen);
     }
 

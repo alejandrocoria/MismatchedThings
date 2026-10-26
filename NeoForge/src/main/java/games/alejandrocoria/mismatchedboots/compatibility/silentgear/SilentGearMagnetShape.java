@@ -22,11 +22,14 @@ import java.util.Set;
 final class SilentGearMagnetShape implements Opcodes {
     static final String EFFECT = SilentGearEffectShape.PREFIX + "gear/trait/effect/ItemMagnetTraitEffect";
     static final String TRACKER = SilentGearEffectShape.PREFIX + "gear/util/MagnetPullTracker";
-    static final String PLAYER = "net/minecraft/world/entity/player/Player", ITEM = "net/minecraft/world/entity/item/ItemEntity";
-    static final String VEC = "net/minecraft/world/phys/Vec3", LEVEL = "net/minecraft/world/level/Level";
+    static final String PLAYER = "net/minecraft/world/entity/player/Player";
+    static final String ITEM = "net/minecraft/world/entity/item/ItemEntity";
+    static final String VEC = "net/minecraft/world/phys/Vec3";
+    static final String LEVEL = "net/minecraft/world/level/Level";
     static final String PUSH = "(L" + ITEM + ";L" + VEC + ";)V";
     static final String META = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
-    private static final String CTX = SilentGearEffectShape.CONTEXT, STACK = SilentGearEffectShape.STACK;
+    private static final String CTX = SilentGearEffectShape.CONTEXT;
+    private static final String STACK = SilentGearEffectShape.STACK;
     private static final String QUEUE = TRACKER + ".ITEMS_TO_PUSH:Ljava/util/Map;";
     private static final Set<String> EFFECT_FIELDS = Set.of(EFFECT + ".pullStrength:F", EFFECT + ".effectRange:F",
                                                             EFFECT + ".affectedItems:Ljava/util/Optional;", VEC + ".x:D", VEC + ".y:D", VEC + ".z:D",
@@ -100,7 +103,8 @@ final class SilentGearMagnetShape implements Opcodes {
     /** Keep the finite-data check aligned with the native radius producer, not a second radius implementation. */
     static boolean radius(MethodNode method) {
         var code = code(method);
-        int slot = -1, matches = 0;
+        int slot = -1;
+        int matches = 0;
         for (int i = 7; i < code.size(); i++) {
             if (!(code.get(i) instanceof VarInsnNode store) || store.getOpcode() != FSTORE) {
                 continue;
@@ -115,6 +119,7 @@ final class SilentGearMagnetShape implements Opcodes {
             slot = store.var;
             matches++;
         }
+
         final int radius = slot;
         return matches == 1 && code.stream()
                                    .filter(node -> node instanceof VarInsnNode store && store.var == radius && store.getOpcode() == FSTORE)
@@ -156,6 +161,7 @@ final class SilentGearMagnetShape implements Opcodes {
             }
             matches++;
         }
+
         return matches == 1 && calls(method, "java/util/Map.clear()V") == 1;
     }
 
@@ -165,10 +171,12 @@ final class SilentGearMagnetShape implements Opcodes {
                 && (field.access & (ACC_PRIVATE | ACC_STATIC | ACC_FINAL)) == (ACC_PRIVATE | ACC_STATIC | ACC_FINAL)).count() != 1) {
             return false;
         }
+
         var init = method(owner, "<clinit>", "()V");
         if (init == null) {
             return false;
         }
+
         var code = code(init);
         int producers = 0;
         for (int i = 3; i < code.size(); i++) {
@@ -182,13 +190,15 @@ final class SilentGearMagnetShape implements Opcodes {
             }
             producers++;
         }
+
         return producers == 1;
     }
 
     /** Require incoming > queued magnitude around the single native queue write, without hashing the method. */
     static boolean strongest(MethodNode method) {
         var code = code(method);
-        int found = 0, previous = -1;
+        int found = 0;
+        int previous = -1;
         for (int i = 0; i + 2 < code.size(); i++) {
             if (call(code.get(i), "java/util/Map.getOrDefault(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
                     && code.get(i + 1) instanceof TypeInsnNode type && type.desc.equals(VEC)
@@ -210,6 +220,7 @@ final class SilentGearMagnetShape implements Opcodes {
             }
             found++;
         }
+
         return found == 1 && calls(method, "java/util/Map.getOrDefault(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;") == 1;
     }
 
@@ -235,6 +246,7 @@ final class SilentGearMagnetShape implements Opcodes {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -246,6 +258,7 @@ final class SilentGearMagnetShape implements Opcodes {
                 || !target.getOwner().equals(owner.name) || !target.getDesc().equals(descriptor)) {
             return false;
         }
+
         boolean predicate = owner.name.equals(EFFECT);
         if (!dynamic.name.equals(predicate ? "test" : "accept")
                 || !dynamic.desc.equals(predicate ? "(L" + PLAYER + ";F)Ljava/util/function/Predicate;" : "()Ljava/util/function/BiConsumer;")
@@ -254,10 +267,12 @@ final class SilentGearMagnetShape implements Opcodes {
                 || !org.objectweb.asm.Type.getMethodType(predicate ? "(L" + ITEM + ";)Z" : PUSH).equals(dynamic.bsmArgs[2])) {
             return false;
         }
+
         var method = method(owner, target.getName(), descriptor);
         if (method == null || (method.access & ACC_STATIC) == 0) {
             return false;
         }
+
         var permitted = owner.name.equals(EFFECT) ? Set.of(ITEM + ".distanceToSqr(Lnet/minecraft/world/entity/Entity;)D")
                                                   : Set.of(ITEM + ".push(DDD)V");
         return body(owner, method, permitted, fields, null) && calls(method, permitted.iterator().next()) == 1;

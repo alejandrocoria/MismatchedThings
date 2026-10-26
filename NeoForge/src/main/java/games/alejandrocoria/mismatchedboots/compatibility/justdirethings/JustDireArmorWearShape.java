@@ -58,6 +58,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (getter == null) {
             return refuse(node);
         }
+
         var code = real(getter);
         boolean intact = owned(getter) && getter.access == (ACC_PRIVATE | ACC_STATIC) && getter.tryCatchBlocks.isEmpty()
                 && code.size() == 2 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN;
@@ -69,6 +70,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (!intact) {
             return refuse(node);
         }
+
         try {
             if (!caller(node) || !transformedConsumer(node)) {
                 return refuse(node);
@@ -109,6 +111,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             handler.instructions.add(new InsnNode(RETURN));
             handler.maxStack = 7;
         }
+
         return false;
     }
 
@@ -117,6 +120,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (method == null || (method.access & ACC_STATIC) == 0) {
             return false;
         }
+
         var flow = new Flow(node, method);
         MethodInsnNode dispatch = null;
         for (var instruction : method.instructions) {
@@ -124,10 +128,12 @@ public final class JustDireArmorWearShape implements Opcodes {
                     || !call.desc.equals("(Ljava/util/function/BiConsumer;)V")) {
                 continue;
             }
+
             var consumer = flow.origin(flow.argument(call, 0, 1));
             if (!(consumer instanceof InvokeDynamicInsnNode lambda) || !lambda.desc.equals("(" + ENTITY + ")Ljava/util/function/BiConsumer;")) {
                 continue;
             }
+
             int targets = 0;
             for (Object argument : lambda.bsmArgs) {
                 if (argument instanceof Handle handle && handle.getTag() == H_INVOKESTATIC && handle.getOwner().equals(OWNER)
@@ -138,20 +144,24 @@ public final class JustDireArmorWearShape implements Opcodes {
             if (targets != 1 || dispatch != null || !flow.parameter(flow.argument(lambda, 0, 1), 3)) {
                 return false;
             }
+
             var map = flow.origin(flow.receiver(call, 1));
             if (!(map instanceof MethodInsnNode getMap) || !getMap.owner.equals(EVENT) || !getMap.name.equals("getArmorMap")
                     || !getMap.desc.equals("()Ljava/util/Map;")) {
                 return false;
             }
+
             var posted = flow.origin(flow.receiver(getMap, 0));
             if (!(posted instanceof MethodInsnNode post) || !post.owner.equals("net/neoforged/bus/api/IEventBus")
                     || !post.name.equals("post") || !post.desc.equals("(Lnet/neoforged/bus/api/Event;)Lnet/neoforged/bus/api/Event;")) {
                 return false;
             }
+
             var created = flow.origin(flow.argument(post, 0, 1));
             if (!(created instanceof TypeInsnNode allocation) || allocation.getOpcode() != NEW || !allocation.desc.equals(EVENT)) {
                 return false;
             }
+
             boolean constructor = false;
             for (var candidate : method.instructions) {
                 if (candidate instanceof MethodInsnNode init && init.owner.equals(EVENT) && init.name.equals("<init>")
@@ -166,6 +176,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             }
             dispatch = call;
         }
+
         return dispatch != null;
     }
 
@@ -174,11 +185,13 @@ public final class JustDireArmorWearShape implements Opcodes {
             if (!(instruction instanceof JumpInsnNode branch) || branch.getOpcode() != IFEQ && branch.getOpcode() != IFNE) {
                 continue;
             }
+
             var result = flow.origin(flow.top(branch));
             if (!(result instanceof MethodInsnNode check) || !check.owner.equals(EVENT) || !check.name.equals("isCanceled")
                     || !check.desc.equals("()Z") || flow.origin(flow.receiver(check, 0)) != post) {
                 continue;
             }
+
             var cancelled = branch.getOpcode() == IFEQ ? branch.getNext() : branch.label;
             var allowed = branch.getOpcode() == IFEQ ? branch.label : branch.getNext();
             if (!reachable(flow.method, flow.method.instructions.getFirst(), branch, post)
@@ -187,6 +200,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -195,6 +209,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (method == null || (method.access & ACC_STATIC) == 0 || !straight(method)) {
             return false;
         }
+
         var flow = new Flow(node, method);
         int calls = 0;
         for (var instruction : method.instructions) {
@@ -208,6 +223,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             }
             calls++;
         }
+
         return calls == 1;
     }
 
@@ -216,6 +232,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (lambda == null || !straight(lambda)) {
             return false;
         }
+
         var flow = new Flow(node, lambda);
         int routes = 0;
         for (var instruction : lambda.instructions) {
@@ -226,6 +243,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                     || !call.desc.equals(HANDLER_DESC) && !call.desc.equals(FORWARD_DESC)) {
                 continue;
             }
+
             var handler = method(node, call.name, call.desc);
             boolean direct = call.desc.equals(HANDLER_DESC);
             int count = direct ? 8 : 5;
@@ -234,6 +252,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                     || !flow.parameter(flow.argument(call, 2, count), 0) || !flow.parameter(flow.argument(call, 3, count), 1)) {
                 return false;
             }
+
             var producer = flow.origin(flow.argument(call, 4, count));
             if (direct) {
                 if (!owned(handler) || !router(node, handler)
@@ -247,6 +266,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             }
             routes++;
         }
+
         return routes == 1;
     }
 
@@ -263,6 +283,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 || !parent.parameter(parent.argument(indy, 2, captures), 1) || !parent.parameter(parent.argument(indy, 3, captures), 2))) {
             return false;
         }
+
         MethodNode bridge = null;
         for (Object argument : indy.bsmArgs) {
             if (!(argument instanceof Handle handle)) {
@@ -277,6 +298,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (bridge == null || !straight(bridge)) {
             return false;
         }
+
         var flow = new Flow(node, bridge);
         int forwards = 0;
         for (var instruction : bridge.instructions) {
@@ -293,6 +315,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             if (call.owner.equals("com/llamalad7/mixinextras/injector/wrapoperation/WrapOperationRuntime") && call.name.equals("checkArgumentCount")) {
                 continue;
             }
+
             String desc = ownedInside ? HANDLER_DESC : FORWARD_DESC;
             int count = ownedInside ? 8 : 5;
             var target = method(node, call.name, call.desc);
@@ -312,6 +335,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             }
             forwards++;
         }
+
         return forwards == 1;
     }
 
@@ -319,6 +343,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if ((handler.access & ACC_STATIC) == 0 || !straight(handler)) {
             return false;
         }
+
         var flow = new Flow(node, handler);
         MethodInsnNode forward = null;
         AbstractInsnNode array = null;
@@ -348,6 +373,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 || flow.constant(flow.top(allocation)) != 4) {
             return false;
         }
+
         var slots = new HashSet<Integer>();
         for (var instruction : handler.instructions) {
             if (instruction.getOpcode() != AASTORE) {
@@ -364,6 +390,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 return false;
             }
         }
+
         return slots.size() == 4;
     }
 
@@ -371,6 +398,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (!method.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         int returns = 0;
         for (var instruction : method.instructions) {
             if (instruction instanceof JumpInsnNode || instruction instanceof TableSwitchInsnNode || instruction instanceof LookupSwitchInsnNode
@@ -381,6 +409,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 returns++;
             }
         }
+
         return returns == 1;
     }
 
@@ -388,8 +417,10 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (!straight(handler)) {
             return false;
         }
+
         var flow = new Flow(node, handler);
-        int routes = 0, getters = 0;
+        int routes = 0;
+        int getters = 0;
         for (var instruction : handler.instructions) {
             if (!(instruction instanceof MethodInsnNode call)) {
                 continue;
@@ -402,6 +433,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                     || !call.name.equals("route") || !call.desc.equals(ROUTE_DESC)) {
                 return false;
             }
+
             var permission = flow.origin(flow.argument(call, 0, 7));
             if (!(permission instanceof MethodInsnNode getter) || !getter.owner.equals(OWNER) || !getter.name.equals(GETTER)
                     || !getter.desc.equals("()Z")) {
@@ -422,6 +454,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             }
             routes++;
         }
+
         return routes == 1 && getters == 1;
     }
 
@@ -430,6 +463,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 || !indy.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory")) {
             return false;
         }
+
         MethodNode callback = null;
         for (Object argument : indy.bsmArgs) {
             if (argument instanceof Handle handle) {
@@ -443,6 +477,7 @@ public final class JustDireArmorWearShape implements Opcodes {
         if (callback == null || !straight(callback)) {
             return false;
         }
+
         var flow = new Flow(node, callback);
         int damage = 0;
         for (var instruction : callback.instructions) {
@@ -471,6 +506,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             }
             damage++;
         }
+
         return damage == 1;
     }
 
@@ -513,6 +549,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             if (current == end) {
                 return true;
             }
+
             int opcode = current.getOpcode();
             if (current instanceof JumpInsnNode jump) {
                 pending.add(jump.label);
@@ -529,6 +566,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                     && !(current instanceof TableSwitchInsnNode) && !(current instanceof LookupSwitchInsnNode) && current.getNext() != null) {
                 pending.add(current.getNext());
             }
+
             int index = method.instructions.indexOf(current);
             for (var block : method.tryCatchBlocks) {
                 if (index >= method.instructions.indexOf(block.start) && index < method.instructions.indexOf(block.end)) {
@@ -536,6 +574,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 }
             }
         }
+
         return false;
     }
 
@@ -561,18 +600,18 @@ public final class JustDireArmorWearShape implements Opcodes {
         }
 
         SourceValue top(AbstractInsnNode node) {
-            var f = at(node);
-            return f == null ? null : f.getStack(f.getStackSize() - 1);
+            var frame = at(node);
+            return frame == null ? null : frame.getStack(frame.getStackSize() - 1);
         }
 
         SourceValue argument(AbstractInsnNode node, int argument, int count) {
-            var f = at(node);
-            return f == null ? null : f.getStack(f.getStackSize() - count + argument);
+            var frame = at(node);
+            return frame == null ? null : frame.getStack(frame.getStackSize() - count + argument);
         }
 
         SourceValue receiver(AbstractInsnNode node, int count) {
-            var f = at(node);
-            return f == null ? null : f.getStack(f.getStackSize() - count - 1);
+            var frame = at(node);
+            return frame == null ? null : frame.getStack(frame.getStackSize() - count - 1);
         }
 
         AbstractInsnNode origin(SourceValue value) {
@@ -583,6 +622,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             if (value == null || value.insns.size() != 1) {
                 return null;
             }
+
             var source = value.insns.iterator().next();
             if (!seen.add(source)) {
                 return null;
@@ -595,6 +635,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                     || source.getOpcode() == CHECKCAST || source.getOpcode() == DUP) {
                 return origin(top(source), seen);
             }
+
             return source;
         }
 

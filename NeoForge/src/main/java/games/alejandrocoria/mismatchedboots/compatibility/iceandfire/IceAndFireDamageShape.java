@@ -78,6 +78,7 @@ public final class IceAndFireDamageShape {
                 code.add(node);
             }
         }
+
         List<AbstractInsnNode> result = new ArrayList<>();
         for (int index = 4; index < code.size(); index++) {
             if (!(code.get(index) instanceof TypeInsnNode check) || check.getOpcode() != Opcodes.INSTANCEOF
@@ -104,11 +105,13 @@ public final class IceAndFireDamageShape {
                                                                                 .count() != 1)) {
             return List.of();
         }
+
         var scale = result.stream().filter(node -> SCALE.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
         var steel = result.stream().filter(node -> STEEL.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
         if (nextCode(((JumpInsnNode) nextCode(scale)).label) != nextCode(nextCode(steel))) {
             return List.of(); // The selected FEET pair itself must share one contribution, not another slot's Steel test.
         }
+
         return List.copyOf(result);
     }
 
@@ -120,6 +123,7 @@ public final class IceAndFireDamageShape {
                 code.add(node);
             }
         }
+
         List<AbstractInsnNode> result = new ArrayList<>();
         for (int index = 6; index < code.size(); index++) {
             if (isCall(code.get(index), "net/minecraft/world/item/ItemStack", "is", "(Ljava/lang/Object;)Z")
@@ -141,6 +145,7 @@ public final class IceAndFireDamageShape {
                 result.add(code.get(index));
             }
         }
+
         return result.size() == 1 ? List.copyOf(result) : List.of();
     }
 
@@ -167,6 +172,7 @@ public final class IceAndFireDamageShape {
                 assigned = true;
             }
         }
+
         return assigned;
     }
 
@@ -175,6 +181,7 @@ public final class IceAndFireDamageShape {
         if (predicate + 1 >= code.size() || !(code.get(predicate + 1) instanceof JumpInsnNode branch)) {
             return false;
         }
+
         int contribution = predicate + 2;
         if (SCALE.equals(type)) {
             if (branch.getOpcode() != Opcodes.IFNE) {
@@ -200,6 +207,7 @@ public final class IceAndFireDamageShape {
                     && steelBranch.getOpcode() == Opcodes.IFEQ
                     && nextCode(steelBranch.label) == nextCode(code.get(contribution + 3));
         }
+
         return nextCode(branch.label) == nextCode(code.get(contribution + 3));
     }
 

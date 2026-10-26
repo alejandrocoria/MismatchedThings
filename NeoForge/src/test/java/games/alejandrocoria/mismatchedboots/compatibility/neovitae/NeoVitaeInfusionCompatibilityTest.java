@@ -45,7 +45,8 @@ class NeoVitaeInfusionCompatibilityTest {
         for (Case example : cases) {
             ItemStack first = boots(example.capacityA, example.amountA, example.typeA);
             ItemStack second = boots(example.capacityB, example.amountB, example.typeB);
-            ItemStack firstBefore = first.copy(), secondBefore = second.copy();
+            ItemStack firstBefore = first.copy();
+            ItemStack secondBefore = second.copy();
             for (int preview = 0; preview < 2; preview++) {
                 assertTuple(create(first, second), example.capacity, example.amountLeft, example.typeLeft);
                 assertTuple(create(second, first), example.capacity, example.amountRight, example.typeRight);
@@ -58,7 +59,8 @@ class NeoVitaeInfusionCompatibilityTest {
     @Test
     void markerUnionUsesPresenceIncludingFalseAndClearsStaleProjection() {
         for (int markers = 0; markers < 4; markers++) {
-            ItemStack first = boots(0, 0, Type.RAW), second = first.copy();
+            ItemStack first = boots(0, 0, Type.RAW);
+            ItemStack second = first.copy();
             if ((markers & 1) != 0) {
                 first.set(API.bloodMending(), false);
             }
@@ -111,17 +113,22 @@ class NeoVitaeInfusionCompatibilityTest {
             invalid.set(API.capacity(), bad[0]);
             invalid.set(API.amount(), bad[1]);
             for (boolean reverse : List.of(false, true)) {
-                ItemStack output = projectedOutput(), before = output.copy(), sourceBefore = invalid.copy();
+                ItemStack output = projectedOutput();
+                ItemStack before = output.copy();
+                ItemStack sourceBefore = invalid.copy();
                 assertThrows(IllegalArgumentException.class, () -> NeoVitaeInfusionCompatibility.initializeCreation(
                         output, reverse ? valid : invalid, reverse ? invalid : valid, API));
                 assertTrue(ItemStack.matches(before, output));
                 assertTrue(ItemStack.matches(sourceBefore, invalid));
             }
-            ItemStack output = projectedOutput(), before = output.copy();
+
+            ItemStack output = projectedOutput();
+            ItemStack before = output.copy();
             assertThrows(IllegalArgumentException.class,
                          () -> NeoVitaeInfusionCompatibility.preserveState(invalid, output, API));
             assertTrue(ItemStack.matches(before, output));
         }
+
         ItemStack invalidType = boots(100, 1, Type.RAW);
         invalidType.set(API.type(), "unknown");
         assertThrows(IllegalArgumentException.class, () -> create(invalidType, valid));
@@ -166,7 +173,8 @@ class NeoVitaeInfusionCompatibilityTest {
     private static void assertPreserved(ItemStack previous) {
         // An unowned projected field must not be restored wholesale from the previous root.
         previous.set(DataComponents.REPAIR_COST, 2);
-        ItemStack output = projectedOutput(), before = previous.copy();
+        ItemStack output = projectedOutput();
+        ItemStack before = previous.copy();
         output.set(DataComponents.REPAIR_COST, 11);
         NeoVitaeInfusionCompatibility.preserveState(previous, output, API);
         for (var field : List.of(API.capacity(), API.amount(), API.type(), API.bloodMending())) {

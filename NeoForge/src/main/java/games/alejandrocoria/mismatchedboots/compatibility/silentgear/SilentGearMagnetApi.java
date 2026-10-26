@@ -19,15 +19,24 @@ import java.util.Set;
 public final class SilentGearMagnetApi {
     public static final Set<String> IDS = Set.of("silentgear:magnetic", "silentgear:greedy");
     private final Class<?> magnet;
-    private final MethodHandle context, definition, id, level, effects, tick;
-    private final Field strength, range, affected;
+    private final MethodHandle context;
+    private final MethodHandle definition;
+    private final MethodHandle id;
+    private final MethodHandle level;
+    private final MethodHandle effects;
+    private final MethodHandle tick;
+    private final Field strength;
+    private final Field range;
+    private final Field affected;
     private final List<MethodHandle> proofs;
     private final SilentGearWearerApi.Carriers carriers = new SilentGearWearerApi.Carriers();
 
     public SilentGearMagnetApi() throws ReflectiveOperationException {
         var lookup = MethodHandles.publicLookup();
         magnet = nativeClass("gear.trait.effect.ItemMagnetTraitEffect");
-        Class<?> instance = nativeClass("api.traits.TraitInstance"), ctx = nativeClass("api.traits.TraitActionContext"), trait = nativeClass(
+        Class<?> instance = nativeClass("api.traits.TraitInstance");
+        Class<?> ctx = nativeClass("api.traits.TraitActionContext");
+        Class<?> trait = nativeClass(
                 "gear.trait.Trait");
         context = lookup.findConstructor(ctx, MethodType.methodType(void.class, Player.class, instance, ItemStack.class));
         definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));

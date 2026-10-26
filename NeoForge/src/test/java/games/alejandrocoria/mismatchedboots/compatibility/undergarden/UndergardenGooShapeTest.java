@@ -85,6 +85,7 @@ class UndergardenGooShapeTest implements Opcodes {
                     j.setOpcode(IFEQ);
                 }
             }
+
             int size = method.instructions.size();
             assertFalse(UndergardenGooShape.apply(owner), fault);
             assertEquals(size, method.instructions.size(), fault);
@@ -112,6 +113,7 @@ class UndergardenGooShapeTest implements Opcodes {
         while (start.getOpcode() < 0) {
             start = start.getPrevious();
         }
+
         var duplicate = new InsnList();
         for (var n = start; n != branch; n = n.getNext()) {
             if (n.getOpcode() >= 0) {

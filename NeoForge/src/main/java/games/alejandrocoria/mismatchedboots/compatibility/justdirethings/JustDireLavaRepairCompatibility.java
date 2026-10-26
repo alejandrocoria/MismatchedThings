@@ -66,6 +66,7 @@ public final class JustDireLavaRepairCompatibility {
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things Lava Repair API; mixed Lava Repair disabled", failure);
         }
+
         try {
             var data = Class.forName("com.direwolf20.justdirethings.client.particles.itemparticle.ItemFlowParticleData");
             var constructor = MethodHandles.publicLookup().findConstructor(data, MethodType.methodType(void.class,
@@ -101,6 +102,7 @@ public final class JustDireLavaRepairCompatibility {
         if (data.left().source().getItem() != binding.provider && data.right().source().getItem() != binding.provider) {
             return false;
         }
+
         try {
             return (boolean) binding.enabledAbility.invokeExact() && api == binding;
         } catch (Throwable failure) {
@@ -121,6 +123,7 @@ public final class JustDireLavaRepairCompatibility {
         if (!client) {
             sanitizeProgress(root);
         }
+
         Api binding = api;
         boolean enabled = eligible(root) && binding != null
                 && root.getOrDefault(binding.toolEnabled, true) && root.getOrDefault(binding.toggle, true);
@@ -167,6 +170,7 @@ public final class JustDireLavaRepairCompatibility {
         if (client) {
             return;
         }
+
         ServerLevel server = (ServerLevel) level;
         if (++episode.progress >= 80) {
             episode.ended = true;
@@ -199,6 +203,7 @@ public final class JustDireLavaRepairCompatibility {
         if (Math.abs(vy - .01) > .001 && Math.abs(vy - .049) > .001 && Math.abs(vy - .0049) > .001) {
             return null;
         }
+
         BlockPos pos = entity.blockPosition();
         for (int i = 0; i < 6; i++) {
             pos = pos.below();
@@ -213,6 +218,7 @@ public final class JustDireLavaRepairCompatibility {
                 return null;
             }
         }
+
         return null;
     }
 
@@ -221,6 +227,7 @@ public final class JustDireLavaRepairCompatibility {
         if (binding == null) {
             return;
         }
+
         try {
             // Reuse JDT's public particle options, codec and client factory, not the unsafe ritual helper.
             var options = (ParticleOptions) binding.create.invokeExact(new ItemStack(binding.item),
@@ -293,7 +300,8 @@ public final class JustDireLavaRepairCompatibility {
         final Level level;
         final MixedBootsData data;
         final BlockPos source;
-        int age, progress;
+        int age;
+        int progress;
         boolean ended;
 
         Episode(ItemStack root, Level level, BlockPos source) {

@@ -42,32 +42,41 @@ final class UndergardenGooShape implements Opcodes {
         if (!owner.name.equals(TARGET)) {
             return false;
         }
-        var methods = owner.methods.stream().filter(m -> m.name.equals(METHOD) && m.desc.equals(DESCRIPTOR)).toList();
+
+        var methods = owner.methods.stream()
+                                   .filter(method -> method.name.equals(METHOD) && method.desc.equals(DESCRIPTOR))
+                                   .toList();
         if (methods.size() != 1 || (methods.getFirst().access & ACC_STATIC) != 0) {
             return false;
         }
+
         var method = methods.getFirst();
-        for (var n : method.instructions) {
-            if (n instanceof MethodInsnNode call && call.owner.equals(ADAPTER)) {
+        for (var instruction : method.instructions) {
+            if (instruction instanceof MethodInsnNode call && call.owner.equals(ADAPTER)) {
                 return false;
             }
         }
+
         var flow = new Flow(owner.name, method);
         var sites = new ArrayList<Site>();
-        for (var n : method.instructions) {
-            if (!(n instanceof JumpInsnNode branch) || branch.getOpcode() != IFEQ) {
+        for (var instruction : method.instructions) {
+            if (!(instruction instanceof JumpInsnNode branch) || branch.getOpcode() != IFEQ) {
                 continue;
             }
+
+            // Match the Cloggrum query and trace its stack back to this player's FEET slot.
             var query = flow.query(flow.argument(branch, 0, 1), STACK, "is");
             if (query == null || !field(flow.origin(flow.argument(query, 1, 2)),
                                         "quek/undergarden/registry/UGItems", "CLOGGRUM_BOOTS",
                                         "Lnet/neoforged/neoforge/registries/DeferredItem;")) {
                 continue;
             }
+
             var item = flow.origin(flow.argument(query, 0, 2));
             if (!call(item, "net/minecraft/world/entity/player/Inventory", "getItem", "(I)L" + STACK + ";")) {
                 continue;
             }
+
             var inventory = flow.origin(flow.argument(item, 0, 2));
             var index = flow.origin(flow.argument(item, 1, 2));
             if (!call(inventory, PLAYER, "getInventory", "()Lnet/minecraft/world/entity/player/Inventory;")
@@ -77,16 +86,20 @@ final class UndergardenGooShape implements Opcodes {
                     || !(flow.origin(flow.argument(index, 1, 2)) instanceof IntInsnNode base) || base.operand != 36) {
                 continue;
             }
+
+            // The matching branch must return only when the player lacks Gooey.
             boolean noGooeyReturn = false;
             for (var next = branch.getNext(); next != null && next != branch.label; next = next.getNext()) {
                 if (!(next instanceof JumpInsnNode effect) || effect.getOpcode() != IFNE || effect.label != branch.label) {
                     continue;
                 }
+
                 var hasEffect = flow.query(flow.argument(effect, 0, 1), PLAYER, "hasEffect");
                 var exit = effect.getNext();
                 while (exit != null && (exit.getOpcode() < 0 || exit.getOpcode() == NOP)) {
                     exit = exit.getNext();
                 }
+
                 if (hasEffect != null && flow.parameter(flow.argument(hasEffect, 0, 2), 4)
                         && field(flow.origin(flow.argument(hasEffect, 1, 2)), "quek/undergarden/registry/UGEffects",
                                  "GOOEY", "Lnet/neoforged/neoforge/registries/DeferredHolder;")
@@ -94,27 +107,33 @@ final class UndergardenGooShape implements Opcodes {
                     noGooeyReturn = true;
                 }
             }
+
             if (noGooeyReturn) {
                 sites.add(new Site(query, branch));
             }
         }
+
         if (sites.size() != 1) {
             return false;
         }
+
         var site = sites.getFirst();
         // Capture the final query operands, then extend the final boolean consumer after peer result chains.
-        int stack = method.maxLocals++, holder = method.maxLocals++;
+        int stackLocal = method.maxLocals++;
+        int holderLocal = method.maxLocals++;
         var save = new InsnList();
         save.add(new InsnNode(DUP2));
-        save.add(new VarInsnNode(ASTORE, holder));
-        save.add(new VarInsnNode(ASTORE, stack));
+        save.add(new VarInsnNode(ASTORE, holderLocal));
+        save.add(new VarInsnNode(ASTORE, stackLocal));
         method.instructions.insertBefore(site.query, save);
+
         var extend = new InsnList();
-        extend.add(new VarInsnNode(ALOAD, stack));
-        extend.add(new VarInsnNode(ALOAD, holder));
+        extend.add(new VarInsnNode(ALOAD, stackLocal));
+        extend.add(new VarInsnNode(ALOAD, holderLocal));
         extend.add(new MethodInsnNode(INVOKESTATIC, ADAPTER, "goo", "(ZL" + STACK + ";Lnet/minecraft/core/Holder;)Z", false));
         method.instructions.insertBefore(site.branch, extend);
         method.maxStack += 2;
+
         return true;
     }
 
@@ -129,15 +148,17 @@ final class UndergardenGooShape implements Opcodes {
             this.method = method;
             frames = new Analyzer<>(new SourceInterpreter(ASM9) {
                 @Override
-                public SourceValue copyOperation(AbstractInsnNode n, SourceValue value) {
-                    return n.getOpcode() >= DUP && n.getOpcode() <= SWAP ? value : super.copyOperation(n, value);
+                public SourceValue copyOperation(AbstractInsnNode instruction, SourceValue value) {
+                    return instruction.getOpcode() >= DUP && instruction.getOpcode() <= SWAP
+                            ? value : super.copyOperation(instruction, value);
                 }
             }).analyzeAndComputeMaxs(owner, method);
         }
 
-        SourceValue argument(AbstractInsnNode n, int index, int count) {
-            var frame = frames[method.instructions.indexOf(n)];
-            return frame == null || frame.getStackSize() < count ? null : frame.getStack(frame.getStackSize() - count + index);
+        SourceValue argument(AbstractInsnNode instruction, int index, int operandCount) {
+            var frame = frames[method.instructions.indexOf(instruction)];
+            return frame == null || frame.getStackSize() < operandCount
+                    ? null : frame.getStack(frame.getStackSize() - operandCount + index);
         }
 
         AbstractInsnNode origin(SourceValue value) {
@@ -148,52 +169,61 @@ final class UndergardenGooShape implements Opcodes {
             if (value == null || value.insns.size() != 1) {
                 return null;
             }
-            var n = value.insns.iterator().next();
-            if (!seen.add(n)) {
+
+            var instruction = value.insns.iterator().next();
+            if (!seen.add(instruction)) {
                 return null;
             }
-            if (n instanceof VarInsnNode variable && n.getOpcode() >= ILOAD && n.getOpcode() <= ALOAD) {
-                var local = frames[method.instructions.indexOf(n)].getLocal(variable.var);
-                return local.insns.isEmpty() ? n : origin(local, seen);
+
+            if (instruction instanceof VarInsnNode variable && instruction.getOpcode() >= ILOAD && instruction.getOpcode() <= ALOAD) {
+                var local = frames[method.instructions.indexOf(instruction)].getLocal(variable.var);
+                return local.insns.isEmpty() ? instruction : origin(local, seen);
             }
-            if (n instanceof VarInsnNode && n.getOpcode() >= ISTORE && n.getOpcode() <= ASTORE || n.getOpcode() == CHECKCAST) {
-                return origin(argument(n, 0, 1), seen);
+
+            if ((instruction instanceof VarInsnNode && instruction.getOpcode() >= ISTORE && instruction.getOpcode() <= ASTORE)
+                    || instruction.getOpcode() == CHECKCAST) {
+                return origin(argument(instruction, 0, 1), seen);
             }
-            return n;
+
+            return instruction;
         }
 
         boolean parameter(SourceValue value, int local) {
-            var n = origin(value);
-            return n instanceof VarInsnNode load && load.getOpcode() == ALOAD && load.var == local
-                    && frames[method.instructions.indexOf(n)].getLocal(local).insns.isEmpty();
+            var instruction = origin(value);
+            return instruction instanceof VarInsnNode load && load.getOpcode() == ALOAD && load.var == local
+                    && frames[method.instructions.indexOf(instruction)].getLocal(local).insns.isEmpty();
         }
 
         MethodInsnNode query(SourceValue value, String owner, String name) {
-            var n = origin(value);
+            var instruction = origin(value);
             var seen = new HashSet<AbstractInsnNode>();
-            while (n instanceof MethodInsnNode peer && seen.add(n)) {
+            while (instruction instanceof MethodInsnNode peer && seen.add(instruction)) {
                 if (call(peer, owner, name, HOLDER)) {
                     return peer;
                 }
-                var args = Type.getArgumentTypes(peer.desc);
-                if (args.length == 0 || !args[0].equals(Type.BOOLEAN_TYPE)
+
+                // Follow wrappers that consume and return the query's boolean without repeating the query.
+                var arguments = Type.getArgumentTypes(peer.desc);
+                if (arguments.length == 0 || !arguments[0].equals(Type.BOOLEAN_TYPE)
                         || !Type.getReturnType(peer.desc).equals(Type.BOOLEAN_TYPE)) {
                     return null;
                 }
-                n = origin(argument(peer, peer.getOpcode() == INVOKESTATIC ? 0 : 1,
-                                    args.length + (peer.getOpcode() == INVOKESTATIC ? 0 : 1)));
+
+                instruction = origin(argument(peer, peer.getOpcode() == INVOKESTATIC ? 0 : 1,
+                                              arguments.length + (peer.getOpcode() == INVOKESTATIC ? 0 : 1)));
             }
+
             return null;
         }
     }
 
-    private static boolean call(AbstractInsnNode n, String owner, String name, String desc) {
-        return n instanceof MethodInsnNode c && c.getOpcode() == INVOKEVIRTUAL
-                && c.owner.equals(owner) && c.name.equals(name) && c.desc.equals(desc);
+    private static boolean call(AbstractInsnNode instruction, String owner, String name, String descriptor) {
+        return instruction instanceof MethodInsnNode call && call.getOpcode() == INVOKEVIRTUAL
+                && call.owner.equals(owner) && call.name.equals(name) && call.desc.equals(descriptor);
     }
 
-    private static boolean field(AbstractInsnNode n, String owner, String name, String desc) {
-        return n instanceof FieldInsnNode f && f.getOpcode() == GETSTATIC
-                && f.owner.equals(owner) && f.name.equals(name) && f.desc.equals(desc);
+    private static boolean field(AbstractInsnNode instruction, String owner, String name, String descriptor) {
+        return instruction instanceof FieldInsnNode field && field.getOpcode() == GETSTATIC
+                && field.owner.equals(owner) && field.name.equals(name) && field.desc.equals(descriptor);
     }
 }

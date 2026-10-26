@@ -41,6 +41,7 @@ public final class SilentGearDefenseInjectionPoint extends InjectionPoint {
         if (!SilentGearDefenseShape.FALL.equals(descriptor)) {
             return false;
         }
+
         var selected = site.equals("wear") ? SilentGearDefenseShape.wearSite(instructions) : null;
         if (selected == null) {
             return false;

@@ -48,12 +48,14 @@ public final class OritechFallInjectionPoint extends InjectionPoint {
         if (!DESCRIPTOR.equals(descriptor)) {
             return null;
         }
+
         var code = new ArrayList<AbstractInsnNode>();
         for (var node : instructions) {
             if (node.getOpcode() >= 0 && node.getOpcode() != Opcodes.NOP) {
                 code.add(node);
             }
         }
+
         MethodInsnNode selected = null;
         boolean overwrittenArgument = false;
         for (int i = 0; i < code.size(); i++) {
@@ -85,6 +87,7 @@ public final class OritechFallInjectionPoint extends InjectionPoint {
             }
             selected = (MethodInsnNode) code.get(i);
         }
+
         return selected;
     }
 

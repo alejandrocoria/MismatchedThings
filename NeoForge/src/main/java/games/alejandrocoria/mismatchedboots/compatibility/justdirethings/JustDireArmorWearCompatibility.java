@@ -46,6 +46,7 @@ public final class JustDireArmorWearCompatibility {
         if (!executing.add(player)) {
             return true;
         }
+
         try {
             var before = root.copy();
             Quote quote;
@@ -54,6 +55,7 @@ public final class JustDireArmorWearCompatibility {
                 if (profile == null || profile.providers() == 0) {
                     return false;
                 }
+
                 int level = root.getEnchantmentLevel(player.registryAccess()
                                                            .lookupOrThrow(Registries.ENCHANTMENT)
                                                            .getOrThrow(Enchantments.UNBREAKING));
@@ -61,11 +63,13 @@ public final class JustDireArmorWearCompatibility {
                 if (bill < 0) {
                     return false;
                 }
+
                 var access = ItemAccess.forStack(root);
                 var energy = access.getCapability(Capabilities.Energy.ITEM);
                 if (energy == null) {
                     return false;
                 }
+
                 int available = energy.getAmountAsInt();
                 if (available < 0) {
                     return false;
@@ -85,10 +89,12 @@ public final class JustDireArmorWearCompatibility {
             if (quote.profile.providers() == 1 && quote.available < quote.bill) {
                 return false;
             }
+
             int debit = Math.min(quote.available, quote.bill);
             if (debit == 0) {
                 return true;
             }
+
             var expected = before.copy();
             expected.set(quote.profile.energy(), quote.available - debit);
             boolean paid = false;
@@ -102,6 +108,7 @@ public final class JustDireArmorWearCompatibility {
                     paid = true;
                 }
             }
+
             return paid || !unchanged(player, root, before);
         } finally {
             executing.remove(player);

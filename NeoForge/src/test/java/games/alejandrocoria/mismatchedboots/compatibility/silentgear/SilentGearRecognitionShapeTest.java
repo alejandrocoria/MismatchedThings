@@ -195,6 +195,7 @@ class SilentGearRecognitionShapeTest implements Opcodes {
             method.instructions.add(new VarInsnNode(ALOAD, 0));
             method.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, name, SilentGearRecognitionShape.VOID_RESULT, false));
         }
+
         var end = new LabelNode();
         method.instructions.add(new JumpInsnNode(IFEQ, end));
         method.instructions.add(end);
@@ -212,6 +213,7 @@ class SilentGearRecognitionShapeTest implements Opcodes {
             route.instructions.add(new InsnNode(IRETURN));
             owner.methods.add(route);
         }
+
         return owner;
     }
 
@@ -256,6 +258,7 @@ class SilentGearRecognitionShapeTest implements Opcodes {
             method.instructions.add(new VarInsnNode(ALOAD, 0));
             method.instructions.add(new MethodInsnNode(INVOKESTATIC, owner.name, name, SilentGearRecognitionShape.RESULT, false));
         }
+
         var code = method.instructions;
         var end = new LabelNode();
         code.add(new VarInsnNode(ISTORE, 3));
@@ -290,6 +293,7 @@ class SilentGearRecognitionShapeTest implements Opcodes {
             routing.instructions.add(new InsnNode(IRETURN));
             owner.methods.add(routing);
         }
+
         return owner;
     }
 

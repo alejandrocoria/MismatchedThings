@@ -30,6 +30,7 @@ public final class CreateFlyBeltShape {
                 code.add(node);
             }
         }
+
         List<AbstractInsnNode> matches = new ArrayList<>();
         for (int index = 7; index + 2 < code.size(); index++) {
             if (call(code.get(index), STACK, "is", "(Ljava/lang/Object;)Z")
@@ -48,6 +49,7 @@ public final class CreateFlyBeltShape {
                 matches.add(code.get(index));
             }
         }
+
         return matches.size() == 1 ? List.copyOf(matches) : List.of();
     }
 

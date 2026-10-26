@@ -53,6 +53,7 @@ public final class SilentGearWearer {
         if (binding == null || disabled || slot == null || !(entity instanceof Player player) || player.tickCount % 10 != 0) {
             return;
         }
+
         try {
             var calls = new ArrayList<Call>();
             // Validate the complete batch before publishing any native potion. Stable max-by-ID view
@@ -68,7 +69,9 @@ public final class SilentGearWearer {
             if (calls.isEmpty()) {
                 return;
             }
-            ItemStack carrier = binding.carrier(root), before = carrier.copy();
+
+            ItemStack carrier = binding.carrier(root);
+            ItemStack before = carrier.copy();
             for (var call : calls) {
                 binding.tick(call.effect, player, call.trait.nativeInstance(), carrier, true);
                 if (!ItemStack.matches(before, carrier)) {

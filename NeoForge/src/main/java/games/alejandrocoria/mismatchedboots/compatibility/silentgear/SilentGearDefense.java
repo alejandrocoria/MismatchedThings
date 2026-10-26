@@ -22,10 +22,14 @@ import java.util.Set;
 
 /** Native other-slot Bounce may charge any FEET item: this barrier does not require a mixed SG trait. */
 public final class SilentGearDefense {
-    private static volatile boolean fallReady, fallDisabled;
+    private static volatile boolean fallReady;
+    private static volatile boolean fallDisabled;
     private static volatile SilentGearDefenseApi api;
     private static volatile boolean incomingDisabled;
-    private static volatile boolean bounceReady, bounceDisabled, retaliationReady, retaliationDisabled;
+    private static volatile boolean bounceReady;
+    private static volatile boolean bounceDisabled;
+    private static volatile boolean retaliationReady;
+    private static volatile boolean retaliationDisabled;
     private static final Set<String> refusedTraits = new HashSet<>();
     private static final Set<String> INCOMING_TRAITS = Set.of("silentgear:heat_resistant", "silentgear:bounce");
 
@@ -46,6 +50,7 @@ public final class SilentGearDefense {
         } catch (Throwable failure) {
             disable(failure);
         }
+
         try {
             SilentGearDefenseApi.require("event.GearEvents", "mismatchedboots$sgIncomingReady");
             SilentGearDefenseApi.require("gear.trait.effect.NegateDamageTraitEffect", "mismatchedboots$sgNegateReady");
@@ -53,12 +58,14 @@ public final class SilentGearDefense {
         } catch (Throwable failure) {
             disableIncoming(failure);
         }
+
         try {
             SilentGearDefenseApi.require("event.GearEvents", "mismatchedboots$sgBounceFallReady");
             bounceReady = true;
         } catch (Throwable failure) {
             disableBounce(false, failure);
         }
+
         try {
             SilentGearDefenseApi.require("event.GearEvents", "mismatchedboots$sgRetaliationReady");
             retaliationReady = true;
@@ -135,6 +142,7 @@ public final class SilentGearDefense {
                 || !(current instanceof Float amount)) {
             return current;
         }
+
         try {
             var calls = new ArrayList<Call>();
             for (var trait : SilentGearCompatibility.effectiveTraits(root)) {
@@ -160,6 +168,7 @@ public final class SilentGearDefense {
                     throw new IllegalStateException("Native defensive leaf violated its read-only reduction contract");
                 }
             }
+
             return result;
         } catch (Throwable failure) {
             disableIncoming(failure);

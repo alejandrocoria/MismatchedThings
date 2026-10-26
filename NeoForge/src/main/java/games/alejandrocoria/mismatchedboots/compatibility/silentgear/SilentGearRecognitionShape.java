@@ -17,14 +17,17 @@ import java.util.List;
 /** Local native query/result consumers, not complete event/class fingerprints. */
 final class SilentGearRecognitionShape implements Opcodes {
     static final String PREFIX = SilentGearEffectShape.PREFIX;
-    static final String ARMOR = PREFIX + "item/gear/GearArmorItem", EVENTS = PREFIX + "event/GearEvents";
+    static final String ARMOR = PREFIX + "item/gear/GearArmorItem";
+    static final String EVENTS = PREFIX + "event/GearEvents";
     static final String EVENT = "net/neoforged/neoforge/event/entity/living/LivingFallEvent";
     static final String RESOURCE = "L" + PREFIX + "api/util/DataResource;";
     static final String QUERY = "(Lnet/minecraft/world/entity/player/Player;" + RESOURCE + ")I";
-    static final String FALL = "(L" + EVENT + ";)V", RESULT = "(IL" + EVENT + ";)I";
+    static final String FALL = "(L" + EVENT + ";)V";
+    static final String RESULT = "(IL" + EVENT + ";)I";
     static final String BRILLIANT = "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)Z";
     static final String PLAYER_PRE = "net/neoforged/neoforge/event/tick/PlayerTickEvent$Pre";
-    static final String TICK = "(L" + PLAYER_PRE + ";)V", VOID_RESULT = "(ZL" + PLAYER_PRE + ";)Z";
+    static final String TICK = "(L" + PLAYER_PRE + ";)V";
+    static final String VOID_RESULT = "(ZL" + PLAYER_PRE + ";)Z";
     static final String VOID_QUERY = "(Lnet/minecraft/world/entity/player/Player;" + RESOURCE + ")Z";
 
     private SilentGearRecognitionShape() {
@@ -46,6 +49,7 @@ final class SilentGearRecognitionShape implements Opcodes {
         if (!FALL.equals(descriptor)) {
             return null;
         }
+
         var code = code(instructions);
         MethodInsnNode found = null;
         for (int i = 2; i < code.size(); i++) {
@@ -57,6 +61,7 @@ final class SilentGearRecognitionShape implements Opcodes {
                 found = (MethodInsnNode) code.get(i);
             }
         }
+
         return found;
     }
 
@@ -65,12 +70,15 @@ final class SilentGearRecognitionShape implements Opcodes {
         if (method == null) {
             return false;
         }
+
         MethodInsnNode query = moonQuery(method.desc, method.instructions);
         if (query == null) {
             return false;
         }
+
         var code = code(method.instructions);
-        int index = code.indexOf(query) + 1, own = 0;
+        int index = code.indexOf(query) + 1;
+        int own = 0;
         while (index + 1 < code.size() && load(code.get(index), ALOAD, 0)
                 && code.get(index + 1) instanceof MethodInsnNode hook && hook.getOpcode() == INVOKESTATIC
                 && hook.owner.equals(EVENTS) && hook.desc.equals(RESULT)) {
@@ -85,6 +93,7 @@ final class SilentGearRecognitionShape implements Opcodes {
         if (own != 1 || index + 17 >= code.size()) {
             return false;
         }
+
         return load(code.get(index), ISTORE, 3) && load(code.get(index + 1), ILOAD, 3)
                 && code.get(index + 2) instanceof JumpInsnNode skip && skip.getOpcode() == IFLE
                 && code.get(index + 3).getOpcode() == FCONST_1 && load(code.get(index + 4), ILOAD, 3)
@@ -103,6 +112,7 @@ final class SilentGearRecognitionShape implements Opcodes {
         if (!TICK.equals(descriptor)) {
             return null;
         }
+
         var code = code(instructions);
         MethodInsnNode found = null;
         for (int i = 2; i < code.size(); i++) {
@@ -125,6 +135,7 @@ final class SilentGearRecognitionShape implements Opcodes {
             }
             found = (MethodInsnNode) code.get(i);
         }
+
         return found;
     }
 
@@ -133,12 +144,15 @@ final class SilentGearRecognitionShape implements Opcodes {
         if (method == null) {
             return false;
         }
+
         MethodInsnNode query = voidQuery(method.desc, method.instructions);
         if (query == null) {
             return false;
         }
+
         var code = code(method.instructions);
-        int index = code.indexOf(query) + 1, own = 0;
+        int index = code.indexOf(query) + 1;
+        int own = 0;
         while (index + 1 < code.size() && load(code.get(index), ALOAD, 0)
                 && code.get(index + 1) instanceof MethodInsnNode hook && hook.getOpcode() == INVOKESTATIC
                 && hook.owner.equals(EVENTS) && hook.desc.equals(VOID_RESULT)) {
@@ -158,6 +172,7 @@ final class SilentGearRecognitionShape implements Opcodes {
             }
             index += 2;
         }
+
         return own == 1 && index < code.size() && code.get(index) instanceof JumpInsnNode branch
                 && (branch.getOpcode() == IFEQ || branch.getOpcode() == IFNE);
     }

@@ -49,6 +49,7 @@ public final class JustDireUpgradesCompatibility {
             if (boots.stream().anyMatch(item -> !tool.isInstance(item))) {
                 throw new IllegalStateException("Unsupported native boot upgrade API");
             }
+
             var upgrades = new ArrayList<Upgrade>();
             for (String name : ABILITIES) {
                 DataComponentType<Boolean> flag = component(name + "_upgrade_installed");
@@ -88,6 +89,7 @@ public final class JustDireUpgradesCompatibility {
         if (binding == null) {
             return;
         }
+
         var data = ModContent.getMixedBootsData(output).orElseThrow();
         var imported = new ArrayList<DataComponentType<Boolean>>();
         var ownerPurchases = new ArrayList<String>();
@@ -170,30 +172,36 @@ public final class JustDireUpgradesCompatibility {
         if (!additionId.getNamespace().equals("justdirethings")) {
             return MixedBootsSmithingPolicy.RootAttempt.UNHANDLED;
         }
+
         String name = ABILITIES.stream().filter(ability -> additionId.getPath().equals("upgrade_" + ability)).findFirst().orElse(null);
         if (name == null) {
             return MixedBootsSmithingPolicy.RootAttempt.UNHANDLED;
         }
+
         Api binding = api;
         // Even failed binding/duplicate/config rejection must not install on a historical source.
         if (binding == null) {
             return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
         }
+
         var upgrade = binding.upgrades.stream().filter(value -> value.name.equals(name)).findFirst().orElseThrow();
         if (root.getOrDefault(upgrade.flag, false)) {
             return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
         }
+
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         for (var source : List.of(data.left().source(), data.right().source())) {
             if (!binding.boots.contains(source.getItem()) || !overlayInstallation(source, root)) {
                 continue;
             }
+
             var input = new SmithingRecipeInput(template.copy(), source, addition.copy());
             var recipe = level.recipeAccess().getRecipeFor(RecipeType.SMITHING, input, level);
             if (recipe.isEmpty() || !recipe.get().value().getClass().getName()
                                            .equals("com.direwolf20.justdirethings.datagen.recipes.AbilityRecipe")) {
                 continue;
             }
+
             var assembled = recipe.get().value().assemble(input);
             if (assembled.isEmpty()) {
                 continue;
@@ -209,6 +217,7 @@ public final class JustDireUpgradesCompatibility {
                 }
                 return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
             }
+
             var changed = root.copy();
             changed.set(upgrade.flag, true);
             try {
@@ -220,6 +229,7 @@ public final class JustDireUpgradesCompatibility {
                 return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
             }
         }
+
         return MixedBootsSmithingPolicy.RootAttempt.REJECTED;
     }
 

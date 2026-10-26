@@ -49,6 +49,7 @@ public final class JustDireHeldToggleCompatibility {
         if (binding == null) {
             return null;
         }
+
         try {
             // Do not compete with JDT's tick listener, including its special portal radial menu.
             if (!((ItemStack) binding.nativeHeld.invokeExact(player)).isEmpty()
@@ -66,6 +67,7 @@ public final class JustDireHeldToggleCompatibility {
             }
             disable(failure);
         }
+
         return null;
     }
 
@@ -74,11 +76,13 @@ public final class JustDireHeldToggleCompatibility {
         if (binding == null || player.containerMenu != player.inventoryMenu || target(player) != hand) {
             return false;
         }
+
         ItemStack root = player.getItemInHand(hand);
         Item receiver = provider(root);
         if (receiver == null || api != binding) {
             return false;
         }
+
         try {
             // Audited native method only flips root TOOL_ENABLED and emits its own message/sound.
             // The native receiver is never equipped or written into inventory/source provenance.

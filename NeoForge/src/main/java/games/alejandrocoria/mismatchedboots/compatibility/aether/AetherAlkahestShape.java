@@ -43,6 +43,7 @@ final class AetherAlkahestShape implements Opcodes {
         if (!armor && !owner.name.equals(FLUID)) {
             return false;
         }
+
         var method = method(owner, armor ? "onArmorDamaged" : "entityInside", armor ? ARMOR : CONTACT);
         if (method == null || ((method.access & ACC_STATIC) != 0) != armor) {
             return false;
@@ -52,6 +53,7 @@ final class AetherAlkahestShape implements Opcodes {
                 return false;
             }
         }
+
         var flow = new Flow(owner, method);
         var sites = new ArrayList<Site>();
         var kinds = new HashSet<String>();
@@ -59,11 +61,13 @@ final class AetherAlkahestShape implements Opcodes {
             if (!(n instanceof JumpInsnNode branch) || branch.getOpcode() != (armor ? IFEQ : IFNE)) {
                 continue;
             }
+
             var query = flow.query(flow.argument(branch, 0, 1));
             if (query == null || !field(flow.base(flow.argument(query, 1, 2)), COMPONENTS, "REINFORCEMENT_TIER",
                                         "Lnet/neoforged/neoforge/registries/DeferredHolder;")) {
                 continue;
             }
+
             String kind = armor ? armorSite(flow, branch, query) : fluidSite(flow, branch, query);
             if (kind == null) {
                 continue;
@@ -78,7 +82,8 @@ final class AetherAlkahestShape implements Opcodes {
         }
         // Prove the whole domain before editing any query; a partial fluid match grants nothing.
         for (var site : sites) {
-            int stack = method.maxLocals++, supplier = method.maxLocals++;
+            int stack = method.maxLocals++;
+            int supplier = method.maxLocals++;
             var save = new InsnList();
             save.add(new InsnNode(DUP2));
             save.add(new VarInsnNode(ASTORE, supplier));
@@ -130,6 +135,7 @@ final class AetherAlkahestShape implements Opcodes {
                 return kind;
             }
         }
+
         return null;
     }
 
@@ -138,23 +144,28 @@ final class AetherAlkahestShape implements Opcodes {
         if (!fieldValue(stack, EVENT + "$ArmorEntry", "armorItemStack", "L" + STACK + ";") || stack.getOpcode() != GETFIELD) {
             return null;
         }
+
         var value = flow.base(flow.argument(stack, 0, 1));
         if (!call(value, "java/util/Map$Entry", "getValue", "()Ljava/lang/Object;")) {
             return null;
         }
+
         var entry = flow.argument(value, 0, 1);
         var next = flow.base(entry);
         if (!call(next, "java/util/Iterator", "next", "()Ljava/lang/Object;")) {
             return null;
         }
+
         var iterator = flow.base(flow.argument(next, 0, 1));
         if (!call(iterator, "java/util/Set", "iterator", "()Ljava/util/Iterator;")) {
             return null;
         }
+
         var entries = flow.base(flow.argument(iterator, 0, 1));
         if (!call(entries, "java/util/Map", "entrySet", "()Ljava/util/Set;")) {
             return null;
         }
+
         var map = flow.base(flow.argument(entries, 0, 1));
         if (!call(map, EVENT, "getArmorMap", "()Ljava/util/Map;") || !flow.parameter(flow.argument(map, 0, 1), 0)) {
             return null;
@@ -170,6 +181,7 @@ final class AetherAlkahestShape implements Opcodes {
                 return "armor";
             }
         }
+
         return null;
     }
 
@@ -197,8 +209,8 @@ final class AetherAlkahestShape implements Opcodes {
         }
 
         SourceValue argument(AbstractInsnNode n, int index, int count) {
-            var f = at(n);
-            return f == null || f.getStackSize() < count ? null : f.getStack(f.getStackSize() - count + index);
+            var frame = at(n);
+            return frame == null || frame.getStackSize() < count ? null : frame.getStack(frame.getStackSize() - count + index);
         }
 
         AbstractInsnNode origin(SourceValue v) {
@@ -209,6 +221,7 @@ final class AetherAlkahestShape implements Opcodes {
             if (v == null || v.insns.size() != 1) {
                 return null;
             }
+
             var n = v.insns.iterator().next();
             if (!seen.add(n)) {
                 return null;
@@ -220,6 +233,7 @@ final class AetherAlkahestShape implements Opcodes {
             if (n instanceof VarInsnNode && n.getOpcode() >= ISTORE && n.getOpcode() <= ASTORE || n.getOpcode() == CHECKCAST) {
                 return origin(argument(n, 0, 1), seen);
             }
+
             return n;
         }
 
@@ -231,12 +245,15 @@ final class AetherAlkahestShape implements Opcodes {
                 if (args.length == 0 || !args[0].equals(Type.getReturnType(peer.desc))) {
                     break;
                 }
+
                 var body = method(owner, peer.name, peer.desc);
                 if (body == null || body == method) {
                     break;
                 }
+
                 var proof = new Flow(owner, body);
-                boolean returned = false, identity = true;
+                boolean returned = false;
+                boolean identity = true;
                 for (var ret : body.instructions) {
                     if (ret.getOpcode() == ARETURN) {
                         returned = true;
@@ -248,6 +265,7 @@ final class AetherAlkahestShape implements Opcodes {
                 }
                 n = origin(argument(peer, peer.getOpcode() == INVOKESTATIC ? 0 : 1, args.length + (peer.getOpcode() == INVOKESTATIC ? 0 : 1)));
             }
+
             return n;
         }
 

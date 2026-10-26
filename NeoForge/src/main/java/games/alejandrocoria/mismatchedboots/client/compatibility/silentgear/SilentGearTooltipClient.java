@@ -23,7 +23,8 @@ import java.util.function.Consumer;
 /** Native original-source presentation only: no root totals, gear event replay or gameplay readiness. */
 public final class SilentGearTooltipClient {
     private static Bindings bindings;
-    private static boolean disabled, warnedData;
+    private static boolean disabled;
+    private static boolean warnedData;
 
     private SilentGearTooltipClient() {
     }
@@ -32,6 +33,7 @@ public final class SilentGearTooltipClient {
         if (disabled) {
             return;
         }
+
         List<Component> lines;
         try {
             if (bindings == null) {
@@ -54,6 +56,7 @@ public final class SilentGearTooltipClient {
                 disabled = true;
                 Constants.LOG.warn("Silent Gear source tooltips disabled: native presentation unavailable", failure);
             }
+
             return;
         }
         // Native part summaries insert into their list. Publish only the completed source-local block.
@@ -78,15 +81,21 @@ public final class SilentGearTooltipClient {
     }
 
     private static final class Bindings {
-        private final Class<?> gear = nativeClass("api.item.GearItem"), flagsType = nativeClass("client.util.GearTooltipFlag");
+        private final Class<?> gear = nativeClass("api.item.GearItem");
+        private final Class<?> flagsType = nativeClass("client.util.GearTooltipFlag");
         private final Class<?> constructionType = nativeClass("core.component.GearConstructionData");
         private final Class<?> propertiesType = nativeClass("core.component.GearPropertiesData");
-        private final Class<?> partType = nativeClass("gear.part.PartInstance"), partListType = nativeClass("api.part.PartList");
-        private final Class<?> helpers = nativeClass("client.tooltips.GearItemTooltips"), keys = nativeClass("client.KeyTracker");
-        private final DataComponentType<Object> construction = component("construction"), properties = component("properties");
+        private final Class<?> partType = nativeClass("gear.part.PartInstance");
+        private final Class<?> partListType = nativeClass("api.part.PartList");
+        private final Class<?> helpers = nativeClass("client.tooltips.GearItemTooltips");
+        private final Class<?> keys = nativeClass("client.KeyTracker");
+        private final DataComponentType<Object> construction = component("construction");
+        private final DataComponentType<Object> properties = component("properties");
         private final Method flags = flagsType.getMethod("withModifierKeys", boolean.class, boolean.class, boolean.class);
-        private final Method getParts = constructionType.getMethod("parts"), sorted = partListType.getMethod("toSortedList");
-        private final Method mains = partListType.getMethod("getMains"), propertyValues = propertiesType.getMethod("properties");
+        private final Method getParts = constructionType.getMethod("parts");
+        private final Method sorted = partListType.getMethod("toSortedList");
+        private final Method mains = partListType.getMethod("getMains");
+        private final Method propertyValues = propertiesType.getMethod("properties");
         private final Method validPart = partType.getMethod("isValid");
         private final Method partInfo = partType.getMethod("addInformation", ItemStack.class, List.class, TooltipFlag.class);
         private final Method propertyInfo = helpers.getMethod("addPropertiesInfo", ItemStack.class, List.class, flagsType, gear);
@@ -110,14 +119,18 @@ public final class SilentGearTooltipClient {
                     || !constructionType.isInstance(input.get(construction)) || !propertiesType.isInstance(input.get(properties))) {
                 return List.of();
             }
-            boolean showParts = display.shows(construction), showProperties = display.shows(properties);
+
+            boolean showParts = display.shows(construction);
+            boolean showProperties = display.shows(properties);
             if (!showParts && !showProperties) {
                 return List.of();
             }
+
             ItemStack source = input.copy();
             if (((java.util.Map<?, ?>) propertyValues.invoke(source.get(properties))).isEmpty()) {
                 return List.of();
             }
+
             Object parts = getParts.invoke(source.get(construction));
             if (!partListType.isInstance(parts)) {
                 throw new SourceDataException("Invalid SG construction part list");
@@ -131,6 +144,7 @@ public final class SilentGearTooltipClient {
             if (((Collection<?>) mains.invoke(parts)).isEmpty()) {
                 return List.of();
             }
+
             var ordered = (Collection<?>) sorted.invoke(parts);
             Object nativeFlag = flags.invoke(null, flag.isAdvanced(), showProperties, showParts);
             var result = new ArrayList<Component>();
@@ -155,6 +169,7 @@ public final class SilentGearTooltipClient {
                     result.add(header.append(Component.literal(" ").append(hint)));
                 }
             }
+
             return List.copyOf(result);
         }
     }

@@ -29,6 +29,7 @@ public final class OritechFallMixinPlugin implements IMixinConfigPlugin {
         } catch (Exception | LinkageError failure) {
             Constants.LOG.warn("Could not inspect Oritech fall recognition; mixed Exo fall protection disabled", failure);
         }
+
         return false;
     }
 

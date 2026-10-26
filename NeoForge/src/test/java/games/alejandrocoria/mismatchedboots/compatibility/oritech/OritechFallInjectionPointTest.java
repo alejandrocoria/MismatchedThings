@@ -30,6 +30,7 @@ class OritechFallInjectionPointTest {
             try (var stream = jar.getInputStream(jar.getJarEntry(OritechFallInjectionPoint.TARGET.replace('.', '/') + ".class"))) {
                 new ClassReader(stream).accept(target, 0);
             }
+
             var method = target.methods.stream().filter(node -> node.name.equals(OritechFallInjectionPoint.METHOD))
                                        .findFirst().orElseThrow();
             var selected = OritechFallInjectionPoint.select(method.desc, method.instructions);

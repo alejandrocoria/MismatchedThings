@@ -28,6 +28,7 @@ public final class FabricMeshClipper {
         if (source == null || source.size() == 0) {
             return LayerGeometryExtension.Plan.NONE;
         }
+
         MutableMesh builder = Renderer.get().mutableMesh();
         QuadEmitter emitter = builder.emitter();
         boolean[] compatible = {true};
@@ -36,6 +37,7 @@ public final class FabricMeshClipper {
             if (!compatible[0]) {
                 return;
             }
+
             try {
                 QuadClipper.TracedPolygonResult result = clip(quad, localTransform, side);
                 switch (result.geometry().decision()) {
@@ -58,6 +60,7 @@ public final class FabricMeshClipper {
         if (!compatible[0]) {
             return LayerGeometryExtension.Plan.INCOMPATIBLE;
         }
+
         Mesh replacement = builder.immutableCopy();
         return new LayerGeometryExtension.Plan(true, () -> {
             source.clear();
@@ -83,6 +86,7 @@ public final class FabricMeshClipper {
             vertices.add(new QuadClipper.Vertex(point(raw),
                                                 new QuadClipper.Uv(source.u(index), source.v(index)), point(canonical)));
         }
+
         return QuadClipper.clipPolygonWithOrigins(new QuadClipper.Quad(vertices), side);
     }
 

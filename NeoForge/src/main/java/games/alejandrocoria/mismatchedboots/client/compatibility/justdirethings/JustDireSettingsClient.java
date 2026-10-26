@@ -23,7 +23,11 @@ import java.util.UUID;
 /** Native selection/edit queue and held global shortcut; ordinary slot packets carry the root. */
 public final class JustDireSettingsClient {
     private static JustDireSettingsScreenAccess selected;
-    private static int selection, request, lastReply, menu, slot;
+    private static int selection;
+    private static int request;
+    private static int lastReply;
+    private static int menu;
+    private static int slot;
     private static UUID token = JustDireActiveNetwork.NONE;
     private static final Queue<Edit> queued = new ArrayDeque<>();
     private static KeyMapping toggleTool;
@@ -165,6 +169,7 @@ public final class JustDireSettingsClient {
         if (action != GLFW.GLFW_PRESS || client.player == null || client.screen != null) {
             return;
         }
+
         var hand = JustDireHeldToggleCompatibility.target(client.player);
         if (hand == null) {
             return;
@@ -191,6 +196,7 @@ public final class JustDireSettingsClient {
                 return null;
             }
         }
+
         return toggleTool;
     }
 

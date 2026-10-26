@@ -71,6 +71,7 @@ public final class JustDireGroundStompCompatibility {
             if (!timer.isRecord()) {
                 throw new IllegalStateException("Unsupported native cooldown record");
             }
+
             var providers = new ArrayList<NativeProvider>();
             for (Provider provider : Provider.values()) {
                 Item item = BuiltInRegistries.ITEM.get(id(provider.path + "_boots")).orElseThrow().value();
@@ -79,6 +80,7 @@ public final class JustDireGroundStompCompatibility {
                 }
                 providers.add(new NativeProvider(provider, item));
             }
+
             Api binding = new Api(ability.getField("GROUNDSTOMP").get(null),
                                   List.copyOf(providers),
                                   lookup.findVirtual(tool, "getAllAbilities", MethodType.methodType(java.util.EnumSet.class))
@@ -113,6 +115,7 @@ public final class JustDireGroundStompCompatibility {
             if (binding.timers.codec() == null || binding.timers.streamCodec() == null) {
                 throw new IllegalStateException("Unsupported native cooldown component codec");
             }
+
             Object decoded = binding.timers.codec().parse(JsonOps.INSTANCE, JsonParser.parseString(
                     "[{\"ability_name\":\"groundstomp\",\"cooldown_ticks\":1,\"is_active\":false}]")).getOrThrow();
             if (!(decoded instanceof List<?> records) || records.size() != 1 || !timer.isInstance(records.getFirst())) {
@@ -129,6 +132,7 @@ public final class JustDireGroundStompCompatibility {
         if (binding == null) {
             return;
         }
+
         var data = ModContent.getMixedBootsData(output).orElseThrow();
         List<Object> imported;
         try {
@@ -139,6 +143,7 @@ public final class JustDireGroundStompCompatibility {
                     imported.add(binding.copy(record));
                 }
             }
+
             int maximum = 0;
             for (var source : List.of(data.left().source(), data.right().source())) {
                 if (binding.provider(source) == null || !binding.permanent(source)) {
@@ -181,19 +186,23 @@ public final class JustDireGroundStompCompatibility {
         if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) {
             return null;
         }
+
         var data = ModContent.getMixedBootsData(root).orElse(null);
         if (data == null) {
             return null;
         }
+
         var left = data.left().source();
         var right = data.right().source();
         if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
             return null;
         }
+
         Api binding = api;
         if (binding == null) {
             return null;
         }
+
         try {
             if (!root.getOrDefault(binding.installed, false) || !root.getOrDefault(binding.enabled, true)
                     || !root.getOrDefault(binding.toggle, true)) {
@@ -207,6 +216,7 @@ public final class JustDireGroundStompCompatibility {
                     return null; // Even a zero native record must be removed by the later supported tick, not by a query.
                 }
             }
+
             Quote selected = null;
             for (ItemStack source : List.of(left, right)) {
                 NativeProvider provider = binding.provider(source);
@@ -223,6 +233,7 @@ public final class JustDireGroundStompCompatibility {
                 if (!(boolean) binding.usable.invokeExact(source.getItem(), source, binding.ability)) {
                     continue;
                 }
+
                 Object params = binding.params.invokeExact(source.getItem(), binding.ability);
                 int min = (int) binding.minimum.invokeExact(params);
                 int max = (int) binding.maximum.invokeExact(params);
@@ -245,15 +256,18 @@ public final class JustDireGroundStompCompatibility {
                         continue;
                     }
                 }
+
                 int strength = (int) binding.slider.invokeExact(source, "groundstomp");
                 if (strength < min || strength > max) {
                     throw new IllegalStateException("Unsupported native Ground Stomp value");
                 }
+
                 Quote candidate = new Quote(provider.kind, strength, base, cooldown);
                 if (candidate.preferredTo(selected)) {
                     selected = candidate;
                 }
             }
+
             return api == binding ? selected : null;
         } catch (Throwable failure) {
             disable(binding, failure);
@@ -268,27 +282,32 @@ public final class JustDireGroundStompCompatibility {
         if (!executing.add(player)) {
             return false;
         }
+
         try {
             Api binding = api;
             if (binding == null || !target.valid() || !ItemStack.matches(root, expected)
                     || !JustDireSettingsCompatibility.groundStompBinding(target, key, mouse)) {
                 return false;
             }
+
             Action action;
             try {
                 Quote quote = quote(root);
                 if (quote == null || api != binding) {
                     return false;
                 }
+
                 int particles = JustDireSettingsCompatibility.particles(root);
                 if (particles < 0 || particles > 1) {
                     return false;
                 }
+
                 int unbreaking = root.getEnchantmentLevel(player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
                                                                 .getOrThrow(Enchantments.UNBREAKING));
                 if (unbreaking < 0) {
                     return false;
                 }
+
                 GameType mode = player.gameMode.getGameModeForPlayer();
                 int bill = mode == GameType.CREATIVE || mode == GameType.SPECTATOR ? 0 : quote.provider.powered
                                                                                          ? (int) Math.max(0,
@@ -347,7 +366,8 @@ public final class JustDireGroundStompCompatibility {
                 expected.setCount(root.getCount());
             }
             for (Mob mob : action.targets) {
-                double x = mob.getX() - player.getX(), z = mob.getZ() - player.getZ();
+                double x = mob.getX() - player.getX();
+                double z = mob.getZ() - player.getZ();
                 double length = Math.sqrt(x * x + z * z);
                 if (length != 0) {
                     mob.knockback(action.quote.strength, -x / length, -z / length);
@@ -358,6 +378,7 @@ public final class JustDireGroundStompCompatibility {
             if (action.particles == 0) {
                 player.level().sendParticles(ParticleTypes.DUST_PLUME, player.getX(), player.getY(), player.getZ(), 20, .5, .2, .5, 0);
             }
+
             return true;
         } finally {
             executing.remove(player);
@@ -380,6 +401,7 @@ public final class JustDireGroundStompCompatibility {
         if (binding == null || !equipped(player, root)) {
             return;
         }
+
         List<Object> next = new ArrayList<>();
         boolean changed = false;
         int count = 0;
@@ -407,6 +429,7 @@ public final class JustDireGroundStompCompatibility {
             disable(binding, failure);
             return;
         }
+
         var completion = count == 1 && ready ? SoundEvents.ENDER_EYE_DEATH : null;
         if (changed && api == binding && equipped(player, root)) {
             root.set(binding.timers, List.copyOf(next));

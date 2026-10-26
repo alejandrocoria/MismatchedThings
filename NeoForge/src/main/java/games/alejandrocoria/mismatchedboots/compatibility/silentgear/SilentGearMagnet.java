@@ -49,6 +49,7 @@ public final class SilentGearMagnet {
                 || player.level() != level || slot != EquipmentSlot.FEET && slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND) {
             return;
         }
+
         try {
             var calls = new ArrayList<Call>();
             // Admit the whole max-by-ID batch before any effect can enqueue work. No Wielder cadence.
@@ -61,7 +62,8 @@ public final class SilentGearMagnet {
                 return;
             }
             binding.requireProof();
-            ItemStack carrier = binding.carrier(root), before = carrier.copy();
+            ItemStack carrier = binding.carrier(root);
+            ItemStack before = carrier.copy();
             for (var call : calls) {
                 binding.tick(call.effect, player, call.instance, carrier, true);
                 if (!ItemStack.matches(before, carrier)) {

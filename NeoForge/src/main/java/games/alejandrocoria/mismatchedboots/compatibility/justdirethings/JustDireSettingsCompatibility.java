@@ -52,6 +52,7 @@ public final class JustDireSettingsCompatibility {
             if (!record.isRecord()) {
                 throw new IllegalStateException("Unsupported native binding record");
             }
+
             var lookup = MethodHandles.publicLookup();
             var abilities = new ArrayList<Setting>();
             for (String name : List.of("stepheight", "jumpboost", "negatefalldamage", "groundstomp")) {
@@ -59,10 +60,12 @@ public final class JustDireSettingsCompatibility {
                                           scalar(name + "_upgrade_installed", false), scalar(name + "_toggle", true), scalar(name + "_value", 1),
                                           scalar(name + "_bindingmode", 0)));
             }
+
             DataComponentType<List<Object>> bindings = component("ability_bindings");
             if (bindings.codec() == null || bindings.streamCodec() == null) {
                 throw new IllegalStateException("Unsupported binding codecs");
             }
+
             Object decoded = bindings.codec().parse(JsonOps.INSTANCE, JsonParser.parseString(
                     "[{\"ability_name\":\"groundstomp\",\"key\":71,\"is_mouse\":false,\"require_equipped\":true}]")).getOrThrow();
             if (!(decoded instanceof List<?> records) || records.size() != 1 || !record.isInstance(records.getFirst())) {
@@ -86,6 +89,7 @@ public final class JustDireSettingsCompatibility {
             Constants.LOG.warn("Could not bind Just Dire Things mixed settings API; new settings/input routes disabled", failure);
             return; // No Lava settings can operate without the shared API; avoid a second diagnostic.
         }
+
         try {
             var ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
             // Intrinsic, toggle-only: neither an installed flag nor an unused numeric field exists.
@@ -121,10 +125,12 @@ public final class JustDireSettingsCompatibility {
         if (name.equals("lavarepair")) {
             return lavaProfile(root, binding);
         }
+
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
         if (setting == null || name.equals("groundstomp") && !JustDireGroundStompCompatibility.available()) {
             return null;
         }
+
         try {
             var data = ModContent.getMixedBootsData(root).orElseThrow();
             Profile selected = null;
@@ -132,18 +138,21 @@ public final class JustDireSettingsCompatibility {
                 if (!BootHalf.isValidSource(source)) {
                     return null;
                 }
+
                 Identifier id = BuiltInRegistries.ITEM.getKey(source.getItem());
                 if (!id.getNamespace().equals("justdirethings") || !binding.tool.isInstance(source.getItem())
                         || !List.of("ferricore_boots", "blazegold_boots", "celestigem_boots", "eclipsealloy_boots").contains(id.getPath())
                         || !((Set<?>) binding.abilities.invokeExact(source.getItem())).contains(setting.ability)) {
                     continue;
                 }
+
                 Object params = binding.params.invokeExact(source.getItem(), setting.ability);
                 Metadata metadata = nativeMetadata(binding, params, name.equals("stepheight") || name.equals("negatefalldamage"));
                 if (selected == null || metadata.maximum > selected.metadata.maximum) {
                     selected = new Profile(source.getItem(), metadata, params);
                 }
             }
+
             return api == binding ? selected : null;
         } catch (Throwable failure) {
             disable(binding, failure);
@@ -152,8 +161,10 @@ public final class JustDireSettingsCompatibility {
     }
 
     private static Metadata nativeMetadata(Api binding, Object params, boolean allowToggleOnly) throws Throwable {
-        int min = (int) binding.minimum.invokeExact(params), max = (int) binding.maximum.invokeExact(params);
-        int increment = (int) binding.increment.invokeExact(params), defaults = (int) binding.defaultValue.invokeExact(params);
+        int min = (int) binding.minimum.invokeExact(params);
+        int max = (int) binding.maximum.invokeExact(params);
+        int increment = (int) binding.increment.invokeExact(params);
+        int defaults = (int) binding.defaultValue.invokeExact(params);
         boolean toggleOnly = allowToggleOnly && min == -1 && max == -1 && increment == -1 && defaults == -1;
         if (!toggleOnly && (min < 0 || max < min || increment <= 0 || defaults < min || defaults > max)) {
             throw new IllegalStateException("Unsupported native mixed settings parameters");
@@ -165,10 +176,12 @@ public final class JustDireSettingsCompatibility {
         if (earthquakeSettingsFailed) {
             return null;
         }
+
         Item item = JustDireEarthquakeCompatibility.settingsItem(root);
         if (item == null) {
             return null;
         }
+
         try {
             Object params = binding.params.invokeExact(item, JustDireEarthquakeCompatibility.settingAbility());
             Metadata metadata = nativeMetadata(binding, params, false);
@@ -200,6 +213,7 @@ public final class JustDireSettingsCompatibility {
         if (setting == null || lavaSettingsFailed || !JustDireLavaRepairCompatibility.eligible(root)) {
             return null;
         }
+
         try {
             Item item = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("justdirethings", "blazegold_boots"));
             Object params = binding.params.invokeExact(item, setting.ability);
@@ -291,6 +305,7 @@ public final class JustDireSettingsCompatibility {
         if (binding == null || !mixed(root) || !validBindingInput(key, mouse) || root.getOrDefault(mode, 0) != 2) {
             return false;
         }
+
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                 if (name.equals((String) binding.name.invokeExact(record)) && (int) binding.key.invokeExact(record) == key
@@ -376,6 +391,7 @@ public final class JustDireSettingsCompatibility {
         if (binding == null || names.isEmpty()) {
             return false;
         }
+
         var messages = new ArrayList<Component>();
         try {
             // Resolve optional metadata before publishing any switch, never half-toggle a shared input.
@@ -425,6 +441,7 @@ public final class JustDireSettingsCompatibility {
         if (binding == null) {
             return null;
         }
+
         EnumSet result = EnumSet.noneOf(((Enum) binding.settings.getFirst().ability).getDeclaringClass());
         for (Setting setting : settings(binding)) {
             if (metadata(root, setting.name) != null) {
@@ -434,6 +451,7 @@ public final class JustDireSettingsCompatibility {
         if (metadata(root, "earthquake") != null) {
             result.add((Enum) JustDireEarthquakeCompatibility.settingAbility());
         }
+
         return api == binding ? result : null;
     }
 
@@ -474,6 +492,7 @@ public final class JustDireSettingsCompatibility {
         if (request.ability().equals("earthquake")) {
             return JustDireEarthquakeCompatibility.edit(root, request);
         }
+
         ItemStack changed = root.copy();
         try {
             Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(request.ability())).findFirst().orElse(null);
@@ -502,6 +521,7 @@ public final class JustDireSettingsCompatibility {
                             || (request.key() != -1 && !validBindingInput(request.key(), request.mouse()))) {
                         return false;
                     }
+
                     var next = new ArrayList<Object>();
                     for (Object record : root.getOrDefault(binding.bindings, List.of())) {
                         if (!setting.name.equals((String) binding.name.invokeExact(record))) {
@@ -552,6 +572,7 @@ public final class JustDireSettingsCompatibility {
                 || request.key() != -1 && !validBindingInput(request.key(), request.mouse())) {
             return false;
         }
+
         List<Object> next = new ArrayList<>();
         try {
             for (Object record : root.getOrDefault(binding.bindings, List.of())) {

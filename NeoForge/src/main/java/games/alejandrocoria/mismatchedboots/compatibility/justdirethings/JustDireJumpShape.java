@@ -61,6 +61,7 @@ public final class JustDireJumpShape implements Opcodes {
         if (receiver == null) {
             return null;
         }
+
         MethodInsnNode result = null;
         List<AbstractInsnNode> nodes = code(instructions);
         for (int i = 1; i + 8 < nodes.size(); i++) {
@@ -102,6 +103,7 @@ public final class JustDireJumpShape implements Opcodes {
                     && getter.desc.equals("()Lnet/minecraft/world/entity/LivingEntity;")
                     && nodes.get(i - 8) instanceof VarInsnNode event && event.getOpcode() == ALOAD && event.var == 0;
         }
+
         return false;
     }
 
@@ -184,6 +186,7 @@ public final class JustDireJumpShape implements Opcodes {
         if (m == null || !query(owner, m.name, m.desc, Set.of("isInWater", "isFallFlying", "getName", "getToolValue", "<init>", "moveRelative"))) {
             return false;
         }
+
         List<AbstractInsnNode> nodes = code(m.instructions);
         if (nodes.size() != 25 || !(nodes.get(2) instanceof JumpInsnNode water) || water.getOpcode() != IFNE
                 || !(nodes.get(5) instanceof JumpInsnNode glide) || glide.getOpcode() != IFNE
@@ -191,6 +194,7 @@ public final class JustDireJumpShape implements Opcodes {
                 || nodes.get(23).getOpcode() != ICONST_0 || nodes.get(24).getOpcode() != IRETURN) {
             return false;
         }
+
         return var(nodes, 0, ALOAD, 1) && call(nodes, 1, PLAYER, "isInWater", "()Z")
                 && var(nodes, 3, ALOAD, 1) && call(nodes, 4, PLAYER, "isFallFlying", "()Z")
                 && var(nodes, 6, ALOAD, 2)
@@ -230,6 +234,7 @@ public final class JustDireJumpShape implements Opcodes {
         if (getter == null) {
             return false;
         }
+
         List<AbstractInsnNode> getterCode = code(getter.instructions);
         boolean originalGetter = getter.access == (ACC_PRIVATE | ACC_STATIC) && owned(getter)
                 && getter.tryCatchBlocks.isEmpty() && getterCode.size() == 2
@@ -260,6 +265,7 @@ public final class JustDireJumpShape implements Opcodes {
         if (m == null) {
             return false;
         }
+
         List<AbstractInsnNode> nodes = code(m.instructions);
         MethodInsnNode dispatch = null;
         List<InvokeDynamicInsnNode> operations = new ArrayList<>();
@@ -272,6 +278,7 @@ public final class JustDireJumpShape implements Opcodes {
                     || !typedPlayer(nodes, i - 1, receiver)) {
                 return false;
             }
+
             int after = i + 1;
             // MixinExtras spills the receiver/slot, then supplies an Operation lambda.
             // Prove that the reloaded arguments are these same two values, not another slot/player.
@@ -331,6 +338,7 @@ public final class JustDireJumpShape implements Opcodes {
         if (dispatch == null) {
             return false;
         }
+
         Set<String> visited = new HashSet<>();
         List<MethodNode> reachable = new ArrayList<>();
         if (!walk(owner, dispatch.name, dispatch.desc, visited, reachable)) {
@@ -353,6 +361,7 @@ public final class JustDireJumpShape implements Opcodes {
                 return false;
             }
         }
+
         int own = 0;
         int original = 0;
         for (MethodNode method : reachable) {
@@ -368,6 +377,7 @@ public final class JustDireJumpShape implements Opcodes {
                 }
             }
         }
+
         return own == 1 && original == 1;
     }
 
@@ -377,6 +387,7 @@ public final class JustDireJumpShape implements Opcodes {
                 || nodes.getLast().getOpcode() != ARETURN) {
             return false;
         }
+
         boolean stored = false;
         boolean permission = false;
         int calls = 0;
@@ -397,6 +408,7 @@ public final class JustDireJumpShape implements Opcodes {
                 permission = true;
             }
         }
+
         return stored && permission && calls == 1 && stores == 1 && m.tryCatchBlocks.isEmpty();
     }
 
@@ -407,6 +419,7 @@ public final class JustDireJumpShape implements Opcodes {
         if (seen.size() > 32) {
             return false;
         }
+
         MethodNode m = method(owner, name, desc);
         if (m == null) {
             return false;
@@ -426,6 +439,7 @@ public final class JustDireJumpShape implements Opcodes {
                 }
             }
         }
+
         return true;
     }
 

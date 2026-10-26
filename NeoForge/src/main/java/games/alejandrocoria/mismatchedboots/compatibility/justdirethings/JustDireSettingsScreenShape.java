@@ -71,6 +71,7 @@ public final class JustDireSettingsScreenShape implements Opcodes {
                            && (m.access & (ACC_STATIC | ACC_ABSTRACT | ACC_NATIVE)) == 0))) {
             return false;
         }
+
         return calls(node, "init", TOOL, "getAbilities") && calls(node, "mouseClicked", TOOL, "getAbilities")
                 && calls(node, "refreshButtons", TOOL, "getAbilityParams") && calls(node, "refreshButtons", TOOL, "getToolValue")
                 && List.of("<init>", "init", "refreshButtons", "mouseClicked").stream().allMatch(name -> calls(node, name, STACK, "getItem"));
@@ -92,12 +93,14 @@ public final class JustDireSettingsScreenShape implements Opcodes {
         if (ready == null) {
             return false;
         }
+
         var code = new java.util.ArrayList<AbstractInsnNode>();
         for (var instruction : ready.instructions) {
             if (instruction.getOpcode() >= 0) {
                 code.add(instruction);
             }
         }
+
         boolean intact = owned(ready) && ready.access == (ACC_PRIVATE | ACC_STATIC) && code.size() == 2
                 && code.getFirst().getOpcode() == ICONST_0 && code.getLast().getOpcode() == IRETURN;
         ready.instructions.clear();
@@ -143,6 +146,7 @@ public final class JustDireSettingsScreenShape implements Opcodes {
                 }
             }
         }
+
         return false;
     }
 
@@ -152,9 +156,9 @@ public final class JustDireSettingsScreenShape implements Opcodes {
     }
 
     private static boolean owned(MethodNode method) {
-        return method.visibleAnnotations != null && method.visibleAnnotations.stream().anyMatch(a ->
-                                                                                                        a.desc.equals(
-                                                                                                                "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(
-                                                                                                                MIXIN));
+        return method.visibleAnnotations != null
+                && method.visibleAnnotations.stream().anyMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(MIXIN));
     }
 }

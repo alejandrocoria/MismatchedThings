@@ -32,6 +32,7 @@ final class SilentGearEffectShape implements Opcodes {
         if (!TICK.equals(descriptor)) {
             return null;
         }
+
         List<AbstractInsnNode> code = code(instructions);
         MethodInsnNode selected = null;
         for (int i = 13; i < code.size(); i++) {
@@ -50,6 +51,7 @@ final class SilentGearEffectShape implements Opcodes {
             }
             selected = (MethodInsnNode) code.get(i);
         }
+
         return selected;
     }
 
@@ -58,12 +60,15 @@ final class SilentGearEffectShape implements Opcodes {
         if (method == null) {
             return false;
         }
+
         var code = code(method.instructions);
         List<AbstractInsnNode> writes = code.stream().filter(SilentGearEffectShape::damage).toList();
         if (writes.size() != 1) {
             return false;
         }
-        int write = code.indexOf(writes.getFirst()), guards = 0;
+
+        int write = code.indexOf(writes.getFirst());
+        int guards = 0;
         for (int i = 0; i + 1 < write; i++) {
             if (!(code.get(i) instanceof MethodInsnNode call) || !call.owner.equals(owner.name)
                     || !call.name.contains("mismatchedboots$sgRepairCondition") || !call.desc.endsWith(")Z")) {
@@ -73,6 +78,7 @@ final class SilentGearEffectShape implements Opcodes {
                     || method.instructions.indexOf(branch.label) <= method.instructions.indexOf(writes.getFirst())) {
                 return false;
             }
+
             MethodNode handler = method(owner, call.name, call.desc);
             if (handler == null || code(handler.instructions).stream()
                                                              .filter(node -> call(node,
@@ -84,6 +90,7 @@ final class SilentGearEffectShape implements Opcodes {
             }
             guards++;
         }
+
         return guards == 1;
     }
 
@@ -92,6 +99,7 @@ final class SilentGearEffectShape implements Opcodes {
         if (method == null) {
             return false;
         }
+
         var code = code(method.instructions);
         int returns = 0;
         for (int i = 4; i < code.size(); i++) {
@@ -101,6 +109,7 @@ final class SilentGearEffectShape implements Opcodes {
                 returns++;
             }
         }
+
         return returns == 1;
     }
 
@@ -109,6 +118,7 @@ final class SilentGearEffectShape implements Opcodes {
         if (proof == null) {
             return;
         }
+
         var original = code(proof.instructions);
         boolean untouched = original.size() == 2 && original.getFirst().getOpcode() == ICONST_0
                 && original.getLast().getOpcode() == IRETURN && proof.tryCatchBlocks.isEmpty();

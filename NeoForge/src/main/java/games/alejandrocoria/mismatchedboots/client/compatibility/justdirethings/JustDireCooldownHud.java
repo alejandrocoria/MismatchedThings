@@ -19,8 +19,10 @@ import java.util.List;
 /** Renderer-only native identity/clock view; never equipment, a source wallet or action permission. */
 public final class JustDireCooldownHud {
     private static Api api;
-    private static boolean attempted, warned;
-    private static boolean stompUnavailable, earthquakeUnavailable;
+    private static boolean attempted;
+    private static boolean warned;
+    private static boolean stompUnavailable;
+    private static boolean earthquakeUnavailable;
 
     private JustDireCooldownHud() {
     }
@@ -30,10 +32,12 @@ public final class JustDireCooldownHud {
                 || ModContent.getMixedBootsData(root).isEmpty()) {
             return root;
         }
+
         Api binding = binding();
         if (binding == null) {
             return root;
         }
+
         try {
             var records = root.getOrDefault(binding.timers, List.of());
             var counts = new HashMap<String, Integer>();
@@ -42,11 +46,13 @@ public final class JustDireCooldownHud {
                     counts.merge((String) binding.name.invoke(record), 1, Integer::sum);
                 }
             }
+
             var shown = new ArrayList<Object>();
             for (Object record : records) {
                 if (!binding.record.isInstance(record)) {
                     continue;
                 }
+
                 String name = (String) binding.name.invoke(record);
                 if (name == null) {
                     continue;
@@ -54,15 +60,18 @@ public final class JustDireCooldownHud {
                 if (!name.equals("groundstomp") && !name.equals("earthquake") || counts.get(name) != 1) {
                     continue;
                 }
+
                 int ticks = (int) binding.ticks.invoke(record);
                 boolean active = (boolean) binding.active.invoke(record);
                 if (ticks <= 0 || name.equals("groundstomp") && active) {
                     continue;
                 }
+
                 Profile profile = profile(binding.parameters, binding.ability, name.equals("earthquake"));
                 if (profile == null) {
                     continue;
                 }
+
                 int duration = active ? profile.activeDuration : profile.cooldown;
                 if (duration > 0) {
                     shown.add(binding.create.newInstance(name, Math.min(ticks, duration), active));
@@ -94,6 +103,7 @@ public final class JustDireCooldownHud {
             if (!tool.isInstance(boots.getItem())) {
                 throw new IllegalStateException("Native HUD metadata item unavailable");
             }
+
             DataComponentType<List<Object>> timers = timers();
             if (timers == null) {
                 throw new IllegalStateException("Native cooldown component unavailable");
@@ -103,6 +113,7 @@ public final class JustDireCooldownHud {
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             warn(failure);
         }
+
         return api;
     }
 
@@ -111,6 +122,7 @@ public final class JustDireCooldownHud {
         if (earthquake ? earthquakeUnavailable : stompUnavailable) {
             return null;
         }
+
         try {
             Object ability = abilityType.getField(earthquake ? "EARTHQUAKE" : "GROUNDSTOMP").get(null);
             // Revalidate current parameters per view: native public metadata can change after binding.
@@ -130,6 +142,7 @@ public final class JustDireCooldownHud {
                     }
                 }
             }
+
             return new Profile(active, duration);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             if (earthquake) {

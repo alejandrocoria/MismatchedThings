@@ -38,20 +38,24 @@ final class JustDireNegateFallCompatibility {
                 || !(root.getItem() instanceof MixedBootsItem)) {
             return false;
         }
+
         var data = ModContent.suspendedBootsData(root).isPresent() ? null
                                                                    : ModContent.mixedBootsDataType().map(root::get).orElse(null);
         if (data == null) {
             return false;
         }
+
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
             return false;
         }
+
         Api binding = binding();
         if (binding == null) {
             return false;
         }
+
         Quote quote;
         try {
             // All optional native calls are read-only and precede both FE and event mutation.
@@ -62,6 +66,7 @@ final class JustDireNegateFallCompatibility {
             if (!binding.usable(left, root) && !binding.usable(right, root)) {
                 return false;
             }
+
             int base = (int) binding.cost.invokeExact(binding.negate);
             double distance = event.getDistance();
             if (base <= 0 || !Double.isFinite(distance) || distance < 0 || distance > Integer.MAX_VALUE
@@ -69,20 +74,24 @@ final class JustDireNegateFallCompatibility {
                 invalidBill();
                 return false;
             }
+
             EnergyHandler energy = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
             if (energy == null) {
                 return false;
             }
+
             int available = energy.getAmountAsInt();
             if (available < base) {
                 return false;
             }
+
             int unbreaking = root.getEnchantmentLevel(player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
                                                             .getOrThrow(Enchantments.UNBREAKING));
             if (unbreaking < 0) {
                 invalidBill();
                 return false;
             }
+
             int raw = base * (int) distance;
             double discount = Math.min(1.0, unbreaking * 0.1);
             int requested = (int) Math.max(0.0, raw - raw * discount);
@@ -152,6 +161,7 @@ final class JustDireNegateFallCompatibility {
             api = null;
             Constants.LOG.warn("Could not bind Just Dire Things Negate Fall API; compatibility disabled", failure);
         }
+
         return api;
     }
 

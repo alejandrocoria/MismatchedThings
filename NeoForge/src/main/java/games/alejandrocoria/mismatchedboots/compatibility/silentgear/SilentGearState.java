@@ -14,7 +14,8 @@ import java.util.Optional;
 /** Root-owned clocks and projection provenance, never another native gear stack. */
 public record SilentGearState(Optional<Oxidation> left, Optional<Oxidation> right,
                               List<Rule> rules, ItemAttributeModifiers projection, List<Key> overrides, Optional<Sample> sample) {
-    private static final int MAX_RULES = 64, MAX_ENTRIES = 128;
+    private static final int MAX_RULES = 64;
+    private static final int MAX_ENTRIES = 128;
     private static final Codec<AttributePolicy> POLICY = Codec.STRING.comapFlatMap(
             name -> AttributePolicy.fromSerializedName(name).map(DataResult::success)
                                    .orElseGet(() -> DataResult.error(() -> "Unknown SG projection policy")), AttributePolicy::serializedName);
@@ -77,10 +78,9 @@ public record SilentGearState(Optional<Oxidation> left, Optional<Oxidation> righ
     }
 
     public record Oxidation(String phase, int level, int stage, int counter) {
-        private static final Codec<String> PHASE = Codec.STRING.validate(value ->
-                                                                                 value.equals("polished") || value.equals("oxidized")
-                                                                                 ? DataResult.success(value)
-                                                                                 : DataResult.error(() -> "Unknown SG oxidation phase"));
+        private static final Codec<String> PHASE = Codec.STRING.validate(value -> value.equals("polished") || value.equals("oxidized")
+                ? DataResult.success(value)
+                : DataResult.error(() -> "Unknown SG oxidation phase"));
         public static final Codec<Oxidation> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 PHASE.fieldOf("phase").forGetter(Oxidation::phase),
                 Codec.intRange(1, Byte.MAX_VALUE).fieldOf("level").forGetter(Oxidation::level),

@@ -15,10 +15,13 @@ import java.util.Set;
 
 /** Reachable call/write boundaries for the selected potion path, not a whole-class fingerprint. */
 final class SilentGearWielderShape implements Opcodes {
-    static final String OWNER = SilentGearWearerShape.OWNER, DATA = OWNER + "$PotionData";
+    static final String OWNER = SilentGearWearerShape.OWNER;
+    static final String DATA = OWNER + "$PotionData";
     static final String QUERY = SilentGearEffectShape.PREFIX + "util/TraitHelper";
-    private static final String PREFIX = SilentGearEffectShape.PREFIX, CTX = SilentGearEffectShape.CONTEXT;
-    private static final String PLAYER = SilentGearWearerShape.PLAYER, STACK = SilentGearEffectShape.STACK;
+    private static final String PREFIX = SilentGearEffectShape.PREFIX;
+    private static final String CTX = SilentGearEffectShape.CONTEXT;
+    private static final String PLAYER = SilentGearWearerShape.PLAYER;
+    private static final String STACK = SilentGearEffectShape.STACK;
     private static final String TYPE = PREFIX + "api/item/GearType";
 
     private SilentGearWielderShape() {
@@ -42,6 +45,7 @@ final class SilentGearWielderShape implements Opcodes {
         if (methods.size() != 1 || !methods.getFirst().tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var code = java.util.Arrays.stream(methods.getFirst().instructions.toArray())
                                    .filter(node -> node.getOpcode() >= 0 && node.getOpcode() != NOP)
                                    .toList();
@@ -76,6 +80,7 @@ final class SilentGearWielderShape implements Opcodes {
                 }
             }
         }
+
         return safe(owner, "getSetPieceCount", counterCalls) && safe(owner, "inventoryTick", Set.of(
                 CTX + ".player()L" + PLAYER + ";", CTX + ".gear()L" + STACK + ";",
                 STACK + ".getItem()Lnet/minecraft/world/item/Item;",
@@ -113,6 +118,7 @@ final class SilentGearWielderShape implements Opcodes {
         if (matches.size() != 1 || !matches.getFirst().tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var method = matches.getFirst();
         var code = java.util.Arrays.stream(method.instructions.toArray()).filter(node -> node.getOpcode() >= 0 && node.getOpcode() != NOP).toList();
         // Only the non-gear early exit becomes newly reachable for a mixed root. Never enter GearData.
@@ -122,6 +128,7 @@ final class SilentGearWielderShape implements Opcodes {
                 || !(code.get(2) instanceof JumpInsnNode skip) || skip.getOpcode() != IFEQ) {
             return false;
         }
+
         var exit = skip.label.getNext();
         while (exit != null && (exit.getOpcode() < 0 || exit.getOpcode() == NOP)) {
             exit = exit.getNext();
@@ -133,6 +140,7 @@ final class SilentGearWielderShape implements Opcodes {
         while (exit != null && (exit.getOpcode() < 0 || exit.getOpcode() == NOP)) {
             exit = exit.getNext();
         }
+
         return exit != null && exit.getOpcode() == IRETURN;
     }
 
@@ -141,6 +149,7 @@ final class SilentGearWielderShape implements Opcodes {
         if (methods.size() != 1) {
             return false;
         }
+
         MethodNode method = methods.getFirst();
         if (!method.tryCatchBlocks.isEmpty()) {
             return false;
@@ -161,6 +170,7 @@ final class SilentGearWielderShape implements Opcodes {
                 }
             }
         }
+
         return true;
     }
 }

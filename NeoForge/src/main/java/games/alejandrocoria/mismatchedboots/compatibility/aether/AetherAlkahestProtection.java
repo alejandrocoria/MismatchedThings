@@ -12,7 +12,8 @@ import java.util.function.Supplier;
 /** Read-only extensions of the native tier predicates, with independent fluid/armor permissions. */
 public final class AetherAlkahestProtection {
     private static final Identifier TIER = Identifier.fromNamespaceAndPath("aether_ii", "reinforcement_tier");
-    private static volatile boolean fluidDisabled, armorDisabled;
+    private static volatile boolean fluidDisabled;
+    private static volatile boolean armorDisabled;
 
     private AetherAlkahestProtection() {
     }
@@ -42,6 +43,7 @@ public final class AetherAlkahestProtection {
         } else {
             fluidDisabled = true;
         }
+
         String message = "Aether II mixed Alkahest " + (armor ? "armor" : "fluid") + " protection disabled: local contract unavailable";
         if (failure == null) {
             Constants.LOG.warn(message);

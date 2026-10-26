@@ -23,6 +23,7 @@ public final class JustDireEnergyBarDecorator implements IItemDecorator {
         if (failed || !ModContent.isMixedBoots(root)) {
             return false;
         }
+
         int width;
         int offset;
         try {
@@ -30,6 +31,7 @@ public final class JustDireEnergyBarDecorator implements IItemDecorator {
             if (receiver == null) {
                 return false;
             }
+
             var storage = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
             if (storage == null || storage.getCapacityAsLong() <= 0 || !receiver.isBarVisible(root)) {
                 return false;

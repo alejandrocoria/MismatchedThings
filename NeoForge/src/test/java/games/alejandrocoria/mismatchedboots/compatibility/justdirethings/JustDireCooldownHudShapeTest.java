@@ -30,6 +30,7 @@ class JustDireCooldownHudShapeTest implements Opcodes {
         try (var jar = new JarFile(path); var stream = jar.getInputStream(jar.getJarEntry(JustDireCooldownHudShape.HUD + ".class"))) {
             bytes = stream.readAllBytes();
         }
+
         var node = read(bytes);
         assertTrue(JustDireCooldownHudShape.entry(node));
         render(node).instructions.insert(new InsnNode(NOP));

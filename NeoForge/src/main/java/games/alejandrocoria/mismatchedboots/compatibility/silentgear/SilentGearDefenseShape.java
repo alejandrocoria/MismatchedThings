@@ -29,15 +29,23 @@ import java.util.Set;
 
 /** Selected defensive math and local branch/payment boundaries, never a class/JAR fingerprint. */
 final class SilentGearDefenseShape implements Opcodes {
-    static final String P = SilentGearEffectShape.PREFIX, EVENTS = P + "event/GearEvents", NEGATE = P + "gear/trait/effect/NegateDamageTraitEffect";
-    static final String SCHEDULER = "net/silentchaos512/lib/event/ServerTicks", STACK = "net/minecraft/world/item/ItemStack";
-    static final String ACTOR = "net/minecraft/world/entity/LivingEntity", ENTITY = "net/minecraft/world/entity/Entity", SLOT = "net/minecraft/world/entity/EquipmentSlot";
-    static final String EVENT = "net/neoforged/neoforge/event/entity/living/LivingFallEvent", VEC = "net/minecraft/world/phys/Vec3";
-    static final String FALL = "(L" + EVENT + ";)V", WEAR = "(L" + STACK + ";IL" + ACTOR + ";L" + SLOT + ";)V";
+    static final String P = SilentGearEffectShape.PREFIX;
+    static final String EVENTS = P + "event/GearEvents";
+    static final String NEGATE = P + "gear/trait/effect/NegateDamageTraitEffect";
+    static final String SCHEDULER = "net/silentchaos512/lib/event/ServerTicks";
+    static final String STACK = "net/minecraft/world/item/ItemStack";
+    static final String ACTOR = "net/minecraft/world/entity/LivingEntity";
+    static final String ENTITY = "net/minecraft/world/entity/Entity";
+    static final String SLOT = "net/minecraft/world/entity/EquipmentSlot";
+    static final String EVENT = "net/neoforged/neoforge/event/entity/living/LivingFallEvent";
+    static final String VEC = "net/minecraft/world/phys/Vec3";
+    static final String FALL = "(L" + EVENT + ";)V";
+    static final String WEAR = "(L" + STACK + ";IL" + ACTOR + ";L" + SLOT + ";)V";
     static final String CONDITION = WEAR.substring(0, WEAR.length() - 1) + "Z";
     static final String NEGATION = "(L" + STACK + ";IL" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;FF)F";
     static final String INCOMING = "(Lnet/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent;)V";
-    static final String POST_EVENT = "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Post", POST = "(L" + POST_EVENT + ";)V";
+    static final String POST_EVENT = "net/neoforged/neoforge/event/entity/living/LivingDamageEvent$Post";
+    static final String POST = "(L" + POST_EVENT + ";)V";
     private static final String ACTIVATION = "(L" + STACK + ";Ljava/lang/Object;L" + P + "api/traits/TraitFunction;)Ljava/lang/Object;";
     private static final String ARMOR_LAMBDA = "(L" + STACK + ";L" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;F)L" + P + "api/traits/TraitFunction;";
     private static final String ADAPTER = "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearDefense";
@@ -80,6 +88,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 selected = (MethodInsnNode) c.get(i);
             }
         }
+
         return selected;
     }
 
@@ -88,14 +97,17 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null) {
             return false;
         }
+
         var query = bounceQuery(m.instructions, true);
         if (query == null) {
             return false;
         }
+
         var chain = levelChain(owner, m, query, true);
         if (chain == null) {
             return false;
         }
+
         var c = code(m.instructions);
         int next = chain.next;
         int rebound = find(c, EVENTS, "bounceEntity", "(L" + ENTITY + ";)V");
@@ -106,10 +118,12 @@ final class SilentGearDefenseShape implements Opcodes {
     /** Extend the returned level, admitting independent result peers without assigning permission by their package. */
     private static LevelChain levelChain(ClassNode owner, MethodNode m, MethodInsnNode query, boolean fall) {
         var c = code(m.instructions);
-        int at = c.indexOf(query) + 1, own = 0;
+        int at = c.indexOf(query) + 1;
+        int own = 0;
         AbstractInsnNode last = query;
         var calls = new HashSet<String>();
-        String event = fall ? EVENT : POST_EVENT, result = "(IL" + event + ";)I";
+        String event = fall ? EVENT : POST_EVENT;
+        String result = "(IL" + event + ";)I";
         try {
             var flow = new Flow(owner, m);
             while (at < c.size()) {
@@ -144,6 +158,7 @@ final class SilentGearDefenseShape implements Opcodes {
         } catch (AnalyzerException | RuntimeException invalid) {
             return null;
         }
+
         return own == 1 ? new LevelChain(last, at, calls) : null;
     }
 
@@ -182,6 +197,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null || !m.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(m.instructions);
         // This concrete leaf never reads stack/actor arguments. Require the native scale and clamp producers.
         if (c.size() != 22 || !load(c.get(0), ALOAD, 4) || !load(c.get(1), ALOAD, 0)
@@ -197,6 +213,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 || !call(c.get(18), "net/minecraft/util/Mth", "clamp", "(FFF)F")) {
             return false;
         }
+
         return c.get(19).getOpcode() == FRETURN && load(c.get(20), FLOAD, 5) && c.get(21).getOpcode() == FRETURN
                 && m.instructions.indexOf(skip.label) > m.instructions.indexOf(c.get(19))
                 && m.instructions.indexOf(skip.label) < m.instructions.indexOf(c.get(20));
@@ -207,6 +224,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null || !m.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(m.instructions);
         var gates = c.stream()
                      .filter(n -> n instanceof MethodInsnNode call && call.owner.equals(EVENTS) && call.name.contains("mismatchedboots$sgFallGate"))
@@ -215,11 +233,14 @@ final class SilentGearDefenseShape implements Opcodes {
         if (gates.size() != 1 || wear == null) {
             return false;
         }
+
         var gate = (MethodInsnNode) gates.getFirst();
         if (!branchGate(owner, m, gate)) {
             return false;
         }
-        int g = c.indexOf(gate), w = c.indexOf(wear);
+
+        int g = c.indexOf(gate);
+        int w = c.indexOf(wear);
         int query = find(c, P + "util/TraitHelper", "getHighestLevelArmorOrCurio", SilentGearRecognitionShape.QUERY);
         // Select by the Bounce ID, independently of Moonwalker's earlier query and harmless result peers.
         for (int i = 2; i < g; i++) {
@@ -234,6 +255,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 || !resource(c.get(query - 1), "BOUNCE") || !(c.get(query - 2) instanceof VarInsnNode player) || player.getOpcode() != ALOAD) {
             return false;
         }
+
         int rebound = find(c, EVENTS, "bounceEntity", "(L" + ENTITY + ";)V");
         if (rebound <= g || w <= rebound || !positiveBill(c, rebound, w) || !wearCondition(owner, m, c, w)
                 || reaches(m.instructions.getFirst(), c.get(rebound), gate) || !paymentOrigins(owner, m, c, query, rebound, wear)) {
@@ -268,6 +290,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 return false;
             }
         }
+
         return bounce(owner);
     }
 
@@ -276,6 +299,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (body == null || !body.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(body.instructions);
         if (c.size() != 7 || !load(c.get(0), ALOAD, 0) || !call(c.get(1), EVENTS, "mismatchedboots$sgSafeFallReady", "()Z")
                 || !call(c.get(2),
@@ -286,6 +310,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 || body.instructions.indexOf(allowed.label) <= body.instructions.indexOf(c.get(5))) {
             return false;
         }
+
         var nativeCode = code(method.instructions);
         int at = nativeCode.indexOf(gate);
         if (!(at + 4 < nativeCode.size() && nativeCode.get(at + 1) instanceof VarInsnNode callback && callback.getOpcode() == ALOAD
@@ -296,6 +321,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 && nativeCode.get(at + 4).getOpcode() == RETURN)) {
             return false;
         }
+
         try {
             var flow = new Flow(owner, method);
             var callbackSource = flow.origin(flow.argument(gate, 1, 2));
@@ -344,6 +370,7 @@ final class SilentGearDefenseShape implements Opcodes {
             }
             found++;
         }
+
         return found == 1;
     }
 
@@ -360,10 +387,12 @@ final class SilentGearDefenseShape implements Opcodes {
                     || flow.origin(flow.argument(wear, 1, 4)) != c.get(rebound + 7)) {
                 return false;
             }
+
             var queried = flow.origin(flow.argument(c.get(query), 0, 2));
             if (!call(queried, EVENT, "getEntity", "()L" + ACTOR + ";") || !flow.parameter(flow.argument(queried, 0, 1), 0)) {
                 return false;
             }
+
             var playerChecks = c.subList(0, query)
                                 .stream()
                                 .filter(n -> n instanceof TypeInsnNode t && t.getOpcode() == INSTANCEOF && t.desc.equals(
@@ -372,12 +401,14 @@ final class SilentGearDefenseShape implements Opcodes {
             if (playerChecks.size() != 1) {
                 return false;
             }
+
             int check = c.indexOf(playerChecks.getFirst());
             if (!(c.get(check + 1) instanceof JumpInsnNode notPlayer) || notPlayer.getOpcode() != IFEQ || reaches(notPlayer.label,
                                                                                                                   c.get(rebound),
                                                                                                                   null)) {
                 return false;
             }
+
             int shortGuard = -1;
             for (int i = 0; i + 3 < query; i++) {
                 if (call(c.get(i), EVENT, "getDistance", "()D") && number(c.get(i + 1), 3D) && c.get(i + 2).getOpcode() == DCMPL
@@ -399,6 +430,7 @@ final class SilentGearDefenseShape implements Opcodes {
                     }
                 }
             }
+
             return true;
         } catch (AnalyzerException | RuntimeException invalid) {
             return false;
@@ -410,6 +442,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null || !m.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(m.instructions);
         if (c.size() != loads.length + 3) {
             return false;
@@ -419,6 +452,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 return false;
             }
         }
+
         return call(c.get(loads.length), EVENTS, "mismatchedboots$sgSafeFallReady", "()Z")
                 && call(c.get(loads.length + 1), ADAPTER, name, descriptor) && c.getLast().getOpcode() == IRETURN;
     }
@@ -437,6 +471,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (!site.equals("incoming")) {
             return null;
         }
+
         var selected = c.subList(c.indexOf(predicates.getFirst()) + 1, c.size()).stream()
                         .filter(n -> call(n, P + "util/TraitHelper", "activateTraits", ACTIVATION)).toList();
         return selected.size() == 1 ? selected.getFirst() : null;
@@ -448,6 +483,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null || !m.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(m.instructions);
         int selected = -1;
         for (int i = 0; i < c.size(); i++) {
@@ -462,6 +498,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 || !call(c.get(selected - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) {
             return false;
         }
+
         var gates = c.stream()
                      .filter(n -> n instanceof MethodInsnNode h && h.owner.equals(EVENTS) && h.name.contains("mismatchedboots$sgIncomingArmor"))
                      .toList();
@@ -471,6 +508,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (gates.size() != 1 || hooks.size() != 1) {
             return false;
         }
+
         var gate = (MethodInsnNode) gates.getFirst();
         var hook = (MethodInsnNode) hooks.getFirst();
         if (!incomingRouting(owner, gate, "armor", new int[]{ILOAD, ALOAD, ALOAD, ALOAD}, IRETURN)
@@ -485,10 +523,12 @@ final class SilentGearDefenseShape implements Opcodes {
             if (!dynamic.desc.equals(ARMOR_LAMBDA)) {
                 continue;
             }
+
             var lambda = lambda(owner, dynamic);
             if (lambda == null) {
                 return false;
             }
+
             boolean commonBase;
             try {
                 var flow = new Flow(owner, m);
@@ -513,6 +553,7 @@ final class SilentGearDefenseShape implements Opcodes {
             } catch (AnalyzerException | RuntimeException invalid) {
                 return false;
             }
+
             return commonBase && incomingLambda(owner, lambda)
                     && readsOnly(lambda,
                                  Set.of(P + "api/traits/TraitInstance.getTrait()L" + P + "gear/trait/Trait;",
@@ -521,6 +562,7 @@ final class SilentGearDefenseShape implements Opcodes {
                                         "java/lang/Float.valueOf(F)Ljava/lang/Float;",
                                         P + "gear/trait/Trait.onEntityIncomingDamage" + NEGATION));
         }
+
         return false;
     }
 
@@ -529,6 +571,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (selected.size() != 1) {
             return false;
         }
+
         var call = selected.getFirst();
         try {
             var flow = new Flow(owner, lambda);
@@ -554,6 +597,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (body == null || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(body.instructions);
         if (c.size() != 9) {
             return false;
@@ -567,6 +611,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 || !(c.get(7) instanceof MethodInsnNode inner) || !inner.owner.equals(EVENTS) || c.get(8).getOpcode() != ARETURN) {
             return false;
         }
+
         return incomingRouting(owner, inner, "incoming", new int[]{ALOAD, ALOAD, ALOAD, ALOAD, ALOAD, FLOAD}, ARETURN);
     }
 
@@ -575,13 +620,17 @@ final class SilentGearDefenseShape implements Opcodes {
         if (!(c.get(at - 1) instanceof VarInsnNode lane) || lane.getOpcode() != FLOAD) {
             return false;
         }
+
         var ref = flow.origin(flow.argument(hook, 5, 6));
         String implementation = "com/llamalad7/mixinextras/sugar/impl/ref/generated/LocalFloatRefImpl";
         if (!(ref instanceof TypeInsnNode type) || type.getOpcode() != NEW || !type.desc.equals(implementation)) {
             return false;
         }
-        MethodInsnNode init = null, dispose = null;
-        int initial = 0, roundTrips = 0;
+
+        MethodInsnNode init = null;
+        MethodInsnNode dispose = null;
+        int initial = 0;
+        int roundTrips = 0;
         for (int i = 0; i < c.size(); i++) {
             var n = c.get(i);
             if (call(n, implementation, "init", "(F)V") && flow.origin(flow.argument(n, 0, 2)) == ref) {
@@ -602,6 +651,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 }
             }
         }
+
         return initial == 1 && roundTrips == 1 && init != null && dispose != null
                 && c.indexOf(init) > at && c.indexOf(init) < c.indexOf(hook) && c.indexOf(dispose) > c.indexOf(hook);
     }
@@ -611,6 +661,7 @@ final class SilentGearDefenseShape implements Opcodes {
         if (body == null || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(body.instructions);
         if (c.size() != loads.length + 3) {
             return false;
@@ -620,6 +671,7 @@ final class SilentGearDefenseShape implements Opcodes {
                 return false;
             }
         }
+
         String descriptor = hook.desc.substring(0, hook.desc.indexOf(')')) + "Z" + hook.desc.substring(hook.desc.indexOf(')'));
         return call(c.get(loads.length), EVENTS, "mismatchedboots$sgIncomingReady", "()Z")
                 && call(c.get(loads.length + 1), ADAPTER, adapter, descriptor) && c.getLast().getOpcode() == result;
@@ -631,14 +683,17 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null) {
             return false;
         }
+
         var selected = bounceQuery(m.instructions, false);
         if (selected == null) {
             return false;
         }
+
         var chain = levelChain(owner, m, selected, false);
         if (chain == null || !queriedPlayer(owner, m, selected, event)) {
             return false;
         }
+
         var c = code(m.instructions);
         int query = c.indexOf(selected);
         int hit = find(c, ACTOR, "knockback", "(DDD)V");
@@ -646,21 +701,25 @@ final class SilentGearDefenseShape implements Opcodes {
                 || reaches(positive.label, c.get(hit), null)) {
             return false;
         }
+
         try {
             var flow = new Flow(owner, m);
             var direct = flow.origin(flow.argument(c.get(hit), 0, 4));
             if (!call(direct, "net/minecraft/world/damagesource/DamageSource", "getDirectEntity", "()L" + ENTITY + ";")) {
                 return false;
             }
+
             var source = flow.origin(flow.argument(direct, 0, 1));
             if (!call(source, event, "getSource", "()Lnet/minecraft/world/damagesource/DamageSource;") || !flow.parameter(flow.argument(source, 0, 1),
                                                                                                                           0)) {
                 return false;
             }
+
             var strength = flow.origin(flow.argument(c.get(hit), 0, 3));
             if (strength == null || strength.getOpcode() != I2D) {
                 return false;
             }
+
             var product = flow.origin(flow.argument(strength, 0, 1));
             if (product == null || product.getOpcode() != IMUL
                     || flow.origin(flow.argument(product, 0, 2)).getOpcode() != ICONST_2 || flow.origin(flow.argument(product, 1, 2)) != chain.last) {
@@ -684,6 +743,7 @@ final class SilentGearDefenseShape implements Opcodes {
         } catch (AnalyzerException | RuntimeException invalid) {
             return false;
         }
+
         var allowed = new HashSet<>(Set.of(event + ".getEntity()L" + ACTOR + ";",
                                            event + ".getSource()Lnet/minecraft/world/damagesource/DamageSource;",
                                            "net/minecraft/world/damagesource/DamageSource.getDirectEntity()L" + ENTITY + ";",
@@ -702,20 +762,24 @@ final class SilentGearDefenseShape implements Opcodes {
         if (m == null || !m.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var c = code(m.instructions);
         int queued = find(c, SCHEDULER, "scheduleAction", "(Ljava/lang/Runnable;)V");
         if (queued < 1 || !(c.get(queued - 1) instanceof InvokeDynamicInsnNode dynamic)) {
             return false;
         }
+
         var action = lambda(owner, dynamic);
         if (action == null || c.size() != 23 || !dynamic.desc.equals("(L" + ENTITY + ";L" + VEC + ";)Ljava/lang/Runnable;")) {
             return false;
         }
+
         var a = code(action.instructions);
         if (a.size() != 4 || !load(a.get(0), ALOAD, 0) || !load(a.get(1), ALOAD, 1) || !call(a.get(2), ENTITY, "push", "(L" + VEC + ";)V") || a.get(3)
                                                                                                                                                .getOpcode() != RETURN) {
             return false;
         }
+
         return load(c.get(0), ALOAD, 0) && call(c.get(1), ENTITY, "getDeltaMovement", "()L" + VEC + ";")
                 && c.get(2) instanceof VarInsnNode velocity && velocity.getOpcode() == ASTORE
                 && load(c.get(3), ALOAD, velocity.var) && field(c.get(4), GETFIELD, VEC, "y", "D") && c.get(5).getOpcode() == DCONST_0 && c.get(6)
@@ -747,6 +811,7 @@ final class SilentGearDefenseShape implements Opcodes {
                               "java/util/Queue.clear()V"))) {
             return false;
         }
+
         try {
             var flow = new Flow(owner, schedule);
             var c = code(schedule.instructions);
@@ -757,6 +822,7 @@ final class SilentGearDefenseShape implements Opcodes {
         } catch (AnalyzerException | RuntimeException invalid) {
             return false;
         }
+
         return drain != null && tick != null && readsOnly(tick, Set.of(SCHEDULER + ".runScheduledActions()V"))
                 && readsOnly(drain, Set.of("java/util/Queue.poll()Ljava/lang/Object;", "java/lang/Runnable.run()V"))
                 && count(code(drain.instructions), "java/lang/Runnable", "run", "()V") == 1
@@ -809,11 +875,13 @@ final class SilentGearDefenseShape implements Opcodes {
                 pending.add(s.dflt);
                 pending.addAll(s.labels);
             }
+
             int op = n.getOpcode();
             if (op != GOTO && op != ATHROW && (op < IRETURN || op > RETURN) && !(n instanceof TableSwitchInsnNode) && !(n instanceof LookupSwitchInsnNode) && n.getNext() != null) {
                 pending.add(n.getNext());
             }
         }
+
         return false;
     }
 
@@ -838,8 +906,8 @@ final class SilentGearDefenseShape implements Opcodes {
         }
 
         SourceValue argument(AbstractInsnNode n, int index, int count) {
-            var f = at(n);
-            return f == null ? null : f.getStack(f.getStackSize() - count + index);
+            var frame = at(n);
+            return frame == null ? null : frame.getStack(frame.getStackSize() - count + index);
         }
 
         AbstractInsnNode origin(SourceValue value) {
@@ -850,6 +918,7 @@ final class SilentGearDefenseShape implements Opcodes {
             if (value == null || value.insns.size() != 1) {
                 return null;
             }
+
             var n = value.insns.iterator().next();
             if (!seen.add(n)) {
                 return null;
@@ -861,6 +930,7 @@ final class SilentGearDefenseShape implements Opcodes {
             if (n instanceof VarInsnNode && n.getOpcode() >= ISTORE && n.getOpcode() <= ASTORE || n.getOpcode() == CHECKCAST) {
                 return origin(argument(n, 0, 1), seen);
             }
+
             return n;
         }
 

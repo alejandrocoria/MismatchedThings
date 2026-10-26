@@ -23,6 +23,7 @@ public final class AetherTooltipMixinPlugin implements IMixinConfigPlugin, IExte
         if (!FMLEnvironment.getDist().isClient()) {
             return;
         }
+
         try {
             MixinService.getService().getBytecodeProvider().getClassNode(AetherTooltipShape.EVENTS);
             Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();

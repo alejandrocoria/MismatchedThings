@@ -47,6 +47,7 @@ public final class JustDireResourcesCompatibility {
             if (!powered.isInstance(celestigem) || !powered.isInstance(eclipsealloy)) {
                 throw new IllegalStateException("Unsupported powered boot API");
             }
+
             DataComponentType<Integer> energy = energyComponent();
             if (energy == null || energy.codec() == null || !(energy.codec().parse(JsonOps.INSTANCE, new JsonPrimitive(0))
                                                                     .getOrThrow() instanceof Integer)) {
@@ -73,6 +74,7 @@ public final class JustDireResourcesCompatibility {
         if (binding == null) {
             return;
         }
+
         MixedBootsData data = output.get(ModContent.mixedBootsDataType().orElseThrow());
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
@@ -93,6 +95,7 @@ public final class JustDireResourcesCompatibility {
         if (binding == null) {
             return;
         }
+
         int oldCapacity = rootCapacity(previous, binding);
         int newCapacity = rootCapacity(output, binding);
         var data = output.get(ModContent.mixedBootsDataType().orElseThrow());
@@ -160,16 +163,19 @@ public final class JustDireResourcesCompatibility {
         if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) {
             return 0;
         }
+
         var data = ModContent.suspendedBootsData(root).isPresent() ? null
                                                                    : ModContent.mixedBootsDataType().map(root::get).orElse(null);
         if (data == null) {
             return 0;
         }
+
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
             return 0;
         }
+
         return Math.max(sourceCapacity(left, binding), sourceCapacity(right, binding));
     }
 
@@ -177,6 +183,7 @@ public final class JustDireResourcesCompatibility {
         if (source.getItem() != binding.celestigem && source.getItem() != binding.eclipsealloy) {
             return 0;
         }
+
         try {
             int capacity = (int) binding.capacity.invokeExact(source.getItem());
             if (capacity <= 0) {

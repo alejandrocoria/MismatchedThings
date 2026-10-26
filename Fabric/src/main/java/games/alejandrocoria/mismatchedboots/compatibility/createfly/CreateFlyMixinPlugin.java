@@ -143,6 +143,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 entityInside = method;
             }
         }
+
         return entityInside != null && CreateFlyBeltShape.cardboardChecks(entityInside.instructions).size() == 1;
     }
 
@@ -214,6 +215,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 }
             }
         }
+
         return false;
     }
 
@@ -234,6 +236,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 }
             }
         }
+
         return false;
     }
 
@@ -298,6 +301,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                     "Could not inspect Create Fly Cardboard API; Cardboard compatibility disabled",
                     exception);
         }
+
         return cardboardCompatible;
     }
 
@@ -310,6 +314,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
         if (!isCardboardCompatible()) {
             return false;
         }
+
         try {
             var provider = MixinService.getService().getBytecodeProvider();
             ClassNode beltBlock = provider.getClassNode(BELT_BLOCK_CLASS);
@@ -325,6 +330,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                     "Could not inspect Create Fly Belt behavior; Cardboard Belt compatibility disabled",
                     exception);
         }
+
         return beltCompatible;
     }
 
@@ -350,6 +356,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                     "Could not inspect Create Fly Diving Boots API; Diving compatibility disabled",
                     exception);
         }
+
         return divingCompatible;
     }
 
@@ -375,6 +382,7 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                     "Could not inspect Create Fly tooltip API; tooltip compatibility disabled",
                     exception);
         }
+
         return tooltipCompatible;
     }
 }

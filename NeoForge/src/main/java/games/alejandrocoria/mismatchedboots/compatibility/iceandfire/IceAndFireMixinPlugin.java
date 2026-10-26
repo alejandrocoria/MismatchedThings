@@ -30,6 +30,7 @@ public final class IceAndFireMixinPlugin implements IMixinConfigPlugin {
         if (cached != null) {
             return cached;
         }
+
         boolean result;
         String integration = lightning ? "lightning-set" : "projectile/dragon";
         boolean handlerPresent = false;
@@ -64,6 +65,7 @@ public final class IceAndFireMixinPlugin implements IMixinConfigPlugin {
         } else {
             compatible = result;
         }
+
         return result;
     }
 

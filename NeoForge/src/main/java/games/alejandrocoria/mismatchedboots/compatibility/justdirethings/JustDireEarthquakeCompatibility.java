@@ -69,6 +69,7 @@ public final class JustDireEarthquakeCompatibility {
             if (!tool.isInstance(eclipse) || !timer.isRecord()) {
                 throw new IllegalStateException("Unsupported Earthquake boot/timer API");
             }
+
             Api binding = new Api(eclipse, ability.getField("EARTHQUAKE").get(null),
                                   (Enum<?>) ability.getField("GROUNDSTOMP").get(null),
                                   lookup.findVirtual(tool, "getAllAbilities", MethodType.methodType(java.util.EnumSet.class))
@@ -97,6 +98,7 @@ public final class JustDireEarthquakeCompatibility {
             if (binding.timers.codec() == null || binding.timers.streamCodec() == null) {
                 throw new IllegalStateException("Unsupported Earthquake timer codecs");
             }
+
             Object decoded = binding.timers.codec().parse(JsonOps.INSTANCE, JsonParser.parseString(
                     "[{\"ability_name\":\"earthquake\",\"cooldown_ticks\":1,\"is_active\":true}]")).getOrThrow();
             if (!(decoded instanceof List<?> records) || records.size() != 1 || !timer.isInstance(records.getFirst())) {
@@ -113,6 +115,7 @@ public final class JustDireEarthquakeCompatibility {
         if (binding == null) {
             return;
         }
+
         var data = ModContent.getMixedBootsData(output).orElseThrow();
         List<Object> imported = new ArrayList<>();
         try {
@@ -122,12 +125,14 @@ public final class JustDireEarthquakeCompatibility {
                     imported.add(binding.copy(record));
                 }
             }
+
             var parameters = binding.parameters();
             Pending selected = null;
             for (var source : List.of(data.left().source(), data.right().source())) {
                 if (!binding.permanent(source)) {
                     continue;
                 }
+
                 var records = new ArrayList<Object>();
                 for (Object record : source.getOrDefault(binding.timers, List.of())) {
                     if (binding.earthquake(record)) {
@@ -173,24 +178,29 @@ public final class JustDireEarthquakeCompatibility {
         if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) {
             return null;
         }
+
         var data = ModContent.getMixedBootsData(root).orElse(null);
         if (data == null) {
             return null;
         }
+
         var left = data.left().source();
         var right = data.right().source();
         if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
             return null;
         }
+
         Api binding = api;
         if (binding == null) {
             return null;
         }
+
         try {
             if (!root.getOrDefault(binding.installed, false) || !root.getOrDefault(binding.enabled, true)
                     || !root.getOrDefault(binding.toggle, true)) {
                 return null;
             }
+
             int pending = 0;
             boolean unsupported = false;
             for (Object record : root.getOrDefault(binding.timers, List.of())) {
@@ -216,17 +226,21 @@ public final class JustDireEarthquakeCompatibility {
                 if (!(boolean) binding.usable.invokeExact(source.getItem(), source, binding.ability)) {
                     continue;
                 }
+
                 var parameters = binding.parameters();
                 int base = (int) binding.cost.invokeExact(binding.ability);
                 if (base <= 0) {
                     throw new IllegalStateException("Unsupported native Earthquake FE cost");
                 }
+
                 var energy = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
                 if (energy == null || energy.getAmountAsInt() < base) {
                     return null;
                 }
+
                 return api == binding ? new Quote(base, parameters.activeTicks, parameters.cooldownTicks) : null;
             }
+
             return null;
         } catch (Throwable failure) {
             disable(binding, failure);
@@ -301,6 +315,7 @@ public final class JustDireEarthquakeCompatibility {
                 return false;
             } // The native fixed numeric value is not a slider or action control.
         }
+
         return true;
     }
 
@@ -313,10 +328,12 @@ public final class JustDireEarthquakeCompatibility {
                 || !JustDireSettingsCompatibility.earthquakeBinding(target, key, mouse)) {
             return false;
         }
+
         Quote initial;
         List<Object> next;
         List<Mob> targets;
-        int particles, bill;
+        int particles;
+        int bill;
         GameType mode;
         try {
             initial = quote(root);
@@ -367,6 +384,7 @@ public final class JustDireEarthquakeCompatibility {
                 if (energy == null || energy.getAmountAsInt() < initial.baseCost) {
                     break;
                 }
+
                 var afterDebit = expected.copy();
                 afterDebit.set(binding.energy, energy.getAmountAsInt() - bill);
                 try (var transaction = Transaction.openRoot()) {
@@ -387,6 +405,7 @@ public final class JustDireEarthquakeCompatibility {
                 player.level().sendParticles(ParticleTypes.ENCHANT, mob.getX(), mob.getY(), mob.getZ(), 20, .5, .2, .5, 0);
             }
         }
+
         return true; // A spent lockout remains accepted even if a later target debit fails.
     }
 
@@ -396,6 +415,7 @@ public final class JustDireEarthquakeCompatibility {
         if (binding == null || !JustDireGroundStompCompatibility.equipped(player, root)) {
             return;
         }
+
         var next = new ArrayList<Object>();
         boolean changed = false;
         SoundEvent completion = null;
@@ -415,12 +435,14 @@ public final class JustDireEarthquakeCompatibility {
                 invalidTimer();
                 return;
             }
+
             int cooldown = binding.parameters().cooldownTicks;
             for (Object record : root.get(binding.timers)) {
                 if (!binding.earthquake(record)) {
                     next.add(record);
                     continue;
                 }
+
                 Pending clock = binding.pending(record);
                 if (clock.ticks == 1) {
                     completion = clock.active ? SoundEvents.CONDUIT_DEACTIVATE : SoundEvents.ENDER_EYE_DEATH;
@@ -541,7 +563,8 @@ public final class JustDireEarthquakeCompatibility {
 
         Parameters parameters() throws Throwable {
             Object values = params.invokeExact(eclipse, ability);
-            int active = (int) activeDuration.invokeExact(values), cooldown = (int) cooldownDuration.invokeExact(values);
+            int active = (int) activeDuration.invokeExact(values);
+            int cooldown = (int) cooldownDuration.invokeExact(values);
             if (active <= 0 || cooldown <= 0) {
                 throw new IllegalStateException("Unsupported native Earthquake durations");
             }

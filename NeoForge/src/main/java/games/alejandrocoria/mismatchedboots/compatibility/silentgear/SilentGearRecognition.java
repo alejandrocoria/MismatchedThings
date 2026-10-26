@@ -22,7 +22,11 @@ public final class SilentGearRecognition {
     }
 
     private static volatile SilentGearWearerApi.Carriers carriers;
-    private static volatile boolean moonReady, voidReady, brilliantDisabled, moonDisabled, voidDisabled;
+    private static volatile boolean moonReady;
+    private static volatile boolean voidReady;
+    private static volatile boolean brilliantDisabled;
+    private static volatile boolean moonDisabled;
+    private static volatile boolean voidDisabled;
 
     private SilentGearRecognition() {
     }
@@ -40,12 +44,14 @@ public final class SilentGearRecognition {
         } catch (Throwable failure) {
             disable(true, failure);
         }
+
         try {
             requireProof("event.GearEvents", "mismatchedboots$sgMoonReady");
             moonReady = true;
         } catch (Throwable failure) {
             disable(false, failure);
         }
+
         try {
             requireProof("event.GearEvents", "mismatchedboots$sgVoidReady");
             voidReady = true;
@@ -67,11 +73,13 @@ public final class SilentGearRecognition {
         if (original || brilliantDisabled || carriers == null) {
             return original;
         }
+
         try {
             if (SilentGearCompatibility.effectiveTraits(root).stream().noneMatch(trait -> trait.id().toString().equals("silentgear:brilliant"))) {
                 return false;
             }
-            ItemStack carrier = carriers.carrier(root), before = carrier.copy();
+            ItemStack carrier = carriers.carrier(root);
+            ItemStack before = carrier.copy();
             if (carrier.isEmpty()) {
                 return false;
             }
@@ -91,6 +99,7 @@ public final class SilentGearRecognition {
         if (!proof || !moonReady || moonDisabled || event.isCanceled() || !(event.getEntity() instanceof Player player)) {
             return original;
         }
+
         try {
             int level = SilentGearCompatibility.effectiveTraits(player.getItemBySlot(EquipmentSlot.FEET))
                                                .stream()

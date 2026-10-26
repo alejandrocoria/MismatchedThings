@@ -86,6 +86,7 @@ class SilentGearFoundationTest {
             malformed.add("rules", rules);
             assertTrue(SilentGearState.CODEC.parse(JsonOps.INSTANCE, malformed).error().isPresent());
         }
+
         var rule = new SilentGearState.Rule(Identifier.withDefaultNamespace("luck"), AttributePolicy.AVERAGE);
         var modifier = entry(1, AttributeModifier.Operation.ADD_VALUE, EquipmentSlotGroup.FEET, ItemAttributeModifiers.Display.attributeModifiers());
         assertThrows(IllegalArgumentException.class,

@@ -30,7 +30,9 @@ import java.util.function.Consumer;
 public final class AetherSourceCharms {
     private static Bindings bindings;
     private static Constructor<?> tooltipConstructor;
-    private static boolean sourcesDisabled, graphicsDisabled, warnedData;
+    private static boolean sourcesDisabled;
+    private static boolean graphicsDisabled;
+    private static boolean warnedData;
 
     private AetherSourceCharms() {
     }
@@ -44,15 +46,18 @@ public final class AetherSourceCharms {
         if (sourcesDisabled || !BootHalf.isValidSource(source)) {
             return;
         }
+
         SourceMarker marker;
         try {
             if (bindings == null) {
                 bindings = new Bindings();
             }
+
             var display = source.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
             if (display.hideTooltip() || !display.shows(bindings.charms)) {
                 return;
             }
+
             Object charms = source.get(bindings.charms);
             if (charms == null) {
                 return;
@@ -86,6 +91,7 @@ public final class AetherSourceCharms {
                 invalidData();
                 return null;
             }
+
             var stack = (ItemStack) bindings.stack.invoke(holder);
             if (stack == null || bindings.type.invoke(holder) == null || bindings.tier.invoke(holder) == null) {
                 invalidData();
@@ -114,6 +120,7 @@ public final class AetherSourceCharms {
             if (!(elements.get(index).left().orElse(null) instanceof SourceMarker marker)) {
                 continue;
             }
+
             ClientTooltipComponent prepared = null;
             if (!graphicsDisabled && marker.holders.size() <= 4) {
                 try {

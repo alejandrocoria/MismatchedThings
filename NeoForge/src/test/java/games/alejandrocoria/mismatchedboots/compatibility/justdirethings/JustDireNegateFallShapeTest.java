@@ -55,10 +55,12 @@ class JustDireNegateFallShapeTest implements Opcodes {
             while (feet.getOpcode() < 0) {
                 feet = feet.getPrevious();
             }
+
             var player = feet.getPrevious();
             while (player.getOpcode() < 0) {
                 player = player.getPrevious();
             }
+
             LabelNode bypass = new LabelNode();
             fall.instructions.insertBefore(player, bypass);
             for (var node : fall.instructions) {

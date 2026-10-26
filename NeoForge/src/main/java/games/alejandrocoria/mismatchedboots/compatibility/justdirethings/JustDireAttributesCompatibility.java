@@ -63,13 +63,16 @@ public final class JustDireAttributesCompatibility {
             Class<?> powered = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.PoweredTool");
             Class<?> toggleable = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.ToggleableTool");
             Class<?> ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
-            Item celestigem = item("celestigem_boots"), eclipsealloy = item("eclipsealloy_boots");
+            Item celestigem = item("celestigem_boots");
+            Item eclipsealloy = item("eclipsealloy_boots");
             if (!powered.isInstance(celestigem) || !powered.isInstance(eclipsealloy)
                     || !toggleable.isInstance(celestigem) || !toggleable.isInstance(eclipsealloy)) {
                 throw new IllegalStateException("Unsupported native powered boot API");
             }
+
             DataComponentType<Integer> energy = component("forge_energy");
-            DataComponentType<Boolean> enabled = component("tool_enabled"), toggle = component("stepheight_toggle");
+            DataComponentType<Boolean> enabled = component("tool_enabled");
+            DataComponentType<Boolean> toggle = component("stepheight_toggle");
             if (energy == null || enabled == null || toggle == null) {
                 throw new IllegalStateException("Missing native attribute component API");
             }
@@ -98,11 +101,13 @@ public final class JustDireAttributesCompatibility {
             output.set(DataComponents.ATTRIBUTE_MODIFIERS, new ItemAttributeModifiers(List.copyOf(baseline)));
             return;
         }
+
         var data = ModContent.getMixedBootsData(output).orElseThrow();
         var first = new ArrayList<ItemAttributeModifiers>(3);
         var second = new ArrayList<ItemAttributeModifiers>(3);
         try {
-            ItemStack left = data.left().source(), right = data.right().source();
+            ItemStack left = data.left().source();
+            ItemStack right = data.right().source();
             for (int state = 0; state < 3; state++) {
                 first.add(Services.PLATFORM.getCompositionAttributeModifiers(view(left, output, state, binding)));
                 second.add(Services.PLATFORM.getCompositionAttributeModifiers(view(right, output, state, binding)));
@@ -115,6 +120,7 @@ public final class JustDireAttributesCompatibility {
         if (api != binding) {
             return;
         }
+
         var states = new ArrayList<ItemAttributeModifiers>(9);
         // Policy/data rejection is not an optional-API failure; publish only after all states succeed.
         for (var a : first) {
@@ -123,6 +129,7 @@ public final class JustDireAttributesCompatibility {
                                                                        .stream().filter(JustDireAttributeProjections::managed).toList()));
             }
         }
+
         var table = new JustDireAttributeProjections(states);
         var baseline = new ArrayList<>(output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
                                              .modifiers().stream().filter(entry -> !JustDireAttributeProjections.managed(entry)).toList());
@@ -176,12 +183,14 @@ public final class JustDireAttributesCompatibility {
         if (binding == null || !ready() || !eligible(root)) {
             throw new IllegalStateException("JDT shared projection unavailable");
         }
+
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         var first = new ArrayList<ItemAttributeModifiers>(3);
         var second = new ArrayList<ItemAttributeModifiers>(3);
         try {
             for (int state = 0; state < 3; state++) {
-                ItemStack a = data.left().source(), b = data.right().source();
+                ItemStack a = data.left().source();
+                ItemStack b = data.right().source();
                 first.add(JustDireUpgradesCompatibility.nativeBoot(a)
                           ? Services.PLATFORM.getCompositionAttributeModifiers(view(a, root, state, binding)) : left);
                 second.add(JustDireUpgradesCompatibility.nativeBoot(b)
@@ -191,6 +200,7 @@ public final class JustDireAttributesCompatibility {
             disable(binding, failure);
             throw new IllegalStateException("JDT shared native source view failed", failure);
         }
+
         var states = new ArrayList<ItemAttributeModifiers>(9);
         for (var a : first) {
             for (var b : second) {
@@ -198,6 +208,7 @@ public final class JustDireAttributesCompatibility {
                                                                        .stream().filter(JustDireAttributeProjections::managed).toList()));
             }
         }
+
         return new JustDireAttributeProjections(states);
     }
 
@@ -222,11 +233,13 @@ public final class JustDireAttributesCompatibility {
         if (!(root.getItem() instanceof MixedBootsItem)) {
             return defaults;
         }
+
         Api binding = api;
         var table = root.get(projections());
         if (table == null || binding == null || !ready() || !eligible(root)) {
             return defaults;
         }
+
         var data = ModContent.getMixedBootsData(root).orElseThrow();
         int state;
         try {
@@ -238,6 +251,7 @@ public final class JustDireAttributesCompatibility {
         if (api != binding) {
             return defaults;
         }
+
         var baseline = table.states().getFirst();
         var live = table.states().get(state);
         var result = new ArrayList<>(defaults.modifiers());
@@ -249,6 +263,7 @@ public final class JustDireAttributesCompatibility {
             result.removeIf(entry -> JustDireAttributeProjections.key(entry).equals(key));
             result.addAll(entries(live, key));
         }
+
         return new ItemAttributeModifiers(List.copyOf(result));
     }
 
@@ -278,6 +293,7 @@ public final class JustDireAttributesCompatibility {
             }
             source.set(binding.energy, state == 0 ? 0 : capacity);
         }
+
         return source;
     }
 
@@ -293,6 +309,7 @@ public final class JustDireAttributesCompatibility {
                                                                  .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Energy.ITEM) == null) {
                 return 0;
             }
+
             int charge = root.getOrDefault(binding.energy, 0);
             int threshold = (int) binding.threshold.invokeExact(source.getItem());
             if (threshold < 0) {
@@ -301,6 +318,7 @@ public final class JustDireAttributesCompatibility {
             if (charge < threshold) {
                 return 0;
             }
+
             int capacity = (int) binding.capacity.invokeExact(source.getItem());
             if (capacity <= 0) {
                 throw new IllegalStateException("Invalid native powered capacity");
@@ -326,6 +344,7 @@ public final class JustDireAttributesCompatibility {
         if (readiness == null) {
             return false;
         }
+
         try {
             return (boolean) readiness.invokeExact();
         } catch (Throwable failure) {

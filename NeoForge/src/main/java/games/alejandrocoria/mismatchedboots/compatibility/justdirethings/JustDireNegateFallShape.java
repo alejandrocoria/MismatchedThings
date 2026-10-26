@@ -54,6 +54,7 @@ final class JustDireNegateFallShape implements Opcodes {
         if (fall == null || !fall.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         List<AbstractInsnNode> nodes = code(fall.instructions);
         try {
             int feet = -1;
@@ -72,6 +73,7 @@ final class JustDireNegateFallShape implements Opcodes {
                             : feetRead(FALL, fall.instructions) != nodes.get(feet + 1)) {
                 return false;
             }
+
             int hand = -1;
             for (int i = 1; i < feet; i++) {
                 if (nodes.get(i) instanceof MethodInsnNode c && c.owner.equals(SERVER_PLAYER) && c.name.equals("getMainHandItem")) {
@@ -84,6 +86,7 @@ final class JustDireNegateFallShape implements Opcodes {
             if (hand < 0) {
                 return false;
             }
+
             Cursor hands = new Cursor(nodes, hand);
             hands.hand(p.var, "getMainHandItem");
             hands.hand(p.var, "getOffhandItem");
@@ -107,6 +110,7 @@ final class JustDireNegateFallShape implements Opcodes {
             if (afterRead < 0) {
                 return false;
             }
+
             Cursor tail = new Cursor(nodes, afterRead);
             int boots = tail.variable(ASTORE);
             LabelNode negateRejected = tail.ability(boots, "NEGATEFALLDAMAGE");
@@ -158,6 +162,7 @@ final class JustDireNegateFallShape implements Opcodes {
                     }
                 }
             }
+
             return true;
         } catch (IllegalArgumentException | IndexOutOfBoundsException incompatible) {
             return false;
@@ -178,6 +183,7 @@ final class JustDireNegateFallShape implements Opcodes {
         if (getter == null) {
             return false;
         }
+
         var body = code(getter.instructions);
         boolean original = getter.access == (ACC_PRIVATE | ACC_STATIC) && owned(getter) && getter.tryCatchBlocks.isEmpty()
                 && body.size() == 2 && body.getFirst().getOpcode() == ICONST_0 && body.getLast().getOpcode() == IRETURN;
@@ -210,7 +216,9 @@ final class JustDireNegateFallShape implements Opcodes {
                         || nodes.getLast().getOpcode() != ARETURN) {
                     return false;
                 }
-                int eventArgument = -1, local = 0;
+
+                int eventArgument = -1;
+                int local = 0;
                 for (Type argument : Type.getArgumentTypes(m.desc)) {
                     if (argument.getDescriptor().equals("L" + EVENT + ";")) {
                         if (eventArgument >= 0) {
@@ -229,6 +237,7 @@ final class JustDireNegateFallShape implements Opcodes {
                 calls++;
             }
         }
+
         return calls == 1;
     }
 
@@ -348,6 +357,7 @@ final class JustDireNegateFallShape implements Opcodes {
             if (reject() != rejected) {
                 throw new IllegalArgumentException();
             }
+
             return rejected;
         }
     }

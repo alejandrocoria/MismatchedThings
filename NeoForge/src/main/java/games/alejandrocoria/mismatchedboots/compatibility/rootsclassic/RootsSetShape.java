@@ -43,15 +43,18 @@ final class RootsSetShape implements Opcodes {
         if (methods.size() != 1) {
             return false;
         }
+
         MethodNode method = methods.getFirst();
         if ((method.access & (ACC_STATIC | ACC_ABSTRACT | ACC_NATIVE)) != 0) {
             return false;
         }
+
         List<AbstractInsnNode> code = code(method);
         // A prior invocation or competing edit of our hook is never grounds for a second insertion.
         if (code.stream().anyMatch(n -> n instanceof MethodInsnNode call && call.owner.equals(ADAPTER))) {
             return false;
         }
+
         List<Integer> reads = new ArrayList<>();
         for (int i = 0; i < code.size(); i++) {
             if (field(code.get(i), SLOT, "FEET", "L" + SLOT + ";")) {
@@ -61,6 +64,7 @@ final class RootsSetShape implements Opcodes {
         if (reads.size() != 1) {
             return false;
         }
+
         int feet = reads.getFirst();
         if (feet < 1 || feet + 3 >= code.size() || !(code.get(feet - 1) instanceof VarInsnNode player)
                 || player.getOpcode() != ALOAD
@@ -80,6 +84,7 @@ final class RootsSetShape implements Opcodes {
                     || next(branch.label) != code.get(feet + 6)) {
                 return false;
             }
+
             InsnList hook = new InsnList();
             // Keep the exact native FEET stack; do not re-query equipment after evaluating its item.
             method.instructions.insertBefore(code.get(feet + 2), new InsnNode(DUP));
@@ -89,6 +94,7 @@ final class RootsSetShape implements Opcodes {
             if (!(code.get(feet + 2) instanceof VarInsnNode store) || store.getOpcode() != ASTORE) {
                 return false;
             }
+
             List<Integer> uses = new ArrayList<>();
             for (int i = feet + 3; i < code.size(); i++) {
                 if (code.get(i) instanceof VarInsnNode local && local.var == store.var) {
@@ -101,6 +107,7 @@ final class RootsSetShape implements Opcodes {
             if (uses.size() != 1) {
                 return false;
             }
+
             int load = uses.getFirst();
             if (load + 4 >= code.size() || !call(code.get(load + 1), STACK, "getItem", "()L" + ITEM + ";")
                     || !field(code.get(load + 2), "elucent/rootsclassic/registry/RootsRegistry", "WILDWOOD_BOOTS",
@@ -126,6 +133,7 @@ final class RootsSetShape implements Opcodes {
         if (!staff) {
             return player == 1 && unwritten(code, 0, end, player);
         }
+
         int definitions = 0;
         for (int i = 0; i < end; i++) {
             if (code.get(i) instanceof VarInsnNode local && local.var == player && local.getOpcode() == ASTORE) {
@@ -137,6 +145,7 @@ final class RootsSetShape implements Opcodes {
                 definitions++;
             }
         }
+
         return player > 4 && definitions == 1 && unwritten(code, 0, end, 3);
     }
 

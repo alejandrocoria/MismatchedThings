@@ -27,6 +27,7 @@ final class SilentGearCureShape implements Opcodes {
                 || (method.access & (ACC_STATIC | ACC_SYNCHRONIZED | ACC_NATIVE | ACC_ABSTRACT)) != 0) {
             return false;
         }
+
         var code = new ArrayList<AbstractInsnNode>();
         for (var node : method.instructions) {
             if (node.getOpcode() >= 0 && node.getOpcode() != NOP) {
@@ -40,6 +41,7 @@ final class SilentGearCureShape implements Opcodes {
                 || actor.var == iterator.var || actor.var == effect.var || iterator.var == effect.var) {
             return false;
         }
+
         return load(code.get(0), ILOAD, 4) && jump(code, 1, IFEQ, 23)
                 && load(code.get(2), ALOAD, 1)
                 && call(code.get(3), INVOKEVIRTUAL, SilentGearEffectShape.CONTEXT, "player", "()L" + PLAYER + ";")

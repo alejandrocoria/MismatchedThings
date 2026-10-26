@@ -49,20 +49,24 @@ public final class JustDireJumpCompatibility {
         if (root.isEmpty() || root.getCount() != 1 || !(root.getItem() instanceof MixedBootsItem)) {
             return 0;
         }
+
         var data = ModContent.suspendedBootsData(root).isPresent() ? null
                                                                    : ModContent.mixedBootsDataType().map(root::get).orElse(null);
         if (data == null) {
             return 0;
         }
+
         ItemStack left = data.left().source();
         ItemStack right = data.right().source();
         if (!BootHalf.isValidSource(left) || !BootHalf.isValidSource(right)) {
             return 0;
         }
+
         Api binding = binding();
         if (binding == null) {
             return 0;
         }
+
         try {
             return Math.max(binding.value(left, root), binding.value(right, root));
         } catch (Throwable failure) {
@@ -112,6 +116,7 @@ public final class JustDireJumpCompatibility {
             api = null;
             Constants.LOG.warn("Could not bind Just Dire Things Jump API; compatibility disabled", failure);
         }
+
         return api;
     }
 
@@ -169,6 +174,7 @@ public final class JustDireJumpCompatibility {
             if ((int) resource.invokeExact(source, jump) < 0) {
                 return 0;
             }
+
             return (int) slider.invokeExact(source, "jumpboost");
         }
     }

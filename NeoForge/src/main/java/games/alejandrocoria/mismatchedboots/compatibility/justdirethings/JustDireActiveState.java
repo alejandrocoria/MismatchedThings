@@ -15,7 +15,8 @@ import java.util.List;
 
 /** Strict paid state, with one bounded exception for the other supported action's worn clock. */
 public final class JustDireActiveState {
-    public static final int GROUND_STOMP = 1, EARTHQUAKE = 2;
+    public static final int GROUND_STOMP = 1;
+    public static final int EARTHQUAKE = 2;
     private static Access access;
     private static boolean attempted;
 
@@ -42,10 +43,12 @@ public final class JustDireActiveState {
         if (ItemStack.matches(root, expected)) {
             return true;
         }
+
         DataComponentType<List<Object>> type = component("ability_cooldowns");
         if (type == null || root.has(type) != expected.has(type) || maximumTicks < 0) {
             return false;
         }
+
         var actual = root.copy();
         var strict = expected.copy();
         actual.remove(type);
@@ -53,10 +56,12 @@ public final class JustDireActiveState {
         if (!ItemStack.matches(actual, strict)) {
             return false;
         }
+
         Access binding = binding();
         if (binding == null) {
             return false;
         }
+
         try {
             var before = expected.getOrDefault(type, List.of());
             var after = root.getOrDefault(type, List.of());
@@ -75,11 +80,13 @@ public final class JustDireActiveState {
             if (!fixedBefore.equals(fixedAfter)) {
                 return false;
             }
+
             var replacements = new HashMap<String, Object>();
             for (String name : List.of("groundstomp", "earthquake")) {
                 if (!unrelated(name, actions)) {
                     continue;
                 }
+
                 var oldRecords = new ArrayList<Object>();
                 var newRecords = new ArrayList<Object>();
                 for (Object record : before) {
@@ -98,6 +105,7 @@ public final class JustDireActiveState {
                 if (oldRecords.size() != 1 || newRecords.size() > 1) {
                     return false;
                 }
+
                 Clock oldClock = binding.clock(oldRecords.getFirst());
                 Clock newClock = newRecords.isEmpty() ? null : binding.clock(newRecords.getFirst());
                 int cooldown = name.equals("earthquake") ? JustDireEarthquakeCompatibility.cooldownDuration() : 0;
@@ -106,6 +114,7 @@ public final class JustDireActiveState {
                 }
                 replacements.put(name, newRecords.isEmpty() ? null : newRecords.getFirst());
             }
+
             var progressed = new ArrayList<Object>();
             for (Object record : before) {
                 String name = binding.name(record);
@@ -114,6 +123,7 @@ public final class JustDireActiveState {
                     progressed.add(replacement);
                 }
             }
+
             return progressed.equals(after); // Owned ticking retains record order, except actual expiry.
         } catch (Throwable failure) {
             if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
@@ -162,6 +172,7 @@ public final class JustDireActiveState {
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             Constants.LOG.warn("Could not bind Just Dire Things paid clock comparison; changed paid snapshots denied", failure);
         }
+
         return access;
     }
 

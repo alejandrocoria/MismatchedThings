@@ -20,7 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SilentGearMagnetShapeTest implements Opcodes {
-    private static final String QUEUE = SilentGearMagnetShape.TRACKER, VEC = SilentGearMagnetShape.VEC;
+    private static final String QUEUE = SilentGearMagnetShape.TRACKER;
+    private static final String VEC = SilentGearMagnetShape.VEC;
 
     @Test
     void admitsFiniteNativeDataWithoutFreezingDefaultsButRejectsUnboundedQueries() {

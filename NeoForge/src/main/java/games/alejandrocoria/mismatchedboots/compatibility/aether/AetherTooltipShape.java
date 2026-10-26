@@ -47,6 +47,7 @@ final class AetherTooltipShape implements Opcodes {
         if (method == null || (method.access & ACC_STATIC) == 0 || hooked(method, attributes ? "suppressAttributes" : "suppressTier")) {
             return false;
         }
+
         String descriptor = attributes ? "(" + STACK + "Ljava/util/List;" + ATTRIBUTE_CONTEXT + ")V"
                                        : "(" + STACK + "Ljava/util/List;" + CONTEXT + FLAG + ")V";
         var calls = List.of(method.instructions.toArray()).stream().filter(n -> call(n, HOOKS,
@@ -56,6 +57,7 @@ final class AetherTooltipShape implements Opcodes {
         if (calls.size() != 1) {
             return false;
         }
+
         var target = (MethodInsnNode) calls.getFirst();
         var flow = new Flow(owner, method);
         int count = attributes ? 3 : 4;
@@ -66,6 +68,7 @@ final class AetherTooltipShape implements Opcodes {
                 || !flow.eventGetter(flow.argument(target, 3, count), event, "getFlags", FLAG))) {
             return false;
         }
+
         int first = method.maxLocals;
         method.maxLocals += count;
         InsnList condition = new InsnList();
@@ -91,6 +94,7 @@ final class AetherTooltipShape implements Opcodes {
         if (method == null || (method.access & ACC_STATIC) == 0 || hooked(method, "details")) {
             return false;
         }
+
         var flow = new Flow(owner, method);
         var calls = new ArrayList<MethodInsnNode>();
         for (var instruction : method.instructions) {
@@ -115,6 +119,7 @@ final class AetherTooltipShape implements Opcodes {
             method.instructions.set(target, new MethodInsnNode(INVOKESTATIC, STATE, "details",
                                                                "(" + STACK + DETAILS.substring(1), false));
         }
+
         return true;
     }
 
@@ -167,6 +172,7 @@ final class AetherTooltipShape implements Opcodes {
             if (value == null || value.insns.size() != 1) {
                 return null;
             }
+
             var n = value.insns.iterator().next();
             if (!seen.add(n)) {
                 return null;
@@ -178,6 +184,7 @@ final class AetherTooltipShape implements Opcodes {
             if (n instanceof VarInsnNode && n.getOpcode() >= ISTORE && n.getOpcode() <= ASTORE || n.getOpcode() == CHECKCAST) {
                 return origin(argument(n, 0, 1), seen);
             }
+
             return n;
         }
 

@@ -63,6 +63,7 @@ public final class JustDireRefundShape implements Opcodes {
             getter.instructions.add(new InsnNode(ICONST_0));
             getter.instructions.add(new InsnNode(IRETURN));
         }
+
         try {
             if (intact && slice(node, true)) {
                 getter.instructions.set(getter.instructions.getFirst(), new InsnNode(ICONST_1));
@@ -90,6 +91,7 @@ public final class JustDireRefundShape implements Opcodes {
             handler.instructions.add(new InsnNode(RETURN));
             handler.maxStack = 5;
         }
+
         return false;
     }
 
@@ -99,8 +101,12 @@ public final class JustDireRefundShape implements Opcodes {
                 || !apply.tryCatchBlocks.isEmpty()) {
             return false;
         }
+
         var flow = new Flow(node, apply);
-        MethodInsnNode site = null, write = null, callback = null, itemRead = null;
+        MethodInsnNode site = null;
+        MethodInsnNode write = null;
+        MethodInsnNode callback = null;
+        MethodInsnNode itemRead = null;
         for (var instruction : apply.instructions) {
             if (!(instruction instanceof MethodInsnNode call)) {
                 continue;
@@ -164,11 +170,13 @@ public final class JustDireRefundShape implements Opcodes {
             if (!(instruction instanceof JumpInsnNode branch) || branch.getOpcode() != IFEQ && branch.getOpcode() != IFNE) {
                 continue;
             }
+
             var checked = flow.origin(flow.top(branch));
             if (!(checked instanceof MethodInsnNode broken) || !broken.owner.equals(OWNER) || !broken.name.equals("isBroken")
                     || !broken.desc.equals("()Z") || !flow.parameter(flow.receiver(broken, 0), 0)) {
                 continue;
             }
+
             var allowed = branch.getOpcode() == IFEQ ? branch.getNext() : branch.label;
             var denied = branch.getOpcode() == IFEQ ? branch.label : branch.getNext();
             if (!reachable(apply, apply.instructions.getFirst(), branch, write)
@@ -177,6 +185,7 @@ public final class JustDireRefundShape implements Opcodes {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -186,10 +195,10 @@ public final class JustDireRefundShape implements Opcodes {
         }
         // Recognize our independent MA consumption observer, not its eligibility or refund items.
         String peer = "games.alejandrocoria.mismatchedboots.mixin.compatibility.mysticalagriculture.MysticalRefundMixin";
-        if (handler.visibleAnnotations == null || handler.visibleAnnotations.stream()
-                                                                            .noneMatch(a -> a.desc.equals(
-                                                                                    "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
-                                                                                    && a.values != null && a.values.contains(peer))) {
+        if (handler.visibleAnnotations == null
+                || handler.visibleAnnotations.stream().noneMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(peer))) {
             return false;
         }
         return routerCode(handler, "mismatchedboots$maRefundReady",
@@ -217,6 +226,7 @@ public final class JustDireRefundShape implements Opcodes {
                 || !indy.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory")) {
             return false;
         }
+
         MethodNode callback = null;
         for (Object argument : indy.bsmArgs) {
             if (!(argument instanceof Handle handle)) {
@@ -231,6 +241,7 @@ public final class JustDireRefundShape implements Opcodes {
         if (callback == null || !straight(callback)) {
             return false;
         }
+
         var flow = new Flow(node, callback);
         int calls = 0;
         for (var instruction : callback.instructions) {
@@ -255,6 +266,7 @@ public final class JustDireRefundShape implements Opcodes {
             }
             calls++;
         }
+
         return calls == 1;
     }
 
@@ -275,6 +287,7 @@ public final class JustDireRefundShape implements Opcodes {
                 }
             }
         }
+
         MethodNode bridge = null;
         for (Object argument : indy.bsmArgs) {
             if (!(argument instanceof Handle handle)) {
@@ -294,6 +307,7 @@ public final class JustDireRefundShape implements Opcodes {
         if (bridge == null || !straight(bridge)) {
             return false;
         }
+
         var flow = new Flow(node, bridge);
         int calls = 0;
         for (var instruction : bridge.instructions) {
@@ -313,6 +327,7 @@ public final class JustDireRefundShape implements Opcodes {
                 }
                 continue;
             }
+
             String desc = ownedInside ? HANDLER : FORWARD;
             int arguments = ownedInside ? 6 : 3;
             var handler = method(node, call.name, call.desc);
@@ -333,6 +348,7 @@ public final class JustDireRefundShape implements Opcodes {
             }
             calls++;
         }
+
         return calls == 1;
     }
 
@@ -340,6 +356,7 @@ public final class JustDireRefundShape implements Opcodes {
         if ((handler.access & ACC_STATIC) != 0 || !straight(handler) || owned(handler)) {
             return false;
         }
+
         var flow = new Flow(node, handler);
         AbstractInsnNode array = null;
         MethodInsnNode forwarded = null;
@@ -370,6 +387,7 @@ public final class JustDireRefundShape implements Opcodes {
                 || !allocation.desc.equals("java/lang/Object") || flow.constant(flow.top(allocation)) != 2) {
             return false;
         }
+
         var slots = new HashSet<Integer>();
         for (var instruction : handler.instructions) {
             if (instruction.getOpcode() < IASTORE || instruction.getOpcode() > SASTORE) {
@@ -378,6 +396,7 @@ public final class JustDireRefundShape implements Opcodes {
             if (instruction.getOpcode() != AASTORE) {
                 return false;
             }
+
             int index = flow.constant(flow.argument(instruction, 1, 3));
             var value = flow.argument(instruction, 2, 3);
             if (flow.origin(value) instanceof MethodInsnNode box && box.owner.equals("java/lang/Integer") && box.name.equals("valueOf")) {
@@ -389,6 +408,7 @@ public final class JustDireRefundShape implements Opcodes {
                 return false;
             }
         }
+
         return slots.size() == 2;
     }
 
@@ -415,16 +435,20 @@ public final class JustDireRefundShape implements Opcodes {
     }
 
     private static boolean owned(MethodNode method) {
-        return method.visibleAnnotations != null && method.visibleAnnotations.stream()
-                                                                             .anyMatch(a -> a.desc.equals(
-                                                                                     "Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(
-                                                                                     MIXIN));
+        return method.visibleAnnotations != null
+                && method.visibleAnnotations.stream().anyMatch(annotation ->
+                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
+                                && annotation.values != null && annotation.values.contains(MIXIN));
     }
 
     private static boolean straight(MethodNode method) {
-        return method.tryCatchBlocks.isEmpty() && real(method).stream()
-                                                              .noneMatch(n -> n instanceof JumpInsnNode || n instanceof TableSwitchInsnNode || n instanceof LookupSwitchInsnNode || n.getOpcode() == ATHROW) && real(
-                method).stream().filter(n -> n.getOpcode() >= IRETURN && n.getOpcode() <= RETURN).count() == 1;
+        return method.tryCatchBlocks.isEmpty()
+                && real(method).stream().noneMatch(instruction -> instruction instanceof JumpInsnNode
+                        || instruction instanceof TableSwitchInsnNode || instruction instanceof LookupSwitchInsnNode
+                        || instruction.getOpcode() == ATHROW)
+                && real(method).stream()
+                               .filter(instruction -> instruction.getOpcode() >= IRETURN && instruction.getOpcode() <= RETURN)
+                               .count() == 1;
     }
 
     private static boolean reachable(MethodNode method, AbstractInsnNode start, AbstractInsnNode end, AbstractInsnNode blocked) {
@@ -441,6 +465,7 @@ public final class JustDireRefundShape implements Opcodes {
             if (current == end) {
                 return true;
             }
+
             int opcode = current.getOpcode();
             if (current instanceof JumpInsnNode jump) {
                 pending.add(jump.label);
@@ -458,6 +483,7 @@ public final class JustDireRefundShape implements Opcodes {
                 pending.add(current.getNext());
             }
         }
+
         return false;
     }
 
@@ -485,8 +511,8 @@ public final class JustDireRefundShape implements Opcodes {
         }
 
         SourceValue argument(AbstractInsnNode node, int argument, int count) {
-            var f = at(node);
-            return f == null ? null : f.getStack(f.getStackSize() - count + argument);
+            var frame = at(node);
+            return frame == null ? null : frame.getStack(frame.getStackSize() - count + argument);
         }
 
         SourceValue receiver(AbstractInsnNode node, int count) {
@@ -501,6 +527,7 @@ public final class JustDireRefundShape implements Opcodes {
             if (value == null || value.insns.size() != 1) {
                 return null;
             }
+
             var source = value.insns.iterator().next();
             if (!seen.add(source)) {
                 return null;
@@ -512,6 +539,7 @@ public final class JustDireRefundShape implements Opcodes {
             if (source instanceof VarInsnNode && source.getOpcode() >= ISTORE && source.getOpcode() <= ASTORE || source.getOpcode() == CHECKCAST) {
                 return origin(top(source), seen);
             }
+
             return source;
         }
 

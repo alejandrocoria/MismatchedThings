@@ -22,9 +22,18 @@ import java.util.function.Supplier;
 public final class SilentGearWearerApi {
     static final Set<String> WIELDER_IDS = Set.of("silentgear:adamant", "silentgear:aquatic", "silentgear:flame_ward", "silentgear:stellar");
     private final Class<?> wielder;
-    private final MethodHandle context, definition, effects, trait, id, tick;
+    private final MethodHandle context;
+    private final MethodHandle definition;
+    private final MethodHandle effects;
+    private final MethodHandle trait;
+    private final MethodHandle id;
+    private final MethodHandle tick;
     private final Carriers carriers;
-    private final Field potions, potionType, potionEffect, potionDuration, potionLevels;
+    private final Field potions;
+    private final Field potionType;
+    private final Field potionEffect;
+    private final Field potionDuration;
+    private final Field potionLevels;
     private final Class<?> potionData;
     private final Object armorType;
 
@@ -32,7 +41,8 @@ public final class SilentGearWearerApi {
         var lookup = MethodHandles.publicLookup();
         carriers = new Carriers();
         wielder = nativeClass("gear.trait.effect.WielderEffectTraitEffect");
-        Class<?> instance = nativeClass("api.traits.TraitInstance"), ctx = nativeClass("api.traits.TraitActionContext");
+        Class<?> instance = nativeClass("api.traits.TraitInstance");
+        Class<?> ctx = nativeClass("api.traits.TraitActionContext");
         Class<?> nativeTrait = nativeClass("gear.trait.Trait");
         context = lookup.findConstructor(ctx, MethodType.methodType(void.class, Player.class, instance, ItemStack.class));
         definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(nativeTrait));
@@ -78,14 +88,17 @@ public final class SilentGearWearerApi {
         if (!WIELDER_IDS.contains(name)) {
             throw new IllegalArgumentException("Unaudited wearer trait");
         }
+
         var calls = effects(instance).stream().filter(this::isWielder).toList();
         if (calls.size() != 1) {
             throw new IllegalStateException("Changed Wielder definition count");
         }
+
         var map = (Map<?, ?>) potions.get(calls.getFirst());
         if (map.size() != 1 || !map.containsKey(armorType) || !(map.get(armorType) instanceof List<?> entries)) {
             throw new IllegalStateException("Changed Wielder gear branch");
         }
+
         List<String> expected = switch (name) {
             case "silentgear:adamant" -> List.of("resistance");
             case "silentgear:aquatic" -> List.of("water_breathing");
@@ -108,6 +121,7 @@ public final class SilentGearWearerApi {
                 throw new IllegalStateException("Unaudited Wielder potion definition");
             }
         }
+
         return calls;
     }
 
@@ -139,7 +153,9 @@ public final class SilentGearWearerApi {
     /** Brilliant can bind this read-only subset without requiring Wielder classes or contexts. */
     public static final class Carriers {
         private final Class<?> armor;
-        private final MethodHandle properties, propertiesConstructor, traitList;
+        private final MethodHandle properties;
+        private final MethodHandle propertiesConstructor;
+        private final MethodHandle traitList;
         private final DataComponentType<Object> component;
         private final Object traitKey;
 

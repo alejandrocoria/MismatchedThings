@@ -53,6 +53,7 @@ class AetherAlkahestShapeTest implements Opcodes {
                                                                                          "(L" + AetherAlkahestShape.STACK + ";)L" + AetherAlkahestShape.STACK + ";",
                                                                                          false));
             }
+
             var supply = query.getPrevious();
             for (String name : new String[]{"first", "second"}) {
                 method.instructions.insert(supply, new MethodInsnNode(INVOKESTATIC, node.name, name + "Supplier",
@@ -76,6 +77,7 @@ class AetherAlkahestShapeTest implements Opcodes {
                     assertEquals(0, hooks(method));
                     continue;
                 }
+
                 boolean receiver = fault.equals("receiver");
                 var opaque = new MethodInsnNode(INVOKESTATIC, "fixture/Peer", "opaque",
                                                 receiver ? "(L" + AetherAlkahestShape.STACK + ";)L" + AetherAlkahestShape.STACK + ";"

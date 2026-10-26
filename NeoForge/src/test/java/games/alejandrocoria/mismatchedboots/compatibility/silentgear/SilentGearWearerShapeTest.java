@@ -102,6 +102,7 @@ class SilentGearWearerShapeTest implements Opcodes {
                 break;
             }
         }
+
         var owner = owner(method);
         assertFalse(SilentGearWearerShape.set(owner));
         owner = owner(counter(true, true));

@@ -29,6 +29,7 @@ public final class JustDireTooltipCompatibility {
         if (!id.getNamespace().equals("justdirethings") || !BOOTS.contains(id.getPath())) {
             return tooltip;
         }
+
         return line -> {
             if (line.getContents() instanceof TranslatableContents text) {
                 if (SOURCE_STATE.contains(text.getKey())) {

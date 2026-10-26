@@ -61,6 +61,7 @@ class JustDireAttributesShapeTest implements Opcodes {
             assertFalse(JustDireAttributesShape.publish(node));
             assertEquals(ICONST_0, getter(node).instructions.getFirst().getOpcode());
         }
+
         var node = routed();
         var method = entry(node);
         var replacement = new InsnList();

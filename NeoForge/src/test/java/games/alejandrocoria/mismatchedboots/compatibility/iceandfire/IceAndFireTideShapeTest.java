@@ -211,6 +211,7 @@ class IceAndFireTideShapeTest implements Opcodes {
             }
             assertNotNull(IceAndFireTideShape.entryFailure(node), mutation);
         }
+
         ClassNode changed = copy(accepted);
         for (var instruction : entry(changed).instructions) {
             if (instruction instanceof MethodInsnNode call && call.name.equals("mismatchedboots$tideFeetResult")) {
@@ -250,6 +251,7 @@ class IceAndFireTideShapeTest implements Opcodes {
         try (var stream = getClassResource()) {
             new ClassReader(stream).accept(mixin, 0);
         }
+
         MethodNode handler = mixin.methods.stream().filter(m -> m.name.equals("mismatchedboots$tideFeetResult")).findFirst().orElseThrow();
         nativeEntry.methods.add(handler);
         MethodNode entry = entry(nativeEntry);
