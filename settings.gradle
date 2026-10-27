@@ -44,3 +44,11 @@ project(':MismatchedBoots').projectDir = file('mods/MismatchedBoots')
 ['Common', 'Fabric', 'NeoForge', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
     include("MismatchedBoots:${path}")
 }
+
+// Research-only consumers/core versions; absent from the ordinary build and publications.
+if (providers.gradleProperty('sharedWorkbenchSpike').map { it.toBoolean() }.getOrElse(false)) {
+    include('WorkbenchSpike:Fabric', 'WorkbenchSpike:NeoForge')
+    project(':WorkbenchSpike').projectDir = file('spikes/SharedWorkbench')
+    project(':WorkbenchSpike:Fabric').projectDir = file('spikes/SharedWorkbench/Fabric')
+    project(':WorkbenchSpike:NeoForge').projectDir = file('spikes/SharedWorkbench/NeoForge')
+}

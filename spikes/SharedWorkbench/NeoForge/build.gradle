@@ -1,0 +1,73 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+}
+
+repositories { mavenCentral() }
+
+neoForge { version = neoforge_version }
+
+apply from: '../fixture.gradle'
+
+['core', 'v11', 'bootsConsumer', 'addonConsumer'].each { name ->
+    neoForge.addModdingDependenciesTo(sourceSets[name])
+}
+
+neoForge {
+    mods {
+        shared_workbench_observer { sourceSet sourceSets.main }
+    }
+    runs {
+        spikeServer {
+            server()
+            disableIdeRun()
+            gameDirectory = spikeRunDirectory.dir('server').asFile
+            programArgument('--nogui')
+            systemProperty('workbench.spike.phase', 'server')
+            systemProperty('workbench.spike.case', spikeCase)
+            systemProperty('workbench.spike.report', spikeReportDirectory.asFile.absolutePath)
+            jvmArgument('-Xmx1G')
+        }
+        spikeClient {
+            client()
+            disableIdeRun()
+            gameDirectory = spikeClientDirectory.asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('spike')
+            systemProperty('workbench.spike.phase', spikeClientPhase)
+            systemProperty('workbench.spike.case', spikeCase)
+            systemProperty('workbench.spike.report', spikeReportDirectory.asFile.absolutePath)
+            systemProperty('workbench.spike.seedReport', spikeSeedReport.asFile.absolutePath)
+            jvmArgument('-Xmx1G')
+        }
+    }
+}
+
+tasks.named('runSpikeServer') { dependsOn 'prepareSpikeServer' }
+tasks.named('runSpikeClient') { dependsOn 'prepareSpikeClient' }
+
+// Isolated native-plugin proof: a real outgoing project artifact, not anonymous file JiJ metadata.
+configurations.create('spikeCoreElements') {
+    canBeConsumed = true
+    canBeResolved = false
+    outgoing.capability("${group}:shared-workbench-neoforge:1.1.0")
+    outgoing.artifact(tasks.named('coreV11Jar'))
+}
+def nativeEmbedding = net.neoforged.moddevgradle.tasks.JarJar.registerWithConfiguration(project, 'spikeNativeJarJar')
+dependencies.add('spikeNativeJarJar', dependencies.project(path: project.path, configuration: 'spikeCoreElements'))
+
+tasks.register('verifyNativeCorePackaging') {
+    dependsOn nativeEmbedding
+    doLast {
+        def directory = nativeEmbedding.get().outputDirectory.get().asFile
+        def metadata = new groovy.json.JsonSlurper().parse(new File(directory, 'META-INF/jarjar/metadata.json'))
+        if (metadata.jars.size() != 1) { throw new GradleException('Expected one identified core project dependency') }
+        def core = metadata.jars.first()
+        if (core.identifier.group != 'games.alejandrocoria.mismatchedthings.spike'
+                || core.identifier.artifact != 'shared-workbench-neoforge'
+                || core.version.artifactVersion != '1.1.0' || core.version.range != '[1.1.0,)'
+                || !new File(directory, core.path).isFile()) {
+            throw new GradleException("Unexpected native project embedding: ${metadata}")
+        }
+    }
+}

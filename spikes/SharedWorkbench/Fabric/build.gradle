@@ -1,0 +1,85 @@
+plugins {
+    id 'java-library'
+    id 'net.fabricmc.fabric-loom'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+apply from: '../fixture.gradle'
+
+loom {
+    mixin { useLegacyMixinAp = false }
+    mods {
+        shared_workbench_observer { sourceSet sourceSets.main }
+    }
+    runs {
+        spikeServer {
+            server()
+            ideConfigGenerated(false)
+            runDir(project.relativePath(spikeRunDirectory.dir('server').asFile))
+            property('workbench.spike.phase', 'server')
+            property('workbench.spike.case', spikeCase)
+            property('workbench.spike.report', spikeReportDirectory.asFile.absolutePath)
+            programArg('--nogui')
+            vmArg('-Xmx1G')
+        }
+        spikeClient {
+            client()
+            ideConfigGenerated(false)
+            runDir(project.relativePath(spikeClientDirectory.asFile))
+            property('workbench.spike.phase', spikeClientPhase)
+            property('workbench.spike.case', spikeCase)
+            property('workbench.spike.report', spikeReportDirectory.asFile.absolutePath)
+            property('workbench.spike.seedReport', spikeSeedReport.asFile.absolutePath)
+            programArgs('--quickPlaySingleplayer', 'spike')
+            vmArg('-Xmx1G')
+        }
+    }
+}
+
+tasks.named('runSpikeServer') { dependsOn 'prepareSpikeServer' }
+tasks.named('runSpikeClient') { dependsOn 'prepareSpikeClient' }
+
+// Package-only control; never put this newer core on ordinary research run classpaths.
+if (providers.gradleProperty('workbenchPackagingProof').map { it.toBoolean() }.getOrElse(false)) {
+    configurations.create('spikeCoreElements') {
+        canBeConsumed = true
+        canBeResolved = false
+        outgoing.capability("${group}:shared-workbench-fabric:1.1.0")
+        outgoing.artifact(tasks.named('coreV11Jar'))
+    }
+    dependencies.add('include', dependencies.project(path: project.path, configuration: 'spikeCoreElements'))
+    tasks.register('verifyNativeCorePackaging') {
+        dependsOn tasks.named('jar')
+        def artifact = tasks.named('jar').flatMap { it.archiveFile }
+        doLast {
+            new java.util.zip.ZipFile(artifact.get().asFile).withCloseable { zip ->
+                def metadata = new groovy.json.JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+                if (metadata.jars.size() != 1) { throw new GradleException('Expected exactly one Loom-included core') }
+                def core = zip.getEntry(metadata.jars.first().file)
+                if (core == null) { throw new GradleException('Loom nested core is missing') }
+                def nested = new java.util.zip.ZipInputStream(zip.getInputStream(core))
+                def found = false
+                nested.withCloseable {
+                    for (def entry = nested.nextEntry; entry != null; entry = nested.nextEntry) {
+                        if (entry.name == 'fabric.mod.json') {
+                            def descriptor = new groovy.json.JsonSlurper().parseText(new String(nested.readAllBytes(), 'UTF-8'))
+                            found = descriptor.id == 'mismatchedthings' && descriptor.version == '1.1.0'
+                            break
+                        }
+                    }
+                }
+                if (!found) { throw new GradleException('Loom did not include the identified v1.1 core mod') }
+            }
+        }
+    }
+}
