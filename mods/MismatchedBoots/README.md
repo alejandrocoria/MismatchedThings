@@ -78,3 +78,18 @@ the mod, loader and side. Release metadata belongs to [mod.properties](mod.prope
 The publication entry is `:MismatchedBoots:publishMod` (both loaders). Package
 verification, the pinned runtime artifact catalog and startup/network acceptance
 are owned here as well; their outputs are under this directory's `build/`.
+
+### Release changelogs
+
+[doc/changelog.md](doc/changelog.md) is the shared release template. The
+[Fabric](doc/compatibility/fabric.md) and [NeoForge](doc/compatibility/neoforge.md)
+fragments contain only Markdown list entries for compatibility added in the
+release being prepared, not a cumulative catalog. Replace their contents for
+each release; leave a fragment empty when that loader has no new compatibility.
+
+Each loader's `processDocs` task inserts its fragment under `Added compatibility`,
+with no blank line between the heading and list. An empty or whitespace-only
+fragment omits the entire section. Both CurseForge and Modrinth publication
+tasks depend on this generation and use the resulting `build/doc/changelog.md`.
+To preview both changelogs without publishing, run
+`./gradlew :MismatchedBoots:Fabric:processDocs :MismatchedBoots:NeoForge:processDocs`.

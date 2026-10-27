@@ -1,0 +1,15 @@
+- Advanced Netherite
+- AllTheModium
+- Aquaculture 2 (Neptunium swim speed)
+- Forbidden Arcanus
+- Ice and Fire Community Edition
+- Just Dire Things
+- Just Enough Items (JEI)
+- Mystical Agriculture
+- Neo Vitae
+- Oritech
+- Roots Classic
+- Roughly Enough Items (REI)
+- Silent Gear
+- The Aether II
+- The Undergarden

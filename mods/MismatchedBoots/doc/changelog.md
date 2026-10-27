@@ -1,4 +1,4 @@
-
+${added_compatibility}
 
 **Requirements:**
 * ${loadername}: ${loaderversion}

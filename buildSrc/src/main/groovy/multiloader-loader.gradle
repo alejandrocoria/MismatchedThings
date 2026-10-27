@@ -25,16 +25,34 @@ dependencies {
 }
 
 ext.registerProcessDocsTask = { String loaderName, String loaderVersion, String extraDocRequirements ->
-    tasks.register('processDocs', Copy) {
+    def compatibilityFile = mismatchedModProject.layout.projectDirectory.file(
+            "doc/compatibility/${project.name.toLowerCase(Locale.ROOT)}.md")
+    def addedCompatibility = providers.fileContents(compatibilityFile).asText.map { text ->
+        def entries = text.trim()
+        entries.isEmpty() ? '' : "### Added compatibility\n${entries}"
+    }
+    def expansionProperties = [
+            loaderversion: loaderVersion,
+            loadername: loaderName,
+            extra_doc_requirements: extraDocRequirements
+    ]
+
+    def processDocs = tasks.register('processDocs', Copy) {
+        inputs.file(compatibilityFile)
+        inputs.properties(expansionProperties)
+
         from(docsDirectory) {
             include '*.md'
-            expand(
-                    loaderversion: loaderVersion,
-                    loadername: loaderName,
-                    extra_doc_requirements: extraDocRequirements
-            )
         }
         into(layout.buildDirectory.dir('doc'))
+
+        doFirst {
+            expand(expansionProperties + [added_compatibility: addedCompatibility.get()])
+        }
+    }
+
+    tasks.matching { it.name in ['publishCurseForge', 'modrinth'] }.configureEach {
+        dependsOn(processDocs)
     }
 }
 
