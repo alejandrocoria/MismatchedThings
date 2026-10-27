@@ -47,6 +47,32 @@ Nested Gradle processes still use the repository wrapper and working directory;
 explicit file-path overrides retain repository-relative semantics. Previous root
 build evidence/cache trees are neither migrated nor read as staging defaults.
 
+## Build-transition acceptance (2026-10-26)
+
+The consolidated post-monorepo matrix passed on the configured Fabric baseline
+and NeoForge .114/.99, with **241 runtime gates/profiles passed**. Neo Vitae Live
+on .99 is the one blocked combination: pinned Modonomicon 2.16.0 requires
+NeoForge .109+. It passed on .114; its absence control passed on .99. No upstream
+requirement was bypassed. These are maintained acceptance profiles, not every
+possible property combination or disjoint sets of assertions.
+
+Accepted JUnit suites contain **637 cases with no failures/errors/skips**:
+Common 326, Fabric fixtures 9, and NeoForge 151 on each baseline. Required final
+class exports were freshly generated for both versions. An initial .114 attempt
+failed three tests because the local runner omitted sibling variant exports;
+completing that evidence and retrying only JUnit resolved it without changing
+production code, tests or timeouts. Preserve sibling class exports alongside
+the principal file when archiving witnesses: some tests resolve them relative
+to the supplied path.
+
+Canonical Fabric GameTests discover 97 cases: 91 exercised/6 context skips
+normally, 92 exercised/5 skips with attribute rules. Dedicated contexts, reloads,
+clients, persistence/recovery, Quilt, viewers and same-loader networking passed.
+Packaging, all 12 corruption controls and the 30-artifact integrity gate passed.
+Normal .114 artifacts and all configured runtime fixture source sets were
+restored. The owner confirmed both indev clients preserve their local data and
+pass representative workbench/craft/equip/presentation/save-rejoin checks.
+
 ## Layout
 
 - `Common/src/main/java`: shared loader-server/network acceptance scenarios and helpers.
