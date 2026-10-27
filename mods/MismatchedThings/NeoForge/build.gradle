@@ -1,0 +1,19 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+
+base.archivesName = "mismatchedthings-${minecraft_version}-neoforge"
+
+neoForge {
+    version = neoforge_version
+    accessTransformers.from(project(':MismatchedThings:Common').file('src/main/resources/META-INF/accesstransformer.cfg'))
+    mods {
+        mismatchedthings { sourceSet sourceSets.main }
+    }
+}
+
+jar {
+    from(rootProject.file('LICENSE'))
+    manifest.attributes('Automatic-Module-Name': 'games.alejandrocoria.mismatchedthings.neoforge')
+}

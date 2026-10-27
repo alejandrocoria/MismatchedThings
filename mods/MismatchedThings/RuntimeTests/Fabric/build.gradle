@@ -1,0 +1,48 @@
+plugins {
+    id 'java-library'
+    id 'net.fabricmc.fabric-loom'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+apply from: '../runtime-tests.gradle'
+
+loom {
+    mixin { useLegacyMixinAp = false }
+    mods {
+        workbench_test { sourceSet sourceSets.main }
+    }
+    runs {
+        configureEach { ideConfigGenerated(false) }
+        workbenchServer {
+            server()
+            runDir(project.relativePath(workbenchRunDirectory.dir('server').asFile))
+            property('workbench.test.phase', 'server')
+            property('workbench.test.recipes', workbenchTestRecipes.toString())
+            property('workbench.test.report', workbenchReportDirectory.asFile.absolutePath)
+            programArg('--nogui')
+            vmArg('-Xmx1G')
+        }
+        workbenchClient {
+            client()
+            runDir(project.relativePath(workbenchRunDirectory.dir('client').asFile))
+            property('workbench.test.phase', 'client')
+            property('workbench.test.recipes', workbenchTestRecipes.toString())
+            property('workbench.test.report', workbenchReportDirectory.asFile.absolutePath)
+            programArgs('--quickPlaySingleplayer', 'workbench')
+            vmArg('-Xmx1G')
+        }
+    }
+}
+
+tasks.named('runWorkbenchServer') { dependsOn 'prepareWorkbenchServer' }
+tasks.named('runWorkbenchClient') { dependsOn 'prepareWorkbenchClient' }

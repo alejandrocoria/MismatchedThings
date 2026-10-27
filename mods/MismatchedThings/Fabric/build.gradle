@@ -1,0 +1,23 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.fabricmc.fabric-loom'
+}
+
+base.archivesName = "mismatchedthings-${minecraft_version}-fabric"
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+loom {
+    accessWidenerPath.set(project(':MismatchedThings:Common').file('src/main/resources/mismatchedthings.accesswidener'))
+    mixin { useLegacyMixinAp = false }
+    runs.configureEach { ideConfigGenerated(false) }
+}
+
+jar {
+    from(rootProject.file('LICENSE'))
+    manifest.attributes('Automatic-Module-Name': 'games.alejandrocoria.mismatchedthings.fabric')
+}

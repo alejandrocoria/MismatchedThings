@@ -1,0 +1,15 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="workbench_test"
+version="${version}"
+displayName="Workbench runtime tests"
+
+[[dependencies.workbench_test]]
+modId="mismatchedthings"
+type="required"
+versionRange="[1.0.0,2.0.0)"
+ordering="AFTER"
+side="BOTH"

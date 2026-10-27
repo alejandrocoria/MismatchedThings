@@ -1,0 +1,184 @@
+import groovy.json.JsonSlurper
+
+import java.util.concurrent.TimeUnit
+import java.util.zip.ZipFile
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+def loader = project.name.toLowerCase(Locale.ROOT)
+def baseline = loader == 'fabric' ? fabric_loader_version : neoforge_version
+def coreProject = project(":MismatchedThings:${project.name}")
+evaluationDependsOn(coreProject.path)
+def coreJar = coreProject.tasks.named('jar').flatMap { it.archiveFile }
+def operations = objects.newInstance(FixtureFileOperations).files
+def outputDirectory = layout.buildDirectory
+def ownerPath = project.path
+def rootDirectory = rootProject.projectDir
+def launcher = rootProject.file('gradlew.bat')
+def offline = gradle.startParameter.offline
+
+ext.workbenchTestRecipes = providers.gradleProperty('workbenchTestRecipes').map { it.toBoolean() }.getOrElse(false)
+def recipes = workbenchTestRecipes
+def scenario = recipes ? 'recipes' : 'core'
+ext.workbenchRunDirectory = layout.buildDirectory.dir("run/${baseline}/${scenario}").get()
+ext.workbenchReportDirectory = layout.buildDirectory.dir("reports/${baseline}/${scenario}").get()
+def runDirectory = workbenchRunDirectory
+def reportDirectory = workbenchReportDirectory
+
+sourceSets.main.java.srcDir '../Common/src/main/java'
+dependencies.add('compileOnly', files(coreJar))
+tasks.named('compileJava') { dependsOn coreProject.tasks.named('jar') }
+
+processResources {
+    from('../Common/src/main/resources') {
+        if (!recipes) { exclude 'data/workbench_test/**' }
+    }
+    inputs.property('recipes', recipes)
+    inputs.property('version', version)
+    filesMatching(['fabric.mod.json', 'META-INF/neoforge.mods.toml']) {
+        expand(version: version)
+    }
+}
+
+def packaging = tasks.register('verifyWorkbenchArtifact') {
+    group = 'verification'
+    dependsOn coreProject.tasks.named('jar')
+    inputs.file(coreJar)
+    doLast {
+        new ZipFile(coreJar.get().asFile).withCloseable { zip ->
+            def names = zip.entries().collect { it.name }
+            if (names.any { it.contains('mismatchedboots') || it.contains('/spike/') || it.startsWith('data/workbench_test/') }) {
+                throw new GradleException('Consumer or research content leaked into the core')
+            }
+            def required = [
+                    'games/alejandrocoria/mismatchedthings/api/MismatchedWorkbench.class',
+                    'games/alejandrocoria/mismatchedthings/internal/client/WorkbenchScreen.class',
+                    'assets/mismatchedthings/blockstates/mismatched_workbench.json',
+                    'assets/mismatchedthings/items/mismatched_workbench.json',
+                    'assets/mismatchedthings/models/block/mismatched_workbench.json',
+                    'assets/mismatchedthings/textures/gui/sprites/container/mismatched_workbench/arrows.png',
+                    'data/mismatchedthings/recipe/mismatched_workbench.json',
+                    'data/mismatchedthings/loot_table/blocks/mismatched_workbench.json',
+                    'data/mismatchedthings/advancement/recipes/decorations/mismatched_workbench.json',
+                    'data/minecraft/tags/block/mineable/axe.json'
+            ]
+            required.each { name ->
+                if (!(name in names)) { throw new GradleException("Missing core entry: ${name}") }
+            }
+            def model = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('assets/mismatchedthings/models/block/mismatched_workbench.json')))
+            model.textures.values().findAll { it.startsWith('mismatchedthings:') }.each { texture ->
+                def path = "assets/${texture.replace(':', '/textures/')}.png".toString()
+                if (!(path in names)) { throw new GradleException("Model references missing texture: ${texture}") }
+            }
+            def manifest = new java.util.jar.Manifest(zip.getInputStream(zip.getEntry('META-INF/MANIFEST.MF')))
+            if (manifest.mainAttributes.getValue('Automatic-Module-Name') != "games.alejandrocoria.mismatchedthings.${loader}") {
+                throw new GradleException('Missing unique loader module identity')
+            }
+            ['en_us', 'es_es'].each { language ->
+                def entry = zip.getEntry("assets/mismatchedthings/lang/${language}.json")
+                def text = new JsonSlurper().parse(zip.getInputStream(entry))
+                if (text['container.mismatchedthings.mismatched_workbench'] != 'Mismatched Workbench') {
+                    throw new GradleException("Missing station title: ${language}")
+                }
+            }
+            def coordinate = "${coreProject.group}:mismatchedthings-${coreProject.name}-${minecraft_version}:${coreProject.version}"
+            if (!coreProject.configurations.runtimeElements.outgoing.capabilities.any { "${it.group}:${it.name}:${it.version}" == coordinate }) {
+                throw new GradleException("Missing identified outgoing core variant: ${coordinate}")
+            }
+            if (loader == 'fabric') {
+                def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+                if (descriptor.id != 'mismatchedthings' || descriptor.version != coreProject.version.toString()
+                        || descriptor.depends.containsKey('mismatchedboots')) {
+                    throw new GradleException('Wrong standalone core metadata')
+                }
+            }
+        }
+    }
+}
+
+def stage = { File directory ->
+    def mods = new File(directory, 'mods')
+    operations.copy { from coreJar; into mods }
+    def config = new File(directory, 'config')
+    config.mkdirs()
+    new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+}
+
+tasks.register('prepareWorkbenchServer') {
+    dependsOn packaging, tasks.named('classes')
+    doLast {
+        def directory = runDirectory.dir('server').asFile
+        // Only disposable descendants of this fixture's build directory are removed.
+        operations.delete { delete directory, reportDirectory.asFile }
+        reportDirectory.asFile.mkdirs()
+        stage(directory)
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-name=workbench
+spawn-protection=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"},{"height":2,"block":"minecraft:dirt"},{"height":1,"block":"minecraft:grass_block"}],"structure_overrides":[]}
+'''
+    }
+}
+
+tasks.register('prepareWorkbenchClient') {
+    dependsOn packaging, tasks.named('classes')
+    doLast {
+        def directory = runDirectory.dir('client').asFile
+        def savedWorld = runDirectory.dir('server/workbench').asFile
+        if (!new File(reportDirectory.asFile, 'server.ok').isFile() || !savedWorld.isDirectory()) {
+            throw new GradleException('Run the corresponding workbench server profile first')
+        }
+        operations.delete { delete directory, new File(reportDirectory.asFile, 'client.ok') }
+        stage(directory)
+        operations.copy { from savedWorld; into new File(directory, 'saves/workbench') }
+        new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+    }
+}
+
+tasks.register('verifyWorkbench') {
+    group = 'verification'
+    description = 'Checks the packaged core alone, then synthetic recipe transactions on server and client.'
+    dependsOn packaging, tasks.named('classes')
+    doLast {
+        def logs = outputDirectory.dir("matrix/${baseline}").get().asFile
+        logs.mkdirs()
+        def marker = new File(logs, 'matrix.ok')
+        marker.delete()
+        [false, true].each { withRecipes ->
+            ['server', 'client'].each { phase ->
+                def name = withRecipes ? 'recipes' : 'core'
+                def log = new File(logs, "${name}-${phase}.log")
+                def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                                 "-PworkbenchTestRecipes=${withRecipes}", "${ownerPath}:runWorkbench${phase.capitalize()}"]
+                if (offline) { arguments.add('--offline') }
+                if (loader == 'neoforge') { arguments.add("-Pneoforge_version=${baseline}") }
+                logger.lifecycle("Workbench ${loader}/${baseline}: ${name}/${phase}")
+                def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                        .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
+                try {
+                    if (!process.waitFor(300, TimeUnit.SECONDS)) {
+                        throw new GradleException("Workbench profile timed out: ${log}")
+                    }
+                    def reports = outputDirectory.dir("reports/${baseline}/${name}").get().asFile
+                    if (process.exitValue() != 0 || !new File(reports, "${phase}.ok").isFile()
+                            || new File(reports, 'failure.txt').exists()) {
+                        throw new GradleException("Workbench profile failed: ${log}")
+                    }
+                } finally {
+                    if (process.isAlive()) {
+                        process.toHandle().descendants().forEach { it.destroyForcibly() }
+                        process.destroyForcibly()
+                    }
+                }
+            }
+        }
+        marker.text = 'standalone core and synthetic recipe server/client profiles passed\n'
+    }
+}

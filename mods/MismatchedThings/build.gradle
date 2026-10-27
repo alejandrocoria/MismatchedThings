@@ -1,0 +1,23 @@
+def metadata = new Properties()
+file('mod.properties').withInputStream { stream -> metadata.load(stream) }
+
+def owningMod = project
+allprojects { child ->
+    child.version = metadata.getProperty('version')
+    child.group = metadata.getProperty('group')
+    child.ext.mismatchedModProject = owningMod
+
+    metadata.each { key, value ->
+        if (!(key in ['version', 'group'])) {
+            child.extensions.extraProperties.set(key.toString(), value)
+        }
+    }
+}
+
+tasks.register('verifyWorkbench') {
+    group = 'verification'
+    description = 'Checks the standalone workbench API, artifacts and runtime behavior.'
+    dependsOn ':MismatchedThings:Common:test',
+            ':MismatchedThings:RuntimeTests:Fabric:verifyWorkbench',
+            ':MismatchedThings:RuntimeTests:NeoForge:verifyWorkbench'
+}

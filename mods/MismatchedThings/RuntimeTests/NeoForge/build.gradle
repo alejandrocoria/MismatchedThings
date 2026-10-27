@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+}
+
+repositories { mavenCentral() }
+
+neoForge { version = neoforge_version }
+
+apply from: '../runtime-tests.gradle'
+
+neoForge {
+    mods {
+        workbench_test { sourceSet sourceSets.main }
+    }
+    runs {
+        workbenchServer {
+            server()
+            disableIdeRun()
+            gameDirectory = workbenchRunDirectory.dir('server').asFile
+            programArgument('--nogui')
+            systemProperty('workbench.test.phase', 'server')
+            systemProperty('workbench.test.recipes', workbenchTestRecipes.toString())
+            systemProperty('workbench.test.report', workbenchReportDirectory.asFile.absolutePath)
+            jvmArgument('-Xmx1G')
+        }
+        workbenchClient {
+            client()
+            disableIdeRun()
+            gameDirectory = workbenchRunDirectory.dir('client').asFile
+            programArgument('--quickPlaySingleplayer')
+            programArgument('workbench')
+            systemProperty('workbench.test.phase', 'client')
+            systemProperty('workbench.test.recipes', workbenchTestRecipes.toString())
+            systemProperty('workbench.test.report', workbenchReportDirectory.asFile.absolutePath)
+            jvmArgument('-Xmx1G')
+        }
+    }
+}
+
+tasks.named('runWorkbenchServer') { dependsOn 'prepareWorkbenchServer' }
+tasks.named('runWorkbenchClient') { dependsOn 'prepareWorkbenchClient' }
