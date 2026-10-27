@@ -178,5 +178,11 @@
     "filename": "alltheores-4.0.4.jar",
     "sha256": "c6f8c4bffcf41a650ce0bdb18235aa94cd579bae0e80c56e25f240f6157f3a4f",
     "url": "https://edge.forgecdn.net/files/8023/670/alltheores-4.0.4.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "Aquaculture-26.1.1-2.9.2.jar",
+    "sha256": "ef3cde416d554aff527abe89125f02389bd420ea86c2be651ff3ee81207f00ed",
+    "url": "https://cdn.modrinth.com/data/Vl1uNAuy/versions/I2FfOQUM/Aquaculture-26.1.1-2.9.2.jar"
   }
 ]

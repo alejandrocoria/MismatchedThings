@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots;
 
 import games.alejandrocoria.mismatchedboots.compatibility.aether.AetherTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.allthemodium.AllTheModiumBoots;
+import games.alejandrocoria.mismatchedboots.compatibility.aquaculture.AquacultureTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireTooltipCompatibility;
@@ -75,6 +76,7 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
 
     @Override
     protected Consumer<Component> sourceTooltip(ItemStack source, TooltipFlag flag, Consumer<Component> tooltip) {
+        AquacultureTooltipCompatibility.appendSource(source, flag, tooltip);
         SilentGearTooltipCompatibility.appendSource(source, flag, tooltip);
         AetherTooltipCompatibility.source(source, flag, tooltip);
         return JustDireTooltipCompatibility.sourceTooltip(source, tooltip);

@@ -18,6 +18,14 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (!System.getProperty("mismatchedboots.runtimetest.aquacultureTooltip", "").isEmpty()) {
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> AquacultureTooltipClientTest.tick(Minecraft.getInstance()));
+            } else {
+                NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> AquacultureTooltipServerTest.tick(event.getServer()));
+            }
+            return;
+        }
         if (games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.enabled()) {
             games.alejandrocoria.mismatchedboots.runtimetest.neoforge.missingmods.MissingModsSpike.initialize(eventBus);
             if (FMLEnvironment.getDist().isClient()) {

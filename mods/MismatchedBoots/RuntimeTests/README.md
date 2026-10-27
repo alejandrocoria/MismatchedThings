@@ -63,6 +63,7 @@ README summaries.
   - [Production Tide acceptance](#production-tide-feet-acceptance).
 - [Neo Vitae infusion](#neo-vitae-infusion-composition--production-creation-gate): production composition and lifecycle.
 - [Oritech](#oritech-exo-fall-recognition), [AllTheModium](#allthemodium-boot-recognition) and [Undergarden](#undergarden-boot-recognition): native boot recognition.
+- [Aquaculture source tooltips](#aquaculture-source-tooltips): native descriptions, physical Shift and optional-client boundaries.
 - [Tooltip separators](#shared-tooltip-separators) and [item geometry](#item-geometry-coverage): shared rendering checks.
 - [Vanilla armor classification](#vanilla-armor-classification): shared startup/server regression.
 
@@ -1116,6 +1117,40 @@ The [implementation plan](../local-docs/NEO-VITAE-INFUSION-COMPOSITION-IMPLEMENT
 owns dated automated evidence and the owner-accepted final manual exit (sections
 7/10.4). The heading/task names are retained
 from A; the existing gate is extended, not duplicated into a second suite.
+
+## Aquaculture source tooltips
+
+```powershell
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAquacultureTooltips '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyAquacultureTooltips --console=plain
+```
+
+Run sequentially, restoring .114 last. This bounded gate downloads and hash-checks
+Aquaculture 2.9.2 through the fixture catalog; it never reads the indev instance.
+It runs a dedicated seed server with Aquaculture, a hidden/muted integrated
+client using that disposable world, and a hidden/muted absent-mod client.
+Both clients load separate copies of the world so 26.1.2 item components are
+bound before constructing test stacks; the seed contains no native item stacks.
+
+The production source callback is compared to the real native handler using
+structured Components/styles with no Shift, left Shift and right Shift. Controls
+cover both orientations, repeated sources/captures, F3+H, custom names, hidden
+source/root tooltips, live holder-tag removal/restoration, unrelated tagged
+items, unchanged root/source components, and exactly one final root event.
+The tag control rebinds the actual holder in memory and restores it in `finally`;
+it is not a full datapack reload test. A final injected native-method failure
+adds text and mutates only the defensive event stack before throwing, proving
+atomic contribution discard and session-local refusal without damaging normal
+tooltip sections. Its single warning is intentional.
+
+Reports and process logs are under
+`RuntimeTests/NeoForge/build/reports/aquaculture-tooltips/<version>/`; disposable
+runs are under that project's `build/run/aquaculture-tooltips/<version>/`.
+Each phase requires its report and no failure marker, with a 240-second process
+bound. No screenshots are required; ordinary-client visual acceptance remains
+separate from structured tooltip checks.
+The owner confirmed the final native/mixed text, Shift, source placement/F3+H
+and Spanish presentation checks on 2026-10-27, closing the visual handoff.
 
 ## Oritech Exo fall recognition
 

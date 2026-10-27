@@ -1,0 +1,92 @@
+// Optional native presentation in packaged Boots; all inputs and worlds are disposable fixtures.
+def modPath = mismatchedModProject.path
+def testMods = mismatchedModProject.ext.testModArtifacts
+def fixtureFiles = objects.newInstance(FixtureFileOperations).files
+def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
+def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
+def directory = layout.buildDirectory.dir("run/aquaculture-tooltips/${neoforge_version}")
+def reports = layout.buildDirectory.dir("reports/aquaculture-tooltips/${neoforge_version}")
+
+['Seed', 'Client', 'Absent'].each { phase ->
+    def mode = phase.toLowerCase(Locale.ROOT)
+    neoForge.runs.create("aquacultureTooltip${phase}") {
+        disableIdeRun()
+        gameDirectory = directory.get().dir(mode).asFile
+        systemProperty('mismatchedboots.runtimetest.markers', reports.get().asFile.absolutePath)
+        systemProperty('mismatchedboots.runtimetest.aquacultureTooltip', mode)
+        if (phase == 'Seed') {
+            server()
+            programArgument('--nogui')
+        } else {
+            client()
+            programArgument('--quickPlaySingleplayer')
+            programArgument('tooltip')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+        }
+        jvmArgument('-Xmx1G')
+    }
+
+    def prepare = tasks.register("prepareAquacultureTooltip${phase}") {
+        dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
+        doLast {
+            def run = directory.get().dir(mode).asFile
+            def nativeJar = phase == 'Absent' ? [] : [testMods.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar')]
+            fixtureFiles.delete { delete run }
+            fixtureFiles.delete { delete fileTree(reports) { include "${mode}-*.txt" } }
+            fixtureFiles.copy {
+                from(productionJar, fixtureJar, nativeJar)
+                into(new File(run, 'mods'))
+            }
+            if (phase == 'Seed') {
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+            } else {
+                def world = directory.get().dir('seed/world').asFile
+                if (!new File(world, 'level.dat').isFile()) {
+                    throw new GradleException('Aquaculture tooltip client requires its disposable seed world')
+                }
+                fixtureFiles.copy {
+                    from(world)
+                    into(new File(run, 'saves/tooltip'))
+                }
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\n'
+                def config = new File(run, 'config')
+                config.mkdirs()
+                new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
+            }
+        }
+    }
+    tasks.named("runAquacultureTooltip${phase}") { dependsOn prepare }
+}
+
+tasks.register('verifyAquacultureTooltips') {
+    group = 'verification'
+    description = 'Native Aquaculture source text, input, hidden/tag boundaries, local failure and optional absence'
+    doLast {
+        ['Seed', 'Client', 'Absent'].each { phase ->
+            def mode = phase.toLowerCase(Locale.ROOT)
+            def log = new File(reports.get().asFile, "${mode}-process.log")
+            runBounded("${modPath}:RuntimeTests:NeoForge:runAquacultureTooltip${phase}", log, 240)
+            def failure = new File(reports.get().asFile, "${mode}-failure.txt")
+            def report = new File(reports.get().asFile, "${mode}-report.txt")
+            if (failure.isFile() || !report.isFile()) {
+                throw new GradleException(failure.isFile() ? failure.text : "Missing ${phase} acceptance; see ${log}")
+            }
+            def refusals = log.readLines().count { it.contains('Aquaculture source tooltips disabled:') }
+            if (refusals != (phase == 'Client' ? 1 : 0)) {
+                throw new GradleException("Unexpected Aquaculture refusal count ${refusals}; see ${log}")
+            }
+            logger.lifecycle(report.text.trim())
+        }
+    }
+}

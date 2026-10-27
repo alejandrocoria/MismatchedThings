@@ -1,6 +1,6 @@
 - Advanced Netherite
 - AllTheModium
-- Aquaculture 2 (Neptunium swim speed)
+- Aquaculture 2
 - Forbidden Arcanus
 - Ice and Fire Community Edition
 - Just Dire Things
