@@ -23,6 +23,12 @@ loom {
     }
     runs {
         configureEach { ideConfigGenerated(false) }
+        configureEach {
+            property('workbench.test.case', providers.gradleProperty('workbenchCase').getOrElse(''))
+            property('workbench.test.upgrade', providers.gradleProperty('workbenchUpgrade').getOrElse('false'))
+            property('workbench.test.expectedVersion', providers.gradleProperty('workbenchExpectedVersion').getOrElse(''))
+            property('workbench.test.seedReport', workbenchSeedReport.asFile.absolutePath)
+        }
         workbenchServer {
             server()
             runDir(project.relativePath(workbenchRunDirectory.dir('server').asFile))

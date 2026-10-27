@@ -1,0 +1,166 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+
+group = 'games.alejandrocoria.mismatchedthings.fixtures'
+version = '1.0.0'
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+def loaderName = project.name
+def loader = loaderName.toLowerCase(Locale.ROOT)
+def kind = providers.gradleProperty('workbenchConsumerVariant').getOrElse('sibling')
+if (!(kind in ['baseline', 'sibling', 'incompatible'])) { throw new GradleException("Unknown consumer: ${kind}") }
+def sourceKind = kind == 'baseline' ? 'baseline' : 'sibling'
+def core = project(":MismatchedThings:${project.name}")
+evaluationDependsOn(core.path)
+def coreJar = core.tasks.named('jar').flatMap { it.archiveFile }
+def currentVersion = core.version.toString()
+def parts = currentVersion.tokenize('.')
+if (parts[0] != '1') { throw new GradleException('The pinned consumer certifies API major 1 only') }
+def candidateVersion = "1.${parts[1].toInteger() + 1}.0"
+def consumerId = "workbench_${sourceKind}"
+def range = kind == 'baseline' ? ['>=1.0.0 <2.0.0', '[1.0.0,2.0.0)']
+        : kind == 'incompatible' ? ['>=2.0.0 <3.0.0', '[2.0.0,3.0.0)']
+        : [">=${candidateVersion} <2.0.0", "[${candidateVersion},2.0.0)"]
+
+base.archivesName = "workbench-${kind}-${loader}"
+
+sourceSets {
+    additiveApi {
+        java.srcDir '../Common/src/additiveApi/java'
+        compileClasspath = configurations.compileClasspath
+    }
+    main {
+        java.srcDirs = ["../Common/src/${sourceKind}/java", "src/${sourceKind}/java"]
+        if (sourceKind == 'sibling') { compileClasspath += sourceSets.additiveApi.output }
+    }
+}
+dependencies.add('compileOnly', files(coreJar))
+tasks.named('compileJava') { dependsOn core.tasks.named('jar') }
+tasks.named('compileAdditiveApiJava') { dependsOn core.tasks.named('jar') }
+
+def metadata = tasks.register('generateConsumerMetadata') {
+    def destination = layout.buildDirectory.dir("metadata/${kind}")
+    inputs.properties(kind: kind, candidateVersion: candidateVersion)
+    outputs.dir(destination)
+    doLast {
+        File directory = destination.get().asFile
+        directory.mkdirs()
+        String entrypoint = "games.alejandrocoria.mismatchedthings.fixture.${sourceKind}.${sourceKind.capitalize()}${loaderName}"
+        if (loader == 'fabric') {
+            new File(directory, 'fabric.mod.json').text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                    schemaVersion: 1, id: consumerId, version: '1.0.0', name: "Workbench ${kind} fixture", environment: '*',
+                    entrypoints: [main: [entrypoint]], depends: [fabricloader: ">=${fabric_loader_version}",
+                    minecraft: minecraft_version, mismatchedthings: range[0]]]))
+        } else {
+            File descriptor = new File(directory, 'META-INF/neoforge.mods.toml')
+            descriptor.parentFile.mkdirs()
+            descriptor.text = """modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+[[mods]]
+modId="${consumerId}"
+version="1.0.0"
+displayName="Workbench ${kind} fixture"
+[[dependencies.${consumerId}]]
+modId="mismatchedthings"
+type="required"
+versionRange="${range[1]}"
+ordering="AFTER"
+side="BOTH"
+"""
+        }
+        File recipe = new File(directory, "data/${consumerId}/recipe/compose.json")
+        recipe.parentFile.mkdirs()
+        recipe.text = JsonOutput.toJson([type: "${consumerId}:compose"])
+    }
+}
+tasks.named('processResources') {
+    from(metadata)
+}
+
+// Reuse the real core artifact, changing only test version metadata and adding a genuinely new API class.
+def candidateMetadata = tasks.register('generateCandidateMetadata') {
+    dependsOn core.tasks.named('jar')
+    inputs.file(coreJar)
+    inputs.property('candidateVersion', candidateVersion)
+    outputs.dir(layout.buildDirectory.dir('candidate-metadata'))
+    doLast {
+        File directory = layout.buildDirectory.dir('candidate-metadata').get().asFile
+        directory.mkdirs()
+        new ZipFile(coreJar.get().asFile).withCloseable { zip ->
+            String path = loader == 'fabric' ? 'fabric.mod.json' : 'META-INF/neoforge.mods.toml'
+            String text = zip.getInputStream(zip.getEntry(path)).getText('UTF-8')
+            if (loader == 'fabric') {
+                def json = new JsonSlurper().parseText(text)
+                json.version = candidateVersion
+                text = JsonOutput.prettyPrint(JsonOutput.toJson(json))
+            } else {
+                text = text.replaceFirst(/(?m)^version="[^"]+"/, "version=\"${candidateVersion}\"")
+            }
+            File descriptor = new File(directory, path)
+            descriptor.parentFile.mkdirs()
+            descriptor.text = text
+        }
+    }
+}
+def candidate = tasks.register('candidateCoreJar', Jar) {
+    dependsOn core.tasks.named('jar'), candidateMetadata, tasks.named('additiveApiClasses')
+    archiveBaseName = "mismatchedthings-${minecraft_version}-${loader}"
+    archiveVersion = candidateVersion
+    from({ zipTree(coreJar.get().asFile) }) {
+        exclude 'META-INF/MANIFEST.MF', 'fabric.mod.json', 'META-INF/neoforge.mods.toml'
+    }
+    from(candidateMetadata)
+    from(sourceSets.additiveApi.output)
+    manifest.attributes('Automatic-Module-Name': "games.alejandrocoria.mismatchedthings.${loader}",
+            'Implementation-Version': candidateVersion)
+}
+configurations.create('candidateCoreElements') {
+    canBeConsumed = true
+    canBeResolved = false
+    outgoing.capability("games.alejandrocoria.mismatchedthings:mismatchedthings-${loader}:${candidateVersion}")
+    outgoing.artifact(candidate)
+}
+ext.workbenchNestedDependency = {
+    dependencies.project(path: kind == 'baseline' ? core.path : project.path,
+            configuration: kind == 'baseline' ? 'workbenchElements' : 'candidateCoreElements')
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.named('jar') {
+    manifest.attributes('Automatic-Module-Name': "games.alejandrocoria.mismatchedthings.fixture.${sourceKind}.${loader}")
+}
+
+// Explicit one-time recording only. No normal verifier or consumer build depends on this task.
+def commit = providers.exec { commandLine 'git', 'rev-parse', 'HEAD' }.standardOutput.asText
+def digest = { File file -> MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString() }
+def baselineDirectory = project(':MismatchedThings:RuntimeTests').file('fixtures/api-v1')
+def consumerJar = tasks.named('jar').flatMap { it.archiveFile }
+def baselineSources = sourceSets.main.allJava.files.collectEntries { [(rootProject.relativePath(it).replace('\\', '/')): it] }
+def recordingAllowed = providers.gradleProperty('recordWorkbenchBaseline').getOrElse('false').toBoolean()
+tasks.register('recordApiV1Baseline') {
+    dependsOn tasks.named('jar')
+    doLast {
+        if (kind != 'baseline' || currentVersion != '1.0.0' || !recordingAllowed) {
+            throw new GradleException('Baseline recording requires core 1.0.0 and explicit baseline/record properties')
+        }
+        File directory = baselineDirectory
+        File artifact = new File(directory, "api-v1-${loader}.jar")
+        if (artifact.exists()) { throw new GradleException('Never silently replace a pinned historical consumer') }
+        directory.mkdirs()
+        byte[] bytes = consumerJar.get().asFile.bytes
+        artifact.bytes = bytes
+        def sources = baselineSources.sort().collectEntries { path, file -> [(path): digest(file)] }
+        new File(directory, "api-v1-${loader}.json").text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                schema: 1, artifact: artifact.name, sha256: digest(artifact), coreVersion: currentVersion,
+                coreSourceCommit: commit.get().trim(), coreArtifactSha256: digest(coreJar.get().asFile),
+                minecraft: minecraft_version, java: java_version, loader: loader,
+                loaderVersion: loader == 'fabric' ? fabric_loader_version : neoforge_version, consumerSources: sources])) + '\n'
+    }
+}

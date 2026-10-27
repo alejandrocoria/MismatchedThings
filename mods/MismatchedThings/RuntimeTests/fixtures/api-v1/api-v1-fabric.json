@@ -1,0 +1,16 @@
+{
+    "schema": 1,
+    "artifact": "api-v1-fabric.jar",
+    "sha256": "643e4c2a61fa5c4457a5c92ba70d0a978725a59801324ba89710186c06b16847",
+    "coreVersion": "1.0.0",
+    "coreSourceCommit": "ac03ef20727e4d2c5db93fb2be183155333f3f12",
+    "coreArtifactSha256": "9327cd71223848e501d1febb956eedc5b10b2623978891202bd107f0b634761a",
+    "minecraft": "26.1.2",
+    "java": "25",
+    "loader": "fabric",
+    "loaderVersion": "0.19.5",
+    "consumerSources": {
+        "mods/MismatchedThings/RuntimeTests/Consumers/Common/src/baseline/java/games/alejandrocoria/mismatchedthings/fixture/baseline/BaselineRecipe.java": "d7b6b246696f6fec63abbc88d2b71f9cbb5bbfbefb8b23e9a54b47d861537c32",
+        "mods/MismatchedThings/RuntimeTests/Consumers/Fabric/src/baseline/java/games/alejandrocoria/mismatchedthings/fixture/baseline/BaselineFabric.java": "fcdb8078ac6636e06141ce363c5323304c39ac7d311c537be0d5fe3230490276"
+    }
+}

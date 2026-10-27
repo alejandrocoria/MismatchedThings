@@ -4,6 +4,7 @@
     "version": "${version}",
     "name": "Workbench runtime tests",
     "environment": "*",
+    "mixins": ["workbench-test.mixins.json"],
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedthings.test.WorkbenchTestFabric"],
         "client": ["games.alejandrocoria.mismatchedthings.test.WorkbenchTestClientFabric"]

@@ -1,0 +1,177 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
+import java.util.zip.ZipFile
+
+// Native consumers exercise the production core. Only the additive API/version is test-specific.
+def loader = project.name.toLowerCase(Locale.ROOT)
+def baseline = loader == 'fabric' ? fabric_loader_version : neoforge_version
+def core = project(":MismatchedThings:${project.name}")
+def boots = project(":MismatchedBoots:${project.name}")
+def consumer = project(":MismatchedThings:RuntimeTests:Consumers:${project.name}")
+evaluationDependsOn(boots.path)
+evaluationDependsOn(consumer.path)
+
+def currentVersion = core.version.toString()
+def candidateVersion = "1.${currentVersion.tokenize('.')[1].toInteger() + 1}.0"
+def caseName = providers.gradleProperty('workbenchCase').getOrElse('')
+def output = layout.buildDirectory
+def frozen = output.dir("compatibility/${baseline}/artifacts").get().asFile
+def pinDirectory = project(':MismatchedThings:RuntimeTests').file('fixtures/api-v1')
+def pinned = new File(pinDirectory, "api-v1-${loader}.jar")
+def provenance = new File(pinDirectory, "api-v1-${loader}.json")
+def digest = { File file -> MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString() }
+def operations = objects.newInstance(FixtureFileOperations).files
+def rootDirectory = rootProject.projectDir
+def launcher = rootProject.file('gradlew.bat')
+def ownerPath = project.path
+def consumerPath = consumer.path
+def offline = gradle.startParameter.offline
+def incompatibleJar = consumer.layout.buildDirectory.file("libs/workbench-incompatible-${loader}-1.0.0.jar").get().asFile
+
+def runChild = { List arguments, File log, boolean success ->
+    log.parentFile.mkdirs()
+    def command = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m'] + arguments
+    if (offline) { command.add('--offline') }
+    if (loader == 'neoforge') { command.add("-Pneoforge_version=${baseline}") }
+    def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + command.collect { it.toString() })
+            .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
+    try {
+        if (!process.waitFor(300, TimeUnit.SECONDS)) {
+            throw new GradleException("Workbench compatibility profile timed out: ${log}")
+        }
+        if ((process.exitValue() == 0) != success) {
+            throw new GradleException("Unexpected workbench compatibility exit: ${log}")
+        }
+    } finally {
+        if (process.isAlive()) {
+            process.toHandle().descendants().forEach { it.destroyForcibly() }
+            process.destroyForcibly()
+        }
+    }
+}
+
+def checkPinned = {
+    if (!pinned.isFile() || !provenance.isFile()) { throw new GradleException('Missing committed API-v1 consumer fixture') }
+    def pin = new JsonSlurper().parse(provenance)
+    if (pin.schema != 1 || pin.artifact != pinned.name || pin.loader != loader || pin.coreVersion != '1.0.0'
+            || !(pin.coreSourceCommit ==~ /[0-9a-f]{40}/) || pin.consumerSources.size() != 2 || pin.sha256 != digest(pinned)) {
+        throw new GradleException("Historical consumer provenance/hash changed: ${provenance}")
+    }
+    new ZipFile(pinned).withCloseable { zip ->
+        String prefix = loader == 'fabric' ? 'META-INF/jars/' : 'META-INF/jarjar/'
+        def nested = zip.entries().findAll { !it.directory && it.name.startsWith(prefix) && it.name.endsWith('.jar') }
+        if (nested.size() != 1 || MessageDigest.getInstance('SHA-256').digest(zip.getInputStream(nested[0]).bytes).encodeHex().toString()
+                != pin.coreArtifactSha256) {
+            throw new GradleException('Frozen consumer no longer contains its original core')
+        }
+    }
+}
+
+ext.workbenchCompatibilityArtifacts = {
+    checkPinned()
+    def files = switch (caseName) {
+        case 'core' -> [new File(frozen, 'core.jar')]
+        case 'boots' -> [new File(frozen, 'boots.jar')]
+        case 'baseline' -> [pinned]
+        case 'sibling' -> [new File(frozen, 'sibling.jar')]
+        case 'both' -> [new File(frozen, 'boots.jar'), pinned, new File(frozen, 'sibling.jar')]
+        case 'incompatible' -> [new File(frozen, 'incompatible.jar')]
+        default -> throw new GradleException("Unknown workbench compatibility case: ${caseName}")
+    }
+    files.each { if (!it.isFile()) { throw new GradleException("Run verifyWorkbenchCompatibility first: missing ${it}") } }
+    files
+}
+
+def coreJar = core.tasks.named('jar').flatMap { it.archiveFile }
+def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
+def siblingJar = consumer.tasks.named('jar').flatMap { it.archiveFile }
+def candidateJar = consumer.tasks.named('candidateCoreJar').flatMap { it.archiveFile }
+
+def freeze = tasks.register('freezeWorkbenchConsumers') {
+    dependsOn core.tasks.named('jar'), boots.tasks.named('jar'), consumer.tasks.named('jar'), tasks.named('classes')
+    doLast {
+        checkPinned()
+        frozen.mkdirs()
+        [[coreJar.get().asFile, 'core.jar'], [bootsJar.get().asFile, 'boots.jar'], [siblingJar.get().asFile, 'sibling.jar']].each { pair ->
+            operations.copy { from pair[0]; into frozen; rename { pair[1] } }
+        }
+        // Native include/jarJar must embed the exact candidate, never a second copied station implementation.
+        new ZipFile(new File(frozen, 'sibling.jar')).withCloseable { zip ->
+            String prefix = loader == 'fabric' ? 'META-INF/jars/' : 'META-INF/jarjar/'
+            def nested = zip.entries().findAll { !it.directory && it.name.startsWith(prefix) && it.name.endsWith('.jar') }
+            if (nested.size() != 1 || MessageDigest.getInstance('SHA-256').digest(zip.getInputStream(nested[0]).bytes).encodeHex().toString()
+                    != digest(candidateJar.get().asFile)) {
+                throw new GradleException('Sibling did not natively package the candidate core')
+            }
+            if (zip.entries().any { it.name.endsWith('/api/WorkbenchExtensions.class') || it.name.contains('/internal/WorkbenchMenu') }) {
+                throw new GradleException('Consumer contains loose core classes')
+            }
+        }
+    }
+}
+
+tasks.register('verifyWorkbenchCompatibility') {
+    group = 'verification'
+    description = 'Checks native core selection, independent consumers, frozen API-v1 compatibility and saved Boots upgrades.'
+    dependsOn freeze
+    doLast {
+        File logs = output.dir("compatibility/${baseline}/logs").get().asFile
+        logs.mkdirs()
+        File marker = new File(logs, 'matrix.ok')
+        marker.delete()
+        runChild(["${consumerPath}:jar", '-PworkbenchConsumerVariant=incompatible'], new File(logs, 'build-incompatible.log'), true)
+        operations.copy { from incompatibleJar; into frozen; rename { 'incompatible.jar' } }
+
+        // Capture once, before any world/profile runs. Never refresh this snapshot inside the matrix.
+        def files = [new File(frozen, 'core.jar'), new File(frozen, 'boots.jar'), pinned, provenance,
+                     new File(frozen, 'sibling.jar'), new File(frozen, 'incompatible.jar')]
+        def hashes = files.collectEntries { [(it.absolutePath): digest(it)] }
+        new File(frozen, 'sha256.json').text = JsonOutput.prettyPrint(JsonOutput.toJson(hashes)) + '\n'
+        def checkUnchanged = {
+            checkPinned()
+            files.each { if (digest(it) != hashes[it.absolutePath]) { throw new GradleException("Frozen input changed: ${it}") } }
+        }
+
+        ['core', 'boots', 'baseline', 'sibling', 'both'].each { name ->
+            ['server', 'client'].each { phase ->
+                checkUnchanged()
+                logger.lifecycle("Workbench compatibility ${loader}/${baseline}: ${name}/${phase}")
+                String expected = name in ['sibling', 'both'] ? candidateVersion : name == 'baseline' ? '1.0.0' : currentVersion
+                runChild(["${ownerPath}:runWorkbench${phase.capitalize()}", "-PworkbenchCase=${name}",
+                          "-PworkbenchExpectedVersion=${expected}"], new File(logs, "${name}-${phase}.log"), true)
+                File report = output.dir("reports/${baseline}/compatibility/${name}").get().asFile
+                if (!new File(report, "${phase}.ok").isFile() || new File(report, 'failure.txt').exists()) {
+                    throw new GradleException("Compatibility assertion failed: ${report}")
+                }
+                checkUnchanged()
+            }
+        }
+
+        checkUnchanged()
+        logger.lifecycle("Workbench compatibility ${loader}/${baseline}: saved Boots upgrade/client")
+        runChild(["${ownerPath}:runWorkbenchClient", '-PworkbenchCase=both', '-PworkbenchUpgrade=true',
+                  "-PworkbenchExpectedVersion=${candidateVersion}"], new File(logs, 'upgrade-client.log'), true)
+        File upgradeReport = output.dir("reports/${baseline}/compatibility/both-upgrade").get().asFile
+        if (!new File(upgradeReport, 'client.ok').isFile() || new File(upgradeReport, 'failure.txt').exists()) {
+            throw new GradleException("Saved Boots upgrade failed: ${upgradeReport}")
+        }
+        checkUnchanged()
+
+        logger.lifecycle("Workbench compatibility ${loader}/${baseline}: intentional incompatible-major refusal")
+        runChild(["${ownerPath}:runWorkbenchServer", '-PworkbenchCase=incompatible'], new File(logs, 'incompatible-server.log'), false)
+        String refusal = new File(logs, 'incompatible-server.log').text
+        File refusedReport = output.dir("reports/${baseline}/compatibility/incompatible").get().asFile
+        boolean nativeRefusal = loader == 'fabric'
+                ? refusal.contains('Incompatible mods found!') && refusal.contains('HARD_DEP_NO_CANDIDATE workbench_sibling')
+                : refusal.contains("Mod ID: 'mismatchedthings', Requested by: 'workbench_sibling', Expected range: '[2.0.0,3.0.0)'")
+        if (!nativeRefusal || !refusal.contains('mismatchedthings') || !refusal.contains('2.0.0')
+                || new File(refusedReport, 'server.ok').exists() || new File(refusedReport, 'failure.txt').exists()) {
+            throw new GradleException('Incompatible major did not fail at native dependency resolution')
+        }
+        checkUnchanged()
+        marker.text = 'five server/client graphs, frozen API-v1/new API selection, full saved Boots root and native major refusal passed\n'
+    }
+}

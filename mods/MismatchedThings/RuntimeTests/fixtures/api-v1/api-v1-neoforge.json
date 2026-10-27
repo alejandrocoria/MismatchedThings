@@ -1,0 +1,16 @@
+{
+    "schema": 1,
+    "artifact": "api-v1-neoforge.jar",
+    "sha256": "b94faedc3cb8b6e4a32a34da11c813dc17969b28701994082064289d2c940f17",
+    "coreVersion": "1.0.0",
+    "coreSourceCommit": "ac03ef20727e4d2c5db93fb2be183155333f3f12",
+    "coreArtifactSha256": "fb5fed33d6da0553edd533573993fdeb33406489eb0c6d5aa04ec7daa3cb4c5b",
+    "minecraft": "26.1.2",
+    "java": "25",
+    "loader": "neoforge",
+    "loaderVersion": "26.1.2.114",
+    "consumerSources": {
+        "mods/MismatchedThings/RuntimeTests/Consumers/Common/src/baseline/java/games/alejandrocoria/mismatchedthings/fixture/baseline/BaselineRecipe.java": "d7b6b246696f6fec63abbc88d2b71f9cbb5bbfbefb8b23e9a54b47d861537c32",
+        "mods/MismatchedThings/RuntimeTests/Consumers/NeoForge/src/baseline/java/games/alejandrocoria/mismatchedthings/fixture/baseline/BaselineNeoForge.java": "29daba75c33eef132fa383c3dce12505274a21ad1ff99a9a9c16a56dc8fa01fe"
+    }
+}

@@ -19,6 +19,10 @@ the loader must discover it inside the real Boots JAR. Existing composition
 datapack overrides remain under `data/mismatchedboots/recipe/`. Core-only tests
 have a separate [guide](../../MismatchedThings/RuntimeTests/README.md).
 
+Automated clients must be hidden from window creation and muted by default, not
+hidden after startup. When adding fixtures, follow the shared
+[client window contract](../../MismatchedThings/RuntimeTests/README.md#client-window-contract).
+
 ## Guide index
 
 All guides share the working-directory, path and artifact rules stated here.

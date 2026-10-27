@@ -19,9 +19,21 @@ def offline = gradle.startParameter.offline
 
 ext.workbenchTestRecipes = providers.gradleProperty('workbenchTestRecipes').map { it.toBoolean() }.getOrElse(false)
 def recipes = workbenchTestRecipes
-def scenario = recipes ? 'recipes' : 'core'
+def compatibilityCase = providers.gradleProperty('workbenchCase').getOrElse('')
+def upgrade = providers.gradleProperty('workbenchUpgrade').getOrElse('false').toBoolean()
+if (compatibilityCase && !(compatibilityCase in ['core', 'boots', 'baseline', 'sibling', 'both', 'incompatible'])) {
+    throw new GradleException("Unknown workbench compatibility case: ${compatibilityCase}")
+}
+if (upgrade && compatibilityCase != 'both') {
+    throw new GradleException('A workbench upgrade requires the joint consumer graph')
+}
+if (compatibilityCase && recipes) {
+    throw new GradleException('Standalone recipe and compatibility profiles are mutually exclusive')
+}
+def scenario = compatibilityCase ? "compatibility/${compatibilityCase}${upgrade ? '-upgrade' : ''}" : recipes ? 'recipes' : 'core'
 ext.workbenchRunDirectory = layout.buildDirectory.dir("run/${baseline}/${scenario}").get()
 ext.workbenchReportDirectory = layout.buildDirectory.dir("reports/${baseline}/${scenario}").get()
+ext.workbenchSeedReport = layout.buildDirectory.dir("reports/${baseline}/compatibility/boots").get()
 def runDirectory = workbenchRunDirectory
 def reportDirectory = workbenchReportDirectory
 
@@ -47,7 +59,8 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
     doLast {
         new ZipFile(coreJar.get().asFile).withCloseable { zip ->
             def names = zip.entries().collect { it.name }
-            if (names.any { it.contains('mismatchedboots') || it.contains('/spike/') || it.startsWith('data/workbench_test/') }) {
+            if (names.any { it.contains('mismatchedboots') || it.contains('/spike/') || it.contains('/fixture/')
+                    || it.contains('/test/') || it.endsWith('/api/WorkbenchExtensions.class') || it.startsWith('data/workbench_test/') }) {
                 throw new GradleException('Consumer or research content leaked into the core')
             }
             def required = [
@@ -98,7 +111,10 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
 
 def stage = { File directory ->
     def mods = new File(directory, 'mods')
-    operations.copy { from coreJar; into mods }
+    operations.copy {
+        from(compatibilityCase ? workbenchCompatibilityArtifacts() : coreJar)
+        into mods
+    }
     def config = new File(directory, 'config')
     config.mkdirs()
     new File(config, 'fml.toml').text = 'earlyWindowControl = false\n'
@@ -131,16 +147,21 @@ tasks.register('prepareWorkbenchClient') {
     dependsOn packaging, tasks.named('classes')
     doLast {
         def directory = runDirectory.dir('client').asFile
-        def savedWorld = runDirectory.dir('server/workbench').asFile
-        if (!new File(reportDirectory.asFile, 'server.ok').isFile() || !savedWorld.isDirectory()) {
+        def seedDirectory = upgrade ? outputDirectory.dir("run/${baseline}/compatibility/boots").get() : runDirectory
+        def seedReports = upgrade ? workbenchSeedReport : reportDirectory
+        def savedWorld = seedDirectory.dir('server/workbench').asFile
+        if (!new File(seedReports.asFile, 'server.ok').isFile() || !savedWorld.isDirectory()) {
             throw new GradleException('Run the corresponding workbench server profile first')
         }
-        operations.delete { delete directory, new File(reportDirectory.asFile, 'client.ok') }
+        operations.delete { delete directory, new File(reportDirectory.asFile, 'client.ok'), new File(reportDirectory.asFile, 'failure.txt') }
+        reportDirectory.asFile.mkdirs()
         stage(directory)
         operations.copy { from savedWorld; into new File(directory, 'saves/workbench') }
         new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
     }
 }
+
+apply from: '../compatibility-tests.gradle'
 
 tasks.register('verifyWorkbench') {
     group = 'verification'

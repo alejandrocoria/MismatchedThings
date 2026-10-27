@@ -24,8 +24,11 @@ public final class WorkbenchClientChecks {
     private static int ticks;
     private static int stage;
     private static int openedAt;
+    private static int routeIndex;
     private static volatile boolean ready;
     private static volatile String expectedInventory;
+    private static volatile String expectedPrimary;
+    private static volatile String expectedInverse;
     private static volatile Throwable serverFailure;
     private static boolean stopping;
 
@@ -37,7 +40,8 @@ public final class WorkbenchClientChecks {
             return;
         }
         try {
-            GLFW.glfwHideWindow(client.getWindow().handle());
+            WorkbenchChecks.require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
+                    "Automated client window became visible");
             WorkbenchChecks.require(serverFailure == null, "Integrated server assertion failed: " + serverFailure);
             WorkbenchChecks.require(++ticks <= 2400, "Client timed out at stage " + stage + ", screen=" + client.screen);
             if (client.player == null || client.level == null || client.gameMode == null || client.getSingleplayerServer() == null) {
@@ -57,6 +61,8 @@ public final class WorkbenchClientChecks {
                                 "Placed station did not survive separate JVMs");
                         var barrel = (Container) level.getBlockEntity(WorkbenchChecks.BARREL);
                         WorkbenchChecks.require(barrel.getItem(0).is(MismatchedWorkbench.item()), "Saved station item missing");
+                        WorkbenchCoexistence.verifyEnvironment();
+                        WorkbenchCoexistence.verifySavedRoot(level, barrel);
                         player.getInventory().clearContent();
                         player.connection.teleport(0.5, 65.0, 2.5, 180.0F, 0.0F);
                         ready = true;
@@ -80,7 +86,7 @@ public final class WorkbenchClientChecks {
                         return;
                     }
                     WorkbenchChecks.require(client.screen.getTitle().getString().equals("Mismatched Workbench"), "Unlocalized title");
-                    if (!WorkbenchChecks.RECIPES) {
+                    if (WorkbenchCoexistence.routes().isEmpty()) {
                         WorkbenchChecks.require(!menu.getSlot(0).mayPlace(new ItemStack(Items.IRON_HELMET))
                                 && !menu.getSlot(2).hasItem() && !menu.getSlot(3).hasItem(), "Core invented a consumer recipe");
                         finish(client, "standalone screen, empty admission, separate-JVM station/item persistence passed\n");
@@ -88,8 +94,13 @@ public final class WorkbenchClientChecks {
                     }
                     onServer(client, () -> {
                         var player = client.getSingleplayerServer().getPlayerList().getPlayers().getFirst();
-                        player.getInventory().setItem(0, new ItemStack(Items.IRON_HELMET));
-                        player.getInventory().setItem(1, new ItemStack(Items.GOLDEN_HELMET));
+                        var route = WorkbenchCoexistence.routes().get(routeIndex);
+                        var expected = route.assemble(player.level());
+                        expectedPrimary = WorkbenchChecks.encode(expected.primary(), player.level());
+                        expectedInverse = WorkbenchChecks.encode(expected.inverse(), player.level());
+                        player.getInventory().clearContent();
+                        player.getInventory().setItem(0, route.input().left());
+                        player.getInventory().setItem(1, route.input().right());
                         player.containerMenu.broadcastChanges();
                         ready = true;
                     });
@@ -97,7 +108,8 @@ public final class WorkbenchClientChecks {
                 }
                 case 3 -> {
                     var menu = (WorkbenchMenu) client.player.containerMenu;
-                    if (!ready || !menu.getSlot(31).hasItem() || !menu.getSlot(32).hasItem()) {
+                    var route = WorkbenchCoexistence.routes().get(routeIndex);
+                    if (!ready || !menu.getSlot(31).getItem().is(route.first()) || !menu.getSlot(32).getItem().is(route.second())) {
                         return;
                     }
                     click(client, menu, 31);
@@ -110,8 +122,8 @@ public final class WorkbenchClientChecks {
                     if (!menu.getSlot(2).hasItem() || !menu.getSlot(3).hasItem()) {
                         return;
                     }
-                    WorkbenchChecks.require(menu.getSlot(2).getItem().getHoverName().getString().equals("Fixture primary")
-                            && menu.getSlot(3).getItem().getHoverName().getString().equals("Fixture inverse"), "Wrong ordered previews");
+                    WorkbenchChecks.require(sameStack(menu.getSlot(2).getItem(), expectedPrimary, client.level)
+                            && sameStack(menu.getSlot(3).getItem(), expectedInverse, client.level), "Wrong complete ordered previews");
                     click(client, menu, 2);
                     stage = 5;
                 }
@@ -140,6 +152,10 @@ public final class WorkbenchClientChecks {
                                 || player.getInventory().getNonEquipmentItems().stream().filter(stack -> !stack.isEmpty()).count() != 2) {
                             return;
                         }
+                        var stacks = player.getInventory().getNonEquipmentItems();
+                        WorkbenchChecks.require(stacks.stream().anyMatch(stack -> sameStack(stack, expectedPrimary, player.level()))
+                                && stacks.stream().anyMatch(stack -> sameStack(stack, expectedInverse, player.level())),
+                                "Paid outputs differ from the authoritative complete recipe results");
                         expectedInventory = inventory(player, player.level());
                         ready = true;
                     });
@@ -152,14 +168,20 @@ public final class WorkbenchClientChecks {
                     WorkbenchChecks.require(!menu.isCommitted() && menu.getSlot(0).isActive(), "Completed transaction did not unlock inputs");
                     ready = false;
                     onServer(client, () -> {
-                        WorkbenchChecks.verifyCloseCleanup(client.getSingleplayerServer().getPlayerList().getPlayers().getFirst());
+                        WorkbenchChecks.verifyCloseCleanup(client.getSingleplayerServer().getPlayerList().getPlayers().getFirst(),
+                                WorkbenchCoexistence.routes().get(routeIndex));
                         ready = true;
                     });
                     stage = 8;
                 }
                 case 8 -> {
                     if (ready) {
-                        finish(client, "native screen/menu packets, ordered paid outputs, exactly-once payment, complete server/client stacks and close cleanup passed\n");
+                        ready = false;
+                        if (++routeIndex < WorkbenchCoexistence.routes().size()) {
+                            stage = 2;
+                        } else {
+                            finish(client, "native screen/menu packets, ordered paid outputs, exactly-once payment, complete server/client stacks and close cleanup passed\n");
+                        }
                     }
                 }
                 default -> throw new AssertionError("Unexpected stage " + stage);
@@ -175,7 +197,15 @@ public final class WorkbenchClientChecks {
         client.gameMode.handleContainerInput(menu.containerId, slot, 0, ContainerInput.QUICK_MOVE, client.player);
     }
 
-    private static void onServer(Minecraft client, Runnable action) {
+    private static boolean sameStack(ItemStack stack, String expected, Level level) {
+        return !stack.isEmpty() && JsonParser.parseString(WorkbenchChecks.encode(stack, level)).equals(JsonParser.parseString(expected));
+    }
+
+    private interface ServerCheck {
+        void run() throws Exception;
+    }
+
+    private static void onServer(Minecraft client, ServerCheck action) {
         client.getSingleplayerServer().execute(() -> {
             try {
                 action.run();

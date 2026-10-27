@@ -14,6 +14,12 @@ neoForge {
         workbench_test { sourceSet sourceSets.main }
     }
     runs {
+        configureEach {
+            systemProperty('workbench.test.case', providers.gradleProperty('workbenchCase').getOrElse(''))
+            systemProperty('workbench.test.upgrade', providers.gradleProperty('workbenchUpgrade').getOrElse('false'))
+            systemProperty('workbench.test.expectedVersion', providers.gradleProperty('workbenchExpectedVersion').getOrElse(''))
+            systemProperty('workbench.test.seedReport', workbenchSeedReport.asFile.absolutePath)
+        }
         workbenchServer {
             server()
             disableIdeRun()

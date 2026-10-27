@@ -14,7 +14,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("workbench_test")
 public final class WorkbenchTestNeoForge {
     public WorkbenchTestNeoForge(IEventBus bus) {
-        WorkbenchChecks.require(!ModList.get().isLoaded("mismatchedboots"), "Core tests must not load Boots");
+        var mods = ModList.get();
+        WorkbenchCoexistence.coreContainers = (int) mods.getMods().stream()
+                .filter(mod -> mod.getModId().equals("mismatchedthings")).count();
+        WorkbenchCoexistence.selectedVersion = mods.getModContainerById("mismatchedthings").orElseThrow().getModInfo().getVersion().toString();
+        WorkbenchCoexistence.boots = mods.isLoaded("mismatchedboots");
+        WorkbenchCoexistence.baseline = mods.isLoaded("workbench_baseline");
+        WorkbenchCoexistence.sibling = mods.isLoaded("workbench_sibling");
+        WorkbenchChecks.require(WorkbenchCoexistence.ACTIVE || !WorkbenchCoexistence.boots, "Core tests must not load Boots");
         if (WorkbenchChecks.RECIPES) {
             MismatchedWorkbench.registerContributor(FixtureRecipe.ID, FixtureRecipe::accepts);
             var serializers = DeferredRegister.<RecipeSerializer<?>>create(Registries.RECIPE_SERIALIZER, "workbench_test");

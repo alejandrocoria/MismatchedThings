@@ -7,6 +7,9 @@ modId="workbench_test"
 version="${version}"
 displayName="Workbench runtime tests"
 
+[[mixins]]
+config="workbench-test.mixins.json"
+
 [[dependencies.workbench_test]]
 modId="mismatchedthings"
 type="required"

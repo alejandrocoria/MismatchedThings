@@ -21,3 +21,10 @@ tasks.register('verifyWorkbench') {
             ':MismatchedThings:RuntimeTests:Fabric:verifyWorkbench',
             ':MismatchedThings:RuntimeTests:NeoForge:verifyWorkbench'
 }
+
+tasks.register('verifyWorkbenchCompatibility') {
+    group = 'verification'
+    description = 'Checks native consumer coexistence and frozen API-v1/core upgrade compatibility.'
+    dependsOn ':MismatchedThings:RuntimeTests:Fabric:verifyWorkbenchCompatibility',
+            ':MismatchedThings:RuntimeTests:NeoForge:verifyWorkbenchCompatibility'
+}

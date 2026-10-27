@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+}
+
+repositories { mavenCentral() }
+
+neoForge { version = neoforge_version }
+
+apply from: '../consumers.gradle'
+
+neoForge.addModdingDependenciesTo(sourceSets.additiveApi)
+
+dependencies.add('jarJar', workbenchNestedDependency())
+tasks.named('jar') { dependsOn tasks.named('jarJar') }
