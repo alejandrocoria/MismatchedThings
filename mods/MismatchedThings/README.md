@@ -7,9 +7,11 @@ native nested dependencies; users do not need a separate download.
 Boots contributes admission and composition through API v1; it no longer owns
 a second station. Permanent native coexistence/version-evolution controls now
 cover Fabric and NeoForge .99/.114, including compiled API-v1 consumers and
-unchanged Boots binaries across a core upgrade. Final consolidated/manual
-acceptance remains before publication. No mixed helmets or other sibling product
-is included; synthetic consumers and their additive API exist only in tests.
+unchanged Boots binaries across a core upgrade. Consolidated automated integration,
+viewer and dedicated networking checks have passed. The owner also accepted the
+final ordinary-client checklist on Fabric and NeoForge on 2026-10-27, completing
+the shared workbench extraction/namespace plan. No mixed helmets or other sibling
+product is included; synthetic consumers and their additive API exist only in tests.
 
 ## Ownership
 

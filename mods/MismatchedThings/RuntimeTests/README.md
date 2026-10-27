@@ -126,6 +126,10 @@ An upgrade client additionally uses `-PworkbenchUpgrade=true` with case `both`;
 it requires the existing Boots-only server seed. Prefer the matrix for final
 acceptance: focused runs alone do not enforce the across-stage hash guard.
 
+Focused server reruns clear their matching live report directory. To reuse an
+earlier matrix's acceptance, retain its `matrix.ok`, child process logs and frozen
+hash manifest; do not assume all older live profile markers still coexist.
+
 No IDE configurations or screenshots are produced. Clients hide their own
 window and mute sound. Dedicated servers bind loopback, use a random port and
 offline mode for isolated local tests. Intentional offline/native/JDK notices
