@@ -1,11 +1,9 @@
 package games.alejandrocoria.mismatchedboots.compatibility;
 
 import games.alejandrocoria.mismatchedboots.Constants;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.component.ComponentRules;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 
@@ -16,14 +14,14 @@ import java.util.Objects;
 
 /** Client-only recipe authority supplied by each loader's existing recipe synchronization. */
 public final class MismatchedWorkbenchClientRecipes {
-    private static List<RecipeHolder<MismatchedWorkbenchRecipe>> recipes = List.of();
+    private static List<RecipeHolder<WorkbenchRecipe>> recipes = List.of();
     private static final List<Runnable> LISTENERS = new ArrayList<>();
 
     private MismatchedWorkbenchClientRecipes() {
     }
 
     // Install/reset and viewer callbacks run on the client thread, including integrated play.
-    public static void install(Collection<RecipeHolder<MismatchedWorkbenchRecipe>> loaded) {
+    public static void install(Collection<RecipeHolder<WorkbenchRecipe>> loaded) {
         recipes = List.copyOf(loaded);
         notifyListeners();
     }
@@ -37,17 +35,17 @@ public final class MismatchedWorkbenchClientRecipes {
         return !recipes.isEmpty();
     }
 
-    public static MismatchedWorkbenchResult assemblePair(
-            MismatchedWorkbenchInput input, Level level, AttributeRuleSet attributes, ComponentRules components) {
+    public static WorkbenchResult assemblePair(
+            WorkbenchInput input, Level level) {
         if (input.isEmpty()) {
-            return MismatchedWorkbenchResult.EMPTY;
+            return WorkbenchResult.EMPTY;
         }
 
         return recipes.stream()
                       .filter(holder -> holder.value().matches(input, level))
                       .findFirst()
-                      .map(holder -> holder.value().assemblePreview(input, attributes, components))
-                      .orElse(MismatchedWorkbenchResult.EMPTY);
+                      .map(holder -> holder.value().assemblePreview(input, level))
+                      .orElse(WorkbenchResult.EMPTY);
     }
 
     public static Runnable addListener(Runnable listener) {

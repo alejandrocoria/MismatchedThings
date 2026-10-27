@@ -3,8 +3,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -293,7 +293,7 @@ public final class NeoForgeSilentGearTest {
     }
 
     static List<ItemStack> workbench(ServerPlayer player, ItemStack first, ItemStack second) {
-        var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
+        var menu = new WorkbenchMenu(1, player.getInventory());
         menu.getSlot(0).set(first.copy());
         menu.getSlot(1).set(second.copy());
         var previews = List.of(menu.getSlot(2).getItem().copy(), menu.getSlot(3).getItem().copy());

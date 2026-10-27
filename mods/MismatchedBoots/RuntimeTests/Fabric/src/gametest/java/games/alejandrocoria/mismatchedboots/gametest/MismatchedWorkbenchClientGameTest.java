@@ -1,8 +1,9 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
-import games.alejandrocoria.mismatchedboots.client.MismatchedWorkbenchScreen;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
+import games.alejandrocoria.mismatchedthings.internal.client.WorkbenchScreen;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -44,27 +45,27 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                 player.getInventory().clearContent();
                 BlockPos pos = player.blockPosition().relative(Direction.NORTH, 2);
                 player.level().setBlock(pos,
-                                        ModContent.mismatchedWorkbenchBlock().orElseThrow().defaultBlockState(), 3);
+                                        MismatchedWorkbench.block().defaultBlockState(), 3);
                 workbenchPos.set(pos.immutable());
             });
             singleplayer.getClientLevel().waitForChunksRender();
             context.waitFor(client -> client.level != null
                     && workbenchPos.get() != null
                     && client.level.getBlockState(workbenchPos.get())
-                                   .is(ModContent.mismatchedWorkbenchBlock().orElseThrow()));
+                                   .is(MismatchedWorkbench.block()));
 
             NetworkTrafficProbe.reset();
             openWorkbench(context, workbenchPos.get());
             context.runOnClient(client -> {
-                if (clientMenu(client).slots.size() != MismatchedWorkbenchMenu.HOTBAR_END) {
+                if (clientMenu(client).slots.size() != WorkbenchMenu.HOTBAR_END) {
                     throw new AssertionError("Workbench exposes a non-standard player equipment slot");
                 }
-                if (!(client.screen instanceof MismatchedWorkbenchScreen screen)
+                if (!(client.screen instanceof WorkbenchScreen screen)
                         || !screen.getTitle().getString().equals("Mismatched Workbench")) {
                     throw new AssertionError("Workbench screen title was not localized");
                 }
             });
-            assertEmptySlotGlyphs(context);
+            assertNeutralInputSlots(context);
 
             setServerInputs(singleplayer, Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
             context.waitFor(client -> hasOrientation(clientMenu(client).getSlot(2).getItem(),
@@ -100,7 +101,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
             context.runOnClient(client -> client.gameMode.handleContainerInput(
                     clientMenu(client).containerId, 2, 0, ContainerInput.QUICK_MOVE, client.player));
             context.waitFor(client -> {
-                MismatchedWorkbenchMenu menu = clientMenu(client);
+                WorkbenchMenu menu = clientMenu(client);
                 return menu.isCommitted()
                         && !menu.getSlot(0).isActive()
                         && !menu.getSlot(1).isActive()
@@ -111,7 +112,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
             context.runOnClient(client -> client.gameMode.handleContainerInput(
                     clientMenu(client).containerId, 3, 0, ContainerInput.QUICK_MOVE, client.player));
             context.waitFor(client -> {
-                MismatchedWorkbenchMenu menu = clientMenu(client);
+                WorkbenchMenu menu = clientMenu(client);
                 return !menu.isCommitted()
                         && menu.getSlot(2).getItem().isEmpty()
                         && menu.getSlot(3).getItem().isEmpty()
@@ -150,8 +151,8 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                 client.player,
                 InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false)));
-        context.waitFor(client -> client.screen instanceof MismatchedWorkbenchScreen
-                && client.player.containerMenu instanceof MismatchedWorkbenchMenu);
+        context.waitFor(client -> client.screen instanceof WorkbenchScreen
+                && client.player.containerMenu instanceof WorkbenchMenu);
     }
 
     private static void closeWorkbench(ClientGameTestContext context) {
@@ -163,7 +164,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
     private static void setServerInputs(TestSingleplayerContext singleplayer, Item left, Item right) {
         singleplayer.getServer().runOnServer(server -> {
             ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
-            if (!(player.containerMenu instanceof MismatchedWorkbenchMenu menu)) {
+            if (!(player.containerMenu instanceof WorkbenchMenu menu)) {
                 throw new AssertionError("Server did not open the Mismatched Workbench menu");
             }
             menu.getSlot(0).set(new ItemStack(left));
@@ -172,15 +173,19 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
         });
     }
 
-    private static void assertEmptySlotGlyphs(ClientGameTestContext context) {
+    private static void assertNeutralInputSlots(ClientGameTestContext context) {
         context.runOnClient(client -> GuiSpriteSubmissionProbe.arm());
         context.waitFor(client -> GuiSpriteSubmissionProbe.hasFrames(2));
         context.runOnClient(client -> {
             GuiSpriteSubmissionProbe.Snapshot snapshot = GuiSpriteSubmissionProbe.takeSnapshot();
-            assertSprite(snapshot, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS, 69, 22,
-                         "left boots input glyph");
-            assertSprite(snapshot, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS, 91, 22,
-                         "right boots input glyph");
+            long slots = snapshot.submissions().stream()
+                                 .filter(submission -> submission.sprite().equals(net.minecraft.resources.Identifier.withDefaultNamespace("container/slot"))
+                                         && submission.width() == 18 && submission.height() == 18)
+                                 .distinct().count();
+            if (slots != 4 || clientMenu(client).getSlot(0).getNoItemIcon() != null
+                    || clientMenu(client).getSlot(1).getNoItemIcon() != null) {
+                throw new AssertionError("Shared station must draw four neutral slots without Boots-only input glyphs");
+            }
         });
     }
 
@@ -189,8 +194,7 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
         context.waitFor(client -> GuiSpriteSubmissionProbe.hasFrames(2));
         context.runOnClient(client -> {
             GuiSpriteSubmissionProbe.Snapshot snapshot = GuiSpriteSubmissionProbe.takeSnapshot();
-            if (hasSprite(snapshot, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS, 69, 22)
-                    || hasSprite(snapshot, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS, 91, 22)) {
+            if (snapshot.submissions().stream().anyMatch(submission -> submission.sprite().equals(InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS))) {
                 throw new AssertionError("Boots input glyph rendered over an occupied input slot");
             }
         });
@@ -220,31 +224,8 @@ public final class MismatchedWorkbenchClientGameTest implements FabricClientGame
                           .orElseThrow(() -> new AssertionError("No rendered item decoration at " + x + "," + y));
     }
 
-    private static void assertSprite(
-            GuiSpriteSubmissionProbe.Snapshot snapshot,
-            net.minecraft.resources.Identifier sprite,
-            int x,
-            int y,
-            String description) {
-        if (!hasSprite(snapshot, sprite, x, y)) {
-            throw new AssertionError("Missing " + description + ": " + snapshot.submissions());
-        }
-    }
-
-    private static boolean hasSprite(
-            GuiSpriteSubmissionProbe.Snapshot snapshot,
-            net.minecraft.resources.Identifier sprite,
-            int x,
-            int y) {
-        return snapshot.submissions().stream().anyMatch(submission -> submission.sprite().equals(sprite)
-                && submission.x() == x
-                && submission.y() == y
-                && submission.width() == 16
-                && submission.height() == 16);
-    }
-
-    private static MismatchedWorkbenchMenu clientMenu(Minecraft client) {
-        if (!(client.player.containerMenu instanceof MismatchedWorkbenchMenu menu)) {
+    private static WorkbenchMenu clientMenu(Minecraft client) {
+        if (!(client.player.containerMenu instanceof WorkbenchMenu menu)) {
             throw new AssertionError("Client does not have a Mismatched Workbench menu");
         }
         return menu;

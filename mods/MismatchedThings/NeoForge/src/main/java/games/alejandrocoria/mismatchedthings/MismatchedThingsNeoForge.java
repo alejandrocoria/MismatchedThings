@@ -5,10 +5,12 @@ import games.alejandrocoria.mismatchedthings.client.MismatchedThingsClientNeoFor
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchContent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 @Mod(MismatchedWorkbench.MOD_ID)
@@ -27,6 +29,11 @@ public final class MismatchedThingsNeoForge {
         ITEMS.register(bus);
         MENUS.register(bus);
         RECIPES.register(bus);
+        bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
+            if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) {
+                event.accept(MismatchedWorkbench.item());
+            }
+        });
 
         if (FMLEnvironment.getDist().isClient()) {
             bus.addListener(MismatchedThingsClientNeoForge::registerScreens);

@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
@@ -24,7 +25,7 @@ public class MismatchedBootsReiClientPlugin implements REIClientPlugin {
         registry.add(new MismatchedWorkbenchReiCategory());
         registry.addWorkstations(
                 MismatchedWorkbenchReiDisplay.CATEGORY,
-                EntryStacks.of(ModContent.mismatchedWorkbenchItem().orElseThrow()));
+                EntryStacks.of(MismatchedWorkbench.item()));
         registry.removePlusButton(MismatchedWorkbenchReiDisplay.CATEGORY);
     }
 
@@ -43,7 +44,7 @@ public class MismatchedBootsReiClientPlugin implements REIClientPlugin {
                                 requestsCategory,
                                 builder.getRecipesFor().stream().flatMap(entry -> itemStack(entry).stream()).toList(),
                                 builder.getUsagesFor().stream().flatMap(entry -> itemStack(entry).stream()).toList(),
-                                ModContent.mismatchedWorkbenchItem().orElseThrow());
+                                MismatchedWorkbench.item());
                         return requestsDisplay ? MismatchedWorkbenchReiExamples.create().map(List::of) : Optional.empty();
                     }
 

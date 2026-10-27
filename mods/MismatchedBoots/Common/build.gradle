@@ -28,6 +28,14 @@ tasks.named('test', Test).configure {
 }
 
 dependencies {
+    compileOnly(project(':MismatchedThings:Common')) {
+        transitive = false
+        capabilities { requireCapability 'games.alejandrocoria.mismatchedthings:mismatchedthings' }
+    }
+    testImplementation(project(':MismatchedThings:Common')) {
+        transitive = false
+        capabilities { requireCapability 'games.alejandrocoria.mismatchedthings:mismatchedthings' }
+    }
     compileOnly 'org.spongepowered:mixin:0.8.5'
     compileOnly 'org.ow2.asm:asm-analysis:9.9.1'
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common

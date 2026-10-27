@@ -1,9 +1,9 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.mystical;
 
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
@@ -88,7 +88,7 @@ public final class MysticalHealthBreakClient {
                     if (kind() == 0) {
                         boots = nativeBoots;
                     } else {
-                        var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(nativeBoots,
+                        var pair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(nativeBoots,
                                                                                                              new ItemStack(Items.DIAMOND_BOOTS)));
                         require(pair.isComplete(), "Recipe rejected health break control");
                         boots = kind() == 1 ? pair.primary() : pair.inverse();

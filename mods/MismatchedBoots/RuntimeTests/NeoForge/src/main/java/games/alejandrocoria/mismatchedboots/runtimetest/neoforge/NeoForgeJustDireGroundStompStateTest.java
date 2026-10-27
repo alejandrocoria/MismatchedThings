@@ -6,8 +6,8 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -338,7 +338,7 @@ public final class NeoForgeJustDireGroundStompStateTest {
         player.getInventory().clearContent();
         var beforeA = a.copy();
         var beforeB = b.copy();
-        var menu = new MismatchedWorkbenchMenu(1, player.getInventory(), ContainerLevelAccess.create(player.level(), BlockPos.ZERO));
+        var menu = new WorkbenchMenu(1, player.getInventory(), ContainerLevelAccess.create(player.level(), BlockPos.ZERO));
         menu.getSlot(0).set(a.copy());
         menu.getSlot(1).set(b.copy());
         var first = menu.getSlot(2).getItem().copy();

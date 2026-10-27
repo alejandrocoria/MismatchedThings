@@ -3,10 +3,10 @@ package games.alejandrocoria.mismatchedboots.runtimetest.missingmods;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsData;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsItemCodec;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import games.alejandrocoria.mismatchedboots.runtimetest.mystical.MysticalNativeTestApi;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -164,9 +164,9 @@ public final class MissingModsProof {
         }
 
         var recipe = new MixedBootsWorkbenchRecipe();
-        var maPair = recipe.assemblePair(new MismatchedWorkbenchInput(ma, new ItemStack(Items.DIAMOND_BOOTS)));
-        var jdtPair = recipe.assemblePair(new MismatchedWorkbenchInput(jdt, new ItemStack(Items.DIAMOND_BOOTS)));
-        var vanillaPair = recipe.assemblePair(new MismatchedWorkbenchInput(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
+        var maPair = recipe.assemblePair(new WorkbenchInput(ma, new ItemStack(Items.DIAMOND_BOOTS)));
+        var jdtPair = recipe.assemblePair(new WorkbenchInput(jdt, new ItemStack(Items.DIAMOND_BOOTS)));
+        var vanillaPair = recipe.assemblePair(new WorkbenchInput(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
         require(maPair.isComplete() && jdtPair.isComplete() && vanillaPair.isComplete(), "Native recipe fixture rejected");
         var roots = new ArrayList<>(List.of(maPair.primary(),
                                             maPair.inverse(),
@@ -176,7 +176,7 @@ public final class MissingModsProof {
                                             vanillaPair.inverse(),
                                             new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
                                             vanillaPair.primary().copy()));
-        var dual = recipe.assemblePair(new MismatchedWorkbenchInput(ma,
+        var dual = recipe.assemblePair(new WorkbenchInput(ma,
                                                                     fabric() ? nativeBoot(MOD + ":temporary_boots") : jdt));
         require(dual.isComplete(), "Two-dependency fixture rejected");
         roots.add(dual.primary());

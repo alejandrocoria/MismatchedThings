@@ -1,11 +1,9 @@
 package games.alejandrocoria.mismatchedboots.compatibility;
 
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
@@ -63,9 +61,9 @@ class MismatchedWorkbenchClientRecipesTest {
                 holder("matching", Items.IRON_BOOTS, Items.LEATHER_BOOTS),
                 holder("later", Items.IRON_BOOTS, Items.DIAMOND_BOOTS)));
         assertTrue(preview().primary().is(Items.LEATHER_BOOTS));
-        var empty = new MismatchedWorkbenchInput(ItemStack.EMPTY, ItemStack.EMPTY);
+        var empty = new WorkbenchInput(ItemStack.EMPTY, ItemStack.EMPTY);
         assertFalse(MismatchedWorkbenchClientRecipes.assemblePair(
-                empty, null, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state()).isComplete());
+                empty, null).isComplete());
     }
 
     @Test
@@ -85,10 +83,10 @@ class MismatchedWorkbenchClientRecipesTest {
         }
     }
 
-    private static MismatchedWorkbenchResult preview() {
-        return MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
+    private static WorkbenchResult preview() {
+        return MismatchedWorkbenchClientRecipes.assemblePair(new WorkbenchInput(
                                                                      stack(Items.IRON_BOOTS), stack(Items.GOLDEN_BOOTS)),
-                                                             null, AttributeRuleDefaults.ruleSet(), ComponentRuleDefaults.state());
+                                                             null);
     }
 
     private static ItemStack stack(Item item) {
@@ -97,20 +95,20 @@ class MismatchedWorkbenchClientRecipesTest {
                                                                  .set(DataComponents.MAX_STACK_SIZE, 1).build()));
     }
 
-    private static RecipeHolder<MismatchedWorkbenchRecipe> holder(String id, Item expected, Item output) {
+    private static RecipeHolder<WorkbenchRecipe> holder(String id, Item expected, Item output) {
         return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.parse("test:" + id)),
                                   new LoadedRecipe(expected, output));
     }
 
-    private record LoadedRecipe(Item expected, Item output) implements MismatchedWorkbenchRecipe {
+    private record LoadedRecipe(Item expected, Item output) implements WorkbenchRecipe {
         @Override
-        public boolean matches(MismatchedWorkbenchInput input, Level level) {
+        public boolean matches(WorkbenchInput input, Level level) {
             return input.left().is(expected);
         }
 
         @Override
-        public MismatchedWorkbenchResult assemblePair(MismatchedWorkbenchInput input) {
-            return new MismatchedWorkbenchResult(stack(output), stack(Items.GOLDEN_BOOTS));
+        public WorkbenchResult assemblePair(WorkbenchInput input) {
+            return new WorkbenchResult(stack(output), stack(Items.GOLDEN_BOOTS));
         }
 
         @Override

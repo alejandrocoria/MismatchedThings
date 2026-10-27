@@ -2,9 +2,9 @@ package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.Minecraft;
@@ -110,7 +110,7 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         source.set(DataComponents.CUSTOM_NAME, Component.literal("Fabric source name"));
         source.set(TestContent.requireTooltipProbeComponent(), new TestContent.TooltipProbe("source-visible"));
         ItemStack sourceBefore = source.copy();
-        MismatchedWorkbenchResult pair = pair(source, new ItemStack(Items.GOLDEN_BOOTS));
+        WorkbenchResult pair = pair(source, new ItemStack(Items.GOLDEN_BOOTS));
 
         assertProductionOutput(client, pair.primary(), source, true,
                                TooltipFlag.NORMAL, false, "root-primary");
@@ -266,9 +266,9 @@ public final class TooltipHooksClientGameTest implements FabricClientGameTest {
         }
     }
 
-    private static MismatchedWorkbenchResult pair(ItemStack left, ItemStack right) {
-        MismatchedWorkbenchResult result = new MixedBootsWorkbenchRecipe()
-                .assemblePair(new MismatchedWorkbenchInput(left, right));
+    private static WorkbenchResult pair(ItemStack left, ItemStack right) {
+        WorkbenchResult result = new MixedBootsWorkbenchRecipe()
+                .assemblePair(new WorkbenchInput(left, right));
         if (!result.isComplete()) {
             throw new AssertionError("Production Workbench recipe rejected tooltip fixtures");
         }

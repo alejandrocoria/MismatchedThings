@@ -9,8 +9,8 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -198,7 +198,7 @@ final class SilentGearFoundationTest {
                 malformed.set(stage, (byte) 127);
             }
 
-            var menu = new MismatchedWorkbenchMenu(2, player.getInventory());
+            var menu = new WorkbenchMenu(2, player.getInventory());
             menu.getSlot(0).set(malformed);
             menu.getSlot(1).set(new ItemStack(Items.DIAMOND_BOOTS));
             require(menu.getSlot(2).getItem().isEmpty() && menu.getSlot(3).getItem().isEmpty() && !menu.isCommitted()

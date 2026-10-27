@@ -7,6 +7,10 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import io.netty.buffer.Unpooled;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
@@ -66,15 +70,15 @@ class MixedBootsWorkbenchRecipeTest {
     void inputHasExactlyTwoOrderedSlots() {
         ItemStack left = boots(Items.IRON_BOOTS);
         ItemStack right = boots(Items.GOLDEN_BOOTS);
-        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
+        WorkbenchInput input = new WorkbenchInput(left, right);
 
         assertEquals(2, input.size());
         assertSame(left, input.getItem(0));
         assertSame(right, input.getItem(1));
         assertThrows(IndexOutOfBoundsException.class, () -> input.getItem(-1));
         assertThrows(IndexOutOfBoundsException.class, () -> input.getItem(2));
-        assertThrows(NullPointerException.class, () -> new MismatchedWorkbenchInput(null, right));
-        assertThrows(NullPointerException.class, () -> new MismatchedWorkbenchInput(left, null));
+        assertThrows(NullPointerException.class, () -> new WorkbenchInput(null, right));
+        assertThrows(NullPointerException.class, () -> new WorkbenchInput(left, null));
     }
 
     @Test
@@ -98,10 +102,10 @@ class MixedBootsWorkbenchRecipeTest {
             receivedRight.set(second);
             return new MixedBootsPair(first.copy(), second.copy());
         });
-        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
+        WorkbenchInput input = new WorkbenchInput(left, right);
 
         assertTrue(recipe.matches(input, null));
-        MismatchedWorkbenchResult result = recipe.assemblePair(input);
+        WorkbenchResult result = recipe.assemblePair(input);
 
         assertEquals(1, calls.get());
         assertTrue(result.isComplete());
@@ -124,8 +128,8 @@ class MixedBootsWorkbenchRecipeTest {
         right.set(DataComponents.CUSTOM_NAME, Component.literal("Right source"));
         MixedBootsWorkbenchRecipe recipe = copyingRecipe();
 
-        MismatchedWorkbenchResult result = recipe.assemblePair(
-                new MismatchedWorkbenchInput(left, right));
+        WorkbenchResult result = recipe.assemblePair(
+                new WorkbenchInput(left, right));
 
         assertTrue(result.isComplete());
         assertEquals(Items.IRON_BOOTS, result.primary().getItem());
@@ -138,7 +142,7 @@ class MixedBootsWorkbenchRecipeTest {
     void resultOwnsBothOutputsAndReturnsDefensiveCopies() {
         ItemStack primary = boots(Items.IRON_BOOTS);
         ItemStack inverse = boots(Items.GOLDEN_BOOTS);
-        MismatchedWorkbenchResult result = new MismatchedWorkbenchResult(primary, inverse);
+        WorkbenchResult result = new WorkbenchResult(primary, inverse);
 
         primary.set(DataComponents.CUSTOM_NAME, Component.literal("Mutated source"));
         inverse.setCount(0);
@@ -148,7 +152,7 @@ class MixedBootsWorkbenchRecipeTest {
         assertNull(result.primary().get(DataComponents.CUSTOM_NAME));
         assertEquals(1, result.inverse().getCount());
         assertTrue(result.isComplete());
-        assertFalse(MismatchedWorkbenchResult.EMPTY.isComplete());
+        assertFalse(WorkbenchResult.EMPTY.isComplete());
     }
 
     @Test
@@ -168,7 +172,7 @@ class MixedBootsWorkbenchRecipeTest {
                 new BootHalf(boots(Items.GOLDEN_BOOTS))));
 
         for (ItemStack invalid : List.of(ItemStack.EMPTY, helmet, stacked, malformed, recursive)) {
-            MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(valid, invalid);
+            WorkbenchInput input = new WorkbenchInput(valid, invalid);
             assertFalse(recipe.matches(input, null));
             assertFalse(recipe.assemblePair(input).isComplete());
             assertTrue(recipe.assemble(input).isEmpty());
@@ -187,7 +191,7 @@ class MixedBootsWorkbenchRecipeTest {
                 (left, right) -> new MixedBootsPair(left, ItemStack.EMPTY));
         ItemStack left = boots(Items.IRON_BOOTS);
         ItemStack leftBefore = left.copy();
-        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, boots(Items.GOLDEN_BOOTS));
+        WorkbenchInput input = new WorkbenchInput(left, boots(Items.GOLDEN_BOOTS));
 
         assertFalse(failing.assemblePair(input).isComplete());
         assertEquals(1, failures.get());
@@ -200,14 +204,14 @@ class MixedBootsWorkbenchRecipeTest {
         MixedBootsWorkbenchRecipe recipe = copyingRecipe();
         AlternateWorkbenchRecipe alternate = AlternateWorkbenchRecipe.INSTANCE;
 
-        assertSame(MismatchedWorkbenchRecipe.TYPE, recipe.getType());
+        assertSame(WorkbenchRecipe.TYPE, recipe.getType());
         assertSame(recipe.getType(), alternate.getType());
-        assertSame(recipe.getType(), ModContent.mismatchedWorkbenchRecipeType());
+        assertSame(recipe.getType(), MismatchedWorkbench.recipeType());
         assertSame(MixedBootsWorkbenchRecipe.SERIALIZER, recipe.getSerializer());
         assertSame(MixedBootsWorkbenchRecipe.SERIALIZER,
                    ModContent.createMixedBootsWorkbenchRecipeSerializer());
         assertNotSame(recipe.getSerializer(), alternate.getSerializer());
-        assertEquals(ModContent.MISMATCHED_WORKBENCH_ID.toString(), recipe.getType().toString());
+        assertEquals(MismatchedWorkbench.ID.toString(), recipe.getType().toString());
         assertTrue(recipe.isSpecial());
         assertFalse(recipe.showNotification());
         assertTrue(recipe.group().isEmpty());
@@ -233,8 +237,8 @@ class MixedBootsWorkbenchRecipeTest {
             assertTrue(encoded.isJsonObject());
             assertSame(serializer, persistent.getSerializer());
             assertSame(serializer, network.getSerializer());
-            assertSame(MismatchedWorkbenchRecipe.TYPE, persistent.getType());
-            assertSame(MismatchedWorkbenchRecipe.TYPE, network.getType());
+            assertSame(WorkbenchRecipe.TYPE, persistent.getType());
+            assertSame(WorkbenchRecipe.TYPE, network.getType());
         } finally {
             buffer.release();
         }
@@ -288,19 +292,19 @@ class MixedBootsWorkbenchRecipeTest {
                 BuiltInRegistries.REGISTRY.stream().map(registry -> (Registry<?>) registry).toList());
     }
 
-    private static final class AlternateWorkbenchRecipe implements MismatchedWorkbenchRecipe {
+    private static final class AlternateWorkbenchRecipe implements WorkbenchRecipe {
         private static final AlternateWorkbenchRecipe INSTANCE = new AlternateWorkbenchRecipe();
         private static final RecipeSerializer<AlternateWorkbenchRecipe> SERIALIZER = new RecipeSerializer<>(
                 MapCodec.unit(INSTANCE), StreamCodec.unit(INSTANCE));
 
         @Override
-        public boolean matches(MismatchedWorkbenchInput input, net.minecraft.world.level.Level level) {
+        public boolean matches(WorkbenchInput input, net.minecraft.world.level.Level level) {
             return false;
         }
 
         @Override
-        public MismatchedWorkbenchResult assemblePair(MismatchedWorkbenchInput input) {
-            return MismatchedWorkbenchResult.EMPTY;
+        public WorkbenchResult assemblePair(WorkbenchInput input) {
+            return WorkbenchResult.EMPTY;
         }
 
         @Override

@@ -3,10 +3,15 @@ package games.alejandrocoria.mismatchedboots.recipe;
 import com.mojang.serialization.MapCodec;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -14,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
-public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecipe {
+public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
     private static final MixedBootsWorkbenchRecipe INSTANCE = new MixedBootsWorkbenchRecipe();
     private static final MapCodec<MixedBootsWorkbenchRecipe> MAP_CODEC = MapCodec.unit(INSTANCE);
     private static final StreamCodec<RegistryFriendlyByteBuf, MixedBootsWorkbenchRecipe> STREAM_CODEC =
@@ -40,14 +45,14 @@ public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecip
     }
 
     @Override
-    public boolean matches(MismatchedWorkbenchInput input, Level level) {
+    public boolean matches(WorkbenchInput input, Level level) {
         return BootHalf.isValidSource(input.left()) && BootHalf.isValidSource(input.right());
     }
 
     @Override
-    public MismatchedWorkbenchResult assemblePair(MismatchedWorkbenchInput input) {
+    public WorkbenchResult assemblePair(WorkbenchInput input) {
         if (!matches(input, null)) {
-            return MismatchedWorkbenchResult.EMPTY;
+            return WorkbenchResult.EMPTY;
         }
 
         try {
@@ -56,23 +61,24 @@ public final class MixedBootsWorkbenchRecipe implements MismatchedWorkbenchRecip
                 Constants.LOG.debug("Rejected empty workbench output for {} and {}",
                                     BuiltInRegistries.ITEM.getKey(input.left().getItem()),
                                     BuiltInRegistries.ITEM.getKey(input.right().getItem()));
-                return MismatchedWorkbenchResult.EMPTY;
+                return WorkbenchResult.EMPTY;
             }
 
-            return new MismatchedWorkbenchResult(pair.primary(), pair.inverse());
+            return new WorkbenchResult(pair.primary(), pair.inverse());
         } catch (IllegalArgumentException exception) {
             Constants.LOG.debug("Rejected workbench composition for {} and {}: {}",
                                 BuiltInRegistries.ITEM.getKey(input.left().getItem()),
                                 BuiltInRegistries.ITEM.getKey(input.right().getItem()),
                                 exception.getMessage());
-            return MismatchedWorkbenchResult.EMPTY;
+            return WorkbenchResult.EMPTY;
         }
     }
 
     @Override
-    public MismatchedWorkbenchResult assemblePreview(
-            MismatchedWorkbenchInput input, AttributeRuleSet attributes, ComponentRules components) {
-        return new MixedBootsWorkbenchRecipe(attributes, components).assemblePair(input);
+    public WorkbenchResult assemblePreview(
+            WorkbenchInput input, Level level) {
+        // This callback is client preview only. Assembly above retains server policy authority.
+        return new MixedBootsWorkbenchRecipe(AttributeRuleState.current(), ComponentRuleState.current()).assemblePair(input);
     }
 
     @Override

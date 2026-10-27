@@ -19,6 +19,7 @@ allprojects { child ->
 apply from: file('gradle/test-mod-artifacts.gradle')
 apply from: file('gradle/network-acceptance-tests.gradle')
 apply from: file('gradle/packaged-dependencies.gradle')
+apply from: file('gradle/shared-workbench-packaging.gradle')
 
 // These optional source APIs belong to Boots, not every user of the build conventions.
 ['Common', 'Fabric', 'NeoForge'].each { name ->

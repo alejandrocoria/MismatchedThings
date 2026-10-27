@@ -14,10 +14,10 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -364,8 +364,8 @@ public final class NeoForgeJustDireResourcesTest {
         cases++;
     }
 
-    private static MismatchedWorkbenchMenu workbench(ServerPlayer player, ItemStack left, ItemStack right) {
-        var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
+    private static WorkbenchMenu workbench(ServerPlayer player, ItemStack left, ItemStack right) {
+        var menu = new WorkbenchMenu(1, player.getInventory());
         menu.getSlot(0).set(left.copy());
         menu.getSlot(1).set(right.copy());
         return menu;
@@ -412,12 +412,12 @@ public final class NeoForgeJustDireResourcesTest {
         var sharing = new ComponentRules(defaults.durability(), defaults.repairCost(), new ComponentRuleSet(declarations));
         ItemStack left = boots("celestigem", 6_000);
         ItemStack before = left.copy();
-        require(!new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(left, new ItemStack(Items.IRON_BOOTS)),
-                                                                 new AttributeRuleSet(AttributePolicy.REJECT, java.util.Map.of()), sharing)
+        require(!new MixedBootsWorkbenchRecipe(new AttributeRuleSet(AttributePolicy.REJECT, java.util.Map.of()), sharing)
+                         .assemblePair(new WorkbenchInput(left, new ItemStack(Items.IRON_BOOTS)))
                                                 .isComplete()
                         && ItemStack.matches(before, left), "Storage finalization bypassed configured composition rejection");
-        var result = new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(left, new ItemStack(Items.IRON_BOOTS)),
-                                                                     new AttributeRuleSet(AttributePolicy.AVERAGE, java.util.Map.of()), sharing);
+        var result = new MixedBootsWorkbenchRecipe(new AttributeRuleSet(AttributePolicy.AVERAGE, java.util.Map.of()), sharing)
+                .assemblePair(new WorkbenchInput(left, new ItemStack(Items.IRON_BOOTS)));
         require(result.isComplete() && energy(result.primary()).getAmountAsInt() == 3_000
                         && energy(result.inverse()).getAmountAsInt() == 3_000, "Generic FE share rule duplicated managed resources");
         cases++;

@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -49,10 +49,10 @@ public final class MysticalLifecycle {
             seeded = true;
             try {
                 var recipe = new MixedBootsWorkbenchRecipe();
-                var first = recipe.assemblePair(new MismatchedWorkbenchInput(
+                var first = recipe.assemblePair(new WorkbenchInput(
                         MysticalAugmentsProbe.item("awakened_supremium_boots", "HEALTH_BOOST_III", "STEP_ASSIST"),
                         new ItemStack(Items.DIAMOND_BOOTS)));
-                var second = recipe.assemblePair(new MismatchedWorkbenchInput(
+                var second = recipe.assemblePair(new WorkbenchInput(
                         MysticalAugmentsProbe.item("awakened_supremium_boots", "JUMP_BOOST_III", "NO_FALL_DAMAGE"),
                         MysticalAugmentsProbe.item("prudentium_boots", "LUCK_I")));
                 require(first.isComplete() && second.isComplete(), "Actual workbench recipe rejected fixtures");

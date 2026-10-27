@@ -1,9 +1,10 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -54,7 +55,7 @@ public final class MismatchedWorkbenchContentGameTests {
     private static final String DISABLING_PACK_ID = "file/" + DISABLING_PACK_NAME;
     private static final BlockPos WORKBENCH_POS = BlockPos.ZERO;
     private static final ResourceKey<Recipe<?>> BLOCK_RECIPE = ResourceKey.create(
-            Registries.RECIPE, ModContent.MISMATCHED_WORKBENCH_ID);
+            Registries.RECIPE, MismatchedWorkbench.ID);
     private static final ResourceKey<Recipe<?>> COMPOSITION_RECIPE = ResourceKey.create(
             Registries.RECIPE, ModContent.MIXED_BOOTS_WORKBENCH_RECIPE_ID);
     private static final ResourceKey<Recipe<?>> REPAIR_RECIPE = ResourceKey.create(
@@ -68,7 +69,7 @@ public final class MismatchedWorkbenchContentGameTests {
                 Items.JUNGLE_PLANKS, Items.ACACIA_PLANKS, Items.DARK_OAK_PLANKS);
         helper.assertTrue(recipe.matches(mixedPlanks, helper.getLevel()),
                           "Workbench recipe rejected mixed vanilla plank types");
-        helper.assertTrue(recipe.assemble(mixedPlanks).is(ModContent.MISMATCHED_WORKBENCH_ITEM_KEY),
+        helper.assertTrue(recipe.assemble(mixedPlanks).is(MismatchedWorkbench.item()),
                           "Workbench recipe returned the wrong item");
 
         List<ItemStack> occupiedLowerCenter = new ArrayList<>(workbenchStacks(
@@ -100,7 +101,7 @@ public final class MismatchedWorkbenchContentGameTests {
         helper.assertTrue(menu.getInputGridSlots().get(7).getItem().isEmpty(),
                           "Lower-center slot was not empty before crafting");
         ItemStack crafted = menu.getSlot(CraftingMenu.RESULT_SLOT).safeTake(1, 1, player);
-        helper.assertTrue(crafted.is(ModContent.MISMATCHED_WORKBENCH_ITEM_KEY),
+        helper.assertTrue(crafted.is(MismatchedWorkbench.item()),
                           "Crafting menu did not produce the workbench");
         helper.assertTrue(menu.getInputGridSlots().stream().allMatch(slot -> slot.getItem().isEmpty()),
                           "Workbench crafting left an ingredient or returned the shears");
@@ -109,8 +110,8 @@ public final class MismatchedWorkbenchContentGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void blockItemPlacesOpensFreshSessionsAndDropsItself(GameTestHelper helper) {
-        var block = ModContent.mismatchedWorkbenchBlock().orElseThrow();
-        var item = ModContent.mismatchedWorkbenchItem().orElseThrow();
+        var block = MismatchedWorkbench.block();
+        var item = MismatchedWorkbench.item();
         helper.assertTrue(item instanceof BlockItem blockItem && blockItem.getBlock() == block,
                           "Registered workbench item does not place the registered block");
         helper.assertTrue(block.defaultBlockState().is(BlockTags.MINEABLE_WITH_AXE),
@@ -148,13 +149,13 @@ public final class MismatchedWorkbenchContentGameTests {
 
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         helper.useBlock(WORKBENCH_POS.east(), player);
-        helper.assertTrue(player.containerMenu instanceof MismatchedWorkbenchMenu,
+        helper.assertTrue(player.containerMenu instanceof WorkbenchMenu,
                           "Placed workbench did not open its menu");
-        MismatchedWorkbenchMenu first = (MismatchedWorkbenchMenu) player.containerMenu;
+        WorkbenchMenu first = (WorkbenchMenu) player.containerMenu;
         first.getSlot(0).set(new ItemStack(Items.IRON_BOOTS));
         player.closeContainer();
         helper.useBlock(WORKBENCH_POS.east(), player);
-        helper.assertTrue(player.containerMenu instanceof MismatchedWorkbenchMenu second
+        helper.assertTrue(player.containerMenu instanceof WorkbenchMenu second
                                   && second != first
                                   && second.getSlot(0).getItem().isEmpty(),
                           "Reopening the workbench reused an old session");
@@ -176,14 +177,14 @@ public final class MismatchedWorkbenchContentGameTests {
                                 .getRecipeFor(RecipeType.CRAFTING, directInput, helper.getLevel()).isEmpty(),
                           "Crafting grid retained a direct mixed-boots recipe");
 
-        RecipeHolder<MismatchedWorkbenchRecipe> station = helper.getLevel().recipeAccess()
-                                                                .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(),
-                                                                              new MismatchedWorkbenchInput(
+        RecipeHolder<WorkbenchRecipe> station = helper.getLevel().recipeAccess()
+                                                                .getRecipeFor(MismatchedWorkbench.recipeType(),
+                                                                              new WorkbenchInput(
                                                                                       new ItemStack(Items.IRON_BOOTS),
                                                                                       new ItemStack(Items.GOLDEN_BOOTS)),
                                                                               helper.getLevel())
                                                                 .orElseThrow();
-        var stationPair = station.value().assemblePair(new MismatchedWorkbenchInput(
+        var stationPair = station.value().assemblePair(new WorkbenchInput(
                 new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
         helper.assertTrue(stationPair.isComplete(), "Workbench did not create both outputs");
         GameTestStacks.assertOrientation(helper, stationPair.primary(),
@@ -221,10 +222,10 @@ public final class MismatchedWorkbenchContentGameTests {
         ServerPlayer pendingPlayer = helper.makeMockServerPlayerInLevel();
         ServerPlayer shiftPlayer = helper.makeMockServerPlayerInLevel();
         ServerPlayer committedPlayer = helper.makeMockServerPlayerInLevel();
-        helper.setBlock(WORKBENCH_POS, ModContent.mismatchedWorkbenchBlock().orElseThrow());
-        MismatchedWorkbenchMenu pending = readyMenu(helper, pendingPlayer, 11);
-        MismatchedWorkbenchMenu shift = readyMenu(helper, shiftPlayer, 12);
-        MismatchedWorkbenchMenu committed = readyMenu(helper, committedPlayer, 13);
+        helper.setBlock(WORKBENCH_POS, MismatchedWorkbench.block());
+        WorkbenchMenu pending = readyMenu(helper, pendingPlayer, 11);
+        WorkbenchMenu shift = readyMenu(helper, shiftPlayer, 12);
+        WorkbenchMenu committed = readyMenu(helper, committedPlayer, 13);
         helper.assertTrue(!committed.getSlot(2).safeTake(1, 1, committedPlayer).isEmpty(),
                           "Could not commit a transaction before reload");
         ItemStack frozen = committed.getSlot(3).getItem().copy();
@@ -241,7 +242,7 @@ public final class MismatchedWorkbenchContentGameTests {
             helper.assertTrue(pending.getCarried().isEmpty(), "Removed recipe's old preview was picked up");
             helper.assertTrue(shift.quickMoveStack(shiftPlayer, 3).isEmpty(),
                               "Removed recipe's old preview was shift-clicked");
-            for (MismatchedWorkbenchMenu live : List.of(pending, shift)) {
+            for (WorkbenchMenu live : List.of(pending, shift)) {
                 helper.assertTrue(!live.isCommitted() && live.getSlot(0).getItem().is(Items.IRON_BOOTS)
                                           && live.getSlot(1).getItem().is(Items.GOLDEN_BOOTS),
                                   "Revoked preview consumed inputs or committed the transaction");
@@ -258,8 +259,8 @@ public final class MismatchedWorkbenchContentGameTests {
             helper.assertTrue(server.getRecipeManager().byKey(BLOCK_RECIPE).isPresent(),
                               "Removing data-driven transformations also removed the block acquisition recipe");
             ServerPlayer player = helper.makeMockServerPlayerInLevel();
-            helper.setBlock(WORKBENCH_POS, ModContent.mismatchedWorkbenchBlock().orElseThrow());
-            MismatchedWorkbenchMenu menu = new MismatchedWorkbenchMenu(
+            helper.setBlock(WORKBENCH_POS, MismatchedWorkbench.block());
+            WorkbenchMenu menu = new WorkbenchMenu(
                     1, player.getInventory(), ContainerLevelAccess.create(
                     helper.getLevel(), helper.absolutePos(WORKBENCH_POS)));
             menu.getSlot(0).set(new ItemStack(Items.IRON_BOOTS));
@@ -310,8 +311,8 @@ public final class MismatchedWorkbenchContentGameTests {
             GameTestHelper helper, MinecraftServer server, List<String> originalPacks, Path pack) {
         ServerPlayer normalPlayer = helper.makeMockServerPlayerInLevel();
         ServerPlayer shiftPlayer = helper.makeMockServerPlayerInLevel();
-        MismatchedWorkbenchMenu normal = readyMenu(helper, normalPlayer, 21);
-        MismatchedWorkbenchMenu shift = readyMenu(helper, shiftPlayer, 22);
+        WorkbenchMenu normal = readyMenu(helper, normalPlayer, 21);
+        WorkbenchMenu shift = readyMenu(helper, shiftPlayer, 22);
         try {
             Files.writeString(pack.resolve("data/mismatchedboots/recipe/mixed_boots_workbench.json"),
                               "{\"type\":\"mismatchedboots-test:reversed_workbench\"}", StandardCharsets.UTF_8);
@@ -322,7 +323,7 @@ public final class MismatchedWorkbenchContentGameTests {
             helper.assertTrue(normal.getCarried().isEmpty(), "Stale normal click extracted a replaced preview");
             helper.assertTrue(shift.quickMoveStack(shiftPlayer, 2).isEmpty(),
                               "Stale shift-click extracted a replaced preview");
-            for (MismatchedWorkbenchMenu live : List.of(normal, shift)) {
+            for (WorkbenchMenu live : List.of(normal, shift)) {
                 helper.assertTrue(!live.isCommitted() && live.getSlot(0).getItem().is(Items.IRON_BOOTS)
                                           && live.getSlot(1).getItem().is(Items.GOLDEN_BOOTS),
                                   "Replacing previews consumed inputs");
@@ -346,8 +347,8 @@ public final class MismatchedWorkbenchContentGameTests {
         }
     }
 
-    private static MismatchedWorkbenchMenu readyMenu(GameTestHelper helper, ServerPlayer player, int id) {
-        var menu = new MismatchedWorkbenchMenu(id, player.getInventory(),
+    private static WorkbenchMenu readyMenu(GameTestHelper helper, ServerPlayer player, int id) {
+        var menu = new WorkbenchMenu(id, player.getInventory(),
                                                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(WORKBENCH_POS)));
         menu.getSlot(0).set(new ItemStack(Items.IRON_BOOTS));
         menu.getSlot(1).set(new ItemStack(Items.GOLDEN_BOOTS));

@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility;
 
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public final class MismatchedWorkbenchExampleCycle {
 
     public static Optional<Example> create(
             List<ItemStack> candidates,
-            BiFunction<ItemStack, ItemStack, MismatchedWorkbenchResult> composer) {
+            BiFunction<ItemStack, ItemStack, WorkbenchResult> composer) {
         Objects.requireNonNull(candidates, "candidates");
         Objects.requireNonNull(composer, "composer");
         if (candidates.isEmpty()) {
@@ -30,7 +30,7 @@ public final class MismatchedWorkbenchExampleCycle {
         for (int index = 0; index < candidates.size(); index++) {
             ItemStack left = candidates.get(index);
             ItemStack right = candidates.get((index + 1) % candidates.size());
-            MismatchedWorkbenchResult result = composer.apply(left, right);
+            WorkbenchResult result = composer.apply(left, right);
             if (!result.isComplete()) {
                 continue;
             }

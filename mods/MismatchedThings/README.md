@@ -1,12 +1,13 @@
 # MismatchedThings shared workbench
 
 Small runtime mod owning the family workbench. Its version is independent of
-Mismatched Boots. The eventual consumer artifacts bundle their loader-specific
-core through native nested dependencies; users should not need a separate download.
+Mismatched Boots. Boots artifacts bundle their loader-specific core through
+native nested dependencies; users do not need a separate download.
 
-Production integration is staged: the core exists, but Boots still owns its
-previous station until the coordinated handoff. This intermediate state is not
-a publication candidate. No mixed helmets or other sibling product is included.
+Boots contributes admission and composition through API v1; it no longer owns
+a second station. Coexistence/version-evolution controls and final manual
+acceptance remain planned before publication. No mixed helmets or other sibling
+product is included.
 
 ## Ownership
 
@@ -40,7 +41,8 @@ Use `games.alejandrocoria.mismatchedthings.api`:
 `MismatchedWorkbench` exposes the station ID, registered block/item/menu and
 typed recipe type. Registry-backed access requires completed registration.
 Implementation classes in `internal` are not a supported consumer API.
-The v1 surface remains provisional until real Boots integration is complete.
+The v1 surface is exercised by real Boots integration, synchronized previews,
+recipe reload and JEI/REI acceptance. Preserve it when making additive 1.x changes.
 
 The menu uses ordinary Minecraft transport, commits both inputs once when the
 first output is taken, and retains the other paid output until collected or

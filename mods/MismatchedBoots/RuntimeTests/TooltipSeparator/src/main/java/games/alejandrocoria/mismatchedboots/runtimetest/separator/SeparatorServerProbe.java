@@ -1,9 +1,9 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.separator;
 
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +17,7 @@ public final class SeparatorServerProbe {
 
     public static void run(MinecraftServer server) {
         try {
-            var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(
+            var pair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(
                     new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
             if (!pair.isComplete()) {
                 throw new AssertionError("Server recipe rejected");

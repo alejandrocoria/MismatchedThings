@@ -2,10 +2,10 @@ package games.alejandrocoria.mismatchedboots.runtimetest.separator;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -73,7 +73,7 @@ public final class SeparatorClientTest {
                 client.options.pauseOnLostFocus = false;
                 client.options.guiScale().set(2);
                 client.resizeGui();
-                var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(
+                var pair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(
                         new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.GOLDEN_BOOTS)));
                 require(pair.isComplete(), "Recipe fixture rejected");
                 ItemStack wide = pair.inverse();
@@ -87,7 +87,7 @@ public final class SeparatorClientTest {
                 var right = new ItemStack(Items.IRON_BOOTS);
                 right.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Right source detail 1"),
                                                                     Component.literal("Right source detail 2"))));
-                var multilinePair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(left, right));
+                var multilinePair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(left, right));
                 require(multilinePair.isComplete(), "Multiline source fixture rejected");
                 var multiline = multilinePair.primary();
                 multiline.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Root details survive after sources"))));

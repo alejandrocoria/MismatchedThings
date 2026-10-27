@@ -2,7 +2,7 @@ package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchExampleCycle;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ final class MismatchedWorkbenchJeiCycle {
 
     static Optional<MismatchedWorkbenchJeiExample> create(
             List<ItemStack> boots,
-            BiFunction<ItemStack, ItemStack, MismatchedWorkbenchResult> composer) {
+            BiFunction<ItemStack, ItemStack, WorkbenchResult> composer) {
         return MismatchedWorkbenchExampleCycle.create(boots, composer)
                                               .map(example -> new MismatchedWorkbenchJeiExample(
                                                       example.leftInputs(),

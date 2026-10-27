@@ -8,6 +8,8 @@ def modPath = mismatchedModProject.path
 base.archivesName = "mismatchedboots-runtime-test-neoforge"
 
 evaluationDependsOn("${modPath}:NeoForge")
+evaluationDependsOn(':MismatchedThings:NeoForge')
+def workbenchArchive = project(':MismatchedThings:NeoForge').tasks.named('jar').flatMap { it.archiveFile }
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
 def testMods = mismatchedModProject.ext.testModArtifacts
@@ -18,6 +20,7 @@ def productionArchive = project("${modPath}:NeoForge").tasks.named('jar').flatMa
 def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
 dependencies {
+    compileOnly files(workbenchArchive)
     // Expose Common's source module to IDEs; NeoForge also compiles these classes into its own output.
     compileOnly(project("${modPath}:Common")) {
         transitive = false
@@ -27,6 +30,13 @@ dependencies {
     }
     compileOnly files(project("${modPath}:NeoForge").sourceSets.main.output)
     compileOnly "mysticdrew:common-networking-neoforge:${common_networking_version}"
+}
+
+// The API is available for compilation only; running fixtures load the native nested core from Boots.
+afterEvaluate {
+    sourceSets.each { sourceSet ->
+        sourceSet.runtimeClasspath = sourceSet.runtimeClasspath - files(workbenchArchive)
+    }
 }
 
 configurations {

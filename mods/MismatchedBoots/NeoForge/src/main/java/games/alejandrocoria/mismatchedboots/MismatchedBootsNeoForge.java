@@ -22,7 +22,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearR
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
-import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -65,10 +65,9 @@ public class MismatchedBootsNeoForge {
             AttributeRulesLifecycle.onServerStopped();
             ComponentRulesLifecycle.onServerStopped();
         });
-        NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) -> event.sendRecipes(ModContent.mismatchedWorkbenchRecipeType()));
+        NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) -> event.sendRecipes(MismatchedWorkbench.recipeType()));
 
         eventBus.addListener(MismatchedBootsClientNeoForge::onClientSetup);
-        eventBus.addListener(MismatchedBootsClientNeoForge::registerScreens);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerItemDecorations);
         eventBus.addListener(MismatchedBootsClientNeoForge::registerTooltipFactories);
     }

@@ -9,7 +9,7 @@ import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
@@ -85,9 +85,8 @@ public final class NetworkAcceptanceClientTest {
                 return;
             }
 
-            ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
-                                                                                      NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()), client.level,
-                                                                              rules, componentRules).primary();
+            ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new WorkbenchInput(
+                                                                                      NetworkAcceptanceStacks.firstSource(), NetworkAcceptanceStacks.secondSource()), client.level).primary();
             if (!preview.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
                                       net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY)
                         .equals(received.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,

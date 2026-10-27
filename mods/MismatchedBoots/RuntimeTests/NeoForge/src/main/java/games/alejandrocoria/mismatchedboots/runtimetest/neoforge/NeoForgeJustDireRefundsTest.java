@@ -17,8 +17,8 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -127,7 +127,7 @@ final class NeoForgeJustDireRefundsTest {
             for (boolean reverse : List.of(false, true)) {
                 var a = inputs.get(reverse ? 1 : 0);
                 var b = inputs.get(reverse ? 0 : 1);
-                var menu = new MismatchedWorkbenchMenu(1, player.getInventory(), ContainerLevelAccess.create(server.overworld(), BlockPos.ZERO));
+                var menu = new WorkbenchMenu(1, player.getInventory(), ContainerLevelAccess.create(server.overworld(), BlockPos.ZERO));
                 player.getInventory().clearContent();
                 var beforeA = a.copy();
                 var beforeB = b.copy();

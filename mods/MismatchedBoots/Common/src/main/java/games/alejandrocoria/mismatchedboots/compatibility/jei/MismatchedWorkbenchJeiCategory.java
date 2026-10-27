@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedboots.Constants;
-import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -19,7 +19,7 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
             MismatchedWorkbenchJeiExample.class);
 
     private static final Identifier ARROWS_TEXTURE = Identifier.fromNamespaceAndPath(
-            Constants.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
+            MismatchedWorkbench.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
     private static final int WIDTH = 130;
     private static final int HEIGHT = 66;
     private static final int LEFT_SLOT_X = 46;
@@ -34,8 +34,8 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
     MismatchedWorkbenchJeiCategory(IGuiHelper guiHelper) {
         super(
                 TYPE,
-                Component.translatable("container.mismatchedboots.mismatched_workbench"),
-                guiHelper.createDrawableItemLike(ModContent.mismatchedWorkbenchItem().orElseThrow()),
+                Component.translatable("container.mismatchedthings.mismatched_workbench"),
+                guiHelper.createDrawableItemLike(MismatchedWorkbench.item()),
                 WIDTH,
                 HEIGHT);
         this.arrows = guiHelper.drawableBuilder(ARROWS_TEXTURE, 0, 0, 26, 26)

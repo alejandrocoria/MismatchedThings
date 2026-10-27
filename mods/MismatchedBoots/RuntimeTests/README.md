@@ -13,6 +13,12 @@ are relative to the mod root, including `build/test-mods/` and
 `build/network-acceptance/`.
 Explicit file-path `-P` overrides are repository-relative or absolute, as before.
 
+The station now belongs to the bundled `mismatchedthings` core. Fixtures compile
+against its API but game runtime classpaths exclude that loose core artifact:
+the loader must discover it inside the real Boots JAR. Existing composition
+datapack overrides remain under `data/mismatchedboots/recipe/`. Core-only tests
+have a separate [guide](../../MismatchedThings/RuntimeTests/README.md).
+
 ## Guide index
 
 All guides share the working-directory, path and artifact rules stated here.
@@ -971,6 +977,13 @@ launch task. No Quilt library enters production artifacts or ordinary tests.
 `verifyPackagedDependencies` declares and builds its final packaged JAR inputs.
 Its companion negative-control task checks corrupted copies in the mod's build
 directory, never modifies release JARs, and verifies rejection diagnostics.
+
+Those entry points also run `verifySharedWorkbenchPackaging` and
+`verifySharedWorkbenchPackagingChecks`: one native nested core, API-major
+bounds, real core byte equality, no loose/legacy station content, indev runtime
+availability and six corrupted-core-package controls. NeoForge project JiJ
+metadata has an open `[bundledVersion,)` range; the required mod dependency
+separately bounds supported API major 1 with `[1.0.0,2.0.0)`.
 
 Optional recipe-viewer regressions run individually:
 

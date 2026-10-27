@@ -59,6 +59,8 @@ tasks.named('assemble') {
 }
 
 dependencies {
+    implementation(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
+    jarJar(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"

@@ -1,17 +1,15 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -54,7 +52,7 @@ public final class NeoForgeJustDireResourcesClientTest {
     private static int phase;
     private static boolean finished;
     private static Future<?> job;
-    private static MismatchedWorkbenchResult preview;
+    private static WorkbenchResult preview;
     private static int generatorCharge;
     private static int fallCharge;
     private static ItemStack refundPurchased;
@@ -90,16 +88,16 @@ public final class NeoForgeJustDireResourcesClientTest {
                                 && GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                         "Resource client was not hidden and muted");
                 tooltipMatrix(client);
-                preview = new MixedBootsWorkbenchRecipe().assemblePreview(new MismatchedWorkbenchInput(
+                preview = new MixedBootsWorkbenchRecipe().assemblePreview(new WorkbenchInput(
                                                                                   poweredBoots(), new ItemStack(Items.IRON_BOOTS)),
-                                                                          AttributeRuleState.current(), ComponentRuleState.current());
+                                                                          client.level);
                 require(preview.isComplete(), "Synchronized client preview failed");
                 var id = player.getUUID();
                 job = server.submit(() -> {
                     var owner = server.getPlayerList().getPlayer(id);
                     require(owner != null, "Actual server player missing");
                     owner.getInventory().clearContent();
-                    var menu = new MismatchedWorkbenchMenu(1, owner.getInventory());
+                    var menu = new WorkbenchMenu(1, owner.getInventory());
                     menu.getSlot(0).set(poweredBoots());
                     menu.getSlot(1).set(new ItemStack(Items.IRON_BOOTS));
                     ItemStack first = menu.getSlot(2).safeTake(1, 1, owner);
@@ -279,7 +277,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                     var owner = server.getPlayerList().getPlayer(id);
                     owner.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
                     owner.getInventory().clearContent();
-                    owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new MismatchedWorkbenchMenu(menuId, inventory),
+                    owner.openMenu(new SimpleMenuProvider((menuId, inventory, ignored) -> new WorkbenchMenu(menuId, inventory),
                                                           Component.literal("Refund packets")));
                     var menu = owner.containerMenu;
                     menu.getSlot(0).set(poweredBoots());
@@ -288,7 +286,7 @@ public final class NeoForgeJustDireResourcesClientTest {
                 });
                 phase = 9;
             } else if (phase == 9) {
-                if (!(player.containerMenu instanceof MismatchedWorkbenchMenu menu) || menu.getSlot(2).getItem().isEmpty() || menu.getSlot(3)
+                if (!(player.containerMenu instanceof WorkbenchMenu menu) || menu.getSlot(2).getItem().isEmpty() || menu.getSlot(3)
                                                                                                                                   .getItem()
                                                                                                                                   .isEmpty()) {
                     return;

@@ -7,8 +7,8 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireRefundCredits;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -44,7 +44,7 @@ final class JustDireRefundLifecycleTest {
         var player = JustDireGroundStompTestSupport.player(server, GameType.SURVIVAL);
         var source = NeoForgeJustDireResourcesTest.boots("celestigem", 6_000);
         JustDireAttributeTestSupport.set(source, "stepheight_upgrade_installed", true);
-        var bench = new MismatchedWorkbenchMenu(1, player.getInventory());
+        var bench = new WorkbenchMenu(1, player.getInventory());
         bench.getSlot(0).set(source);
         bench.getSlot(1).set(new ItemStack(Items.DIAMOND_BOOTS));
         var outputs = List.of(bench.getSlot(2).safeTake(1, 1, player), bench.getSlot(3).safeTake(1, 1, player));

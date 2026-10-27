@@ -1,13 +1,11 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchExampleCycle;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
@@ -47,11 +45,9 @@ final class MismatchedWorkbenchReiExamples {
             return Optional.empty();
         }
 
-        var attributes = AttributeRuleState.current();
-        var components = ComponentRuleState.current();
         return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) -> {
             return MismatchedWorkbenchClientRecipes.assemblePair(
-                    new MismatchedWorkbenchInput(left, right), level, attributes, components);
+                    new WorkbenchInput(left, right), level);
         }).map(example -> MismatchedWorkbenchReiDisplay.create(
                 example.leftInputs(),
                 example.rightInputs(),

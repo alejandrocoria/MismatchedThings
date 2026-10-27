@@ -16,7 +16,6 @@
     "license": "${mod_license}",
     "icon": "${mod_logo}",
     "environment": "*",
-    "accessWidener": "mismatchedboots.accesswidener",
     "entrypoints": {
         "main": [
             "games.alejandrocoria.mismatchedboots.MismatchedBootsFabric"
@@ -41,6 +40,7 @@
         "mismatchedboots.client.mixins.json"
     ],
     "depends": {
+        "mismatchedthings": ">=1.0.0 <2.0.0",
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": ">=${fabric_api_min_version}",
         "commonnetworking": ">=${common_networking_version}",

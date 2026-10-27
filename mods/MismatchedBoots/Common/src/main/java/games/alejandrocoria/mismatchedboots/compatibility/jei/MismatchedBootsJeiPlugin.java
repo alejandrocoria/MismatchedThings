@@ -2,8 +2,8 @@ package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
-import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -39,7 +39,7 @@ public final class MismatchedBootsJeiPlugin implements IModPlugin {
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addCraftingStation(
                 MismatchedWorkbenchJeiCategory.TYPE,
-                ModContent.mismatchedWorkbenchItem().orElseThrow());
+                MismatchedWorkbench.item());
     }
 
     @Override

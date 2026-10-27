@@ -4,8 +4,9 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.Holder;
@@ -47,9 +48,9 @@ public final class CompatibilityGameTests {
     public void moddedComponentBootsComposeThroughTheLiveWorkbenchRecipe(GameTestHelper helper) {
         ItemStack modded = new ItemStack(TestContent.requireComponentBoots());
         modded.set(TestContent.requireOpaqueComponent(), "compatibility-alpha");
-        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(modded, new ItemStack(Items.DIAMOND_BOOTS));
+        WorkbenchInput input = new WorkbenchInput(modded, new ItemStack(Items.DIAMOND_BOOTS));
         var recipe = helper.getLevel().recipeAccess()
-                           .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
+                           .getRecipeFor(MismatchedWorkbench.recipeType(), input, helper.getLevel())
                            .orElseThrow(() -> new AssertionError("Live workbench recipe rejected the GameTest modded boots"));
 
         var result = recipe.value().assemblePair(input);
@@ -166,9 +167,9 @@ public final class CompatibilityGameTests {
         ItemStack leftBefore = left.copy();
         ItemStack rightBefore = right.copy();
 
-        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(left, right);
+        WorkbenchInput input = new WorkbenchInput(left, right);
         var recipe = helper.getLevel().recipeAccess()
-                           .getRecipeFor(ModContent.mismatchedWorkbenchRecipeType(), input, helper.getLevel())
+                           .getRecipeFor(MismatchedWorkbench.recipeType(), input, helper.getLevel())
                            .orElseThrow(() -> new AssertionError("Live workbench recipe rejected tooltip fixtures"));
         var result = recipe.value().assemblePair(input);
         helper.assertTrue(result.isComplete(), "Live workbench recipe did not create tooltip outputs");

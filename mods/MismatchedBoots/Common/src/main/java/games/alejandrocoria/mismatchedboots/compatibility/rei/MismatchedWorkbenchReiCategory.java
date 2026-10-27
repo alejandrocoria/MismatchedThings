@@ -1,7 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
-import games.alejandrocoria.mismatchedboots.Constants;
-import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.Renderer;
@@ -18,7 +17,7 @@ import java.util.List;
 
 final class MismatchedWorkbenchReiCategory implements DisplayCategory<MismatchedWorkbenchReiDisplay> {
     private static final Identifier ARROWS_TEXTURE = Identifier.fromNamespaceAndPath(
-            Constants.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
+            MismatchedWorkbench.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
     private static final int WIDTH = 130;
     private static final int HEIGHT = 72;
     private static final int SLOT_SPACING = 22;
@@ -33,12 +32,12 @@ final class MismatchedWorkbenchReiCategory implements DisplayCategory<Mismatched
 
     @Override
     public Component getTitle() {
-        return Component.translatable("container.mismatchedboots.mismatched_workbench");
+        return Component.translatable("container.mismatchedthings.mismatched_workbench");
     }
 
     @Override
     public Renderer getIcon() {
-        return EntryStacks.of(ModContent.mismatchedWorkbenchItem().orElseThrow());
+        return EntryStacks.of(MismatchedWorkbench.item());
     }
 
     @Override

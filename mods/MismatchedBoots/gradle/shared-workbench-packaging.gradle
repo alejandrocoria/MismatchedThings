@@ -1,0 +1,168 @@
+import groovy.json.JsonSlurper
+
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+
+def verify = tasks.register('verifySharedWorkbenchPackaging') {
+    group = 'verification'
+    description = 'Checks native nested core identity, API bounds and exclusive station ownership.'
+}
+
+def controls = tasks.register('verifySharedWorkbenchPackagingChecks') {
+    group = 'verification'
+    description = 'Checks rejection of missing cores, unbounded dependencies and loose shared classes.'
+}
+
+gradle.projectsEvaluated {
+    def archives = ['Fabric', 'NeoForge'].collectEntries { name ->
+        def boots = project(name).tasks.named('jar')
+        def core = project(":MismatchedThings:${name}").tasks.named('jar')
+        [(name.toLowerCase(Locale.ROOT)): [boots: boots, core: core, developmentClasspath: project(name).sourceSets.main.runtimeClasspath,
+                version: project(":MismatchedThings:${name}").version.toString()]]
+    }
+    def allJars = archives.values().collectMany { [it.boots, it.core] }
+    def readNested = { byte[] bytes ->
+        def entries = [:]
+        new ZipInputStream(new ByteArrayInputStream(bytes)).withCloseable { nested ->
+            for (def entry = nested.nextEntry; entry != null; entry = nested.nextEntry) {
+                if (!entry.directory) { entries[entry.name] = nested.readAllBytes() }
+            }
+        }
+        entries
+    }
+    def inspect = { String loader, File artifact, byte[] expected, String version ->
+        new ZipFile(artifact).withCloseable { zip ->
+            def names = zip.entries().findAll { !it.directory }.collect { it.name }
+            if (names.any { it.startsWith('games/alejandrocoria/mismatchedthings/')
+                    || it.startsWith('assets/mismatchedthings/') || it.startsWith('data/mismatchedthings/') }) {
+                throw new GradleException('Loose shared core content in Boots')
+            }
+            if (names.any { it.matches('assets/mismatchedboots/(blockstates|items|models/block)/mismatched_workbench.json')
+                    || it.contains('mismatchedboots/textures/block/mismatched_workbench_')
+                    || it.contains('mismatchedboots/textures/gui/sprites/container/mismatched_workbench/')
+                    || it == 'data/mismatchedboots/recipe/mismatched_workbench.json'
+                    || it == 'data/mismatchedboots/loot_table/blocks/mismatched_workbench.json'
+                    || it == 'data/mismatchedboots/advancement/recipes/decorations/mismatched_workbench.json'
+                    || it.matches('games/alejandrocoria/mismatchedboots/(menu|client|content|recipe)/MismatchedWorkbench.*class') }) {
+                throw new GradleException('Legacy station implementation/resources remain in Boots')
+            }
+            String path
+            if (loader == 'fabric') {
+                def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+                if (descriptor.depends.mismatchedthings != '>=1.0.0 <2.0.0') {
+                    throw new GradleException('Wrong core API bounds')
+                }
+                def cores = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
+                if (cores.size() != 1) { throw new GradleException('Expected one native nested core') }
+                path = cores.first().file
+            } else {
+                def text = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
+                def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
+                if (dependency == null || !dependency.contains('versionRange="[1.0.0,2.0.0)"') || !dependency.contains('type="required"')) {
+                    throw new GradleException('Wrong core API bounds')
+                }
+                def metadata = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('META-INF/jarjar/metadata.json')))
+                def cores = metadata.jars.findAll { it.identifier.group == 'games.alejandrocoria.mismatchedthings'
+                        && it.identifier.artifact == 'mismatchedthings-neoforge' }
+                if (cores.size() != 1) { throw new GradleException('Expected one native nested core') }
+                def core = cores.first()
+                // ModDevGradle project artifacts emit an open JiJ range. The required mod dependency above bounds API major 1.
+                if (core.version.artifactVersion != version || core.version.range != "[${version},)" || core.isObfuscated) {
+                    throw new GradleException('Wrong native core identity/version range')
+                }
+                path = core.path
+            }
+            def entry = zip.getEntry(path)
+            if (entry == null) { throw new GradleException('Missing nested core') }
+            byte[] bytes = zip.getInputStream(entry).withCloseable { it.readAllBytes() }
+            if (!Arrays.equals(bytes, expected)) { throw new GradleException('Nested core differs from its real loader artifact') }
+            def nested = readNested(bytes)
+            if (!nested.containsKey('games/alejandrocoria/mismatchedthings/api/MismatchedWorkbench.class')
+                    || !nested.containsKey('assets/mismatchedthings/items/mismatched_workbench.json')
+                    || nested.keySet().any { it.contains('mismatchedboots') || it.contains('/spike/') }) {
+                throw new GradleException('Wrong nested core ownership')
+            }
+            def recipe = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('data/mismatchedboots/recipe/mixed_boots_workbench.json')))
+            if (recipe.type != 'mismatchedboots:mixed_boots_workbench') {
+                throw new GradleException('Boots composition serializer changed namespace')
+            }
+            ['en_us', 'es_es'].each { language ->
+                def translations = new JsonSlurper().parse(zip.getInputStream(zip.getEntry("assets/mismatchedboots/lang/${language}.json")))
+                if (translations.containsKey('container.mismatchedboots.mismatched_workbench')
+                        || translations.containsKey('block.mismatchedboots.mismatched_workbench')) {
+                    throw new GradleException('Legacy station translations remain in Boots')
+                }
+            }
+            path
+        }
+    }
+
+    verify.configure {
+        dependsOn allJars
+        inputs.files(allJars.collect { it.flatMap { it.archiveFile } })
+        doLast {
+            archives.each { loader, inputs ->
+                inspect(loader, inputs.boots.get().archiveFile.get().asFile, inputs.core.get().archiveFile.get().asFile.bytes, inputs.version)
+                if (!inputs.developmentClasspath.files.contains(inputs.core.get().archiveFile.get().asFile)) {
+                    throw new GradleException("The ${loader} indev runtime cannot discover the real core mod")
+                }
+            }
+        }
+    }
+    def directory = layout.buildDirectory.dir('shared-workbench-packaging-controls')
+    controls.configure {
+        dependsOn allJars
+        doLast {
+            directory.get().asFile.mkdirs()
+            archives.each { loader, inputs ->
+                File original = inputs.boots.get().archiveFile.get().asFile
+                byte[] expected = inputs.core.get().archiveFile.get().asFile.bytes
+                String nestedPath = inspect(loader, original, expected, inputs.version)
+                ['missing': 'Missing nested core', 'unbounded': 'Wrong core API bounds', 'loose': 'Loose shared core content in Boots'].each { name, error ->
+                    File corrupted = new File(directory.get().asFile, "${loader}-${name}.jar")
+                    new ZipFile(original).withCloseable { zip ->
+                        new ZipOutputStream(new FileOutputStream(corrupted)).withCloseable { output ->
+                            zip.entries().each { entry ->
+                                if (!(name == 'missing' && entry.name == nestedPath)) {
+                                    output.putNextEntry(new ZipEntry(entry.name))
+                                    byte[] bytes = zip.getInputStream(entry).withCloseable { it.readAllBytes() }
+                                    if (name == 'unbounded' && entry.name == (loader == 'fabric' ? 'fabric.mod.json' : 'META-INF/neoforge.mods.toml')) {
+                                        String text = new String(bytes, 'UTF-8')
+                                        if (loader == 'fabric') {
+                                            def metadata = new JsonSlurper().parseText(text)
+                                            metadata.depends.mismatchedthings = '*'
+                                            text = groovy.json.JsonOutput.toJson(metadata)
+                                        } else {
+                                            text = text.replace('[1.0.0,2.0.0)', '[1.0.0,)')
+                                        }
+                                        bytes = text.getBytes('UTF-8')
+                                    }
+                                    output.write(bytes)
+                                    output.closeEntry()
+                                }
+                            }
+                            if (name == 'loose') {
+                                output.putNextEntry(new ZipEntry('games/alejandrocoria/mismatchedthings/api/Fake.class'))
+                                output.closeEntry()
+                            }
+                        }
+                    }
+                    boolean rejected = false
+                    try {
+                        inspect(loader, corrupted, expected, inputs.version)
+                    } catch (GradleException failure) {
+                        if (!failure.message.contains(error)) { throw failure }
+                        rejected = true
+                    }
+                    if (!rejected) { throw new GradleException("Accepted corrupt core package: ${loader}/${name}") }
+                }
+            }
+            logger.lifecycle('Rejected all six shared-core corrupted artifact controls')
+        }
+    }
+}
+
+tasks.named('verifyPackagedDependencies') { dependsOn verify }
+tasks.matching { it.name == 'verifyPackagedDependencyChecks' }.configureEach { dependsOn controls }

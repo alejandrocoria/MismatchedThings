@@ -1,7 +1,8 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -27,7 +28,7 @@ public final class MismatchedWorkbenchGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void previewTracksOrderedInputsAndInventoryRouting(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        MismatchedWorkbenchMenu menu = menu(helper, player, 1);
+        WorkbenchMenu menu = menu(helper, player, 1);
 
         menu.getSlot(0).set(new ItemStack(Items.IRON_BOOTS));
         helper.assertTrue(menu.getSlot(2).getItem().isEmpty() && menu.getSlot(3).getItem().isEmpty(),
@@ -50,9 +51,9 @@ public final class MismatchedWorkbenchGameTests {
         menu.getSlot(1).set(ItemStack.EMPTY);
         player.getInventory().setItem(9, new ItemStack(Items.IRON_BOOTS));
         player.getInventory().setItem(0, new ItemStack(Items.GOLDEN_BOOTS));
-        helper.assertTrue(!menu.quickMoveStack(player, MismatchedWorkbenchMenu.PLAYER_INVENTORY_START).isEmpty(),
+        helper.assertTrue(!menu.quickMoveStack(player, WorkbenchMenu.PLAYER_INVENTORY_START).isEmpty(),
                           "Shift-click did not route a source from the main inventory");
-        helper.assertTrue(!menu.quickMoveStack(player, MismatchedWorkbenchMenu.HOTBAR_START).isEmpty(),
+        helper.assertTrue(!menu.quickMoveStack(player, WorkbenchMenu.HOTBAR_START).isEmpty(),
                           "Shift-click did not route a source from the hotbar");
         assertPair(helper, menu, Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "routed preview");
         helper.assertTrue(!menu.quickMoveStack(player, 0).isEmpty(),
@@ -75,7 +76,7 @@ public final class MismatchedWorkbenchGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void secondOutputCompletesFrozenTransactionOnce(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        MismatchedWorkbenchMenu menu = readyMenu(helper, player, 20);
+        WorkbenchMenu menu = readyMenu(helper, player, 20);
         Item outputItem = menu.getSlot(2).getItem().getItem();
 
         ItemStack primary = menu.getSlot(2).safeTake(1, 1, player);
@@ -102,7 +103,7 @@ public final class MismatchedWorkbenchGameTests {
     public void fullInventoryLeavesPreviewAndInputsUntouched(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         player.getInventory().getNonEquipmentItems().replaceAll(ignored -> new ItemStack(Items.STONE, 64));
-        MismatchedWorkbenchMenu menu = readyMenu(helper, player, 30);
+        WorkbenchMenu menu = readyMenu(helper, player, 30);
 
         ItemStack moved = menu.quickMoveStack(player, 2);
 
@@ -119,7 +120,7 @@ public final class MismatchedWorkbenchGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void closingReturnsOnlyRealTransactionItems(GameTestHelper helper) {
         ServerPlayer previewPlayer = helper.makeMockServerPlayerInLevel();
-        MismatchedWorkbenchMenu preview = readyMenu(helper, previewPlayer, 40);
+        WorkbenchMenu preview = readyMenu(helper, previewPlayer, 40);
         preview.removed(previewPlayer);
         helper.assertValueEqual(count(previewPlayer, Items.IRON_BOOTS), 1, "returned iron input");
         helper.assertValueEqual(count(previewPlayer, Items.GOLDEN_BOOTS), 1, "returned gold input");
@@ -128,7 +129,7 @@ public final class MismatchedWorkbenchGameTests {
                                 "preview close recipe trigger");
 
         ServerPlayer committedPlayer = helper.makeMockServerPlayerInLevel();
-        MismatchedWorkbenchMenu committed = readyMenu(helper, committedPlayer, 41);
+        WorkbenchMenu committed = readyMenu(helper, committedPlayer, 41);
         Item outputItem = committed.getSlot(2).getItem().getItem();
         committed.clicked(2, 0, ContainerInput.PICKUP, committedPlayer);
         helper.assertTrue(!committed.getCarried().isEmpty(), "Pickup did not carry the first output");
@@ -146,19 +147,19 @@ public final class MismatchedWorkbenchGameTests {
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void blockCreatesIndependentMenusAndInvalidationCleansUp(GameTestHelper helper) {
-        var block = ModContent.mismatchedWorkbenchBlock().orElseThrow();
+        var block = MismatchedWorkbench.block();
         helper.setBlock(WORKBENCH_POS, block);
         ServerPlayer first = helper.makeMockServerPlayerInLevel();
         ServerPlayer second = helper.makeMockServerPlayerInLevel();
 
         helper.useBlock(WORKBENCH_POS, first);
         helper.useBlock(WORKBENCH_POS, second);
-        helper.assertTrue(first.containerMenu instanceof MismatchedWorkbenchMenu,
+        helper.assertTrue(first.containerMenu instanceof WorkbenchMenu,
                           "Block did not open the registered workbench menu for the first player");
-        helper.assertTrue(second.containerMenu instanceof MismatchedWorkbenchMenu,
+        helper.assertTrue(second.containerMenu instanceof WorkbenchMenu,
                           "Block did not open the registered workbench menu for the second player");
-        MismatchedWorkbenchMenu firstMenu = (MismatchedWorkbenchMenu) first.containerMenu;
-        MismatchedWorkbenchMenu secondMenu = (MismatchedWorkbenchMenu) second.containerMenu;
+        WorkbenchMenu firstMenu = (WorkbenchMenu) first.containerMenu;
+        WorkbenchMenu secondMenu = (WorkbenchMenu) second.containerMenu;
         firstMenu.getSlot(0).set(new ItemStack(Items.IRON_BOOTS));
         firstMenu.getSlot(1).set(new ItemStack(Items.GOLDEN_BOOTS));
         helper.assertTrue(secondMenu.getSlot(0).getItem().isEmpty()
@@ -181,7 +182,7 @@ public final class MismatchedWorkbenchGameTests {
     private static void assertFirstExtraction(
             GameTestHelper helper, ContainerInput action, int button, int resultSlot, String description) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        MismatchedWorkbenchMenu menu = readyMenu(helper, player, 10 + resultSlot + button);
+        WorkbenchMenu menu = readyMenu(helper, player, 10 + resultSlot + button);
         Item outputItem = menu.getSlot(resultSlot).getItem().getItem();
 
         if (action == ContainerInput.QUICK_MOVE) {
@@ -204,24 +205,24 @@ public final class MismatchedWorkbenchGameTests {
                                 description + " crafted callback count");
     }
 
-    private static MismatchedWorkbenchMenu readyMenu(GameTestHelper helper, ServerPlayer player, int id) {
-        MismatchedWorkbenchMenu menu = menu(helper, player, id);
+    private static WorkbenchMenu readyMenu(GameTestHelper helper, ServerPlayer player, int id) {
+        WorkbenchMenu menu = menu(helper, player, id);
         menu.getSlot(0).set(new ItemStack(Items.IRON_BOOTS));
         menu.getSlot(1).set(new ItemStack(Items.GOLDEN_BOOTS));
         assertPair(helper, menu, Items.IRON_BOOTS, Items.GOLDEN_BOOTS, "ready preview");
         return menu;
     }
 
-    private static MismatchedWorkbenchMenu menu(GameTestHelper helper, ServerPlayer player, int id) {
-        var block = ModContent.mismatchedWorkbenchBlock().orElseThrow();
+    private static WorkbenchMenu menu(GameTestHelper helper, ServerPlayer player, int id) {
+        var block = MismatchedWorkbench.block();
         helper.setBlock(WORKBENCH_POS, block);
-        return new MismatchedWorkbenchMenu(id, player.getInventory(), ContainerLevelAccess.create(
+        return new WorkbenchMenu(id, player.getInventory(), ContainerLevelAccess.create(
                 helper.getLevel(), helper.absolutePos(WORKBENCH_POS)));
     }
 
     private static void assertPair(
             GameTestHelper helper,
-            MismatchedWorkbenchMenu menu,
+            WorkbenchMenu menu,
             Item left,
             Item right,
             String description) {
@@ -232,7 +233,7 @@ public final class MismatchedWorkbenchGameTests {
     }
 
     private static void assertUncommitted(
-            GameTestHelper helper, ServerPlayer player, MismatchedWorkbenchMenu menu, String description) {
+            GameTestHelper helper, ServerPlayer player, WorkbenchMenu menu, String description) {
         helper.assertTrue(!menu.isCommitted(), description + " unexpectedly committed");
         helper.assertValueEqual(RecipeCraftedProbe.count(player, TEST_RECIPE), 0,
                                 description + " recipe trigger count");

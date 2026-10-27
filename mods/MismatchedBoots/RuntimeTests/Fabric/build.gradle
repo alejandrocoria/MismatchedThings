@@ -8,6 +8,8 @@ def modPath = mismatchedModProject.path
 base.archivesName = "mismatchedboots-runtime-test-fabric"
 
 evaluationDependsOn("${modPath}:Fabric")
+evaluationDependsOn(':MismatchedThings:Fabric')
+def workbenchArchive = project(':MismatchedThings:Fabric').tasks.named('jar').flatMap { it.archiveFile }
 
 // Resolve project-owned services/providers during configuration, not from Task.project in actions.
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
@@ -16,6 +18,8 @@ def productionArchive = project("${modPath}:Fabric").tasks.named('jar').flatMap 
 def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
 dependencies {
+    compileOnly files(workbenchArchive)
+    testImplementation files(workbenchArchive)
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
@@ -25,6 +29,15 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Packaged game runs must discover the core inside Boots, not from this compile-only API dependency.
+afterEvaluate {
+    sourceSets.each { sourceSet ->
+        if (sourceSet.name != 'test') {
+            sourceSet.runtimeClasspath = sourceSet.runtimeClasspath - files(workbenchArchive)
+        }
+    }
 }
 
 // Loader-local reflection regressions use fake optional APIs, not a running game.

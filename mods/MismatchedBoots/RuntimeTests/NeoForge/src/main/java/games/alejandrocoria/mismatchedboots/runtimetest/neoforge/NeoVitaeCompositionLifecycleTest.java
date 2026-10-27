@@ -5,8 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -174,7 +174,7 @@ final class NeoVitaeCompositionLifecycleTest {
     }
 
     private static List<ItemStack> workbench(ServerPlayer player, ItemStack first, ItemStack second) {
-        var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
+        var menu = new WorkbenchMenu(1, player.getInventory());
         ItemStack beforeFirst = first.copy();
         ItemStack beforeSecond = second.copy();
         menu.getSlot(0).set(first);

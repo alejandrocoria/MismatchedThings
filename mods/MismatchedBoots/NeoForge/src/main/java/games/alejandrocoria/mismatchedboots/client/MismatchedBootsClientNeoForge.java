@@ -11,6 +11,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -20,7 +21,6 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.LevelEvent;
 
@@ -51,9 +51,9 @@ public final class MismatchedBootsClientNeoForge {
                 (ClientPlayerNetworkEvent.LoggingIn login) -> CompositionRulesClientLifecycle.onConnected());
         NeoForge.EVENT_BUS.addListener(
                 (RecipesReceivedEvent recipes) -> {
-                    if (recipes.getRecipeTypes().contains(ModContent.mismatchedWorkbenchRecipeType())) {
+                    if (recipes.getRecipeTypes().contains(MismatchedWorkbench.recipeType())) {
                         MismatchedWorkbenchClientRecipes.install(
-                                recipes.getRecipeMap().byType(ModContent.mismatchedWorkbenchRecipeType()));
+                                recipes.getRecipeMap().byType(MismatchedWorkbench.recipeType()));
                     }
                 });
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> {
@@ -75,11 +75,6 @@ public final class MismatchedBootsClientNeoForge {
         if (ModList.get().isLoaded("aether_ii")) {
             AetherSourceCharms.registerFactory(event);
         }
-    }
-
-    public static void registerScreens(RegisterMenuScreensEvent event) {
-        event.register(ModContent.mismatchedWorkbenchMenuType().orElseThrow(),
-                       MismatchedWorkbenchScreen::new);
     }
 
     public static void registerItemDecorations(RegisterItemDecorationsEvent event) {

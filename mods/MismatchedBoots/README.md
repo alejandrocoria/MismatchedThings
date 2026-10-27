@@ -5,6 +5,9 @@ mixed pairs on Fabric and NeoForge.
 
 ## Crafting
 
+The workbench is provided by the bundled MismatchedThings core. It comes with
+Boots; no separate dependency download is required.
+
 Craft a **Mismatched Workbench** with six planks (any combination), shears, and
 a diamond in this 3x3 arrangement:
 

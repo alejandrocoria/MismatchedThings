@@ -5,6 +5,13 @@ plugins {
 
 base.archivesName = "mismatchedthings-${minecraft_version}-neoforge"
 
+configurations.create('workbenchElements') {
+    canBeConsumed = true
+    canBeResolved = false
+    outgoing.capability("${group}:mismatchedthings-neoforge:${version}")
+    outgoing.artifact(tasks.named('jar'))
+}
+
 neoForge {
     version = neoforge_version
     accessTransformers.from(project(':MismatchedThings:Common').file('src/main/resources/META-INF/accesstransformer.cfg'))

@@ -3,8 +3,8 @@ package games.alejandrocoria.mismatchedboots.gametest;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -38,7 +38,7 @@ public final class AttributeRulesGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void invalidNumericInputMakesWorkbenchCompositionFailAtomically(GameTestHelper helper) {
         ItemStack invalid = bootsWithModifier(Items.IRON_BOOTS, Attributes.ARMOR, Double.NaN);
-        MismatchedWorkbenchInput input = new MismatchedWorkbenchInput(
+        WorkbenchInput input = new WorkbenchInput(
                 invalid, new ItemStack(Items.GOLDEN_BOOTS));
         MixedBootsWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe();
 
@@ -75,7 +75,7 @@ public final class AttributeRulesGameTests {
                                 "configured second source amount");
 
         ItemStack rejected = bootsWithModifier(Items.IRON_BOOTS, Attributes.WAYPOINT_TRANSMIT_RANGE, 1.0D);
-        MismatchedWorkbenchInput rejectedInput = new MismatchedWorkbenchInput(
+        WorkbenchInput rejectedInput = new WorkbenchInput(
                 rejected, new ItemStack(Items.GOLDEN_BOOTS));
         MixedBootsWorkbenchRecipe recipe = new MixedBootsWorkbenchRecipe();
         helper.assertTrue(recipe.matches(rejectedInput, helper.getLevel()),

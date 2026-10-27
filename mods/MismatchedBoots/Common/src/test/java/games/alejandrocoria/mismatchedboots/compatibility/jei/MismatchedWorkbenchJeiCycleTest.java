@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchResult;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
@@ -88,7 +88,7 @@ class MismatchedWorkbenchJeiCycleTest {
                                                       MismatchedWorkbenchJeiCycleTest::orderedResult).isEmpty());
         assertTrue(MismatchedWorkbenchJeiCycle.create(
                 List.of(boots(Items.IRON_BOOTS), boots(Items.GOLDEN_BOOTS)),
-                (left, right) -> MismatchedWorkbenchResult.EMPTY).isEmpty());
+                (left, right) -> WorkbenchResult.EMPTY).isEmpty());
     }
 
     @Test
@@ -108,7 +108,7 @@ class MismatchedWorkbenchJeiCycleTest {
         MismatchedWorkbenchJeiExample withRejectedPair = MismatchedWorkbenchJeiCycle.create(
                 boots,
                 (left, right) -> left.is(Items.GOLDEN_BOOTS)
-                                 ? MismatchedWorkbenchResult.EMPTY
+                                 ? WorkbenchResult.EMPTY
                                  : orderedResult(left, right)).orElseThrow();
 
         assertEquals(List.of(Items.DIAMOND_BOOTS, Items.IRON_BOOTS),
@@ -134,8 +134,8 @@ class MismatchedWorkbenchJeiCycleTest {
         assertEquals(512, example.orElseThrow().leftInputs().size());
     }
 
-    private static MismatchedWorkbenchResult orderedResult(ItemStack left, ItemStack right) {
-        return new MismatchedWorkbenchResult(left, right);
+    private static WorkbenchResult orderedResult(ItemStack left, ItemStack right) {
+        return new WorkbenchResult(left, right);
     }
 
     private static ItemStack named(ItemStack stack, String name) {

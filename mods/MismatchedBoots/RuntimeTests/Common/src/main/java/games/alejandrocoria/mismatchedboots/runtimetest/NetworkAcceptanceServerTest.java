@@ -9,7 +9,8 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -57,6 +58,7 @@ public final class NetworkAcceptanceServerTest {
         try {
             ticks++;
             if (!ready) {
+                assertSharedWorkbench();
                 assertRules();
                 assertBehaviorTagProjection();
                 assertOptionalModAbsent();
@@ -87,6 +89,26 @@ public final class NetworkAcceptanceServerTest {
             NetworkAcceptanceFiles.failure("server", throwable);
             stopping = true;
             server.halt(false);
+        }
+    }
+
+    private static void assertSharedWorkbench() {
+        Identifier current = Identifier.parse("mismatchedthings:mismatched_workbench");
+        Identifier legacy = Identifier.parse("mismatchedboots:mismatched_workbench");
+        if (!BuiltInRegistries.BLOCK.containsKey(current) || !BuiltInRegistries.ITEM.containsKey(current)
+                || !BuiltInRegistries.MENU.containsKey(current) || !BuiltInRegistries.RECIPE_TYPE.containsKey(current)
+                || BuiltInRegistries.BLOCK.containsKey(legacy) || BuiltInRegistries.ITEM.containsKey(legacy)
+                || BuiltInRegistries.MENU.containsKey(legacy) || BuiltInRegistries.RECIPE_TYPE.containsKey(legacy)) {
+            throw new AssertionError("Workbench registration ownership is not exclusively mismatchedthings");
+        }
+        if (!BuiltInRegistries.RECIPE_SERIALIZER.containsKey(Identifier.parse("mismatchedboots:mixed_boots_workbench"))
+                || !BuiltInRegistries.ITEM.containsKey(Identifier.parse("mismatchedboots:mixed_boots"))
+                || !BuiltInRegistries.DATA_COMPONENT_TYPE.containsKey(Identifier.parse("mismatchedboots:mixed_boots_data"))) {
+            throw new AssertionError("Boots-owned content changed identity during the station handoff");
+        }
+        String origin = MismatchedWorkbench.class.getProtectionDomain().getCodeSource().getLocation().toString();
+        if (!origin.contains(".jar") || origin.replace('\\', '/').contains("/mods/MismatchedThings/")) {
+            throw new AssertionError("Packaged fixture is using a loose core compile dependency: " + origin);
         }
     }
 
@@ -139,16 +161,16 @@ public final class NetworkAcceptanceServerTest {
     }
 
     private static void craftAndDeliver(ServerPlayer player) {
-        MismatchedWorkbenchMenu menu = new MismatchedWorkbenchMenu(1, player.getInventory());
-        menu.getSlot(MismatchedWorkbenchMenu.INPUT_START).set(NetworkAcceptanceStacks.firstSource());
-        menu.getSlot(MismatchedWorkbenchMenu.INPUT_START + 1).set(NetworkAcceptanceStacks.secondSource());
+        WorkbenchMenu menu = new WorkbenchMenu(1, player.getInventory());
+        menu.getSlot(WorkbenchMenu.INPUT_START).set(NetworkAcceptanceStacks.firstSource());
+        menu.getSlot(WorkbenchMenu.INPUT_START + 1).set(NetworkAcceptanceStacks.secondSource());
 
-        ItemStack crafted = menu.getSlot(MismatchedWorkbenchMenu.RESULT_START).safeTake(1, 1, player);
+        ItemStack crafted = menu.getSlot(WorkbenchMenu.RESULT_START).safeTake(1, 1, player);
         String description = NetworkAcceptanceStacks.describePrimary(crafted);
-        ItemStack inverse = menu.getSlot(MismatchedWorkbenchMenu.RESULT_START + 1).safeTake(1, 1, player);
+        ItemStack inverse = menu.getSlot(WorkbenchMenu.RESULT_START + 1).safeTake(1, 1, player);
         NetworkAcceptanceStacks.assertInverse(inverse);
         assertEquipmentRoutes(player, crafted);
-        if (menu.slots.subList(MismatchedWorkbenchMenu.INPUT_START, MismatchedWorkbenchMenu.RESULT_END)
+        if (menu.slots.subList(WorkbenchMenu.INPUT_START, WorkbenchMenu.RESULT_END)
                       .stream().anyMatch(slot -> !slot.getItem().isEmpty())) {
             throw new AssertionError("Workbench transaction retained inputs or outputs after both were taken");
         }

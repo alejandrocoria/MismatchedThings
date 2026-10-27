@@ -2,14 +2,14 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.google.gson.JsonArray;
 import com.mojang.serialization.JsonOps;
-import games.alejandrocoria.mismatchedboots.client.MismatchedWorkbenchScreen;
 import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherTooltipClient;
 import games.alejandrocoria.mismatchedboots.compatibility.aether.AetherTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
+import games.alejandrocoria.mismatchedthings.internal.client.WorkbenchScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -107,7 +107,7 @@ public final class AetherTooltipLifecycleTest {
                 owner.setItemSlot(EquipmentSlot.FEET, samples.get(9).copy());
                 owner.setItemSlot(EquipmentSlot.HEAD, item("burrukai_plate_helmet"));
                 owner.setItemSlot(EquipmentSlot.CHEST, item("burrukai_plate_chestplate"));
-                owner.openMenu(new SimpleMenuProvider((id, inv, player) -> new MismatchedWorkbenchMenu(id, inv),
+                owner.openMenu(new SimpleMenuProvider((id, inv, player) -> new WorkbenchMenu(id, inv),
                                                       Component.literal("Tooltip UI control")));
                 owner.containerMenu.getSlot(0).set(item("burrukai_plate_boots"));
                 owner.containerMenu.getSlot(1).set(new ItemStack(net.minecraft.world.item.Items.DIAMOND_BOOTS));
@@ -118,7 +118,7 @@ public final class AetherTooltipLifecycleTest {
             return false;
         }
         if (phase == 1) {
-            if (!(client.screen instanceof MismatchedWorkbenchScreen screen) || screen.getMenu().getSlot(2).getItem().isEmpty()
+            if (!(client.screen instanceof WorkbenchScreen screen) || screen.getMenu().getSlot(2).getItem().isEmpty()
                     || AetherIITooltipClientTest.nativeSetRows(client, TooltipFlag.NORMAL).size() != 2) {
                 return false;
             }

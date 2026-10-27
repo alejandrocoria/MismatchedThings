@@ -7,8 +7,8 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesConfig;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
-import games.alejandrocoria.mismatchedboots.menu.MismatchedWorkbenchMenu;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -437,7 +437,7 @@ public final class AetherIICompatibilityTest {
     }
 
     static List<ItemStack> paidPair(ServerPlayer player, ItemStack first, ItemStack second) {
-        var menu = new MismatchedWorkbenchMenu(1, player.getInventory());
+        var menu = new WorkbenchMenu(1, player.getInventory());
         menu.getSlot(0).set(first.copy());
         menu.getSlot(1).set(second.copy());
         var firstPreview = menu.getSlot(2).getItem().copy();

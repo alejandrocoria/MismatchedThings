@@ -1,25 +1,22 @@
 package games.alejandrocoria.mismatchedboots.client;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
-import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.recipe.v1.sync.ClientRecipeSynchronizedEvent;
-import net.minecraft.client.gui.screens.MenuScreens;
 
 public class MismatchedBootsClientFabric implements ClientModInitializer {
     private static boolean recipesSynchronizedSinceVanillaUpdate;
 
     @Override
     public void onInitializeClient() {
-        MenuScreens.register(ModContent.mismatchedWorkbenchMenuType().orElseThrow(),
-                             MismatchedWorkbenchScreen::new);
         ClientPlayConnectionEvents.JOIN.register(
                 (handler, sender, client) -> CompositionRulesClientLifecycle.onConnected());
         ClientRecipeSynchronizedEvent.EVENT.register((client, recipes) -> {
             recipesSynchronizedSinceVanillaUpdate = true;
-            MismatchedWorkbenchClientRecipes.install(recipes.getAllOfType(ModContent.mismatchedWorkbenchRecipeType()));
+            MismatchedWorkbenchClientRecipes.install(recipes.getAllOfType(MismatchedWorkbench.recipeType()));
         });
         ClientPlayConnectionEvents.DISCONNECT.register(
                 (handler, client) -> CompositionRulesClientLifecycle.onDisconnected());

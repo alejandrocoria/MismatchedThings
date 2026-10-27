@@ -21,8 +21,8 @@ import games.alejandrocoria.mismatchedboots.network.AttributeRulesPayload;
 import games.alejandrocoria.mismatchedboots.network.ComponentRulesPayload;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.platform.Services;
-import games.alejandrocoria.mismatchedboots.recipe.MismatchedWorkbenchInput;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -90,9 +90,8 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
                                                       .filter(CompositionRulesClientGameTest::isPolicyResult)
                                                       .findFirst()
                                                       .orElseThrow();
-                ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new MismatchedWorkbenchInput(
-                                                                                          source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0)), client.level,
-                                                                                  AttributeRuleState.current(), ComponentRuleState.current())
+                ItemStack preview = MismatchedWorkbenchClientRecipes.assemblePair(new WorkbenchInput(
+                                                                                          source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0)), client.level)
                                                                     .primary();
                 if (!serverResult.getOrDefault(
                         DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).equals(
@@ -141,7 +140,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             singleplayer.getServer().runOnServer(server -> {
                 var left = source(Items.LEATHER_BOOTS, 2.0);
                 var right = source(Items.CHAINMAIL_BOOTS, 4.0);
-                var pair = new MixedBootsWorkbenchRecipe().assemblePair(new MismatchedWorkbenchInput(left, right));
+                var pair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(left, right));
                 if (!pair.isComplete() || attributeAmount(pair.primary()) != expectedAmount) {
                     throw new AssertionError("Client reset/partial rules changed integrated-server Workbench output");
                 }

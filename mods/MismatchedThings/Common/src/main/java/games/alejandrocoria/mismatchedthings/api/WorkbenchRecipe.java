@@ -1,12 +1,12 @@
 package games.alejandrocoria.mismatchedthings.api;
 
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategories;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 
 public interface WorkbenchRecipe extends Recipe<WorkbenchInput> {
     RecipeType<WorkbenchRecipe> TYPE = new RecipeType<>() {
