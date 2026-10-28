@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.mixin;
+package games.alejandrocoria.mismatchedboots.mixin.recovery;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

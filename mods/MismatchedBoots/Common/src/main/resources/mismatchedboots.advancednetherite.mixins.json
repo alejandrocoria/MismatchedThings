@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.advancednetherite.AdvancedNetheriteMixinPlugin",
+    "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.advancednetherite",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "AdvancedNetheriteHooksMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

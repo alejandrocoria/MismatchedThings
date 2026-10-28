@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.mixin;
+package games.alejandrocoria.mismatchedboots.mixin.recovery;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.core.component.DataComponents;

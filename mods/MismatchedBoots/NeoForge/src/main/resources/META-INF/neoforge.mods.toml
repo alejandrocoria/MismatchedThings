@@ -28,6 +28,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.recovery.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.advancednetherite.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.neoforge.mixins.json"
 
 [[mixins]]
