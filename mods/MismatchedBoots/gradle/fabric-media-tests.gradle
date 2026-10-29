@@ -1,0 +1,73 @@
+// Opt-in photo/replay acceptance; no media dependencies in the ordinary client suite.
+def modPath = mismatchedModProject.path
+def mediaClient = project("${modPath}:Fabric")
+def mediaPins = new groovy.json.JsonSlurper().parse(mismatchedModProject.file('media/artifacts.json'))
+def mediaBuild = mismatchedModProject.layout.buildDirectory.dir('media')
+def replayJar = mediaBuild.map { it.file("mods/${mediaPins.replay.filename}") }
+def runDirectory = layout.buildDirectory.dir('run/mediaClient')
+def fileOperations = objects.newInstance(FixtureFileOperations).files
+
+sourceSets {
+    mediaTest {
+        compileClasspath += sourceSets.gametest.compileClasspath + sourceSets.gametest.output
+        compileClasspath += files(replayJar)
+    }
+}
+tasks.named('compileMediaTestJava') {
+    dependsOn mediaClient.tasks.named('prepareMediaReplay')
+}
+def mediaTestJar = tasks.register('mediaTestJar', Jar) {
+    archiveClassifier = 'media-test'
+    from sourceSets.mediaTest.output
+}
+
+loom.runs.create('mediaClient') {
+    inherit loom.runs.client
+    source('gametest')
+    ideConfigGenerated(false)
+    property('fabric.client.gametest')
+    property('fabric.client.gametest.modid', 'mismatchedboots_media_test')
+    property('mismatchedboots.test.hideClientWindow', 'true')
+    runDir('build/run/mediaClient')
+    vmArg('-Xmx2G')
+}
+
+def prepare = tasks.register('prepareMediaClientTest', Delete) {
+    dependsOn mediaTestJar, mediaClient.tasks.named('jar'), mediaClient.tasks.named('prepareMediaReplay'),
+            mediaClient.tasks.named('prepareMediaPacks'), mediaClient.tasks.named('mediaDatapack')
+    delete runDirectory
+    doLast {
+        File directory = runDirectory.get().asFile
+        directory.mkdirs()
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'options.txt').text =
+                'soundCategory_master:0.0\nresourcePacks:["vanilla","file/mismatchedmedia"]\n'
+        fileOperations.copy {
+            from replayJar, mediaTestJar.flatMap { it.archiveFile }
+            into new File(directory, 'mods')
+        }
+        fileOperations.copy {
+            from mediaBuild.map { it.dir('resourcepack') }
+            into new File(directory, 'resourcepacks/mismatchedmedia')
+        }
+        fileOperations.copy {
+            from mediaBuild.map { it.file('mismatchedmedia-datapack.zip') }, mediaBuild.map { it.file('catalog.json') }
+            into directory
+        }
+    }
+}
+tasks.named('runMediaClient') {
+    dependsOn prepare
+    timeout = java.time.Duration.ofMinutes(5)
+}
+tasks.register('verifyMediaClient') {
+    group = 'verification'
+    description = 'Checks photo pack commands, mixed appearances and real Replay Mod recording/playback in a hidden client.'
+    dependsOn tasks.named('runMediaClient')
+    doLast {
+        File marker = runDirectory.get().file('media-client.ok').asFile
+        if (!marker.isFile() || marker.text != 'media-client-passed\n') {
+            throw new GradleException("Media acceptance marker missing: ${marker}")
+        }
+    }
+}

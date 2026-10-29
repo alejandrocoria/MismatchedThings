@@ -38,6 +38,7 @@ README summaries.
 
 ### Dedicated guides
 
+- [Media client](../media/README.md#targeted-validation): opt-in photo pack and Replay Mod acceptance.
 - [Silent Gear](docs/silent-gear.md): state, traits, tooltips, scoped faults and connected lifecycle.
 - Just Dire Things:
   - [Movement and cooldown feedback](docs/just-dire-movement.md): Jump, Negate, HUD and completion sounds.

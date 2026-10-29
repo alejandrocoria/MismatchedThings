@@ -1,0 +1,273 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+
+// Photo-only dependencies: never add these configurations to a production classpath or publication.
+def mediaSources = mismatchedModProject.file('media')
+def pins = new JsonSlurper().parse(new File(mediaSources, 'artifacts.json'))
+def mediaBuild = mismatchedModProject.layout.buildDirectory.dir('media')
+def mediaRun = layout.projectDirectory.dir('runs/media')
+def fileOperations = objects.newInstance(FixtureFileOperations).files
+def artifactConfigurations = [:]
+
+pins.each { id, pin ->
+    def configuration = configurations.create("media_${id}") {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    repositories.ivy {
+        name = "media_${id}"
+        url = pin.url.substring(0, pin.url.lastIndexOf('/') + 1)
+        patternLayout { artifact('[artifact].[ext]') }
+        metadataSources { artifact() }
+        content { includeModule('mismatchedboots.media', id) }
+    }
+    dependencies.add(configuration.name, "mismatchedboots.media:${id}:pinned") {
+        artifact {
+            name = pin.filename.substring(0, pin.filename.length() - 4)
+            type = 'jar'
+            extension = 'jar'
+        }
+    }
+    artifactConfigurations[id] = configuration
+}
+
+def resolveArtifact = { String id ->
+    def pin = pins[id]
+    File artifact = artifactConfigurations[id].singleFile
+    def actual = artifact.withInputStream { input ->
+        MessageDigest.getInstance(pin.algorithm).digest(input.readAllBytes()).encodeHex().toString()
+    }
+    if (actual != pin.hash) {
+        throw new GradleException("Unexpected ${pin.algorithm} for media artifact ${pin.filename}")
+    }
+    artifact
+}
+
+def prepareMediaPacks = tasks.register('prepareMediaPacks') {
+    group = 'media'
+    description = 'Builds photo-only resource assets from pinned original mod JARs without loading those mods.'
+    doLast {
+        File resources = mediaBuild.get().dir('resourcepack').asFile
+        File datapack = mediaBuild.get().dir('datapack').asFile
+        fileOperations.sync {
+            from new File(mediaSources, 'resourcepack')
+            into resources
+        }
+        fileOperations.sync {
+            from new File(mediaSources, 'datapack')
+            into datapack
+        }
+        def writeJson = { File destination, Object value ->
+            destination.parentFile.mkdirs()
+            destination.text = JsonOutput.prettyPrint(JsonOutput.toJson(value)) + '\n'
+        }
+        def give = { String item, Map components ->
+            "give @s ${item}[" + components.collect { key, value ->
+                "${key}=${JsonOutput.toJson(value)}"
+            }.join(',') + ']'
+        }
+        def translations = [en_us: [:], es_es: [:]]
+        def catalog = []
+        def allFunctions = []
+        def boxColors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink',
+                         'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown']
+        pins.findAll { id, pin -> pin.boots }.eachWithIndex { id, pin, groupIndex ->
+            def group = []
+            new ZipFile(resolveArtifact(id)).withCloseable { archive ->
+                def readJson = { String path ->
+                    def entry = archive.getEntry(path)
+                    if (entry == null) {
+                        throw new GradleException("Missing media source ${path}")
+                    }
+                    archive.getInputStream(entry).withCloseable { new JsonSlurper().parse(it) }
+                }
+                // Keep original PNGs and optional animation metadata unchanged, under a private namespace.
+                def copyTexture = { String texture, String directory ->
+                    if (texture.startsWith('#') || texture.startsWith('minecraft:')) {
+                        return texture
+                    }
+                    def parts = texture.split(':', 2)
+                    if (!directory && !parts[1].startsWith('item/')) {
+                        throw new GradleException("Unsupported media icon texture path: ${texture}")
+                    }
+                    // Inventory sprites must stay beneath textures/item for Minecraft's item atlas discovery.
+                    String targetTexture = directory ? "${parts[0]}/${parts[1]}"
+                            : "item/${parts[0]}/${parts[1].substring('item/'.length())}"
+                    String source = "assets/${parts[0]}/textures/${directory}${parts[1]}.png"
+                    [source, source + '.mcmeta'].each { path ->
+                        def entry = archive.getEntry(path)
+                        if (entry == null && path == source) {
+                            throw new GradleException("Missing media texture ${source}")
+                        }
+                        if (entry != null) {
+                            File target = new File(resources,
+                                    "assets/mismatchedmedia/textures/${directory}${targetTexture}"
+                                            + (path.endsWith('.mcmeta') ? '.png.mcmeta' : '.png'))
+                            target.parentFile.mkdirs()
+                            archive.getInputStream(entry).withCloseable { input ->
+                                target.withOutputStream { output -> input.transferTo(output) }
+                            }
+                        }
+                    }
+                    "mismatchedmedia:${targetTexture}".toString()
+                }
+                def nativeNames = [:]
+                translations.keySet().each { language ->
+                    String path = "assets/${id}/lang/${language}.json"
+                    nativeNames[language] = archive.getEntry(path) == null ? [:] : readJson(path)
+                }
+                pin.boots.each { definition ->
+                    def boot = definition instanceof String ? [item: definition] : definition
+                    String material = boot.item.replaceFirst(/_boots$/, '')
+                    String name = boot.id ?: "${id}_${material}"
+                    String modelId = "mismatchedmedia:${name}_boots"
+                    def layers = readJson("assets/${id}/equipment/${boot.equipment ?: material}.json").layers
+                    if (!layers.humanoid) {
+                        throw new GradleException("No standard humanoid layer for media boot ${id}:${boot.item}")
+                    }
+                    // The photo catalog targets adult player legs, not other equipment slots or baby mobs.
+                    def equippedLayers = [humanoid: layers.humanoid.collect { layer ->
+                        def result = new LinkedHashMap(layer)
+                        result.texture = copyTexture(layer.texture, 'entity/equipment/humanoid/')
+                        result
+                    }]
+                    writeJson(new File(resources, "assets/mismatchedmedia/equipment/${name}.json"),
+                            [layers: equippedLayers])
+
+                    // Photo presets intentionally use the untrimmed base, not NeoForge-only item-model dispatch.
+                    def base = readJson("assets/${id}/items/${boot.item}.json").model
+                    while (base.type != 'minecraft:model') {
+                        base = base.base_model ?: base.fallback
+                        if (base == null) {
+                            throw new GradleException("Unsupported media item model for ${id}:${boot.item}")
+                        }
+                    }
+                    def originalModel = base.model.split(':', 2)
+                    def model = readJson("assets/${originalModel[0]}/models/${originalModel[1]}.json")
+                    if (!(model.parent in ['minecraft:item/generated', 'item/generated']) || model.elements) {
+                        throw new GradleException("Media boot requires a custom item model: ${id}:${boot.item}")
+                    }
+                    model.textures = model.textures.collectEntries { key, texture ->
+                        [(key): copyTexture(texture, '')]
+                    }
+                    writeJson(new File(resources, "assets/mismatchedmedia/models/item/${name}_boots.json"), model)
+                    def itemModel = new LinkedHashMap(base)
+                    itemModel.model = "mismatchedmedia:item/${name}_boots"
+                    writeJson(new File(resources, "assets/mismatchedmedia/items/${name}_boots.json"), [model: itemModel])
+
+                    String translation = "item.mismatchedmedia.${name}_boots"
+                    String originalKey = "item.${id}.${boot.item}"
+                    if (!nativeNames.en_us[originalKey]) {
+                        throw new GradleException("Missing media item name ${originalKey}")
+                    }
+                    translations.each { language, names ->
+                        names[translation] = nativeNames[language][originalKey] ?: nativeNames.en_us[originalKey]
+                    }
+                    def components = [
+                            'minecraft:item_model': modelId,
+                            'minecraft:item_name': [translate: translation],
+                            'minecraft:equippable': [slot: 'feet', equip_sound: 'minecraft:item.armor.equip_iron',
+                                                     asset_id: "mismatchedmedia:${name}"]]
+                    File function = new File(datapack, "data/mismatchedmedia/function/boots/${name}.mcfunction")
+                    function.parentFile.mkdirs()
+                    function.text = give('minecraft:iron_boots', components) + '\n'
+                    def entry = [id: name, mod: id, components: components,
+                                 textures: equippedLayers.humanoid*.texture]
+                    group.add(entry)
+                    catalog.add(entry)
+                }
+            }
+            File functions = new File(datapack, 'data/mismatchedmedia/function')
+            new File(functions, 'mods').mkdirs()
+            new File(functions, "mods/${id}.mcfunction").text = group.collect {
+                "function mismatchedmedia:boots/${it.id}"
+            }.join('\n') + '\n'
+            new File(functions, 'catalog').mkdirs()
+            def container = group.withIndex().collect { boot, slot ->
+                [slot: slot, item: [id: 'minecraft:iron_boots', count: 1, components: boot.components]]
+            }
+            new File(functions, "catalog/${id}.mcfunction").text = give(
+                    "minecraft:${boxColors[groupIndex]}_shulker_box",
+                    ['minecraft:item_name': [text: pin.label], 'minecraft:container': container]) + '\n'
+            allFunctions.add("function mismatchedmedia:catalog/${id}")
+        }
+        allFunctions.add('give @s mismatchedthings:mismatched_workbench')
+        new File(datapack, 'data/mismatchedmedia/function/all.mcfunction').text = allFunctions.join('\n') + '\n'
+        translations.each { language, names ->
+            writeJson(new File(resources, "assets/mismatchedmedia/lang/${language}.json"), names)
+        }
+        writeJson(mediaBuild.get().file('catalog.json').asFile, catalog)
+        logger.lifecycle("Prepared ${catalog.size()} media boot appearances from ${allFunctions.size() - 1} mods")
+    }
+}
+
+def mediaDatapack = tasks.register('mediaDatapack', Zip) {
+    group = 'media'
+    description = 'Packages the photo boot commands for installation in a media world.'
+    dependsOn prepareMediaPacks
+    from mediaBuild.map { it.dir('datapack') }
+    destinationDirectory = mediaBuild
+    archiveFileName = 'mismatchedmedia-datapack.zip'
+}
+
+def prepareMediaReplay = tasks.register('prepareMediaReplay') {
+    group = 'media'
+    description = 'Stages the pinned Replay Mod in build/media, independently of any client instance.'
+    doLast {
+        fileOperations.copy {
+            from resolveArtifact('replay')
+            rename { pins.replay.filename }
+            into mediaBuild.get().dir('mods')
+        }
+    }
+}
+
+tasks.register('prepareMediaClient') {
+    group = 'media'
+    description = 'Prepares the isolated media client, preserving its worlds, recordings and settings.'
+    dependsOn prepareMediaPacks, mediaDatapack, prepareMediaReplay
+    doLast {
+        File directory = mediaRun.asFile
+        directory.mkdirs()
+        File replay = mediaBuild.get().file("mods/${pins.replay.filename}").asFile
+        File mods = new File(directory, 'mods')
+        // Preserve intentional additions (for example JEI); the automated fixture never reads this folder.
+        def unexpected = mods.listFiles()?.findAll { it.name.endsWith('.jar') && it.name != pins.replay.filename } ?: []
+        if (!unexpected.empty) {
+            logger.warn("Preserving additional media mods: ${unexpected*.name}")
+        }
+        fileOperations.copy {
+            from replay
+            into mods
+        }
+        fileOperations.sync {
+            from mediaBuild.get().dir('resourcepack')
+            into new File(directory, 'resourcepacks/mismatchedmedia')
+        }
+        fileOperations.copy {
+            from mediaDatapack.flatMap { it.archiveFile }
+            into new File(directory, 'packs')
+        }
+        File options = new File(directory, 'options.txt')
+        if (!options.exists()) {
+            options.text = 'resourcePacks:["vanilla","file/mismatchedmedia"]\n'
+        }
+        logger.lifecycle("Media ready: ${directory}\nDatapack: ${new File(directory, 'packs')}")
+        logger.lifecycle('For existing worlds, replace their installed media datapack ZIP and run /reload; reload textures with F3+T.')
+    }
+}
+
+loom.runs.create('media') {
+    client()
+    setConfigName("${mod_name} — Fabric Media")
+    ideConfigGenerated(true)
+    runDir('runs/media')
+}
+
+tasks.named('runMedia') {
+    dependsOn tasks.named('prepareMediaClient')
+}

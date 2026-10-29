@@ -69,6 +69,8 @@ loom {
     }
 }
 
+apply from: mismatchedModProject.file('gradle/fabric-media.gradle')
+
 // Keep the established validation commands while runtime infrastructure lives separately.
 ['verifyGameplay', 'verifyClient', 'verifyQuiltSmoke', 'verifyGameTestContextGuard',
  'verifyPersistenceRestart', 'verifyComponentRulesConfig',

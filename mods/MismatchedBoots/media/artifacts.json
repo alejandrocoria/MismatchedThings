@@ -1,0 +1,178 @@
+{
+    "replay": {
+        "filename": "replaymod-26.1-2.6.28.jar",
+        "url": "https://cdn.modrinth.com/data/Nv2fQJo5/versions/5LxshONI/replaymod-26.1-2.6.28.jar",
+        "algorithm": "SHA-512",
+        "hash": "4ad55c41c7eb0ff8358dcc15f16c3ec5ce777bb50e0e5ff825a9ed7b73b2ce7c9f2df8ceac9ed26d6e3f2de6450d09fae602be438c6efd82e34e34ac9705ba22"
+    },
+    "aquaculture": {
+        "filename": "Aquaculture-26.1.1-2.9.2.jar",
+        "url": "https://cdn.modrinth.com/data/Vl1uNAuy/versions/I2FfOQUM/Aquaculture-26.1.1-2.9.2.jar",
+        "algorithm": "SHA-256",
+        "hash": "ef3cde416d554aff527abe89125f02389bd420ea86c2be651ff3ee81207f00ed",
+        "label": "Aquaculture 2",
+        "boots": [
+            {
+                "item": "neptunium_boots",
+                "id": "neptunium"
+            }
+        ]
+    },
+    "allthemodium": {
+        "filename": "allthemodium-26.1.2-4.1.1.jar",
+        "url": "https://edge.forgecdn.net/files/9052/575/allthemodium-26.1.2-4.1.1.jar",
+        "algorithm": "SHA-256",
+        "hash": "59e24aa1f26e752faf86ced677547a72403d81c395b5193e9e2598bd23b033ff",
+        "label": "AllTheModium",
+        "boots": [
+            "allthemodium_boots",
+            "vibranium_boots",
+            {
+                "item": "unobtainium_boots",
+                "id": "unobtainium"
+            }
+        ]
+    },
+    "aether_ii": {
+        "filename": "aether_ii-26.1.2-alpha.4.1-neoforge.jar",
+        "url": "https://cdn.modrinth.com/data/JD2NSu5O/versions/soZ6Sulf/aether_ii-26.1.2-alpha.4.1-neoforge.jar",
+        "algorithm": "SHA-256",
+        "hash": "97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6",
+        "label": "The Aether II",
+        "boots": [
+            "arkenium_boots",
+            "beast_pelt_boots",
+            "burrukai_plate_boots",
+            "gravitite_boots",
+            "neptune_boots",
+            "sentry_boots",
+            "zanite_boots"
+        ]
+    },
+    "justdirethings": {
+        "filename": "justdirethings-1.6.11.jar",
+        "url": "https://edge.forgecdn.net/files/8251/776/justdirethings-1.6.11.jar",
+        "algorithm": "SHA-256",
+        "hash": "27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436",
+        "label": "Just Dire Things",
+        "boots": [
+            "ferricore_boots",
+            "blazegold_boots",
+            "celestigem_boots",
+            "eclipsealloy_boots"
+        ]
+    },
+    "mysticalagriculture": {
+        "filename": "MysticalAgriculture-26.1.2-9.0.11.jar",
+        "url": "https://cdn.modrinth.com/data/C95ReXie/versions/euEwsQlw/MysticalAgriculture-26.1.2-9.0.11.jar",
+        "algorithm": "SHA-256",
+        "hash": "f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498",
+        "label": "Mystical Agriculture",
+        "boots": [
+            "inferium_boots",
+            "prudentium_boots",
+            "tertium_boots",
+            "imperium_boots",
+            "supremium_boots",
+            "awakened_supremium_boots"
+        ]
+    },
+    "neovitae": {
+        "filename": "neovitae-26.1.2-1.1.31.jar",
+        "url": "https://cdn.modrinth.com/data/rvaW4C93/versions/QJXvo8Q1/neovitae-26.1.2-1.1.31.jar",
+        "algorithm": "SHA-256",
+        "hash": "55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92",
+        "label": "Neo Vitae",
+        "boots": [
+            "sentient_boots"
+        ]
+    },
+    "undergarden": {
+        "filename": "The_Undergarden-26.1.2-0.9.8.jar",
+        "url": "https://cdn.modrinth.com/data/Ejfl5qDL/versions/e8zLw9Sq/The_Undergarden-26.1.2-0.9.8.jar",
+        "algorithm": "SHA-256",
+        "hash": "5a9c449b01327b8f368bfd8a70e5dd5707362a3e3211ea7735e751dff4c258dc",
+        "label": "The Undergarden",
+        "boots": [
+            "cloggrum_boots",
+            "froststeel_boots",
+            "utherium_boots"
+        ]
+    },
+    "iceandfire": {
+        "filename": "iceandfire-2.2-beta.3.jar",
+        "url": "https://edge.forgecdn.net/files/8929/527/iceandfire-2.2-beta.3.jar",
+        "algorithm": "SHA-256",
+        "hash": "ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2",
+        "label": "Ice and Fire",
+        "boots": [
+            "sheep_boots"
+        ]
+    },
+    "advancednetherite": {
+        "filename": "advancednetherite-fabric-2.4.1-26.1.2.jar",
+        "url": "https://cdn.modrinth.com/data/CFX9ftUJ/versions/vudH2Rjv/advancednetherite-fabric-2.4.1-26.1.2.jar",
+        "algorithm": "SHA-512",
+        "hash": "67b9d36213ea1393c8187e981d528784d17dc26f4f3543b63f4b5f6ee79c732473909783c64f7ffdecc3d0963ef9977812cf910968dc5d31e123e361de3cb968",
+        "label": "Advanced Netherite",
+        "boots": [
+            "netherite_iron_boots",
+            "netherite_gold_boots",
+            "netherite_emerald_boots",
+            "netherite_diamond_boots"
+        ]
+    },
+    "betterend": {
+        "filename": "better-end-26.101.2.jar",
+        "url": "https://cdn.modrinth.com/data/gc8OEnCC/versions/tBdZGZeX/better-end-26.101.2.jar",
+        "algorithm": "SHA-512",
+        "hash": "29f5dd94b48eef10c06d4b8bbd0b03daa8c6740c0e3af6635589d35e1018e7681de15239547d3a3423c9df79d867c289b52831c298dd108f284bed43e9e401d7",
+        "label": "Better End",
+        "boots": [
+            "thallasium_boots",
+            "terminite_boots",
+            "aeternium_boots"
+        ]
+    },
+    "betternether": {
+        "filename": "better-nether-26.101.2.jar",
+        "url": "https://cdn.modrinth.com/data/MpzVLzy5/versions/gDLNJy17/better-nether-26.101.2.jar",
+        "algorithm": "SHA-512",
+        "hash": "392a7f25ade5b36caf3f632a79accfa764e65dc8efed8625be1ed5fe259fc7159ab22e56de64ac3bf4d4bb7b149b48a1d3b815405ac280d3ba21cbe7dd79f02d",
+        "label": "Better Nether",
+        "boots": [
+            "cincinnasite_boots",
+            "nether_ruby_boots",
+            "flaming_ruby_boots"
+        ]
+    },
+    "create": {
+        "filename": "create-fly-26.1.2-6.0.9-4.jar",
+        "url": "https://cdn.modrinth.com/data/dKvj0eNn/versions/wV5IQLKg/create-fly-26.1.2-6.0.9-4.jar",
+        "algorithm": "SHA-512",
+        "hash": "5930cc930a053614b2d5b0340403093af5c08c8524ab5ae3290377f7deb002ebcd2ac1e678f788d52274b1a057f45f204c2890c6ad03d7a3574181ce01efdd34",
+        "label": "Create Fly",
+        "boots": [
+            "cardboard_boots",
+            {
+                "item": "copper_diving_boots",
+                "equipment": "copper"
+            },
+            {
+                "item": "netherite_diving_boots",
+                "equipment": "netherite"
+            }
+        ]
+    },
+    "forbidden_arcanus": {
+        "filename": "forbidden_arcanus-26.1.2-2.7.2.jar",
+        "url": "https://cdn.modrinth.com/data/MdlnLS7Q/versions/o5OOKrZw/forbidden_arcanus-26.1.2-2.7.2.jar",
+        "algorithm": "SHA-512",
+        "hash": "d84bd44f596ad4c439e7beae65b3192fe532b9c5ea1f9d211fb38dfb44ed387a26800cd25d7b9a6c79ddb326c57ba4d0022e2a4b5192b4060d9f6dbddaea492d",
+        "label": "Forbidden Arcanus",
+        "boots": [
+            "draco_arcanus_boots",
+            "tyr_boots"
+        ]
+    }
+}

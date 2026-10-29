@@ -75,6 +75,9 @@ The production client tasks are `:MismatchedBoots:Fabric:runClient` and
 `:MismatchedBoots:NeoForge:runClient`. Generated IntelliJ launch names identify
 the mod, loader and side. Release metadata belongs to [mod.properties](mod.properties).
 
+For promotional photos and Replay Mod recordings, use the separate
+[Fabric media client](media/README.md), not the ordinary indev client.
+
 The publication entry is `:MismatchedBoots:publishMod` (both loaders). Package
 verification, the pinned runtime artifact catalog and startup/network acceptance
 are owned here as well; their outputs are under this directory's `build/`.

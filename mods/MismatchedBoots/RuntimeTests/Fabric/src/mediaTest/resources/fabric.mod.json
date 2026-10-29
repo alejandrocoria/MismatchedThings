@@ -1,0 +1,20 @@
+{
+    "schemaVersion": 1,
+    "id": "mismatchedboots_media_test",
+    "version": "1.0.0",
+    "name": "MismatchedBoots Media Test",
+    "environment": "client",
+    "entrypoints": {
+        "fabric-client-gametest": [
+            "games.alejandrocoria.mismatchedboots.runtimetest.media.MediaClientGameTest"
+        ]
+    },
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "26.1.2",
+        "mismatchedboots": "*",
+        "mismatchedboots-test": "*",
+        "replaymod": "*"
+    }
+}
