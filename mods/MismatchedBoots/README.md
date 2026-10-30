@@ -3,6 +3,9 @@
 MismatchedBoots combines any two pairs of boots into two oppositely oriented
 mixed pairs on Fabric and NeoForge.
 
+Install it on both the client and the server, using the same mod loader on both
+sides. Cross-loader connections are not supported.
+
 ## Crafting
 
 The workbench is provided by the bundled MismatchedThings core. It comes with

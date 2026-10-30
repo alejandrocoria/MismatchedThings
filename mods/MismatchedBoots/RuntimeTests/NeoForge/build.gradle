@@ -164,6 +164,8 @@ neoForge {
             systemProperty('mismatchedboots.runtimetest.loader', 'neoforge')
             systemProperty('mismatchedboots.runtimetest.stopAfterReady',
                     providers.gradleProperty('networkTestStopAfterReady').getOrElse('false'))
+            systemProperty('mismatchedboots.runtimetest.expectLoaderRejection',
+                    providers.gradleProperty('networkTestExpectLoaderRejection').getOrElse('false'))
             jvmArgument('-Xmx1G')
         }
         networkTestClient {

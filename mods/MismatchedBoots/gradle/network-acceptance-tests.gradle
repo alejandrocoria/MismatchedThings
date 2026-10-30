@@ -102,7 +102,8 @@ narrator:0
     }
 }
 
-def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady ->
+def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady,
+                      boolean expectLoaderRejection = false ->
     String projectName = loader == 'fabric' ? 'Fabric' : 'NeoForge'
     String taskName = "${modPath}:RuntimeTests:${projectName}:runNetworkTest${endpoint.capitalize()}"
     List<String> gradleArguments = [
@@ -113,6 +114,7 @@ def startEndpoint = { String loader, String endpoint, int port, File markers, bo
             "-PnetworkTestPort=${port}",
             "-PnetworkTestMarkers=${markers.absolutePath}",
             "-PnetworkTestStopAfterReady=${stopAfterReady}",
+            "-PnetworkTestExpectLoaderRejection=${expectLoaderRejection}",
             taskName
     ] + baselineArguments
     List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
@@ -274,6 +276,39 @@ def runPair = { String serverLoader, String clientLoader, int port ->
     }
 }
 
+def runLoaderRejection = {
+    File markers = networkAcceptanceRoot.get().dir('neoforge-server_fabric-client-refused').asFile
+    acceptanceFileOperations.delete { delete markers }
+    markers.mkdirs()
+    int port = 25581
+    prepareEndpoint('neoforge', 'server', port, null)
+    prepareEndpoint('fabric', 'client', port, null)
+    Process server = null
+    Process client = null
+    try {
+        server = startEndpoint('neoforge', 'server', port, markers, false, true)
+        awaitServerReady(server, markers)
+        client = startEndpoint('fabric', 'client', port, markers, false, true)
+        awaitExit(client, 'client', markers, 240)
+        awaitExit(server, 'server', markers, 60)
+        String failure = failureText(markers)
+        if (failure) {
+            throw new GradleException(failure)
+        }
+        if (!new File(markers, 'client-loader-rejected.txt').isFile()
+                || !new File(markers, 'server-success.txt').isFile()
+                || new File(markers, 'client-success.txt').exists()
+                || new File(markers, 'server-result.txt').exists()) {
+            throw new GradleException("Loader rejection evidence is missing or client entered the world; see ${markers}")
+        }
+        assertCleanLogs([runDirectory('neoforge', 'server'), runDirectory('fabric', 'client')], markers)
+        println 'Passed NeoForge server rejection of a Fabric client before entering the world'
+    } finally {
+        stopProcess(client)
+        stopProcess(server)
+    }
+}
+
 def journeyMapNeoForge = {
     def artifact = journeyMapConfiguration
             .resolvedConfiguration
@@ -372,7 +407,7 @@ tasks.register('verifyLoaderServerStartup') {
 
 tasks.register('verifyLoaderNetworking') {
     group = 'verification'
-    description = 'Runs separate-process same-loader rule synchronization acceptance tests.'
+    description = 'Tests same-loader synchronization and rejection of an incompatible client in separate processes.'
     dependsOn "${modPath}:Fabric:jar", "${modPath}:NeoForge:jar"
 
     doLast {
@@ -383,10 +418,13 @@ tasks.register('verifyLoaderNetworking') {
         if (selectedCase == 'all' || selectedCase == 'neoforge-neoforge') {
             runPair('neoforge', 'neoforge', 25576)
         }
+        if (selectedCase == 'all' || selectedCase == 'neoforge-fabric-refused') {
+            runLoaderRejection()
+        }
         if (selectedCase == 'all' || selectedCase == 'journeymap') {
             runJourneyMapCoexistence()
         }
-        if (!(selectedCase in ['all', 'fabric-fabric', 'neoforge-neoforge', 'journeymap'])) {
+        if (!(selectedCase in ['all', 'fabric-fabric', 'neoforge-neoforge', 'neoforge-fabric-refused', 'journeymap'])) {
             throw new GradleException("Unknown networkAcceptanceCase: ${selectedCase}")
         }
     }

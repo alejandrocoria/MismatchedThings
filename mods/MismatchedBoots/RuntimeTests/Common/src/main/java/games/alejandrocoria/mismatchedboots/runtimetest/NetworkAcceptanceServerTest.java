@@ -74,6 +74,18 @@ public final class NetworkAcceptanceServerTest {
                 }
             }
 
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.expectLoaderRejection")) {
+                if (!server.getPlayerList().getPlayers().isEmpty()) {
+                    throw new AssertionError("Incompatible client entered the server world");
+                }
+                if (NetworkAcceptanceFiles.exists("client-loader-rejected.txt")) {
+                    succeedAndStop(server);
+                } else if (ticks > TIMEOUT_TICKS) {
+                    throw new AssertionError("Loader rejection client did not report its disconnect reason");
+                }
+                return;
+            }
+
             if (!resultDelivered && !server.getPlayerList().getPlayers().isEmpty()) {
                 playerSeen = true;
                 craftAndDeliver(server.getPlayerList().getPlayers().getFirst());

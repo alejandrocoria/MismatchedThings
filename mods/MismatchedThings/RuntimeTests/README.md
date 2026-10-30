@@ -58,6 +58,24 @@ owners, defensive single-item admission and concurrent consumer registration.
 
 ## Native coexistence and evolution
 
+### Loader compatibility
+
+Remote connections must use the same loader. The NeoForge entry point checks
+the negotiated connection type during `RegisterConfigurationTasksEvent` and
+rejects `OTHER` before play, with a translated message and an English fallback.
+In-memory integrated connections bypass this check because they share registries.
+Fabric API supplies the corresponding Fabric-server rejection.
+
+The existing Boots packaged-endpoint harness owns the real TCP regression:
+`:MismatchedBoots:verifyLoaderNetworking -PnetworkAcceptanceCase=neoforge-fabric-refused`.
+Run on NeoForge .99 and .114 alongside its `neoforge-neoforge` positive case;
+see [the networking guide](../../MismatchedBoots/RuntimeTests/README.md#commands)
+for endpoint preparation and success-marker requirements. Core assets and the
+refusal callback are loaded from the real core JAR nested inside Boots, not copied
+into a fixture. This check does not provide cross-loader registry interoperability.
+
+### Native consumer matrix
+
 `verifyWorkbenchCompatibility` runs five server/client graphs, an additional
 saved-world upgrade client, then one intentionally refused server launch:
 

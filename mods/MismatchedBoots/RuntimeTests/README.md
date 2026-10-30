@@ -1014,7 +1014,7 @@ viewer test or human visual acceptance.
 `verifyLoaderNetworking` orchestrates real connections, prepares isolated
 directories, and checks result markers. Select a pair with
 `-PnetworkAcceptanceCase=fabric-fabric` or `neoforge-neoforge`; the default also
-includes JourneyMap coexistence. The internal `runNetworkTestServer` and
+includes incompatible-loader rejection and JourneyMap coexistence. The internal `runNetworkTestServer` and
 `runNetworkTestClient` tasks require that preparation and are not standalone
 verification entrypoints.
 
@@ -1022,6 +1022,19 @@ To validate the declared minimum NeoForge loader, add
 `'-Pneoforge_version=26.1.2.99'` to the selected startup/network verifier.
 Explicit `neoforge_version`, `fabric_loader_version`, and `fabric_api_version`
 overrides propagate to its child Gradle runs. Normal indev NeoForge stays .114.
+
+Cross-loader play is unsupported. The focused
+`-PnetworkAcceptanceCase=neoforge-fabric-refused` case connects a hidden/muted
+Fabric client to the actual packaged NeoForge server. It requires Things' exact
+loader-mismatch message on the client, no player entering either world and no
+server crafting result; a timeout or unrelated disconnect is not success.
+The server stops normally after the refusal marker, and both endpoints must exit
+cleanly. Run on .99 and .114; the same-loader positive cases remain required
+controls. Fabric API already refuses NeoForge clients through registry sync.
+
+On 2026-10-30, both the refusal and NeoForge/NeoForge positive controls passed
+on .99 and .114. The standalone Things server/client persistence and screen
+control also passed on .114, including its integrated singleplayer connection.
 
 Same-loader network acceptance also checks the actual inventory/use/dispenser
 routes: a bare invalid shell never equips, while a valid crafted pair still

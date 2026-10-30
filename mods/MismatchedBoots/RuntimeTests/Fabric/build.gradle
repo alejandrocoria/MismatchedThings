@@ -674,6 +674,8 @@ loom {
             property('mismatchedboots.runtimetest.markers', networkTestMarkers)
             property('mismatchedboots.runtimetest.loader', 'fabric')
             property('mismatchedboots.test.hideClientWindow', 'true')
+            property('mismatchedboots.runtimetest.expectLoaderRejection',
+                    providers.gradleProperty('networkTestExpectLoaderRejection').getOrElse('false'))
             programArgs('--quickPlayMultiplayer', "127.0.0.1:${networkTestPort}")
             vmArg('-Xmx1G')
         }

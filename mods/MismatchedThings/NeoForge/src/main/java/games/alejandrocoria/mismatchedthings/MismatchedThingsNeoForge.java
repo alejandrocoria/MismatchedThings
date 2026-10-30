@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import games.alejandrocoria.mismatchedthings.client.MismatchedThingsClientNeoForge;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchContent;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -11,6 +12,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.network.event.RegisterConfigurationTasksEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 @Mod(MismatchedWorkbench.MOD_ID)
@@ -29,6 +31,7 @@ public final class MismatchedThingsNeoForge {
         ITEMS.register(bus);
         MENUS.register(bus);
         RECIPES.register(bus);
+        bus.addListener(MismatchedThingsNeoForge::requireNeoForgeClient);
         bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) {
                 event.accept(MismatchedWorkbench.item());
@@ -37,6 +40,16 @@ public final class MismatchedThingsNeoForge {
 
         if (FMLEnvironment.getDist().isClient()) {
             bus.addListener(MismatchedThingsClientNeoForge::registerScreens);
+        }
+    }
+
+    private static void requireNeoForgeClient(RegisterConfigurationTasksEvent event) {
+        var listener = event.getListener();
+        // Integrated clients share the registries; remote clients need NeoForge's registry synchronization.
+        if (!listener.getConnection().isMemoryConnection() && listener.getConnectionType().isOther()) {
+            listener.disconnect(Component.translatableWithFallback(
+                    "disconnect.mismatchedthings.loader_mismatch",
+                    "This server requires NeoForge. Mismatched mods must use the same loader on the client and server."));
         }
     }
 }

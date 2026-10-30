@@ -11,6 +11,7 @@ import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
@@ -39,6 +40,10 @@ public final class NetworkAcceptanceClientTest {
         try {
             ticks++;
             assertUnattended(client);
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.expectLoaderRejection")) {
+                verifyLoaderRejection(client);
+                return;
+            }
             if (client.level == null || client.player == null) {
                 if (ticks > TIMEOUT_TICKS) {
                     throw new AssertionError("Network acceptance client timed out before joining the server");
@@ -122,6 +127,24 @@ public final class NetworkAcceptanceClientTest {
             NetworkAcceptanceFiles.failure("client", throwable);
             finished = true;
             client.stop();
+        }
+    }
+
+    private static void verifyLoaderRejection(Minecraft client) {
+        if (client.level != null || client.player != null) {
+            throw new AssertionError("Incompatible client entered the server world");
+        }
+        if (client.screen instanceof DisconnectedScreen screen) {
+            String reason = screen.getNarrationMessage().getString();
+            String expected = "This server requires NeoForge. Mismatched mods must use the same loader on the client and server.";
+            if (!reason.contains(expected)) {
+                throw new AssertionError("Unexpected loader rejection reason: " + reason);
+            }
+            NetworkAcceptanceFiles.write("client-loader-rejected.txt", reason);
+            finished = true;
+            client.stop();
+        } else if (ticks > TIMEOUT_TICKS) {
+            throw new AssertionError("Incompatible client was not rejected during configuration");
         }
     }
 

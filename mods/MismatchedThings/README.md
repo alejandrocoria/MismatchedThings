@@ -4,6 +4,12 @@ Small runtime mod owning the family workbench. Its version is independent of
 Mismatched Boots. Boots artifacts bundle their loader-specific core through
 native nested dependencies; users do not need a separate download.
 
+Client and server must use the same loader. NeoForge rejects remote non-NeoForge
+clients during configuration because their static registry IDs cannot be safely
+synchronized by its protocol. Fabric API already rejects clients that do not
+support Fabric registry synchronization. Integrated singleplayer connections
+share registries and are unaffected.
+
 Boots contributes admission and composition through API v1; it no longer owns
 a second station. Permanent native coexistence/version-evolution controls now
 cover Fabric and NeoForge .99/.114, including compiled API-v1 consumers and

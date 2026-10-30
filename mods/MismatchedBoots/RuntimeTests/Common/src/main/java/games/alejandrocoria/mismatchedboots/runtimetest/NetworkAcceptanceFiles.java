@@ -31,6 +31,10 @@ public final class NetworkAcceptanceFiles {
         write(endpoint + "-failure.txt", trace.toString());
     }
 
+    public static boolean exists(String name) {
+        return Files.isRegularFile(markerDirectory().resolve(name));
+    }
+
     public static String snapshot(AttributeRuleSet rules, ComponentRules componentRules) {
         StringBuilder result = new StringBuilder("fallback=")
                 .append(rules.fallback().serializedName())
