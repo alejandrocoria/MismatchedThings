@@ -532,6 +532,11 @@ launch client, persistence-restart, geometry, or network acceptance runs.
 The focused NeoForge tooltip characterization is likewise an explicit client
 task rather than part of `build`/`check`.
 
+Publication tasks (`modrinth`, `publishCurseForge`, and their `publishMod`
+aggregate) assemble the loader artifacts and generate changelogs without running
+`build`/`check`. Run the desired verification gates separately before publishing;
+uploading is not itself test acceptance.
+
 The NeoForge geometry client also exercises native equipment model replacement:
 side ownership after extension resolution, cached models shared across queued
 entities, custom animation, ordinary/default/non-humanoid controls, exactly one

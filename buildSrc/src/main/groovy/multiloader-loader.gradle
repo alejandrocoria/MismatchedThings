@@ -86,8 +86,8 @@ tasks.matching { it.name == 'sourcesJar' }.configureEach {
     from(configurations.commonResources)
 }
 
-tasks.configureEach {
-    if (name.startsWith('curseforge') || name.startsWith('modrinth')) {
-        dependsOn(tasks.named('build'))
-    }
+tasks.matching {
+    it.name in ['publishCurseForge', 'modrinth']
+}.configureEach {
+    dependsOn(tasks.named('assemble'))
 }
