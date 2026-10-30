@@ -1,0 +1,37 @@
+// Build-only regression: these older libraries never enter a game runtime or published JAR.
+def compatibilitySources = sourceSets.create('mixinBinaryCompatibility')
+
+dependencies {
+    mixinBinaryCompatibilityImplementation 'io.github.llamalad7:mixinextras-neoforge:0.5.4'
+    mixinBinaryCompatibilityImplementation 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
+    mixinBinaryCompatibilityImplementation 'org.ow2.asm:asm-tree:9.9.1'
+    mixinBinaryCompatibilityImplementation 'org.ow2.asm:asm-util:9.9.1'
+}
+
+tasks.named(compatibilitySources.compileJavaTaskName, JavaCompile) {
+    options.compilerArgs.add('-proc:none')
+}
+
+def publication = tasks.named('jar').flatMap { it.archiveFile }
+def verifyBinary = tasks.register('verifyMixinBinaryCompatibility', JavaExec) {
+    group = 'verification'
+    description = 'Checks published Redirect bytecode against MixinExtras 0.5.4, including an incompatible-format control.'
+    dependsOn tasks.named('jar'), tasks.named(compatibilitySources.classesTaskName)
+    inputs.file(publication)
+    classpath = compatibilitySources.runtimeClasspath
+    mainClass = 'games.alejandrocoria.mismatchedboots.buildtest.MixinBinaryCompatibilityCheck'
+    javaLauncher = javaToolchains.launcherFor(java.toolchain)
+    argumentProviders.add({ [publication.get().asFile.absolutePath] } as CommandLineArgumentProvider)
+}
+
+tasks.named('check') { dependsOn verifyBinary }
+mismatchedModProject.tasks.named('verifyPackagedDependencies') { dependsOn verifyBinary }
+
+tasks.register('captureMixinCompatibilityArtifact', Copy) {
+    group = 'verification'
+    description = 'Freezes the verified publication for unchanged-JAR checks on other NeoForge runtimes.'
+    dependsOn verifyBinary
+    from(publication)
+    into(mismatchedModProject.layout.buildDirectory.dir('mixin-binary-compatibility'))
+    rename { 'published.jar' }
+}

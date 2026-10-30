@@ -21,6 +21,18 @@ apply from: file('gradle/network-acceptance-tests.gradle')
 apply from: file('gradle/packaged-dependencies.gradle')
 apply from: file('gradle/shared-workbench-packaging.gradle')
 
+// Mixin 0.17.4 emits array-form Redirect.at annotations that older supported
+// NeoForge runtimes' MixinExtras 0.5.4 cannot read. Constrain compilation only:
+// each loader keeps its own runtime libraries, and Fabric's compiler is unchanged.
+['Common', 'NeoForge'].each { name ->
+    def targetProject = project(name)
+    targetProject.pluginManager.withPlugin('java-library') {
+        targetProject.configurations.named('compileClasspath') {
+            resolutionStrategy.force 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
+        }
+    }
+}
+
 // These optional source APIs belong to Boots, not every user of the build conventions.
 ['Common', 'Fabric', 'NeoForge'].each { name ->
     def targetProject = project(name)

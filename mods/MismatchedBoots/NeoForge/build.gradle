@@ -8,6 +8,8 @@ plugins {
     id "com.modrinth.minotaur" version "2.9.0"
 }
 
+apply from: file('../gradle/mixin-binary-compatibility.gradle')
+
 def modPath = mismatchedModProject.path
 
 base.archivesName = "${project.mod_name}-${project.minecraft_version}-neoforge"

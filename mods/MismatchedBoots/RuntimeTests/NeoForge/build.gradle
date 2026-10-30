@@ -87,6 +87,10 @@ def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
         .getOrElse(fixtureBuildDirectory.dir('markers').get().asFile.absolutePath)
 def geometryMarkers = fixtureBuildDirectory.dir('geometry-markers')
 def geometryRunDirectory = fixtureBuildDirectory.dir('run/geometryClient')
+// A frozen publication can be exercised on older loaders without substituting their freshly compiled Boots JAR.
+def geometryProductionArchive = providers.gradleProperty('geometryProductionJar')
+        .map { rootProject.file(it) }
+        .orElse(productionArchive.map { it.asFile })
 def iceAndFireTest = providers.gradleProperty('iceAndFireTest').map { it.toBoolean() }.getOrElse(false)
 def rootsRenderingTest = providers.gradleProperty('rootsRenderingTest').map { it.toBoolean() }.getOrElse(false)
 def rootsRenderingArtifact = testMods.path('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar')
@@ -438,6 +442,7 @@ tasks.register('verifyAdvancedNetheriteCompatibility') {
 
 tasks.register('prepareGeometryClient') {
     dependsOn("${modPath}:NeoForge:jar")
+    inputs.file(geometryProductionArchive)
     doLast {
         def compatibilityArtifacts = []
         if (iceAndFireTest) {
@@ -459,10 +464,21 @@ tasks.register('prepareGeometryClient') {
         def modsDirectory = new File(runDirectory, 'mods')
         modsDirectory.mkdirs()
         fixtureFileOperations.copy {
-            from(productionArchive)
+            from(geometryProductionArchive)
             from(compatibilityArtifacts)
             into(modsDirectory)
         }
+        def staged = new File(modsDirectory, geometryProductionArchive.get().name)
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        def sourceHash = digest.digest(geometryProductionArchive.get().bytes).encodeHex().toString()
+        def stagedHash = digest.digest(staged.bytes).encodeHex().toString()
+        if (sourceHash != stagedHash) {
+            throw new GradleException('Geometry fixture did not stage the requested Boots artifact unchanged')
+        }
+        def markers = geometryMarkers.get().asFile
+        markers.mkdirs()
+        new File(markers, 'geometry-artifact-sha256.txt').text = stagedHash + '\n'
+        logger.lifecycle("Geometry Boots artifact SHA-256: ${stagedHash}")
         new File(runDirectory, 'options.txt').text = 'soundCategory_master:0.0\n'
         def configDirectory = new File(runDirectory, 'config')
         configDirectory.mkdirs()

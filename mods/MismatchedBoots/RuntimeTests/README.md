@@ -38,6 +38,8 @@ README summaries.
 
 ### Dedicated guides
 
+- [Mixin binary compatibility](docs/mixin-binary-compatibility.md): publication-format regression and unchanged-JAR
+  checks against older NeoForge runtimes.
 - [Media client](../media/README.md#targeted-validation): opt-in photo pack and Replay Mod acceptance.
 - [Silent Gear](docs/silent-gear.md): state, traits, tooltips, scoped faults and connected lifecycle.
 - Just Dire Things:
