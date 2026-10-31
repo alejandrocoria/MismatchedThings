@@ -1,0 +1,16 @@
+{
+    "schemaVersion": 1,
+    "id": "leggings_spike",
+    "version": "0.0.0-spike",
+    "name": "Leggings rendering research (test only)",
+    "environment": "client",
+    "entrypoints": {
+        "client": ["games.alejandrocoria.leggingsspike.FabricSpike"]
+    },
+    "mixins": ["leggings-spike.mixins.json"],
+    "depends": {
+        "fabricloader": ">=0.19.5",
+        "fabric-api": "*",
+        "minecraft": "26.1.2"
+    }
+}

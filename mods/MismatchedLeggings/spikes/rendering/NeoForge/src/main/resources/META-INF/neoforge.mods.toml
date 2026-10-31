@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="leggings_spike"
+version="0.0.0-spike"
+displayName="Leggings rendering research (test only)"
+
+[[mixins]]
+config="leggings-spike.mixins.json"

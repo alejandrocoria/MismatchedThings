@@ -54,3 +54,13 @@ project(':MismatchedThings').projectDir = file('mods/MismatchedThings')
 ['Fabric', 'NeoForge'].each { loader ->
     include("MismatchedThings:RuntimeTests:Consumers:${loader}")
 }
+
+// Disposable rendering research, excluded from normal builds and publication.
+if (providers.gradleProperty('leggingsSpike').map { it.toBoolean() }.getOrElse(false)) {
+    include('LeggingsSpike')
+    project(':LeggingsSpike').projectDir = file('mods/MismatchedLeggings/spikes/rendering')
+    ['Fabric', 'NeoForge'].each { loader ->
+        include("LeggingsSpike:${loader}")
+        project(":LeggingsSpike:${loader}").projectDir = file("mods/MismatchedLeggings/spikes/rendering/${loader}")
+    }
+}
