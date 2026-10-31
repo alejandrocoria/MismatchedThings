@@ -46,6 +46,7 @@ public final class SkeletonChecks {
         serverFinished = true;
         try {
             verify();
+            SourceDataChecks.verify(server);
             passed("server");
         } catch (Throwable failure) {
             failed("server", failure);

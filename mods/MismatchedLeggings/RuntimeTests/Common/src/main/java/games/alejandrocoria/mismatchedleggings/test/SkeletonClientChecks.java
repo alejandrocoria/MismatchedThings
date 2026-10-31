@@ -34,7 +34,7 @@ public final class SkeletonClientChecks {
                 SkeletonChecks.require(stack.getHoverName().getString().equals("Mismatched Leggings"), "Missing item translation");
                 SkeletonChecks.require(stack.getTooltipLines(Item.TooltipContext.EMPTY, null, TooltipFlag.NORMAL).stream()
                         .anyMatch(line -> line.getString().equals("Invalid mixed leggings data")), "Missing bare-item diagnostic");
-                scene = new ItemScene(stack);
+                scene = new ItemScene(SourceDataChecks.clientRoundTrip(client.level.registryAccess()));
                 client.setScreen(scene);
             } else if (scene.frames >= 5) {
                 SkeletonChecks.passed("client");

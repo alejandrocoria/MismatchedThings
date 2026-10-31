@@ -28,7 +28,8 @@ gradle.projectsEvaluated {
                      'assets/mismatchedleggings/items/mixed_leggings.json',
                      'assets/mismatchedleggings/models/item/mixed_leggings.json',
                      'assets/mismatchedleggings/lang/en_us.json',
-                     'assets/mismatchedleggings/lang/es_es.json'].each { path ->
+                     'assets/mismatchedleggings/lang/es_es.json',
+                     'mismatchedleggings.mixins.json'].each { path ->
                         if (!(path in names)) { throw new GradleException("Missing product entry: ${path}") }
                     }
                     String nestedPath
@@ -36,7 +37,8 @@ gradle.projectsEvaluated {
                         def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
                         if (descriptor.id != 'mismatchedleggings' || descriptor.version != project.version.toString()
                                 || descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0'
-                                || descriptor.depends.containsKey('mismatchedboots') || descriptor.mixins) {
+                                || descriptor.depends.containsKey('mismatchedboots')
+                                || descriptor.mixins != ['mismatchedleggings.mixins.json']) {
                             throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
                         }
                         def nested = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
@@ -49,7 +51,7 @@ gradle.projectsEvaluated {
                         def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
                         if (!text.contains('modId="mismatchedleggings"') || text.contains('modId="mismatchedboots"')
                                 || dependency == null || !dependency.contains('versionRange="[1.1.0,2.0.0)"')
-                                || !dependency.contains('type="required"') || text.contains('[[mixins]]')) {
+                                || !dependency.contains('type="required"') || !text.contains('config="mismatchedleggings.mixins.json"')) {
                             throw new GradleException('Wrong standalone NeoForge identity, bounds or skeleton hooks')
                         }
                         def metadata = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('META-INF/jarjar/metadata.json')))

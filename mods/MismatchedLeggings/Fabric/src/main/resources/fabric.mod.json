@@ -7,6 +7,7 @@
     "authors": ["${mod_author}"],
     "license": "${mod_license}",
     "environment": "*",
+    "mixins": ["mismatchedleggings.mixins.json"],
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedleggings.MismatchedLeggingsFabric"]
     },

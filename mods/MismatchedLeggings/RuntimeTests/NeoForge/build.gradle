@@ -33,3 +33,6 @@ neoForge {
 
 tasks.named('runSkeletonServer') { dependsOn 'prepareSkeletonServer' }
 tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }
+
+// Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.
+tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton' }
