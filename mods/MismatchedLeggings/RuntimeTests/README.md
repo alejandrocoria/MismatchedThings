@@ -10,6 +10,48 @@ The additional workbench profile can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
 
+## Equipped rendering
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyEquipped --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyEquipped --offline --console=plain
+```
+
+As with the workbench profiles below, optional `'-PleggingsBoots=true'` stages
+current packaged Boots. For NeoForge, `'-PleggingsIceAndFire=true'` additionally
+resolves the existing exact pinned Ice and Fire/Uranus/Jupiter artifacts through
+Boots' hash-checked resolver, never from indev. Add `'-Pneoforge_version=26.1.2.99'`
+for the floor and restore .114 afterwards. Loader/baseline runs remain sequential.
+
+Both concrete profiles share [client-profiles.gradle](client-profiles.gradle);
+they do not share run/report state. Equipped paths use
+`build/{run,reports,verification}/<baseline>/equipped[-boots][-ice-and-fire]`.
+The server checks the packaged item/recipe setup and saves the disposable world;
+the hidden client loads a copy and renders **real factory-created mixed leggings**
+through the production armor mixin, not the old spike marker/interceptor.
+
+Focused checks retain the spike's native vertex-area/UV/normal, mirrored/rotated
+child, empty ancestor, independently animated child, crouch/seated/player/slim/
+baby/stand and queued A → B → A controls. They also verify all buffered native
+material fields/pose/state, source dye/trim, live-root foil on both sides,
+pair-wide rejection of unknown submissions, complete-owner/neutral fallbacks and
+native admission of valid pairs whose owner has no asset. Fabric registers a
+synthetic custom renderer that must never be called by mixed rendering. NeoForge
+checks final replacement resolution once per source, unsupported models and,
+optionally, all 30 pinned Ice and Fire replacements/13 decorated waists.
+
+Cache controls require only two geometry builds across 30 repeated two-side
+frames with at least 60 hits, bound retention to 128 native waist identities under
+fresh-model churn, preserve an already queued view after eviction, and require a
+real resource reload to clear/rebuild templates and recreate native renderers.
+Fresh success/failure markers and process exit remain mandatory. The profile
+saves one relevant `equipped-panel.png` for visual inspection; it does not capture
+unrelated UI screens. Agent visual inspection is not owner manual acceptance.
+No product/Things version changes or native-mod gameplay compatibility are implied.
+The optional pinned graph can warn about absent `AutoConfig`/`AutoConfigClient`
+targets from Jupiter's `jupiter.mixins.json` when that integration is not installed;
+these are foreign integration warnings, not Leggings renderer/mixin failures.
+
 ## Workbench and synchronization
 
 Run sequentially from the repository root:

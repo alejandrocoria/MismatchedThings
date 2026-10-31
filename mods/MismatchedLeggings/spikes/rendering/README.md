@@ -1,5 +1,10 @@
 # Equipped leggings rendering spike
 
+The production route has now been promoted in Leggings block E. Use the maintained
+[packaged equipped profiles](../../RuntimeTests/README.md#equipped-rendering) for
+current acceptance, including cache/fallback and real product data. This opt-in
+tree remains the earlier characterization and is not the product renderer.
+
 Test-only proof for Minecraft 26.1.2. This is not a Leggings product or a supported
 armor API. Normal builds/publication do not include these projects; opt in with
 `-PleggingsSpike=true`. There are no recipes, product registries or saved-data

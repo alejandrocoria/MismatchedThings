@@ -41,4 +41,4 @@ loom {
 tasks.named('runSkeletonServer') { dependsOn 'prepareSkeletonServer' }
 tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }
 
-apply from: '../workbench-tests.gradle'
+apply from: '../client-profiles.gradle'

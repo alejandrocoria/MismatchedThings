@@ -6,8 +6,8 @@ The standalone skeleton and source schema are implemented. A bare
 valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
-Actual mixed rendering and the later workstation/recovery features are not
-implemented yet. The iron-leggings icon is temporary. This is not a complete or
+Equipped mixed rendering is implemented; mixed item rendering and the later
+workstation/recovery features are not. The iron-leggings icon is temporary. This is not a complete or
 publishable release.
 
 ## Development
@@ -77,6 +77,29 @@ NeoForge snapshots effective source attributes on a copy and canonicalizes holde
 Fabric reads stored modifiers. There is no per-tick foreign ability simulation.
 Durability is live on each root, with native armor wear, bars, Unbreaking and
 Mending. Stored sources are immutable provenance, not durability wallets.
+
+## Equipped appearance
+
+The renderer retains each source's complete native leg and clips waist geometry
+in reference waist space, including ordinary transformed child decorations.
+Native animation, material passes, dye and trims are preserved; the live mixed
+root controls foil for both sides. Item icons/hand models remain temporary until
+the item-rendering block.
+
+Both source views are checked before either split is submitted. Unsupported
+standard geometry degrades to one complete left-owner appearance where safe,
+then to a product-owned neutral iron-like appearance. A valid pair with a missing
+owner asset still reaches that fallback. Bare/malformed roots are not rendered.
+There is no universal support claim for arbitrary custom render callbacks,
+custom cube compilers or mesh deformation. Fabric's custom-armor lookup is a
+small bounded adapter to the pinned API's internal registry; an incompatible
+lookup fails closed to neutral rather than pretending to split custom output.
+
+The bounded geometry cache retains immutable templates by native waist identity
+and side within a resource epoch, never queued entity state/animation views.
+Definitions are assumed stable within that epoch; live transforms are copied at
+draw time. Resource reload invalidates the cache and fresh-model providers cannot
+grow retention indefinitely.
 
 ## Runs and tests
 

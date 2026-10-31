@@ -22,6 +22,9 @@ public final class SkeletonTestNeoForge {
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count());
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> SkeletonChecks.serverTick(event.getServer()));
         if (FMLEnvironment.getDist().isClient()) {
+            if (Boolean.getBoolean("leggings.test.equipped")) {
+                games.alejandrocoria.mismatchedleggings.test.render.NativeEquipmentChecks.register(bus);
+            }
             bus.addListener(SkeletonClientNeoForge::setup);
         }
     }
