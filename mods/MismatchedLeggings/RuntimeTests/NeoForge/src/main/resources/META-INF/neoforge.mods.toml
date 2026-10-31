@@ -1,0 +1,18 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="leggings_skeleton_test"
+version="1.0.0"
+displayName="Leggings skeleton tests"
+
+[[mixins]]
+config="leggings-test.mixins.json"
+
+[[dependencies.leggings_skeleton_test]]
+modId="mismatchedleggings"
+type="required"
+versionRange="[0.1.0-dev,)"
+ordering="AFTER"
+side="BOTH"

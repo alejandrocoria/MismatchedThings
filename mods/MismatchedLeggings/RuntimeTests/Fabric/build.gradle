@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'net.fabricmc.fabric-loom'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+apply from: '../runtime-tests.gradle'
+
+loom {
+    mixin { useLegacyMixinAp = false }
+    mods { leggings_skeleton_test { sourceSet sourceSets.main } }
+    runs {
+        configureEach { ideConfigGenerated(false) }
+        skeletonServer {
+            server()
+            runDir(project.relativePath(skeletonRunDirectory.dir('server').asFile))
+            property('leggings.test.report', skeletonReportDirectory.asFile.absolutePath)
+            programArg('--nogui')
+            vmArg('-Xmx1G')
+        }
+        skeletonClient {
+            client()
+            runDir(project.relativePath(skeletonRunDirectory.dir('client').asFile))
+            property('leggings.test.report', skeletonReportDirectory.asFile.absolutePath)
+            programArgs('--quickPlaySingleplayer', 'skeleton')
+            vmArg('-Xmx1G')
+        }
+    }
+}
+
+tasks.named('runSkeletonServer') { dependsOn 'prepareSkeletonServer' }
+tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }

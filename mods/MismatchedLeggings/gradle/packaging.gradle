@@ -1,0 +1,79 @@
+import groovy.json.JsonSlurper
+
+import java.util.zip.ZipFile
+
+def verification = tasks.register('verifyPackaging') {
+    group = 'verification'
+    description = 'Checks real Leggings artifacts, nested core identity and independent development classpaths.'
+}
+
+gradle.projectsEvaluated {
+    ['Fabric', 'NeoForge'].each { name ->
+        def product = project(name)
+        def core = project(":MismatchedThings:${name}")
+        def productJar = product.tasks.named('jar').flatMap { it.archiveFile }
+        def coreJar = core.tasks.named('jar').flatMap { it.archiveFile }
+        verification.configure {
+            dependsOn product.tasks.named('assemble'), core.tasks.named('jar')
+            inputs.files(productJar, coreJar)
+            doLast {
+                new ZipFile(productJar.get().asFile).withCloseable { zip ->
+                    def names = zip.entries().findAll { !it.directory }.collect { it.name }
+                    if (names.any { it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
+                            || it.startsWith('games/alejandrocoria/mismatchedthings/')
+                            || it.startsWith('assets/mismatchedthings/') || it.startsWith('data/mismatchedthings/') }) {
+                        throw new GradleException('Boots, fixture or loose core content leaked into Leggings')
+                    }
+                    ['games/alejandrocoria/mismatchedleggings/content/MixedLeggingsItem.class',
+                     'assets/mismatchedleggings/items/mixed_leggings.json',
+                     'assets/mismatchedleggings/models/item/mixed_leggings.json',
+                     'assets/mismatchedleggings/lang/en_us.json',
+                     'assets/mismatchedleggings/lang/es_es.json'].each { path ->
+                        if (!(path in names)) { throw new GradleException("Missing product entry: ${path}") }
+                    }
+                    String nestedPath
+                    if (name == 'Fabric') {
+                        def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+                        if (descriptor.id != 'mismatchedleggings' || descriptor.version != project.version.toString()
+                                || descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0'
+                                || descriptor.depends.containsKey('mismatchedboots') || descriptor.mixins) {
+                            throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
+                        }
+                        def nested = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
+                        if (nested.size() != 1 || descriptor.jars.size() != 1) {
+                            throw new GradleException('Expected only one native nested core')
+                        }
+                        nestedPath = nested.first().file
+                    } else {
+                        def text = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
+                        def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
+                        if (!text.contains('modId="mismatchedleggings"') || text.contains('modId="mismatchedboots"')
+                                || dependency == null || !dependency.contains('versionRange="[1.1.0,2.0.0)"')
+                                || !dependency.contains('type="required"') || text.contains('[[mixins]]')) {
+                            throw new GradleException('Wrong standalone NeoForge identity, bounds or skeleton hooks')
+                        }
+                        def metadata = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('META-INF/jarjar/metadata.json')))
+                        def nested = metadata.jars.findAll { it.identifier.group == 'games.alejandrocoria.mismatchedthings'
+                                && it.identifier.artifact == 'mismatchedthings-neoforge' }
+                        if (nested.size() != 1 || metadata.jars.size() != 1
+                                || nested.first().version.artifactVersion != core.version.toString()
+                                || nested.first().isObfuscated) {
+                            throw new GradleException('Wrong native nested core identity/version')
+                        }
+                        nestedPath = nested.first().path
+                    }
+                    def nested = zip.getEntry(nestedPath)
+                    if (nested == null || !Arrays.equals(zip.getInputStream(nested).withCloseable { it.readAllBytes() },
+                            coreJar.get().asFile.bytes)) {
+                        throw new GradleException('Nested core differs from its real loader artifact')
+                    }
+                }
+                def runtime = product.sourceSets.main.runtimeClasspath.files
+                if (!runtime.contains(coreJar.get().asFile) || runtime.any { it.path.contains('MismatchedBoots') }) {
+                    throw new GradleException("Wrong independent ${name} development classpath")
+                }
+                logger.lifecycle("Verified ${name} standalone Leggings artifact and native core ${core.version}")
+            }
+        }
+    }
+}

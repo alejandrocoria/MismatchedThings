@@ -1,0 +1,33 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+    id 'idea'
+}
+
+base.archivesName = "${mod_name}-${minecraft_version}-neoforge"
+
+dependencies {
+    implementation(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
+    jarJar(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
+}
+
+neoForge {
+    version = neoforge_version
+    mods { mismatchedleggings { sourceSet sourceSets.main } }
+    runs {
+        configureEach { ideName = "${mod_name} — NeoForge ${it.name.capitalize()}" }
+        client {
+            client()
+            gameDirectory = project.file('runs/client')
+        }
+        server {
+            server()
+            gameDirectory = project.file('runs/server')
+            programArgument('--nogui')
+        }
+    }
+}
+
+idea.module.excludeDirs += file('runs')
+tasks.named('assemble') { dependsOn tasks.named('jarJar') }
+jar { from(rootProject.file('LICENSE')) }

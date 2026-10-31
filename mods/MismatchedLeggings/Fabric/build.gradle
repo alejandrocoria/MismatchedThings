@@ -1,0 +1,37 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.fabricmc.fabric-loom'
+    id 'idea'
+}
+
+base.archivesName = "${mod_name}-${minecraft_version}-fabric"
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    implementation(project(path: ':MismatchedThings:Fabric', configuration: 'workbenchElements')) { transitive = false }
+    include(project(path: ':MismatchedThings:Fabric', configuration: 'workbenchElements')) { transitive = false }
+}
+
+loom {
+    mixin { useLegacyMixinAp = false }
+    runs {
+        configureEach { appendProjectPathToConfigName.set(false) }
+        client {
+            client()
+            setConfigName("${mod_name} — Fabric Client")
+            ideConfigGenerated(true)
+            runDir('runs/client')
+        }
+        server {
+            server()
+            setConfigName("${mod_name} — Fabric Server")
+            ideConfigGenerated(true)
+            runDir('runs/server')
+        }
+    }
+}
+
+idea.module.excludeDirs += file('runs')
+jar { from(rootProject.file('LICENSE')) }

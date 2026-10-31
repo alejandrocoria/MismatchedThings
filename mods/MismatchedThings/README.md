@@ -1,7 +1,7 @@
 # MismatchedThings shared core
 
 Small runtime mod owning the family workbench and focused shared utilities. Its version is independent of
-Mismatched Boots. Boots artifacts bundle their loader-specific core through
+the armor products. Boots and the in-development Leggings artifacts bundle their loader-specific core through
 native nested dependencies; users do not need a separate download.
 
 Client and server must use the same loader. NeoForge rejects remote non-NeoForge
@@ -16,8 +16,9 @@ cover Fabric and NeoForge .99/.114, including compiled API-v1 consumers and
 unchanged Boots binaries across a core upgrade. Consolidated automated integration,
 viewer and dedicated networking checks have passed. The owner also accepted the
 final ordinary-client checklist on Fabric and NeoForge on 2026-10-27, completing
-the shared workbench extraction/namespace plan. No mixed helmets or other sibling
-product is included; synthetic consumers and their additive API exist only in tests.
+the shared workbench extraction/namespace plan. Leggings now has a separate inert
+product skeleton, but does not contribute a composition recipe yet. Synthetic
+consumers and their additive API exist only in tests.
 
 ## Ownership
 

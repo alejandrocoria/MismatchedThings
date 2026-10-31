@@ -1,0 +1,35 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+}
+
+repositories { mavenCentral() }
+neoForge { version = neoforge_version }
+
+apply from: '../runtime-tests.gradle'
+
+neoForge {
+    mods { leggings_skeleton_test { sourceSet sourceSets.main } }
+    runs {
+        skeletonServer {
+            server()
+            disableIdeRun()
+            gameDirectory = skeletonRunDirectory.dir('server').asFile
+            systemProperty('leggings.test.report', skeletonReportDirectory.asFile.absolutePath)
+            programArgument('--nogui')
+            jvmArgument('-Xmx1G')
+        }
+        skeletonClient {
+            client()
+            disableIdeRun()
+            gameDirectory = skeletonRunDirectory.dir('client').asFile
+            systemProperty('leggings.test.report', skeletonReportDirectory.asFile.absolutePath)
+            programArgument('--quickPlaySingleplayer')
+            programArgument('skeleton')
+            jvmArgument('-Xmx1G')
+        }
+    }
+}
+
+tasks.named('runSkeletonServer') { dependsOn 'prepareSkeletonServer' }
+tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }

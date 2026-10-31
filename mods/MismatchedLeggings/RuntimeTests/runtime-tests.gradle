@@ -1,0 +1,101 @@
+import java.util.concurrent.TimeUnit
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+sourceSets.main.java.srcDir '../Common/src/main/java'
+sourceSets.main.resources.srcDir '../Common/src/main/resources'
+
+def product = project(":MismatchedLeggings:${project.name}")
+def core = project(":MismatchedThings:${project.name}")
+evaluationDependsOn(product.path)
+evaluationDependsOn(core.path)
+def productJar = product.tasks.named('jar').flatMap { it.archiveFile }
+def coreJar = core.tasks.named('jar').flatMap { it.archiveFile }
+dependencies.add('compileOnly', files(productJar, coreJar))
+
+def baseline = project.name == 'Fabric' ? fabric_loader_version : neoforge_version
+ext.skeletonRunDirectory = layout.buildDirectory.dir("run/${baseline}").get()
+ext.skeletonReportDirectory = layout.buildDirectory.dir("reports/${baseline}").get()
+def runDirectory = skeletonRunDirectory
+def reportDirectory = skeletonReportDirectory
+
+['server', 'client'].each { phase ->
+    tasks.register("prepareSkeleton${phase.capitalize()}") {
+        dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
+        doLast {
+            def directory = runDirectory.dir(phase).asFile
+            def mods = new File(directory, 'mods')
+            mods.mkdirs()
+            if (mods.listFiles().any { it.name != productJar.get().asFile.name }) {
+                throw new GradleException("Unexpected content in disposable mods directory: ${mods}")
+            }
+            copy { from productJar; into mods }
+            reportDirectory.asFile.mkdirs()
+            new File(reportDirectory.asFile, "${phase}.ok").delete()
+            new File(reportDirectory.asFile, "${phase}.failure.txt").delete()
+            new File(directory, 'config').mkdirs()
+            new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (phase == 'client') {
+                def savedWorld = runDirectory.dir('server/skeleton').asFile
+                if (!new File(savedWorld, 'level.dat').isFile()) {
+                    throw new GradleException('Run the dedicated skeleton server before its client')
+                }
+                copy { from savedWorld; into new File(directory, 'saves/skeleton') }
+                new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+            } else {
+                new File(directory, 'eula.txt').text = 'eula=true\n'
+                new File(directory, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-name=skeleton
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+            }
+        }
+    }
+}
+
+def ownerPath = project.path
+def rootDirectory = rootProject.projectDir
+def launcher = rootProject.file('gradlew.bat')
+def offline = gradle.startParameter.offline
+def neoForge = project.name == 'NeoForge'
+
+tasks.register('verifySkeleton') {
+    group = 'verification'
+    description = 'Checks the packaged standalone product on a dedicated server and hidden client.'
+    dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
+    doLast {
+        def logs = layout.buildDirectory.dir("verification/${baseline}").get().asFile
+        logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        ['server', 'client'].each { phase ->
+            def log = new File(logs, "${phase}.log")
+            def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain',
+                             '-Dorg.gradle.jvmargs=-Xmx768m', "${ownerPath}:runSkeleton${phase.capitalize()}"]
+            if (offline) { arguments.add('--offline') }
+            if (neoForge) { arguments.add("-Pneoforge_version=${baseline}") }
+            logger.lifecycle("Leggings skeleton ${baseline}/${phase}")
+            def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                    .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
+            try {
+                if (!process.waitFor(240, TimeUnit.SECONDS)) {
+                    throw new GradleException("Skeleton profile timed out: ${log}")
+                }
+                if (process.exitValue() != 0 || !new File(reportDirectory.asFile, "${phase}.ok").isFile()
+                        || new File(reportDirectory.asFile, "${phase}.failure.txt").exists()) {
+                    throw new GradleException("Skeleton profile failed: ${log}")
+                }
+            } finally {
+                if (process.isAlive()) {
+                    process.toHandle().descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                }
+            }
+        }
+        new File(logs, 'matrix.ok').text = 'packaged standalone server and hidden client passed\n'
+    }
+}

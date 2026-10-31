@@ -1,0 +1,23 @@
+def metadata = new Properties()
+file('mod.properties').withInputStream { stream -> metadata.load(stream) }
+
+def owningMod = project
+allprojects { child ->
+    child.version = metadata.getProperty('version')
+    child.group = metadata.getProperty('group')
+    child.ext.mismatchedModProject = owningMod
+    metadata.each { key, value ->
+        if (!(key in ['version', 'group'])) {
+            child.extensions.extraProperties.set(key.toString(), value)
+        }
+    }
+}
+
+apply from: 'gradle/packaging.gradle'
+
+tasks.register('verifySkeleton') {
+    group = 'verification'
+    description = 'Checks standalone packaged Leggings startup on both loaders.'
+    dependsOn 'verifyPackaging', ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton',
+            ':MismatchedLeggings:RuntimeTests:NeoForge:verifySkeleton'
+}
