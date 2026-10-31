@@ -7,9 +7,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class LeggingsContent {
     public static final String MOD_ID = "mismatchedleggings";
+    public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
     public static final Identifier MIXED_LEGGINGS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "mixed_leggings");
     public static final Identifier MIXED_LEGGINGS_DATA_ID = Identifier.fromNamespaceAndPath(MOD_ID, "mixed_leggings_data");
     // Reserved for block K. No recovery component/schema is registered until preservation exists.

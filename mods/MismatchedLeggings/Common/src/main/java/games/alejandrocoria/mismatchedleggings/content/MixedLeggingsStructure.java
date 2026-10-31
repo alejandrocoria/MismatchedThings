@@ -43,7 +43,7 @@ public final class MixedLeggingsStructure {
         return classify(stack) == State.VALID ? Optional.of(stack.get(LeggingsContent.mixedLeggingsDataType())) : Optional.empty();
     }
 
-    /** Called only after the future factory has projected owner-effective components. */
+    /** Called only after the factory has projected owner-effective components. */
     public static void apply(ItemStack root, MixedLeggingsData data) {
         if (!isMixedItem(root) || root.getCount() != 1) {
             throw new IllegalArgumentException("Structural fields require a single mixed leggings root");

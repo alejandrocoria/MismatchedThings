@@ -16,8 +16,8 @@ cover Fabric and NeoForge .99/.114, including compiled API-v1 consumers and
 unchanged Boots binaries across a core upgrade. Consolidated automated integration,
 viewer and dedicated networking checks have passed. The owner also accepted the
 final ordinary-client checklist on Fabric and NeoForge on 2026-10-27, completing
-the shared workbench extraction/namespace plan. Leggings now has a separate inert
-product skeleton, but does not contribute a composition recipe yet. Synthetic
+the shared workbench extraction/namespace plan. Leggings now has its own source
+schema and composition factory, but does not contribute a workbench recipe yet. Synthetic
 consumers and their additive API exist only in tests.
 
 ## Ownership
@@ -50,9 +50,24 @@ state, policies and third-party behavior; Things does not contain a general armo
   averages round up, repairable materials form a union, and enchantments retain
   the existing equal-level upgrade/max-level-plus-one rule (capped at 255).
 
-New Boots code requires Things `>=1.1.0 <2.0.0`. Earlier compiled consumers of the
+## Further composition utilities (since 1.1.0)
+
+- `AttributeMerger.merge(first, second, policies)` composes supplied modifier lists
+  by registered attribute/modifier identity. It retains slot/display metadata,
+  separates divergent identities and treats absent total multipliers as factor one.
+  Loader-effective queries and canonicalization remain the consumer's responsibility.
+- `ComponentValueMerger` composes supplied component values under `ComponentRule`,
+  `ComponentPolicy` and `ComponentNumericKind`. The consumer resolves supported
+  rules and supplies a warning sink, retaining ownership of logging/deduplication,
+  structural exclusions and defaults. Integer averages floor without overflow;
+  invalid numeric inputs reject, and unrepresentable results retain owner values.
+  Damage-resistance equivalence/intersection keeps the established bounded behavior.
+
+Current Boots and Leggings code requires Things `>=1.1.0 <2.0.0`. Earlier compiled consumers of the
 1.0 workbench API remain supported. The extraction changes neither saved IDs nor
-configuration formats; no world/item migration is needed. Renderer classes and
+configuration formats; no world/item migration is needed. Boots' existing local
+composition methods delegate to the new helpers without changing their signatures.
+Renderer classes and
 loader hooks under `internal` are not consumer API.
 
 ## Contribution boundary

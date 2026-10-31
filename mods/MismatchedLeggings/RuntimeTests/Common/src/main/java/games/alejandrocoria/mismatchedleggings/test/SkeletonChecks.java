@@ -47,6 +47,7 @@ public final class SkeletonChecks {
         try {
             verify();
             SourceDataChecks.verify(server);
+            CompositionChecks.verify(server);
             passed("server");
         } catch (Throwable failure) {
             failed("server", failure);

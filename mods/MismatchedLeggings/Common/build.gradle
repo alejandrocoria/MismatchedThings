@@ -5,7 +5,15 @@ plugins {
 
 neoForge { neoFormVersion = neo_form_version }
 
-dependencies { compileOnly 'org.spongepowered:mixin:0.8.5' }
+dependencies {
+    compileOnly 'org.spongepowered:mixin:0.8.5'
+    compileOnly(project(':MismatchedThings:Common')) {
+        transitive = false
+        capabilities { requireCapability 'games.alejandrocoria.mismatchedthings:mismatchedthings' }
+    }
+    api "com.electronwill.night-config:core:${nightconfig_version}"
+    api "com.electronwill.night-config:toml:${nightconfig_version}"
+}
 
 configurations {
     commonJava {

@@ -38,8 +38,14 @@ Equipment checks cover the owner's flags/asset, custom sound selection, strict
 root classification and actual player use/slot/dispenser queries, with vanilla
 leggings as a pass-through control. The client checks the bare diagnostic tooltip,
 round-trips the registered pair component and draws its temporary model for
-several frames. This is structural acceptance, not mixed-rendering or numerical
-composition acceptance; it does not claim missing-mod recovery.
+several frames. Factory checks additionally cover asymmetric/same-item pairs,
+owner/unknown/removed fields, durability rounding and numeric resource bounds,
+prior work, repair material union, enchantments, identity/operation/slot arithmetic,
+invalid modifiers, explicit policies and TOML schemas. Native combat-wear entry,
+seeded armor Unbreaking and real XP pickup exercise both roots without changing
+their provenance. NeoForge injects a test-only effective modifier and mutates the
+query copy to verify the native boundary and source isolation. This does not claim
+workbench, synchronization, mixed rendering or missing-mod recovery acceptance.
 
 Per-phase logs live in each loader's `build/verification/<baseline>/`; assertion
 reports live in `build/reports/<baseline>/`. No test IDE configurations are generated.
