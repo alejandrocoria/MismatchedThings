@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.composition;
+package games.alejandrocoria.mismatchedthings.api.composition;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -15,11 +15,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-final class RepairableComposer {
+/** Builds the union of accepted repair materials without modifying either source. */
+public final class RepairableComposer {
     private RepairableComposer() {
     }
 
-    static Optional<Repairable> compose(ItemStack first, ItemStack second) {
+    public static Optional<Repairable> compose(ItemStack first, ItemStack second) {
         Objects.requireNonNull(first, "first");
         Objects.requireNonNull(second, "second");
 

@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedthings.internal.client.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "TooltipSeparatorFactoryMixin",
+        "TooltipSeparatorWrapMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.tooltip;
+package games.alejandrocoria.mismatchedthings.api.tooltip;
 
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;

@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.component;
+package games.alejandrocoria.mismatchedthings.api.composition;
 
 import java.util.Arrays;
 import java.util.Optional;

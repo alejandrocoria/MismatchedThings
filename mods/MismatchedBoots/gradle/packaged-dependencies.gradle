@@ -35,6 +35,8 @@ gradle.projectsEvaluated {
     def fabricApiMinimum = fabric_api_min_version.toString()
     def neoForgeRange = neoforge_version_range.toString()
     def entryPrefixes = [fabric: "META-INF/jars/", neoforge: "META-INF/jarjar/"]
+    def coreVersion = project(':MismatchedThings').version.toString()
+    def corePaths = [:]
     def verifyArtifact = { String loader, File artifact ->
         if (!artifact.isFile()) {
             throw new GradleException("Missing ${loader} artifact: ${artifact}")
@@ -61,12 +63,26 @@ gradle.projectsEvaluated {
                     "${prefix}core-${nightConfigVersion}.jar",
                     "${prefix}toml-${nightConfigVersion}.jar"
             ].collect { it.toString() }
+            def cores = entries.findAll {
+                it.startsWith(prefix) && it.endsWith("mismatchedthings-${minecraft_version}-${loader}-${coreVersion}.jar")
+            }
+            if (cores.size() != 1) {
+                throw new GradleException("${artifact.name} is missing its MismatchedThings core")
+            }
+            corePaths[loader] = cores.first()
+            def coreEntry = zip.getEntry(cores.first())
+            def coreEntries = []
+            new java.util.zip.ZipInputStream(zip.getInputStream(coreEntry)).withCloseable { nested ->
+                for (def entry = nested.nextEntry; entry != null; entry = nested.nextEntry) {
+                    coreEntries.add(entry.name)
+                }
+            }
             expectedNightConfig.each { expected ->
-                if (!entries.contains(expected)) {
+                if (!coreEntries.contains(expected)) {
                     throw new GradleException("${artifact.name} does not contain ${expected}")
                 }
             }
-            def bundledNightConfig = entries.findAll {
+            def bundledNightConfig = (entries + coreEntries).findAll {
                 def fileName = it.substring(it.lastIndexOf('/') + 1)
                 (fileName.startsWith("core-") || fileName.startsWith("toml-")) && fileName.endsWith(".jar")
             }
@@ -127,7 +143,7 @@ gradle.projectsEvaluated {
                 def cases = [
                         missingBackend    : [omit: backend, error: 'must contain only'],
                         wrongBackend      : [rename: backend, error: 'must contain only'],
-                        missingNightConfig: [omit : "${prefix}core-${nightConfigVersion}.jar".toString(),
+                        missingNightConfig: [nestedOmit: "${prefix}core-${nightConfigVersion}.jar".toString(),
                                              error: 'does not contain'],
                         extraNightConfig  : [extra: "${prefix}core-0.jar".toString(),
                                              error: 'unexpected NightConfig'],
@@ -149,6 +165,21 @@ gradle.projectsEvaluated {
                                                 ? "${prefix}common-networking-wrong-loader.jar" : entry.name
                                         output.putNextEntry(new java.util.zip.ZipEntry(target))
                                         byte[] bytes = original.getInputStream(entry).withCloseable { it.readAllBytes() }
+                                        if (entry.name == corePaths[loader] && control.nestedOmit != null) {
+                                            def buffer = new ByteArrayOutputStream()
+                                            new java.util.zip.ZipOutputStream(buffer).withCloseable { nestedOutput ->
+                                                new java.util.zip.ZipInputStream(new ByteArrayInputStream(bytes)).withCloseable { nestedInput ->
+                                                    for (def nestedEntry = nestedInput.nextEntry; nestedEntry != null; nestedEntry = nestedInput.nextEntry) {
+                                                        if (nestedEntry.name != control.nestedOmit) {
+                                                            nestedOutput.putNextEntry(new java.util.zip.ZipEntry(nestedEntry.name))
+                                                            nestedOutput.write(nestedInput.readAllBytes())
+                                                            nestedOutput.closeEntry()
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            bytes = buffer.toByteArray()
+                                        }
                                         if (entry.name == control.change) {
                                             def text = new String(bytes, java.nio.charset.StandardCharsets.UTF_8)
                                             if (loader == 'fabric') {

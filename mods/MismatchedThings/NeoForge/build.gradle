@@ -14,10 +14,20 @@ configurations.create('workbenchElements') {
 
 neoForge {
     version = neoforge_version
+    dependencies {
+        implementation "com.electronwill.night-config:core:${nightconfig_version}"
+        implementation "com.electronwill.night-config:toml:${nightconfig_version}"
+        jarJar "com.electronwill.night-config:core:[${nightconfig_version}]"
+        jarJar "com.electronwill.night-config:toml:[${nightconfig_version}]"
+    }
     accessTransformers.from(project(':MismatchedThings:Common').file('src/main/resources/META-INF/accesstransformer.cfg'))
     mods {
         mismatchedthings { sourceSet sourceSets.main }
     }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('jarJar')
 }
 
 jar {

@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.component;
 
+import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
+import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
 import net.minecraft.resources.Identifier;
 
 import java.util.Collections;

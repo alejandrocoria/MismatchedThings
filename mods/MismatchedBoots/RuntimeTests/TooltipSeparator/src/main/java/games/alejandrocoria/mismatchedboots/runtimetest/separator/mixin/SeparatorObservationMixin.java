@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.separator.mixin;
 
-import games.alejandrocoria.mismatchedboots.client.tooltip.TooltipSeparatorComponent;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorObservations;
+import games.alejandrocoria.mismatchedthings.internal.client.tooltip.TooltipSeparatorComponent;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.spongepowered.asm.mixin.Mixin;

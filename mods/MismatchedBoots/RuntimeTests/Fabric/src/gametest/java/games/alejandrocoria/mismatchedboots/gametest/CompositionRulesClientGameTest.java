@@ -11,8 +11,6 @@ import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
-import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
-import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesConfig;
@@ -23,6 +21,8 @@ import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecy
 import games.alejandrocoria.mismatchedboots.platform.Services;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
+import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;

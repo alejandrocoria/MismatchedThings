@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.mystical;
 
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
-import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;

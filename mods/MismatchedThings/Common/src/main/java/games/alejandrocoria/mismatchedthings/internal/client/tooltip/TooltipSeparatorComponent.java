@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.client.tooltip;
+package games.alejandrocoria.mismatchedthings.internal.client.tooltip;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

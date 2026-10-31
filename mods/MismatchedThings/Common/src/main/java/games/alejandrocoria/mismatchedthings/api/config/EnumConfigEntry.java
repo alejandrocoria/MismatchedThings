@@ -1,14 +1,14 @@
-package games.alejandrocoria.mismatchedboots.config;
+package games.alejandrocoria.mismatchedthings.api.config;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-final class EnumConfigEntry<T extends Enum<T>> extends ConfigEntry<T> {
+public final class EnumConfigEntry<T extends Enum<T>> extends ConfigEntry<T> {
     private final Function<String, Optional<T>> parser;
     private final Function<T, String> serializer;
 
-    EnumConfigEntry(String key, T defaultValue, String comment,
-                    Function<String, Optional<T>> parser, Function<T, String> serializer) {
+    public EnumConfigEntry(String key, T defaultValue, String comment,
+                           Function<String, Optional<T>> parser, Function<T, String> serializer) {
         super(key, defaultValue, comment);
         this.parser = parser;
         this.serializer = serializer;

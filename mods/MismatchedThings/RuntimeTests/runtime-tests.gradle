@@ -39,6 +39,7 @@ def reportDirectory = workbenchReportDirectory
 
 sourceSets.main.java.srcDir '../Common/src/main/java'
 dependencies.add('compileOnly', files(coreJar))
+dependencies.add('compileOnly', "com.electronwill.night-config:core:${nightconfig_version}")
 tasks.named('compileJava') { dependsOn coreProject.tasks.named('jar') }
 
 processResources {
@@ -65,6 +66,9 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
             }
             def required = [
                     'games/alejandrocoria/mismatchedthings/api/MismatchedWorkbench.class',
+                    'games/alejandrocoria/mismatchedthings/api/config/TomlConfigIO.class',
+                    'games/alejandrocoria/mismatchedthings/api/composition/EnchantmentMerger.class',
+                    'games/alejandrocoria/mismatchedthings/api/tooltip/TooltipSeparator.class',
                     'games/alejandrocoria/mismatchedthings/internal/client/WorkbenchScreen.class',
                     'assets/mismatchedthings/blockstates/mismatched_workbench.json',
                     'assets/mismatchedthings/items/mismatched_workbench.json',

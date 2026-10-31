@@ -39,6 +39,16 @@ gradle.projectsEvaluated {
                     || it.startsWith('assets/mismatchedthings/') || it.startsWith('data/mismatchedthings/') }) {
                 throw new GradleException('Loose shared core content in Boots')
             }
+            def extractedHelpers = [
+                    'config/ConfigEntry', 'config/EnumConfigEntry', 'config/DynamicConfigPart', 'config/TomlConfigIO',
+                    'composition/EnchantmentMerger', 'composition/RepairableComposer', 'composition/DurabilityMerger',
+                    'composition/RepairCostMerger', 'component/DurabilityPolicy', 'component/RepairCostPolicy',
+                    'tooltip/TooltipSeparator', 'client/tooltip/TooltipSeparatorComponent',
+                    'client/tooltip/NeoForgeTooltipSeparators', 'mixin/TooltipSeparatorFactoryMixin', 'mixin/TooltipSeparatorWrapMixin'
+            ]
+            if (extractedHelpers.any { names.contains("games/alejandrocoria/mismatchedboots/${it}.class".toString()) }) {
+                throw new GradleException('Extracted shared helpers remain duplicated in Boots')
+            }
             if (names.any { it.matches('assets/mismatchedboots/(blockstates|items|models/block)/mismatched_workbench.json')
                     || it.contains('mismatchedboots/textures/block/mismatched_workbench_')
                     || it.contains('mismatchedboots/textures/gui/sprites/container/mismatched_workbench/')
@@ -51,7 +61,7 @@ gradle.projectsEvaluated {
             String path
             if (loader == 'fabric') {
                 def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
-                if (descriptor.depends.mismatchedthings != '>=1.0.0 <2.0.0') {
+                if (descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0') {
                     throw new GradleException('Wrong core API bounds')
                 }
                 def cores = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
@@ -60,7 +70,7 @@ gradle.projectsEvaluated {
             } else {
                 def text = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
                 def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
-                if (dependency == null || !dependency.contains('versionRange="[1.0.0,2.0.0)"') || !dependency.contains('type="required"')) {
+                if (dependency == null || !dependency.contains('versionRange="[1.1.0,2.0.0)"') || !dependency.contains('type="required"')) {
                     throw new GradleException('Wrong core API bounds')
                 }
                 def metadata = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('META-INF/jarjar/metadata.json')))
@@ -120,7 +130,8 @@ gradle.projectsEvaluated {
                 File original = inputs.boots.get().archiveFile.get().asFile
                 byte[] expected = inputs.core.get().archiveFile.get().asFile.bytes
                 String nestedPath = inspect(loader, original, expected, inputs.version)
-                ['missing': 'Missing nested core', 'unbounded': 'Wrong core API bounds', 'loose': 'Loose shared core content in Boots'].each { name, error ->
+                ['missing': 'Missing nested core', 'unbounded': 'Wrong core API bounds', 'loose': 'Loose shared core content in Boots',
+                 'extracted': 'Extracted shared helpers remain duplicated in Boots'].each { name, error ->
                     File corrupted = new File(directory.get().asFile, "${loader}-${name}.jar")
                     new ZipFile(original).withCloseable { zip ->
                         new ZipOutputStream(new FileOutputStream(corrupted)).withCloseable { output ->
@@ -135,7 +146,7 @@ gradle.projectsEvaluated {
                                             metadata.depends.mismatchedthings = '*'
                                             text = groovy.json.JsonOutput.toJson(metadata)
                                         } else {
-                                            text = text.replace('[1.0.0,2.0.0)', '[1.0.0,)')
+                                            text = text.replace('[1.1.0,2.0.0)', '[1.1.0,)')
                                         }
                                         bytes = text.getBytes('UTF-8')
                                     }
@@ -145,6 +156,10 @@ gradle.projectsEvaluated {
                             }
                             if (name == 'loose') {
                                 output.putNextEntry(new ZipEntry('games/alejandrocoria/mismatchedthings/api/Fake.class'))
+                                output.closeEntry()
+                            }
+                            if (name == 'extracted') {
+                                output.putNextEntry(new ZipEntry('games/alejandrocoria/mismatchedboots/config/TomlConfigIO.class'))
                                 output.closeEntry()
                             }
                         }
@@ -159,7 +174,7 @@ gradle.projectsEvaluated {
                     if (!rejected) { throw new GradleException("Accepted corrupt core package: ${loader}/${name}") }
                 }
             }
-            logger.lifecycle('Rejected all six shared-core corrupted artifact controls')
+            logger.lifecycle('Rejected all eight shared-core corrupted artifact controls')
         }
     }
 }

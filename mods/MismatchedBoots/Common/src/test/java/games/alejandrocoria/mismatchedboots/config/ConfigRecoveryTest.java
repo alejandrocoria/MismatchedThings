@@ -2,8 +2,10 @@ package games.alejandrocoria.mismatchedboots.config;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
+import games.alejandrocoria.mismatchedthings.api.config.TomlConfigIO;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,9 +43,9 @@ class ConfigRecoveryTest {
                 .getBytes(java.nio.charset.StandardCharsets.UTF_8);
         Files.write(path, original);
         int[] backupAttempts = {0};
-        TomlConfigIO files = new TomlConfigIO() {
+        TomlConfigIO files = new TomlConfigIO(Constants.LOG) {
             @Override
-            CommentedConfig read(Path target) throws IOException {
+            protected CommentedConfig read(Path target) throws IOException {
                 if (unreadable) {
                     fail();
                 }
@@ -51,14 +53,14 @@ class ConfigRecoveryTest {
             }
 
             @Override
-            Path backup(Path target) throws IOException {
+            protected Path backup(Path target) throws IOException {
                 backupAttempts[0]++;
                 fail();
                 throw new AssertionError("Failure injection returned");
             }
 
             @Override
-            CommentedFileConfig open(Path target) {
+            protected CommentedFileConfig open(Path target) {
                 throw new AssertionError("Recovery attempted to write without a successful read/backup");
             }
 
@@ -101,16 +103,16 @@ class ConfigRecoveryTest {
                 .getBytes(java.nio.charset.StandardCharsets.UTF_8);
         Files.write(path, original);
         List<Path> backups = new java.util.ArrayList<>();
-        TomlConfigIO files = new TomlConfigIO() {
+        TomlConfigIO files = new TomlConfigIO(Constants.LOG) {
             @Override
-            Path backup(Path target) throws IOException {
+            protected Path backup(Path target) throws IOException {
                 Path preserved = super.backup(target);
                 backups.add(preserved);
                 return preserved;
             }
 
             @Override
-            CommentedFileConfig open(Path target) throws IOException {
+            protected CommentedFileConfig open(Path target) throws IOException {
                 throw new IOException("Injected save-open failure");
             }
         };

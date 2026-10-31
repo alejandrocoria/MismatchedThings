@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.composition;
+package games.alejandrocoria.mismatchedthings.api.composition;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;

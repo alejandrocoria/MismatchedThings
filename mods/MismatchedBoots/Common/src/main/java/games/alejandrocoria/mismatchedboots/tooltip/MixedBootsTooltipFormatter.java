@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.tooltip;
 
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;

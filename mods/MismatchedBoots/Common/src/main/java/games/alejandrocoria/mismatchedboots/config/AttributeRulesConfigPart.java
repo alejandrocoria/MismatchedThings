@@ -5,6 +5,8 @@ import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedthings.api.config.DynamicConfigPart;
+import games.alejandrocoria.mismatchedthings.api.config.EnumConfigEntry;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;

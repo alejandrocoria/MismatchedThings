@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.config;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import games.alejandrocoria.mismatchedthings.api.config.TomlConfigIO;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -13,7 +14,7 @@ public final class AttributeRulesConfig {
     private final AttributeRulesConfigPart attributes = new AttributeRulesConfigPart();
 
     public AttributeRulesConfig(Path path) {
-        this(path, new TomlConfigIO());
+        this(path, new TomlConfigIO(Constants.LOG));
     }
 
     AttributeRulesConfig(Path path, TomlConfigIO files) {

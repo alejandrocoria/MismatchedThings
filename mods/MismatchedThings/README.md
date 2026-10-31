@@ -1,6 +1,6 @@
-# MismatchedThings shared workbench
+# MismatchedThings shared core
 
-Small runtime mod owning the family workbench. Its version is independent of
+Small runtime mod owning the family workbench and focused shared utilities. Its version is independent of
 Mismatched Boots. Boots artifacts bundle their loader-specific core through
 native nested dependencies; users do not need a separate download.
 
@@ -21,13 +21,38 @@ product is included; synthetic consumers and their additive API exist only in te
 
 ## Ownership
 
-- `Common`: station implementation, API and family resources shared between loaders.
+- `Common`: station implementation, shared utilities, API and family resources shared between loaders.
 - `Fabric` / `NeoForge`: independent loader artifacts and entry points.
 - `RuntimeTests`: disposable packaged-core controls; see its [guide](RuntimeTests/README.md).
 
 The block, item, menu and station recipe type use
 `mismatchedthings:mismatched_workbench`. The core owns acquisition, loot,
-advancement, axe membership and presentation, but does not compose armor itself.
+advancement, axe membership and presentation. Products still own armor construction,
+state, policies and third-party behavior; Things does not contain a general armor engine.
+
+## Shared utilities (since 1.1.0)
+
+- `api.config`: `TomlConfigIO`, `DynamicConfigPart`, `ConfigEntry` and
+  `EnumConfigEntry`. Each consumer supplies its logger, paths, schema, defaults and
+  state. Missing/invalid entries normalize to consumer defaults; unreadable files
+  stay untouched, and malformed TOML is replaced only after a successful backup.
+  Lifecycle hooks, reload/synchronization and product config names remain local.
+- `api.tooltip.TooltipSeparator.INSTANCE`: append this transient marker to a
+  tooltip wherever a section boundary is wanted. Things installs the Fabric and
+  NeoForge conversions and solid-line renderer; no consumer-side renderer or
+  registration is needed. Server-side collection stays safe and text copying
+  falls back to an ordinary blank row. Do not persist the marker as item data.
+- `api.composition`: `EnchantmentMerger`, `RepairableComposer`, `DurabilityMerger`
+  and `RepairCostMerger`, plus `DurabilityPolicy` and `RepairCostPolicy`. These
+  read inputs without mutating them; the consumer chooses which operations to
+  call and builds its own outputs. Durability averages round down, repair-cost
+  averages round up, repairable materials form a union, and enchantments retain
+  the existing equal-level upgrade/max-level-plus-one rule (capped at 255).
+
+New Boots code requires Things `>=1.1.0 <2.0.0`. Earlier compiled consumers of the
+1.0 workbench API remain supported. The extraction changes neither saved IDs nor
+configuration formats; no world/item migration is needed. Renderer classes and
+loader hooks under `internal` are not consumer API.
 
 ## Contribution boundary
 

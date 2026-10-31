@@ -4,7 +4,7 @@ import games.alejandrocoria.mismatchedboots.client.compatibility.aquaculture.Aqu
 import games.alejandrocoria.mismatchedboots.compatibility.aquaculture.AquacultureTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
-import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;

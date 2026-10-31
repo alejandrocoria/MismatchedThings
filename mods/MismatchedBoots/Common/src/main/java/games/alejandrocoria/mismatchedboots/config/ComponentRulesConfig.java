@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.config;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
+import games.alejandrocoria.mismatchedthings.api.config.TomlConfigIO;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -13,7 +14,7 @@ public final class ComponentRulesConfig {
     private final ComponentRulesConfigPart rules = new ComponentRulesConfigPart();
 
     public ComponentRulesConfig(Path path) {
-        this(path, new TomlConfigIO());
+        this(path, new TomlConfigIO(Constants.LOG));
     }
 
     ComponentRulesConfig(Path path, TomlConfigIO files) {

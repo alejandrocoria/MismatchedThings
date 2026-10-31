@@ -14,10 +14,10 @@ import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
-import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
-import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
+import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -250,33 +250,6 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void durabilityPropertiesHoldAcrossOddAndMalformedValues() {
-        for (int firstMaximum = 0; firstMaximum <= 12; firstMaximum++) {
-            for (int secondMaximum = 0; secondMaximum <= 12; secondMaximum++) {
-                for (int firstDamage = 0; firstDamage <= firstMaximum + 2; firstDamage++) {
-                    for (int secondDamage = 0; secondDamage <= secondMaximum + 2; secondDamage++) {
-                        ItemStack first = boots(Items.IRON_BOOTS);
-                        ItemStack second = boots(Items.GOLDEN_BOOTS);
-                        setDurability(first, firstMaximum, firstDamage);
-                        setDurability(second, secondMaximum, secondDamage);
-
-                        DurabilityMerger.Result result = DurabilityMerger.merge(
-                                first, second, DurabilityPolicy.AVERAGE).primary();
-                        long sourceRemaining = remaining(firstMaximum, firstDamage) + remaining(secondMaximum, secondDamage);
-                        long resultRemaining = (long) result.maximum() - result.damage();
-
-                        assertTrue(2L * result.maximum() <= (long) firstMaximum + secondMaximum);
-                        assertTrue(2L * resultRemaining <= sourceRemaining);
-                        assertTrue((long) firstMaximum + secondMaximum - 2L * result.maximum() <= 1L);
-                        assertTrue(sourceRemaining - 2L * resultRemaining <= 1L);
-                        assertTrue(result.damage() >= 0 && result.damage() <= result.maximum());
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
     void oneSidedUnbreakableIsOmittedWithoutChangingDerivedDurability() {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
@@ -294,15 +267,10 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void separateDurabilityFollowsEachOwnerAndClampsSourceDamage() {
+    void separateDurabilityFollowsEachOwner() {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
-        setDurability(first, 101, 150);
-        DurabilityMerger.Results clamped = DurabilityMerger.merge(first, second, DurabilityPolicy.SEPARATE);
-        assertEquals(new DurabilityMerger.Result(101, 101), clamped.primary());
-        assertEquals(new DurabilityMerger.Result(0, 0), clamped.inverse());
-
-        first.set(DataComponents.DAMAGE, 100);
+        setDurability(first, 101, 100);
         ComponentRules rules = new ComponentRules(
                 DurabilityPolicy.SEPARATE, RepairCostPolicy.MAXIMUM, ComponentRuleDefaults.ruleSet());
 
@@ -317,40 +285,13 @@ class MixedBootsFactoryTest {
     }
 
     @Test
-    void repairCostPoliciesHandleOrientationAbsenceRoundingAndBoundaries() {
+    void rejectsNegativeRepairCostWithoutMutatingInputs() {
         ItemStack first = boots(Items.IRON_BOOTS);
         ItemStack second = boots(Items.GOLDEN_BOOTS);
-        first.set(DataComponents.REPAIR_COST, 2);
-        second.set(DataComponents.REPAIR_COST, 5);
-
-        assertEquals(new RepairCostMerger.Results(2, 5),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
-        assertEquals(new RepairCostMerger.Results(4, 4),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
-        assertEquals(new RepairCostMerger.Results(2, 2),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
-        assertEquals(new RepairCostMerger.Results(5, 5),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
-
-        first.remove(DataComponents.REPAIR_COST);
-        assertEquals(new RepairCostMerger.Results(0, 5),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.OWNER));
-        assertEquals(new RepairCostMerger.Results(3, 3),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
-        assertEquals(new RepairCostMerger.Results(0, 0),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.MINIMUM));
-
-        first.set(DataComponents.REPAIR_COST, Integer.MAX_VALUE);
-        second.set(DataComponents.REPAIR_COST, Integer.MAX_VALUE);
-        assertEquals(new RepairCostMerger.Results(Integer.MAX_VALUE, Integer.MAX_VALUE),
-                     RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE));
-
         first.set(DataComponents.REPAIR_COST, -1);
-        second.set(DataComponents.REPAIR_COST, 5);
         ItemStack firstBefore = first.copy();
         ItemStack secondBefore = second.copy();
-        assertThrows(IllegalArgumentException.class,
-                     () -> RepairCostMerger.merge(first, second, RepairCostPolicy.MAXIMUM));
+
         assertThrows(IllegalArgumentException.class, () -> create(first, second));
         assertTrue(ItemStack.matches(firstBefore, first));
         assertTrue(ItemStack.matches(secondBefore, second));
@@ -570,27 +511,6 @@ class MixedBootsFactoryTest {
 
         assertEquals(original, decoded);
         assertTrue(Double.isFinite(decoded.modifiers().getFirst().modifier().amount()));
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "0,3,4,3",
-            "2,3,4,3",
-            "3,3,4,4",
-            "4,4,4,5",
-            "5,5,4,5",
-            "1,1,1,2"
-    })
-    void mergesEnchantmentLevels(int firstLevel, int secondLevel, int declaredMaximum, int expected) {
-        Holder<Enchantment> enchantment = syntheticEnchantment("level_case", declaredMaximum, HolderSet.empty());
-        ItemStack first = boots(Items.IRON_BOOTS);
-        ItemStack second = boots(Items.GOLDEN_BOOTS);
-        setEnchantment(first, enchantment, firstLevel);
-        setEnchantment(second, enchantment, secondLevel);
-
-        ItemEnchantments merged = EnchantmentMerger.merge(first, second);
-
-        assertEquals(expected, merged.getLevel(enchantment));
     }
 
     @Test
@@ -904,10 +824,6 @@ class MixedBootsFactoryTest {
             stack.set(DataComponents.MAX_DAMAGE, maximum);
             stack.set(DataComponents.DAMAGE, damage);
         }
-    }
-
-    private static long remaining(int maximum, int damage) {
-        return Math.max(0L, Math.min((long) maximum - damage, maximum));
     }
 
     private static void assertRepairableAccepts(ItemStack stack, Item... expectedItems) {

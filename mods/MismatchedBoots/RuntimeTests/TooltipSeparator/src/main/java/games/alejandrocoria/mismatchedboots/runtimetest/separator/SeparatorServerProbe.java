@@ -2,8 +2,8 @@ package games.alejandrocoria.mismatchedboots.runtimetest.separator;
 
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
-import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

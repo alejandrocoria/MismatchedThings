@@ -1290,7 +1290,8 @@ These maintained commands observe production, not the
 technical results and the separate owner checklist. No executable spike aliases
 remain. `tooltipSeparatorPlainOnly` restricts the gate to Seed/Plain and disables
 screenshots; the property is forwarded to its bounded child Gradle processes.
-The formatter, shared solid row and loader conversions belong to production;
+The formatter belongs to Boots; the shared marker, solid row and loader conversions
+now belong to Things 1.1.0. Both are production code;
 the fixture contains scenarios and read-only `extractImage` observers. Two narrow
 scenario input hooks emulate another mod copying all tooltip text or supplying
 the actual native `BundleContents` image from a bundle. No test-owned separator

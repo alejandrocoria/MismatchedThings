@@ -17,6 +17,7 @@ evaluationDependsOn(consumer.path)
 def currentVersion = core.version.toString()
 def candidateVersion = "1.${currentVersion.tokenize('.')[1].toInteger() + 1}.0"
 def caseName = providers.gradleProperty('workbenchCase').getOrElse('')
+def previousBoots = providers.gradleProperty('workbenchPreviousBootsJar').map { rootProject.file(it) }
 def output = layout.buildDirectory
 def frozen = output.dir("compatibility/${baseline}/artifacts").get().asFile
 def pinDirectory = project(':MismatchedThings:RuntimeTests').file('fixtures/api-v1')
@@ -34,6 +35,7 @@ def incompatibleJar = consumer.layout.buildDirectory.file("libs/workbench-incomp
 def runChild = { List arguments, File log, boolean success ->
     log.parentFile.mkdirs()
     def command = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m'] + arguments
+    if (previousBoots.isPresent()) { command.add("-PworkbenchPreviousBootsJar=${previousBoots.get().absolutePath}") }
     if (offline) { command.add('--offline') }
     if (loader == 'neoforge') { command.add("-Pneoforge_version=${baseline}") }
     def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + command.collect { it.toString() })
@@ -74,7 +76,7 @@ ext.workbenchCompatibilityArtifacts = {
     checkPinned()
     def files = switch (caseName) {
         case 'core' -> [new File(frozen, 'core.jar')]
-        case 'boots' -> [new File(frozen, 'boots.jar')]
+        case 'boots' -> [new File(frozen, 'boots.jar')] + (previousBoots.isPresent() ? [new File(frozen, 'core.jar')] : [])
         case 'baseline' -> [pinned]
         case 'sibling' -> [new File(frozen, 'sibling.jar')]
         case 'both' -> [new File(frozen, 'boots.jar'), pinned, new File(frozen, 'sibling.jar')]
@@ -95,7 +97,8 @@ def freeze = tasks.register('freezeWorkbenchConsumers') {
     doLast {
         checkPinned()
         frozen.mkdirs()
-        [[coreJar.get().asFile, 'core.jar'], [bootsJar.get().asFile, 'boots.jar'], [siblingJar.get().asFile, 'sibling.jar']].each { pair ->
+        [[coreJar.get().asFile, 'core.jar'], [previousBoots.getOrElse(bootsJar.get().asFile), 'boots.jar'],
+         [siblingJar.get().asFile, 'sibling.jar']].each { pair ->
             operations.copy { from pair[0]; into frozen; rename { pair[1] } }
         }
         // Native include/jarJar must embed the exact candidate, never a second copied station implementation.

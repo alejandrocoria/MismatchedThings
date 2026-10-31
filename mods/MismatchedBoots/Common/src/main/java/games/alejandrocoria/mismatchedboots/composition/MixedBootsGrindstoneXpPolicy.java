@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.composition;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedthings.api.composition.EnchantmentMerger;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.item.ItemStack;

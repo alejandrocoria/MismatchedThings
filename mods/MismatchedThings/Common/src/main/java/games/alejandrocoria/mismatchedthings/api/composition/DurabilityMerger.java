@@ -1,16 +1,16 @@
-package games.alejandrocoria.mismatchedboots.composition;
+package games.alejandrocoria.mismatchedthings.api.composition;
 
-import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Objects;
 
-final class DurabilityMerger {
+/** Computes ordered durability results without modifying sources; averages conserve remaining durability. */
+public final class DurabilityMerger {
     private DurabilityMerger() {
     }
 
-    static Results merge(ItemStack left, ItemStack right, DurabilityPolicy policy) {
+    public static Results merge(ItemStack left, ItemStack right, DurabilityPolicy policy) {
         Objects.requireNonNull(policy, "policy");
         return switch (policy) {
             case AVERAGE -> {
@@ -44,12 +44,12 @@ final class DurabilityMerger {
         return Math.max(0L, Math.min((long) maximum - damage, maximum));
     }
 
-    record Result(int maximum, int damage) {
-        boolean damageable() {
+    public record Result(int maximum, int damage) {
+        public boolean damageable() {
             return maximum > 0;
         }
     }
 
-    record Results(Result primary, Result inverse) {
+    public record Results(Result primary, Result inverse) {
     }
 }

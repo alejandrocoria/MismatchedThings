@@ -53,6 +53,9 @@ public final class WorkbenchClientChecks {
                     if (client.screen != null) {
                         return;
                     }
+                    if (!WorkbenchCoexistence.ACTIVE) {
+                        SharedTooltipChecks.verify(client);
+                    }
                     onServer(client, () -> {
                         var server = client.getSingleplayerServer();
                         var player = server.getPlayerList().getPlayers().getFirst();

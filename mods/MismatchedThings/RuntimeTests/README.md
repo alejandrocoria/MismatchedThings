@@ -55,6 +55,11 @@ The synthetic recipe names vanilla helmet outputs; it is not a sibling product.
 Its serializer, data and admission are enabled only in the recipe profiles.
 Common JVM tests cover mutable-result isolation, incomplete pairs, duplicate
 owners, defensive single-item admission and concurrent consumer registration.
+They also own the extracted composition-operation tests and generic TOML/enum
+configuration checks. Boots retains product-schema, lifecycle and factory
+integration tests. Standalone runtime profiles exercise shared config and
+composition with helmet inputs and check each loader's separator factory without
+Boots; this also verifies that Things carries its own NightConfig dependencies.
 
 ## Native coexistence and evolution
 
@@ -116,6 +121,14 @@ them. `Consumers` contains their source provenance and the maintained synthetic
 sibling; its source sets and metadata remain test-only. The family-level
 `:MismatchedThings:verifyWorkbenchCompatibility` task aggregates both selected
 loader baselines, independently of the four-profile standalone verifier.
+
+For an actual older Boots release, preserve its loader JAR outside normal build
+outputs, then pass `-PworkbenchPreviousBootsJar=<repo-relative-or-absolute-path>`
+to that loader's `verifyWorkbenchCompatibility`. The matrix copies and hash-freezes
+that unchanged binary instead of current Boots. Its Boots-only graph also installs
+the current production core directly, so the old embedded core cannot stand in
+for the upgrade being tested. Child runs receive the same property. The original
+file is read-only; normal verification without this option still tests current Boots.
 
 ## Focused runs and evidence
 

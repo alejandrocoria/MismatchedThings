@@ -1,23 +1,24 @@
-package games.alejandrocoria.mismatchedboots.config;
+package games.alejandrocoria.mismatchedthings.api.config;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 
 import java.util.Objects;
 
-abstract class ConfigEntry<T> {
+/** A consumer-owned value that normalizes missing or invalid input to its default. */
+public abstract class ConfigEntry<T> {
     private final String key;
     private final T defaultValue;
     private final String comment;
     private T value;
 
-    ConfigEntry(String key, T defaultValue, String comment) {
+    protected ConfigEntry(String key, T defaultValue, String comment) {
         this.key = Objects.requireNonNull(key, "key");
         this.defaultValue = Objects.requireNonNull(defaultValue, "defaultValue");
         this.comment = comment;
         value = defaultValue;
     }
 
-    final boolean load(CommentedConfig config) {
+    public final boolean load(CommentedConfig config) {
         Object rawValue = config.valueMap().get(key);
         if (rawValue == null) {
             reset();
@@ -34,18 +35,18 @@ abstract class ConfigEntry<T> {
         return false;
     }
 
-    final void save(CommentedConfig config) {
+    public final void save(CommentedConfig config) {
         config.set(key, serialize(value));
         if (comment != null) {
             config.setComment(key, comment);
         }
     }
 
-    final T get() {
+    public final T get() {
         return value;
     }
 
-    final void reset() {
+    public final void reset() {
         value = defaultValue;
     }
 

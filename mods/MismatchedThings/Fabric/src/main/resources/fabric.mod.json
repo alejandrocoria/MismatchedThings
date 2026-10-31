@@ -12,6 +12,7 @@
         "main": ["games.alejandrocoria.mismatchedthings.MismatchedThingsFabric"],
         "client": ["games.alejandrocoria.mismatchedthings.client.MismatchedThingsClientFabric"]
     },
+    "mixins": ["mismatchedthings.fabric.mixins.json"],
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": ">=${fabric_api_min_version}",

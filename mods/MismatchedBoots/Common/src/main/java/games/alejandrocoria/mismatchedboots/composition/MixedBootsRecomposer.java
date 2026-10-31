@@ -9,6 +9,8 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.platform.Services;
+import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
+import games.alejandrocoria.mismatchedthings.api.composition.RepairableComposer;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;

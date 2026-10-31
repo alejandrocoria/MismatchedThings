@@ -6,10 +6,10 @@ import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchCli
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
-import games.alejandrocoria.mismatchedboots.component.DurabilityPolicy;
-import games.alejandrocoria.mismatchedboots.component.RepairCostPolicy;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
+import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.core.component.DataComponents;

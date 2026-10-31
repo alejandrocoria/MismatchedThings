@@ -1,7 +1,7 @@
-package games.alejandrocoria.mismatchedboots.client.tooltip;
+package games.alejandrocoria.mismatchedthings.internal.client.tooltip;
 
 import com.mojang.datafixers.util.Either;
-import games.alejandrocoria.mismatchedboots.tooltip.TooltipSeparator;
+import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 

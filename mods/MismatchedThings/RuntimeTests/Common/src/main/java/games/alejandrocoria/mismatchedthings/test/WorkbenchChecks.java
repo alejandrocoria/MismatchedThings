@@ -53,6 +53,9 @@ public final class WorkbenchChecks {
                     "Block item points at another block");
             require(BuiltInRegistries.RECIPE_TYPE.getValue(id) == MismatchedWorkbench.recipeType(), "Wrong recipe type");
             WorkbenchCoexistence.verifyEnvironment();
+            if (!WorkbenchCoexistence.ACTIVE) {
+                SharedUtilitiesChecks.verify();
+            }
             require(WorkbenchCoexistence.ACTIVE || !BuiltInRegistries.ITEM.containsKey(Identifier.parse("mismatchedboots:mixed_boots")),
                     "Boots leaked into core run");
             require(!BuiltInRegistries.BLOCK.containsKey(Identifier.parse("mismatchedboots:mismatched_workbench")), "Legacy station present");

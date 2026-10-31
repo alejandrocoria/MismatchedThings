@@ -10,6 +10,8 @@ neoForge {
 neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
+    api "com.electronwill.night-config:core:${nightconfig_version}"
+    api "com.electronwill.night-config:toml:${nightconfig_version}"
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

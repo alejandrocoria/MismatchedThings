@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.composition;
+package games.alejandrocoria.mismatchedthings.api.composition;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
@@ -10,11 +10,12 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import java.util.Map;
 import java.util.TreeMap;
 
-final class EnchantmentMerger {
+/** Merges all source enchantments, retaining incompatible entries and the equal-level upgrade rule. */
+public final class EnchantmentMerger {
     private EnchantmentMerger() {
     }
 
-    static ItemEnchantments merge(ItemStack left, ItemStack right) {
+    public static ItemEnchantments merge(ItemStack left, ItemStack right) {
         ItemEnchantments leftEnchantments = left.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         ItemEnchantments rightEnchantments = right.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         Map<Identifier, Holder<Enchantment>> ordered = new TreeMap<>();
