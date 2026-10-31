@@ -1,7 +1,7 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.client.renderer.v1.render.FabricLayerRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;

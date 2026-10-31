@@ -6,9 +6,39 @@ the real loader JARs, then load only the packaged Leggings artifact from disposa
 dependency, not loose core classes or a separately staged core JAR. Boots and
 indev mods/configuration/worlds are excluded.
 
-The additional workbench profile can also stage the **current built** Boots JAR
+The additional client profiles can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
+
+## Item rendering
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyItems --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyItems --offline --console=plain
+```
+
+Use the same sequential loader/baseline rules and `-PleggingsBoots=true` option
+as equipped rendering. This profile has isolated `items[-boots]` run/report paths.
+The shared server seeds a disposable world; the hidden client resolves actual
+factory-created products in every display context and exercises native GUI,
+third-person hands, ground/frame entity renderers and actual first-person hands.
+Controlled source geometry checks anatomical orientation, half area/full scale,
+both source orders, live-root foil, preserved provenance and existing output layers.
+Native leather/trim layers, special-renderer pair-wide fallback, empty/missing
+assets, bare diagnostics, unrelated-item pass-through and stable GUI identities
+have focused controls. Fabric repeats resolution with API-emitted mesh-only sources.
+The warning for `leggings_test:absent` is deliberate missing-asset coverage;
+other model/mixin errors must still be investigated.
+The client really reloads resources, requires a new native model identity and
+repeats assertions and actual submissions. One `items-panel.png` is relevant
+visual evidence; automated/agent inspection is not owner manual acceptance.
+
+For an unchanged earlier Boots binary, pass `-PleggingsBoots=true` and
+`-PleggingsBootsJar=<path>`. It is copied read-only and hash-checked after the
+run; this variant uses `items-previous-boots`. It also stages the candidate core
+explicitly so an equally numbered earlier unpublished nested build cannot win
+selection. This focused coexistence check does not replace the final published-
+consumer evolution matrix. Normal profiles still load Things only from Leggings.
 
 ## Equipped rendering
 
@@ -23,7 +53,7 @@ resolves the existing exact pinned Ice and Fire/Uranus/Jupiter artifacts through
 Boots' hash-checked resolver, never from indev. Add `'-Pneoforge_version=26.1.2.99'`
 for the floor and restore .114 afterwards. Loader/baseline runs remain sequential.
 
-Both concrete profiles share [client-profiles.gradle](client-profiles.gradle);
+The client profiles share [client-profiles.gradle](client-profiles.gradle);
 they do not share run/report state. Equipped paths use
 `build/{run,reports,verification}/<baseline>/equipped[-boots][-ice-and-fire]`.
 The server checks the packaged item/recipe setup and saves the disposable world;
@@ -130,7 +160,7 @@ input. A successful round trip after rejection checks recursion-guard cleanup.
 Equipment checks cover the owner's flags/asset, custom sound selection, strict
 root classification and actual player use/slot/dispenser queries, with vanilla
 leggings as a pass-through control. The client checks the bare diagnostic tooltip,
-round-trips the registered pair component and draws its temporary model for
+round-trips the registered pair component and draws its current item model for
 several frames. Factory checks additionally cover asymmetric/same-item pairs,
 owner/unknown/removed fields, durability rounding and numeric resource bounds,
 prior work, repair material union, enchantments, identity/operation/slot arithmetic,

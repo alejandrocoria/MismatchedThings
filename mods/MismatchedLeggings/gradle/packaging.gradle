@@ -29,6 +29,7 @@ gradle.projectsEvaluated {
                      'games/alejandrocoria/mismatchedleggings/recipe/MixedLeggingsWorkbenchRecipe.class',
                      'games/alejandrocoria/mismatchedleggings/network/CompositionRulesPayload.class',
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsEquipmentRenderer.class',
+                     'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsItemRenderer.class',
                      'META-INF/services/games.alejandrocoria.mismatchedleggings.client.render.EquipmentSources',
                      'assets/mismatchedleggings/equipment/neutral.json',
                      'data/mismatchedleggings/recipe/mixed_leggings_workbench.json',
@@ -47,7 +48,7 @@ gradle.projectsEvaluated {
                         if (descriptor.id != 'mismatchedleggings' || descriptor.version != project.version.toString()
                                 || descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0'
                                 || descriptor.depends.containsKey('mismatchedboots')
-                                || descriptor.mixins != ['mismatchedleggings.mixins.json']) {
+                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
                             throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
                         }
                         def nested = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }

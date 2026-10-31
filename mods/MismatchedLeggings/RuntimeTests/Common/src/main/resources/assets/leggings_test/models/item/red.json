@@ -1,0 +1,32 @@
+{
+    "parent": "minecraft:item/handheld",
+    "textures": {
+        "particle": "minecraft:block/redstone_block",
+        "all": "minecraft:block/redstone_block"
+    },
+    "elements": [
+        {
+            "from": [
+                0,
+                0,
+                8
+            ],
+            "to": [
+                16,
+                16,
+                8
+            ],
+            "faces": {
+                "south": {
+                    "texture": "#all",
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ]
+                }
+            }
+        }
+    ]
+}

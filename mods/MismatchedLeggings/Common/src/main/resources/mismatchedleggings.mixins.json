@@ -4,6 +4,13 @@
     "package": "games.alejandrocoria.mismatchedleggings.mixin",
     "compatibilityLevel": "JAVA_25",
     "mixins": ["LivingEntityEquipmentMixin"],
-    "client": ["client.ArmorLayerMixin", "client.EntityRenderDispatcherMixin"],
+    "client": [
+        "client.ArmorLayerMixin",
+        "client.EntityRenderDispatcherMixin",
+        "client.GuiGraphicsExtractorMixin",
+        "client.ItemModelResolverMixin",
+        "client.ItemStackRenderStateAccessor",
+        "client.LayerRenderStateAccessor"
+    ],
     "injectors": { "defaultRequire": 1 }
 }

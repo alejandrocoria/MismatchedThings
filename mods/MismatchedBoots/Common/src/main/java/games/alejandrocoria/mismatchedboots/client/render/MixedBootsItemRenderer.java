@@ -2,11 +2,11 @@ package games.alejandrocoria.mismatchedboots.client.render;
 
 import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.BakedQuadClipper;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerGeometryExtension;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.BakedQuadClipper;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.item.TrackingItemStackRenderState;

@@ -8,8 +8,8 @@ This branch targets Minecraft 26.1.2 with Fabric and NeoForge.
 - [Mismatched Boots](mods/MismatchedBoots/README.md) combines two pairs of boots
   into two oppositely oriented mixed pairs. It is the currently playable armor product.
 - [Mismatched Leggings](mods/MismatchedLeggings/README.md) is in development;
-  composition, shared-workbench crafting and equipped rendering are implemented;
-  mixed item rendering and the remaining product features are pending.
+  composition, shared-workbench crafting and equipped/item rendering are implemented;
+  the remaining product features are pending.
 - [MismatchedThings core](mods/MismatchedThings/README.md) owns the shared
   workbench and small shared config, tooltip and composition utilities. It is
   bundled inside each armor product artifact; no separate download is needed.

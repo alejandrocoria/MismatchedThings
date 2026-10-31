@@ -22,6 +22,9 @@ import net.minecraft.world.item.Items;
 public final class SkeletonClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        if (Boolean.getBoolean("leggings.test.items")) {
+            FabricItemChecks.install();
+        }
         if (Boolean.getBoolean("leggings.test.equipped")) {
             ArmorRenderer.register((pose, collector, stack, state, slot, light, model) -> {
                 throw new AssertionError("Mixed rendering invoked an unsafe custom renderer");

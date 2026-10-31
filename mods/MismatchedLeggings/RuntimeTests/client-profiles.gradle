@@ -1,13 +1,17 @@
 import java.util.concurrent.TimeUnit
 
-// Two concrete packaged-product profiles share staging and bounded process launching.
-['Workbench', 'Equipped'].each { profile ->
+// Concrete packaged-product profiles share staging and bounded process launching.
+['Workbench', 'Equipped', 'Items'].each { profile ->
     def equipped = profile == 'Equipped'
+    def items = profile == 'Items'
     def iceAndFire = equipped && project.name == 'NeoForge' && providers.gradleProperty('leggingsIceAndFire')
             .map { it.toBoolean() }.getOrElse(false)
     def coexistence = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
+    def previousBoots = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
+    def previousHash = previousBoots == null ? null : java.security.MessageDigest.getInstance('SHA-256')
+            .digest(previousBoots.bytes).encodeHex().toString()
     def baseline = project.name == 'Fabric' ? fabric_loader_version : neoforge_version
-    def variant = (equipped ? 'equipped' : 'workbench') + (coexistence ? '-boots' : '') + (iceAndFire ? '-ice-and-fire' : '')
+    def variant = profile.uncapitalize() + (coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -19,13 +23,17 @@ import java.util.concurrent.TimeUnit
     ['server', 'client'].each { phase ->
         tasks.register("prepare${profile}${phase.capitalize()}") {
             dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
-            if (coexistence) { dependsOn boots.tasks.named('assemble') }
+            if (coexistence && previousBoots == null) { dependsOn boots.tasks.named('assemble') }
             doLast {
                 def run = new File(directory, phase)
                 def mods = new File(run, 'mods')
                 mods.mkdirs()
                 def artifacts = [leggingsJar.get().asFile]
-                if (coexistence) { artifacts.add(bootsJar.get().asFile) }
+                if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
+                if (coexistence && previousBoots != null) {
+                    // Prefer the candidate core over an equally numbered, older unpublished nested build.
+                    artifacts.add(project(":MismatchedThings:${project.name}").tasks.named('jar').get().archiveFile.get().asFile)
+                }
                 if (iceAndFire) {
                     def resolver = project(':MismatchedBoots').testModArtifacts
                     ['iceandfire-2.2-beta.3.jar', 'uranus-3.0-alpha.1.jar',
@@ -74,9 +82,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     client(); programArgs('--quickPlaySingleplayer', 'skeleton')
                 }
                 ideConfigGenerated(false)
-                if (equipped && phase == 'client') { programArgs('--width', '1280', '--height', '720') }
+                if ((equipped || items) && phase == 'client') { programArgs('--width', '1280', '--height', '720') }
                 runDir(project.relativePath(new File(directory, phase)))
                 property('leggings.test.equipped', equipped.toString())
+                property('leggings.test.items', items.toString())
                 property('leggings.test.workbench', 'true')
                 property('leggings.test.boots', coexistence.toString())
                 property('leggings.test.report', reports.absolutePath)
@@ -88,11 +97,12 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     client(); programArgument('--quickPlaySingleplayer'); programArgument('skeleton')
                 }
                 disableIdeRun()
-                if (equipped && phase == 'client') {
+                if ((equipped || items) && phase == 'client') {
                     programArgument('--width'); programArgument('1280'); programArgument('--height'); programArgument('720')
                 }
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
+                systemProperty('leggings.test.items', items.toString())
                 systemProperty('leggings.test.workbench', 'true')
                 systemProperty('leggings.test.boots', coexistence.toString())
                 systemProperty('leggings.test.report', reports.absolutePath)
@@ -109,7 +119,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     def neoForgeLoader = project.name == 'NeoForge'
     tasks.register("verify${profile}") {
         group = 'verification'
-        description = equipped ? 'Checks production equipped rendering, geometry cache, fallbacks and optional decorated models.'
+        description = items ? 'Checks production item geometry, GUI, display contexts, fallbacks and reload.'
+                : equipped ? 'Checks production equipped rendering, geometry cache, fallbacks and optional decorated models.'
                 : 'Checks Leggings workbench transactions, rule synchronization and optional Boots coexistence.'
         dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
         doLast {
@@ -121,6 +132,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
+                if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
                 if (offline) { arguments.add('--offline') }
                 if (neoForgeLoader) { arguments.add("-Pneoforge_version=${baseline}") }
                 logger.lifecycle("Leggings ${baseline}/${variant}/${phase}")
@@ -138,6 +150,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
+            }
+            if (previousBoots != null && previousHash != java.security.MessageDigest.getInstance('SHA-256')
+                    .digest(previousBoots.bytes).encodeHex().toString()) {
+                throw new GradleException('Previous Boots artifact was modified')
             }
             new File(logs, 'matrix.ok').text = "packaged ${profile} server and hidden client passed\n"
         }

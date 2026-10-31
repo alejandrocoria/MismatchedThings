@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.client.render.geometry;
 
+import games.alejandrocoria.mismatchedthings.api.client.geometry.PolygonTessellator;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;

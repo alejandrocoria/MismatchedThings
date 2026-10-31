@@ -6,8 +6,8 @@ The standalone skeleton and source schema are implemented. A bare
 valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
-Equipped mixed rendering is implemented; mixed item rendering and the later
-workstation/recovery features are not. The iron-leggings icon is temporary. This is not a complete or
+Equipped and item mixed rendering are implemented; the later
+workstation/recovery features are not. This is not a complete or
 publishable release.
 
 ## Development
@@ -83,8 +83,7 @@ Mending. Stored sources are immutable provenance, not durability wallets.
 The renderer retains each source's complete native leg and clips waist geometry
 in reference waist space, including ordinary transformed child decorations.
 Native animation, material passes, dye and trims are preserved; the live mixed
-root controls foil for both sides. Item icons/hand models remain temporary until
-the item-rendering block.
+root controls foil for both sides.
 
 Both source views are checked before either split is submitted. Unsupported
 standard geometry degrades to one complete left-owner appearance where safe,
@@ -100,6 +99,21 @@ and side within a resource epoch, never queued entity state/animation views.
 Definitions are assumed stable within that epoch; live transforms are copied at
 draw time. Resource reload invalidates the cache and fresh-model providers cannot
 grow retention indefinitely.
+
+## Item appearance
+
+GUI, held, framed and dropped items combine native source item geometry at full
+scale. Artwork is front-facing: the wearer's left source occupies the viewer's
+right half. Dye, trims and native material passes stay with their sources; foil
+comes from the live root. Canonical item clipping is separate from equipped
+waist clipping and both halves are planned before either is changed.
+
+Unsupported geometry uses two full-size source models with small opposing
+rotations. Axis-aligned GUI views can instead use complementary native scissors;
+rotated GUI views use the overlap. An empty source model selects the complete
+product diagnostic, as do data-less roots. Missing assets retain native missing-model
+rendering rather than crashing. Resource reload uses fresh native item models;
+no product item-model cache survives it. Loader mesh adapters remain product-local.
 
 ## Runs and tests
 

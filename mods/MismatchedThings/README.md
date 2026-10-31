@@ -63,6 +63,17 @@ state, policies and third-party behavior; Things does not contain a general armo
   invalid numeric inputs reject, and unrepresentable results retain owner values.
   Damage-resistance equivalence/intersection keeps the established bounded behavior.
 
+## Item geometry utilities (since 1.1.0)
+
+`api.client.geometry` supplies canonical half-plane clipping and bounded polygon
+tessellation: `QuadClipper`, `PolygonTessellator`, `BakedQuadClipper` and
+`BakedPolygonTessellator`. Inputs carry rendered positions, UVs and separate
+clipping coordinates; traced cuts retain vertex origins for consumer metadata
+interpolation. Baked outputs retain native direction/material identity.
+Unsupported cuts are reported before consumer mutation. These are client-side
+operations, not equipment models, caches, renderer mixins or loader adapters.
+Boots and Leggings own those boundaries and their pair-wide fallback decisions.
+
 Current Boots and Leggings code requires Things `>=1.1.0 <2.0.0`. Earlier compiled consumers of the
 1.0 workbench API remain supported. The extraction changes neither saved IDs nor
 configuration formats; no world/item migration is needed. Boots' existing local

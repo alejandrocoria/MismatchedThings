@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.client.render.geometry;
+package games.alejandrocoria.mismatchedthings.api.client.geometry;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.SharedConstants;

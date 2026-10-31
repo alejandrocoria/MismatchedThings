@@ -5,7 +5,8 @@
     "mixins": ["ArmorWearInvoker", "RecipeManagerInvoker"],
     "client": [
         "EquipmentProbeMixin",
-        "HiddenWindowMixin"
+        "HiddenWindowMixin",
+        "ItemSubmitProbeMixin"
     ],
     "injectors": { "defaultRequire": 1 }
 }

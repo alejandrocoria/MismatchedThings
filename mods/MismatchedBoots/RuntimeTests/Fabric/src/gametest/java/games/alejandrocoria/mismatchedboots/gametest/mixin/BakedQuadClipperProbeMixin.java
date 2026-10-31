@@ -1,9 +1,9 @@
 package games.alejandrocoria.mismatchedboots.gametest.mixin;
 
-import games.alejandrocoria.mismatchedboots.client.render.geometry.BakedQuadClipper;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import games.alejandrocoria.mismatchedboots.gametest.HybridItemRenderingRuntimeClientGameTest;
 import games.alejandrocoria.mismatchedboots.gametest.QuadPlanningProbe;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.BakedQuadClipper;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Mixin;

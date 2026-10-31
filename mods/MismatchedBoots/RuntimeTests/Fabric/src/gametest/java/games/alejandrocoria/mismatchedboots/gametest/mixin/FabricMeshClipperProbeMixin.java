@@ -1,8 +1,8 @@
 package games.alejandrocoria.mismatchedboots.gametest.mixin;
 
 import games.alejandrocoria.mismatchedboots.client.render.geometry.FabricMeshClipper;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import games.alejandrocoria.mismatchedboots.gametest.QuadPlanningProbe;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Mixin;

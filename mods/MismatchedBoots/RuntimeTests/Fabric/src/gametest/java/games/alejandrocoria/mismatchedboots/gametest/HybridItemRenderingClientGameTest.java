@@ -4,11 +4,11 @@ import games.alejandrocoria.mismatchedboots.client.mixin.ItemStackRenderStateAcc
 import games.alejandrocoria.mismatchedboots.client.mixin.LayerRenderStateAccessor;
 import games.alejandrocoria.mismatchedboots.client.render.MixedBootsItemRenderer;
 import games.alejandrocoria.mismatchedboots.client.render.geometry.LayerGeometryExtension;
-import games.alejandrocoria.mismatchedboots.client.render.geometry.QuadClipper;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.gametest.mixin.LayerRenderStateTestAccessor;
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;

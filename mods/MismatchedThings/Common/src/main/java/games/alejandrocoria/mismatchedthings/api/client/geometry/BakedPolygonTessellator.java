@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.client.render.geometry;
+package games.alejandrocoria.mismatchedthings.api.client.geometry;
 
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.resources.model.geometry.BakedQuad;

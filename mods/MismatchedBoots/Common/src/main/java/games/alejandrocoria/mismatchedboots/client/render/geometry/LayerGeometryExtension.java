@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.client.render.geometry;
 
+import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
+
 import org.joml.Matrix4fc;
 
 import java.util.Objects;

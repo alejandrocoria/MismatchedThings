@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.client.render.geometry;
+package games.alejandrocoria.mismatchedthings.api.client.geometry;
 
 import org.junit.jupiter.api.Test;
 
