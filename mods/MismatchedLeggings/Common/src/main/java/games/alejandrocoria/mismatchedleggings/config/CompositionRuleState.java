@@ -1,11 +1,13 @@
 package games.alejandrocoria.mismatchedleggings.config;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Objects;
 
 /** Distinct server authority and client preview state, even in an integrated process. */
 public final class CompositionRuleState {
     private static volatile CompositionRules server = CompositionRules.defaults();
-    private static volatile CompositionRules preview = CompositionRules.defaults();
+    private static volatile @Nullable CompositionRules synchronizedPreview;
 
     private CompositionRuleState() {
     }
@@ -15,7 +17,8 @@ public final class CompositionRuleState {
     }
 
     public static CompositionRules preview() {
-        return preview;
+        var snapshot = synchronizedPreview;
+        return snapshot == null ? CompositionRules.defaults() : snapshot;
     }
 
     public static void installServer(CompositionRules rules) {
@@ -23,10 +26,14 @@ public final class CompositionRuleState {
     }
 
     public static void installPreview(CompositionRules rules) {
-        preview = Objects.requireNonNull(rules, "rules");
+        synchronizedPreview = Objects.requireNonNull(rules, "rules");
+    }
+
+    public static @Nullable CompositionRules synchronizedPreview() {
+        return synchronizedPreview;
     }
 
     public static void resetPreview() {
-        preview = CompositionRules.defaults();
+        synchronizedPreview = null;
     }
 }

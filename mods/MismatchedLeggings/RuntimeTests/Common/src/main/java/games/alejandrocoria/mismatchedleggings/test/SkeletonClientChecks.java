@@ -18,6 +18,10 @@ public final class SkeletonClientChecks {
     }
 
     public static void tick(Minecraft client) {
+        if (Boolean.getBoolean("leggings.test.workbench")) {
+            WorkbenchClientChecks.tick(client);
+            return;
+        }
         if (finished) {
             return;
         }

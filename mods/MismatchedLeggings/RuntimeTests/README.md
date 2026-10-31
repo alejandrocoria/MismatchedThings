@@ -6,7 +6,58 @@ the real loader JARs, then load only the packaged Leggings artifact from disposa
 dependency, not loose core classes or a separately staged core JAR. Boots and
 indev mods/configuration/worlds are excluded.
 
-## Commands
+The additional workbench profile can also stage the **current built** Boots JAR
+for coexistence. It does not use an indev directory or claim acceptance against
+the frozen published Boots release; that release graph remains a final-product gate.
+
+## Workbench and synchronization
+
+Run sequentially from the repository root:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyWorkbench --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyWorkbench --console=plain
+```
+
+Add `'-PleggingsBoots=true'` to either command to stage both packaged products.
+For NeoForge's floor, add `'-Pneoforge_version=26.1.2.99'`; afterwards rerun without
+that override to restore the normal .114 outputs. Optional `--offline` and both
+properties propagate to the bounded child Gradle launches. Do not run loader
+suites or NeoForge baselines concurrently: they share production build outputs.
+
+Each command starts a separate dedicated server and hidden client. The client
+loads a copy of the saved fixture world, then uses actual block-use and container
+packets against its integrated server. Following
+[Boots' composition-rule client test](../../MismatchedBoots/RuntimeTests/Fabric/src/gametest/java/games/alejandrocoria/mismatchedboots/gametest/CompositionRulesClientGameTest.java),
+it verifies two real sessions with different config files. The first starts
+with maximum attribute rules and separate durability; editing the files during
+play must not alter either authority or client previews, including a paid inverse.
+After a real disconnect and same-world reopen, normal server-start hooks must load
+minimum attribute rules and average durability and the new connection must receive
+both together. Native join/ready/S2C handlers deliver the complete snapshot; the
+fixture never overrides server-start loading or directly installs successful
+client rules. No production command or testing-only production hook is needed.
+Full `ItemStack` equality checks both previews and paid inventory outputs on each
+side, not merely their item IDs. The client also checks disconnect reset and the
+absence of fabricated previews before synchronization.
+
+Dedicated checks cover source admission, loaded product routes, rejection of
+cross-slot inputs, either output taken first, exactly-once payment, input locks,
+shift-click and paid/unpaid close cleanup. A test-only native recipe-manager apply
+invoker exercises removal and holder replacement, including stale pickup/shift
+rejection and preservation of a paid inverse. This is the apply boundary of a
+reload, not a separate filesystem datapack-discovery test. Rule codec checks cover
+registered/absent numeric declarations, full atomic round trips, trailing data,
+invalid counts, duplicate IDs and protected structural fields.
+
+Disposable runs are under `build/run/<baseline>/workbench[-boots]/<server|client>`.
+Fresh markers are under `build/reports/<baseline>/workbench[-boots]/`; subprocess
+logs and `matrix.ok` are under `build/verification/<baseline>/workbench[-boots]/`.
+The normal skeleton profiles remain separate and exclude Boots. The client-window
+contract below applies to both suites; no screenshots are required for these
+transaction/state assertions.
+
+## Skeleton commands
 
 Run sequentially from the repository root:
 

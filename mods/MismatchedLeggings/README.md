@@ -5,8 +5,10 @@ The standalone skeleton and source schema are implemented. A bare
 `mismatchedleggings:mixed_leggings` remains inert and non-equippable. Structurally
 valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
-Acquisition recipes and actual mixed rendering are not implemented yet. The iron-leggings icon is temporary.
-This is not a playable or publishable release.
+The shared workbench now crafts both ordered results under server-owned rules.
+Actual mixed rendering and the later workstation/recovery features are not
+implemented yet. The iron-leggings icon is temporary. This is not a complete or
+publishable release.
 
 ## Development
 
@@ -22,8 +24,8 @@ Run Gradle from the repository root:
 loader depends on Boots. Things `>=1.1.0 <2.0.0` is required and bundled; no
 separate download is needed. Product identity/version live in
 [mod.properties](mod.properties); there are no publication IDs/tasks yet.
-Client-only production hooks will be added when rendering needs them, rather
-than placing client classes in common initialization.
+Client-only lifecycle hooks live in the loader client entry points; dedicated
+servers do not initialize client classes.
 
 ## Source and equipment boundary
 
@@ -47,9 +49,19 @@ not registered: missing-mod preservation/recovery is not implemented yet.
 
 Product-owned schemas use `mismatchedleggings-attributes.toml` and
 `mismatchedleggings-components.toml` through Things' TOML infrastructure.
-Lifecycle loading, reload and synchronization are deferred to the workbench block;
-the current factory uses defaults or an explicit immutable `CompositionRules`.
-Server authority and preview state are separate even in singleplayer.
+Like Boots, the logical server loads both files at startup and resets its rules
+when it stops. Changes require restarting the dedicated server or leaving and
+reopening the singleplayer world; there is no config command or live reload.
+Server authority and preview state are separate even in singleplayer; one
+complete snapshot supplies client preview rules when connecting. Until that
+snapshot arrives, local examples produce no result rather than using client config
+or defaults. Disconnecting clears only Leggings' preview state.
+
+The product registers its own `mismatchedleggings:mixed_leggings_workbench` recipe
+and leggings admission through the public Things API. Boots remains independent:
+both products share one station, but a boots/leggings input pair has no recipe.
+The core owns payment, retained outputs, shift-click and close cleanup. No private
+station/menu implementation is duplicated in Leggings.
 
 Attribute policies are average/combine/minimum/maximum/separate/reject. Vanilla
 defaults match the family semantics, with maximum step height, average NeoForge

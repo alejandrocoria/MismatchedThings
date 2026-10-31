@@ -9,7 +9,8 @@
     "environment": "*",
     "mixins": ["mismatchedleggings.mixins.json"],
     "entrypoints": {
-        "main": ["games.alejandrocoria.mismatchedleggings.MismatchedLeggingsFabric"]
+        "main": ["games.alejandrocoria.mismatchedleggings.MismatchedLeggingsFabric"],
+        "client": ["games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientFabric"]
     },
     "contact": { "sources": "${mod_sources}", "issues": "${mod_issues}" },
     "depends": {

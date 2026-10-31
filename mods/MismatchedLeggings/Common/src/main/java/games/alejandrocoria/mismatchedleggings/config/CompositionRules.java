@@ -8,7 +8,7 @@ import games.alejandrocoria.mismatchedleggings.component.ComponentRules;
 import java.nio.file.Path;
 import java.util.Objects;
 
-/** One immutable snapshot; lifecycle and synchronization are wired in block D. */
+/** One immutable snapshot, installed atomically by the server lifecycle or client synchronization. */
 public record CompositionRules(AttributeRuleSet attributes, ComponentRules components) {
     public CompositionRules {
         Objects.requireNonNull(attributes, "attributes");

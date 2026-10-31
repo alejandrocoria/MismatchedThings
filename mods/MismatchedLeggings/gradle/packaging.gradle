@@ -26,6 +26,9 @@ gradle.projectsEvaluated {
                     }
                     ['games/alejandrocoria/mismatchedleggings/content/MixedLeggingsItem.class',
                      'games/alejandrocoria/mismatchedleggings/composition/MixedLeggingsFactory.class',
+                     'games/alejandrocoria/mismatchedleggings/recipe/MixedLeggingsWorkbenchRecipe.class',
+                     'games/alejandrocoria/mismatchedleggings/network/CompositionRulesPayload.class',
+                     'data/mismatchedleggings/recipe/mixed_leggings_workbench.json',
                      'META-INF/services/games.alejandrocoria.mismatchedleggings.composition.CompositionAttributes',
                      'data/minecraft/tags/item/enchantable/armor.json',
                      'assets/mismatchedleggings/items/mixed_leggings.json',

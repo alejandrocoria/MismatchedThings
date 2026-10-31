@@ -21,7 +21,8 @@ public final class SkeletonChecks {
     }
 
     public static void environment(boolean boots, long products, long cores) {
-        require(!boots && products == 1 && cores == 1, "Expected standalone Leggings with exactly one nested Things");
+        require(boots == Boolean.getBoolean("leggings.test.boots") && products == 1 && cores == 1,
+                "Wrong product graph or duplicate nested Things");
     }
 
     public static ItemStack verify() {
@@ -46,8 +47,12 @@ public final class SkeletonChecks {
         serverFinished = true;
         try {
             verify();
-            SourceDataChecks.verify(server);
-            CompositionChecks.verify(server);
+            if (Boolean.getBoolean("leggings.test.workbench")) {
+                WorkbenchChecks.verify(server);
+            } else {
+                SourceDataChecks.verify(server);
+                CompositionChecks.verify(server);
+            }
             passed("server");
         } catch (Throwable failure) {
             failed("server", failure);
@@ -57,7 +62,7 @@ public final class SkeletonChecks {
     }
 
     public static void passed(String phase) throws Exception {
-        Files.writeString(report(phase + ".ok"), "standalone packaged skeleton passed\n");
+        Files.writeString(report(phase + ".ok"), "packaged leggings " + phase + " checks passed\n");
     }
 
     public static void failed(String phase, Throwable failure) {
