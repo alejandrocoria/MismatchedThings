@@ -16,6 +16,9 @@ public final class SkeletonTestNeoForge {
         components.register("charge", () -> CompositionFixture.CHARGE);
         components.register(bus);
         NeoForgeCompositionChecks.register();
+        if (Boolean.getBoolean("leggings.test.repair")) {
+            NeoForgeRepairChecks.register(bus);
+        }
         var mods = ModList.get();
         SkeletonChecks.environment(mods.isLoaded("mismatchedboots"),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedleggings")).count(),

@@ -6,8 +6,9 @@ The standalone skeleton and source schema are implemented. A bare
 valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
-Equipped/item rendering, source tooltips and vanilla leggings semantics are implemented; the later
-workstation/recovery features are not. This is not a complete or
+Equipped/item rendering, source tooltips, vanilla leggings semantics, anvil and
+crafting donor repair are implemented; grindstone, smithing and recovery are not.
+This is not a complete or
 publishable release.
 
 ## Development
@@ -132,7 +133,30 @@ on either source of a valid root; this is not arbitrary tag inheritance.
 Future books require support from a source and retain native conflict/level
 checks, independently of the factory's composition-time enchantment union.
 Bare roots retain their diagnostic and cannot obtain normal book admission.
-Full repair/grindstone/source-wise smithing support remains later work.
+Grindstone/source-wise smithing support remains later work.
+
+## Anvil and crafting repair
+
+The native anvil supports naming/name removal, compatible enchanted books,
+materials in the composed repair-material union, and an ordinary leggings donor
+whose item matches either stored source. Native level/conflict, prior-work,
+survival cost limits and payment rules remain in force; composition-time
+overlevel merging is not repeated. Mixed/Mixed and unrelated donors are rejected.
+Repair changes live root durability, never the stored sources or composed capacity.
+Bare/malformed roots cannot use these repair/enchantment paths.
+
+Player crafting grids, crafting tables and the Crafter accept one valid mixed
+root plus one ordinary donor matching either source, in either input order.
+They add both remaining durabilities and five percent of the root's capacity,
+clamped to that capacity. Non-curse enchantments, custom names and prior-work
+cost are removed; each curse retains its greater input level. There is no XP
+reward. Other live-root components and ordered source snapshots are preserved.
+NeoForge's native combine-repair veto is respected.
+
+Repair materials are a composition-time snapshot, as in Boots: changing a repair
+tag affects newly composed roots, not an existing root's stored union. Ordinary
+source items continue to follow their own native tags. This does not add foreign
+repair-table or arbitrary class-based item compatibility.
 
 ## Runs and tests
 

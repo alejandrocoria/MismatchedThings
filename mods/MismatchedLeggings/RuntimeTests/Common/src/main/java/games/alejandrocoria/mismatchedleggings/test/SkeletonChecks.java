@@ -47,7 +47,10 @@ public final class SkeletonChecks {
         serverFinished = true;
         try {
             verify();
-            if (Boolean.getBoolean("leggings.test.presentation")) {
+            if (Boolean.getBoolean("leggings.test.repair")) {
+                AnvilRepairChecks.verify(server);
+                CraftingRepairChecks.verify(server);
+            } else if (Boolean.getBoolean("leggings.test.presentation")) {
                 SourceDataChecks.verify(server);
                 CompositionChecks.wear(server);
                 VanillaLeggingsChecks.verify(server);

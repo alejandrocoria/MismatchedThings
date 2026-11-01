@@ -9,7 +9,7 @@ This branch targets Minecraft 26.1.2 with Fabric and NeoForge.
   into two oppositely oriented mixed pairs. It is the currently playable armor product.
 - [Mismatched Leggings](mods/MismatchedLeggings/README.md) is in development;
   composition, shared-workbench crafting, rendering, source tooltips and vanilla
-  leggings behavior are implemented;
+  leggings behavior, anvil and crafting donor repair are implemented;
   the remaining product features are pending.
 - [MismatchedThings core](mods/MismatchedThings/README.md) owns the shared
   workbench and small shared config, tooltip and composition utilities. It is

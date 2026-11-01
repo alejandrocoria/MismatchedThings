@@ -2,7 +2,12 @@
     "required": true,
     "package": "games.alejandrocoria.mismatchedleggings.test.mixin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["ArmorWearInvoker", "EquipmentUpdatesInvoker", "RecipeManagerInvoker"],
+    "mixins": [
+        "ArmorWearInvoker",
+        "CrafterInvoker",
+        "EquipmentUpdatesInvoker",
+        "RecipeManagerInvoker"
+    ],
     "client": [
         "EquipmentProbeMixin",
         "HiddenWindowMixin",

@@ -10,6 +10,39 @@ The additional client profiles can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
 
+## Anvil and crafting donor repair
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyRepair --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRepair --offline --console=plain
+```
+
+Use the sequential baseline rules and optional `-PleggingsBoots=true` switch
+below; `-PleggingsBootsJar=<path>` can retain an unchanged earlier Boots binary.
+Runs/reports/verification use isolated `repair[-boots|-previous-boots]` paths.
+The profile uses packaged products, never indev JARs, and its client must stay
+hidden/muted with NeoForge's early loading window disabled. It adds no screenshot.
+
+Dedicated checks exercise actual native anvil previews and normal/shift extraction:
+both source identities/orientations, material count and XP payment, rename/name
+removal, prior-work/cost limits, compatible/conflicting/wrong-slot books, native
+level caps, unpaid close and invalid/bare/malformed/cross-product inputs.
+Crafting checks use actual sparse 2x2/3x3 menus and a real Crafter's native
+dispense method with barrel output. They check input order/consumption, the
+five-percent bonus/capacity bound, curse/name/prior-work rules, no player XP
+payment and preserved provenance/opaque live components. Native ordinary repair
+and optional Boots hooks remain controls, rather than isolated policy calls.
+NeoForge additionally uses a fixture item that vetoes combine repair.
+
+Repair-material reload checks apply native pending item tags (including holder
+memberships), restoring them afterwards. Newly composed roots use the new tag;
+existing roots retain the union stored during composition, matching Boots. This
+is the native tag-apply boundary, not filesystem datapack discovery coverage.
+The client opens the real anvil with a block-use packet, checks full synchronized
+previews and paid output/XP, then extracts an inventory-grid repair through a real
+container packet. Owner manual acceptance remains separate. Grindstone and
+source-wise smithing belong to I/J, not this gate.
+
 ## Tooltips and vanilla leggings semantics
 
 ```powershell
@@ -38,7 +71,7 @@ and captures one relevant `tooltip.png` showing native separator rendering.
 Source providers retain their normal/Shift behavior; no artificial Shift mode or
 optional-mod tooltip bridge is introduced. Owner readability acceptance remains
 separate. Specific suspended-state diagnostics belong to K, where their schema
-will first exist. H–J still own the remaining workstation implementation.
+will first exist. The repair gate above covers H; I/J own grindstone and smithing.
 
 ## Item rendering
 

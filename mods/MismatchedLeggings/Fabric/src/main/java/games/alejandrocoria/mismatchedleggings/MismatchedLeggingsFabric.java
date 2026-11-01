@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedleggings.config.CompositionRulesLifecycle;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.network.ClientReadyPayload;
 import games.alejandrocoria.mismatchedleggings.network.CompositionRulesPayload;
+import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsRepairRecipe;
 import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsWorkbenchRecipe;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -22,6 +23,9 @@ public final class MismatchedLeggingsFabric implements ModInitializer {
         Registry.register(BuiltInRegistries.ITEM, LeggingsContent.MIXED_LEGGINGS_ID, LeggingsContent.createItem());
         Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MixedLeggingsWorkbenchRecipe.ID, MixedLeggingsWorkbenchRecipe.SERIALIZER);
         RecipeSynchronization.synchronizeRecipeSerializer(MixedLeggingsWorkbenchRecipe.SERIALIZER);
+        var repairSerializer = new MixedLeggingsRepairRecipe(stack -> true).getSerializer();
+        Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MixedLeggingsRepairRecipe.ID, repairSerializer);
+        RecipeSynchronization.synchronizeRecipeSerializer(repairSerializer);
         CompositionRulesLifecycle.registerContributor();
 
         PayloadTypeRegistry.clientboundPlay().register(CompositionRulesPayload.TYPE, CompositionRulesPayload.STREAM_CODEC);
