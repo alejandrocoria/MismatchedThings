@@ -10,6 +10,40 @@ The additional client profiles can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
 
+## Source-wise smithing and recomposition
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifySmithing --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySmithing --offline --console=plain
+```
+
+Use the sequential baselines and optional Boots/current-or-unchanged-JAR switches
+below. Isolated paths use `smithing[-boots|-previous-boots]`. Only packaged
+products are staged, never indev files. The disposable client world is reset;
+the client stays hidden/muted and NeoForge's early window is disabled. This gate
+adds no screenshots.
+
+Dedicated checks use native menus/recipes and normal/shift extraction: one/both
+eligible sources, both orientations, netherite, source-wise trims including a
+one-sided trim and repeated no-op trim, native slot admission, exact payment and
+unpaid close. Native transform-recipe fixtures installed through recipe-manager
+apply cover two distinct template-free recipes, unsupported/no-op/wrong-slot/
+multi-count results and dedicated root precedence. The original recipe graph is
+restored afterwards. This tests native apply/finalization, not filesystem datapack
+discovery. Actual crafted-recipe calls are observed by a test-only probe: both
+distinct recipes are credited on take, while two sources using one recipe are
+not credited twice. Removed/replaced recipes and newly loaded dedicated root
+priority must block stale normal/shift extraction without spending inputs.
+
+Assertions distinguish derived capacity/attributes/materials from live root
+damage/enchantments/name/prior work and spent/removed opaque resources. They also
+check an unchanged projected field following its new source, a live override
+winning, and paid damage clamping under a smaller new capacity. Native items and
+optional Boots remain controls at shared vanilla hook boundaries. The hidden
+client opens the actual smithing table by packet, compares complete synchronized
+previews and paid outputs, and upgrades then trims that same live result using
+normal and shift pickup. Manual appearance acceptance remains separate.
+
 ## Grindstone and bounded XP
 
 ```powershell
@@ -41,7 +75,7 @@ menu/XP hooks. NeoForge additionally exercises its native combine-repair veto.
 The hidden client opens the native screen through a block-use packet, compares
 the full synchronized preview and confirms authoritative extraction, input
 consumption and XP rather than relying on client pickup prediction. Owner manual
-acceptance remains separate. Source-wise smithing belongs to J.
+acceptance remains separate. Smithing has its own gate above.
 
 ## Anvil and crafting donor repair
 
@@ -74,7 +108,7 @@ is the native tag-apply boundary, not filesystem datapack discovery coverage.
 The client opens the real anvil with a block-use packet, checks full synchronized
 previews and paid output/XP, then extracts an inventory-grid repair through a real
 container packet. Owner manual acceptance remains separate. Grindstone has its
-own gate above; source-wise smithing belongs to J, not this repair gate.
+own gate above, as does source-wise smithing.
 
 ## Tooltips and vanilla leggings semantics
 
@@ -104,7 +138,7 @@ and captures one relevant `tooltip.png` showing native separator rendering.
 Source providers retain their normal/Shift behavior; no artificial Shift mode or
 optional-mod tooltip bridge is introduced. Owner readability acceptance remains
 separate. Specific suspended-state diagnostics belong to K, where their schema
-will first exist. The workstation gates above cover H/I; J owns smithing.
+will first exist. The workstation gates above cover H–J.
 
 ## Item rendering
 

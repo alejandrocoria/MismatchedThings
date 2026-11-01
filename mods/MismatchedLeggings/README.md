@@ -7,7 +7,8 @@ valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
 Equipped/item rendering, source tooltips, vanilla leggings semantics, anvil and
-crafting donor repair and grindstone are implemented; smithing and recovery are not.
+crafting donor repair, grindstone and source-wise smithing are implemented;
+missing-source recovery is not.
 This is not a complete or
 publishable release.
 
@@ -133,7 +134,7 @@ on either source of a valid root; this is not arbitrary tag inheritance.
 Future books require support from a source and retain native conflict/level
 checks, independently of the factory's composition-time enchantment union.
 Bare roots retain their diagnostic and cannot obtain normal book admission.
-Source-wise smithing support remains later work.
+Source-wise smithing is described below; missing-source recovery remains later work.
 
 ## Anvil and crafting repair
 
@@ -173,6 +174,26 @@ composition duplicates enchantments into two outputs, inherited XP potential is
 capped against the stored sources and halved; later positive potential above
 that original merged baseline counts fully. An ordinary donor contributes its
 full removable-enchantment potential. Closing or cancelling a preview pays no XP.
+
+## Smithing
+
+Loaded smithing recipes are evaluated separately against both ordinary sources.
+Netherite upgrades transform eligible halves; native trims apply to eligible
+source appearances rather than becoming an invisible root-only trim. One root
+costs one addition and one template when the actual recipe requires it, even if
+both halves change. Recipes requiring an empty template slot keep that requirement.
+Dedicated native results for the mixed item take priority over the generic
+source fallback. Opaque external effects and dedicated mod upgrade tables are
+not emulated.
+
+Source order stays fixed. Capacity, effective attributes, equipment and repair
+materials are refreshed under the current server rules, while paid root damage
+is retained (clamped to the new capacity), along with live enchantments, name and
+prior work. Other projected fields follow their transformed source only if the
+root still matches the old projection; live edits/removals win. Smithing does not
+recreate resource wallets from source snapshots. No-op or invalid source results
+do not count as changes. Removed/replaced recipes invalidate unpaid source-wise
+previews, and each contributing distinct recipe is credited only on extraction.
 
 ## Runs and tests
 

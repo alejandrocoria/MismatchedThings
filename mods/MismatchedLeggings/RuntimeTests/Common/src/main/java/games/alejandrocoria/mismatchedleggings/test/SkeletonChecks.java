@@ -53,7 +53,9 @@ public final class SkeletonChecks {
         serverFinished = true;
         try {
             verify();
-            if (Boolean.getBoolean("leggings.test.grindstone")) {
+            if (Boolean.getBoolean("leggings.test.smithing")) {
+                SmithingChecks.verify(server);
+            } else if (Boolean.getBoolean("leggings.test.grindstone")) {
                 GrindstoneChecks.verify(server);
             } else if (Boolean.getBoolean("leggings.test.repair")) {
                 AnvilRepairChecks.verify(server);

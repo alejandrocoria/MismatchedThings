@@ -18,6 +18,10 @@ public final class SkeletonClientChecks {
     }
 
     public static void tick(Minecraft client) {
+        if (Boolean.getBoolean("leggings.test.smithing")) {
+            SmithingClientChecks.tick(client);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.grindstone")) {
             GrindstoneClientChecks.tick(client);
             return;

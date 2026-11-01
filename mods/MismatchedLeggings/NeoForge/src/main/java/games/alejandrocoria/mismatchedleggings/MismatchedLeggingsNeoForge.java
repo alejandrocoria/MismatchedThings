@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.network.ClientReadyPayload;
 import games.alejandrocoria.mismatchedleggings.network.CompositionRulesPayload;
 import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsRepairRecipe;
+import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsSmithingBaseRecipe;
 import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.minecraft.core.registries.Registries;
@@ -36,6 +37,7 @@ public final class MismatchedLeggingsNeoForge {
         var serializers = DeferredRegister.create(Registries.RECIPE_SERIALIZER, LeggingsContent.MOD_ID);
         serializers.register("mixed_leggings_workbench", () -> MixedLeggingsWorkbenchRecipe.SERIALIZER);
         serializers.register("mixed_leggings_repair", () -> new MixedLeggingsRepairRecipe(ItemStack::isCombineRepairable).getSerializer());
+        serializers.register("mixed_leggings_smithing_base", () -> MixedLeggingsSmithingBaseRecipe.SERIALIZER);
         serializers.register(bus);
         CompositionRulesLifecycle.registerContributor();
 

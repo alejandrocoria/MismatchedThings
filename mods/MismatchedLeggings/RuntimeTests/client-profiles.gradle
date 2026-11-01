@@ -1,12 +1,13 @@
 import java.util.concurrent.TimeUnit
 
 // Concrete packaged-product profiles share staging and bounded process launching.
-['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone'].each { profile ->
+['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing'].each { profile ->
     def equipped = profile == 'Equipped'
     def items = profile == 'Items'
     def presentation = profile == 'Presentation'
     def repair = profile == 'Repair'
     def grindstone = profile == 'Grindstone'
+    def smithing = profile == 'Smithing'
     def iceAndFire = equipped && project.name == 'NeoForge' && providers.gradleProperty('leggingsIceAndFire')
             .map { it.toBoolean() }.getOrElse(false)
     def coexistence = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
@@ -74,7 +75,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 } else {
                     def world = new File(directory, 'server/skeleton')
                     if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run the workbench server first') }
-                    if (repair || grindstone) {
+                    if (repair || grindstone || smithing) {
                         def savedCopy = new File(run, 'saves/skeleton').canonicalFile
                         if (!savedCopy.path.startsWith(layout.buildDirectory.get().asFile.canonicalPath + File.separator)) {
                             throw new GradleException('Workstation world reset escaped the disposable build directory')
@@ -99,6 +100,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 property('leggings.test.presentation', presentation.toString())
                 property('leggings.test.repair', repair.toString())
                 property('leggings.test.grindstone', grindstone.toString())
+                property('leggings.test.smithing', smithing.toString())
                 property('leggings.test.workbench', 'true')
                 property('leggings.test.boots', coexistence.toString())
                 property('leggings.test.report', reports.absolutePath)
@@ -119,6 +121,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.presentation', presentation.toString())
                 systemProperty('leggings.test.repair', repair.toString())
                 systemProperty('leggings.test.grindstone', grindstone.toString())
+                systemProperty('leggings.test.smithing', smithing.toString())
                 systemProperty('leggings.test.workbench', 'true')
                 systemProperty('leggings.test.boots', coexistence.toString())
                 systemProperty('leggings.test.report', reports.absolutePath)
@@ -135,7 +138,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     def neoForgeLoader = project.name == 'NeoForge'
     tasks.register("verify${profile}") {
         group = 'verification'
-        description = grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
+        description = smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
+                : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
                 : presentation ? 'Checks tooltips, native armor semantics, enchantment admission and audited behavior tags.'
                 : items ? 'Checks production item geometry, GUI, display contexts, fallbacks and reload.'

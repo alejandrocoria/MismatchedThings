@@ -46,7 +46,7 @@ public final class MixedLeggingsFactory {
         var components = ComponentProjection.project(firstSource, secondSource, rules.components().components());
         var durability = DurabilityMerger.merge(firstSource, secondSource, rules.components().durability());
         var repairCost = RepairCostMerger.merge(firstSource, secondSource, rules.components().repairCost());
-        var attributes = AttributeMerger.merge(ATTRIBUTES.query(firstSource), ATTRIBUTES.query(secondSource), rules.attributes()::policyFor);
+        var attributes = AttributeMerger.merge(queryAttributes(firstSource), queryAttributes(secondSource), rules.attributes()::policyFor);
         var enchantments = EnchantmentMerger.merge(firstSource, secondSource);
         var repairable = RepairableComposer.compose(firstSource, secondSource);
 
@@ -55,6 +55,10 @@ public final class MixedLeggingsFactory {
         var inverse = createOrientation(new MixedLeggingsData(secondHalf, firstHalf), components.inverse(), components.managedTypes(),
                 durability.inverse(), repairCost.inverse(), attributes.inverse(), enchantments, repairable);
         return new MixedLeggingsPair(primary, inverse);
+    }
+
+    static ItemAttributeModifiers queryAttributes(ItemStack source) {
+        return ATTRIBUTES.query(source);
     }
 
     private static ItemStack createOrientation(MixedLeggingsData data, DataComponentMap projection, Set<DataComponentType<?>> managed,

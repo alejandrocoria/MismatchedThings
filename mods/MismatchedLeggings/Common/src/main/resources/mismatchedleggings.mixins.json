@@ -3,7 +3,16 @@
     "minVersion": "0.8",
     "package": "games.alejandrocoria.mismatchedleggings.mixin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["GrindstoneMenuMixin", "GrindstoneResultSlotXpMixin", "LivingEntityEquipmentMixin", "RepairItemRecipeMixin", "TypedInstanceMixin"],
+    "mixins": [
+        "GrindstoneMenuMixin",
+        "GrindstoneResultSlotXpMixin",
+        "IngredientAccessor",
+        "LivingEntityEquipmentMixin",
+        "RepairItemRecipeMixin",
+        "SmithingMenuMixin",
+        "SmithingPickupMixin",
+        "TypedInstanceMixin"
+    ],
     "client": [
         "client.ArmorLayerMixin",
         "client.EntityRenderDispatcherMixin",

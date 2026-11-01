@@ -161,7 +161,7 @@ public final class WorkbenchChecks {
         }
     }
 
-    private static void applyRecipes(MinecraftServer server, List<RecipeHolder<?>> recipes) {
+    static void applyRecipes(MinecraftServer server, List<RecipeHolder<?>> recipes) {
         ((RecipeManagerInvoker) server.getRecipeManager()).leggings$apply(
                 RecipeMap.create(recipes), server.getResourceManager(), Profiler.get());
         server.getRecipeManager().finalizeRecipeLoading(server.overworld().enabledFeatures());
