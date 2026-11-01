@@ -1,9 +1,10 @@
 import java.util.concurrent.TimeUnit
 
 // Concrete packaged-product profiles share staging and bounded process launching.
-['Workbench', 'Equipped', 'Items'].each { profile ->
+['Workbench', 'Equipped', 'Items', 'Presentation'].each { profile ->
     def equipped = profile == 'Equipped'
     def items = profile == 'Items'
+    def presentation = profile == 'Presentation'
     def iceAndFire = equipped && project.name == 'NeoForge' && providers.gradleProperty('leggingsIceAndFire')
             .map { it.toBoolean() }.getOrElse(false)
     def coexistence = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
@@ -82,10 +83,11 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     client(); programArgs('--quickPlaySingleplayer', 'skeleton')
                 }
                 ideConfigGenerated(false)
-                if ((equipped || items) && phase == 'client') { programArgs('--width', '1280', '--height', '720') }
+                if ((equipped || items || presentation) && phase == 'client') { programArgs('--width', '1280', '--height', '720') }
                 runDir(project.relativePath(new File(directory, phase)))
                 property('leggings.test.equipped', equipped.toString())
                 property('leggings.test.items', items.toString())
+                property('leggings.test.presentation', presentation.toString())
                 property('leggings.test.workbench', 'true')
                 property('leggings.test.boots', coexistence.toString())
                 property('leggings.test.report', reports.absolutePath)
@@ -97,12 +99,13 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     client(); programArgument('--quickPlaySingleplayer'); programArgument('skeleton')
                 }
                 disableIdeRun()
-                if ((equipped || items) && phase == 'client') {
+                if ((equipped || items || presentation) && phase == 'client') {
                     programArgument('--width'); programArgument('1280'); programArgument('--height'); programArgument('720')
                 }
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
                 systemProperty('leggings.test.items', items.toString())
+                systemProperty('leggings.test.presentation', presentation.toString())
                 systemProperty('leggings.test.workbench', 'true')
                 systemProperty('leggings.test.boots', coexistence.toString())
                 systemProperty('leggings.test.report', reports.absolutePath)
@@ -119,7 +122,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     def neoForgeLoader = project.name == 'NeoForge'
     tasks.register("verify${profile}") {
         group = 'verification'
-        description = items ? 'Checks production item geometry, GUI, display contexts, fallbacks and reload.'
+        description = presentation ? 'Checks tooltips, native armor semantics, enchantment admission and audited behavior tags.'
+                : items ? 'Checks production item geometry, GUI, display contexts, fallbacks and reload.'
                 : equipped ? 'Checks production equipped rendering, geometry cache, fallbacks and optional decorated models.'
                 : 'Checks Leggings workbench transactions, rule synchronization and optional Boots coexistence.'
         dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')

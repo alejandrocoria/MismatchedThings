@@ -10,6 +10,8 @@ import net.minecraft.world.item.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Function;
+
 public final class LeggingsContent {
     public static final String MOD_ID = "mismatchedleggings";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
@@ -32,8 +34,12 @@ public final class LeggingsContent {
     }
 
     public static Item createItem() {
+        return createItem(MixedLeggingsItem::new);
+    }
+
+    public static Item createItem(Function<Item.Properties, ? extends MixedLeggingsItem> factory) {
         // Bare roots have no equipment component; only later validated composition may add one.
-        return new MixedLeggingsItem(new Item.Properties()
+        return factory.apply(new Item.Properties()
                 .setId(ResourceKey.create(Registries.ITEM, MIXED_LEGGINGS_ID))
                 .stacksTo(1));
     }

@@ -29,7 +29,7 @@ public final class MismatchedLeggingsNeoForge {
         components.register("mixed_leggings_data", LeggingsContent::createDataType);
         components.register(bus);
         var items = DeferredRegister.createItems(LeggingsContent.MOD_ID);
-        items.register("mixed_leggings", LeggingsContent::createItem);
+        items.register("mixed_leggings", () -> LeggingsContent.createItem(NeoForgeMixedLeggingsItem::new));
         items.register(bus);
         var serializers = DeferredRegister.create(Registries.RECIPE_SERIALIZER, LeggingsContent.MOD_ID);
         serializers.register("mixed_leggings_workbench", () -> MixedLeggingsWorkbenchRecipe.SERIALIZER);

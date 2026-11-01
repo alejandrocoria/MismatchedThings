@@ -1,8 +1,9 @@
 {
     "required": true,
     "minVersion": "0.8",
-    "package": "games.alejandrocoria.mismatchedleggings.mixin.client",
+    "package": "games.alejandrocoria.mismatchedleggings.mixin",
     "compatibilityLevel": "JAVA_25",
-    "client": ["LayerRenderStateExtensionMixin"],
+    "mixins": ["AnvilMenuEnchantMixin"],
+    "client": ["client.LayerRenderStateExtensionMixin"],
     "injectors": { "defaultRequire": 1 }
 }

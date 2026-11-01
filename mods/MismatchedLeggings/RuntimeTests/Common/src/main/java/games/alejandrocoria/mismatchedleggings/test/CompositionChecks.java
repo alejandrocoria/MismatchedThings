@@ -177,7 +177,7 @@ public final class CompositionChecks {
         Files.delete(directory.resolve("mismatchedleggings-components.toml"));
     }
 
-    private static void wear(MinecraftServer server) {
+    static void wear(MinecraftServer server) {
         var player = new ServerPlayer(server, server.overworld(), new GameProfile(UUID.randomUUID(), "leggings-wear"), ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player,
                 CommonListenerCookie.createInitial(player.getGameProfile(), false));

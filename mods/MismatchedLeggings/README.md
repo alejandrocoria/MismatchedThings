@@ -6,7 +6,7 @@ The standalone skeleton and source schema are implemented. A bare
 valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
-Equipped and item mixed rendering are implemented; the later
+Equipped/item rendering, source tooltips and vanilla leggings semantics are implemented; the later
 workstation/recovery features are not. This is not a complete or
 publishable release.
 
@@ -114,6 +114,25 @@ rotated GUI views use the overlap. An empty source model selects the complete
 product diagnostic, as do data-less roots. Missing assets retain native missing-model
 rendering rather than crashing. Resource reload uses fresh native item models;
 no product item-model cache survives it. Loader mesh adapters remain product-local.
+
+## Tooltips and vanilla behavior
+
+Source tooltip sections follow Boots' layout: left and right names, native
+visual details and two Things separators, followed by the live root's effective
+enchantments/attributes. F3+H adds each namespaced source ID directly below its
+name. Custom names retain the natural identity; nested attributes, enchantments,
+durability and component-count diagnostics are not duplicated. Native tooltip
+visibility and source-provider Shift behavior are respected.
+
+The item is real `minecraft:leg_armor` as well as `enchantable/armor`, inheriting
+vanilla leggings enchantment, durability and equipment classification without
+foot/head/chest tags. Swift Sneak uses the actual legs slot. The only virtual
+source tags are `piglin_safe_armor` and `freeze_immune_wearables`, queried live
+on either source of a valid root; this is not arbitrary tag inheritance.
+Future books require support from a source and retain native conflict/level
+checks, independently of the factory's composition-time enchantment union.
+Bare roots retain their diagnostic and cannot obtain normal book admission.
+Full repair/grindstone/source-wise smithing support remains later work.
 
 ## Runs and tests
 

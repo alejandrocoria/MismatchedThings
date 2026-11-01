@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
+import games.alejandrocoria.mismatchedleggings.tooltip.MixedLeggingsTooltipFormatter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -28,9 +29,18 @@ public class MixedLeggingsItem extends Item {
     @SuppressWarnings("deprecation")
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
                                Consumer<Component> tooltip, TooltipFlag flag) {
-        if (MixedLeggingsStructure.classify(stack) != MixedLeggingsStructure.State.VALID) {
+        var state = MixedLeggingsStructure.classify(stack);
+        if (state != MixedLeggingsStructure.State.VALID) {
             tooltip.accept(Component.translatable("tooltip.mismatchedleggings.mixed_leggings.invalid")
                     .withStyle(ChatFormatting.RED));
+            if (state == MixedLeggingsStructure.State.BARE) {
+                tooltip.accept(Component.translatable("tooltip.mismatchedleggings.mixed_leggings.bare_hint",
+                                Component.translatable("block.mismatchedthings.mismatched_workbench"))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            return;
         }
+        MixedLeggingsTooltipFormatter.appendSourceSections(
+                MixedLeggingsStructure.validData(stack).orElseThrow(), context, flag, tooltip);
     }
 }

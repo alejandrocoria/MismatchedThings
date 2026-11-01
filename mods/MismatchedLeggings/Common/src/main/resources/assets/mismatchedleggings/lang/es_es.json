@@ -1,4 +1,8 @@
 {
     "item.mismatchedleggings.mixed_leggings": "Mismatched Leggings",
-    "tooltip.mismatchedleggings.mixed_leggings.invalid": "Datos inválidos de leggings mezclados"
+    "tooltip.mismatchedleggings.mixed_leggings.invalid": "Datos inválidos de leggings mezclados",
+    "tooltip.mismatchedleggings.mixed_leggings.bare_hint": "Combina dos pantalones en una %s",
+    "tooltip.mismatchedleggings.mixed_leggings.left": "Izquierda:",
+    "tooltip.mismatchedleggings.mixed_leggings.right": "Derecha:",
+    "tooltip.mismatchedleggings.mixed_leggings.name_with_natural": "%s (%s)"
 }

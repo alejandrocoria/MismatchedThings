@@ -10,6 +10,36 @@ The additional client profiles can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
 
+## Tooltips and vanilla leggings semantics
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyPresentation --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyPresentation --offline --console=plain
+```
+
+Use the same sequential baseline rules and optional `-PleggingsBoots=true`
+coexistence switch as the profiles below. Disposable paths use
+`presentation[-boots]`. The dedicated server reuses the existing source/equipment
+and native combat-wear/Unbreaking/Mending controls, without rerunning the separate
+composition-arithmetic fixture under this profile's nondefault workbench config.
+New controls check real leg/armor/enchantment classification, native table
+candidates and survival-anvil source admission/conflicts, invalid roots and native
+pass-through. Actual equipment updates apply/remove Swift Sneak's sneaking-speed
+attribute, with a wrong-slot control. Native piglin-safe armor and freezing queries
+exercise gold/leather behavior in both orientations, plus absent-source,
+malformed/foreign-root and unrelated-tag negatives. Optional Boots checks exercise
+its own tag and book-admission paths alongside Leggings' locally gated hooks.
+
+The hidden client checks ordered source headers, natural/custom names, native
+trim/lore/blank lines, effective-root attributes/enchantments, live state versus
+provenance, advanced source IDs, diagnostics and native hide-tooltip settings.
+It exercises ordinary and advanced tooltips through the real item-tooltip route
+and captures one relevant `tooltip.png` showing native separator rendering.
+Source providers retain their normal/Shift behavior; no artificial Shift mode or
+optional-mod tooltip bridge is introduced. Owner readability acceptance remains
+separate. Specific suspended-state diagnostics belong to K, where their schema
+will first exist. H–J still own the remaining workstation implementation.
+
 ## Item rendering
 
 ```powershell

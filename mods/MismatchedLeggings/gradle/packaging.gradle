@@ -30,6 +30,8 @@ gradle.projectsEvaluated {
                      'games/alejandrocoria/mismatchedleggings/network/CompositionRulesPayload.class',
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsEquipmentRenderer.class',
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsItemRenderer.class',
+                     'games/alejandrocoria/mismatchedleggings/tooltip/MixedLeggingsTooltipFormatter.class',
+                     'data/minecraft/tags/item/leg_armor.json',
                      'META-INF/services/games.alejandrocoria.mismatchedleggings.client.render.EquipmentSources',
                      'assets/mismatchedleggings/equipment/neutral.json',
                      'data/mismatchedleggings/recipe/mixed_leggings_workbench.json',

@@ -3,7 +3,7 @@
     "minVersion": "0.8",
     "package": "games.alejandrocoria.mismatchedleggings.mixin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["LivingEntityEquipmentMixin"],
+    "mixins": ["LivingEntityEquipmentMixin", "TypedInstanceMixin"],
     "client": [
         "client.ArmorLayerMixin",
         "client.EntityRenderDispatcherMixin",

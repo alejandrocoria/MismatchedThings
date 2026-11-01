@@ -18,6 +18,10 @@ public final class SkeletonClientChecks {
     }
 
     public static void tick(Minecraft client) {
+        if (Boolean.getBoolean("leggings.test.presentation")) {
+            PresentationClient.tick(client);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.items")) {
             games.alejandrocoria.mismatchedleggings.test.render.ItemClient.tick(client);
             return;
