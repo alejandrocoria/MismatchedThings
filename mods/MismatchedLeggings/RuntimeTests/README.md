@@ -10,6 +10,39 @@ The additional client profiles can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
 
+## Grindstone and bounded XP
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyGrindstone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyGrindstone --offline --console=plain
+```
+
+Use the same sequential baselines, `-PleggingsBoots=true` and optional unchanged
+`-PleggingsBootsJar=<path>` controls as repair below. Paths use isolated
+`grindstone[-boots|-previous-boots]` variants, with a fresh disposable client world.
+Only packaged artifacts are staged; client windows stay hidden/muted and
+NeoForge's early window stays disabled. This profile adds no screenshots.
+
+Dedicated tests use actual menus, normal/shift extraction and real XP orbs.
+They prepare the fixture chunk before acceptance so its entities are observable,
+then check a native XP-award control. Tests cover either single-input slot, both
+root orientations and donor identities/orders, unchanged provenance/live state,
+root capacity versus a larger donor, native curse priority/name/prior work,
+unenchanted and curse-only inputs, invalid/bare/malformed/count/cross-product
+negatives, cancelled previews and exactly-once payment. Orb totals include merged
+orb counts, not just entity count. A test-only invoker observes the native
+per-input XP helper after the product hook; the real payout must also lie in the
+bounded vanilla random range. Protection I + I proves the nonlinear merged-cost
+cap, an odd one-sided baseline proves downward rounding, and later paid root
+enchantments/ordinary donor value retain their full positive contribution.
+
+Ordinary items and optional Boots remain pass-through controls at the shared
+menu/XP hooks. NeoForge additionally exercises its native combine-repair veto.
+The hidden client opens the native screen through a block-use packet, compares
+the full synchronized preview and confirms authoritative extraction, input
+consumption and XP rather than relying on client pickup prediction. Owner manual
+acceptance remains separate. Source-wise smithing belongs to J.
+
 ## Anvil and crafting donor repair
 
 ```powershell
@@ -40,8 +73,8 @@ existing roots retain the union stored during composition, matching Boots. This
 is the native tag-apply boundary, not filesystem datapack discovery coverage.
 The client opens the real anvil with a block-use packet, checks full synchronized
 previews and paid output/XP, then extracts an inventory-grid repair through a real
-container packet. Owner manual acceptance remains separate. Grindstone and
-source-wise smithing belong to I/J, not this gate.
+container packet. Owner manual acceptance remains separate. Grindstone has its
+own gate above; source-wise smithing belongs to J, not this repair gate.
 
 ## Tooltips and vanilla leggings semantics
 
@@ -71,7 +104,7 @@ and captures one relevant `tooltip.png` showing native separator rendering.
 Source providers retain their normal/Shift behavior; no artificial Shift mode or
 optional-mod tooltip bridge is introduced. Owner readability acceptance remains
 separate. Specific suspended-state diagnostics belong to K, where their schema
-will first exist. The repair gate above covers H; I/J own grindstone and smithing.
+will first exist. The workstation gates above cover H/I; J owns smithing.
 
 ## Item rendering
 

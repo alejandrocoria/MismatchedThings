@@ -6,6 +6,7 @@
         "ArmorWearInvoker",
         "CrafterInvoker",
         "EquipmentUpdatesInvoker",
+        "GrindstoneXpInvoker",
         "RecipeManagerInvoker"
     ],
     "client": [

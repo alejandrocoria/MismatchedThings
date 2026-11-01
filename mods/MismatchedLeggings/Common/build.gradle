@@ -7,6 +7,9 @@ neoForge { neoFormVersion = neo_form_version }
 
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
+    // Both loaders supply MixinExtras; compile only against the established minimal API.
+    compileOnly 'io.github.llamalad7:mixinextras-common:0.3.5'
+    annotationProcessor 'io.github.llamalad7:mixinextras-common:0.3.5'
     compileOnly(project(':MismatchedThings:Common')) {
         transitive = false
         capabilities { requireCapability 'games.alejandrocoria.mismatchedthings:mismatchedthings' }

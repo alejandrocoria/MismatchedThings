@@ -28,6 +28,8 @@ gradle.projectsEvaluated {
                      'games/alejandrocoria/mismatchedleggings/composition/MixedLeggingsFactory.class',
                      'games/alejandrocoria/mismatchedleggings/recipe/MixedLeggingsWorkbenchRecipe.class',
                      'games/alejandrocoria/mismatchedleggings/recipe/MixedLeggingsRepairRecipe.class',
+                     'games/alejandrocoria/mismatchedleggings/mixin/GrindstoneMenuMixin.class',
+                     'games/alejandrocoria/mismatchedleggings/mixin/GrindstoneResultSlotXpMixin.class',
                      'games/alejandrocoria/mismatchedleggings/network/CompositionRulesPayload.class',
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsEquipmentRenderer.class',
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsItemRenderer.class',

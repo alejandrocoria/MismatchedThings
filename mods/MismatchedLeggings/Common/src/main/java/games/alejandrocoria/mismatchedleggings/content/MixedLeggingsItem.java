@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
+import games.alejandrocoria.mismatchedleggings.interaction.LeggingsRepair;
 import games.alejandrocoria.mismatchedleggings.tooltip.MixedLeggingsTooltipFormatter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -17,6 +18,11 @@ import java.util.function.Consumer;
 public class MixedLeggingsItem extends Item {
     public MixedLeggingsItem(Properties properties) {
         super(properties);
+    }
+
+    /** Loader-local eligibility, including the native combine-repair veto on NeoForge. */
+    public boolean canGrindstoneRepairWith(ItemStack stack, ItemStack donor) {
+        return LeggingsRepair.acceptsDonor(stack, donor);
     }
 
     @Override

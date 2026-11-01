@@ -47,5 +47,18 @@ final class NeoForgeRepairChecks {
             require(!RepairItemRecipe.INSTANCE.matches(CraftingInput.of(2, 1, List.of(donor, donor.copy())), level),
                     "Native combine-veto control unexpectedly accepts repair");
         };
+        GrindstoneChecks.nativeEligibilityCheck = server -> {
+            var donor = new ItemStack(blocked.get());
+            var pair = MixedLeggingsFactory.createPair(donor, new ItemStack(Items.IRON_LEGGINGS), CompositionRules.defaults());
+            var player = RepairFixtures.player(server);
+            for (var root : List.of(pair.primary(), pair.inverse())) {
+                for (boolean reverse : List.of(false, true)) {
+                    var rejected = GrindstoneChecks.ready(player, reverse ? donor : root, reverse ? root : donor);
+                    require(!rejected.getSlot(2).hasItem(), "Grindstone ignored the native donor combine-repair veto");
+                }
+                var allowed = GrindstoneChecks.ready(player, root, new ItemStack(Items.IRON_LEGGINGS));
+                require(allowed.getSlot(2).hasItem(), "A source donor veto disabled unrelated valid root repair");
+            }
+        };
     }
 }

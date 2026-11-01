@@ -16,7 +16,7 @@ public final class SkeletonTestNeoForge {
         components.register("charge", () -> CompositionFixture.CHARGE);
         components.register(bus);
         NeoForgeCompositionChecks.register();
-        if (Boolean.getBoolean("leggings.test.repair")) {
+        if (Boolean.getBoolean("leggings.test.repair") || Boolean.getBoolean("leggings.test.grindstone")) {
             NeoForgeRepairChecks.register(bus);
         }
         var mods = ModList.get();

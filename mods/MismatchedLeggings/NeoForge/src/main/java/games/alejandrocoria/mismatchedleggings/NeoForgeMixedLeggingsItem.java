@@ -12,6 +12,12 @@ public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
     }
 
     @Override
+    public boolean canGrindstoneRepairWith(ItemStack stack, ItemStack donor) {
+        return super.canGrindstoneRepairWith(stack, donor)
+                && stack.isCombineRepairable() && donor.isCombineRepairable();
+    }
+
+    @Override
     public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
         var data = MixedLeggingsStructure.validData(stack).orElse(null);
         return data != null && (data.left().source().supportsEnchantment(enchantment)

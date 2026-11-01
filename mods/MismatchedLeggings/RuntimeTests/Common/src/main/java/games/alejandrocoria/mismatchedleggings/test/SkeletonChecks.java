@@ -41,13 +41,21 @@ public final class SkeletonChecks {
     }
 
     public static void serverTick(MinecraftServer server) {
-        if (!server.isDedicatedServer() || serverFinished || server.getTickCount() < 20) {
+        if (!server.isDedicatedServer() || serverFinished) {
+            return;
+        }
+        if (Boolean.getBoolean("leggings.test.grindstone")) {
+            GrindstoneChecks.prepare(server);
+        }
+        if (server.getTickCount() < 20) {
             return;
         }
         serverFinished = true;
         try {
             verify();
-            if (Boolean.getBoolean("leggings.test.repair")) {
+            if (Boolean.getBoolean("leggings.test.grindstone")) {
+                GrindstoneChecks.verify(server);
+            } else if (Boolean.getBoolean("leggings.test.repair")) {
                 AnvilRepairChecks.verify(server);
                 CraftingRepairChecks.verify(server);
             } else if (Boolean.getBoolean("leggings.test.presentation")) {

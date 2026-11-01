@@ -7,7 +7,7 @@ valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
 Equipped/item rendering, source tooltips, vanilla leggings semantics, anvil and
-crafting donor repair are implemented; grindstone, smithing and recovery are not.
+crafting donor repair and grindstone are implemented; smithing and recovery are not.
 This is not a complete or
 publishable release.
 
@@ -133,7 +133,7 @@ on either source of a valid root; this is not arbitrary tag inheritance.
 Future books require support from a source and retain native conflict/level
 checks, independently of the factory's composition-time enchantment union.
 Bare roots retain their diagnostic and cannot obtain normal book admission.
-Grindstone/source-wise smithing support remains later work.
+Source-wise smithing support remains later work.
 
 ## Anvil and crafting repair
 
@@ -157,6 +157,22 @@ Repair materials are a composition-time snapshot, as in Boots: changing a repair
 tag affects newly composed roots, not an existing root's stored union. Ordinary
 source items continue to follow their own native tags. This does not add foreign
 repair-table or arbitrary class-based item compatibility.
+
+## Grindstone
+
+One valid mixed root can be disenchanted in either input slot. Native removal
+keeps curses and the root's custom name, recomputes prior work and leaves live
+damage, capacity, source snapshots and other live components intact. A second
+input may be ordinary leggings matching either source, in either physical order;
+repair adds the donor's remaining durability and five percent of root capacity,
+without importing a larger donor capacity. Unrelated, Mixed/Mixed, bare and
+malformed inputs are rejected. NeoForge's native combine-repair veto is respected.
+
+XP is paid only on extraction, through Minecraft's normal random payout. Since
+composition duplicates enchantments into two outputs, inherited XP potential is
+capped against the stored sources and halved; later positive potential above
+that original merged baseline counts fully. An ordinary donor contributes its
+full removable-enchantment potential. Closing or cancelling a preview pays no XP.
 
 ## Runs and tests
 
