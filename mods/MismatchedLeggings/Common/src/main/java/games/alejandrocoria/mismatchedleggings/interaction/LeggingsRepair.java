@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.interaction;
 
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.world.item.ItemStack;
 
@@ -22,7 +23,8 @@ public final class LeggingsRepair {
 
     public static boolean anvilInput(ItemStack input, boolean normallyAccepted) {
         return normallyAccepted && (!MixedLeggingsStructure.isMixedItem(input)
-                || MixedLeggingsStructure.validData(input).isPresent());
+                || MixedLeggingsStructure.validData(input).isPresent()
+                || LeggingsContent.suspendedLeggingsData(input).isPresent());
     }
 
     public static int craftingDamage(ItemStack mixed, ItemStack donor) {

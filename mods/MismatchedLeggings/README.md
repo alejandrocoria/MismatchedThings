@@ -7,8 +7,8 @@ valid roots carry two ordered source snapshots and project legs equipment. The
 composition factory now builds both complete numerical results under local rules.
 The shared workbench now crafts both ordered results under server-owned rules.
 Equipped/item rendering, source tooltips, vanilla leggings semantics, anvil and
-crafting donor repair, grindstone and source-wise smithing are implemented;
-missing-source recovery is not.
+crafting donor repair, grindstone, source-wise smithing and missing-source
+preservation/recovery are implemented.
 This is not a complete or
 publishable release.
 
@@ -44,8 +44,8 @@ installs structural fields and validates the result.
 Only validated roots cross the product's consumer boundary. Bare/malformed roots
 cannot equip through normal use, armor-slot queries or dispensers, even when an
 invalid root carries `EQUIPPABLE`. The native guards are item-local in scope and
-leave unrelated armor alone. `mismatchedleggings:suspended_leggings` is reserved,
-not registered: missing-mod preservation/recovery is not implemented yet.
+leave unrelated armor alone. Admitted suspended history is the only inactive
+exception allowed to remain equipped; it grants no active armor behavior.
 
 ## Composition rules
 
@@ -134,7 +134,32 @@ on either source of a valid root; this is not arbitrary tag inheritance.
 Future books require support from a source and retain native conflict/level
 checks, independently of the factory's composition-time enchantment union.
 Bare roots retain their diagnostic and cannot obtain normal book admission.
-Source-wise smithing is described below; missing-source recovery remains later work.
+Source-wise smithing and missing-source recovery are described below.
+
+## Temporary missing sources
+
+The required early ItemStack persistence wrapper preserves the complete protected
+root/source patch before native decoding can discard unavailable registrations.
+The product-owned `mismatchedleggings:suspended_leggings` component stores bounded,
+typed opaque data and synchronizes it without foreign component registrations.
+Raw source-item presence is checked first. Full native success and strict valid
+root/sources permit activation; missing sources and failed/partial native reads
+stay inactive. Successful native normalization is accepted, not audited as a backup
+of every possible change inside a foreign codec.
+
+Admitted history keeps a non-wearing legs shell with no active attributes,
+enchantments or source abilities. Movement and safe naming remain possible;
+enchanting, repair, grindstone and smithing do not modify parked state. Bare
+command-created roots do not gain this equipment permission. Conflicting edits
+are retained without selecting a winner; malformed bounded archives remain opaque
+in quarantine. Tooltips distinguish these inactive states.
+
+Recovery retries on persistent load after restoring the missing registrations,
+not every tick. It restores the saved live root plus allowed passive edits/removals,
+without reapplying current composition policies, reconstructing from sources or
+refilling resources. A required-hook installation failure refuses startup before
+a world is loaded. The wrapper is product-namespaced and chains with Boots;
+this does not migrate Boots schemas into Things or Leggings.
 
 ## Anvil and crafting repair
 

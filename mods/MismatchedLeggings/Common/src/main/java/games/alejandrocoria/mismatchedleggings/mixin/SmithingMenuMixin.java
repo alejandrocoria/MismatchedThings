@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.interaction.LeggingsSmithing;
 import games.alejandrocoria.mismatchedleggings.interaction.LeggingsSmithingState;
@@ -37,6 +38,13 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
         mismatchedleggings$match = null;
         mismatchedleggings$inputs = null;
         var menu = (SmithingMenu) (Object) this;
+        for (int slot = SmithingMenu.TEMPLATE_SLOT; slot <= SmithingMenu.ADDITIONAL_SLOT; slot++) {
+            if (LeggingsContent.suspendedLeggingsData(menu.getSlot(slot).getItem()).isPresent()) {
+                mismatchedleggings$clearResult();
+                callback.cancel();
+                return;
+            }
+        }
         var base = menu.getSlot(SmithingMenu.BASE_SLOT).getItem();
         if (MixedLeggingsStructure.isMixedItem(base) && MixedLeggingsStructure.validData(base).isEmpty()) {
             mismatchedleggings$clearResult();

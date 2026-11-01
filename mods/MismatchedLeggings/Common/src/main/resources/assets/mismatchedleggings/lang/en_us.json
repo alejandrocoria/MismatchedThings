@@ -1,6 +1,9 @@
 {
     "item.mismatchedleggings.mixed_leggings": "Mismatched Leggings",
     "tooltip.mismatchedleggings.mixed_leggings.invalid": "Invalid mixed leggings data",
+    "tooltip.mismatchedleggings.mixed_leggings.suspended": "Leggings inactive: stored data is unavailable or incompatible",
+    "tooltip.mismatchedleggings.mixed_leggings.conflicted": "Leggings inactive: conflicting stored data",
+    "tooltip.mismatchedleggings.mixed_leggings.quarantined": "Leggings inactive: unreadable data preserved",
     "tooltip.mismatchedleggings.mixed_leggings.bare_hint": "Combine two leggings in a %s",
     "tooltip.mismatchedleggings.mixed_leggings.left": "Left:",
     "tooltip.mismatchedleggings.mixed_leggings.right": "Right:",

@@ -7,6 +7,9 @@ issueTrackerURL="${mod_issues}"
 config="mismatchedleggings.mixins.json"
 
 [[mixins]]
+config="mismatchedleggings.recovery.mixins.json"
+
+[[mixins]]
 config="mismatchedleggings.neoforge.mixins.json"
 
 [[mods]]

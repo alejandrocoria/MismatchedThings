@@ -41,6 +41,10 @@ public final class SkeletonChecks {
     }
 
     public static void serverTick(MinecraftServer server) {
+        if (RecoveryFixture.enabled()) {
+            RecoveryChecks.tick(server);
+            return;
+        }
         if (!server.isDedicatedServer() || serverFinished) {
             return;
         }

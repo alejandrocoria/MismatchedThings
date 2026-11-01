@@ -10,6 +10,49 @@ The additional client profiles can also stage the **current built** Boots JAR
 for coexistence. It does not use an indev directory or claim acceptance against
 the frozen published Boots release; that release graph remains a final-product gate.
 
+## Missing-source preservation and recovery
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyRecovery --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRecovery --offline --console=plain
+```
+
+Use the sequential NeoForge .99/.114 baselines and optional `-PleggingsBoots=true`
+with `-PleggingsBootsJar=<unchanged jar>` as below. Artifacts come from packaged
+outputs/that explicit read-only binary, never indev. Paths use isolated
+`recovery[-boots|-previous-boots]`; `write` resets only that disposable profile.
+Clients are hidden before window creation, muted, and NeoForge's early window is
+disabled. There are no screenshots. The separate launcher is
+[recovery.gradle](recovery.gradle).
+
+One actual barrel/world crosses independent dedicated JVMs: `write`, `absent`,
+`absentagain`, `partial`, `sources`, `restore`, `reloaded`. A temporary source item
+and foreign paid-wallet registration disappear/return through fixture registration,
+not an alternate decoder. `partial` registers both sources but fails the foreign
+component's codec; `sources` returns both sources without the wallet component.
+Only full native readiness may activate the result. Source snapshots, root-only
+foreign state, paid longs above double precision, typed NBT, live damage,
+enchantments, passive naming/removal, repeated saves and ordinary/bare controls
+are checked. Policies change after the first save to detect accidental recomposition.
+Optional unchanged Boots exercises its own suspended/recovered root in the same
+barrel, proving both early wrappers participate without cross-capturing products.
+
+`write`, `absent` and `restore` also use independent TCP clients, not integrated
+servers. Full equipment/inventory snapshots are compared after synchronization.
+The absent phase exercises native death, a real client respawn packet, pickup and
+re-equipping; the other root persists as a native item entity and must recover
+after reconnect. Focused actual-codec checks cover early source checks, conflict/
+quarantine stability, native JSON and safety refusal; native menus cover safe
+rename versus blocked mutations, combat wear and Mending. `refused` and `bypassed`
+alter the real recursive-codec factory/operation and require refusal before world
+creation (not just a nonzero exit). Common unit tests cover defensive archive
+encoding, network length/heap bounds and nested-history admission.
+
+`-PleggingsRecoveryStages=<comma-separated stages>` selects an ordered subset for
+investigation; later stages require earlier saved evidence. A subset marker is
+not a full-matrix result. These controlled registrations do not claim a particular
+third-party version-upgrade guarantee. Owner normal-play acceptance remains separate.
+
 ## Source-wise smithing and recomposition
 
 ```powershell
@@ -137,8 +180,8 @@ It exercises ordinary and advanced tooltips through the real item-tooltip route
 and captures one relevant `tooltip.png` showing native separator rendering.
 Source providers retain their normal/Shift behavior; no artificial Shift mode or
 optional-mod tooltip bridge is introduced. Owner readability acceptance remains
-separate. Specific suspended-state diagnostics belong to K, where their schema
-will first exist. The workstation gates above cover H–J.
+separate. Suspended-state diagnostics and their registered schema belong to the
+recovery gate above. The workstation gates above cover H–J.
 
 ## Item rendering
 

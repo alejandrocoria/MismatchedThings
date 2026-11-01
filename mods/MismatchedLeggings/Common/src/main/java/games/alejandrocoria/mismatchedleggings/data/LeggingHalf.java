@@ -75,7 +75,7 @@ public record LeggingHalf(ItemStack source) {
         }
         for (TypedDataComponent<?> component : source.getComponents()) {
             var id = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(component.type());
-            if (component.value() instanceof MixedLeggingsData
+            if (component.value() instanceof MixedLeggingsData || component.value() instanceof SuspendedLeggingsData
                     || LeggingsContent.MIXED_LEGGINGS_DATA_ID.equals(id) || LeggingsContent.SUSPENDED_LEGGINGS_ID.equals(id)) {
                 return "Mixed leggings source/recovery data cannot be nested";
             }

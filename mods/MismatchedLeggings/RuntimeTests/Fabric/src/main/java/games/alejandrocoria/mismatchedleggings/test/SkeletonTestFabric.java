@@ -11,6 +11,12 @@ public final class SkeletonTestFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse("leggings_skeleton_test:charge"), CompositionFixture.CHARGE);
+        if (RecoveryFixture.sourcesPresent()) {
+            Registry.register(BuiltInRegistries.ITEM, RecoveryFixture.SOURCE, RecoveryFixture.source());
+        }
+        if (RecoveryFixture.walletPresent()) {
+            Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, RecoveryFixture.WALLET_ID, RecoveryFixture.WALLET);
+        }
         var loader = FabricLoader.getInstance();
         SkeletonChecks.environment(loader.isModLoaded("mismatchedboots"),
                 loader.getAllMods().stream().filter(mod -> mod.getMetadata().getId().equals("mismatchedleggings")).count(),

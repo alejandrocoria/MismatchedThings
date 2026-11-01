@@ -30,6 +30,7 @@ public final class MismatchedLeggingsNeoForge {
     public MismatchedLeggingsNeoForge(IEventBus bus) {
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, LeggingsContent.MOD_ID);
         components.register("mixed_leggings_data", LeggingsContent::createDataType);
+        components.register("suspended_leggings", LeggingsContent::createSuspendedDataType);
         components.register(bus);
         var items = DeferredRegister.createItems(LeggingsContent.MOD_ID);
         items.register("mixed_leggings", () -> LeggingsContent.createItem(NeoForgeMixedLeggingsItem::new));

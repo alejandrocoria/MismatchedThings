@@ -1,15 +1,18 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
+import games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public final class LeggingsContent {
@@ -17,7 +20,6 @@ public final class LeggingsContent {
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
     public static final Identifier MIXED_LEGGINGS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "mixed_leggings");
     public static final Identifier MIXED_LEGGINGS_DATA_ID = Identifier.fromNamespaceAndPath(MOD_ID, "mixed_leggings_data");
-    // Reserved for block K. No recovery component/schema is registered until preservation exists.
     public static final Identifier SUSPENDED_LEGGINGS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "suspended_leggings");
 
     private LeggingsContent() {
@@ -26,6 +28,16 @@ public final class LeggingsContent {
     public static DataComponentType<MixedLeggingsData> createDataType() {
         return DataComponentType.<MixedLeggingsData>builder().persistent(MixedLeggingsData.CODEC)
                 .networkSynchronized(MixedLeggingsData.STREAM_CODEC).cacheEncoding().build();
+    }
+
+    public static DataComponentType<SuspendedLeggingsData> createSuspendedDataType() {
+        return DataComponentType.<SuspendedLeggingsData>builder().persistent(SuspendedLeggingsData.CODEC)
+                .networkSynchronized(SuspendedLeggingsData.STREAM_CODEC).cacheEncoding().build();
+    }
+
+    public static Optional<SuspendedLeggingsData> suspendedLeggingsData(ItemStack stack) {
+        return stack.getComponents().stream().map(component -> component.value())
+                .filter(SuspendedLeggingsData.class::isInstance).map(SuspendedLeggingsData.class::cast).findFirst();
     }
 
     @SuppressWarnings("unchecked")

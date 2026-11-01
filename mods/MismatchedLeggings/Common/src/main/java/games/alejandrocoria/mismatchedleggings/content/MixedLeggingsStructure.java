@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings.content;
 
 import games.alejandrocoria.mismatchedleggings.data.LeggingHalf;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
+import games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 /** Product-owned structural fields only; numerical composition belongs to the factory. */
 public final class MixedLeggingsStructure {
-    public enum State { BARE, MALFORMED, VALID }
+    public enum State { BARE, MALFORMED, SUSPENDED, VALID }
 
     private MixedLeggingsStructure() {
     }
@@ -24,6 +25,9 @@ public final class MixedLeggingsStructure {
     public static State classify(ItemStack stack) {
         if (!isMixedItem(stack) || stack.isEmpty() || stack.getCount() != 1 || ItemStack.validateStrict(stack).isError()) {
             return State.MALFORMED;
+        }
+        if (LeggingsContent.suspendedLeggingsData(stack).isPresent()) {
+            return State.SUSPENDED;
         }
         var data = stack.get(LeggingsContent.mixedLeggingsDataType());
         if (data == null) {
@@ -41,6 +45,19 @@ public final class MixedLeggingsStructure {
     /** Strict consumer boundary: data on an unrelated item is not a mixed pair. */
     public static Optional<MixedLeggingsData> validData(ItemStack stack) {
         return classify(stack) == State.VALID ? Optional.of(stack.get(LeggingsContent.mixedLeggingsDataType())) : Optional.empty();
+    }
+
+    /** Inactive history may stay worn, but a bare or quarantined root cannot invent an armor slot. */
+    public static boolean canEquip(ItemStack stack) {
+        var state = classify(stack);
+        if (state == State.VALID) {
+            return true;
+        }
+        return state == State.SUSPENDED && LeggingsContent.suspendedLeggingsData(stack)
+                .filter(data -> !data.quarantined() && data.projection().equals(SuspendedLeggingsData.equipmentProjection()))
+                .isPresent()
+                && Equippable.builder(EquipmentSlot.LEGS).setDamageOnHurt(false).build()
+                        .equals(stack.get(DataComponents.EQUIPPABLE));
     }
 
     /** Called only after the factory has projected owner-effective components. */

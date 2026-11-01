@@ -8,6 +8,8 @@
         "EquipmentUpdatesInvoker",
         "GrindstoneXpInvoker",
         "RecipeManagerInvoker",
+        "RecoveryBypassProbe",
+        "RecoveryFactoryProbe",
         "SmithingCreditsMixin"
     ],
     "client": [

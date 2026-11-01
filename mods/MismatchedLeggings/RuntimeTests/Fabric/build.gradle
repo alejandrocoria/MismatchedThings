@@ -42,3 +42,4 @@ tasks.named('runSkeletonServer') { dependsOn 'prepareSkeletonServer' }
 tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }
 
 apply from: '../client-profiles.gradle'
+apply from: '../recovery.gradle'

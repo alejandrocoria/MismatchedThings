@@ -36,6 +36,6 @@ abstract class LivingEntityEquipmentMixin {
 
     @Unique
     private static boolean invalid(ItemStack stack) {
-        return MixedLeggingsStructure.isMixedItem(stack) && MixedLeggingsStructure.classify(stack) != MixedLeggingsStructure.State.VALID;
+        return MixedLeggingsStructure.isMixedItem(stack) && !MixedLeggingsStructure.canEquip(stack);
     }
 }

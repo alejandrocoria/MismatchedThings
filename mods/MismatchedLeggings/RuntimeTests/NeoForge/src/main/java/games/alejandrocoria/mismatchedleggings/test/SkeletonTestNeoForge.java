@@ -14,7 +14,15 @@ public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, "leggings_skeleton_test");
         components.register("charge", () -> CompositionFixture.CHARGE);
+        if (RecoveryFixture.walletPresent()) {
+            components.register("wallet", () -> RecoveryFixture.WALLET);
+        }
         components.register(bus);
+        if (RecoveryFixture.sourcesPresent()) {
+            var items = DeferredRegister.createItems("leggings_skeleton_test");
+            items.register("temporary_leggings", RecoveryFixture::source);
+            items.register(bus);
+        }
         NeoForgeCompositionChecks.register();
         if (Boolean.getBoolean("leggings.test.repair") || Boolean.getBoolean("leggings.test.grindstone")) {
             NeoForgeRepairChecks.register(bus);

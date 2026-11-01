@@ -4,6 +4,7 @@ plugins {
 }
 
 neoForge { neoFormVersion = neo_form_version }
+neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
@@ -16,6 +17,19 @@ dependencies {
     }
     api "com.electronwill.night-config:core:${nightconfig_version}"
     api "com.electronwill.night-config:toml:${nightconfig_version}"
+    testImplementation(project(':MismatchedThings:Common')) {
+        transitive = false
+        capabilities { requireCapability 'games.alejandrocoria.mismatchedthings:mismatchedthings' }
+    }
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    workingDir layout.buildDirectory.dir('test-work')
+    doFirst { workingDir.mkdirs() }
 }
 
 configurations {

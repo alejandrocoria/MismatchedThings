@@ -1,0 +1,203 @@
+import java.util.concurrent.TimeUnit
+
+// One native world, independent servers; only write/absent/restore also connect a separate client.
+def baseline = project.name == 'Fabric' ? fabric_loader_version : neoforge_version
+def coexistence = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
+def previousBoots = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
+def previousHash = previousBoots == null ? null : java.security.MessageDigest.getInstance('SHA-256')
+        .digest(previousBoots.bytes).encodeHex().toString()
+def variant = 'recovery' + (coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '')
+def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
+def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
+def selectedStage = providers.gradleProperty('leggingsRecoveryStage').getOrElse('write')
+def stageReport = new File(reports, selectedStage)
+def port = providers.gradleProperty('leggingsRecoveryPort').getOrElse('25585')
+def refusal = selectedStage in ['refused', 'bypassed']
+def product = project(":MismatchedLeggings:${project.name}")
+def leggingsJar = product.tasks.named('jar').flatMap { it.archiveFile }
+def boots = project(":MismatchedBoots:${project.name}")
+evaluationDependsOn(boots.path)
+def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
+
+['server', 'client'].each { phase ->
+    tasks.register("prepareRecovery${phase.capitalize()}") {
+        dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
+        if (coexistence && previousBoots == null) { dependsOn boots.tasks.named('assemble') }
+        doLast {
+            def run = new File(directory, refusal ? selectedStage : phase)
+            if (selectedStage == 'write' && phase == 'server') {
+                // Only this explicitly resolved disposable profile is reset, never an indev directory.
+                if (!directory.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+                    throw new GradleException('Recovery reset escaped the disposable build directory')
+                }
+                delete directory
+                delete reports
+            }
+            if (phase == 'server') {
+                delete stageReport
+                if (refusal) {
+                    if (!run.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+                        throw new GradleException('Recovery refusal reset escaped the disposable build directory')
+                    }
+                    delete run
+                }
+            }
+            stageReport.mkdirs()
+            def mods = new File(run, 'mods')
+            mods.mkdirs()
+            def artifacts = [leggingsJar.get().asFile]
+            if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
+            if (coexistence && previousBoots != null) {
+                artifacts.add(project(":MismatchedThings:${project.name}").tasks.named('jar').get().archiveFile.get().asFile)
+            }
+            if (mods.listFiles().any { candidate -> !artifacts.any { it.name == candidate.name } }) {
+                throw new GradleException("Unexpected artifact in disposable ${mods}")
+            }
+            copy { from artifacts; into mods }
+            new File(run, 'config').mkdirs()
+            new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            // Change policy after the first save: recovery must restore paid state, not compose it again.
+            new File(run, 'config/mismatchedleggings-components.toml').text = selectedStage == 'write'
+                    ? "[durability]\npolicy='average'\n" : "[durability]\npolicy='separate'\n"
+            if (phase == 'server') {
+                if (!refusal && selectedStage != 'write' && !new File(run, 'world/level.dat').isFile()) {
+                    throw new GradleException('Recovery stages require the preceding native world')
+                }
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = """online-mode=false
+server-ip=127.0.0.1
+server-port=${port}
+level-name=world
+view-distance=2
+simulation-distance=2
+spawn-protection=0
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+"""
+            } else {
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+            }
+        }
+    }
+    def properties = [
+            'leggings.test.recoveryStage': selectedStage,
+            'leggings.test.recoveryBaseline': reports.absolutePath,
+            'leggings.test.report': stageReport.absolutePath,
+            'leggings.test.boots': coexistence.toString()
+    ]
+    if (project.name == 'Fabric') {
+        loom.runs.create("recovery${phase.capitalize()}") {
+            if (phase == 'server') { server(); programArg('--nogui') } else {
+                client(); programArgs('--quickPlayMultiplayer', "127.0.0.1:${port}", '--username', 'LeggingsRecovery')
+            }
+            ideConfigGenerated(false)
+            runDir(project.relativePath(new File(directory, refusal ? selectedStage : phase)))
+            properties.each { key, value -> property(key, value) }
+            vmArg('-Xmx1G')
+        }
+    } else {
+        neoForge.runs.create("recovery${phase.capitalize()}") {
+            if (phase == 'server') { server(); programArgument('--nogui') } else {
+                client()
+                programArgument('--quickPlayMultiplayer'); programArgument("127.0.0.1:${port}")
+                programArgument('--username'); programArgument('LeggingsRecovery')
+            }
+            disableIdeRun()
+            gameDirectory = new File(directory, refusal ? selectedStage : phase)
+            properties.each { key, value -> systemProperty(key, value) }
+            jvmArgument('-Xmx1G')
+        }
+    }
+    tasks.named("runRecovery${phase.capitalize()}") { dependsOn "prepareRecovery${phase.capitalize()}" }
+}
+
+def ownerPath = project.path
+def rootDirectory = rootProject.projectDir
+def launcher = rootProject.file('gradlew.bat')
+def offline = gradle.startParameter.offline
+def neoForgeLoader = project.name == 'NeoForge'
+tasks.register('verifyRecovery') {
+    group = 'verification'
+    description = 'Checks staged missing-source preservation, native lifecycle/TCP recovery and optional unchanged Boots.'
+    dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
+    doLast {
+        def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
+        logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        def stages = providers.gradleProperty('leggingsRecoveryStages')
+                .getOrElse('write,absent,absentagain,partial,sources,restore,reloaded,refused,bypassed').split(',')
+        stages.each { stage ->
+            if (!(stage in ['write', 'absent', 'absentagain', 'partial', 'sources', 'restore', 'reloaded', 'refused', 'bypassed'])) {
+                throw new GradleException("Unknown recovery stage ${stage}")
+            }
+            int selectedPort
+            new ServerSocket(0).withCloseable { selectedPort = it.localPort }
+            def markers = new File(reports, stage)
+            // Remove previous readiness/failure signals before launching the child Gradle process.
+            if (!markers.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+                throw new GradleException('Recovery markers escaped the disposable build directory')
+            }
+            delete markers
+            def start = { String phase ->
+                def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                                 "${ownerPath}:runRecovery${phase.capitalize()}", "-PleggingsRecoveryStage=${stage}",
+                                 "-PleggingsRecoveryPort=${selectedPort}", "-PleggingsBoots=${coexistence}"]
+                if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
+                if (offline) { arguments.add('--offline') }
+                if (neoForgeLoader) { arguments.add("-Pneoforge_version=${baseline}") }
+                return new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                        .directory(rootDirectory).redirectErrorStream(true).redirectOutput(new File(logs, "${stage}-${phase}.log")).start()
+            }
+            def stop = { Process process ->
+                if (process != null && process.isAlive()) {
+                    process.toHandle().descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                }
+            }
+            logger.lifecycle("Leggings ${baseline}/${variant}/${stage}")
+            def server = start('server')
+            Process client = null
+            try {
+                if (stage in ['refused', 'bypassed']) {
+                    if (!server.waitFor(150, TimeUnit.SECONDS)) {
+                        throw new GradleException("Recovery refusal timed out: ${stage}")
+                    }
+                    def diagnostic = new File(logs, "${stage}-server.log").text
+                    if (!(diagnostic =~ /Cannot safely install mixed-(leggings|boots) capture/)
+                            || new File(directory, "${stage}/world").exists() || new File(markers, 'server.ok').exists()) {
+                        throw new GradleException("Recovery did not refuse before world creation: ${stage}")
+                    }
+                    return
+                }
+                if (stage in ['write', 'absent', 'restore']) {
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(150)
+                    while (!new File(markers, 'ready.txt').isFile() && server.isAlive() && System.nanoTime() < deadline
+                            && !new File(markers, 'server.failure.txt').isFile()) {
+                        Thread.sleep(500)
+                    }
+                    if (!new File(markers, 'ready.txt').isFile()) {
+                        throw new GradleException("Recovery server did not become ready: ${logs}/${stage}-server.log")
+                    }
+                    client = start('client')
+                    if (!client.waitFor(240, TimeUnit.SECONDS) || client.exitValue() != 0
+                            || !new File(markers, 'client.ok').isFile() || new File(markers, 'client.failure.txt').exists()) {
+                        throw new GradleException("Recovery TCP client failed: ${logs}/${stage}-client.log")
+                    }
+                }
+                if (!server.waitFor(180, TimeUnit.SECONDS) || server.exitValue() != 0
+                        || !new File(markers, 'server.ok').isFile() || new File(markers, 'server.failure.txt').exists()) {
+                    throw new GradleException("Recovery server failed: ${logs}/${stage}-server.log")
+                }
+            } finally {
+                stop(client)
+                stop(server)
+            }
+        }
+        if (previousBoots != null && previousHash != java.security.MessageDigest.getInstance('SHA-256')
+                .digest(previousBoots.bytes).encodeHex().toString()) {
+            throw new GradleException('Previous Boots artifact was modified')
+        }
+        new File(logs, 'matrix.ok').text = "packaged recovery stages ${stages.join(',')} passed\n"
+    }
+}
