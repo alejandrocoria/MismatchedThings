@@ -7,6 +7,13 @@ plugins {
 base.archivesName = "${mod_name}-${minecraft_version}-neoforge"
 
 dependencies {
+    // Optional viewer APIs carry Fabric environment annotations even on their common surface.
+    compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
+    compileOnly "dev.architectury:architectury-neoforge:${architectury_version}"
+    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}"
     implementation(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
     jarJar(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
 }

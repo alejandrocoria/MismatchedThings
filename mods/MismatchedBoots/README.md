@@ -68,6 +68,15 @@ with a diagnostic tooltip rather than inventing source boots.
 Such a bare stack cannot be equipped through ordinary use, armor slots, or a
 dispenser; valid crafted pairs remain equippable.
 
+## Optional recipe viewers
+
+JEI and REI show examples in the shared **Mismatched Workbench** category supplied
+by Things. Each current family product contributes its own inputs and both ordered
+results only when installed, using loaded recipes and synchronized server rules.
+This development build shares the category with Leggings; published Boots 1.0.0
+keeps its separate legacy category when used with newer family products.
+There is no automatic recipe-transfer integration.
+
 ## Development
 
 This mod lives in the [MismatchedThings repository](../../README.md). Run the

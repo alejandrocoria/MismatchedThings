@@ -39,6 +39,8 @@ gradle.projectsEvaluated {
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsEquipmentRenderer.class',
                      'games/alejandrocoria/mismatchedleggings/client/render/MixedLeggingsItemRenderer.class',
                      'games/alejandrocoria/mismatchedleggings/tooltip/MixedLeggingsTooltipFormatter.class',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/jei/MismatchedLeggingsJeiPlugin.class',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/rei/MismatchedLeggingsReiClientPlugin.class',
                      'data/minecraft/tags/item/leg_armor.json',
                      'META-INF/services/games.alejandrocoria.mismatchedleggings.client.render.EquipmentSources',
                      'assets/mismatchedleggings/equipment/neutral.json',
@@ -61,6 +63,9 @@ gradle.projectsEvaluated {
                         if (descriptor.id != 'mismatchedleggings' || descriptor.version != project.version.toString()
                                 || descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0'
                                 || descriptor.depends.containsKey('mismatchedboots')
+                                || descriptor.depends.containsKey('jei') || descriptor.depends.containsKey('roughlyenoughitems')
+                                || descriptor.entrypoints.jei_mod_plugin != ['games.alejandrocoria.mismatchedleggings.compatibility.jei.MismatchedLeggingsJeiPlugin']
+                                || descriptor.entrypoints.rei_client != ['games.alejandrocoria.mismatchedleggings.compatibility.rei.MismatchedLeggingsReiClientPlugin']
                                 || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
                             throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
                         }
@@ -73,10 +78,14 @@ gradle.projectsEvaluated {
                         def text = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
                         def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
                         if (!text.contains('modId="mismatchedleggings"') || text.contains('modId="mismatchedboots"')
+                                || text.contains('modId="jei"') || text.contains('modId="roughlyenoughitems"')
                                 || dependency == null || !dependency.contains('versionRange="[1.1.0,2.0.0)"')
                                 || !dependency.contains('type="required"') || !text.contains('config="mismatchedleggings.mixins.json"')
                                 || !text.contains('config="mismatchedleggings.recovery.mixins.json"')) {
                             throw new GradleException('Wrong standalone NeoForge identity, bounds or skeleton hooks')
+                        }
+                        if (!names.contains('games/alejandrocoria/mismatchedleggings/compatibility/rei/MismatchedLeggingsReiNeoForgePlugin.class')) {
+                            throw new GradleException('Missing optional NeoForge REI discovery adapter')
                         }
                         def metadata = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('META-INF/jarjar/metadata.json')))
                         def nested = metadata.jars.findAll { it.identifier.group == 'games.alejandrocoria.mismatchedthings'
@@ -92,6 +101,32 @@ gradle.projectsEvaluated {
                     if (nested == null || !Arrays.equals(zip.getInputStream(nested).withCloseable { it.readAllBytes() },
                             coreJar.get().asFile.bytes)) {
                         throw new GradleException('Nested core differs from its real loader artifact')
+                    }
+                }
+                new ZipFile(coreJar.get().asFile).withCloseable { zip ->
+                    def entries = zip.entries().findAll { !it.directory }.collect { it.name }
+                    ['api/client/viewer/WorkbenchExample.class',
+                     'api/client/viewer/jei/WorkbenchJeiRecipes.class',
+                     'api/client/viewer/rei/WorkbenchReiDisplay.class',
+                     'internal/client/viewer/jei/WorkbenchJeiPlugin.class',
+                     'internal/client/viewer/rei/WorkbenchReiPlugin.class'].each { entry ->
+                        if (!entries.contains("games/alejandrocoria/mismatchedthings/${entry}".toString())) {
+                            throw new GradleException("Missing shared viewer entry: ${entry}")
+                        }
+                    }
+                    if (entries.any { it.contains('mismatchedboots') || it.contains('mismatchedleggings')
+                            || it.contains('/test/') || it.contains('/spike/') }) {
+                        throw new GradleException('Product or fixture content leaked into the shared viewer core')
+                    }
+                    if (name == 'Fabric') {
+                        def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+                        if (descriptor.depends.containsKey('jei') || descriptor.depends.containsKey('roughlyenoughitems')
+                                || descriptor.entrypoints.jei_mod_plugin != ['games.alejandrocoria.mismatchedthings.internal.client.viewer.jei.WorkbenchJeiPlugin']
+                                || descriptor.entrypoints.rei_client != ['games.alejandrocoria.mismatchedthings.internal.client.viewer.rei.WorkbenchReiPlugin']) {
+                            throw new GradleException('Wrong optional core viewer discovery/dependencies')
+                        }
+                    } else if (!entries.contains('games/alejandrocoria/mismatchedthings/internal/client/viewer/rei/WorkbenchReiNeoForgePlugin.class')) {
+                        throw new GradleException('Missing core NeoForge REI discovery adapter')
                     }
                 }
                 def runtime = product.sourceSets.main.runtimeClasspath.files

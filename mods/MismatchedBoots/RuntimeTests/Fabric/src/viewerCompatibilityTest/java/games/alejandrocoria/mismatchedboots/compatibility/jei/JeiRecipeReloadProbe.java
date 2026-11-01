@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.viewer.RecipeViewerReloadClientGameTest;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.jei.WorkbenchJeiRecipes;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -34,13 +35,13 @@ public final class JeiRecipeReloadProbe implements IModPlugin, RecipeViewerReloa
 
     @Override
     public List<RecipeViewerReloadClientGameTest.Cycle> cycles() {
-        return runtime.getRecipeManager().createRecipeLookup(MismatchedWorkbenchJeiCategory.TYPE).get()
+        return runtime.getRecipeManager().createRecipeLookup(WorkbenchJeiRecipes.TYPE).get()
                       .map(example -> new RecipeViewerReloadClientGameTest.Cycle(example.leftInputs(), example.rightInputs(),
                                                                                  example.primaryOutputs(), example.inverseOutputs())).toList();
     }
 
     @Override
     public void open() {
-        runtime.getRecipesGui().showTypes(List.of(MismatchedWorkbenchJeiCategory.TYPE));
+        runtime.getRecipesGui().showTypes(List.of(WorkbenchJeiRecipes.TYPE));
     }
 }

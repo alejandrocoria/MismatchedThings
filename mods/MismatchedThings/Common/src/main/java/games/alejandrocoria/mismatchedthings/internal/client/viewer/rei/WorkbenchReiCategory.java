@@ -1,6 +1,7 @@
-package games.alejandrocoria.mismatchedboots.compatibility.rei;
+package games.alejandrocoria.mismatchedthings.internal.client.viewer.rei;
 
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.rei.WorkbenchReiDisplay;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.Renderer;
@@ -15,7 +16,7 @@ import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 
-final class MismatchedWorkbenchReiCategory implements DisplayCategory<MismatchedWorkbenchReiDisplay> {
+final class WorkbenchReiCategory implements DisplayCategory<WorkbenchReiDisplay> {
     private static final Identifier ARROWS_TEXTURE = Identifier.fromNamespaceAndPath(
             MismatchedWorkbench.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
     private static final int WIDTH = 130;
@@ -26,8 +27,8 @@ final class MismatchedWorkbenchReiCategory implements DisplayCategory<Mismatched
     private static final int ARROWS_SIZE = 26;
 
     @Override
-    public CategoryIdentifier<? extends MismatchedWorkbenchReiDisplay> getCategoryIdentifier() {
-        return MismatchedWorkbenchReiDisplay.CATEGORY;
+    public CategoryIdentifier<? extends WorkbenchReiDisplay> getCategoryIdentifier() {
+        return WorkbenchReiDisplay.CATEGORY;
     }
 
     @Override
@@ -41,7 +42,7 @@ final class MismatchedWorkbenchReiCategory implements DisplayCategory<Mismatched
     }
 
     @Override
-    public List<Widget> setupDisplay(MismatchedWorkbenchReiDisplay display, Rectangle bounds) {
+    public List<Widget> setupDisplay(WorkbenchReiDisplay display, Rectangle bounds) {
         int pairWidth = SLOT_SPACING + SLOT_SIZE;
         // REI treats a slot Point as the item origin and draws its frame one pixel to the left.
         int leftSlotX = bounds.getCenterX() - pairWidth / 2 + 1;
@@ -73,7 +74,7 @@ final class MismatchedWorkbenchReiCategory implements DisplayCategory<Mismatched
     }
 
     @Override
-    public int getDisplayWidth(MismatchedWorkbenchReiDisplay display) {
+    public int getDisplayWidth(WorkbenchReiDisplay display) {
         return WIDTH;
     }
 

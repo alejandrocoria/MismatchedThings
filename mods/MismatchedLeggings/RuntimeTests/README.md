@@ -7,8 +7,75 @@ dependency, not loose core classes or a separately staged core JAR. Boots and
 indev mods/configuration/worlds are excluded.
 
 The additional client profiles can also stage the **current built** Boots JAR
-for coexistence. It does not use an indev directory or claim acceptance against
-the frozen published Boots release; that release graph remains a final-product gate.
+for coexistence, or an explicitly supplied unchanged published Boots binary.
+Neither route reads the indev directory. A viewer compatibility check against a
+published binary does not replace the broader final-product release-graph gates.
+
+## Optional JEI/REI and user-guide acceptance
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:prepareViewerArtifacts
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:prepareViewerArtifacts
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=jei -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=rei -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=none --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=jei -PleggingsViewerBootsOnly=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=jei -PleggingsBoots=true '-PleggingsBootsJar=<published-boots.jar>' --offline --console=plain
+```
+
+Use the same `verifyViewers` commands on NeoForge, sequentially on .99 and .114.
+Pass `-Pneoforge_version=26.1.2.99` for the floor and leave normal outputs on .114.
+Boots can be omitted or supplied as the explicit unchanged binary with the usual
+`-PleggingsBootsJar=<path>` switch. JEI and REI are tested individually, never
+together. Run each viewer with no Boots flag (Leggings alone), `-PleggingsBoots=true`
+(both current products), `-PleggingsViewerBootsOnly=true` (Boots alone, no Leggings
+product staged), and the explicit published JAR. The no-viewer control covers both
+standalone products. Paths use `viewers-<none|jei|rei>[-boots|-previous-boots|-boots-only]`. The disposable
+client world is reset before copying the dedicated server's seed. Clients stay
+hidden before GLFW creation, muted, with NeoForge's early window disabled. No
+screenshots or indev JARs are needed.
+
+The pinned NeoForge REI JAR still uses deprecated `@OnlyIn` annotations. In this
+isolated REI profile only, `neoforge.warnings.onlyin.hide=true` prevents NeoForge's
+development-only warning screen from blocking quick play. Its diagnostics remain
+in logs; actual loading errors and other warnings are not suppressed. Production
+code and normal indev run settings are unchanged.
+
+The profile starts packaged dedicated and integrated endpoints. Actual JEI/REI
+queries and screens verify one linked cycle, both orientations, repeated opening
+while already open, closing/reopening, and independent product contributions in
+one Things-owned category. It rejects separate current-product categories and
+checks the shared cycle count against installed products. Published Boots keeps
+its old category, which is explicitly checked rather than treated as a duplicate.
+A real
+datapack overrides the Leggings recipe with an ordinary crafting recipe, then a
+fixture workbench recipe that reverses its results, then restores the native
+recipe. Fresh examples must disappear/change/return accordingly, without touching
+the production cache directly, and Boots' contribution must remain available.
+After disconnect, authority must be empty; the
+same world then reopens with a different server policy, and the displayed armor
+values must follow that policy. The no-viewer case exercises real recipe/rule
+synchronization and reload without resolving optional APIs at runtime.
+
+The Boots-only control deliberately omits the Leggings product: its dedicated
+endpoint checks Boots' loaded workbench recipe and rejects a Leggings route; its
+hidden client checks only Boots examples, repeated opening and world reconnect.
+Fixture loader metadata therefore requires Things, with explicit product-graph
+assertions selecting the appropriate profile. Server and client checks stay in
+separate classes so dedicated startup never resolves client screen classes.
+
+For an explicit previous binary, the profile checks its SHA-256 before/after the
+run and stages the current core without modifying the input JAR. Record provenance
+and the hash with acceptance evidence; a locally rebuilt 1.0.0 is not the published
+release. Published binary paths are supplied explicitly, not inferred from indev.
+
+Fabric shares Boots' existing checksum-pinned download definitions. NeoForge's
+exact URLs and upstream SHA-512 values are in [mod-artifacts.json](mod-artifacts.json),
+resolved by [viewer-fixtures.gradle](viewer-fixtures.gradle). Run
+`prepareViewerArtifacts` online once before offline verification. Optional APIs
+are compile-only and are never bundled in the production product. Human appearance
+and discoverability acceptance remain separate; the player workflow is in the
+[product README](../README.md).
 
 ## Missing-source preservation and recovery
 

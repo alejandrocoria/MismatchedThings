@@ -1,7 +1,11 @@
 import java.util.concurrent.TimeUnit
 
 // Concrete packaged-product profiles share staging and bounded process launching.
-['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing'].each { profile ->
+['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers'].each { profile ->
+    def viewers = profile == 'Viewers'
+    def bootsOnly = viewers && providers.gradleProperty('leggingsViewerBootsOnly').map { it.toBoolean() }.getOrElse(false)
+    def viewer = providers.gradleProperty('leggingsViewer').getOrElse('none')
+    if (viewers && !(viewer in ['none', 'jei', 'rei'])) { throw new GradleException("Unknown leggings viewer: ${viewer}") }
     def equipped = profile == 'Equipped'
     def items = profile == 'Items'
     def presentation = profile == 'Presentation'
@@ -10,12 +14,12 @@ import java.util.concurrent.TimeUnit
     def smithing = profile == 'Smithing'
     def iceAndFire = equipped && project.name == 'NeoForge' && providers.gradleProperty('leggingsIceAndFire')
             .map { it.toBoolean() }.getOrElse(false)
-    def coexistence = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
+    def coexistence = bootsOnly || providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
     def previousBoots = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
     def previousHash = previousBoots == null ? null : java.security.MessageDigest.getInstance('SHA-256')
             .digest(previousBoots.bytes).encodeHex().toString()
     def baseline = project.name == 'Fabric' ? fabric_loader_version : neoforge_version
-    def variant = profile.uncapitalize() + (coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
+    def variant = profile.uncapitalize() + (viewers ? "-${viewer}" : '') + (bootsOnly ? '-boots-only' : coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -32,7 +36,8 @@ import java.util.concurrent.TimeUnit
                 def run = new File(directory, phase)
                 def mods = new File(run, 'mods')
                 mods.mkdirs()
-                def artifacts = [leggingsJar.get().asFile]
+                def artifacts = bootsOnly ? [] : [leggingsJar.get().asFile]
+                if (viewers) { artifacts.addAll(project.leggingsViewerArtifacts(viewer)) }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -75,7 +80,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 } else {
                     def world = new File(directory, 'server/skeleton')
                     if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run the workbench server first') }
-                    if (repair || grindstone || smithing) {
+                    if (repair || grindstone || smithing || viewers) {
                         def savedCopy = new File(run, 'saves/skeleton').canonicalFile
                         if (!savedCopy.path.startsWith(layout.buildDirectory.get().asFile.canonicalPath + File.separator)) {
                             throw new GradleException('Workstation world reset escaped the disposable build directory')
@@ -101,6 +106,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 property('leggings.test.repair', repair.toString())
                 property('leggings.test.grindstone', grindstone.toString())
                 property('leggings.test.smithing', smithing.toString())
+                property('leggings.test.viewers', viewers.toString())
+                property('leggings.test.viewerBootsOnly', bootsOnly.toString())
+                property('leggings.test.viewer', viewer)
+                property('leggings.test.previousBoots', (previousBoots != null).toString())
                 property('leggings.test.workbench', 'true')
                 property('leggings.test.boots', coexistence.toString())
                 property('leggings.test.report', reports.absolutePath)
@@ -122,6 +131,15 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.repair', repair.toString())
                 systemProperty('leggings.test.grindstone', grindstone.toString())
                 systemProperty('leggings.test.smithing', smithing.toString())
+                systemProperty('leggings.test.viewers', viewers.toString())
+                systemProperty('leggings.test.viewerBootsOnly', bootsOnly.toString())
+                systemProperty('leggings.test.viewer', viewer)
+                systemProperty('leggings.test.previousBoots', (previousBoots != null).toString())
+                if (viewers && viewer == 'rei') {
+                    // Native dev-only warning screen blocks quick play for this pinned third-party JAR.
+                    // Keep the @OnlyIn diagnostics in logs; do not disable actual loading errors or other warnings.
+                    systemProperty('neoforge.warnings.onlyin.hide', 'true')
+                }
                 systemProperty('leggings.test.workbench', 'true')
                 systemProperty('leggings.test.boots', coexistence.toString())
                 systemProperty('leggings.test.report', reports.absolutePath)
@@ -138,7 +156,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     def neoForgeLoader = project.name == 'NeoForge'
     tasks.register("verify${profile}") {
         group = 'verification'
-        description = smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
+        description = viewers ? 'Checks actual optional JEI/REI examples, reload, repeated opening and session rules.'
+                : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
                 : presentation ? 'Checks tooltips, native armor semantics, enchantment admission and audited behavior tags.'
@@ -155,6 +174,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
+                if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
+                if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
                 if (offline) { arguments.add('--offline') }
                 if (neoForgeLoader) { arguments.add("-Pneoforge_version=${baseline}") }

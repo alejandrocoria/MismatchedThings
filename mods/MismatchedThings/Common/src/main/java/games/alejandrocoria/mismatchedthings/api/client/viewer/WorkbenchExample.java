@@ -1,16 +1,17 @@
-package games.alejandrocoria.mismatchedboots.compatibility.jei;
+package games.alejandrocoria.mismatchedthings.api.client.viewer;
 
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.Objects;
 
-record MismatchedWorkbenchJeiExample(
+/** Immutable snapshots for one linked workbench example; no product rules or viewer dependency. */
+public record WorkbenchExample(
         List<ItemStack> leftInputs,
         List<ItemStack> rightInputs,
         List<ItemStack> primaryOutputs,
         List<ItemStack> inverseOutputs) {
-    MismatchedWorkbenchJeiExample {
+    public WorkbenchExample {
         leftInputs = copyStacks(leftInputs, "leftInputs");
         rightInputs = copyStacks(rightInputs, "rightInputs");
         primaryOutputs = copyStacks(primaryOutputs, "primaryOutputs");
@@ -18,7 +19,7 @@ record MismatchedWorkbenchJeiExample(
 
         int size = leftInputs.size();
         if (rightInputs.size() != size || primaryOutputs.size() != size || inverseOutputs.size() != size) {
-            throw new IllegalArgumentException("linked JEI slots must contain the same number of stacks");
+            throw new IllegalArgumentException("linked example slots must contain the same number of stacks");
         }
     }
 

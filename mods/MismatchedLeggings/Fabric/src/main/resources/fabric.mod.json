@@ -10,7 +10,9 @@
     "mixins": ["mismatchedleggings.mixins.json", "mismatchedleggings.recovery.mixins.json", "mismatchedleggings.fabric.mixins.json"],
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedleggings.MismatchedLeggingsFabric"],
-        "client": ["games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientFabric"]
+        "client": ["games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientFabric"],
+        "jei_mod_plugin": ["games.alejandrocoria.mismatchedleggings.compatibility.jei.MismatchedLeggingsJeiPlugin"],
+        "rei_client": ["games.alejandrocoria.mismatchedleggings.compatibility.rei.MismatchedLeggingsReiClientPlugin"]
     },
     "contact": { "sources": "${mod_sources}", "issues": "${mod_issues}" },
     "depends": {

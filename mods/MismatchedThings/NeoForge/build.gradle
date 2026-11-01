@@ -5,6 +5,16 @@ plugins {
 
 base.archivesName = "mismatchedthings-${minecraft_version}-neoforge"
 
+dependencies {
+    // REI's common API includes Fabric environment annotations, even on NeoForge.
+    compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
+    compileOnly "dev.architectury:architectury-neoforge:${architectury_version}"
+    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}"
+}
+
 configurations.create('workbenchElements') {
     canBeConsumed = true
     canBeResolved = false

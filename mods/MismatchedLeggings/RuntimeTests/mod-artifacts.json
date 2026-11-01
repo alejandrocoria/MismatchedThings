@@ -1,0 +1,26 @@
+[
+    {
+        "filename": "jei-26.1.2-neoforge-29.43.0.106.jar",
+        "viewer": "jei",
+        "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/iub7wR3J/jei-26.1.2-neoforge-29.43.0.106.jar",
+        "sha512": "e271c5fe2cf12886a12fdba9047b83251a9b8e3648ea8af2239ca9e92e483d284612e5ee278e3336f704055ea68a7fbaf522cf9dfb812a06f866d952070d325c"
+    },
+    {
+        "filename": "RoughlyEnoughItems-26.1.819.jar",
+        "viewer": "rei",
+        "url": "https://cdn.modrinth.com/data/nfn13YXA/versions/isd1MxO2/RoughlyEnoughItems-26.1.819.jar",
+        "sha512": "86c792fb1e34f8f78b48a613d394a868a94dfa1c59fab67b1d499d44f588339c211c38a3ca33a99347fcb332b7e17fc08f8bc34721a399c02c0e4356ce0e6e37"
+    },
+    {
+        "filename": "architectury-neoforge-20.1.16.jar",
+        "viewer": "rei",
+        "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/9PW5lWrQ/architectury-neoforge-20.1.16.jar",
+        "sha512": "e7d30447e339b75609ceff20b8e6ce150eff5c3fe5c40c926a2cba6d3481528128efa3dcaf4e233a776c418ba1652b693bba630c8dd300275adb48c01e03bd3a"
+    },
+    {
+        "filename": "cloth-config-26.1.154.jar",
+        "viewer": "rei",
+        "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/TimoYzse/cloth-config-26.1.154.jar",
+        "sha512": "b3084e992459c211617bf5247a94b93c06823277932341e7cec98602a6c6e21ca599aae5e552868ae7a60aac6ec33f3a9cee11615667470483948b3e349d3caf"
+    }
+]

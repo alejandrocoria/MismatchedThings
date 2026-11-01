@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.WorkbenchExample;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
@@ -68,7 +69,7 @@ class MismatchedWorkbenchJeiCycleTest {
                 boots(Items.GOLDEN_BOOTS),
                 boots(Items.IRON_BOOTS));
 
-        MismatchedWorkbenchJeiExample example = MismatchedWorkbenchJeiCycle.create(
+        WorkbenchExample example = MismatchedWorkbenchJeiCycle.create(
                 boots,
                 MismatchedWorkbenchJeiCycleTest::orderedResult).orElseThrow();
 
@@ -94,7 +95,7 @@ class MismatchedWorkbenchJeiCycleTest {
     @Test
     void oneCandidateFormsOneSelfPairAndRejectedAdjacentPairsAreSkipped() {
         ItemStack only = boots(Items.IRON_BOOTS);
-        MismatchedWorkbenchJeiExample single = MismatchedWorkbenchJeiCycle.create(
+        WorkbenchExample single = MismatchedWorkbenchJeiCycle.create(
                 List.of(only),
                 MismatchedWorkbenchJeiCycleTest::orderedResult).orElseThrow();
         assertEquals(1, single.leftInputs().size());
@@ -105,7 +106,7 @@ class MismatchedWorkbenchJeiCycleTest {
                 boots(Items.DIAMOND_BOOTS),
                 boots(Items.GOLDEN_BOOTS),
                 boots(Items.IRON_BOOTS));
-        MismatchedWorkbenchJeiExample withRejectedPair = MismatchedWorkbenchJeiCycle.create(
+        WorkbenchExample withRejectedPair = MismatchedWorkbenchJeiCycle.create(
                 boots,
                 (left, right) -> left.is(Items.GOLDEN_BOOTS)
                                  ? WorkbenchResult.EMPTY
@@ -125,7 +126,7 @@ class MismatchedWorkbenchJeiCycleTest {
         }
         AtomicInteger calls = new AtomicInteger();
 
-        Optional<MismatchedWorkbenchJeiExample> example = MismatchedWorkbenchJeiCycle.create(boots, (left, right) -> {
+        Optional<WorkbenchExample> example = MismatchedWorkbenchJeiCycle.create(boots, (left, right) -> {
             calls.incrementAndGet();
             return orderedResult(left, right);
         });

@@ -11,8 +11,8 @@ displayName="Leggings skeleton tests"
 config="leggings-test.mixins.json"
 
 [[dependencies.leggings_skeleton_test]]
-modId="mismatchedleggings"
+modId="mismatchedthings"
 type="required"
-versionRange="[0.1.0-dev,)"
+versionRange="[1.1.0,2.0.0)"
 ordering="AFTER"
 side="BOTH"

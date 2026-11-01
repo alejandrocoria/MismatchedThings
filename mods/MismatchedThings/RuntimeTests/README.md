@@ -167,5 +167,7 @@ offline mode for isolated local tests. Intentional offline/native/JDK notices
 are distinct from workbench failures; inspect accepted process logs as well as
 the markers.
 
-This suite does not replace Boots gameplay/JEI/REI tests, dedicated TCP networking
-or the owner's ordinary-client visual acceptance. Those remain separate gates.
+This suite does not replace Boots gameplay tests,
+[shared JEI/REI acceptance](../../MismatchedLeggings/RuntimeTests/README.md#optional-jeirei-and-user-guide-acceptance),
+dedicated TCP networking or the owner's ordinary-client visual acceptance.
+Those remain separate gates.

@@ -12,12 +12,27 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.viewerBootsOnly")) {
+            var mods = ModList.get();
+            BootsOnlyViewerChecks.environment(mods.isLoaded("mismatchedboots"), mods.isLoaded("mismatchedleggings"),
+                    mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count());
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> BootsOnlyViewerChecks.serverTick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) {
+                bus.addListener(SkeletonClientNeoForge::setup);
+            }
+            return;
+        }
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, "leggings_skeleton_test");
         components.register("charge", () -> CompositionFixture.CHARGE);
         if (RecoveryFixture.walletPresent()) {
             components.register("wallet", () -> RecoveryFixture.WALLET);
         }
         components.register(bus);
+        if (Boolean.getBoolean("leggings.test.viewers")) {
+            var recipes = DeferredRegister.create(Registries.RECIPE_SERIALIZER, "leggings_skeleton_test");
+            recipes.register("reversed_workbench", () -> ViewerRecipe.SERIALIZER);
+            recipes.register(bus);
+        }
         if (RecoveryFixture.sourcesPresent()) {
             var items = DeferredRegister.createItems("leggings_skeleton_test");
             items.register("temporary_leggings", RecoveryFixture::source);

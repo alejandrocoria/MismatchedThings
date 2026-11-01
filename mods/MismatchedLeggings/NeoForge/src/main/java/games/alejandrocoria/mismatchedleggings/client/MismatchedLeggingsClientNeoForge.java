@@ -1,9 +1,12 @@
 package games.alejandrocoria.mismatchedleggings.client;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.network.ClientReadyPayload;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -17,7 +20,15 @@ public final class MismatchedLeggingsClientNeoForge {
                 CompositionRuleState.resetPreview();
                 ClientPacketDistributor.sendToServer(new ClientReadyPayload());
             });
-            NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> CompositionRuleState.resetPreview());
+            NeoForge.EVENT_BUS.addListener((RecipesReceivedEvent recipes) -> {
+                if (recipes.getRecipeTypes().contains(MismatchedWorkbench.recipeType())) {
+                    MismatchedWorkbenchClientRecipes.install(recipes.getRecipeMap().byType(MismatchedWorkbench.recipeType()));
+                }
+            });
+            NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> {
+                CompositionRuleState.resetPreview();
+                MismatchedWorkbenchClientRecipes.reset();
+            });
         });
     }
 }

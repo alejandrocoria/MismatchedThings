@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.viewer.RecipeViewerReloadClientGameTest;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.rei.WorkbenchReiDisplay;
 import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
@@ -28,8 +29,8 @@ public final class ReiRecipeReloadProbe implements RecipeViewerReloadClientGameT
     }
 
     private static ViewSearchBuilder search() {
-        return ViewSearchBuilder.builder().addCategory(MismatchedWorkbenchReiDisplay.CATEGORY)
-                                .filterCategory(MismatchedWorkbenchReiDisplay.CATEGORY).mergingDisplays(false);
+        return ViewSearchBuilder.builder().addCategory(WorkbenchReiDisplay.CATEGORY)
+                                .filterCategory(WorkbenchReiDisplay.CATEGORY).mergingDisplays(false);
     }
 
     private static List<ItemStack> stacks(EntryIngredient entries) {

@@ -1,6 +1,6 @@
-package games.alejandrocoria.mismatchedboots.compatibility.rei;
+package games.alejandrocoria.mismatchedthings.api.client.viewer.rei;
 
-import games.alejandrocoria.mismatchedboots.Constants;
+import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.display.DisplaySerializer;
@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-final class MismatchedWorkbenchReiDisplay extends BasicDisplay {
-    static final CategoryIdentifier<MismatchedWorkbenchReiDisplay> CATEGORY =
-            CategoryIdentifier.of(Constants.MOD_ID, "mismatched_workbench");
+public final class WorkbenchReiDisplay extends BasicDisplay {
+    public static final CategoryIdentifier<WorkbenchReiDisplay> CATEGORY =
+            CategoryIdentifier.of(MismatchedWorkbench.MOD_ID, "mismatched_workbench");
 
-    private MismatchedWorkbenchReiDisplay(
+    private WorkbenchReiDisplay(
             EntryIngredient leftInput,
             EntryIngredient rightInput,
             EntryIngredient primaryOutput,
@@ -26,7 +26,7 @@ final class MismatchedWorkbenchReiDisplay extends BasicDisplay {
         super(List.of(leftInput, rightInput), List.of(primaryOutput, inverseOutput), Optional.empty());
     }
 
-    static MismatchedWorkbenchReiDisplay create(
+    public static WorkbenchReiDisplay create(
             List<ItemStack> leftInputs,
             List<ItemStack> rightInputs,
             List<ItemStack> primaryOutputs,
@@ -38,7 +38,7 @@ final class MismatchedWorkbenchReiDisplay extends BasicDisplay {
                 || inverseOutputs.size() != size) {
             throw new IllegalArgumentException("linked REI slots must contain the same non-zero number of stacks");
         }
-        return new MismatchedWorkbenchReiDisplay(
+        return new WorkbenchReiDisplay(
                 ingredient(leftInputs),
                 ingredient(rightInputs),
                 ingredient(primaryOutputs),

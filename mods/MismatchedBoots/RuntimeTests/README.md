@@ -996,7 +996,7 @@ Those entry points also run `verifySharedWorkbenchPackaging` and
 bounds, real core byte equality, no loose/legacy station content, indev runtime
 availability and six corrupted-core-package controls. NeoForge project JiJ
 metadata has an open `[bundledVersion,)` range; the required mod dependency
-separately bounds supported API major 1 with `[1.0.0,2.0.0)`.
+separately bounds supported API major 1 with `[1.1.0,2.0.0)` in current development builds.
 
 Optional recipe-viewer regressions run individually:
 
@@ -1015,8 +1015,11 @@ by disconnect invalidation. Screens are closed before datapack reload; rendering
 REI's entry registry during its asynchronous mutation is outside this check.
 The replacement is a test-only serializer which opts into Fabric synchronization.
 Third-party Fabric recipe serializers must likewise opt into that loader API.
-This is canonical Fabric viewer coverage, not a claim of a second real NeoForge
-viewer test or human visual acceptance.
+These product regressions cover Fabric, not human visual acceptance. The
+[shared-category profile](../../MismatchedLeggings/RuntimeTests/README.md#optional-jeirei-and-user-guide-acceptance)
+adds packaged Fabric/NeoForge .99/.114 checks with Boots alone, Leggings alone,
+both products and unchanged published Boots. It verifies independent contributions
+to Things' single category, including the accepted legacy-category exception.
 
 `verifyLoaderNetworking` orchestrates real connections, prepares isolated
 directories, and checks result markers. Select a pair with

@@ -10,8 +10,8 @@ This branch targets Minecraft 26.1.2 with Fabric and NeoForge.
 - [Mismatched Leggings](mods/MismatchedLeggings/README.md) is in development;
   composition, shared-workbench crafting, rendering, source tooltips and vanilla
   leggings behavior, anvil, crafting donor repair, grindstone, source-wise smithing
-  and missing-source recovery are implemented;
-  the remaining product features are pending.
+  missing-source recovery and optional JEI/REI integration are implemented;
+  final product consolidation is pending.
 - [MismatchedThings core](mods/MismatchedThings/README.md) owns the shared
   workbench and small shared config, tooltip and composition utilities. It is
   bundled inside each armor product artifact; no separate download is needed.

@@ -90,6 +90,9 @@ gradle.projectsEvaluated {
             if (!Arrays.equals(bytes, expected)) { throw new GradleException('Nested core differs from its real loader artifact') }
             def nested = readNested(bytes)
             if (!nested.containsKey('games/alejandrocoria/mismatchedthings/api/MismatchedWorkbench.class')
+                    || !nested.containsKey('games/alejandrocoria/mismatchedthings/api/client/viewer/WorkbenchExample.class')
+                    || !nested.containsKey('games/alejandrocoria/mismatchedthings/internal/client/viewer/jei/WorkbenchJeiPlugin.class')
+                    || !nested.containsKey('games/alejandrocoria/mismatchedthings/internal/client/viewer/rei/WorkbenchReiPlugin.class')
                     || !nested.containsKey('assets/mismatchedthings/items/mismatched_workbench.json')
                     || nested.keySet().any { it.contains('mismatchedboots') || it.contains('/spike/') }) {
                 throw new GradleException('Wrong nested core ownership')

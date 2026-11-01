@@ -1,16 +1,83 @@
 # Mismatched Leggings
 
-Independent armor product in development for Minecraft 26.1.2, Fabric and NeoForge.
-The standalone skeleton and source schema are implemented. A bare
-`mismatchedleggings:mixed_leggings` remains inert and non-equippable. Structurally
-valid roots carry two ordered source snapshots and project legs equipment. The
-composition factory now builds both complete numerical results under local rules.
-The shared workbench now crafts both ordered results under server-owned rules.
-Equipped/item rendering, source tooltips, vanilla leggings semantics, anvil and
-crafting donor repair, grindstone, source-wise smithing and missing-source
-preservation/recovery are implemented.
-This is not a complete or
-publishable release.
+MismatchedLeggings combines two ordinary leggings stacks into two oppositely
+oriented mixed pairs on Fabric and NeoForge for Minecraft 26.1.2.
+The product is in development; final packaged consolidation is still pending.
+
+## Installation
+
+Install it on both the client and the server, using the same mod loader on both
+sides. Cross-loader connections are not supported. Fabric also requires Fabric API.
+MismatchedThings is bundled;
+no separate core download is required. Boots is optional: when both products are
+installed, they share one workbench and keep their own items and configuration.
+
+## Crafting
+
+Craft a **Mismatched Workbench** with six planks (any combination), shears and a
+diamond in this 3x3 arrangement:
+
+```text
+plank  shears   plank
+plank  diamond  plank
+plank  empty    plank
+```
+
+Place one ordinary, legs-equippable leggings stack in each workbench input. The
+left input supplies the wearer's left leg and half-waist in the primary result;
+the right input supplies the right side. The inverse result exchanges them.
+Item artwork is front-facing, so the wearer's left appears on the viewer's right.
+
+Both results are visible separately. Taking either consumes the two inputs once;
+the other remains available until taken or returned when the screen closes.
+Existing mixed pairs and Boots/Leggings cross-product inputs cannot be combined.
+Crafting grids and Crafters do not compose leggings; they can repair an existing
+mixed pair with an ordinary donor matching either source.
+
+## Combined behavior
+
+- Maximum and remaining durability use the conservative average by default,
+  rounded down. Mending, Unbreaking and subsequent wear operate on the live pair.
+- Attributes use server-configurable policies. Common vanilla bonuses average
+  compatible modifiers; unknown attributes retain each orientation owner's
+  contribution by default.
+- Both results inherit enchantments from both sources. Equal levels gain one,
+  capped at the enchantment's normal maximum plus one. Swift Sneak uses the legs slot.
+- Unknown data components follow each orientation's left source by default;
+  supported component policies can be configured on the server.
+
+An anvil supports naming, compatible books, composed repair materials and ordinary
+donors matching either source. A grindstone disenchants or performs donor repair
+with bounded XP paid only on extraction. Smithing applies loaded trims/upgrades
+to eligible sources for one addition and, where required, one template per result.
+Mixed/Mixed repair is unsupported. See the sections below for transaction details.
+
+## Compatibility and recipe viewers
+
+Normal legs equipment, components, attributes, durability, enchantments and
+standard humanoid equipment models provide automatic compatibility. Special
+behavior implemented only in a source item's class, custom events or foreign
+upgrade tables is not generically transferred. Boots' dedicated mod adapters do
+not automatically apply to Leggings.
+
+Equipped rendering keeps each native leg and splits standard waist geometry.
+Unsupported geometry may fall back to a complete left-owner appearance, then to
+neutral leggings. Unsupported item models fall back to two superimposed complete
+source models. Arbitrary custom renderers and mesh deformation are best-effort,
+not a universal compatibility guarantee.
+
+JEI and REI are optional. Each shows a **Mismatched Workbench** category
+with linked inputs and both results, using currently loaded recipes and
+synchronized server rules. Cycling examples illustrate combinations rather than
+enumerating every possible pair. Recipe reload, disconnect and a new session
+refresh those examples independently of Boots. Current family products contribute
+to that one category when installed; published Boots 1.0.0 retains its separate
+legacy category until updated. Inputs must be placed manually;
+there is no automatic recipe-transfer integration.
+
+The bare registry item has no source data and is absent from creative tabs.
+Bare command-created roots remain diagnostic and non-equippable. Temporary
+missing-source preservation is described below; it is distinct from a bare item.
 
 ## Development
 

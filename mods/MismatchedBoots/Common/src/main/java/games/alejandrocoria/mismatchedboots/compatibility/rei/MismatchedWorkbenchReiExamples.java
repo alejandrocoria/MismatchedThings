@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.rei.WorkbenchReiDisplay;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
@@ -35,7 +36,7 @@ final class MismatchedWorkbenchReiExamples {
                 || usagesFor.stream().anyMatch(stack -> stack.is(workstation) || BootHalf.isValidSource(stack));
     }
 
-    static Optional<MismatchedWorkbenchReiDisplay> create() {
+    static Optional<WorkbenchReiDisplay> create() {
         if (!CompositionRulesClientLifecycle.areRulesSynchronized()) {
             return Optional.empty();
         }
@@ -48,7 +49,7 @@ final class MismatchedWorkbenchReiExamples {
         return MismatchedWorkbenchExampleCycle.create(collectCandidates(), (left, right) -> {
             return MismatchedWorkbenchClientRecipes.assemblePair(
                     new WorkbenchInput(left, right), level);
-        }).map(example -> MismatchedWorkbenchReiDisplay.create(
+        }).map(example -> WorkbenchReiDisplay.create(
                 example.leftInputs(),
                 example.rightInputs(),
                 example.primaryOutputs(),

@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.compatibility.jei;
 
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.WorkbenchExample;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.subtypes.UidContext;
@@ -20,7 +21,7 @@ final class MismatchedWorkbenchJeiExamples {
     private MismatchedWorkbenchJeiExamples() {
     }
 
-    static Optional<MismatchedWorkbenchJeiExample> create(IJeiRuntime runtime) {
+    static Optional<WorkbenchExample> create(IJeiRuntime runtime) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return Optional.empty();

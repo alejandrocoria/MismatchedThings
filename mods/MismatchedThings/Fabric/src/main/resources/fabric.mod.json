@@ -10,7 +10,9 @@
     "accessWidener": "mismatchedthings.accesswidener",
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedthings.MismatchedThingsFabric"],
-        "client": ["games.alejandrocoria.mismatchedthings.client.MismatchedThingsClientFabric"]
+        "client": ["games.alejandrocoria.mismatchedthings.client.MismatchedThingsClientFabric"],
+        "jei_mod_plugin": ["games.alejandrocoria.mismatchedthings.internal.client.viewer.jei.WorkbenchJeiPlugin"],
+        "rei_client": ["games.alejandrocoria.mismatchedthings.internal.client.viewer.rei.WorkbenchReiPlugin"]
     },
     "mixins": ["mismatchedthings.fabric.mixins.json"],
     "depends": {

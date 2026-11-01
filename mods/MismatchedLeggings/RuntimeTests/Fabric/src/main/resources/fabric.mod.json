@@ -7,7 +7,8 @@
     "mixins": ["leggings-test.mixins.json", "leggings-test.fabric.mixins.json"],
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedleggings.test.SkeletonTestFabric"],
-        "client": ["games.alejandrocoria.mismatchedleggings.test.SkeletonClientFabric"]
+        "client": ["games.alejandrocoria.mismatchedleggings.test.SkeletonClientFabric"],
+        "jei_mod_plugin": ["games.alejandrocoria.mismatchedleggings.test.JeiViewerProbe"]
     },
-    "depends": { "mismatchedleggings": "*", "fabric-api": "*" }
+    "depends": { "mismatchedthings": ">=1.1.0 <2.0.0", "fabric-api": "*" }
 }

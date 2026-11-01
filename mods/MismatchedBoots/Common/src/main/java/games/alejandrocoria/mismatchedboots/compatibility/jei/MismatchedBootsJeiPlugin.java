@@ -3,16 +3,14 @@ package games.alejandrocoria.mismatchedboots.compatibility.jei;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.jei.WorkbenchJeiRecipes;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
-import mezz.jei.api.registration.IRecipeCatalystRegistration;
-import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.util.Optional;
 
 @JeiPlugin
 public final class MismatchedBootsJeiPlugin implements IModPlugin {
@@ -23,7 +21,6 @@ public final class MismatchedBootsJeiPlugin implements IModPlugin {
     };
     private Runnable removeRecipesListener = () -> {
     };
-    private @Nullable MismatchedWorkbenchJeiExample registeredExample;
 
     @Override
     public Identifier getPluginUid() {
@@ -31,23 +28,10 @@ public final class MismatchedBootsJeiPlugin implements IModPlugin {
     }
 
     @Override
-    public void registerCategories(IRecipeCategoryRegistration registration) {
-        registration.addRecipeCategories(new MismatchedWorkbenchJeiCategory(registration.getJeiHelpers().getGuiHelper()));
-    }
-
-    @Override
-    public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addCraftingStation(
-                MismatchedWorkbenchJeiCategory.TYPE,
-                MismatchedWorkbench.item());
-    }
-
-    @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         removeRulesListener.run();
         removeRecipesListener.run();
         runtime = jeiRuntime;
-        registeredExample = null;
         removeRecipesListener = MismatchedWorkbenchClientRecipes.addListener(this::refreshExample);
         removeRulesListener = CompositionRulesClientLifecycle.addSynchronizedListener(this::refreshExample);
     }
@@ -61,7 +45,7 @@ public final class MismatchedBootsJeiPlugin implements IModPlugin {
         removeRecipesListener = () -> {
         };
         runtime = null;
-        registeredExample = null;
+        WorkbenchJeiRecipes.replace(PLUGIN_ID, Optional.empty());
     }
 
     private void refreshExample() {
@@ -69,20 +53,11 @@ public final class MismatchedBootsJeiPlugin implements IModPlugin {
         if (currentRuntime == null) {
             return;
         }
-        if (registeredExample != null) {
-            currentRuntime.getRecipeManager().hideRecipes(
-                    MismatchedWorkbenchJeiCategory.TYPE, List.of(registeredExample));
-            registeredExample = null;
-        }
         if (!CompositionRulesClientLifecycle.areRulesSynchronized()) {
+            WorkbenchJeiRecipes.replace(PLUGIN_ID, Optional.empty());
             return;
         }
 
-        MismatchedWorkbenchJeiExamples.create(currentRuntime).ifPresent(example -> {
-            currentRuntime.getRecipeManager().addRecipes(
-                    MismatchedWorkbenchJeiCategory.TYPE,
-                    List.of(example));
-            registeredExample = example;
-        });
+        WorkbenchJeiRecipes.replace(PLUGIN_ID, MismatchedWorkbenchJeiExamples.create(currentRuntime));
     }
 }

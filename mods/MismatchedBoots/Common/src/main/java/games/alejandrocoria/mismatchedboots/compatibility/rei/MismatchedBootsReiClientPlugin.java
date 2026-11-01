@@ -2,8 +2,8 @@ package games.alejandrocoria.mismatchedboots.compatibility.rei;
 
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.rei.WorkbenchReiDisplay;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
-import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.registry.display.DynamicDisplayGenerator;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
@@ -20,26 +20,16 @@ import java.util.Optional;
 
 public class MismatchedBootsReiClientPlugin implements REIClientPlugin {
     @Override
-    @SuppressWarnings("removal")
-    public void registerCategories(CategoryRegistry registry) {
-        registry.add(new MismatchedWorkbenchReiCategory());
-        registry.addWorkstations(
-                MismatchedWorkbenchReiDisplay.CATEGORY,
-                EntryStacks.of(MismatchedWorkbench.item()));
-        registry.removePlusButton(MismatchedWorkbenchReiDisplay.CATEGORY);
-    }
-
-    @Override
     public void registerDisplays(DisplayRegistry registry) {
         registry.registerDisplayGenerator(
-                MismatchedWorkbenchReiDisplay.CATEGORY,
-                new DynamicDisplayGenerator<MismatchedWorkbenchReiDisplay>() {
+                WorkbenchReiDisplay.CATEGORY,
+                new DynamicDisplayGenerator<WorkbenchReiDisplay>() {
                     @Override
-                    public Optional<List<MismatchedWorkbenchReiDisplay>> generate(ViewSearchBuilder builder) {
+                    public Optional<List<WorkbenchReiDisplay>> generate(ViewSearchBuilder builder) {
                         // REI combines all three generator callbacks in one search. Publish only here;
                         // its preferred category merely preserves the selected tab when reopening.
-                        boolean requestsCategory = builder.getCategories().contains(MismatchedWorkbenchReiDisplay.CATEGORY)
-                                || builder.getFilteringCategories().contains(MismatchedWorkbenchReiDisplay.CATEGORY);
+                        boolean requestsCategory = builder.getCategories().contains(WorkbenchReiDisplay.CATEGORY)
+                                || builder.getFilteringCategories().contains(WorkbenchReiDisplay.CATEGORY);
                         boolean requestsDisplay = MismatchedWorkbenchReiExamples.requestsDisplay(
                                 requestsCategory,
                                 builder.getRecipesFor().stream().flatMap(entry -> itemStack(entry).stream()).toList(),

@@ -17,7 +17,7 @@ unchanged Boots binaries across a core upgrade. Consolidated automated integrati
 viewer and dedicated networking checks have passed. The owner also accepted the
 final ordinary-client checklist on Fabric and NeoForge on 2026-10-27, completing
 the shared workbench extraction/namespace plan. Leggings now has its own source
-schema and composition factory, but does not contribute a workbench recipe yet. Synthetic
+schema, composition factory and its own workbench recipe. Synthetic
 consumers and their additive API exist only in tests.
 
 ## Ownership
@@ -82,6 +82,41 @@ Renderer classes and
 loader hooks under `internal` are not consumer API.
 
 ## Contribution boundary
+
+### Optional recipe viewers (since 1.1.0)
+
+Things registers one JEI/REI category, `mismatchedthings:mismatched_workbench`,
+titled **Mismatched Workbench**. Optional APIs are compile-only; neither viewer is
+required on either endpoint. Products keep their own optional plugins and contribute
+independently; Things contains no armor-product lookup or composition rules.
+
+- `api.client.viewer.WorkbenchExample` holds defensive single-item snapshots of
+  four equally sized, nonempty linked slots. It has no viewer API dependency.
+- JEI plugins call `api.client.viewer.jei.WorkbenchJeiRecipes.replace(owner, example)`
+  on the client thread with their unique contribution ID and an optional example.
+  Empty removes only that owner's cycle. Products subscribe to their own recipe/
+  synchronized-rule changes, clear on unavailable authority, and dispose listeners
+  when their JEI runtime stops. Things handles registration, replacement and pending
+  contributions regardless of plugin callback order. `TYPE` identifies the shared category.
+- REI plugins register their own `DynamicDisplayGenerator` against
+  `api.client.viewer.rei.WorkbenchReiDisplay.CATEGORY` during REI's normal reload.
+  Return `WorkbenchReiDisplay.create(...)` from only the main `generate` callback;
+  generate from current product authority and return empty while unavailable.
+  REI owns generator reload/disposal. Do not register another category or workstation.
+
+Product candidate selection still respects viewer visibility/subtypes; outputs
+come from actual loaded product recipes and synchronized product rules, never a
+new factory recipe invented by Things. No recipe transfer is provided.
+
+Published Boots 1.0.0 uses the old `mismatchedboots:mismatched_workbench` category
+and example classes. Its existing API remains supported: it can coexist with
+Leggings and Things 1.1.0, but keeps a separate, identically titled legacy tab.
+There is no core bridge into Boots internals and no saved-data migration.
+
+Packaged current-product and legacy-consumer viewer checks live in the
+[shared viewer profile](../MismatchedLeggings/RuntimeTests/README.md#optional-jeirei-and-user-guide-acceptance).
+
+### Workbench recipes
 
 Use `games.alejandrocoria.mismatchedthings.api`:
 

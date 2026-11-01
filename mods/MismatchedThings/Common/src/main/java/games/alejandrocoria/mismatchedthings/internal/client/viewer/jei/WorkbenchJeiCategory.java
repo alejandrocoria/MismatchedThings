@@ -1,7 +1,8 @@
-package games.alejandrocoria.mismatchedboots.compatibility.jei;
+package games.alejandrocoria.mismatchedthings.internal.client.viewer.jei;
 
-import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.WorkbenchExample;
+import games.alejandrocoria.mismatchedthings.api.client.viewer.jei.WorkbenchJeiRecipes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -9,15 +10,10 @@ import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.category.AbstractRecipeCategory;
-import mezz.jei.api.recipe.types.IRecipeType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<MismatchedWorkbenchJeiExample> {
-    static final IRecipeType<MismatchedWorkbenchJeiExample> TYPE = IRecipeType.create(
-            Identifier.fromNamespaceAndPath(Constants.MOD_ID, "mismatched_workbench"),
-            MismatchedWorkbenchJeiExample.class);
-
+final class WorkbenchJeiCategory extends AbstractRecipeCategory<WorkbenchExample> {
     private static final Identifier ARROWS_TEXTURE = Identifier.fromNamespaceAndPath(
             MismatchedWorkbench.MOD_ID, "textures/gui/sprites/container/mismatched_workbench/arrows.png");
     private static final int WIDTH = 130;
@@ -31,9 +27,9 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
 
     private final IDrawable arrows;
 
-    MismatchedWorkbenchJeiCategory(IGuiHelper guiHelper) {
+    WorkbenchJeiCategory(IGuiHelper guiHelper) {
         super(
-                TYPE,
+                WorkbenchJeiRecipes.TYPE,
                 Component.translatable("container.mismatchedthings.mismatched_workbench"),
                 guiHelper.createDrawableItemLike(MismatchedWorkbench.item()),
                 WIDTH,
@@ -46,7 +42,7 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
     @Override
     public void setRecipe(
             IRecipeLayoutBuilder builder,
-            MismatchedWorkbenchJeiExample recipe,
+            WorkbenchExample recipe,
             IFocusGroup focuses) {
         IRecipeSlotBuilder leftInput = builder.addInputSlot(LEFT_SLOT_X, INPUT_Y)
                                               .setStandardSlotBackground()
@@ -66,7 +62,7 @@ final class MismatchedWorkbenchJeiCategory extends AbstractRecipeCategory<Mismat
     @Override
     public void createRecipeExtras(
             IRecipeExtrasBuilder builder,
-            MismatchedWorkbenchJeiExample recipe,
+            WorkbenchExample recipe,
             IFocusGroup focuses) {
         builder.addDrawable(arrows, ARROWS_X, ARROWS_Y);
     }

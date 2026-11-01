@@ -18,6 +18,14 @@ public final class SkeletonClientChecks {
     }
 
     public static void tick(Minecraft client) {
+        if (Boolean.getBoolean("leggings.test.viewerBootsOnly")) {
+            BootsOnlyViewerClientChecks.clientTick(client);
+            return;
+        }
+        if (Boolean.getBoolean("leggings.test.viewers")) {
+            ViewerClientChecks.tick(client);
+            return;
+        }
         if (RecoveryFixture.enabled()) {
             RecoveryClientChecks.tick(client);
             return;
