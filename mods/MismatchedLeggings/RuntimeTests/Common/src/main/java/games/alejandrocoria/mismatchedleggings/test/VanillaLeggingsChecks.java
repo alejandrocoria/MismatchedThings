@@ -58,9 +58,10 @@ final class VanillaLeggingsChecks {
         iron.enchant(swift, 3);
         var pair = pair(iron, new ItemStack(Items.GOLDEN_LEGGINGS));
         for (var root : List.of(pair.primary(), pair.inverse())) {
-            require(root.is(ItemTags.LEG_ARMOR) && root.is(ItemTags.LEG_ARMOR_ENCHANTABLE)
+            require(!root.is(ItemTags.LEG_ARMOR) && !root.is(ItemTags.TRIMMABLE_ARMOR)
+                    && root.is(ItemTags.LEG_ARMOR_ENCHANTABLE)
                     && root.is(ItemTags.ARMOR_ENCHANTABLE) && root.is(ItemTags.DURABILITY_ENCHANTABLE)
-                    && root.is(ItemTags.EQUIPPABLE_ENCHANTABLE), "Missing real leggings classification");
+                    && root.is(ItemTags.EQUIPPABLE_ENCHANTABLE), "Incorrect narrow leggings classification");
             require(!root.is(ItemTags.FOOT_ARMOR) && !root.is(ItemTags.FOOT_ARMOR_ENCHANTABLE)
                     && !root.is(ItemTags.CHEST_ARMOR) && !root.is(ItemTags.HEAD_ARMOR), "Cross-slot tag leakage");
             require(swift.value().canEnchant(root) && !feather.value().canEnchant(root), "Native leggings enchantment tags are wrong");
@@ -74,6 +75,13 @@ final class VanillaLeggingsChecks {
             require(provenance.equals(MixedLeggingsStructure.validData(root).orElseThrow()), "Equipment effects mutated sources");
             var clean = root.copy();
             clean.set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+            var nativeLeggings = new ItemStack(Items.IRON_LEGGINGS);
+            enchantments.listElements().forEach(holder -> {
+                var enchantment = holder.value();
+                require(enchantment.canEnchant(clean) == enchantment.canEnchant(nativeLeggings)
+                                && enchantment.isPrimaryItem(clean) == enchantment.isPrimaryItem(nativeLeggings),
+                        "Narrow classification changed native enchantment eligibility: " + holder.key().identifier());
+            });
             require(clean.isEnchantable(), "Composed enchantability did not reach the real root");
             var pool = enchantments.getOrThrow(EnchantmentTags.IN_ENCHANTING_TABLE);
             var choices = EnchantmentHelper.getAvailableEnchantmentResults(25, clean, pool.stream());

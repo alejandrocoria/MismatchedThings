@@ -2,6 +2,8 @@ package games.alejandrocoria.mismatchedleggings.test;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -9,6 +11,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+
+import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
 @JeiPlugin
 public final class JeiViewerProbe implements IModPlugin, ViewerProbe {
@@ -46,6 +50,20 @@ public final class JeiViewerProbe implements IModPlugin, ViewerProbe {
     @Override
     public void open(String namespace) {
         runtime.getRecipesGui().showTypes(List.of(type(namespace)));
+    }
+
+    @Override
+    public void verifyUsages(List<ViewerUsageChecks.Sample> samples) {
+        var focuses = runtime.getJeiHelpers().getFocusFactory();
+        for (var sample : samples) {
+            var focus = focuses.createFocus(RecipeIngredientRole.INPUT, VanillaTypes.ITEM_STACK, sample.root());
+            var categories = runtime.getRecipeManager().createRecipeCategoryLookup().limitFocus(List.of(focus)).get().toList();
+            boolean smithing = categories.stream()
+                    .anyMatch(category -> category.getRecipeType().getUid().toString().equals("minecraft:smithing"));
+            require(smithing != ViewerUsageChecks.isMixed(sample.root()),
+                    "JEI generic smithing usage classification failed: " + sample.label());
+        }
+        System.out.println("JEI_USAGE_CONTROL mixed=omitted ordinary=present samples=" + samples.size());
     }
 
     @Override

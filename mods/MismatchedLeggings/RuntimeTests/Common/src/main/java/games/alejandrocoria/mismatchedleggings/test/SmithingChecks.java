@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -14,6 +15,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.tags.TagLoader;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.SmithingMenu;
@@ -30,6 +34,7 @@ import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.item.enchantment.Enchantments;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +50,7 @@ final class SmithingChecks {
 
     static void verify(MinecraftServer server) {
         vanilla(server);
+        genericTrimTagControl(server);
         invalid(server);
         synthetic(server);
         controls(server);
@@ -91,7 +97,7 @@ final class SmithingChecks {
             var repeated = ready(player, new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), trimmed, new ItemStack(Items.DIAMOND));
             require(!repeated.getSlot(3).hasItem(), "No-op source trim still charged a root-only application");
         }
-        // Only one ordinary source is trimmable; the root's real tag must not invent the other half.
+        // Only one ordinary source is trimmable; composition must not invent the other half.
         var paper = new ItemStack(Items.PAPER);
         paper.set(DataComponents.EQUIPPABLE, new ItemStack(Items.IRON_LEGGINGS).get(DataComponents.EQUIPPABLE));
         var player = RepairFixtures.player(server);
@@ -99,6 +105,32 @@ final class SmithingChecks {
         var trim = ready(player, new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), one, new ItemStack(Items.DIAMOND));
         var data = MixedLeggingsStructure.validData(trim.getSlot(3).getItem()).orElseThrow();
         require(!data.left().source().has(DataComponents.TRIM) && data.right().source().has(DataComponents.TRIM), "One-sided trim became two-sided");
+    }
+
+    private static void genericTrimTagControl(MinecraftServer server) {
+        var original = new LinkedHashMap<TagKey<Item>, List<Holder<Item>>>();
+        BuiltInRegistries.ITEM.getTags().forEach(tag -> original.put(tag.key(), tag.stream().toList()));
+        try {
+            // A datapack may explicitly opt the root into native generic trimming.
+            var root = RepairFixtures.mixed(false);
+            var members = new ArrayList<>(original.get(ItemTags.TRIMMABLE_ARMOR));
+            members.add(root.typeHolder());
+            var changed = new LinkedHashMap<>(original);
+            changed.put(ItemTags.TRIMMABLE_ARMOR, members);
+            BuiltInRegistries.ITEM.prepareTagReload(new TagLoader.LoadResult<>(Registries.ITEM, changed)).apply();
+            require(root.is(ItemTags.TRIMMABLE_ARMOR), "Datapack trim control did not activate");
+            var player = RepairFixtures.player(server);
+            var menu = ready(player, new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), root, new ItemStack(Items.DIAMOND));
+            var output = menu.getSlot(3).getItem();
+            var data = MixedLeggingsStructure.validData(output).orElseThrow();
+            require(!output.has(DataComponents.TRIM) && data.left().source().has(DataComponents.TRIM)
+                            && data.right().source().has(DataComponents.TRIM),
+                    "Datapack generic trim bypassed source-wise application");
+            var repeated = ready(player, new ItemStack(Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE), output.copy(), new ItemStack(Items.DIAMOND));
+            require(!repeated.getSlot(3).hasItem(), "Datapack generic trim admitted a root-only no-op");
+        } finally {
+            BuiltInRegistries.ITEM.prepareTagReload(new TagLoader.LoadResult<>(Registries.ITEM, original)).apply();
+        }
     }
 
     private static void synthetic(MinecraftServer server) {

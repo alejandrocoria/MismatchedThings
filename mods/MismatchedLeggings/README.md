@@ -215,9 +215,12 @@ name. Custom names retain the natural identity; nested attributes, enchantments,
 durability and component-count diagnostics are not duplicated. Native tooltip
 visibility and source-provider Shift behavior are respected.
 
-The item is real `minecraft:leg_armor` as well as `enchantable/armor`, inheriting
-vanilla leggings enchantment, durability and equipment classification without
-foot/head/chest tags. Swift Sneak uses the actual legs slot. The only virtual
+The item directly belongs to `minecraft:enchantable/armor`, `enchantable/leg_armor`,
+`enchantable/durability` and `enchantable/equippable`, preserving vanilla leggings
+enchantment eligibility without general `leg_armor` or `trimmable_armor` membership.
+This avoids diagnostic mixed items appearing as misleading native smithing examples
+in recipe viewers; valid source-wise smithing still works. Swift Sneak uses the
+actual legs slot. The only virtual
 source tags are `piglin_safe_armor` and `freeze_immune_wearables`, queried live
 on either source of a valid root; this is not arbitrary tag inheritance.
 Future books require support from a source and retain native conflict/level

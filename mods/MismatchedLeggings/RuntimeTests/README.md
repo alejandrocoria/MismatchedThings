@@ -144,6 +144,24 @@ are compile-only and are never bundled in the production product. Human appearan
 and discoverability acceptance remain separate; the player workflow is in the
 [product README](../README.md).
 
+### Native mixed-usage regression
+
+Normal JEI viewer profiles query bare and valid mixed Leggings (both orientations),
+plus current Boots when installed. Generic smithing usages must be absent while
+ordinary armor retains them. The check repeats after reconnect. Historical Boots
+keeps its separate published-consumer checks; tag-information pages are not
+transformation examples and remain available.
+
+REI's development registry can lack static smithing displays even for ordinary
+armor, so an empty query would be an invalid success criterion. Its profile instead
+invokes the installed upstream trim-display factory on a real loaded recipe,
+requires ordinary boots/leggings entries and rejects mixed inputs/outputs. These
+displays are inspected separately, not injected or claimed as registered queries.
+No dynamic source-aware usages are implemented. The temporary contrast datapack,
+opt-in investigation flag and verbose sample logs were retired after the spike.
+Enchanting and gameplay coverage lives in the presentation and smithing profiles,
+not duplicated here. Clients retain the hidden/muted contract without screenshots.
+
 ## Missing-source preservation and recovery
 
 ```powershell
@@ -299,7 +317,9 @@ coexistence switch as the profiles below. Disposable paths use
 `presentation[-boots]`. The dedicated server reuses the existing source/equipment
 and native combat-wear/Unbreaking/Mending controls, without rerunning the separate
 composition-arithmetic fixture under this profile's nondefault workbench config.
-New controls check real leg/armor/enchantment classification, native table
+Controls check narrow armor/leggings enchantment tags without broad slot/trim
+membership, supported/primary eligibility for every loaded enchantment against
+native iron leggings, native table
 candidates and survival-anvil source admission/conflicts, invalid roots and native
 pass-through. Actual equipment updates apply/remove Swift Sneak's sneaking-speed
 attribute, with a wrong-slot control. Native piglin-safe armor and freezing queries

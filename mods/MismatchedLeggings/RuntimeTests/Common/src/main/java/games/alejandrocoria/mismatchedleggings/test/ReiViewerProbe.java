@@ -12,14 +12,19 @@ import me.shedaniel.rei.api.client.gui.widgets.TooltipContext;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.SmithingTrimRecipe;
 
 import java.util.List;
 
@@ -43,6 +48,39 @@ public final class ReiViewerProbe implements ViewerProbe {
     @Override
     public void open(String namespace) {
         search(namespace).open();
+    }
+
+    @Override
+    public void verifyUsages(List<ViewerUsageChecks.Sample> samples) {
+        var server = Minecraft.getInstance().getSingleplayerServer();
+        var recipe = server.submit(() -> server.getRecipeManager().getRecipes().stream()
+                .filter(holder -> holder.value() instanceof SmithingTrimRecipe
+                        && holder.id().identifier().getPath().startsWith("coast_"))
+                .findFirst().orElseThrow()).join();
+        try {
+            // Static displays can be absent even for ordinary armor in the dev registry.
+            // Check the real installed factory with a positive control, without injecting displays.
+            var factory = Class.forName("me.shedaniel.rei.plugin.common.displays.DefaultSmithingDisplay");
+            var values = (List<?>) factory.getMethod("fromTrimming", RecipeHolder.class).invoke(null, recipe);
+            boolean leggingsSeen = false;
+            boolean bootsSeen = false;
+            for (Object value : values) {
+                var display = (Display) value;
+                var inputs = display.getInputEntries().stream().flatMap(List::stream)
+                        .filter(entry -> entry.getType() == VanillaEntryTypes.ITEM).map(entry -> entry.<ItemStack>castValue()).toList();
+                leggingsSeen |= inputs.stream().anyMatch(stack -> stack.is(Items.IRON_LEGGINGS));
+                bootsSeen |= inputs.stream().anyMatch(stack -> stack.is(Items.IRON_BOOTS));
+                require(inputs.stream().noneMatch(ViewerUsageChecks::isMixed)
+                                && display.getOutputEntries().stream().flatMap(List::stream)
+                                .filter(entry -> entry.getType() == VanillaEntryTypes.ITEM)
+                                .map(entry -> entry.<ItemStack>castValue()).noneMatch(ViewerUsageChecks::isMixed),
+                        "REI native trim factory included a diagnostic mixed input/output");
+            }
+            require(leggingsSeen && bootsSeen, "REI native trim factory lost ordinary armor controls");
+            System.out.println("REI_NATIVE_FACTORY_CONTROL mixed=omitted ordinary=present");
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError("Cannot inspect upstream REI trim factory", failure);
+        }
     }
 
     @Override

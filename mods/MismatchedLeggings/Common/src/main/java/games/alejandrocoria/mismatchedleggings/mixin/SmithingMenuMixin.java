@@ -60,7 +60,7 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
             return;
         }
         var result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
-        // Real leg_armor membership also admits native root-only trims, which would be invisible.
+        // Datapacks can add broad armor tags and admit invisible native root-only trims.
         // Only the generic trimmable_armor recipe yields to source-wise application; dedicated results win.
         boolean genericTrim = LeggingsSmithing.isGenericRootTrim(result.getRecipeUsed());
         if (!result.getItem(0).isEmpty() && !genericTrim) {

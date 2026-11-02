@@ -117,6 +117,11 @@ final class ViewerClientChecks {
                 var boots = probe.cycles(BOOTS);
                 require(NONE || boots.size() == 1, "Leggings removed/duplicated the Boots viewer example");
             }
+            if (!NONE && mode == 0) {
+                boolean currentBoots = Boolean.getBoolean("leggings.test.boots")
+                        && !Boolean.getBoolean("leggings.test.previousBoots");
+                probe.verifyUsages(ViewerUsageChecks.samples(currentBoots));
+            }
             if (!NONE && mode != 1) {
                 for (int attempt = 0; attempt < 3; attempt++) {
                     probe.open(LEGGINGS);

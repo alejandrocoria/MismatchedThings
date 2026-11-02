@@ -19,6 +19,9 @@ gradle.projectsEvaluated {
             doLast {
                 new ZipFile(productJar.get().asFile).withCloseable { zip ->
                     def names = zip.entries().findAll { !it.directory }.collect { it.name }
+                    if ('data/minecraft/tags/item/leg_armor.json' in names) {
+                        throw new GradleException('Broad armor classification would advertise invalid mixed smithing examples')
+                    }
                     if (names.any { it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
                             || it.contains('leggingsspike') || it.contains('leggings-spike') || it.contains('leggings_test')
                             || it.startsWith('games/alejandrocoria/mismatchedthings/')
@@ -42,7 +45,9 @@ gradle.projectsEvaluated {
                      'games/alejandrocoria/mismatchedleggings/tooltip/MixedLeggingsTooltipFormatter.class',
                      'games/alejandrocoria/mismatchedleggings/compatibility/jei/MismatchedLeggingsJeiPlugin.class',
                      'games/alejandrocoria/mismatchedleggings/compatibility/rei/MismatchedLeggingsReiClientPlugin.class',
-                     'data/minecraft/tags/item/leg_armor.json',
+                     'data/minecraft/tags/item/enchantable/leg_armor.json',
+                     'data/minecraft/tags/item/enchantable/durability.json',
+                     'data/minecraft/tags/item/enchantable/equippable.json',
                      'META-INF/services/games.alejandrocoria.mismatchedleggings.client.render.EquipmentSources',
                      'assets/mismatchedleggings/equipment/neutral.json',
                      'data/mismatchedleggings/recipe/mixed_leggings_workbench.json',

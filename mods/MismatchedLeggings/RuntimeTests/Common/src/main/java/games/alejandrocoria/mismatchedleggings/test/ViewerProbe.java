@@ -13,6 +13,10 @@ public interface ViewerProbe {
     default void verifyOutputTooltips(String namespace) {
     }
 
+    default void verifyUsages(List<ViewerUsageChecks.Sample> samples) {
+        throw new UnsupportedOperationException("Usage regression requires a viewer");
+    }
+
     default void verifyCategories(boolean legacyBoots) {
     }
 
