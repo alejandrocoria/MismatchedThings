@@ -103,6 +103,21 @@ Boots 1.0.0 JARs for both loaders. See the
 inputs, bounded coverage and evidence paths. It is separate from publication
 and from the owner's consolidated manual acceptance.
 
+### Release changelogs
+
+All family mods use one change list for the upcoming release, without version
+headings or accumulated beta history. Use `Added:` followed by the new functionality
+as a natural continuation of "Added", `Changed:` for the new observable behavior,
+and `Fixed:` for the problem that occurred, normally without implementation details.
+New compatibilities belong in a separate generated section, not duplicate `Added:`
+entries. Only compatibilities added in that release belong there; an empty loader
+list must omit the entire section.
+
+Leggings does not yet have release templates, new-compatibility fragments or
+publication configuration. Aligning that workflow with
+[Boots](../MismatchedBoots/README.md#release-changelogs) is separate release-preparation
+work; the format above already applies, without introducing publication tasks here.
+
 ## Source and equipment boundary
 
 `mismatchedleggings:mixed_leggings_data` stores two defensive, single-item `LEGS`

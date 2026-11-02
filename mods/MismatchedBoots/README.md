@@ -97,6 +97,11 @@ are owned here as well; their outputs are under this directory's `build/`.
 ### Release changelogs
 
 [doc/changelog.md](doc/changelog.md) is the shared release template. The
+changes form one list without version headings. Use `Added:` followed by the new
+functionality as a natural continuation of "Added", `Changed:` for the new
+observable behavior, and `Fixed:` for the problem that occurred, normally without
+implementation details. New compatibilities belong in the generated section,
+not duplicate `Added:` entries. The
 [Fabric](doc/compatibility/fabric.md) and [NeoForge](doc/compatibility/neoforge.md)
 fragments contain only Markdown list entries for compatibility added in the
 release being prepared, not a cumulative catalog. Replace their contents for

@@ -1,7 +1,0 @@
-- Advanced Netherite
-- Better End
-- Better Nether
-- Create Fly
-- Just Enough Items (JEI)
-- Mystical Agriculture (unofficial Fabric port)
-- Roughly Enough Items (REI)
