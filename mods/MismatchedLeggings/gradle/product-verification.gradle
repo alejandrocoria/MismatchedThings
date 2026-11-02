@@ -1,0 +1,146 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
+
+// Deliberately sequential: child builds share loader outputs and generated launch arguments.
+tasks.register('verifyProduct') {
+    group = 'verification'
+    description = 'Runs bounded final packaged Leggings/core acceptance with pinned unchanged Boots 1.0.0.'
+    dependsOn 'verifyPackaging', ':MismatchedThings:Common:test', ':MismatchedLeggings:Common:test',
+            ':MismatchedBoots:Common:test', ':MismatchedBoots:verifySharedWorkbenchPackagingChecks'
+
+    doLast {
+        def selection = providers.gradleProperty('leggingsProductCases').orNull
+        def selected = selection == null ? null : selection.split(',').collect { it.trim() }.findAll { !it.isEmpty() }.toSet()
+        if (selected != null && selected.isEmpty()) { throw new GradleException('leggingsProductCases must name at least one case') }
+        String directory = 'product'
+        if (selected != null) {
+            String key = MessageDigest.getInstance('SHA-256').digest(selected.toList().sort().join('\n').getBytes('UTF-8'))
+                    .encodeHex().toString().take(12)
+            directory = "product-focused/${key}"
+        }
+        def output = layout.buildDirectory.dir("verification/${directory}").get().asFile
+        def frozen = new File(output, 'inputs')
+        def logs = new File(output, 'logs')
+        def marker = new File(output, selected == null ? 'matrix.ok' : 'subset.ok')
+        def manifest = new File(output, 'evidence.json')
+        def pins = new JsonSlurper().parse(file('RuntimeTests/fixtures/boots-1.0.0.json'))
+        def digest = { File input -> MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString() }
+        def releases = [:]
+        output.mkdirs()
+        marker.delete()
+        manifest.delete()
+
+        ['Fabric', 'NeoForge'].each { loader ->
+            String propertyName = "leggings${loader}BootsJar"
+            def supplied = providers.gradleProperty(propertyName).map { rootProject.file(it) }.orNull
+            if (supplied == null || !supplied.isFile()) {
+                throw new GradleException("Provide -P${propertyName}=<unchanged Boots ${pins.version} JAR>; see RuntimeTests/README.md")
+            }
+            if (digest(supplied) != pins[loader].sha256) {
+                throw new GradleException("Wrong ${loader} release SHA-256: ${supplied}; do not substitute a locally rebuilt or pre-fix JAR")
+            }
+            releases[loader] = supplied
+        }
+
+        frozen.mkdirs()
+        logs.mkdirs()
+        def inputs = [:]
+        releases.each { loader, supplied ->
+            project.copy { from supplied; into frozen; rename { pins[loader].filename } }
+            File snapshot = new File(frozen, pins[loader].filename)
+            inputs[loader] = [source: supplied.absolutePath, frozen: snapshot.absolutePath, sha256: pins[loader].sha256]
+        }
+        def checkInputs = {
+            inputs.each { loader, input ->
+                if (digest(new File(input.source)) != input.sha256 || digest(new File(input.frozen)) != input.sha256) {
+                    throw new GradleException("Historical ${loader} input changed during acceptance")
+                }
+            }
+        }
+
+        def completed = []
+        def matched = [] as Set
+        def evidence = [minecraft: minecraft_version, leggings: project.version.toString(),
+                        things: project(':MismatchedThings').version.toString(), coverage: selected == null ? 'full' : 'focused',
+                        selection: selected?.toList()?.sort(), inputs: inputs, completed: completed]
+        def record = { manifest.text = JsonOutput.prettyPrint(JsonOutput.toJson(evidence)) + '\n' }
+        record()
+        def run = { String loader, String baseline, String name, String task, List properties ->
+            if (selected != null) {
+                def selectors = selected.findAll { it == name || it == "${loader}/${baseline}/${name}" }
+                if (name != 'final-packaging' && selectors.isEmpty()) { return }
+                matched.addAll(selectors)
+            }
+            checkInputs()
+            File log = new File(logs, "${loader.toLowerCase(Locale.ROOT)}-${baseline}-${name}.log")
+            def arguments = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
+                             '-Dorg.gradle.jvmargs=-Xmx768m', task] + properties
+            if (gradle.startParameter.offline) { arguments.add('--offline') }
+            if (loader == 'NeoForge') { arguments.add("-Pneoforge_version=${baseline}") }
+            logger.lifecycle("Product acceptance ${loader}/${baseline}: ${name}")
+            def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                    .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+            try {
+                if (!process.waitFor(30, TimeUnit.MINUTES) || process.exitValue() != 0) {
+                    throw new GradleException("Product acceptance failed: ${log}")
+                }
+            } finally {
+                if (process.isAlive()) {
+                    process.toHandle().descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                }
+            }
+            checkInputs()
+            completed.add([loader: loader, baseline: baseline, caseName: name, task: task,
+                           properties: properties, log: log.absolutePath])
+            record()
+        }
+
+        [['Fabric', fabric_loader_version.toString()], ['NeoForge', '26.1.2.99'], ['NeoForge', '26.1.2.114']].each { entry ->
+            String loader = entry[0]
+            String baseline = entry[1]
+            String productTests = ":MismatchedLeggings:RuntimeTests:${loader}"
+            String coreTests = ":MismatchedThings:RuntimeTests:${loader}"
+            String previous = inputs[loader].frozen
+            def joint = ['-PleggingsBoots=true', "-PleggingsBootsJar=${previous}"]
+
+            run(loader, baseline, 'core-standalone', "${coreTests}:verifyWorkbench", [])
+            run(loader, baseline, 'core-evolution', "${coreTests}:verifyWorkbenchCompatibility",
+                    ["-PworkbenchPreviousBootsJar=${previous}"])
+            run(loader, baseline, 'product-standalone', "${productTests}:verifySkeleton", [])
+            ['Workbench', 'Equipped', 'Items'].each { profile ->
+                run(loader, baseline, "standalone-${profile.toLowerCase(Locale.ROOT)}", "${productTests}:verify${profile}", [])
+            }
+            ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Recovery'].each { profile ->
+                run(loader, baseline, "legacy-${profile.toLowerCase(Locale.ROOT)}", "${productTests}:verify${profile}", joint)
+            }
+            ['jei', 'rei'].each { viewer ->
+                run(loader, baseline, "legacy-${viewer}", "${productTests}:verifyViewers", joint + ["-PleggingsViewer=${viewer}"])
+            }
+            if (loader == 'NeoForge' && baseline == '26.1.2.114') {
+                run(loader, baseline, 'native-waists', "${productTests}:verifyEquipped", joint + ['-PleggingsIceAndFire=true'])
+            }
+        }
+
+        run('NeoForge', '26.1.2.114', 'final-packaging', ':MismatchedLeggings:verifyPackaging',
+                [':MismatchedBoots:verifySharedWorkbenchPackaging', ':MismatchedBoots:NeoForge:verifyMixinBinaryCompatibility'])
+        if (selected != null && !(selected - matched).isEmpty()) {
+            throw new GradleException("Unknown or unmatched product cases: ${selected - matched}")
+        }
+        def artifacts = [:]
+        ['MismatchedLeggings', 'MismatchedThings', 'MismatchedBoots'].each { owner ->
+            ['Fabric', 'NeoForge'].each { loader ->
+                File archive = project(":${owner}:${loader}").tasks.named('jar').get().archiveFile.get().asFile
+                artifacts["${owner}/${loader}"] = [path: archive.absolutePath, sha256: digest(archive)]
+            }
+        }
+        evidence.artifacts = artifacts
+        record()
+        marker.text = (selected == null ? 'full bounded packaged product/core acceptance passed' : 'selected product cases passed; not full matrix acceptance') +
+                '; owner manual acceptance is separate\n'
+        logger.lifecycle("Product acceptance passed; evidence: ${manifest}")
+    }
+}

@@ -2,7 +2,8 @@
 
 MismatchedLeggings combines two ordinary leggings stacks into two oppositely
 oriented mixed pairs on Fabric and NeoForge for Minecraft 26.1.2.
-The product is in development; final packaged consolidation is still pending.
+Packaged automated checks and consolidated owner acceptance have passed.
+The initial functional implementation is complete; the product is not yet published.
 
 ## Installation
 
@@ -95,6 +96,12 @@ separate download is needed. Product identity/version live in
 [mod.properties](mod.properties); there are no publication IDs/tasks yet.
 Client-only lifecycle hooks live in the loader client entry points; dedicated
 servers do not initialize client classes.
+
+The final `:MismatchedLeggings:verifyProduct` matrix requires explicit unchanged
+Boots 1.0.0 JARs for both loaders. See the
+[runtime guide](RuntimeTests/README.md#final-packaged-product-acceptance) for
+inputs, bounded coverage and evidence paths. It is separate from publication
+and from the owner's consolidated manual acceptance.
 
 ## Source and equipment boundary
 
@@ -296,6 +303,7 @@ are `MismatchedLeggings — Fabric Client/Server` and
 Boots configurations retain their names and paths.
 
 The [runtime guide](RuntimeTests/README.md) describes isolated packaged-artifact
-checks, supported baselines and the hidden-client contract. Rendering research
-under `spikes/rendering` remains opt-in with `-PleggingsSpike=true`; it is not
-part of the product or its normal build.
+checks, supported baselines and the hidden-client contract. The executable
+rendering spike and its opt-in project have been retired after promotion to
+maintained product profiles. Its [historical record](spikes/rendering/README.md)
+remains; `-PleggingsSpike=true` no longer includes a project.

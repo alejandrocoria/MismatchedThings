@@ -59,6 +59,7 @@ final class BootsOnlyViewerClientChecks {
                 require(client.screen != null && probe.cycles("mismatchedthings").size() == 1,
                         "Boots-only repeated opening duplicated the shared example");
             }
+            probe.verifyOutputTooltips("mismatchedboots");
             client.setScreen(null);
             if (state == 2) {
                 SkeletonChecks.passed("client");

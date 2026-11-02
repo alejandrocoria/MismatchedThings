@@ -125,9 +125,11 @@ final class ViewerClientChecks {
                 client.setScreen(null);
                 probe.open(LEGGINGS);
                 require(client.screen != null && matches(probe.cycles(LEGGINGS), mode), "Fresh open lost the Leggings display");
+                probe.verifyOutputTooltips(LEGGINGS);
                 if (Boolean.getBoolean("leggings.test.boots")) {
                     probe.open(BOOTS);
                     require(probe.cycles(BOOTS).size() == 1 && matches(probe.cycles(LEGGINGS), mode), "Opening Boots changed Leggings examples");
+                    probe.verifyOutputTooltips(BOOTS);
                 }
             }
             // Do not render an upstream mutable REI entry list while the next native reload runs.

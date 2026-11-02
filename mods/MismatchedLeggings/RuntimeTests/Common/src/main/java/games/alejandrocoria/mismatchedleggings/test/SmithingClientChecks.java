@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
+import games.alejandrocoria.mismatchedleggings.test.mixin.ServerInteractionAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -23,6 +24,7 @@ final class SmithingClientChecks {
     private static int phase;
     private static boolean finished;
     private static volatile boolean ready;
+    private static volatile boolean openingReady;
     private static volatile boolean paid;
     private static volatile Throwable failure;
     private static volatile ItemStack expected = ItemStack.EMPTY;
@@ -67,10 +69,19 @@ final class SmithingClientChecks {
                     stage = 1;
                 }
                 case 1 -> {
-                    if (!ready) {
+                    var station = SmithingChecks.STATION;
+                    if (!ready || !client.level.getBlockState(station).is(Blocks.SMITHING_TABLE)
+                            || client.player.distanceToSqr(Vec3.atCenterOf(station)) > 16) {
                         return;
                     }
-                    var station = SmithingChecks.STATION;
+                    if (!openingReady) {
+                        onServer(client, () -> {
+                            var player = client.getSingleplayerServer().getPlayerList().getPlayers().getFirst();
+                            openingReady = player.connection.hasClientLoaded()
+                                    && ((ServerInteractionAccessor) player.connection).leggings$pendingTeleport() == null;
+                        });
+                        return;
+                    }
                     client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND,
                             new BlockHitResult(Vec3.atCenterOf(station), Direction.UP, station, false));
                     stage = 2;
@@ -148,6 +159,7 @@ final class SmithingClientChecks {
                         return;
                     }
                     phase = 1;
+                    openingReady = false;
                     stage = 1;
                 }
                 default -> throw new AssertionError("Unknown smithing client stage");

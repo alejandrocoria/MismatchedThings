@@ -58,8 +58,11 @@ owners, defensive single-item admission and concurrent consumer registration.
 They also own the extracted composition-operation tests and generic TOML/enum
 configuration checks. Boots retains product-schema, lifecycle and factory
 integration tests. Standalone runtime profiles exercise shared config and
-composition with helmet inputs and check each loader's separator factory without
-Boots; this also verifies that Things carries its own NightConfig dependencies.
+composition with helmet inputs and check separator conversion without Boots:
+Fabric preserves the text marker through font splitting and sequence conversion;
+NeoForge posts the native gather event, verifies text order around the converted
+image payload and resolves its registered factory. This also verifies that
+Things carries its own NightConfig dependencies.
 
 ## Native coexistence and evolution
 

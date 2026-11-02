@@ -6,12 +6,14 @@ import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.FormattedCharSink;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
 
 import java.util.List;
 
-/** Transient section boundary with an ordinary blank-line fallback; safe for server tooltip collection. */
-public final class TooltipSeparator implements Component, TooltipComponent {
+/**
+ * Transient text boundary with a blank-line fallback; safe for server collection.
+ * Keep image data in loader adapters: viewers may classify both interfaces independently.
+ */
+public final class TooltipSeparator implements Component {
     public static final TooltipSeparator INSTANCE = new TooltipSeparator();
 
     private TooltipSeparator() {

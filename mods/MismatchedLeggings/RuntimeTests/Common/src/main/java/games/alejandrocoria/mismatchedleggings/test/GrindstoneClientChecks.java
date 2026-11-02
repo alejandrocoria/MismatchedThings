@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings.test;
 
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
+import games.alejandrocoria.mismatchedleggings.test.mixin.ServerInteractionAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -27,6 +28,7 @@ final class GrindstoneClientChecks {
     private static int beforeOrbs;
     private static boolean finished;
     private static volatile boolean ready;
+    private static volatile boolean openingReady;
     private static volatile boolean paid;
     private static volatile Throwable failure;
     private static volatile ItemStack expected = ItemStack.EMPTY;
@@ -71,10 +73,21 @@ final class GrindstoneClientChecks {
                     stage = 1;
                 }
                 case 1 -> {
-                    if (!ready) {
+                    var station = GrindstoneChecks.STATION;
+                    // Server completion precedes client teleport/chunk packets; don't lose the one opening click.
+                    if (!ready || !client.level.getBlockState(station).is(Blocks.GRINDSTONE)
+                            || client.player.distanceToSqr(Vec3.atCenterOf(station)) > 16) {
                         return;
                     }
-                    var station = GrindstoneChecks.STATION;
+                    if (!openingReady) {
+                        onServer(client, () -> {
+                            var player = client.getSingleplayerServer().getPlayerList().getPlayers().getFirst();
+                            // Native block use rejects clicks until loading and teleport acknowledgments arrive.
+                            openingReady = player.connection.hasClientLoaded()
+                                    && ((ServerInteractionAccessor) player.connection).leggings$pendingTeleport() == null;
+                        });
+                        return;
+                    }
                     client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND,
                             new BlockHitResult(Vec3.atCenterOf(station), Direction.UP, station, false));
                     stage = 2;

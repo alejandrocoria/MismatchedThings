@@ -11,7 +11,7 @@ This branch targets Minecraft 26.1.2 with Fabric and NeoForge.
   composition, shared-workbench crafting, rendering, source tooltips and vanilla
   leggings behavior, anvil, crafting donor repair, grindstone, source-wise smithing
   missing-source recovery and optional JEI/REI integration are implemented;
-  final product consolidation is pending.
+  automated product checks and consolidated owner acceptance are complete.
 - [MismatchedThings core](mods/MismatchedThings/README.md) owns the shared
   workbench and small shared config, tooltip and composition utilities. It is
   bundled inside each armor product artifact; no separate download is needed.

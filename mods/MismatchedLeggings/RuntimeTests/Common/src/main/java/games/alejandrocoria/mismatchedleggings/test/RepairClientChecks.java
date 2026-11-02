@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
+import games.alejandrocoria.mismatchedleggings.test.mixin.ServerInteractionAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +27,7 @@ final class RepairClientChecks {
     private static int price;
     private static boolean finished;
     private static volatile boolean ready;
+    private static volatile boolean openingReady;
     private static volatile boolean anvilPaid;
     private static volatile boolean craftingPaid;
     private static volatile Throwable failure;
@@ -71,7 +73,16 @@ final class RepairClientChecks {
                     stage = 1;
                 }
                 case 1 -> {
-                    if (!ready) {
+                    if (!ready || !client.level.getBlockState(ANVIL).is(Blocks.ANVIL)
+                            || client.player.distanceToSqr(Vec3.atCenterOf(ANVIL)) > 16) {
+                        return;
+                    }
+                    if (!openingReady) {
+                        onServer(client, () -> {
+                            var player = client.getSingleplayerServer().getPlayerList().getPlayers().getFirst();
+                            openingReady = player.connection.hasClientLoaded()
+                                    && ((ServerInteractionAccessor) player.connection).leggings$pendingTeleport() == null;
+                        });
                         return;
                     }
                     client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND,

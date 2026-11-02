@@ -1,0 +1,11 @@
+{
+    "version": "1.0.0",
+    "Fabric": {
+        "filename": "MismatchedBoots-26.1.2-fabric-1.0.0.jar",
+        "sha256": "867c8144836d7dbe9edf9bfad0f91913d873247174da482d1fdc5e97c9d67eab"
+    },
+    "NeoForge": {
+        "filename": "MismatchedBoots-26.1.2-neoforge-1.0.0.jar",
+        "sha256": "21e2ca6062ba86f17391f09b94cadd690278d1fb52a15ea6fcc436479651bb88"
+    }
+}

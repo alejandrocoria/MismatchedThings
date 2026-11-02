@@ -20,6 +20,12 @@ the shared workbench extraction/namespace plan. Leggings now has its own source
 schema, composition factory and its own workbench recipe. Synthetic
 consumers and their additive API exist only in tests.
 
+Leggings' [final packaged matrix](../MismatchedLeggings/RuntimeTests/README.md#final-packaged-product-acceptance)
+also sequences these maintained core/consumer controls alongside its product
+profiles, using pinned unchanged Boots releases. Its consolidated owner acceptance
+passed on both loaders on 2026-11-02, separately from the completed workbench
+extraction above.
+
 ## Ownership
 
 - `Common`: station implementation, shared utilities, API and family resources shared between loaders.
@@ -43,6 +49,9 @@ state, policies and third-party behavior; Things does not contain a general armo
   NeoForge conversions and solid-line renderer; no consumer-side renderer or
   registration is needed. Server-side collection stays safe and text copying
   falls back to an ordinary blank row. Do not persist the marker as item data.
+  The shared marker is text-only; NeoForge converts it to a loader-local image
+  payload. Do not make the marker implement both text and image interfaces:
+  viewers such as REI classify those independently and would process it twice.
 - `api.composition`: `EnchantmentMerger`, `RepairableComposer`, `DurabilityMerger`
   and `RepairCostMerger`, plus `DurabilityPolicy` and `RepairCostPolicy`. These
   read inputs without mutating them; the consumer chooses which operations to

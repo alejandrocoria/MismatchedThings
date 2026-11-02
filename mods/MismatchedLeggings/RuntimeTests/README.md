@@ -11,6 +11,58 @@ for coexistence, or an explicitly supplied unchanged published Boots binary.
 Neither route reads the indev directory. A viewer compatibility check against a
 published binary does not replace the broader final-product release-graph gates.
 
+## Final packaged product acceptance
+
+Run from the repository root, supplying the unchanged Boots 1.0.0 releases:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:verifyProduct '-PleggingsFabricBootsJar=<published-fabric-boots.jar>' '-PleggingsNeoForgeBootsJar=<published-neoforge-boots.jar>' --offline --console=plain
+```
+
+The inputs must match [the release pins](fixtures/boots-1.0.0.json). They are
+copied without modification, not rebuilt or discovered in indev. See the
+[provenance note](fixtures/README.md) before replacing a pin. Prepare the optional
+viewer and Ice and Fire artifacts with their targeted preparation tasks online
+before an offline run.
+
+The bounded matrix runs sequentially on Fabric and NeoForge `.99`/`.114`:
+
+- Common tests for all three modules, packaging and corrupted-artifact controls.
+- Standalone core endpoints and its compiled-consumer/version-evolution matrix,
+  including saved Boots state and the refused incompatible-core-major control.
+- Standalone Leggings schema/composition, workbench, equipped and item profiles.
+- Workbench, equipped/item rendering, presentation, repair, grindstone, smithing,
+  recovery and separate JEI/REI profiles with unchanged Boots.
+- The optional native Ice and Fire waist profile on `.114`, then final packaging
+  and NeoForge Mixin binary checks. Normal outputs are left on `.114`.
+
+This does not run Boots' historical third-party compatibility matrix. Loader
+metadata remains responsible for native dependency selection; passing this matrix
+does not imply cross-loader support. Clients obey the hidden/muted contract below.
+Do not run profiles or baselines concurrently: they share generated launch files.
+
+Evidence is written to `../build/verification/product/evidence.json`, with frozen
+input copies, per-case logs, completed cases and final product/core JAR hashes.
+`matrix.ok` is written only after the full matrix succeeds; a partial evidence file
+is not acceptance. Child profiles retain their own detailed reports. Publication
+tasks do not depend on this matrix.
+
+For a targeted rerun, `-PleggingsProductCases=legacy-repair,legacy-grindstone`
+selects those case names on every baseline. A fully qualified selector such as
+`NeoForge/26.1.2.114/legacy-recovery` restricts one case to one baseline. Case names
+are the labels printed during a full run. Final packaging always runs to restore
+normal `.114` outputs; unknown/unmatched selectors fail verification. Focused
+evidence goes to `../build/verification/product-focused/<selection-hash>/`, with
+`coverage: focused` and `subset.ok`, never a full `matrix.ok`. It does not overwrite
+full-run evidence. Do not describe a focused rerun alone as full-matrix acceptance;
+record the earlier coverage and which changed boundaries were repeated.
+
+Owner acceptance is separate: use copied packaged JARs in disposable instances,
+not indev while this matrix runs. Check both loaders, both extraction orders and
+close cleanup, both visual orientations and item contexts, vanilla enchantments
+and workstations, save/rejoin and matching-loader dedicated play, controlled
+source removal/reinstallation, and both products together with optional viewers.
+
 ## Optional JEI/REI and user-guide acceptance
 
 ```powershell
@@ -41,14 +93,29 @@ development-only warning screen from blocking quick play. Its diagnostics remain
 in logs; actual loading errors and other warnings are not suppressed. Production
 code and normal indev run settings are unchanged.
 
+With pinned NeoForge REI 26.1.819, the dedicated dev fixture also logs its own
+`DefaultRuntimePlugin`/`DefaultPlugin` failures loading client-only `LocalPlayer`,
+followed by failed server-side recipe display filling (including ordinary vanilla
+recipes). These are REI registration failures, not successful coverage of those
+REI server facilities. They remain visible in `server.log`; product server checks
+and actual client category/query/reload checks are separate gates. REI's reload
+task/DisplayRegistry warnings also remain visible. This suite does not repair
+upstream REI or infer that every server-side viewer feature works.
+
 The profile starts packaged dedicated and integrated endpoints. Actual JEI/REI
 queries and screens verify one linked cycle, both orientations, repeated opening
 while already open, closing/reopening, and independent product contributions in
 one Things-owned category. It rejects separate current-product categories and
 checks the shared cycle count against installed products. Published Boots keeps
 its old category, which is explicitly checked rather than treated as a duplicate.
-A real
-datapack overrides the Leggings recipe with an ordinary crafting recipe, then a
+For current products, REI additionally obtains both output slots from the actual
+category widgets, collects their hovered tooltips and invokes the installed
+platform tooltip renderer. It requires the two source boundaries and rendered
+text, and rejects a boundary classified as both text and image (which would append
+duplicate separators). These checks repeat across recipe reloads and reconnect;
+the Boots-only control also renders both tooltips. Published Boots' own legacy
+separator is outside this Things-marker regression, not claimed as hover coverage.
+A real datapack overrides the Leggings recipe with an ordinary crafting recipe, then a
 fixture workbench recipe that reverses its results, then restores the native
 recipe. Fresh examples must disappear/change/return accordingly, without touching
 the production cache directly, and Boots' contribution must remain available.
@@ -425,3 +492,10 @@ Tick checks assert it stays hidden without silently hiding it again. Disposable
 options mute master volume and disable narration; NeoForge's early loading window
 is disabled. Keep this contract for new client fixtures and focused runs. These
 hooks must never enter production artifacts or ordinary indev configurations.
+
+For native block interactions, server-fixture completion does not mean the client
+has received its teleport and block updates. Wait for the actual client block and
+nearby player, plus native server load/teleport acknowledgments, before the opening
+click. The test-only `ServerInteractionAccessor` observes the pending teleport;
+it does not clear it or bypass admission. Retain the normal interaction packets
+and bounded failure timeout rather than opening menus directly or retrying blindly.

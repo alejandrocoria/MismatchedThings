@@ -20,6 +20,7 @@ gradle.projectsEvaluated {
                 new ZipFile(productJar.get().asFile).withCloseable { zip ->
                     def names = zip.entries().findAll { !it.directory }.collect { it.name }
                     if (names.any { it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
+                            || it.contains('leggingsspike') || it.contains('leggings-spike') || it.contains('leggings_test')
                             || it.startsWith('games/alejandrocoria/mismatchedthings/')
                             || it.startsWith('assets/mismatchedthings/') || it.startsWith('data/mismatchedthings/') }) {
                         throw new GradleException('Boots, fixture or loose core content leaked into Leggings')

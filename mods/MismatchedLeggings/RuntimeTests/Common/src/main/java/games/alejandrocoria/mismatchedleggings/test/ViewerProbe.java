@@ -10,6 +10,9 @@ public interface ViewerProbe {
     List<Cycle> cycles(String namespace);
     void open(String namespace);
 
+    default void verifyOutputTooltips(String namespace) {
+    }
+
     default void verifyCategories(boolean legacyBoots) {
     }
 
