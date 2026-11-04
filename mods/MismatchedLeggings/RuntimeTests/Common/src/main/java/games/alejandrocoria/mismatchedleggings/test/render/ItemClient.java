@@ -25,6 +25,7 @@ public final class ItemClient {
     private static volatile boolean captured;
     private static volatile Throwable captureFailure;
     private static Object previousModelIdentity;
+    private static final boolean EMPTY_MODELS = Boolean.getBoolean("leggings.test.emptyItems");
 
     private ItemClient() {}
 
@@ -37,17 +38,21 @@ public final class ItemClient {
             if (stage == 0 && client.level != null && client.player != null && client.screen == null && client.getOverlay() == null) {
                 ItemChecks.run(client);
                 platformChecks.run();
+                if (EMPTY_MODELS) {
+                    EmptyItemModelChecks.run(client);
+                    EmptyItemModelChecks.resetSubmissions();
+                }
                 previousModelIdentity = ItemChecks.resolve(ItemChecks.model("red"), ItemDisplayContext.GUI).getModelIdentity();
                 scene = new ItemScene();
                 client.setScreen(scene);
                 stage = 1;
             } else if (stage == 1 && scene.frames >= 10) {
-                require(submitted.containsAll(EnumSet.of(ItemDisplayContext.GROUND, ItemDisplayContext.FIXED,
+                require(EMPTY_MODELS ? EmptyItemModelChecks.thirdPersonComplete() : submitted.containsAll(EnumSet.of(ItemDisplayContext.GROUND, ItemDisplayContext.FIXED,
                         ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemDisplayContext.THIRD_PERSON_LEFT_HAND)),
                         "Native entity item submissions were missing: " + submitted);
                 Screenshot.takeScreenshot(client.getMainRenderTarget(), image -> {
                     try (image) {
-                        image.writeToFile(Path.of(System.getProperty("leggings.test.report"), "items-panel.png"));
+                        image.writeToFile(Path.of(System.getProperty("leggings.test.report"), EMPTY_MODELS ? "empty-item-models.png" : "items-panel.png"));
                         captured = true;
                     } catch (Throwable failure) {
                         captureFailure = failure;
@@ -60,11 +65,9 @@ public final class ItemClient {
                 phaseTicks = 0;
                 stage = 3;
             } else if (stage == 3) {
-                var pair = RenderFixture.pair(ItemChecks.model("red"), ItemChecks.model("blue"));
-                client.player.setItemInHand(InteractionHand.MAIN_HAND, pair);
-                client.player.setItemInHand(InteractionHand.OFF_HAND, pair.copy());
-                if (++phaseTicks > 50 && submitted.containsAll(EnumSet.of(
-                        ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemDisplayContext.FIRST_PERSON_LEFT_HAND))) {
+                holdItems(client);
+                if (++phaseTicks > 50 && (EMPTY_MODELS ? EmptyItemModelChecks.firstPersonComplete() : submitted.containsAll(EnumSet.of(
+                        ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemDisplayContext.FIRST_PERSON_LEFT_HAND)))) {
                     reload = client.reloadResourcePacks();
                     stage = 4;
                 }
@@ -75,22 +78,24 @@ public final class ItemClient {
                 submitted.clear();
                 ItemChecks.run(client);
                 platformChecks.run();
+                if (EMPTY_MODELS) {
+                    EmptyItemModelChecks.run(client);
+                    EmptyItemModelChecks.resetSubmissions();
+                }
                 scene = new ItemScene();
                 client.setScreen(scene);
                 stage = 5;
             } else if (stage == 5 && scene.frames >= 10) {
-                require(submitted.containsAll(EnumSet.of(ItemDisplayContext.GROUND, ItemDisplayContext.FIXED,
+                require(EMPTY_MODELS ? EmptyItemModelChecks.thirdPersonComplete() : submitted.containsAll(EnumSet.of(ItemDisplayContext.GROUND, ItemDisplayContext.FIXED,
                         ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemDisplayContext.THIRD_PERSON_LEFT_HAND)),
                         "Reload lost entity item submissions");
                 client.setScreen(null);
                 phaseTicks = 0;
                 stage = 6;
             } else if (stage == 6) {
-                var pair = RenderFixture.pair(ItemChecks.model("red"), ItemChecks.model("blue"));
-                client.player.setItemInHand(InteractionHand.MAIN_HAND, pair);
-                client.player.setItemInHand(InteractionHand.OFF_HAND, pair.copy());
-                if (++phaseTicks > 50 && submitted.containsAll(EnumSet.of(
-                        ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemDisplayContext.FIRST_PERSON_LEFT_HAND))) {
+                holdItems(client);
+                if (++phaseTicks > 50 && (EMPTY_MODELS ? EmptyItemModelChecks.firstPersonComplete() : submitted.containsAll(EnumSet.of(
+                        ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemDisplayContext.FIRST_PERSON_LEFT_HAND)))) {
                     SkeletonChecks.passed("client");
                     stage = 7;
                     client.stop();
@@ -102,5 +107,15 @@ public final class ItemClient {
             SkeletonChecks.failed("client", failure);
             client.stop();
         }
+    }
+
+    private static void holdItems(Minecraft client) {
+        if (EMPTY_MODELS) {
+            EmptyItemModelChecks.hold(client, phaseTicks);
+            return;
+        }
+        var pair = RenderFixture.pair(ItemChecks.model("red"), ItemChecks.model("blue"));
+        client.player.setItemInHand(InteractionHand.MAIN_HAND, pair);
+        client.player.setItemInHand(InteractionHand.OFF_HAND, pair.copy());
     }
 }

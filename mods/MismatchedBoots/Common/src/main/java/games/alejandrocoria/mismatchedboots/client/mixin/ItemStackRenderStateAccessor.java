@@ -11,6 +11,9 @@ public interface ItemStackRenderStateAccessor {
     @Accessor("activeLayerCount")
     int mismatchedboots$getActiveLayerCount();
 
+    @Accessor("activeLayerCount")
+    void mismatchedboots$setActiveLayerCount(int count);
+
     @Accessor("layers")
     ItemStackRenderState.LayerRenderState[] mismatchedboots$getLayers();
 

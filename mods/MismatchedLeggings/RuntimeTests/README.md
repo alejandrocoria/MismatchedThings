@@ -391,6 +391,29 @@ explicitly so an equally numbered earlier unpublished nested build cannot win
 selection. This focused coexistence check does not replace the final published-
 consumer evolution matrix. Normal profiles still load Things only from Leggings.
 
+### Opt-in empty-source item-model regression
+
+Add `-PleggingsEmptyItems=true -PleggingsBoots=true` to `verifyItems`, using both
+current products, not historical Boots. The isolated `items-boots-empty-model`
+variant uses the fixture resource definition `minecraft:empty` through source
+`item_model` components and requires truly zero native layers. Eight pairs cover
+normal controls, empty left/right and both empty for each product, in all display
+contexts, before and after native resource reload. No indev mods or external packs
+are read. Default item-profile behavior is unchanged.
+
+The relevant `empty-item-models.png` replaces the ordinary item panel. It renders
+the actual GUI hook and native third-person hands. The actual first-person player
+hands also cycle opposite source orders for both products; submission observations
+must repeat after reload. Clients retain the hidden/muted contract.
+
+Both products must select their complete diagnostic geometry for any zero-layer
+source, including both-empty pairs. Actual hand submissions must contain both
+diagnostic materials, not a surviving source half. Root foil overrides are checked
+with and without glint in every context; FIXED controls preserve preceding output
+layers for normal and diagnostic pairs. Rendering must not change root components
+or source provenance. The ordinary item assertions still run alongside these checks.
+No equipped-armor or arbitrary transparency guarantee is implied.
+
 ## Equipped rendering
 
 ```powershell

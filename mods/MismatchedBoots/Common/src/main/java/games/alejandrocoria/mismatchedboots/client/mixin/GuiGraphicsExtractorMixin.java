@@ -62,6 +62,11 @@ abstract class GuiGraphicsExtractorMixin {
         GuiGraphicsExtractor graphics = (GuiGraphicsExtractor) (Object) this;
         MixedBootsItemRenderer.GuiPreparation prepared = MixedBootsItemRenderer.prepareGui(
                 data, stack.hasFoil(), minecraft.getItemModelResolver(), level, owner, seed);
+        if (prepared.left().isEmpty() || prepared.right().isEmpty()) {
+            // Native extraction uses the pair-wide diagnostic model in appendLayers.
+            return;
+        }
+
         if (prepared.clipped() || !mismatchedboots$supportsRectangularClipping(graphics.pose())) {
             mismatchedboots$submitItem(graphics, prepared.compose(), x, y);
         } else {

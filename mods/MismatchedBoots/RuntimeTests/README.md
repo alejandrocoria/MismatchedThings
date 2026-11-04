@@ -1331,6 +1331,11 @@ that confirmation did not require another automatic run or screenshot suite.
 
 ## Item geometry coverage
 
+The shared [empty-source item-model regression](../../MismatchedLeggings/RuntimeTests/README.md#opt-in-empty-source-item-model-regression)
+uses both current packaged products. It requires complete diagnostic fallback
+for native zero-layer source models in every display context, actual GUI/hand
+submission and resource reload, preserving root foil, provenance and prior layers.
+
 The opt-in [whole-model fallback visual trial](../local-docs/ITEM-FALLBACK-ROTATION-EXPLORATION.md)
 runs only the hybrid structural suite and five task-specific fallback captures:
 

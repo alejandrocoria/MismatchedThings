@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.test.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import games.alejandrocoria.mismatchedleggings.test.render.EmptyItemModelChecks;
 import games.alejandrocoria.mismatchedleggings.test.render.ItemChecks;
 import games.alejandrocoria.mismatchedleggings.test.render.ItemClient;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -21,6 +22,9 @@ abstract class ItemSubmitProbeMixin {
                                      int outline, CallbackInfo callback) {
         if (!Boolean.getBoolean("leggings.test.items")) { return; }
         var faces = ItemChecks.faces((ItemStackRenderState) (Object) this);
+        if (Boolean.getBoolean("leggings.test.emptyItems")) {
+            EmptyItemModelChecks.observe(displayContext, faces);
+        }
         if (faces.stream().anyMatch(f -> f.texture().contains("redstone_block"))
                 && faces.stream().anyMatch(f -> f.texture().contains("lapis_block"))) {
             ItemClient.submitted.add(displayContext);

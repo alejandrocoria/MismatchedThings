@@ -34,6 +34,11 @@ public final class ItemScene extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        if (Boolean.getBoolean("leggings.test.emptyItems")) {
+            EmptyItemModelScene.draw(graphics, font);
+            frames++;
+            return;
+        }
         var client = Minecraft.getInstance();
         var resolver = client.getItemModelResolver();
         graphics.fill(0, 0, width, height, 0xFF20252C);

@@ -54,6 +54,21 @@ public final class MixedBootsItemRenderer {
                                         displayContext, level, owner, seed, QuadClipper.Side.LEFT);
 
         oversized |= output.isOversizedInGui();
+        if (left.size() == 0 || right.size() == 0) {
+            // An empty source model must not leave an invisible or silently half-drawn pair.
+            ItemStackRenderStateAccessor fields = (ItemStackRenderStateAccessor) (Object) output;
+            for (int i = left.firstLayer(); i < right.lastLayer(); i++) {
+                fields.mismatchedboots$getLayers()[i].clear();
+            }
+            fields.mismatchedboots$setActiveLayerCount(left.firstLayer());
+
+            ItemStack diagnostic = new ItemStack(stack.getItem());
+            diagnostic.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+            resolver.appendItemLayers(output, diagnostic, displayContext, level, owner, seed);
+            fields.mismatchedboots$setCachedModelBoundingBox(null);
+            return true;
+        }
+
         if (!clipAtomically(output, left, output, right)) {
             applyOverlappingFallback(output, left);
             applyOverlappingFallback(output, right);
