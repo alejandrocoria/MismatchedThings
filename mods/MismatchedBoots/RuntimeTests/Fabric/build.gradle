@@ -297,6 +297,7 @@ loom {
 
 // Each optional suite keeps its runs, preparation and verification together.
 apply from: file('../../gradle/fabric-recipe-viewer-tests.gradle')
+apply from: file('../../gradle/rules-protocol-fixtures.gradle')
 apply from: file('../../gradle/fabric-advanced-netherite-tests.gradle')
 apply from: file('../../gradle/fabric-betterx-tests.gradle')
 apply from: file('../../gradle/fabric-create-fly-tests.gradle')
@@ -693,6 +694,7 @@ loom {
             property('mismatchedboots.test.hideClientWindow', 'true')
             property('mismatchedboots.runtimetest.expectLoaderRejection',
                     providers.gradleProperty('networkTestExpectLoaderRejection').getOrElse('false'))
+            property('mismatchedboots.runtimetest.serverNeoForgeVersion', neoforge_version)
             programArgs('--quickPlayMultiplayer', "127.0.0.1:${networkTestPort}")
             vmArg('-Xmx1G')
         }

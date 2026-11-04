@@ -174,6 +174,14 @@ independently missing Earthquake API, unsupported Earthquake settings and quiet
 absence. Native widgets/capture use production callbacks and transport; no
 prototype gameplay listener is installed. A transparent reply observer defers
 selected genuine paid replies, then feeds them back into production validation.
+
+For a focused networking/coexistence change, use
+`-PjustDireGroundStompClientVariants=Live` with that verifier to retain its actual
+native widgets/input, marker/error checks and report handling without launching
+the unrelated fault variants. Omit the selector for the full eight-variant gate.
+The existing `verifyJustDireGroundStompTransport` remains its companion active/
+settings/ordinary-packet control; do not replace either with a mock packet test.
+
 Both mixed
 orientations cover supported controls and per-ability ranges, rapid edits,
 global-off state, particles, keyboard/mouse assignment,

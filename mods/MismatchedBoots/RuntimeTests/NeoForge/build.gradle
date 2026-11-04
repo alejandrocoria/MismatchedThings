@@ -652,6 +652,7 @@ tasks.register('verifyTooltipCharacterization') {
 
 apply from: file('../../gradle/neo-vitae-composition-tests.gradle')
 apply from: file('../../gradle/neoforge-rules-synchronization-tests.gradle')
+apply from: file('../../gradle/rules-protocol-fixtures.gradle')
 apply from: file('../../gradle/oritech-fall-tests.gradle')
 apply from: file('../../gradle/undergarden-tests.gradle')
 apply from: file('../../gradle/allthemodium-tests.gradle')

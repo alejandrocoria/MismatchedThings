@@ -40,16 +40,17 @@ def runDirectory = { String loader, String endpoint ->
     endpointDirectories[loader][endpoint].get().asFile
 }
 
-def prepareEndpoint = { String loader, String endpoint, int port, File extraMod ->
+def prepareEndpoint = { String loader, String endpoint, int port, File extraMod, File productOverride = null, boolean includeProduct = true ->
     File directory = runDirectory(loader, endpoint)
     acceptanceFileOperations.delete { delete directory }
     File mods = new File(directory, 'mods')
     File config = new File(directory, 'config')
     mods.mkdirs()
     config.mkdirs()
-    Files.copy(productionArtifact(loader).toPath(),
-            new File(mods, productionArtifact(loader).name).toPath(),
-            StandardCopyOption.REPLACE_EXISTING)
+    File artifact = productOverride == null ? productionArtifact(loader) : productOverride
+    if (includeProduct) {
+        Files.copy(artifact.toPath(), new File(mods, artifact.name).toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
     if (extraMod != null) {
         Files.copy(extraMod.toPath(), new File(mods, extraMod.name).toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
@@ -108,14 +109,18 @@ narrator:0
 }
 
 def startEndpoint = { String loader, String endpoint, int port, File markers, boolean stopAfterReady,
-                      boolean expectLoaderRejection = false ->
+                      boolean expectLoaderRejection = false, Map protocol = [:] ->
     String projectName = loader == 'fabric' ? 'Fabric' : 'NeoForge'
-    String taskName = "${modPath}:RuntimeTests:${projectName}:runNetworkTest${endpoint.capitalize()}"
+    String profile = protocol.isEmpty() ? 'NetworkTest' : 'RulesProtocol'
+    String taskName = "${modPath}:RuntimeTests:${projectName}:run${profile}${endpoint.capitalize()}"
     List<String> gradleArguments = [
             gradleLauncher.absolutePath,
             '--no-daemon',
             '--console=plain',
             '-Dorg.gradle.jvmargs=-Xmx768m',
+            "-PrulesProtocolEndpoint=${!protocol.isEmpty()}",
+            "-PrulesProtocolNativeControl=${protocol.nativeControl == true}",
+            "-PrulesProtocolControlAdvertise=${protocol.advertise == true}",
             "-PnetworkTestPort=${port}",
             "-PnetworkTestMarkers=${markers.absolutePath}",
             "-PnetworkTestStopAfterReady=${stopAfterReady}",
@@ -388,6 +393,92 @@ def runServerStartup = { String loader, int port ->
         println "Passed ${loader} self-terminating server startup"
     } finally {
         stopProcess(server)
+    }
+}
+
+// Reuse the normal endpoint preparation/lifetime controls, but never load its current-API fixture on old peers.
+def publishedBoots = { String loader ->
+    def pins = new groovy.json.JsonSlurper().parse(
+            rootProject.file('mods/MismatchedLeggings/RuntimeTests/fixtures/boots-1.0.0.json'))
+    String key = loader == 'fabric' ? 'Fabric' : 'NeoForge'
+    File artifact = providers.gradleProperty("rulesProtocol${key}BootsJar").map { rootProject.file(it) }
+            .getOrElse(rootProject.file("mods/MismatchedLeggings/build/verification/product/inputs/${pins[key].filename}"))
+    if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
+            .digest(artifact.bytes).encodeHex().toString() != pins[key].sha256) {
+        throw new GradleException("Supply unchanged published Boots using -PrulesProtocol${key}BootsJar; wrong/missing ${artifact}")
+    }
+    artifact
+}
+
+def runProtocolRejection = { String loader, boolean oldClient, boolean nativeControl = false ->
+    File release = nativeControl ? null : publishedBoots(loader)
+    String baseline = loader == 'fabric' ? fabric_loader_version : neoforge_version
+    String pair = nativeControl ? (oldClient ? 'native-control_server-required' : 'native-control_client-required')
+            : oldClient ? 'old-client_current-server' : 'current-client_old-server'
+    File markers = networkAcceptanceRoot.get().dir("rules-protocol/${loader}/${baseline}/${pair}").asFile
+    acceptanceFileOperations.delete { delete markers }
+    markers.mkdirs()
+    int port = loader == 'fabric' ? 25583 : 25584
+    prepareEndpoint(loader, 'server', port, null, oldClient ? null : release, !nativeControl)
+    prepareEndpoint(loader, 'client', port, null, oldClient ? release : null, !nativeControl)
+    Process server = null
+    Process client = null
+    try {
+        server = startEndpoint(loader, 'server', port, markers, false, false,
+                [nativeControl: nativeControl, advertise: nativeControl && oldClient])
+        awaitServerReady(server, markers)
+        client = startEndpoint(loader, 'client', port, markers, false, false,
+                [nativeControl: nativeControl, advertise: nativeControl && !oldClient])
+        awaitExit(client, 'client', markers, 240)
+        awaitExit(server, 'server', markers, 60)
+        if (failureText(markers) || !new File(markers, 'client-protocol-rejected.txt').isFile()
+                || !new File(markers, 'server-success.txt').isFile()) {
+            throw new GradleException("Protocol rejection failed: ${failureText(markers)}; see ${markers}")
+        }
+        // A specific native mismatch is required; codec/handler errors are not acceptable substitutes.
+        def logs = ['server', 'client'].collect { new File(markers, "${it}-process.log").text }.join('\n')
+        if (logs =~ /DecoderException|EncoderException|Failed to handle packet/) {
+            throw new GradleException("Protocol rejection included a packet processing failure: ${markers}")
+        }
+        if (logs.contains('/ERROR]')) {
+            logger.warn("Native rejection emitted ERROR diagnostics; inspect before accepting: ${markers}")
+        }
+        if (!nativeControl) {
+            publishedBoots(loader) // Recheck that the historical input was not changed by a child.
+        }
+        new File(markers, 'passed.txt').text = "${loader}/${baseline}/${pair}\n"
+        logger.lifecycle("Passed native protocol rejection: ${loader}/${baseline}/${pair}")
+    } finally {
+        stopProcess(client)
+        stopProcess(server)
+    }
+}
+
+tasks.register('verifyRulesProtocolNativeControl') {
+    group = 'verification'
+    description = 'Compares native NeoForge rejection/close diagnostics with a synthetic required channel and no Boots/Things.'
+    doLast {
+        runProtocolRejection('neoforge', true, true)
+        runProtocolRejection('neoforge', false, true)
+    }
+}
+
+tasks.register('verifyRulesProtocol') {
+    group = 'verification'
+    description = 'Checks current/current and both published/current Boots protocol directions using passive native observers.'
+    dependsOn "${modPath}:Fabric:jar", "${modPath}:NeoForge:jar"
+    doLast {
+        String selected = providers.gradleProperty('rulesProtocolLoader').getOrElse('all')
+        if (!(selected in ['all', 'fabric', 'neoforge'])) {
+            throw new GradleException("Unknown rulesProtocolLoader: ${selected}")
+        }
+        ['fabric', 'neoforge'].findAll { selected == 'all' || selected == it }.each { loader ->
+            if (providers.gradleProperty('rulesProtocolPositive').getOrElse('true').toBoolean()) {
+                runPair(loader, loader, loader == 'fabric' ? 25575 : 25576)
+            }
+            runProtocolRejection(loader, true)
+            runProtocolRejection(loader, false)
+        }
     }
 }
 

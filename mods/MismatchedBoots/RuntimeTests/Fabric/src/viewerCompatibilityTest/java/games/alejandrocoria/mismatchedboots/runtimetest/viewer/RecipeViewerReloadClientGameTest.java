@@ -1,10 +1,14 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.viewer;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.compatibility.jei.JeiRecipeReloadProbe;
 import games.alejandrocoria.mismatchedboots.compatibility.rei.ReiRecipeReloadProbe;
+import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.config.AttributeRulesConfig;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedboots.platform.Services;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -39,24 +43,87 @@ public final class RecipeViewerReloadClientGameTest implements FabricClientGameT
     public void runTest(ClientGameTestContext context) {
         String viewer = System.getProperty("mismatchedboots.test.recipeViewer");
         Probe probe = "jei".equals(viewer) ? new JeiRecipeReloadProbe() : new ReiRecipeReloadProbe();
-        AtomicReference<List<String>> originalPacks = new AtomicReference<>();
-        try (TestSingleplayerContext world = context.worldBuilder().create()) {
-            world.getServer().runOnServer(server -> originalPacks.set(List.copyOf(
-                    server.getPackRepository().getSelectedIds())));
-            verifyPhase(context, probe, 0);
-            reload(world, originalPacks.get(), 1);
-            verifyPhase(context, probe, 1);
-            reload(world, originalPacks.get(), 2);
-            verifyPhase(context, probe, 2);
-            reload(world, originalPacks.get(), 0);
-            verifyPhase(context, probe, 0);
+        for (boolean recipesFirst : new boolean[]{true, false}) {
+            String policy = recipesFirst ? "combine" : "minimum";
+            try {
+                Files.writeString(Services.PLATFORM.getConfigDirectory().resolve(AttributeRulesConfig.FILE_NAME),
+                        "[attributes]\nfallback = 'separate'\n[attributes.\"minecraft:armor\"]\npolicy = '" + policy + "'\n");
+            } catch (IOException exception) {
+                throw new UncheckedIOException(exception);
+            }
+            context.runOnClient(client -> RulesDeliveryGate.begin());
+            AtomicReference<List<String>> originalPacks = new AtomicReference<>();
+            try (TestSingleplayerContext world = context.worldBuilder().create()) {
+                world.getServer().runOnServer(server -> originalPacks.set(List.copyOf(
+                        server.getPackRepository().getSelectedIds())));
+                context.waitFor(client -> RulesDeliveryGate.captured() && probe.ready());
+                context.runOnClient(client -> {
+                    assertNoExample(probe);
+                    if (recipesFirst) {
+                        RulesDeliveryGate.releaseRecipes();
+                    } else {
+                        RulesDeliveryGate.releaseRules();
+                    }
+                    assertNoExample(probe);
+                });
+                context.waitTicks(5);
+                context.runOnClient(client -> {
+                    assertNoExample(probe);
+                    if (recipesFirst) {
+                        RulesDeliveryGate.releaseRules();
+                    } else {
+                        RulesDeliveryGate.releaseRecipes();
+                    }
+                });
+                verifyPhase(context, probe, 0);
+                context.runOnClient(client -> assertServerRulesInExamples(probe,
+                        recipesFirst ? AttributePolicy.COMBINE : AttributePolicy.MINIMUM));
+                context.runOnClient(client -> RulesDeliveryGate.finish());
+                reload(world, originalPacks.get(), 1);
+                verifyPhase(context, probe, 1);
+                reload(world, originalPacks.get(), 2);
+                verifyPhase(context, probe, 2);
+                reload(world, originalPacks.get(), 0);
+                verifyPhase(context, probe, 0);
+            } finally {
+                context.runOnClient(client -> RulesDeliveryGate.finish());
+            }
+            context.waitFor(client -> !MismatchedWorkbenchClientRecipes.hasRecipes()
+                    && !CompositionRulesClientLifecycle.areRulesSynchronized());
+            context.runOnClient(client -> {
+                if (probe.ready()) {
+                    assertNoExample(probe);
+                }
+            });
         }
-        // World teardown must have invalidated the recipe authority on the client thread.
-        context.waitFor(client -> !MismatchedWorkbenchClientRecipes.hasRecipes());
         try {
             Files.writeString(Path.of("viewer-reload.ok"), viewer + "-reload-passed\n");
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);
+        }
+    }
+
+    private static void assertNoExample(Probe probe) {
+        if (!probe.cycles().isEmpty()) {
+            throw new AssertionError("Viewer exposed Boots before both synchronized inputs were available");
+        }
+    }
+
+    private static void assertServerRulesInExamples(Probe probe, AttributePolicy expectedPolicy) {
+        var rules = CompositionRulesClientLifecycle.synchronizedRules();
+        if (rules == null || rules.attributes().policyFor(
+                net.minecraft.resources.Identifier.withDefaultNamespace("armor")) != expectedPolicy) {
+            throw new AssertionError("Viewer did not receive the current server's nondefault armor policy");
+        }
+        for (Cycle cycle : probe.cycles()) {
+            for (int index = 0; index < cycle.left().size(); index++) {
+                var expected = MixedBootsFactory.createPair(cycle.left().get(index), cycle.right().get(index),
+                        rules.attributes(), rules.components());
+                if (!ItemStack.isSameItemSameComponents(expected.primary(), cycle.primary().get(index))
+                        || !ItemStack.isSameItemSameComponents(expected.inverse(), cycle.inverse().get(index))) {
+                    throw new AssertionError("Actual viewer outputs did not use the complete server snapshot");
+                }
+            }
         }
     }
 

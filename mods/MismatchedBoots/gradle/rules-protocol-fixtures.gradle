@@ -1,0 +1,65 @@
+// A passive, API-independent observer can run beside both current and unchanged published Boots.
+def fabric = project.name == 'Fabric'
+def protocolEndpoint = providers.gradleProperty('rulesProtocolEndpoint').map { it.toBoolean() }.getOrElse(false)
+sourceSets {
+    rulesProtocolTest {
+        java.srcDirs file('../RulesProtocol/Common/src/main/java'), file("../RulesProtocol/${project.name}/src/main/java")
+        resources.srcDirs file('../RulesProtocol/Common/src/main/resources'), file("../RulesProtocol/${project.name}/src/main/resources")
+        if (fabric) {
+            compileClasspath += sourceSets.main.compileClasspath
+            runtimeClasspath += sourceSets.main.runtimeClasspath - sourceSets.main.output
+        }
+    }
+}
+if (!fabric) {
+    neoForge.addModdingDependenciesTo(sourceSets.rulesProtocolTest)
+}
+if (protocolEndpoint) {
+    def markers = providers.gradleProperty('networkTestMarkers').get()
+    def port = providers.gradleProperty('networkTestPort').get()
+    if (fabric) {
+        loom.mods { mismatchedboots_protocol_test { sourceSet sourceSets.rulesProtocolTest } }
+    } else {
+        // Do not auto-load the normal fixture: it intentionally links the current Boots API.
+        neoForge.mods.clear()
+        neoForge.mods { mismatchedboots_protocol_test { sourceSet sourceSets.rulesProtocolTest } }
+    }
+    ['Server', 'Client'].each { endpoint ->
+        if (fabric) {
+            loom.runs.create("rulesProtocol${endpoint}") {
+                source('rulesProtocolTest')
+                ideConfigGenerated(false)
+                if (endpoint == 'Server') {
+                    server()
+                    programArg('--nogui')
+                } else {
+                    client()
+                    programArgs('--quickPlayMultiplayer', "127.0.0.1:${port}")
+                }
+                runDir("build/run/${endpoint.toLowerCase(Locale.ROOT)}")
+                property('mismatchedboots.runtimetest.markers', markers)
+                vmArg('-Xmx1G')
+            }
+        } else {
+            neoForge.runs.create("rulesProtocol${endpoint}") {
+                sourceSet = sourceSets.rulesProtocolTest
+                disableIdeRun()
+                gameDirectory = file("build/run/${endpoint.toLowerCase(Locale.ROOT)}")
+                if (endpoint == 'Server') {
+                    server()
+                    programArgument('--nogui')
+                } else {
+                    client()
+                    programArgument('--quickPlayMultiplayer')
+                    programArgument("127.0.0.1:${port}")
+                }
+                systemProperty('mismatchedboots.runtimetest.markers', markers)
+                systemProperty('mismatchedboots.runtimetest.protocolNativeControl',
+                        providers.gradleProperty('rulesProtocolNativeControl').getOrElse('false'))
+                systemProperty('mismatchedboots.runtimetest.protocolControlAdvertise',
+                        providers.gradleProperty('rulesProtocolControlAdvertise').getOrElse('false'))
+                jvmArgument('-Xmx1G')
+            }
+        }
+    }
+}

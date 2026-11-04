@@ -12,6 +12,7 @@
             "games.alejandrocoria.mismatchedboots.runtimetest.viewer.RecipeViewerReloadClientGameTest"
         ]
     },
+    "mixins": ["mismatchedboots-viewer-delivery.mixins.json"],
     "depends": {
         "fabricloader": "*",
         "fabric-api": "*",

@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="mismatchedboots_protocol_test"
+version="1.0.0"
+displayName="Boots native protocol observer"
+
+[[mixins]]
+config="mismatchedboots-protocol-test.mixins.json"
+
+[[mixins]]
+config="mismatchedboots-protocol-test.neoforge.mixins.json"

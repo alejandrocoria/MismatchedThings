@@ -1,0 +1,7 @@
+{
+    "required": true,
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.protocol.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "client": ["ProtocolWindowMixin"],
+    "injectors": {"defaultRequire": 1}
+}

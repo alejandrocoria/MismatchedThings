@@ -143,7 +143,12 @@ public final class NetworkAcceptanceClientTest {
         if (client.screen instanceof DisconnectedScreen screen) {
             String reason = screen.getNarrationMessage().getString();
             String expected = "This server requires NeoForge. Mismatched mods must use the same loader on the client and server.";
-            if (!reason.contains(expected)) {
+            // Required native play routes let NeoForge refuse OTHER before Things' configuration task runs.
+            String nativeExpected = "You are trying to connect to a server that is running NeoForge, but you are not. "
+                    + "Please install NeoForge Version: "
+                    + System.getProperty("mismatchedboots.runtimetest.serverNeoForgeVersion")
+                    + " to connect to this server.";
+            if (!reason.contains(expected) && !reason.contains(nativeExpected)) {
                 throw new AssertionError("Unexpected loader rejection reason: " + reason);
             }
             NetworkAcceptanceFiles.write("client-loader-rejected.txt", reason);

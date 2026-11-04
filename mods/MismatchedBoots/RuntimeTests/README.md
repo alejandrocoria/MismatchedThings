@@ -1052,8 +1052,41 @@ client process, changing policy between sessions. The fixture compares the actua
 server-created inventory stack with direct/loaded recipe previews and verifies
 disconnect invalidation. Its reports and bounded child logs live under
 `RuntimeTests/NeoForge/build/rules-synchronization/<baseline>/reports/`.
-Neither control loads the old replacement spike. Final viewer arrival-order,
-published-peer rejection and JDT transport checks remain separate acceptance gates.
+Neither control replaces production networking. The JEI/REI reload profiles above
+also hold genuine decoded rules/recipes, release them in both orders, verify that
+the real viewer has no example until both arrive, compare its outputs with the
+nondefault server rules and reconnect under a different policy. Their test-only
+delivery mixins do not register protocol handlers or fabricate server replies.
+
+Published-peer rejection uses an API-independent passive observer, so an old
+binary never loads a fixture linked against the new Boots/Things API:
+
+```powershell
+.\gradlew.bat :MismatchedBoots:verifyRulesProtocol '-PrulesProtocolLoader=fabric' --offline --console=plain
+.\gradlew.bat :MismatchedBoots:verifyRulesProtocol '-PrulesProtocolLoader=neoforge' '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedBoots:verifyRulesProtocol '-PrulesProtocolLoader=neoforge' '-Pneoforge_version=26.1.2.114' --offline --console=plain
+```
+
+Each selected loader runs a current/current dedicated positive and unchanged
+published 1.0.0 against current in both directions. `-PrulesProtocolPositive=false`
+reuses an already verified unchanged positive. Frozen releases are hash-checked
+using [the existing pins](../../MismatchedLeggings/RuntimeTests/fixtures/boots-1.0.0.json);
+the default cache is `mods/MismatchedLeggings/build/verification/product/inputs/`.
+Override with `-PrulesProtocolFabricBootsJar=<path>` or
+`-PrulesProtocolNeoForgeBootsJar=<path>`, never a rebuild.
+
+Rejection must happen before play with the specific Fabric Boots protocol message
+or NeoForge's actual native channel/reason map identifying both required routes.
+Generic disconnect titles, socket failures and timeouts do not qualify. Reports
+retain loader/baseline/direction under `build/network-acceptance/rules-protocol/`.
+Packet decode/handler failures block the verifier; runtime ERROR diagnostics
+remain visible for inspection, not blanket-suppressed.
+
+If native close diagnostics recur, `:MismatchedBoots:verifyRulesProtocolNativeControl`
+compares both directions with a synthetic required NeoForge channel and **neither
+Boots nor Things loaded**. It uses the same observer and bounded endpoint harness;
+the synthetic route is not part of ordinary production/acceptance runs.
+Human-paced screen/log acceptance remains separate from automatic rejection proof.
 
 `verifyLoaderNetworking` orchestrates real connections, prepares isolated
 directories, and checks result markers. Select a pair with
@@ -1070,8 +1103,10 @@ overrides propagate to its child Gradle runs. Normal indev NeoForge stays .114.
 Cross-loader play is unsupported. The focused
 `-PnetworkAcceptanceCase=neoforge-fabric-refused` case connects a hidden/muted
 Fabric client to the actual packaged NeoForge server. It requires Things' exact
-loader-mismatch message on the client, no player entering either world and no
-server crafting result; a timeout or unrelated disconnect is not success.
+loader-mismatch message or NeoForge's specific native loader refusal with the
+selected server version. Required Boots play channels let NeoForge reject first,
+before Things' configuration task. No player may enter either world and no
+server crafting result may exist; a timeout or unrelated disconnect is not success.
 The server stops normally after the refusal marker, and both endpoints must exit
 cleanly. Run on .99 and .114; the same-loader positive cases remain required
 controls. Fabric API already refuses NeoForge clients through registry sync.

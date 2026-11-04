@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedthings.api.client.viewer.jei.WorkbenchJeiR
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.runtime.IJeiRuntime;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
@@ -20,11 +21,13 @@ public final class JeiRecipeReloadProbe implements IModPlugin, RecipeViewerReloa
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime current) {
+        requireClientThread();
         runtime = current;
     }
 
     @Override
     public void onRuntimeUnavailable() {
+        requireClientThread();
         runtime = null;
     }
 
@@ -43,5 +46,11 @@ public final class JeiRecipeReloadProbe implements IModPlugin, RecipeViewerReloa
     @Override
     public void open() {
         runtime.getRecipesGui().showTypes(List.of(WorkbenchJeiRecipes.TYPE));
+    }
+
+    private static void requireClientThread() {
+        if (!Minecraft.getInstance().isSameThread()) {
+            throw new AssertionError("JEI runtime lifecycle must notify product subscribers on the client thread");
+        }
     }
 }

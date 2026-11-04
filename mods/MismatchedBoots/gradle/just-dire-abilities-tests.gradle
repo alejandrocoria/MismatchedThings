@@ -326,7 +326,13 @@ tasks.register('verifyJustDireGroundStompClient') {
     description = 'Verifies native JDT mixed widgets/capture and production location-aware keyboard/mouse batch transport.'
     dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
-        ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent'].each { variant ->
+        def supported = ['Live', 'High', 'Low', 'HooksMissing', 'ApiMissing', 'EarthquakeMissing', 'EarthquakeSettingsFailure', 'Absent']
+        def variants = providers.gradleProperty('justDireGroundStompClientVariants')
+                .map { it.split(',').collect { name -> name.trim() } }.getOrElse(supported)
+        if (variants.isEmpty() || variants.any { !supported.contains(it) } || variants.toSet().size() != variants.size()) {
+            throw new GradleException("Unknown or duplicate native JDT client variants: ${variants}")
+        }
+        variants.each { variant ->
             def log = fixtureBuildDirectory.file("reports/just-dire-ground-stomp-client/${neoforge_version}/${variant.uncapitalize()}-process.log").get().asFile
             runBoundedGradleTask("${modPath}:RuntimeTests:NeoForge:runJustDireGroundStompClient${variant}", log, 300)
             def directory = justDireSmithingMarkers.get().asFile
@@ -358,7 +364,11 @@ tasks.register('verifyJustDireGroundStompClient') {
                     into(log.parentFile)
                 }
             }
-            logger.lifecycle(report.text)
+            if (variants.size() == supported.size()) {
+                logger.lifecycle(report.text)
+            } else {
+                logger.lifecycle("Native JDT ${variant} passed; report: ${new File(log.parentFile, variant.uncapitalize() + '-report.txt')}")
+            }
         }
     }
 }
