@@ -22,7 +22,8 @@ gradle.projectsEvaluated {
                     if ('data/minecraft/tags/item/leg_armor.json' in names) {
                         throw new GradleException('Broad armor classification would advertise invalid mixed smithing examples')
                     }
-                    if (names.any { it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
+                    if (names.any { it.startsWith('com/autovw/advancednetherite/')
+                            || it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
                             || it.contains('leggingsspike') || it.contains('leggings-spike') || it.contains('leggings_test')
                             || it.startsWith('games/alejandrocoria/mismatchedthings/')
                             || it.startsWith('assets/mismatchedthings/') || it.startsWith('data/mismatchedthings/') }) {
@@ -60,19 +61,29 @@ gradle.projectsEvaluated {
                      'assets/mismatchedleggings/lang/en_us.json',
                      'assets/mismatchedleggings/lang/es_es.json',
                      'mismatchedleggings.mixins.json',
-                     'mismatchedleggings.recovery.mixins.json'].each { path ->
+                     'mismatchedleggings.recovery.mixins.json',
+                     'mismatchedleggings.advancednetherite.mixins.json',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/advancednetherite/AdvancedNetheriteMixinPlugin.class',
+                     'games/alejandrocoria/mismatchedleggings/mixin/compatibility/advancednetherite/AdvancedNetheriteHooksMixin.class'].each { path ->
                         if (!(path in names)) { throw new GradleException("Missing product entry: ${path}") }
                     }
                     String nestedPath
+                    def optionalMixin = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('mismatchedleggings.advancednetherite.mixins.json')))
+                    if (optionalMixin.plugin != 'games.alejandrocoria.mismatchedleggings.compatibility.advancednetherite.AdvancedNetheriteMixinPlugin'
+                            || optionalMixin.package != 'games.alejandrocoria.mismatchedleggings.mixin.compatibility.advancednetherite'
+                            || optionalMixin.mixins != ['AdvancedNetheriteHooksMixin']) {
+                        throw new GradleException('Wrong optional Advanced Netherite mixin ownership')
+                    }
                     if (name == 'Fabric') {
                         def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
                         if (descriptor.id != 'mismatchedleggings' || descriptor.version != project.version.toString()
                                 || descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0'
                                 || descriptor.depends.containsKey('mismatchedboots')
+                                || descriptor.depends.containsKey('advancednetherite')
                                 || descriptor.depends.containsKey('jei') || descriptor.depends.containsKey('roughlyenoughitems')
                                 || descriptor.entrypoints.jei_mod_plugin != ['games.alejandrocoria.mismatchedleggings.compatibility.jei.MismatchedLeggingsJeiPlugin']
                                 || descriptor.entrypoints.rei_client != ['games.alejandrocoria.mismatchedleggings.compatibility.rei.MismatchedLeggingsReiClientPlugin']
-                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
+                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.advancednetherite.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
                             throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
                         }
                         def nested = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
@@ -82,6 +93,10 @@ gradle.projectsEvaluated {
                         nestedPath = nested.first().file
                     } else {
                         def text = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
+                        if (text.count('config="mismatchedleggings.advancednetherite.mixins.json"') != 1
+                                || text.contains('modId="advancednetherite"')) {
+                            throw new GradleException('Optional Advanced Netherite integration is missing, duplicated or required')
+                        }
                         def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
                         if (!text.contains('modId="mismatchedleggings"') || text.contains('modId="mismatchedboots"')
                                 || text.contains('modId="jei"') || text.contains('modId="roughlyenoughitems"')

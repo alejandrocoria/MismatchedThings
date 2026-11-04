@@ -1,7 +1,8 @@
 import java.util.concurrent.TimeUnit
 
 // Concrete packaged-product profiles share staging and bounded process launching.
-['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers'].each { profile ->
+['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite'].each { profile ->
+    def advancedNetherite = profile == 'AdvancedNetherite'
     def viewers = profile == 'Viewers'
     def bootsOnly = viewers && providers.gradleProperty('leggingsViewerBootsOnly').map { it.toBoolean() }.getOrElse(false)
     def viewer = providers.gradleProperty('leggingsViewer').getOrElse('none')
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit
                 mods.mkdirs()
                 def artifacts = bootsOnly ? [] : [leggingsJar.get().asFile]
                 if (viewers) { artifacts.addAll(project.leggingsViewerArtifacts(viewer)) }
+                if (advancedNetherite) { artifacts.addAll(project.leggingsAdvancedNetheriteArtifacts()) }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -105,6 +107,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if ((equipped || items || presentation) && phase == 'client') { programArgs('--width', '1280', '--height', '720') }
                 runDir(project.relativePath(new File(directory, phase)))
                 property('leggings.test.equipped', equipped.toString())
+                property('leggings.test.advancedNetherite', advancedNetherite.toString())
                 property('leggings.test.items', items.toString())
                 property('leggings.test.emptyItems', emptyItems.toString())
                 property('leggings.test.presentation', presentation.toString())
@@ -132,6 +135,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 }
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
+                systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.items', items.toString())
                 systemProperty('leggings.test.emptyItems', emptyItems.toString())
                 systemProperty('leggings.test.presentation', presentation.toString())
@@ -165,6 +169,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
     tasks.register("verify${profile}") {
         group = 'verification'
         description = viewers ? 'Checks actual optional JEI/REI examples, reload, repeated opening and session rules.'
+                : advancedNetherite ? 'Checks pinned Advanced Netherite pacification, live tags, smithing and native tooltips.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'

@@ -16,6 +16,15 @@ allprojects { child ->
 apply from: 'gradle/packaging.gradle'
 apply from: 'gradle/product-verification.gradle'
 
+// The shared optional API has identical bytecode in the pinned loader artifacts.
+['Common', 'Fabric', 'NeoForge'].each { name ->
+    project(name).pluginManager.withPlugin('java-library') {
+        project(name).dependencies {
+            compileOnly('maven.modrinth:CFX9ftUJ:vudH2Rjv') { transitive = false }
+        }
+    }
+}
+
 tasks.register('verifySkeleton') {
     group = 'verification'
     description = 'Checks standalone packaged Leggings startup on both loaders.'

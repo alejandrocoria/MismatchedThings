@@ -63,6 +63,36 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Advanced Netherite compatibility
+
+The optional profile resolves Advanced Netherite 2.4.1 through exact Modrinth
+coordinates and verifies SHA-256 before staging; no indev JAR is read. It tests
+both ordered outputs, native equipped-player pacification, invalid/inventory-only
+controls, hook-only sources and defensive provenance, real datapack tag
+removal/restoration on already-crafted roots, native tier-upgrade smithing and
+source tooltips in the hidden client.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyAdvancedNetherite --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAdvancedNetherite '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAdvancedNetherite '-Pneoforge_version=26.1.2.114' --offline --console=plain
+```
+
+Omit `--offline` for the first artifact download. Add `-PleggingsBoots=true` for
+current-Boots coexistence. Evidence is under each loader's
+`build/verification/<baseline>/advancedNetherite[-boots]/` (bounded process logs
+and `matrix.ok`) and `build/reports/<baseline>/advancedNetherite[-boots]/`
+(`server.ok`, `client.ok` or explicit failure traces).
+
+This reuses the existing sequential server/client profile harness and its early
+hidden-window/muted contract, without screenshots or another launch framework.
+Run `verifySkeleton` without Advanced Netherite for optional-absence acceptance;
+the seven focused Common plugin tests cover incompatible API shapes and symbolic
+linkage. The owner confirmed the separate Shift-held/config-disabled presentation,
+armor geometry and mob provocation/retaliation checks on both loaders on
+2026-11-04; this is not a manual matrix across both NeoForge baselines.
+Material-colored native durability bars are intentionally not forwarded.
+
 ## Optional JEI/REI and user-guide acceptance
 
 ```powershell

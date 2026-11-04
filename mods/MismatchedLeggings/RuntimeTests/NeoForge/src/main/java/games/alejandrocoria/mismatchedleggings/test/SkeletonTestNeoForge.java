@@ -39,6 +39,11 @@ public final class SkeletonTestNeoForge {
             items.register(bus);
         }
         NeoForgeCompositionChecks.register();
+        if (Boolean.getBoolean("leggings.test.advancedNetherite")) {
+            var items = DeferredRegister.createItems("leggings_skeleton_test");
+            items.registerItem("advanced_hook_leggings", AdvancedNetheriteChecks::hookItem);
+            items.register(bus);
+        }
         if (Boolean.getBoolean("leggings.test.repair") || Boolean.getBoolean("leggings.test.grindstone")) {
             NeoForgeRepairChecks.register(bus);
         }

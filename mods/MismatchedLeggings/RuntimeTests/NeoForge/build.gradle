@@ -35,6 +35,7 @@ tasks.named('runSkeletonServer') { dependsOn 'prepareSkeletonServer' }
 tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }
 
 apply from: '../viewer-fixtures.gradle'
+apply from: '../advanced-netherite-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 

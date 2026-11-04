@@ -10,6 +10,9 @@ config="mismatchedleggings.mixins.json"
 config="mismatchedleggings.recovery.mixins.json"
 
 [[mixins]]
+config="mismatchedleggings.advancednetherite.mixins.json"
+
+[[mixins]]
 config="mismatchedleggings.neoforge.mixins.json"
 
 [[mods]]

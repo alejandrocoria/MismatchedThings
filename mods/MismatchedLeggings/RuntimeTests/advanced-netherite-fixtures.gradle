@@ -1,0 +1,22 @@
+// Optional native API for test compilation; only the selected profile stages it at runtime.
+def nativeVersion = project.name == 'Fabric' ? 'vudH2Rjv' : 'yvbzX6CA'
+def expectedHash = project.name == 'Fabric'
+        ? '22b1ac273c95a5403ace2e0dca0981df3348b4d645864ba6552574521470adb1'
+        : 'da94547f5a33884b016cd26e5d3a6e2be352eb663ad1aa9b1f5398bee97e083b'
+
+repositories { maven { url = 'https://api.modrinth.com/maven' } }
+configurations {
+    advancedNetheriteFixture {
+        canBeConsumed = false
+        transitive = false
+    }
+    compileOnly.extendsFrom advancedNetheriteFixture
+}
+dependencies { advancedNetheriteFixture "maven.modrinth:CFX9ftUJ:${nativeVersion}" }
+
+ext.leggingsAdvancedNetheriteArtifacts = {
+    def artifact = configurations.advancedNetheriteFixture.singleFile
+    def hash = java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+    if (hash != expectedHash) { throw new GradleException("Unexpected Advanced Netherite SHA-256: ${artifact}") }
+    [artifact]
+}

@@ -61,6 +61,14 @@ behavior implemented only in a source item's class, custom events or foreign
 upgrade tables is not generically transferred. Boots' dedicated mod adapters do
 not automatically apply to Leggings.
 
+Advanced Netherite pacification is inherited from either source: Iron protects
+against unprovoked phantoms, Gold against piglins, Emerald against enderman
+staring, and Diamond supplies all three. No full set is required; different
+source perks combine without duplicating a benefit. Native provocation and
+retaliation rules still apply. Native source tooltips are retained; the mixed
+root keeps its ordinary durability-bar color rather than the optional
+material-colored Advanced Netherite bar.
+
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to
 neutral leggings. Unsupported item models fall back to two superimposed complete

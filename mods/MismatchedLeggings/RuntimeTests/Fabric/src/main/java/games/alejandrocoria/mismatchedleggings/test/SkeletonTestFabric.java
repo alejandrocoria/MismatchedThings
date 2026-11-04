@@ -18,6 +18,11 @@ public final class SkeletonTestFabric implements ModInitializer {
             return;
         }
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Identifier.parse("leggings_skeleton_test:charge"), CompositionFixture.CHARGE);
+        if (Boolean.getBoolean("leggings.test.advancedNetherite")) {
+            Registry.register(BuiltInRegistries.ITEM, AdvancedNetheriteChecks.HOOK_ID,
+                    AdvancedNetheriteChecks.hookItem(new net.minecraft.world.item.Item.Properties()
+                            .setId(AdvancedNetheriteChecks.HOOK_KEY)));
+        }
         if (Boolean.getBoolean("leggings.test.viewers")) {
             Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Identifier.parse("leggings_skeleton_test:reversed_workbench"), ViewerRecipe.SERIALIZER);
             net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization.synchronizeRecipeSerializer(ViewerRecipe.SERIALIZER);

@@ -57,7 +57,9 @@ public final class SkeletonChecks {
         serverFinished = true;
         try {
             verify();
-            if (Boolean.getBoolean("leggings.test.smithing")) {
+            if (Boolean.getBoolean("leggings.test.advancedNetherite")) {
+                AdvancedNetheriteChecks.verify(server);
+            } else if (Boolean.getBoolean("leggings.test.smithing")) {
                 SmithingChecks.verify(server);
             } else if (Boolean.getBoolean("leggings.test.grindstone")) {
                 GrindstoneChecks.verify(server);

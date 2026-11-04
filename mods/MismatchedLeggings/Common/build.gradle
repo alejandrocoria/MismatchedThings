@@ -8,6 +8,7 @@ neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
+    compileOnly 'org.ow2.asm:asm-tree:9.9.1'
     // Both loaders supply MixinExtras; compile only against the established minimal API.
     compileOnly 'io.github.llamalad7:mixinextras-common:0.3.5'
     annotationProcessor 'io.github.llamalad7:mixinextras-common:0.3.5'
@@ -28,6 +29,8 @@ dependencies {
     }
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.spongepowered:mixin:0.8.5'
+    testImplementation 'org.ow2.asm:asm-tree:9.9.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

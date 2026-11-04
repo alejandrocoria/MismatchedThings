@@ -18,6 +18,10 @@ public final class SkeletonClientChecks {
     }
 
     public static void tick(Minecraft client) {
+        if (Boolean.getBoolean("leggings.test.advancedNetherite")) {
+            AdvancedNetheriteClientChecks.tick(client);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.viewerBootsOnly")) {
             BootsOnlyViewerClientChecks.clientTick(client);
             return;
