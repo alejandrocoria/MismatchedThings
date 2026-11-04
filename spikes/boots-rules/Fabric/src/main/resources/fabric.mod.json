@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "boots_rules_spike",
+  "version": "1.0.0",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["games.alejandrocoria.rulesspike.FabricSpike"],
+    "client": ["games.alejandrocoria.rulesspike.FabricClientSpike"]
+  },
+  "mixins": ["boots-rules-spike.mixins.json"],
+  "depends": {"fabricloader": "*", "fabric-api": "*", "mismatchedboots": "*"}
+}

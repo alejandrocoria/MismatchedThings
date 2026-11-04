@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "games.alejandrocoria.rulesspike.mixin",
+  "plugin": "games.alejandrocoria.rulesspike.mixin.SpikePlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["LegacyNetworkMixin", "LegacyClientMixin"],
+  "client": ["PreviewMixin", "WindowMixin"],
+  "injectors": {"defaultRequire": 1}
+}

@@ -60,3 +60,13 @@ project(':MismatchedLeggings').projectDir = file('mods/MismatchedLeggings')
 ['Common', 'Fabric', 'NeoForge', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
     include("MismatchedLeggings:${path}")
 }
+
+// Temporary, opt-in protocol experiment; never enters production or normal verification.
+if (providers.gradleProperty('bootsRulesSpike').map { it.toBoolean() }.getOrElse(false)) {
+    include('RulesSpike')
+    project(':RulesSpike').projectDir = file('spikes/boots-rules')
+    ['Fabric', 'NeoForge'].each { loader ->
+        include("RulesSpike:${loader}")
+        project(":RulesSpike:${loader}").projectDir = file("spikes/boots-rules/${loader}")
+    }
+}

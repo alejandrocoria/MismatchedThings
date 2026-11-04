@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+}
+
+repositories { mavenCentral() }
+neoForge { version = neoforge_version }
+apply from: '../runtime.gradle'

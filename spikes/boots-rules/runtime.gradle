@@ -1,0 +1,186 @@
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
+
+// Disposable protocol proof, opt-in from settings.gradle. No normal production/test classpath includes it.
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+sourceSets.main.java.srcDir '../Common/src/main/java'
+sourceSets.main.resources.srcDir '../Common/src/main/resources'
+
+def fabric = project.name == 'Fabric'
+def loader = project.name
+def baseline = fabric ? fabric_loader_version : neoforge_version
+def product = project(":MismatchedBoots:${loader}")
+def core = project(":MismatchedThings:${loader}")
+evaluationDependsOn(product.path)
+evaluationDependsOn(core.path)
+def productJar = product.tasks.named('jar').flatMap { it.archiveFile }
+def coreJar = core.tasks.named('jar').flatMap { it.archiveFile }
+dependencies.add('compileOnly', files(productJar, coreJar))
+
+def selectedCase = providers.gradleProperty('rulesSpikeCase').getOrElse('new-new')
+if (!(selectedCase in ['new-new', 'new-old', 'old-new', 'seed', 'integrated'])) {
+    throw new GradleException("Unknown rules spike case: ${selectedCase}")
+}
+def root = layout.buildDirectory.dir("proof/${baseline}").get().asFile
+def reports = new File(root, "${selectedCase}/reports")
+def port = fabric ? 25583 : 25584
+def operations = objects.newInstance(FixtureFileOperations).files
+
+if (fabric) {
+    loom.mods { boots_rules_spike { sourceSet sourceSets.main } }
+} else {
+    neoForge.mods { boots_rules_spike { sourceSet sourceSets.main } }
+}
+
+['server', 'client'].each { endpoint ->
+    def directory = new File(root, "${selectedCase}/${endpoint}")
+    def candidate = endpoint == 'server' ? selectedCase != 'new-old' : selectedCase != 'old-new'
+    def props = [
+            'rules.spike.candidate': candidate.toString(),
+            'rules.spike.case': selectedCase,
+            'rules.spike.reports': reports.absolutePath
+    ]
+    def prepare = tasks.register("prepareSpike${endpoint.capitalize()}") {
+        dependsOn productJar, coreJar, tasks.named('classes')
+        doLast {
+            def canonical = directory.canonicalFile.toPath()
+            if (!canonical.startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+                throw new GradleException("Fixture cleanup escaped build: ${directory}")
+            }
+            operations.delete { delete directory }
+            reports.mkdirs()
+            def artifact = productJar.get().asFile
+            if (!candidate) {
+                def pins = new JsonSlurper().parse(rootProject.file('mods/MismatchedLeggings/RuntimeTests/fixtures/boots-1.0.0.json'))
+                artifact = providers.gradleProperty("rulesSpike${loader}BootsJar").map { rootProject.file(it) }
+                        .getOrElse(rootProject.file("mods/MismatchedLeggings/build/verification/product/inputs/${pins[loader].filename}"))
+                if (!artifact.isFile() || MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != pins[loader].sha256) {
+                    throw new GradleException("Supply unchanged published Boots using -PrulesSpike${loader}BootsJar; wrong/missing ${artifact}")
+                }
+            }
+            operations.copy { from artifact; into new File(directory, 'mods') }
+            new File(directory, 'config').mkdirs()
+            new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            new File(directory, 'config/mismatchedboots-attributes.toml').text = endpoint == 'server' || selectedCase == 'integrated'
+                    ? '[attributes]\nfallback = "maximum"\n[attributes."minecraft:armor"]\npolicy = "maximum"\n'
+                    : '[attributes]\nfallback = "separate"\n'
+            new File(directory, 'config/mismatchedboots-components.toml').text = endpoint == 'server' || selectedCase == 'integrated'
+                    ? '[durability]\npolicy = "separate"\n[repair_cost]\npolicy = "owner"\n'
+                    : '[durability]\npolicy = "average"\n[repair_cost]\npolicy = "maximum"\n'
+            if (endpoint == 'server') {
+                new File(directory, 'eula.txt').text = 'eula=true\n'
+                new File(directory, 'server.properties').text = """online-mode=false
+server-ip=127.0.0.1
+server-port=${selectedCase == 'seed' ? 0 : port}
+level-name=spike
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+"""
+            } else {
+                new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+                if (selectedCase == 'integrated') {
+                    def world = new File(root, 'seed/server/spike')
+                    if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run seed first') }
+                    operations.copy { from world; into new File(directory, 'saves/spike') }
+                }
+            }
+        }
+    }
+    if (fabric) {
+        loom.runs.create("spike${endpoint.capitalize()}") {
+            if (endpoint == 'server') { server(); programArg('--nogui') } else {
+                client()
+                programArgs(selectedCase == 'integrated' ? '--quickPlaySingleplayer' : '--quickPlayMultiplayer',
+                        selectedCase == 'integrated' ? 'spike' : "127.0.0.1:${port}")
+            }
+            ideConfigGenerated(false)
+            runDir(project.relativePath(directory))
+            props.each { key, value -> property(key, value) }
+            vmArg('-Xmx1G')
+        }
+    } else {
+        neoForge.runs.create("spike${endpoint.capitalize()}") {
+            if (endpoint == 'server') { server(); programArgument('--nogui') } else {
+                client()
+                programArgument(selectedCase == 'integrated' ? '--quickPlaySingleplayer' : '--quickPlayMultiplayer')
+                programArgument(selectedCase == 'integrated' ? 'spike' : "127.0.0.1:${port}")
+            }
+            disableIdeRun()
+            gameDirectory = directory
+            props.each { key, value -> systemProperty(key, value) }
+            jvmArgument('-Xmx1G')
+        }
+    }
+    tasks.named("runSpike${endpoint.capitalize()}") { dependsOn prepare }
+}
+
+def launcher = rootProject.file('gradlew.bat')
+def workspace = rootProject.projectDir
+def ownerPath = project.path
+def offline = gradle.startParameter.offline
+tasks.register('verifySpike') {
+    group = 'verification'
+    description = 'Runs the isolated Boots snapshot/guard proof, not production acceptance.'
+    dependsOn tasks.named('classes'), productJar, coreJar
+    doLast {
+        def cases = providers.gradleProperty('rulesSpikeCases').getOrElse('seed,integrated,new-new,new-old,old-new').split(',')
+        cases.each { mode ->
+            if (!(mode in ['seed', 'integrated', 'new-new', 'new-old', 'old-new'])) { throw new GradleException("Unknown case ${mode}") }
+            def evidence = new File(root, "${mode}/reports")
+            operations.delete { delete evidence }
+            evidence.mkdirs()
+            def start = { endpoint ->
+                def args = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                            '-PbootsRulesSpike=true', "-PrulesSpikeCase=${mode}", "-Pneoforge_version=${neoforge_version}",
+                            "${ownerPath}:runSpike${endpoint.capitalize()}"]
+                if (offline) { args.add('--offline') }
+                ["rulesSpike${loader}BootsJar"].each { name ->
+                    if (providers.gradleProperty(name).isPresent()) { args.add("-P${name}=${providers.gradleProperty(name).get()}") }
+                }
+                new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(workspace)
+                        .redirectErrorStream(true).redirectOutput(new File(evidence, "${endpoint}-process.log")).start()
+            }
+            def stop = { Process process ->
+                if (process != null && process.isAlive()) {
+                    process.toHandle().descendants().forEach { it.destroy() }
+                    process.destroy()
+                    if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                        process.toHandle().descendants().forEach { it.destroyForcibly() }
+                        process.destroyForcibly()
+                    }
+                }
+            }
+            Process server = null
+            Process client = null
+            try {
+                logger.lifecycle("Rules spike ${loader}/${baseline}/${mode}")
+                if (mode != 'integrated') {
+                    server = start('server')
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(180)
+                    while (!new File(evidence, 'server-ready.txt').isFile() && server.isAlive() && System.nanoTime() < deadline) {
+                        Thread.sleep(500)
+                    }
+                    if (!new File(evidence, 'server-ready.txt').isFile()) { throw new GradleException("Server not ready: ${evidence}") }
+                }
+                if (mode != 'seed') {
+                    client = start('client')
+                    if (!client.waitFor(240, TimeUnit.SECONDS) || client.exitValue() != 0
+                            || !new File(evidence, 'client-ok.txt').isFile() || new File(evidence, 'client-failure.txt').exists()) {
+                        throw new GradleException("Client proof failed: ${evidence}")
+                    }
+                }
+                if (server != null && (!server.waitFor(60, TimeUnit.SECONDS) || server.exitValue() != 0)) {
+                    throw new GradleException("Server did not stop cleanly: ${evidence}")
+                }
+                new File(evidence, 'passed.txt').text = "${loader}/${baseline}/${mode}\n"
+            } finally {
+                stop(client)
+                stop(server)
+            }
+        }
+    }
+}
