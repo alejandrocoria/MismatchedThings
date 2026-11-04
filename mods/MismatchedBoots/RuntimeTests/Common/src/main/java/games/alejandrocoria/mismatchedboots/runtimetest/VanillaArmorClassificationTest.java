@@ -24,6 +24,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.PowderSnowBlock;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +42,7 @@ final class VanillaArmorClassificationTest {
                                          CommonListenerCookie.createInitial(player.getGameProfile(), false));
         player.setGameMode(GameType.SURVIVAL);
         player.giveExperienceLevels(100);
+        leatherSnowBehavior(player);
         var enchantments = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         var unbreaking = enchantments.getOrThrow(Enchantments.UNBREAKING);
         var protection = enchantments.getOrThrow(Enchantments.PROTECTION);
@@ -103,6 +105,57 @@ final class VanillaArmorClassificationTest {
                                      "both orientations: native/mixed Unbreaking III wear=17; non-armor control=6; sources/enchantments unchanged\n"
                                              + "table candidates retain Protection, not chest-primary Thorns; existing source-hook Feather Falling=" + sourceTableHook + "\n"
                                              + "real survival anvil: two-source/one-source acceptance; source-rejecting, bare and conflicting roots rejected; ordinary decisions preserved\n");
+    }
+
+    private static void leatherSnowBehavior(ServerPlayer player) {
+        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+        require(player.canFreeze(), "Unarmored survival control cannot freeze");
+        require(!PowderSnowBlock.canEntityWalkOnPowderSnow(player), "Unarmored control can walk on powder snow");
+        player.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.LEATHER_BOOTS));
+        require(!player.canFreeze(), "Native leather boots no longer prevent freezing");
+        require(PowderSnowBlock.canEntityWalkOnPowderSnow(player), "Native leather boots no longer walk on powder snow");
+
+        var leather = MixedBootsFactory.createPair(new ItemStack(Items.LEATHER_BOOTS), new ItemStack(Items.IRON_BOOTS));
+        var allLeather = MixedBootsFactory.createPair(new ItemStack(Items.LEATHER_BOOTS), new ItemStack(Items.LEATHER_BOOTS));
+        for (var root : List.of(leather.primary(), leather.inverse(), allLeather.primary(), allLeather.inverse())) {
+            var before = root.copy();
+            player.setItemSlot(EquipmentSlot.FEET, root);
+            require(!player.canFreeze() && root.is(ItemTags.FREEZE_IMMUNE_WEARABLES),
+                    "Mixed leather boots did not prevent freezing in both orientations");
+            require(PowderSnowBlock.canEntityWalkOnPowderSnow(player),
+                    "Mixed leather boots cannot walk on powder snow");
+            require(!root.is(ItemTags.FOOT_ARMOR), "Freeze immunity expanded unrelated source classification");
+            require(ItemStack.matches(root, before), "Freeze query changed root components or source provenance");
+        }
+
+        var ordinary = MixedBootsFactory.createPair(new ItemStack(Items.DIAMOND_BOOTS), new ItemStack(Items.IRON_BOOTS));
+        var bare = new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID));
+        var malformed = leather.primary().copyWithCount(2);
+        var foreign = new ItemStack(Items.STICK);
+        foreign.set(ModContent.mixedBootsDataType().orElseThrow(), ModContent.getMixedBootsData(leather.primary()).orElseThrow());
+        for (var root : List.of(ordinary.primary(), ordinary.inverse(), bare, malformed, foreign)) {
+            player.setItemSlot(EquipmentSlot.FEET, root);
+            require(player.canFreeze() && !root.is(ItemTags.FREEZE_IMMUNE_WEARABLES),
+                    "No-source, bare, malformed or foreign root inherited freeze immunity");
+            require(!PowderSnowBlock.canEntityWalkOnPowderSnow(player),
+                    "No-source, bare, malformed or foreign root inherited powder-snow walking");
+        }
+
+        // A freeze-immune item adapted to FEET is not necessarily a leather boot.
+        var freezeOnly = MixedBootsFactory.createPair(feet(new ItemStack(Items.LEATHER_HELMET)), new ItemStack(Items.IRON_BOOTS));
+        player.setItemSlot(EquipmentSlot.FEET, freezeOnly.primary());
+        require(!player.canFreeze() && !PowderSnowBlock.canEntityWalkOnPowderSnow(player),
+                "Freeze immunity alone granted powder-snow walking");
+
+        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+        player.setItemSlot(EquipmentSlot.MAINHAND, leather.primary());
+        require(player.canFreeze(), "Unequipped mixed boots still prevent freezing");
+        require(!PowderSnowBlock.canEntityWalkOnPowderSnow(player), "Held mixed boots granted powder-snow walking");
+        player.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        NetworkAcceptanceFiles.write("vanilla-freezing-report.txt",
+                "native leather and both mixed orientations prevent freezing; no-source/bare/malformed/foreign controls freeze\n"
+                        + "unequipping removes protection; held boots do not protect; source provenance and unrelated tags unchanged\n"
+                        + "one/two leather sources walk on powder snow in both orientations; invalid/held/freeze-only controls do not\n");
     }
 
     private static int wear(ServerPlayer player, ItemStack stack) {

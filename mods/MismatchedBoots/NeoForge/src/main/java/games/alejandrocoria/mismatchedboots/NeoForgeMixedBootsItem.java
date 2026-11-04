@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots;
 
+import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
 import games.alejandrocoria.mismatchedboots.compatibility.aether.AetherTooltipCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.allthemodium.AllTheModiumBoots;
 import games.alejandrocoria.mismatchedboots.compatibility.aquaculture.AquacultureTooltipCompatibility;
@@ -30,6 +31,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -50,7 +52,9 @@ public final class NeoForgeMixedBootsItem extends MixedBootsItem {
     @Override
     public boolean canWalkOnPowderedSnow(ItemStack stack, LivingEntity wearer) {
         // SG's optional slot override is broken for its own boots; use our resolved FEET source view.
-        return super.canWalkOnPowderedSnow(stack, wearer) || SilentGearRecognition.snowWalker(stack)
+        return super.canWalkOnPowderedSnow(stack, wearer)
+                || MixedBootsSources.anySource(stack, source -> source.is(Items.LEATHER_BOOTS))
+                || SilentGearRecognition.snowWalker(stack)
                 || UndergardenBoots.snow(stack) || AllTheModiumBoots.eligible(stack);
     }
 

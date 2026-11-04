@@ -29,6 +29,7 @@ public final class MixedBootsBehaviorTags {
             Identifier.fromNamespaceAndPath("aether_ii", "alkahest_resistant_item"));
     private static final Set<TagKey<Item>> ANY_SOURCE = Set.of(
             ItemTags.PIGLIN_SAFE_ARMOR,
+            ItemTags.FREEZE_IMMUNE_WEARABLES,
             CRYSTALITE_SET,
             SENTIENT_SET,
             SENTIENT_UPGRADE_SET,

@@ -100,6 +100,7 @@ class MixedBootsSourcesTest {
     @Test
     void behaviorTagAllowlistRejectsEveryUnauditedCategory() {
         assertTrue(MixedBootsBehaviorTags.isProjected(ItemTags.PIGLIN_SAFE_ARMOR));
+        assertTrue(MixedBootsBehaviorTags.isProjected(ItemTags.FREEZE_IMMUNE_WEARABLES));
         assertTrue(MixedBootsBehaviorTags.isProjected(betterEndTag("armor_set/crystalite")));
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("sentient_upgrade_set/sentient")));
         assertTrue(MixedBootsBehaviorTags.isProjected(neoVitaeTag("sentient_upgrade_set")));

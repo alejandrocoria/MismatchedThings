@@ -1400,3 +1400,12 @@ NeoForge with `"-Pneoforge_version=26.1.2.99"` and restore the default afterward
 startup/network markers under `build/network-acceptance/`. The temporary
 baseline/candidate probe/datapack were retired; historical evidence remains in
 [the bounded record](../local-docs/VANILLA-ARMOR-TAG-EXPLORATION.md).
+
+The same server gate checks native `player.canFreeze()` with leather and both
+mixed leather/iron orientations. Nonleather, bare, over-stacked and foreign roots
+remain unprotected; unequipping or holding mixed boots does not grant immunity.
+Root/source data and unrelated classification must remain unchanged. The same
+fixture checks native powder-snow walking with one/two leather sources, both
+orientations and the same negative controls. A freeze-immune non-boot source must
+not inherit walking merely from its tag. The separate `vanilla-freezing-report.txt`
+records both rules; no client or screenshot is needed.
