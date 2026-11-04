@@ -35,6 +35,8 @@ README summaries.
 - [Layout](#layout): source sets, packaged-test boundaries and applied Gradle scripts.
 - [Commands](#commands): core suites, packaging, networking and optional geometry controls.
 - [Build-transition acceptance](#build-transition-acceptance-2026-10-26): dated consolidated validation, not an additional suite.
+- [Source-wise smithing pickup/reload](../../MismatchedLeggings/RuntimeTests/README.md#smithing-reload-regression):
+  shared packaged-product regression for both current mods, with real reload/click packets.
 
 ### Dedicated guides
 

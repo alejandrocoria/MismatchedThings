@@ -22,13 +22,7 @@ public final class MixedBootsSmithingPolicy {
 
     public static Optional<Result> evaluate(
             ServerLevel level, ItemStack template, ItemStack root, ItemStack addition) {
-        if (!ModContent.MIXED_BOOTS_ID.equals(BuiltInRegistries.ITEM.getKey(root.getItem()))
-                || root.getCount() != 1 || addition.isEmpty()
-                || ItemStack.validateStrict(root).error().isPresent()) {
-            return Optional.empty();
-        }
-
-        Optional<MixedBootsData> data = ModContent.getMixedBootsData(root);
+        Optional<MixedBootsData> data = validData(root, addition);
         if (data.isEmpty()) {
             return Optional.empty();
         }
@@ -38,10 +32,31 @@ public final class MixedBootsSmithingPolicy {
             return Optional.ofNullable(rootAttempt.result());
         }
 
+        return evaluateSources(level, template, root, addition, data.get());
+    }
+
+    /** Revalidate only a previously source-wise preview, without rerunning root-owned actions. */
+    public static Optional<Result> evaluateSourceWise(
+            ServerLevel level, ItemStack template, ItemStack root, ItemStack addition) {
+        return validData(root, addition).flatMap(data -> evaluateSources(level, template, root, addition, data));
+    }
+
+    private static Optional<MixedBootsData> validData(ItemStack root, ItemStack addition) {
+        if (!ModContent.MIXED_BOOTS_ID.equals(BuiltInRegistries.ITEM.getKey(root.getItem()))
+                || root.getCount() != 1 || addition.isEmpty()
+                || ItemStack.validateStrict(root).error().isPresent()) {
+            return Optional.empty();
+        }
+
+        return ModContent.getMixedBootsData(root);
+    }
+
+    private static Optional<Result> evaluateSources(
+            ServerLevel level, ItemStack template, ItemStack root, ItemStack addition, MixedBootsData data) {
         // Template requirements belong to the loaded recipes, including recipes
         // that require the slot to be empty. Pass the actual input unchanged.
-        Side left = evaluateSource(level, template, data.get().left().source(), addition);
-        Side right = evaluateSource(level, template, data.get().right().source(), addition);
+        Side left = evaluateSource(level, template, data.left().source(), addition);
+        Side right = evaluateSource(level, template, data.right().source(), addition);
         if (left.recipe() == null && right.recipe() == null) {
             return Optional.empty();
         }
@@ -52,7 +67,7 @@ public final class MixedBootsSmithingPolicy {
             RecipeHolder<SmithingRecipe> additional = left.recipe() != null && right.recipe() != null
                                                               && !left.recipe().id().equals(right.recipe().id()) ? right.recipe() : null;
 
-            return Optional.of(new Result(result, primary, additional));
+            return Optional.of(new Result(result, primary, additional, true));
         } catch (IllegalArgumentException exception) {
             Constants.LOG.debug("Rejected mixed boots smithing recomposition: {}", exception.getMessage());
             return Optional.empty();
@@ -83,7 +98,12 @@ public final class MixedBootsSmithingPolicy {
     public record Result(
             ItemStack output,
             RecipeHolder<SmithingRecipe> primaryRecipe,
-            RecipeHolder<SmithingRecipe> additionalRecipe) {
+            RecipeHolder<SmithingRecipe> additionalRecipe,
+            boolean sourceWise) {
+        /** Compatibility-owned results are not revalidated through the source-wise path. */
+        public Result(ItemStack output, RecipeHolder<SmithingRecipe> primaryRecipe, RecipeHolder<SmithingRecipe> additionalRecipe) {
+            this(output, primaryRecipe, additionalRecipe, false);
+        }
     }
 
     private record Side(ItemStack source, RecipeHolder<SmithingRecipe> recipe) {

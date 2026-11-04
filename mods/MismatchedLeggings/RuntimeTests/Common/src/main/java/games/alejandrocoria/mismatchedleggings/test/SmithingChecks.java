@@ -30,6 +30,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SmithingRecipe;
+import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.item.enchantment.Enchantments;
 
@@ -53,6 +54,9 @@ final class SmithingChecks {
         genericTrimTagControl(server);
         invalid(server);
         synthetic(server);
+        if (Boolean.getBoolean("leggings.test.boots") && !Boolean.getBoolean("leggings.test.previousBoots")) {
+            bootsPreviewGuard(server);
+        }
         controls(server);
     }
 
@@ -200,6 +204,58 @@ final class SmithingChecks {
                 var root = MixedLeggingsFactory.createPair(new ItemStack(Items.IRON_LEGGINGS), new ItemStack(Items.GOLDEN_LEGGINGS)).primary();
                 require(!ready(player, ItemStack.EMPTY, root, new ItemStack(Items.AMETHYST_SHARD)).getSlot(3).hasItem(),
                         "No-op, wrong-slot or multi-count source transformation was admitted");
+            }
+        } finally {
+            WorkbenchChecks.applyRecipes(server, original);
+        }
+    }
+
+    private static void bootsPreviewGuard(MinecraftServer server) {
+        var original = List.copyOf(server.getRecipeManager().getRecipes());
+        var first = transform(FIRST, Items.IRON_BOOTS, Items.IRON_BOOTS,
+                DataComponentPatch.builder().set(DataComponents.RARITY, Rarity.RARE).build());
+        var second = transform(SECOND, Items.GOLDEN_BOOTS, Items.GOLDEN_BOOTS,
+                DataComponentPatch.builder().set(DataComponents.RARITY, Rarity.EPIC).build());
+        var rootItem = BootsCoexistence.mixed().getItem();
+        var emptyRoot = new RecipeHolder<SmithingRecipe>(ResourceKey.create(Registries.RECIPE,
+                Identifier.parse("leggings_skeleton_test:empty_boots_root")),
+                new SmithingTransformRecipe(new Recipe.CommonInfo(false), Optional.empty(), Ingredient.of(rootItem),
+                        Optional.of(Ingredient.of(Items.AMETHYST_SHARD)), new ItemStackTemplate(rootItem)) {
+                    @Override
+                    public ItemStack assemble(SmithingRecipeInput input) {
+                        return ItemStack.EMPTY;
+                    }
+                });
+        var dedicated = transform(Identifier.parse("leggings_skeleton_test:direct_boots_root"), rootItem, rootItem,
+                DataComponentPatch.builder().set(DataComponents.CUSTOM_NAME, Component.literal("Dedicated Boots result")).build());
+        try {
+            for (boolean shift : List.of(false, true)) {
+                // A matching native root recipe with an empty result must still permit fallback.
+                install(server, original, first, second, emptyRoot);
+                var player = RepairFixtures.player(server);
+                var root = BootsCoexistence.mixed();
+                var menu = ready(player, ItemStack.EMPTY, root.copy(), new ItemStack(Items.AMETHYST_SHARD, 2));
+                require(menu.getSlot(3).hasItem() && SmithingCredits.count(player, FIRST) == 0
+                                && SmithingCredits.count(player, SECOND) == 0,
+                        "Boots source-wise preview was missing or credited recipes before extraction");
+                paid(player, menu, shift, 0, 1);
+                require(SmithingCredits.count(player, FIRST) == 1 && SmithingCredits.count(player, SECOND) == 1,
+                        "Boots pickup validation lost or duplicated distinct source recipe credits");
+
+                install(server, original, first, second);
+                var stale = ready(player, ItemStack.EMPTY, root.copy(), new ItemStack(Items.AMETHYST_SHARD, 2));
+                // Preserve both source holder objects: only the newly added root priority changes.
+                install(server, original, first, second, dedicated);
+                var taken = shift ? stale.quickMoveStack(player, 3) : stale.getSlot(3).safeTake(1, 1, player);
+                require(taken.isEmpty() && ItemStack.matches(root, stale.getSlot(1).getItem())
+                                && stale.getSlot(2).getItem().getCount() == 2,
+                        "A newly loaded dedicated root recipe did not block the old Boots fallback");
+                var direct = ready(player, ItemStack.EMPTY, root.copy(), new ItemStack(Items.AMETHYST_SHARD, 2));
+                require(direct.getSlot(3).getItem().getHoverName().getString().equals("Dedicated Boots result"),
+                        "Boots source validation replaced a dedicated native root result");
+                paid(player, direct, shift, 0, 1);
+                require(SmithingCredits.count(player, dedicated.id().identifier()) == 1,
+                        "Dedicated native Boots recipe was not credited exactly once");
             }
         } finally {
             WorkbenchChecks.applyRecipes(server, original);

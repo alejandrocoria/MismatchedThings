@@ -343,28 +343,38 @@ public final class SmithingUpgradeGameTests {
     }
 
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
-    public void inPlaceInputEditsDoNotAwardTheStaleSecondaryRecipe(GameTestHelper helper) {
+    public void inPlaceInputEditsInvalidateSourceWisePreview(GameTestHelper helper) {
         for (boolean changeCount : new boolean[]{true, false}) {
-            ServerPlayer player = connectedMockPlayer(helper);
-            SmithingMenu menu = smithing(helper, player, new ItemStack(Items.PAPER, 2),
-                                         GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS),
-                                         new ItemStack(Items.QUARTZ, 2));
-            // Emulate another consumer editing the live stack without a slot-change
-            // notification: the cached secondary attribution must match full inputs.
-            ItemStack template = menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem();
-            if (changeCount) {
-                template.setCount(3);
-            } else {
-                template.set(DataComponents.CUSTOM_NAME, Component.literal("Changed after preview"));
+            for (boolean shift : new boolean[]{false, true}) {
+                ServerPlayer player = connectedMockPlayer(helper);
+                SmithingMenu menu = smithing(helper, player, new ItemStack(Items.PAPER, 2),
+                                             GameTestStacks.mixed(TestContent.COMPONENT_BOOTS, Items.IRON_BOOTS),
+                                             new ItemStack(Items.QUARTZ, 2));
+                // Emulate another consumer editing the live stack without a slot-change
+                // notification: pickup must validate the complete paid-input snapshot.
+                ItemStack template = menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem();
+                if (changeCount) {
+                    template.setCount(3);
+                } else {
+                    template.set(DataComponents.CUSTOM_NAME, Component.literal("Changed after preview"));
+                }
+                ItemStack expectedTemplate = template.copy();
+                ItemStack expectedBase = menu.getSlot(SmithingMenu.BASE_SLOT).getItem().copy();
+                ItemStack taken = shift ? menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT)
+                        : menu.getSlot(SmithingMenu.RESULT_SLOT).safeTake(1, 1, player);
+                helper.assertTrue(taken.isEmpty() && !menu.getSlot(SmithingMenu.RESULT_SLOT).hasItem(),
+                                  "Input edit left a stale source-wise result extractable");
+                helper.assertTrue(ItemStack.matches(expectedTemplate, menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem())
+                                          && ItemStack.matches(expectedBase, menu.getSlot(SmithingMenu.BASE_SLOT).getItem())
+                                          && menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().getCount() == 2,
+                                  "Rejected input-edit preview spent ingredients");
+                helper.assertValueEqual(RecipeCraftedProbe.count(player, COMPONENT_RECIPE), 0,
+                                        "Rejected preview credited its primary recipe");
+                helper.assertValueEqual(RecipeCraftedProbe.count(player, IRON_RECIPE), 0,
+                                        "Rejected preview credited its secondary recipe");
+                helper.assertTrue(!player.getRecipeBook().contains(COMPONENT_RECIPE) && !player.getRecipeBook().contains(IRON_RECIPE),
+                                  "Rejected preview added a recipe to the recipe book");
             }
-            helper.assertTrue(!menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT).isEmpty(),
-                              "Input-edit fixture did not extract its existing preview");
-            helper.assertValueEqual(RecipeCraftedProbe.count(player, COMPONENT_RECIPE), 1,
-                                    "Vanilla primary recipe attribution was suppressed");
-            helper.assertValueEqual(RecipeCraftedProbe.count(player, IRON_RECIPE), 0,
-                                    "Stale secondary attribution ignored an input count/component edit");
-            helper.assertTrue(!player.getRecipeBook().contains(IRON_RECIPE),
-                              "Stale secondary recipe was added to the recipe book");
         }
         helper.succeed();
     }

@@ -42,7 +42,8 @@ final class SmithingClientChecks {
             if (failure != null) {
                 throw new AssertionError("Smithing packet server check failed", failure);
             }
-            require(++ticks < 1800, "Smithing client timed out at stage " + stage + "/" + phase);
+            int limit = Boolean.getBoolean("leggings.test.smithingReload") ? 6000 : 1800;
+            require(++ticks < limit, "Smithing client timed out at stage " + stage + "/" + phase);
             if (client.player == null || client.level == null || client.gameMode == null || client.getSingleplayerServer() == null) {
                 return;
             }
@@ -139,6 +140,10 @@ final class SmithingClientChecks {
                         return;
                     }
                     if (phase == 1) {
+                        if (Boolean.getBoolean("leggings.test.smithingReload")) {
+                            stage = 6;
+                            return;
+                        }
                         SkeletonChecks.passed("client");
                         finished = true;
                         client.stop();
@@ -161,6 +166,13 @@ final class SmithingClientChecks {
                     phase = 1;
                     openingReady = false;
                     stage = 1;
+                }
+                case 6 -> {
+                    if (SmithingReloadChecks.tick(client)) {
+                        SkeletonChecks.passed("client");
+                        finished = true;
+                        client.stop();
+                    }
                 }
                 default -> throw new AssertionError("Unknown smithing client stage");
             }

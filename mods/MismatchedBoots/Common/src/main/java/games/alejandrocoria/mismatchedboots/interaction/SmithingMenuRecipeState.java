@@ -1,5 +1,7 @@
 package games.alejandrocoria.mismatchedboots.interaction;
 
 public interface SmithingMenuRecipeState {
-    void mismatchedboots$clearAdditionalRecipe();
+    void mismatchedboots$clearSmithingState();
+
+    boolean mismatchedboots$validateSmithingPreview();
 }

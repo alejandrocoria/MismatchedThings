@@ -239,6 +239,30 @@ client opens the actual smithing table by packet, compares complete synchronized
 previews and paid outputs, and upgrades then trims that same live result using
 normal and shift pickup. Manual appearance acceptance remains separate.
 
+### Smithing reload regression
+
+Add `-PleggingsSmithingReload=true -PleggingsBoots=true` to `verifySmithing`,
+using current products, not a historical Boots JAR. The isolated
+`smithing-boots-reload` variant extends the normal hidden packet-driven client
+with 24 cases: Boots, Leggings and vanilla equipment; normal/shift result
+clicks; no change, recipe removal, replacement and equivalent-body reload.
+
+Recipes come from a disposable filesystem datapack applied by native resource
+reload while the menu stays open. The fixture verifies actual loaded recipe bodies
+and captures authoritative state after the server handles each result-click
+packet, then waits for the client's slots, cursor and inventory to match that
+authoritative snapshot. Original packs are restored afterward. It does not force preview refresh,
+alter production code, use indev JARs or take screenshots.
+
+Both current mixed products must reject an existing source-wise preview after
+removal, replacement or equivalent-body reload, without spending inputs. No-reload
+positive controls must succeed. Native equipment retains its own behavior and
+is not patched by this guard. The ordinary server profile additionally checks
+Boots' distinct source-recipe credits, fallback beneath a native empty result,
+and newly added dedicated-root priority while preserving source holder identity.
+Root-owned JDT installation and terminal rejection have their own Boots gates;
+this fixture does not claim coverage of arbitrary paid compatibility handlers.
+
 ## Grindstone and bounded XP
 
 ```powershell

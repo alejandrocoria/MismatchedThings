@@ -11,7 +11,8 @@
         "RecoveryBypassProbe",
         "RecoveryFactoryProbe",
         "ServerInteractionAccessor",
-        "SmithingCreditsMixin"
+        "SmithingCreditsMixin",
+        "SmithingReloadPacketProbe"
     ],
     "client": [
         "EquipmentProbeMixin",

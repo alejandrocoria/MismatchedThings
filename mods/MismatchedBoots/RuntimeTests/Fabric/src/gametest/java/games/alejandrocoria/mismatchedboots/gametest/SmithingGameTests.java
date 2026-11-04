@@ -7,7 +7,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.SmithingMenu;
@@ -39,6 +43,8 @@ public final class SmithingGameTests {
     @GameTest(structure = GameTestStacks.EMPTY_STRUCTURE)
     public void trimBothSourcesPreservesRootAndConsumesInputsOnce(GameTestHelper helper) {
         var player = GameTestPlayers.makeMockServerPlayer(helper, net.minecraft.world.level.GameType.CREATIVE);
+        new ServerGamePacketListenerImpl(helper.getLevel().getServer(), new Connection(PacketFlow.SERVERBOUND), player,
+                                         CommonListenerCookie.createInitial(player.getGameProfile(), false));
         ItemStack mixed = GameTestStacks.mixed(Items.IRON_BOOTS, Items.GOLDEN_BOOTS);
         MixedBootsData before = GameTestStacks.data(mixed);
         mixed.setDamageValue(9);
@@ -72,8 +78,6 @@ public final class SmithingGameTests {
 
         ResultContainer resultSlots = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
         helper.assertTrue(resultSlots.getRecipeUsed() != null, "Smithing preview has no primary recipe");
-        // Mock players have no packet connection; skip only the recipe-book award on extraction.
-        resultSlots.setRecipeUsed(null);
         ItemStack taken = menu.quickMoveStack(player, SmithingMenu.RESULT_SLOT);
         assertTrims(helper, taken, true, true);
         helper.assertValueEqual(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().getCount(), 1,
