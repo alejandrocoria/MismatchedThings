@@ -4,8 +4,8 @@
     "tooltip.mismatchedleggings.mixed_leggings.suspended": "Pantalones inactivos: datos guardados no disponibles o incompatibles",
     "tooltip.mismatchedleggings.mixed_leggings.conflicted": "Pantalones inactivos: conflicto en los datos guardados",
     "tooltip.mismatchedleggings.mixed_leggings.quarantined": "Pantalones inactivos: datos ilegibles conservados",
-    "tooltip.mismatchedleggings.mixed_leggings.bare_hint": "Combina dos pantalones en una %s",
+    "tooltip.mismatchedleggings.mixed_leggings.bare_hint": "Combina dos pantalones en una %1$s",
     "tooltip.mismatchedleggings.mixed_leggings.left": "Izquierda:",
     "tooltip.mismatchedleggings.mixed_leggings.right": "Derecha:",
-    "tooltip.mismatchedleggings.mixed_leggings.name_with_natural": "%s (%s)"
+    "tooltip.mismatchedleggings.mixed_leggings.name_with_natural": "%1$s (%2$s)"
 }

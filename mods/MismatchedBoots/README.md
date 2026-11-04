@@ -64,7 +64,7 @@ generically transferred.
 
 The bare registry item has no valid source data, so it is intentionally absent
 from creative tabs. Commands that create a bare stack produce an invalid item
-with a diagnostic tooltip rather than inventing source boots.
+with a diagnostic tooltip and a workbench hint rather than inventing source boots.
 Such a bare stack cannot be equipped through ordinary use, armor slots, or a
 dispenser; valid crafted pairs remain equippable.
 

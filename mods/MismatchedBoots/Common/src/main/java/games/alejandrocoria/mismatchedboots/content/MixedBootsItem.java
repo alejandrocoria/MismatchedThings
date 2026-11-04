@@ -44,6 +44,9 @@ public class MixedBootsItem extends Item {
         if (data == null) {
             tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots.invalid")
                                     .withStyle(ChatFormatting.RED));
+            tooltip.accept(Component.translatable("tooltip.mismatchedboots.mixed_boots.bare_hint",
+                                                  Component.translatable("block.mismatchedthings.mismatched_workbench"))
+                                    .withStyle(ChatFormatting.GRAY));
             return;
         }
 

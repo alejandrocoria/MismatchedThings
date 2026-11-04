@@ -4,8 +4,8 @@
     "tooltip.mismatchedleggings.mixed_leggings.suspended": "Leggings inactive: stored data is unavailable or incompatible",
     "tooltip.mismatchedleggings.mixed_leggings.conflicted": "Leggings inactive: conflicting stored data",
     "tooltip.mismatchedleggings.mixed_leggings.quarantined": "Leggings inactive: unreadable data preserved",
-    "tooltip.mismatchedleggings.mixed_leggings.bare_hint": "Combine two leggings in a %s",
+    "tooltip.mismatchedleggings.mixed_leggings.bare_hint": "Combine two leggings in a %1$s",
     "tooltip.mismatchedleggings.mixed_leggings.left": "Left:",
     "tooltip.mismatchedleggings.mixed_leggings.right": "Right:",
-    "tooltip.mismatchedleggings.mixed_leggings.name_with_natural": "%s (%s)"
+    "tooltip.mismatchedleggings.mixed_leggings.name_with_natural": "%1$s (%2$s)"
 }

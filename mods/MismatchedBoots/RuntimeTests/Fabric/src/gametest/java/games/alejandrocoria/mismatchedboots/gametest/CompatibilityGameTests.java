@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.data.SuspendedBootsData;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
@@ -14,6 +15,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -89,6 +91,8 @@ public final class CompatibilityGameTests {
                 Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
         assertTranslation(helper, invalidTooltip,
                           "tooltip.mismatchedboots.mixed_boots.invalid", "invalid-stack tooltip");
+        assertTranslation(helper, invalidTooltip,
+                          "tooltip.mismatchedboots.mixed_boots.bare_hint", "bare-stack workbench hint");
         helper.assertTrue(indexOfTranslation(invalidTooltip,
                                              "tooltip.mismatchedboots.mixed_boots.left") < 0
                                   && indexOfTranslation(invalidTooltip,
@@ -102,6 +106,22 @@ public final class CompatibilityGameTests {
         ItemStack valid = GameTestStacks.pair(left, right).primary();
         List<Component> validTooltip = valid.getTooltipLines(
                 Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
+        helper.assertTrue(indexOfTranslation(validTooltip,
+                                             "tooltip.mismatchedboots.mixed_boots.bare_hint") < 0,
+                          "Valid boots suggested replacing their source data");
+
+        ItemStack suspended = valid.copy();
+        suspended.set(ModContent.createSuspendedBootsType(),
+                      SuspendedBootsData.of(new CompoundTag(), new CompoundTag(), new CompoundTag()));
+        List<Component> suspendedTooltip = suspended.getTooltipLines(
+                Item.TooltipContext.of(helper.getLevel()), player, TooltipFlag.NORMAL);
+        assertTranslation(helper, suspendedTooltip,
+                          "tooltip.mismatchedboots.mixed_boots.suspended", "suspended-stack tooltip");
+        helper.assertTrue(indexOfTranslation(suspendedTooltip,
+                                             "tooltip.mismatchedboots.mixed_boots.bare_hint") < 0
+                                  && indexOfTranslation(suspendedTooltip,
+                                                        "tooltip.mismatchedboots.mixed_boots.left") < 0,
+                          "Suspended boots exposed sources or an acquisition hint");
         assertTranslation(helper, validTooltip,
                           "tooltip.mismatchedboots.mixed_boots.left", "valid left tooltip");
         assertTranslation(helper, validTooltip,
