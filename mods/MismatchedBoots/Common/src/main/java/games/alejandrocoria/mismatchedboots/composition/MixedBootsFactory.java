@@ -19,14 +19,11 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.enchantment.Repairable;
-import net.minecraft.world.item.equipment.Equippable;
 
 import java.util.List;
 import java.util.Optional;
@@ -105,10 +102,8 @@ public final class MixedBootsFactory {
         repairable.ifPresent(value -> output.set(DataComponents.REPAIRABLE, value));
         output.remove(dataType);
 
-        output.set(DataComponents.MAX_STACK_SIZE, 1);
-        output.set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"));
-        output.set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID);
-        output.set(DataComponents.EQUIPPABLE, projectEquippable(owner, right.source()));
+        MixedBootsStructuralProjection.applyIdentity(output);
+        output.set(DataComponents.EQUIPPABLE, MixedBootsStructuralProjection.projectEquippable(owner, right.source()));
 
         output.remove(DataComponents.MAX_DAMAGE);
         output.remove(DataComponents.DAMAGE);
@@ -135,33 +130,5 @@ public final class MixedBootsFactory {
         }
 
         return output;
-    }
-
-    static Equippable projectEquippable(ItemStack owner, ItemStack companion) {
-        Equippable source = owner.get(DataComponents.EQUIPPABLE);
-        Equippable other = companion.get(DataComponents.EQUIPPABLE);
-        if (source == null || other == null) {
-            throw new IllegalArgumentException("Mixed boots sources are not feet-equippable");
-        }
-
-        var sound = source.equipSound();
-        // Classify the sound, not the item: supports native/inline holders and keeps the chosen holder's range intact.
-        if ("minecraft".equals(sound.value().location().getNamespace())
-                && !"minecraft".equals(other.equipSound().value().location().getNamespace())) {
-            sound = other.equipSound();
-        }
-
-        return new Equippable(
-                EquipmentSlot.FEET,
-                sound,
-                source.assetId(),
-                Optional.empty(),
-                source.allowedEntities(),
-                source.dispensable(),
-                source.swappable(),
-                source.damageOnHurt(),
-                source.equipOnInteract(),
-                source.canBeSheared(),
-                source.shearingSound());
     }
 }

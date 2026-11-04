@@ -12,6 +12,8 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SuspendedBootsItemCodecTest {
     @BeforeAll
@@ -34,11 +37,15 @@ class SuspendedBootsItemCodecTest {
     }
 
     @Test
-    void activeJsonBooleanComponentsReachTheNativeDecoderWithoutTranscoding() {
+    void activeJsonBooleansAndEditedNativeStructureRemainUntouched() {
         var source = new ItemStack(Items.IRON_BOOTS);
         source.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).build());
         var root = source.copy();
         root.set(ModContent.createMixedBootsDataType(), new MixedBootsData(new BootHalf(source), new BootHalf(source)));
+        root.set(DataComponents.ITEM_NAME, Component.literal("Edited native name"));
+        root.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath("fixture", "edited_model"));
+        root.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).setDamageOnHurt(false).build());
+        var before = root.copy();
 
         for (boolean enabled : new boolean[]{false, true}) {
             // A strict foreign boolean codec exposes the wrapper's format conversion independently of loader mixins.
@@ -78,6 +85,7 @@ class SuspendedBootsItemCodecTest {
 
             var decoded = new SuspendedBootsItemCodec(nativeDecoder).codec().parse(JsonOps.INSTANCE, input).getOrThrow();
             assertSame(root, decoded);
+            assertTrue(ItemStack.matches(before, decoded));
         }
     }
 }

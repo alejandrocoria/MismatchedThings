@@ -108,6 +108,8 @@ class MixedBootsFactoryTest {
         ItemStack first = boots(Items.IRON_BOOTS, ownerEquippable);
         var customSound = Holder.direct(SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath("test", "equip"), 32));
         ItemStack second = boots(Items.GOLDEN_BOOTS, Equippable.builder(EquipmentSlot.FEET).setEquipSound(customSound).build());
+        first.set(DataComponents.MAX_STACK_SIZE, 16);
+        second.set(DataComponents.MAX_STACK_SIZE, 32);
         first.set(opaqueType, "alpha");
         second.set(opaqueType, "beta");
         second.set(rightOnlyType, "right-only");
@@ -120,11 +122,13 @@ class MixedBootsFactoryTest {
         ItemStack primary = pair.primary();
         ItemStack inverse = pair.inverse();
 
-        assertEquals(Items.CHAINMAIL_BOOTS, primary.getItem());
-        assertEquals(1, primary.getCount());
-        assertEquals(1, primary.get(DataComponents.MAX_STACK_SIZE));
-        assertEquals(Component.translatable("item.mismatchedboots.mixed_boots"), primary.get(DataComponents.ITEM_NAME));
-        assertEquals(ModContent.MIXED_BOOTS_ID, primary.get(DataComponents.ITEM_MODEL));
+        for (ItemStack root : List.of(primary, inverse)) {
+            assertEquals(Items.CHAINMAIL_BOOTS, root.getItem());
+            assertEquals(1, root.getCount());
+            assertEquals(1, root.get(DataComponents.MAX_STACK_SIZE));
+            assertEquals(Component.translatable("item.mismatchedboots.mixed_boots"), root.get(DataComponents.ITEM_NAME));
+            assertEquals(ModContent.MIXED_BOOTS_ID, root.get(DataComponents.ITEM_MODEL));
+        }
         assertRepairableAccepts(primary, Items.IRON_INGOT, Items.GOLD_INGOT);
         assertRepairableAccepts(inverse, Items.IRON_INGOT, Items.GOLD_INGOT);
 
@@ -153,6 +157,20 @@ class MixedBootsFactoryTest {
         assertEquals("alpha", data.left().source().get(opaqueType));
         assertEquals(Items.GOLDEN_BOOTS, data.right().source().getItem());
         assertEquals("beta", data.right().source().get(opaqueType));
+    }
+
+    @Test
+    void broadDataDiscoveryPreservesEditedStructureAndFixtureComponentTypes() {
+        ItemStack root = create(boots(Items.IRON_BOOTS), boots(Items.GOLDEN_BOOTS)).primary();
+        MixedBootsData data = root.get(mixedDataType);
+        root.set(DataComponents.ITEM_NAME, Component.literal("Edited base name"));
+        root.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath("test", "edited_model"));
+        root.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).setDamageOnHurt(false).build());
+        ItemStack before = root.copy();
+
+        assertEquals(data, ModContent.getMixedBootsData(root).orElseThrow());
+        assertTrue(ModContent.isMixedBoots(root));
+        assertTrue(ItemStack.matches(before, root));
     }
 
     @Test
@@ -593,6 +611,10 @@ class MixedBootsFactoryTest {
         root.set(DataComponents.CUSTOM_NAME, Component.literal("Anvil name"));
         root.set(DataComponents.REPAIR_COST, 13);
         root.setDamageValue(17);
+        root.set(DataComponents.ITEM_NAME, Component.literal("Edited base name"));
+        root.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath("test", "edited_model"));
+        root.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET)
+                .setAsset(EquipmentAssets.GOLD).setDamageOnHurt(false).build());
 
         ItemStack replacement = left.copy();
         replacement.set(opaqueType, "new");
@@ -622,10 +644,13 @@ class MixedBootsFactoryTest {
         assertEquals(Component.literal("Anvil name"), result.get(DataComponents.CUSTOM_NAME));
         assertEquals(13, result.get(DataComponents.REPAIR_COST));
         assertEquals(17, result.getDamageValue());
+        assertEquals(1, result.get(DataComponents.MAX_STACK_SIZE));
+        assertEquals(Component.translatable("item.mismatchedboots.mixed_boots"), result.get(DataComponents.ITEM_NAME));
+        assertEquals(ModContent.MIXED_BOOTS_ID, result.get(DataComponents.ITEM_MODEL));
         assertRepairableAccepts(result, Items.DIAMOND, Items.GOLD_INGOT);
         assertEquals(AttributeComposer.compose(replacement, right, AttributeRuleDefaults.ruleSet()).primary(),
                      result.get(DataComponents.ATTRIBUTE_MODIFIERS));
-        assertEquals(Optional.of(EquipmentAssets.DIAMOND), result.get(DataComponents.EQUIPPABLE).assetId());
+        assertEquals(replacement.get(DataComponents.EQUIPPABLE), result.get(DataComponents.EQUIPPABLE));
         assertEquals("new", result.get(mixedDataType).left().source().get(opaqueType));
         assertTrue(ItemStack.matches(rootBefore, root));
         assertTrue(ItemStack.matches(replacementBefore, replacement));

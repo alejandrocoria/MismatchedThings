@@ -13,7 +13,6 @@ import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairableComposer;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Repairable;
 
@@ -65,10 +64,8 @@ public final class MixedBootsRecomposer {
 
         output.set(DataComponents.ATTRIBUTE_MODIFIERS,
                    AttributeComposer.compose(leftSource, rightSource, rules).primary());
-        output.set(DataComponents.EQUIPPABLE, MixedBootsFactory.projectEquippable(leftSource, rightSource));
-        output.set(DataComponents.MAX_STACK_SIZE, 1);
-        output.set(DataComponents.ITEM_NAME, Component.translatable("item.mismatchedboots.mixed_boots"));
-        output.set(DataComponents.ITEM_MODEL, ModContent.MIXED_BOOTS_ID);
+        output.set(DataComponents.EQUIPPABLE, MixedBootsStructuralProjection.projectEquippable(leftSource, rightSource));
+        MixedBootsStructuralProjection.applyIdentity(output);
         output.remove(DataComponents.REPAIRABLE);
         Optional<Repairable> repairable = RepairableComposer.compose(leftSource, rightSource);
         repairable.ifPresent(value -> output.set(DataComponents.REPAIRABLE, value));
