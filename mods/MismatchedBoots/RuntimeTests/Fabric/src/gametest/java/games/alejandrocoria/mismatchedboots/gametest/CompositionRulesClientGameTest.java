@@ -1,23 +1,18 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.client.network.FabricCompositionRulesClientNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.component.ComponentNumericKind;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
-import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesConfig;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesConfig;
-import games.alejandrocoria.mismatchedboots.network.AttributeRulesPayload;
-import games.alejandrocoria.mismatchedboots.network.ComponentRulesPayload;
+import games.alejandrocoria.mismatchedboots.network.CompositionRules;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesPayload;
 import games.alejandrocoria.mismatchedboots.platform.Services;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
@@ -60,11 +55,11 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
         writeComponentConfig(componentConfigPath);
 
         runConnection(context, AttributePolicy.COMBINE, 6.0);
-        assertDisconnectedDefaults(context);
+        assertDisconnectedState(context);
 
         writeConfig(configPath, "maximum");
         runConnection(context, AttributePolicy.MAXIMUM, 4.0);
-        assertDisconnectedDefaults(context);
+        assertDisconnectedState(context);
 
         writeConfig(configPath, "combine");
     }
@@ -73,11 +68,12 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
             ClientGameTestContext context, AttributePolicy expectedPolicy, double expectedAmount) {
         NetworkTrafficProbe.reset();
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
-            context.waitFor(client -> AttributeRuleState.current()
+            context.waitFor(client -> CompositionRulesClientLifecycle.areRulesSynchronized());
+            context.waitFor(client -> CompositionRulesClientLifecycle.synchronizedRules().attributes()
                                                         .policyFor(Identifier.withDefaultNamespace("movement_speed")) == expectedPolicy);
-            context.waitFor(client -> ComponentRuleState.current().durability() == DurabilityPolicy.SEPARATE
-                    && ComponentRuleState.current().repairCost() == RepairCostPolicy.OWNER);
-            context.waitFor(client -> NetworkTrafficProbe.events().size() == 3);
+            context.waitFor(client -> CompositionRulesClientLifecycle.synchronizedRules().components().durability() == DurabilityPolicy.SEPARATE
+                    && CompositionRulesClientLifecycle.synchronizedRules().components().repairCost() == RepairCostPolicy.OWNER);
+            context.waitFor(client -> NetworkTrafficProbe.events().size() == 2);
             context.waitFor(client -> MismatchedWorkbenchClientRecipes.hasRecipes());
             context.runOnClient(client -> assertHandshake(expectedPolicy));
 
@@ -103,7 +99,7 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
                 }
                 assertComponentResult(serverResult, preview);
                 assertMalformedSnapshotsAreAtomic(
-                        client, AttributeRuleState.current(), ComponentRuleState.current());
+                        client, CompositionRulesClientLifecycle.synchronizedRules());
                 assertHandshake(expectedPolicy);
             });
             assertServerCompositionDuringClientReset(context, singleplayer, expectedPolicy, expectedAmount);
@@ -113,98 +109,71 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
     private static void assertServerCompositionDuringClientReset(
             ClientGameTestContext context, TestSingleplayerContext singleplayer,
             AttributePolicy expectedPolicy, double expectedAmount) {
-        var attributes = AttributeRuleState.current();
-        var components = ComponentRuleState.current();
-        for (int phase = 0; phase < 3; phase++) {
-            int partial = phase;
-            context.runOnClient(client -> {
-                CompositionRulesClientLifecycle.onDisconnected();
-                if (partial == 1) {
-                    AttributeRuleState.install(attributes);
-                }
-                if (partial == 2) {
-                    ComponentRuleState.install(components);
-                }
-                if (CompositionRulesClientLifecycle.areRulesSynchronized()) {
-                    throw new AssertionError("Reset/partial receipt incorrectly reports full readiness");
-                }
-                if (partial == 0) {
-                    var disconnectedPreview = MixedBootsFactory.createPair(
-                            source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0),
-                            AttributeRuleState.current(), ComponentRuleState.current()).primary();
-                    if (attributeAmount(disconnectedPreview) != 3.0) {
-                        throw new AssertionError("Disconnected client preview did not use built-in average");
-                    }
-                }
-            });
-            singleplayer.getServer().runOnServer(server -> {
-                var left = source(Items.LEATHER_BOOTS, 2.0);
-                var right = source(Items.CHAINMAIL_BOOTS, 4.0);
-                var pair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(left, right));
-                if (!pair.isComplete() || attributeAmount(pair.primary()) != expectedAmount) {
-                    throw new AssertionError("Client reset/partial rules changed integrated-server Workbench output");
-                }
-                assertComponentResult(pair.primary(), pair.primary());
-                ItemStack recomposed = MixedBootsRecomposer.recompose(pair.primary(), left, right);
-                if (attributeAmount(recomposed) != expectedAmount) {
-                    throw new AssertionError("Client reset/partial rules changed integrated-server recomposition");
-                }
-                assertComponentResult(pair.primary(), recomposed);
-            });
-        }
-        // Restore through a real handshake so subsequent tests keep production readiness semantics.
+        context.runOnClient(client -> {
+            CompositionRulesClientLifecycle.onDisconnected();
+            var input = new WorkbenchInput(source(Items.LEATHER_BOOTS, 2.0), source(Items.CHAINMAIL_BOOTS, 4.0));
+            if (CompositionRulesClientLifecycle.areRulesSynchronized()
+                    || new MixedBootsWorkbenchRecipe().assemblePreview(input, client.level).isComplete()) {
+                throw new AssertionError("Client preview must be empty while no snapshot is installed");
+            }
+        });
+        singleplayer.getServer().runOnServer(server -> {
+            var left = source(Items.LEATHER_BOOTS, 2.0);
+            var right = source(Items.CHAINMAIL_BOOTS, 4.0);
+            var pair = new MixedBootsWorkbenchRecipe().assemblePair(new WorkbenchInput(left, right));
+            if (!pair.isComplete() || attributeAmount(pair.primary()) != expectedAmount) {
+                throw new AssertionError("Client reset changed integrated-server Workbench output");
+            }
+            assertComponentResult(pair.primary(), pair.primary());
+            ItemStack recomposed = MixedBootsRecomposer.recompose(pair.primary(), left, right);
+            if (attributeAmount(recomposed) != expectedAmount) {
+                throw new AssertionError("Client reset changed integrated-server recomposition");
+            }
+            assertComponentResult(pair.primary(), recomposed);
+        });
+        // Restore through the native handshake, without installing a test-side snapshot.
         NetworkTrafficProbe.reset();
-        context.runOnClient(client -> CompositionRulesClientLifecycle.onConnected());
+        context.runOnClient(client -> FabricCompositionRulesClientNetwork.onConnected());
         context.waitFor(client -> CompositionRulesClientLifecycle.areRulesSynchronized()
-                && NetworkTrafficProbe.events().size() == 3);
+                && NetworkTrafficProbe.events().size() == 2);
         context.runOnClient(client -> assertHandshake(expectedPolicy));
     }
 
     private static void assertHandshake(AttributePolicy expectedPolicy) {
         List<NetworkTrafficProbe.Event> events = NetworkTrafficProbe.events();
-        if (events.size() != 3
+        if (events.size() != 2
                 || !events.get(0).name().equals("client_ready")
-                || !events.get(1).name().equals("attribute_rules")
-                || !events.get(2).name().equals("component_rules")) {
+                || !events.get(1).name().equals("rules")) {
             throw new AssertionError("Unexpected rule synchronization traffic: " + events);
         }
-        if (events.stream().anyMatch(event -> !event.forced())) {
-            throw new AssertionError("Rule synchronization did not use forced sends: " + events);
+
+        CompositionRulesPayload response = (CompositionRulesPayload) events.get(1).payload();
+        if (response == null || !response.rules().equals(CompositionRulesClientLifecycle.synchronizedRules())) {
+            throw new AssertionError("Client rules differ from the complete server snapshot");
+        }
+        var attributes = response.rules().attributes();
+        if (attributes.policyFor(Identifier.withDefaultNamespace("movement_speed")) != expectedPolicy
+                || attributes.policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM) {
+            throw new AssertionError("Server attribute snapshot omitted configured rules: " + attributes);
         }
 
-        AttributeRulesPayload response = (AttributeRulesPayload) events.get(1).payload();
-        if (response == null || !response.rules().equals(AttributeRuleState.current())) {
-            throw new AssertionError("Client attribute rules differ from the complete server snapshot");
-        }
-        if (response.rules().policyFor(Identifier.withDefaultNamespace("movement_speed")) != expectedPolicy
-                || response.rules().policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM) {
-            throw new AssertionError("Server attribute snapshot omitted configured rules: " + response.rules());
-        }
-
-        ComponentRulesPayload componentResponse = (ComponentRulesPayload) events.get(2).payload();
-        var componentRules = componentResponse.rules();
-        if (!componentRules.equals(ComponentRuleState.current())) {
-            throw new AssertionError("Client component rules differ from the complete server snapshot");
-        }
-        if (componentRules.durability() != DurabilityPolicy.SEPARATE
-                || componentRules.repairCost() != RepairCostPolicy.OWNER
+        var components = response.rules().components();
+        if (components.durability() != DurabilityPolicy.SEPARATE
+                || components.repairCost() != RepairCostPolicy.OWNER
                 || !ComponentRule.numeric(ComponentPolicy.AVERAGE, ComponentNumericKind.INT).equals(
-                componentRules.declarations().get(TestContent.NUMERIC_COMPONENT_ID))
+                components.declarations().get(TestContent.NUMERIC_COMPONENT_ID))
                 || !ComponentRule.of(ComponentPolicy.SHARE).equals(
-                componentRules.declarations().get(DORMANT_COMPONENT))
-                || componentRules.components().rules().containsKey(DORMANT_COMPONENT)) {
-            throw new AssertionError("Server component snapshot omitted configured rules: " + componentRules);
+                components.declarations().get(DORMANT_COMPONENT))
+                || components.components().rules().containsKey(DORMANT_COMPONENT)) {
+            throw new AssertionError("Server component snapshot omitted configured rules: " + components);
         }
     }
 
-    private static void assertDisconnectedDefaults(ClientGameTestContext context) {
+    private static void assertDisconnectedState(ClientGameTestContext context) {
         context.waitFor(client -> client.level == null);
         context.runOnClient(client -> {
-            if (AttributeRuleState.current() != AttributeRuleDefaults.ruleSet()) {
-                throw new AssertionError("Disconnect did not restore built-in attribute rules");
-            }
-            if (ComponentRuleState.current() != ComponentRuleDefaults.state()) {
-                throw new AssertionError("Disconnect did not restore built-in component rules");
+            if (CompositionRulesClientLifecycle.synchronizedRules() != null) {
+                throw new AssertionError("Disconnect retained the previous world's rules");
             }
             if (MismatchedWorkbenchClientRecipes.hasRecipes()) {
                 throw new AssertionError("Disconnect retained the previous world's Workbench recipes");
@@ -274,47 +243,37 @@ public final class CompositionRulesClientGameTest implements FabricClientGameTes
     }
 
     private static void assertMalformedSnapshotsAreAtomic(
-            net.minecraft.client.Minecraft client,
-            AttributeRuleSet beforeAttributes,
-            ComponentRules beforeComponents) {
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
-                Unpooled.buffer(), client.level.registryAccess());
-        try {
-            buffer.writeUtf("separate", 16);
-            buffer.writeVarInt(2);
-            buffer.writeUtf("minecraft:armor");
-            buffer.writeUtf("average", 16);
-            buffer.writeUtf("minecraft:armor");
-            buffer.writeUtf("combine", 16);
+            net.minecraft.client.Minecraft client, CompositionRules before) {
+        for (boolean malformedComponents : new boolean[]{false, true}) {
+            RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
+                    Unpooled.buffer(), client.level.registryAccess());
             try {
-                AttributeRulesPayload.STREAM_CODEC.decode(buffer);
-                throw new AssertionError("Malformed duplicate snapshot was accepted");
-            } catch (RuntimeException expected) {
-                if (AttributeRuleState.current() != beforeAttributes) {
-                    throw new AssertionError("Malformed snapshot partially replaced client rules");
+                // A valid first section followed by an invalid second one must not publish either half.
+                buffer.writeUtf("separate", 16);
+                buffer.writeVarInt(malformedComponents ? 0 : 2);
+                if (malformedComponents) {
+                    buffer.writeUtf("separate", 16);
+                    buffer.writeUtf("owner", 16);
+                    buffer.writeVarInt(2);
+                    writeComponentRule(buffer, "minecraft:rarity", "same");
+                    writeComponentRule(buffer, "minecraft:rarity", "owner");
+                } else {
+                    buffer.writeUtf("minecraft:armor");
+                    buffer.writeUtf("average", 16);
+                    buffer.writeUtf("minecraft:armor");
+                    buffer.writeUtf("combine", 16);
                 }
-            }
-        } finally {
-            buffer.release();
-        }
-
-        buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), client.level.registryAccess());
-        try {
-            buffer.writeUtf("separate", 16);
-            buffer.writeUtf("owner", 16);
-            buffer.writeVarInt(2);
-            writeComponentRule(buffer, "minecraft:rarity", "same");
-            writeComponentRule(buffer, "minecraft:rarity", "owner");
-            try {
-                ComponentRulesPayload.STREAM_CODEC.decode(buffer);
-                throw new AssertionError("Malformed duplicate component snapshot was accepted");
-            } catch (RuntimeException expected) {
-                if (ComponentRuleState.current() != beforeComponents) {
-                    throw new AssertionError("Malformed snapshot partially replaced component rules");
+                try {
+                    CompositionRulesClientLifecycle.install(CompositionRulesPayload.STREAM_CODEC.decode(buffer).rules());
+                    throw new AssertionError("Malformed duplicate snapshot was accepted");
+                } catch (RuntimeException expected) {
+                    if (CompositionRulesClientLifecycle.synchronizedRules() != before) {
+                        throw new AssertionError("Malformed snapshot replaced client rules");
+                    }
                 }
+            } finally {
+                buffer.release();
             }
-        } finally {
-            buffer.release();
         }
     }
 

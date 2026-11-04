@@ -49,7 +49,7 @@ class CompositionRulesPayloadTest {
         byte[] encoded = encode(rules);
         CompositionRules decoded = decode(encoded);
 
-        assertArrayEquals(legacySections(rules), encoded);
+        assertArrayEquals(sectionBytes(rules), encoded);
         assertEquals(rules, decoded);
         assertEquals(rules.attributes().rules().keySet().stream().toList(),
                      decoded.attributes().rules().keySet().stream().toList());
@@ -128,7 +128,7 @@ class CompositionRulesPayloadTest {
         byte[] encoded = encode(rules());
         RegistryFriendlyByteBuf attributes = buffer();
         try {
-            AttributeRulesPayload.STREAM_CODEC.encode(attributes, new AttributeRulesPayload(rules().attributes()));
+            AttributeRulesSectionCodec.encode(attributes, rules().attributes());
             assertThrows(RuntimeException.class, () -> decode(Arrays.copyOf(encoded, attributes.readableBytes() - 1)));
             assertThrows(RuntimeException.class, () -> decode(Arrays.copyOf(encoded, encoded.length - 1)));
             assertThrows(DecoderException.class, () -> decode(Arrays.copyOf(encoded, encoded.length + 1)));
@@ -147,7 +147,7 @@ class CompositionRulesPayloadTest {
         }
         CompositionRules rules = new CompositionRules(new AttributeRuleSet(AttributePolicy.SEPARATE, attributes),
                 new ComponentRules(DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER, components, new ComponentRuleSet(Map.of())));
-        byte[] combined = legacySections(rules);
+        byte[] combined = sectionBytes(rules);
         assertTrue(combined.length > CompositionRulesPayload.MAX_PAYLOAD_BYTES);
 
         RegistryFriendlyByteBuf outgoing = buffer();
@@ -176,9 +176,9 @@ class CompositionRulesPayloadTest {
         assertTrue(atLimit.equals(decode(encoded)), "Boundary snapshot did not round-trip intact");
 
         CompositionRules tooLarge = rulesWithWireSize(CompositionRulesPayload.MAX_PAYLOAD_BYTES + 1);
-        assertEquals(CompositionRulesPayload.MAX_PAYLOAD_BYTES + 1, legacySections(tooLarge).length);
+        assertEquals(CompositionRulesPayload.MAX_PAYLOAD_BYTES + 1, sectionBytes(tooLarge).length);
         assertThrows(EncoderException.class, () -> encode(tooLarge));
-        assertThrows(DecoderException.class, () -> decode(legacySections(tooLarge)));
+        assertThrows(DecoderException.class, () -> decode(sectionBytes(tooLarge)));
     }
 
     @Test
@@ -220,7 +220,7 @@ class CompositionRulesPayloadTest {
         ComponentRules components = new ComponentRules(
                 DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER, new ComponentRuleSet(Map.of()));
         CompositionRules base = new CompositionRules(new AttributeRuleSet(AttributePolicy.SEPARATE, attributes), components);
-        int padding = target - legacySections(base).length;
+        int padding = target - sectionBytes(base).length;
         // Both tail lengths use a three-byte UTF length prefix, so padding changes only the actual ID bytes.
         attributes.remove(tail);
         attributes.put(longId("tail", 16_384 + padding), AttributePolicy.AVERAGE);
@@ -234,7 +234,7 @@ class CompositionRulesPayloadTest {
 
     private static void assertBadComponents(Consumer<RegistryFriendlyByteBuf> writer) {
         assertMalformed(buffer -> {
-            AttributeRulesPayload.STREAM_CODEC.encode(buffer, new AttributeRulesPayload(rules().attributes()));
+            AttributeRulesSectionCodec.encode(buffer, rules().attributes());
             writer.accept(buffer);
         });
     }
@@ -274,11 +274,11 @@ class CompositionRulesPayloadTest {
         }
     }
 
-    private static byte[] legacySections(CompositionRules rules) {
+    private static byte[] sectionBytes(CompositionRules rules) {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
-            AttributeRulesPayload.STREAM_CODEC.encode(buffer, new AttributeRulesPayload(rules.attributes()));
-            ComponentRulesPayload.STREAM_CODEC.encode(buffer, new ComponentRulesPayload(rules.components()));
+            AttributeRulesSectionCodec.encode(buffer, rules.attributes());
+            ComponentRulesSectionCodec.encode(buffer, rules.components());
             return bytes(buffer);
         } finally {
             buffer.release();

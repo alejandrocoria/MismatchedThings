@@ -1,17 +1,15 @@
 package games.alejandrocoria.mismatchedboots.network;
 
-import games.alejandrocoria.mismatchedboots.Constants;
 import io.netty.handler.codec.DecoderException;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
 
 public record ClientReadyPayload() implements CustomPacketPayload {
     public static final ClientReadyPayload INSTANCE = new ClientReadyPayload();
     public static final Type<ClientReadyPayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "client_ready"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, ClientReadyPayload> STREAM_CODEC = StreamCodec.of(
+            new Type<>(CompositionRulesProtocol.READY_ID);
+    public static final StreamCodec<FriendlyByteBuf, ClientReadyPayload> STREAM_CODEC = StreamCodec.of(
             (buffer, payload) -> {
             },
             buffer -> {

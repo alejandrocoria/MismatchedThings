@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.network.FabricCompositionRulesNetwork;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization;
@@ -42,6 +43,7 @@ public class MismatchedBootsFabric implements ModInitializer {
             AttributeRulesLifecycle.onServerStopped();
             ComponentRulesLifecycle.onServerStopped();
         });
+        FabricCompositionRulesNetwork.register();
         MismatchedBoots.init();
     }
 }

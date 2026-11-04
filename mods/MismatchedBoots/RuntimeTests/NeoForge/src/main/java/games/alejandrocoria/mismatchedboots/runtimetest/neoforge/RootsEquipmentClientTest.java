@@ -2,9 +2,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.client.render.RootsEquipmentRendering;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
@@ -142,7 +140,7 @@ public final class RootsEquipmentClientTest {
                                                                        .getConstructor(ModelPart.class, ArmorType.class)
                                                                        .newInstance(new ModelPart(List.of(), children), ArmorType.BOOTS);
             var pair = MixedBootsFactory.createPair(new ItemStack(Items.IRON_BOOTS),
-                                                    new ItemStack(Items.GOLDEN_BOOTS), AttributeRuleState.current(), ComponentRuleState.current())
+                                                    new ItemStack(Items.GOLDEN_BOOTS), CompositionRulesClientLifecycle.synchronizedRules().attributes(), CompositionRulesClientLifecycle.synchronizedRules().components())
                                         .primary();
             var marked = renderPair(pair, original, 0.3F).stream()
                                                          .filter(node -> node.submit().model().root() == original.leftLeg)
@@ -181,7 +179,7 @@ public final class RootsEquipmentClientTest {
         ItemStack leftBefore = left.copy();
         ItemStack rightBefore = right.copy();
         ItemStack pair = MixedBootsFactory.createPair(left, right,
-                                                      AttributeRuleState.current(), ComponentRuleState.current()).primary();
+                                                      CompositionRulesClientLifecycle.synchronizedRules().attributes(), CompositionRulesClientLifecycle.synchronizedRules().components()).primary();
         pair.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
         HumanoidModel<?> leftModel = resolve(left, original);
         HumanoidModel<?> rightModel = resolve(right, original);

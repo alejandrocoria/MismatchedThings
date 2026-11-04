@@ -1,9 +1,8 @@
 package games.alejandrocoria.mismatchedboots.gametest;
 
 import com.mojang.serialization.MapCodec;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
@@ -32,7 +31,11 @@ public final class ReversedWorkbenchRecipe implements WorkbenchRecipe {
     @Override
     public WorkbenchResult assemblePreview(
             WorkbenchInput input, Level level) {
-        var pair = MixedBootsFactory.createPair(input.right(), input.left(), AttributeRuleState.current(), ComponentRuleState.current());
+        var rules = CompositionRulesClientLifecycle.synchronizedRules();
+        if (rules == null) {
+            return WorkbenchResult.EMPTY;
+        }
+        var pair = MixedBootsFactory.createPair(input.right(), input.left(), rules.attributes(), rules.components());
         return new WorkbenchResult(pair.primary(), pair.inverse());
     }
 

@@ -3,7 +3,9 @@ package games.alejandrocoria.mismatchedboots.config;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
+import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
+import games.alejandrocoria.mismatchedboots.network.CompositionRules;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +25,13 @@ class AttributeRulesLifecycleTest {
     @AfterEach
     void restoreDefaults() {
         AttributeRulesLifecycle.onServerStopped();
-        AttributeRuleState.restoreDefaults();
+        CompositionRulesClientLifecycle.onDisconnected();
     }
 
     @Test
     void serverLifecycleDoesNotOverwriteClientRules() throws IOException {
         AttributeRuleSet client = new AttributeRuleSet(AttributePolicy.MAXIMUM, java.util.Map.of());
-        AttributeRuleState.install(client);
+        CompositionRulesClientLifecycle.install(new CompositionRules(client, ComponentRuleDefaults.state()));
         Path path = directory.resolve(AttributeRulesConfig.FILE_NAME);
         Files.writeString(path, """
                 [attributes]
@@ -41,14 +43,14 @@ class AttributeRulesLifecycleTest {
 
         AttributeRuleSet loaded = AttributeRulesLifecycle.load(path);
 
-        assertSame(client, AttributeRuleState.current());
+        assertSame(client, CompositionRulesClientLifecycle.synchronizedRules().attributes());
         assertSame(loaded, AttributeRulesLifecycle.serverRules());
         assertEquals(AttributePolicy.COMBINE,
                      loaded.policyFor(Identifier.withDefaultNamespace("armor")));
 
         AttributeRulesLifecycle.onServerStopped();
 
-        assertSame(client, AttributeRuleState.current());
+        assertSame(client, CompositionRulesClientLifecycle.synchronizedRules().attributes());
         assertSame(AttributeRuleDefaults.ruleSet(), AttributeRulesLifecycle.serverRules());
     }
 }

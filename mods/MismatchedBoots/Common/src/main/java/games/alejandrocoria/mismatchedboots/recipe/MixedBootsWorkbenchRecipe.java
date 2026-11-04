@@ -3,12 +3,11 @@ package games.alejandrocoria.mismatchedboots.recipe;
 import com.mojang.serialization.MapCodec;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsPair;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
@@ -78,7 +77,9 @@ public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
     public WorkbenchResult assemblePreview(
             WorkbenchInput input, Level level) {
         // This callback is client preview only. Assembly above retains server policy authority.
-        return new MixedBootsWorkbenchRecipe(AttributeRuleState.current(), ComponentRuleState.current()).assemblePair(input);
+        var rules = CompositionRulesClientLifecycle.synchronizedRules();
+        return rules == null ? WorkbenchResult.EMPTY
+                : new MixedBootsWorkbenchRecipe(rules.attributes(), rules.components()).assemblePair(input);
     }
 
     @Override

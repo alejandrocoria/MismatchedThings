@@ -1,12 +1,11 @@
 package games.alejandrocoria.mismatchedboots.runtimetest;
 
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
@@ -54,8 +53,15 @@ public final class NetworkAcceptanceClientTest {
                 throw new AssertionError("Network acceptance client unexpectedly opened an integrated server");
             }
 
-            var rules = AttributeRuleState.current();
-            var componentRules = ComponentRuleState.current();
+            var snapshot = CompositionRulesClientLifecycle.synchronizedRules();
+            if (snapshot == null) {
+                if (ticks > TIMEOUT_TICKS) {
+                    throw new AssertionError("Client did not receive the complete server rule snapshot");
+                }
+                return;
+            }
+            var rules = snapshot.attributes();
+            var componentRules = snapshot.components();
             if (rules.policyFor(MOVEMENT_SPEED) != AttributePolicy.COMBINE
                     || rules.policyFor(DORMANT_ATTRIBUTE) != AttributePolicy.MINIMUM
                     || componentRules.durability() != DurabilityPolicy.SEPARATE

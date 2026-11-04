@@ -31,6 +31,7 @@ README summaries.
 
 ### Shared setup and validation
 
+- [Rules synchronization](#rules-synchronization): native production snapshots, focused integrated rejoin and dedicated authority controls.
 - [Third-party test artifacts](#third-party-test-artifacts): pinned downloads, caching and fixture isolation.
 - [Layout](#layout): source sets, packaged-test boundaries and applied Gradle scripts.
 - [Commands](#commands): core suites, packaging, networking and optional geometry controls.
@@ -1022,6 +1023,37 @@ These product regressions cover Fabric, not human visual acceptance. The
 adds packaged Fabric/NeoForge .99/.114 checks with Boots alone, Leggings alone,
 both products and unchanged published Boots. It verifies independent contributions
 to Things' single category, including the accepted legacy-category exception.
+
+### Rules synchronization
+
+Boots uses one complete revision-2 composition-rules payload over native Fabric/
+NeoForge transport. The client has no preview rules before receipt or after
+disconnect; server configuration is independent. Common Networking is absent from
+Fabric and retained on NeoForge for JDT. Packaged verification rejects accidental
+Fabric nesting/metadata dependencies and missing/wrong NeoForge backends.
+
+Focused integrated controls, using actual packaged production code:
+
+```powershell
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:runClientGameTest '-PcompositionRulesClientTestOnly=true' --offline --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyRulesSynchronizationIntegrated '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyRulesSynchronizationIntegrated '-Pneoforge_version=26.1.2.114' --offline --console=plain
+```
+
+The Fabric selector narrows only the generated test descriptor to the composition
+GameTest; omit it for the ordinary client suite. It checks exactly one native
+ready/reply pair per handshake, complete/dormant declarations, direct preview
+gating, malformed-packet atomicity, server assembly/recomposition during a client
+reset, and two worlds with changed rules. Its test mixins observe native sends;
+they do not register replacement transport or install successful test-side rules.
+
+NeoForge seeds a disposable flat world, then joins/rejoins it in one hidden/muted
+client process, changing policy between sessions. The fixture compares the actual
+server-created inventory stack with direct/loaded recipe previews and verifies
+disconnect invalidation. Its reports and bounded child logs live under
+`RuntimeTests/NeoForge/build/rules-synchronization/<baseline>/reports/`.
+Neither control loads the old replacement spike. Final viewer arrival-order,
+published-peer rejection and JDT transport checks remain separate acceptance gates.
 
 `verifyLoaderNetworking` orchestrates real connections, prepares isolated
 directories, and checks result markers. Select a pair with

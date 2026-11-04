@@ -1,4 +1,5 @@
 {
+    "disconnect.mismatchedboots.protocol_mismatch": "Mismatched Boots requires compatible network protocols on the client and server. Use matching Boots builds.",
     "item.mismatchedboots.mixed_boots": "Mismatched Boots",
     "tooltip.mismatchedboots.mixed_boots.left": "Left:",
     "tooltip.mismatchedboots.mixed_boots.right": "Right:",

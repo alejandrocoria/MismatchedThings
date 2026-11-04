@@ -5,7 +5,6 @@ import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
@@ -17,7 +16,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.Bootstrap;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -27,10 +25,9 @@ import java.util.LinkedHashMap;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class ComponentRulesPayloadTest {
+class ComponentRulesSectionCodecTest {
     private static final Identifier DORMANT = Identifier.parse("futuremod:dormant_energy");
 
     @BeforeAll
@@ -39,18 +36,13 @@ class ComponentRulesPayloadTest {
         Bootstrap.bootStrap();
     }
 
-    @AfterEach
-    void restoreDefaults() {
-        ComponentRuleState.restoreDefaults();
-    }
-
     @Test
     void codecIsDeterministicAndPreservesCompleteOrderedState() {
         ComponentRules rules = rules();
 
-        byte[] first = encode(new ComponentRulesPayload(rules));
-        byte[] second = encode(new ComponentRulesPayload(rules));
-        ComponentRules decoded = decode(first).rules();
+        byte[] first = encode(rules);
+        byte[] second = encode(rules);
+        ComponentRules decoded = decode(first);
 
         assertArrayEquals(first, second);
         assertEquals(rules, decoded);
@@ -63,7 +55,7 @@ class ComponentRulesPayloadTest {
 
     @Test
     void optionalCharmDefaultSurvivesSynchronizationAsADormantDeclaration() {
-        ComponentRules decoded = decode(encode(new ComponentRulesPayload(ComponentRuleDefaults.state()))).rules();
+        ComponentRules decoded = decode(encode(ComponentRuleDefaults.state()));
         Identifier charms = Identifier.parse("aether_ii:charms");
         assertEquals(ComponentRule.of(ComponentPolicy.OMIT), decoded.declarations().get(charms));
         assertFalse(decoded.components().rules().containsKey(charms));
@@ -73,7 +65,7 @@ class ComponentRulesPayloadTest {
     void wireFormatPreservesAllOrderedFieldsWithoutAVersionField() {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
-            ComponentRulesPayload.STREAM_CODEC.encode(buffer, new ComponentRulesPayload(rules()));
+            ComponentRulesSectionCodec.encode(buffer, rules());
 
             assertEquals("separate", buffer.readUtf(16));
             assertEquals("owner", buffer.readUtf(16));
@@ -166,36 +158,10 @@ class ComponentRulesPayloadTest {
     }
 
     @Test
-    void codecRejectsTruncationAndTrailingData() {
-        byte[] complete = encode(new ComponentRulesPayload(rules()));
+    void codecRejectsTruncation() {
+        byte[] complete = encode(rules());
         assertThrows(RuntimeException.class,
                      () -> decode(Arrays.copyOf(complete, complete.length - 1)));
-
-        RegistryFriendlyByteBuf buffer = buffer();
-        try {
-            ComponentRulesPayload.STREAM_CODEC.encode(buffer, new ComponentRulesPayload(rules()));
-            buffer.writeByte(0);
-            assertThrows(RuntimeException.class, () -> ComponentRulesPayload.STREAM_CODEC.decode(buffer));
-        } finally {
-            buffer.release();
-        }
-    }
-
-    @Test
-    void malformedDecodeCannotPartiallyReplaceInstalledState() {
-        ComponentRules installed = rules();
-        ComponentRuleState.install(installed);
-        RegistryFriendlyByteBuf buffer = buffer();
-        try {
-            writeHeader(buffer, "average", "owner", 2);
-            writeRule(buffer, "minecraft:rarity", "owner", null);
-            writeRule(buffer, "minecraft:rarity", "same", null);
-
-            assertThrows(RuntimeException.class, () -> ComponentRulesPayload.STREAM_CODEC.decode(buffer));
-            assertSame(installed, ComponentRuleState.current());
-        } finally {
-            buffer.release();
-        }
     }
 
     private static ComponentRules rules() {
@@ -215,10 +181,10 @@ class ComponentRulesPayloadTest {
                                   declarations, new ComponentRuleSet(effective));
     }
 
-    private static byte[] encode(ComponentRulesPayload payload) {
+    private static byte[] encode(ComponentRules payload) {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
-            ComponentRulesPayload.STREAM_CODEC.encode(buffer, payload);
+            ComponentRulesSectionCodec.encode(buffer, payload);
             byte[] bytes = new byte[buffer.readableBytes()];
             buffer.getBytes(buffer.readerIndex(), bytes);
             return bytes;
@@ -227,11 +193,11 @@ class ComponentRulesPayloadTest {
         }
     }
 
-    private static ComponentRulesPayload decode(byte[] bytes) {
+    private static ComponentRules decode(byte[] bytes) {
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
                 Unpooled.wrappedBuffer(bytes), builtInRegistryAccess());
         try {
-            return ComponentRulesPayload.STREAM_CODEC.decode(buffer);
+            return ComponentRulesSectionCodec.decode(buffer);
         } finally {
             buffer.release();
         }
@@ -241,7 +207,7 @@ class ComponentRulesPayloadTest {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
             writer.write(buffer);
-            assertThrows(RuntimeException.class, () -> ComponentRulesPayload.STREAM_CODEC.decode(buffer));
+            assertThrows(RuntimeException.class, () -> ComponentRulesSectionCodec.decode(buffer));
         } finally {
             buffer.release();
         }

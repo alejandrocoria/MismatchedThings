@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AttributeRuleDefaultsTest {
@@ -142,19 +141,6 @@ class AttributeRuleDefaultsTest {
         assertEquals(AttributePolicy.AVERAGE, rules.policyFor(id));
         assertThrows(UnsupportedOperationException.class,
                      () -> rules.rules().put(minecraft("luck"), AttributePolicy.COMBINE));
-    }
-
-    @Test
-    void sharedStateInstallsAndRestoresWholeImmutableSnapshots() {
-        AttributeRuleSet custom = new AttributeRuleSet(
-                AttributePolicy.REJECT, Map.of(minecraft("armor"), AttributePolicy.MAXIMUM));
-        try {
-            AttributeRuleState.install(custom);
-            assertSame(custom, AttributeRuleState.current());
-        } finally {
-            AttributeRuleState.restoreDefaults();
-        }
-        assertSame(AttributeRuleDefaults.ruleSet(), AttributeRuleState.current());
     }
 
     private static Identifier minecraft(String path) {

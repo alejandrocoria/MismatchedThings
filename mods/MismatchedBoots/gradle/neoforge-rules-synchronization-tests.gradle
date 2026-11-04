@@ -1,0 +1,87 @@
+// Observe the native production join/rejoin path; the old replacement spike is not on this classpath.
+def modPath = mismatchedModProject.path
+def operations = objects.newInstance(FixtureFileOperations).files
+def product = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
+def markers = layout.buildDirectory.dir("rules-synchronization/${neoforge_version}/reports")
+def root = layout.buildDirectory.dir("run/rulesSynchronization/${neoforge_version}")
+def runBounded = mismatchedModProject.ext.runBoundedGradleTask
+
+['Seed', 'Client'].each { endpoint ->
+    def directory = root.map { it.dir(endpoint) }
+    neoForge.runs.register("rulesSynchronization${endpoint}") {
+        disableIdeRun()
+        gameDirectory = directory.get().asFile
+        systemProperty('mismatchedboots.runtimetest.markers', markers.get().asFile.absolutePath)
+        if (endpoint == 'Seed') {
+            server()
+            programArgument('--nogui')
+            systemProperty('mismatchedboots.runtimetest.integratedRulesSeed', 'true')
+        } else {
+            client()
+            programArgument('--quickPlaySingleplayer')
+            programArgument('rules')
+            systemProperty('mismatchedboots.runtimetest.integratedRules', 'true')
+            systemProperty('mismatchedboots.test.hideClientWindow', 'true')
+            systemProperty('mismatchedboots.runtimetest.dismissWarnings', 'true')
+        }
+        jvmArgument('-Xmx1G')
+    }
+    def prepare = tasks.register("prepareRulesSynchronization${endpoint}") {
+        dependsOn product, tasks.named('jar')
+        doLast {
+            def target = directory.get().asFile
+            operations.delete { delete target }
+            operations.copy { from product; into new File(target, 'mods') }
+            new File(target, 'config').mkdirs()
+            markers.get().asFile.mkdirs()
+            if (endpoint == 'Seed') {
+                new File(target, 'eula.txt').text = 'eula=true\n'
+                new File(target, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-name=rules
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+'''
+            } else {
+                def world = root.get().dir('Seed/rules').asFile
+                if (!new File(world, 'level.dat').isFile()) {
+                    throw new GradleException('Run runRulesSynchronizationSeed first')
+                }
+                operations.copy { from world; into new File(target, 'saves/rules') }
+                new File(target, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+                new File(target, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+                new File(target, 'config/mismatchedboots-attributes.toml').text =
+                        '[attributes]\nfallback = "maximum"\n[attributes."minecraft:armor"]\npolicy = "maximum"\n'
+                new File(target, 'config/mismatchedboots-components.toml').text =
+                        '[durability]\npolicy = "separate"\n[repair_cost]\npolicy = "owner"\n'
+            }
+        }
+    }
+    tasks.named("runRulesSynchronization${endpoint}") { dependsOn prepare }
+}
+
+tasks.register('verifyRulesSynchronizationIntegrated') {
+    group = 'verification'
+    description = 'Checks two packaged native NeoForge rules sessions, server output and disconnect invalidation.'
+    dependsOn product, tasks.named('jar')
+    doLast {
+        def evidence = markers.get().asFile
+        operations.delete { delete evidence }
+        evidence.mkdirs()
+        ['Seed', 'Client'].each { endpoint ->
+            runBounded("${modPath}:RuntimeTests:NeoForge:runRulesSynchronization${endpoint}",
+                    new File(evidence, "${endpoint}-process.log"), 240)
+        }
+        def success = new File(evidence, 'integrated-rules-success.txt')
+        def failure = new File(evidence, 'integrated-rules-failure.txt')
+        def clientLog = new File(evidence, 'Client-process.log')
+        if (!success.isFile() || failure.exists() || clientLog.text.contains('/ERROR]')) {
+            throw new GradleException("Native integrated rules acceptance failed: ${evidence}")
+        }
+        logger.lifecycle(success.text)
+    }
+}

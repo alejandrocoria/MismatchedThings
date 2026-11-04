@@ -54,7 +54,7 @@ def prepareEndpoint = { String loader, String endpoint, int port, File extraMod 
         Files.copy(extraMod.toPath(), new File(mods, extraMod.name).toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
     }
-    new File(config, 'mismatchedboots-attributes.toml').text = '''[attributes]
+    new File(config, 'mismatchedboots-attributes.toml').text = endpoint == 'server' ? '''[attributes]
 fallback = "separate"
 
 [attributes."minecraft:movement_speed"]
@@ -62,6 +62,11 @@ policy = "combine"
 
 [attributes."futuremod:dormant"]
 policy = "minimum"
+''' : '''[attributes]
+fallback = "reject"
+
+[attributes."minecraft:movement_speed"]
+policy = "maximum"
 '''
     new File(config, 'mismatchedboots-components.toml').text = endpoint == 'server' ? '''[durability]
 policy = "separate"

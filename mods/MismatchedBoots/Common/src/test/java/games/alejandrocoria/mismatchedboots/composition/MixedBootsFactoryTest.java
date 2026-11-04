@@ -7,15 +7,15 @@ import com.mojang.serialization.Lifecycle;
 import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
-import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleSet;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.network.CompositionRules;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
 import net.minecraft.SharedConstants;
@@ -396,7 +396,8 @@ class MixedBootsFactoryTest {
                 AttributePolicy.SEPARATE,
                 Map.of(Identifier.withDefaultNamespace("armor"), AttributePolicy.COMBINE));
         // Explicit composition must not accidentally read the unrelated client snapshot.
-        AttributeRuleState.install(new AttributeRuleSet(AttributePolicy.REJECT, Map.of()));
+        CompositionRulesClientLifecycle.install(new CompositionRules(
+                new AttributeRuleSet(AttributePolicy.REJECT, Map.of()), ComponentRuleDefaults.state()));
         try {
             ItemStack iron = boots(Items.IRON_BOOTS);
             iron.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
@@ -426,7 +427,7 @@ class MixedBootsFactoryTest {
                 assertEquals(3.0D, armor.getFirst().modifier().amount());
             }
         } finally {
-            AttributeRuleState.restoreDefaults();
+            CompositionRulesClientLifecycle.onDisconnected();
         }
     }
 
@@ -434,8 +435,8 @@ class MixedBootsFactoryTest {
     void factoryUsesTheExplicitCompleteComponentRuleSnapshot() {
         ComponentRules rules = new ComponentRules(
                 DurabilityPolicy.SEPARATE, RepairCostPolicy.OWNER, ComponentRuleDefaults.ruleSet());
-        ComponentRuleState.install(new ComponentRules(
-                DurabilityPolicy.AVERAGE, RepairCostPolicy.MAXIMUM, ComponentRuleDefaults.ruleSet()));
+        CompositionRulesClientLifecycle.install(new CompositionRules(AttributeRuleDefaults.ruleSet(), new ComponentRules(
+                DurabilityPolicy.AVERAGE, RepairCostPolicy.MAXIMUM, ComponentRuleDefaults.ruleSet())));
         try {
             ItemStack first = boots(Items.IRON_BOOTS);
             ItemStack second = boots(Items.GOLDEN_BOOTS);
@@ -454,7 +455,7 @@ class MixedBootsFactoryTest {
             assertEquals(40, pair.inverse().getDamageValue());
             assertEquals(5, pair.inverse().get(DataComponents.REPAIR_COST));
         } finally {
-            ComponentRuleState.restoreDefaults();
+            CompositionRulesClientLifecycle.onDisconnected();
         }
     }
 

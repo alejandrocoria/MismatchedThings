@@ -55,8 +55,9 @@ gradle.projectsEvaluated {
             def bundledBackends = entries.findAll {
                 it.substring(it.lastIndexOf('/') + 1).startsWith("common-networking-")
             }
-            if (bundledBackends != [expectedBackend]) {
-                throw new GradleException("${artifact} must contain only ${expectedBackend}; found ${bundledBackends}")
+            def expectedBackends = loader == 'neoforge' ? [expectedBackend] : []
+            if (bundledBackends != expectedBackends) {
+                throw new GradleException("${artifact} must contain only ${expectedBackends}; found ${bundledBackends}")
             }
 
             def expectedNightConfig = [
@@ -99,11 +100,14 @@ gradle.projectsEvaluated {
             }
 
             def descriptor = zip.getInputStream(descriptorEntry).getText("UTF-8")
-            if (!descriptor.contains("commonnetworking") || !descriptor.contains(networkingVersion)) {
+            if (loader == 'neoforge' && (!descriptor.contains("commonnetworking") || !descriptor.contains(networkingVersion))) {
                 throw new GradleException("${artifact.name} does not require CommonNetworking ${networkingVersion}")
             }
             if (loader == 'fabric') {
                 def metadata = new groovy.json.JsonSlurper().parseText(descriptor)
+                if (metadata.depends.containsKey('commonnetworking')) {
+                    throw new GradleException("${artifact.name} must not require CommonNetworking on Fabric")
+                }
                 if (metadata.depends['fabric-api'] != ">=${fabricApiMinimum}".toString()) {
                     throw new GradleException("${artifact.name} does not require Fabric API ${fabricApiMinimum}")
                 }
@@ -152,6 +156,13 @@ gradle.projectsEvaluated {
                                              error : loader == 'fabric' ? 'does not require Fabric API'
                                                      : 'must declare NeoForge']
                 ]
+                if (loader == 'fabric') {
+                    cases.remove('missingBackend')
+                    cases.remove('wrongBackend')
+                    cases.unexpectedBackend = [extra: backend, error: 'must contain only']
+                    cases.unexpectedBackendDependency = [addBackendDependency: descriptor,
+                                                         error: 'must not require CommonNetworking']
+                }
                 cases.each { name, control ->
                     File fixture = new File(directory, "${loader}-${name}.jar")
                     def original = new java.util.zip.ZipFile(archive.get().asFile)
@@ -190,6 +201,12 @@ gradle.projectsEvaluated {
                                                 text = text.replace(neoForgeRange, '[1,)')
                                             }
                                             bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+                                        }
+                                        if (entry.name == control.addBackendDependency) {
+                                            def metadata = new groovy.json.JsonSlurper().parseText(
+                                                    new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
+                                            metadata.depends.commonnetworking = ">=" + networkingVersion
+                                            bytes = groovy.json.JsonOutput.toJson(metadata).getBytes(java.nio.charset.StandardCharsets.UTF_8)
                                         }
                                         output.write(bytes)
                                         output.closeEntry()

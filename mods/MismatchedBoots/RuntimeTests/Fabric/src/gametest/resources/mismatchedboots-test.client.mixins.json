@@ -8,11 +8,12 @@
         "BakedQuadClipperProbeMixin",
         "EquipmentLayerRendererMixin",
         "FabricMeshClipperProbeMixin",
-        "FabricNetworkHandlerMixin",
         "GuiGraphicsExtractorProbeMixin",
         "GuiRenderStateMixin",
         "ItemModelResolverProbeMixin",
         "LayerRenderStateTestAccessor",
+        "RulesReadyTrafficMixin",
+        "RulesReplyTrafficMixin",
         "SubmitNodeStorageProbeMixin",
         "WindowVisibilityMixin"
     ],

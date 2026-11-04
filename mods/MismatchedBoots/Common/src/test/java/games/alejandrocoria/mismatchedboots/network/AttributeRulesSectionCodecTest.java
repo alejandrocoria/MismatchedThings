@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class AttributeRulesPayloadTest {
+class AttributeRulesSectionCodecTest {
     @BeforeAll
     static void bootstrap() {
         SharedConstants.tryDetectVersion();
@@ -34,22 +34,22 @@ class AttributeRulesPayloadTest {
     void codecIsDeterministicAndPreservesFallbackAndOrderedEntries() {
         AttributeRuleSet rules = rules();
 
-        byte[] first = encode(new AttributeRulesPayload(rules));
-        byte[] second = encode(new AttributeRulesPayload(rules));
-        AttributeRulesPayload decoded = decode(first);
+        byte[] first = encode(rules);
+        byte[] second = encode(rules);
+        AttributeRuleSet decoded = decode(first);
 
         assertArrayEquals(first, second);
-        assertEquals(rules, decoded.rules());
+        assertEquals(rules, decoded);
         assertEquals(
                 rules.rules().keySet().stream().toList(),
-                decoded.rules().rules().keySet().stream().toList());
+                decoded.rules().keySet().stream().toList());
     }
 
     @Test
     void wireFormatPreservesAllOrderedFieldsWithoutAVersionField() {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
-            AttributeRulesPayload.STREAM_CODEC.encode(buffer, new AttributeRulesPayload(rules()));
+            AttributeRulesSectionCodec.encode(buffer, rules());
 
             assertEquals("separate", buffer.readUtf(16));
             assertEquals(3, buffer.readVarInt());
@@ -88,7 +88,7 @@ class AttributeRulesPayloadTest {
     void codecPreservesEmptyAndMaximumDormantDeclarations() {
         for (int count : new int[]{0, 4_096}) {
             AttributeRuleSet rules = declarations(count);
-            assertEquals(rules, decode(encode(new AttributeRulesPayload(rules))).rules());
+            assertEquals(rules, decode(encode(rules)));
         }
     }
 
@@ -96,8 +96,8 @@ class AttributeRulesPayloadTest {
     void encoderRejectsTooManyDeclarationsBeforeWriting() {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
-            assertThrows(EncoderException.class, () -> AttributeRulesPayload.STREAM_CODEC.encode(
-                    buffer, new AttributeRulesPayload(declarations(4_097))));
+            assertThrows(EncoderException.class, () -> AttributeRulesSectionCodec.encode(
+                    buffer, declarations(4_097)));
             assertEquals(0, buffer.writerIndex(), "Rejected payload must not write a partial header");
         } finally {
             buffer.release();
@@ -132,23 +132,10 @@ class AttributeRulesPayloadTest {
 
     @Test
     void codecRejectsTruncation() {
-        byte[] complete = encode(new AttributeRulesPayload(rules()));
+        byte[] complete = encode(rules());
 
         assertThrows(RuntimeException.class,
                      () -> decode(Arrays.copyOf(complete, complete.length - 1)));
-    }
-
-    @Test
-    void codecRejectsTrailingData() {
-        RegistryFriendlyByteBuf buffer = buffer();
-        try {
-            AttributeRulesPayload.STREAM_CODEC.encode(buffer, new AttributeRulesPayload(rules()));
-            buffer.writeByte(0);
-
-            assertThrows(DecoderException.class, () -> AttributeRulesPayload.STREAM_CODEC.decode(buffer));
-        } finally {
-            buffer.release();
-        }
     }
 
     @Test
@@ -173,10 +160,10 @@ class AttributeRulesPayloadTest {
         return new AttributeRuleSet(AttributePolicy.SEPARATE, rules);
     }
 
-    private static byte[] encode(AttributeRulesPayload payload) {
+    private static byte[] encode(AttributeRuleSet payload) {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
-            AttributeRulesPayload.STREAM_CODEC.encode(buffer, payload);
+            AttributeRulesSectionCodec.encode(buffer, payload);
             byte[] bytes = new byte[buffer.readableBytes()];
             buffer.getBytes(buffer.readerIndex(), bytes);
             return bytes;
@@ -185,11 +172,11 @@ class AttributeRulesPayloadTest {
         }
     }
 
-    private static AttributeRulesPayload decode(byte[] bytes) {
+    private static AttributeRuleSet decode(byte[] bytes) {
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
                 Unpooled.wrappedBuffer(bytes), builtInRegistryAccess());
         try {
-            return AttributeRulesPayload.STREAM_CODEC.decode(buffer);
+            return AttributeRulesSectionCodec.decode(buffer);
         } finally {
             buffer.release();
         }
@@ -199,7 +186,7 @@ class AttributeRulesPayloadTest {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
             writer.write(buffer);
-            assertThrows(DecoderException.class, () -> AttributeRulesPayload.STREAM_CODEC.decode(buffer));
+            assertThrows(DecoderException.class, () -> AttributeRulesSectionCodec.decode(buffer));
         } finally {
             buffer.release();
         }

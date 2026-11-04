@@ -9,6 +9,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchCli
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireLavaRepairCompatibility;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.network.ClientReadyPayload;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,6 +21,7 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.LevelEvent;
 
@@ -46,7 +48,8 @@ public final class MismatchedBootsClientNeoForge {
             JustDireAbilityInput.tick();
         });
         NeoForge.EVENT_BUS.addListener(
-                (ClientPlayerNetworkEvent.LoggingIn login) -> CompositionRulesClientLifecycle.onConnected());
+                (ClientPlayerNetworkEvent.LoggingIn login) -> CompositionRulesClientLifecycle.onConnected(
+                        () -> ClientPacketDistributor.sendToServer(ClientReadyPayload.INSTANCE)));
         NeoForge.EVENT_BUS.addListener(
                 (RecipesReceivedEvent recipes) -> {
                     if (recipes.getRecipeTypes().contains(MismatchedWorkbench.recipeType())) {

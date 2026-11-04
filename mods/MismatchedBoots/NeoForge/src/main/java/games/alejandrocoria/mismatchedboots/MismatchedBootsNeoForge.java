@@ -22,6 +22,7 @@ import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearR
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.network.NeoForgeCompositionRulesNetwork;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -34,6 +35,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 public class MismatchedBootsNeoForge {
     public MismatchedBootsNeoForge(IEventBus eventBus) {
         ModRegistries.register(eventBus);
+        eventBus.addListener(NeoForgeCompositionRulesNetwork::register);
         JustDireRefundCompatibility.initialize(eventBus);
         MismatchedBoots.init();
         IceAndFireTideCompatibility.initialize();

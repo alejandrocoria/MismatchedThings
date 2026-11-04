@@ -33,7 +33,7 @@ public final class MismatchedBootsJeiPlugin implements IModPlugin {
         removeRecipesListener.run();
         runtime = jeiRuntime;
         removeRecipesListener = MismatchedWorkbenchClientRecipes.addListener(this::refreshExample);
-        removeRulesListener = CompositionRulesClientLifecycle.addSynchronizedListener(this::refreshExample);
+        removeRulesListener = CompositionRulesClientLifecycle.addRulesListener(this::refreshExample);
     }
 
     @Override

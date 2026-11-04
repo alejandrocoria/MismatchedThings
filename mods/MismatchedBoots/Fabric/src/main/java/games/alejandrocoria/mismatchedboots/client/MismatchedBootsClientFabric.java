@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.client;
 
+import games.alejandrocoria.mismatchedboots.client.network.FabricCompositionRulesClientNetwork;
 import games.alejandrocoria.mismatchedboots.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
@@ -12,14 +13,13 @@ public class MismatchedBootsClientFabric implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        FabricCompositionRulesClientNetwork.initialize();
         ClientPlayConnectionEvents.JOIN.register(
-                (handler, sender, client) -> CompositionRulesClientLifecycle.onConnected());
+                (handler, sender, client) -> FabricCompositionRulesClientNetwork.onConnected());
         ClientRecipeSynchronizedEvent.EVENT.register((client, recipes) -> {
             recipesSynchronizedSinceVanillaUpdate = true;
             MismatchedWorkbenchClientRecipes.install(recipes.getAllOfType(MismatchedWorkbench.recipeType()));
         });
-        ClientPlayConnectionEvents.DISCONNECT.register(
-                (handler, client) -> CompositionRulesClientLifecycle.onDisconnected());
     }
 
     public static void onVanillaRecipesUpdated() {
@@ -34,6 +34,7 @@ public class MismatchedBootsClientFabric implements ClientModInitializer {
     }
 
     public static void onClientDisconnected() {
+        CompositionRulesClientLifecycle.onDisconnected();
         // Called on the client thread after vanilla drops pending tasks. Fabric's
         // Netty disconnect event cannot notify JEI directly or reliably enqueue it.
         recipesSynchronizedSinceVanillaUpdate = false;

@@ -155,6 +155,23 @@ fabricApi {
 // This project's main source set is intentionally empty; only test mods run here.
 sourceSets.gametest.runtimeClasspath -= sourceSets.main.output
 
+// A focused entry point avoids launching unrelated visual GameTests for a rules-only change.
+def compositionRulesClientTestOnly = providers.gradleProperty('compositionRulesClientTestOnly')
+        .map { it.toBoolean() }.getOrElse(false)
+tasks.named('processGametestResources', ProcessResources) {
+    inputs.property('compositionRulesClientTestOnly', compositionRulesClientTestOnly)
+    doLast {
+        if (compositionRulesClientTestOnly) {
+            def descriptor = new File(destinationDir, 'fabric.mod.json')
+            def metadata = new groovy.json.JsonSlurper().parse(descriptor)
+            metadata.entrypoints['fabric-client-gametest'] = [
+                    'games.alejandrocoria.mismatchedboots.gametest.CompositionRulesClientGameTest'
+            ]
+            descriptor.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+        }
+    }
+}
+
 // Optional real-viewer regressions are separate from the clean core client suite.
 sourceSets {
     viewerCompatibilityTest {

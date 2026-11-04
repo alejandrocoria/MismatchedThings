@@ -3,6 +3,12 @@
 Temporary opt-in experiment, **not production networking or final acceptance**.
 Normal builds do not include these projects. No fixture code enters published JARs.
 
+Historical pre-cutover fixture: block B removed the legacy production types that
+this replacement experiment targets. Do not run it against current production or
+use it to validate the migrated protocol. Maintained positive controls are in the
+[Boots runtime guide](../../mods/MismatchedBoots/RuntimeTests/README.md#rules-synchronization).
+Block C will retire this directory after final passive acceptance is in place.
+
 ```powershell
 .\gradlew.bat -PbootsRulesSpike=true :RulesSpike:Fabric:verifySpike --offline
 .\gradlew.bat -PbootsRulesSpike=true :RulesSpike:NeoForge:verifySpike -Pneoforge_version=26.1.2.99 --offline

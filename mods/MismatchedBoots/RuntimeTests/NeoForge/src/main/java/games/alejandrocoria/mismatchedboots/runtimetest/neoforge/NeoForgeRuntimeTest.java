@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.neoforge;
 
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceClientTest;
+import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceServerTest;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorClientTest;
 import games.alejandrocoria.mismatchedboots.runtimetest.separator.SeparatorObservations;
@@ -13,11 +14,28 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientResourceLoadFinishedEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @Mod("mismatchedboots_runtime_test")
 public final class NeoForgeRuntimeTest {
     public NeoForgeRuntimeTest(IEventBus eventBus) {
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.integratedRulesSeed")) {
+            NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> {
+                NetworkAcceptanceFiles.write("integrated-rules-seed.txt", "ready");
+                event.getServer().halt(false);
+            });
+            return;
+        }
+        if (Boolean.getBoolean("mismatchedboots.runtimetest.integratedRules")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
+                    IntegratedRulesClientTest.serverTick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) {
+                NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) ->
+                        IntegratedRulesClientTest.tick(Minecraft.getInstance()));
+            }
+            return;
+        }
         if (!System.getProperty("mismatchedboots.runtimetest.aquacultureTooltip", "").isEmpty()) {
             if (FMLEnvironment.getDist().isClient()) {
                 NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> AquacultureTooltipClientTest.tick(Minecraft.getInstance()));

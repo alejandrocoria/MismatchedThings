@@ -1,10 +1,12 @@
 package games.alejandrocoria.mismatchedboots.config;
 
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleDefaults;
 import games.alejandrocoria.mismatchedboots.component.ComponentPolicy;
 import games.alejandrocoria.mismatchedboots.component.ComponentRule;
 import games.alejandrocoria.mismatchedboots.component.ComponentRuleDefaults;
-import games.alejandrocoria.mismatchedboots.component.ComponentRuleState;
 import games.alejandrocoria.mismatchedboots.component.ComponentRules;
+import games.alejandrocoria.mismatchedboots.network.CompositionRules;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairCostPolicy;
 import net.minecraft.SharedConstants;
@@ -35,14 +37,14 @@ class ComponentRulesLifecycleTest {
     @AfterEach
     void restoreDefaults() {
         ComponentRulesLifecycle.onServerStopped();
-        ComponentRuleState.restoreDefaults();
+        CompositionRulesClientLifecycle.onDisconnected();
     }
 
     @Test
     void serverLifecycleDoesNotOverwriteClientRules() throws IOException {
         ComponentRules client = new ComponentRules(DurabilityPolicy.SEPARATE,
                                                    RepairCostPolicy.AVERAGE, ComponentRuleDefaults.ruleSet());
-        ComponentRuleState.install(client);
+        CompositionRulesClientLifecycle.install(new CompositionRules(AttributeRuleDefaults.ruleSet(), client));
         Path path = directory.resolve(ComponentRulesConfig.FILE_NAME);
         Files.writeString(path, """
                 [durability]
@@ -60,7 +62,7 @@ class ComponentRulesLifecycleTest {
 
         ComponentRules loaded = ComponentRulesLifecycle.load(path);
 
-        assertSame(client, ComponentRuleState.current());
+        assertSame(client, CompositionRulesClientLifecycle.synchronizedRules().components());
         assertSame(loaded, ComponentRulesLifecycle.serverRules());
         assertEquals(DurabilityPolicy.SEPARATE, loaded.durability());
         assertEquals(RepairCostPolicy.OWNER, loaded.repairCost());
@@ -70,7 +72,7 @@ class ComponentRulesLifecycleTest {
                      loaded.declarations().get(Identifier.parse("futuremod:dormant")));
 
         ComponentRulesLifecycle.onServerStopped();
-        assertSame(client, ComponentRuleState.current());
+        assertSame(client, CompositionRulesClientLifecycle.synchronizedRules().components());
         assertSame(ComponentRuleDefaults.state(), ComponentRulesLifecycle.serverRules());
     }
 }

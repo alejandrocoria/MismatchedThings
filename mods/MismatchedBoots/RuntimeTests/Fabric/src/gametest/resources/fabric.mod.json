@@ -55,7 +55,6 @@
         "fabricloader": "*",
         "fabric-api": "*",
         "minecraft": "*",
-        "mismatchedboots": "*",
-        "commonnetworking": "*"
+        "mismatchedboots": "*"
     }
 }
