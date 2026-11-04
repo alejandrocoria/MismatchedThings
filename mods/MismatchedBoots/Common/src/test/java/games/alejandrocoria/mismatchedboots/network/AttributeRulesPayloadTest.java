@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AttributeRulesPayloadTest {
@@ -45,7 +46,7 @@ class AttributeRulesPayloadTest {
     }
 
     @Test
-    void wireFormatStartsWithTheFallbackAndContainsNoVersionField() {
+    void wireFormatPreservesAllOrderedFieldsWithoutAVersionField() {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
             AttributeRulesPayload.STREAM_CODEC.encode(buffer, new AttributeRulesPayload(rules()));
@@ -53,6 +54,12 @@ class AttributeRulesPayloadTest {
             assertEquals("separate", buffer.readUtf(16));
             assertEquals(3, buffer.readVarInt());
             assertEquals("minecraft:armor", buffer.readUtf());
+            assertEquals("average", buffer.readUtf(16));
+            assertEquals("example:mana", buffer.readUtf());
+            assertEquals("combine", buffer.readUtf(16));
+            assertEquals("missing:future_attribute", buffer.readUtf());
+            assertEquals("reject", buffer.readUtf(16));
+            assertFalse(buffer.isReadable());
         } finally {
             buffer.release();
         }

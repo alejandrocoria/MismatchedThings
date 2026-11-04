@@ -70,7 +70,7 @@ class ComponentRulesPayloadTest {
     }
 
     @Test
-    void wireFormatStartsWithDedicatedPoliciesAndContainsNoVersionField() {
+    void wireFormatPreservesAllOrderedFieldsWithoutAVersionField() {
         RegistryFriendlyByteBuf buffer = buffer();
         try {
             ComponentRulesPayload.STREAM_CODEC.encode(buffer, new ComponentRulesPayload(rules()));
@@ -79,6 +79,16 @@ class ComponentRulesPayloadTest {
             assertEquals("owner", buffer.readUtf(16));
             assertEquals(3, buffer.readVarInt());
             assertEquals("minecraft:enchantable", buffer.readUtf());
+            assertEquals("maximum", buffer.readUtf(16));
+            assertEquals(0, buffer.readUnsignedByte());
+            assertEquals("minecraft:rarity", buffer.readUtf());
+            assertEquals("owner", buffer.readUtf(16));
+            assertEquals(0, buffer.readUnsignedByte());
+            assertEquals("futuremod:dormant_energy", buffer.readUtf());
+            assertEquals("average", buffer.readUtf(16));
+            assertEquals(1, buffer.readUnsignedByte());
+            assertEquals("long", buffer.readUtf(8));
+            assertFalse(buffer.isReadable());
         } finally {
             buffer.release();
         }

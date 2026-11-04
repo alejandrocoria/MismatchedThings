@@ -1,0 +1,78 @@
+package games.alejandrocoria.mismatchedboots.network;
+
+import games.alejandrocoria.mismatchedboots.attribute.AttributePolicy;
+import games.alejandrocoria.mismatchedboots.attribute.AttributeRuleSet;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.Identifier;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/** Section codec only; the enclosing payload owns its size and trailing-data checks. */
+final class AttributeRulesSectionCodec {
+    private static final int MAX_RULE_COUNT = 4_096;
+    private static final int MAX_POLICY_LENGTH = 16;
+    private static final int MAX_IDENTIFIER_LENGTH = 32_767;
+
+    private AttributeRulesSectionCodec() {
+    }
+
+    static void encode(RegistryFriendlyByteBuf buffer, AttributeRuleSet rules) {
+        int count = rules.rules().size();
+        if (count > MAX_RULE_COUNT) {
+            throw new EncoderException("Too many attribute rules: " + count);
+        }
+
+        writePolicy(buffer, rules.fallback());
+        buffer.writeVarInt(count);
+        rules.rules().forEach((id, policy) -> {
+            // Identifier.toString() always writes the explicit, validated namespace:path form.
+            buffer.writeUtf(id.toString(), MAX_IDENTIFIER_LENGTH);
+            writePolicy(buffer, policy);
+        });
+    }
+
+    static AttributeRuleSet decode(RegistryFriendlyByteBuf buffer) {
+        AttributePolicy fallback = readPolicy(buffer);
+        int count = buffer.readVarInt();
+        if (count < 0 || count > MAX_RULE_COUNT) {
+            throw new DecoderException("Invalid attribute-rule count: " + count);
+        }
+
+        Map<Identifier, AttributePolicy> rules = new LinkedHashMap<>();
+        for (int index = 0; index < count; index++) {
+            String serializedId = buffer.readUtf(MAX_IDENTIFIER_LENGTH);
+            int separator = serializedId.indexOf(':');
+            if (separator <= 0 || separator != serializedId.lastIndexOf(':')
+                    || separator == serializedId.length() - 1) {
+                throw new DecoderException("Invalid attribute ID: " + serializedId);
+            }
+
+            Identifier id;
+            try {
+                id = Identifier.parse(serializedId);
+            } catch (RuntimeException exception) {
+                throw new DecoderException("Invalid attribute ID: " + serializedId, exception);
+            }
+
+            AttributePolicy policy = readPolicy(buffer);
+            if (rules.putIfAbsent(id, policy) != null) {
+                throw new DecoderException("Duplicate attribute ID: " + id);
+            }
+        }
+
+        return new AttributeRuleSet(fallback, rules);
+    }
+
+    private static void writePolicy(RegistryFriendlyByteBuf buffer, AttributePolicy policy) {
+        buffer.writeUtf(policy.serializedName(), MAX_POLICY_LENGTH);
+    }
+
+    private static AttributePolicy readPolicy(RegistryFriendlyByteBuf buffer) {
+        String serialized = buffer.readUtf(MAX_POLICY_LENGTH);
+        return AttributePolicy.fromSerializedName(serialized)
+                              .orElseThrow(() -> new DecoderException("Invalid attribute policy: " + serialized));
+    }
+}
