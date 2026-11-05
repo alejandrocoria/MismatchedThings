@@ -3,9 +3,14 @@ package games.alejandrocoria.mismatchedleggings.test;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.betterend.CrystaliteEquipmentCapture;
+import games.alejandrocoria.mismatchedleggings.client.render.EquipmentSources;
 import games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache;
 import games.alejandrocoria.mismatchedleggings.client.render.LeggingsView;
+import games.alejandrocoria.mismatchedleggings.client.render.MixedLeggingsEquipmentRenderer;
+import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
 import games.alejandrocoria.mismatchedleggings.test.render.RecordingSubmits;
+import games.alejandrocoria.mismatchedleggings.test.render.RenderFixture;
 import net.fabricmc.fabric.impl.client.rendering.ArmorRendererRegistryImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -20,11 +25,14 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.Rotations;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.equipment.Equippable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -109,11 +117,116 @@ final class CrystaliteCaptureChecks {
         require(full(source, rig, state, false).nodes.size() == 2,
                 "Unsupported request disabled normal Crystalite capture");
         require(ItemStack.matches(original, source), "Crystalite capture mutated source components");
+        dispatch(source, rig, state);
         previousEpochModel = full(source, rig, state, false).nodes.getFirst().model();
         return "crystalite.nativeGeometryUvNormalsMaterials=true\ncrystalite.complementarySplitAndNativeLeg=true\n"
                 + "crystalite.playerSlimCrouchSeatedBabyStands=true\ncrystalite.visibilityAndSkipDraw=true\n"
                 + "crystalite.queueAndBoundedCache=true\ncrystalite.rootFoilAndRenderFields=true\n"
-                + "crystalite.unsupportedRequestAndNonMutation=true\n";
+                + "crystalite.unsupportedRequestAndNonMutation=true\n"
+                + "crystalite.productionDispatchBothOrientationsAndFoil=true\n"
+                + "crystalite.unknownOwnerNeutralAndAtomicFallback=true\n"
+                + "crystalite.incompatibleProbeEpochDisableAndRecovery=true\n";
+    }
+
+    private static void dispatch(ItemStack source, HumanoidModel<HumanoidRenderState> rig, HumanoidRenderState state) {
+        require(EquippedClient.renderer != null, "Missing live equipment renderer for production dispatch");
+        require(!EquipmentSources.INSTANCE.usesStandardRenderer(source), "Crystalite was falsely marked standard");
+        var iron = new ItemStack(Items.IRON_LEGGINGS);
+        var unknown = new ItemStack(Items.CHAINMAIL_LEGGINGS);
+        require(!EquipmentSources.INSTANCE.usesStandardRenderer(unknown), "Synthetic unknown renderer was not registered");
+        var original = source.copy();
+        for (boolean inverse : List.of(false, true)) {
+            var root = pair(inverse ? iron : source, inverse ? source : iron, false);
+            var before = root.copy();
+            var data = MixedLeggingsStructure.validData(root).orElseThrow();
+            var left = data.left().source().copy();
+            var right = data.right().source().copy();
+            var output = submit(root, rig, state);
+            require(output.nodes.size() == 3 && output.nodes.stream().allMatch(node -> node.model() instanceof LeggingsView<?>)
+                            && output.nodes.stream().filter(node -> node.state() != state).count() == 2,
+                    "Production did not split two Crystalite layers and one standard layer: inverse=" + inverse);
+            require(output.nodes.stream().allMatch(node -> node.light() == LIGHT && node.outline() == OUTLINE),
+                    "Production dispatch changed captured light/outline");
+            require(ItemStack.matches(before, root) && ItemStack.matches(left, data.left().source())
+                            && ItemStack.matches(right, data.right().source()),
+                    "Production dispatch mutated root or source snapshots");
+            root.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+            var foil = submit(root, rig, state);
+            require(foil.nodes.size() == 5
+                            && foil.nodes.stream().filter(node -> node.type() == RenderTypes.armorEntityGlint()).count() == 2,
+                    "Root foil did not reach both production halves");
+        }
+        require(submit(pair(source, source, false), rig, state).nodes.size() == 4,
+                "Double Crystalite did not preserve two native layers per half");
+        var standard = submit(pair(iron, new ItemStack(Items.GOLDEN_LEGGINGS), false), rig, state);
+        require(standard.nodes.size() == 2 && standard.nodes.stream().allMatch(node -> node.model() instanceof LeggingsView<?>),
+                "Known custom dispatch changed standard equipment splitting");
+        var noAsset = source.copy();
+        noAsset.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.LEGS).build());
+        require(submit(pair(noAsset, iron, false), rig, state).nodes.size() == 3,
+                "Standard asset guard incorrectly rejected known custom geometry");
+
+        var owner = submit(pair(source, unknown, false), rig, state);
+        sameSubmissions(owner, full(source, rig, state, false), "Unknown right did not retain safe complete Crystalite owner");
+        var neutral = submit(pair(unknown, unknown, false), rig, state);
+        require(neutral.nodes.size() == 1 && !(neutral.nodes.getFirst().model() instanceof LeggingsView<?>),
+                "Unknown owners did not choose a complete neutral model");
+        sameSubmissions(submit(pair(unknown, source, false), rig, state), neutral,
+                "Unknown left did not choose neutral fallback");
+
+        CrystaliteFailureControls.preparedLeft = 0;
+        CrystaliteFailureControls.rejectedRight = 0;
+        CrystaliteFailureControls.failRightSplit = true;
+        try {
+            sameSubmissions(submit(pair(source, iron, false), rig, state), full(source, rig, state, false),
+                    "Second-half failure leaked partial split output instead of the complete owner");
+            require(CrystaliteFailureControls.preparedLeft == 1 && CrystaliteFailureControls.rejectedRight == 1,
+                    "Atomic-fallback control did not fail after preparing the first half");
+        } finally {
+            CrystaliteFailureControls.failRightSplit = false;
+        }
+
+        var standardOwner = submit(pair(iron, unknown, false), rig, state);
+        LeggingsGeometryCache.clear();
+        CrystaliteFailureControls.probeAttempts = 0;
+        CrystaliteFailureControls.dropProbeCallback = true;
+        try {
+            sameSubmissions(submit(pair(source, iron, false), rig, state), neutral,
+                    "Incompatible material probe did not fall back to neutral");
+            sameSubmissions(submit(pair(iron, source, false), rig, state), standardOwner,
+                    "Incompatible material probe replaced a safe standard owner");
+            require(CrystaliteFailureControls.probeAttempts == 1, "Failed adapter retried its material probe in the same epoch");
+        } finally {
+            CrystaliteFailureControls.dropProbeCallback = false;
+        }
+        LeggingsGeometryCache.clear();
+        require(submit(pair(source, iron, false), rig, state).nodes.size() == 3,
+                "A new resource epoch did not recover Crystalite rendering after an incompatible probe");
+        var bare = new ItemStack(pair(iron, iron, false).getItem());
+        require(submit(bare, rig, state).nodes.isEmpty(), "Bare invalid root entered production capture");
+        require(ItemStack.matches(original, source), "Production checks mutated the native input");
+    }
+
+    private static ItemStack pair(ItemStack left, ItemStack right, boolean foil) {
+        var root = RenderFixture.pair(left, right);
+        root.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+        return root;
+    }
+
+    private static RecordingSubmits submit(ItemStack root, HumanoidModel<HumanoidRenderState> rig, HumanoidRenderState state) {
+        var output = new RecordingSubmits();
+        MixedLeggingsEquipmentRenderer.render(EquippedClient.renderer, rig, state,
+                EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS, root, new PoseStack(), output, LIGHT, OUTLINE);
+        return output;
+    }
+
+    private static void sameSubmissions(RecordingSubmits actual, RecordingSubmits expected, String message) {
+        require(!expected.nodes.isEmpty() && actual.nodes.size() == expected.nodes.size(), message);
+        for (int index = 0; index < expected.nodes.size(); index++) {
+            var a = actual.nodes.get(index);
+            var b = expected.nodes.get(index);
+            require(a.model() == b.model() && a.type() == b.type() && keys(vertices(a)).equals(keys(vertices(b))), message);
+        }
     }
 
     private static void compare(ItemStack source, HumanoidModel<HumanoidRenderState> rig, HumanoidRenderState state) {

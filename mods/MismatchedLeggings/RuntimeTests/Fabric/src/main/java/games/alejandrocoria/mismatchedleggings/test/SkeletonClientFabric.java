@@ -28,10 +28,12 @@ public final class SkeletonClientFabric implements ClientModInitializer {
         if (Boolean.getBoolean("leggings.test.items")) {
             FabricItemChecks.install();
         }
-        if (Boolean.getBoolean("leggings.test.equipped")) {
+        if (Boolean.getBoolean("leggings.test.equipped") || Boolean.getBoolean("leggings.test.betterEnd")) {
             ArmorRenderer.register((pose, collector, stack, state, slot, light, model) -> {
                 throw new AssertionError("Mixed rendering invoked an unsafe custom renderer");
             }, Items.CHAINMAIL_LEGGINGS);
+        }
+        if (Boolean.getBoolean("leggings.test.equipped")) {
             EquippedClient.platformChecks = () -> {
                 var model = new HumanoidModel<HumanoidRenderState>(Minecraft.getInstance().getEntityModels()
                         .bakeLayer(ModelLayers.ZOMBIE_ARMOR.legs()));

@@ -1,7 +1,13 @@
 # Crystalite leggings rendering spike
 
-Opt-in Fabric 26.1.2 / Better End 26.101.4 investigation. No production rendering
-change. The ordinary test fixture does not compile/load this source set.
+Historical Fabric 26.1.2 / Better End 26.101.4 feasibility investigation. The
+ordinary test fixture does not compile/load this source set, and product JARs
+never include it. Production blocks A/B now supersede its capture/dispatch and
+old complete-owner/neutral baselines. Use normal `verifyBetterEnd` for current
+validation; the command below records the original experiment, not a maintained
+post-integration acceptance gate. Block C of the
+[production plan](../../mods/MismatchedLeggings/local-docs/BETTER-END-RENDERING-IMPLEMENTATION.md)
+will remove this prototype and its opt-in wiring.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyBetterEnd -PleggingsCrystaliteSpike=true --offline --console=plain

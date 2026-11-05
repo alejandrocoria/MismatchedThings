@@ -18,6 +18,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EquipmentLayerRenderer.class)
 abstract class EquipmentProbeMixin {
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void leggingsTest$observeBetterEndRenderer(CallbackInfo callback) {
+        if (Boolean.getBoolean("leggings.test.betterEnd")) {
+            EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
+        }
+    }
+
     @Inject(method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;"
             + "Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;"
             + "Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;"

@@ -2,6 +2,10 @@
     "required": true,
     "package": "games.alejandrocoria.mismatchedleggings.test.fabricmixin",
     "compatibilityLevel": "JAVA_25",
-    "client": ["FabricItemResolverProbe"],
+    "client": [
+        "CrystaliteMaterialProbe",
+        "CrystaliteSplitProbe",
+        "FabricItemResolverProbe"
+    ],
     "injectors": { "defaultRequire": 1 }
 }

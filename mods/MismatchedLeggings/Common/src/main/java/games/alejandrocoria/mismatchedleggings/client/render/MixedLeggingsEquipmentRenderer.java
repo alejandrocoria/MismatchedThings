@@ -51,8 +51,13 @@ public final class MixedLeggingsEquipmentRenderer {
                                                 EquipmentClientInfo.LayerType layer, ItemStack source, boolean foil,
                                                 PoseStack pose, int light, int outline) {
         var equippable = source.get(DataComponents.EQUIPPABLE);
-        if (!EquipmentSources.INSTANCE.usesStandardRenderer(source) || equippable == null
-                || equippable.slot() != EquipmentSlot.LEGS || equippable.assetId().isEmpty()) {
+        if (equippable == null || equippable.slot() != EquipmentSlot.LEGS) {
+            return null;
+        }
+        if (!EquipmentSources.INSTANCE.usesStandardRenderer(source)) {
+            return EquipmentSources.INSTANCE.captureCustom(source, model, state, foil, pose, light, outline);
+        }
+        if (equippable.assetId().isEmpty()) {
             return null;
         }
         source.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);

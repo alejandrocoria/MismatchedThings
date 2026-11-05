@@ -178,16 +178,31 @@ visibility, queued pose independence, bounded cache reuse, root foil and render
 fields, unsupported requests and source non-mutation. It repeats these checks
 after a real resource reload, without manually resetting the adapter. Fresh
 `crystalite-capture.txt` and `crystalite-capture-after-reload.txt` are mandatory.
-This block-A fixture does not enable production dispatch or certify its final
-appearance; no screenshot is required here. Evidence uses `betterEnd[-boots]` beneath the usual
+The same fixture now exercises production dispatch for both orientations, double
+Crystalite, root foil and ordinary equipment, including a known custom source
+without a standard equipment asset. An unknown renderer registered during client
+initialization must never be called. Controls check safe complete Crystalite /
+standard owners versus neutral, root/source non-mutation and bare invalid data.
+Fixture-only mixins drop one probe callback and reject the second split after the
+first prepared successfully: the actual guard/fallback must reject partial output,
+disable retries for the failed epoch and recover in a new epoch. The injected
+incompatible probe intentionally produces one adapter warning, not warning spam.
+No production testing switches or upstream-mod renderer mixins are used.
+The two fault-injection mixins use optional string targets so Boots-only profiles
+remain runnable without Leggings; the reduced no-viewer Boots-only gate passed.
+Final appearance acceptance remains in block C; no screenshot is required here.
+Evidence uses `betterEnd[-boots]` beneath the usual
 `build/{reports,verification}/<baseline>/` directories, including `server.ok`,
 `client.ok` and `matrix.ok`. No present-mod NeoForge support is claimed.
 
-The opt-in [Crystalite rendering spike](../../../spikes/leggings-crystalite/README.md)
-uses `-PleggingsCrystaliteSpike=true` on `verifyBetterEnd`. It has a separate
+The historical [Crystalite rendering spike](../../../spikes/leggings-crystalite/README.md)
+used `-PleggingsCrystaliteSpike=true` on `verifyBetterEnd`. It has a separate
 source set, client-only mod and `betterEnd-crystalite-spike` reports, including
 one relevant panel and mandatory fresh before/after-reload proof. It replaces
-that variant's client checks only; normal profiles never load the spike.
+that variant's client checks only; normal profiles never load the spike. Its
+pre-integration fallback baselines are superseded by production block B: use the
+maintained normal profile above, not this historical opt-in command. Block C
+removes the prototype and its wiring after consolidating final acceptance.
 
 ## Optional JEI/REI and user-guide acceptance
 
