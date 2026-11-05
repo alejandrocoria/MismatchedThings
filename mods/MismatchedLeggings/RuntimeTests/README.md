@@ -143,7 +143,7 @@ families/both outputs and the appearance, movement and tooltip review on
 2026-11-04. This does not turn the automatic profiles into a live mob-AI test or
 claim present-mod NeoForge support.
 
-## Better End gameplay compatibility
+## Better End compatibility
 
 The Fabric-only profile resolves Better End, BCLib and WorldWeaver 26.101.4
 through pinned Modrinth Maven coordinates and verifies SHA-256. Downloads use
@@ -175,7 +175,8 @@ The Fabric client also directly exercises the production Crystalite capture
 adapter against native renderer callbacks: geometry/UVs/normals/materials,
 complementary split and selected leg, regular/slim/crouched/seated/baby/posed rigs,
 visibility, queued pose independence, bounded cache reuse, root foil and render
-fields, unsupported requests and source non-mutation. It repeats these checks
+fields, unsupported requests and source non-mutation. Native decorated controls
+also verify that Crystalite still ignores its own trim/foil components. It repeats these checks
 after a real resource reload, without manually resetting the adapter. Fresh
 `crystalite-capture.txt` and `crystalite-capture-after-reload.txt` are mandatory.
 The same fixture now exercises production dispatch for both orientations, double
@@ -190,19 +191,21 @@ incompatible probe intentionally produces one adapter warning, not warning spam.
 No production testing switches or upstream-mod renderer mixins are used.
 The two fault-injection mixins use optional string targets so Boots-only profiles
 remain runnable without Leggings; the reduced no-viewer Boots-only gate passed.
-Final appearance acceptance remains in block C; no screenshot is required here.
+The real armor-layer/deferred renderer draws one bounded native/mixed gallery:
+both orientations, double Crystalite on a posed small stand, native/mixed crouch,
+walking and root foil with a dyed/trimmed ordinary half. The hidden client captures
+`crystalite-panel.png` and `crystalite-panel-after-reload.png`; both fresh nonempty
+panels and both proof files are mandatory before `matrix.ok`. In coexistence,
+the gallery also requires both native Boots halves to render before/after reload.
+These focused screenshots do not add unrelated compatibility pictures. Agent
+inspection is separate from owner visual acceptance.
+The owner confirmed the final Fabric model checklist on 2026-11-05: both
+orientations, movement/posed presentation, root foil and ordinary-side trim,
+resource reload, and unchanged icon/tooltips. The rendering plan is closed;
+this does not certify arbitrary shaders or a present-mod NeoForge integration.
 Evidence uses `betterEnd[-boots]` beneath the usual
 `build/{reports,verification}/<baseline>/` directories, including `server.ok`,
 `client.ok` and `matrix.ok`. No present-mod NeoForge support is claimed.
-
-The historical [Crystalite rendering spike](../../../spikes/leggings-crystalite/README.md)
-used `-PleggingsCrystaliteSpike=true` on `verifyBetterEnd`. It has a separate
-source set, client-only mod and `betterEnd-crystalite-spike` reports, including
-one relevant panel and mandatory fresh before/after-reload proof. It replaces
-that variant's client checks only; normal profiles never load the spike. Its
-pre-integration fallback baselines are superseded by production block B: use the
-maintained normal profile above, not this historical opt-in command. Block C
-removes the prototype and its wiring after consolidating final acceptance.
 
 ## Optional JEI/REI and user-guide acceptance
 

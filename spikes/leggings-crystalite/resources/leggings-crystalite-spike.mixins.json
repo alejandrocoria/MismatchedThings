@@ -1,7 +1,0 @@
-{
-  "required": true,
-  "package": "games.alejandrocoria.crystalitespike.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "client": ["ClientChecksMixin", "MixedRendererMixin"],
-  "injectors": {"defaultRequire": 1}
-}

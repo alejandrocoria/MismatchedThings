@@ -7,7 +7,6 @@ profiles.each { profile ->
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
-    def crystaliteSpike = betterEnd && providers.gradleProperty('leggingsCrystaliteSpike').map { it.toBoolean() }.getOrElse(false)
     def viewers = profile == 'Viewers'
     def bootsOnly = viewers && providers.gradleProperty('leggingsViewerBootsOnly').map { it.toBoolean() }.getOrElse(false)
     def viewer = providers.gradleProperty('leggingsViewer').getOrElse('none')
@@ -30,7 +29,6 @@ profiles.each { profile ->
     def variant = profile.uncapitalize() + (viewers ? "-${viewer}" : '') + (bootsOnly ? '-boots-only' : coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
     if (smithingReload) { variant += '-reload' }
     if (emptyItems) { variant += '-empty-model' }
-    if (crystaliteSpike) { variant += '-crystalite-spike' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -71,13 +69,9 @@ profiles.each { profile ->
                 reports.mkdirs()
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
-                if (betterEnd && !crystaliteSpike && phase == 'client') {
-                    ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt'].each { name ->
-                        new File(reports, name).delete()
-                    }
-                }
-                if (crystaliteSpike && phase == 'client') {
-                    ['crystalite-proof.txt', 'crystalite-after-reload.txt', 'crystalite-panel.png'].each { name ->
+                if (betterEnd && phase == 'client') {
+                    ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt',
+                     'crystalite-panel.png', 'crystalite-panel-after-reload.png'].each { name ->
                         new File(reports, name).delete()
                     }
                 }
@@ -134,6 +128,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 }
                 ideConfigGenerated(false)
                 if ((equipped || items || presentation) && phase == 'client') { programArgs('--width', '1280', '--height', '720') }
+                if (betterEnd && phase == 'client') { programArgs('--width', '1600', '--height', '1000') }
                 runDir(project.relativePath(new File(directory, phase)))
                 property('leggings.test.equipped', equipped.toString())
                 property('leggings.test.advancedNetherite', advancedNetherite.toString())
@@ -222,7 +217,6 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
-                if (crystaliteSpike) { arguments.add('-PleggingsCrystaliteSpike=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -244,14 +238,11 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     }
                 }
             }
-            if (crystaliteSpike && ['crystalite-proof.txt', 'crystalite-after-reload.txt', 'crystalite-panel.png'].any {
+            if (betterEnd && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt',
+                              'crystalite-panel.png', 'crystalite-panel-after-reload.png'].any {
                 def proof = new File(reports, it)
                 !proof.isFile() || proof.length() == 0
-            }) { throw new GradleException('Crystalite spike did not produce fresh before/after-reload evidence and panel') }
-            if (betterEnd && !crystaliteSpike && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt'].any {
-                def proof = new File(reports, it)
-                !proof.isFile() || proof.length() == 0
-            }) { throw new GradleException('Crystalite capture checks did not produce fresh before/after-reload evidence') }
+            }) { throw new GradleException('Crystalite capture checks did not produce fresh before/after-reload evidence and panels') }
             if (previousBoots != null && previousHash != java.security.MessageDigest.getInstance('SHA-256')
                     .digest(previousBoots.bytes).encodeHex().toString()) {
                 throw new GradleException('Previous Boots artifact was modified')

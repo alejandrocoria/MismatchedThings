@@ -117,15 +117,37 @@ final class CrystaliteCaptureChecks {
         require(full(source, rig, state, false).nodes.size() == 2,
                 "Unsupported request disabled normal Crystalite capture");
         require(ItemStack.matches(original, source), "Crystalite capture mutated source components");
+        nativeDecoration(source, rig, state);
         dispatch(source, rig, state);
         previousEpochModel = full(source, rig, state, false).nodes.getFirst().model();
         return "crystalite.nativeGeometryUvNormalsMaterials=true\ncrystalite.complementarySplitAndNativeLeg=true\n"
                 + "crystalite.playerSlimCrouchSeatedBabyStands=true\ncrystalite.visibilityAndSkipDraw=true\n"
                 + "crystalite.queueAndBoundedCache=true\ncrystalite.rootFoilAndRenderFields=true\n"
                 + "crystalite.unsupportedRequestAndNonMutation=true\n"
+                + "crystalite.nativeTrimAndFoilIgnored=true\n"
                 + "crystalite.productionDispatchBothOrientationsAndFoil=true\n"
                 + "crystalite.unknownOwnerNeutralAndAtomicFallback=true\n"
                 + "crystalite.incompatibleProbeEpochDisableAndRecovery=true\n";
+    }
+
+    private static void nativeDecoration(ItemStack source, HumanoidModel<HumanoidRenderState> rig, HumanoidRenderState state) {
+        var decorated = source.copy();
+        decorated.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        decorated.set(DataComponents.TRIM, RenderFixture.sources(2)[0].get(DataComponents.TRIM));
+        var renderer = ArmorRendererRegistryImpl.get(source.getItem());
+        var plainCalls = new NativeCalls();
+        var decoratedCalls = new NativeCalls();
+        rig.setupAnim(state);
+        renderer.render(new PoseStack(), plainCalls, source, state, EquipmentSlot.LEGS, LIGHT, rig);
+        renderer.render(new PoseStack(), decoratedCalls, decorated, state, EquipmentSlot.LEGS, LIGHT, rig);
+        require(plainCalls.calls.size() == 6 && decoratedCalls.calls.size() == 6,
+                "Native Crystalite decoration contract changed");
+        for (int index = 0; index < 6; index++) {
+            var plain = plainCalls.calls.get(index);
+            var modified = decoratedCalls.calls.get(index);
+            require(plain.type() == modified.type() && keys(vertices(plain)).equals(keys(vertices(modified))),
+                    "Native Crystalite now renders trim or foil; revisit the bounded adapter");
+        }
     }
 
     private static void dispatch(ItemStack source, HumanoidModel<HumanoidRenderState> rig, HumanoidRenderState state) {

@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedleggings.tooltip.MixedLeggingsTooltipForma
 import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -32,6 +33,10 @@ final class BetterEndClientChecks {
     private static boolean finished;
     private static CompletableFuture<Void> reload;
     private static long generation;
+    private static BetterEndRenderScene scene;
+    private static int phase;
+    private static volatile boolean captured;
+    private static volatile Throwable captureFailure;
 
     private BetterEndClientChecks() {
     }
@@ -44,20 +49,14 @@ final class BetterEndClientChecks {
             require(++ticks < 2400, "Better End client startup/reload timed out: screen=" + client.screen);
             require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                     "Automated client window became visible");
-            if (client.level == null || client.player == null || client.screen != null || client.getOverlay() != null) {
+            if (captureFailure != null) {
+                throw new AssertionError("Crystalite panel capture failed", captureFailure);
+            }
+            if (phase != 0) {
+                renderingTick(client);
                 return;
             }
-            if (reload != null) {
-                if (!reload.isDone()) {
-                    return;
-                }
-                reload.join();
-                require(LeggingsGeometryCache.statistics().generation() > generation,
-                        "Better End resource reload did not clear the geometry epoch");
-                writeRenderProof("crystalite-capture-after-reload.txt");
-                SkeletonChecks.passed("client");
-                finished = true;
-                client.stop();
+            if (client.level == null || client.player == null || client.screen != null || client.getOverlay() != null) {
                 return;
             }
             var nativeLeggings = BetterEndChecks.nativeStack("crystalite_leggings");
@@ -87,14 +86,60 @@ final class BetterEndClientChecks {
             for (var root : roots) {
                 tooltip(client, root, false);
             }
-            writeRenderProof("crystalite-capture.txt");
-            generation = LeggingsGeometryCache.statistics().generation();
-            reload = client.reloadResourcePacks();
+            scene = new BetterEndRenderScene();
+            client.setScreen(scene);
+            phase = 1;
         } catch (Throwable failure) {
             finished = true;
             SkeletonChecks.failed("client", failure);
             client.stop();
         }
+    }
+
+    private static void renderingTick(Minecraft client) throws Exception {
+        if (client.getOverlay() != null) {
+            return;
+        }
+        if (phase == 1 && scene.frames >= 8) {
+            writeRenderProof("crystalite-capture.txt");
+            generation = LeggingsGeometryCache.statistics().generation();
+            capture(client, "crystalite-panel.png");
+            phase = 2;
+        } else if (phase == 2 && captured) {
+            reload = client.reloadResourcePacks();
+            phase = 3;
+        } else if (phase == 3 && reload.isDone()) {
+            reload.join();
+            require(LeggingsGeometryCache.statistics().generation() > generation,
+                    "Better End resource reload did not clear the geometry epoch");
+            scene = new BetterEndRenderScene();
+            client.setScreen(scene);
+            phase = 4;
+        } else if (phase == 4 && scene.frames >= 8) {
+            writeRenderProof("crystalite-capture-after-reload.txt");
+            capture(client, "crystalite-panel-after-reload.png");
+            phase = 5;
+        } else if (phase == 5 && captured) {
+            SkeletonChecks.passed("client");
+            finished = true;
+            client.stop();
+        }
+    }
+
+    private static void capture(Minecraft client, String name) {
+        if (Boolean.getBoolean("leggings.test.boots")) {
+            require(BootsCoexistence.ironSeen && BootsCoexistence.goldSeen,
+                    "Crystalite gallery did not render both native Boots halves");
+        }
+        captured = false;
+        Screenshot.takeScreenshot(client.getMainRenderTarget(), image -> {
+            try (image) {
+                image.writeToFile(Path.of(System.getProperty("leggings.test.report"), name));
+                captured = true;
+            } catch (Throwable failure) {
+                captureFailure = failure;
+            }
+        });
     }
 
     private static void writeRenderProof(String name) throws IOException {
