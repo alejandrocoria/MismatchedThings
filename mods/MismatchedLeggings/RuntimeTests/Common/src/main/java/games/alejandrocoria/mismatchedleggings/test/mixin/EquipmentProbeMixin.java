@@ -19,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EquipmentLayerRenderer.class)
 abstract class EquipmentProbeMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void leggingsTest$observeBetterEndRenderer(CallbackInfo callback) {
-        if (Boolean.getBoolean("leggings.test.betterEnd")) {
+    private void leggingsTest$observeNativeRenderer(CallbackInfo callback) {
+        if (Boolean.getBoolean("leggings.test.betterEnd") || Boolean.getBoolean("leggings.test.createFly")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }
     }

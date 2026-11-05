@@ -162,7 +162,9 @@ dimensions and independent coexistence with current mixed Boots. The dedicated
 endpoint additionally exercises native Full Stealth, mob target/attacker clearing
 and the real Belt passenger gate, distinct from its full-set transport helper.
 No original feet/legs anchor is required, and the native effect implementations
-are not replaced. These gameplay/tooltip checks take no screenshots.
+are not replaced. A real smithing transaction additionally compares native and
+mixed Cardboard trim results in both orientations, including output extraction
+and ingredient payment; it does not require the excluded Arts and Crafts award.
 
 The client also compares native and source-local descriptions in normal/Shift
 and advanced modes with Create's tooltip config on/off/on, including both mixed
@@ -173,15 +175,33 @@ Cardboard Leggings. Controlled test-only window-key input feeds the real
 `Minecraft.hasShiftDown()` and native modifier, following the same input boundary
 as Fabric client GameTests; it never substitutes Create's description output.
 
+Presentation uses a focused Cardboard gallery, not the unrelated general render
+matrix: native/mixed ordinary and trimmed leggings, both orientations, walking/
+crouching, native full-set boxes, current mixed feet when present, root foil,
+GUI icons and native hand rendering. Assertions compare native equipment
+materials and Create trim sprites, require split views with the correct leg,
+resolve item contexts and exercise native box/overlay consumers. A real resource
+reload must replace the native renderer and clear the geometry epoch before
+repeating those checks. Clients remain early-hidden and muted.
+
+Fresh `cardboard-render{,-after-reload}.txt` and
+`cardboard-panel{,-after-reload}.png` reports are required before `matrix.ok` can
+be written. Only these integration-specific panels are captured; owner gameplay/
+visual review remains separate from the automated assertions and panel inspection.
+
 Evidence uses `createFly[-boots]` beneath the usual
 `build/{reports,verification}/<fabric-loader>/` directories (`server.ok`,
 `client.ok`, `matrix.ok` or failure traces). Plain `verifySkeleton` checks
 optional absence; packaging checks Fabric-only mixin ownership, no required
 Create dependency and no bundled Create classes. Loader-local unit tests cover
 the required API/semantic anchor without fingerprinting unrelated mixin code.
-Final visual acceptance belongs to the later presentation block; this profile
-does not certify it. Fuel inheritance and Arts and
+The profile does not substitute for owner acceptance. Fuel inheritance and Arts and
 Crafts on mixed smithing outputs are excluded from the initial integration.
+
+The owner confirmed the separate Fabric item/equipped, movement, native/mixed
+disguise, reload, tooltip/config and trim-smithing checklist on 2026-11-05,
+closing this bounded integration. This does not extend present-mod support to
+NeoForge or other Create distributions/versions.
 
 ## Better End compatibility
 

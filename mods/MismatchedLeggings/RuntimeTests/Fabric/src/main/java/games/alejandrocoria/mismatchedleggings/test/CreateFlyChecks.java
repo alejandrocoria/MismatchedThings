@@ -51,6 +51,7 @@ final class CreateFlyChecks {
             var player = RepairFixtures.player(server);
             equippedChecks(player);
             serverConsumers(player);
+            smithing(player);
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
@@ -192,6 +193,32 @@ final class CreateFlyChecks {
             level.setBlockAndUpdate(position, oldBlock);
             clear(player);
         }
+    }
+
+    private static void smithing(ServerPlayer player) {
+        var source = AllItems.CARDBOARD_LEGGINGS.getDefaultInstance();
+        var nativeMenu = SmithingChecks.ready(player, new ItemStack(Items.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE),
+                source, new ItemStack(Items.DIAMOND));
+        var nativeTrim = nativeMenu.getSlot(3).getItem().get(DataComponents.TRIM);
+        require(nativeTrim != null, "Native Cardboard trim control produced no result");
+        var pair = MixedLeggingsFactory.createPair(source, new ItemStack(Items.GOLDEN_LEGGINGS));
+        for (var root : List.of(pair.primary(), pair.inverse())) {
+            var before = root.copy();
+            var menu = SmithingChecks.ready(player, new ItemStack(Items.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE),
+                    root.copy(), new ItemStack(Items.DIAMOND));
+            var preview = menu.getSlot(3).getItem().copy();
+            var data = MixedLeggingsStructure.validData(preview).orElseThrow();
+            require(!preview.has(DataComponents.TRIM)
+                            && nativeTrim.equals(data.left().source().get(DataComponents.TRIM))
+                            && nativeTrim.equals(data.right().source().get(DataComponents.TRIM)),
+                    "Real smithing lost native trims or applied only a root decoration");
+            var taken = menu.getSlot(3).safeTake(1, 1, player);
+            require(ItemStack.matches(preview, taken) && !menu.getSlot(0).hasItem()
+                            && !menu.getSlot(1).hasItem() && !menu.getSlot(2).hasItem(),
+                    "Cardboard trim extraction/payment disagreed with its preview");
+            require(ItemStack.matches(before, root), "Smithing mutated the original provenance");
+        }
+        player.getInventory().clearContent();
     }
 
     private static void mobTarget(ServerPlayer wearer, boolean cleared) {
