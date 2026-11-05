@@ -320,6 +320,10 @@ recreate resource wallets from source snapshots. No-op or invalid source results
 do not count as changes. Removed/replaced recipes invalidate unpaid source-wise
 previews, and each contributing distinct recipe is credited only on extraction.
 
+Enchantments newly granted by a source upgrade also reach the live pair, without
+restoring old source enchantments removed from the root. Repeated grants keep the
+higher granted/live level rather than applying the composition-time level bonus.
+
 ## Runs and tests
 
 Import the root Gradle project in IntelliJ. The four product-named configurations

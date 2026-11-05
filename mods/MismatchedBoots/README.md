@@ -50,6 +50,10 @@ addition for the mixed result. Combining two mixed pairs in an anvil or
 grindstone remains unsupported, as do opaque smithing side effects outside the
 assembled item's identity and components.
 
+Enchantments newly granted by a source upgrade also reach the live pair, without
+restoring old source enchantments removed from the root. Repeated grants keep the
+higher granted/live level rather than applying the composition-time level bonus.
+
 ## Rendering and compatibility
 
 Item views display both source pairs side by side. Equipped standard humanoid

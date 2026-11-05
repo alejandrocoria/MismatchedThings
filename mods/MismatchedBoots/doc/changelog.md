@@ -4,6 +4,7 @@
 * Fixed: Mixed boots could still be taken from an outdated source-wise smithing preview after recipes were reloaded.
 * Fixed: Mixed boots could appear incomplete or invisible when a source item model was empty.
 * Fixed: Mixed boots with a leather source did not protect against freezing or allow walking on powder snow.
+* Fixed: Upgrading mixed boots to Fireruby did not grant Ruby Fire.
 
 ${added_compatibility}
 

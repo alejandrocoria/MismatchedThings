@@ -1,0 +1,5 @@
+gradle.afterProject { project ->
+    if (project.path == ':MismatchedLeggings:RuntimeTests:Fabric') {
+        project.apply from: new File(gradle.startParameter.currentDir, 'spikes/leggings-betternether/probe.gradle')
+    }
+}

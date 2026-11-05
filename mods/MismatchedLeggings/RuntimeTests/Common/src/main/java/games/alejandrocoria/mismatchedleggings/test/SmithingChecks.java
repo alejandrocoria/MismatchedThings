@@ -33,6 +33,7 @@ import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -54,8 +55,10 @@ final class SmithingChecks {
         genericTrimTagControl(server);
         invalid(server);
         synthetic(server);
+        enchantmentGrants(server, false);
         if (Boolean.getBoolean("leggings.test.boots") && !Boolean.getBoolean("leggings.test.previousBoots")) {
             bootsPreviewGuard(server);
+            enchantmentGrants(server, true);
         }
         controls(server);
     }
@@ -260,6 +263,66 @@ final class SmithingChecks {
         } finally {
             WorkbenchChecks.applyRecipes(server, original);
         }
+    }
+
+    private static void enchantmentGrants(MinecraftServer server, boolean boots) {
+        var enchantments = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        var protection = enchantments.getOrThrow(Enchantments.PROTECTION);
+        var unbreaking = enchantments.getOrThrow(Enchantments.UNBREAKING);
+        var featherFalling = enchantments.getOrThrow(Enchantments.FEATHER_FALLING);
+        var mending = enchantments.getOrThrow(Enchantments.MENDING);
+        var binding = enchantments.getOrThrow(Enchantments.BINDING_CURSE);
+        var iron = boots ? Items.IRON_BOOTS : Items.IRON_LEGGINGS;
+        var gold = boots ? Items.GOLDEN_BOOTS : Items.GOLDEN_LEGGINGS;
+        var firstEnchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        firstEnchantments.set(protection, 4);
+        firstEnchantments.set(mending, 1);
+        firstEnchantments.set(unbreaking, 1);
+        var secondEnchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        secondEnchantments.set(mending, 1);
+        secondEnchantments.set(featherFalling, 2);
+        secondEnchantments.set(binding, 1);
+        var original = List.copyOf(server.getRecipeManager().getRecipes());
+        try {
+            install(server, original,
+                    transform(FIRST, iron, iron, DataComponentPatch.builder()
+                            .set(DataComponents.ENCHANTMENTS, firstEnchantments.toImmutable()).build()),
+                    transform(SECOND, gold, gold, DataComponentPatch.builder()
+                            .set(DataComponents.ENCHANTMENTS, secondEnchantments.toImmutable()).build()));
+            var source = new ItemStack(iron);
+            source.enchant(protection, 4);
+            var other = new ItemStack(gold);
+            var pair = boots ? BootsCoexistence.pair(source, other) : leggingsPair(source, other);
+            for (int orientation = 0; orientation < pair.size(); orientation++) {
+                var root = decorate(server, pair.get(orientation));
+                // Remove inherited Protection, but retain unrelated live enchants at stronger levels.
+                var live = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+                live.set(unbreaking, 3);
+                live.set(featherFalling, 4);
+                root.set(DataComponents.ENCHANTMENTS, live.toImmutable());
+                var before = root.copy();
+                var player = RepairFixtures.player(server);
+                var menu = ready(player, ItemStack.EMPTY, root, new ItemStack(Items.AMETHYST_SHARD, 2));
+                var output = menu.getSlot(3).getItem();
+                var result = output.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+                require(result.getLevel(mending) == 1 && result.getLevel(binding) == 1 && result.getLevel(protection) == 0
+                                && result.getLevel(unbreaking) == 3 && result.getLevel(featherFalling) == 4,
+                        "Native grants were lost, duplicated, downgraded or revived removed source enchantments; boots=" + boots);
+                require(output.get(DataComponents.CUSTOM_NAME).equals(before.get(DataComponents.CUSTOM_NAME))
+                                && output.getDamageValue() == before.getDamageValue()
+                                && output.get(DataComponents.REPAIR_COST).equals(before.get(DataComponents.REPAIR_COST))
+                                && output.get(CompositionFixture.CHARGE).equals(123L)
+                                && ItemStack.matches(root, before), "Enchantment grants reset live state or mutated the input");
+                paid(player, menu, orientation == 1, 0, 1);
+            }
+        } finally {
+            WorkbenchChecks.applyRecipes(server, original);
+        }
+    }
+
+    private static List<ItemStack> leggingsPair(ItemStack first, ItemStack second) {
+        var pair = MixedLeggingsFactory.createPair(first, second);
+        return List.of(pair.primary(), pair.inverse());
     }
 
     @SafeVarargs

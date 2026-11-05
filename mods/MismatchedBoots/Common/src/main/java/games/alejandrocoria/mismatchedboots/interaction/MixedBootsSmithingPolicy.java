@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.platform.Services;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -13,6 +14,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 import java.util.Optional;
 
@@ -63,6 +65,8 @@ public final class MixedBootsSmithingPolicy {
 
         try {
             ItemStack result = MixedBootsRecomposer.recompose(root, left.source(), right.source());
+            inheritNewEnchantments(result, data.left().source(), left.source());
+            inheritNewEnchantments(result, data.right().source(), right.source());
             RecipeHolder<SmithingRecipe> primary = left.recipe() != null ? left.recipe() : right.recipe();
             RecipeHolder<SmithingRecipe> additional = left.recipe() != null && right.recipe() != null
                                                               && !left.recipe().id().equals(right.recipe().id()) ? right.recipe() : null;
@@ -93,6 +97,26 @@ public final class MixedBootsSmithingPolicy {
 
     private static boolean isValidChange(ItemStack source, ItemStack assembled) {
         return BootHalf.isValidSource(assembled) && !ItemStack.matches(source, assembled);
+    }
+
+    private static void inheritNewEnchantments(ItemStack output, ItemStack previous, ItemStack transformed) {
+        var before = previous.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        var after = transformed.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        var current = output.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        var result = new ItemEnchantments.Mutable(current);
+        boolean changed = false;
+
+        // Only native upgrade grants cross this boundary; rebuilding from sources would undo live disenchanting.
+        for (var enchantment : after.keySet()) {
+            int level = after.getLevel(enchantment);
+            if (before.getLevel(enchantment) == 0 && level > current.getLevel(enchantment)) {
+                result.set(enchantment, level);
+                changed = true;
+            }
+        }
+        if (changed) {
+            output.set(DataComponents.ENCHANTMENTS, result.toImmutable());
+        }
     }
 
     public record Result(

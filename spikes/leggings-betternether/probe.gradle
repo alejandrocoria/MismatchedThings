@@ -1,0 +1,88 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.time.Duration
+
+// Opt-in through init.gradle only. Neither normal runs nor the maintained fixture metadata change.
+sourceSets.main.java.srcDir rootProject.file('spikes/leggings-betternether/src')
+repositories { maven { url = 'https://api.modrinth.com/maven' } }
+configurations {
+    rubyFireProbe { canBeConsumed = false; transitive = false }
+}
+dependencies {
+    rubyFireProbe 'maven.modrinth:MpzVLzy5:MUV7eOIE'
+    rubyFireProbe 'maven.modrinth:BgNRHReB:TZEtveQ9'
+    rubyFireProbe 'maven.modrinth:RiN8rDVs:UoxStTIn'
+}
+
+def expected = [
+        'MpzVLzy5-MUV7eOIE.jar': '3f9af3b5d301a7de79d3126989c762e61276b1b4d0dc851fbbaf6008d928c85d',
+        'BgNRHReB-TZEtveQ9.jar': '29c9eab8d5192c3549dff1879fb27f2ce5a1632cb22845daa7cc00bd225ee7d7',
+        'RiN8rDVs-UoxStTIn.jar': '07a48a932851157e131fa92caa0f1db46b4a895ae5400a7a36bae0aeec6159dc'
+]
+def directory = layout.buildDirectory.dir('run/ruby-fire-probe/server').get().asFile
+def reports = layout.buildDirectory.dir('reports/ruby-fire-probe').get().asFile
+def productJar = project(':MismatchedLeggings:Fabric').tasks.named('jar').flatMap { it.archiveFile }
+def boots = project(':MismatchedBoots:Fabric')
+evaluationDependsOn(boots.path)
+def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
+
+tasks.named('processResources') {
+    inputs.file(rootProject.file('spikes/leggings-betternether/probe.gradle'))
+    doLast {
+        def metadata = new File(destinationDir, 'fabric.mod.json')
+        def json = new JsonSlurper().parse(metadata)
+        json.entrypoints = [main: ['games.alejandrocoria.mismatchedleggings.test.RubyFireProbe']]
+        metadata.text = JsonOutput.prettyPrint(JsonOutput.toJson(json))
+    }
+}
+
+tasks.register('prepareRubyFireProbe') {
+    dependsOn ':MismatchedLeggings:verifyPackaging', boots.tasks.named('assemble'), tasks.named('classes')
+    doLast {
+        def artifacts = configurations.rubyFireProbe.files
+        artifacts.each { artifact ->
+            def hash = java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+            if (hash != expected[artifact.name]) { throw new GradleException("Unexpected Ruby Fire fixture: ${artifact}") }
+        }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        def staged = artifacts + [productJar.get().asFile, bootsJar.get().asFile]
+        if (mods.listFiles().any { candidate -> !staged.any { it.name == candidate.name } }) {
+            throw new GradleException("Unexpected artifact in disposable ${mods}")
+        }
+        copy { from staged; into mods }
+        reports.mkdirs()
+        ['probe.ok', 'probe.failure.txt', 'observations.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-name=ruby-fire-probe
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+    }
+}
+
+loom.runs.create('rubyFireProbe') {
+    server()
+    programArg('--nogui')
+    ideConfigGenerated(false)
+    runDir(project.relativePath(directory))
+    property('leggings.test.rubyFireReport', reports.absolutePath)
+    property('leggings.test.rubyFireExpected', providers.gradleProperty('rubyFireExpected').getOrElse('1'))
+    vmArg('-Xmx1G')
+}
+tasks.named('runRubyFireProbe') {
+    dependsOn 'prepareRubyFireProbe'
+    timeout = Duration.ofSeconds(240)
+    doLast {
+        if (!new File(reports, 'probe.ok').isFile() || new File(reports, 'probe.failure.txt').exists()) {
+            throw new GradleException("Ruby Fire probe failed; see ${reports}")
+        }
+    }
+}

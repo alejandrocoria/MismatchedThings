@@ -269,6 +269,14 @@ client opens the actual smithing table by packet, compares complete synchronized
 previews and paid outputs, and upgrades then trims that same live result using
 normal and shift pickup. Manual appearance acceptance remains separate.
 
+The server also tests new-enchantment grants from source transformations: both
+orientations, independent second-source and duplicate grants without a composition bonus, stronger live levels,
+deliberately removed source enchantments, live name/damage/prior work/resources,
+input non-mutation and actual normal/shift pickup/payment. Add `-PleggingsBoots=true`
+to run those cases for current packaged Boots as well; unchanged historical Boots
+is excluded from the new-grant assertions. These controlled native recipe fixtures
+do not require Better Nether or any indev JARs.
+
 ### Smithing reload regression
 
 Add `-PleggingsSmithingReload=true -PleggingsBoots=true` to `verifySmithing`,
