@@ -9,6 +9,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -24,6 +26,7 @@ public final class MixedLeggingsTooltipFormatter {
     private static final String RIGHT_KEY = "tooltip.mismatchedleggings.mixed_leggings.right";
     private static final String NAME_WITH_NATURAL_KEY =
             "tooltip.mismatchedleggings.mixed_leggings.name_with_natural";
+    private static final Identifier CRYSTALITE_LEGGINGS = Identifier.parse("betterend:crystalite_leggings");
     private static final List<DataComponentType<?>> SOURCE_GAMEPLAY_COMPONENTS = List.of(
             DataComponents.DAMAGE,
             DataComponents.MAX_DAMAGE,
@@ -118,15 +121,35 @@ public final class MixedLeggingsTooltipFormatter {
             TooltipDisplay display,
             TooltipFlag flag,
             Consumer<Component> tooltip) {
-        if (!flag.isAdvanced()) {
+        boolean crystalite = CRYSTALITE_LEGGINGS.equals(BuiltInRegistries.ITEM.getKey(source.getItem()));
+        if (!flag.isAdvanced() && !crystalite) {
             source.addDetailsToTooltip(context, display, null, flag, tooltip);
             return;
         }
 
         List<Component> details = new ArrayList<>();
         source.addDetailsToTooltip(context, display, null, flag, details::add);
-        removeAdvancedStackDiagnostics(source, details);
+        if (flag.isAdvanced()) {
+            removeAdvancedStackDiagnostics(source, details);
+        }
+        if (crystalite) {
+            removeCrystaliteHealthDescription(details);
+        }
         details.forEach(tooltip);
+    }
+
+    private static void removeCrystaliteHealthDescription(List<Component> details) {
+        // Better End hardcodes +4 in this description; the root attribute reports the composed value.
+        for (int index = details.size() - 1; index >= 0; index--) {
+            if (details.get(index).getContents() instanceof TranslatableContents text
+                    && text.getKey().equals("tooltip.armor.crystalite_leggings")) {
+                details.remove(index);
+                if (index > 0 && details.get(index - 1).equals(Component.empty())) {
+                    details.remove(index - 1);
+                    index--;
+                }
+            }
+        }
     }
 
     private static void removeAdvancedStackDiagnostics(ItemStack source, List<Component> details) {

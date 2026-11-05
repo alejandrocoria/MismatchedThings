@@ -1,0 +1,22 @@
+// Fabric-only native fixtures: pinned downloads, cached by Gradle and never sourced from indev.
+repositories { maven { url = 'https://api.modrinth.com/maven' } }
+configurations {
+    betterEndFixture { canBeConsumed = false; transitive = false }
+}
+dependencies {
+    betterEndFixture 'maven.modrinth:gc8OEnCC:8dlasiJv'
+    betterEndFixture 'maven.modrinth:BgNRHReB:TZEtveQ9'
+    betterEndFixture 'maven.modrinth:RiN8rDVs:UoxStTIn'
+}
+
+def expected = [
+        'gc8OEnCC-8dlasiJv.jar': '432f99ec0218504c8dcfaebcd6cd37970b400ff1f4a396888b697e447036ab2f',
+        'BgNRHReB-TZEtveQ9.jar': '29c9eab8d5192c3549dff1879fb27f2ce5a1632cb22845daa7cc00bd225ee7d7',
+        'RiN8rDVs-UoxStTIn.jar': '07a48a932851157e131fa92caa0f1db46b4a895ae5400a7a36bae0aeec6159dc'
+]
+ext.leggingsBetterEndArtifacts = {
+    configurations.betterEndFixture.files.each { artifact ->
+        def hash = java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+        if (hash != expected[artifact.name]) { throw new GradleException("Unexpected Better End SHA-256: ${artifact}") }
+    }.toList()
+}

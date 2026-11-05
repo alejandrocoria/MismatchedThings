@@ -57,7 +57,9 @@ public final class SkeletonChecks {
         serverFinished = true;
         try {
             verify();
-            if (Boolean.getBoolean("leggings.test.betterNether")) {
+            if (Boolean.getBoolean("leggings.test.betterEnd")) {
+                BetterEndChecks.verify(server);
+            } else if (Boolean.getBoolean("leggings.test.betterNether")) {
                 BetterNetherChecks.verify(server);
             } else if (Boolean.getBoolean("leggings.test.advancedNetherite")) {
                 AdvancedNetheriteChecks.verify(server);

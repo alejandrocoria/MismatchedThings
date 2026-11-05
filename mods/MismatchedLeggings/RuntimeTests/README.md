@@ -143,6 +143,40 @@ families/both outputs and the appearance, movement and tooltip review on
 2026-11-04. This does not turn the automatic profiles into a live mob-AI test or
 claim present-mod NeoForge support.
 
+## Better End gameplay compatibility
+
+The Fabric-only profile resolves Better End, BCLib and WorldWeaver 26.101.4
+through pinned Modrinth Maven coordinates and verifies SHA-256. Downloads use
+Gradle's cache; indev JARs/settings are never fixture inputs. No Better Nether
+artifact is staged by this profile.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyBetterEnd --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyBetterEnd -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton --offline --console=plain
+```
+
+Omit `--offline` for the first download. The dedicated server checks both ordered
+outputs, native Crystalite full-set dispatch/Regeneration I, actual equipped
+maximum health under default composition rules, ordinary-tier negatives,
+invalid/suspended/unrelated/wrong-slot/inventory negatives, source non-mutation,
+live datapack tag removal/restoration and preservation of native tag positives.
+It also checks paid native Terminite-to-Aeternium smithing. Current-Boots
+coexistence covers both output orientations of both pieces completing the set
+without an original legs/feet anchor.
+
+The hidden/muted client checks that native leggings retain their fixed health
+description while mixed sources omit it and its extra spacer, with one or two
+Crystalite sources. Effective root health text must match native attribute
+rendering. It also checks exactly one native root set-bonus line, equipped
+complete/incomplete-set colors, unequipped and null-player tooltips, in normal
+and advanced modes. It reuses the WorldWeaver
+first-launch configuration above. No screenshots or custom-renderer acceptance
+are part of this gameplay profile: Crystalite's equipped rendering is a separate
+investigation. Evidence uses `betterEnd[-boots]` beneath the usual
+`build/{reports,verification}/<baseline>/` directories, including `server.ok`,
+`client.ok` and `matrix.ok`. No present-mod NeoForge support is claimed.
+
 ## Optional JEI/REI and user-guide acceptance
 
 ```powershell

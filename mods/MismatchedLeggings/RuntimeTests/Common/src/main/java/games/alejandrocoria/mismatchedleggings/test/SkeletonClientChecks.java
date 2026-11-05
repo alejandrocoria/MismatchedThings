@@ -18,6 +18,10 @@ public final class SkeletonClientChecks {
     }
 
     public static void tick(Minecraft client) {
+        if (Boolean.getBoolean("leggings.test.betterEnd")) {
+            BetterEndClientChecks.tick(client);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.betterNether")) {
             BetterNetherClientChecks.tick(client);
             return;
