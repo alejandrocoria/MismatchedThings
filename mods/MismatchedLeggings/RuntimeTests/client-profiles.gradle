@@ -3,7 +3,11 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
+if (project.name == 'NeoForge') { profiles.add('AllTheModium') }
 profiles.each { profile ->
+    def allTheModium = profile == 'AllTheModium'
+    def brokenAllTheModium = allTheModium && providers.gradleProperty('leggingsAllTheModiumBroken')
+            .map { it.toBoolean() }.getOrElse(false)
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
@@ -30,6 +34,7 @@ profiles.each { profile ->
     def variant = profile.uncapitalize() + (viewers ? "-${viewer}" : '') + (bootsOnly ? '-boots-only' : coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
     if (smithingReload) { variant += '-reload' }
     if (emptyItems) { variant += '-empty-model' }
+    if (brokenAllTheModium) { variant += '-broken' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -38,7 +43,7 @@ profiles.each { profile ->
     evaluationDependsOn(boots.path)
     def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
 
-    ['server', 'client'].each { phase ->
+    (allTheModium ? ['server'] : ['server', 'client']).each { phase ->
         tasks.register("prepare${profile}${phase.capitalize()}") {
             dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
             if (coexistence && previousBoots == null) { dependsOn boots.tasks.named('assemble') }
@@ -52,6 +57,13 @@ profiles.each { profile ->
                 if (betterNether) { artifacts.addAll(project.leggingsBetterNetherArtifacts()) }
                 if (betterEnd) { artifacts.addAll(project.leggingsBetterEndArtifacts()) }
                 if (createFly) { artifacts.addAll(project.leggingsCreateFlyArtifacts()) }
+                if (allTheModium) {
+                    def resolver = project(':MismatchedBoots').testModArtifacts
+                    ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar',
+                     'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name ->
+                        artifacts.add(resolver.resolve('NeoForge', name))
+                    }
+                }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -171,6 +183,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
+                systemProperty('leggings.test.allTheModium', allTheModium.toString())
+                systemProperty('leggings.test.allTheModiumBroken', brokenAllTheModium.toString())
                 systemProperty('leggings.test.items', items.toString())
                 systemProperty('leggings.test.emptyItems', emptyItems.toString())
                 systemProperty('leggings.test.presentation', presentation.toString())
@@ -208,6 +222,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : betterNether ? 'Checks pinned Better Nether piglin recognition, live configuration and optional Boots coexistence.'
                 : betterEnd ? 'Checks pinned Crystalite set recognition, live tags, health, smithing and native tooltips.'
                 : createFly ? 'Checks pinned Create Fly Cardboard recognition, native consumers and optional Boots coexistence.'
+                : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -220,13 +235,15 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
             logs.mkdirs()
             new File(logs, 'matrix.ok').delete()
-            ['server', 'client'].each { phase ->
+            // A's wearer contract needs only the dedicated endpoint; presentation belongs to B.
+            (allTheModium ? ['server'] : ['server', 'client']).each { phase ->
                 def log = new File(logs, "${phase}.log")
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
+                if (brokenAllTheModium) { arguments.add('-PleggingsAllTheModiumBroken=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -247,6 +264,13 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
+                if (allTheModium) {
+                    def text = log.text
+                    def refusals = text.readLines().count { it.contains('AllTheModium mixed leggings tick disabled:') }
+                    if (refusals != (brokenAllTheModium ? 1 : 0) || text.contains('/ERROR]')) {
+                        throw new GradleException("Unexpected AllTheModium diagnostics: ${log}")
+                    }
+                }
             }
             if (betterEnd && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt',
                               'crystalite-panel.png', 'crystalite-panel-after-reload.png'].any {
@@ -262,7 +286,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def proof = new File(reports, it)
                 !proof.isFile() || proof.length() == 0
             }) { throw new GradleException('Create Fly checks did not produce fresh before/after-reload evidence and panels') }
-            new File(logs, 'matrix.ok').text = "packaged ${profile} server and hidden client passed\n"
+            new File(logs, 'matrix.ok').text = allTheModium
+                    ? 'packaged AllTheModium dedicated gameplay checks passed; presentation pending\n'
+                    : "packaged ${profile} server and hidden client passed\n"
         }
     }
 }

@@ -63,6 +63,42 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## AllTheModium compatibility
+
+The NeoForge-only gameplay profile resolves AllTheModium 4.1.1, All the Ores
+4.0.4 and GeckoLib 5.5.2 through Boots' maintained artifact catalog, download
+cache and SHA-256 pins. It never reads indev JARs. Block A uses only the dedicated
+endpoint; workstations, client presentation and owner acceptance belong to B.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAllTheModium --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAllTheModium -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAllTheModium '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAllTheModium -PleggingsAllTheModiumBroken=true --offline --console=plain
+```
+
+Omit `--offline` for initial downloads. Reports and bounded process logs use
+`build/{reports,verification}/<baseline>/allTheModium[-boots][-broken]/`, with
+`server.ok`, explicit failure traces and `matrix.ok`. This marker covers only the
+dedicated gameplay profile, not final compatibility acceptance.
+
+Consecutive server callbacks advance disconnected ServerPlayers through the real
+Player inventory/effect tick, with a controlled player-tick counter and a forced
+fixture chunk for genuine fluid detection. Native controls cover all three tiers,
+both mixed outputs with iron/diamond, duplicate/differing qualifying sources,
+20-player-tick cures, unrelated effects, water activation and the dry/unequipped
+Dolphin's Grace tail. A test-only optional native-method probe checks exactly one
+call on the live stack and no calls for idle, wrong-slot, non-player or invalid
+roots. Real piglin and damage/snow consumers check pacification, preserved gold
+positives, absence of other armor-piece entitlements and optional independent
+current-Boots protection. Root and source snapshots must remain unchanged.
+
+The separate `-broken` process removes the native tick declaration through a
+test-only Mixin plugin. It requires zero tick effects, preserved piglin safety and
+exactly one production guard warning; it does not patch production readiness or
+retry another source. Neither test Mixin applies to ordinary absence profiles.
+Use the existing `verifySkeleton` profiles for optional-absence validation in B.
+
 ## Advanced Netherite compatibility
 
 The optional profile resolves Advanced Netherite 2.4.1 through exact Modrinth
