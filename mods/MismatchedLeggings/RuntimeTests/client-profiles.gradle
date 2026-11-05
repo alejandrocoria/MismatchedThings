@@ -7,6 +7,7 @@ profiles.each { profile ->
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
+    def crystaliteSpike = betterEnd && providers.gradleProperty('leggingsCrystaliteSpike').map { it.toBoolean() }.getOrElse(false)
     def viewers = profile == 'Viewers'
     def bootsOnly = viewers && providers.gradleProperty('leggingsViewerBootsOnly').map { it.toBoolean() }.getOrElse(false)
     def viewer = providers.gradleProperty('leggingsViewer').getOrElse('none')
@@ -29,6 +30,7 @@ profiles.each { profile ->
     def variant = profile.uncapitalize() + (viewers ? "-${viewer}" : '') + (bootsOnly ? '-boots-only' : coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
     if (smithingReload) { variant += '-reload' }
     if (emptyItems) { variant += '-empty-model' }
+    if (crystaliteSpike) { variant += '-crystalite-spike' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -69,6 +71,11 @@ profiles.each { profile ->
                 reports.mkdirs()
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
+                if (crystaliteSpike && phase == 'client') {
+                    ['crystalite-proof.txt', 'crystalite-after-reload.txt', 'crystalite-panel.png'].each { name ->
+                        new File(reports, name).delete()
+                    }
+                }
                 new File(run, 'config').mkdirs()
                 new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
                 // Both start with the same rules. The client fixture edits the files during play,
@@ -210,6 +217,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
+                if (crystaliteSpike) { arguments.add('-PleggingsCrystaliteSpike=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -231,6 +239,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     }
                 }
             }
+            if (crystaliteSpike && ['crystalite-proof.txt', 'crystalite-after-reload.txt', 'crystalite-panel.png'].any {
+                def proof = new File(reports, it)
+                !proof.isFile() || proof.length() == 0
+            }) { throw new GradleException('Crystalite spike did not produce fresh before/after-reload evidence and panel') }
             if (previousBoots != null && previousHash != java.security.MessageDigest.getInstance('SHA-256')
                     .digest(previousBoots.bytes).encodeHex().toString()) {
                 throw new GradleException('Previous Boots artifact was modified')

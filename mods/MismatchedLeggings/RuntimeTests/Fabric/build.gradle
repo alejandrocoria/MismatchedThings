@@ -61,3 +61,7 @@ tasks.named('test', Test) {
     workingDir layout.buildDirectory.dir('test-work')
     doFirst { workingDir.mkdirs() }
 }
+
+if (providers.gradleProperty('leggingsCrystaliteSpike').map { it.toBoolean() }.getOrElse(false)) {
+    apply from: rootProject.file('spikes/leggings-crystalite/spike.gradle')
+}

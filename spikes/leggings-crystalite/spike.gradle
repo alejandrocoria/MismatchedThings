@@ -1,0 +1,22 @@
+// Opt-in investigation only. No source or resource enters a product or normal test fixture.
+def spike = rootProject.file('spikes/leggings-crystalite')
+sourceSets {
+    crystaliteSpike {
+        java.srcDir new File(spike, 'java')
+        resources.srcDir new File(spike, 'resources')
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+loom.mods {
+    leggings_crystalite_spike { sourceSet sourceSets.crystaliteSpike }
+}
+['runBetterEndServer', 'runBetterEndClient'].each { name ->
+    tasks.named(name) {
+        dependsOn tasks.named('crystaliteSpikeClasses')
+        classpath += sourceSets.crystaliteSpike.output
+    }
+}
+loom.runs.named('betterEndClient') {
+    programArgs('--width', '1600', '--height', '1000')
+}

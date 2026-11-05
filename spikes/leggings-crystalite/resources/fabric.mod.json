@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "leggings_crystalite_spike",
+  "version": "1.0.0",
+  "name": "Crystalite leggings rendering spike",
+  "environment": "client",
+  "entrypoints": {"client": ["games.alejandrocoria.crystalitespike.SpikeClient"]},
+  "mixins": ["leggings-crystalite-spike.mixins.json"],
+  "depends": {"leggings_skeleton_test": "*", "betterend": "26.101.4"}
+}

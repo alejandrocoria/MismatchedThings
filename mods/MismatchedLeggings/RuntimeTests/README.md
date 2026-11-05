@@ -177,6 +177,12 @@ investigation. Evidence uses `betterEnd[-boots]` beneath the usual
 `build/{reports,verification}/<baseline>/` directories, including `server.ok`,
 `client.ok` and `matrix.ok`. No present-mod NeoForge support is claimed.
 
+The opt-in [Crystalite rendering spike](../../../spikes/leggings-crystalite/README.md)
+uses `-PleggingsCrystaliteSpike=true` on `verifyBetterEnd`. It has a separate
+source set, client-only mod and `betterEnd-crystalite-spike` reports, including
+one relevant panel and mandatory fresh before/after-reload proof. It replaces
+that variant's client checks only; normal profiles never load the spike.
+
 ## Optional JEI/REI and user-guide acceptance
 
 ```powershell
