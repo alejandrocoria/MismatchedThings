@@ -37,6 +37,10 @@ public final class SkeletonTestFabric implements ModInitializer {
         SkeletonChecks.environment(loader.isModLoaded("mismatchedboots"),
                 loader.getAllMods().stream().filter(mod -> mod.getMetadata().getId().equals("mismatchedleggings")).count(),
                 loader.getAllMods().stream().filter(mod -> mod.getMetadata().getId().equals("mismatchedthings")).count());
-        ServerTickEvents.END_SERVER_TICK.register(SkeletonChecks::serverTick);
+        if (Boolean.getBoolean("leggings.test.createFly")) {
+            ServerTickEvents.END_SERVER_TICK.register(CreateFlyChecks::serverTick);
+        } else {
+            ServerTickEvents.END_SERVER_TICK.register(SkeletonChecks::serverTick);
+        }
     }
 }

@@ -23,6 +23,7 @@ gradle.projectsEvaluated {
                         throw new GradleException('Broad armor classification would advertise invalid mixed smithing examples')
                     }
                     if (names.any { it.startsWith('com/autovw/advancednetherite/')
+                            || it.startsWith('com/zurrtum/create/')
                             || it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
                             || it.contains('leggingsspike') || it.contains('leggings-spike') || it.contains('leggings_test')
                             || it.startsWith('games/alejandrocoria/mismatchedthings/')
@@ -81,10 +82,11 @@ gradle.projectsEvaluated {
                                 || descriptor.depends.containsKey('mismatchedboots')
                                 || descriptor.depends.containsKey('advancednetherite')
                                 || descriptor.depends.containsKey('betternether')
+                                || descriptor.depends.containsKey('create')
                                 || descriptor.depends.containsKey('jei') || descriptor.depends.containsKey('roughlyenoughitems')
                                 || descriptor.entrypoints.jei_mod_plugin != ['games.alejandrocoria.mismatchedleggings.compatibility.jei.MismatchedLeggingsJeiPlugin']
                                 || descriptor.entrypoints.rei_client != ['games.alejandrocoria.mismatchedleggings.compatibility.rei.MismatchedLeggingsReiClientPlugin']
-                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.advancednetherite.mixins.json', 'mismatchedleggings.betternether.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
+                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.advancednetherite.mixins.json', 'mismatchedleggings.betternether.mixins.json', 'mismatchedleggings.createfly.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
                             throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
                         }
                         ['mismatchedleggings.betternether.mixins.json',
@@ -100,11 +102,25 @@ gradle.projectsEvaluated {
                             throw new GradleException('Wrong optional Better Nether mixin ownership')
                         }
                         def nested = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
+                        ['mismatchedleggings.createfly.mixins.json',
+                         'games/alejandrocoria/mismatchedleggings/compatibility/createfly/CreateFlyMixinPlugin.class',
+                         'games/alejandrocoria/mismatchedleggings/mixin/compatibility/createfly/CreateFlyCardboardArmorHandlerMixin.class'].each { path ->
+                            if (!(path in names)) { throw new GradleException("Missing Fabric Create Fly entry: ${path}") }
+                        }
+                        def createFly = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('mismatchedleggings.createfly.mixins.json')))
+                        if (createFly.plugin != 'games.alejandrocoria.mismatchedleggings.compatibility.createfly.CreateFlyMixinPlugin'
+                                || createFly.package != 'games.alejandrocoria.mismatchedleggings.mixin.compatibility.createfly'
+                                || createFly.mixins != ['CreateFlyCardboardArmorHandlerMixin']) {
+                            throw new GradleException('Wrong optional Create Fly mixin ownership')
+                        }
                         if (nested.size() != 1 || descriptor.jars.size() != 1) {
                             throw new GradleException('Expected only one native nested core')
                         }
                         nestedPath = nested.first().file
                     } else {
+                        if (names.any { it.contains('/compatibility/createfly/') || it == 'mismatchedleggings.createfly.mixins.json' }) {
+                            throw new GradleException('Fabric-only Create Fly integration leaked into NeoForge')
+                        }
                         if (names.any { it.contains('/compatibility/betternether/') || it == 'mismatchedleggings.betternether.mixins.json' }) {
                             throw new GradleException('Fabric-only Better Nether integration leaked into NeoForge')
                         }

@@ -143,6 +143,37 @@ families/both outputs and the appearance, movement and tooltip review on
 2026-11-04. This does not turn the automatic profiles into a live mob-AI test or
 claim present-mod NeoForge support.
 
+## Create Fly compatibility
+
+The Fabric-only profile resolves Create Fly 6.0.9-4 from its exact Modrinth Maven
+coordinate, caches the download and verifies SHA-256 before staging. Neither the
+indev instance nor another distribution with mod ID `create` is an input.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:test :MismatchedLeggings:RuntimeTests:Fabric:verifyCreateFly --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyCreateFly -PleggingsBoots=true --offline --console=plain
+```
+
+Omit `--offline` for the first download. The sequential dedicated and early-hidden,
+muted client endpoints exercise native Cardboard recognition, both mixed outputs,
+one/two Cardboard sources, strict invalid/suspended/spoofed controls, equipped
+versus inventory presence, full/incomplete sets, crouching/flight, scaled box
+dimensions and independent coexistence with current mixed Boots. The dedicated
+endpoint additionally exercises native Full Stealth, mob target/attacker clearing
+and the real Belt passenger gate, distinct from its full-set transport helper.
+No original feet/legs anchor is required, and the native effect implementations
+are not replaced. There are no screenshots in this gameplay block.
+
+Evidence uses `createFly[-boots]` beneath the usual
+`build/{reports,verification}/<fabric-loader>/` directories (`server.ok`,
+`client.ok`, `matrix.ok` or failure traces). Plain `verifySkeleton` checks
+optional absence; packaging checks Fabric-only mixin ownership, no required
+Create dependency and no bundled Create classes. Loader-local unit tests cover
+the required API/semantic anchor without fingerprinting unrelated mixin code.
+Native source-tooltip integration and final visual acceptance belong to later
+blocks; this profile does not yet certify them. Fuel inheritance and Arts and
+Crafts on mixed smithing outputs are excluded from the initial integration.
+
 ## Better End compatibility
 
 The Fabric-only profile resolves Better End, BCLib and WorldWeaver 26.101.4

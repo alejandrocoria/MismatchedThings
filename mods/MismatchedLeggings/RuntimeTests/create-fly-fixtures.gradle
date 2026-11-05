@@ -1,0 +1,18 @@
+// Exact Create Fly distribution, shared with Boots' pin; never read the indev instance.
+repositories { maven { url = 'https://api.modrinth.com/maven' } }
+configurations {
+    createFlyFixture { canBeConsumed = false; transitive = false }
+    compileOnly.extendsFrom(createFlyFixture)
+}
+dependencies {
+    createFlyFixture 'maven.modrinth:dKvj0eNn:wV5IQLKg'
+}
+
+ext.leggingsCreateFlyArtifacts = {
+    configurations.createFlyFixture.files.each { artifact ->
+        def hash = java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+        if (hash != 'de1633a2de5dc93878ca660bbdfdeb682a9a1ac1edcde97cb8b52624cc9fe42d') {
+            throw new GradleException("Unexpected Create Fly SHA-256: ${artifact}")
+        }
+    }.toList()
+}

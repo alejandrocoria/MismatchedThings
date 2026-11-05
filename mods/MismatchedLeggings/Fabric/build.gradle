@@ -6,7 +6,10 @@ plugins {
 
 base.archivesName = "${mod_name}-${minecraft_version}-fabric"
 
+repositories { maven { url = 'https://api.modrinth.com/maven' } }
+
 dependencies {
+    compileOnly('maven.modrinth:dKvj0eNn:wV5IQLKg') { transitive = false }
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}"

@@ -52,6 +52,10 @@ public final class SkeletonClientFabric implements ClientModInitializer {
                 return "fabric.customRendererFallback=true";
             };
         }
-        ClientTickEvents.END_CLIENT_TICK.register(SkeletonClientChecks::tick);
+        if (Boolean.getBoolean("leggings.test.createFly")) {
+            ClientTickEvents.END_CLIENT_TICK.register(CreateFlyClientChecks::tick);
+        } else {
+            ClientTickEvents.END_CLIENT_TICK.register(SkeletonClientChecks::tick);
+        }
     }
 }

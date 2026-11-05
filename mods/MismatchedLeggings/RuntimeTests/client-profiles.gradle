@@ -2,11 +2,12 @@ import java.util.concurrent.TimeUnit
 
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
-if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd']) }
+if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
 profiles.each { profile ->
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
+    def createFly = profile == 'CreateFly'
     def viewers = profile == 'Viewers'
     def bootsOnly = viewers && providers.gradleProperty('leggingsViewerBootsOnly').map { it.toBoolean() }.getOrElse(false)
     def viewer = providers.gradleProperty('leggingsViewer').getOrElse('none')
@@ -50,6 +51,7 @@ profiles.each { profile ->
                 if (advancedNetherite) { artifacts.addAll(project.leggingsAdvancedNetheriteArtifacts()) }
                 if (betterNether) { artifacts.addAll(project.leggingsBetterNetherArtifacts()) }
                 if (betterEnd) { artifacts.addAll(project.leggingsBetterEndArtifacts()) }
+                if (createFly) { artifacts.addAll(project.leggingsCreateFlyArtifacts()) }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -134,6 +136,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 property('leggings.test.advancedNetherite', advancedNetherite.toString())
                 property('leggings.test.betterNether', betterNether.toString())
                 property('leggings.test.betterEnd', betterEnd.toString())
+                property('leggings.test.createFly', createFly.toString())
                 property('leggings.test.items', items.toString())
                 property('leggings.test.emptyItems', emptyItems.toString())
                 property('leggings.test.presentation', presentation.toString())
@@ -198,6 +201,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : advancedNetherite ? 'Checks pinned Advanced Netherite pacification, live tags, smithing and native tooltips.'
                 : betterNether ? 'Checks pinned Better Nether piglin recognition, live configuration and optional Boots coexistence.'
                 : betterEnd ? 'Checks pinned Crystalite set recognition, live tags, health, smithing and native tooltips.'
+                : createFly ? 'Checks pinned Create Fly Cardboard recognition, native consumers and optional Boots coexistence.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
