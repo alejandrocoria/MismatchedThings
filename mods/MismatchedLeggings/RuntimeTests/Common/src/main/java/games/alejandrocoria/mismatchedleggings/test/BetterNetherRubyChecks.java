@@ -3,10 +3,7 @@ package games.alejandrocoria.mismatchedleggings.test;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -28,80 +25,44 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Disposable characterization of native enchantment creation versus live-root preservation. */
-public final class RubyFireProbe implements ModInitializer {
-    private static final StringBuilder OBSERVATIONS = new StringBuilder();
-    private static boolean finished;
-
-    @Override
-    public void onInitialize() {
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
-            if (finished) {
-                return;
-            }
-            finished = true;
-            var reports = Path.of(System.getProperty("leggings.test.rubyFireReport"));
-            try {
-                verify(server);
-                Files.writeString(reports.resolve("observations.txt"), OBSERVATIONS);
-                Files.writeString(reports.resolve("probe.ok"), "Native smithing/composition/anvil characterization completed\n");
-            } catch (Throwable failure) {
-                var trace = new StringWriter();
-                failure.printStackTrace(new PrintWriter(trace));
-                try {
-                    Files.writeString(reports.resolve("observations.txt"), OBSERVATIONS);
-                    Files.writeString(reports.resolve("probe.failure.txt"), trace.toString());
-                } catch (Exception reportFailure) {
-                    failure.addSuppressed(reportFailure);
-                }
-                failure.printStackTrace();
-            } finally {
-                server.halt(false);
-            }
-        });
+/** Native upgrade, book and retaliation regressions for the pinned Better Nether profile. */
+final class BetterNetherRubyChecks {
+    private BetterNetherRubyChecks() {
     }
 
-    private static void verify(MinecraftServer server) throws Exception {
-        SkeletonChecks.verify();
+    static void verify(MinecraftServer server) throws Exception {
         verifyProduct(server, "leggings", EquipmentSlot.LEGS, Items.IRON_LEGGINGS);
-        verifyProduct(server, "boots", EquipmentSlot.FEET, Items.IRON_BOOTS);
+        if (Boolean.getBoolean("leggings.test.boots") && !Boolean.getBoolean("leggings.test.previousBoots")) {
+            verifyProduct(server, "boots", EquipmentSlot.FEET, Items.IRON_BOOTS);
+        }
     }
 
     private static void verifyProduct(MinecraftServer server, String product, EquipmentSlot slot,
                                       Item iron) throws Exception {
-        OBSERVATIONS.append("Product: ").append(product).append('\n');
         var ruby = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
                 .getOrThrow(ResourceKey.create(Registries.ENCHANTMENT, Identifier.parse("betternether:ruby_fire")));
         var unbreaking = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.UNBREAKING);
         var protection = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.PROTECTION);
-        var nativeRuby = nativeStack(server, "nether_ruby_" + product);
-        var nativeFire = nativeStack(server, "flaming_ruby_" + product);
+        var nativeRuby = BetterNetherChecks.nativeStack(server.registryAccess(), "nether_ruby_" + product);
+        var nativeFire = BetterNetherChecks.nativeStack(server.registryAccess(), "flaming_ruby_" + product);
         require(level(nativeRuby, ruby) == 0 && level(nativeFire, ruby) == 1, "Native setup control failed");
-        OBSERVATIONS.append("Native setup: Nether Ruby=0, Fireruby=1\n");
 
         var nativeUpgrade = upgrade(server, nativeRuby);
         require(nativeUpgrade.is(nativeFire.getItem()) && level(nativeUpgrade, ruby) == 1,
                 "Native smithing did not add Ruby Fire I");
         retaliation(server, nativeUpgrade, slot, true, "native upgraded Fireruby");
-        OBSERVATIONS.append("Native smithing: Ruby Fire=1, paid once, retaliation works\n");
 
         var composed = pair(product, nativeFire, new ItemStack(iron));
         int orientation = 0;
         for (var root : composed) {
             require(level(root, ruby) == 1, "Initial composition lost Ruby Fire");
-            retaliation(server, root.copy(), slot, true, "initial composition " + orientation);
+            retaliation(server, root.copy(), slot, true, "initial composition " + orientation++);
             anvil(server, root, ruby);
-            OBSERVATIONS.append("Initial composition ").append(orientation++)
-                    .append(": root Ruby Fire=1, retaliation and book application work\n");
         }
 
         nativeRuby.enchant(protection, 4);
@@ -126,13 +87,8 @@ public final class RubyFireProbe implements ModInitializer {
                     "Upgrade reset live root state");
             require(ItemStack.matches(root, before), "Upgrade mutated input provenance");
             int rootRuby = level(result, ruby);
-            int expected = Integer.getInteger("leggings.test.rubyFireExpected", -1);
-            require(expected < 0 || rootRuby == expected, "Upgrade did not grant expected root Ruby Fire level");
-            retaliation(server, result.copy(), slot, rootRuby > 0, "upgraded mixed " + orientation);
-            OBSERVATIONS.append("Mixed upgrade ").append(orientation++)
-                    .append(": source Ruby Fire=1, root Ruby Fire=").append(rootRuby)
-                    .append(", live state preserved, removed Protection not resurrected, retaliation=")
-                    .append(rootRuby > 0).append('\n');
+            require(rootRuby == 1, "Upgrade did not grant root Ruby Fire I for " + product);
+            retaliation(server, result.copy(), slot, true, "upgraded mixed " + orientation++);
         }
         retaliation(server, new ItemStack(iron), slot, false, "vanilla negative");
     }
@@ -157,17 +113,6 @@ public final class RubyFireProbe implements ModInitializer {
         var right = data.getClass().getMethod("right").invoke(data);
         return List.of((ItemStack) left.getClass().getMethod("source").invoke(left),
                 (ItemStack) right.getClass().getMethod("source").invoke(right));
-    }
-
-    private static ItemStack nativeStack(MinecraftServer server, String name) throws Exception {
-        var id = Identifier.fromNamespaceAndPath("betternether", name);
-        var item = BuiltInRegistries.ITEM.getValue(id);
-        require(BuiltInRegistries.ITEM.getKey(item).equals(id), "Missing native fixture: " + id);
-        var stack = item.getDefaultInstance();
-        // Invoke the real native setup with live registries, not a hand-authored enchantment substitute.
-        item.getClass().getMethod("setupItemStack", ItemStack.class, HolderLookup.Provider.class)
-                .invoke(item, stack, server.registryAccess());
-        return stack;
     }
 
     private static ItemStack upgrade(MinecraftServer server, ItemStack input) {

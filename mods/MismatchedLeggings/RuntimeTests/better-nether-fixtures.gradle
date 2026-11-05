@@ -1,0 +1,22 @@
+// Fabric-only pinned native artifacts. Gradle caches downloads; indev is never a fixture source.
+repositories { maven { url = 'https://api.modrinth.com/maven' } }
+configurations {
+    betterNetherFixture { canBeConsumed = false; transitive = false }
+}
+dependencies {
+    betterNetherFixture 'maven.modrinth:MpzVLzy5:MUV7eOIE'
+    betterNetherFixture 'maven.modrinth:BgNRHReB:TZEtveQ9'
+    betterNetherFixture 'maven.modrinth:RiN8rDVs:UoxStTIn'
+}
+
+def expected = [
+        'MpzVLzy5-MUV7eOIE.jar': '3f9af3b5d301a7de79d3126989c762e61276b1b4d0dc851fbbaf6008d928c85d',
+        'BgNRHReB-TZEtveQ9.jar': '29c9eab8d5192c3549dff1879fb27f2ce5a1632cb22845daa7cc00bd225ee7d7',
+        'RiN8rDVs-UoxStTIn.jar': '07a48a932851157e131fa92caa0f1db46b4a895ae5400a7a36bae0aeec6159dc'
+]
+ext.leggingsBetterNetherArtifacts = {
+    configurations.betterNetherFixture.files.each { artifact ->
+        def hash = java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+        if (hash != expected[artifact.name]) { throw new GradleException("Unexpected Better Nether SHA-256: ${artifact}") }
+    }.toList()
+}

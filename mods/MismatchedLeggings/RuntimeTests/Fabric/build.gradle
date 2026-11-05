@@ -43,5 +43,20 @@ tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }
 
 apply from: '../viewer-fixtures.gradle'
 apply from: '../advanced-netherite-fixtures.gradle'
+apply from: '../better-nether-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
+
+dependencies {
+    testImplementation files(project(':MismatchedLeggings:Fabric').tasks.named('jar').flatMap { it.archiveFile })
+    testImplementation files(project(':MismatchedThings:Fabric').tasks.named('jar').flatMap { it.archiveFile })
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    workingDir layout.buildDirectory.dir('test-work')
+    doFirst { workingDir.mkdirs() }
+}

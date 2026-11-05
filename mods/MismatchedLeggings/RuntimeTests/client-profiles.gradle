@@ -1,8 +1,11 @@
 import java.util.concurrent.TimeUnit
 
 // Concrete packaged-product profiles share staging and bounded process launching.
-['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite'].each { profile ->
+def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
+if (project.name == 'Fabric') { profiles.add('BetterNether') }
+profiles.each { profile ->
     def advancedNetherite = profile == 'AdvancedNetherite'
+    def betterNether = profile == 'BetterNether'
     def viewers = profile == 'Viewers'
     def bootsOnly = viewers && providers.gradleProperty('leggingsViewerBootsOnly').map { it.toBoolean() }.getOrElse(false)
     def viewer = providers.gradleProperty('leggingsViewer').getOrElse('none')
@@ -44,6 +47,7 @@ import java.util.concurrent.TimeUnit
                 def artifacts = bootsOnly ? [] : [leggingsJar.get().asFile]
                 if (viewers) { artifacts.addAll(project.leggingsViewerArtifacts(viewer)) }
                 if (advancedNetherite) { artifacts.addAll(project.leggingsAdvancedNetheriteArtifacts()) }
+                if (betterNether) { artifacts.addAll(project.leggingsBetterNetherArtifacts()) }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -71,6 +75,17 @@ import java.util.concurrent.TimeUnit
                         "[durability]\npolicy = 'separate'\n[repair_cost]\npolicy = 'maximum'\n[components]\n"
                 new File(run, 'config/mismatchedleggings-attributes.toml').text =
                         "[attributes]\nfallback = 'maximum'\n[attributes.\"minecraft:armor\"]\npolicy = 'maximum'\n"
+                if (betterNether && phase == 'client') {
+                    // The native first-launch welcome blocks quick play before any world is opened.
+                    new File(run, 'config/wover').mkdirs()
+                    new File(run, 'config/wover/client.json').text = '''{
+  "create_version": "26.101.4",
+  "modify_version": "26.101.4",
+  "internal": { "did_present_welcome_screen": true },
+  "general": { "check_for_new_versions": false }
+}
+'''
+                }
                 if (phase == 'server') {
                     new File(run, 'eula.txt').text = 'eula=true\n'
                     new File(run, 'server.properties').text = '''online-mode=false
@@ -108,6 +123,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 runDir(project.relativePath(new File(directory, phase)))
                 property('leggings.test.equipped', equipped.toString())
                 property('leggings.test.advancedNetherite', advancedNetherite.toString())
+                property('leggings.test.betterNether', betterNether.toString())
                 property('leggings.test.items', items.toString())
                 property('leggings.test.emptyItems', emptyItems.toString())
                 property('leggings.test.presentation', presentation.toString())
@@ -170,6 +186,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         group = 'verification'
         description = viewers ? 'Checks actual optional JEI/REI examples, reload, repeated opening and session rules.'
                 : advancedNetherite ? 'Checks pinned Advanced Netherite pacification, live tags, smithing and native tooltips.'
+                : betterNether ? 'Checks pinned Better Nether piglin recognition, live configuration and optional Boots coexistence.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'

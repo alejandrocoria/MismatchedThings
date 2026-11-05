@@ -69,6 +69,11 @@ retaliation rules still apply. Native source tooltips are retained; the mixed
 root keeps its ordinary durability-bar color rather than the optional
 material-colored Advanced Netherite bar.
 
+On Fabric, either Cincinnasite, Nether Ruby or Fireruby source from Better Nether
+grants its native piglin-ignore recognition in both outputs while Better Nether's
+option is enabled. No full set or original armor piece is required. Other native
+reasons for piglins to remain neutral are preserved, as are provocation rules.
+
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to
 neutral leggings. Unsupported item models fall back to two superimposed complete

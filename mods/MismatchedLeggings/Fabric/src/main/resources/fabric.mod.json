@@ -7,7 +7,7 @@
     "authors": ["${mod_author}"],
     "license": "${mod_license}",
     "environment": "*",
-    "mixins": ["mismatchedleggings.mixins.json", "mismatchedleggings.recovery.mixins.json", "mismatchedleggings.advancednetherite.mixins.json", "mismatchedleggings.fabric.mixins.json"],
+    "mixins": ["mismatchedleggings.mixins.json", "mismatchedleggings.recovery.mixins.json", "mismatchedleggings.advancednetherite.mixins.json", "mismatchedleggings.betternether.mixins.json", "mismatchedleggings.fabric.mixins.json"],
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedleggings.MismatchedLeggingsFabric"],
         "client": ["games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientFabric"],

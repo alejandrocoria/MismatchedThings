@@ -93,6 +93,56 @@ armor geometry and mob provocation/retaliation checks on both loaders on
 2026-11-04; this is not a manual matrix across both NeoForge baselines.
 Material-colored native durability bars are intentionally not forwarded.
 
+## Better Nether compatibility
+
+The Fabric-only profile resolves Better Nether, BCLib and WorldWeaver 26.101.4
+through pinned Modrinth Maven coordinates, verifies SHA-256 and uses Gradle's
+download cache. It never reads indev JARs or stages Better End.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:test :MismatchedLeggings:RuntimeTests:Fabric:verifyBetterNether --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyBetterNether -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton --offline --console=plain
+```
+
+Omit `--offline` for initial downloads. Dedicated and hidden/muted integrated
+clients check all three native leggings, both mixed outputs, native on/off/on
+configuration changes on existing roots, vanilla-positive preservation,
+invalid/suspended/unrelated/wrong-slot/inventory negatives and source non-mutation.
+The coexistence variant checks Boots and Leggings separately and together without
+an original armor anchor. It reuses the existing profile harness and adds no
+screenshots. Evidence uses `betterNether[-boots]` under the usual
+`build/{reports,verification}/<baseline>/` directories, with `server.ok`,
+`client.ok` and `matrix.ok`. Plain `verifySkeleton` provides native-mod absence.
+
+The dedicated endpoint also runs the [native Ruby Fire regressions](Common/src/main/java/games/alejandrocoria/mismatchedleggings/test/BetterNetherRubyChecks.java):
+initialized native controls, both composition orientations, paid native Fireruby
+upgrades, source-aware book application, retaliation with item wear, live-state
+preservation and no resurrection of removed source enchantments. Standalone runs
+cover Leggings; current-Boots coexistence additionally covers Boots. Historical
+Boots binaries are excluded from the new-grant assertions. Expected root Ruby
+Fire I is mandatory, not a configurable pre-fix observation mode. This replaces
+the retired `spikes/leggings-betternether` harness without changing production.
+
+The disposable client's WorldWeaver configuration marks its first-launch welcome
+as already seen and disables upstream update checks, so quick play can reach the
+test world without an interactive startup dialog. Indev settings are untouched;
+loading errors are not hidden or bypassed.
+
+Eighteen loader-local unit cases cover the used API/injection guard, unrelated
+upstream additions, preserved positives, live reflection reads and once-only
+disable/logging on broken boundaries. Packaging verifies optional Fabric mixin
+ownership and rejects its leakage into NeoForge. This is not present-mod
+NeoForge support, mob-provocation simulation or visual acceptance. Native Ruby
+Fire effect checks use the dedicated server's enchantment dispatcher, not a new
+connected-player combat simulation. The ordinary smithing suite still owns the
+general new-enchantment regression.
+
+The owner separately confirmed the requested Fabric piglin checks for all three
+families/both outputs and the appearance, movement and tooltip review on
+2026-11-04. This does not turn the automatic profiles into a live mob-AI test or
+claim present-mod NeoForge support.
+
 ## Optional JEI/REI and user-guide acceptance
 
 ```powershell

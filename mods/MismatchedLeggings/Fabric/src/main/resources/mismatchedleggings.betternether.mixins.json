@@ -1,0 +1,9 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "plugin": "games.alejandrocoria.mismatchedleggings.compatibility.betternether.BetterNetherMixinPlugin",
+    "package": "games.alejandrocoria.mismatchedleggings.mixin.compatibility.betternether",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": ["BetterNetherPiglinArmorMixin"],
+    "injectors": { "defaultRequire": 1 }
+}
