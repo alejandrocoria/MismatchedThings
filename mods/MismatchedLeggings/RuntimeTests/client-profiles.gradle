@@ -8,6 +8,7 @@ profiles.each { profile ->
     def allTheModium = profile == 'AllTheModium'
     def brokenAllTheModium = allTheModium && providers.gradleProperty('leggingsAllTheModiumBroken')
             .map { it.toBoolean() }.getOrElse(false)
+    def phases = brokenAllTheModium ? ['server'] : ['server', 'client']
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
@@ -43,7 +44,7 @@ profiles.each { profile ->
     evaluationDependsOn(boots.path)
     def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
 
-    (allTheModium ? ['server'] : ['server', 'client']).each { phase ->
+    phases.each { phase ->
         tasks.register("prepare${profile}${phase.capitalize()}") {
             dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
             if (coexistence && previousBoots == null) { dependsOn boots.tasks.named('assemble') }
@@ -94,6 +95,10 @@ profiles.each { profile ->
                      'crystalite-panel.png', 'crystalite-panel-after-reload.png'].each { name ->
                         new File(reports, name).delete()
                     }
+                }
+                if (allTheModium && phase == 'client') {
+                    ['allthemodium-render.txt', 'allthemodium-render-after-reload.txt',
+                     'allthemodium-panel.png'].each { name -> new File(reports, name).delete() }
                 }
                 new File(run, 'config').mkdirs()
                 new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
@@ -180,6 +185,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if ((equipped || items || presentation) && phase == 'client') {
                     programArgument('--width'); programArgument('1280'); programArgument('--height'); programArgument('720')
                 }
+                if (allTheModium && phase == 'client') {
+                    programArgument('--width'); programArgument('1600'); programArgument('--height'); programArgument('1000')
+                }
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
@@ -235,8 +243,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
             logs.mkdirs()
             new File(logs, 'matrix.ok').delete()
-            // A's wearer contract needs only the dedicated endpoint; presentation belongs to B.
-            (allTheModium ? ['server'] : ['server', 'client']).each { phase ->
+            phases.each { phase ->
                 def log = new File(logs, "${phase}.log")
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
@@ -286,8 +293,13 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def proof = new File(reports, it)
                 !proof.isFile() || proof.length() == 0
             }) { throw new GradleException('Create Fly checks did not produce fresh before/after-reload evidence and panels') }
-            new File(logs, 'matrix.ok').text = allTheModium
-                    ? 'packaged AllTheModium dedicated gameplay checks passed; presentation pending\n'
+            if (allTheModium && !brokenAllTheModium && ['allthemodium-render.txt', 'allthemodium-render-after-reload.txt',
+                                                       'allthemodium-panel.png'].any {
+                def proof = new File(reports, it)
+                !proof.isFile() || proof.length() == 0
+            }) { throw new GradleException('AllTheModium presentation/reload evidence is missing') }
+            new File(logs, 'matrix.ok').text = brokenAllTheModium
+                    ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }
     }

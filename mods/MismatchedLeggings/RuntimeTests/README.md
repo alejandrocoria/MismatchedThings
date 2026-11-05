@@ -67,8 +67,9 @@ source removal/reinstallation, and both products together with optional viewers.
 
 The NeoForge-only gameplay profile resolves AllTheModium 4.1.1, All the Ores
 4.0.4 and GeckoLib 5.5.2 through Boots' maintained artifact catalog, download
-cache and SHA-256 pins. It never reads indev JARs. Block A uses only the dedicated
-endpoint; workstations, client presentation and owner acceptance belong to B.
+cache and SHA-256 pins. It never reads indev JARs. The normal profile runs a
+dedicated endpoint followed by the hidden/muted client. The deliberately broken
+tick control remains server-only. Owner acceptance is separate.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAllTheModium --offline --console=plain
@@ -79,8 +80,9 @@ endpoint; workstations, client presentation and owner acceptance belong to B.
 
 Omit `--offline` for initial downloads. Reports and bounded process logs use
 `build/{reports,verification}/<baseline>/allTheModium[-boots][-broken]/`, with
-`server.ok`, explicit failure traces and `matrix.ok`. This marker covers only the
-dedicated gameplay profile, not final compatibility acceptance.
+`server.ok`, `client.ok`, explicit failure traces and `matrix.ok`; the `-broken`
+variant requires only `server.ok`. A's earlier gameplay-only evidence is recorded
+in the private implementation plan, not equivalent to the expanded normal profile.
 
 Consecutive server callbacks advance disconnected ServerPlayers through the real
 Player inventory/effect tick, with a controlled player-tick counter and a forced
@@ -97,7 +99,29 @@ The separate `-broken` process removes the native tick declaration through a
 test-only Mixin plugin. It requires zero tick effects, preserved piglin safety and
 exactly one production guard warning; it does not patch production readiness or
 retry another source. Neither test Mixin applies to ordinary absence profiles.
-Use the existing `verifySkeleton` profiles for optional-absence validation in B.
+
+The dedicated endpoint also checks paid native upgrades from netherite through
+all three tiers, both extraction orientations, unrelated root/source-state
+preservation, real vanilla/custom trim recipes and the existing average durability,
+SAME Unbreakable and INTERSECTION fire-resistance policies. The client compares
+native base/trim submissions, split waist/legs, walking/crouching, GUI/hand item
+textures and normal/advanced tooltips for all tiers and both orientations before
+and after a real resource reload. It reuses the native renderer probe and eight-cell
+gallery, producing `allthemodium-render.txt`, `allthemodium-render-after-reload.txt`
+and one relevant `allthemodium-panel.png`. Fresh evidence is required. Only the
+disposable copied world may have its native backup/join confirmation accepted.
+
+Use the existing Fabric and NeoForge `verifySkeleton` profiles for optional-absence
+validation. Routine consolidated presentation/workstation coverage is `.114`;
+A's `.99` gameplay boundary remains separate evidence. Do not rerun the historical
+Boots compatibility matrix or imply a Fabric-present AllTheModium integration.
+
+On 2026-11-05 the expanded standalone/current-Boots server and hidden-client
+profiles passed on `.114`, including paid upgrades/trims and before/after-reload
+proofs; the representative panel was inspected. NeoForge `.114` and Fabric
+`0.19.5` skeleton absence profiles also passed. The owner separately confirmed the
+final NeoForge gameplay/visual checklist on 2026-11-05, closing the bounded plan.
+A's earlier `.99` gameplay coverage is not a B client-matrix claim.
 
 ## Advanced Netherite compatibility
 

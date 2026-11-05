@@ -20,7 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class EquipmentProbeMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void leggingsTest$observeNativeRenderer(CallbackInfo callback) {
-        if (Boolean.getBoolean("leggings.test.betterEnd") || Boolean.getBoolean("leggings.test.createFly")) {
+        if (Boolean.getBoolean("leggings.test.betterEnd") || Boolean.getBoolean("leggings.test.createFly")
+                || Boolean.getBoolean("leggings.test.allTheModium")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }
     }

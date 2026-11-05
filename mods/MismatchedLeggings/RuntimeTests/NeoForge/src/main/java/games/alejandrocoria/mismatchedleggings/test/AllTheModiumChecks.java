@@ -49,11 +49,14 @@ public final class AllTheModiumChecks {
     }
 
     public static void tick(MinecraftServer server) {
-        if (finished || server.getTickCount() < 20) {
+        if (!server.isDedicatedServer() || finished || server.getTickCount() < 20) {
             return;
         }
         try {
             if (actors.isEmpty()) {
+                if (!BROKEN) {
+                    AllTheModiumWorkstationChecks.verify(server);
+                }
                 prepare(server);
             }
             clock++;
