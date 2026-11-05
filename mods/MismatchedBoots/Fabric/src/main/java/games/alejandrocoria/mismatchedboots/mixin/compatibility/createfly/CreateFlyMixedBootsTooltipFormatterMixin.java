@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.mixin.compatibility.createfly;
 
 import com.zurrtum.create.client.foundation.item.TooltipModifier;
+import com.zurrtum.create.client.infrastructure.config.AllConfigs;
 import games.alejandrocoria.mismatchedboots.tooltip.MixedBootsTooltipFormatter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -32,7 +33,7 @@ abstract class CreateFlyMixedBootsTooltipFormatterMixin {
             Consumer<Component> tooltip,
             CallbackInfo callback) {
         Player player = Minecraft.getInstance().player;
-        if (player == null) {
+        if (player == null || !AllConfigs.client().tooltips.get()) {
             return;
         }
 

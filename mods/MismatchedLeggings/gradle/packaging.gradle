@@ -104,13 +104,15 @@ gradle.projectsEvaluated {
                         def nested = descriptor.jars.findAll { it.file.tokenize('/').last().startsWith('mismatchedthings-') }
                         ['mismatchedleggings.createfly.mixins.json',
                          'games/alejandrocoria/mismatchedleggings/compatibility/createfly/CreateFlyMixinPlugin.class',
-                         'games/alejandrocoria/mismatchedleggings/mixin/compatibility/createfly/CreateFlyCardboardArmorHandlerMixin.class'].each { path ->
+                         'games/alejandrocoria/mismatchedleggings/mixin/compatibility/createfly/CreateFlyCardboardArmorHandlerMixin.class',
+                         'games/alejandrocoria/mismatchedleggings/mixin/compatibility/createfly/CreateFlyMixedLeggingsTooltipFormatterMixin.class'].each { path ->
                             if (!(path in names)) { throw new GradleException("Missing Fabric Create Fly entry: ${path}") }
                         }
                         def createFly = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('mismatchedleggings.createfly.mixins.json')))
                         if (createFly.plugin != 'games.alejandrocoria.mismatchedleggings.compatibility.createfly.CreateFlyMixinPlugin'
                                 || createFly.package != 'games.alejandrocoria.mismatchedleggings.mixin.compatibility.createfly'
-                                || createFly.mixins != ['CreateFlyCardboardArmorHandlerMixin']) {
+                                || createFly.mixins != ['CreateFlyCardboardArmorHandlerMixin']
+                                || createFly.client != ['CreateFlyMixedLeggingsTooltipFormatterMixin']) {
                             throw new GradleException('Wrong optional Create Fly mixin ownership')
                         }
                         if (nested.size() != 1 || descriptor.jars.size() != 1) {

@@ -61,6 +61,33 @@ class CreateFlyMixinPluginTest {
         return CreateFlyMixinPlugin.hasCompatibleCardboardApi(api[0], api[1], api[2]);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"valid", "missing_registry", "wrong_modify", "static_get", "missing_interface"})
+    void tooltipRegistryHasAnIndependentApiGuard(String change) {
+        var modifier = publicClass();
+        modifier.access |= Opcodes.ACC_INTERFACE;
+        modifier.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+                "REGISTRY", "Lcom/zurrtum/create/api/registry/SimpleRegistry;", null, null));
+        modifier.methods.add(new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, "modify",
+                "(Ljava/util/List;Lnet/minecraft/world/entity/player/Player;)V", null, null));
+        var registry = publicClass();
+        registry.access |= Opcodes.ACC_INTERFACE;
+        registry.methods.add(new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                "get", "(Ljava/lang/Object;)Ljava/lang/Object;", null, null));
+        switch (change) {
+            case "missing_registry" -> modifier.fields.clear();
+            case "wrong_modify" -> modifier.methods.getFirst().desc = "()V";
+            case "static_get" -> registry.methods.getFirst().access |= Opcodes.ACC_STATIC;
+            case "missing_interface" -> registry.access = Opcodes.ACC_PUBLIC;
+        }
+        if (change.equals("valid")) {
+            assertTrue(CreateFlyMixinPlugin.hasCompatibleTooltipApi(modifier, registry));
+        } else {
+            assertFalse(CreateFlyMixinPlugin.hasCompatibleTooltipApi(modifier, registry));
+        }
+        assertTrue(compatible(compatibleApi()));
+    }
+
     private static ClassNode[] compatibleApi() {
         var handler = publicClass();
         var predicate = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,

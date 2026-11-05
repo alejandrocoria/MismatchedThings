@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.runtimetest.createfly.fabric;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.AllSynchedDatas;
 import com.zurrtum.create.client.foundation.item.TooltipModifier;
+import com.zurrtum.create.client.infrastructure.config.AllConfigs;
 import com.zurrtum.create.content.equipment.armor.DivingBootsItem;
 import games.alejandrocoria.mismatchedboots.compatibility.createfly.CreateFlyMixinPlugin;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
@@ -64,6 +65,7 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
             context.runOnClient(
                     CreateFlyTooltipCompatibilityClientGameTest::characterizeRegistryDrivenSource);
             context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::characterizeUnrelatedTooltip);
+            context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::characterizeConfigToggle);
             context.runOnClient(CreateFlyTooltipCompatibilityClientGameTest::characterizeDivingState);
         }
         completeClientCompatibilityVerification();
@@ -249,6 +251,28 @@ public final class CreateFlyTooltipCompatibilityClientGameTest
                 "Unrelated Mismatched tooltip recursively ran its final hook");
         require(ItemStack.matches(before, mixed) && sourcesBefore.equals(mixedData(mixed)),
                 "Unrelated Mismatched tooltip changed root or source data");
+    }
+
+    private static void characterizeConfigToggle(Minecraft client) {
+        boolean previous = AllConfigs.client().tooltips.get();
+        try {
+            for (boolean enabled : List.of(true, false, true)) {
+                AllConfigs.client().tooltips.set(enabled);
+                for (Item item : List.of(AllItems.CARDBOARD_BOOTS, AllItems.COPPER_DIVING_BOOTS, AllItems.NETHERITE_DIVING_BOOTS)) {
+                    var source = item.getDefaultInstance();
+                    var expected = contribution(TooltipModifier.REGISTRY.get(item), client);
+                    require(countSubsequence(tooltip(client, source), expected) == (enabled ? 1 : 0),
+                            "Native Create tooltip config control disagreed");
+                    var pair = MixedBootsFactory.createPair(source, Items.IRON_BOOTS.getDefaultInstance());
+                    for (var root : List.of(pair.primary(), pair.inverse())) {
+                        require(countSubsequence(tooltip(client, root), expected) == (enabled ? 1 : 0),
+                                "Mixed Boots ignored Create's tooltip-enable config");
+                    }
+                }
+            }
+        } finally {
+            AllConfigs.client().tooltips.set(previous);
+        }
     }
 
     private static void characterizeRegistryDrivenSource(Minecraft client) {

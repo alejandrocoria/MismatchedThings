@@ -37,6 +37,10 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             "com.zurrtum.create.client.foundation.item.TooltipModifier";
     private static final String SIMPLE_REGISTRY_CLASS =
             "com.zurrtum.create.api.registry.SimpleRegistry";
+    private static final String CONFIGS_CLASS = "com.zurrtum.create.client.infrastructure.config.AllConfigs";
+    private static final String CLIENT_CONFIG_CLASS = "com.zurrtum.create.client.infrastructure.config.CClient";
+    private static final String CONFIG_BOOL_CLASS = "com.zurrtum.create.catnip.config.ConfigBase$ConfigBool";
+    private static final String CONFIG_VALUE_CLASS = "com.zurrtum.create.catnip.config.ConfigBase$CValue";
 
     private static final String ARMOR_ITEM_INTERNAL = ARMOR_ITEM_CLASS.replace('.', '/');
     private static final String ALL_ITEMS_INTERNAL = ALL_ITEMS_CLASS.replace('.', '/');
@@ -197,6 +201,20 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
                 "get",
                 GET_REGISTRY_VALUE,
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT);
+    }
+
+    static boolean hasCompatibleTooltipConfigApi(ClassNode configs, ClassNode client, ClassNode bool, ClassNode value) {
+        return isPublicClass(configs) && isPublicClass(client) && isPublicClass(bool) && isPublicClass(value)
+                && hasMethod(configs, "client", "()Lcom/zurrtum/create/client/infrastructure/config/CClient;",
+                             Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+                && client.fields.stream().anyMatch(field -> "tooltips".equals(field.name)
+                && "Lcom/zurrtum/create/catnip/config/ConfigBase$ConfigBool;".equals(field.desc)
+                && (field.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC))
+                == (Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL))
+                && "com/zurrtum/create/catnip/config/ConfigBase$CValue".equals(bool.superName)
+                && value.methods.stream().anyMatch(method -> "get".equals(method.name)
+                && "()Ljava/lang/Object;".equals(method.desc)
+                && (method.access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)) == Opcodes.ACC_PUBLIC);
     }
 
     private static boolean hasCardboardPredicate(ClassNode handler) {
@@ -370,7 +388,9 @@ public final class CreateFlyMixinPlugin implements IMixinConfigPlugin {
             var provider = MixinService.getService().getBytecodeProvider();
             tooltipCompatible = hasCompatibleTooltipApi(
                     provider.getClassNode(TOOLTIP_MODIFIER_CLASS),
-                    provider.getClassNode(SIMPLE_REGISTRY_CLASS));
+                    provider.getClassNode(SIMPLE_REGISTRY_CLASS))
+                    && hasCompatibleTooltipConfigApi(provider.getClassNode(CONFIGS_CLASS), provider.getClassNode(CLIENT_CONFIG_CLASS),
+                                                     provider.getClassNode(CONFIG_BOOL_CLASS), provider.getClassNode(CONFIG_VALUE_CLASS));
             if (!tooltipCompatible) {
                 Constants.LOG.warn(
                         "Create Fly tooltip API is incompatible; tooltip compatibility disabled");

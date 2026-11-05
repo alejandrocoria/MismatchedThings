@@ -33,6 +33,7 @@ final class CreateFlyClientChecks {
             } finally {
                 client.player.input.keyPresses = previousInput;
             }
+            CreateFlyTooltipChecks.verify(client);
             SkeletonChecks.passed("client");
             finished = true;
             client.stop();

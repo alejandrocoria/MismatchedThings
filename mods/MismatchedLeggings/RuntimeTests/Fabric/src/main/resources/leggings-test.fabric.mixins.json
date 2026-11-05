@@ -3,6 +3,7 @@
     "package": "games.alejandrocoria.mismatchedleggings.test.fabricmixin",
     "compatibilityLevel": "JAVA_25",
     "client": [
+        "CreateFlyInputProbe",
         "CrystaliteMaterialProbe",
         "CrystaliteSplitProbe",
         "FabricItemResolverProbe"

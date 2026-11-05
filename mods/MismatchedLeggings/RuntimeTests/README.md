@@ -162,7 +162,16 @@ dimensions and independent coexistence with current mixed Boots. The dedicated
 endpoint additionally exercises native Full Stealth, mob target/attacker clearing
 and the real Belt passenger gate, distinct from its full-set transport helper.
 No original feet/legs anchor is required, and the native effect implementations
-are not replaced. There are no screenshots in this gameplay block.
+are not replaced. These gameplay/tooltip checks take no screenshots.
+
+The client also compares native and source-local descriptions in normal/Shift
+and advanced modes with Create's tooltip config on/off/on, including both mixed
+orientations, hidden source tooltips, absent players, source IDs, separators,
+unrelated lore/attributes, non-mutation and exactly one final tooltip callback.
+The coexistence profile covers Cardboard and both Diving Boots as well as
+Cardboard Leggings. Controlled test-only window-key input feeds the real
+`Minecraft.hasShiftDown()` and native modifier, following the same input boundary
+as Fabric client GameTests; it never substitutes Create's description output.
 
 Evidence uses `createFly[-boots]` beneath the usual
 `build/{reports,verification}/<fabric-loader>/` directories (`server.ok`,
@@ -170,8 +179,8 @@ Evidence uses `createFly[-boots]` beneath the usual
 optional absence; packaging checks Fabric-only mixin ownership, no required
 Create dependency and no bundled Create classes. Loader-local unit tests cover
 the required API/semantic anchor without fingerprinting unrelated mixin code.
-Native source-tooltip integration and final visual acceptance belong to later
-blocks; this profile does not yet certify them. Fuel inheritance and Arts and
+Final visual acceptance belongs to the later presentation block; this profile
+does not certify it. Fuel inheritance and Arts and
 Crafts on mixed smithing outputs are excluded from the initial integration.
 
 ## Better End compatibility
