@@ -22,6 +22,9 @@ import net.minecraft.world.item.Items;
 public final class SkeletonClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        if (Boolean.getBoolean("leggings.test.betterEnd")) {
+            BetterEndClientChecks.renderChecks = CrystaliteCaptureChecks::run;
+        }
         if (Boolean.getBoolean("leggings.test.items")) {
             FabricItemChecks.install();
         }

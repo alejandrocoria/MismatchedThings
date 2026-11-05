@@ -170,10 +170,16 @@ description while mixed sources omit it and its extra spacer, with one or two
 Crystalite sources. Effective root health text must match native attribute
 rendering. It also checks exactly one native root set-bonus line, equipped
 complete/incomplete-set colors, unequipped and null-player tooltips, in normal
-and advanced modes. It reuses the WorldWeaver
-first-launch configuration above. No screenshots or custom-renderer acceptance
-are part of this gameplay profile: Crystalite's equipped rendering is a separate
-investigation. Evidence uses `betterEnd[-boots]` beneath the usual
+and advanced modes. It reuses the WorldWeaver first-launch configuration above.
+The Fabric client also directly exercises the production Crystalite capture
+adapter against native renderer callbacks: geometry/UVs/normals/materials,
+complementary split and selected leg, regular/slim/crouched/seated/baby/posed rigs,
+visibility, queued pose independence, bounded cache reuse, root foil and render
+fields, unsupported requests and source non-mutation. It repeats these checks
+after a real resource reload, without manually resetting the adapter. Fresh
+`crystalite-capture.txt` and `crystalite-capture-after-reload.txt` are mandatory.
+This block-A fixture does not enable production dispatch or certify its final
+appearance; no screenshot is required here. Evidence uses `betterEnd[-boots]` beneath the usual
 `build/{reports,verification}/<baseline>/` directories, including `server.ok`,
 `client.ok` and `matrix.ok`. No present-mod NeoForge support is claimed.
 

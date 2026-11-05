@@ -71,6 +71,11 @@ profiles.each { profile ->
                 reports.mkdirs()
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
+                if (betterEnd && !crystaliteSpike && phase == 'client') {
+                    ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt'].each { name ->
+                        new File(reports, name).delete()
+                    }
+                }
                 if (crystaliteSpike && phase == 'client') {
                     ['crystalite-proof.txt', 'crystalite-after-reload.txt', 'crystalite-panel.png'].each { name ->
                         new File(reports, name).delete()
@@ -243,6 +248,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def proof = new File(reports, it)
                 !proof.isFile() || proof.length() == 0
             }) { throw new GradleException('Crystalite spike did not produce fresh before/after-reload evidence and panel') }
+            if (betterEnd && !crystaliteSpike && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt'].any {
+                def proof = new File(reports, it)
+                !proof.isFile() || proof.length() == 0
+            }) { throw new GradleException('Crystalite capture checks did not produce fresh before/after-reload evidence') }
             if (previousBoots != null && previousHash != java.security.MessageDigest.getInstance('SHA-256')
                     .digest(previousBoots.bytes).encodeHex().toString()) {
                 throw new GradleException('Previous Boots artifact was modified')

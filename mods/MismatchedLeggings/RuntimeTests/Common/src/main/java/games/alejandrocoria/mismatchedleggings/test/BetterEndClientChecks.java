@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
+import games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import games.alejandrocoria.mismatchedleggings.tooltip.MixedLeggingsTooltipFormatter;
@@ -15,14 +16,22 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
 final class BetterEndClientChecks {
+    static Supplier<String> renderChecks = () -> "";
     private static int ticks;
     private static boolean finished;
+    private static CompletableFuture<Void> reload;
+    private static long generation;
 
     private BetterEndClientChecks() {
     }
@@ -32,10 +41,23 @@ final class BetterEndClientChecks {
             return;
         }
         try {
-            require(++ticks < 1800, "Better End client startup timed out: screen=" + client.screen);
+            require(++ticks < 2400, "Better End client startup/reload timed out: screen=" + client.screen);
             require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                     "Automated client window became visible");
             if (client.level == null || client.player == null || client.screen != null || client.getOverlay() != null) {
+                return;
+            }
+            if (reload != null) {
+                if (!reload.isDone()) {
+                    return;
+                }
+                reload.join();
+                require(LeggingsGeometryCache.statistics().generation() > generation,
+                        "Better End resource reload did not clear the geometry epoch");
+                writeRenderProof("crystalite-capture-after-reload.txt");
+                SkeletonChecks.passed("client");
+                finished = true;
+                client.stop();
                 return;
             }
             var nativeLeggings = BetterEndChecks.nativeStack("crystalite_leggings");
@@ -65,14 +87,20 @@ final class BetterEndClientChecks {
             for (var root : roots) {
                 tooltip(client, root, false);
             }
-            SkeletonChecks.passed("client");
-            finished = true;
-            client.stop();
+            writeRenderProof("crystalite-capture.txt");
+            generation = LeggingsGeometryCache.statistics().generation();
+            reload = client.reloadResourcePacks();
         } catch (Throwable failure) {
             finished = true;
             SkeletonChecks.failed("client", failure);
             client.stop();
         }
+    }
+
+    private static void writeRenderProof(String name) throws IOException {
+        String proof = renderChecks.get();
+        require(!proof.isBlank(), "Better End platform render checks were not installed");
+        Files.writeString(Path.of(System.getProperty("leggings.test.report"), name), proof);
     }
 
     private static void tooltip(Minecraft client, ItemStack stack, boolean complete) {
