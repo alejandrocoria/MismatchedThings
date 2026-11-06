@@ -92,6 +92,7 @@ profiles.each { profile ->
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
+                if (aquaculture && phase == 'client') { new File(reports, 'aquaculture-tooltip.txt').delete() }
                 if (createFly && phase == 'client') {
                     ['cardboard-render.txt', 'cardboard-render-after-reload.txt',
                      'cardboard-panel.png', 'cardboard-panel-after-reload.png'].each { name ->
@@ -288,6 +289,12 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     if (refusals != (brokenAllTheModium ? 1 : 0) || text.contains('/ERROR]')) {
                         throw new GradleException("Unexpected ${profile} diagnostics: ${log}")
                     }
+                    if (aquaculture) {
+                        def failures = text.readLines().count { it.contains('Aquaculture leggings source tooltips disabled:') }
+                        if (failures != (phase == 'client' ? 1 : 0)) {
+                            throw new GradleException("Unexpected Aquaculture tooltip failure count: ${log}")
+                        }
+                    }
                 }
             }
             if (betterEnd && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt',
@@ -313,6 +320,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def proof = new File(reports, it)
                 !proof.isFile() || proof.length() == 0
             }) { throw new GradleException('Aquaculture gameplay/client evidence is missing') }
+            if (aquaculture && !aquacultureServerOnly) {
+                def proof = new File(reports, 'aquaculture-tooltip.txt')
+                if (!proof.isFile() || proof.length() == 0) { throw new GradleException('Aquaculture native tooltip evidence is missing') }
+            }
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'

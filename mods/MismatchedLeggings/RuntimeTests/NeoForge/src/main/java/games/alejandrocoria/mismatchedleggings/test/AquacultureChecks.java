@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
 import com.mojang.authlib.GameProfile;
+import games.alejandrocoria.mismatchedleggings.compatibility.aquaculture.AquacultureTooltipCompatibility;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
@@ -10,6 +11,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -26,6 +28,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.TagValueInput;
@@ -34,6 +37,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -75,6 +79,10 @@ public final class AquacultureChecks {
 
     private static void verify(MinecraftServer server) {
         var source = nativeItem("neptunium_leggings");
+        var serverTooltip = new ArrayList<Component>();
+        AquacultureTooltipCompatibility.appendSource(source, TooltipFlag.NORMAL, serverTooltip::add);
+        require(serverTooltip.isEmpty(), "Dedicated server invoked the native client tooltip handler");
+        REPORT.append("Dedicated-server tooltip distribution gate passed without native client linkage\n");
         var roots = pair(source, new ItemStack(Items.IRON_LEGGINGS));
         for (var root : roots) {
             checkGravity(server, root, true);

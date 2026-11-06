@@ -136,6 +136,7 @@ final class AquacultureClientChecks {
             keys(client, false, false);
             scene++;
             if (scene == SCENES.length) {
+                AquacultureTooltipChecks.verify();
                 Files.writeString(Path.of(System.getProperty("leggings.test.report"), "aquaculture-client.txt"), REPORT.toString());
                 SkeletonChecks.passed("client");
                 finished = true;

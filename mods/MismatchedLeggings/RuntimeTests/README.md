@@ -79,7 +79,8 @@ The normal profile runs a dedicated endpoint followed by the hidden/muted client
 Omit `--offline` for initial downloads. Evidence uses
 `build/{reports,verification}/<baseline>/aquaculture[-boots][-server-only]/`:
 `server.ok`, `client.ok`, explicit failure traces, `aquaculture-server.txt`,
-`aquaculture-client.txt` and `matrix.ok`. The `-server-only` variant has its own
+`aquaculture-client.txt`, `aquaculture-tooltip.txt` and `matrix.ok`. The
+`-server-only` variant has its own
 directory/marker and deliberately requires no client evidence; do not report it
 as a full client matrix. Run profiles/baselines sequentially and restore normal
 `.114` packaging after a floor run.
@@ -108,8 +109,29 @@ The hook targets the fixed Minecraft gravity getter with the ordinary required
 injection boundary, not an optional native method. No Aquaculture class is linked;
 absence is checked through the existing Fabric and NeoForge `verifySkeleton`
 profiles. There is no native-body fingerprint or pretend incompatible-API control.
-Native source tooltips and consolidated presentation/session checks belong to
-later blocks; passing this gameplay profile does not close the compatibility.
+
+The client also compares actual native tooltip components/styles for both output
+orientations and duplicate Neptunium sources, normal/advanced flags and physical
+left/right Shift. The test-only input probe overrides keys only during synchronous
+captures. Source IDs stay dark gray before the contribution, hidden source/root
+details stay hidden, custom names/lore remain, and descriptions never move to the
+root. Captures use an empty context/null player and must post exactly one final
+root tooltip event, without replaying source events or changing history.
+
+Live tag removal/restoration uses the native registry tag-reload application,
+including a native negative control and an unrelated tagged item. This is not a
+datapack-network reload acceptance claim. Current-Boots descriptions are checked
+before and after the Leggings adapter's deliberately faulting final invocation.
+That last check changes only the fixture JVM's private reflected binding: partial
+output/mutations must remain isolated, later calls must not retry and exactly one
+`Aquaculture leggings source tooltips disabled:` warning is **expected** in each
+present-profile client log, zero on the dedicated endpoint. Unexpected errors or
+warning counts fail the profile. Run presentation checks before this intentional
+disable if extending the same JVM. The dedicated endpoint separately exercises
+the bridge's distribution gate without invoking native client code.
+
+Consolidated rendering/workstation/session checks and owner acceptance remain
+separate; passing this profile does not close the compatibility.
 
 ## AllTheModium compatibility
 
