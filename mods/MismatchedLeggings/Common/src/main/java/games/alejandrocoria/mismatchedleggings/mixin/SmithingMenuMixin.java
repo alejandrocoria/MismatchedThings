@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import games.alejandrocoria.mismatchedleggings.compatibility.forbiddenarcanus.ForbiddenModifierAdapter;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.interaction.LeggingsSmithing;
@@ -32,11 +33,14 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
     private LeggingsSmithing.Result mismatchedleggings$match;
     @Unique
     private List<ItemStack> mismatchedleggings$inputs;
+    @Unique
+    private boolean mismatchedleggings$modifierHandled;
 
     @Inject(method = "createResult", at = @At("HEAD"), cancellable = true)
     private void mismatchedleggings$begin(CallbackInfo callback) {
         mismatchedleggings$match = null;
         mismatchedleggings$inputs = null;
+        mismatchedleggings$modifierHandled = false;
         var menu = (SmithingMenu) (Object) this;
         for (int slot = SmithingMenu.TEMPLATE_SLOT; slot <= SmithingMenu.ADDITIONAL_SLOT; slot++) {
             if (LeggingsContent.suspendedLeggingsData(menu.getSlot(slot).getItem()).isPresent()) {
@@ -49,6 +53,16 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
         if (MixedLeggingsStructure.isMixedItem(base) && MixedLeggingsStructure.validData(base).isEmpty()) {
             mismatchedleggings$clearResult();
             callback.cancel();
+            return;
+        }
+        if (level instanceof ServerLevel server && MixedLeggingsStructure.validData(base).isPresent()) {
+            var decision = ForbiddenModifierAdapter.INSTANCE.smithing(server, menu.getSlot(0).getItem(), base, menu.getSlot(2).getItem());
+            if (decision.handled()) {
+                mismatchedleggings$modifierHandled = true;
+                mismatchedleggings$clearResult();
+                decision.result().ifPresent(this::mismatchedleggings$installMatch);
+                callback.cancel();
+            }
         }
     }
 
@@ -56,7 +70,7 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
     private void mismatchedleggings$trySources(CallbackInfo callback) {
         var menu = (SmithingMenu) (Object) this;
         var base = menu.getSlot(SmithingMenu.BASE_SLOT).getItem();
-        if (!(level instanceof ServerLevel server) || MixedLeggingsStructure.validData(base).isEmpty()) {
+        if (mismatchedleggings$modifierHandled || !(level instanceof ServerLevel server) || MixedLeggingsStructure.validData(base).isEmpty()) {
             return;
         }
         var result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
@@ -70,13 +84,7 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
             mismatchedleggings$clearResult();
         }
         LeggingsSmithing.evaluate(server, menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem(), base,
-                menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem()).ifPresent(match -> {
-            result.setRecipeUsed(match.primary());
-            result.setItem(0, match.output());
-            mismatchedleggings$match = new LeggingsSmithing.Result(match.output().copy(), match.primary(), match.additional());
-            mismatchedleggings$inputs = List.of(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem().copy(),
-                    base.copy(), menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem().copy());
-        });
+                menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem()).ifPresent(this::mismatchedleggings$installMatch);
     }
 
     @Override
@@ -87,7 +95,9 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
         var menu = (SmithingMenu) (Object) this;
         var inputs = List.of(menu.getSlot(SmithingMenu.TEMPLATE_SLOT).getItem(), menu.getSlot(SmithingMenu.BASE_SLOT).getItem(),
                 menu.getSlot(SmithingMenu.ADDITIONAL_SLOT).getItem());
-        var fresh = LeggingsSmithing.hasDirectResult(server, inputs.get(0), inputs.get(1), inputs.get(2)) ? null
+        var modifiers = ForbiddenModifierAdapter.INSTANCE.smithing(server, inputs.get(0), inputs.get(1), inputs.get(2));
+        var fresh = modifiers.handled() ? modifiers.result().orElse(null)
+                : LeggingsSmithing.hasDirectResult(server, inputs.get(0), inputs.get(1), inputs.get(2)) ? null
                 : LeggingsSmithing.evaluate(server, inputs.get(0), inputs.get(1), inputs.get(2)).orElse(null);
         if (mismatchedleggings$sameInputs(inputs) && fresh != null
                 && fresh.primary() == mismatchedleggings$match.primary()
@@ -122,6 +132,16 @@ abstract class SmithingMenuMixin implements LeggingsSmithingState {
                 player.awardRecipes(List.of(match.additional()));
             }
         }
+    }
+
+    @Unique
+    private void mismatchedleggings$installMatch(LeggingsSmithing.Result match) {
+        var menu = (SmithingMenu) (Object) this;
+        var result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
+        result.setRecipeUsed(match.primary());
+        result.setItem(0, match.output());
+        mismatchedleggings$match = new LeggingsSmithing.Result(match.output().copy(), match.primary(), match.additional());
+        mismatchedleggings$inputs = List.of(menu.getSlot(0).getItem().copy(), menu.getSlot(1).getItem().copy(), menu.getSlot(2).getItem().copy());
     }
 
     @Unique

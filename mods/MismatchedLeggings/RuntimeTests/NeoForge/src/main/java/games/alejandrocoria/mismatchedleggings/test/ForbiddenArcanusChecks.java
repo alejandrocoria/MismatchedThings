@@ -96,6 +96,7 @@ final class ForbiddenArcanusChecks {
                     .getMethod("server", MinecraftServer.class).invoke(null, server);
         } else {
             ForbiddenModifierChecks.server(server);
+            ForbiddenModifierSmithingChecks.server(server);
         }
         nativeSaveControl(server);
         for (var sample : samples()) {

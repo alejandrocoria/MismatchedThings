@@ -102,8 +102,13 @@ combinations and both outputs through the actual workbench, authoritative union,
 immutable sources, exact native projections, real armor wear and native
 death/`PlayerList.respawn`, codecs, root-only state and recomposition. Eternal
 removes live durability; Soulbound remains the native scalar projection when both
-effects are active. Modifier smithing admission and final tooltip presentation
-are separate unfinished blocks, not certified by these state/effect checks.
+effects are active. A separate fresh `forbidden-modifiers-smithing.txt` is also
+required: real native menus cover independent installation in either order,
+both orientations, named/unnamed roots, normal/shift payment and recipe credit,
+duplicate/invalid-input refusal, live-vs-historical admission, recipe/tag rebinding
+and stale-result rejection. Subsequent trim, anvil rename, grindstone and finite
+Soulbound crafting repair preserve the live effects. Native originals remain
+controls. Final tooltip presentation is still separate unfinished work.
 The normal hidden client receives all four states in both orientations through
 real equipment packets, without client-side equipment writes. It does not need
 new screenshots for this data-only check.

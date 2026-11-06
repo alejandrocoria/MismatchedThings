@@ -110,6 +110,7 @@ profiles.each { profile ->
                 if (forbiddenArcanus) { new File(reports, "forbidden-${phase}.txt").delete() }
                 if (forbiddenArcanus && !forbiddenModifiersSpike && phase == 'server') {
                     new File(reports, 'forbidden-modifiers-server.txt').delete()
+                    new File(reports, 'forbidden-modifiers-smithing.txt').delete()
                 }
                 if (forbiddenArcanus && phase == 'server') { new File(reports, 'forbidden-native-save.txt').delete() }
                 if (forbiddenModifiersSpike) { new File(reports, "modifiers-${phase}.txt").delete() }
@@ -340,8 +341,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     throw new GradleException("Missing Forbidden Arcanus modifier spike evidence: ${log}")
                 }
                 if (forbiddenArcanus && !forbiddenModifiersSpike && phase == 'server'
-                        && !new File(reports, 'forbidden-modifiers-server.txt').isFile()) {
-                    throw new GradleException("Missing Forbidden Arcanus modifier state/effect evidence: ${log}")
+                        && (!new File(reports, 'forbidden-modifiers-server.txt').isFile()
+                        || !new File(reports, 'forbidden-modifiers-smithing.txt').isFile())) {
+                    throw new GradleException("Missing Forbidden Arcanus modifier state/effect/smithing evidence: ${log}")
                 }
             }
             if (betterEnd && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt',

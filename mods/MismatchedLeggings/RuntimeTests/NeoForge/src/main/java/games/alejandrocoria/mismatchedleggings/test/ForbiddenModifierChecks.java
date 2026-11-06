@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Maintained state/effect checks; modifier smithing admission and UI belong to later blocks. */
+/** Maintained state/effect checks; smithing and presentation have separate acceptance. */
 final class ForbiddenModifierChecks {
     private static final ResourceKey<Registry<Object>> REGISTRY = ResourceKey.createRegistryKey(id("item_modifier"));
 
@@ -54,7 +54,7 @@ final class ForbiddenModifierChecks {
                 "Nine native input combinations, both orientations and actual workbench payment passed;\n"
                 + "immutable history, exact union/projections, actual wear, root-only state and recomposition passed;\n"
                 + "persistent/network codecs and real native death/PlayerList respawn passed;\n"
-                + "no modifier smithing or presentation acceptance claimed\n");
+                + "smithing has a separate report; final presentation acceptance is not claimed here\n");
     }
 
     private static void matrix(MinecraftServer server) throws Exception {
@@ -191,7 +191,7 @@ final class ForbiddenModifierChecks {
         return samples;
     }
 
-    private static void verify(ItemStack root, ForbiddenModifiers state) {
+    static void verify(ItemStack root, ForbiddenModifiers state) {
         require(MixedLeggingsStructure.validData(root).isPresent(), "Modifier output lost structural validity/name");
         require(root.getOrDefault(LeggingsContent.forbiddenModifiersType(), ForbiddenModifiers.EMPTY).equals(state), "Wrong authoritative union");
         require(!state.isEmpty() || !root.has(LeggingsContent.forbiddenModifiersType()), "Empty authority should be omitted");
@@ -201,7 +201,7 @@ final class ForbiddenModifierChecks {
                         : root.isDamageableItem() && root.getMaxDamage() > 0, "Wrong live durability for root flags");
     }
 
-    private static void codecs(MinecraftServer server, ItemStack root) {
+    static void codecs(MinecraftServer server, ItemStack root) {
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
         var loaded = ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, root).getOrThrow()).getOrThrow();
         require(ItemStack.matches(root, loaded), "Persistent codec changed modifiers/provenance");
@@ -221,7 +221,7 @@ final class ForbiddenModifierChecks {
                 .toList().toString();
     }
 
-    private static ItemStack source(MinecraftServer server, String kind, boolean diamond) {
+    static ItemStack source(MinecraftServer server, String kind, boolean diamond) {
         var result = new ItemStack(diamond ? Items.DIAMOND_LEGGINGS : Items.IRON_LEGGINGS);
         result.setDamageValue(diamond ? 20 : 10);
         if (!kind.equals("none")) {
@@ -237,7 +237,7 @@ final class ForbiddenModifierChecks {
     }
 
     @SuppressWarnings("unchecked")
-    private static String nativeKind(ItemStack root) {
+    static String nativeKind(ItemStack root) {
         var type = (DataComponentType<Holder<Object>>) BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(id("modifier"));
         var holder = root.get(type);
         return holder == null ? "none" : holder.unwrapKey().orElseThrow().identifier().getPath();
@@ -251,14 +251,14 @@ final class ForbiddenModifierChecks {
         return Identifier.fromNamespaceAndPath("forbidden_arcanus", path);
     }
 
-    private static ServerPlayer actor(MinecraftServer server) {
+    static ServerPlayer actor(MinecraftServer server) {
         var player = RepairFixtures.player(server);
         new EmbeddedChannel(player.connection.getConnection());
         player.connection.markClientLoaded();
         return player;
     }
 
-    private static void close(ServerPlayer player) {
+    static void close(ServerPlayer player) {
         ((EmbeddedChannel) player.connection.getConnection().channel()).finishAndReleaseAll();
     }
 }
