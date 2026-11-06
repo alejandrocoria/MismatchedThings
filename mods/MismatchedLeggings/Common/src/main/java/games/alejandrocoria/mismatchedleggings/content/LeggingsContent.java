@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
+import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
 import games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData;
 import net.minecraft.core.component.DataComponentType;
@@ -21,6 +22,7 @@ public final class LeggingsContent {
     public static final Identifier MIXED_LEGGINGS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "mixed_leggings");
     public static final Identifier MIXED_LEGGINGS_DATA_ID = Identifier.fromNamespaceAndPath(MOD_ID, "mixed_leggings_data");
     public static final Identifier SUSPENDED_LEGGINGS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "suspended_leggings");
+    public static final Identifier FORBIDDEN_MODIFIERS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "forbidden_modifiers");
 
     private LeggingsContent() {
     }
@@ -33,6 +35,16 @@ public final class LeggingsContent {
     public static DataComponentType<SuspendedLeggingsData> createSuspendedDataType() {
         return DataComponentType.<SuspendedLeggingsData>builder().persistent(SuspendedLeggingsData.CODEC)
                 .networkSynchronized(SuspendedLeggingsData.STREAM_CODEC).cacheEncoding().build();
+    }
+
+    public static DataComponentType<ForbiddenModifiers> createForbiddenModifiersType() {
+        return DataComponentType.<ForbiddenModifiers>builder().persistent(ForbiddenModifiers.CODEC)
+                .networkSynchronized(ForbiddenModifiers.STREAM_CODEC).cacheEncoding().build();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static DataComponentType<ForbiddenModifiers> forbiddenModifiersType() {
+        return (DataComponentType<ForbiddenModifiers>) BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(FORBIDDEN_MODIFIERS_ID);
     }
 
     public static Optional<SuspendedLeggingsData> suspendedLeggingsData(ItemStack stack) {

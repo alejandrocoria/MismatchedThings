@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -68,7 +69,11 @@ final class ForbiddenArcanusClientChecks {
             if (phase == 0) {
                 SkeletonChecks.verify();
                 playerId = client.player.getUUID();
-                job = server.submit(ForbiddenArcanusChecks::samples);
+                job = server.submit(() -> {
+                    var created = new ArrayList<>(ForbiddenArcanusChecks.samples());
+                    created.addAll(ForbiddenModifierChecks.samples(server));
+                    return created;
+                });
                 phase = 1;
             } else if (phase == 1 && job.isDone()) {
                 @SuppressWarnings("unchecked")
@@ -121,7 +126,8 @@ final class ForbiddenArcanusClientChecks {
                         "Real native equipment packets and client attributes passed for " + samples.size() + " samples;\n"
                         + "Draco/Tyr item textures, native base/trim materials, split waist/legs and tooltips passed before/after real reload;\n"
                         + "native save/disconnect/reopen replaced server/player, retained UUID, named/damaged/trimmed root/provenance and Aureal;\n"
-                        + "no client equipment/attribute writes, screenshot or optional modifier acceptance\n");
+                        + "all four modifier states received through real equipment packets in both orientations;\n"
+                        + "no client equipment/attribute writes, screenshot or modifier smithing/presentation acceptance\n");
                 SkeletonChecks.passed("client");
                 phase = 8;
                 client.stop();

@@ -31,6 +31,7 @@ public final class ComponentRuleSupport {
     public static boolean isManaged(DataComponentType<?> type) {
         Objects.requireNonNull(type, "type");
         return !FIXED_TYPES.contains(type) && type != LeggingsContent.mixedLeggingsDataType()
+                && !LeggingsContent.FORBIDDEN_MODIFIERS_ID.equals(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type))
                 && !LeggingsContent.SUSPENDED_LEGGINGS_ID.equals(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type));
     }
 

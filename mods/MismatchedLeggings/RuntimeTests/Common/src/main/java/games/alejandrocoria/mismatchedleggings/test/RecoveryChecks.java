@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsItemCodec;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
@@ -186,6 +187,8 @@ public final class RecoveryChecks {
     }
 
     private static ItemStack decorate(MinecraftServer server, ItemStack root, int index) {
+        // Own registry-independent state must survive the same real absent-source cycle.
+        root.set(LeggingsContent.forbiddenModifiersType(), new ForbiddenModifiers(true, true));
         root.set(RecoveryFixture.WALLET, PAID);
         root.set(CompositionFixture.CHARGE, 123L);
         root.setDamageValue(17 + index);
@@ -214,6 +217,8 @@ public final class RecoveryChecks {
                     require(encode(root, server.registryAccess()).equals(encode(decoded, server.registryAccess()))
                                     && MixedLeggingsStructure.validData(root).isPresent(), "Incomplete recovery in slot " + i);
                     require(root.get(RecoveryFixture.WALLET) == PAID, "Recovery refilled/rounded the paid wallet");
+                    require(new ForbiddenModifiers(true, true).equals(root.get(LeggingsContent.forbiddenModifiersType())),
+                            "Recovery lost product-owned modifier flags");
                 } else {
                     inactive(root);
                     if (RecoveryFixture.stage().equals("absent")) {

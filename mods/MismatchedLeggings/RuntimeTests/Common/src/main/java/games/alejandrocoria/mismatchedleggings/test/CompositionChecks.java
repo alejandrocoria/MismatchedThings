@@ -4,11 +4,14 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedleggings.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedleggings.component.ComponentRuleSet;
+import games.alejandrocoria.mismatchedleggings.component.ComponentRuleSupport;
 import games.alejandrocoria.mismatchedleggings.component.ComponentRules;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedleggings.test.mixin.ArmorWearInvoker;
 import games.alejandrocoria.mismatchedthings.api.composition.AttributeMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.AttributePolicy;
@@ -68,6 +71,8 @@ public final class CompositionChecks {
         b.set(DataComponents.REPAIR_COST, 8);
         a.set(CompositionFixture.CHARGE, 7L);
         b.set(CompositionFixture.CHARGE, 4L);
+        a.set(LeggingsContent.forbiddenModifiersType(), new ForbiddenModifiers(true, true));
+        require(!ComponentRuleSupport.isManaged(LeggingsContent.forbiddenModifiersType()), "Root modifier state became configurable");
         a.set(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         a.set(DataComponents.LORE, new ItemLore(List.of(net.minecraft.network.chat.Component.literal("Source lore"))));
         b.remove(DataComponents.CUSTOM_DATA);
@@ -87,6 +92,7 @@ public final class CompositionChecks {
                         && pair.primary().has(DataComponents.CUSTOM_DATA) && !pair.inverse().has(DataComponents.CUSTOM_DATA),
                 "Unknown components/removals did not retain their orientation owner");
         for (var root : List.of(pair.primary(), pair.inverse())) {
+            require(!root.has(LeggingsContent.forbiddenModifiersType()), "A source supplied forged mixed-root modifier authority");
             require(root.getMaxDamage() == (a.getMaxDamage() + b.getMaxDamage()) / 2
                             && root.getMaxDamage() - root.getDamageValue() == (a.getMaxDamage() - 7 + b.getMaxDamage() - 12) / 2,
                     "Durability did not conserve remaining resource with floor rounding");

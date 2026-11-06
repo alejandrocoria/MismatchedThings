@@ -33,7 +33,7 @@ public final class LeggingsSmithing {
             return Optional.empty();
         }
         try {
-            var output = MixedLeggingsRecomposer.recompose(root, left.stack(), right.stack());
+            var output = MixedLeggingsRecomposer.recompose(root, left.stack(), right.stack(), level.registryAccess());
             inheritNewEnchantments(output, data.left().source(), left.stack());
             inheritNewEnchantments(output, data.right().source(), right.stack());
             var primary = left.recipe() != null ? left.recipe() : right.recipe();

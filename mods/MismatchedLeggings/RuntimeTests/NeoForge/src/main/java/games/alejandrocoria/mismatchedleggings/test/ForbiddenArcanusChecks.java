@@ -94,6 +94,8 @@ final class ForbiddenArcanusChecks {
         if (Boolean.getBoolean("leggings.test.forbiddenModifiersSpike")) {
             Class.forName("games.alejandrocoria.mismatchedleggings.test.ForbiddenModifierSpike")
                     .getMethod("server", MinecraftServer.class).invoke(null, server);
+        } else {
+            ForbiddenModifierChecks.server(server);
         }
         nativeSaveControl(server);
         for (var sample : samples()) {

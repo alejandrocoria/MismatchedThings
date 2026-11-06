@@ -63,17 +63,19 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
-## Forbidden Arcanus Aureal validation
+## Forbidden Arcanus Aureal and modifier-state validation
 
 An optional [Eternal/Soulbound lifecycle spike](../spikes/forbidden-modifiers/README.md)
 extends this harness with `-PleggingsForbiddenModifiersSpike=true`. Its separate
-paths/reports observe current behavior and small prototypes, not accepted
-production modifier support. Ordinary compilation excludes its sources.
+paths/reports record the pre-implementation behavior and small prototypes, not
+production acceptance. Its old assertions are not a regression suite for the new
+dual-effect implementation. Ordinary compilation excludes its sources; retire
+the experiment when maintained smithing/presentation checks replace the rest.
 
 This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
 1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
 artifacts and SHA-256 verification. It does not read indev JARs or configuration
-and does not add a production adapter. The packaged Leggings JAR supplies nested
+and exercises the optional product adapter. The packaged Leggings JAR supplies nested
 Things; optional coexistence uses the current built Boots artifact.
 The client also stages the existing pinned JEI fixture: Forbidden Arcanus 2.7.2
 otherwise logs a native `ClientRecipeSync` / missing `IModPlugin` error on recipe
@@ -93,6 +95,23 @@ launch logs and `matrix.ok` use the corresponding `build/verification/` path.
 Fresh `server.ok`/`client.ok` and `forbidden-server.txt`/`forbidden-client.txt` are
 required for the phases actually run. The `-server-only` variant cannot establish
 client, rendering or saved-world acceptance.
+
+The ordinary server profile additionally requires fresh
+`forbidden-modifiers-server.txt`. It checks all none/Eternal/Soulbound input
+combinations and both outputs through the actual workbench, authoritative union,
+immutable sources, exact native projections, real armor wear and native
+death/`PlayerList.respawn`, codecs, root-only state and recomposition. Eternal
+removes live durability; Soulbound remains the native scalar projection when both
+effects are active. Modifier smithing admission and final tooltip presentation
+are separate unfinished blocks, not certified by these state/effect checks.
+The normal hidden client receives all four states in both orientations through
+real equipment packets, without client-side equipment writes. It does not need
+new screenshots for this data-only check.
+
+The optional-absence `verifySkeleton` checks on both loaders reject source-carried
+root authority. The existing `verifyRecovery` profile now carries the own flags
+through its actual source-removal/reinstallation cycle without loading Forbidden
+Arcanus; this checks opaque state preservation, not native effects without the mod.
 
 The dedicated fixture compares both native tiers, plain controls, each mixed
 orientation, duplicate tiers and Draco/Tyr combinations. It verifies equipped

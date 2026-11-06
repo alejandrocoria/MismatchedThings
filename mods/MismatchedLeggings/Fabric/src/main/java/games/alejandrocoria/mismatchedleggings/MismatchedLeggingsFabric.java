@@ -22,6 +22,7 @@ public final class MismatchedLeggingsFabric implements ModInitializer {
     public void onInitialize() {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, LeggingsContent.MIXED_LEGGINGS_DATA_ID, LeggingsContent.createDataType());
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, LeggingsContent.SUSPENDED_LEGGINGS_ID, LeggingsContent.createSuspendedDataType());
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, LeggingsContent.FORBIDDEN_MODIFIERS_ID, LeggingsContent.createForbiddenModifiersType());
         Registry.register(BuiltInRegistries.ITEM, LeggingsContent.MIXED_LEGGINGS_ID, LeggingsContent.createItem());
         Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MixedLeggingsWorkbenchRecipe.ID, MixedLeggingsWorkbenchRecipe.SERIALIZER);
         RecipeSynchronization.synchronizeRecipeSerializer(MixedLeggingsWorkbenchRecipe.SERIALIZER);

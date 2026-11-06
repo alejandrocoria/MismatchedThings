@@ -1,5 +1,10 @@
 # Forbidden Arcanus modifier lifecycle spike
 
+Historical pre-A experiment: its original-defect assertions are not a regression
+suite for the implemented dual-effect state/native projections. Use the ordinary
+maintained Forbidden Arcanus profile for that coverage. Keep the remaining probes
+as a reference for unfinished smithing/presentation work; retire them in C.
+
 Opt-in NeoForge experiment for Eternal/Soulbound, not production compatibility
 and not part of ordinary runtime compilation. Uses the maintained pinned
 Forbidden Arcanus/Valhelsia fixtures; the client also uses pinned JEI for the

@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.composition;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.forbiddenarcanus.ForbiddenModifierAdapter;
 import games.alejandrocoria.mismatchedleggings.component.ComponentProjection;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
@@ -9,10 +10,12 @@ import games.alejandrocoria.mismatchedthings.api.composition.AttributeMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.ComponentValueMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairableComposer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -23,6 +26,11 @@ public final class MixedLeggingsRecomposer {
     }
 
     public static ItemStack recompose(ItemStack root, ItemStack newLeft, ItemStack newRight) {
+        return recompose(root, newLeft, newRight, null);
+    }
+
+    public static ItemStack recompose(ItemStack root, ItemStack newLeft, ItemStack newRight,
+                                      HolderLookup.@Nullable Provider registries) {
         var previous = MixedLeggingsStructure.validData(root)
                 .orElseThrow(() -> new IllegalArgumentException("Recomposition requires a valid mixed leggings root"));
         var data = new MixedLeggingsData(new LeggingHalf(newLeft), new LeggingHalf(newRight));
@@ -50,8 +58,9 @@ public final class MixedLeggingsRecomposer {
                 MixedLeggingsFactory.queryAttributes(left), MixedLeggingsFactory.queryAttributes(right), rules.attributes()::policyFor).primary());
         output.remove(DataComponents.REPAIRABLE);
         RepairableComposer.compose(left, right).ifPresent(value -> output.set(DataComponents.REPAIRABLE, value));
-        MixedLeggingsStructure.apply(output, data);
-        return output;
+        var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
+        MixedLeggingsStructure.apply(finalized, data);
+        return finalized;
     }
 
     private static <T> void mergeComponent(ItemStack root, DataComponentMap previous, DataComponentMap replacement,
