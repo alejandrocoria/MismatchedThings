@@ -184,5 +184,17 @@
     "filename": "Aquaculture-26.1.1-2.9.2.jar",
     "sha256": "ef3cde416d554aff527abe89125f02389bd420ea86c2be651ff3ee81207f00ed",
     "url": "https://cdn.modrinth.com/data/Vl1uNAuy/versions/I2FfOQUM/Aquaculture-26.1.1-2.9.2.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "forbidden_arcanus-26.1.2-2.7.2.jar",
+    "sha256": "ced3714330a023f84d24d550d3cd82376d70797fff59b0c1d2b21200c0cf5d3a",
+    "url": "https://cdn.modrinth.com/data/MdlnLS7Q/versions/o5OOKrZw/forbidden_arcanus-26.1.2-2.7.2.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "valhelsia_core-neoforge-26.1.2-1.1.6.jar",
+    "sha256": "d130c1e93f019c8dac5e3704ad299033f24b030681c1f8afe3127716c03b1446",
+    "url": "https://cdn.modrinth.com/data/HsdNFinx/versions/l4EKYaUc/valhelsia_core-neoforge-26.1.2-1.1.6.jar"
   }
 ]

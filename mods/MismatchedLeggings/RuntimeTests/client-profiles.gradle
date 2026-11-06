@@ -3,15 +3,18 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture']) }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus']) }
 profiles.each { profile ->
+    def forbiddenArcanus = profile == 'ForbiddenArcanus'
+    def forbiddenServerOnly = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenServerOnly')
+            .map { it.toBoolean() }.getOrElse(false)
     def aquaculture = profile == 'Aquaculture'
     def aquacultureServerOnly = aquaculture && providers.gradleProperty('leggingsAquacultureServerOnly')
             .map { it.toBoolean() }.getOrElse(false)
     def allTheModium = profile == 'AllTheModium'
     def brokenAllTheModium = allTheModium && providers.gradleProperty('leggingsAllTheModiumBroken')
             .map { it.toBoolean() }.getOrElse(false)
-    def phases = brokenAllTheModium || aquacultureServerOnly ? ['server'] : ['server', 'client']
+    def phases = brokenAllTheModium || aquacultureServerOnly || forbiddenServerOnly ? ['server'] : ['server', 'client']
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
@@ -40,6 +43,7 @@ profiles.each { profile ->
     if (emptyItems) { variant += '-empty-model' }
     if (brokenAllTheModium) { variant += '-broken' }
     if (aquacultureServerOnly) { variant += '-server-only' }
+    if (forbiddenServerOnly) { variant += '-server-only' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -72,6 +76,15 @@ profiles.each { profile ->
                 if (aquaculture) {
                     artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
                 }
+                if (forbiddenArcanus) {
+                    def resolver = project(':MismatchedBoots').testModArtifacts
+                    ['forbidden_arcanus-26.1.2-2.7.2.jar', 'valhelsia_core-neoforge-26.1.2-1.1.6.jar'].each { name ->
+                        artifacts.add(resolver.resolve('NeoForge', name))
+                    }
+                    // FA 2.7.2's unguarded ClientRecipeSync subscriber links JEI even when absent.
+                    // Keep that upstream error out of this attribute fixture, not out of its log gate.
+                    if (phase == 'client') { artifacts.addAll(project.leggingsViewerArtifacts('jei')) }
+                }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -91,6 +104,8 @@ profiles.each { profile ->
                 reports.mkdirs()
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
+                if (forbiddenArcanus) { new File(reports, "forbidden-${phase}.txt").delete() }
+                if (forbiddenArcanus && phase == 'server') { new File(reports, 'forbidden-native-save.txt').delete() }
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
                 if (aquaculture && phase == 'client') {
                     ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
@@ -120,6 +135,11 @@ profiles.each { profile ->
                         "[durability]\npolicy = 'separate'\n[repair_cost]\npolicy = 'maximum'\n[components]\n"
                 new File(run, 'config/mismatchedleggings-attributes.toml').text =
                         "[attributes]\nfallback = 'maximum'\n[attributes.\"minecraft:armor\"]\npolicy = 'maximum'\n"
+                if (forbiddenArcanus) {
+                    // Exercise shipped policies, not the workbench profile's nondefault snapshots.
+                    new File(run, 'config/mismatchedleggings-attributes.toml').text = "[attributes]\nfallback = 'separate'\n"
+                    new File(run, 'config/mismatchedleggings-components.toml').text = "[durability]\npolicy = 'average'\n[components]\n"
+                }
                 if ((betterNether || betterEnd) && phase == 'client') {
                     // The native first-launch welcome blocks quick play before any world is opened.
                     new File(run, 'config/wover').mkdirs()
@@ -146,7 +166,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 } else {
                     def world = new File(directory, 'server/skeleton')
                     if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run the workbench server first') }
-                    if (repair || grindstone || smithing || viewers) {
+                    if (repair || grindstone || smithing || viewers || forbiddenArcanus) {
                         def savedCopy = new File(run, 'saves/skeleton').canonicalFile
                         if (!savedCopy.path.startsWith(layout.buildDirectory.get().asFile.canonicalPath + File.separator)) {
                             throw new GradleException('Workstation world reset escaped the disposable build directory')
@@ -206,6 +226,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
+                systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
                 systemProperty('leggings.test.allTheModiumBroken', brokenAllTheModium.toString())
                 systemProperty('leggings.test.items', items.toString())
                 systemProperty('leggings.test.emptyItems', emptyItems.toString())
@@ -246,6 +267,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : createFly ? 'Checks pinned Create Fly Cardboard recognition, native consumers and optional Boots coexistence.'
                 : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
+                : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -267,6 +289,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
                 if (brokenAllTheModium) { arguments.add('-PleggingsAllTheModiumBroken=true') }
                 if (aquacultureServerOnly) { arguments.add('-PleggingsAquacultureServerOnly=true') }
+                if (forbiddenServerOnly) { arguments.add('-PleggingsForbiddenServerOnly=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -299,6 +322,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                             throw new GradleException("Unexpected Aquaculture tooltip failure count: ${log}")
                         }
                     }
+                }
+                if (forbiddenArcanus && (log.text.contains('/ERROR]')
+                        || !new File(reports, "forbidden-${phase}.txt").isFile())) {
+                    throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
             }
             if (betterEnd && ['crystalite-capture.txt', 'crystalite-capture-after-reload.txt',
@@ -334,6 +361,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
+                    : forbiddenServerOnly ? 'packaged Forbidden Arcanus dedicated-server checks passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }
     }

@@ -21,7 +21,8 @@ abstract class EquipmentProbeMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void leggingsTest$observeNativeRenderer(CallbackInfo callback) {
         if (Boolean.getBoolean("leggings.test.betterEnd") || Boolean.getBoolean("leggings.test.createFly")
-                || Boolean.getBoolean("leggings.test.allTheModium") || Boolean.getBoolean("leggings.test.aquaculture")) {
+                || Boolean.getBoolean("leggings.test.allTheModium") || Boolean.getBoolean("leggings.test.aquaculture")
+                || Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }
     }

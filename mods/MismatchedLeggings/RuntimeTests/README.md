@@ -63,6 +63,72 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Forbidden Arcanus Aureal validation
+
+This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
+1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
+artifacts and SHA-256 verification. It does not read indev JARs or configuration
+and does not add a production adapter. The packaged Leggings JAR supplies nested
+Things; optional coexistence uses the current built Boots artifact.
+The client also stages the existing pinned JEI fixture: Forbidden Arcanus 2.7.2
+otherwise logs a native `ClientRecipeSync` / missing `IModPlugin` error on recipe
+synchronization. The dedicated endpoint remains JEI-free. This is a fixture-only
+upstream workaround, not a new production requirement or viewer acceptance claim.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus -PleggingsForbiddenServerOnly=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+After initial downloads, the first command also accepts `--offline`. Run profiles
+and baselines sequentially; restore normal `.114` packaging after the floor run.
+Reports use `build/reports/<baseline>/forbiddenArcanus[-boots][-server-only]/`;
+launch logs and `matrix.ok` use the corresponding `build/verification/` path.
+Fresh `server.ok`/`client.ok` and `forbidden-server.txt`/`forbidden-client.txt` are
+required for the phases actually run. The `-server-only` variant cannot establish
+client, rendering or saved-world acceptance.
+
+The dedicated fixture compares both native tiers, plain controls, each mixed
+orientation, duplicate tiers and Draco/Tyr combinations. It verifies equipped
+attributes, immutable source inputs, canonical holders, codec/stream/hash round
+trips, unchanged-source recomposition, and unequip/inventory cleanup. It dispatches
+one real `PlayerTickEvent.Pre` per world tick for disconnected ServerPlayers,
+using the installed mod's event handler and attachment rather than reimplementing
+regeneration. Actual resource deltas and the 100-tick cadence are checked over
+205 world ticks with empty native storage/headroom. Explicit fractional-policy
+controls distinguish attribute composition from native integer truncation.
+Coexistence additionally checks additive mixed Boots and Leggings contributions.
+`forbidden-native-save.txt` records a native-only control for Valhelsia's
+unregistered attribute holder during entity saving. Original Tyr alone reproduces
+it; a fresh mixed-only player saves cleanly. Equipping natives before mixed
+retains the old native AttributeInstance and its warning. The fixture verifies
+that warmed player's real Aureal too; it does not repair upstream entity state.
+
+The hidden/muted client receives actual server equipment/attribute packets for
+the native/mixed cases; it never sets client equipment or attributes. Native
+base/trim submissions, split waist/leg selection, GUI/hand/fixed item textures and
+normal/advanced Aureal tooltip lines are compared before/after a real reload.
+A named, damaged, trimmed Tyr mixed root then survives native disconnect/save/
+reopen with a new server/player, retained UUID, complete source data and Aureal
+attribute on both endpoints. There is no screenshot; final gameplay, animation,
+glint and visual usability remain owner checks. The inherited early-hidden GLFW,
+muting and disabled NeoForge early-window contract applies unchanged.
+The client intentionally exercises native items before mixed, so its player-save
+log can contain that controlled native `attributes` serialization warning even
+though the complete mixed item and its sources persist. Unrelated native block-
+model missing-texture and NeoForge shader sampler warnings are not armor-render
+failures; native/mixed armor material checks remain mandatory. Actual error-level
+diagnostics fail this profile, including the JEI linkage error described above.
+
+This profile does **not** certify Eternal/Soulbound modifiers or Hephaestus Forge
+transmutation of mixed leggings. Those are separate lifecycle/workstation topics.
+
+On 2026-11-06 the owner confirmed the ordinary armor/Aureal manual checklist,
+including regeneration/removal, presentation, normal workstations and save/reopen.
+Together with the focused automatic evidence, this closes that bounded review;
+it does not extend acceptance to the optional modifiers or mixed forge upgrades.
+
 ## Aquaculture 2 compatibility
 
 The NeoForge-only profile resolves `Aquaculture-26.1.1-2.9.2.jar` through Boots'
