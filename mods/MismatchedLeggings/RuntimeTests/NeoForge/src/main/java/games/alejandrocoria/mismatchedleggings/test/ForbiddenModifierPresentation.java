@@ -11,7 +11,10 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -76,10 +79,12 @@ public final class ForbiddenModifierPresentation {
     static void verify(Minecraft client, List<ForbiddenArcanusChecks.Sample> samples) throws Exception {
         for (var sample : samples) {
             var root = sample.stack();
-            var state = root.getOrDefault(LeggingsContent.forbiddenModifiersType(), ForbiddenModifiers.EMPTY);
+            var state = state(root);
             var unnamed = root.copy();
             unnamed.remove(DataComponents.CUSTOM_NAME);
-            for (var stack : List.of(root, unnamed)) {
+            var named = root.copy();
+            named.set(DataComponents.CUSTOM_NAME, Component.literal("Owner-named modifier root"));
+            for (var stack : List.of(root, unnamed, named)) {
                 var before = stack.copy();
                 var expected = Component.empty();
                 if (!stack.has(DataComponents.CUSTOM_NAME)) {
@@ -102,12 +107,9 @@ public final class ForbiddenModifierPresentation {
                                     }
                                 }
                             }
-                            var history = MixedLeggingsStructure.validData(stack).orElse(null);
-                            if (history != null) {
-                                for (var source : List.of(history.left().source(), history.right().source())) {
-                                    require(lines.stream().anyMatch(line -> line.getString().contains(source.getHoverName().getString())),
-                                            "Source provenance name was lost");
-                                }
+                            for (var source : sources(stack)) {
+                                require(lines.stream().anyMatch(line -> line.getString().contains(source.getHoverName().getString())),
+                                        "Source provenance name was lost");
                             }
                             // EMPTY/null-player requests are safe and do not borrow an unrelated active world.
                             require(stack.getTooltipLines(Item.TooltipContext.EMPTY, null, flag).getFirst().getString()
@@ -120,8 +122,80 @@ public final class ForbiddenModifierPresentation {
                 require(ItemStack.matches(before, stack), "Read-only modifier tooltip changed root/source data");
             }
         }
+        if (ForbiddenBootsChecks.enabled()) {
+            bootsAdmission(client, samples);
+            Files.writeString(ForbiddenArcanusChecks.report("boots-tooltip"),
+                    "Boots native styled prefixes, custom/source names, ordinary/Shift/F3+H, null/EMPTY contexts,\n"
+                            + "invalid/suspended roots and repeated read-only tooltips passed alongside Leggings\n");
+        }
         Files.writeString(ForbiddenArcanusChecks.report("modifiers-tooltip"),
                 "Native translated root prefixes, custom/source names, normal/Shift/F3+H, EMPTY/null and nonmutation passed\n");
+    }
+
+    private static boolean boots(ItemStack stack) {
+        return ForbiddenBootsChecks.enabled() && BuiltInRegistries.ITEM.getKey(stack.getItem())
+                .equals(Identifier.parse("mismatchedboots:mixed_boots"));
+    }
+
+    private static ForbiddenModifiers state(ItemStack stack) {
+        return stack.getOrDefault(boots(stack) ? ForbiddenBootsChecks.type() : LeggingsContent.forbiddenModifiersType(),
+                ForbiddenModifiers.EMPTY);
+    }
+
+    private static List<ItemStack> sources(ItemStack stack) throws Exception {
+        if (boots(stack)) {
+            return ForbiddenBootsChecks.history(stack);
+        }
+        return MixedLeggingsStructure.validData(stack)
+                .map(data -> List.of(data.left().source(), data.right().source())).orElse(List.of());
+    }
+
+    private static void bootsAdmission(Minecraft client, List<ForbiddenArcanusChecks.Sample> samples) throws Exception {
+        var root = samples.stream().map(ForbiddenArcanusChecks.Sample::stack)
+                .filter(stack -> boots(stack) && state(stack).equals(new ForbiddenModifiers(true, true)))
+                .findFirst().orElseThrow().copy();
+        root.remove(DataComponents.CUSTOM_NAME);
+        var before = root.copy();
+        var lines = root.getTooltipLines(Item.TooltipContext.of(client.level), null, TooltipFlag.NORMAL);
+        require(lines.getFirst().getString().equals(name(client, "eternal").getString() + " "
+                        + name(client, "soulbound").getString() + " " + root.getHoverName().getString()),
+                "Null-player world context lost the Boots native title");
+        require(ItemStack.matches(before, root), "Null-player tooltip mutated Boots");
+
+        var invalid = new ArrayList<ItemStack>();
+        var noData = root.copy();
+        noData.remove(BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("mismatchedboots:mixed_boots_data")));
+        invalid.add(noData);
+        var wrongModel = root.copy();
+        wrongModel.set(DataComponents.ITEM_MODEL, Identifier.withDefaultNamespace("diamond_boots"));
+        invalid.add(wrongModel);
+        var multiple = root.copy();
+        multiple.setCount(2);
+        invalid.add(multiple);
+        var suspension = Class.forName("games.alejandrocoria.mismatchedboots.data.SuspendedBootsData");
+        for (boolean quarantine : List.of(false, true)) {
+            var suspended = root.copy();
+            var empty = new CompoundTag();
+            var archive = quarantine ? suspension.getMethod("quarantined", CompoundTag.class, CompoundTag.class).invoke(null, empty, empty)
+                    : suspension.getMethod("of", CompoundTag.class, CompoundTag.class, CompoundTag.class).invoke(null, empty, empty, empty);
+            putSuspension(suspended, archive);
+            invalid.add(suspended);
+        }
+        for (var stack : invalid) {
+            before = stack.copy();
+            for (var flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
+                var title = stack.getTooltipLines(Item.TooltipContext.of(client.level), client.player, flag).getFirst();
+                require(title.getString().equals(stack.getHoverName().getString()), "Invalid/suspended Boots gained root prefixes");
+            }
+            require(ItemStack.matches(before, stack), "Invalid/suspended tooltip changed serialized Boots state");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void putSuspension(ItemStack stack, Object archive) {
+        var type = (DataComponentType<Object>) BuiltInRegistries.DATA_COMPONENT_TYPE
+                .getValue(Identifier.parse("mismatchedboots:suspended_boots"));
+        stack.set(type, archive);
     }
 
     private static Component name(Minecraft client, String kind) throws Exception {
@@ -158,7 +232,7 @@ public final class ForbiddenModifierPresentation {
             super(Component.literal("Forbidden Arcanus modifier tooltip"));
             stacks = samples.stream().map(ForbiddenArcanusChecks.Sample::stack)
                     .filter(stack -> !ForbiddenModifierChecks.nativeKind(stack).equals("none"))
-                    .sorted(Comparator.comparing(stack -> MixedLeggingsStructure.validData(stack).isPresent()))
+                    .sorted(Comparator.comparingInt(stack -> boots(stack) ? 2 : MixedLeggingsStructure.validData(stack).isPresent() ? 1 : 0))
                     .map(stack -> {
                         var copy = stack.copy();
                         copy.remove(DataComponents.CUSTOM_NAME);

@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.client;
 
 import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherSourceCharms;
 import games.alejandrocoria.mismatchedboots.client.compatibility.aether.AetherTooltipClient;
+import games.alejandrocoria.mismatchedboots.client.compatibility.forbiddenarcanus.ForbiddenModifierTooltip;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireAbilityInput;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireEnergyBarDecorator;
 import games.alejandrocoria.mismatchedboots.client.compatibility.justdirethings.JustDireSettingsClient;
@@ -30,6 +31,9 @@ public final class MismatchedBootsClientNeoForge {
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {
+        if (ModList.get().isLoaded("forbidden_arcanus")) {
+            NeoForge.EVENT_BUS.addListener(ForbiddenModifierTooltip::title);
+        }
         if (ModList.get().isLoaded("aether_ii")) {
             NeoForge.EVENT_BUS.addListener(AetherSourceCharms::gather);
             NeoForge.EVENT_BUS.addListener(AetherTooltipClient::attributes);

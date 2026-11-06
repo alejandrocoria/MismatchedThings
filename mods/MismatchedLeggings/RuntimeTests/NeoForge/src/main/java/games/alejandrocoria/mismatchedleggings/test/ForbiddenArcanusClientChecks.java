@@ -171,7 +171,9 @@ final class ForbiddenArcanusClientChecks {
                 SkeletonChecks.passed("client");
                 if (ForbiddenBootsChecks.enabled()) {
                     Files.writeString(ForbiddenArcanusChecks.report("boots-client"),
-                            "Current and adopted Boots: real feet/inventory packets and complete save/disconnect/reopen passed\n");
+                            "Current and adopted Boots: real feet/inventory packets and complete save/disconnect/reopen passed;\n"
+                                    + "native titles/background frames, custom/source names and read-only contexts passed;\n"
+                                    + "title assertions repeated after real resource reload with both products installed\n");
                 }
                 phase = 8;
                 client.stop();

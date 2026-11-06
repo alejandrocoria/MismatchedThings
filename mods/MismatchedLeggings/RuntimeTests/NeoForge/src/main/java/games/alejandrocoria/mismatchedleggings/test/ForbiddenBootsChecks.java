@@ -498,7 +498,7 @@ final class ForbiddenBootsChecks {
                 : root.isDamageableItem(), "Boots Eternal/finite durability differs");
     }
 
-    private static List<ItemStack> history(ItemStack root) throws Exception {
+    static List<ItemStack> history(ItemStack root) throws Exception {
         var maybe = (java.util.Optional<?>) Class.forName(ADAPTER).getMethod("validData", ItemStack.class).invoke(null, root);
         var data = maybe.orElseThrow();
         var result = new ArrayList<ItemStack>();

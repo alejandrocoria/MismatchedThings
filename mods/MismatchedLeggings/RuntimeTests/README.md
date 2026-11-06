@@ -126,6 +126,11 @@ The screenshot is one relevant final dual-effect tooltip frame. Actual native
 background extraction is observed at `TooltipRenderUtil`, not a synthetic texture
 event without an extractor. Native controls, each single effect and both together
 pass through the real frame renderer.
+With `leggingsForbiddenBoots=true`, the same checks also exercise Boots' own
+listener/state and require fresh `forbidden-boots-tooltip.txt`. Invalid/suspended
+Boots never gain prefixes, both installed listeners stay product-local, and the
+single relevant screenshot ends on a dual-effect Boots tooltip. See the
+[Boots modifier guide](../../MismatchedBoots/RuntimeTests/docs/forbidden-arcanus.md).
 Inherited and paid single/dual roots in both orientations arrive through real
 equipment **and inventory** packets without client-side item/attribute writes.
 Save/disconnect/reopen retains installed roots, flags, native scalar projection,

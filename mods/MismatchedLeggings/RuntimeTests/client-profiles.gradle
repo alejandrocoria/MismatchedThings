@@ -135,6 +135,7 @@ profiles.each { profile ->
                 if (forbiddenArcanus && phase == 'client') {
                     ['forbidden-modifiers-tooltip.txt', 'forbidden-modifiers-tooltip.png'].each { new File(reports, it).delete() }
                 }
+                if (forbiddenBoots && phase == 'client') { new File(reports, 'forbidden-boots-tooltip.txt').delete() }
                 if (forbiddenBootsSpike) {
                     new File(reports, "forbidden-boots-${phase}.txt").delete()
                     if (phase == 'server') {
@@ -383,6 +384,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 }
                 if (forbiddenBoots && !new File(reports, "forbidden-boots-${phase}.txt").isFile()) {
                     throw new GradleException("Missing maintained Boots modifier acceptance: ${phase}")
+                }
+                if (forbiddenBoots && phase == 'client' && !new File(reports, 'forbidden-boots-tooltip.txt').isFile()) {
+                    throw new GradleException("Missing Boots native modifier presentation evidence: ${log}")
                 }
                 if (forbiddenBootsSpike && phase == 'client' && ['loaded', 'reloaded', 'routing'].any {
                     !new File(reports, "forbidden-boots-${it}.txt").isFile()

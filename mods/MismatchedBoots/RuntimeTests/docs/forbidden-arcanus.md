@@ -36,13 +36,23 @@ for FA's native recipe-sync subscriber. No production dependency is added.
   explicit empty authority, suspension/quarantine and atomic API-failure refusal.
 - Real client equipment/inventory packets and native save/disconnect/reopen,
   alongside the existing Leggings integration. No client-side item repair is used.
+- Native translated/styled root prefixes (Eternal before Soulbound), unchanged
+  custom and source names, ordinary/Shift/F3+H tooltips and repeated read-only
+  construction, including worldless/null-player and invalid/suspended contexts.
+  Title/context checks run before/after real resource reload with both independently
+  packaged products installed. Before reload, native Eternal/Soulbound/dual
+  backgrounds pass through the real deferred tooltip extractor and rendered
+  frames, alongside native controls.
 
 The isolated variant is `forbiddenArcanus-boots-modifiers` (or
 `forbiddenArcanus-boots-server-only-modifiers`). Reports and verification logs
 are under the Leggings fixture's usual `build/reports/<baseline>/` and
 `build/verification/<baseline>/` directories. In addition to the ordinary Leggings
 markers, require fresh `forbidden-boots-server.txt` and, when run,
-`forbidden-boots-client.txt`. Server-only is not client/persistence acceptance.
+`forbidden-boots-client.txt` and `forbidden-boots-tooltip.txt`. The existing
+`forbidden-modifiers-tooltip.png` captures a relevant final Boots dual-effect
+frame in this profile, not an unrelated screenshot suite. Server-only is not
+client/persistence or presentation acceptance.
 
 The [frozen legacy data](../fixtures/forbidden-boots-1.0.0.json) contains 15 complete
 NBT roots produced by the actual unchanged published Boots 1.0.0 binary during
@@ -58,5 +68,4 @@ round-trip oracle for that payload. Plain states still retain JSON codec coverag
 The optional-adoption fault is test-only; production must preserve the original
 successful decode and refuse unsafe later recomposition without adding a marker.
 
-Root title/background presentation is a separate implementation block. This
-functional profile does not stand in for owner presentation acceptance.
+Automated title/background checks do not stand in for owner visual acceptance.
