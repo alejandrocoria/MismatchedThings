@@ -65,6 +65,11 @@ source removal/reinstallation, and both products together with optional viewers.
 
 ## Forbidden Arcanus Aureal validation
 
+An optional [Eternal/Soulbound lifecycle spike](../spikes/forbidden-modifiers/README.md)
+extends this harness with `-PleggingsForbiddenModifiersSpike=true`. Its separate
+paths/reports observe current behavior and small prototypes, not accepted
+production modifier support. Ordinary compilation excludes its sources.
+
 This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
 1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
 artifacts and SHA-256 verification. It does not read indev JARs or configuration

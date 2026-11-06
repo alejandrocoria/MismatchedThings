@@ -39,5 +39,14 @@ apply from: '../advanced-netherite-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 
+if (providers.gradleProperty('leggingsForbiddenModifiersSpike').map { it.toBoolean() }.getOrElse(false)) {
+    sourceSets.main.java.srcDir '../../spikes/forbidden-modifiers/src/main/java'
+    dependencies.add('compileOnly', files(providers.provider {
+        def resolver = project(':MismatchedBoots').testModArtifacts
+        ['forbidden_arcanus-26.1.2-2.7.2.jar', 'valhelsia_core-neoforge-26.1.2-1.1.6.jar']
+                .collect { resolver.resolve('NeoForge', it) }
+    }))
+}
+
 // Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.
 tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton' }
