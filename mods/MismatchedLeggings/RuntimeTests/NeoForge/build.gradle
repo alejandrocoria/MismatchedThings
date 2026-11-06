@@ -39,5 +39,9 @@ apply from: '../advanced-netherite-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 
+if (providers.gradleProperty('leggingsForbiddenBootsSpike').map { it.toBoolean() }.getOrElse(false)) {
+    sourceSets.main.java.srcDir '../../../MismatchedBoots/spikes/forbidden-shared/src/main/java'
+}
+
 // Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.
 tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton' }

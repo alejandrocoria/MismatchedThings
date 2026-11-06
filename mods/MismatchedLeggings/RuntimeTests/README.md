@@ -66,8 +66,9 @@ source removal/reinstallation, and both products together with optional viewers.
 ## Forbidden Arcanus Aureal and modifier-state validation
 
 Maintained Eternal/Soulbound state, smithing, presentation and recovery checks
-replace the retired lifecycle spike. There is no spike property, extra native
-compile dependency or historical executable assertion path.
+replace the retired lifecycle spike. That old experiment has no remaining
+property, extra native compile dependency or executable assertion path. The
+separate published-Boots load experiment below is explicitly opt-in.
 
 This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
 1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
@@ -195,6 +196,30 @@ On 2026-11-06 the owner confirmed the ordinary armor/Aureal manual checklist,
 including regeneration/removal, presentation, normal workstations and save/reopen.
 Together with the focused automatic evidence, this closes that bounded review;
 it does not extend acceptance to the optional modifiers or mixed forge upgrades.
+
+## Forbidden Arcanus published-Boots load spike
+
+The [bounded legacy-load/routing experiment](../../MismatchedBoots/spikes/forbidden-shared/README.md)
+uses this native harness with `-PleggingsForbiddenBootsSpike=true`,
+`-PleggingsBoots=true` and the existing `-PleggingsBootsJar=...` pinned published
+artifact input. Its candidate sources compile only with that property. The
+default codec probe returns the original factory unchanged; ordinary profiles
+do not load the candidate or register its temporary component.
+
+The old dedicated producer saves real roots/world data without adoption; the
+hidden/muted client loads them through the post-success persistent-codec candidate
+and verifies native container contents, full state, real equipment/inventory
+packets and save/reopen without repeated adoption. Actual old FA menu routes and
+JDT paid upgrades supplement a bounded FA classifier, not final menu interception.
+The `forbiddenArcanus-previous-boots-legacy-spike` variant keeps separate fresh
+reports and raw old NBT. No indev JARs or new screenshots are used.
+
+On 2026-11-06, full producer/client gates passed on `.114` and `.99`; normal
+non-spike `.114` compilation/runtime passed afterward. Old Eternal matches a
+native root recipe, while Soulbound uses Boots' source-wise fallback. JDT preserves
+adopted flags but reconstructs finite Eternal durability, confirming that final
+FA projection must follow recomposition. This does not certify shipped Boots
+modifier support or the still-proposed shared core API.
 
 ## Aquaculture 2 compatibility
 
