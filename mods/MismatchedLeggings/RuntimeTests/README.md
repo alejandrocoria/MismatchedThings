@@ -65,6 +65,13 @@ source removal/reinstallation, and both products together with optional viewers.
 
 ## Forbidden Arcanus Aureal and modifier-state validation
 
+Current Boots modifier/adoption checks reuse this packaged harness with
+`-PleggingsBoots=true -PleggingsForbiddenBoots=true`; their commands, frozen data,
+extra markers and scope are maintained in the
+[Boots runtime guide](../../MismatchedBoots/RuntimeTests/docs/forbidden-arcanus.md).
+The default profile still validates Leggings independently; the current-Boots
+flag is distinct from the historical published-Boots spike below.
+
 Maintained Eternal/Soulbound state, smithing, presentation and recovery checks
 replace the retired lifecycle spike. That old experiment has no remaining
 property, extra native compile dependency or executable assertion path. The

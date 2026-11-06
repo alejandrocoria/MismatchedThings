@@ -9,7 +9,10 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
@@ -42,6 +45,8 @@ final class ForbiddenArcanusClientChecks {
     private static ForbiddenModifierPresentation.Scene scene;
     private static List<ItemStack> savedInventory;
     private static List<ItemStack> expectedInventory;
+    private static List<CompoundTag> expectedInventoryNbt;
+    private static CompoundTag expectedNbt;
 
     private ForbiddenArcanusClientChecks() {}
 
@@ -86,6 +91,7 @@ final class ForbiddenArcanusClientChecks {
                     var created = new ArrayList<>(ForbiddenArcanusChecks.samples());
                     created.addAll(ForbiddenModifierChecks.samples(server));
                     created.addAll(ForbiddenModifierPresentation.installed(server));
+                    created.addAll(ForbiddenBootsChecks.clientSamples(server));
                     return created;
                 });
                 phase = 1;
@@ -135,11 +141,19 @@ final class ForbiddenArcanusClientChecks {
                         "Reopen reused an old server/player or changed player identity");
                 job = server.submit(() -> {
                     var player = server.getPlayerList().getPlayer(playerId);
-                    require(ItemStack.matches(expected, player.getItemBySlot(EquipmentSlot.LEGS)), "Saved root/provenance did not reopen intact");
+                    require(expectedNbt.equals(RecoveryChecks.encode(player.getItemBySlot(EquipmentSlot.LEGS), server.registryAccess())),
+                            "Saved root/provenance did not reopen intact");
                     for (int slot = 0; slot < expectedInventory.size(); slot++) {
-                        require(ItemStack.matches(expectedInventory.get(slot), player.getInventory().getItem(slot)),
-                                "Saved installed root or source history did not reopen in slot " + slot);
+                        require(expectedInventoryNbt.get(slot).equals(RecoveryChecks.encode(player.getInventory().getItem(slot), server.registryAccess())),
+                                "Saved installed root or source history did not reopen in slot " + slot + ": "
+                                        + ForbiddenModifierChecks.changedComponents(expectedInventory.get(slot), player.getInventory().getItem(slot))
+                                        + ForbiddenBootsChecks.historyDifference(expectedInventory.get(slot), player.getInventory().getItem(slot)));
                     }
+                    // The new world has new damage-type/tag holders. Rebind only the expected oracle;
+                    // compare complete persisted NBT first, and never rewrite actual player/client items.
+                    var ops = RegistryOps.create(NbtOps.INSTANCE, server.registryAccess());
+                    expected = ItemStack.CODEC.parse(ops, expectedNbt).getOrThrow();
+                    expectedInventory = expectedInventoryNbt.stream().map(nbt -> ItemStack.CODEC.parse(ops, nbt).getOrThrow()).toList();
                     require(player.getAttributeValue(ForbiddenArcanusChecks.attribute()) == 2, "Reopened server lost Aureal");
                 });
                 settled = 0;
@@ -155,6 +169,10 @@ final class ForbiddenArcanusClientChecks {
                         + "native single/dual backgrounds passed real deferred tooltip extraction and rendered frames before reload;\n"
                         + "no client equipment/attribute writes; owner visual/gameplay acceptance remains separate\n");
                 SkeletonChecks.passed("client");
+                if (ForbiddenBootsChecks.enabled()) {
+                    Files.writeString(ForbiddenArcanusChecks.report("boots-client"),
+                            "Current and adopted Boots: real feet/inventory packets and complete save/disconnect/reopen passed\n");
+                }
                 phase = 8;
                 client.stop();
             }
@@ -178,6 +196,8 @@ final class ForbiddenArcanusClientChecks {
                 player.getInventory().setItem(slot, expectedInventory.get(slot).copy());
             }
             player.inventoryMenu.broadcastChanges();
+            expectedNbt = RecoveryChecks.encode(expected, server.registryAccess());
+            expectedInventoryNbt = expectedInventory.stream().map(snapshot -> RecoveryChecks.encode(snapshot, server.registryAccess())).toList();
             require(player.getAttributeValue(ForbiddenArcanusChecks.attribute()) == rate, "Server fixture attribute differs from expected");
         });
     }
@@ -187,7 +207,7 @@ final class ForbiddenArcanusClientChecks {
             return false;
         }
         job.join();
-        if (!ItemStack.matches(expected, client.player.getItemBySlot(EquipmentSlot.LEGS))
+        if (!ItemStack.matches(expected, client.player.getItemBySlot(ForbiddenArcanusChecks.slot(expected)))
                 || client.player.getAttributeValue(ForbiddenArcanusChecks.attribute()) != expectedRate) {
             settled = 0;
             return false;

@@ -30,6 +30,14 @@ public interface ForbiddenModifierService {
         return output;
     }
 
+    /**
+     * Apply only the supported scalar holder already decoded on this disposable output.
+     * No registry lookup or union; native ITEM_NAME changes are left to the caller to normalize.
+     */
+    default ItemStack applyExisting(ItemStack output) {
+        return output;
+    }
+
     /** No output mutation or payment: the caller applies a match and revalidates it on take. */
     default SmithingDecision smithing(ServerLevel level, ItemStack template, ItemStack root, ItemStack addition,
                                      ForbiddenModifiers current, List<ItemStack> sources) {

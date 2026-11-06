@@ -14,6 +14,7 @@ public class MismatchedBootsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, ModContent.SUSPENDED_BOOTS_ID, ModContent.createSuspendedBootsType());
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, ModContent.FORBIDDEN_MODIFIERS_ID, ModContent.createForbiddenModifiersType());
         Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
                 ModContent.MIXED_BOOTS_DATA_ID,

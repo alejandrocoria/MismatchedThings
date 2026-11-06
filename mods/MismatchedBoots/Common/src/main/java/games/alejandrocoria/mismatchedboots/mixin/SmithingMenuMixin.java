@@ -3,9 +3,11 @@ package games.alejandrocoria.mismatchedboots.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import games.alejandrocoria.mismatchedboots.compatibility.forbiddenarcanus.ForbiddenBootsModifiers;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.interaction.SmithingMenuRecipeState;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ResultContainer;
@@ -45,6 +47,8 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
     private boolean mismatchedboots$sourceWise;
     @Unique
     private RecipeHolder<SmithingRecipe> mismatchedboots$nativeRecipe;
+    @Unique
+    private boolean mismatchedboots$modifierHandled;
 
     @Inject(method = "createResult", at = @At("HEAD"), cancellable = true)
     private void mismatchedboots$resetPreview(CallbackInfo callback) {
@@ -59,12 +63,39 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
                 return;
             }
         }
+        var base = menu.getSlot(SmithingMenu.BASE_SLOT).getItem();
+        if (ModContent.MIXED_BOOTS_ID.equals(BuiltInRegistries.ITEM.getKey(base.getItem()))
+                && ForbiddenBootsModifiers.validData(base).isEmpty()) {
+            var result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
+            result.setRecipeUsed(null);
+            result.setItem(0, ItemStack.EMPTY);
+            callback.cancel();
+            return;
+        }
+        if (level instanceof ServerLevel server) {
+            var attempt = ForbiddenBootsModifiers.smithing(server, menu.getSlot(0).getItem(), base, menu.getSlot(2).getItem());
+            if (attempt.handled()) {
+                mismatchedboots$modifierHandled = true;
+                var result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
+                result.setRecipeUsed(null);
+                result.setItem(0, ItemStack.EMPTY);
+                if (attempt.result() != null) {
+                    var match = attempt.result();
+                    result.setRecipeUsed(match.primaryRecipe());
+                    result.setItem(0, match.output());
+                    mismatchedboots$primaryRecipe = match.primaryRecipe();
+                    mismatchedboots$preview = match.output().copy();
+                    mismatchedboots$matchedInputs = List.of(menu.getSlot(0).getItem().copy(), base.copy(), menu.getSlot(2).getItem().copy());
+                }
+                callback.cancel();
+            }
+        }
     }
 
     @Inject(method = "createResult", at = @At("RETURN"))
     private void mismatchedboots$trySourceSmithing(CallbackInfo callback) {
         SmithingMenu menu = (SmithingMenu) (Object) this;
-        if (!(level instanceof ServerLevel serverLevel)
+        if (mismatchedboots$modifierHandled || !(level instanceof ServerLevel serverLevel)
                 || !menu.getSlot(SmithingMenu.RESULT_SLOT).getItem().isEmpty()) {
             return;
         }
@@ -97,6 +128,9 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
 
     @Override
     public boolean mismatchedboots$validateSmithingPreview() {
+        if (mismatchedboots$modifierHandled && level instanceof ServerLevel server) {
+            return mismatchedboots$validateModifierPreview(server);
+        }
         if (!mismatchedboots$sourceWise || !(level instanceof ServerLevel server)) {
             return true;
         }
@@ -114,6 +148,26 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
                 : null;
         if (fresh != null && fresh.primaryRecipe() == mismatchedboots$primaryRecipe
                 && fresh.additionalRecipe() == mismatchedboots$additionalRecipe
+                && result.getRecipeUsed() == mismatchedboots$primaryRecipe
+                && ItemStack.matches(fresh.output(), mismatchedboots$preview)
+                && ItemStack.matches(result.getItem(0), mismatchedboots$preview)) {
+            return true;
+        }
+        result.setRecipeUsed(null);
+        result.setItem(0, ItemStack.EMPTY);
+        mismatchedboots$clearSmithingState();
+        return false;
+    }
+
+    @Unique
+    private boolean mismatchedboots$validateModifierPreview(ServerLevel server) {
+        var menu = (SmithingMenu) (Object) this;
+        var inputs = List.of(menu.getSlot(0).getItem(), menu.getSlot(1).getItem(), menu.getSlot(2).getItem());
+        var attempt = ForbiddenBootsModifiers.smithing(server, inputs.get(0), inputs.get(1), inputs.get(2));
+        var fresh = attempt.handled() ? attempt.result() : null;
+        var result = (ResultContainer) menu.getSlot(SmithingMenu.RESULT_SLOT).container;
+        if (mismatchedboots$sameInputs(inputs, mismatchedboots$matchedInputs) && fresh != null
+                && fresh.primaryRecipe() == mismatchedboots$primaryRecipe
                 && result.getRecipeUsed() == mismatchedboots$primaryRecipe
                 && ItemStack.matches(fresh.output(), mismatchedboots$preview)
                 && ItemStack.matches(result.getItem(0), mismatchedboots$preview)) {
@@ -176,5 +230,6 @@ abstract class SmithingMenuMixin implements SmithingMenuRecipeState {
         mismatchedboots$matchedInputs = null;
         mismatchedboots$sourceWise = false;
         mismatchedboots$nativeRecipe = null;
+        mismatchedboots$modifierHandled = false;
     }
 }

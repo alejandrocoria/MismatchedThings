@@ -6,6 +6,8 @@ if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'C
 if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus']) }
 profiles.each { profile ->
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
+    def forbiddenBoots = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenBoots')
+            .map { it.toBoolean() }.getOrElse(false)
     def forbiddenBootsSpike = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenBootsSpike')
             .map { it.toBoolean() }.getOrElse(false)
     def forbiddenServerOnly = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenServerOnly')
@@ -37,6 +39,9 @@ profiles.each { profile ->
             .map { it.toBoolean() }.getOrElse(false)
     def coexistence = bootsOnly || providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
     def previousBoots = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
+    if (forbiddenBoots && (!coexistence || previousBoots != null)) {
+        throw new GradleException('Forbidden Boots acceptance requires leggingsBoots=true and current packaged Boots')
+    }
     if (forbiddenBootsSpike && (!coexistence || previousBoots == null)) {
         throw new GradleException('Forbidden Boots spike requires leggingsBoots=true and the pinned published leggingsBootsJar')
     }
@@ -56,6 +61,7 @@ profiles.each { profile ->
     if (aquacultureServerOnly) { variant += '-server-only' }
     if (forbiddenServerOnly) { variant += '-server-only' }
     if (forbiddenBootsSpike) { variant += '-legacy-spike' }
+    if (forbiddenBoots) { variant += '-modifiers' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -97,7 +103,7 @@ profiles.each { profile ->
                     // Keep that upstream error out of this attribute fixture, not out of its log gate.
                     if (phase == 'client') { artifacts.addAll(project.leggingsViewerArtifacts('jei')) }
                 }
-                if (forbiddenBootsSpike) {
+                if (forbiddenBootsSpike || forbiddenBoots) {
                     artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar'))
                 }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
@@ -120,6 +126,7 @@ profiles.each { profile ->
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
                 if (forbiddenArcanus) { new File(reports, "forbidden-${phase}.txt").delete() }
+                if (forbiddenBoots) { new File(reports, "forbidden-boots-${phase}.txt").delete() }
                 if (forbiddenArcanus && !forbiddenBootsSpike && phase == 'server') {
                     new File(reports, 'forbidden-modifiers-server.txt').delete()
                     new File(reports, 'forbidden-modifiers-smithing.txt').delete()
@@ -258,6 +265,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
                 systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
                 systemProperty('leggings.test.forbiddenBootsSpike', forbiddenBootsSpike.toString())
+                systemProperty('leggings.test.forbiddenBoots', forbiddenBoots.toString())
                 systemProperty('leggings.test.forbiddenBootsStage', phase == 'server' ? 'write' : 'adopt')
                 systemProperty('leggings.test.allTheModiumBroken', brokenAllTheModium.toString())
                 systemProperty('leggings.test.items', items.toString())
@@ -323,6 +331,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (aquacultureServerOnly) { arguments.add('-PleggingsAquacultureServerOnly=true') }
                 if (forbiddenServerOnly) { arguments.add('-PleggingsForbiddenServerOnly=true') }
                 if (forbiddenBootsSpike) { arguments.add('-PleggingsForbiddenBootsSpike=true') }
+                if (forbiddenBoots) { arguments.add('-PleggingsForbiddenBoots=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -371,6 +380,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 }
                 if (forbiddenBootsSpike && !new File(reports, "forbidden-boots-${phase}.txt").isFile()) {
                     throw new GradleException("Missing Forbidden Boots legacy spike evidence: ${log}")
+                }
+                if (forbiddenBoots && !new File(reports, "forbidden-boots-${phase}.txt").isFile()) {
+                    throw new GradleException("Missing maintained Boots modifier acceptance: ${phase}")
                 }
                 if (forbiddenBootsSpike && phase == 'client' && ['loaded', 'reloaded', 'routing'].any {
                     !new File(reports, "forbidden-boots-${it}.txt").isFile()

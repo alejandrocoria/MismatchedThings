@@ -41,6 +41,7 @@ README summaries.
 
 ### Dedicated guides
 
+- [Forbidden Arcanus modifiers](docs/forbidden-arcanus.md): native effects, root smithing, published-root adoption and JDT coexistence.
 - [Mixin binary compatibility](docs/mixin-binary-compatibility.md): publication-format regression and unchanged-JAR
   checks against older NeoForge runtimes.
 - [Media client](../media/README.md#targeted-validation): opt-in photo pack and Replay Mod acceptance.

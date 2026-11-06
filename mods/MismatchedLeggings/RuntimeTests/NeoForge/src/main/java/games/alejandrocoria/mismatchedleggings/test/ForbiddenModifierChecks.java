@@ -204,7 +204,7 @@ final class ForbiddenModifierChecks {
     static void codecs(MinecraftServer server, ItemStack root) {
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
         var loaded = ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, root).getOrThrow()).getOrThrow();
-        require(ItemStack.matches(root, loaded), "Persistent codec changed modifiers/provenance");
+        require(ItemStack.matches(root, loaded), "Persistent codec changed modifiers/provenance: " + changedComponents(root, loaded));
         var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), server.registryAccess());
         try {
             ItemStack.STREAM_CODEC.encode(buffer, root);
@@ -214,7 +214,7 @@ final class ForbiddenModifierChecks {
         }
     }
 
-    private static String changedComponents(ItemStack before, ItemStack after) {
+    static String changedComponents(ItemStack before, ItemStack after) {
         return Stream.concat(before.getComponents().keySet().stream(), after.getComponents().keySet().stream())
                 .distinct().filter(type -> !Objects.equals(before.get(type), after.get(type)))
                 .map(type -> BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type) + ": " + before.get(type) + " -> " + after.get(type))

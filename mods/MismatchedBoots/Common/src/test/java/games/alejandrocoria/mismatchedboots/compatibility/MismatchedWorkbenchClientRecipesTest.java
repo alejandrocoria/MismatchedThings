@@ -102,6 +102,12 @@ class MismatchedWorkbenchClientRecipesTest {
 
     private record LoadedRecipe(Item expected, Item output) implements WorkbenchRecipe {
         @Override
+        public WorkbenchResult assemblePreview(WorkbenchInput input, Level level) {
+            // This policy/reload fixture has no world and does not perform registry-dependent composition.
+            return assemblePair(input);
+        }
+
+        @Override
         public boolean matches(WorkbenchInput input, Level level) {
             return input.left().is(expected);
         }

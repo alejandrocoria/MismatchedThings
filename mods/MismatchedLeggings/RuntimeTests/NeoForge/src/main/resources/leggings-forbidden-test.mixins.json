@@ -2,7 +2,11 @@
     "required": true,
     "package": "games.alejandrocoria.mismatchedleggings.test.mixin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["ForbiddenBootsLoadProbe"],
+    "mixins": [
+        "ForbiddenBootsAdoptionFault",
+        "ForbiddenBootsLoadProbe",
+        "ForbiddenBootsNativeFailure"
+    ],
     "client": [
         "ForbiddenInputProbe",
         "ForbiddenTooltipProbe"

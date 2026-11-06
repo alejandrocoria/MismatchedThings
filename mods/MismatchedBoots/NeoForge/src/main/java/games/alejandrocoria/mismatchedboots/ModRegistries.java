@@ -18,6 +18,7 @@ final class ModRegistries {
         ITEMS.registerItem(ModContent.MIXED_BOOTS_NAME, NeoForgeMixedBootsItem::new, ModContent::mixedBootsProperties);
         DATA_COMPONENT_TYPES.register(ModContent.MIXED_BOOTS_DATA_NAME, ModContent::createMixedBootsDataType);
         DATA_COMPONENT_TYPES.register(ModContent.SUSPENDED_BOOTS_NAME, ModContent::createSuspendedBootsType);
+        DATA_COMPONENT_TYPES.register(ModContent.FORBIDDEN_MODIFIERS_NAME, ModContent::createForbiddenModifiersType);
         RECIPE_SERIALIZERS.register(ModContent.SMITHING_BASE_RECIPE_NAME, ModContent::createSmithingBaseRecipeSerializer);
         RECIPE_SERIALIZERS.register(
                 ModContent.MIXED_BOOTS_REPAIR_RECIPE_NAME,

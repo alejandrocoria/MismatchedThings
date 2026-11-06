@@ -93,6 +93,7 @@ final class ForbiddenArcanusChecks {
         SkeletonChecks.verify();
         ForbiddenModifierChecks.server(server);
         ForbiddenModifierSmithingChecks.server(server);
+        ForbiddenBootsChecks.server(server);
         nativeSaveControl(server);
         for (var sample : samples()) {
             codecs(server, sample.stack());
@@ -214,8 +215,16 @@ final class ForbiddenArcanusChecks {
     }
 
     static void equip(ServerPlayer player, ItemStack root) {
-        player.setItemSlot(EquipmentSlot.LEGS, root.copy());
+        player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+        player.setItemSlot(slot(root), root.copy());
         ((EquipmentUpdatesInvoker) player).leggings$detectEquipmentUpdates();
+    }
+
+    static EquipmentSlot slot(ItemStack stack) {
+        var equipment = stack.get(DataComponents.EQUIPPABLE);
+        // Existing bare/malformed Leggings controls intentionally have no equipment component.
+        return equipment == null ? EquipmentSlot.LEGS : equipment.slot();
     }
 
     private static ServerPlayer player(MinecraftServer server) {

@@ -11,12 +11,14 @@ import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecy
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
+import org.jspecify.annotations.Nullable;
 
 public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
     private static final MixedBootsWorkbenchRecipe INSTANCE = new MixedBootsWorkbenchRecipe();
@@ -26,20 +28,24 @@ public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
     public static final RecipeSerializer<MixedBootsWorkbenchRecipe> SERIALIZER =
             new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    private final PairFactory pairFactory;
+    private final ContextPairFactory pairFactory;
 
     public MixedBootsWorkbenchRecipe() {
-        this(MixedBootsFactory::createPair);
+        this((left, right, registries) -> MixedBootsFactory.createPair(left, right, registries));
     }
 
     /** Client examples capture the synchronized rules explicitly, not physical-side inference. */
     public MixedBootsWorkbenchRecipe(AttributeRuleSet attributes, ComponentRules components) {
-        this((left, right) -> MixedBootsFactory.createPair(left, right, attributes, components));
+        this((left, right, registries) -> MixedBootsFactory.createPair(left, right, attributes, components, registries));
         java.util.Objects.requireNonNull(attributes, "attributes");
         java.util.Objects.requireNonNull(components, "components");
     }
 
     MixedBootsWorkbenchRecipe(PairFactory pairFactory) {
+        this((left, right, registries) -> pairFactory.create(left, right));
+    }
+
+    private MixedBootsWorkbenchRecipe(ContextPairFactory pairFactory) {
         this.pairFactory = pairFactory;
     }
 
@@ -50,12 +56,17 @@ public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
 
     @Override
     public WorkbenchResult assemblePair(WorkbenchInput input) {
+        return assemblePair(input, null);
+    }
+
+    @Override
+    public WorkbenchResult assemblePair(WorkbenchInput input, HolderLookup.@Nullable Provider registries) {
         if (!matches(input, null)) {
             return WorkbenchResult.EMPTY;
         }
 
         try {
-            MixedBootsPair pair = pairFactory.create(input.left().copy(), input.right().copy());
+            MixedBootsPair pair = pairFactory.create(input.left().copy(), input.right().copy(), registries);
             if (pair.primary().isEmpty() || pair.inverse().isEmpty()) {
                 Constants.LOG.debug("Rejected empty workbench output for {} and {}",
                                     BuiltInRegistries.ITEM.getKey(input.left().getItem()),
@@ -79,7 +90,7 @@ public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
         // This callback is client preview only. Assembly above retains server policy authority.
         var rules = CompositionRulesClientLifecycle.synchronizedRules();
         return rules == null ? WorkbenchResult.EMPTY
-                : new MixedBootsWorkbenchRecipe(rules.attributes(), rules.components()).assemblePair(input);
+                : new MixedBootsWorkbenchRecipe(rules.attributes(), rules.components()).assemblePair(input, level.registryAccess());
     }
 
     @Override
@@ -88,6 +99,10 @@ public final class MixedBootsWorkbenchRecipe implements WorkbenchRecipe {
     }
 
     @FunctionalInterface
+    private interface ContextPairFactory {
+        MixedBootsPair create(ItemStack left, ItemStack right, HolderLookup.@Nullable Provider registries);
+    }
+
     interface PairFactory {
         MixedBootsPair create(ItemStack left, ItemStack right);
     }

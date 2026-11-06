@@ -30,6 +30,7 @@ public final class ComponentRuleSupport {
     public static boolean isManaged(DataComponentType<?> type) {
         Objects.requireNonNull(type, "type");
         return !FIXED_TYPES.contains(type) && ModContent.mixedBootsDataType().filter(type::equals).isEmpty()
+                && !ModContent.FORBIDDEN_MODIFIERS_ID.equals(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type))
                 && !ModContent.SUSPENDED_BOOTS_ID.equals(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(type));
     }
 

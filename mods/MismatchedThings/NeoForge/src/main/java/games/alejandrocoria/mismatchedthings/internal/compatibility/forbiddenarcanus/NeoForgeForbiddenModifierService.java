@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -113,6 +114,39 @@ public final class NeoForgeForbiddenModifierService implements ForbiddenModifier
             return ForbiddenModifiers.EMPTY;
         }
         return new ForbiddenModifiers(holder.is(ETERNAL), holder.is(SOULBOUND));
+    }
+
+    @Override
+    public ItemStack applyExisting(ItemStack output) {
+        if (!ModList.get().isLoaded("forbidden_arcanus")) {
+            return output;
+        }
+        try {
+            var state = readNative(output);
+            if (state.isEmpty()) {
+                return output;
+            }
+            var api = NativeApi.INSTANCE;
+            if (api == null) {
+                throw new IllegalArgumentException("Incompatible Forbidden Arcanus modifier API");
+            }
+            var holder = output.get(nativeType());
+            var result = output.copy();
+            api.apply(result, holder, state.eternal() ? Set.of(DataComponents.MAX_DAMAGE, DataComponents.DAMAGE) : Set.of());
+            if (result.get(nativeType()) != holder
+                    || !Objects.equals(output.get(DataComponents.CUSTOM_NAME), result.get(DataComponents.CUSTOM_NAME))
+                    || state.eternal() && (result.has(DataComponents.MAX_DAMAGE) || result.has(DataComponents.DAMAGE))) {
+                throw new IllegalArgumentException("Native modifier application changed the decoded scalar contract");
+            }
+            return result;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            if (failure instanceof InvocationTargetException invocation && invocation.getCause() instanceof Error fatal
+                    && !(fatal instanceof LinkageError)) {
+                throw fatal;
+            }
+            warn(failure);
+            throw new IllegalArgumentException("Could not apply the decoded Forbidden Arcanus modifier", failure);
+        }
     }
 
     @Override

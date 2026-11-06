@@ -107,6 +107,11 @@ product output or a purchase. Finalization works on disposable outputs; consumer
 must reject failures and validate their own state before publishing a result.
 There is no automatic adoption of old products merely by selecting a newer core.
 
+`applyExisting` applies only a supported native scalar holder already decoded on
+a disposable output, without a world/registry lookup. Native structural-name
+changes remain visible to the caller; product-owned adoption validates and
+normalizes them while preserving custom names and unrelated live data.
+
 `WorkbenchRecipe.assemblePair(input, registries)` supplies operation-local context
 from both menu preview and take-time reconstruction. Its default delegates to
 the original `assemblePair(input)`, retaining compiled API-v1 consumers. The

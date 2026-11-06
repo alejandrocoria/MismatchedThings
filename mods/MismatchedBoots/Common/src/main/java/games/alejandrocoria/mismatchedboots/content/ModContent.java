@@ -6,6 +6,7 @@ import games.alejandrocoria.mismatchedboots.data.SuspendedBootsData;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsRepairRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsSmithingBaseRecipe;
 import games.alejandrocoria.mismatchedboots.recipe.MixedBootsWorkbenchRecipe;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.TypedDataComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,8 @@ public final class ModContent {
     public static final String MIXED_BOOTS_NAME = "mixed_boots";
     public static final String MIXED_BOOTS_DATA_NAME = "mixed_boots_data";
     public static final String SUSPENDED_BOOTS_NAME = "suspended_boots";
+    public static final String FORBIDDEN_MODIFIERS_NAME = "forbidden_modifiers";
+    public static final Identifier FORBIDDEN_MODIFIERS_ID = id(FORBIDDEN_MODIFIERS_NAME);
     public static final Identifier SUSPENDED_BOOTS_ID = id(SUSPENDED_BOOTS_NAME);
     public static final String SMITHING_BASE_RECIPE_NAME = "smithing_base";
     public static final String MIXED_BOOTS_REPAIR_RECIPE_NAME = "mixed_boots_repair";
@@ -54,6 +57,17 @@ public final class ModContent {
         return DataComponentType.<SuspendedBootsData>builder().persistent(SuspendedBootsData.CODEC)
                                 .networkSynchronized(SuspendedBootsData.STREAM_CODEC)
                                 .build();
+    }
+
+    public static DataComponentType<ForbiddenModifiers> createForbiddenModifiersType() {
+        return DataComponentType.<ForbiddenModifiers>builder().persistent(ForbiddenModifiers.CODEC)
+                                .networkSynchronized(ForbiddenModifiers.STREAM_CODEC).cacheEncoding().build();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Optional<DataComponentType<ForbiddenModifiers>> forbiddenModifiersType() {
+        return Optional.ofNullable((DataComponentType<ForbiddenModifiers>)
+                BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(FORBIDDEN_MODIFIERS_ID));
     }
 
     public static RecipeSerializer<MixedBootsSmithingBaseRecipe> createSmithingBaseRecipeSerializer() {

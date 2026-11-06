@@ -3,6 +3,10 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+tasks.named('processResources') {
+    from(project(':MismatchedBoots:RuntimeTests').file('fixtures/forbidden-boots-1.0.0.json'))
+}
+
 repositories { mavenCentral() }
 neoForge { version = neoforge_version }
 

@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.interaction;
 
 import games.alejandrocoria.mismatchedboots.Constants;
+import games.alejandrocoria.mismatchedboots.compatibility.forbiddenarcanus.ForbiddenBootsModifiers;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
@@ -29,6 +30,10 @@ public final class MixedBootsSmithingPolicy {
             return Optional.empty();
         }
 
+        RootAttempt modifiers = ForbiddenBootsModifiers.smithing(level, template, root, addition);
+        if (modifiers.handled()) {
+            return Optional.ofNullable(modifiers.result());
+        }
         RootAttempt rootAttempt = Services.PLATFORM.tryRootSmithing(level, template, root, addition);
         if (rootAttempt.handled()) {
             return Optional.ofNullable(rootAttempt.result());
@@ -64,7 +69,7 @@ public final class MixedBootsSmithingPolicy {
         }
 
         try {
-            ItemStack result = MixedBootsRecomposer.recompose(root, left.source(), right.source());
+            ItemStack result = MixedBootsRecomposer.recompose(root, left.source(), right.source(), level.registryAccess());
             inheritNewEnchantments(result, data.left().source(), left.source());
             inheritNewEnchantments(result, data.right().source(), right.source());
             RecipeHolder<SmithingRecipe> primary = left.recipe() != null ? left.recipe() : right.recipe();

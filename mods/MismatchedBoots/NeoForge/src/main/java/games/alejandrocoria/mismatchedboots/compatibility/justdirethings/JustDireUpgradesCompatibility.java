@@ -222,7 +222,7 @@ public final class JustDireUpgradesCompatibility {
             changed.set(upgrade.flag, true);
             try {
                 JustDireRefundCompatibility.addInstallation(changed, name);
-                var output = MixedBootsRecomposer.recompose(changed, data.left().source(), data.right().source());
+                var output = MixedBootsRecomposer.recompose(changed, data.left().source(), data.right().source(), level.registryAccess());
                 return new MixedBootsSmithingPolicy.RootAttempt(true, new MixedBootsSmithingPolicy.Result(output, recipe.get(), null));
             } catch (IllegalArgumentException rejected) {
                 Constants.LOG.debug("Rejected root-upgrade recomposition: {}", rejected.getMessage());

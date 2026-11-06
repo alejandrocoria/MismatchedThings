@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import games.alejandrocoria.mismatchedboots.data.ForbiddenBootsItemCodec;
 import games.alejandrocoria.mismatchedboots.data.RecoveryRefusalException;
 import games.alejandrocoria.mismatchedboots.data.SuspendedBootsItemCodec;
 import net.minecraft.nbt.NbtOps;
@@ -31,7 +32,8 @@ abstract class ItemStackRecoveryMixin {
         var result = original.call(name, (Function<Codec<ItemStack>, MapCodec<ItemStack>>) self -> {
             var capture = new SuspendedBootsItemCodec(factory.apply(self));
             mismatchedboots$recoveryInstalled = true;
-            return capture;
+            // Optional normalization runs only after complete suspension/restoration success, never during codec construction.
+            return new ForbiddenBootsItemCodec(capture);
         });
         // Recursive codecs are lazy. Force the native-field guard now, before a world can be opened.
         result.keys(NbtOps.INSTANCE).count();
