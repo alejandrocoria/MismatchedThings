@@ -65,12 +65,9 @@ source removal/reinstallation, and both products together with optional viewers.
 
 ## Forbidden Arcanus Aureal and modifier-state validation
 
-An optional [Eternal/Soulbound lifecycle spike](../spikes/forbidden-modifiers/README.md)
-extends this harness with `-PleggingsForbiddenModifiersSpike=true`. Its separate
-paths/reports record the pre-implementation behavior and small prototypes, not
-production acceptance. Its old assertions are not a regression suite for the new
-dual-effect implementation. Ordinary compilation excludes its sources; retire
-the experiment when maintained smithing/presentation checks replace the rest.
+Maintained Eternal/Soulbound state, smithing, presentation and recovery checks
+replace the retired lifecycle spike. There is no spike property, extra native
+compile dependency or historical executable assertion path.
 
 This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
 1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
@@ -90,6 +87,8 @@ upstream workaround, not a new production requirement or viewer acceptance claim
 
 After initial downloads, the first command also accepts `--offline`. Run profiles
 and baselines sequentially; restore normal `.114` packaging after the floor run.
+Omit `-PleggingsForbiddenServerOnly=true` on the floor command to include the
+hidden client/presentation/reopen gate, as executed during modifier block C.
 Reports use `build/reports/<baseline>/forbiddenArcanus[-boots][-server-only]/`;
 launch logs and `matrix.ok` use the corresponding `build/verification/` path.
 Fresh `server.ok`/`client.ok` and `forbidden-server.txt`/`forbidden-client.txt` are
@@ -108,15 +107,53 @@ both orientations, named/unnamed roots, normal/shift payment and recipe credit,
 duplicate/invalid-input refusal, live-vs-historical admission, recipe/tag rebinding
 and stale-result rejection. Subsequent trim, anvil rename, grindstone and finite
 Soulbound crafting repair preserve the live effects. Native originals remain
-controls. Final tooltip presentation is still separate unfinished work.
-The normal hidden client receives all four states in both orientations through
-real equipment packets, without client-side equipment writes. It does not need
-new screenshots for this data-only check.
+controls. The normal hidden client additionally requires
+`forbidden-modifiers-tooltip.txt` and `forbidden-modifiers-tooltip.png`. It checks
+native translated Eternal/Soulbound root prefixes, custom/source names, ordinary/
+Shift/F3+H and EMPTY/null-player contexts, with unchanged root/source components.
+The screenshot is one relevant final dual-effect tooltip frame. Actual native
+background extraction is observed at `TooltipRenderUtil`, not a synthetic texture
+event without an extractor. Native controls, each single effect and both together
+pass through the real frame renderer.
+Inherited and paid single/dual roots in both orientations arrive through real
+equipment **and inventory** packets without client-side item/attribute writes.
+Save/disconnect/reopen retains installed roots, flags, native scalar projection,
+names, prior work, custom state and complete source history in worn/inventory slots.
 
 The optional-absence `verifySkeleton` checks on both loaders reject source-carried
 root authority. The existing `verifyRecovery` profile now carries the own flags
 through its actual source-removal/reinstallation cycle without loading Forbidden
 Arcanus; this checks opaque state preservation, not native effects without the mod.
+
+For actual Forbidden Arcanus source removal and reinstallation, run:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRecovery -PleggingsForbiddenRecovery=true '-PleggingsRecoveryStages=write,absent,absentagain,restore,reloaded' --offline --console=plain
+```
+
+The isolated `recovery-forbidden` variant stages pinned FA/Valhelsia/JEI artifacts
+itself, removes FA/Valhelsia between independent JVMs, and reinstalls them on
+restore. A real barrel holds paid Soulbound and dual-effect roots in both
+orientations with a native Draco source. Native world saves/loads must suspend
+them inertly, preserve repeated absent archives and restore complete paid state/
+source history, not only own flag codecs. Each stage requires fresh
+`forbidden-recovery.txt`; the existing TCP/death/respawn generic recovery checks
+still run. No indev JARs/worlds are used and no new screenshot is added.
+On the absent server, NeoForge can report exactly `Encountered unknown or
+non-serializable data attachment forbidden_arcanus:aureal. Skipping.` when loading
+the returning player. That native player attachment is not an item archive and
+is outside the source-removal contract. Only that exact attachment/logger/stage
+diagnostic is accepted; any other error-level server/client message fails the
+native recovery variant. Whole-item restored-state equality remains mandatory.
+
+On 2026-11-06, modifier C passed `.114` standalone/current-Boots and `.99`
+standalone dedicated/hidden-client profiles, the five-stage native-source recovery
+cycle above, Common unit tests and both-loader absence profiles. Normal `.114`
+packaging/runtime outputs were restored afterward. The relevant dual-effect
+tooltip frame was inspected, with native title/background and source separators;
+the owner separately confirmed the consolidated NeoForge modifier checklist on
+2026-11-06, closing the bounded Eternal/Soulbound integration. Optional manual
+dedicated-reconnection/coexistence permutations were not separately reported.
 
 The dedicated fixture compares both native tiers, plain controls, each mixed
 orientation, duplicate tiers and Draco/Tyr combinations. It verifies equipped
@@ -138,9 +175,10 @@ The hidden/muted client receives actual server equipment/attribute packets for
 the native/mixed cases; it never sets client equipment or attributes. Native
 base/trim submissions, split waist/leg selection, GUI/hand/fixed item textures and
 normal/advanced Aureal tooltip lines are compared before/after a real reload.
-A named, damaged, trimmed Tyr mixed root then survives native disconnect/save/
-reopen with a new server/player, retained UUID, complete source data and Aureal
-attribute on both endpoints. There is no screenshot; final gameplay, animation,
+A named, damaged Tyr mixed control in inventory and a trimmed dual-effect Tyr
+root worn on the player survive native disconnect/save/reopen with a new server/
+player, retained UUID, complete source data and Aureal on both endpoints.
+Only the relevant modifier tooltip frame is captured; final gameplay, animation,
 glint and visual usability remain owner checks. The inherited early-hidden GLFW,
 muting and disabled NeoForge early-window contract applies unchanged.
 The client intentionally exercises native items before mixed, so its player-save

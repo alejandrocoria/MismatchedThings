@@ -6,8 +6,6 @@ if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'C
 if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus']) }
 profiles.each { profile ->
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
-    def forbiddenModifiersSpike = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenModifiersSpike')
-            .map { it.toBoolean() }.getOrElse(false)
     def forbiddenServerOnly = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenServerOnly')
             .map { it.toBoolean() }.getOrElse(false)
     def aquaculture = profile == 'Aquaculture'
@@ -46,7 +44,6 @@ profiles.each { profile ->
     if (brokenAllTheModium) { variant += '-broken' }
     if (aquacultureServerOnly) { variant += '-server-only' }
     if (forbiddenServerOnly) { variant += '-server-only' }
-    if (forbiddenModifiersSpike) { variant += '-modifiers-spike' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -108,12 +105,14 @@ profiles.each { profile ->
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
                 if (forbiddenArcanus) { new File(reports, "forbidden-${phase}.txt").delete() }
-                if (forbiddenArcanus && !forbiddenModifiersSpike && phase == 'server') {
+                if (forbiddenArcanus && phase == 'server') {
                     new File(reports, 'forbidden-modifiers-server.txt').delete()
                     new File(reports, 'forbidden-modifiers-smithing.txt').delete()
                 }
                 if (forbiddenArcanus && phase == 'server') { new File(reports, 'forbidden-native-save.txt').delete() }
-                if (forbiddenModifiersSpike) { new File(reports, "modifiers-${phase}.txt").delete() }
+                if (forbiddenArcanus && phase == 'client') {
+                    ['forbidden-modifiers-tooltip.txt', 'forbidden-modifiers-tooltip.png'].each { new File(reports, it).delete() }
+                }
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
                 if (aquaculture && phase == 'client') {
                     ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
@@ -235,7 +234,6 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
                 systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
-                systemProperty('leggings.test.forbiddenModifiersSpike', forbiddenModifiersSpike.toString())
                 systemProperty('leggings.test.allTheModiumBroken', brokenAllTheModium.toString())
                 systemProperty('leggings.test.items', items.toString())
                 systemProperty('leggings.test.emptyItems', emptyItems.toString())
@@ -299,7 +297,6 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (brokenAllTheModium) { arguments.add('-PleggingsAllTheModiumBroken=true') }
                 if (aquacultureServerOnly) { arguments.add('-PleggingsAquacultureServerOnly=true') }
                 if (forbiddenServerOnly) { arguments.add('-PleggingsForbiddenServerOnly=true') }
-                if (forbiddenModifiersSpike) { arguments.add('-PleggingsForbiddenModifiersSpike=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -337,10 +334,11 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         || !new File(reports, "forbidden-${phase}.txt").isFile())) {
                     throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
-                if (forbiddenModifiersSpike && !new File(reports, "modifiers-${phase}.txt").isFile()) {
-                    throw new GradleException("Missing Forbidden Arcanus modifier spike evidence: ${log}")
+                if (forbiddenArcanus && phase == 'client'
+                        && ['forbidden-modifiers-tooltip.txt', 'forbidden-modifiers-tooltip.png'].any { !new File(reports, it).isFile() }) {
+                    throw new GradleException("Missing Forbidden Arcanus modifier presentation evidence: ${log}")
                 }
-                if (forbiddenArcanus && !forbiddenModifiersSpike && phase == 'server'
+                if (forbiddenArcanus && phase == 'server'
                         && (!new File(reports, 'forbidden-modifiers-server.txt').isFile()
                         || !new File(reports, 'forbidden-modifiers-smithing.txt').isFile())) {
                     throw new GradleException("Missing Forbidden Arcanus modifier state/effect/smithing evidence: ${log}")

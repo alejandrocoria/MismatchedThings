@@ -184,6 +184,10 @@ public final class RecoveryChecks {
         } else {
             verifyStored(server);
         }
+        if (Boolean.getBoolean("leggings.test.forbiddenRecovery")) {
+            Class.forName("games.alejandrocoria.mismatchedleggings.test.ForbiddenModifierRecoveryChecks")
+                    .getMethod("stored", MinecraftServer.class).invoke(null, server);
+        }
     }
 
     private static ItemStack decorate(MinecraftServer server, ItemStack root, int index) {

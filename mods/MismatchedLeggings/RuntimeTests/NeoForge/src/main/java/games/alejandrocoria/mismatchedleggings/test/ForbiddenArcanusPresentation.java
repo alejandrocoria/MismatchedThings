@@ -34,14 +34,6 @@ final class ForbiddenArcanusPresentation {
     private ForbiddenArcanusPresentation() {}
 
     static void verify(Minecraft client) {
-        if (Boolean.getBoolean("leggings.test.forbiddenModifiersSpike")) {
-            try {
-                Class.forName("games.alejandrocoria.mismatchedleggings.test.ForbiddenModifierClientSpike")
-                        .getMethod("verify", Minecraft.class).invoke(null, client);
-            } catch (ReflectiveOperationException failure) {
-                throw new AssertionError("Forbidden Arcanus modifier client spike failed", failure);
-            }
-        }
         require(EquippedClient.renderer != null, "Native equipment renderer was not captured");
         var rig = new HumanoidModel<HumanoidRenderState>(client.getEntityModels().bakeLayer(ModelLayers.PLAYER_ARMOR.legs()));
         for (String tier : List.of("draco_arcanus", "tyr")) {

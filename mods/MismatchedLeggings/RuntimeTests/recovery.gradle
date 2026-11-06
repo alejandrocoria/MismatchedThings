@@ -3,10 +3,13 @@ import java.util.concurrent.TimeUnit
 // One native world, independent servers; only write/absent/restore also connect a separate client.
 def baseline = project.name == 'Fabric' ? fabric_loader_version : neoforge_version
 def coexistence = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
+def forbidden = project.name == 'NeoForge' && providers.gradleProperty('leggingsForbiddenRecovery')
+        .map { it.toBoolean() }.getOrElse(false)
 def previousBoots = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
 def previousHash = previousBoots == null ? null : java.security.MessageDigest.getInstance('SHA-256')
         .digest(previousBoots.bytes).encodeHex().toString()
 def variant = 'recovery' + (coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '')
+if (forbidden) { variant += '-forbidden' }
 def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
 def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
 def selectedStage = providers.gradleProperty('leggingsRecoveryStage').getOrElse('write')
@@ -46,6 +49,16 @@ def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
             def mods = new File(run, 'mods')
             mods.mkdirs()
             def artifacts = [leggingsJar.get().asFile]
+            def nativeNames = ['forbidden_arcanus-26.1.2-2.7.2.jar', 'valhelsia_core-neoforge-26.1.2-1.1.6.jar']
+            if (forbidden) {
+                // Only these two pinned fixture artifacts are removed between independent JVMs.
+                nativeNames.each { name -> delete new File(mods, name) }
+                if (!selectedStage.startsWith('absent')) {
+                    nativeNames.each { name -> artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', name)) }
+                }
+                // Keep JEI staged during absence too; its pinned artifacts have no source state.
+                if (phase == 'client') { artifacts.addAll(project.leggingsViewerArtifacts('jei')) }
+            }
             if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
             if (coexistence && previousBoots != null) {
                 artifacts.add(project(":MismatchedThings:${project.name}").tasks.named('jar').get().archiveFile.get().asFile)
@@ -86,6 +99,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             'leggings.test.report': stageReport.absolutePath,
             'leggings.test.boots': coexistence.toString()
     ]
+    if (forbidden) { properties['leggings.test.forbiddenRecovery'] = 'true' }
     if (project.name == 'Fabric') {
         loom.runs.create("recovery${phase.capitalize()}") {
             if (phase == 'server') { server(); programArg('--nogui') } else {
@@ -144,6 +158,7 @@ tasks.register('verifyRecovery') {
                                  "${ownerPath}:runRecovery${phase.capitalize()}", "-PleggingsRecoveryStage=${stage}",
                                  "-PleggingsRecoveryPort=${selectedPort}", "-PleggingsBoots=${coexistence}"]
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
+                if (forbidden) { arguments.add('-PleggingsForbiddenRecovery=true') }
                 if (offline) { arguments.add('--offline') }
                 if (neoForgeLoader) { arguments.add("-Pneoforge_version=${baseline}") }
                 return new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
@@ -188,6 +203,25 @@ tasks.register('verifyRecovery') {
                 if (!server.waitFor(180, TimeUnit.SECONDS) || server.exitValue() != 0
                         || !new File(markers, 'server.ok').isFile() || new File(markers, 'server.failure.txt').exists()) {
                     throw new GradleException("Recovery server failed: ${logs}/${stage}-server.log")
+                }
+                if (forbidden) {
+                    if (!new File(markers, 'forbidden-recovery.txt').isFile()) {
+                        throw new GradleException("Missing native modifier recovery evidence: ${stage}")
+                    }
+                    ['server', 'client'].each { endpoint ->
+                        def endpointLog = new File(logs, "${stage}-${endpoint}.log")
+                        if (endpointLog.isFile()) {
+                            def errors = endpointLog.readLines().findAll { it.contains('/ERROR]') }
+                            def unexpected = errors.findAll { line ->
+                                // Native player attachments are outside the item-source recovery contract.
+                                !(stage.startsWith('absent') && endpoint == 'server'
+                                        && line.contains('[ne.ne.ne.at.AttachmentHolder/]: Encountered unknown or non-serializable data attachment forbidden_arcanus:aureal. Skipping.'))
+                            }
+                            if (!unexpected.isEmpty()) {
+                                throw new GradleException("Unexpected native recovery errors: ${endpointLog}\n${unexpected.join('\n')}")
+                            }
+                        }
+                    }
                 }
             } finally {
                 stop(client)

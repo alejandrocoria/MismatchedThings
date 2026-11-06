@@ -91,13 +91,8 @@ final class ForbiddenArcanusChecks {
 
     private static void prepare(MinecraftServer server) throws Exception {
         SkeletonChecks.verify();
-        if (Boolean.getBoolean("leggings.test.forbiddenModifiersSpike")) {
-            Class.forName("games.alejandrocoria.mismatchedleggings.test.ForbiddenModifierSpike")
-                    .getMethod("server", MinecraftServer.class).invoke(null, server);
-        } else {
-            ForbiddenModifierChecks.server(server);
-            ForbiddenModifierSmithingChecks.server(server);
-        }
+        ForbiddenModifierChecks.server(server);
+        ForbiddenModifierSmithingChecks.server(server);
         nativeSaveControl(server);
         for (var sample : samples()) {
             codecs(server, sample.stack());

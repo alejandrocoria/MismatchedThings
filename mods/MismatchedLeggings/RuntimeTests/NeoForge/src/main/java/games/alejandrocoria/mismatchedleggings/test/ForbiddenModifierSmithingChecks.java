@@ -246,7 +246,7 @@ final class ForbiddenModifierSmithingChecks {
         return root;
     }
 
-    private static ItemStack upgrade(ServerPlayer player, ItemStack root, String kind, boolean shift) {
+    static ItemStack upgrade(ServerPlayer player, ItemStack root, String kind, boolean shift) {
         var before = root.copy();
         var menu = ready(player, root, kind);
         var output = take(player, menu, shift);

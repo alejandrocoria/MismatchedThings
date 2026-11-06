@@ -39,6 +39,9 @@ final class ForbiddenArcanusClientChecks {
     private static UUID playerId;
     private static long generation;
     private static EquipmentLayerRenderer previousRenderer;
+    private static ForbiddenModifierPresentation.Scene scene;
+    private static List<ItemStack> savedInventory;
+    private static List<ItemStack> expectedInventory;
 
     private ForbiddenArcanusClientChecks() {}
 
@@ -50,6 +53,16 @@ final class ForbiddenArcanusClientChecks {
             require(++ticks < 3000, "Forbidden Arcanus client timeout, phase=" + phase + ", screen=" + client.screen);
             require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                     "Automated client window became visible");
+            if (phase == 9) {
+                if (scene.complete(client)) {
+                    client.setScreen(null);
+                    generation = LeggingsGeometryCache.statistics().generation();
+                    previousRenderer = EquippedClient.renderer;
+                    job = client.reloadResourcePacks();
+                    phase = 3;
+                }
+                return;
+            }
             if (client.player == null && client.screen instanceof BackupConfirmScreen backup && !backupConfirmed) {
                 backupConfirmed = true;
                 backup.children().stream().filter(child -> child instanceof Button button
@@ -72,6 +85,7 @@ final class ForbiddenArcanusClientChecks {
                 job = server.submit(() -> {
                     var created = new ArrayList<>(ForbiddenArcanusChecks.samples());
                     created.addAll(ForbiddenModifierChecks.samples(server));
+                    created.addAll(ForbiddenModifierPresentation.installed(server));
                     return created;
                 });
                 phase = 1;
@@ -87,10 +101,10 @@ final class ForbiddenArcanusClientChecks {
                     schedule(server, next.stack(), next.rate());
                 } else {
                     ForbiddenArcanusPresentation.verify(client);
-                    generation = LeggingsGeometryCache.statistics().generation();
-                    previousRenderer = EquippedClient.renderer;
-                    job = client.reloadResourcePacks();
-                    phase = 3;
+                    ForbiddenModifierPresentation.verify(client, samples);
+                    scene = new ForbiddenModifierPresentation.Scene(samples);
+                    client.setScreen(scene);
+                    phase = 9;
                 }
             } else if (phase == 3 && job.isDone()) {
                 job.join();
@@ -98,10 +112,15 @@ final class ForbiddenArcanusClientChecks {
                                 && EquippedClient.renderer != previousRenderer,
                         "Real reload did not replace native renderer and invalidate split geometry");
                 ForbiddenArcanusPresentation.verify(client);
-                var saved = samples.stream().filter(sample -> sample.name().equals("tyr_leggings/diamond primary"))
+                ForbiddenModifierPresentation.verify(client, samples);
+                var ordinary = samples.stream().filter(sample -> sample.name().equals("tyr_leggings/diamond primary"))
                         .findFirst().orElseThrow().stack().copy();
-                saved.set(DataComponents.CUSTOM_NAME, Component.literal("Forbidden Arcanus saved Aureal root"));
-                saved.setDamageValue(13);
+                ordinary.set(DataComponents.CUSTOM_NAME, Component.literal("Forbidden Arcanus saved Aureal root"));
+                ordinary.setDamageValue(13);
+                savedInventory = new ArrayList<>(samples.stream().filter(sample -> sample.name().startsWith("installed "))
+                        .map(sample -> sample.stack().copy()).toList());
+                savedInventory.add(ordinary);
+                var saved = savedInventory.get(2).copy();
                 ForbiddenArcanusPresentation.trim(client, saved);
                 previousServer = server;
                 previousPlayer = client.player;
@@ -117,6 +136,10 @@ final class ForbiddenArcanusClientChecks {
                 job = server.submit(() -> {
                     var player = server.getPlayerList().getPlayer(playerId);
                     require(ItemStack.matches(expected, player.getItemBySlot(EquipmentSlot.LEGS)), "Saved root/provenance did not reopen intact");
+                    for (int slot = 0; slot < expectedInventory.size(); slot++) {
+                        require(ItemStack.matches(expectedInventory.get(slot), player.getInventory().getItem(slot)),
+                                "Saved installed root or source history did not reopen in slot " + slot);
+                    }
                     require(player.getAttributeValue(ForbiddenArcanusChecks.attribute()) == 2, "Reopened server lost Aureal");
                 });
                 settled = 0;
@@ -126,8 +149,11 @@ final class ForbiddenArcanusClientChecks {
                         "Real native equipment packets and client attributes passed for " + samples.size() + " samples;\n"
                         + "Draco/Tyr item textures, native base/trim materials, split waist/legs and tooltips passed before/after real reload;\n"
                         + "native save/disconnect/reopen replaced server/player, retained UUID, named/damaged/trimmed root/provenance and Aureal;\n"
-                        + "all four modifier states received through real equipment packets in both orientations;\n"
-                        + "no client equipment/attribute writes, screenshot or modifier smithing/presentation acceptance\n");
+                        + "inherited/installed single and dual states received through equipment AND inventory packets in both orientations;\n"
+                        + "paid flags, scalar projections and complete source/root state survived native save/reopen;\n"
+                        + "native translated titles, custom/source names and read-only contexts passed before/after reload;\n"
+                        + "native single/dual backgrounds passed real deferred tooltip extraction and rendered frames before reload;\n"
+                        + "no client equipment/attribute writes; owner visual/gameplay acceptance remains separate\n");
                 SkeletonChecks.passed("client");
                 phase = 8;
                 client.stop();
@@ -142,11 +168,15 @@ final class ForbiddenArcanusClientChecks {
     private static void schedule(MinecraftServer server, ItemStack stack, double rate) {
         expected = stack.copy();
         expectedRate = rate;
+        expectedInventory = savedInventory == null ? List.of(expected.copy()) : savedInventory;
         settled = 0;
         job = server.submit(() -> {
             var player = server.getPlayerList().getPlayer(playerId);
             player.getInventory().clearContent();
             ForbiddenArcanusChecks.equip(player, expected);
+            for (int slot = 0; slot < expectedInventory.size(); slot++) {
+                player.getInventory().setItem(slot, expectedInventory.get(slot).copy());
+            }
             player.inventoryMenu.broadcastChanges();
             require(player.getAttributeValue(ForbiddenArcanusChecks.attribute()) == rate, "Server fixture attribute differs from expected");
         });
@@ -161,6 +191,12 @@ final class ForbiddenArcanusClientChecks {
                 || client.player.getAttributeValue(ForbiddenArcanusChecks.attribute()) != expectedRate) {
             settled = 0;
             return false;
+        }
+        for (int slot = 0; slot < expectedInventory.size(); slot++) {
+            if (!ItemStack.matches(expectedInventory.get(slot), client.player.getInventory().getItem(slot))) {
+                settled = 0;
+                return false;
+            }
         }
         return ++settled >= 4;
     }
