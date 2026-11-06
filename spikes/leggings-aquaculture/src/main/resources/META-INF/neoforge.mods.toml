@@ -1,0 +1,18 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="leggings_aqua_spike"
+version="1.0.0"
+displayName="Aquaculture leggings feasibility spike"
+
+[[dependencies.leggings_aqua_spike]]
+modId="mismatchedleggings"
+type="required"
+versionRange="[0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[mixins]]
+config="aqua-spike.mixins.json"
