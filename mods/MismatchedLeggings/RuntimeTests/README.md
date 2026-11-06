@@ -63,6 +63,54 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Aquaculture 2 compatibility
+
+The NeoForge-only profile resolves `Aquaculture-26.1.1-2.9.2.jar` through Boots'
+maintained artifact catalog, download cache and SHA-256 pin. It uses packaged
+Leggings with nested Things and optionally current built Boots, never indev JARs.
+The normal profile runs a dedicated endpoint followed by the hidden/muted client.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAquaculture --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAquaculture -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAquaculture -PleggingsAquacultureServerOnly=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+Omit `--offline` for initial downloads. Evidence uses
+`build/{reports,verification}/<baseline>/aquaculture[-boots][-server-only]/`:
+`server.ok`, `client.ok`, explicit failure traces, `aquaculture-server.txt`,
+`aquaculture-client.txt` and `matrix.ok`. The `-server-only` variant has its own
+directory/marker and deliberately requires no client evidence; do not report it
+as a full client matrix. Run profiles/baselines sequentially and restore normal
+`.114` packaging after a floor run.
+
+Disconnected ServerPlayers undergo real inventory/fluid priming and native
+`travel` comparisons: 128 vertical-motion samples across both outputs and eight
+water/input/game-mode conditions. Strict-root, duplicate-source, wrong-slot,
+inventory/non-player, actual break, removal/exit-water, foreign `NoGravity` and
+non-default gravity controls exercise production queries, not just a predicate.
+Native armor carried/worn cannot cancel the effect; native head/chest positives
+stay independent. Current-Boots controls include mixed Neptunium feet without
+original leggings. An entity serialization roundtrip checks absence of saved
+candidate state, not an actual reconnect/restart. Native-only flag leakage is
+recorded separately and is not repaired by this integration.
+
+The early client uses a real integrated server and its normal local network
+connection. Only the server sets initial equipment/position once per scene;
+keyboard input and ordinary client physics then drive movement. Received equipment,
+client/server queries, server-tick progress and bounded position differences are
+checked for ordinary sinking, both buoyant orientations, crouch/jump and release,
+and unequipping. Native carried armor continues its real tick. The fixture never
+forces client position/velocity/gravity and produces no screenshots. It does not
+replace final dedicated multiplayer/reconnect, presentation or owner acceptance.
+
+The hook targets the fixed Minecraft gravity getter with the ordinary required
+injection boundary, not an optional native method. No Aquaculture class is linked;
+absence is checked through the existing Fabric and NeoForge `verifySkeleton`
+profiles. There is no native-body fingerprint or pretend incompatible-API control.
+Native source tooltips and consolidated presentation/session checks belong to
+later blocks; passing this gameplay profile does not close the compatibility.
+
 ## AllTheModium compatibility
 
 The NeoForge-only gameplay profile resolves AllTheModium 4.1.1, All the Ores

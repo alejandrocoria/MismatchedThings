@@ -10,7 +10,9 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
-        if (Boolean.getBoolean("leggings.test.allTheModium")) {
+        if (Boolean.getBoolean("leggings.test.aquaculture")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> AquacultureClientChecks.tick(Minecraft.getInstance()));
+        } else if (Boolean.getBoolean("leggings.test.allTheModium")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> AllTheModiumClientChecks.tick(Minecraft.getInstance()));
         } else {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> SkeletonClientChecks.tick(Minecraft.getInstance()));

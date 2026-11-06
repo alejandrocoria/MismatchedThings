@@ -1,5 +1,12 @@
 # Aquaculture leggings buoyancy feasibility spike
 
+The production gravity query now supersedes this prototype. Its pre-integration
+`native`/`refused` baselines intentionally assumed no production buoyancy and are
+not valid against the current product. Use the maintained
+[Aquaculture runtime profile](../../mods/MismatchedLeggings/RuntimeTests/README.md#aquaculture-2-compatibility)
+instead. Keep this isolated prototype only until final integration acceptance,
+then remove it and its opt-in settings registration.
+
 Opt-in NeoForge fixture, not production compatibility. Normal builds do not
 include this project. The maintained artifact resolver supplies the exact Boots
 catalog pin for Aquaculture 2.9.2; no indev JAR is used. Production Leggings is

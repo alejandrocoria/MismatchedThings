@@ -3,12 +3,15 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.add('AllTheModium') }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture']) }
 profiles.each { profile ->
+    def aquaculture = profile == 'Aquaculture'
+    def aquacultureServerOnly = aquaculture && providers.gradleProperty('leggingsAquacultureServerOnly')
+            .map { it.toBoolean() }.getOrElse(false)
     def allTheModium = profile == 'AllTheModium'
     def brokenAllTheModium = allTheModium && providers.gradleProperty('leggingsAllTheModiumBroken')
             .map { it.toBoolean() }.getOrElse(false)
-    def phases = brokenAllTheModium ? ['server'] : ['server', 'client']
+    def phases = brokenAllTheModium || aquacultureServerOnly ? ['server'] : ['server', 'client']
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
@@ -36,6 +39,7 @@ profiles.each { profile ->
     if (smithingReload) { variant += '-reload' }
     if (emptyItems) { variant += '-empty-model' }
     if (brokenAllTheModium) { variant += '-broken' }
+    if (aquacultureServerOnly) { variant += '-server-only' }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -65,6 +69,9 @@ profiles.each { profile ->
                         artifacts.add(resolver.resolve('NeoForge', name))
                     }
                 }
+                if (aquaculture) {
+                    artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
+                }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
                     // Prefer the candidate core over an equally numbered, older unpublished nested build.
@@ -84,6 +91,7 @@ profiles.each { profile ->
                 reports.mkdirs()
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
+                if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
                 if (createFly && phase == 'client') {
                     ['cardboard-render.txt', 'cardboard-render-after-reload.txt',
                      'cardboard-panel.png', 'cardboard-panel-after-reload.png'].each { name ->
@@ -192,6 +200,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.equipped', equipped.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
+                systemProperty('leggings.test.aquaculture', aquaculture.toString())
                 systemProperty('leggings.test.allTheModiumBroken', brokenAllTheModium.toString())
                 systemProperty('leggings.test.items', items.toString())
                 systemProperty('leggings.test.emptyItems', emptyItems.toString())
@@ -231,6 +240,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : betterEnd ? 'Checks pinned Crystalite set recognition, live tags, health, smithing and native tooltips.'
                 : createFly ? 'Checks pinned Create Fly Cardboard recognition, native consumers and optional Boots coexistence.'
                 : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
+                : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -251,6 +261,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
                 if (brokenAllTheModium) { arguments.add('-PleggingsAllTheModiumBroken=true') }
+                if (aquacultureServerOnly) { arguments.add('-PleggingsAquacultureServerOnly=true') }
                 if (viewers) { arguments.add("-PleggingsViewer=${viewer}") }
                 if (bootsOnly) { arguments.add('-PleggingsViewerBootsOnly=true') }
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
@@ -271,11 +282,11 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
-                if (allTheModium) {
+                if (allTheModium || aquaculture) {
                     def text = log.text
                     def refusals = text.readLines().count { it.contains('AllTheModium mixed leggings tick disabled:') }
                     if (refusals != (brokenAllTheModium ? 1 : 0) || text.contains('/ERROR]')) {
-                        throw new GradleException("Unexpected AllTheModium diagnostics: ${log}")
+                        throw new GradleException("Unexpected ${profile} diagnostics: ${log}")
                     }
                 }
             }
@@ -298,8 +309,13 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def proof = new File(reports, it)
                 !proof.isFile() || proof.length() == 0
             }) { throw new GradleException('AllTheModium presentation/reload evidence is missing') }
+            if (aquaculture && phases.collect { "aquaculture-${it}.txt" }.any {
+                def proof = new File(reports, it)
+                !proof.isFile() || proof.length() == 0
+            }) { throw new GradleException('Aquaculture gameplay/client evidence is missing') }
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
+                    : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }
     }
