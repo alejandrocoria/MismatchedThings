@@ -92,6 +92,28 @@ loader hooks under `internal` are not consumer API.
 
 ## Contribution boundary
 
+### Optional Forbidden Arcanus operations (since 1.1.0)
+
+`api.compatibility.forbiddenarcanus` provides the immutable `ForbiddenModifiers`
+value/codecs and `ForbiddenModifierService`: exact native Eternal/Soulbound
+reading, projection, recipe inspection and title construction. NeoForge binds
+the optional native API lazily; Fabric and mod absence are safe no-ops. No
+Forbidden Arcanus dependency is bundled or required.
+
+Products register their own state IDs and retain validity/admission, composition
+ordering, smithing payment/revalidation and tooltip listeners. A shared smithing
+decision is pass, handled denial or a native recipe/desired-state match, never a
+product output or a purchase. Finalization works on disposable outputs; consumers
+must reject failures and validate their own state before publishing a result.
+There is no automatic adoption of old products merely by selecting a newer core.
+
+`WorkbenchRecipe.assemblePair(input, registries)` supplies operation-local context
+from both menu preview and take-time reconstruction. Its default delegates to
+the original `assemblePair(input)`, retaining compiled API-v1 consumers. The
+default client preview uses the contextual route; consumers with synchronized
+policies may still override it. The context-free vanilla Recipe entry point stays
+available. Consumers must not inject into the core menu to obtain registries.
+
 ### Optional recipe viewers (since 1.1.0)
 
 Things registers one JEI/REI category, `mismatchedthings:mismatched_workbench`,

@@ -53,6 +53,12 @@ Each loader suite checks the emitted artifact and runs four bounded profiles:
 
 The synthetic recipe names vanilla helmet outputs; it is not a sibling product.
 Its serializer, data and admission are enabled only in the recipe profiles.
+The synthetic recipe requires the registry-aware assembly overload, so using the
+old entry point in the menu fails rather than silently bypassing this control.
+Frozen API-v1 recipes separately retain the default delegation check. Common
+tests also pin the extracted Forbidden Arcanus flag fields and wire order; actual
+native effects, smithing and title rendering remain in the product runtime suite.
+
 Common JVM tests cover mutable-result isolation, incomplete pairs, duplicate
 owners, defensive single-item admission and concurrent consumer registration.
 They also own the extracted composition-operation tests and generic TOML/enum

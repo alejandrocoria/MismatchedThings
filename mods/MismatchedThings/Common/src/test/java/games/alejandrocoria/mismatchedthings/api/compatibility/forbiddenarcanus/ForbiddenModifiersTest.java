@@ -1,5 +1,7 @@
-package games.alejandrocoria.mismatchedleggings.data;
+package games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.NbtOps;
@@ -36,9 +38,14 @@ class ForbiddenModifiersTest {
                 var state = new ForbiddenModifiers(eternal, soulbound);
                 var encoded = ForbiddenModifiers.CODEC.encodeStart(NbtOps.INSTANCE, state).getOrThrow();
                 assertEquals(state, ForbiddenModifiers.CODEC.parse(NbtOps.INSTANCE, encoded).getOrThrow());
+                var expectedJson = JsonParser.parseString("{\"eternal\":" + eternal + ",\"soulbound\":" + soulbound + "}");
+                assertEquals(expectedJson, ForbiddenModifiers.CODEC.encodeStart(JsonOps.INSTANCE, state).getOrThrow());
                 var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), RegistryAccess.EMPTY);
                 try {
                     ForbiddenModifiers.STREAM_CODEC.encode(buffer, state);
+                    assertEquals(2, buffer.readableBytes());
+                    assertEquals(eternal ? 1 : 0, buffer.getByte(0));
+                    assertEquals(soulbound ? 1 : 0, buffer.getByte(1));
                     assertEquals(state, ForbiddenModifiers.STREAM_CODEC.decode(buffer));
                 } finally {
                     buffer.release();

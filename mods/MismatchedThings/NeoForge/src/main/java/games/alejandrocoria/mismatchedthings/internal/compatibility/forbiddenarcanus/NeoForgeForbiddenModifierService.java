@@ -1,9 +1,7 @@
-package games.alejandrocoria.mismatchedleggings.compatibility.forbiddenarcanus;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.forbiddenarcanus;
 
-import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
-import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
-import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
-import games.alejandrocoria.mismatchedleggings.interaction.LeggingsSmithing;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifierService;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
@@ -11,6 +9,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +21,8 @@ import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.neoforged.fml.ModList;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -34,7 +35,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /** Exact Eternal/Soulbound integration; all native application happens on disposable output copies. */
-public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifierAdapter {
+public final class NeoForgeForbiddenModifierService implements ForbiddenModifierService {
+    private static final Logger LOG = LoggerFactory.getLogger("mismatchedthings/forbidden_arcanus");
+    private static final AtomicBoolean TITLE_WARNED = new AtomicBoolean();
     private static final Identifier COMPONENT = id("modifier");
     private static final ResourceKey<Registry<Object>> REGISTRY = ResourceKey.createRegistryKey(id("item_modifier"));
     private static final ResourceKey<Object> ETERNAL = ResourceKey.create(REGISTRY, id("eternal"));
@@ -43,12 +46,12 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
     private static final String NATIVE_RECIPE = "com.stal111.forbidden_arcanus.common.item.crafting.ApplyModifierRecipe";
 
     @Override
-    public ForbiddenModifiers inherit(ItemStack left, ItemStack right) {
+    public ForbiddenModifiers read(ItemStack stack) {
         if (!ModList.get().isLoaded("forbidden_arcanus")) {
             return ForbiddenModifiers.EMPTY;
         }
         try {
-            return read(left).union(read(right));
+            return readNative(stack);
         } catch (RuntimeException | LinkageError failure) {
             warn(failure);
             throw new IllegalArgumentException("Could not read Forbidden Arcanus source modifiers", failure);
@@ -56,16 +59,15 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
     }
 
     @Override
-    public ItemStack finish(ItemStack output, HolderLookup.@Nullable Provider registries) {
+    public ItemStack finish(ItemStack output, ForbiddenModifiers state, HolderLookup.@Nullable Provider registries) {
         if (!ModList.get().isLoaded("forbidden_arcanus")) {
             return output;
         }
         try {
-            var state = output.getOrDefault(LeggingsContent.forbiddenModifiersType(), ForbiddenModifiers.EMPTY);
             var type = nativeType();
             if (state.isEmpty()) {
                 // Historical sources and configurable owner projection cannot install live effects.
-                if (!read(output).isEmpty()) {
+                if (!readNative(output).isEmpty()) {
                     output.remove(type);
                 }
                 return output;
@@ -89,7 +91,6 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
                 api.apply(result, lookup.getOrThrow(SOULBOUND), Set.of());
             }
             if (result.get(type) != lookup.getOrThrow(state.soulbound() ? SOULBOUND : ETERNAL)
-                    || !state.equals(result.get(LeggingsContent.forbiddenModifiersType()))
                     || !Objects.equals(output.get(DataComponents.CUSTOM_NAME), result.get(DataComponents.CUSTOM_NAME))
                     || state.eternal() && (result.has(DataComponents.MAX_DAMAGE) || result.has(DataComponents.DAMAGE))) {
                 throw new IllegalArgumentException("Native modifier application did not preserve the root effect contract");
@@ -102,11 +103,11 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
             return result;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             warn(failure);
-            throw new IllegalArgumentException("Could not finalize Forbidden Arcanus mixed leggings modifiers", failure);
+            throw new IllegalArgumentException("Could not finalize Forbidden Arcanus modifiers", failure);
         }
     }
 
-    private static ForbiddenModifiers read(ItemStack stack) {
+    private static ForbiddenModifiers readNative(ItemStack stack) {
         var holder = stack.get(nativeType());
         if (holder == null) {
             return ForbiddenModifiers.EMPTY;
@@ -115,12 +116,9 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
     }
 
     @Override
-    public SmithingDecision smithing(ServerLevel level, ItemStack template, ItemStack root, ItemStack addition) {
+    public SmithingDecision smithing(ServerLevel level, ItemStack template, ItemStack root, ItemStack addition,
+                                     ForbiddenModifiers current, List<ItemStack> sources) {
         if (!ModList.get().isLoaded("forbidden_arcanus")) {
-            return SmithingDecision.PASS;
-        }
-        var data = MixedLeggingsStructure.validData(root).orElse(null);
-        if (data == null) {
             return SmithingDecision.PASS;
         }
         boolean handled = false;
@@ -148,13 +146,12 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
                     continue;
                 }
                 handled = true;
-                var current = root.getOrDefault(LeggingsContent.forbiddenModifiersType(), ForbiddenModifiers.EMPTY);
                 var projection = root.get(nativeType());
                 if (current.union(added).equals(current) || api.excludes(root, modifier)
                         || projection != null && !projection.is(ETERNAL) && !projection.is(SOULBOUND)) {
                     continue;
                 }
-                for (var source : List.of(data.left().source(), data.right().source())) {
+                for (var source : sources) {
                     // Borrow only native item/tag admission. Live enchantments, damage, custom data
                     // and the own flags remain the root's; historical modifiers never authorize it.
                     var admission = new ItemStack(source.getItem());
@@ -166,13 +163,7 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
                     if (!nativeRecipe.matches(new SmithingRecipeInput(template.copy(), admission, addition.copy()), level)) {
                         continue;
                     }
-                    var output = root.copy();
-                    output.set(LeggingsContent.forbiddenModifiersType(), current.union(added));
-                    output = finish(output, level.registryAccess());
-                    if (MixedLeggingsStructure.validData(output).isEmpty()) {
-                        throw new IllegalArgumentException("Modifier smithing changed mixed leggings structure");
-                    }
-                    return new SmithingDecision(true, Optional.of(new LeggingsSmithing.Result(output, recipe, null)));
+                    return new SmithingDecision(true, Optional.of(new SmithingMatch(recipe, current.union(added))));
                 }
             }
             return handled ? SmithingDecision.DENIED : SmithingDecision.PASS;
@@ -193,7 +184,7 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
 
     private static void warn(Throwable failure) {
         if (WARNED.compareAndSet(false, true)) {
-            LeggingsContent.LOG.warn("Forbidden Arcanus mixed leggings modifier composition refused: {}", failure.toString());
+            LOG.warn("Forbidden Arcanus modifier operation refused: {}", failure.toString());
         }
     }
 
@@ -264,6 +255,57 @@ public final class NeoForgeForbiddenModifierAdapter implements ForbiddenModifier
                 throw new IllegalArgumentException("Unsupported component removals for " + holder.unwrapKey().orElseThrow());
             }
             setModifier.invoke(null, output, holder);
+        }
+    }
+
+    @Override
+    public Component title(Component original, ForbiddenModifiers state, HolderLookup.Provider registries) {
+        if (state.isEmpty() || !ModList.get().isLoaded("forbidden_arcanus")) {
+            return original;
+        }
+        try {
+            var names = Names.INSTANCE;
+            if (names == null) {
+                return original;
+            }
+            var registry = registries.lookupOrThrow(REGISTRY);
+            var title = Component.empty().withStyle(original.getStyle());
+            for (String kind : new String[]{"eternal", "soulbound"}) {
+                if (kind.equals("eternal") ? state.eternal() : state.soulbound()) {
+                    var modifier = registry.getOrThrow(ResourceKey.create(REGISTRY, id(kind))).value();
+                    title.append(((Component) names.name().invoke(names.display().invoke(modifier))).copy()).append(" ");
+                }
+            }
+            return title.append(original.copy());
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            warnTitle(failure);
+            return original;
+        }
+    }
+
+    private static void warnTitle(Throwable failure) {
+        if (TITLE_WARNED.compareAndSet(false, true)) {
+            LOG.warn("Forbidden Arcanus modifier tooltip title unavailable: {}", failure.toString());
+        }
+    }
+
+    /** Resolve methods lazily, never retain world registries or native modifier instances. */
+    private record Names(Method display, Method name) {
+        private static final Names INSTANCE = resolve();
+
+        private static Names resolve() {
+            try {
+                var display = Class.forName("com.stal111.forbidden_arcanus.common.item.modifier.ItemModifier")
+                        .getMethod("displaySettings");
+                var name = display.getReturnType().getMethod("name");
+                if (name.getReturnType() != Component.class) {
+                    throw new NoSuchMethodException("Unexpected native modifier display name");
+                }
+                return new Names(display, name);
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+                warnTitle(failure);
+                return null;
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
-import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;

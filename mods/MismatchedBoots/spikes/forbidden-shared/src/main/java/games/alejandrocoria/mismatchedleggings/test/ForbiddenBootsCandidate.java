@@ -1,6 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
-import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;

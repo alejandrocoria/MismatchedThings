@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedthings.api;
 
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchContributors;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -9,6 +10,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +39,35 @@ class WorkbenchContractTest {
             }
             item.builtInRegistryHolder().bindComponents(components.build());
         }
+    }
+
+    @Test
+    void registryAwareAssemblyRetainsTheOriginalConsumerEntryPoint() {
+        AtomicInteger legacyCalls = new AtomicInteger();
+        WorkbenchRecipe legacy = new WorkbenchRecipe() {
+            @Override
+            public WorkbenchResult assemblePair(WorkbenchInput input) {
+                legacyCalls.incrementAndGet();
+                return new WorkbenchResult(input.left(), input.right());
+            }
+
+            @Override
+            public boolean matches(WorkbenchInput input, Level level) {
+                return true;
+            }
+
+            @Override
+            public RecipeSerializer<? extends WorkbenchRecipe> getSerializer() {
+                return null;
+            }
+        };
+        WorkbenchInput input = new WorkbenchInput(new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.GOLDEN_BOOTS));
+        WorkbenchResult result = legacy.assemblePair(input, RegistryAccess.EMPTY);
+
+        assertEquals(1, legacyCalls.get());
+        assertTrue(result.isComplete());
+        assertTrue(result.primary().is(Items.IRON_BOOTS));
+        assertTrue(result.inverse().is(Items.GOLDEN_BOOTS));
     }
 
     @Test

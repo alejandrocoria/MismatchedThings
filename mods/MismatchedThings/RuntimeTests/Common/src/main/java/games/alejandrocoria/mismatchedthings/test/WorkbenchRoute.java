@@ -30,6 +30,8 @@ public record WorkbenchRoute(String name, Item first, Item second) {
 
     public WorkbenchResult assemble(ServerLevel level) {
         WorkbenchInput input = input();
-        return level.recipeAccess().getRecipeFor(MismatchedWorkbench.recipeType(), input, level).orElseThrow().value().assemblePair(input);
+        var recipe = level.recipeAccess().getRecipeFor(MismatchedWorkbench.recipeType(), input, level).orElseThrow().value();
+        // The frozen baseline graph deliberately runs the actual 1.0 core, without the new overload.
+        return this == FIXTURE ? recipe.assemblePair(input, level.registryAccess()) : recipe.assemblePair(input);
     }
 }

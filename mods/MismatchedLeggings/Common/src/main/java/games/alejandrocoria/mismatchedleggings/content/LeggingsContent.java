@@ -1,8 +1,8 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
-import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
 import games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;

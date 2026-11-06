@@ -73,7 +73,10 @@ separate published-Boots load experiment below is explicitly opt-in.
 This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
 1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
 artifacts and SHA-256 verification. It does not read indev JARs or configuration
-and exercises the optional product adapter. The packaged Leggings JAR supplies nested
+and exercises the local authority/transaction adapter over Things' optional native
+service. The shared flag value retains the product component ID and its persistent
+fields/wire order; moving Java ownership is not a saved-data migration. The
+packaged Leggings JAR supplies nested
 Things; optional coexistence uses the current built Boots artifact.
 The client also stages the existing pinned JEI fixture: Forbidden Arcanus 2.7.2
 otherwise logs a native `ClientRecipeSync` / missing `IModPlugin` error on recipe

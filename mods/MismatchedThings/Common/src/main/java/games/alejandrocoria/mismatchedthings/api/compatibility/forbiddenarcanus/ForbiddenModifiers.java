@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedleggings.data;
+package games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

@@ -85,7 +85,7 @@ public final class WorkbenchMenu extends AbstractContainerMenu {
             return;
         }
 
-        WorkbenchResult assembled = recipe.value().assemblePair(input);
+        WorkbenchResult assembled = recipe.value().assemblePair(input, level.registryAccess());
         if (!assembled.isComplete()) {
             clearPreview();
             return;
@@ -119,7 +119,7 @@ public final class WorkbenchMenu extends AbstractContainerMenu {
             return true;
         }
 
-        WorkbenchResult refreshed = current.value().assemblePair(input);
+        WorkbenchResult refreshed = current.value().assemblePair(input, level.registryAccess());
         if (refreshed.isComplete()
                 && ItemStack.matches(results.getItem(0), refreshed.primary())
                 && ItemStack.matches(results.getItem(1), refreshed.inverse())) {

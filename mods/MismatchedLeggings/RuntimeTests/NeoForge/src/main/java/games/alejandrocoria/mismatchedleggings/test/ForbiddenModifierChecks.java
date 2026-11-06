@@ -8,8 +8,8 @@ import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsRecompos
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
-import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedleggings.test.mixin.ArmorWearInvoker;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;

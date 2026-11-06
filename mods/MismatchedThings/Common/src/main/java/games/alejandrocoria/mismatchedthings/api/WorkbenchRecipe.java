@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedthings.api;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
@@ -18,10 +19,15 @@ public interface WorkbenchRecipe extends Recipe<WorkbenchInput> {
 
     WorkbenchResult assemblePair(WorkbenchInput input);
 
+    /** Operation-local registries for current consumers; published API-v1 recipes keep their original entry point. */
+    default WorkbenchResult assemblePair(WorkbenchInput input, HolderLookup.Provider registries) {
+        return assemblePair(input);
+    }
+
     /** Client preview only: consumers resolve their own synchronized policies without exposing them to the core. */
     default WorkbenchResult assemblePreview(
             WorkbenchInput input, Level level) {
-        return assemblePair(input);
+        return assemblePair(input, level.registryAccess());
     }
 
     @Override

@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchResult;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
@@ -31,6 +33,14 @@ public final class FixtureRecipe implements WorkbenchRecipe {
 
     @Override
     public WorkbenchResult assemblePair(WorkbenchInput input) {
+        throw new AssertionError("Fixture requires operation-local registry context");
+    }
+
+    @Override
+    public WorkbenchResult assemblePair(WorkbenchInput input, HolderLookup.Provider registries) {
+        if (!(registries instanceof RegistryAccess)) {
+            throw new AssertionError("Workbench did not supply operation-local registries");
+        }
         ItemStack primary = input.left().copyWithCount(1);
         ItemStack inverse = input.right().copyWithCount(1);
         primary.set(DataComponents.CUSTOM_NAME, Component.literal("Fixture primary"));

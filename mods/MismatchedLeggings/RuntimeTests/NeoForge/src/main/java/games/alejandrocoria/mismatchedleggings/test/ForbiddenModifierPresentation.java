@@ -4,7 +4,7 @@ import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
-import games.alejandrocoria.mismatchedleggings.data.ForbiddenModifiers;
+import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

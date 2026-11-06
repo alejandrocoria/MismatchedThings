@@ -32,7 +32,7 @@ public final class MixedLeggingsWorkbenchRecipe implements WorkbenchRecipe {
         return assemblePair(input, null);
     }
 
-    /** Product-local context route; Things' published recipe API remains unchanged. */
+    @Override
     public WorkbenchResult assemblePair(WorkbenchInput input, HolderLookup.@Nullable Provider registries) {
         return assemble(input, CompositionRuleState.server(), registries);
     }
