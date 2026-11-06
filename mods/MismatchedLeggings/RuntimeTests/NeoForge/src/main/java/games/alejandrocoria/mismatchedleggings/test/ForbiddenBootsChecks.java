@@ -64,6 +64,10 @@ final class ForbiddenBootsChecks {
         return Boolean.getBoolean("leggings.test.forbiddenBoots");
     }
 
+    static boolean only() {
+        return Boolean.getBoolean("leggings.test.forbiddenBootsOnly");
+    }
+
     static void server(MinecraftServer server) throws Exception {
         if (!enabled()) { return; }
         matrix(server);
@@ -73,6 +77,7 @@ final class ForbiddenBootsChecks {
         justDire(server);
         legacy(server);
         deaths(server);
+        ForbiddenBootsStorage.seed(server);
         Files.writeString(ForbiddenArcanusChecks.report("boots-server"),
                 "Boots union/orientations, native wear/death/respawn, paid root upgrades, duplicate/stale refusal,\n"
                         + "published raw legacy roots, atomic failure, explicit empty state and codecs passed\n");
@@ -354,7 +359,47 @@ final class ForbiddenBootsChecks {
         for (var root : justDire(server)) {
             samples.add(new ForbiddenArcanusChecks.Sample("installed boots powered " + samples.size(), root, 0));
         }
+        var player = ForbiddenModifierChecks.actor(server);
+        try {
+            var tyr = pair(server, ForbiddenArcanusChecks.nativeItem("tyr_boots"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst();
+            var dual = ForbiddenModifierSmithingChecks.upgrade(player,
+                    ForbiddenModifierSmithingChecks.upgrade(player, tyr, "soulbound", false), "eternal", true);
+            samples.add(new ForbiddenArcanusChecks.Sample("installed boots Aureal dual", dual, 2));
+        } finally {
+            ForbiddenModifierChecks.close(player);
+        }
         return samples;
+    }
+
+    static List<ForbiddenArcanusChecks.Sample> aurealSamples(MinecraftServer server) throws Exception {
+        var result = new ArrayList<ForbiddenArcanusChecks.Sample>();
+        for (String kind : List.of("draco_arcanus", "tyr")) {
+            var source = ForbiddenArcanusChecks.nativeItem(kind + "_boots");
+            double rate = kind.equals("tyr") ? 2 : 1;
+            result.add(new ForbiddenArcanusChecks.Sample(kind + " native boots", source.copy(), rate));
+            var roots = pair(server, source, new ItemStack(Items.DIAMOND_BOOTS));
+            result.add(new ForbiddenArcanusChecks.Sample(kind + "_boots/diamond primary", roots.getFirst(), rate));
+            result.add(new ForbiddenArcanusChecks.Sample(kind + "_boots/diamond inverse", roots.getLast(), 0));
+        }
+        for (String kind : List.of("eternal", "soulbound")) {
+            result.add(new ForbiddenArcanusChecks.Sample("native boots " + kind, source(server, kind, true), 0));
+        }
+        return result;
+    }
+
+    static List<ItemStack> recoveryRoots(MinecraftServer server) throws Exception {
+        var result = new ArrayList<ItemStack>();
+        var player = ForbiddenModifierChecks.actor(server);
+        try {
+            for (var plain : pair(server, ForbiddenArcanusChecks.nativeItem("draco_arcanus_boots"), new ItemStack(Items.DIAMOND_BOOTS))) {
+                var soul = ForbiddenModifierSmithingChecks.upgrade(player, plain, "soulbound", false);
+                result.add(soul);
+                result.add(ForbiddenModifierSmithingChecks.upgrade(player, soul, "eternal", true));
+            }
+        } finally {
+            ForbiddenModifierChecks.close(player);
+        }
+        return result;
     }
 
     private static void legacy(MinecraftServer server) throws Exception {
@@ -445,7 +490,7 @@ final class ForbiddenBootsChecks {
                 "Quarantined root acquired modifier authority");
     }
 
-    private static CompoundTag fixture() throws Exception {
+    static CompoundTag fixture() throws Exception {
         try (var stream = ForbiddenBootsChecks.class.getResourceAsStream("/forbidden-boots-1.0.0.json")) {
             require(stream != null, "Missing frozen published Boots fixture");
             var manifest = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -490,7 +535,7 @@ final class ForbiddenBootsChecks {
         return root.getOrDefault(type(), ForbiddenModifiers.EMPTY);
     }
 
-    private static void verify(ItemStack root, ForbiddenModifiers state) {
+    static void verify(ItemStack root, ForbiddenModifiers state) {
         require(root.is(BuiltInRegistries.ITEM.getValue(BOOTS)) && state(root).equals(state), "Boots root authority differs");
         String scalar = ForbiddenModifierChecks.nativeKind(root);
         require(scalar.equals(state.soulbound() ? "soulbound" : state.eternal() ? "eternal" : "none"), "Boots scalar projection differs");

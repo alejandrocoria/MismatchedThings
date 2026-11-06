@@ -14,7 +14,6 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
@@ -47,6 +46,7 @@ final class ForbiddenArcanusClientChecks {
     private static List<ItemStack> expectedInventory;
     private static List<CompoundTag> expectedInventoryNbt;
     private static CompoundTag expectedNbt;
+    private static int savedAdoptions;
 
     private ForbiddenArcanusClientChecks() {}
 
@@ -61,8 +61,10 @@ final class ForbiddenArcanusClientChecks {
             if (phase == 9) {
                 if (scene.complete(client)) {
                     client.setScreen(null);
-                    generation = LeggingsGeometryCache.statistics().generation();
-                    previousRenderer = EquippedClient.renderer;
+                    if (!ForbiddenBootsChecks.only()) {
+                        generation = LeggingsGeometryCache.statistics().generation();
+                        previousRenderer = EquippedClient.renderer;
+                    }
                     job = client.reloadResourcePacks();
                     phase = 3;
                 }
@@ -85,12 +87,15 @@ final class ForbiddenArcanusClientChecks {
             }
             var server = client.getSingleplayerServer();
             if (phase == 0) {
-                SkeletonChecks.verify();
+                if (!ForbiddenBootsChecks.only()) { SkeletonChecks.verify(); }
                 playerId = client.player.getUUID();
                 job = server.submit(() -> {
-                    var created = new ArrayList<>(ForbiddenArcanusChecks.samples());
-                    created.addAll(ForbiddenModifierChecks.samples(server));
-                    created.addAll(ForbiddenModifierPresentation.installed(server));
+                    ForbiddenBootsStorage.verify(server);
+                    var created = new ArrayList<>(ForbiddenArcanusChecks.samples(server));
+                    if (!ForbiddenBootsChecks.only()) {
+                        created.addAll(ForbiddenModifierChecks.samples(server));
+                        created.addAll(ForbiddenModifierPresentation.installed(server));
+                    }
                     created.addAll(ForbiddenBootsChecks.clientSamples(server));
                     return created;
                 });
@@ -106,7 +111,7 @@ final class ForbiddenArcanusClientChecks {
                     var next = samples.get(index);
                     schedule(server, next.stack(), next.rate());
                 } else {
-                    ForbiddenArcanusPresentation.verify(client);
+                    if (!ForbiddenBootsChecks.only()) { ForbiddenArcanusPresentation.verify(client); }
                     ForbiddenModifierPresentation.verify(client, samples);
                     scene = new ForbiddenModifierPresentation.Scene(samples);
                     client.setScreen(scene);
@@ -114,25 +119,31 @@ final class ForbiddenArcanusClientChecks {
                 }
             } else if (phase == 3 && job.isDone()) {
                 job.join();
-                require(LeggingsGeometryCache.statistics().generation() > generation
-                                && EquippedClient.renderer != previousRenderer,
-                        "Real reload did not replace native renderer and invalidate split geometry");
-                ForbiddenArcanusPresentation.verify(client);
+                if (!ForbiddenBootsChecks.only()) {
+                    require(LeggingsGeometryCache.statistics().generation() > generation
+                                    && EquippedClient.renderer != previousRenderer,
+                            "Real reload did not replace native renderer and invalidate split geometry");
+                    ForbiddenArcanusPresentation.verify(client);
+                }
                 ForbiddenModifierPresentation.verify(client, samples);
-                var ordinary = samples.stream().filter(sample -> sample.name().equals("tyr_leggings/diamond primary"))
+                var ordinary = samples.stream().filter(sample -> sample.name().equals(ForbiddenBootsChecks.only()
+                                ? "tyr_boots/diamond primary" : "tyr_leggings/diamond primary"))
                         .findFirst().orElseThrow().stack().copy();
                 ordinary.set(DataComponents.CUSTOM_NAME, Component.literal("Forbidden Arcanus saved Aureal root"));
                 ordinary.setDamageValue(13);
                 savedInventory = new ArrayList<>(samples.stream().filter(sample -> sample.name().startsWith("installed "))
                         .map(sample -> sample.stack().copy()).toList());
                 savedInventory.add(ordinary);
-                var saved = savedInventory.get(2).copy();
+                var saved = ForbiddenBootsChecks.only() ? samples.stream()
+                        .filter(sample -> sample.name().equals("installed boots Aureal dual")).findFirst().orElseThrow().stack().copy()
+                        : savedInventory.get(2).copy();
                 ForbiddenArcanusPresentation.trim(client, saved);
                 previousServer = server;
                 previousPlayer = client.player;
                 schedule(server, saved, 2);
                 phase = 4;
             } else if (phase == 4 && received(client)) {
+                savedAdoptions = ForbiddenBootsStorage.adoptions.get();
                 backupConfirmed = false;
                 client.disconnectWithSavingScreen();
                 phase = 5;
@@ -141,7 +152,9 @@ final class ForbiddenArcanusClientChecks {
                         "Reopen reused an old server/player or changed player identity");
                 job = server.submit(() -> {
                     var player = server.getPlayerList().getPlayer(playerId);
-                    require(expectedNbt.equals(RecoveryChecks.encode(player.getItemBySlot(EquipmentSlot.LEGS), server.registryAccess())),
+                    ForbiddenBootsStorage.verify(server);
+                    require(ForbiddenBootsStorage.adoptions.get() == savedAdoptions, "Saved roots were adopted again on native reopen");
+                    require(expectedNbt.equals(RecoveryChecks.encode(player.getItemBySlot(ForbiddenArcanusChecks.slot(expected)), server.registryAccess())),
                             "Saved root/provenance did not reopen intact");
                     for (int slot = 0; slot < expectedInventory.size(); slot++) {
                         require(expectedInventoryNbt.get(slot).equals(RecoveryChecks.encode(player.getInventory().getItem(slot), server.registryAccess())),
@@ -159,9 +172,12 @@ final class ForbiddenArcanusClientChecks {
                 settled = 0;
                 phase = 7;
             } else if (phase == 7 && received(client)) {
+                String rendering = ForbiddenBootsChecks.only()
+                        ? "Standalone Boots: native controls, root/source titles and read-only contexts passed before/after real reload;\n"
+                        : "Draco/Tyr item textures, native base/trim materials, split waist/legs and tooltips passed before/after real reload;\n";
                 Files.writeString(ForbiddenArcanusChecks.report("client"),
                         "Real native equipment packets and client attributes passed for " + samples.size() + " samples;\n"
-                        + "Draco/Tyr item textures, native base/trim materials, split waist/legs and tooltips passed before/after real reload;\n"
+                        + rendering
                         + "native save/disconnect/reopen replaced server/player, retained UUID, named/damaged/trimmed root/provenance and Aureal;\n"
                         + "inherited/installed single and dual states received through equipment AND inventory packets in both orientations;\n"
                         + "paid flags, scalar projections and complete source/root state survived native save/reopen;\n"
@@ -170,6 +186,8 @@ final class ForbiddenArcanusClientChecks {
                         + "no client equipment/attribute writes; owner visual/gameplay acceptance remains separate\n");
                 SkeletonChecks.passed("client");
                 if (ForbiddenBootsChecks.enabled()) {
+                    Files.writeString(ForbiddenArcanusChecks.report("boots-storage-client"),
+                            "Native container survived initial load and save/disconnect/reopen with exact root/history and no repeated adoption\n");
                     Files.writeString(ForbiddenArcanusChecks.report("boots-client"),
                             "Current and adopted Boots: real feet/inventory packets and complete save/disconnect/reopen passed;\n"
                                     + "native titles/background frames, custom/source names and read-only contexts passed;\n"

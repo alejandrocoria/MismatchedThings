@@ -1,8 +1,8 @@
 # Forbidden Arcanus modifiers
 
 Maintained current-Boots integration runs through the existing packaged Leggings
-FA harness, with both independently packaged products installed. It does not
-compile against Boots classes: the narrow product calls use reflection, native
+FA harness, with Boots alone or both independently packaged products installed.
+It does not compile against Boots classes: the narrow product calls use reflection, native
 menus and actual product codecs. No new cross-product launcher is introduced.
 
 ## Commands
@@ -11,13 +11,16 @@ From the repository root, sequentially:
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus -PleggingsBoots=true -PleggingsForbiddenBoots=true --offline --console=plain
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus -PleggingsBoots=true -PleggingsForbiddenBoots=true -PleggingsForbiddenServerOnly=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus -PleggingsForbiddenBootsOnly=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyForbiddenArcanus -PleggingsBoots=true -PleggingsForbiddenBoots=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
 ```
 
 Restore the normal `.114` artifacts after a floor run. Omit `--offline` for the
-first pinned dependency download. The flag requires current packaged Boots,
-not `leggingsBootsJar` or the separate opt-in legacy spike. FA 2.7.2, Valhelsia
-Core 1.1.6 and JDT 1.6.11 resolve from the existing checksum-pinned catalog, not
+first pinned dependency download. Add `-PleggingsForbiddenServerOnly=true` for a
+focused server-only control, not client/persistence acceptance. Both Boots modifier
+flags require current packaged Boots, not `leggingsBootsJar`. The executable legacy
+spike has been retired. FA 2.7.2,
+Valhelsia Core 1.1.6 and JDT 1.6.11 resolve from the existing checksum-pinned catalog, not
 indev. The hidden/muted client also uses the established JEI fixture workaround
 for FA's native recipe-sync subscriber. No production dependency is added.
 
@@ -34,6 +37,11 @@ for FA's native recipe-sync subscriber. No production dependency is added.
 - Full old roots decoded by the production load hook, live-scalar-only adoption,
   exact unrelated root/history retention, skipped malformed/unknown shapes,
   explicit empty authority, suspension/quarantine and atomic API-failure refusal.
+- A native barrel loads the 15 raw published-writer roots through Minecraft's
+  slotted-container codec, before access to its items. Exact live/source NBT is
+  compared after load and a real saved-world reopen. A test-only counter checks
+  that normal saved roots are not adopted again. No replacement decoder or
+  tooltip/inventory-tick migration participates.
 - Real client equipment/inventory packets and native save/disconnect/reopen,
   alongside the existing Leggings integration. No client-side item repair is used.
 - Native translated/styled root prefixes (Eternal before Soulbound), unchanged
@@ -45,12 +53,15 @@ for FA's native recipe-sync subscriber. No production dependency is added.
   frames, alongside native controls.
 
 The isolated variant is `forbiddenArcanus-boots-modifiers` (or
-`forbiddenArcanus-boots-server-only-modifiers`). Reports and verification logs
+`forbiddenArcanus-boots-server-only-modifiers`); Boots alone uses
+`forbiddenArcanus-boots-only-modifiers`. Reports and verification logs
 are under the Leggings fixture's usual `build/reports/<baseline>/` and
 `build/verification/<baseline>/` directories. In addition to the ordinary Leggings
 markers, require fresh `forbidden-boots-server.txt` and, when run,
-`forbidden-boots-client.txt` and `forbidden-boots-tooltip.txt`. The existing
-`forbidden-modifiers-tooltip.png` captures a relevant final Boots dual-effect
+`forbidden-boots-client.txt` and `forbidden-boots-tooltip.txt`. The
+`forbidden-boots-storage-server.txt` / `forbidden-boots-storage-client.txt` markers
+and `forbidden-boots-storage.nbt` oracle cover native container persistence. The
+existing `forbidden-modifiers-tooltip.png` captures a relevant final Boots dual-effect
 frame in this profile, not an unrelated screenshot suite. Server-only is not
 client/persistence or presentation acceptance.
 
@@ -69,3 +80,26 @@ The optional-adoption fault is test-only; production must preserve the original
 successful decode and refuse unsafe later recomposition without adding a marker.
 
 Automated title/background checks do not stand in for owner visual acceptance.
+
+## Native source removal/reinstallation
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRecovery -PleggingsBoots=true -PleggingsForbiddenRecovery=true '-PleggingsRecoveryStages=write,absent,absentagain,restore,reloaded' --offline --console=plain
+```
+
+This removes/reinstalls the actual FA JAR using the existing recovery launcher.
+Both orientations of Boots and Leggings containing a native FA source and
+purchased Soulbound/dual state live in native storage. Absent sources must yield
+inactive but equipable shells;
+restoration must retain the exact paid root, flags and complete source history.
+The frozen Boots fixture above tests adoption instead; these are separate contracts.
+
+## Published consumer compatibility
+
+Use Things' existing
+[native consumer matrix](../../../MismatchedThings/RuntimeTests/README.md#native-consumer-matrix)
+with `-PworkbenchPreviousBootsJar=<path>` to check the unchanged published Boots
+binary against the current core. The actual historical JAR must match the
+[retained manifest](../../../MismatchedLeggings/RuntimeTests/fixtures/boots-1.0.0.json);
+recompiling old sources is not a substitute. This is an API/selection regression,
+separate from the frozen native modifier data and current-Boots adoption checks.

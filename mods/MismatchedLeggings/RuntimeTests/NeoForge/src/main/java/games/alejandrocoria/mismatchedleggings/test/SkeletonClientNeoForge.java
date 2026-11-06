@@ -10,6 +10,9 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (ForbiddenBootsChecks.enabled()) {
+            SkeletonChecks.require(ForbiddenBootsStorage.adoptions.get() == 0, "Native modifier adoption ran before a client world existed");
+        }
         if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> ForbiddenArcanusClientChecks.tick(Minecraft.getInstance()));
         } else if (Boolean.getBoolean("leggings.test.aquaculture")) {

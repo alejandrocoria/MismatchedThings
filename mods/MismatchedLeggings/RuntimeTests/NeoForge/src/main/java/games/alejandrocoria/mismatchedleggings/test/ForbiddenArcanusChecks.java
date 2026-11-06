@@ -72,9 +72,12 @@ final class ForbiddenArcanusChecks {
             }
             if (++ticks >= 205) {
                 require(periods >= 2, "Native resource cadence was not exercised twice");
-                Files.writeString(report("server"), "Native/Draco/Tyr/plain, both orientations and duplicates passed;\n"
+                String coverage = ForbiddenBootsChecks.only()
+                        ? "Standalone Boots: native Draco/Tyr and both mixed orientations, wear/death, smithing, JDT and legacy storage passed;\n"
+                        : "Native/Draco/Tyr/plain, both orientations and duplicates passed;\n"
                         + "effective canonical attributes, immutable inputs, codec/stream/hash, recomposition,\n"
-                        + "unequip/inventory and fractional-policy controls passed;\n"
+                        + "unequip/inventory and fractional-policy controls passed;\n";
+                Files.writeString(report("server"), coverage
                         + "native-only entity attribute save failure reproduced; fresh mixed-only entity save clean;\n"
                         + "native PlayerTickEvent.Pre consumer: " + actors.size() + " actors, " + ticks + " real world ticks, "
                         + periods + " regeneration periods; current Boots=" + Boolean.getBoolean("leggings.test.boots") + "\n");
@@ -90,13 +93,19 @@ final class ForbiddenArcanusChecks {
     }
 
     private static void prepare(MinecraftServer server) throws Exception {
-        SkeletonChecks.verify();
-        ForbiddenModifierChecks.server(server);
-        ForbiddenModifierSmithingChecks.server(server);
+        if (!ForbiddenBootsChecks.only()) {
+            SkeletonChecks.verify();
+            ForbiddenModifierChecks.server(server);
+            ForbiddenModifierSmithingChecks.server(server);
+        }
         ForbiddenBootsChecks.server(server);
         nativeSaveControl(server);
-        for (var sample : samples()) {
-            codecs(server, sample.stack());
+        for (var sample : samples(server)) {
+            if (ForbiddenBootsChecks.only()) {
+                ForbiddenModifierChecks.codecs(server, sample.stack());
+            } else {
+                codecs(server, sample.stack());
+            }
             var player = player(server);
             equip(player, sample.stack());
             require(player.getAttributeValue(attribute()) == sample.rate(), "Wrong equipped Aureal: " + sample.name());
@@ -104,7 +113,8 @@ final class ForbiddenArcanusChecks {
             actors.add(new Actor(sample.name(), player, sample.rate()));
         }
         var player = player(server);
-        var root = samples().stream().filter(sample -> sample.name().equals("tyr_leggings/diamond primary")).findFirst().orElseThrow().stack();
+        var root = samples(server).stream().filter(sample -> sample.name().equals(ForbiddenBootsChecks.only()
+                ? "tyr_boots/diamond primary" : "tyr_leggings/diamond primary")).findFirst().orElseThrow().stack();
         equip(player, root);
         require(player.getAttributeValue(attribute()) == 2, "Unequip positive control failed");
         equip(player, ItemStack.EMPTY);
@@ -112,7 +122,7 @@ final class ForbiddenArcanusChecks {
         require(player.getAttributeValue(attribute()) == 0, "Inventory/removed leggings retain Aureal");
         actors.add(new Actor("unequipped root in inventory", player, 0));
 
-        if (Boolean.getBoolean("leggings.test.boots")) {
+        if (Boolean.getBoolean("leggings.test.boots") && !ForbiddenBootsChecks.only()) {
             player = player(server);
             equip(player, root.copy());
             player.setItemSlot(EquipmentSlot.FEET,
@@ -125,15 +135,16 @@ final class ForbiddenArcanusChecks {
 
     private static void nativeSaveControl(MinecraftServer server) throws Exception {
         var nativePlayer = player(server);
-        equip(nativePlayer, nativeItem("tyr_leggings"));
+        equip(nativePlayer, nativeItem(ForbiddenBootsChecks.only() ? "tyr_boots" : "tyr_leggings"));
         var nativeProblems = saveProblems(nativePlayer);
         require(nativeProblems.contains("Unregistered holder") && nativeProblems.contains("RegistryEntry")
                         && nativeProblems.contains("attributes"),
                 "Pinned native-only Valhelsia entity-save control changed: " + nativeProblems);
 
         var mixedPlayer = player(server);
-        var root = MixedLeggingsFactory.createPair(nativeItem("tyr_leggings"), new ItemStack(Items.DIAMOND_LEGGINGS),
-                CompositionRules.defaults()).primary();
+        var root = ForbiddenBootsChecks.only()
+                ? ForbiddenBootsChecks.pair(server, nativeItem("tyr_boots"), new ItemStack(Items.DIAMOND_BOOTS)).getFirst()
+                : MixedLeggingsFactory.createPair(nativeItem("tyr_leggings"), new ItemStack(Items.DIAMOND_LEGGINGS), CompositionRules.defaults()).primary();
         equip(mixedPlayer, root);
         require(saveProblems(mixedPlayer).isEmpty(), "Fresh mixed-only equipment produced entity serialization errors");
         equip(nativePlayer, root);
@@ -154,7 +165,14 @@ final class ForbiddenArcanusChecks {
         return problems.getReport();
     }
 
-    static List<Sample> samples() {
+    static List<Sample> samples(MinecraftServer server) {
+        if (ForbiddenBootsChecks.only()) {
+            try {
+                return ForbiddenBootsChecks.aurealSamples(server);
+            } catch (Exception failure) {
+                throw new AssertionError("Could not create standalone Boots Aureal controls", failure);
+            }
+        }
         var result = new ArrayList<Sample>();
         result.add(new Sample("plain", new ItemStack(Items.DIAMOND_LEGGINGS), 0));
         for (String tier : List.of("draco_arcanus", "tyr")) {

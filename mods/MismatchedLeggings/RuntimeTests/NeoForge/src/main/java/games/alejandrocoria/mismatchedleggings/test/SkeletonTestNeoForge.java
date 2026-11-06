@@ -24,6 +24,18 @@ public final class SkeletonTestNeoForge {
         }
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, "leggings_skeleton_test");
         components.register("charge", () -> CompositionFixture.CHARGE);
+        if (ForbiddenBootsChecks.only()) {
+            components.register(bus);
+            var mods = ModList.get();
+            SkeletonChecks.require(mods.isLoaded("mismatchedboots") && !mods.isLoaded("mismatchedleggings")
+                            && mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count() == 1,
+                    "Wrong standalone Boots modifier graph");
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> ForbiddenArcanusChecks.tick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) {
+                bus.addListener(SkeletonClientNeoForge::setup);
+            }
+            return;
+        }
         if (RecoveryFixture.walletPresent()) {
             components.register("wallet", () -> RecoveryFixture.WALLET);
         }
@@ -51,15 +63,6 @@ public final class SkeletonTestNeoForge {
         SkeletonChecks.environment(mods.isLoaded("mismatchedboots"),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedleggings")).count(),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count());
-        if (Boolean.getBoolean("leggings.test.forbiddenBootsSpike")) {
-            try {
-                Class.forName("games.alejandrocoria.mismatchedleggings.test.ForbiddenBootsSpike")
-                        .getMethod("register", IEventBus.class).invoke(null, bus);
-            } catch (ReflectiveOperationException failure) {
-                throw new IllegalStateException("Cannot start opt-in Forbidden Boots spike", failure);
-            }
-            return;
-        }
         if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> ForbiddenArcanusChecks.tick(event.getServer()));
         } else if (Boolean.getBoolean("leggings.test.aquaculture")) {

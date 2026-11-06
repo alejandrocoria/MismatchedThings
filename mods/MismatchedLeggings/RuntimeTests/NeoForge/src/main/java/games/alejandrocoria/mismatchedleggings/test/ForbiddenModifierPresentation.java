@@ -126,7 +126,8 @@ public final class ForbiddenModifierPresentation {
             bootsAdmission(client, samples);
             Files.writeString(ForbiddenArcanusChecks.report("boots-tooltip"),
                     "Boots native styled prefixes, custom/source names, ordinary/Shift/F3+H, null/EMPTY contexts,\n"
-                            + "invalid/suspended roots and repeated read-only tooltips passed alongside Leggings\n");
+                            + "invalid/suspended roots and repeated read-only tooltips passed "
+                            + (ForbiddenBootsChecks.only() ? "without Leggings\n" : "alongside Leggings\n"));
         }
         Files.writeString(ForbiddenArcanusChecks.report("modifiers-tooltip"),
                 "Native translated root prefixes, custom/source names, normal/Shift/F3+H, EMPTY/null and nonmutation passed\n");
@@ -138,6 +139,7 @@ public final class ForbiddenModifierPresentation {
     }
 
     private static ForbiddenModifiers state(ItemStack stack) {
+        if (ForbiddenBootsChecks.only() && !boots(stack)) { return ForbiddenModifiers.EMPTY; }
         return stack.getOrDefault(boots(stack) ? ForbiddenBootsChecks.type() : LeggingsContent.forbiddenModifiersType(),
                 ForbiddenModifiers.EMPTY);
     }
@@ -146,6 +148,7 @@ public final class ForbiddenModifierPresentation {
         if (boots(stack)) {
             return ForbiddenBootsChecks.history(stack);
         }
+        if (ForbiddenBootsChecks.only()) { return List.of(); }
         return MixedLeggingsStructure.validData(stack)
                 .map(data -> List.of(data.left().source(), data.right().source())).orElse(List.of());
     }
@@ -232,7 +235,8 @@ public final class ForbiddenModifierPresentation {
             super(Component.literal("Forbidden Arcanus modifier tooltip"));
             stacks = samples.stream().map(ForbiddenArcanusChecks.Sample::stack)
                     .filter(stack -> !ForbiddenModifierChecks.nativeKind(stack).equals("none"))
-                    .sorted(Comparator.comparingInt(stack -> boots(stack) ? 2 : MixedLeggingsStructure.validData(stack).isPresent() ? 1 : 0))
+                    .sorted(Comparator.comparingInt(stack -> boots(stack) ? 2
+                            : !ForbiddenBootsChecks.only() && MixedLeggingsStructure.validData(stack).isPresent() ? 1 : 0))
                     .map(stack -> {
                         var copy = stack.copy();
                         copy.remove(DataComponents.CUSTOM_NAME);
