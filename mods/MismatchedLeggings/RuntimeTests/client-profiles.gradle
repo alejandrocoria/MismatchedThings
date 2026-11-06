@@ -92,7 +92,10 @@ profiles.each { profile ->
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
-                if (aquaculture && phase == 'client') { new File(reports, 'aquaculture-tooltip.txt').delete() }
+                if (aquaculture && phase == 'client') {
+                    ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
+                     'aquaculture-panel.png', 'aquaculture-session.txt'].each { name -> new File(reports, name).delete() }
+                }
                 if (createFly && phase == 'client') {
                     ['cardboard-render.txt', 'cardboard-render-after-reload.txt',
                      'cardboard-panel.png', 'cardboard-panel-after-reload.png'].each { name ->
@@ -152,6 +155,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     }
                     copy { from world; into new File(run, 'saves/skeleton') }
                     new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\nguiScale:2\n'
+                    if (aquaculture) { new File(run, 'options.txt').append('tutorialStep:none\n') }
                 }
             }
         }
@@ -194,7 +198,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if ((equipped || items || presentation) && phase == 'client') {
                     programArgument('--width'); programArgument('1280'); programArgument('--height'); programArgument('720')
                 }
-                if (allTheModium && phase == 'client') {
+                if ((allTheModium || aquaculture) && phase == 'client') {
                     programArgument('--width'); programArgument('1600'); programArgument('--height'); programArgument('1000')
                 }
                 gameDirectory = new File(directory, phase)
@@ -321,8 +325,11 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 !proof.isFile() || proof.length() == 0
             }) { throw new GradleException('Aquaculture gameplay/client evidence is missing') }
             if (aquaculture && !aquacultureServerOnly) {
-                def proof = new File(reports, 'aquaculture-tooltip.txt')
-                if (!proof.isFile() || proof.length() == 0) { throw new GradleException('Aquaculture native tooltip evidence is missing') }
+                if (['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
+                     'aquaculture-panel.png', 'aquaculture-session.txt'].any { name ->
+                    def proof = new File(reports, name)
+                    !proof.isFile() || proof.length() == 0
+                }) { throw new GradleException('Aquaculture tooltip/presentation/session evidence is missing') }
             }
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'

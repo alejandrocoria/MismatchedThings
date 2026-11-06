@@ -1,8 +1,0 @@
-{
-    "required": true,
-    "package": "games.alejandrocoria.aquaspike.mixin",
-    "plugin": "games.alejandrocoria.aquaspike.SpikePlugin",
-    "compatibilityLevel": "JAVA_25",
-    "mixins": ["GravityQueryMixin"],
-    "injectors": { "defaultRequire": 1 }
-}

@@ -67,6 +67,8 @@ public final class AquacultureChecks {
             }
             SkeletonChecks.verify();
             verify(server);
+            AquacultureWorkstationChecks.verify(server);
+            REPORT.append("Paid native/mixed Neptunium repair, Mending/Unbreaking/Swift Sneak books and trim smithing passed\n");
             REPORT.append("Native fluid-movement comparisons=").append(motionComparisons).append('\n');
             Files.writeString(report("aquaculture-server.txt"), REPORT.toString());
             SkeletonChecks.passed("server");

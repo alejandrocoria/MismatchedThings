@@ -60,9 +60,3 @@ project(':MismatchedLeggings').projectDir = file('mods/MismatchedLeggings')
 ['Common', 'Fabric', 'NeoForge', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
     include("MismatchedLeggings:${path}")
 }
-
-// Opt-in feasibility fixture, never part of production or normal verification.
-if (providers.gradleProperty('leggingsAquacultureSpike').map { it.toBoolean() }.getOrElse(false)) {
-    include('LeggingsAquacultureSpike')
-    project(':LeggingsAquacultureSpike').projectDir = file('spikes/leggings-aquaculture')
-}

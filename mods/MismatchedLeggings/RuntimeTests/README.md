@@ -79,7 +79,9 @@ The normal profile runs a dedicated endpoint followed by the hidden/muted client
 Omit `--offline` for initial downloads. Evidence uses
 `build/{reports,verification}/<baseline>/aquaculture[-boots][-server-only]/`:
 `server.ok`, `client.ok`, explicit failure traces, `aquaculture-server.txt`,
-`aquaculture-client.txt`, `aquaculture-tooltip.txt` and `matrix.ok`. The
+`aquaculture-client.txt`, `aquaculture-tooltip.txt`, `aquaculture-render.txt`,
+`aquaculture-render-after-reload.txt`, `aquaculture-panel.png`,
+`aquaculture-session.txt` and `matrix.ok`. The
 `-server-only` variant has its own
 directory/marker and deliberately requires no client evidence; do not report it
 as a full client matrix. Run profiles/baselines sequentially and restore normal
@@ -102,8 +104,9 @@ keyboard input and ordinary client physics then drive movement. Received equipme
 client/server queries, server-tick progress and bounded position differences are
 checked for ordinary sinking, both buoyant orientations, crouch/jump and release,
 and unequipping. Native carried armor continues its real tick. The fixture never
-forces client position/velocity/gravity and produces no screenshots. It does not
-replace final dedicated multiplayer/reconnect, presentation or owner acceptance.
+forces client position/velocity/gravity. Later phases below add relevant rendering
+and real saved-world session checks; this movement phase alone does not replace
+dedicated multiplayer or owner acceptance.
 
 The hook targets the fixed Minecraft gravity getter with the ordinary required
 injection boundary, not an optional native method. No Aquaculture class is linked;
@@ -130,8 +133,33 @@ warning counts fail the profile. Run presentation checks before this intentional
 disable if extending the same JVM. The dedicated endpoint separately exercises
 the bridge's distribution gate without invoking native client code.
 
-Consolidated rendering/workstation/session checks and owner acceptance remain
-separate; passing this profile does not close the compatibility.
+The dedicated endpoint also checks paid Neptunium-ingot repair, Mending/Unbreaking/
+Swift Sneak books and trim smithing on native leggings and both mixed orientations,
+including real XP/material/template consumption, immutable inputs and no repeat
+take. It does not invent an additional Aquaculture workstation or item-icon trim.
+
+After movement, the client compares actual native base/trim/foil submissions,
+both split legs/waist orientations, posed geometry, a dyed leather partner and
+GUI/hand/fixed item textures. The native item stays a static texture even when
+trimmed. Checks repeat after a real resource reload, requiring cache invalidation
+and a fresh renderer. One relevant eight-cell panel is generated at 1600x1000;
+only the disposable profile's vanilla tutorial is disabled to avoid hiding it.
+Clients remain hidden before GLFW and muted throughout.
+
+The final session phase equips a named/damaged/trimmed root, disconnects with
+native saving, reopens the same world and requires new integrated-server/client-
+player instances with the same UUID. Complete root/source equality and client/
+server buoyancy must survive; no native armor is left to mask a stale flag.
+An actual unequip update must restore ordinary gravity and sinking. This is a
+real in-JVM world/server restart and reconnection, not merely an entity codec
+roundtrip, but it does not test an external dedicated server's anti-flight rules.
+That check and final gameplay/visual acceptance are separate owner gates; passing
+the automatic profile alone does not close the compatibility.
+
+On 2026-11-06 the owner confirmed the complete NeoForge checklist, including
+native/mixed movement/coexistence, sustained dedicated buoyancy, reconnection and
+server restart, presentation/reload, tooltips and repair/enchantment/trim workflows.
+Together with the 2026-11-05 automatic evidence, this closes the bounded integration.
 
 ## AllTheModium compatibility
 

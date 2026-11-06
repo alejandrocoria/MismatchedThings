@@ -38,8 +38,9 @@ final class AquacultureClientChecks {
     private static double initialY;
     private static double initialServerY;
     private static boolean prepared;
-    private static boolean backupConfirmed;
+    private static BackupConfirmScreen confirmedBackup;
     private static boolean finished;
+    private static boolean movementFinished;
 
     private AquacultureClientChecks() {
     }
@@ -50,18 +51,22 @@ final class AquacultureClientChecks {
             return;
         }
         try {
-            require(++ticks < 2400, "Aquaculture client timed out: " + scene + "/" + age + "/" + client.screen);
+            require(++ticks < 3600, "Aquaculture client timed out: " + scene + "/" + age + "/" + client.screen);
             require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE
                             && client.options.getSoundSourceVolume(SoundSource.MASTER) == 0,
                     "Aquaculture automated client must remain hidden and muted");
             if (client.player == null && client.screen instanceof BackupConfirmScreen backup) {
-                if (!backupConfirmed) {
-                    backupConfirmed = true;
+                if (confirmedBackup != backup) {
+                    confirmedBackup = backup;
                     backup.children().stream().filter(child -> child instanceof Button button
                                     && button.getMessage().equals(Component.translatable("selectWorld.backupJoinSkipButton")))
                             .map(Button.class::cast).findFirst().orElseThrow()
                             .onPress(new KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
                 }
+                return;
+            }
+            if (movementFinished) {
+                AquaculturePresentationClient.tick(client);
                 return;
             }
             if (client.player == null || client.level == null || client.getOverlay() != null
@@ -136,11 +141,8 @@ final class AquacultureClientChecks {
             keys(client, false, false);
             scene++;
             if (scene == SCENES.length) {
-                AquacultureTooltipChecks.verify();
                 Files.writeString(Path.of(System.getProperty("leggings.test.report"), "aquaculture-client.txt"), REPORT.toString());
-                SkeletonChecks.passed("client");
-                finished = true;
-                client.stop();
+                movementFinished = true;
             } else {
                 prepared = false;
                 age = 0;
