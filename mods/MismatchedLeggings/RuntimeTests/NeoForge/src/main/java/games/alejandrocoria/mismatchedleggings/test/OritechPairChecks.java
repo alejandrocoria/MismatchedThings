@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -141,9 +142,14 @@ final class OritechPairChecks {
     }
 
     private static PairSubmits render(ItemStack root, ArmorStandRenderState state, ArmorStandArmorModel rig) {
+        return render(root, state, rig, 0);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    static PairSubmits render(ItemStack root, HumanoidRenderState state, HumanoidModel rig, int outline) {
         var output = new PairSubmits();
         MixedLeggingsEquipmentRenderer.render(EquippedClient.renderer, rig, state, EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS,
-                root, new PoseStack(), output, 15728880, 0);
+                root, new PoseStack(), output, 15728880, outline);
         return output;
     }
 
@@ -184,7 +190,7 @@ final class OritechPairChecks {
         }
     }
 
-    private static final class PairSubmits extends SubmitNodeStorage {
+    static final class PairSubmits extends SubmitNodeStorage {
         final OritechCaptureChecks.Geometry custom = new OritechCaptureChecks.Geometry();
         final RecordingSubmits models = new RecordingSubmits();
 

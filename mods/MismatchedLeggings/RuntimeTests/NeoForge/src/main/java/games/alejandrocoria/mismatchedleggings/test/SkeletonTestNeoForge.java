@@ -63,7 +63,9 @@ public final class SkeletonTestNeoForge {
         SkeletonChecks.environment(mods.isLoaded("mismatchedboots"),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedleggings")).count(),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count());
-        if (Boolean.getBoolean("leggings.test.neoVitae")) {
+        if (Boolean.getBoolean("leggings.test.oritechCapture")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> OritechGameplayChecks.tick(event.getServer()));
+        } else if (Boolean.getBoolean("leggings.test.neoVitae")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> NeoVitaeChecks.tick(event.getServer()));
         } else if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> ForbiddenArcanusChecks.tick(event.getServer()));

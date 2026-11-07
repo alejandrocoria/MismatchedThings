@@ -124,7 +124,10 @@ final class OritechCaptureChecks {
                                 + "capture.fullBothMasksAndNoHistoryMutation=true\nrejection.staleMissingBonesExtraSubmissions=true\n"
                                 + "guard.localApiChangesAndUnrelatedEdits=true\nreload.recoverAndInvalidate=true\n"
                                 + "dispatch.bothOrientationsTwoExoAndOrdinary=true\nfallback.fullExoOwnerOrNeutralAtomic=true\n"
-                                + "fallback.failedEpochSafeOrdinaryOwner=true\n");
+                                + "fallback.failedEpochSafeOrdinaryOwner=true\n"
+                                + "wearers.playerMovingCrouchedSmallStandAdultBabyZombie=true\n"
+                                + "materials.nativeTrimFoilOutlineLimitsOrdinaryDecorations=true\n"
+                                + "queue.distinctRigsAndReloadedModel=true\npresentation.nativeSourceTooltipGuiHands=true\n");
                 phase = 3;
                 SkeletonChecks.passed("client");
                 client.stop();
@@ -199,6 +202,7 @@ final class OritechCaptureChecks {
         require(ItemStack.matches(root, before), "Capture changed provenance");
 
         OritechPairChecks.verify(client);
+        OritechWearerChecks.verify(client);
         submissionGuards(controlMaterial(client, source), rig);
         var actor = actor(client, root, false);
         var target = state(client, actor);

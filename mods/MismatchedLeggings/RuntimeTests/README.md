@@ -63,21 +63,13 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
-## Oritech rendering research
-
-The opt-in [Oritech spike](../spikes/oritech/README.md) stages pinned fixtures and
-compares native/source Gecko rendering, per-leg masks, deferred poses and reload
-against packaged Leggings, with optional current Boots. It uses this harness's
-dedicated server and early-hidden/muted client contract. It is not production
-compatibility; normal runtime tasks do not compile or register the spike.
-
-### Production source capture and pair dispatch (blocks A/B)
+## Oritech production compatibility
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyOritechCapture --offline --console=plain
 ```
 
-This maintained profile does not enable/compile the spike. It stages pinned
+This maintained profile replaces the retired research spike. It stages pinned
 Oritech/Athena/GeckoLib through the shared resolver, then runs the dedicated
 workbench control and a hidden/muted client. Add `-PleggingsBoots=true` for current
 Boots coexistence; omit `--offline` for initial downloads. No IDE configurations
@@ -100,11 +92,27 @@ prepared: no partial output may reach the destination before full-owner fallback
 The panel compares native Exo, both orientations and two Exo through the real
 production renderer, with mixed Boots equipped when coexistence is enabled.
 
+Consolidated controls compare native armor-layer output with actual moving/
+crouched players, small posed armor stands and adult/baby zombies, retaining
+queued geometry across rig changes. Native decorated controls preserve Exo's
+single custom-geometry pass (no additional equipped trim/glint/outline pass);
+the ordinary half retains trim, live-root glint and its outline field. Actual
+reload must replace the baked native model as well as recover refused captures.
+GUI/hand item geometry and the native source description are checked too.
+
+The dedicated server checks equipped armor and movement-speed values, unequip,
+servo selection, unbreakability, source immutability and actual fall damage with
+native/mixed Boots positives. Vanilla players have no `flying_speed` attribute:
+the native +20% declaration is preserved/averaged to +10% for one source, but it
+is not a player creative/Elytra flight-speed feature. Leggings must not acquire
+helmet night vision or Boots fall protection by themselves.
+
 Evidence: `NeoForge/build/reports/<baseline>/oritechCapture[-boots]/oritech-capture.txt`
-and `oritech-pairs.png`, with bounded logs under
-`build/verification/<baseline>/oritechCapture[-boots]/`. Consolidated wearer,
-material/gameplay controls and owner acceptance remain in block C; these gates
-alone are not final compatibility acceptance.
+plus `oritech-gameplay.txt` and `oritech-pairs.png`, with bounded logs under
+`build/verification/<baseline>/oritechCapture[-boots]/`. Add
+`'-Pneoforge_version=26.1.2.99'` for the supported floor; restore `.114` after it.
+Run profiles sequentially. Owner acceptance is recorded separately from these
+automatic gates; this is bounded Oritech support, not a generic GeckoLib adapter.
 
 ## Neo Vitae recognition and direct root operations
 
