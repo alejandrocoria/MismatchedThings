@@ -13,6 +13,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.aetherSpike")) {
+            games.alejandrocoria.mismatchedleggings.spike.aether.AetherSpike.register(bus);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.viewerBootsOnly")) {
             var mods = ModList.get();
             BootsOnlyViewerChecks.environment(mods.isLoaded("mismatchedboots"), mods.isLoaded("mismatchedleggings"),

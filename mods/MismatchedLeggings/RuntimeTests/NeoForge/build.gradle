@@ -45,6 +45,7 @@ apply from: '../viewer-fixtures.gradle'
 apply from: '../advanced-netherite-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
+apply from: rootProject.file('spikes/leggings-aether/spike.gradle')
 
 // Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.
 tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton' }

@@ -1,0 +1,112 @@
+import java.util.concurrent.TimeUnit
+
+// Temporary, test-only feasibility fixture. Production outputs never include these sources.
+sourceSets.main.java.srcDir rootProject.file('spikes/leggings-aether/src')
+sourceSets.main.resources.srcDir rootProject.file('spikes/leggings-aether/resources')
+def resolver = project(':MismatchedThings').testModArtifacts
+def nativeJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar') }
+dependencies.add('compileOnly', files(nativeJar))
+
+def product = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+def mode = providers.gradleProperty('leggingsAetherMode').getOrElse('candidate')
+if (!(mode in ['baseline', 'candidate'])) { throw new GradleException("Unknown Aether spike mode: ${mode}") }
+def coexist = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
+def variant = "aether-spike-${mode}" + (coexist ? '-boots' : '')
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${variant}").get().asFile
+def runRoot = layout.buildDirectory.dir("run/${neoforge_version}/${variant}").get().asFile
+
+['Server', 'Client'].each { phase ->
+    def run = new File(runRoot, phase.toLowerCase())
+    tasks.register("prepareAetherSpike${phase}") {
+        dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes'), boots.tasks.named('assemble')
+        doLast {
+            def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile, nativeJar.get()]
+            if (coexist) { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+            def mods = new File(run, 'mods')
+            mods.mkdirs()
+            if (mods.listFiles().any { candidate -> !artifacts.any { it.name == candidate.name } }) {
+                throw new GradleException("Unexpected artifact in disposable ${mods}")
+            }
+            copy { from artifacts; into mods }
+            reports.mkdirs()
+            ["${phase.toLowerCase()}.ok", "${phase.toLowerCase()}.failure.txt"].each { new File(reports, it).delete() }
+            new File(run, 'config').mkdirs()
+            new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (phase == 'Server') {
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-name=skeleton
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+            } else {
+                def world = new File(runRoot, 'server/skeleton')
+                if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run the spike server first') }
+                copy { from world; into new File(run, 'saves/skeleton') }
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+            }
+        }
+    }
+    neoForge.runs.create("aetherSpike${phase}") {
+        if (phase == 'Server') { server(); programArgument('--nogui') }
+        else { client(); programArgument('--quickPlaySingleplayer'); programArgument('skeleton') }
+        disableIdeRun()
+        gameDirectory = run
+        systemProperty('leggings.test.aetherSpike', 'true')
+        systemProperty('leggings.test.aetherMode', mode)
+        systemProperty('leggings.test.boots', coexist.toString())
+        systemProperty('leggings.test.report', reports.absolutePath)
+        systemProperty('leggings.test.aetherNativeJar', nativeJar.get().absolutePath)
+        systemProperty('leggings.test.aetherBootsJar', boots.tasks.named('jar').get().archiveFile.get().asFile.absolutePath)
+        jvmArgument('-Xmx1G')
+    }
+    tasks.named("runAetherSpike${phase}") { dependsOn "prepareAetherSpike${phase}" }
+}
+
+tasks.register('verifyAetherSpike') {
+    group = 'verification'
+    description = 'Runs the temporary native Aether leggings baseline/candidate on an isolated server and hidden client.'
+    doLast {
+        def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${variant}").get().asFile
+        logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        def phases = providers.gradleProperty('leggingsAetherServerOnly').map { it.toBoolean() }.getOrElse(false) ? ['server'] : ['server', 'client']
+        phases.each { phase ->
+            def log = new File(logs, "${phase}.log")
+            def arguments = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
+                             '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runAetherSpike${phase.capitalize()}",
+                             "-Pneoforge_version=${neoforge_version}", "-PleggingsAetherMode=${mode}", "-PleggingsBoots=${coexist}"]
+            if (gradle.startParameter.offline) { arguments.add('--offline') }
+            logger.lifecycle("Aether spike ${neoforge_version}/${variant}/${phase}")
+            def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                    .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+            try {
+                if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
+                        || !new File(reports, "${phase}.ok").isFile() || new File(reports, "${phase}.failure.txt").exists()) {
+                    throw new GradleException("Aether spike failed: ${log}")
+                }
+                def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
+                def nativeToast = errors.findAll { it.contains('NeoForgeDevDistCleaner/DISTXFORM')
+                        && it.endsWith('Attempted to load class net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
+                if (nativeToast.size() != (phase == 'server' ? 2 : 0) || !(errors - nativeToast).isEmpty()) {
+                    throw new GradleException("Unexpected Aether diagnostics (native Toast errors remain visible): ${log}")
+                }
+                if (log.text.readLines().any { it.contains('Aether II ') && (it.contains('disabled:') || it.contains('unavailable:')) }) {
+                    throw new GradleException("Unexpected Aether adapter refusal: ${log}")
+                }
+            } finally {
+                if (process.isAlive()) {
+                    process.toHandle().descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                }
+            }
+        }
+        new File(logs, phases.size() == 2 ? 'matrix.ok' : 'server-only.ok').text = "native ${mode}; phases=${phases}\n"
+    }
+}
