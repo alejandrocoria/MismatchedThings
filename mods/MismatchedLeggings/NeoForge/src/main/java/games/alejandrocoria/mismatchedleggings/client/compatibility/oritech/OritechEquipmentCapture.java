@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Optional render-thread-only helper. Block A deliberately does not wire product dispatch. */
+/** Optional, request-owned native Exo captures for the ordinary pair-preflight renderer. */
 public final class OritechEquipmentCapture {
     private static final Identifier ITEM = Identifier.parse("oritech:exo_leggings");
     private static final String RENDERER = "rearth.oritech.client.renderers.ExosuitArmorRenderer";

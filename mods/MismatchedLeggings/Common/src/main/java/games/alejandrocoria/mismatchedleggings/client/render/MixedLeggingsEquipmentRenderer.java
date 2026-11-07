@@ -33,7 +33,7 @@ public final class MixedLeggingsEquipmentRenderer {
             right.flush(destination);
             return;
         }
-        // Reuse the already resolved owner submissions: native extensions/material hooks run once.
+        // Reuse the resolved owner capture without resolving its native provider again.
         if (left != null && left.prepareFull()) {
             left.flush(destination);
             return;
@@ -47,7 +47,7 @@ public final class MixedLeggingsEquipmentRenderer {
                 neutral, pose, destination, light, outline);
     }
 
-    private static <S> BufferedEquipment capture(EquipmentLayerRenderer renderer, Model<? super S> model, S state,
+    private static <S> EquipmentCapture capture(EquipmentLayerRenderer renderer, Model<? super S> model, S state,
                                                 EquipmentClientInfo.LayerType layer, ItemStack source, boolean foil,
                                                 PoseStack pose, int light, int outline) {
         var equippable = source.get(DataComponents.EQUIPPABLE);

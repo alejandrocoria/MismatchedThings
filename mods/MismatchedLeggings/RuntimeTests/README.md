@@ -71,7 +71,7 @@ against packaged Leggings, with optional current Boots. It uses this harness's
 dedicated server and early-hidden/muted client contract. It is not production
 compatibility; normal runtime tasks do not compile or register the spike.
 
-### Production source capture (block A)
+### Production source capture and pair dispatch (blocks A/B)
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyOritechCapture --offline --console=plain
@@ -80,8 +80,8 @@ compatibility; normal runtime tasks do not compile or register the spike.
 This maintained profile does not enable/compile the spike. It stages pinned
 Oritech/Athena/GeckoLib through the shared resolver, then runs the dedicated
 workbench control and a hidden/muted client. Add `-PleggingsBoots=true` for current
-Boots coexistence; omit `--offline` for initial downloads. No screenshots or IDE
-configurations are created.
+Boots coexistence; omit `--offline` for initial downloads. No IDE configurations
+are created; one representative equipped panel is captured by the hidden client.
 
 The native original armor renderer is the independent control for production
 full/masked source captures. Assertions cover geometry/UV/normals/material/light,
@@ -92,11 +92,19 @@ must recover the bridge and reject old captures. The client requires one bounded
 compatibility warning despite repeating the resource-failure check. The exact
 known Oritech `fluxite` data-map error stays visible; other ERRORs fail verification.
 
+Production pair checks cover Exo on either side, two Exo and ordinary controls,
+standing and posed. They verify native leg selection, the ordinary leg/half-waist,
+complete Exo owner versus neutral fallback, missing request context and failed
+resource epochs. A missing right asset rejects the pair after the left split has
+prepared: no partial output may reach the destination before full-owner fallback.
+The panel compares native Exo, both orientations and two Exo through the real
+production renderer, with mixed Boots equipped when coexistence is enabled.
+
 Evidence: `NeoForge/build/reports/<baseline>/oritechCapture[-boots]/oritech-capture.txt`
-and bounded logs under `build/verification/<baseline>/oritechCapture[-boots]/`.
-A verifies the actual mixed renderer still uses its previous fallback: source
-capture is implemented, production pair dispatch is not enabled until block B.
-Do not describe this as final equipped-rendering or owner acceptance.
+and `oritech-pairs.png`, with bounded logs under
+`build/verification/<baseline>/oritechCapture[-boots]/`. Consolidated wearer,
+material/gameplay controls and owner acceptance remain in block C; these gates
+alone are not final compatibility acceptance.
 
 ## Neo Vitae recognition and direct root operations
 
