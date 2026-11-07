@@ -1,0 +1,15 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedleggings.mixin.compatibility.oritech",
+    "plugin": "games.alejandrocoria.mismatchedleggings.compatibility.oritech.OritechMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "ArmorModelAccessor",
+        "ExoExtractionMixin",
+        "ExoRenderStateMixin",
+        "LevelRenderStateAccessor",
+        "LivingRendererAccessor"
+    ],
+    "injectors": { "defaultRequire": 1 }
+}

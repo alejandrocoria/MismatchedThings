@@ -13,7 +13,10 @@ public final class SkeletonClientNeoForge {
         if (ForbiddenBootsChecks.enabled()) {
             SkeletonChecks.require(ForbiddenBootsStorage.adoptions.get() == 0, "Native modifier adoption ran before a client world existed");
         }
-        if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
+        if (Boolean.getBoolean("leggings.test.oritechCapture")) {
+            OritechCaptureChecks.register();
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> OritechCaptureChecks.tick(Minecraft.getInstance()));
+        } else if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> ForbiddenArcanusClientChecks.tick(Minecraft.getInstance()));
         } else if (Boolean.getBoolean("leggings.test.aquaculture")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> AquacultureClientChecks.tick(Minecraft.getInstance()));

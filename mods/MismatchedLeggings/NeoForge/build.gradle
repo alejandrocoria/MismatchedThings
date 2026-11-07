@@ -6,7 +6,13 @@ plugins {
 
 base.archivesName = "${mod_name}-${minecraft_version}-neoforge"
 
+evaluationDependsOn(':MismatchedThings')
+def optionalGeckoApi = files(providers.provider {
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'geckolib-neoforge-26.1.2-5.5.2.jar')
+})
+
 dependencies {
+    compileOnly optionalGeckoApi
     // Optional viewer APIs carry Fabric environment annotations even on their common surface.
     compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"

@@ -3,12 +3,13 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae']) }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture']) }
 if (project.name == 'NeoForge' && providers.gradleProperty('leggingsOritechSpike').map { it.toBoolean() }.getOrElse(false)) {
     profiles.add('OritechSpike')
 }
 profiles.each { profile ->
     def oritechSpike = profile == 'OritechSpike'
+    def oritechCapture = profile == 'OritechCapture'
     def neoVitae = profile == 'NeoVitae'
     def neoVitaeRestart = neoVitae && providers.gradleProperty('leggingsNeoVitaeRestart').map { it.toBoolean() }.getOrElse(false)
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
@@ -90,11 +91,12 @@ profiles.each { profile ->
                 if (aquaculture) {
                     artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
                 }
-                if (oritechSpike) {
+                if (oritechSpike || oritechCapture) {
                     def resolver = project(':MismatchedThings').testModArtifacts
                     ['oritech-2.0.0-exp6.jar', 'athena-4.7.3.jar',
                      'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name -> artifacts.add(resolver.resolve('NeoForge', name)) }
                     if (phase == 'client') {
+                        if (oritechCapture) { new File(reports, 'oritech-capture.txt').delete() }
                         ['oritech-spike.txt', 'oritech-before.png', 'oritech-after.png', 'oritech-reload.png'].each {
                             new File(reports, it).delete()
                         }
@@ -286,6 +288,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
                 systemProperty('leggings.test.oritechSpike', oritechSpike.toString())
+                systemProperty('leggings.test.oritechCapture', oritechCapture.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
@@ -336,6 +339,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
                 : neoVitae ? 'Checks native Sentient tags, infusion composition, paid workstations and separate-process world reopen.'
+                : oritechCapture ? 'Checks guarded production Exo source capture, independent native state and deferred pose isolation without pair dispatch.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -383,16 +387,19 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
-                if (allTheModium || aquaculture || oritechSpike) {
+                if (allTheModium || aquaculture || oritechSpike || oritechCapture) {
                     def text = log.text
                     def refusals = text.readLines().count { it.contains('AllTheModium mixed leggings tick disabled:') }
                     def errors = text.readLines().findAll { it.contains('/ERROR]') }
-                    if (oritechSpike) {
+                    if (oritechSpike || oritechCapture) {
                         // Pinned upstream resource defect, already recorded by the Boots audit; keep it visible.
                         errors = errors.findAll { !it.endsWith("[ne.ne.ne.re.DataMapLoader/]: Object with ID oritech:fluxite specified in data map for registry minecraft:block doesn't exist") }
                     }
                     if (refusals != (brokenAllTheModium ? 1 : 0) || !errors.isEmpty()) {
                         throw new GradleException("Unexpected ${profile} diagnostics: ${log}")
+                    }
+                    if (oritechCapture && text.readLines().count { it.contains('Cannot capture Oritech Exo leggings;') } != (phase == 'client' ? 1 : 0)) {
+                        throw new GradleException("Unexpected Oritech controlled-refusal count: ${log}")
                     }
                     if (aquaculture) {
                         def failures = text.readLines().count { it.contains('Aquaculture leggings source tooltips disabled:') }
@@ -463,6 +470,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             if (oritechSpike && ['oritech-spike.txt', 'oritech-before.png', 'oritech-after.png', 'oritech-reload.png'].any {
                 !new File(reports, it).isFile() || new File(reports, it).length() == 0
             }) { throw new GradleException('Oritech spike evidence missing') }
+            if (oritechCapture && !new File(reports, 'oritech-capture.txt').isFile()) {
+                throw new GradleException('Oritech production-capture evidence missing')
+            }
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'

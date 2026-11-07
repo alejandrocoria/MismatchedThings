@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Buffers the native equipment path's model submissions, not arbitrary custom renderers. */
-public final class BufferedEquipment extends SubmitNodeStorage {
+public final class BufferedEquipment extends SubmitNodeStorage implements EquipmentCapture {
     private final Map<Model<?>, Model<?>> views = new IdentityHashMap<>();
     private final List<Node<?>> nodes = new ArrayList<>();
     private final List<SubmitNodeCollection> collections = new ArrayList<>();
