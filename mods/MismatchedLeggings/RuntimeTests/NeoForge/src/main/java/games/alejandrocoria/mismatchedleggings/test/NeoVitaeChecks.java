@@ -33,7 +33,7 @@ import java.util.List;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Native recognition and direct root operations only; infused-input composition is a separate contract. */
+/** Native recognition/direct-root regression with separate composition and saved-world lifecycle evidence. */
 public final class NeoVitaeChecks {
     private static final TagKey<Item> SET = tag("sentient_upgrade_set/sentient");
     private static final TagKey<Item> CHANGE = tag("sentient_upgrade_set");
@@ -50,6 +50,11 @@ public final class NeoVitaeChecks {
         finished = true;
         try {
             require(ModList.get().isLoaded("neovitae"), "Missing pinned Neo Vitae fixture");
+            if (Boolean.getBoolean("leggings.test.neoVitaeRestart")) {
+                NeoVitaeLifecycleChecks.restart(server);
+                SkeletonChecks.passed("server");
+                return;
+            }
             var api = new NativeApi();
             var nativeLeggings = item("sentient_leggings");
             var pair = MixedLeggingsFactory.createPair(nativeLeggings, new ItemStack(Items.IRON_LEGGINGS));
@@ -70,12 +75,13 @@ public final class NeoVitaeChecks {
             var invalid = new ItemStack(BuiltInRegistries.ITEM.getValue(LeggingsContent.MIXED_LEGGINGS_ID));
             require(!invalid.is(SET) && !invalid.is(CHANGE) && !invalid.is(INFUSION), "Bare invalid root gained source tags");
             NeoVitaeCompositionChecks.verify();
+            NeoVitaeLifecycleChecks.save(server);
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "neovitae-server.txt"),
                     "Native full-set and equipment-change gates: both orientations, inventory/removal/near-broken-chest controls; Boots="
                             + ModList.get().isLoaded("mismatchedboots") + "\n"
                             + "Paid native infusion/Blood Mending, generic non-Sentient roots and native leggings control; "
                             + "root-only simulated/committed fill, incompatible type refusal, drain and empty retyping; immutable history\n"
-                            + "Not covered: infused-input composition, equipped EV repair, client presentation or saved-world reopen\n");
+                            + "Composition/lifecycle/reopen evidence is separate; this marker excludes equipped EV repair and client presentation\n");
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
@@ -164,7 +170,7 @@ public final class NeoVitaeChecks {
         return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("neovitae", path));
     }
 
-    private static ItemStack item(String path) {
+    static ItemStack item(String path) {
         var item = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("neovitae", path));
         require(item != Items.AIR, "Missing native item: " + path);
         return new ItemStack(item);
@@ -177,7 +183,7 @@ public final class NeoVitaeChecks {
     }
 
     /** Same pinned reflection boundary as Boots' lifecycle fixture; matching, progress and payment stay native. */
-    private static final class NativeApi {
+    static final class NativeApi {
         final DataComponentType<Double> capacity = component("spiritus_max");
         final DataComponentType<Double> amount = component("spiritus_amount");
         final DataComponentType<Object> type = component("spiritus_type");
@@ -207,6 +213,10 @@ public final class NeoVitaeChecks {
 
         double fill(ItemStack root, Object aspect, double quantity, boolean execute) throws ReflectiveOperationException {
             return (double) fill.invoke(null, root, aspect, quantity, execute);
+        }
+
+        double drain(ItemStack root, Object aspect, double quantity, boolean execute) throws ReflectiveOperationException {
+            return (double) drain.invoke(null, root, aspect, quantity, execute);
         }
 
         ItemStack forge(MinecraftServer server, List<ItemStack> ingredients, double cost) throws Exception {

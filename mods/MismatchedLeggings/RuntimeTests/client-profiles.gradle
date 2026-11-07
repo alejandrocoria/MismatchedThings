@@ -6,6 +6,7 @@ if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'C
 if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae']) }
 profiles.each { profile ->
     def neoVitae = profile == 'NeoVitae'
+    def neoVitaeRestart = neoVitae && providers.gradleProperty('leggingsNeoVitaeRestart').map { it.toBoolean() }.getOrElse(false)
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
     def forbiddenBootsOnly = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenBootsOnly')
             .map { it.toBoolean() }.getOrElse(false)
@@ -126,6 +127,14 @@ profiles.each { profile ->
                 reports.mkdirs()
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
+                if (neoVitaeRestart) {
+                    new File(reports, 'neovitae-restart-server.txt').delete()
+                    if (!new File(run, 'skeleton/level.dat').isFile() || !new File(reports, 'neovitae-saved.json').isFile()) {
+                        throw new GradleException('Run the Neo Vitae server seed before reopening its saved world')
+                    }
+                    // Reuse the same staged world/configuration; do not recreate the seed during the second JVM.
+                    return
+                }
                 if (forbiddenArcanus) { new File(reports, "forbidden-${phase}.txt").delete() }
                 if (forbiddenBoots) { new File(reports, "forbidden-boots-${phase}.txt").delete() }
                 if (forbiddenArcanus && phase == 'server') {
@@ -143,7 +152,8 @@ profiles.each { profile ->
                 }
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
                 if (neoVitae) {
-                    ['neovitae-server.txt', 'neovitae-composition-server.txt'].each { name -> new File(reports, name).delete() }
+                    ['neovitae-server.txt', 'neovitae-composition-server.txt', 'neovitae-lifecycle-server.txt',
+                     'neovitae-saved.json', 'neovitae-restart-server.txt'].each { name -> new File(reports, name).delete() }
                 }
                 if (aquaculture && phase == 'client') {
                     ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
@@ -265,6 +275,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
                 systemProperty('leggings.test.neoVitae', neoVitae.toString())
+                systemProperty('leggings.test.neoVitaeRestart', neoVitaeRestart.toString())
                 systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
                 systemProperty('leggings.test.forbiddenBoots', forbiddenBoots.toString())
                 systemProperty('leggings.test.forbiddenBootsOnly', forbiddenBootsOnly.toString())
@@ -309,7 +320,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
-                : neoVitae ? 'Checks native Sentient tags, direct root operations and coherent infusion creation/preservation.'
+                : neoVitae ? 'Checks native Sentient tags, infusion composition, paid workstations and separate-process world reopen.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -322,10 +333,12 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
             logs.mkdirs()
             new File(logs, 'matrix.ok').delete()
-            phases.each { phase ->
-                def log = new File(logs, "${phase}.log")
+            (neoVitae ? ['server', 'restart'] : phases).each { execution ->
+                def phase = execution == 'restart' ? 'server' : execution
+                def log = new File(logs, "${execution}.log")
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
+                if (execution == 'restart') { arguments.add('-PleggingsNeoVitaeRestart=true') }
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
@@ -339,7 +352,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (previousBoots != null) { arguments.add("-PleggingsBootsJar=${previousBoots.absolutePath}") }
                 if (offline) { arguments.add('--offline') }
                 if (neoForgeLoader) { arguments.add("-Pneoforge_version=${baseline}") }
-                logger.lifecycle("Leggings ${baseline}/${variant}/${phase}")
+                logger.lifecycle("Leggings ${baseline}/${variant}/${execution}")
                 def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
                         .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
                 try {
@@ -372,7 +385,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
                 if (neoVitae && (log.text.contains('/ERROR]')
-                        || ['neovitae-server.txt', 'neovitae-composition-server.txt'].any { !new File(reports, it).isFile() })) {
+                        || ['neovitae-server.txt', 'neovitae-composition-server.txt', 'neovitae-lifecycle-server.txt',
+                            'neovitae-saved.json'].any { !new File(reports, it).isFile() }
+                        || execution == 'restart' && !new File(reports, 'neovitae-restart-server.txt').isFile())) {
                     throw new GradleException("Missing Neo Vitae evidence or unexpected diagnostics: ${log}")
                 }
                 if (forbiddenArcanus && phase == 'client'
@@ -428,7 +443,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
                     : forbiddenServerOnly ? 'packaged Forbidden Arcanus dedicated-server checks passed; no client coverage\n'
-                    : neoVitae ? 'packaged Neo Vitae recognition, direct-root operations and infusion creation/preservation passed; no client coverage\n'
+                    : neoVitae ? 'packaged Neo Vitae recognition, infusion composition, paid workstations and independent world reopen passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }
     }

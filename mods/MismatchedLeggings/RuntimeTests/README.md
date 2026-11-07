@@ -76,8 +76,10 @@ GeckoLib 5.5.2. Prefetch the catalog before the first offline run. Use NeoForge
 `.114`; the pinned Modonomicon requires `.109` or newer. There is no claim of a
 native `.99` run with these dependencies.
 
-`neovitae-server.txt`, `neovitae-composition-server.txt` and `server.ok` are
-required alongside a clean error gate. The recognition/direct-root checks
+`neovitae-server.txt`, `neovitae-composition-server.txt`,
+`neovitae-lifecycle-server.txt`, `neovitae-saved.json`,
+`neovitae-restart-server.txt` and fresh `server.ok` are required alongside clean
+error gates in both JVMs. The recognition/direct-root checks
 exercise both source orientations and native leggings controls:
 
 - Native full-set recognition, equipment-change chest-attribute recalculation,
@@ -100,11 +102,26 @@ root-only state, even when equal to old projections. Synthetic source replacemen
 conflicting generic `omit`/`share` overrides and malformed refusal verify the
 product boundary, not a duplicate of Things' arithmetic unit tests.
 
-These composition checks do not establish paid composed-root workstation
-transactions or separate saved-world reopening; those remain lifecycle coverage.
-Human set effects/training, equipped EV repair, tooltips/bars/rendering and
-persistence are not established by this server gate; the focused checklist is maintained in the
-[Leggings exploration](../local-docs/NEO-VITAE-COMPATIBILITY-EXPLORATION.md#7-tag-only-implementation-and-owner-handoff).
+The lifecycle check adds four real paid Workbench transactions, both extraction
+orders, immutable history and a malformed no-payment control. Native forge ticks
+install infusion/Blood Mending with ingredient/fuel debits. Native transfers
+exercise simulation, draining, depletion/retyping and incompatible-type refusal.
+Real trim/tier smithing, paid anvil, crafting repair and grindstone takes preserve
+the live tuple/marker without importing historical source balances. This includes
+an infusion installed only after mixing, not just inherited fields.
+
+The first server stores nine complete roots in a world barrel and writes an
+independent expectation manifest. The verifier starts a **second JVM** on that
+same world, without reseeding it: PID and full stack/history equality are checked,
+then native drain, paid trim, empty-container retyping and later infusion run
+again. `server.log` and `restart.log` are retained; `matrix.ok` is written only
+after both pass. `leggingsNeoVitaeRestart` is an internal child-launch flag, not a
+replacement reload command or an independent acceptance gate.
+
+Human set effects/training, equipped EV repair and client tooltips/bars/rendering
+remain separate acceptance. The [tag-only checklist](../local-docs/NEO-VITAE-COMPATIBILITY-EXPLORATION.md#7-tag-only-implementation-and-owner-handoff)
+and [composition checklist](../local-docs/NEO-VITAE-INFUSION-COMPOSITION-IMPLEMENTATION.md#focused-owner-checklist)
+distinguish the two scopes.
 No automated client or screenshot is launched by this profile.
 
 ## Forbidden Arcanus Aureal and modifier-state validation
