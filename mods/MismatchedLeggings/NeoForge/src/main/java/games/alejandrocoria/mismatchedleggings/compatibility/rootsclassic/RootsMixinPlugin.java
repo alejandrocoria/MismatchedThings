@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic;
 
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -13,8 +14,9 @@ import org.spongepowered.asm.service.MixinService;
 import java.util.List;
 import java.util.Set;
 
-/** Publishes product-local tick proofs after competing mixins and MixinExtras. */
+/** Final tick proofs and slot-local set edits after competing mixins and MixinExtras. */
 public final class RootsMixinPlugin implements IMixinConfigPlugin, IExtension {
+    private final Set<String> declinedSets = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -40,6 +42,9 @@ public final class RootsMixinPlugin implements IMixinConfigPlugin, IExtension {
             RootsTickShape.publish(node, RootsTickShape.ENTRY_PROOF, false, RootsTickShape.tick(node));
         } else if (node.name.equals(RootsTickShape.UTIL)) {
             RootsTickShape.publish(node, RootsTickShape.REPAIR_PROOF, true, RootsTickShape.repair(node));
+        }
+        if (RootsSetShape.target(node.name) && !RootsSetShape.apply(node) && declinedSets.add(node.name)) {
+            LeggingsContent.LOG.warn("Roots Classic mixed leggings set consumer disabled: {} (local LEGS predicate unavailable)", node.name);
         }
     }
 

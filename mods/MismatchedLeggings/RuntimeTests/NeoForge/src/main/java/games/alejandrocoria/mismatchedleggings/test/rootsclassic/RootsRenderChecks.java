@@ -9,11 +9,13 @@ import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.test.SkeletonChecks;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
+import games.alejandrocoria.mismatchedleggings.test.render.ItemChecks;
 import games.alejandrocoria.mismatchedleggings.test.render.RecordingSubmits;
 import games.alejandrocoria.mismatchedleggings.test.render.RenderFixture;
 import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.ItemExtensionsAccess;
 import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.LivingLayersAccess;
 import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.NativeArmorAccess;
+import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -36,8 +38,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
@@ -172,6 +177,7 @@ public final class RootsRenderChecks {
         decorations(client);
         fallback(client);
         resources(client);
+        presentation(client);
     }
 
     private static void compare(Minecraft client, LivingEntity actor) {
@@ -262,6 +268,43 @@ public final class RootsRenderChecks {
         changed.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.LEGS)
                 .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.parse("leggings_skeleton_test:" + name))).build());
         return changed;
+    }
+
+    private static void presentation(Minecraft client) {
+        String perk = Component.translatable("rootsclassic.attribute.increasedmanaregen").getString();
+        for (var first : samples()) {
+            for (var second : samples()) {
+                if (!roots(first) && !roots(second)) {
+                    continue;
+                }
+                var root = pair(first, second);
+                var before = root.copy();
+                for (var flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
+                    var lines = root.getTooltipLines(Item.TooltipContext.of(client.level), client.player, flag);
+                    int separator = lines.indexOf(TooltipSeparator.INSTANCE);
+                    int last = lines.lastIndexOf(TooltipSeparator.INSTANCE);
+                    require(separator > 0 && last > separator, "Roots tooltip lost its source sections");
+                    for (int side = 0; side < 2; side++) {
+                        var section = side == 0 ? lines.subList(1, separator) : lines.subList(separator + 1, last);
+                        require(section.stream().filter(line -> line.getString().contains(perk)).count()
+                                        == (roots(side == 0 ? first : second) ? 1 : 0),
+                                "Native Roots perk was lost, duplicated or assigned to the other source");
+                    }
+                    require(lines.subList(last + 1, lines.size()).stream().noneMatch(line -> line.getString().contains(perk)),
+                            "Source perk was duplicated in a new root tooltip block");
+                }
+                for (var context : List.of(ItemDisplayContext.GUI, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
+                        ItemDisplayContext.THIRD_PERSON_LEFT_HAND)) {
+                    var nativeTextures = new ArrayList<String>();
+                    nativeTextures.addAll(ItemChecks.faces(ItemChecks.resolve(first, context)).stream().map(ItemChecks.Face::texture).toList());
+                    nativeTextures.addAll(ItemChecks.faces(ItemChecks.resolve(second, context)).stream().map(ItemChecks.Face::texture).toList());
+                    var mixedTextures = ItemChecks.faces(ItemChecks.resolve(root, context)).stream().map(ItemChecks.Face::texture).toList();
+                    require(!nativeTextures.isEmpty() && mixedTextures.containsAll(nativeTextures),
+                            "Roots mixed inventory/hand model lost native source textures");
+                }
+                require(ItemStack.matches(root, before), "Roots tooltip/item rendering mutated source data");
+            }
+        }
     }
 
     private static void resources(Minecraft client) {

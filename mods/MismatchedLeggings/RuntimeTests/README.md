@@ -83,6 +83,9 @@ queued native models, trim/glint, atomic complete-owner/neutral fallback and rea
 resource reload. Resource fixtures verify requested-layer priority and missing
 alternate layers; a temporarily replaced native extension is restored in `finally`
 and must produce one bounded compatibility warning, not an ERROR exemption.
+The same pre/post-reload assertions preserve native perk text in each source
+section without a duplicate root block, and native item textures in GUI/hand
+contexts for all eight pairs.
 
 Reports under `NeoForge/build/reports/<baseline>/rootsRendering[-boots]/` require
 `roots-rendering.txt`, one representative `roots-pairs.png` and normal completion
@@ -110,17 +113,33 @@ final receiver/helper proofs must exist, each repairs its own root and contribut
 Terra independently. The Leggings unit task resolves the same pinned artifact
 and tests local stack-consumer guard mutations and owned proof publication.
 
+The profile also invokes both real native staff consumers, checking Sylvan's
+single set bonus, Crystal Staff's separate base bonus, Terra payment and uses.
+Wildwood healing runs through the native event bus with controlled hit/miss,
+health/food/missing-piece controls and no original LEGS/FEET anchors in the
+coexistence graph. A compatible independent HEAD wrapper remains active.
+Unit tests apply the actual packaged Boots FEET edit before/after Leggings'
+LEGS edit on each pinned consumer. The sibling JAR is a test-only dependency.
+Normal mode additionally checks repaired inventory/slot-packet round trips,
+the native Terra attachment serializer and paid anvil/trim menus, preserving
+native Roots-donor crafting/grindstone vetoes. Actual world re-entry is an owner
+check; serialization tests are not claimed as a separate-process restart.
+
 Use `-PleggingsRootsTickVariant=receiver` or `helper` for late native stack-consumer
 faults: originals still work, mixed calls are refused before mutation, and repeat
 attempts must not repeat diagnostics. `absent` omits Roots entirely and requires
-quiet ordinary mixed ticks. Default is `normal`; other values are rejected.
+quiet ordinary mixed ticks. Default is `normal`; unknown values are rejected.
+The additional `staff`, `crystal` and `healing` variants introduce a late unknown
+LEGS item consumer only in that native method. Exactly one set adaptation must
+be refused, originals and the other consumers must remain functional, and root
+tick support must remain enabled.
 Variants run in separate JVMs/directories. Use
 `'-Pneoforge_version=26.1.2.99'` for the floor and restore `.114` afterwards.
 
 Evidence is `NeoForge/build/reports/<baseline>/rootsTicks[-boots][-variant]/roots-ticks.txt`
 plus `server.ok` and corresponding `build/verification/.../matrix.ok`. Unexpected
 ERRORs or refusal counts fail the wrapper. This profile creates no client window
-or screenshot; set recognition is outside its scope.
+or screenshot. Full owner acceptance remains separate from these automatic gates.
 
 ## Oritech production compatibility
 

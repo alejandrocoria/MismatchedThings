@@ -40,6 +40,11 @@ public final class RootsTickTestControl {
     public static void foreignStack(Object stack) {
     }
 
+    /** Deliberately unknown local predicate consumer, while leaving native controls functional. */
+    public static net.minecraft.world.item.Item foreignItem(net.minecraft.world.item.Item item) {
+        return item;
+    }
+
     public static Integer roll(int bound) {
         Scope scope = ACTIVE.get();
         if (scope == null) {

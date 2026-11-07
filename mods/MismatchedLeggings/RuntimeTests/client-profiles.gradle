@@ -8,7 +8,7 @@ profiles.each { profile ->
     def rootsRendering = profile == 'RootsRendering'
     def rootsTicks = profile == 'RootsTicks'
     def rootsTickVariant = rootsTicks ? providers.gradleProperty('leggingsRootsTickVariant').getOrElse('normal') : ''
-    if (rootsTicks && !(rootsTickVariant in ['normal', 'receiver', 'helper', 'absent'])) {
+    if (rootsTicks && !(rootsTickVariant in ['normal', 'receiver', 'helper', 'absent', 'staff', 'crystal', 'healing'])) {
         throw new GradleException("Unknown Roots tick variant: ${rootsTickVariant}")
     }
     def oritechCapture = profile == 'OritechCapture'
@@ -421,6 +421,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         def warnings = text.readLines().count { it.contains('Roots Classic mixed leggings ') && it.contains(' tick disabled:') }
                         if (warnings != expected || !new File(reports, 'roots-ticks.txt').isFile()) {
                             throw new GradleException("Unexpected Roots tick diagnostics or missing native evidence: ${log}")
+                        }
+                        def setWarnings = text.readLines().count { it.contains('Roots Classic mixed leggings set consumer disabled:') }
+                        if (setWarnings != (rootsTickVariant in ['staff', 'crystal', 'healing'] ? 1 : 0)) {
+                            throw new GradleException("Unexpected Roots local-set refusal count: ${log}")
                         }
                     }
                     if (aquaculture) {

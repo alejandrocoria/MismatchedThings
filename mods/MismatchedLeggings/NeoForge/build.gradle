@@ -16,6 +16,8 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.ow2.asm:asm-tree:9.9.1'
+    // Actual sibling bytecode is a test witness, never a production dependency.
+    testRuntimeOnly files(project(':MismatchedBoots:NeoForge').tasks.named('jar').flatMap { it.archiveFile })
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // Optional viewer APIs carry Fabric environment annotations even on their common surface.
     compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"

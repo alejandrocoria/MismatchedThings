@@ -6,6 +6,7 @@
     "compatibilityLevel": "JAVA_25",
     "mixins": [
         "RootsRepairProofMixin",
+        "RootsSetTargetsMixin",
         "RootsTickEntryMixin"
     ],
     "injectors": { "defaultRequire": 1 }

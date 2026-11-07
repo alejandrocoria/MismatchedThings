@@ -130,8 +130,11 @@ public final class RootsTickChecks {
                 }
             }
 
+            int sets = absent ? 0 : RootsSetChecks.run(player);
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "roots-ticks.txt"),
-                    VARIANT + ": " + cases + " native callback/root damage/Terra cases; immutable sources; no periodic Terra event posted\n");
+                    VARIANT + ": " + cases + (absent ? " ordinary mixed tick cases; quiet Roots absence\n"
+                            : " native callback/root damage/Terra cases; immutable sources; no periodic Terra event posted during tick cases\n")
+                            + "Native staff/set/persistence cases: " + sets + "\n");
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
