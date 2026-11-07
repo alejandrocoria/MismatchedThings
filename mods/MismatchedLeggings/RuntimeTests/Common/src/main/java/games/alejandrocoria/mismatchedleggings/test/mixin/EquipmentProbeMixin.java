@@ -23,7 +23,7 @@ abstract class EquipmentProbeMixin {
         if (Boolean.getBoolean("leggings.test.betterEnd") || Boolean.getBoolean("leggings.test.createFly")
                 || Boolean.getBoolean("leggings.test.allTheModium") || Boolean.getBoolean("leggings.test.aquaculture")
                 || Boolean.getBoolean("leggings.test.forbiddenArcanus")
-                || Boolean.getBoolean("leggings.test.oritechCapture")) {
+                || Boolean.getBoolean("leggings.test.oritechCapture") || Boolean.getBoolean("leggings.test.rootsSpike")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }
     }

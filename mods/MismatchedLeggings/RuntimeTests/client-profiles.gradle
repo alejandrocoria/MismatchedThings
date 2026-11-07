@@ -4,7 +4,11 @@ import java.util.concurrent.TimeUnit
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
 if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture']) }
+if (project.name == 'NeoForge' && providers.gradleProperty('leggingsRootsSpike').map { it.toBoolean() }.getOrElse(false)) {
+    profiles.add('RootsSpike')
+}
 profiles.each { profile ->
+    def rootsSpike = profile == 'RootsSpike'
     def oritechCapture = profile == 'OritechCapture'
     def neoVitae = profile == 'NeoVitae'
     def neoVitaeRestart = neoVitae && providers.gradleProperty('leggingsNeoVitaeRestart').map { it.toBoolean() }.getOrElse(false)
@@ -86,6 +90,12 @@ profiles.each { profile ->
                 }
                 if (aquaculture) {
                     artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
+                }
+                if (rootsSpike) {
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar'))
+                    if (phase == 'client') {
+                        ['roots-spike.txt', 'roots-before.png', 'roots-after.png'].each { new File(reports, it).delete() }
+                    }
                 }
                 if (oritechCapture) {
                     def resolver = project(':MismatchedThings').testModArtifacts
@@ -277,11 +287,12 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if ((equipped || items || presentation) && phase == 'client') {
                     programArgument('--width'); programArgument('1280'); programArgument('--height'); programArgument('720')
                 }
-                if ((allTheModium || aquaculture || oritechCapture) && phase == 'client') {
+                if ((allTheModium || aquaculture || oritechCapture || rootsSpike) && phase == 'client') {
                     programArgument('--width'); programArgument('1600'); programArgument('--height'); programArgument('1000')
                 }
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
+                systemProperty('leggings.test.rootsSpike', rootsSpike.toString())
                 systemProperty('leggings.test.oritechCapture', oritechCapture.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
@@ -334,6 +345,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
                 : neoVitae ? 'Checks native Sentient tags, infusion composition, paid workstations and separate-process world reopen.'
                 : oritechCapture ? 'Checks native Exo capture, production pair dispatch, atomic fallbacks, independent poses and reload.'
+                : rootsSpike ? 'Compares original Roots leggings layers with an opt-in mixed-only layer-routing prototype.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -352,6 +364,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
                 if (execution == 'restart') { arguments.add('-PleggingsNeoVitaeRestart=true') }
+                if (rootsSpike) { arguments.add('-PleggingsRootsSpike=true') }
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
@@ -380,7 +393,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
-                if (allTheModium || aquaculture || oritechCapture) {
+                if (allTheModium || aquaculture || oritechCapture || rootsSpike) {
                     def text = log.text
                     def refusals = text.readLines().count { it.contains('AllTheModium mixed leggings tick disabled:') }
                     def errors = text.readLines().findAll { it.contains('/ERROR]') }
@@ -460,6 +473,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     !proof.isFile() || proof.length() == 0
                 }) { throw new GradleException('Aquaculture tooltip/presentation/session evidence is missing') }
             }
+            if (rootsSpike && ['roots-spike.txt', 'roots-before.png', 'roots-after.png'].any {
+                !new File(reports, it).isFile() || new File(reports, it).length() == 0
+            }) { throw new GradleException('Roots rendering spike evidence missing') }
             if (oritechCapture && ['oritech-capture.txt', 'oritech-gameplay.txt', 'oritech-pairs.png'].any {
                 !new File(reports, it).isFile() || new File(reports, it).length() == 0
             }) {

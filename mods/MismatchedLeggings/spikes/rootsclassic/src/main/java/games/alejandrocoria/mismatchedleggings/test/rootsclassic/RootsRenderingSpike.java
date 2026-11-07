@@ -1,0 +1,378 @@
+package games.alejandrocoria.mismatchedleggings.test.rootsclassic;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache;
+import games.alejandrocoria.mismatchedleggings.client.render.LeggingsView;
+import games.alejandrocoria.mismatchedleggings.client.render.MixedLeggingsEquipmentRenderer;
+import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
+import games.alejandrocoria.mismatchedleggings.test.SkeletonChecks;
+import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
+import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
+import games.alejandrocoria.mismatchedleggings.test.render.RecordingSubmits;
+import games.alejandrocoria.mismatchedleggings.test.render.RenderFixture;
+import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.LivingLayersAccess;
+import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.NativeArmorAccess;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
+import net.minecraft.core.Rotations;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.equipment.EquipmentAssets;
+import net.minecraft.world.item.equipment.Equippable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import org.lwjgl.glfw.GLFW;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
+
+/** Research routing only: native render controls and the packaged product's unmodified split logic. */
+public final class RootsRenderingSpike {
+    public static boolean enabled;
+    private static final int LIGHT = 0x00A000A0;
+    private static final int OUTLINE = 0xFF123456;
+    private static int phase;
+    private static int ticks;
+    private static Scene scene;
+    private static CompletableFuture<Void> reload;
+    private static long generation;
+    private static volatile boolean captured;
+    private static volatile Throwable captureFailure;
+    private static RecordingSubmits.Node<?> queued;
+    private static List<Vertices.Vertex> queuedBefore;
+
+    private RootsRenderingSpike() {
+    }
+
+    public static boolean roots(ItemStack stack) {
+        var id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        return id.equals("rootsclassic:sylvan_tunic") || id.equals("rootsclassic:wildwood_leggings");
+    }
+
+    public static void tick(Minecraft client) {
+        if (phase == 6) {
+            return;
+        }
+        try {
+            require(++ticks < 2400, "Roots spike timed out at phase " + phase);
+            require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
+                    "Automated client became visible");
+            if (captureFailure != null) {
+                throw new AssertionError("Roots panel capture failed", captureFailure);
+            }
+            if (client.level == null || client.player == null || client.getOverlay() != null) {
+                return;
+            }
+            if (phase == 0 && client.screen == null) {
+                SkeletonChecks.verify();
+                require(EquippedClient.renderer != null, "Equipment renderer was not observed");
+                baseline(client);
+                scene = new Scene(client);
+                client.setScreen(scene);
+                phase = 1;
+            } else if (phase == 1 && scene.frames >= 8) {
+                screenshot(client, "roots-before.png");
+                phase = 2;
+            } else if (phase == 2 && captured) {
+                enabled = true;
+                verify(client);
+                scene = new Scene(client);
+                client.setScreen(scene);
+                phase = 3;
+            } else if (phase == 3 && scene.frames >= 8) {
+                screenshot(client, "roots-after.png");
+                phase = 4;
+            } else if (phase == 4 && captured) {
+                generation = LeggingsGeometryCache.statistics().generation();
+                reload = client.reloadResourcePacks();
+                phase = 5;
+            } else if (phase == 5 && reload.isDone()) {
+                reload.join();
+                require(LeggingsGeometryCache.statistics().generation() > generation, "Real reload did not invalidate product geometry");
+                verify(client);
+                Files.writeString(report("roots-spike.txt"),
+                        "original.nativeLegsEmpty=true\noriginal.mixedOwnerNeutralFallback=true\n"
+                                + "prototype.mixedOnlyHumanoidLayer=true\ngeometry.nativeLegSubtreesUvNormalsMaterialsExact=true\n"
+                                + "geometry.noSyntheticWaistOrFeet=true\nqueue.cachedModelsAndDistinctPoses=true\n"
+                                + "decorations.rootFoilNativeAlternateLayerTrimOutline=true\nfallback.fullRootsOwnerOrNeutralAtomic=true\n"
+                                + "wearers.movingCrouchedPlayerPosedSmallStandAdultBabyZombie=true\nreload.sameAssertions=true\n"
+                                + "data.sourcesAndRootsUnchanged=true\n");
+                SkeletonChecks.passed("client");
+                phase = 6;
+                client.stop();
+            }
+        } catch (Throwable failure) {
+            phase = 6;
+            SkeletonChecks.failed("client", failure);
+            client.stop();
+        }
+    }
+
+    private static ItemStack source(String name) {
+        return new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("rootsclassic:" + name)));
+    }
+
+    private static List<ItemStack> samples() {
+        return List.of(source("sylvan_tunic"), source("wildwood_leggings"), new ItemStack(Items.IRON_LEGGINGS));
+    }
+
+    private static ItemStack pair(ItemStack first, ItemStack second) {
+        return MixedLeggingsFactory.createPair(first, second).primary();
+    }
+
+    private static void baseline(Minecraft client) {
+        for (var source : samples().subList(0, 2)) {
+            var actor = stand(client, source, false);
+            var state = state(client, actor);
+            var original = new RecordingSubmits();
+            armor(client, actor).rootsSpike$render(new PoseStack(), original, source, EquipmentSlot.LEGS, LIGHT, state);
+            require(original.nodes.isEmpty(), "Original native LEGS route is no longer empty; revisit the missing-layer hypothesis");
+            require(alternate(client, actor, source, state).nodes.size() == 1, "Explicit alternate-layer native control missing");
+            var left = pair(source, new ItemStack(Items.IRON_LEGGINGS));
+            var right = pair(new ItemStack(Items.GOLDEN_LEGGINGS), source);
+            var neutral = mixed(client, actor, left);
+            var owner = mixed(client, actor, right);
+            require(neutral.nodes.size() == 1 && neutral.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
+                            Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/iron.png")),
+                    "Baseline unsafe Roots owner did not use neutral");
+            require(owner.nodes.size() == 1 && owner.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
+                            Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/gold.png")),
+                    "Baseline ordinary owner fallback changed");
+        }
+    }
+
+    private static void verify(Minecraft client) throws Exception {
+        queued = null;
+        queuedBefore = null;
+        // Enabling the mixed-only hook must not silently fix or rewrite originals.
+        for (var source : samples().subList(0, 2)) {
+            var nativeActor = stand(client, source, false);
+            var original = new RecordingSubmits();
+            armor(client, nativeActor).rootsSpike$render(new PoseStack(), original, source, EquipmentSlot.LEGS, LIGHT, state(client, nativeActor));
+            require(original.nodes.isEmpty(), "Mixed-only routing changed native leggings");
+        }
+        var player = new RemotePlayer(client.level, client.player.getGameProfile());
+        player.walkAnimation.update(0.8F, 1, 1);
+        require(state(client, player).walkAnimationSpeed > 0, "Moving player control has no walk animation");
+        compare(client, player);
+        player.setPose(Pose.CROUCHING);
+        require(state(client, player).isCrouching, "Player fixture is not crouched");
+        compare(client, player);
+        var stand = stand(client, ItemStack.EMPTY, true);
+        compare(client, stand);
+        var small = ArmorStand.class.getDeclaredMethod("setSmall", boolean.class);
+        small.setAccessible(true);
+        small.invoke(stand, true);
+        compare(client, stand);
+        var zombie = new Zombie(EntityType.ZOMBIE, client.level);
+        zombie.walkAnimation.update(0.7F, 1, 1);
+        compare(client, zombie);
+        zombie.setBaby(true);
+        compare(client, zombie);
+        decorations(client);
+        fallback(client);
+    }
+
+    private static void compare(Minecraft client, LivingEntity actor) {
+        for (var first : samples()) {
+            for (var second : samples()) {
+                if (!roots(first) && !roots(second)) {
+                    continue;
+                }
+                var beforeFirst = first.copy();
+                var beforeSecond = second.copy();
+                var root = pair(first, second);
+                var before = root.copy();
+                var output = mixed(client, actor, root);
+                require(output.nodes.size() == 2 && output.nodes.stream().allMatch(node -> node.model() instanceof LeggingsView<?>),
+                        "Pair fell back or lost a source after alternate-layer routing");
+                for (int side = 0; side < 2; side++) {
+                    var input = side == 0 ? first : second;
+                    var node = output.nodes.get(side);
+                    require(node.light() == LIGHT && node.outline() == OUTLINE, "Native source light/outline was lost");
+                    if (!roots(input)) {
+                        continue;
+                    }
+                    var state = state(client, actor);
+                    var control = alternate(client, actor, input, state).nodes.getFirst();
+                    var nativeModel = (HumanoidModel<?>) control.model();
+                    var expected = Vertices.part(control, side == 0 ? nativeModel.leftLeg : nativeModel.rightLeg);
+                    require(!expected.isEmpty() && Vertices.model(node).equals(expected) && node.type() == control.type(),
+                            "Split differs from the independent native selected-leg subtree");
+                    var union = new ArrayList<>(Vertices.part(control, nativeModel.leftLeg));
+                    union.addAll(Vertices.part(control, nativeModel.rightLeg));
+                    require(Vertices.sorted(union).equals(Vertices.sorted(Vertices.model(control))),
+                            "Native LEGS renders unexpected body/waist/feet geometry");
+                    if (queued != null) {
+                        require(queuedBefore.equals(Vertices.model(queued)), "Another cached model request changed earlier queued geometry");
+                    }
+                    queued = node;
+                    queuedBefore = Vertices.model(node);
+                }
+                require(ItemStack.matches(root, before) && ItemStack.matches(first, beforeFirst) && ItemStack.matches(second, beforeSecond),
+                        "Routing/render capture changed root/source data");
+            }
+        }
+    }
+
+    private static void decorations(Minecraft client) {
+        for (var input : samples().subList(0, 2)) {
+            input.set(DataComponents.TRIM, RenderFixture.sources(2)[0].get(DataComponents.TRIM));
+            var partner = new ItemStack(Items.IRON_LEGGINGS);
+            partner.set(DataComponents.TRIM, input.get(DataComponents.TRIM));
+            for (boolean inverse : List.of(false, true)) {
+                var root = inverse ? pair(partner, input) : pair(input, partner);
+                for (boolean foil : List.of(false, true)) {
+                    root.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+                    var actor = stand(client, root, false);
+                    var output = mixed(client, actor, root);
+                    require(output.nodes.size() == (foil ? 6 : 4), "Ordinary native layer trim/glint submissions changed");
+                    var projected = input.copy();
+                    projected.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+                    var control = alternate(client, actor, projected, state(client, actor));
+                    require(control.nodes.size() == (foil ? 3 : 2), "Alternate-layer decoration control changed");
+                    int start = inverse ? control.nodes.size() : 0;
+                    for (int pass = 0; pass < control.nodes.size(); pass++) {
+                        require(output.nodes.get(start + pass).type() == control.nodes.get(pass).type(), "Source trim/glint material changed");
+                    }
+                }
+            }
+        }
+    }
+
+    private static void fallback(Minecraft client) {
+        var source = source("sylvan_tunic");
+        var unsupported = new ItemStack(Items.GOLDEN_LEGGINGS);
+        unsupported.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.LEGS)
+                .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.parse("leggings_skeleton_test:missing"))).build());
+        var actor = stand(client, ItemStack.EMPTY, false);
+        var full = mixed(client, actor, pair(source, unsupported));
+        var control = alternate(client, actor, source, state(client, actor));
+        require(full.nodes.size() == 1 && Vertices.model(full.nodes.getFirst()).equals(Vertices.model(control.nodes.getFirst())),
+                "Rejected right source leaked a half or lost the complete Roots owner");
+        var neutral = mixed(client, actor, pair(unsupported, source));
+        require(neutral.nodes.size() == 1 && neutral.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
+                        Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/iron.png")),
+                "Unsafe first source did not use neutral atomically");
+    }
+
+    private static NativeArmorAccess armor(Minecraft client, LivingEntity actor) {
+        var renderer = (LivingLayersAccess) client.getEntityRenderDispatcher().getRenderer(actor);
+        return renderer.rootsSpike$layers().stream().filter(layer -> layer instanceof HumanoidArmorLayer<?, ?, ?>)
+                .map(layer -> (NativeArmorAccess) layer).findFirst().orElseThrow();
+    }
+
+    private static HumanoidRenderState state(Minecraft client, LivingEntity actor) {
+        return (HumanoidRenderState) client.getEntityRenderDispatcher().getRenderer(actor).createRenderState(actor, 0.375F);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static RecordingSubmits alternate(Minecraft client, LivingEntity actor, ItemStack source, HumanoidRenderState state) {
+        var output = new RecordingSubmits();
+        var asset = source.get(DataComponents.EQUIPPABLE).assetId().orElseThrow();
+        EquippedClient.renderer.renderLayers(EquipmentClientInfo.LayerType.HUMANOID, asset,
+                (HumanoidModel) armor(client, actor).rootsSpike$model(state, EquipmentSlot.LEGS), state,
+                source, new PoseStack(), output, LIGHT, OUTLINE);
+        return output;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static RecordingSubmits mixed(Minecraft client, LivingEntity actor, ItemStack root) {
+        actor.setItemSlot(EquipmentSlot.LEGS, root);
+        var state = state(client, actor);
+        var output = new RecordingSubmits();
+        var requested = state.isBaby && state.entityType != EntityType.ARMOR_STAND
+                ? EquipmentClientInfo.LayerType.HUMANOID_BABY : EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS;
+        MixedLeggingsEquipmentRenderer.render(EquippedClient.renderer,
+                (HumanoidModel) armor(client, actor).rootsSpike$model(state, EquipmentSlot.LEGS), state,
+                requested, root, new PoseStack(), output, LIGHT, OUTLINE);
+        return output;
+    }
+
+    private static ArmorStand stand(Minecraft client, ItemStack legs, boolean posed) {
+        var actor = new ArmorStand(client.level, 0, 80, 0);
+        actor.setItemSlot(EquipmentSlot.LEGS, legs);
+        if (posed) {
+            actor.setLeftLegPose(new Rotations(-35, 10, -10));
+            actor.setRightLegPose(new Rotations(25, -10, 12));
+        }
+        if (Boolean.getBoolean("leggings.test.boots")) {
+            actor.setItemSlot(EquipmentSlot.FEET, BootsCoexistence.pair(source("sylvan_boots"), new ItemStack(Items.IRON_BOOTS)).getFirst());
+        }
+        return actor;
+    }
+
+    private static Path report(String name) {
+        return Path.of(System.getProperty("leggings.test.report"), name);
+    }
+
+    private static void screenshot(Minecraft client, String name) {
+        captured = false;
+        Screenshot.takeScreenshot(client.getMainRenderTarget(), image -> {
+            try (image) {
+                image.writeToFile(report(name));
+                captured = true;
+            } catch (Throwable failure) {
+                captureFailure = failure;
+            }
+        });
+    }
+
+    private static final class Scene extends Screen {
+        private final List<ArmorStand> actors = new ArrayList<>();
+        private final List<String> labels = List.of("Native Sylvan (original)", "Native Wildwood (original)", "Sylvan / iron", "Iron / Sylvan",
+                "Wildwood / iron", "Iron / Wildwood", "Sylvan / Wildwood", "Wildwood / Sylvan");
+        int frames;
+
+        Scene(Minecraft client) {
+            super(Component.literal("Roots leggings: " + (enabled ? "mixed-only routing prototype" : "original routes")));
+            var sylvan = source("sylvan_tunic");
+            var wildwood = source("wildwood_leggings");
+            var iron = new ItemStack(Items.IRON_LEGGINGS);
+            for (var sample : List.of(sylvan, wildwood, pair(sylvan, iron), pair(iron, sylvan), pair(wildwood, iron),
+                    pair(iron, wildwood), pair(sylvan, wildwood), pair(wildwood, sylvan))) {
+                actors.add(stand(client, sample, false));
+            }
+        }
+
+        @Override
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+            graphics.fill(0, 0, width, height, 0xFF20252C);
+            int cellWidth = width / 4;
+            int cellHeight = height / 2;
+            for (int index = 0; index < actors.size(); index++) {
+                int x = index % 4 * cellWidth;
+                int y = index / 4 * cellHeight;
+                graphics.text(font, labels.get(index), x + 5, y + 5, 0xFFFFFFFF, false);
+                graphics.entity(state(Minecraft.getInstance(), actors.get(index)), 65, new Vector3f(0, 1.05F, 0),
+                        new Quaternionf().rotateZ((float) Math.PI), new Quaternionf(),
+                        x + 4, y + 18, x + cellWidth - 4, y + cellHeight - 4);
+            }
+            frames++;
+        }
+    }
+}

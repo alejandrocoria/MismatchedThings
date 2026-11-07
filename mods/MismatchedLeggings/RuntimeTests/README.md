@@ -63,6 +63,14 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Roots Classic rendering research
+
+The opt-in [Roots rendering spike](../spikes/rootsclassic/README.md) compares the
+unchanged native LEGS route with an explicit alternate equipment layer and a
+mixed-only routing prototype. It uses pinned cached fixtures, a dedicated server
+and the hidden/muted client contract below. Normal tasks do not compile/register
+the spike; this is rendering feasibility, not gameplay or owner acceptance.
+
 ## Oritech production compatibility
 
 ```powershell
