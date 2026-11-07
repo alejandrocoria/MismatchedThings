@@ -3,8 +3,9 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus']) }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae']) }
 profiles.each { profile ->
+    def neoVitae = profile == 'NeoVitae'
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
     def forbiddenBootsOnly = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenBootsOnly')
             .map { it.toBoolean() }.getOrElse(false)
@@ -18,7 +19,7 @@ profiles.each { profile ->
     def allTheModium = profile == 'AllTheModium'
     def brokenAllTheModium = allTheModium && providers.gradleProperty('leggingsAllTheModiumBroken')
             .map { it.toBoolean() }.getOrElse(false)
-    def phases = brokenAllTheModium || aquacultureServerOnly || forbiddenServerOnly ? ['server'] : ['server', 'client']
+    def phases = neoVitae || brokenAllTheModium || aquacultureServerOnly || forbiddenServerOnly ? ['server'] : ['server', 'client']
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
@@ -84,6 +85,16 @@ profiles.each { profile ->
                 if (aquaculture) {
                     artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
                 }
+                if (neoVitae) {
+                    if (baseline.toString().tokenize('.').last().toInteger() < 109) {
+                        throw new GradleException('Pinned Modonomicon requires NeoForge 26.1.2.109+; use .114 for Neo Vitae')
+                    }
+                    def resolver = project(':MismatchedThings').testModArtifacts
+                    ['neovitae-26.1.2-1.1.31.jar', 'modonomicon-26.1.2-neoforge-2.16.0.jar',
+                     'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name ->
+                        artifacts.add(resolver.resolve('NeoForge', name))
+                    }
+                }
                 if (forbiddenArcanus) {
                     def resolver = project(':MismatchedThings').testModArtifacts
                     ['forbidden_arcanus-26.1.2-2.7.2.jar', 'valhelsia_core-neoforge-26.1.2-1.1.6.jar'].each { name ->
@@ -131,6 +142,7 @@ profiles.each { profile ->
                     if (phase == 'server') { new File(reports, 'forbidden-boots-storage.nbt').delete() }
                 }
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
+                if (neoVitae) { new File(reports, 'neovitae-server.txt').delete() }
                 if (aquaculture && phase == 'client') {
                     ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
                      'aquaculture-panel.png', 'aquaculture-session.txt'].each { name -> new File(reports, name).delete() }
@@ -159,7 +171,7 @@ profiles.each { profile ->
                         "[durability]\npolicy = 'separate'\n[repair_cost]\npolicy = 'maximum'\n[components]\n"
                 new File(run, 'config/mismatchedleggings-attributes.toml').text =
                         "[attributes]\nfallback = 'maximum'\n[attributes.\"minecraft:armor\"]\npolicy = 'maximum'\n"
-                if (forbiddenArcanus) {
+                if (forbiddenArcanus || neoVitae) {
                     // Exercise shipped policies, not the workbench profile's nondefault snapshots.
                     new File(run, 'config/mismatchedleggings-attributes.toml').text = "[attributes]\nfallback = 'separate'\n"
                     new File(run, 'config/mismatchedleggings-components.toml').text = "[durability]\npolicy = 'average'\n[components]\n"
@@ -250,6 +262,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
+                systemProperty('leggings.test.neoVitae', neoVitae.toString())
                 systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
                 systemProperty('leggings.test.forbiddenBoots', forbiddenBoots.toString())
                 systemProperty('leggings.test.forbiddenBootsOnly', forbiddenBootsOnly.toString())
@@ -294,6 +307,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
+                : neoVitae ? 'Checks native Sentient set tags, root forge payment and Spiritus transfer without testing infused-input composition.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -355,6 +369,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         || !new File(reports, "forbidden-${phase}.txt").isFile())) {
                     throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
+                if (neoVitae && (log.text.contains('/ERROR]') || !new File(reports, 'neovitae-server.txt').isFile())) {
+                    throw new GradleException("Missing Neo Vitae evidence or unexpected diagnostics: ${log}")
+                }
                 if (forbiddenArcanus && phase == 'client'
                         && ['forbidden-modifiers-tooltip.txt', 'forbidden-modifiers-tooltip.png'].any { !new File(reports, it).isFile() }) {
                     throw new GradleException("Missing Forbidden Arcanus modifier presentation evidence: ${log}")
@@ -408,6 +425,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
                     : forbiddenServerOnly ? 'packaged Forbidden Arcanus dedicated-server checks passed; no client coverage\n'
+                    : neoVitae ? 'packaged Neo Vitae dedicated-server recognition and direct-root operations passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }
     }

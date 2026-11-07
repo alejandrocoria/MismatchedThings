@@ -15,7 +15,10 @@ public final class LeggingsBehaviorTags {
     private static final List<TagKey<Item>> ANY_SOURCE = List.of(
             ItemTags.PIGLIN_SAFE_ARMOR,
             ItemTags.FREEZE_IMMUNE_WEARABLES,
-            TagKey.create(Registries.ITEM, Identifier.parse("betterend:armor_set/crystalite")));
+            TagKey.create(Registries.ITEM, Identifier.parse("betterend:armor_set/crystalite")),
+            TagKey.create(Registries.ITEM, Identifier.parse("neovitae:sentient_upgrade_set/sentient")),
+            TagKey.create(Registries.ITEM, Identifier.parse("neovitae:sentient_upgrade_set")),
+            TagKey.create(Registries.ITEM, Identifier.parse("neovitae:spiritus_capable")));
 
     private LeggingsBehaviorTags() {
     }

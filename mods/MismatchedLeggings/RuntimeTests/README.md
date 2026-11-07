@@ -63,6 +63,39 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Neo Vitae recognition and direct root operations
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyNeoVitae --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyNeoVitae -PleggingsBoots=true --offline --console=plain
+```
+
+This bounded **dedicated-server-only** profile uses the current packaged products
+and Things' shared artifact resolver: Neo Vitae 1.1.31, Modonomicon 2.16.0 and
+GeckoLib 5.5.2. Prefetch the catalog before the first offline run. Use NeoForge
+`.114`; the pinned Modonomicon requires `.109` or newer. There is no claim of a
+native `.99` run with these dependencies.
+
+`neovitae-server.txt` and `server.ok` are required alongside a clean error gate.
+The checks exercise both source orientations and native leggings controls:
+
+- Native full-set recognition, equipment-change chest-attribute recalculation,
+  removal/inventory-only and nearly broken chestplate controls. With Boots,
+  neither the feet nor legs slot contains an original Sentient item.
+- The actual Hellfire Forge tick, ingredient consumption and Spiritus fuel
+  payment for direct root infusion and Blood Mending. Ordinary non-Sentient
+  mixed armor is eligible too, without granting Sentient set membership.
+- Root-only simulated/committed Spiritus fill, incompatible positive-type
+  refusal, draining, empty-container retyping and immutable source history.
+- Bare invalid roots do not acquire any of the three projected behavior tags.
+
+This is not infused-input composition acceptance: those components still follow
+the owner until a separate creation/preservation rule is implemented. Human set
+effects/training, equipped EV repair, tooltips/bars/rendering and persistence are
+not established by this server gate; the focused checklist is maintained in the
+[Leggings exploration](../local-docs/NEO-VITAE-COMPATIBILITY-EXPLORATION.md#7-tag-only-implementation-and-owner-handoff).
+No automated client or screenshot is launched by this profile.
+
 ## Forbidden Arcanus Aureal and modifier-state validation
 
 Current Boots modifier/adoption checks reuse this packaged harness with
