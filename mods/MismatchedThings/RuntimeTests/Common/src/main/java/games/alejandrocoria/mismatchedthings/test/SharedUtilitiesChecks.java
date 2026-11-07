@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedthings.test;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
+import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairCostMerger;
@@ -9,6 +10,7 @@ import games.alejandrocoria.mismatchedthings.api.config.DynamicConfigPart;
 import games.alejandrocoria.mismatchedthings.api.config.EnumConfigEntry;
 import games.alejandrocoria.mismatchedthings.api.config.TomlConfigIO;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,24 @@ final class SharedUtilitiesChecks {
         second.set(DataComponents.REPAIR_COST, 5);
         WorkbenchChecks.require(RepairCostMerger.merge(first, second, RepairCostPolicy.AVERAGE)
                 .equals(new RepairCostMerger.Results(4, 4)), "Standalone repair-cost composition changed");
+        optionalInfusion(first, second);
+    }
+
+    private static void optionalInfusion(ItemStack first, ItemStack second) {
+        var service = NeoVitaeInfusionService.INSTANCE;
+        String origin = service.getClass().getProtectionDomain().getCodeSource().getLocation().toString();
+        WorkbenchChecks.require(origin.contains("mismatchedthings") && origin.contains(".jar"),
+                "Optional infusion service was not loaded from the packaged core: " + origin);
+        var output = first.copy();
+        output.set(DataComponents.CUSTOM_NAME, Component.literal("live root, not either source"));
+        var before = output.copy();
+        var firstBefore = first.copy();
+        var secondBefore = second.copy();
+        service.initializeCreation(output, first, second);
+        service.preserveState(second, output);
+        WorkbenchChecks.require(ItemStack.matches(before, output) && ItemStack.matches(firstBefore, first)
+                        && ItemStack.matches(secondBefore, second),
+                "Absent Neo Vitae modified standalone output or sources");
     }
 
     private static final class TestPart implements DynamicConfigPart {

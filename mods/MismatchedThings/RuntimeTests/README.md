@@ -86,6 +86,11 @@ old entry point in the menu fails rather than silently bypassing this control.
 Frozen API-v1 recipes separately retain the default delegation check. Common
 tests also pin the extracted Forbidden Arcanus flag fields and wire order; actual
 native effects, smithing and title rendering remain in the product runtime suite.
+The seven coherent Neo Vitae infusion policy tests also live in Common, under
+`NeoVitaeInfusionRulesTest`. Their local components test conservation, malformed
+rejection and exact field preservation, not native binding. Boots' maintained
+[native infusion gate](../../MismatchedBoots/RuntimeTests/README.md#neo-vitae-infusion-composition--production-creation-gate)
+exercises production delegation, paid workstations and a separate server reopen.
 
 Common JVM tests cover mutable-result isolation, incomplete pairs, duplicate
 owners, defensive single-item admission and concurrent consumer registration.
@@ -96,7 +101,10 @@ composition with helmet inputs and check separator conversion without Boots:
 Fabric preserves the text marker through font splitting and sequence conversion;
 NeoForge posts the native gather event, verifies text order around the converted
 image payload and resolves its registered factory. This also verifies that
-Things carries its own NightConfig dependencies.
+Things carries its own NightConfig dependencies. The same standalone server
+checks resolve the optional infusion service from the packaged core and verify
+that creation/preservation leave output and inputs unchanged without Neo Vitae,
+on both loaders. They do not require an armor product or an optional native mod.
 
 ## Native coexistence and evolution
 

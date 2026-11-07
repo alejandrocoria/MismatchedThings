@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.compatibility.neovitae;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.Holder;
@@ -20,10 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class NeoVitaeInfusionCompatibilityTest {
+class NeoVitaeInfusionRulesTest {
     private enum Type {RAW, RUINA}
 
-    private static final NeoVitaeInfusionCompatibility.Binding API = new NeoVitaeInfusionCompatibility.Binding(
+    private static final NeoVitaeInfusionRules.Binding API = new NeoVitaeInfusionRules.Binding(
             DataComponentType.<Double>builder().persistent(Codec.DOUBLE).build(),
             DataComponentType.<Double>builder().persistent(Codec.DOUBLE).build(),
             DataComponentType.<Object>builder().persistent(Codec.STRING.xmap(Type::valueOf, value -> ((Type) value).name())).build(),
@@ -43,8 +43,8 @@ class NeoVitaeInfusionCompatibilityTest {
                 new Case(100, 60, Type.RAW, 200, 90, Type.RUINA, 200, 60, Type.RAW, 90, Type.RUINA),
                 new Case(1, .125, Type.RUINA, 2, .625, Type.RUINA, 2, .375, Type.RUINA, .375, Type.RUINA));
         for (Case example : cases) {
-            ItemStack first = boots(example.capacityA, example.amountA, example.typeA);
-            ItemStack second = boots(example.capacityB, example.amountB, example.typeB);
+            ItemStack first = source(example.capacityA, example.amountA, example.typeA);
+            ItemStack second = source(example.capacityB, example.amountB, example.typeB);
             ItemStack firstBefore = first.copy();
             ItemStack secondBefore = second.copy();
             for (int preview = 0; preview < 2; preview++) {
@@ -59,7 +59,7 @@ class NeoVitaeInfusionCompatibilityTest {
     @Test
     void markerUnionUsesPresenceIncludingFalseAndClearsStaleProjection() {
         for (int markers = 0; markers < 4; markers++) {
-            ItemStack first = boots(0, 0, Type.RAW);
+            ItemStack first = source(0, 0, Type.RAW);
             ItemStack second = first.copy();
             if ((markers & 1) != 0) {
                 first.set(API.bloodMending(), false);
@@ -78,22 +78,22 @@ class NeoVitaeInfusionCompatibilityTest {
 
     @Test
     void nativeDefaultsAndOrphanChargeDoNotInventStorage() {
-        ItemStack installed = boots(10, 0, Type.RUINA);
+        ItemStack installed = source(10, 0, Type.RUINA);
         installed.remove(API.amount());
         installed.remove(API.type());
-        ItemStack orphan = boots(0, 0, Type.RAW);
+        ItemStack orphan = source(0, 0, Type.RAW);
         orphan.set(API.amount(), 123D);
         orphan.set(API.type(), Type.RUINA);
         assertTuple(create(installed, orphan), 10, 0, Type.RAW);
-        assertTuple(create(orphan, boots(0, 0, Type.RAW)), 0, 0, Type.RAW);
+        assertTuple(create(orphan, source(0, 0, Type.RAW)), 0, 0, Type.RAW);
     }
 
     @Test
     void fractionalAndExtremeBalancesNeverMintOrOverflow() {
         for (double[] amounts : List.of(new double[]{.1, .2}, new double[]{Double.MAX_VALUE, Double.MAX_VALUE},
                                         new double[]{Double.MIN_VALUE, 0}, new double[]{Math.nextDown(1D), 1D})) {
-            ItemStack root = create(boots(Double.MAX_VALUE, amounts[0], Type.RAW),
-                                    boots(Double.MAX_VALUE, amounts[1], Type.RAW));
+            ItemStack root = create(source(Double.MAX_VALUE, amounts[0], Type.RAW),
+                                    source(Double.MAX_VALUE, amounts[1], Type.RAW));
             double balance = root.get(API.amount());
             BigDecimal half = new BigDecimal(amounts[0]).add(new BigDecimal(amounts[1])).divide(BigDecimal.valueOf(2));
             assertTrue(Double.isFinite(balance));
@@ -105,18 +105,18 @@ class NeoVitaeInfusionCompatibilityTest {
 
     @Test
     void malformedParticipatingTuplesRejectBeforeAnyOutputWrite() {
-        ItemStack valid = boots(100, 10, Type.RAW);
+        ItemStack valid = source(100, 10, Type.RAW);
         for (double[] bad : List.of(new double[]{0, 0}, new double[]{-1, 0}, new double[]{Double.NaN, 0},
                                     new double[]{Double.POSITIVE_INFINITY, 0}, new double[]{100, -1}, new double[]{100, 101},
                                     new double[]{100, Double.NaN}, new double[]{100, Double.POSITIVE_INFINITY})) {
-            ItemStack invalid = boots(100, 0, Type.RAW);
+            ItemStack invalid = source(100, 0, Type.RAW);
             invalid.set(API.capacity(), bad[0]);
             invalid.set(API.amount(), bad[1]);
             for (boolean reverse : List.of(false, true)) {
                 ItemStack output = projectedOutput();
                 ItemStack before = output.copy();
                 ItemStack sourceBefore = invalid.copy();
-                assertThrows(IllegalArgumentException.class, () -> NeoVitaeInfusionCompatibility.initializeCreation(
+                assertThrows(IllegalArgumentException.class, () -> NeoVitaeInfusionRules.initializeCreation(
                         output, reverse ? valid : invalid, reverse ? invalid : valid, API));
                 assertTrue(ItemStack.matches(before, output));
                 assertTrue(ItemStack.matches(sourceBefore, invalid));
@@ -125,22 +125,22 @@ class NeoVitaeInfusionCompatibilityTest {
             ItemStack output = projectedOutput();
             ItemStack before = output.copy();
             assertThrows(IllegalArgumentException.class,
-                         () -> NeoVitaeInfusionCompatibility.preserveState(invalid, output, API));
+                         () -> NeoVitaeInfusionRules.preserveState(invalid, output, API));
             assertTrue(ItemStack.matches(before, output));
         }
 
-        ItemStack invalidType = boots(100, 1, Type.RAW);
+        ItemStack invalidType = source(100, 1, Type.RAW);
         invalidType.set(API.type(), "unknown");
         assertThrows(IllegalArgumentException.class, () -> create(invalidType, valid));
         assertThrows(IllegalArgumentException.class,
-                     () -> NeoVitaeInfusionCompatibility.preserveState(invalidType, projectedOutput(), API));
+                     () -> NeoVitaeInfusionRules.preserveState(invalidType, projectedOutput(), API));
     }
 
     @Test
     void preservationRestoresExactTuplePresenceWithoutDefaultingOrReaveraging() {
         // Includes installed-but-defaulted, orphan fields and entirely absent storage.
         for (int fields = 0; fields < 8; fields++) {
-            ItemStack previous = boots(4096, 12.5, Type.RUINA);
+            ItemStack previous = source(4096, 12.5, Type.RUINA);
             if ((fields & 1) == 0) {
                 previous.remove(API.capacity());
             }
@@ -153,13 +153,13 @@ class NeoVitaeInfusionCompatibilityTest {
             assertPreserved(previous);
         }
         for (double balance : List.of(0D, 7.25, 60D)) {
-            assertPreserved(boots(100, balance, Type.RAW));
+            assertPreserved(source(100, balance, Type.RAW));
         }
     }
 
     @Test
     void preservationKeepsLiveMarkerValueAndAbsenceWithoutReimportingSources() {
-        ItemStack previous = boots(100, 12.5, Type.RUINA);
+        ItemStack previous = source(100, 12.5, Type.RUINA);
         for (Boolean marker : new Boolean[]{null, false, true}) {
             if (marker == null) {
                 previous.remove(API.bloodMending());
@@ -176,7 +176,7 @@ class NeoVitaeInfusionCompatibilityTest {
         ItemStack output = projectedOutput();
         ItemStack before = previous.copy();
         output.set(DataComponents.REPAIR_COST, 11);
-        NeoVitaeInfusionCompatibility.preserveState(previous, output, API);
+        NeoVitaeInfusionRules.preserveState(previous, output, API);
         for (var field : List.of(API.capacity(), API.amount(), API.type(), API.bloodMending())) {
             assertEquals(previous.has(field), output.has(field));
             assertEquals(previous.get(field), output.get(field));
@@ -186,7 +186,7 @@ class NeoVitaeInfusionCompatibilityTest {
         assertTrue(ItemStack.matches(before, previous));
     }
 
-    private static ItemStack boots(double capacity, double amount, Type type) {
+    private static ItemStack source(double capacity, double amount, Type type) {
         // Unit bootstrap lacks data-driven item components; real factory wiring has its own runtime gate.
         ItemStack stack = new ItemStack(Holder.direct(Items.IRON_BOOTS, DataComponentMap.builder()
                                                                                         .set(DataComponents.MAX_STACK_SIZE, 1)
@@ -202,7 +202,7 @@ class NeoVitaeInfusionCompatibilityTest {
     }
 
     private static ItemStack projectedOutput() {
-        ItemStack output = boots(5, 5, Type.RUINA);
+        ItemStack output = source(5, 5, Type.RUINA);
         output.set(API.bloodMending(), false);
         output.set(DataComponents.CUSTOM_NAME, Component.literal("unrelated state"));
         return output;
@@ -210,7 +210,7 @@ class NeoVitaeInfusionCompatibilityTest {
 
     private static ItemStack create(ItemStack owner, ItemStack other) {
         ItemStack output = projectedOutput();
-        NeoVitaeInfusionCompatibility.initializeCreation(output, owner, other, API);
+        NeoVitaeInfusionRules.initializeCreation(output, owner, other, API);
         assertEquals(Component.literal("unrelated state"), output.get(DataComponents.CUSTOM_NAME));
         return output;
     }

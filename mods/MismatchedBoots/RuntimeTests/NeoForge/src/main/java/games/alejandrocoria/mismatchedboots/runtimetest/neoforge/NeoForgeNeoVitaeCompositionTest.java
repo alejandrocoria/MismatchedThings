@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedboots.composition.MixedBootsRecomposer;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -52,6 +53,12 @@ public final class NeoForgeNeoVitaeCompositionTest {
 
             boolean absent = Boolean.getBoolean("mismatchedboots.runtimetest.neoVitaeAbsent");
             require(ModList.get().isLoaded("neovitae") != absent, "Wrong optional-mod environment");
+            var provider = NeoVitaeInfusionService.INSTANCE.getClass();
+            require(provider.getName().equals("games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.NeoForgeNeoVitaeInfusionService"),
+                    "Native infusion did not resolve the shared provider");
+            String origin = provider.getProtectionDomain().getCodeSource().getLocation().toString();
+            require(origin.contains("mismatchedthings") && origin.contains(".jar"),
+                    "Infusion provider was not loaded from the packaged core: " + origin);
             if (absent) {
                 verifyAbsent(server.overworld());
             } else {

@@ -43,6 +43,8 @@ gradle.projectsEvaluated {
                     'config/ConfigEntry', 'config/EnumConfigEntry', 'config/DynamicConfigPart', 'config/TomlConfigIO',
                     'composition/EnchantmentMerger', 'composition/RepairableComposer', 'composition/DurabilityMerger',
                     'composition/RepairCostMerger', 'component/DurabilityPolicy', 'component/RepairCostPolicy',
+                    'compatibility/neovitae/NeoVitaeInfusionCompatibility$Binding',
+                    'compatibility/neovitae/NeoVitaeInfusionCompatibility$Infusion',
                     'tooltip/TooltipSeparator', 'client/tooltip/TooltipSeparatorComponent',
                     'client/tooltip/NeoForgeTooltipSeparators', 'mixin/TooltipSeparatorFactoryMixin', 'mixin/TooltipSeparatorWrapMixin'
             ]
@@ -90,12 +92,25 @@ gradle.projectsEvaluated {
             if (!Arrays.equals(bytes, expected)) { throw new GradleException('Nested core differs from its real loader artifact') }
             def nested = readNested(bytes)
             if (!nested.containsKey('games/alejandrocoria/mismatchedthings/api/MismatchedWorkbench.class')
+                    || !nested.containsKey('games/alejandrocoria/mismatchedthings/api/compatibility/neovitae/NeoVitaeInfusionService.class')
+                    || !nested.containsKey('games/alejandrocoria/mismatchedthings/internal/compatibility/neovitae/NeoVitaeInfusionRules.class')
                     || !nested.containsKey('games/alejandrocoria/mismatchedthings/api/client/viewer/WorkbenchExample.class')
                     || !nested.containsKey('games/alejandrocoria/mismatchedthings/internal/client/viewer/jei/WorkbenchJeiPlugin.class')
                     || !nested.containsKey('games/alejandrocoria/mismatchedthings/internal/client/viewer/rei/WorkbenchReiPlugin.class')
                     || !nested.containsKey('assets/mismatchedthings/items/mismatched_workbench.json')
                     || nested.keySet().any { it.contains('mismatchedboots') || it.contains('/spike/') }) {
                 throw new GradleException('Wrong nested core ownership')
+            }
+            def infusionService = 'META-INF/services/games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService'
+            def infusionProvider = 'games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.NeoForgeNeoVitaeInfusionService'
+            if (loader == 'neoforge') {
+                if (!nested.containsKey(infusionProvider.replace('.', '/') + '.class')
+                        || !nested.containsKey(infusionService)
+                        || new String(nested[infusionService], 'UTF-8').trim() != infusionProvider) {
+                    throw new GradleException('Missing shared NeoForge infusion provider')
+                }
+            } else if (nested.containsKey(infusionService) || nested.containsKey(infusionProvider.replace('.', '/') + '.class')) {
+                throw new GradleException('NeoForge infusion provider leaked into Fabric')
             }
             def recipe = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('data/mismatchedboots/recipe/mixed_boots_workbench.json')))
             if (recipe.type != 'mismatchedboots:mixed_boots_workbench') {

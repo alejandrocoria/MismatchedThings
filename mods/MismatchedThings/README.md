@@ -119,6 +119,29 @@ default client preview uses the contextual route; consumers with synchronized
 policies may still override it. The context-free vanilla Recipe entry point stays
 available. Consumers must not inject into the core menu to obtain registries.
 
+### Optional Neo Vitae infusion (since 1.1.0)
+
+`api.compatibility.neovitae.NeoVitaeInfusionService` exposes only new-orientation
+creation from two supplied sources and exact existing-root state preservation.
+It keeps the four native Spiritus/Blood Mending components: maximum capacity,
+conserved compatible-type charge and owner amount/type on positive conflicts.
+Recomposition preserves exact live values/presence rather than averaging again.
+
+Consumers own source extraction, transaction payment and strict final output
+validation. Both operations mutate only a disposable output; sources and the
+previous root are read-only. Discard failed outputs rather than publishing a
+partial tuple. No product data, tag whitelist or recipe is registered by this API.
+
+The NeoForge provider binds optional native component codecs once after component
+registration, without linking Neo Vitae classes or installing an energy capability.
+Absent/unsupported native bindings and Fabric are no-ops; unsupported bindings log
+a warning. With a valid binding, malformed installed containers reject the
+operation. No Neo Vitae dependency or replacement wallet is bundled.
+
+Boots currently delegates to this service. Leggings' composition integration is
+separate; simply selecting this core does not reinterpret existing mixed items
+or remix their stored resources.
+
 ### Optional recipe viewers (since 1.1.0)
 
 Things registers one JEI/REI category, `mismatchedthings:mismatched_workbench`,

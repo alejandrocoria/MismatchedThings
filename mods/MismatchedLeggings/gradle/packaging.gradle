@@ -160,7 +160,9 @@ gradle.projectsEvaluated {
                 }
                 new ZipFile(coreJar.get().asFile).withCloseable { zip ->
                     def entries = zip.entries().findAll { !it.directory }.collect { it.name }
-                    ['api/client/viewer/WorkbenchExample.class',
+                    ['api/compatibility/neovitae/NeoVitaeInfusionService.class',
+                     'internal/compatibility/neovitae/NeoVitaeInfusionRules.class',
+                     'api/client/viewer/WorkbenchExample.class',
                      'api/client/viewer/jei/WorkbenchJeiRecipes.class',
                      'api/client/viewer/rei/WorkbenchReiDisplay.class',
                      'internal/client/viewer/jei/WorkbenchJeiPlugin.class',
@@ -172,6 +174,17 @@ gradle.projectsEvaluated {
                     if (entries.any { it.contains('mismatchedboots') || it.contains('mismatchedleggings')
                             || it.contains('/test/') || it.contains('/spike/') }) {
                         throw new GradleException('Product or fixture content leaked into the shared viewer core')
+                    }
+                    def infusionService = 'META-INF/services/games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService'
+                    def infusionProvider = 'games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.NeoForgeNeoVitaeInfusionService'
+                    if (name == 'NeoForge') {
+                        if (!entries.contains(infusionProvider.replace('.', '/') + '.class')
+                                || !entries.contains(infusionService)
+                                || zip.getInputStream(zip.getEntry(infusionService)).getText('UTF-8').trim() != infusionProvider) {
+                            throw new GradleException('Missing shared NeoForge infusion provider')
+                        }
+                    } else if (entries.contains(infusionService) || entries.contains(infusionProvider.replace('.', '/') + '.class')) {
+                        throw new GradleException('NeoForge infusion provider leaked into Fabric')
                     }
                     if (name == 'Fabric') {
                         def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))

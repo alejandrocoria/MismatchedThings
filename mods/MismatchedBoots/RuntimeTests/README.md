@@ -1135,17 +1135,20 @@ directories and old Fabric test reports are not migrated or deleted.
 ## Neo Vitae infusion composition — production creation gate
 
 ```powershell
-.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' --console=plain
+.\gradlew.bat :MismatchedThings:Common:test --tests '*NeoVitaeInfusionRulesTest' --console=plain
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeComposition --console=plain
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent --console=plain
-.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*NeoVitaeInfusionCompatibilityTest' :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent '-Pneoforge_version=26.1.2.99' --console=plain
+.\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeCompositionAbsent '-Pneoforge_version=26.1.2.99' --console=plain
 ```
 
-Seven local policy tests cover the seven composition cases, both orientations,
+Seven shared Common policy tests cover the seven composition cases, both orientations,
 presence-based Blood Mending, fractional/overflow/underflow conservation,
 malformed tuple rejection and unchanged inputs/unrelated output state, plus
 exact live tuple/marker presence/value preservation and invalid-live rejection. Their
-local component fixture does not claim a real optional binding.
+local component fixture does not claim a real optional binding. The rules and
+optional service now belong to Things; Boots keeps source extraction and its
+creation/recomposition calls. The native gate verifies that service discovery
+resolves the provider from the packaged core, not loose classes or another product.
 
 The native gate uses the **packaged production mod**, real Neo Vitae components
 and the public mixed factory; it checks binding/finalizer wiring, one-sided,
@@ -1194,7 +1197,8 @@ and per-phase archived reports are in plan section 10.
 Live downloads and hash-checks Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
 2.16.0 from the test artifact catalog, copying them into disposable
 fixture directories. Pinned Modonomicon needs NeoForge .109+, so Live is checked
-on .114, **not .99**; Absent and local policy tests run on both .99/.114. Never
+on .114, **not .99**; Absent can run on .99/.114 and pure Common policy tests are
+loader-independent. Never
 bypass upstream metadata to fill that matrix cell. No new mandatory dependency,
 wrapper, JDK, production configuration or indev world change is required.
 
