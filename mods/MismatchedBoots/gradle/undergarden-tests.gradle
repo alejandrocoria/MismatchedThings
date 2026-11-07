@@ -1,7 +1,7 @@
 // Pinned native handlers, real competing transformations and quiet absence in disposable servers.
 def modPath = mismatchedModProject.path
 
-def testMods = mismatchedModProject.ext.testModArtifacts
+def testMods = project(':MismatchedThings').testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }

@@ -13,6 +13,8 @@ allprojects { child ->
     }
 }
 
+evaluationDependsOn(':MismatchedThings')
+
 apply from: 'gradle/packaging.gradle'
 apply from: 'gradle/product-verification.gradle'
 

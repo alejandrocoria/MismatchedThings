@@ -75,17 +75,17 @@ profiles.each { profile ->
                 if (betterEnd) { artifacts.addAll(project.leggingsBetterEndArtifacts()) }
                 if (createFly) { artifacts.addAll(project.leggingsCreateFlyArtifacts()) }
                 if (allTheModium) {
-                    def resolver = project(':MismatchedBoots').testModArtifacts
+                    def resolver = project(':MismatchedThings').testModArtifacts
                     ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar',
                      'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name ->
                         artifacts.add(resolver.resolve('NeoForge', name))
                     }
                 }
                 if (aquaculture) {
-                    artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
                 }
                 if (forbiddenArcanus) {
-                    def resolver = project(':MismatchedBoots').testModArtifacts
+                    def resolver = project(':MismatchedThings').testModArtifacts
                     ['forbidden_arcanus-26.1.2-2.7.2.jar', 'valhelsia_core-neoforge-26.1.2-1.1.6.jar'].each { name ->
                         artifacts.add(resolver.resolve('NeoForge', name))
                     }
@@ -94,7 +94,7 @@ profiles.each { profile ->
                     if (phase == 'client') { artifacts.addAll(project.leggingsViewerArtifacts('jei')) }
                 }
                 if (forbiddenBoots) {
-                    artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar'))
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar'))
                 }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
@@ -102,7 +102,7 @@ profiles.each { profile ->
                     artifacts.add(project(":MismatchedThings:${project.name}").tasks.named('jar').get().archiveFile.get().asFile)
                 }
                 if (iceAndFire) {
-                    def resolver = project(':MismatchedBoots').testModArtifacts
+                    def resolver = project(':MismatchedThings').testModArtifacts
                     ['iceandfire-2.2-beta.3.jar', 'uranus-3.0-alpha.1.jar',
                      'jupiter-2.4.3-26.1.2-universal.jar'].each { name ->
                         artifacts.add(resolver.resolve('NeoForge', name))

@@ -6,7 +6,15 @@ plugins {
 }
 
 // Explicit family verification conveniences; publication belongs to each mod.
-['prepareTestModArtifacts', 'verifyTestModArtifacts', 'verifyPackagedDependencies',
+['prepareTestModArtifacts', 'verifyTestModArtifacts'].each { name ->
+    tasks.register(name) {
+        group = 'verification'
+        description = "Runs MismatchedThings' shared ${name} verification."
+        dependsOn(":MismatchedThings:${name}")
+    }
+}
+
+['verifyPackagedDependencies',
  'verifyPackagedDependencyChecks', 'verifyLoaderServerStartup', 'verifyLoaderNetworking'].each { name ->
     tasks.register(name) {
         group = 'verification'

@@ -26,12 +26,15 @@ in [mod.properties](mods/MismatchedBoots/mod.properties); root `gradle.propertie
 contains the technical baseline, not a default mod identity.
 
 Publication is mod-scoped: `:MismatchedBoots:publishMod`; there is no root
-`publishMod` task. Package checks, pinned test artifacts and startup/network
-orchestration also belong to `:MismatchedBoots`, with outputs in that mod's
-`build/` directory. The root retains six explicit verification conveniences:
+`publishMod` task. Boots' package checks and startup/network orchestration
+belong to `:MismatchedBoots`, with outputs in that mod's `build/` directory.
+The shared [test artifact catalog and resolver](mods/MismatchedThings/RuntimeTests/README.md#third-party-test-artifacts)
+belong to `:MismatchedThings`, with staging in its `build/test-mods/` directory.
+The root retains six explicit verification conveniences:
 `prepareTestModArtifacts`, `verifyTestModArtifacts`, `verifyPackagedDependencies`,
 `verifyPackagedDependencyChecks`, `verifyLoaderServerStartup` and
-`verifyLoaderNetworking`. Each delegates only to its Boots counterpart.
+`verifyLoaderNetworking`. The two catalog tasks delegate to Things; the other
+four delegate to Boots.
 
 See [the runtime test guide](mods/MismatchedBoots/RuntimeTests/README.md) for
 maintained validation commands. Production artifacts remain separate Fabric

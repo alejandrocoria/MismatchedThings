@@ -1,12 +1,11 @@
 // Exact third-party runtime fixtures; isolated from production dependencies/publication.
-def modPath = mismatchedModProject.path
-
-def pins = new groovy.json.JsonSlurper().parse(project("${modPath}:RuntimeTests").file('mod-artifacts.json'))
+def pins = new groovy.json.JsonSlurper().parse(file('RuntimeTests/mod-artifacts.json'))
 def artifacts = [:]
 pins.eachWithIndex { pin, index ->
     def uri = URI.create(pin.url)
     def filename = uri.path.substring(uri.path.lastIndexOf('/') + 1)
     def module = "fixture-${index}"
+    // Preserve existing Gradle cache coordinates; this is not a published mod namespace.
     def group = 'mismatchedboots.test-fixtures'
     repositories.ivy {
         name = "TestMod${index}"

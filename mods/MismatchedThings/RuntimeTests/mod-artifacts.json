@@ -196,5 +196,29 @@
     "filename": "valhelsia_core-neoforge-26.1.2-1.1.6.jar",
     "sha256": "d130c1e93f019c8dac5e3704ad299033f24b030681c1f8afe3127716c03b1446",
     "url": "https://cdn.modrinth.com/data/HsdNFinx/versions/l4EKYaUc/valhelsia_core-neoforge-26.1.2-1.1.6.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "jei-26.1.2-neoforge-29.43.0.106.jar",
+    "sha256": "a66fd1b3a258fc02f24a1068c9a7809ea4118cfae2414ace8f84a6fade8a1903",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/iub7wR3J/jei-26.1.2-neoforge-29.43.0.106.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "RoughlyEnoughItems-26.1.819.jar",
+    "sha256": "3744421b94005d9c14ed2949c4c6d6ae085f4e52ecfe19cd97b47cb1dce80d1a",
+    "url": "https://cdn.modrinth.com/data/nfn13YXA/versions/isd1MxO2/RoughlyEnoughItems-26.1.819.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "architectury-neoforge-20.1.16.jar",
+    "sha256": "d81e13115ad09ae2f119db595ad5bf1c21284333bcc20db618daf4681fac6cc0",
+    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/9PW5lWrQ/architectury-neoforge-20.1.16.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "filename": "cloth-config-26.1.154.jar",
+    "sha256": "d9147c8549fedad478bd18e2ddeef172ef290a081f80bd4d242d54e027ecd9d8",
+    "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/TimoYzse/cloth-config-26.1.154.jar"
   }
 ]

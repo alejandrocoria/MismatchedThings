@@ -1,7 +1,7 @@
 // Packaged production capture; fixtures supply scenarios, peers and an explicit native-loss control only.
 def modPath = mismatchedModProject.path
 
-def testMods = mismatchedModProject.ext.testModArtifacts
+def testMods = project(':MismatchedThings').testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def baseline = fabric ? minecraft_version : neoforge_version

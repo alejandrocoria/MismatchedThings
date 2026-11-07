@@ -1,7 +1,7 @@
 // Targeted production effect/refund gates; fixture code is never packaged in production.
 def modPath = mismatchedModProject.path
 
-def testMods = mismatchedModProject.ext.testModArtifacts
+def testMods = project(':MismatchedThings').testModArtifacts
 def fabric = project.name == 'Fabric'
 def loader = fabric ? 'Fabric' : 'NeoForge'
 def sources = fabric ? sourceSets.networkTest : sourceSets.main

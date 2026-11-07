@@ -3,7 +3,7 @@ def modPath = mismatchedModProject.path
 
 def runBoundedGradleTask = mismatchedModProject.ext.runBoundedGradleTask
 
-def testMods = mismatchedModProject.ext.testModArtifacts
+def testMods = project(':MismatchedThings').testModArtifacts
 
 def fixtureFileOperations = objects.newInstance(FixtureFileOperations).files
 

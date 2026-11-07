@@ -54,7 +54,7 @@ def bootsJar = boots.tasks.named('jar').flatMap { it.archiveFile }
                 // Only these two pinned fixture artifacts are removed between independent JVMs.
                 nativeNames.each { name -> delete new File(mods, name) }
                 if (!selectedStage.startsWith('absent')) {
-                    nativeNames.each { name -> artifacts.add(project(':MismatchedBoots').testModArtifacts.resolve('NeoForge', name)) }
+                    nativeNames.each { name -> artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', name)) }
                 }
                 // Keep JEI staged during absence too; its pinned artifacts have no source state.
                 if (phase == 'client') { artifacts.addAll(project.leggingsViewerArtifacts('jei')) }

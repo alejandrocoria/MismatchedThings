@@ -1,5 +1,3 @@
-import groovy.json.JsonSlurper
-
 repositories {
     maven { url = 'https://maven.fabricmc.net' }
     maven { url = 'https://maven.blamejared.com' }
@@ -14,41 +12,18 @@ dependencies {
     compileOnly 'me.shedaniel.cloth:basic-math:0.6.1'
 }
 
-def entries = [:]
-if (project.name == 'NeoForge') {
-    new JsonSlurper().parse(file('../mod-artifacts.json')).eachWithIndex { pin, index ->
-        def configuration = configurations.create("viewerFixture${index}") {
-            canBeResolved = true
-            canBeConsumed = false
-            transitive = false
-        }
-        repositories.ivy {
-            url = pin.url.substring(0, pin.url.lastIndexOf('/') + 1)
-            patternLayout { artifact '[artifact].[ext]' }
-            metadataSources { artifact() }
-            content { includeModule('mismatchedleggings.viewer-fixtures', "fixture-${index}") }
-        }
-        dependencies.add(configuration.name, "mismatchedleggings.viewer-fixtures:fixture-${index}:1") {
-            artifact { name = pin.filename.substring(0, pin.filename.length() - 4); extension = 'jar'; type = 'jar' }
-        }
-        entries[pin.filename] = [pin: pin, configuration: configuration]
-    }
-}
-
 ext.leggingsViewerArtifacts = { String viewer ->
     if (viewer == 'none') { return [] }
+    def resolver = project(':MismatchedThings').testModArtifacts
+    def names
     if (project.name == 'Fabric') {
-        def resolver = project(':MismatchedBoots').testModArtifacts
-        def names = viewer == 'jei' ? ['jei-26.1.2-fabric-29.43.0.106.jar']
+        names = viewer == 'jei' ? ['jei-26.1.2-fabric-29.43.0.106.jar']
                 : ['RoughlyEnoughItems-26.1.819 (Fabric).jar', 'architectury-fabric-20.1.16.jar', 'cloth-config-26.1.154 (Fabric).jar']
-        return names.collect { resolver.resolve('Fabric', it) }
+    } else {
+        names = viewer == 'jei' ? ['jei-26.1.2-neoforge-29.43.0.106.jar']
+                : ['RoughlyEnoughItems-26.1.819.jar', 'architectury-neoforge-20.1.16.jar', 'cloth-config-26.1.154.jar']
     }
-    return entries.values().findAll { it.pin.viewer == viewer }.collect { entry ->
-        def artifact = entry.configuration.singleFile
-        def hash = java.security.MessageDigest.getInstance('SHA-512').digest(artifact.bytes).encodeHex().toString()
-        if (hash != entry.pin.sha512) { throw new GradleException("Unexpected viewer SHA-512: ${artifact.name}") }
-        artifact
-    }
+    return names.collect { resolver.resolve(project.name, it) }
 }
 
 tasks.register('prepareViewerArtifacts') {

@@ -6,6 +6,34 @@ compatibility matrix uses a frozen copy of the current packaged Boots artifact.
 Indev JARs/configuration/worlds are never dependencies. Test mods and the additive
 test API never enter released core artifacts.
 
+## Third-party test artifacts
+
+The family-wide [catalog](mod-artifacts.json) and [resolver](mod-artifacts.gradle)
+belong to Things' development tooling, not its released JAR. Boots and Leggings
+select their required artifacts in their own test profiles; listing a mod here
+does not certify compatibility or make it a production dependency.
+
+Exact official download URLs and SHA-256 pins are resolved lazily through Gradle's
+artifact cache, then staged in `mods/MismatchedThings/build/test-mods/<loader>/`.
+Both loaders' JEI/REI fixtures use the same mechanism. Existing Maven-pinned
+test configurations retain their coordinates. Maintained tests must not depend
+implicitly on indev JARs, configs or worlds.
+
+Run from the repository root:
+
+```powershell
+.\gradlew.bat :MismatchedThings:prepareTestModArtifacts --console=plain
+.\gradlew.bat :MismatchedThings:verifyTestModArtifacts --offline --console=plain
+```
+
+The first task prefetches all catalog entries; individual suites normally resolve
+only their own selections. The second also checks damaged staging recovery and
+checksum rejection. The root tasks with the same names delegate here. Tests can
+run offline once their required dependencies are cached. Old Boots staging files
+are no longer read; Gradle's existing download cache remains reusable. The
+resolver retains its historical `mismatchedboots.test-fixtures` cache coordinates
+for that purpose; they are not mod IDs or production dependencies.
+
 ## Client window contract
 
 Automated clients must start hidden and muted, including focused runs and new

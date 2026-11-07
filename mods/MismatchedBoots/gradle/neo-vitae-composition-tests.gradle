@@ -1,7 +1,7 @@
 // Disposable state stays in this fixture project's build directory, never the owner's indev client.
 def modPath = mismatchedModProject.path
 
-def testMods = mismatchedModProject.ext.testModArtifacts
+def testMods = project(':MismatchedThings').testModArtifacts
 def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }

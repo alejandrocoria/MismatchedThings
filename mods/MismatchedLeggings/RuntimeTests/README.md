@@ -658,9 +658,9 @@ run and stages the current core without modifying the input JAR. Record provenan
 and the hash with acceptance evidence; a locally rebuilt 1.0.0 is not the published
 release. Published binary paths are supplied explicitly, not inferred from indev.
 
-Fabric shares Boots' existing checksum-pinned download definitions. NeoForge's
-exact URLs and upstream SHA-512 values are in [mod-artifacts.json](mod-artifacts.json),
-resolved by [viewer-fixtures.gradle](viewer-fixtures.gradle). Run
+Both loaders use Things' shared SHA-256-pinned
+[catalog and resolver](../../MismatchedThings/RuntimeTests/README.md#third-party-test-artifacts).
+The local [viewer profiles](viewer-fixtures.gradle) select JEI/REI and their dependencies. Run
 `prepareViewerArtifacts` online once before offline verification. Optional APIs
 are compile-only and are never bundled in the production product. Human appearance
 and discoverability acceptance remain separate; the player workflow is in the

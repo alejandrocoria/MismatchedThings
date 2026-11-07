@@ -9,8 +9,8 @@ Run all commands below from the **repository root**, where the Gradle wrapper
 lives. Boots projects use the `:MismatchedBoots` namespace; the earlier root-level
 project aliases no longer exist. Unless otherwise specified,
 `Common/`, `Fabric/`, `NeoForge/`, `RuntimeTests/` and `gradle/` paths in this guide
-are relative to the mod root, including `build/test-mods/` and
-`build/network-acceptance/`.
+are relative to the mod root, including `build/network-acceptance/`.
+Shared third-party artifacts are staged under Things as described below.
 Explicit file-path `-P` overrides are repository-relative or absolute, as before.
 
 The station now belongs to the bundled `mismatchedthings` core. Fixtures compile
@@ -78,16 +78,17 @@ README summaries.
 
 Maintained tests do not depend on JARs in the indev instances. Third-party mods
 are downloaded on demand from exact Modrinth/CurseForge publications and checked
-against their SHA-256 pins. The formerly local fixtures are registered in
-[mod-artifacts.json](mod-artifacts.json), resolved through Gradle's artifact
-cache and staged in `mods/MismatchedBoots/build/test-mods/<loader>/`. Other
-existing test configurations retain their exact Maven coordinates.
+against their SHA-256 pins. Boots and Leggings use the shared Things
+[catalog and resolver](../../MismatchedThings/RuntimeTests/README.md#third-party-test-artifacts),
+resolved through Gradle's artifact cache and staged in
+`mods/MismatchedThings/build/test-mods/<loader>/`. Other existing test
+configurations retain their exact Maven coordinates.
 
 To prefetch and verify the entire fixture catalog:
 
 ```powershell
-.\gradlew.bat :MismatchedBoots:prepareTestModArtifacts
-.\gradlew.bat :MismatchedBoots:verifyTestModArtifacts --offline
+.\gradlew.bat :MismatchedThings:prepareTestModArtifacts
+.\gradlew.bat :MismatchedThings:verifyTestModArtifacts --offline
 ```
 
 Each suite copies only its required artifacts into its disposable run. It never
@@ -99,7 +100,7 @@ dedicated runtime checks. After all required Gradle/game artifacts are cached,
 tests can run offline. Adding a maintained compatibility test requires a pinned,
 automatically resolved artifact, not an implicit dependency on an indev JAR.
 
-The mod parent owns these services and the canonical `verifyPackagedDependencies`,
+Things owns the shared catalog services. The Boots parent owns `verifyPackagedDependencies`,
 `verifyPackagedDependencyChecks`, `verifyLoaderServerStartup` and
 `verifyLoaderNetworking` tasks, all under `:MismatchedBoots:`. The repository root
 keeps explicit delegators for those four tasks and the two catalog tasks above.

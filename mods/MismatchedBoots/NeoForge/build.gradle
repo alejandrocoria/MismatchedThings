@@ -72,7 +72,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-def testMods = mismatchedModProject.ext.testModArtifacts
+def testMods = project(':MismatchedThings').testModArtifacts
 def guardFixtures = [
         justDireGuardJar: 'justdirethings-1.6.11.jar',
         iceAndFireGuardJar: 'iceandfire-2.2-beta.3.jar',
