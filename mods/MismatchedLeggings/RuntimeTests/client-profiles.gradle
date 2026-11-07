@@ -3,9 +3,14 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture', 'RootsRendering']) }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture', 'RootsRendering', 'RootsTicks']) }
 profiles.each { profile ->
     def rootsRendering = profile == 'RootsRendering'
+    def rootsTicks = profile == 'RootsTicks'
+    def rootsTickVariant = rootsTicks ? providers.gradleProperty('leggingsRootsTickVariant').getOrElse('normal') : ''
+    if (rootsTicks && !(rootsTickVariant in ['normal', 'receiver', 'helper', 'absent'])) {
+        throw new GradleException("Unknown Roots tick variant: ${rootsTickVariant}")
+    }
     def oritechCapture = profile == 'OritechCapture'
     def neoVitae = profile == 'NeoVitae'
     def neoVitaeRestart = neoVitae && providers.gradleProperty('leggingsNeoVitaeRestart').map { it.toBoolean() }.getOrElse(false)
@@ -22,7 +27,7 @@ profiles.each { profile ->
     def allTheModium = profile == 'AllTheModium'
     def brokenAllTheModium = allTheModium && providers.gradleProperty('leggingsAllTheModiumBroken')
             .map { it.toBoolean() }.getOrElse(false)
-    def phases = neoVitae || brokenAllTheModium || aquacultureServerOnly || forbiddenServerOnly ? ['server'] : ['server', 'client']
+    def phases = rootsTicks || neoVitae || brokenAllTheModium || aquacultureServerOnly || forbiddenServerOnly ? ['server'] : ['server', 'client']
     def advancedNetherite = profile == 'AdvancedNetherite'
     def betterNether = profile == 'BetterNether'
     def betterEnd = profile == 'BetterEnd'
@@ -56,6 +61,7 @@ profiles.each { profile ->
     if (aquacultureServerOnly) { variant += '-server-only' }
     if (forbiddenServerOnly) { variant += '-server-only' }
     if (forbiddenBoots) { variant += '-modifiers' }
+    if (rootsTicks && rootsTickVariant != 'normal') { variant += "-${rootsTickVariant}" }
     def directory = layout.buildDirectory.dir("run/${baseline}/${variant}").get().asFile
     def reports = layout.buildDirectory.dir("reports/${baseline}/${variant}").get().asFile
     def product = project(":MismatchedLeggings:${project.name}")
@@ -88,9 +94,9 @@ profiles.each { profile ->
                 if (aquaculture) {
                     artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
                 }
-                if (rootsRendering) {
+                if (rootsTicks && rootsTickVariant != 'absent' || rootsRendering) {
                     artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar'))
-                    if (phase == 'client') {
+                    if (rootsRendering && phase == 'client') {
                         ['roots-rendering.txt', 'roots-pairs.png'].each { new File(reports, it).delete() }
                     }
                 }
@@ -154,6 +160,7 @@ profiles.each { profile ->
                     return
                 }
                 if (forbiddenArcanus) { new File(reports, "forbidden-${phase}.txt").delete() }
+                if (rootsTicks) { new File(reports, 'roots-ticks.txt').delete() }
                 if (forbiddenBoots) { new File(reports, "forbidden-boots-${phase}.txt").delete() }
                 if (forbiddenArcanus && phase == 'server') {
                     new File(reports, 'forbidden-modifiers-server.txt').delete()
@@ -290,6 +297,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
                 systemProperty('leggings.test.rootsRendering', rootsRendering.toString())
+                systemProperty('leggings.test.rootsTicks', rootsTickVariant)
                 systemProperty('leggings.test.oritechCapture', oritechCapture.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
@@ -343,6 +351,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : neoVitae ? 'Checks native Sentient tags, infusion composition, paid workstations and separate-process world reopen.'
                 : oritechCapture ? 'Checks native Exo capture, production pair dispatch, atomic fallbacks, independent poses and reload.'
                 : rootsRendering ? 'Checks production Roots layer selection, native leg geometry, resource priority, fallbacks and reload.'
+                : rootsTicks ? 'Checks native Roots repair/Terra callbacks, real inventory dispatch, guards and independent Boots readiness.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -361,6 +370,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
                 if (execution == 'restart') { arguments.add('-PleggingsNeoVitaeRestart=true') }
+                if (rootsTicks) { arguments.add("-PleggingsRootsTickVariant=${rootsTickVariant}") }
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
@@ -389,7 +399,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
-                if (allTheModium || aquaculture || oritechCapture || rootsRendering) {
+                if (allTheModium || aquaculture || oritechCapture || rootsRendering || rootsTicks) {
                     def text = log.text
                     def refusals = text.readLines().count { it.contains('AllTheModium mixed leggings tick disabled:') }
                     def errors = text.readLines().findAll { it.contains('/ERROR]') }
@@ -405,6 +415,13 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     }
                     if (rootsRendering && text.readLines().count { it.contains('Cannot select Roots Classic leggings alternate layer:') } != (phase == 'client' ? 1 : 0)) {
                         throw new GradleException("Unexpected Roots controlled-refusal count: ${log}")
+                    }
+                    if (rootsTicks) {
+                        def expected = rootsTickVariant == 'helper' ? 2 : rootsTickVariant == 'receiver' ? 1 : 0
+                        def warnings = text.readLines().count { it.contains('Roots Classic mixed leggings ') && it.contains(' tick disabled:') }
+                        if (warnings != expected || !new File(reports, 'roots-ticks.txt').isFile()) {
+                            throw new GradleException("Unexpected Roots tick diagnostics or missing native evidence: ${log}")
+                        }
                     }
                     if (aquaculture) {
                         def failures = text.readLines().count { it.contains('Aquaculture leggings source tooltips disabled:') }

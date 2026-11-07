@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "package": "games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin",
+    "plugin": "games.alejandrocoria.mismatchedleggings.test.rootsclassic.RootsTickTestPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "RootsRepairControlMixin",
+        "RootsTickControlMixin",
+        "RootsTickHelperFaultMixin",
+        "RootsTickReceiverFaultMixin"
+    ],
+    "injectors": { "defaultRequire": 1 }
+}

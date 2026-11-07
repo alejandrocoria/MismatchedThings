@@ -91,6 +91,37 @@ The original native LEGS route is deliberately unchanged and empty in the pinned
 graph; explicit native HUMANOID controls are separate references. This profile
 does not establish repair/Terra, full-set gameplay or owner acceptance.
 
+## Roots Classic native ticks
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test :MismatchedLeggings:RuntimeTests:NeoForge:verifyRootsTicks --offline --console=plain
+```
+
+This dedicated-server-only profile stages packaged Leggings and pinned Roots
+Classic through the shared resolver/cache. It uses scoped native RNG controls,
+not a replacement repair/Terra algorithm. Assertions cover actual root damage and
+the native player attachment, independent repair/Terra rolls, one Sylvan-preferred
+receiver per dispatch, immutable sources, healthy/capped Terra, non-player repair,
+real equipped/held/backpack inventory dispatch, and invalid/suspended negatives.
+No periodic player-regeneration event is posted during controlled callback cases.
+
+Add `-PleggingsBoots=true` for current packaged Boots: both products' distinct
+final receiver/helper proofs must exist, each repairs its own root and contributes
+Terra independently. The Leggings unit task resolves the same pinned artifact
+and tests local stack-consumer guard mutations and owned proof publication.
+
+Use `-PleggingsRootsTickVariant=receiver` or `helper` for late native stack-consumer
+faults: originals still work, mixed calls are refused before mutation, and repeat
+attempts must not repeat diagnostics. `absent` omits Roots entirely and requires
+quiet ordinary mixed ticks. Default is `normal`; other values are rejected.
+Variants run in separate JVMs/directories. Use
+`'-Pneoforge_version=26.1.2.99'` for the floor and restore `.114` afterwards.
+
+Evidence is `NeoForge/build/reports/<baseline>/rootsTicks[-boots][-variant]/roots-ticks.txt`
+plus `server.ok` and corresponding `build/verification/.../matrix.ok`. Unexpected
+ERRORs or refusal counts fail the wrapper. This profile creates no client window
+or screenshot; set recognition is outside its scope.
+
 ## Oritech production compatibility
 
 ```powershell

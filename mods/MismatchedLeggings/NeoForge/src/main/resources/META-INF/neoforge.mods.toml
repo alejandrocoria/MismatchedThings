@@ -21,6 +21,9 @@ config="mismatchedleggings.aquaculture.mixins.json"
 [[mixins]]
 config="mismatchedleggings.oritech.mixins.json"
 
+[[mixins]]
+config="mismatchedleggings.rootsclassic.mixins.json"
+
 [[mods]]
 modId="${mod_id}"
 version="${version}"

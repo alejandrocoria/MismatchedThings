@@ -22,6 +22,9 @@ config="leggings-forbidden-test.mixins.json"
 [[mixins]]
 config="leggings-roots-test.mixins.json"
 
+[[mixins]]
+config="leggings-roots-ticks-test.mixins.json"
+
 [[dependencies.leggings_skeleton_test]]
 modId="mismatchedthings"
 type="required"

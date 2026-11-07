@@ -13,6 +13,10 @@ def optionalGeckoApi = files(providers.provider {
 
 dependencies {
     compileOnly optionalGeckoApi
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.ow2.asm:asm-tree:9.9.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // Optional viewer APIs carry Fabric environment annotations even on their common surface.
     compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
@@ -44,3 +48,12 @@ neoForge {
 idea.module.excludeDirs += file('runs')
 tasks.named('assemble') { dependsOn tasks.named('jarJar') }
 jar { from(rootProject.file('LICENSE')) }
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    def artifacts = project(':MismatchedThings').testModArtifacts
+    def roots = 'RootsClassic-26.1.2-1.6.7.jar'
+    inputs.file(providers.provider { artifacts.resolve('NeoForge', roots) })
+            .withPropertyName('rootsGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
+    systemProperty 'mismatchedleggings.test.rootsGuardJar', artifacts.path('NeoForge', roots).absolutePath
+}
