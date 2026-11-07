@@ -1,0 +1,11 @@
+// Opt-in research only. No source, dependency or mixin enters a production JAR.
+sourceSets.main.java.srcDir '../../spikes/oritech/src/main/java'
+sourceSets.main.resources.srcDir '../../spikes/oritech/src/main/resources'
+dependencies.add('compileOnly', files(providers.provider {
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'geckolib-neoforge-26.1.2-5.5.2.jar')
+}))
+tasks.named('processResources') {
+    doLast {
+        new File(destinationDir, 'META-INF/neoforge.mods.toml').append('\n[[mixins]]\nconfig="leggings-oritech-spike.mixins.json"\n')
+    }
+}

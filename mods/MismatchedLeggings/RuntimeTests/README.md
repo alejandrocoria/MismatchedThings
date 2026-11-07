@@ -63,6 +63,14 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Oritech rendering research
+
+The opt-in [Oritech spike](../spikes/oritech/README.md) stages pinned fixtures and
+compares native/source Gecko rendering, per-leg masks, deferred poses and reload
+against packaged Leggings, with optional current Boots. It uses this harness's
+dedicated server and early-hidden/muted client contract. It is not production
+compatibility; normal runtime tasks do not compile or register the spike.
+
 ## Neo Vitae recognition and direct root operations
 
 ```powershell

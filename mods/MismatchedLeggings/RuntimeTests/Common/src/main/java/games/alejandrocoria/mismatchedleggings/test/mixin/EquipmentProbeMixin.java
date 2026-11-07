@@ -22,7 +22,7 @@ abstract class EquipmentProbeMixin {
     private void leggingsTest$observeNativeRenderer(CallbackInfo callback) {
         if (Boolean.getBoolean("leggings.test.betterEnd") || Boolean.getBoolean("leggings.test.createFly")
                 || Boolean.getBoolean("leggings.test.allTheModium") || Boolean.getBoolean("leggings.test.aquaculture")
-                || Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
+                || Boolean.getBoolean("leggings.test.forbiddenArcanus") || Boolean.getBoolean("leggings.test.oritechSpike")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }
     }

@@ -40,6 +40,9 @@ tasks.named('runSkeletonClient') { dependsOn 'prepareSkeletonClient' }
 
 apply from: '../viewer-fixtures.gradle'
 apply from: '../advanced-netherite-fixtures.gradle'
+if (providers.gradleProperty('leggingsOritechSpike').map { it.toBoolean() }.getOrElse(false)) {
+    apply from: '../../spikes/oritech/spike.gradle'
+}
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 

@@ -4,7 +4,11 @@ import java.util.concurrent.TimeUnit
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
 if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae']) }
+if (project.name == 'NeoForge' && providers.gradleProperty('leggingsOritechSpike').map { it.toBoolean() }.getOrElse(false)) {
+    profiles.add('OritechSpike')
+}
 profiles.each { profile ->
+    def oritechSpike = profile == 'OritechSpike'
     def neoVitae = profile == 'NeoVitae'
     def neoVitaeRestart = neoVitae && providers.gradleProperty('leggingsNeoVitaeRestart').map { it.toBoolean() }.getOrElse(false)
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
@@ -85,6 +89,16 @@ profiles.each { profile ->
                 }
                 if (aquaculture) {
                     artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
+                }
+                if (oritechSpike) {
+                    def resolver = project(':MismatchedThings').testModArtifacts
+                    ['oritech-2.0.0-exp6.jar', 'athena-4.7.3.jar',
+                     'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name -> artifacts.add(resolver.resolve('NeoForge', name)) }
+                    if (phase == 'client') {
+                        ['oritech-spike.txt', 'oritech-before.png', 'oritech-after.png', 'oritech-reload.png'].each {
+                            new File(reports, it).delete()
+                        }
+                    }
                 }
                 if (neoVitae) {
                     if (baseline.toString().tokenize('.').last().toInteger() < 109) {
@@ -266,11 +280,12 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if ((equipped || items || presentation) && phase == 'client') {
                     programArgument('--width'); programArgument('1280'); programArgument('--height'); programArgument('720')
                 }
-                if ((allTheModium || aquaculture) && phase == 'client') {
+                if ((allTheModium || aquaculture || oritechSpike) && phase == 'client') {
                     programArgument('--width'); programArgument('1600'); programArgument('--height'); programArgument('1000')
                 }
                 gameDirectory = new File(directory, phase)
                 systemProperty('leggings.test.equipped', equipped.toString())
+                systemProperty('leggings.test.oritechSpike', oritechSpike.toString())
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
@@ -339,6 +354,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                                  "${ownerPath}:run${profile}${phase.capitalize()}", "-PleggingsBoots=${coexistence}"]
                 if (execution == 'restart') { arguments.add('-PleggingsNeoVitaeRestart=true') }
+                if (oritechSpike) { arguments.add('-PleggingsOritechSpike=true') }
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
@@ -367,10 +383,15 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.destroyForcibly()
                     }
                 }
-                if (allTheModium || aquaculture) {
+                if (allTheModium || aquaculture || oritechSpike) {
                     def text = log.text
                     def refusals = text.readLines().count { it.contains('AllTheModium mixed leggings tick disabled:') }
-                    if (refusals != (brokenAllTheModium ? 1 : 0) || text.contains('/ERROR]')) {
+                    def errors = text.readLines().findAll { it.contains('/ERROR]') }
+                    if (oritechSpike) {
+                        // Pinned upstream resource defect, already recorded by the Boots audit; keep it visible.
+                        errors = errors.findAll { !it.endsWith("[ne.ne.ne.re.DataMapLoader/]: Object with ID oritech:fluxite specified in data map for registry minecraft:block doesn't exist") }
+                    }
+                    if (refusals != (brokenAllTheModium ? 1 : 0) || !errors.isEmpty()) {
                         throw new GradleException("Unexpected ${profile} diagnostics: ${log}")
                     }
                     if (aquaculture) {
@@ -439,6 +460,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     !proof.isFile() || proof.length() == 0
                 }) { throw new GradleException('Aquaculture tooltip/presentation/session evidence is missing') }
             }
+            if (oritechSpike && ['oritech-spike.txt', 'oritech-before.png', 'oritech-after.png', 'oritech-reload.png'].any {
+                !new File(reports, it).isFile() || new File(reports, it).length() == 0
+            }) { throw new GradleException('Oritech spike evidence missing') }
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
