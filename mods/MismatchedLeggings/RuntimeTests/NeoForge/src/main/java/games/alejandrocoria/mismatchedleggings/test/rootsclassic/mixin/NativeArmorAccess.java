@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(HumanoidArmorLayer.class)
 public interface NativeArmorAccess {
     @Invoker("renderArmorPiece")
-    void rootsSpike$render(PoseStack pose, SubmitNodeCollector collector, ItemStack stack, EquipmentSlot slot,
+    void leggingsRootsTest$render(PoseStack pose, SubmitNodeCollector collector, ItemStack stack, EquipmentSlot slot,
                           int light, HumanoidRenderState state);
 
     @Invoker("getArmorModel")
-    HumanoidModel<?> rootsSpike$model(HumanoidRenderState state, EquipmentSlot slot);
+    HumanoidModel<?> leggingsRootsTest$model(HumanoidRenderState state, EquipmentSlot slot);
 }

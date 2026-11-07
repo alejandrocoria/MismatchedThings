@@ -10,5 +10,5 @@ import java.util.List;
 @Mixin(LivingEntityRenderer.class)
 public interface LivingLayersAccess {
     @Accessor("layers")
-    List<RenderLayer<?, ?>> rootsSpike$layers();
+    List<RenderLayer<?, ?>> leggingsRootsTest$layers();
 }

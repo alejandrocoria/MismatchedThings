@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/** Executes the queued native model; independent selected-part output is the split oracle. */
+/** Executes queued native models; independent selected-part output is the split oracle. */
 final class Vertices implements VertexConsumer {
     private final List<Vertex> vertices = new ArrayList<>();
 

@@ -3,11 +3,14 @@ package games.alejandrocoria.mismatchedleggings.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.oritech.OritechEquipmentCapture;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.oritech.OritechRenderState;
+import games.alejandrocoria.mismatchedleggings.client.compatibility.rootsclassic.RootsEquipmentLayers;
 import games.alejandrocoria.mismatchedleggings.client.render.EquipmentCapture;
 import games.alejandrocoria.mismatchedleggings.client.render.EquipmentSources;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +22,12 @@ public final class NeoForgeEquipmentSources implements EquipmentSources {
     @Override
     public boolean usesStandardRenderer(ItemStack source) {
         return !EXO.equals(BuiltInRegistries.ITEM.getKey(source.getItem()));
+    }
+
+    @Override
+    public EquipmentClientInfo.LayerType selectLayer(ItemStack source, EquipmentClientInfo.LayerType requested,
+                                                     EquipmentLayerRenderer renderer) {
+        return RootsEquipmentLayers.select(source, requested, renderer);
     }
 
     @Override

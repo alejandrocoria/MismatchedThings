@@ -60,9 +60,13 @@ public final class MixedLeggingsEquipmentRenderer {
         if (equippable.assetId().isEmpty()) {
             return null;
         }
+        var selectedLayer = EquipmentSources.INSTANCE.selectLayer(source, layer, renderer);
+        if (selectedLayer == null) {
+            return null;
+        }
         source.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
         var captured = new BufferedEquipment();
-        renderer.renderLayers(layer, equippable.assetId().orElseThrow(), model, state, source,
+        renderer.renderLayers(selectedLayer, equippable.assetId().orElseThrow(), model, state, source,
                 pose, captured, light, outline);
         return captured;
     }

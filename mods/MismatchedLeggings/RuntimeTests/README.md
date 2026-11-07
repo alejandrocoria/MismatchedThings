@@ -63,13 +63,33 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
-## Roots Classic rendering research
+## Roots Classic production rendering
 
-The opt-in [Roots rendering spike](../spikes/rootsclassic/README.md) compares the
-unchanged native LEGS route with an explicit alternate equipment layer and a
-mixed-only routing prototype. It uses pinned cached fixtures, a dedicated server
-and the hidden/muted client contract below. Normal tasks do not compile/register
-the spike; this is rendering feasibility, not gameplay or owner acceptance.
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRootsRendering --offline --console=plain
+```
+
+This maintained profile replaces the rendering spike. It stages pinned Roots
+Classic 1.6.7 through the shared artifact resolver/cache, runs a dedicated server
+control, then an early-hidden/muted client without IDE configurations. Add
+`-PleggingsBoots=true` for current Boots coexistence or
+`'-Pneoforge_version=26.1.2.99'` for the floor; run variants sequentially and restore
+routine `.114` outputs afterwards. Omit `--offline` for initial downloads.
+
+The packaged production selector is exercised without a test routing hook.
+Independent native selected-leg geometry/UV/material controls cover eight ordered
+Roots/iron pairs, moving/crouched players, posed/small stands, adult/baby wearers,
+queued native models, trim/glint, atomic complete-owner/neutral fallback and real
+resource reload. Resource fixtures verify requested-layer priority and missing
+alternate layers; a temporarily replaced native extension is restored in `finally`
+and must produce one bounded compatibility warning, not an ERROR exemption.
+
+Reports under `NeoForge/build/reports/<baseline>/rootsRendering[-boots]/` require
+`roots-rendering.txt`, one representative `roots-pairs.png` and normal completion
+markers. Corresponding bounded logs and `matrix.ok` are under `build/verification/`.
+The original native LEGS route is deliberately unchanged and empty in the pinned
+graph; explicit native HUMANOID controls are separate references. This profile
+does not establish repair/Terra, full-set gameplay or owner acceptance.
 
 ## Oritech production compatibility
 

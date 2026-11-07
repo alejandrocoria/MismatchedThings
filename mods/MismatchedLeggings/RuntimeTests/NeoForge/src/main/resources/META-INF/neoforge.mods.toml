@@ -19,6 +19,9 @@ config="leggings-aquaculture-test.mixins.json"
 [[mixins]]
 config="leggings-forbidden-test.mixins.json"
 
+[[mixins]]
+config="leggings-roots-test.mixins.json"
+
 [[dependencies.leggings_skeleton_test]]
 modId="mismatchedthings"
 type="required"

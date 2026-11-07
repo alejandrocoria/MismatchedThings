@@ -1,8 +1,0 @@
-// Explicit research opt-in: no source or mixin enters either production artifact.
-sourceSets.main.java.srcDir '../../spikes/rootsclassic/src/main/java'
-sourceSets.main.resources.srcDir '../../spikes/rootsclassic/src/main/resources'
-tasks.named('processResources') {
-    doLast {
-        new File(destinationDir, 'META-INF/neoforge.mods.toml').append('\n[[mixins]]\nconfig="leggings-roots-spike.mixins.json"\n')
-    }
-}

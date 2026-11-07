@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.test.rootsclassic;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import games.alejandrocoria.mismatchedleggings.client.compatibility.rootsclassic.RootsEquipmentLayers;
 import games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache;
 import games.alejandrocoria.mismatchedleggings.client.render.LeggingsView;
 import games.alejandrocoria.mismatchedleggings.client.render.MixedLeggingsEquipmentRenderer;
@@ -10,6 +11,7 @@ import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
 import games.alejandrocoria.mismatchedleggings.test.render.RecordingSubmits;
 import games.alejandrocoria.mismatchedleggings.test.render.RenderFixture;
+import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.ItemExtensionsAccess;
 import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.LivingLayersAccess;
 import games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin.NativeArmorAccess;
 import net.minecraft.client.Minecraft;
@@ -28,8 +30,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -38,6 +40,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
@@ -50,9 +53,8 @@ import java.util.concurrent.CompletableFuture;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Research routing only: native render controls and the packaged product's unmodified split logic. */
-public final class RootsRenderingSpike {
-    public static boolean enabled;
+/** Native independent controls against packaged production routing, with no test render interception. */
+public final class RootsRenderChecks {
     private static final int LIGHT = 0x00A000A0;
     private static final int OUTLINE = 0xFF123456;
     private static int phase;
@@ -65,7 +67,7 @@ public final class RootsRenderingSpike {
     private static RecordingSubmits.Node<?> queued;
     private static List<Vertices.Vertex> queuedBefore;
 
-    private RootsRenderingSpike() {
+    private RootsRenderChecks() {
     }
 
     public static boolean roots(ItemStack stack) {
@@ -74,11 +76,11 @@ public final class RootsRenderingSpike {
     }
 
     public static void tick(Minecraft client) {
-        if (phase == 6) {
+        if (phase == 3) {
             return;
         }
         try {
-            require(++ticks < 2400, "Roots spike timed out at phase " + phase);
+            require(++ticks < 2400, "Roots rendering checks timed out at phase " + phase);
             require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                     "Automated client became visible");
             if (captureFailure != null) {
@@ -90,43 +92,38 @@ public final class RootsRenderingSpike {
             if (phase == 0 && client.screen == null) {
                 SkeletonChecks.verify();
                 require(EquippedClient.renderer != null, "Equipment renderer was not observed");
-                baseline(client);
+                verify(client);
                 scene = new Scene(client);
                 client.setScreen(scene);
                 phase = 1;
             } else if (phase == 1 && scene.frames >= 8) {
-                screenshot(client, "roots-before.png");
+                screenshot(client, "roots-pairs.png");
                 phase = 2;
             } else if (phase == 2 && captured) {
-                enabled = true;
-                verify(client);
-                scene = new Scene(client);
-                client.setScreen(scene);
-                phase = 3;
-            } else if (phase == 3 && scene.frames >= 8) {
-                screenshot(client, "roots-after.png");
-                phase = 4;
-            } else if (phase == 4 && captured) {
-                generation = LeggingsGeometryCache.statistics().generation();
-                reload = client.reloadResourcePacks();
-                phase = 5;
-            } else if (phase == 5 && reload.isDone()) {
+                if (reload == null) {
+                    generation = LeggingsGeometryCache.statistics().generation();
+                    reload = client.reloadResourcePacks();
+                    return;
+                }
+                if (!reload.isDone()) {
+                    return;
+                }
                 reload.join();
                 require(LeggingsGeometryCache.statistics().generation() > generation, "Real reload did not invalidate product geometry");
                 verify(client);
-                Files.writeString(report("roots-spike.txt"),
-                        "original.nativeLegsEmpty=true\noriginal.mixedOwnerNeutralFallback=true\n"
-                                + "prototype.mixedOnlyHumanoidLayer=true\ngeometry.nativeLegSubtreesUvNormalsMaterialsExact=true\n"
+                Files.writeString(report("roots-rendering.txt"),
+                        "original.nativeLegsEmpty=true\nproduction.mixedOnlyAlternateLayer=true\n"
+                                + "resources.requestedPriorityMissingAlternateAndUnknownBinding=true\ngeometry.nativeLegSubtreesUvNormalsMaterialsExact=true\n"
                                 + "geometry.noSyntheticWaistOrFeet=true\nqueue.cachedModelsAndDistinctPoses=true\n"
                                 + "decorations.rootFoilNativeAlternateLayerTrimOutline=true\nfallback.fullRootsOwnerOrNeutralAtomic=true\n"
                                 + "wearers.movingCrouchedPlayerPosedSmallStandAdultBabyZombie=true\nreload.sameAssertions=true\n"
                                 + "data.sourcesAndRootsUnchanged=true\n");
                 SkeletonChecks.passed("client");
-                phase = 6;
+                phase = 3;
                 client.stop();
             }
         } catch (Throwable failure) {
-            phase = 6;
+            phase = 3;
             SkeletonChecks.failed("client", failure);
             client.stop();
         }
@@ -144,35 +141,14 @@ public final class RootsRenderingSpike {
         return MixedLeggingsFactory.createPair(first, second).primary();
     }
 
-    private static void baseline(Minecraft client) {
-        for (var source : samples().subList(0, 2)) {
-            var actor = stand(client, source, false);
-            var state = state(client, actor);
-            var original = new RecordingSubmits();
-            armor(client, actor).rootsSpike$render(new PoseStack(), original, source, EquipmentSlot.LEGS, LIGHT, state);
-            require(original.nodes.isEmpty(), "Original native LEGS route is no longer empty; revisit the missing-layer hypothesis");
-            require(alternate(client, actor, source, state).nodes.size() == 1, "Explicit alternate-layer native control missing");
-            var left = pair(source, new ItemStack(Items.IRON_LEGGINGS));
-            var right = pair(new ItemStack(Items.GOLDEN_LEGGINGS), source);
-            var neutral = mixed(client, actor, left);
-            var owner = mixed(client, actor, right);
-            require(neutral.nodes.size() == 1 && neutral.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
-                            Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/iron.png")),
-                    "Baseline unsafe Roots owner did not use neutral");
-            require(owner.nodes.size() == 1 && owner.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
-                            Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/gold.png")),
-                    "Baseline ordinary owner fallback changed");
-        }
-    }
-
     private static void verify(Minecraft client) throws Exception {
         queued = null;
         queuedBefore = null;
-        // Enabling the mixed-only hook must not silently fix or rewrite originals.
+        // The packaged mixed-only route must not silently fix or rewrite originals.
         for (var source : samples().subList(0, 2)) {
             var nativeActor = stand(client, source, false);
             var original = new RecordingSubmits();
-            armor(client, nativeActor).rootsSpike$render(new PoseStack(), original, source, EquipmentSlot.LEGS, LIGHT, state(client, nativeActor));
+            armor(client, nativeActor).leggingsRootsTest$render(new PoseStack(), original, source, EquipmentSlot.LEGS, LIGHT, state(client, nativeActor));
             require(original.nodes.isEmpty(), "Mixed-only routing changed native leggings");
         }
         var player = new RemotePlayer(client.level, client.player.getGameProfile());
@@ -195,6 +171,7 @@ public final class RootsRenderingSpike {
         compare(client, zombie);
         decorations(client);
         fallback(client);
+        resources(client);
     }
 
     private static void compare(Minecraft client, LivingEntity actor) {
@@ -280,9 +257,77 @@ public final class RootsRenderingSpike {
                 "Unsafe first source did not use neutral atomically");
     }
 
+    private static ItemStack asset(ItemStack input, String name) {
+        var changed = input.copy();
+        changed.set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.LEGS)
+                .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.parse("leggings_skeleton_test:" + name))).build());
+        return changed;
+    }
+
+    private static void resources(Minecraft client) {
+        var requested = EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS;
+        var renderer = EquippedClient.renderer;
+        var actor = stand(client, ItemStack.EMPTY, false);
+        for (var source : samples().subList(0, 2)) {
+            require(RootsEquipmentLayers.select(source, requested, renderer) == EquipmentClientInfo.LayerType.HUMANOID,
+                    "Pinned Roots missing layer did not select the available native alternate");
+            var supplied = asset(source, "roots_requested");
+            require(RootsEquipmentLayers.select(supplied, requested, renderer) == requested,
+                    "A supplied requested resource layer lost priority to the compatibility fallback");
+            require(RootsEquipmentLayers.select(supplied, EquipmentClientInfo.LayerType.HUMANOID_BABY, renderer)
+                            == EquipmentClientInfo.LayerType.HUMANOID_BABY,
+                    "A supplied baby resource layer lost priority");
+            for (boolean inverse : List.of(false, true)) {
+                var iron = new ItemStack(Items.IRON_LEGGINGS);
+                var output = mixed(client, actor, inverse ? pair(iron, supplied) : pair(supplied, iron));
+                require(output.nodes.size() == 2, "Supplied requested layer failed actual production capture");
+                var node = output.nodes.get(inverse ? 1 : 0);
+                var control = nativeLayer(client, actor, supplied, state(client, actor), requested).nodes.getFirst();
+                var nativeModel = (HumanoidModel<?>) control.model();
+                require(node.type() == control.type() && Vertices.model(node).equals(Vertices.part(control,
+                                inverse ? nativeModel.rightLeg : nativeModel.leftLeg)),
+                        "Requested resource layer differs from its independent native geometry/material control");
+            }
+
+            var missing = asset(source, "missing");
+            require(RootsEquipmentLayers.select(missing, requested, renderer) == null, "Missing all layers was admitted");
+            var neutral = mixed(client, actor, pair(missing, source));
+            require(neutral.nodes.size() == 1 && neutral.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
+                            Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/iron.png")),
+                    "Missing Roots owner did not fall back atomically to neutral");
+            var full = mixed(client, actor, pair(new ItemStack(Items.GOLDEN_LEGGINGS), missing));
+            require(full.nodes.size() == 1 && full.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
+                            Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/gold.png")),
+                    "Missing Roots counterpart did not retain the complete ordinary owner");
+            var noAlternate = asset(source, "roots_no_alternate");
+            require(RootsEquipmentLayers.select(noAlternate, EquipmentClientInfo.LayerType.HUMANOID_BABY, renderer) == null,
+                    "Missing requested and HUMANOID layers incorrectly selected another layer");
+
+            // Replace the real native binding, then restore it even if a rejection assertion fails.
+            var extensions = ItemExtensionsAccess.leggingsRootsTest$extensions();
+            var nativeExtension = extensions.put(source.getItem(), new IClientItemExtensions() {});
+            try {
+                require(nativeExtension != null, "Pinned native extension was never registered");
+                require(RootsEquipmentLayers.select(source, requested, renderer) == null,
+                        "Unsupported native binding was admitted to alternate rendering");
+                require(RootsEquipmentLayers.select(supplied, requested, renderer) == requested,
+                        "Unknown binding incorrectly disabled an available ordinary requested layer");
+                var rejected = mixed(client, actor, pair(source, new ItemStack(Items.GOLDEN_LEGGINGS)));
+                require(rejected.nodes.size() == 1 && rejected.nodes.getFirst().type() == RenderTypes.armorCutoutNoCull(
+                                Identifier.withDefaultNamespace("textures/entity/equipment/humanoid_leggings/iron.png")),
+                        "Unsupported Roots owner leaked or rendered an unsafe alternate");
+            } finally {
+                extensions.put(source.getItem(), nativeExtension);
+            }
+        }
+        var ordinary = asset(new ItemStack(Items.IRON_LEGGINGS), "roots_requested");
+        require(RootsEquipmentLayers.select(ordinary, requested, renderer) == requested,
+                "Ordinary source was captured by Roots-specific policy");
+    }
+
     private static NativeArmorAccess armor(Minecraft client, LivingEntity actor) {
         var renderer = (LivingLayersAccess) client.getEntityRenderDispatcher().getRenderer(actor);
-        return renderer.rootsSpike$layers().stream().filter(layer -> layer instanceof HumanoidArmorLayer<?, ?, ?>)
+        return renderer.leggingsRootsTest$layers().stream().filter(layer -> layer instanceof HumanoidArmorLayer<?, ?, ?>)
                 .map(layer -> (NativeArmorAccess) layer).findFirst().orElseThrow();
     }
 
@@ -292,10 +337,16 @@ public final class RootsRenderingSpike {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static RecordingSubmits alternate(Minecraft client, LivingEntity actor, ItemStack source, HumanoidRenderState state) {
+        return nativeLayer(client, actor, source, state, EquipmentClientInfo.LayerType.HUMANOID);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static RecordingSubmits nativeLayer(Minecraft client, LivingEntity actor, ItemStack source,
+                                                HumanoidRenderState state, EquipmentClientInfo.LayerType layer) {
         var output = new RecordingSubmits();
         var asset = source.get(DataComponents.EQUIPPABLE).assetId().orElseThrow();
-        EquippedClient.renderer.renderLayers(EquipmentClientInfo.LayerType.HUMANOID, asset,
-                (HumanoidModel) armor(client, actor).rootsSpike$model(state, EquipmentSlot.LEGS), state,
+        EquippedClient.renderer.renderLayers(layer, asset,
+                (HumanoidModel) armor(client, actor).leggingsRootsTest$model(state, EquipmentSlot.LEGS), state,
                 source, new PoseStack(), output, LIGHT, OUTLINE);
         return output;
     }
@@ -308,7 +359,7 @@ public final class RootsRenderingSpike {
         var requested = state.isBaby && state.entityType != EntityType.ARMOR_STAND
                 ? EquipmentClientInfo.LayerType.HUMANOID_BABY : EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS;
         MixedLeggingsEquipmentRenderer.render(EquippedClient.renderer,
-                (HumanoidModel) armor(client, actor).rootsSpike$model(state, EquipmentSlot.LEGS), state,
+                (HumanoidModel) armor(client, actor).leggingsRootsTest$model(state, EquipmentSlot.LEGS), state,
                 requested, root, new PoseStack(), output, LIGHT, OUTLINE);
         return output;
     }
@@ -349,7 +400,7 @@ public final class RootsRenderingSpike {
         int frames;
 
         Scene(Minecraft client) {
-            super(Component.literal("Roots leggings: " + (enabled ? "mixed-only routing prototype" : "original routes")));
+            super(Component.literal("Roots leggings: production mixed-only routing"));
             var sylvan = source("sylvan_tunic");
             var wildwood = source("wildwood_leggings");
             var iron = new ItemStack(Items.IRON_LEGGINGS);

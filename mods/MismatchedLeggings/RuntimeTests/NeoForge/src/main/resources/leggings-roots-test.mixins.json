@@ -1,0 +1,11 @@
+{
+    "required": true,
+    "package": "games.alejandrocoria.mismatchedleggings.test.rootsclassic.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "ItemExtensionsAccess",
+        "LivingLayersAccess",
+        "NativeArmorAccess"
+    ],
+    "injectors": { "defaultRequire": 1 }
+}

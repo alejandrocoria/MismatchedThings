@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
+import games.alejandrocoria.mismatchedleggings.test.rootsclassic.RootsRenderChecks;
 import net.minecraft.client.Minecraft;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -13,7 +14,9 @@ public final class SkeletonClientNeoForge {
         if (ForbiddenBootsChecks.enabled()) {
             SkeletonChecks.require(ForbiddenBootsStorage.adoptions.get() == 0, "Native modifier adoption ran before a client world existed");
         }
-        if (Boolean.getBoolean("leggings.test.oritechCapture")) {
+        if (Boolean.getBoolean("leggings.test.rootsRendering")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> RootsRenderChecks.tick(Minecraft.getInstance()));
+        } else if (Boolean.getBoolean("leggings.test.oritechCapture")) {
             OritechCaptureChecks.register();
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> OritechCaptureChecks.tick(Minecraft.getInstance()));
         } else if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {

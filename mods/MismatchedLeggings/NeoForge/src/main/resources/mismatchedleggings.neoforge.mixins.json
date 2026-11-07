@@ -4,5 +4,6 @@
     "package": "games.alejandrocoria.mismatchedleggings.mixin",
     "compatibilityLevel": "JAVA_25",
     "mixins": ["NeoForgeAnvilMenuDonorMixin"],
+    "client": ["client.EquipmentAssetsAccessor"],
     "injectors": { "defaultRequire": 1 }
 }
