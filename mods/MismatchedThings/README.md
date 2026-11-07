@@ -138,9 +138,9 @@ Absent/unsupported native bindings and Fabric are no-ops; unsupported bindings l
 a warning. With a valid binding, malformed installed containers reject the
 operation. No Neo Vitae dependency or replacement wallet is bundled.
 
-Boots currently delegates to this service. Leggings' composition integration is
-separate; simply selecting this core does not reinterpret existing mixed items
-or remix their stored resources.
+Boots and Leggings delegate their creation/preservation boundaries to this service.
+Simply selecting this core does not reinterpret existing mixed items or remix
+their stored resources.
 
 ### Optional recipe viewers (since 1.1.0)
 

@@ -142,7 +142,9 @@ profiles.each { profile ->
                     if (phase == 'server') { new File(reports, 'forbidden-boots-storage.nbt').delete() }
                 }
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
-                if (neoVitae) { new File(reports, 'neovitae-server.txt').delete() }
+                if (neoVitae) {
+                    ['neovitae-server.txt', 'neovitae-composition-server.txt'].each { name -> new File(reports, name).delete() }
+                }
                 if (aquaculture && phase == 'client') {
                     ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
                      'aquaculture-panel.png', 'aquaculture-session.txt'].each { name -> new File(reports, name).delete() }
@@ -307,7 +309,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
-                : neoVitae ? 'Checks native Sentient set tags, root forge payment and Spiritus transfer without testing infused-input composition.'
+                : neoVitae ? 'Checks native Sentient tags, direct root operations and coherent infusion creation/preservation.'
                 : smithing ? 'Checks source-wise smithing, live-state recomposition, recipe reload/payment and coexistence.'
                 : grindstone ? 'Checks native grindstone repair, disenchantment, bounded XP and product coexistence.'
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
@@ -369,7 +371,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         || !new File(reports, "forbidden-${phase}.txt").isFile())) {
                     throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
-                if (neoVitae && (log.text.contains('/ERROR]') || !new File(reports, 'neovitae-server.txt').isFile())) {
+                if (neoVitae && (log.text.contains('/ERROR]')
+                        || ['neovitae-server.txt', 'neovitae-composition-server.txt'].any { !new File(reports, it).isFile() })) {
                     throw new GradleException("Missing Neo Vitae evidence or unexpected diagnostics: ${log}")
                 }
                 if (forbiddenArcanus && phase == 'client'
@@ -425,7 +428,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
                     : forbiddenServerOnly ? 'packaged Forbidden Arcanus dedicated-server checks passed; no client coverage\n'
-                    : neoVitae ? 'packaged Neo Vitae dedicated-server recognition and direct-root operations passed; no client coverage\n'
+                    : neoVitae ? 'packaged Neo Vitae recognition, direct-root operations and infusion creation/preservation passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }
     }

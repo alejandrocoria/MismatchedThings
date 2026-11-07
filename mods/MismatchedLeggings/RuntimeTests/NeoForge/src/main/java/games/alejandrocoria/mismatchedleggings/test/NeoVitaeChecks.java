@@ -69,6 +69,7 @@ public final class NeoVitaeChecks {
 
             var invalid = new ItemStack(BuiltInRegistries.ITEM.getValue(LeggingsContent.MIXED_LEGGINGS_ID));
             require(!invalid.is(SET) && !invalid.is(CHANGE) && !invalid.is(INFUSION), "Bare invalid root gained source tags");
+            NeoVitaeCompositionChecks.verify();
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "neovitae-server.txt"),
                     "Native full-set and equipment-change gates: both orientations, inventory/removal/near-broken-chest controls; Boots="
                             + ModList.get().isLoaded("mismatchedboots") + "\n"
