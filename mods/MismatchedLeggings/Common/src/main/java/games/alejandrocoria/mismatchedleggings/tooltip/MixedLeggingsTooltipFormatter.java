@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 public final class MixedLeggingsTooltipFormatter {
     private static final String LEFT_KEY = "tooltip.mismatchedleggings.mixed_leggings.left";
     private static final String RIGHT_KEY = "tooltip.mismatchedleggings.mixed_leggings.right";
+    private static final Identifier ROGDORIUM_INFUSION = Identifier.parse("undergarden:rogdorium_infusion");
     private static final String NAME_WITH_NATURAL_KEY =
             "tooltip.mismatchedleggings.mixed_leggings.name_with_natural";
     private static final Identifier CRYSTALITE_LEGGINGS = Identifier.parse("betterend:crystalite_leggings");
@@ -111,7 +112,9 @@ public final class MixedLeggingsTooltipFormatter {
         for (DataComponentType<?> component : SOURCE_GAMEPLAY_COMPONENTS) {
             result = result.withHidden(component, true);
         }
-        return result;
+        // Historical reserve is not live state; leave the native root appender/decorator untouched.
+        var infusion = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(ROGDORIUM_INFUSION).orElse(null);
+        return infusion == null ? result : result.withHidden(infusion, true);
     }
 
     @SuppressWarnings("deprecation")

@@ -116,6 +116,38 @@ warning. Errors, bad exit,
 timeouts, failed/missing markers and unexpected refusal counts fail verification.
 This state gate opens no client window and establishes no owner visual acceptance.
 
+### Native Rogdorium presentation
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumPresentation --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumPresentation '-PleggingsUndergardenGraph=boots' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumPresentation '-PleggingsUndergardenGraph=leggings' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumPresentation '-PleggingsUndergardenAbsent=true' --offline --console=plain
+```
+
+The presentation driver first runs the corresponding state/Infuser server, then
+copies its disposable world and exact staged product/native JARs into a client.
+It requires the normal variant; add `'-Pneoforge_version=26.1.2.99'` for a focused
+floor check, and restore `.114` afterward. Run graphs/baselines sequentially.
+The existing test-only window hook hides the client **before GLFW creation**;
+options mute it and disable the NeoForge early display. No screenshots are needed.
+
+Actual normal/F3+H tooltip producers must emit exactly one native live-root line
+with native text/style, after the source sections, or no line when zero, absent
+or hidden. Both orientations, unequal historical reserves, source display flags,
+root-only installation and ordinary native items are covered. Actual registered
+decoration rectangles are checked at zero/partial/full charge, with/without the
+durability bar; hiding the component tooltip must not hide the independent native
+bar. Tooltip/decorator calls must not mutate roots or histories. Assertions repeat
+after resource reload; absence must remain quiet.
+
+Evidence shares the state profile's report/log directories: `presentation.txt`,
+`client.ok`, `client.log` and `presentation.ok`. Unexpected runtime ERRORs or adapter
+refusals fail the driver; the client disconnects cleanly before stopping.
+Opening a copied world does not certify saved mixed-item recovery, multiplayer
+transport, manual presentation or native menu prediction; those remain separate
+consolidation/owner gates.
+
 ## Aether II production gameplay
 
 ```powershell

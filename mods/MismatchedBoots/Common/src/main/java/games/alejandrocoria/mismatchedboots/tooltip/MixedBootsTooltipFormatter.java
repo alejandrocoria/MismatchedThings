@@ -9,6 +9,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -23,6 +24,7 @@ import java.util.function.Consumer;
 public final class MixedBootsTooltipFormatter {
     private static final String LEFT_KEY = "tooltip.mismatchedboots.mixed_boots.left";
     private static final String RIGHT_KEY = "tooltip.mismatchedboots.mixed_boots.right";
+    private static final Identifier ROGDORIUM_INFUSION = Identifier.parse("undergarden:rogdorium_infusion");
     private static final String NAME_WITH_NATURAL_KEY =
             "tooltip.mismatchedboots.mixed_boots.name_with_natural";
     private static final List<DataComponentType<?>> SOURCE_GAMEPLAY_COMPONENTS = List.of(
@@ -121,7 +123,9 @@ public final class MixedBootsTooltipFormatter {
         for (DataComponentType<?> component : SOURCE_GAMEPLAY_COMPONENTS) {
             result = result.withHidden(component, true);
         }
-        return result;
+        // Historical reserve is not live state; leave the native root appender/decorator untouched.
+        var infusion = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(ROGDORIUM_INFUSION).orElse(null);
+        return infusion == null ? result : result.withHidden(infusion, true);
     }
 
     @SuppressWarnings("deprecation")

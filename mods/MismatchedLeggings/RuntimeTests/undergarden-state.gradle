@@ -64,6 +64,43 @@ neoForge.runs.create('rogdoriumStateServer') {
 }
 tasks.named('runRogdoriumStateServer') { dependsOn 'prepareRogdoriumStateServer' }
 
+def clientDirectory = new File(directory.parentFile, 'client')
+tasks.register('prepareRogdoriumPresentationClient') {
+    dependsOn tasks.named('classes')
+    doLast {
+        def world = new File(directory, 'state')
+        if (!new File(reports, 'server.ok').isFile() || !new File(world, 'level.dat').isFile()) {
+            throw new GradleException('Run the corresponding production state server before the presentation client')
+        }
+        def artifacts = new File(directory, 'mods').listFiles().toList()
+        def mods = new File(clientDirectory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
+            throw new GradleException("Unexpected artifact in disposable ${mods}")
+        }
+        copy { from artifacts; into mods }
+        copy { from world; into new File(clientDirectory, 'saves/state') }
+        ['client.ok', 'client.failure.txt', 'presentation.txt'].each { new File(reports, it).delete() }
+        new File(clientDirectory, 'config').mkdirs()
+        new File(clientDirectory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(clientDirectory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\nguiScale:2\n'
+    }
+}
+neoForge.runs.create('rogdoriumPresentationClient') {
+    client()
+    disableIdeRun()
+    gameDirectory = clientDirectory
+    programArgument('--quickPlaySingleplayer'); programArgument('state')
+    programArgument('--width'); programArgument('1280')
+    programArgument('--height'); programArgument('900')
+    systemProperty('leggings.test.rogdoriumPresentation', 'true')
+    systemProperty('leggings.test.rogdoriumGraph', graph)
+    systemProperty('leggings.test.rogdoriumAbsent', absent.toString())
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runRogdoriumPresentationClient') { dependsOn 'prepareRogdoriumPresentationClient' }
+
 tasks.register('verifyRogdoriumState') {
     group = 'verification'
     description = 'Verifies production Rogdorium state, native Infuser admission/payment, local guards and optional absence.'
@@ -96,6 +133,43 @@ tasks.register('verifyRogdoriumState') {
                 throw new GradleException("Unexpected Rogdorium diagnostics: ${log}")
             }
             new File(logs, 'matrix.ok').text = "production state; graph=${graph}; absent=${absent}\n"
+        } finally {
+            if (process.isAlive()) {
+                process.toHandle().descendants().forEach { it.destroyForcibly() }
+                process.destroyForcibly()
+            }
+        }
+    }
+}
+
+tasks.register('verifyRogdoriumPresentation') {
+    group = 'verification'
+    description = 'Verifies native live-only source/root tooltips and registered bars with a hidden/muted packaged client.'
+    dependsOn tasks.named('verifyRogdoriumState')
+    doLast {
+        if (variant != 'normal') { throw new GradleException('Presentation requires the normal production variant') }
+        def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+        new File(logs, 'presentation.ok').delete()
+        def log = new File(logs, 'client.log')
+        def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
+                    '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runRogdoriumPresentationClient",
+                    "-Pneoforge_version=${neoforge_version}", "-PleggingsUndergardenGraph=${graph}", "-PleggingsUndergardenAbsent=${absent}"]
+        if (gradle.startParameter.offline) { args.add('--offline') }
+        logger.lifecycle("Production Rogdorium presentation ${neoforge_version}/${label}")
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
+                    || !new File(reports, 'client.ok').isFile() || new File(reports, 'client.failure.txt').exists()
+                    || !new File(reports, 'presentation.txt').isFile()) {
+                throw new GradleException("Production Rogdorium presentation failed: ${log}")
+            }
+            if (log.text.readLines().any { it.contains('/ERROR]') || it.contains('Mixed Rogdorium infusion creation refused:')
+                    || it.contains('Undergarden mixed ') && it.contains(' disabled:')
+                    || absent && it.contains('Error loading class: quek/undergarden/') }) {
+                throw new GradleException("Unexpected Rogdorium presentation diagnostics: ${log}")
+            }
+            new File(logs, 'presentation.ok').text = "packaged hidden/muted client; graph=${graph}; absent=${absent}\n"
         } finally {
             if (process.isAlive()) {
                 process.toHandle().descendants().forEach { it.destroyForcibly() }

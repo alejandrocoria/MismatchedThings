@@ -14,7 +14,9 @@ public final class SkeletonClientNeoForge {
         if (ForbiddenBootsChecks.enabled()) {
             SkeletonChecks.require(ForbiddenBootsStorage.adoptions.get() == 0, "Native modifier adoption ran before a client world existed");
         }
-        if (Boolean.getBoolean("leggings.test.aetherTooltips")) {
+        if (Boolean.getBoolean("leggings.test.rogdoriumPresentation")) {
+            RogdoriumPresentationClient.register();
+        } else if (Boolean.getBoolean("leggings.test.aetherTooltips")) {
             games.alejandrocoria.mismatchedleggings.test.aether.AetherTooltipChecks.register();
         } else if (Boolean.getBoolean("leggings.test.rootsRendering")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> RootsRenderChecks.tick(Minecraft.getInstance()));

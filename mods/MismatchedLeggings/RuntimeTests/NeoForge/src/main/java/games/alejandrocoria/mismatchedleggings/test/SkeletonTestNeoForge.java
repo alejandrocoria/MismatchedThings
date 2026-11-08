@@ -13,6 +13,12 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.rogdoriumPresentation")) {
+            if (FMLEnvironment.getDist().isClient()) {
+                bus.addListener(SkeletonClientNeoForge::setup);
+            }
+            return; // This profile seeds via its dedicated server and checks actual tooltip producers on the client.
+        }
         if (Boolean.getBoolean("leggings.test.rogdoriumState")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> RogdoriumStateChecks.tick(event.getServer()));
             return;
