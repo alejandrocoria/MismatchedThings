@@ -100,6 +100,42 @@ source graphic placement, visual acceptance or a separate-process save restart.
 Keep the early fault plugin ASM-only: its Minecraft-typed receiver belongs in
 the separate helper, avoiding premature class loading before common tag mixins.
 
+## Aether II production tooltips
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherTooltips --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherTooltips -PleggingsBoots=true --offline --console=plain
+```
+
+This maintained profile stages packaged Leggings and resolver-pinned Aether, with
+optional current Boots; it never activates spike routing/hooks or reads indev data.
+A dedicated gameplay server seeds its disposable world, then a hidden/muted client
+checks the real tooltip/event/gather/native-factory paths. NeoForge's early window
+is disabled and GLFW visibility is false before creation. No IDE run is generated.
+Do not run profiles/baselines concurrently. A focused floor run accepts
+`'-Pneoforge_version=26.1.2.99'`; restore `.114` outputs afterwards.
+
+Coverage includes six families/both orientations, normal/F3+H identities, lore and
+source IDs, native tiers once, Arkenium hint omission, actual idle/incomplete/full
+counts and no-player safety. Native transient attributes belong only to the exact
+worn LEGS object, once per distinct family after ordinary attributes, never a held
+or inventory copy. Installed-only source graphics use actual native client factories;
+duplicate instances/order, empty capacity, oversized native-name fallback, independent
+visibility, live-root-holder overrides and foreign payloads are controls. Scoped
+nested/exceptional calls restore exact source identity. Local formatting/graphics
+failure controls preserve proven native containment and unrelated presentation.
+The optional sibling case checks native mixed LEGS/FEET counts and both tooltip paths.
+
+Reports are `NeoForge/build/reports/<baseline>/aetherTooltips[-boots]/`, including
+`aether-tooltips.txt`, `aether-tooltip.png`, `server.ok` and `client.ok`; bounded
+process logs and `matrix.ok` are under `build/verification/<baseline>/` with the same
+label. The screenshot is only relevant integrated tooltip QA, not equipment acceptance.
+Exactly the two known native dedicated Toast ERRORs are allowed; other ERRORs and
+unexpected Aether refusals fail. Client logs must have zero ERRORs. Unit guards use
+the real native producer bytecode and packaged Boots edits in both orders, including
+unsupported local producers and atomic refusal of changed source-detail branches.
+This does not establish owner acceptance, paid Forge editing or save/restart coverage.
+
 ## Roots Classic production rendering
 
 ```powershell

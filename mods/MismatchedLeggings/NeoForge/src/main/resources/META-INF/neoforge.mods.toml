@@ -27,6 +27,9 @@ config="mismatchedleggings.rootsclassic.mixins.json"
 [[mixins]]
 config="mismatchedleggings.aether.mixins.json"
 
+[[mixins]]
+config="mismatchedleggings.aether-tooltips.mixins.json"
+
 [[mods]]
 modId="${mod_id}"
 version="${version}"

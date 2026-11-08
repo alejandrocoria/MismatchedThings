@@ -1,0 +1,29 @@
+package games.alejandrocoria.mismatchedleggings.compatibility.aether;
+
+import games.alejandrocoria.mismatchedleggings.client.compatibility.aether.AetherSourceCharms;
+import games.alejandrocoria.mismatchedleggings.client.compatibility.aether.AetherTooltipClient;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLEnvironment;
+
+import java.util.function.Consumer;
+
+/** The registered item also runs on dedicated servers; resolve client bindings only behind both gates. */
+public final class AetherTooltipCompatibility {
+    private AetherTooltipCompatibility() {
+    }
+
+    private static boolean available() {
+        return FMLEnvironment.getDist().isClient() && ModList.get().isLoaded("aether_ii");
+    }
+
+    public static void source(ItemStack source, TooltipFlag flag, Consumer<Component> output) {
+        if (available()) {
+            AetherTooltipClient.sourceSet(source, output);
+            AetherTooltipClient.sourceTier(source, flag, output);
+            AetherSourceCharms.source(source, output);
+        }
+    }
+}

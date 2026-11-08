@@ -57,6 +57,7 @@ public final class MismatchedLeggingsNeoForge {
 
         if (FMLEnvironment.getDist().isClient()) {
             bus.addListener(MismatchedLeggingsClientNeoForge::setup);
+            bus.addListener(MismatchedLeggingsClientNeoForge::registerTooltipFactories);
         }
     }
 }
