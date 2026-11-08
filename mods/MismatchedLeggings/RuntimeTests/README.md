@@ -63,6 +63,43 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Aether II production gameplay
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherGameplay --offline --console=plain
+```
+
+Dedicated-server-only coverage of packaged production set recognition, default
+charm omission and Alkahest queries. Pinned Aether comes from the shared resolver;
+no spike routing, explicit fixture-only omission rules or indev files are used.
+Add `-PleggingsBoots=true` for current Boots coexistence or
+`'-Pneoforge_version=26.1.2.99'` for a focused floor run. Run sequentially and
+restore normal `.114` outputs afterwards; omit `--offline` for initial downloads.
+
+`-PleggingsAetherVariant=sets`, `fluid` or `armor` introduces one unknown local
+native operand/result contract in a separate standalone JVM. Native behavior is
+unchanged, but only that product domain must decline with one diagnostic;
+the other domains and ordinary controls remain functional. `absent` omits Aether
+and runs the normal standalone composition server. Default is `normal`; unknown
+variants and sibling fault combinations are rejected.
+
+Guard unit tests additionally apply the real packaged Boots set/tier edits in
+both orders and reject count scaling/clamping, changed enumeration, receivers
+and suppliers before partial edits. Runtime checks cover six sets, native gloves
+and transient effect removal, all five armor charms and explicit policies,
+complete source histories, unequal tiers, native dropped/both-hand/worn fluid
+calls, freeze immunity and invalid/foreign/suspended/count-two negatives.
+Native charm/tier fixtures use components, not paid Forge operations.
+
+Evidence is `NeoForge/build/reports/<baseline>/aetherGameplay[-boots][-variant]/`
+(`aether-server.txt` for native runs, plus `server.ok`) and corresponding
+`build/verification/.../matrix.ok`. The two known native dedicated `Toast` ERRORs
+remain visible and exactly counted; all other ERRORs/unexpected refusals fail.
+No client window or screenshot is created. This profile does not establish
+source graphic placement, visual acceptance or a separate-process save restart.
+Keep the early fault plugin ASM-only: its Minecraft-typed receiver belongs in
+the separate helper, avoiding premature class loading before common tag mixins.
+
 ## Roots Classic production rendering
 
 ```powershell

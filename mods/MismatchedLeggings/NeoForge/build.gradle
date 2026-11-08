@@ -16,6 +16,7 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.ow2.asm:asm-tree:9.9.1'
+    testImplementation 'org.ow2.asm:asm-analysis:9.9.1'
     // Actual sibling bytecode is a test witness, never a production dependency.
     testRuntimeOnly files(project(':MismatchedBoots:NeoForge').tasks.named('jar').flatMap { it.archiveFile })
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -58,4 +59,8 @@ tasks.named('test', Test) {
     inputs.file(providers.provider { artifacts.resolve('NeoForge', roots) })
             .withPropertyName('rootsGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.rootsGuardJar', artifacts.path('NeoForge', roots).absolutePath
+    def aether = 'aether_ii-26.1.2-alpha.4.1-neoforge.jar'
+    inputs.file(providers.provider { artifacts.resolve('NeoForge', aether) })
+            .withPropertyName('aetherGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
+    systemProperty 'mismatchedleggings.test.aetherGuardJar', artifacts.path('NeoForge', aether).absolutePath
 }

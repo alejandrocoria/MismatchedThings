@@ -68,7 +68,10 @@ public final class SkeletonTestNeoForge {
         SkeletonChecks.environment(mods.isLoaded("mismatchedboots"),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedleggings")).count(),
                 mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count());
-        if (!System.getProperty("leggings.test.rootsTicks", "").isEmpty()) {
+        var aether = System.getProperty("leggings.test.aetherGameplay", "");
+        if (!aether.isEmpty() && !aether.equals("absent")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedleggings.test.aether.AetherGameplayChecks.tick(event.getServer()));
+        } else if (!System.getProperty("leggings.test.rootsTicks", "").isEmpty()) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> RootsTickChecks.tick(event.getServer()));
         } else if (Boolean.getBoolean("leggings.test.oritechCapture")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> OritechGameplayChecks.tick(event.getServer()));

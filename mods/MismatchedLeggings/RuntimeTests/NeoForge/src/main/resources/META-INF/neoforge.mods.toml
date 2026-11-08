@@ -28,6 +28,9 @@ config="leggings-roots-ticks-test.mixins.json"
 [[mixins]]
 config="leggings-aether-spike.mixins.json"
 
+[[mixins]]
+config="leggings-aether-gameplay-test.mixins.json"
+
 [[dependencies.leggings_skeleton_test]]
 modId="mismatchedthings"
 type="required"

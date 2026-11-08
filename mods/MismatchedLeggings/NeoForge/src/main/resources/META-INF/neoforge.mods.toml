@@ -24,6 +24,9 @@ config="mismatchedleggings.oritech.mixins.json"
 [[mixins]]
 config="mismatchedleggings.rootsclassic.mixins.json"
 
+[[mixins]]
+config="mismatchedleggings.aether.mixins.json"
+
 [[mods]]
 modId="${mod_id}"
 version="${version}"

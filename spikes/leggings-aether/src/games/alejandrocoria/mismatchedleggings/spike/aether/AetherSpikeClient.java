@@ -181,7 +181,7 @@ public final class AetherSpikeClient {
                     client.player.setItemSlot(EquipmentSlot.LEGS, equipped ? root : ItemStack.EMPTY);
                     int count = Math.min(3, EquipmentUtil.getArmorCount(client.player, set));
                     int expected = equipped ? (set == source.get(AetherIIDataComponents.ARMOR_SET) ? 2 : 0)
-                            + (AetherSpike.CANDIDATE || root.get(AetherIIDataComponents.ARMOR_SET) == set ? 1 : 0) : 0;
+                            + 1 : 0;
                     require(count == expected, "Client native set count differs from server semantics");
                     var progress = Component.translatable(key + "2", Component.literal(count + "/3"));
                     require(!progress.getString().contains(key), "Missing native set-progress translation");

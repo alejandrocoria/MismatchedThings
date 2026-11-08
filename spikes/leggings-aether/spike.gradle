@@ -5,12 +5,11 @@ sourceSets.main.java.srcDir rootProject.file('spikes/leggings-aether/src')
 sourceSets.main.resources.srcDir rootProject.file('spikes/leggings-aether/resources')
 def resolver = project(':MismatchedThings').testModArtifacts
 def nativeJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar') }
-dependencies.add('compileOnly', files(nativeJar))
 
 def product = project(':MismatchedLeggings:NeoForge')
 def boots = project(':MismatchedBoots:NeoForge')
-def mode = providers.gradleProperty('leggingsAetherMode').getOrElse('candidate')
-if (!(mode in ['baseline', 'candidate'])) { throw new GradleException("Unknown Aether spike mode: ${mode}") }
+def mode = providers.gradleProperty('leggingsAetherMode').getOrElse('presentation')
+if (mode != 'presentation') { throw new GradleException('The gameplay spike was replaced by verifyAetherGameplay; only presentation remains') }
 def coexist = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
 def variant = "aether-spike-${mode}" + (coexist ? '-boots' : '')
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${variant}").get().asFile
@@ -59,11 +58,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         disableIdeRun()
         gameDirectory = run
         systemProperty('leggings.test.aetherSpike', 'true')
-        systemProperty('leggings.test.aetherMode', mode)
         systemProperty('leggings.test.boots', coexist.toString())
         systemProperty('leggings.test.report', reports.absolutePath)
-        systemProperty('leggings.test.aetherNativeJar', nativeJar.get().absolutePath)
-        systemProperty('leggings.test.aetherBootsJar', boots.tasks.named('jar').get().archiveFile.get().asFile.absolutePath)
         jvmArgument('-Xmx1G')
     }
     tasks.named("runAetherSpike${phase}") { dependsOn "prepareAetherSpike${phase}" }
@@ -71,7 +67,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
 
 tasks.register('verifyAetherSpike') {
     group = 'verification'
-    description = 'Runs the temporary native Aether leggings baseline/candidate on an isolated server and hidden client.'
+    description = 'Runs the remaining Aether presentation feasibility with production-only gameplay and a hidden client.'
     doLast {
         def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${variant}").get().asFile
         logs.mkdirs()

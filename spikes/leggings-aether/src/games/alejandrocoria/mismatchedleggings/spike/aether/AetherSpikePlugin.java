@@ -17,8 +17,5 @@ public final class AetherSpikePlugin implements IMixinConfigPlugin {
     public List<String> getMixins() { return null; }
     public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        if (mixin.endsWith(".AetherTarget") && !System.getProperty("leggings.test.aetherMode").equals("baseline")) {
-            AetherTransforms.apply(node);
-        }
     }
 }

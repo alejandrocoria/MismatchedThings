@@ -3,7 +3,7 @@
     "package": "games.alejandrocoria.mismatchedleggings.spike.aether.mixin",
     "plugin": "games.alejandrocoria.mismatchedleggings.spike.aether.AetherSpikePlugin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["AetherTarget", "BehaviorTagMixin"],
+    "mixins": [],
     "client": ["RendererProbe"],
     "injectors": { "defaultRequire": 1 }
 }
