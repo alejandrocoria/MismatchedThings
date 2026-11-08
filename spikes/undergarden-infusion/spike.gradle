@@ -1,0 +1,103 @@
+import java.util.concurrent.TimeUnit
+
+// Disposable native/baseline/candidate experiment, never included in product artifacts.
+sourceSets.main.java.srcDir rootProject.file('spikes/undergarden-infusion/src')
+sourceSets.main.resources.srcDir rootProject.file('spikes/undergarden-infusion/resources')
+def nativeJar = providers.provider {
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')
+}
+def boots = project(':MismatchedBoots:NeoForge')
+def leggings = project(':MismatchedLeggings:NeoForge')
+dependencies.add('compileOnly', files(nativeJar, boots.tasks.named('jar').flatMap { it.archiveFile }))
+def graph = providers.gradleProperty('undergardenGraph').getOrElse('both')
+def candidate = providers.gradleProperty('undergardenCandidate').map { it.toBoolean() }.getOrElse(false)
+if (!(graph in ['boots', 'leggings', 'both'])) { throw new GradleException("Unknown spike graph ${graph}") }
+def label = "undergarden-${graph}-${candidate ? 'candidate' : 'baseline'}"
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def runRoot = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
+
+['Server', 'Client'].each { phase ->
+    def directory = new File(runRoot, phase.toLowerCase())
+    tasks.register("prepareUndergardenSpike${phase}") {
+        dependsOn tasks.named('classes'), boots.tasks.named('assemble'), leggings.tasks.named('assemble')
+        doLast {
+            def artifacts = [nativeJar.get()]
+            if (graph != 'boots') { artifacts.add(leggings.tasks.named('jar').get().archiveFile.get().asFile) }
+            if (graph != 'leggings') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+            def mods = new File(directory, 'mods')
+            mods.mkdirs()
+            if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
+                throw new GradleException("Unexpected artifact in disposable ${mods}")
+            }
+            copy { from artifacts; into mods }
+            reports.mkdirs()
+            ["${phase.toLowerCase()}.ok", "${phase.toLowerCase()}.failure.txt"].each { new File(reports, it).delete() }
+            new File(directory, 'config').mkdirs()
+            new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (phase == 'Server') {
+                new File(directory, 'eula.txt').text = 'eula=true\n'
+                new File(directory, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=0
+level-name=skeleton
+view-distance=2
+simulation-distance=2
+max-tick-time=-1
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}
+'''
+            } else {
+                def world = new File(runRoot, 'server/skeleton')
+                if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run spike server first') }
+                copy { from world; into new File(directory, 'saves/skeleton') }
+                new File(directory, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\nguiScale:2\n'
+            }
+        }
+    }
+    neoForge.runs.create("undergardenSpike${phase}") {
+        if (phase == 'Server') { server(); programArgument('--nogui') }
+        else { client(); programArgument('--quickPlaySingleplayer'); programArgument('skeleton') }
+        disableIdeRun()
+        gameDirectory = directory
+        systemProperty('leggings.test.undergardenSpike', 'true')
+        systemProperty('undergarden.spike.candidate', candidate.toString())
+        systemProperty('undergarden.spike.graph', graph)
+        systemProperty('leggings.test.report', reports.absolutePath)
+        jvmArgument('-Xmx1G')
+    }
+    tasks.named("runUndergardenSpike${phase}") { dependsOn "prepareUndergardenSpike${phase}" }
+}
+tasks.register('verifyUndergardenSpike') {
+    group = 'verification'
+    description = 'Runs the isolated Undergarden native/mixed infusion feasibility experiment.'
+    doLast {
+        def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+        logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        ['server', 'client'].each { phase ->
+            def log = new File(logs, "${phase}.log")
+            def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
+                        '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runUndergardenSpike${phase.capitalize()}",
+                        "-Pneoforge_version=${neoforge_version}", "-PundergardenGraph=${graph}", "-PundergardenCandidate=${candidate}"]
+            if (gradle.startParameter.offline) { args.add('--offline') }
+            logger.lifecycle("Undergarden spike ${neoforge_version}/${label}/${phase}")
+            def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                    .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+            try {
+                if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
+                        || !new File(reports, "${phase}.ok").isFile() || new File(reports, "${phase}.failure.txt").exists()) {
+                    throw new GradleException("Undergarden spike failed: ${log}")
+                }
+                if (log.text.readLines().any { it.contains('/ERROR]') }) {
+                    throw new GradleException("Unexpected Undergarden errors: ${log}")
+                }
+            } finally {
+                if (process.isAlive()) {
+                    process.toHandle().descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                }
+            }
+        }
+        new File(logs, 'matrix.ok').text = "${label}; native Infuser/infection and hidden native client presentation\n"
+    }
+}
