@@ -22,6 +22,10 @@ import net.minecraft.world.item.Items;
 public final class SkeletonClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        if (games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.enabled()) {
+            ClientTickEvents.END_CLIENT_TICK.register(games.alejandrocoria.mismatchedleggings.test.mystical.SpikeClient::tick);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.betterEnd")) {
             BetterEndClientChecks.renderChecks = CrystaliteCaptureChecks::run;
         }

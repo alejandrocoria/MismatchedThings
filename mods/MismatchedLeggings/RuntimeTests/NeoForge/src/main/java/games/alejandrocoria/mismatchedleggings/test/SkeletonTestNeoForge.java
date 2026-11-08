@@ -13,6 +13,11 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.enabled()) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.seed(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.rogdoriumPresentation")) {
             if (FMLEnvironment.getDist().isClient()) {
                 bus.addListener(SkeletonClientNeoForge::setup);

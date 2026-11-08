@@ -11,6 +11,10 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.enabled()) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> games.alejandrocoria.mismatchedleggings.test.mystical.SpikeClient.tick(Minecraft.getInstance()));
+            return;
+        }
         if (ForbiddenBootsChecks.enabled()) {
             SkeletonChecks.require(ForbiddenBootsStorage.adoptions.get() == 0, "Native modifier adoption ran before a client world existed");
         }

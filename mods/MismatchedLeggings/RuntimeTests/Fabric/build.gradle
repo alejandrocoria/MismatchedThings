@@ -48,6 +48,7 @@ apply from: '../better-end-fixtures.gradle'
 apply from: '../create-fly-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
+apply from: rootProject.file('spikes/leggings-mystical/spike.gradle')
 
 dependencies {
     testImplementation files(project(':MismatchedLeggings:Fabric').tasks.named('jar').flatMap { it.archiveFile })

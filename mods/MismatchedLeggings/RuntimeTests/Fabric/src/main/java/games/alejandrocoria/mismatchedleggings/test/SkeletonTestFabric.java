@@ -10,6 +10,10 @@ import net.minecraft.resources.Identifier;
 public final class SkeletonTestFabric implements ModInitializer {
     @Override
     public void onInitialize() {
+        if (games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.enabled()) {
+            ServerTickEvents.END_SERVER_TICK.register(games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks::seed);
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.viewerBootsOnly")) {
             var loader = FabricLoader.getInstance();
             BootsOnlyViewerChecks.environment(loader.isModLoaded("mismatchedboots"), loader.isModLoaded("mismatchedleggings"),
