@@ -45,6 +45,7 @@ public final class RogdoriumPresentationClient {
     private static int closing;
     private static BackupConfirmScreen confirmed;
     private static CompletableFuture<Void> reload;
+    private static CompletableFuture<String> saved;
     private static String first;
 
     private RogdoriumPresentationClient() {}
@@ -80,6 +81,22 @@ public final class RogdoriumPresentationClient {
             if (client.player == null || client.level == null || client.getOverlay() != null) {
                 return;
             }
+            if (!Boolean.getBoolean("leggings.test.rogdoriumAbsent")) {
+                if (saved == null) {
+                    saved = client.getSingleplayerServer().submit(() -> {
+                        try {
+                            return RogdoriumLifecycleChecks.reopen(client.getSingleplayerServer());
+                        } catch (Exception failure) {
+                            throw new IllegalStateException("Saved Rogdorium state verification failed", failure);
+                        }
+                    });
+                    return;
+                }
+                if (!saved.isDone()) {
+                    return;
+                }
+                saved.join();
+            }
             if (reload == null) {
                 first = verify(client);
                 reload = client.reloadResourcePacks();
@@ -92,7 +109,8 @@ public final class RogdoriumPresentationClient {
             String second = verify(client);
             require(first.equals(second), "Resource reload changed the presentation contract");
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "presentation.txt"),
-                    first + "All assertions repeated after resource reload; no screenshots or saved-item recovery claimed\n");
+                    (saved == null ? "Native absent; no native saved-state claim\n" : saved.join())
+                            + first + "All assertions repeated after resource reload; no screenshots or multiplayer transport claimed\n");
             client.disconnectWithSavingScreen();
             closing = 1;
         } catch (Throwable failure) {
@@ -108,8 +126,6 @@ public final class RogdoriumPresentationClient {
         require(mods.isLoaded("undergarden") != absent, "Wrong native presence");
         require(mods.isLoaded("mismatchedboots") == PRODUCTS.contains("Boots")
                 && mods.isLoaded("mismatchedleggings") == PRODUCTS.contains("Leggings"), "Wrong product graph");
-        require(!Boolean.getBoolean("leggings.test.undergardenSpike") && !Boolean.getBoolean("undergarden.spike.candidate"),
-                "Production presentation cannot enable candidate hooks");
         var type = infusionType();
         require((type == null) == absent, "Wrong registered infusion component");
         var report = new StringBuilder();
@@ -178,6 +194,9 @@ public final class RogdoriumPresentationClient {
             }
             report.append(product).append(": both orientations; one live native line/style or none when depleted/absent/hidden; ")
                     .append("normal/F3+H, root-only state, source flags/history, native control and full/partial/zero bars passed\n");
+        }
+        if (!absent && PRODUCTS.contains("Leggings")) {
+            report.append(UndergardenOrdinaryRendering.verify(client));
         }
         return report.toString();
     }

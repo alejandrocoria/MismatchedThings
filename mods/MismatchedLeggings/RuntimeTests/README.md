@@ -68,7 +68,8 @@ source removal/reinstallation, and both products together with optional viewers.
 This maintained **server-only** profile exercises the packaged Boots/Leggings
 factories and recomposers, with the small native-state service in their selected
 nested Things, plus their independent production Infuser adapters. It does not
-activate the root spike's candidate hooks or change tooltips. The fixture module
+activate candidate hooks or change tooltips. The executable infusion spike has
+been retired; all checks use maintained fixtures. The fixture module
 can stage each product alone or both, never loose product classes or indev
 JARs/configuration/worlds.
 
@@ -97,8 +98,15 @@ old OWNER layouts and absent/zero reservoirs. Bare, suspended, quarantined,
 count-two and unrelated items do not gain admission. Slot/fuel restrictions remain
 native. Recipe removal, changed ingredients and equivalent replacement/time changes
 use the real recipe-manager apply/finalize path with new menus/machines.
-Codec roundtrips are not real multiplayer transport or saved-world reopening;
-menu calls do not establish ordinary-client prediction or visual acceptance.
+Normal native runs also save six roots per installed product in a real chest:
+natively spent and paid-refilled balances, synthetic former OWNER/absent-inverse
+layouts, explicit zero and a root-only custom capacity. `saved-roots.nbt` is an
+independently encoded full-stack oracle. OWNER samples reproduce the old layout;
+they are not saves produced by a published 1.0.0 binary. Coexistence compares
+native infection and slot spending with both products worn together. Four ordinary
+Leggings families additionally exercise actual equipped armor/Froststeel speed.
+Codec roundtrips are not multiplayer transport; menu calls do not establish
+ordinary-client prediction or visual acceptance.
 
 `compatible` introduces an unrelated instruction and a final boolean peer chain.
 `recipe` and `menu` each replace one operand with a runtime-identical but unproved
@@ -127,6 +135,11 @@ This state gate opens no client window and establishes no owner visual acceptanc
 
 The presentation driver first runs the corresponding state/Infuser server, then
 copies its disposable world and exact staged product/native JARs into a client.
+The second JVM reopens the actual saved chest on its integrated server thread,
+requiring exact full-stack NBT before recomposition and exact live infusion
+presence/value, source history and custom name afterward. Derived repair ingredient
+ordering is not a live-state invariant. Native absence skips the native lifecycle
+fixture without loading its optional classes.
 It requires the normal variant; add `'-Pneoforge_version=26.1.2.99'` for a focused
 floor check, and restore `.114` afterward. Run graphs/baselines sequentially.
 The existing test-only window hook hides the client **before GLFW creation**;
@@ -141,12 +154,27 @@ durability bar; hiding the component tooltip must not hide the independent nativ
 bar. Tooltip/decorator calls must not mutate roots or histories. Assertions repeat
 after resource reload; absence must remain quiet.
 
+When Leggings is installed with Undergarden, the four ordinary families also
+exercise both item orientations in GUI/each hand, native equipped materials and
+trim layers, glint, selected moving legs and nonempty clipped waists while
+standing/crouched. These submission assertions repeat after resource reload;
+they are not pixel-level or owner visual certification.
+
 Evidence shares the state profile's report/log directories: `presentation.txt`,
 `client.ok`, `client.log` and `presentation.ok`. Unexpected runtime ERRORs or adapter
 refusals fail the driver; the client disconnects cleanly before stopping.
-Opening a copied world does not certify saved mixed-item recovery, multiplayer
-transport, manual presentation or native menu prediction; those remain separate
-consolidation/owner gates.
+This establishes actual saved-item reopening, not multiplayer transport, manual
+presentation or native menu prediction; those remain separate owner gates.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumArtifacts --offline --console=plain
+```
+
+The artifact gate assembles all six product/core JARs. It rejects bundled native,
+test or spike classes and Fabric references to native Undergarden classes, checks
+the small Things service/provider boundary, and requires each product to embed
+the exact current loader-specific core. This packaging gate does not replace the
+core's focused unchanged API-v1 consumer evolution check.
 
 ## Aether II production gameplay
 

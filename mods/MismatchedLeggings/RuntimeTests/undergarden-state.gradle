@@ -1,4 +1,5 @@
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipFile
 
 // Packaged product state/Infuser behavior: no spike flags, source directories or candidate mixins.
 def nativeJar = providers.provider {
@@ -176,5 +177,47 @@ tasks.register('verifyRogdoriumPresentation') {
                 process.destroyForcibly()
             }
         }
+    }
+}
+
+tasks.register('verifyRogdoriumArtifacts') {
+    group = 'verification'
+    description = 'Checks additive native-state service packaging, optional boundaries and exact nested core identity.'
+    ['Fabric', 'NeoForge'].each { loader ->
+        ['Boots', 'Leggings', 'Things'].each { name ->
+            dependsOn project(":Mismatched${name}:${loader}").tasks.named('assemble')
+        }
+    }
+    doLast {
+        ['Fabric', 'NeoForge'].each { loader ->
+            def shared = project(":MismatchedThings:${loader}").tasks.named('jar').get().archiveFile.get().asFile
+            ['Boots', 'Leggings', 'Things'].each { name ->
+                def jar = project(":Mismatched${name}:${loader}").tasks.named('jar').get().archiveFile.get().asFile
+                new ZipFile(jar).withCloseable { zip ->
+                    def entries = zip.entries().findAll { !it.directory }
+                    if (entries.any { it.name.startsWith('quek/') || it.name.contains('/test/') || it.name.contains('/spike/') }) {
+                        throw new GradleException("Foreign or test classes leaked into ${jar}")
+                    }
+                    if (loader == 'Fabric' && entries.findAll { it.name.endsWith('.class') }.any {
+                        new String(zip.getInputStream(it).bytes, java.nio.charset.StandardCharsets.ISO_8859_1).contains('quek/undergarden/')
+                    }) {
+                        throw new GradleException("Fabric foreign native reference in ${jar}")
+                    }
+                    String service = 'META-INF/services/games.alejandrocoria.mismatchedthings.api.compatibility.undergarden.RogdoriumInfusionService'
+                    if (name == 'Things') {
+                        if (!zip.getEntry('games/alejandrocoria/mismatchedthings/api/compatibility/undergarden/RogdoriumInfusionService.class')
+                                || (zip.getEntry(service) != null) != (loader == 'NeoForge')) {
+                            throw new GradleException("Wrong optional service packaging in ${jar}")
+                        }
+                    } else {
+                        def cores = entries.findAll { it.name.contains('mismatchedthings') && it.name.endsWith('.jar') }
+                        if (cores.size() != 1 || !java.util.Arrays.equals(zip.getInputStream(cores.first()).bytes, shared.bytes)) {
+                            throw new GradleException("Product does not include exactly the current core: ${jar}")
+                        }
+                    }
+                }
+            }
+        }
+        logger.lifecycle('Six production artifacts: clean optional boundaries and exact nested cores')
     }
 }

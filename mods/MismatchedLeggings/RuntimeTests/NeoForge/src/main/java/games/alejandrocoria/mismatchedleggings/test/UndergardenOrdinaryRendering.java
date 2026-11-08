@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedleggings.test.undergarden;
+package games.alejandrocoria.mismatchedleggings.test;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import games.alejandrocoria.mismatchedleggings.client.render.LeggingsView;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
 /** Only ordinary native references; no copied textures/models or alternate render path. */
-final class OrdinaryRendering {
+final class UndergardenOrdinaryRendering {
     static String verify(Minecraft client) throws Exception {
         require(EquippedClient.renderer != null, "Native renderer not observed");
         var model = new HumanoidModel<HumanoidRenderState>(client.getEntityModels().bakeLayer(ModelLayers.ZOMBIE_ARMOR.legs()));
@@ -39,11 +39,11 @@ final class OrdinaryRendering {
         model.leftLeg.visible = true;
         model.rightLeg.visible = true;
         for (String family : List.of("cloggrum", "froststeel", "utherium", "ancient")) {
-            var source = InfusionSpike.item("undergarden:" + family + "_leggings");
+            var source = RogdoriumStateChecks.item("undergarden:" + family + "_leggings");
             source.set(DataComponents.TRIM, new ArmorTrim(
                     client.level.registryAccess().lookupOrThrow(Registries.TRIM_MATERIAL).getOrThrow(TrimMaterials.GOLD),
                     client.level.registryAccess().lookupOrThrow(Registries.TRIM_PATTERN).getOrThrow(TrimPatterns.SENTRY)));
-            for (var root : InfusionSpike.pair("leggings", source, new ItemStack(Items.DIAMOND_LEGGINGS))) {
+            for (var root : RogdoriumStateChecks.pair("Leggings", source, new ItemStack(Items.DIAMOND_LEGGINGS))) {
                 root.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
                 var data = MixedLeggingsStructure.validData(root).orElseThrow();
                 var prepared = MixedLeggingsItemRenderer.prepareGui(data, true, client.getItemModelResolver(), client.level, client.player, 0);
@@ -75,6 +75,7 @@ final class OrdinaryRendering {
                             EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS, root, new PoseStack(), actual, 15728880, 0);
                     require(!actual.nodes.isEmpty() && actual.nodes.stream().allMatch(node -> node.model() instanceof LeggingsView<?>), "Equipment fallback " + family);
                     int offset = 0;
+                    int selectedSide = 0;
                     for (var history : List.of(data.left().source(), data.right().source())) {
                         history.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, root.hasFoil());
                         var nativeOutput = new RecordingSubmits();
@@ -86,7 +87,13 @@ final class OrdinaryRendering {
                             var result = actual.nodes.get(offset++);
                             require(node.type().equals(result.type()) && node.color() == result.color() && node.sprite() == result.sprite(),
                                     "Native material/trim lost: " + family + " expected=" + node.type() + " actual=" + result.type());
+                            var view = (LeggingsView<?>) result.model();
+                            require(view.root().getChild("leg") == (selectedSide == 0 ? model.leftLeg : model.rightLeg),
+                                    "Wrong native moving leg selected: " + family);
+                            require(view.root().getChild("waist").getAllParts().stream().anyMatch(part -> !part.isEmpty()),
+                                    "Clipped native waist missing: " + family);
                         }
+                        selectedSide++;
                     }
                     require(offset == actual.nodes.size(), "Unexpected source layer");
                 }

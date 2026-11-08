@@ -88,7 +88,8 @@ final class RogdoriumNativeStateChecks {
                     .append("exact recomposition including absence/zero/old-projection equality/root-only installation; ")
                     .append("native spending and recipe copy; paid workbench and unpaid invalid/binding refusal; JSON/stream roundtrip passed\n");
         }
-        return report + "Native Infuser processing/menu/payment/reloads passed; source-tooltip presentation pending C\n";
+        report.append(RogdoriumLifecycleChecks.seed(server));
+        return report + "Native Infuser processing/menu/payment/reloads passed; hidden client verifies presentation and saved-world reopening separately\n";
     }
 
     private static void creation(String product) throws Exception {
@@ -148,11 +149,14 @@ final class RogdoriumNativeStateChecks {
         player.setItemSlot(slot, nativeControl);
         tick(player);
         int nativeSpent = 600 - amount(nativeControl);
+        float nativeInfection = player.getData(UGAttachments.UNDERGARDEN_DATA).uthericInfection();
         require(nativeSpent > 0, "Native spending positive control failed");
         var oldHistory = history(root, product);
         player.setItemSlot(slot, root);
         tick(player);
-        require(amount(root) == 600 - nativeSpent && oldHistory.equals(history(root, product)), "Mixed/native spending diverged");
+        require(amount(root) == 600 - nativeSpent && oldHistory.equals(history(root, product))
+                && Math.abs(nativeInfection - player.getData(UGAttachments.UNDERGARDEN_DATA).uthericInfection()) < .0001,
+                "Mixed/native spending or infection diverged");
         var histories = sources(root, product);
         charge(histories.getFirst(), 3600, 3600);
         var refreshed = recompose(product, root, histories.getFirst(), histories.getLast());
@@ -162,6 +166,31 @@ final class RogdoriumNativeStateChecks {
         require(amount(recompose(product, root, histories.getFirst(), histories.getLast())) == 3500, "Live refill lost");
         root.remove(UGDataComponents.ROGDORIUM_INFUSION);
         require(!recompose(product, root, histories.getFirst(), histories.getLast()).has(UGDataComponents.ROGDORIUM_INFUSION), "Removed reserve resurrected");
+
+        for (int reserve : new int[]{1, 0}) {
+            charge(nativeControl, reserve, 3600);
+            player.setItemSlot(slot, nativeControl);
+            tick(player);
+            float expected = player.getData(UGAttachments.UNDERGARDEN_DATA).uthericInfection();
+            charge(root, reserve, 3600);
+            player.setItemSlot(slot, root);
+            tick(player);
+            require(amount(root) == amount(nativeControl)
+                    && Math.abs(expected - player.getData(UGAttachments.UNDERGARDEN_DATA).uthericInfection()) < .0001,
+                    "Final-unit/exhaustion diverged from native");
+        }
+        charge(root, 10, 3600);
+        player.setItemSlot(slot, ItemStack.EMPTY);
+        tick(player);
+        require(amount(root) == 10, "Unequipped root spent reserve");
+        player.setItemSlot(slot, root);
+        player.tickCount = 21;
+        NeoForge.EVENT_BUS.post(new EntityTickEvent.Pre(player));
+        require(amount(root) == 10, "Spent outside the native update interval");
+        player.setData(UGAttachments.UNDERGARDEN_DATA, new UndergardenData(20, 0, true));
+        player.tickCount = 20;
+        NeoForge.EVENT_BUS.post(new EntityTickEvent.Pre(player));
+        require(amount(root) == 10 && oldHistory.equals(history(root, product)), "Harmful threshold or immutable history changed");
     }
 
     private static void transaction(ServerLevel level, String product, ItemStack first, ItemStack second) throws Exception {
@@ -247,7 +276,7 @@ final class RogdoriumNativeStateChecks {
         return player;
     }
 
-    private static void tick(FakePlayer player) {
+    static void tick(FakePlayer player) {
         player.setData(UGAttachments.UNDERGARDEN_DATA, new UndergardenData(0, 0, true));
         player.tickCount = 20;
         NeoForge.EVENT_BUS.post(new EntityTickEvent.Pre(player));

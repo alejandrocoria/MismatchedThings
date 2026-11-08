@@ -31,8 +31,6 @@ public final class RogdoriumStateChecks {
         if (finished || server.getTickCount() < 20) { return; }
         finished = true;
         try {
-            require(!Boolean.getBoolean("leggings.test.undergardenSpike") && !Boolean.getBoolean("undergarden.spike.candidate"),
-                    "Production proof cannot enable prototype hooks");
             var mods = ModList.get();
             require(mods.isLoaded("mismatchedboots") == PRODUCTS.contains("Boots")
                     && mods.isLoaded("mismatchedleggings") == PRODUCTS.contains("Leggings"), "Wrong product graph");

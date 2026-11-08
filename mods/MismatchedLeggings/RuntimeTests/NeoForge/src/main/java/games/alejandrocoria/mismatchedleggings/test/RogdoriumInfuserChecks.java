@@ -203,6 +203,17 @@ final class RogdoriumInfuserChecks {
         }
     }
 
+    static ItemStack refill(ServerLevel level, ItemStack input, int fuel) {
+        var before = input.copy();
+        var machine = ready(level, input, fuel);
+        process(level, machine);
+        var expected = input.copy();
+        charge(expected, Math.min(3600, amount(input) + fuel * 600), 3600);
+        require(ItemStack.matches(expected, machine.getItem(3)) && machine.getItem(2).isEmpty()
+                && machine.getItem(0).isEmpty() && ItemStack.matches(input, before), "Paid persistence fixture refill failed");
+        return machine.getItem(3).copy();
+    }
+
     private static InfuserBlockEntity ready(ServerLevel level, ItemStack input, int fuel) {
         var position = new BlockPos(5, 4, 0);
         var block = BuiltInRegistries.BLOCK.getValue(Identifier.parse("undergarden:infuser"));

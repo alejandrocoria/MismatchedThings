@@ -24,7 +24,7 @@ abstract class EquipmentProbeMixin {
                 || Boolean.getBoolean("leggings.test.allTheModium") || Boolean.getBoolean("leggings.test.aquaculture")
                 || Boolean.getBoolean("leggings.test.forbiddenArcanus")
                 || Boolean.getBoolean("leggings.test.oritechCapture") || Boolean.getBoolean("leggings.test.rootsRendering")
-                || Boolean.getBoolean("leggings.test.aetherConsolidation") || Boolean.getBoolean("leggings.test.undergardenSpike")) {
+                || Boolean.getBoolean("leggings.test.aetherConsolidation") || Boolean.getBoolean("leggings.test.rogdoriumPresentation")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }
     }

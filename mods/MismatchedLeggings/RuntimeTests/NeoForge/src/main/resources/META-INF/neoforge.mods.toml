@@ -8,9 +8,6 @@ version="1.0.0"
 displayName="Leggings skeleton tests"
 
 [[mixins]]
-config="undergarden-spike.mixins.json"
-
-[[mixins]]
 config="leggings-test.mixins.json"
 
 [[mixins]]

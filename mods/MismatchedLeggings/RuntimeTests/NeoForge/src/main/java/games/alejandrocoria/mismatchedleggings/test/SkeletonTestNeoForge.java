@@ -23,10 +23,6 @@ public final class SkeletonTestNeoForge {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> RogdoriumStateChecks.tick(event.getServer()));
             return;
         }
-        if (Boolean.getBoolean("leggings.test.undergardenSpike")) {
-            games.alejandrocoria.mismatchedleggings.test.undergarden.InfusionSpike.register(bus);
-            return;
-        }
         if (Boolean.getBoolean("leggings.test.viewerBootsOnly")) {
             var mods = ModList.get();
             BootsOnlyViewerChecks.environment(mods.isLoaded("mismatchedboots"), mods.isLoaded("mismatchedleggings"),
