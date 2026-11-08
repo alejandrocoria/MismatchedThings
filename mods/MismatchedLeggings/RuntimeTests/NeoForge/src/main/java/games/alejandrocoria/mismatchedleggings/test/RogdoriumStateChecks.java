@@ -16,7 +16,7 @@ import java.util.Locale;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Maintained state wiring only; the prototype's candidate hooks are never enabled. */
+/** Maintained state/Infuser wiring; the prototype's candidate hooks are never enabled. */
 public final class RogdoriumStateChecks {
     static final List<String> PRODUCTS = switch (System.getProperty("leggings.test.rogdoriumGraph", "both")) {
         case "boots" -> List.of("Boots");

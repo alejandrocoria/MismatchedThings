@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.mixin.compatibility.undergarden",
+    "plugin": "games.alejandrocoria.mismatchedboots.compatibility.undergarden.InfuserMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "InfuserTargetsMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

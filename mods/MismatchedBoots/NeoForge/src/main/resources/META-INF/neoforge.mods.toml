@@ -46,6 +46,9 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.undergarden.mixins.json"
 
 [[mixins]]
+    config="mismatchedboots.undergarden-infusion.mixins.json"
+
+[[mixins]]
     config="mismatchedboots.aether-recognition.mixins.json"
 
 [[mixins]]

@@ -67,15 +67,19 @@ source removal/reinstallation, and both products together with optional viewers.
 
 This maintained **server-only** profile exercises the packaged Boots/Leggings
 factories and recomposers, with the small native-state service in their selected
-nested Things. It does not activate the root spike's candidate hooks or change
-Infuser admission/tooltips. The fixture module can stage each product alone or
-both, never loose product classes or indev JARs/configuration/worlds.
+nested Things, plus their independent production Infuser adapters. It does not
+activate the root spike's candidate hooks or change tooltips. The fixture module
+can stage each product alone or both, never loose product classes or indev
+JARs/configuration/worlds.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenGraph=boots' --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenGraph=leggings' --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenAbsent=true' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenVariant=compatible' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenVariant=recipe' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenVariant=menu' --offline --console=plain
 ```
 
 Default graph is `both`. Add `'-Pneoforge_version=26.1.2.99'` for the supported
@@ -87,15 +91,28 @@ Coverage: odd/equal/unequal/empty native creation in both orientations, paid nat
 infusion of vanilla sources, exact live-state recomposition (including absence,
 zero, root-only installation and old-projection equality), real native spending,
 native recipe copy, paid workbench output and unpaid malformed/binding refusal,
-plus full-stack persistent/stream codecs. Refill/removal preservation uses explicit
-live field writes; **paid infusion of mixed roots remains a separate gate**, not
-an assertion of this profile. Codec roundtrips are not real multiplayer transport
-or saved-world reopening.
+plus full-stack persistent/stream codecs. The native Infuser is also exercised
+through paid mixed processing, manual/Shift-click input, extraction, partial top-up,
+old OWNER layouts and absent/zero reservoirs. Bare, suspended, quarantined,
+count-two and unrelated items do not gain admission. Slot/fuel restrictions remain
+native. Recipe removal, changed ingredients and equivalent replacement/time changes
+use the real recipe-manager apply/finalize path with new menus/machines.
+Codec roundtrips are not real multiplayer transport or saved-world reopening;
+menu calls do not establish ordinary-client prediction or visual acceptance.
 
-Reports: `NeoForge/build/reports/<baseline>/rogdorium-state-<graph>[-absent]/`;
+`compatible` introduces an unrelated instruction and a final boolean peer chain.
+`recipe` and `menu` each replace one operand with a runtime-identical but unproved
+supplier, testing independent refusal without disabling the other hook or native
+armor. Three focused `InfuserShapeTest` unit tests additionally exercise the actual
+packaged Boots transformation and Leggings transformation in both orders, duplicate
+application, compatible peers and unknown recipe/slot/menu operands atomically.
+
+Reports: `NeoForge/build/reports/<baseline>/rogdorium-state-<graph>[-absent][-variant]/`;
 driver logs/`matrix.ok`: matching `NeoForge/build/verification/.../`.
 One bounded `Mixed Rogdorium infusion creation refused` warning is expected from
-the present-native negative controls; absence must be quiet. Errors, bad exit,
+the normal/compatible present-native negative controls; absence must be quiet.
+Each isolated refusal expects one guard warning per installed product and no state
+warning. Errors, bad exit,
 timeouts, failed/missing markers and unexpected refusal counts fail verification.
 This state gate opens no client window and establishes no owner visual acceptance.
 

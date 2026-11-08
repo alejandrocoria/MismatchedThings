@@ -12,6 +12,9 @@ def optionalGeckoApi = files(providers.provider {
 })
 
 dependencies {
+    compileOnly files(providers.provider {
+        project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')
+    })
     compileOnly optionalGeckoApi
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -63,4 +66,8 @@ tasks.named('test', Test) {
     inputs.file(providers.provider { artifacts.resolve('NeoForge', aether) })
             .withPropertyName('aetherGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.aetherGuardJar', artifacts.path('NeoForge', aether).absolutePath
+    def undergarden = 'The_Undergarden-26.1.2-0.9.8.jar'
+    inputs.file(providers.provider { artifacts.resolve('NeoForge', undergarden) })
+            .withPropertyName('undergardenGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
+    systemProperty 'mismatchedleggings.test.undergardenGuardJar', artifacts.path('NeoForge', undergarden).absolutePath
 }

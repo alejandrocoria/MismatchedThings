@@ -1,6 +1,6 @@
 import java.util.concurrent.TimeUnit
 
-// Packaged product state only: no spike flags, source directories or candidate mixins.
+// Packaged product state/Infuser behavior: no spike flags, source directories or candidate mixins.
 def nativeJar = providers.provider {
     project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')
 }
@@ -9,8 +9,12 @@ def boots = project(':MismatchedBoots:NeoForge')
 def leggings = project(':MismatchedLeggings:NeoForge')
 def graph = providers.gradleProperty('leggingsUndergardenGraph').getOrElse('both')
 def absent = providers.gradleProperty('leggingsUndergardenAbsent').map { it.toBoolean() }.getOrElse(false)
+def variant = providers.gradleProperty('leggingsUndergardenVariant').getOrElse('normal')
+if (!(variant in ['normal', 'compatible', 'recipe', 'menu']) || absent && variant != 'normal') {
+    throw new GradleException("Unknown or absent-native Undergarden variant ${variant}")
+}
 if (!(graph in ['boots', 'leggings', 'both'])) { throw new GradleException("Unknown Undergarden graph ${graph}") }
-def label = "rogdorium-state-${graph}" + (absent ? '-absent' : '')
+def label = "rogdorium-state-${graph}" + (absent ? '-absent' : '') + (variant == 'normal' ? '' : "-${variant}")
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 
@@ -54,6 +58,7 @@ neoForge.runs.create('rogdoriumStateServer') {
     systemProperty('leggings.test.rogdoriumState', 'true')
     systemProperty('leggings.test.rogdoriumGraph', graph)
     systemProperty('leggings.test.rogdoriumAbsent', absent.toString())
+    systemProperty('leggings.test.rogdoriumVariant', variant)
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
 }
@@ -61,7 +66,7 @@ tasks.named('runRogdoriumStateServer') { dependsOn 'prepareRogdoriumStateServer'
 
 tasks.register('verifyRogdoriumState') {
     group = 'verification'
-    description = 'Verifies production Rogdorium creation, live-state preservation, native spending and optional absence.'
+    description = 'Verifies production Rogdorium state, native Infuser admission/payment, local guards and optional absence.'
     doLast {
         def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
         logs.mkdirs()
@@ -69,7 +74,8 @@ tasks.register('verifyRogdoriumState') {
         def log = new File(logs, 'server.log')
         def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
                     '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runRogdoriumStateServer",
-                    "-Pneoforge_version=${neoforge_version}", "-PleggingsUndergardenGraph=${graph}", "-PleggingsUndergardenAbsent=${absent}"]
+                    "-Pneoforge_version=${neoforge_version}", "-PleggingsUndergardenGraph=${graph}", "-PleggingsUndergardenAbsent=${absent}",
+                    "-PleggingsUndergardenVariant=${variant}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         logger.lifecycle("Production Rogdorium state ${neoforge_version}/${label}")
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
@@ -82,7 +88,10 @@ tasks.register('verifyRogdoriumState') {
             }
             def lines = log.text.readLines()
             def refusals = lines.count { it.contains('Mixed Rogdorium infusion creation refused:') }
-            if (lines.any { it.contains('/ERROR]') } || refusals != (absent ? 0 : 1)
+            def guardRefusals = lines.count { it.contains('Undergarden mixed ') && it.contains(' disabled: incompatible local operands') }
+            int expectedGuards = variant in ['recipe', 'menu'] ? (graph == 'both' ? 2 : 1) : 0
+            if (lines.any { it.contains('/ERROR]') } || refusals != (absent || expectedGuards > 0 ? 0 : 1)
+                    || guardRefusals != expectedGuards
                     || absent && lines.any { it.contains('Error loading class: quek/undergarden/') }) {
                 throw new GradleException("Unexpected Rogdorium diagnostics: ${log}")
             }

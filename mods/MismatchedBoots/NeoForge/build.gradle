@@ -59,6 +59,9 @@ tasks.named('assemble') {
 }
 
 dependencies {
+    compileOnly files(providers.provider {
+        project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')
+    })
     implementation(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
     jarJar(project(path: ':MismatchedThings:NeoForge', configuration: 'workbenchElements')) { transitive = false }
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"

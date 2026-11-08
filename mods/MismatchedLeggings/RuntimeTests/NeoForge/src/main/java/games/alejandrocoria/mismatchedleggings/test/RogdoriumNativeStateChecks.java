@@ -44,11 +44,15 @@ import static games.alejandrocoria.mismatchedleggings.test.RogdoriumStateChecks.
 import static games.alejandrocoria.mismatchedleggings.test.RogdoriumStateChecks.sources;
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Loaded only by the present-native profile; no test-local creation override or infusion-admission hook. */
+/** Loaded only by the present-native profile; no prototype creation or admission overrides. */
 final class RogdoriumNativeStateChecks {
     private RogdoriumNativeStateChecks() {}
 
     static String verify(MinecraftServer server) throws Exception {
+        String variant = System.getProperty("leggings.test.rogdoriumVariant", "normal");
+        if (variant.equals("recipe") || variant.equals("menu")) {
+            return RogdoriumInfuserChecks.refusal(server, variant);
+        }
         var level = server.overworld();
         var biome = level.registryAccess().lookupOrThrow(Registries.BIOME)
                 .getOrThrow(ResourceKey.create(Registries.BIOME, Identifier.parse("undergarden:depths")));
@@ -68,8 +72,8 @@ final class RogdoriumNativeStateChecks {
             for (var root : pair(product, nativeSource, other)) {
                 require(amount(root) == 600 && maximum(root) == 3600, "Paid infused vanilla creation " + product);
                 var before = root.copy();
-                require(!armorRecipe.matches(new InfuserInput(root, InfusingRecipe.SlotType.ROGDORIUM), level),
-                        "Block A accidentally enabled Infuser admission");
+                require(armorRecipe.matches(new InfuserInput(root, InfusingRecipe.SlotType.ROGDORIUM), level),
+                        "Production Infuser admission missing");
                 var copied = armorRecipe.assemble(new InfuserInput(root, InfusingRecipe.SlotType.ROGDORIUM));
                 require(ItemStack.matches(copied, root), "Native assemble copy changed reservoir/history");
                 roundtrip(server, root);
@@ -79,11 +83,12 @@ final class RogdoriumNativeStateChecks {
             spending(level, product, nativeSource, other);
             transaction(level, product, nativeSource, other);
             unavailableBinding(product, nativeSource, other);
+            RogdoriumInfuserChecks.verify(server, product, armorRecipe, nativeSource, other);
             report.append(product).append(": registered native binding; conservative creation both orientations/vanilla sources; ")
                     .append("exact recomposition including absence/zero/old-projection equality/root-only installation; ")
                     .append("native spending and recipe copy; paid workbench and unpaid invalid/binding refusal; JSON/stream roundtrip passed\n");
         }
-        return report + "Infuser processing/menu and source-tooltip presentation remain unchanged, pending B/C\n";
+        return report + "Native Infuser processing/menu/payment/reloads passed; source-tooltip presentation pending C\n";
     }
 
     private static void creation(String product) throws Exception {
@@ -234,7 +239,7 @@ final class RogdoriumNativeStateChecks {
         } finally { bytes.release(); }
     }
 
-    private static FakePlayer player(ServerLevel level) {
+    static FakePlayer player(ServerLevel level) {
         var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "rogdorium_state"));
         player.setGameMode(GameType.SURVIVAL);
         player.connection.markClientLoaded();
@@ -248,7 +253,7 @@ final class RogdoriumNativeStateChecks {
         NeoForge.EVENT_BUS.post(new EntityTickEvent.Pre(player));
     }
 
-    private static int amount(ItemStack stack) {
+    static int amount(ItemStack stack) {
         return stack.getOrDefault(UGDataComponents.ROGDORIUM_INFUSION, RogdoriumInfusion.DEFAULT).infusionAmount();
     }
 
@@ -256,7 +261,7 @@ final class RogdoriumNativeStateChecks {
         return stack.getOrDefault(UGDataComponents.ROGDORIUM_INFUSION, RogdoriumInfusion.DEFAULT).infusionMax();
     }
 
-    private static void charge(ItemStack stack, int amount, int maximum) {
+    static void charge(ItemStack stack, int amount, int maximum) {
         stack.set(UGDataComponents.ROGDORIUM_INFUSION, new RogdoriumInfusion(amount, maximum));
     }
 }
