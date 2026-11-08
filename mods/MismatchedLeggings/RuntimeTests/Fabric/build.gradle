@@ -63,3 +63,5 @@ tasks.named('test', Test) {
     workingDir layout.buildDirectory.dir('test-work')
     doFirst { workingDir.mkdirs() }
 }
+
+apply from: '../mystical-effects.gradle'

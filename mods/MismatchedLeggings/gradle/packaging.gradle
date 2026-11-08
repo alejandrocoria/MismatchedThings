@@ -22,7 +22,8 @@ gradle.projectsEvaluated {
                     if ('data/minecraft/tags/item/leg_armor.json' in names) {
                         throw new GradleException('Broad armor classification would advertise invalid mixed smithing examples')
                     }
-                    if (names.any { it.startsWith('com/autovw/advancednetherite/')
+                    if (names.any { it.startsWith('com/blakebr0/mysticalagriculture/') || it.startsWith('com/blakebr0/cucumber/')
+                            || it.startsWith('com/autovw/advancednetherite/')
                             || it.startsWith('com/zurrtum/create/')
                             || it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
                             || it.contains('leggingsspike') || it.contains('leggings-spike') || it.contains('leggings_test')
@@ -64,9 +65,23 @@ gradle.projectsEvaluated {
                      'mismatchedleggings.mixins.json',
                      'mismatchedleggings.recovery.mixins.json',
                      'mismatchedleggings.advancednetherite.mixins.json',
+                     'mismatchedleggings.mysticalagriculture.mixins.json',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAugments.class',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAugmentsCompatibility.class',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAugmentsShape.class',
+                     'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAugmentsMixinPlugin.class',
+                     'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalEquipmentMixin.class',
+                     'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalArmorTickProofMixin.class',
+                     'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalHealthCleanupMixin.class',
                      'games/alejandrocoria/mismatchedleggings/compatibility/advancednetherite/AdvancedNetheriteMixinPlugin.class',
                      'games/alejandrocoria/mismatchedleggings/mixin/compatibility/advancednetherite/AdvancedNetheriteHooksMixin.class'].each { path ->
                         if (!(path in names)) { throw new GradleException("Missing product entry: ${path}") }
+                    }
+                    def mystical = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('mismatchedleggings.mysticalagriculture.mixins.json')))
+                    if (mystical.plugin != 'games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture.MysticalAugmentsMixinPlugin'
+                            || mystical.package != 'games.alejandrocoria.mismatchedleggings.mixin.compatibility.mysticalagriculture'
+                            || mystical.mixins != []) {
+                        throw new GradleException('Wrong optional Mystical Agriculture mixin ownership')
                     }
                     String nestedPath
                     def optionalMixin = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('mismatchedleggings.advancednetherite.mixins.json')))
@@ -80,13 +95,14 @@ gradle.projectsEvaluated {
                         if (descriptor.id != 'mismatchedleggings' || descriptor.version != project.version.toString()
                                 || descriptor.depends.mismatchedthings != '>=1.1.0 <2.0.0'
                                 || descriptor.depends.containsKey('mismatchedboots')
+                                || descriptor.depends.containsKey('mysticalagriculture') || descriptor.depends.containsKey('cucumber')
                                 || descriptor.depends.containsKey('advancednetherite')
                                 || descriptor.depends.containsKey('betternether')
                                 || descriptor.depends.containsKey('create')
                                 || descriptor.depends.containsKey('jei') || descriptor.depends.containsKey('roughlyenoughitems')
                                 || descriptor.entrypoints.jei_mod_plugin != ['games.alejandrocoria.mismatchedleggings.compatibility.jei.MismatchedLeggingsJeiPlugin']
                                 || descriptor.entrypoints.rei_client != ['games.alejandrocoria.mismatchedleggings.compatibility.rei.MismatchedLeggingsReiClientPlugin']
-                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.advancednetherite.mixins.json', 'mismatchedleggings.betternether.mixins.json', 'mismatchedleggings.createfly.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
+                                || descriptor.mixins != ['mismatchedleggings.mixins.json', 'mismatchedleggings.mysticalagriculture.mixins.json', 'mismatchedleggings.recovery.mixins.json', 'mismatchedleggings.advancednetherite.mixins.json', 'mismatchedleggings.betternether.mixins.json', 'mismatchedleggings.createfly.mixins.json', 'mismatchedleggings.fabric.mixins.json']) {
                             throw new GradleException('Wrong standalone Fabric identity, bounds or skeleton hooks')
                         }
                         ['mismatchedleggings.betternether.mixins.json',
@@ -130,6 +146,10 @@ gradle.projectsEvaluated {
                         if (text.count('config="mismatchedleggings.advancednetherite.mixins.json"') != 1
                                 || text.contains('modId="advancednetherite"')) {
                             throw new GradleException('Optional Advanced Netherite integration is missing, duplicated or required')
+                        }
+                        if (text.count('config="mismatchedleggings.mysticalagriculture.mixins.json"') != 1
+                                || text.contains('modId="mysticalagriculture"') || text.contains('modId="cucumber"')) {
+                            throw new GradleException('Optional Mystical Agriculture integration is missing, duplicated or required')
                         }
                         def dependency = text.split(/\[\[dependencies\.[^\]]+\]\]/).find { it.contains('modId="mismatchedthings"') }
                         if (!text.contains('modId="mismatchedleggings"') || text.contains('modId="mismatchedboots"')

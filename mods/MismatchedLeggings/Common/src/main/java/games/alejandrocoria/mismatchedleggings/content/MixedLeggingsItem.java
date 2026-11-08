@@ -1,11 +1,15 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture.MysticalAugmentsCompatibility;
 import games.alejandrocoria.mismatchedleggings.interaction.LeggingsRepair;
 import games.alejandrocoria.mismatchedleggings.tooltip.MixedLeggingsTooltipFormatter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -18,6 +22,12 @@ import java.util.function.Consumer;
 public class MixedLeggingsItem extends Item {
     public MixedLeggingsItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
+        super.inventoryTick(stack, level, entity, slot);
+        MysticalAugmentsCompatibility.tick(stack, level, entity, slot);
     }
 
     /** Loader-local eligibility, including the native combine-repair veto on NeoForge. */

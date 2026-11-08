@@ -52,3 +52,5 @@ apply from: rootProject.file('spikes/leggings-mystical/spike.gradle')
 
 // Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.
 tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton' }
+
+apply from: '../mystical-effects.gradle'

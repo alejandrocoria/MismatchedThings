@@ -4,6 +4,9 @@ license="${mod_license}"
 issueTrackerURL="${mod_issues}"
 
 [[mixins]]
+config="mismatchedleggings.mysticalagriculture.mixins.json"
+
+[[mixins]]
 config="mismatchedleggings.mixins.json"
 
 [[mixins]]

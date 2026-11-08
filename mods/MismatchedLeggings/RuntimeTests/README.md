@@ -63,6 +63,68 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Mystical Agriculture inherited effects (block A)
+
+This maintained profile uses packaged Leggings and the resolver-pinned original
+NeoForge MA/Cucumber or independent Fabric port. Its mixed effects are production
+code; it enables no research candidate, refund router or observer. The research
+spike remains separately available until block C retires it.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalEffects --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyMysticalEffects --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalEffects '-PleggingsMaGraph=current' '-PleggingsMaFocus=lifecycle' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyMysticalEffects '-PleggingsMaGraph=current' '-PleggingsMaFocus=lifecycle' --offline --console=plain
+```
+
+Run profiles/loaders/baselines sequentially. `leggingsMaGraph=alone|current`
+selects Leggings alone or current packaged Boots. `leggingsMaFocus=full|lifecycle`
+selects the real keyboard movement matrix or focused effects/cache checks.
+`leggingsMaVariant=normal|compatible|armor|equipment|health` selects unmodified
+native operations, an unrelated instruction, or a runtime-identical but unproved
+local seam; use `lifecycle` and `alone` for refusal variants. Armor refusal affects
+only Luck; equipment refusal affects Health Boost/Speed/Step Assist; health refusal
+affects only Health Boost. Native items and independently proved families remain
+positive controls. Each refusal must produce exactly one diagnostic per affected
+family in the client process; the seed server does not initialize bindings.
+
+`-PleggingsMaAbsent=true` omits both optional native artifacts and checks ordinary
+composition/client startup with quiet absence. `-Pneoforge_version=26.1.2.99`
+selects the supported floor; restore normal `.114` outputs afterward. No indev
+instance or published Boots binary is needed by A; the unchanged published refund
+matrix belongs to B.
+
+Each profile seeds a disposable dedicated world, then starts a hidden, muted
+integrated client before GLFW creation. Native input/movement/attribute packets
+connect that real client player to the integrated server. Source/selection checks
+cover all 22 IDs, all six source tiers/capacities, strongest selection in both
+orientations, duplicate occupied purchases, unknown/unsupported IDs, malformed
+slots/roots and unchanged histories. Live armor checks cover all seven armor
+families (Absorption III, Fire Resistance, Luck III, four debuff removals), native
+and both mixed orientations, carried/hand/wrong-slot controls and the shared
+exclusive 9600-tick Absorption boundary. Equipment-list order is compared to native.
+
+Normal/compatible lifecycle checks exercise Health Boost I/III/V, Step Assist,
+crouching, native-to-mixed same-rank replacement, stronger-to-weaker replacement,
+unequip and genuine near-exhausted Health V breaks with full health. Native and
+mixed Boots controls retain their lower entitlement after Leggings removal/break;
+the client checks synchronized attributes and liveness independently. Refusal
+variants run only the short native/mixed/removal control sequence.
+
+Full movement measures forward/strafe/sprint/crouch/ordinary-airborne scenes with
+empty native, Speed I/III and both mixed orientations. NeoForge must demonstrate a
+native positive in the four grounded scenes and mixed/native equality; the
+pinned Fabric port must preserve its native lack of acceleration. Equality alone
+is not functional Speed acceptance. Water and creative flight are not certified.
+
+Reports: `<Loader>/build/reports/<baseline>/mystical-effects-<graph>-<variant>`
+with optional `-absent`/`-lifecycle` suffixes. Require both phase `.ok` markers,
+`movement.txt`, and `matrix.ok` in the matching `build/verification/...` directory.
+Partial samples are diagnostic only. Unexpected runtime ERRORs, binding/refund
+refusals, bad exit, missing markers and timeouts fail verification. This profile
+establishes no refunds, native table support, actual saved mixed-item reopening,
+dedicated-client transport, rendering or owner acceptance.
+
 ## Undergarden Rogdorium state
 
 This maintained **server-only** profile exercises the packaged Boots/Leggings
