@@ -10,6 +10,7 @@ import games.alejandrocoria.mismatchedleggings.data.LeggingHalf;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
 import games.alejandrocoria.mismatchedthings.api.compatibility.forbiddenarcanus.ForbiddenModifiers;
 import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService;
+import games.alejandrocoria.mismatchedthings.api.compatibility.undergarden.RogdoriumInfusionService;
 import games.alejandrocoria.mismatchedthings.api.composition.AttributeMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.EnchantmentMerger;
@@ -103,6 +104,7 @@ public final class MixedLeggingsFactory {
             output.set(LeggingsContent.forbiddenModifiersType(), modifiers);
         }
         NeoVitaeInfusionService.INSTANCE.initializeCreation(output, data.left().source(), data.right().source());
+        RogdoriumInfusionService.INSTANCE.initializeCreation(output, data.left().source(), data.right().source());
         var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
         // Structural installation is last and strictly validates the complete native stack.
         MixedLeggingsStructure.apply(finalized, data);

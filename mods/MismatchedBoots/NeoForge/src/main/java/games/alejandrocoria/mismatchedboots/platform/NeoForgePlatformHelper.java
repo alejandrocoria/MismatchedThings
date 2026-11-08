@@ -9,8 +9,10 @@ import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDir
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireUpgradesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeInfusionCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearCompatibility;
+import games.alejandrocoria.mismatchedboots.compatibility.undergarden.RogdoriumInfusionCompatibility;
 import games.alejandrocoria.mismatchedboots.interaction.MixedBootsSmithingPolicy;
 import games.alejandrocoria.mismatchedboots.platform.services.IPlatformHelper;
+import games.alejandrocoria.mismatchedthings.api.compatibility.undergarden.RogdoriumInfusionService;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +31,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         JustDireEarthquakeCompatibility.initializeCooldown(output);
         JustDireAttributesCompatibility.prepare(null, output, attributes);
         NeoVitaeInfusionCompatibility.initializeCreation(output);
+        RogdoriumInfusionCompatibility.initializeCreation(output);
         SilentGearCompatibility.prepare(null, output, attributes);
     }
 
@@ -39,6 +42,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         JustDireResourcesCompatibility.preserveCharge(previous, output);
         JustDireAttributesCompatibility.prepare(previous, output, attributes);
         NeoVitaeInfusionCompatibility.preserveState(previous, output);
+        RogdoriumInfusionService.INSTANCE.preserveState(previous, output);
         SilentGearCompatibility.prepare(previous, output, attributes);
     }
 

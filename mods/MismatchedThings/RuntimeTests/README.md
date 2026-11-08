@@ -106,6 +106,13 @@ checks resolve the optional infusion service from the packaged core and verify
 that creation/preservation leave output and inputs unchanged without Neo Vitae,
 on both loaders. They do not require an armor product or an optional native mod.
 
+Rogdorium's six focused Common tests (`RogdoriumInfusionRulesTest`) cover
+conservative integer creation/capacity, exact presence preservation, invalid or
+lossy codecs and atomic refusal. The standalone packaged-core server resolves
+the actual service and checks no-op behavior without Undergarden,
+on either loader. Product/native wiring lives in the
+[joint product state profile](../../MismatchedLeggings/RuntimeTests/README.md#undergarden-rogdorium-state).
+
 ## Native coexistence and evolution
 
 ### Loader compatibility

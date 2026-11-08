@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedthings.test;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService;
+import games.alejandrocoria.mismatchedthings.api.compatibility.undergarden.RogdoriumInfusionService;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.RepairCostMerger;
@@ -64,6 +65,16 @@ final class SharedUtilitiesChecks {
         WorkbenchChecks.require(ItemStack.matches(before, output) && ItemStack.matches(firstBefore, first)
                         && ItemStack.matches(secondBefore, second),
                 "Absent Neo Vitae modified standalone output or sources");
+
+        var infusion = RogdoriumInfusionService.INSTANCE;
+        String infusionOrigin = infusion.getClass().getProtectionDomain().getCodeSource().getLocation().toString();
+        WorkbenchChecks.require(infusionOrigin.contains("mismatchedthings") && infusionOrigin.contains(".jar"),
+                "Rogdorium service was not loaded from the packaged core: " + infusionOrigin);
+        infusion.initializeCreation(output, first, second);
+        infusion.preserveState(second, output);
+        WorkbenchChecks.require(ItemStack.matches(before, output) && ItemStack.matches(firstBefore, first)
+                        && ItemStack.matches(secondBefore, second),
+                "Absent Undergarden modified standalone output or sources");
     }
 
     private static final class TestPart implements DynamicConfigPart {

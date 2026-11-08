@@ -142,6 +142,25 @@ Boots and Leggings delegate their creation/preservation boundaries to this servi
 Simply selecting this core does not reinterpret existing mixed items or remix
 their stored resources.
 
+### Optional Undergarden infusion (since 1.1.0)
+
+`api.compatibility.undergarden.RogdoriumInfusionService` initializes Rogdorium
+infusion from two read-only sources and preserves an existing root's exact
+component presence/value. New orientations receive a conservative integer average
+of spendable units and maximum capacity, using native defaults for an absent
+source record. Neither source infused means no installed reservoir. Recomposition
+does not refill or rebalance from history, including older OWNER-created roots.
+
+Products own source extraction, payment and final structural validation. Both
+operations mutate only a disposable output; discard failed creations. The optional
+NeoForge provider uses the registered native codec, not foreign classes or another
+wallet. Invalid/unsupported present records refuse creation rather than silently
+falling back to OWNER. Exact existing-state preservation does not decode the
+record. Without Undergarden, and on Fabric, this service is inert.
+
+The API does not admit items to the Infuser, interpret armor identities, spend
+charge or render tooltips/bars. Those native/product responsibilities are separate.
+
 ### Optional recipe viewers (since 1.1.0)
 
 Things registers one JEI/REI category, `mismatchedthings:mismatched_workbench`,

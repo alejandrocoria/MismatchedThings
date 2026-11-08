@@ -47,6 +47,7 @@ apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 apply from: '../aether-gameplay.gradle'
 apply from: '../aether-tooltips.gradle'
+apply from: '../undergarden-state.gradle'
 apply from: rootProject.file('spikes/undergarden-infusion/spike.gradle')
 
 // Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.

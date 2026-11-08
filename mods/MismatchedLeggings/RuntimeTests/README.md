@@ -63,6 +63,42 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Undergarden Rogdorium state
+
+This maintained **server-only** profile exercises the packaged Boots/Leggings
+factories and recomposers, with the small native-state service in their selected
+nested Things. It does not activate the root spike's candidate hooks or change
+Infuser admission/tooltips. The fixture module can stage each product alone or
+both, never loose product classes or indev JARs/configuration/worlds.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenGraph=boots' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenGraph=leggings' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRogdoriumState '-PleggingsUndergardenAbsent=true' --offline --console=plain
+```
+
+Default graph is `both`. Add `'-Pneoforge_version=26.1.2.99'` for the supported
+floor; restore `.114` with a final default run. Run profiles/baselines sequentially.
+The shared resolver downloads/caches the exact Undergarden 0.9.8 pin when needed
+and permitted; omit `--offline` to prepare a missing artifact.
+
+Coverage: odd/equal/unequal/empty native creation in both orientations, paid native
+infusion of vanilla sources, exact live-state recomposition (including absence,
+zero, root-only installation and old-projection equality), real native spending,
+native recipe copy, paid workbench output and unpaid malformed/binding refusal,
+plus full-stack persistent/stream codecs. Refill/removal preservation uses explicit
+live field writes; **paid infusion of mixed roots remains a separate gate**, not
+an assertion of this profile. Codec roundtrips are not real multiplayer transport
+or saved-world reopening.
+
+Reports: `NeoForge/build/reports/<baseline>/rogdorium-state-<graph>[-absent]/`;
+driver logs/`matrix.ok`: matching `NeoForge/build/verification/.../`.
+One bounded `Mixed Rogdorium infusion creation refused` warning is expected from
+the present-native negative controls; absence must be quiet. Errors, bad exit,
+timeouts, failed/missing markers and unexpected refusal counts fail verification.
+This state gate opens no client window and establishes no owner visual acceptance.
+
 ## Aether II production gameplay
 
 ```powershell

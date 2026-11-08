@@ -1,9 +1,15 @@
 # Undergarden infusion spike
 
 Bounded experiment for **both Boots and Leggings**, not production support.
-The normal factories remain unchanged. The candidate only initializes disposable
+At the time of the spike, the normal factories were unchanged. The candidate only initializes disposable
 roots and enables test-only Infuser/source-tooltip adapters. Native code still
 owns recipe timing, assembly, payment, infection, translation and item decoration.
+
+Production block A now initializes and preserves the reservoir through Things.
+The old baseline's OWNER expectations are historical and no longer apply to
+current artifacts. Use the maintained
+[production state profile](../../mods/MismatchedLeggings/RuntimeTests/README.md#undergarden-rogdorium-state)
+for A; this executable prototype remains only until the plan's D retirement.
 
 The test module compiles against the packaged product JARs. Runs stage only the
 selected packaged products and the shared resolver's pinned

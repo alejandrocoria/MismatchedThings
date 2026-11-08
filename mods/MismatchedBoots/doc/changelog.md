@@ -1,4 +1,5 @@
 * Added: A workbench hint to mixed boots without source data.
+* Changed: Rogdorium infusion from The Undergarden is shared evenly between newly combined boots, preserving the reservoir capacity.
 * Added: Eternal and Soulbound support for Forbidden Arcanus, including both effects together, smithing upgrades and native tooltip titles on mixed boots.
 * Fixed: Existing Eternal mixed boots could retain finite durability instead of their native protection from wear.
 * Changed: Client and server now require the updated Mismatched Boots network protocol to connect.

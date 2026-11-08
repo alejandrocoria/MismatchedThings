@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.data.LeggingHalf;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
 import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService;
+import games.alejandrocoria.mismatchedthings.api.compatibility.undergarden.RogdoriumInfusionService;
 import games.alejandrocoria.mismatchedthings.api.composition.AttributeMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.ComponentValueMerger;
 import games.alejandrocoria.mismatchedthings.api.composition.DurabilityMerger;
@@ -61,6 +62,7 @@ public final class MixedLeggingsRecomposer {
         RepairableComposer.compose(left, right).ifPresent(value -> output.set(DataComponents.REPAIRABLE, value));
         // Live infusion is one tuple, even when a field equals the old source projection.
         NeoVitaeInfusionService.INSTANCE.preserveState(root, output);
+        RogdoriumInfusionService.INSTANCE.preserveState(root, output);
         var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
         MixedLeggingsStructure.apply(finalized, data);
         return finalized;
