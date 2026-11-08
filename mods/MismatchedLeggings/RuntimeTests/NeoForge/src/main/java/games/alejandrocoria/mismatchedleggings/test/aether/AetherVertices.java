@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedleggings.spike.aether;
+package games.alejandrocoria.mismatchedleggings.test.aether;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

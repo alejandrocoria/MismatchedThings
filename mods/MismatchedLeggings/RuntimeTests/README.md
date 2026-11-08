@@ -136,6 +136,45 @@ the real native producer bytecode and packaged Boots edits in both orders, inclu
 unsupported local producers and atomic refusal of changed source-detail branches.
 This does not establish owner acceptance, paid Forge editing or save/restart coverage.
 
+### Aether II consolidated acceptance
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherTooltips -PleggingsAetherConsolidation=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherTooltips -PleggingsAetherConsolidation=true -PleggingsBoots=true --offline --console=plain
+```
+
+The consolidation switch reuses the same pinned, hidden/muted server/client
+driver and isolates its worlds/reports under `aetherCompatibility[-boots]`.
+It adds paid workbench extraction in both orders, paid/unpaid close cleanup,
+native donor anvil payment, crafting/grindstone admission and source preservation,
+paid trims retaining native tiers/charms, and continued native Forge installation
+exclusion. A NeoForge FakePlayer avoids fictitious attachment networking when
+native smithing advancements are awarded; ordinary offline ServerPlayers have no
+real channel and are unsuitable for that native callback.
+
+Both charmed/reinforced output orientations are written to a real chest, saved
+by the dedicated server and compared against full registered-codec snapshots
+after its copied world is reopened by the integrated server. A registered stack
+stream-codec round trip separately checks network-serializable state; it is not a
+claim that a real client connected to that dedicated endpoint. Native matching-loader
+dedicated synchronization remains in the explicit owner checklist.
+
+The client compares actual native submissions/materials and independently emitted
+leg/waist vertices for all six families, both orientations and walking/crouching,
+with native styles, dye, trims and root glint. A real resource reload must replace
+the native renderer/invalidate product geometry, then pass both those comparisons
+and B's integrated tooltip checks again. Only the existing relevant tooltip capture
+is made; visual equipment acceptance stays with the owner. Additional evidence is
+`aether-lifecycle.txt`, `aether-saved-0.json`/`-1.json` and the expanded
+`aether-tooltips.txt`. No executable spike, alternate renderer or asset copy remains.
+
+On 2026-11-08 the owner separately confirmed the complete NeoForge acceptance
+checklist: both output/extraction orders and close cleanup, native sets including
+mixed LEGS/FEET together, normal/F3+H source presentation, equipment/item appearance
+and reload, freeze/Alkahest behavior, ordinary workstations, save/reopen and actual
+same-loader dedicated play with Boots present. This completes A/B/C acceptance;
+it does not extend automatic coverage or the deferred native transaction scope.
+
 ## Roots Classic production rendering
 
 ```powershell

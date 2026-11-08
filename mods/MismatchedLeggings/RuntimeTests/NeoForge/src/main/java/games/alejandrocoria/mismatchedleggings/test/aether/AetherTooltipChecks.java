@@ -8,10 +8,13 @@ import com.aetherteam.aetherii.item.equipment.armor.abilities.BurrukaiPlateArmor
 import com.mojang.datafixers.util.Either;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.aether.AetherSourceCharms;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.aether.AetherTooltipClient;
+import games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache;
 import games.alejandrocoria.mismatchedleggings.compatibility.aether.AetherTooltipState;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import games.alejandrocoria.mismatchedleggings.test.AetherLifecycleChecks;
 import games.alejandrocoria.mismatchedleggings.test.SkeletonChecks;
+import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -20,6 +23,7 @@ import net.minecraft.client.gui.screens.BackupConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
@@ -47,6 +51,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 import static games.alejandrocoria.mismatchedleggings.test.aether.AetherGameplayChecks.item;
@@ -62,6 +67,11 @@ public final class AetherTooltipChecks {
     private static volatile Throwable captureFailure;
     private static List<Either<FormattedText, TooltipComponent>> gathered = List.of();
     private static final StringBuilder REPORT = new StringBuilder();
+    private static final boolean CONSOLIDATION = Boolean.getBoolean("leggings.test.aetherConsolidation");
+    private static CompletableFuture<String> saved;
+    private static CompletableFuture<Void> reload;
+    private static long generation;
+    private static EquipmentLayerRenderer previousRenderer;
 
     private AetherTooltipChecks() {}
 
@@ -85,7 +95,24 @@ public final class AetherTooltipChecks {
                 return;
             }
             if (client.player == null || client.level == null || client.getOverlay() != null) { return; }
+            if (CONSOLIDATION && saved == null) {
+                var server = client.getSingleplayerServer();
+                require(server != null, "Missing reopened integrated server");
+                saved = server.submit(() -> {
+                    try {
+                        return AetherLifecycleChecks.verifySaved(server);
+                    } catch (Exception failure) {
+                        throw new java.util.concurrent.CompletionException(failure);
+                    }
+                });
+                return;
+            }
+            if (CONSOLIDATION && !saved.isDone()) { return; }
             if (panel == null) {
+                if (CONSOLIDATION) {
+                    REPORT.append(saved.join());
+                    REPORT.append(AetherRenderingChecks.verify(client));
+                }
                 var sample = verify(client);
                 panel = new Panel(sample, lines(client, sample, TooltipFlag.ADVANCED));
                 client.setScreen(panel);
@@ -98,6 +125,21 @@ public final class AetherTooltipChecks {
                     } catch (Throwable failure) { captureFailure = failure; }
                 });
             } else if (captured) {
+                if (CONSOLIDATION) {
+                    if (reload == null) {
+                        generation = LeggingsGeometryCache.statistics().generation();
+                        previousRenderer = EquippedClient.renderer;
+                        reload = client.reloadResourcePacks();
+                        return;
+                    }
+                    if (!reload.isDone()) { return; }
+                    reload.join();
+                    require(LeggingsGeometryCache.statistics().generation() > generation
+                            && EquippedClient.renderer != previousRenderer, "Real reload retained stale geometry/native renderer");
+                    REPORT.append(AetherRenderingChecks.verify(client));
+                    verify(client);
+                    REPORT.append("Actual resource reload: geometry/native renderer refreshed and production tooltips/factories revalidated\n");
+                }
                 Files.writeString(report("aether-tooltips.txt"), REPORT.toString());
                 SkeletonChecks.passed("client");
                 finished = true;

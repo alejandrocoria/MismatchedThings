@@ -7,7 +7,8 @@ def nativeJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii-26.
 def product = project(':MismatchedLeggings:NeoForge')
 def boots = project(':MismatchedBoots:NeoForge')
 def coexist = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
-def variant = 'aetherTooltips' + (coexist ? '-boots' : '')
+def consolidation = providers.gradleProperty('leggingsAetherConsolidation').map { it.toBoolean() }.getOrElse(false)
+def variant = (consolidation ? 'aetherCompatibility' : 'aetherTooltips') + (coexist ? '-boots' : '')
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${variant}").get().asFile
 def runRoot = layout.buildDirectory.dir("run/${neoforge_version}/${variant}").get().asFile
 
@@ -60,6 +61,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
         disableIdeRun()
         gameDirectory = run
         systemProperty('leggings.test.aetherTooltips', 'true')
+        systemProperty('leggings.test.aetherConsolidation', consolidation.toString())
         systemProperty('leggings.test.aetherGameplay', 'normal')
         systemProperty('leggings.test.boots', coexist.toString())
         systemProperty('leggings.test.report', reports.absolutePath)
@@ -81,6 +83,7 @@ tasks.register('verifyAetherTooltips') {
             def arguments = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
                              '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runAetherTooltips${phase.capitalize()}",
                              "-Pneoforge_version=${neoforge_version}", "-PleggingsBoots=${coexist}"]
+            arguments.add("-PleggingsAetherConsolidation=${consolidation}")
             if (gradle.startParameter.offline) { arguments.add('--offline') }
             logger.lifecycle("Aether tooltips ${neoforge_version}/${variant}/${phase}")
             def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })

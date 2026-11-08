@@ -47,7 +47,6 @@ apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 apply from: '../aether-gameplay.gradle'
 apply from: '../aether-tooltips.gradle'
-apply from: rootProject.file('spikes/leggings-aether/spike.gradle')
 
 // Child Gradle launches share production outputs: aggregate acceptance must run loader suites sequentially.
 tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:Fabric:verifySkeleton' }

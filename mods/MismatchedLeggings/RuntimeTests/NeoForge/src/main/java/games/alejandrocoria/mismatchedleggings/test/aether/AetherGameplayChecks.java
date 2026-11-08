@@ -80,6 +80,9 @@ public final class AetherGameplayChecks {
             charms();
             corrosion(server);
             admission(server);
+            if (Boolean.getBoolean("leggings.test.aetherConsolidation")) {
+                games.alejandrocoria.mismatchedleggings.test.AetherLifecycleChecks.verify(server);
+            }
             var frozen = pair(item("beast_pelt_leggings"), new ItemStack(Items.IRON_LEGGINGS));
             require(frozen.stream().allMatch(stack -> stack.is(ItemTags.FREEZE_IMMUNE_WEARABLES)), "Existing freeze tag route failed");
             Files.writeString(report("aether-server.txt"), REPORT + "Existing Beast Pelt freeze immunity passed\n");

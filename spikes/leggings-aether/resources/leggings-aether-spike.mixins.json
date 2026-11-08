@@ -1,9 +1,0 @@
-{
-    "required": true,
-    "package": "games.alejandrocoria.mismatchedleggings.spike.aether.mixin",
-    "plugin": "games.alejandrocoria.mismatchedleggings.spike.aether.AetherSpikePlugin",
-    "compatibilityLevel": "JAVA_25",
-    "mixins": [],
-    "client": ["RendererProbe"],
-    "injectors": { "defaultRequire": 1 }
-}
