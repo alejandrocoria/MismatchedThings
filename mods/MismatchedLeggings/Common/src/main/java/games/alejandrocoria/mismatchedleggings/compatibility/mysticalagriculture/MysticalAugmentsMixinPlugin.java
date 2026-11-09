@@ -17,6 +17,7 @@ import java.util.Set;
 public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IExtension {
 
     private MysticalRefundShape refundShape;
+    private boolean awakenedSetWarned;
 
     @Override
     public void onLoad(String name) {
@@ -36,7 +37,7 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
             LeggingsContent.LOG.warn("Could not inspect Mystical Agriculture augment API", failure);
             return List.of();
         }
-        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin"));
+        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin", "MysticalAwakenedSetTargetMixin"));
         try {
             var stack = MixinService.getService().getBytecodeProvider().getClassNode(MysticalRefundShape.OWNER);
             refundShape = new MysticalRefundShape(stack.methods.stream().noneMatch(m -> m.name.equals("applyDamage") && m.desc.contains("/LivingEntity;")));
@@ -55,6 +56,13 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+        if (node.name.equals(MysticalAwakenedSetShape.OWNER)) {
+            if (!MysticalAwakenedSetShape.apply(node) && !awakenedSetWarned) {
+                awakenedSetWarned = true;
+                org.slf4j.LoggerFactory.getLogger("mismatchedleggings").warn("Mystical Agriculture mixed legs Awakened set extension disabled: incompatible local predicate");
+            }
+            return;
+        }
         if (node.name.equals(MysticalRefundShape.OWNER)) {
             if (refundShape != null && !refundShape.publish(node)) { MysticalRefundCompatibility.unavailable(null); }
         } else if (node.name.equals(MysticalAugmentsShape.UTILS)) {

@@ -13,6 +13,15 @@ belong to Things' development tooling, not its released JAR. Boots and Leggings
 select their required artifacts in their own test profiles; listing a mod here
 does not certify compatibility or make it a production dependency.
 
+Catalog entries can expose a stable, loader-scoped `id`. New profiles select
+that ID, for example `testModArtifacts.resolve(loader, 'mysticalagriculture')`,
+instead of repeating versioned JAR filenames, URLs or hashes in Gradle scripts.
+The catalog owns that metadata; `path`, `resolve` and `sha256` accept the same
+selector. Duplicate selectors are rejected. Legacy filename selectors remain
+supported for existing profiles, with unchanged download-cache coordinates.
+Mystical Agriculture/Cucumber profiles and their JDT coexistence/recovery
+selection use IDs; `verifyTestModArtifacts` also checks their alias/path identity.
+
 Exact official download URLs and SHA-256 pins are resolved lazily through Gradle's
 artifact cache, then staged in `mods/MismatchedThings/build/test-mods/<loader>/`.
 Both loaders' JEI/REI fixtures use the same mechanism. Existing Maven-pinned

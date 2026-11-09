@@ -55,3 +55,4 @@ tasks.named('verifySkeleton') { mustRunAfter ':MismatchedLeggings:RuntimeTests:F
 apply from: '../mystical-effects.gradle'
 
 apply from: '../mystical-refunds.gradle'
+apply from: '../mystical-awakened-set.gradle'

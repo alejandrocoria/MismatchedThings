@@ -63,6 +63,62 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Mystical Agriculture Awakened set recognition
+
+The joint server-only fixture exercises packaged Boots/Leggings on each loader,
+with the existing shared resolver's exact MA/Cucumber pins. Run loaders and
+baselines sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyMysticalAwakenedSetMatrix --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalAwakenedSetMatrix --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalAwakenedSet '-PawakenedGraph=both' '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+Restore normal `.114` outputs afterward. The matrix runs twelve isolated cases:
+native armor, Boots alone, Leggings alone and both products; a compatible HEAD
+observer; independently opaque/ambiguous FEET and LEGS predicates with both
+products installed; and quiet MA/Cucumber absence for each nonempty product graph.
+The native control installs no armor product or set adapter; standalone Things
+only satisfies the existing fixture's core dependency. Production native
+dependencies remain optional. No indev directories or client processes are used.
+
+For a single case use `verifyMysticalAwakenedSet` with
+`awakenedGraph=native|boots|leggings|both`,
+`awakenedVariant=normal|compatible|boots-opaque|leggings-opaque|boots-ambiguous|leggings-ambiguous`
+and optional `-PawakenedAbsent=true`. Refusal variants require their product;
+absence requires the normal variant.
+
+Both outputs/orientations, one/two matching sources, ordinary Supremium, invalid/
+suspended/foreign roots, incorrect slots and inventory-only sources/roots are
+compared through the native set predicate. An observer enters the original
+growth consumer without cancelling its body: complete sets dispatch exactly at
+ticks 20/40 during forty ordinary equipped-stack tick calls per piece. Missing/
+incorrect HEAD/CHEST/LEGS/FEET and config-off controls refuse growth. No assertion
+depends on one random crop-growth attempt succeeding.
+
+Loaded per-product final-export proofs verify each local edit; Mixin's ordinary
+debug export precedes these extensions and is not final-readiness evidence.
+The joint normal case also applies the actual packaged adapters in both orders
+to native classes, defines both resulting classes in isolated classloaders and
+executes their set predicates and native tick/growth bodies throughout the
+eligibility/cadence/config matrix. Receiver-free static test bridges preserve all
+native tick instructions; the fixture verifies that the receiver is unused before
+creating them. Installed growth also uses the ordinary production transformation
+pipeline. Focused inherited Fire
+Resistance/Luck and real-break left-owner refunds run for both outputs of each
+installed product, including every refused set boundary.
+
+Reports: `<Loader>/build/reports/<baseline>/awakened-set-<graph>-<variant>[-absent]`.
+Require `server.ok`, `set.txt` and matching
+`build/verification/<baseline>/awakened-set-<graph>-<variant>[-absent]/matrix.ok`.
+Unexpected errors, unrelated augment/refund refusals, missing markers, bad exits
+and timeouts fail the gate; each incompatible product must warn exactly once.
+This is automated server evidence, separate from the
+[owner handoff and dated results](../../../local-docs/MYSTICAL-AGRICULTURE-AWAKENED-SET-IMPLEMENTATION.md).
+It does not certify native particles visually, config-file reload behavior,
+runtime clients or owner acceptance.
+
 ## Mystical Agriculture inherited effects (block A)
 
 This maintained profile uses packaged Leggings and the resolver-pinned original

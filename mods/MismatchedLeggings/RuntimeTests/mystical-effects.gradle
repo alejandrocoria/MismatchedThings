@@ -30,9 +30,9 @@ def fileOperations = objects.newInstance(FixtureFileOperations).files
             def target = new File(directory, phase.toLowerCase(Locale.ROOT))
             def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
             if (!absent) {
-                def names = fabric ? ['MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar', 'Cucumber-Fabric-26.1.2-9.0.6.2.jar']
-                        : ['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']
-                names.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve(loader, it)) }
+                ['mysticalagriculture', 'cucumber'].each {
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve(loader, it))
+                }
             }
             if (graph == 'current') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
             def mods = new File(target, 'mods')

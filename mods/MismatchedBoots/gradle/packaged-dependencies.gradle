@@ -51,6 +51,17 @@ gradle.projectsEvaluated {
             }
 
             def prefix = entryPrefixes[loader]
+            if (entries.any { it.startsWith('com/blakebr0/mysticalagriculture/') || it.startsWith('com/blakebr0/cucumber/')
+                    || it.startsWith('games/alejandrocoria/mismatchedleggings/') || it.contains('/runtimetest/') }) {
+                throw new GradleException("${artifact.name} contains optional upstream, sibling or runtime test classes")
+            }
+            ['compatibility/mysticalagriculture/MysticalAwakenedSetShape.class',
+             'compatibility/mysticalagriculture/MysticalAwakenedSetCompatibility.class',
+             'mixin/compatibility/mysticalagriculture/MysticalAwakenedSetTargetMixin.class'].each { path ->
+                if (!entries.contains("games/alejandrocoria/mismatchedboots/${path}".toString())) {
+                    throw new GradleException("Missing Awakened set entry: ${path}")
+                }
+            }
             def expectedBackend = "${prefix}common-networking-${loader}-${networkingVersion}.jar".toString()
             def bundledBackends = entries.findAll {
                 it.substring(it.lastIndexOf('/') + 1).startsWith("common-networking-")
@@ -108,10 +119,21 @@ gradle.projectsEvaluated {
                 if (metadata.depends.containsKey('commonnetworking')) {
                     throw new GradleException("${artifact.name} must not require CommonNetworking on Fabric")
                 }
+                if (['mysticalagriculture', 'cucumber', 'mismatchedleggings'].any { metadata.depends.containsKey(it) }) {
+                    throw new GradleException("${artifact.name} requires an optional native mod or sibling")
+                }
                 if (metadata.depends['fabric-api'] != ">=${fabricApiMinimum}".toString()) {
                     throw new GradleException("${artifact.name} does not require Fabric API ${fabricApiMinimum}")
                 }
             } else {
+                def requiredOptional = descriptor.split(/\[\[dependencies\.[^\]]+\]\]/).any { block ->
+                    block.contains('type="required"') && ['mysticalagriculture', 'cucumber', 'mismatchedleggings'].any { id ->
+                        block.contains("modId=\"${id}\"")
+                    }
+                }
+                if (requiredOptional) {
+                    throw new GradleException("${artifact.name} requires an optional native mod or sibling")
+                }
                 def dependency = descriptor.split(/\[\[dependencies\.[^\]]+\]\]/)
                         .find { it.contains('modId="neoforge"') }
                 if (dependency == null || !dependency.contains("versionRange=\"${neoForgeRange}\"")) {

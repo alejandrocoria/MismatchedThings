@@ -35,8 +35,7 @@ tasks.register('prepareMysticalRefundsServer') {
     doLast {
         def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
         if (!absent) {
-            (fabric ? ['MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar', 'Cucumber-Fabric-26.1.2-9.0.6.2.jar']
-                    : ['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']).each {
+            ['mysticalagriculture', 'cucumber'].each {
                 artifacts.add(project(':MismatchedThings').testModArtifacts.resolve(loader, it))
             }
         }

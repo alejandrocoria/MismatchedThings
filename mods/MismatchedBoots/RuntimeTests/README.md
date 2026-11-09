@@ -1,5 +1,10 @@
 # Runtime tests
 
+The focused [Mystical Agriculture Awakened set matrix](../../MismatchedLeggings/RuntimeTests/README.md#mystical-agriculture-awakened-set-recognition)
+uses both products' packaged artifacts from the Leggings runtime module. It owns
+set/growth/cadence and local-guard validation; the older augment commands below
+retain their separate evidence scope.
+
 This directory contains test-only mods and their Gradle run configurations.
 Production sources remain in `Common`, `Fabric`, and `NeoForge` at the
 mod root (`mods/MismatchedBoots/`). The fast Common JUnit suite remains in

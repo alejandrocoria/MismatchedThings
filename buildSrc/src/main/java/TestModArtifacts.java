@@ -29,6 +29,10 @@ public final class TestModArtifacts {
         return artifact(loader, filename).target();
     }
 
+    /** Pinned metadata for fixtures that also verify staged files outside the resolver. */
+    public String sha256(String loader, String selector) {
+        return artifact(loader, selector).sha256();
+    }
     public File resolve(String loader, String filename) {
         Artifact artifact = artifact(loader, filename);
         try {

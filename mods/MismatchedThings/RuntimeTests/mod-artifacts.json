@@ -13,6 +13,7 @@
   },
   {
     "loader": "Fabric",
+    "id": "cucumber",
     "filename": "Cucumber-Fabric-26.1.2-9.0.6.2.jar",
     "sha256": "7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2",
     "url": "https://edge.forgecdn.net/files/9060/393/Cucumber-Fabric-26.1.2-9.0.6.2.jar"
@@ -31,6 +32,7 @@
   },
   {
     "loader": "Fabric",
+    "id": "mysticalagriculture",
     "filename": "MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar",
     "sha256": "58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278",
     "url": "https://edge.forgecdn.net/files/9300/969/MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar"
@@ -61,6 +63,7 @@
   },
   {
     "loader": "NeoForge",
+    "id": "cucumber",
     "filename": "Cucumber-26.1.2-9.0.7.jar",
     "sha256": "8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821",
     "url": "https://cdn.modrinth.com/data/Rw1NrDzF/versions/SSzjv5lL/Cucumber-26.1.2-9.0.7.jar"
@@ -91,6 +94,7 @@
   },
   {
     "loader": "NeoForge",
+    "id": "justdirethings",
     "filename": "justdirethings-1.6.11.jar",
     "sha256": "27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436",
     "url": "https://edge.forgecdn.net/files/8251/776/justdirethings-1.6.11.jar"
@@ -109,6 +113,7 @@
   },
   {
     "loader": "NeoForge",
+    "id": "mysticalagriculture",
     "filename": "MysticalAgriculture-26.1.2-9.0.11.jar",
     "sha256": "f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498",
     "url": "https://cdn.modrinth.com/data/C95ReXie/versions/euEwsQlw/MysticalAgriculture-26.1.2-9.0.11.jar"

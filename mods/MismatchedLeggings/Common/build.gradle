@@ -36,8 +36,19 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+def testMods = project(':MismatchedThings').testModArtifacts
+def guardFixtures = [Fabric: 'mysticalagriculture', NeoForge: 'mysticalagriculture']
+def guardArtifactInputs = guardFixtures.collect { loader, id ->
+    providers.provider { testMods.resolve(loader, id) }
+}
+
 tasks.named('test', Test) {
     useJUnitPlatform()
+    inputs.files(guardArtifactInputs).withPropertyName('nativeGuardArtifacts')
+            .withPathSensitivity(PathSensitivity.NONE)
+    guardFixtures.each { loader, id ->
+        systemProperty "mystical.set.artifact.${loader}", testMods.path(loader, id).absolutePath
+    }
     workingDir layout.buildDirectory.dir('test-work')
     doFirst { workingDir.mkdirs() }
 }

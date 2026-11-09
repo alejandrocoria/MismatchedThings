@@ -27,8 +27,15 @@ pins.eachWithIndex { pin, index ->
         }
     }
     def target = layout.buildDirectory.file("test-mods/${pin.loader}/${pin.filename}").get().asFile
-    artifacts["${pin.loader}/${pin.filename}".toString()] =
-            TestModArtifacts.entry(target, configuration, pin.sha256)
+    def entry = TestModArtifacts.entry(target, configuration, pin.sha256)
+    def selectors = [pin.filename]
+    if (pin.id) { selectors.add(pin.id) }
+    selectors.each { selector ->
+        def key = "${pin.loader}/${selector}".toString()
+        if (artifacts.putIfAbsent(key, entry) != null) {
+            throw new GradleException("Duplicate test mod selector ${key}")
+        }
+    }
 }
 
 def testMods = new TestModArtifacts(artifacts)
@@ -48,6 +55,12 @@ tasks.register('verifyTestModArtifacts') {
     dependsOn tasks.named('prepareTestModArtifacts')
     def damaged = layout.buildDirectory.file('test-mod-checks/damaged.jar')
     doLast {
+        pins.findAll { it.id }.each { pin ->
+            if (testMods.path(pin.loader, pin.id) != testMods.path(pin.loader, pin.filename)
+                    || testMods.resolve(pin.loader, pin.id) != testMods.resolve(pin.loader, pin.filename)) {
+                throw new GradleException("Test mod ID does not resolve its catalog entry: ${pin.loader}/${pin.id}")
+            }
+        }
         def pin = pins.first()
         def key = "${pin.loader}/${pin.filename}".toString()
         def original = artifacts[key]

@@ -18,9 +18,20 @@ neoForge {
 
 neoForge.addModdingDependenciesTo(sourceSets["test"])
 
+def testMods = project(':MismatchedThings').testModArtifacts
+def guardFixtures = [Fabric: 'mysticalagriculture', NeoForge: 'mysticalagriculture']
+def guardArtifactInputs = guardFixtures.collect { loader, id ->
+    providers.provider { testMods.resolve(loader, id) }
+}
+
 tasks.named('test', Test).configure {
     def testWorkDirectory = layout.buildDirectory.dir('test-work')
     useJUnitPlatform()
+    inputs.files(guardArtifactInputs).withPropertyName('nativeGuardArtifacts')
+            .withPathSensitivity(PathSensitivity.NONE)
+    guardFixtures.each { loader, id ->
+        systemProperty "mystical.set.artifact.${loader}", testMods.path(loader, id).absolutePath
+    }
     workingDir testWorkDirectory
     doFirst {
         testWorkDirectory.get().asFile.mkdirs()

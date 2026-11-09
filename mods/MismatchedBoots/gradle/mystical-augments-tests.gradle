@@ -17,13 +17,7 @@ def baseline = fabric ? minecraft_version : neoforge_version
 def runs = layout.buildDirectory.dir("run/mysticalAugments/${baseline}")
 def reports = layout.buildDirectory.dir("reports/mystical-augments/${baseline}")
 def bounded = mismatchedModProject.ext.runBoundedGradleTask
-def pins = fabric ? [
-        'MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar': '58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278',
-        'Cucumber-Fabric-26.1.2-9.0.6.2.jar'            : '7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2'
-] : [
-        'MysticalAgriculture-26.1.2-9.0.11.jar': 'f611751c26ace5903a94354e1597403c0c0821f37d674e28c9101b9ff9800498',
-        'Cucumber-26.1.2-9.0.7.jar'            : '8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821'
-]
+def nativeIds = ['mysticalagriculture', 'cucumber']
 def effectVariants = ['Production', 'Compatible', 'NoEquipment', 'NoJump', 'Absent']
 def refundVariants = ['Refunds', 'RefundInner', 'RefundOuter', 'RefundMissing', 'RefundExtra']
 if (!fabric) {
@@ -70,21 +64,9 @@ if (!fabric) {
                     throw new GradleException('MA test paths must remain inside the runtime build directory')
                 }
             }
-            def artifacts = variant == 'Absent' ? [] : pins.collect { namePinned, hash ->
-                def artifact = testMods.resolve(loader, namePinned)
-                if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                        .digest(artifact.bytes).encodeHex().toString() != hash) {
-                    throw new GradleException("Missing/unexpected MA test fixture: ${artifact}")
-                }
-                artifact
-            }
+            def artifacts = variant == 'Absent' ? [] : nativeIds.collect { testMods.resolve(loader, it) }
             if (variant == 'RefundCoexist') {
-                def peer = testMods.resolve('NeoForge', 'justdirethings-1.6.11.jar')
-                if (!peer.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(peer.bytes).encodeHex().toString()
-                        != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
-                    throw new GradleException('Missing/unexpected JDT coexistence fixture')
-                }
-                artifacts.add(peer)
+                artifacts.add(testMods.resolve('NeoForge', 'justdirethings'))
             }
             filesService.delete { delete directory, markers }
             def target = directory.get().asFile
@@ -219,13 +201,7 @@ def lifecycleRuns = layout.buildDirectory.dir("run/mysticalLifecycle/${baseline}
             def target = directory.get().asFile
             if (phase == 'Seed') {
                 filesService.delete { delete lifecycleRuns, lifecycleReports }
-                def artifacts = pins.collect { name, hash ->
-                    def artifact = testMods.resolve(loader, name)
-                    if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != hash) {
-                        throw new GradleException("Missing/unexpected MA lifecycle artifact: ${artifact}")
-                    }
-                    artifact
-                }
+                def artifacts = nativeIds.collect { testMods.resolve(loader, it) }
                 filesService.copy {
                     from production.flatMap { it.archiveFile }, fixture.flatMap { it.archiveFile }, artifacts
                     into new File(target, 'mods')

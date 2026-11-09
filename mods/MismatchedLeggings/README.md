@@ -88,10 +88,21 @@ without a second effective augment list at the root. No new persistent state is 
 The original NeoForge MA `9.0.11`/Cucumber `9.0.7` and independent Fabric port
 `9.0.10.3`/`9.0.6.2` are separate targets. NeoForge's real-input Speed positive is
 retained; the pinned Fabric port has no native connected-input acceleration and
-mixed leggings preserve that limitation. Tinkering Table editing/admission,
-Awakened full-set recognition and addon augments are excluded. See the
+mixed leggings preserve that limitation. Tinkering Table editing/admission
+and addon augments are excluded. See the
 [implementation contract and acceptance status](local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md)
 and [maintained testing coverage](RuntimeTests/README.md#mystical-agriculture-presentation-and-consolidation-block-c).
+
+The separate Awakened set adapter lets either registered Awakened Supremium
+Leggings source satisfy the native LEGS comparison in both mixed outputs.
+It works alone or alongside mixed Boots' independent FEET recognition.
+Two matching sources count as one piece; ordinary Supremium, invalid/suspended
+roots, wrong slots and inventory-only items do not qualify. The original Awakened
+helmet/chestplate, native option, growth, particles and twenty-tick cadence stay
+required. No second growth dispatcher or new state/tooltip is added.
+An incompatible local predicate disables only its product's set extension.
+See the [joint contract and acceptance status](../../local-docs/MYSTICAL-AGRICULTURE-AWAKENED-SET-IMPLEMENTATION.md)
+and [focused test matrix](RuntimeTests/README.md#mystical-agriculture-awakened-set-recognition).
 
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to

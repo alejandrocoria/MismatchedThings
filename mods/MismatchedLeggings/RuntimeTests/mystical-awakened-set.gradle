@@ -1,0 +1,111 @@
+import java.util.concurrent.TimeUnit
+
+// One small server fixture for all product subsets; upstream remains optional in production.
+def fabric = project.name == 'Fabric'
+def loader = project.name
+def baseline = fabric ? fabric_loader_version : neoforge_version
+def graph = providers.gradleProperty('awakenedGraph').getOrElse('both')
+def variant = providers.gradleProperty('awakenedVariant').getOrElse('normal')
+def absent = providers.gradleProperty('awakenedAbsent').getOrElse('false').toBoolean()
+if (!(graph in ['native', 'boots', 'leggings', 'both']) ||
+        !(variant in ['normal', 'compatible', 'boots-opaque', 'leggings-opaque', 'boots-ambiguous', 'leggings-ambiguous']) ||
+        absent && variant != 'normal' ||
+        variant.startsWith('boots-') && !(graph in ['boots', 'both']) ||
+        variant.startsWith('leggings-') && !(graph in ['leggings', 'both'])) {
+    throw new GradleException('Unknown Awakened set graph/variant')
+}
+def label = "awakened-set-${graph}-${variant}" + (absent ? '-absent' : '')
+def reports = layout.buildDirectory.dir("reports/${baseline}/${label}").get().asFile
+def directory = layout.buildDirectory.dir("run/${baseline}/${label}/server").get().asFile
+def products = graph == 'both' ? ['MismatchedBoots', 'MismatchedLeggings'] :
+        graph == 'boots' ? ['MismatchedBoots'] : graph == 'leggings' ? ['MismatchedLeggings'] : []
+tasks.register('prepareMysticalAwakenedSetServer') {
+    dependsOn tasks.named('classes')
+    if (graph == 'native') { dependsOn project(":MismatchedThings:${loader}").tasks.named('jar') }
+    products.each { dependsOn project(":${it}:${loader}").tasks.named('assemble') }
+    doLast {
+        def artifacts = products.collect { project(":${it}:${loader}").tasks.named('jar').get().archiveFile.get().asFile }
+        // The existing harness requires Things; this control installs no armor product or set hook.
+        if (graph == 'native') { artifacts.add(project(":MismatchedThings:${loader}").tasks.named('jar').get().archiveFile.get().asFile) }
+        if (!absent) {
+            ['mysticalagriculture', 'cucumber'].each {
+                artifacts.add(project(':MismatchedThings').testModArtifacts.resolve(loader, it))
+            }
+        }
+        def mods = new File(directory, 'mods'); mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) { throw new GradleException("Unexpected ${mods}") }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'set.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=awakened\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+def properties = ['leggings.test.awakenedSet': 'true', 'leggings.test.awakenedGraph': graph,
+                  'leggings.test.awakenedVariant': variant, 'leggings.test.awakenedAbsent': absent.toString(),
+                  'leggings.test.report': reports.absolutePath, 'mixin.debug.export': 'true',
+                  'mixin.debug.export.filter': 'com.blakebr0.mysticalagriculture.item.armor.EssenceChestplateItem']
+if (fabric) {
+    loom.runs.create('mysticalAwakenedSetServer') {
+        server(); ideConfigGenerated(false); runDir(project.relativePath(directory))
+        properties.each { key, value -> property(key, value) }; programArg('--nogui'); vmArg('-Xmx1G')
+    }
+} else {
+    neoForge.runs.create('mysticalAwakenedSetServer') {
+        server(); disableIdeRun(); gameDirectory = directory
+        properties.each { key, value -> systemProperty(key, value) }; programArgument('--nogui'); jvmArgument('-Xmx1G')
+    }
+}
+tasks.named('runMysticalAwakenedSetServer') { dependsOn 'prepareMysticalAwakenedSetServer' }
+def verifyCase = { String caseGraph, String caseVariant, boolean caseAbsent ->
+        def caseLabel = "awakened-set-${caseGraph}-${caseVariant}" + (caseAbsent ? '-absent' : '')
+        def caseReports = layout.buildDirectory.dir("reports/${baseline}/${caseLabel}").get().asFile
+        def logs = layout.buildDirectory.dir("verification/${baseline}/${caseLabel}").get().asFile; logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        def log = new File(logs, 'server.log')
+        def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                    "${project.path}:runMysticalAwakenedSetServer", "-PawakenedGraph=${caseGraph}", "-PawakenedVariant=${caseVariant}",
+                    "-PawakenedAbsent=${caseAbsent}", "-Pneoforge_version=${neoforge_version}"]
+        if (gradle.startParameter.offline) { args.add('--offline') }
+        logger.lifecycle("Awakened set ${loader}/${baseline}/${caseLabel}")
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0 || !new File(caseReports, 'server.ok').isFile()
+                    || new File(caseReports, 'server.failure.txt').exists() || !new File(caseReports, 'set.txt').isFile()) {
+                throw new GradleException("Awakened set failed: ${log}")
+            }
+            def text = log.text
+            for (String slot : ['feet', 'legs']) {
+                int expected = !caseAbsent && caseVariant.startsWith(slot == 'feet' ? 'boots-' : 'leggings-') ? 1 : 0
+                if ((text =~ /Mystical Agriculture mixed ${slot} Awakened set extension disabled:/).count != expected) {
+                    throw new GradleException("Unexpected local set refusal: ${log}")
+                }
+            }
+            if (text.contains('/ERROR]') || text.contains('refund flow incompatible') || text.contains('refund binding unavailable')
+                    || text.contains('mixed augment disabled') || text.contains('mixed augment API unavailable')
+                    || caseAbsent && text.readLines().any { it.contains('WARN') && (it.contains('Mystical') || it.contains('Cucumber')) }) {
+                throw new GradleException("Unexpected Awakened set diagnostics: ${log}")
+            }
+            new File(logs, 'matrix.ok').text = "native growth consumer; graph=${caseGraph}; variant=${caseVariant}; absent=${caseAbsent}\n"
+            logger.lifecycle(new File(caseReports, 'set.txt').text)
+        } finally {
+            if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
+        }
+}
+tasks.register('verifyMysticalAwakenedSet') {
+    group = 'verification'
+    description = 'Verifies native Awakened growth, independently guarded mixed FEET/LEGS, optional subsets and cadence.'
+    doLast { verifyCase(graph, variant, absent) }
+}
+tasks.register('verifyMysticalAwakenedSetMatrix') {
+    group = 'verification'
+    description = 'Runs all four product graphs, compatible/local-refusal controls and quiet absence sequentially.'
+    doLast {
+        ['native', 'boots', 'leggings', 'both'].each { verifyCase(it, 'normal', false) }
+        ['compatible', 'boots-opaque', 'leggings-opaque', 'boots-ambiguous', 'leggings-ambiguous'].each { verifyCase('both', it, false) }
+        ['boots', 'leggings', 'both'].each { verifyCase(it, 'normal', true) }
+    }
+}

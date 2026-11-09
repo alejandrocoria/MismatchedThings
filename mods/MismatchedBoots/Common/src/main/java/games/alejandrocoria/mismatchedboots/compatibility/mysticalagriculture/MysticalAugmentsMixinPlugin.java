@@ -16,6 +16,7 @@ import java.util.Set;
 
 public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IExtension {
     private MysticalRefundShape refundShape;
+    private boolean awakenedSetWarned;
     private boolean refundWarned;
 
     @Override
@@ -36,7 +37,7 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
             Constants.LOG.warn("Could not inspect Mystical Agriculture augment API", failure);
             return List.of();
         }
-        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin"));
+        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin", "MysticalAwakenedSetTargetMixin"));
         try {
             ClassNode stack = MixinService.getService().getBytecodeProvider().getClassNode("net.minecraft.world.item.ItemStack");
             // NeoForge retains vanilla's ServerPlayer delegator as well as the real LivingEntity body.
@@ -51,6 +52,13 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+        if (node.name.equals(MysticalAwakenedSetShape.OWNER)) {
+            if (!MysticalAwakenedSetShape.apply(node) && !awakenedSetWarned) {
+                awakenedSetWarned = true;
+                org.slf4j.LoggerFactory.getLogger("mismatchedboots").warn("Mystical Agriculture mixed feet Awakened set extension disabled: incompatible local predicate");
+            }
+            return;
+        }
         if (node.name.equals("net/minecraft/world/item/ItemStack")) {
             if (refundShape != null && !refundShape.publish(node) && !refundWarned) {
                 refundWarned = true;
