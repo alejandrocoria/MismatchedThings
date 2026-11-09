@@ -38,6 +38,10 @@ dependencies {
 neoForge {
     version = neoforge_version
     mods { mismatchedleggings { sourceSet sourceSets.main } }
+    unitTest {
+        enable()
+        testedMod = mods.mismatchedleggings
+    }
     runs {
         configureEach { ideName = "${mod_name} — NeoForge ${it.name.capitalize()}" }
         client {
@@ -58,6 +62,9 @@ jar { from(rootProject.file('LICENSE')) }
 
 tasks.named('test', Test) {
     useJUnitPlatform()
+    // The modded JUnit loader hides Mixin resources; ASM reads this witness directly from the packaged sibling.
+    systemProperty 'mismatchedleggings.test.bootsWitnessJar', project(':MismatchedBoots:NeoForge')
+            .tasks.named('jar').flatMap { it.archiveFile }.get().asFile.absolutePath
     def artifacts = project(':MismatchedThings').testModArtifacts
     def roots = 'RootsClassic-26.1.2-1.6.7.jar'
     inputs.file(providers.provider { artifacts.resolve('NeoForge', roots) })

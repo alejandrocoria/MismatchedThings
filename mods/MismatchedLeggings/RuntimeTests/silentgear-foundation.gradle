@@ -1,0 +1,93 @@
+import java.util.concurrent.TimeUnit
+
+// Maintained block-A production gate. Research candidates and Wielder hooks stay disabled.
+def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
+dependencies.add('compileOnly', files(providers.provider {
+    nativeNames.collect { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it) }
+}))
+def graph = providers.gradleProperty('sgFoundationGraph').getOrElse('alone')
+def absent = providers.gradleProperty('sgFoundationAbsent').map { it.toBoolean() }.getOrElse(false)
+if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foundation graph') }
+def label = "sg-foundation-${graph}" + (absent ? '-absent' : '')
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def product = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+
+tasks.register('prepareSgFoundation') {
+    dependsOn tasks.named('classes'), product.tasks.named('assemble')
+    if (graph == 'boots') { dependsOn boots.tasks.named('assemble') }
+    doLast {
+        def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
+        new java.util.zip.ZipFile(artifacts.first()).withCloseable { zip ->
+            def names = zip.entries().findAll { !it.directory }.collect { it.name }
+            if (names.any { it.startsWith('net/silentchaos512/') || it.contains('/spike/') || it.contains('/test/') }
+                    || !names.contains('games/alejandrocoria/mismatchedleggings/compatibility/silentgear/SilentGearState.class')
+                    || !names.contains('META-INF/services/games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearComposition')) {
+                throw new GradleException('Incorrect SG foundation product packaging')
+            }
+        }
+        if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        if (!absent) {
+            nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
+        }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
+            throw new GradleException("Unexpected artifact in disposable ${mods}")
+        }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'foundation.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=foundation\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('sgFoundation') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.sgFoundation', 'true')
+    systemProperty('leggings.test.sgFoundationAbsent', absent.toString())
+    systemProperty('leggings.test.boots', (graph == 'boots').toString())
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runSgFoundation') { dependsOn 'prepareSgFoundation' }
+tasks.register('verifySgFoundation') {
+    group = 'verification'
+    doLast {
+        def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+        evidence.mkdirs()
+        new File(evidence, 'matrix.ok').delete()
+        def log = new File(evidence, 'server.log')
+        def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                    "${project.path}:runSgFoundation", "-Pneoforge_version=${neoforge_version}",
+                    "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}"]
+        if (gradle.startParameter.offline) { args.add('--offline') }
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
+                    || !new File(reports, 'server.ok').isFile() || !new File(reports, 'foundation.txt').isFile()
+                    || new File(reports, 'server.failure.txt').exists()) {
+                throw new GradleException("Silent Gear foundation failed: ${log}")
+            }
+            def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
+            if (absent ? !errors.isEmpty() : errors.size() != 1
+                    || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                    || !errors.first().contains('bonsaitrees2:sapling')) {
+                throw new GradleException("Unexpected SG foundation errors: ${log}")
+            }
+            if (log.text.readLines().any { it.contains('WARN') && it.contains('Silent Gear') }) {
+                throw new GradleException("Unexpected SG foundation refusal: ${log}")
+            }
+            new File(evidence, 'matrix.ok').text = 'packaged SG block-A production foundation passed\n'
+        } finally {
+            if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
+        }
+    }
+}

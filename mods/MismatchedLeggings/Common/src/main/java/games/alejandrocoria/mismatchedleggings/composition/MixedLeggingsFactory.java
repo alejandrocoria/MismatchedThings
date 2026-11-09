@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.composition;
 
 import games.alejandrocoria.mismatchedleggings.compatibility.forbiddenarcanus.ForbiddenModifierAdapter;
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearComposition;
 import games.alejandrocoria.mismatchedleggings.component.ComponentProjection;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
@@ -63,9 +64,9 @@ public final class MixedLeggingsFactory {
         var modifiers = ForbiddenModifierAdapter.INSTANCE.inherit(firstSource, secondSource);
 
         var primary = createOrientation(new MixedLeggingsData(firstHalf, secondHalf), components.primary(), components.managedTypes(),
-                durability.primary(), repairCost.primary(), attributes.primary(), enchantments, repairable, modifiers, registries);
+                durability.primary(), repairCost.primary(), attributes.primary(), enchantments, repairable, modifiers, rules, registries);
         var inverse = createOrientation(new MixedLeggingsData(secondHalf, firstHalf), components.inverse(), components.managedTypes(),
-                durability.inverse(), repairCost.inverse(), attributes.inverse(), enchantments, repairable, modifiers, registries);
+                durability.inverse(), repairCost.inverse(), attributes.inverse(), enchantments, repairable, modifiers, rules, registries);
         return new MixedLeggingsPair(primary, inverse);
     }
 
@@ -76,7 +77,7 @@ public final class MixedLeggingsFactory {
     private static ItemStack createOrientation(MixedLeggingsData data, DataComponentMap projection, Set<DataComponentType<?>> managed,
                                                DurabilityMerger.Result durability, int repairCost, ItemAttributeModifiers attributes,
                                                ItemEnchantments enchantments, Optional<Repairable> repairable,
-                                               ForbiddenModifiers modifiers, HolderLookup.@Nullable Provider registries) {
+                                               ForbiddenModifiers modifiers, CompositionRules rules, HolderLookup.@Nullable Provider registries) {
         var output = new ItemStack(BuiltInRegistries.ITEM.getValue(LeggingsContent.MIXED_LEGGINGS_ID));
         List.copyOf(output.getComponents().keySet()).forEach(output::remove);
         output.applyComponents(data.left().source().getComponents());
@@ -106,6 +107,7 @@ public final class MixedLeggingsFactory {
         NeoVitaeInfusionService.INSTANCE.initializeCreation(output, data.left().source(), data.right().source());
         RogdoriumInfusionService.INSTANCE.initializeCreation(output, data.left().source(), data.right().source());
         var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
+        SilentGearComposition.INSTANCE.prepare(null, finalized, data, rules);
         // Structural installation is last and strictly validates the complete native stack.
         MixedLeggingsStructure.apply(finalized, data);
         return finalized;

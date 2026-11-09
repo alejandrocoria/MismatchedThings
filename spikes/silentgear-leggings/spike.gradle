@@ -1,0 +1,99 @@
+// Research-only sources are never compiled into a product JAR.
+def spike = rootProject.file('spikes/silentgear-leggings')
+sourceSets.main.java.srcDir new File(spike, 'java')
+sourceSets.main.resources.srcDir new File(spike, 'resources')
+dependencies.add('compileOnly', files(providers.provider {
+    ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar'].collect {
+        project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)
+    }
+}))
+
+def graph = providers.gradleProperty('sgSpikeGraph').getOrElse('alone')
+def order = providers.gradleProperty('sgSpikeOrder').getOrElse('before')
+def mode = providers.gradleProperty('sgSpikeMode').getOrElse('candidate')
+if (!(graph in ['alone', 'boots']) || !(order in ['before', 'after']) || !(mode in ['baseline', 'candidate', 'compatible', 'refuse'])) {
+    throw new GradleException('Unknown Silent Gear leggings spike graph/order/mode')
+}
+def label = "sg-spike-${graph}-${order}-${mode}"
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def product = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+tasks.named('processResources') {
+    inputs.property('sgSpikeOrder', order)
+    doLast {
+        def target = new File(destinationDir, 'leggings-sg-spike.mixins.json')
+        def config = new groovy.json.JsonSlurper().parse(target)
+        config.mixinPriority = order == 'before' ? 900 : 1100
+        target.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(config))
+    }
+}
+
+tasks.register('prepareSgSpike') {
+    dependsOn tasks.named('classes'), product.tasks.named('assemble')
+    if (graph == 'boots') { dependsOn boots.tasks.named('assemble') }
+    doLast {
+        def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
+        if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar'].each {
+            artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
+        }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { candidate -> !artifacts.any { it.name == candidate.name } }) {
+            throw new GradleException("Unexpected artifact in disposable ${mods}")
+        }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'silentgear.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=spike\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+    }
+}
+neoForge.runs.create('sgSpike') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.sgSpike', 'true')
+    systemProperty('leggings.test.sgSpikeMode', mode)
+    systemProperty('leggings.test.sgSpikeOrder', order)
+    systemProperty('leggings.test.boots', (graph == 'boots').toString())
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runSgSpike') { dependsOn 'prepareSgSpike' }
+
+tasks.register('verifySgSpike') {
+    group = 'verification'
+    doLast {
+        def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+        evidence.mkdirs()
+        new File(evidence, 'matrix.ok').delete()
+        def log = new File(evidence, 'server.log')
+        def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                    "${project.path}:runSgSpike", "-Pneoforge_version=${neoforge_version}",
+                    "-PsgSpikeGraph=${graph}", "-PsgSpikeOrder=${order}", "-PsgSpikeMode=${mode}"]
+        if (gradle.startParameter.offline) { args.add('--offline') }
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, java.util.concurrent.TimeUnit.SECONDS) || process.exitValue() != 0
+                    || !new File(reports, 'server.ok').isFile() || !new File(reports, 'silentgear.txt').isFile()
+                    || new File(reports, 'server.failure.txt').exists()) {
+                throw new GradleException("Silent Gear spike failed: ${log}")
+            }
+            def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
+            if (errors.size() != 1 || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                    || !errors.first().contains('bonsaitrees2:sapling')
+                    || log.text.readLines().any { it.contains('WARN') && it.contains('Silent Gear mixed') }) {
+                throw new GradleException("Unexpected SG diagnostics: ${log}")
+            }
+            new File(evidence, 'matrix.ok').text = 'research-only numeric/state and native Wielder set gate passed\n'
+        } finally {
+            if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
+        }
+    }
+}

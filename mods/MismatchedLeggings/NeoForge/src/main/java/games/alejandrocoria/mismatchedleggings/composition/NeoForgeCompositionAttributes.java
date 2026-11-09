@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.composition;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearCompatibility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -14,6 +15,6 @@ public final class NeoForgeCompositionAttributes implements CompositionAttribute
             var holder = BuiltInRegistries.ATTRIBUTE.get(key).orElseThrow(() -> new IllegalArgumentException("Unknown source attribute: " + key));
             result.add(holder, entry.modifier(), entry.slot(), entry.display());
         }
-        return result.build();
+        return SilentGearCompatibility.normalize(source, result.build());
     }
 }

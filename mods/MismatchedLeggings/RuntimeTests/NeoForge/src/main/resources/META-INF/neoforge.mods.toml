@@ -51,3 +51,6 @@ config="leggings-iaf-damage-test.mixins.json"
 
 [[mixins]]
 config="leggings-iaf-tide-test.mixins.json"
+
+[[mixins]]
+config="leggings-sg-spike.mixins.json"

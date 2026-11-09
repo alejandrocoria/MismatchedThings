@@ -61,6 +61,16 @@ behavior implemented only in a source item's class, custom events or foreign
 upgrade tables is not generically transferred. Boots' dedicated mod adapters do
 not automatically apply to Leggings.
 
+On NeoForge, Silent Gear's identical effective attribute entries are normalized
+before composition: phantom-lined iron's Light gives +1% speed in either mixed
+orientation, and Flutter is averaged normally. Magic Armor averages by default;
+an explicit server policy wins, and native players still lack that attribute
+instance. A bounded product component seeds independent source oxidation clocks
+and preserves live state through supported recomposition. This is the
+[attributes/state foundation (block A)](local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md),
+not live SG wear, repair, armor refresh, oxidation or wearer/set effects; those
+stages remain pending. SG is optional and its native source histories stay immutable.
+
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman
 staring, and Diamond supplies all three. No full set is required; different

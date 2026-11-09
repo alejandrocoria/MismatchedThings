@@ -262,8 +262,9 @@ class IceAndFireTideShapeTest implements Opcodes {
 
     private static void siblingHook(ClassNode node) throws Exception {
         var mixin = new ClassNode();
-        try (var input = IceAndFireTideShapeTest.class.getResourceAsStream(
-                "/games/alejandrocoria/mismatchedboots/mixin/compatibility/iceandfire/IceAndFireTideFeetMixin.class")) {
+        try (var jar = new java.util.zip.ZipFile(System.getProperty("mismatchedleggings.test.bootsWitnessJar"));
+             var input = jar.getInputStream(jar.getEntry(
+                     "games/alejandrocoria/mismatchedboots/mixin/compatibility/iceandfire/IceAndFireTideFeetMixin.class"))) {
             new ClassReader(input).accept(mixin, 0);
         }
         var handler = mixin.methods.stream().filter(m -> m.name.equals("mismatchedboots$tideFeetResult")).findFirst().orElseThrow();

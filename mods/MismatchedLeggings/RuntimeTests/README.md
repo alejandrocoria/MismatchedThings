@@ -63,6 +63,53 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Silent Gear foundation (block A)
+
+Maintained dedicated-server checks load packaged production Leggings and optional
+current Boots, with pinned SG `4.2.3` / Silent Lib `11.2.0` from the shared resolver.
+No research candidate or Wielder hook is enabled. Run profiles sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearFoundationTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationAbsent=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:Common:test :MismatchedLeggings:NeoForge:test :MismatchedLeggings:verifyPackaging :MismatchedBoots:NeoForge:assemble --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:runSkeletonServer --offline --console=plain
+```
+
+Automatic coverage passed on 2026-11-09: four focused unit cases; `.114` native
+standalone/current Boots and standalone absence; focused `.99` native/current
+Boots; the ordinary Fabric `0.19.5` dedicated skeleton also passes without SG.
+The final regression covers all 26 Common and 37 NeoForge cases, including the
+four foundation cases. NeoForge's modded unit-test runner reads the pre-existing
+Ice and Fire sibling Mixin witness directly from the actual Boots JAR; no sibling
+production change or substitute bytecode is used.
+Normal `.114` product outputs are restored afterwards. Fresh `server.ok`,
+`foundation.txt`, `matrix.ok`, successful bounded child exit and no failure marker
+are required. Logs/reports are under `NeoForge/build/{verification,reports}/<baseline>/sg-foundation-<graph>[-absent]/`.
+Only the pinned native optional Bonsai recipe ERROR is admitted; absence requires
+zero ERRORs and SG refusal warnings fail either profile.
+
+Controls cover paid Workbench extraction in either order and read-only previews,
+native equipped Light/Flutter, durability/history conservation, Magic Armor's
+default/explicit policy/native player limitation, one/two-sided independent
+clocks, inverse orientation, already-oxidized inputs, native conditions, trim
+preservation of live clocks distinct from source history, missing/copied state,
+sticky managed overrides, typed root/network roundtrips and malformed native
+payment/network negatives. Unit cases also cover exact-entry conflict metadata,
+codec limits and existing explicit TOML policies. No live trait dispatch, client,
+disk-reopen or missing-source recovery acceptance is inferred from block A.
+
+## Silent Gear bounded research gate
+
+The [isolated spike guide](../../../spikes/silentgear-leggings/README.md) documents
+the temporary dedicated-server numeric/live-state and native Stellar set probe,
+its current-Boots transformation-order/refusal controls and `.99` boundary.
+Use the shared pinned artifact resolver, not indev JARs. This is feasibility
+evidence, not production SG support or the complete compatibility test matrix.
+
 ## Ice and Fire damage and Lightning (block A)
 
 Maintained **server-only** production checks use real `hurtServer`, the native
