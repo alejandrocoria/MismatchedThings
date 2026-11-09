@@ -59,3 +59,5 @@ apply from: '../mystical-awakened-set.gradle'
 apply from: rootProject.file('spikes/leggings-ice-and-fire/spike.gradle')
 
 apply from: '../ice-and-fire-damage.gradle'
+
+apply from: '../ice-and-fire-tide.gradle'

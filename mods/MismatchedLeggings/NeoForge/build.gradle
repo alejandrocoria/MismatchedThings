@@ -20,6 +20,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.ow2.asm:asm-tree:9.9.1'
     testImplementation 'org.ow2.asm:asm-analysis:9.9.1'
+    testImplementation 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
     // Actual sibling bytecode is a test witness, never a production dependency.
     testRuntimeOnly files(project(':MismatchedBoots:NeoForge').tasks.named('jar').flatMap { it.archiveFile })
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

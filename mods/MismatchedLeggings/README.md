@@ -110,9 +110,16 @@ projectile contribution. Two qualifying sources still count as one piece.
 An exact Dragonsteel Lightning source can complete the ordinary lightning-bolt
 immunity set, with the other three logical pieces required. These local routes
 compose with optional mixed Boots and refuse independently when their native
-boundaries change. Tide activation remains pending. See the
+boundaries change. Either native Tide leggings source supplies one LEGS count
+and activates the audited native Tide tick while the root is actually worn.
+Water Breathing and wet Strength retain native refresh/expiry and effect hooks;
+with optional mixed Tide Boots, both mixed pieces alone grant wet Strength II.
+Entry, base tick and receiver checks must all pass. See the
 [bounded implementation status](local-docs/ICE-AND-FIRE-COMPATIBILITY-IMPLEMENTATION.md)
-and [maintained damage checks](RuntimeTests/README.md#ice-and-fire-damage-and-lightning-block-a).
+and the maintained [damage](RuntimeTests/README.md#ice-and-fire-damage-and-lightning-block-a)
+and [Tide checks](RuntimeTests/README.md#ice-and-fire-native-tide-block-b).
+Presentation/lifecycle consolidation and final Ice and Fire owner acceptance
+remain pending.
 
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to

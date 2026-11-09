@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings;
 
 import games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientNeoForge;
+import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRulesLifecycle;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
@@ -42,6 +43,7 @@ public final class MismatchedLeggingsNeoForge {
         serializers.register("mixed_leggings_smithing_base", () -> MixedLeggingsSmithingBaseRecipe.SERIALIZER);
         serializers.register(bus);
         CompositionRulesLifecycle.registerContributor();
+        IceAndFireTideCompatibility.initialize();
 
         bus.addListener((RegisterPayloadHandlersEvent event) -> {
             var registrar = event.registrar("1");

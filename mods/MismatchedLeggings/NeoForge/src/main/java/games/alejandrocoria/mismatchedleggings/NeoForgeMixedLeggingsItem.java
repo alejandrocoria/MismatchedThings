@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings;
 
 import games.alejandrocoria.mismatchedleggings.compatibility.allthemodium.AllTheModiumLeggings;
+import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
@@ -22,6 +23,7 @@ public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
         super.inventoryTick(stack, level, entity, slot);
         AllTheModiumLeggings.tick(stack, level, entity, slot);
         RootsTickCompatibility.tick(stack, level, entity, slot);
+        IceAndFireTideCompatibility.activate(stack, level, entity, slot);
     }
 
     @Override

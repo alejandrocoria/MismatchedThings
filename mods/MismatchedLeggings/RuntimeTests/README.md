@@ -105,7 +105,64 @@ reports use the matching `build/reports` directory. Unexpected ERRORs, Boots
 refusals, missing markers, bad exits and timeouts fail the gate. Empty native
 config overrides preserve native defaults without first-run Jupiter errors.
 Restore ordinary `.114` outputs afterward. These checks establish no Tide
-activation, client/rendering/lifecycle or owner acceptance; B/C retain that work.
+activation, client/rendering/lifecycle or owner acceptance; see the B section below for Tide
+checks and C for the remaining consolidation.
+
+## Ice and Fire native Tide (block B)
+
+Maintained server-only production checks use the resolver pins from block A and
+real `ServerPlayer.doTick`, with no candidate tick or replacement effect engine:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*IceAndFire*' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafTide --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafTide -PiafTideGraph=boots -PiafTideOrder=after --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafTide -PiafTideGraph=boots -PiafTideVariant=count --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafTide -PiafTideGraph=boots -PiafTideOrder=after '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+Run profiles/baselines sequentially. `iafTideGraph=alone|boots` selects actual
+packaged products; `iafTideOrder=before|after` changes only the staged Leggings
+Tide config's priority to 900/1100, around unchanged Boots' 1000. A test extension
+checks Mixin's actual sorted application set. No production Boots dependency or
+concrete sibling-handler recognition is introduced.
+
+`iafTideVariant=normal|compatible|count|entry|base|publication|receiver|absent`
+selects normal behavior, bounded compatible result chains on all four slots,
+an altered own LEGS hook, opaque extra native entry work, extra base tick work,
+a tampered true/final publication getter, a wrong-slot fixed receiver binding,
+or quiet native absence. Count/publication/receiver refuse only Leggings Tide;
+shared unsafe entry/base work refuses both independent Tide owners. Every native
+profile retains real damage/Lightning `hurtServer` positives. Unit tests also
+cover incomplete/changed API, missing/ambiguous predicates, native provenance,
+carrier alias/mutation, effect/count/wetness/dispatch changes, missing publication
+and overridden inherited base proof. Tests load actual compiled hooks and the
+packaged Boots final proof in both edit orders.
+
+Native-versus-mixed comparisons include both orientations, all seven Tide colors,
+duplicate sources, native neighbors, mixed LEGS/FEET without originals, inventory/
+wrong-slot/bare/malformed/suspended/foreign controls, actual immersion/drying,
+rain without immersion, stronger external effects, controlled native effect veto,
+removal and natural expiry. They compare ordered effect calls and the complete
+codec state (including hidden effects), require one real worn-root tick and the
+native per-piece refresh count, and preserve actual equipment/source contents.
+Native wrong-slot class counting stays upstream-owned.
+
+Require fresh `server.ok`, `tide.txt` and
+`NeoForge/build/verification/<baseline>/iaf-tide-<graph>-<order>-<variant>/matrix.ok`;
+reports use the matching `build/reports` directory. Bad exits/timeouts, ERRORs,
+unexpected refusal diagnostics and missing markers fail verification. Refusals
+emit one warning per affected owner. Absence leaves the Item checkpoint uninstalled.
+Restore normal `.114` outputs after floor checks.
+
+The entry proof intentionally rejects unfamiliar extra work, carrier access,
+whole-method wrappers and nonempty base ticks, including harmless additions
+outside its small grammar. Bounded result callbacks remain third-party behavior;
+their purity or intentional-veto semantics are not certified. Final publication
+observes Mixin export after MixinExtras, without claiming protection from later
+loader transformers, mutating export extensions or redefinition. These tests
+establish no client transport, saved-world lifecycle, rendering or owner acceptance;
+block C and the final owner checklist remain separate.
 
 ## Mystical Agriculture Awakened set recognition
 

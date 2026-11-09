@@ -97,7 +97,7 @@ gradle.projectsEvaluated {
                         throw new GradleException('Wrong optional Advanced Netherite mixin ownership')
                     }
                     if (name == 'Fabric') {
-                        if (names.any { it.contains('/compatibility/iceandfire/') || it == 'mismatchedleggings.iceandfire.mixins.json' }) {
+                        if (names.any { it.contains('/compatibility/iceandfire/') || it.startsWith('mismatchedleggings.iceandfire') }) {
                             throw new GradleException('NeoForge-only Ice and Fire integration leaked into Fabric')
                         }
                         def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
@@ -153,10 +153,13 @@ gradle.projectsEvaluated {
                         }
                         def text = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
                         if (text.count('config="mismatchedleggings.iceandfire.mixins.json"') != 1
+                                || text.count('config="mismatchedleggings.iceandfire-tide.mixins.json"') != 1
                                 || text.contains('modId="iceandfire"') || text.contains('modId="uranus"') || text.contains('modId="jupiter"')) {
                             throw new GradleException('Optional Ice and Fire integration is missing, duplicated or required')
                         }
-                        ['IceAndFireDamageShape', 'IceAndFireMixinPlugin', 'IceAndFireRecognition'].each { type ->
+                        ['IceAndFireDamageShape', 'IceAndFireMixinPlugin', 'IceAndFireRecognition',
+                         'IceAndFireTideApi', 'IceAndFireTideCompatibility', 'IceAndFireTideLegsInjectionPoint',
+                         'IceAndFireTideMixinPlugin', 'IceAndFireTideReadiness', 'IceAndFireTideShape'].each { type ->
                             if (!names.contains('games/alejandrocoria/mismatchedleggings/compatibility/iceandfire/' + type + '.class')) {
                                 throw new GradleException("Missing Ice and Fire adapter: ${type}")
                             }
@@ -167,6 +170,13 @@ gradle.projectsEvaluated {
                                 || !names.contains('games/alejandrocoria/mismatchedleggings/mixin/compatibility/iceandfire/IceAndFireDamageTargetMixin.class')
                                 || iceAndFire.mixins != ['IceAndFireDamageTargetMixin']) {
                             throw new GradleException('Wrong optional Ice and Fire mixin ownership')
+                        }
+                        def tide = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('mismatchedleggings.iceandfire-tide.mixins.json')))
+                        if (tide.plugin != 'games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideMixinPlugin'
+                                || tide.package != 'games.alejandrocoria.mismatchedleggings.mixin.compatibility.iceandfire'
+                                || tide.mixins != ['IceAndFireTideArmorAccess', 'IceAndFireTideBaseMixin', 'IceAndFireTideEntryMixin', 'IceAndFireTideLegsMixin']
+                                || tide.mixins.any { !names.contains('games/alejandrocoria/mismatchedleggings/mixin/compatibility/iceandfire/' + it + '.class') }) {
+                            throw new GradleException('Wrong optional Tide mixin ownership or missing final checkpoints')
                         }
                         if (text.count('config="mismatchedleggings.advancednetherite.mixins.json"') != 1
                                 || text.contains('modId="advancednetherite"')) {
