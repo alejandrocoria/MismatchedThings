@@ -164,6 +164,59 @@ loader transformers, mutating export extensions or redefinition. These tests
 establish no client transport, saved-world lifecycle, rendering or owner acceptance;
 block C and the final owner checklist remain separate.
 
+## Ice and Fire presentation and lifecycle (block C)
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyEquipped -PleggingsIceAndFire=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyEquipped -PleggingsIceAndFire=true -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIceAndFire --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIceAndFire -PleggingsBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIceAndFire -PleggingsBoots=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+Run graphs/baselines sequentially; repeat the focused equipped profile with the
+same `.99` override and restore normal `.114` outputs afterward. The equipped
+profile automatically checks all 31 native sources whenever Ice and Fire is loaded:
+30 replacement models, 13 decorated waists, 124 both-orientation moving/crouched
+trimmed native/dyed-leather pairs, exact ordered native materials, live foil,
+GUI/first/third-person item textures, and actual resource reload. Supported pairs
+must use split `LeggingsView` submissions. Native normal/advanced descriptions
+retain exact Component text/styles under their source, including duplicate-source
+controls, with no root duplicate or mutation. No render-spike flag is needed.
+Require fresh `ice-and-fire-render.txt` and `ice-and-fire-tooltip.txt` alongside
+the equipped profile's server/client markers and `matrix.ok`.
+
+`verifyIceAndFire` seeds a dedicated world with three paid native compositions
+and six paid repairs/trims. A separate hidden/muted client JVM reads all six
+complete roots from the saved barrel, exercises the real damage/set consumers,
+then checks equipment/effect packets on the actual player. Both Tide orientations,
+optional mixed Tide Boots without originals, disconnect/save/reopen, preserved
+UUID/history, unequip/natural expiry, inventory inactivity, re-equip and drying
+are covered. Snapshots for re-equipping are read from the reopened server's
+registry lifetime. This is a connected integrated-server lifecycle gate;
+packaged dedicated multiplayer belongs to the separate final owner checklist.
+
+Require fresh `server.ok`, `client.ok`, `ice-and-fire-lifecycle.txt`,
+`ice-and-fire-saved.json` and `ice-and-fire-session.txt` under
+`NeoForge/build/reports/<baseline>/iceAndFire[-boots]`, plus the matching
+`build/verification/<baseline>/iceAndFire[-boots]/matrix.ok`. ERRORs, adapter
+refusals, missing evidence, timeouts and bad exits fail the gate. Native config
+files contain empty override objects to retain defaults without first-run
+missing-file errors. Inputs use the shared hash-pinned resolver; clients remain
+hidden before GLFW creation, muted, with the NeoForge early window disabled.
+
+The executable `spikes/leggings-ice-and-fire` candidate is retired. Historical
+measurements remain in the [dated research record](../local-docs/ICE-AND-FIRE-COMPATIBILITY-SPIKE.md);
+maintained A/B refusals and absence controls remain independent of C.
+
+The 2026-11-09 C record passed the two `.114` lifecycle/equipped graphs and the
+current-Boots `.99` graph, with fresh required reports and matrix markers.
+Post-retirement `.114` damage/Lightning flow, Tide count/shared-entry refusals,
+both native-absence graphs, ordinary NeoForge/Fabric dedicated startup and
+both-loader packaging also passed. Normal `.114` outputs are restored. The owner
+confirmed the final NeoForge tests passed on 2026-11-09, closing the bounded
+plan; see the [accepted implementation checklist](../local-docs/ICE-AND-FIRE-COMPATIBILITY-IMPLEMENTATION.md#7-owner-checklist-and-closure).
+
 ## Mystical Agriculture Awakened set recognition
 
 The joint server-only fixture exercises packaged Boots/Leggings on each loader,
@@ -1688,10 +1741,9 @@ No equipped-armor or arbitrary transparency guarantee is implied.
 
 ## Equipped rendering
 
-The temporary [Ice and Fire Leggings research spike](../../../spikes/leggings-ice-and-fire/README.md)
-reuses this profile with opt-in extra native source pairs. Its separate gameplay
-candidate is not production support or part of ordinary product acceptance;
-retire its hooks with the executable spike after production consolidation.
+The maintained [Ice and Fire block C checks](#ice-and-fire-presentation-and-lifecycle-block-c)
+run automatically with the native equipped profile; historical spike evidence is
+retained separately from production and owner acceptance.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyEquipped --offline --console=plain

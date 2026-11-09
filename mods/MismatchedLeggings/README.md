@@ -118,8 +118,12 @@ Entry, base tick and receiver checks must all pass. See the
 [bounded implementation status](local-docs/ICE-AND-FIRE-COMPATIBILITY-IMPLEMENTATION.md)
 and the maintained [damage](RuntimeTests/README.md#ice-and-fire-damage-and-lightning-block-a)
 and [Tide checks](RuntimeTests/README.md#ice-and-fire-native-tide-block-b).
-Presentation/lifecycle consolidation and final Ice and Fire owner acceptance
-remain pending.
+Native source descriptions and existing split rendering pass maintained
+[presentation/lifecycle checks](RuntimeTests/README.md#ice-and-fire-presentation-and-lifecycle-block-c)
+on `.114` standalone/current Boots and `.99` current Boots, including resource
+reload and real saved-world reconnect with equipment/effect packets. The research
+candidate is retired. The owner confirmed the final NeoForge checklist passed
+on 2026-11-09, closing the bounded Ice and Fire integration.
 
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to

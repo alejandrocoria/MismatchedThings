@@ -3,7 +3,7 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture', 'RootsRendering', 'RootsTicks']) }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture', 'RootsRendering', 'RootsTicks', 'IceAndFire']) }
 profiles.each { profile ->
     def rootsRendering = profile == 'RootsRendering'
     def rootsTicks = profile == 'RootsTicks'
@@ -44,7 +44,8 @@ profiles.each { profile ->
     def grindstone = profile == 'Grindstone'
     def smithing = profile == 'Smithing'
     def smithingReload = smithing && providers.gradleProperty('leggingsSmithingReload').map { it.toBoolean() }.getOrElse(false)
-    def iceAndFire = equipped && project.name == 'NeoForge' && providers.gradleProperty('leggingsIceAndFire')
+    def iceAndFireLifecycle = profile == 'IceAndFire'
+    def iceAndFire = iceAndFireLifecycle || equipped && project.name == 'NeoForge' && providers.gradleProperty('leggingsIceAndFire')
             .map { it.toBoolean() }.getOrElse(false)
     def coexistence = bootsOnly || providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
     def previousBoots = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
@@ -54,7 +55,7 @@ profiles.each { profile ->
     def previousHash = previousBoots == null ? null : java.security.MessageDigest.getInstance('SHA-256')
             .digest(previousBoots.bytes).encodeHex().toString()
     def baseline = project.name == 'Fabric' ? fabric_loader_version : neoforge_version
-    def variant = profile.uncapitalize() + (viewers ? "-${viewer}" : '') + (bootsOnly ? '-boots-only' : coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire ? '-ice-and-fire' : '')
+    def variant = profile.uncapitalize() + (viewers ? "-${viewer}" : '') + (bootsOnly ? '-boots-only' : coexistence ? (previousBoots == null ? '-boots' : '-previous-boots') : '') + (iceAndFire && !iceAndFireLifecycle ? '-ice-and-fire' : '')
     if (smithingReload) { variant += '-reload' }
     if (emptyItems) { variant += '-empty-model' }
     if (brokenAllTheModium) { variant += '-broken' }
@@ -138,6 +139,10 @@ profiles.each { profile ->
                     artifacts.add(project(":MismatchedThings:${project.name}").tasks.named('jar').get().archiveFile.get().asFile)
                 }
                 if (iceAndFire) {
+                    ['config/jupiter.json', 'config/iceandfire/iaf-common.json', 'config/iceandfire/iaf-client.json'].each { name ->
+                        def config = new File(run, name)
+                        if (!config.exists()) { config.parentFile.mkdirs(); config.text = '{}\n' }
+                    }
                     def resolver = project(':MismatchedThings').testModArtifacts
                     ['iceandfire-2.2-beta.3.jar', 'uranus-3.0-alpha.1.jar',
                      'jupiter-2.4.3-26.1.2-universal.jar'].each { name ->
@@ -149,6 +154,10 @@ profiles.each { profile ->
                 }
                 copy { from artifacts; into mods }
                 reports.mkdirs()
+                if (iceAndFire && phase == 'server') {
+                    ['ice-and-fire-render.txt', 'ice-and-fire-tooltip.txt', 'ice-and-fire-session.txt',
+                     'ice-and-fire-saved.json', 'ice-and-fire-lifecycle.txt'].each { new File(reports, it).delete() }
+                }
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
                 if (neoVitaeRestart) {
@@ -302,6 +311,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.advancedNetherite', advancedNetherite.toString())
                 systemProperty('leggings.test.allTheModium', allTheModium.toString())
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
+                systemProperty('leggings.test.iceAndFire', iceAndFireLifecycle.toString())
                 systemProperty('leggings.test.neoVitae', neoVitae.toString())
                 systemProperty('leggings.test.neoVitaeRestart', neoVitaeRestart.toString())
                 systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
@@ -357,6 +367,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : repair ? 'Checks native anvil transactions, crafting/Crafter donor repair and product coexistence.'
                 : presentation ? 'Checks tooltips, native armor semantics, enchantment admission and audited behavior tags.'
                 : items ? 'Checks production item geometry, GUI, display contexts, fallbacks and reload.'
+                : iceAndFireLifecycle ? 'Checks saved Ice and Fire roots, paid composition/repair/trim, native consumers and connected Tide lifecycle.'
                 : equipped ? 'Checks production equipped rendering, geometry cache, fallbacks and optional decorated models.'
                 : 'Checks Leggings workbench transactions, rule synchronization and optional Boots coexistence.'
         dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
@@ -372,9 +383,6 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 if (execution == 'restart') { arguments.add('-PleggingsNeoVitaeRestart=true') }
                 if (rootsTicks) { arguments.add("-PleggingsRootsTickVariant=${rootsTickVariant}") }
                 if (iceAndFire) { arguments.add('-PleggingsIceAndFire=true') }
-                if (providers.gradleProperty('leggingsIafRenderSpike').getOrElse('false').toBoolean()) {
-                    arguments.add('-PleggingsIafRenderSpike=true')
-                }
                 if (smithingReload) { arguments.add('-PleggingsSmithingReload=true') }
                 if (emptyItems) { arguments.add('-PleggingsEmptyItems=true') }
                 if (brokenAllTheModium) { arguments.add('-PleggingsAllTheModiumBroken=true') }
@@ -401,6 +409,16 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         process.toHandle().descendants().forEach { it.destroyForcibly() }
                         process.destroyForcibly()
                     }
+                }
+                if (iceAndFire) {
+                    if (log.text.contains('/ERROR]') || log.text.contains('Tide adapter disabled')
+                            || log.text.contains('mixed leggings recognition disabled') || log.text.contains('boot compatibility disabled')) {
+                        throw new GradleException("Unexpected Ice and Fire diagnostics: ${log}")
+                    }
+                    def evidence = phase == 'client' ? (iceAndFireLifecycle ? ['ice-and-fire-session.txt']
+                            : ['ice-and-fire-render.txt', 'ice-and-fire-tooltip.txt'])
+                            : (iceAndFireLifecycle ? ['ice-and-fire-saved.json', 'ice-and-fire-lifecycle.txt'] : [])
+                    evidence.each { if (!new File(reports, it).isFile()) { throw new GradleException("Missing Ice and Fire evidence: ${it}") } }
                 }
                 if (allTheModium || aquaculture || oritechCapture || rootsRendering || rootsTicks) {
                     def text = log.text

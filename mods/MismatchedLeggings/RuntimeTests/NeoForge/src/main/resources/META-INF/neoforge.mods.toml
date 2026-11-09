@@ -47,9 +47,6 @@ config="leggings-mystical-refunds-test.mixins.json"
 config="leggings-awakened-set-test.mixins.json"
 
 [[mixins]]
-config="leggings-iaf-spike.mixins.json"
-
-[[mixins]]
 config="leggings-iaf-damage-test.mixins.json"
 
 [[mixins]]

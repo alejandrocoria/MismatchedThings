@@ -21,10 +21,6 @@ public final class SkeletonTestNeoForge {
             games.alejandrocoria.mismatchedleggings.test.iceandfire.DamageChecks.register();
             return;
         }
-        if (Boolean.getBoolean("leggings.test.iafSpike")) {
-            games.alejandrocoria.mismatchedleggings.test.iafspike.SpikeChecks.register();
-            return;
-        }
         if (games.alejandrocoria.mismatchedleggings.test.awakenedset.SetChecks.enabled()) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedleggings.test.awakenedset.SetChecks.tick(event.getServer()));
             return;
@@ -110,6 +106,8 @@ public final class SkeletonTestNeoForge {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> NeoVitaeChecks.tick(event.getServer()));
         } else if (Boolean.getBoolean("leggings.test.forbiddenArcanus")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> ForbiddenArcanusChecks.tick(event.getServer()));
+        } else if (Boolean.getBoolean("leggings.test.iceAndFire")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> IceAndFireLifecycleChecks.seed(event.getServer()));
         } else if (Boolean.getBoolean("leggings.test.aquaculture")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> AquacultureChecks.tick(event.getServer()));
         } else if (Boolean.getBoolean("leggings.test.allTheModium")) {
