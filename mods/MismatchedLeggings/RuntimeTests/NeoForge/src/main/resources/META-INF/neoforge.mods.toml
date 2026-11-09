@@ -48,3 +48,6 @@ config="leggings-awakened-set-test.mixins.json"
 
 [[mixins]]
 config="leggings-iaf-spike.mixins.json"
+
+[[mixins]]
+config="leggings-iaf-damage-test.mixins.json"

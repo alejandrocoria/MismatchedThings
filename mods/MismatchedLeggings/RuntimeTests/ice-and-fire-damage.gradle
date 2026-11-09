@@ -1,0 +1,112 @@
+import java.util.concurrent.TimeUnit
+import java.util.zip.ZipFile
+
+def graph = providers.gradleProperty('iafDamageGraph').getOrElse('alone')
+def order = providers.gradleProperty('iafDamageOrder').getOrElse('before')
+def variant = providers.gradleProperty('iafDamageVariant').getOrElse('normal')
+if (!(graph in ['alone', 'boots']) || !(order in ['before', 'after']) || !(variant in ['normal', 'compatible', 'damage-class', 'damage-flow', 'lightning-item', 'lightning-flow', 'absent'])) {
+    throw new GradleException('Unknown Ice and Fire production damage graph/order/variant')
+}
+def label = "iaf-damage-${graph}-${order}-${variant}"
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def product = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+
+tasks.register('prepareIafDamageServer') {
+    dependsOn tasks.named('classes'), product.tasks.named('assemble')
+    if (graph == 'boots') { dependsOn boots.tasks.named('assemble') }
+    doLast {
+        def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
+        if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        if (variant != 'absent') {
+            ['iceandfire-2.2-beta.3.jar', 'uranus-3.0-alpha.1.jar', 'jupiter-2.4.3-26.1.2-universal.jar'].each {
+                artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
+            }
+        }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { candidate -> !artifacts.any { it.name == candidate.name } }) {
+            throw new GradleException("Unexpected artifact in disposable ${mods}")
+        }
+        copy { from artifacts; into mods }
+        def staged = new File(mods, artifacts.first().name)
+        def contents = [:]
+        new ZipFile(staged).withCloseable { zip ->
+            zip.entries().each { entry ->
+                if (!entry.directory) { contents[entry.name] = zip.getInputStream(entry).bytes }
+            }
+        }
+        def configName = 'mismatchedleggings.iceandfire.mixins.json'
+        def config = new groovy.json.JsonSlurper().parse(contents[configName])
+        config.mixinPriority = order == 'before' ? 900 : 1100
+        contents[configName] = groovy.json.JsonOutput.toJson(config).getBytes('UTF-8')
+        new java.util.zip.ZipOutputStream(new FileOutputStream(staged)).withCloseable { zip ->
+            contents.each { name, bytes ->
+                zip.putNextEntry(new java.util.zip.ZipEntry(name)); zip.write(bytes); zip.closeEntry()
+            }
+        }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'damage.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        if (variant != 'absent') {
+            // Empty override objects keep native defaults without Jupiter's first-run missing-file ERROR.
+            ['config/jupiter.json', 'config/iceandfire/iaf-common.json'].each { name ->
+                def nativeConfig = new File(directory, name)
+                if (!nativeConfig.exists()) { nativeConfig.parentFile.mkdirs(); nativeConfig.text = '{}\n' }
+            }
+        }
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=damage\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('iafDamageServer') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.iafDamage', 'true')
+    systemProperty('leggings.test.iafDamageVariant', variant)
+    systemProperty('leggings.test.iafDamageOrder', order)
+    systemProperty('leggings.test.boots', (graph == 'boots').toString())
+    systemProperty('leggings.test.report', reports.absolutePath)
+    systemProperty('mixin.debug.export', 'true')
+    systemProperty('mixin.debug.export.filter', 'com.iafenvoy.iceandfire.**')
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runIafDamageServer') { dependsOn 'prepareIafDamageServer' }
+tasks.register('verifyIafDamage') {
+    group = 'verification'
+    doLast {
+        def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+        logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        def log = new File(logs, 'server.log')
+        def arguments = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                         "${project.path}:runIafDamageServer", "-Pneoforge_version=${neoforge_version}", "-PiafDamageGraph=${graph}",
+                         "-PiafDamageOrder=${order}", "-PiafDamageVariant=${variant}"]
+        if (gradle.startParameter.offline) { arguments.add('--offline') }
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0 || !new File(reports, 'server.ok').isFile()
+                    || new File(reports, 'server.failure.txt').exists() || !new File(reports, 'damage.txt').isFile()) {
+                throw new GradleException("Ice and Fire production damage failed: ${log}")
+            }
+            if (log.text.contains('/ERROR]') || log.text.contains('Tide adapter disabled') || log.text.contains('boot compatibility disabled')
+                    || variant == 'absent' && log.text.readLines().any { it.contains('WARN') && it.contains('iceandfire') }) {
+                throw new GradleException("Unexpected damage diagnostics: ${log}")
+            }
+            def refusals = log.text.readLines().findAll { it.contains('WARN') && it.contains('mixed leggings recognition disabled') }
+            def expected = variant.startsWith('damage-') || variant.startsWith('lightning-') ? 1 : 0
+            if (refusals.size() != expected || expected == 1 && !refusals.first().contains(variant.startsWith('damage-') ? 'projectile/dragon' : 'lightning-set')) {
+                throw new GradleException("Unexpected production refusal diagnostics: ${log}")
+            }
+            new File(logs, 'matrix.ok').text = 'production native damage and Lightning recognition; final local guards and sibling coexistence\n'
+        } finally {
+            if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
+        }
+    }
+}
+

@@ -63,6 +63,50 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Ice and Fire damage and Lightning (block A)
+
+Maintained **server-only** production checks use real `hurtServer`, the native
+Pre-event results and actual health loss. They enable no damage or Tide candidate.
+Native dependencies come from the shared resolver's Ice and Fire `2.2-beta.3`,
+Uranus `3.0-alpha.1` and Jupiter `2.4.3` pins; actual current Boots is optional.
+Run profiles and baselines sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*IceAndFireDamageShapeTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafDamage --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafDamage -PiafDamageGraph=boots -PiafDamageOrder=after --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafDamage -PiafDamageGraph=boots -PiafDamageVariant=damage-flow --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyIafDamage -PiafDamageGraph=boots -PiafDamageOrder=after '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+`iafDamageGraph=alone|boots` selects actual packaged products.
+`iafDamageOrder=before|after` instruments only the staged Leggings mixin config's
+priority to 900/1100, around unchanged Boots' 1000. A test extension inspects the
+actual sorted application set; requested flags alone do not establish order.
+`iafDamageVariant=normal|compatible|damage-class|damage-flow|lightning-item|lightning-flow|absent`
+selects the native graph, compatible executable/HEAD-result additions, a changed
+LEGS Troll class/exact Lightning item, a runtime-identical opaque local predicate,
+or quiet native absence. Mutations run after ordinary mixin selection, so the
+final proof must independently refuse. Each refused family must warn once;
+native positives and Boots' independent damage/set/Tide readiness remain checked.
+
+All 31 sources, native/both orientations/duplicates, mixed Troll/Dragon sources,
+three breaths/projectiles, invalid/suspended/foreign roots, incomplete/incorrect
+Lightning sets and joint LEGS/FEET protection traverse the real event bus.
+Source snapshots and actual equipment identity must remain unchanged. Focused
+native-bytecode tests additionally refuse changed entity/slot/class/item/branch/
+coefficient/consumer, missing/ambiguous targets and incomplete API, while allowing
+relocated locals and other-slot result chains. Native balance constants remain
+native; no copied formula, extra damage listener or global identity alias is used.
+
+Require `server.ok`, `damage.txt` and
+`NeoForge/build/verification/<baseline>/iaf-damage-<graph>-<order>-<variant>/matrix.ok`;
+reports use the matching `build/reports` directory. Unexpected ERRORs, Boots
+refusals, missing markers, bad exits and timeouts fail the gate. Empty native
+config overrides preserve native defaults without first-run Jupiter errors.
+Restore ordinary `.114` outputs afterward. These checks establish no Tide
+activation, client/rendering/lifecycle or owner acceptance; B/C retain that work.
+
 ## Mystical Agriculture Awakened set recognition
 
 The joint server-only fixture exercises packaged Boots/Leggings on each loader,

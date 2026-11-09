@@ -13,6 +13,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.iafDamage")) {
+            games.alejandrocoria.mismatchedleggings.test.iceandfire.DamageChecks.register();
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.iafSpike")) {
             games.alejandrocoria.mismatchedleggings.test.iafspike.SpikeChecks.register();
             return;

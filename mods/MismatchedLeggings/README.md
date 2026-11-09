@@ -104,6 +104,16 @@ An incompatible local predicate disables only its product's set extension.
 See the [joint contract and acceptance status](../../local-docs/MYSTICAL-AGRICULTURE-AWAKENED-SET-IMPLEMENTATION.md)
 and [focused test matrix](RuntimeTests/README.md#mystical-agriculture-awakened-set-recognition).
 
+On NeoForge, either Dragon Scale or Dragonsteel source supplies Ice and Fire's
+native LEGS breath-protection contribution; either Troll source supplies its
+projectile contribution. Two qualifying sources still count as one piece.
+An exact Dragonsteel Lightning source can complete the ordinary lightning-bolt
+immunity set, with the other three logical pieces required. These local routes
+compose with optional mixed Boots and refuse independently when their native
+boundaries change. Tide activation remains pending. See the
+[bounded implementation status](local-docs/ICE-AND-FIRE-COMPATIBILITY-IMPLEMENTATION.md)
+and [maintained damage checks](RuntimeTests/README.md#ice-and-fire-damage-and-lightning-block-a).
+
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to
 neutral leggings. Unsupported item models fall back to two superimposed complete

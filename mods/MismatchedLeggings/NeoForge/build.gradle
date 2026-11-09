@@ -70,4 +70,8 @@ tasks.named('test', Test) {
     inputs.file(providers.provider { artifacts.resolve('NeoForge', undergarden) })
             .withPropertyName('undergardenGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.undergardenGuardJar', artifacts.path('NeoForge', undergarden).absolutePath
+    def iceAndFire = 'iceandfire-2.2-beta.3.jar'
+    inputs.file(providers.provider { artifacts.resolve('NeoForge', iceAndFire) })
+            .withPropertyName('iceAndFireGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
+    systemProperty 'mismatchedleggings.test.iceAndFireGuardJar', artifacts.path('NeoForge', iceAndFire).absolutePath
 }
