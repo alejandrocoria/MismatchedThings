@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
 
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
+import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -36,6 +37,7 @@ public final class SilentGearCompatibility {
 
     public static void initialize(IEventBus bus) {
         TYPES.register(bus);
+        SilentGearEffects.initialize(bus);
         if (ModList.get().isLoaded("silentgear")) {
             bus.addListener((RegisterCapabilitiesEvent event) -> {
                 try {
@@ -62,6 +64,14 @@ public final class SilentGearCompatibility {
             LeggingsContent.LOG.warn("Could not read Silent Gear leggings source identity", failure);
             return false;
         }
+    }
+
+    static ItemStack carrier(ItemStack root) {
+        var data = MixedLeggingsStructure.validData(root).orElse(null);
+        if (data == null) { return ItemStack.EMPTY; }
+        var left = data.left().source();
+        var right = data.right().source();
+        return leggings(left) ? left.copy() : leggings(right) ? right.copy() : ItemStack.EMPTY;
     }
 
     public static ItemAttributeModifiers normalize(ItemStack source, ItemAttributeModifiers attributes) {

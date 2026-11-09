@@ -42,6 +42,9 @@ config="mismatchedleggings.iceandfire.mixins.json"
 [[mixins]]
 config="mismatchedleggings.iceandfire-tide.mixins.json"
 
+[[mixins]]
+config="mismatchedleggings.silentgear-effects.mixins.json"
+
 [[mods]]
 modId="${mod_id}"
 version="${version}"

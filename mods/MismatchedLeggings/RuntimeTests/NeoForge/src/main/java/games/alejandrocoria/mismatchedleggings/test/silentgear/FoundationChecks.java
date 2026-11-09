@@ -80,6 +80,7 @@ public final class FoundationChecks {
                 numeric(server, player);
                 clocks(server, player);
                 rejection(player);
+                EffectsChecks.run(player, REPORT);
                 if (ModList.get().isLoaded("mismatchedboots")) { sibling(); }
             }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
@@ -104,6 +105,13 @@ public final class FoundationChecks {
         require(query.modifiers().size() == duplicates.size(), "Non-SG duplicate entries were normalized");
         for (var root : pair(source, new ItemStack(Items.DIAMOND_LEGGINGS))) {
             require(!root.has(SilentGearCompatibility.state()), "Foreign copied state manufactured SG authority");
+            root.setDamageValue(10);
+            var before = root.copy();
+            root.inventoryTick(player.level(), player, EquipmentSlot.LEGS);
+            require(ItemStack.matches(before, root), "Ordinary inventory tick activated SG state/repair");
+            root.hurtAndBreak(3, player, EquipmentSlot.LEGS);
+            before.setDamageValue(13);
+            require(ItemStack.matches(before, root), "Ordinary wear changed beyond its single root debit");
         }
         // The same registered scalar schema and network codec work in a JVM without any SG classes.
         var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), server.registryAccess());
@@ -273,7 +281,7 @@ public final class FoundationChecks {
         REPORT.append("Current packaged Boots initializes its separate SG component\n");
     }
 
-    private static List<ItemStack> paid(ServerPlayer player, ItemStack first, ItemStack second) {
+    static List<ItemStack> paid(ServerPlayer player, ItemStack first, ItemStack second) {
         var expected = pair(first, second);
         for (int slot : List.of(2, 3)) {
             player.getInventory().clearContent();
@@ -310,14 +318,14 @@ public final class FoundationChecks {
         return List.of(pair.primary(), pair.inverse());
     }
 
-    private static ItemStack armor(String material, String... extras) throws Exception {
+    static ItemStack armor(String material, String... extras) throws Exception {
         var parts = new ArrayList<PartInstance>();
         parts.add(PartInstance.from(part("legging_plates", material)));
         for (int i = 0; i < extras.length; i += 2) { parts.add(PartInstance.from(part(extras[i], extras[i + 1]))); }
         return ((GearItem) BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:leggings"))).construct(parts);
     }
 
-    private static ItemStack part(String name, String material) throws Exception {
+    static ItemStack part(String name, String material) throws Exception {
         var item = BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:" + name));
         return (ItemStack) item.getClass().getMethod("create", List.class).invoke(item,
                 List.of(MaterialInstance.of(DataResource.material("silentgear:" + material))));
@@ -342,7 +350,7 @@ public final class FoundationChecks {
                 .mapToDouble(e -> e.modifier().amount()).sum();
     }
 
-    private static ServerPlayer player(MinecraftServer server) throws Exception {
+    static ServerPlayer player(MinecraftServer server) throws Exception {
         var profile = new GameProfile(UUID.randomUUID(), "SgFoundation");
         var player = new ServerPlayer(server, server.overworld(), profile, ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player, CommonListenerCookie.createInitial(profile, false));

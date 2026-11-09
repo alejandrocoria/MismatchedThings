@@ -1,14 +1,19 @@
 import java.util.concurrent.TimeUnit
 
-// Maintained block-A production gate. Research candidates and Wielder hooks stay disabled.
+// Maintained A/B production gate. Research candidates and Wielder hooks stay disabled.
 def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
 dependencies.add('compileOnly', files(providers.provider {
     nativeNames.collect { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it) }
 }))
 def graph = providers.gradleProperty('sgFoundationGraph').getOrElse('alone')
 def absent = providers.gradleProperty('sgFoundationAbsent').map { it.toBoolean() }.getOrElse(false)
+def variant = providers.gradleProperty('sgEffectsVariant').getOrElse('')
+def order = providers.gradleProperty('sgEffectsOrder').getOrElse('default')
+if (!(variant in ['', 'repair', 'wear', 'wear-delta', 'compatible']) || !(order in ['default', 'before', 'after'])) {
+    throw new GradleException('Unknown SG effects variant/order')
+}
 if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foundation graph') }
-def label = "sg-foundation-${graph}" + (absent ? '-absent' : '')
+def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}")
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -28,6 +33,26 @@ tasks.register('prepareSgFoundation') {
             }
         }
         if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        if (order != 'default') {
+            // Exercise both actual application orders by changing only config priority in a disposable product copy.
+            def original = artifacts.first()
+            def staged = layout.buildDirectory.file("sg-order/${label}/${original.name}").get().asFile
+            staged.parentFile.mkdirs()
+            new java.util.zip.ZipFile(original).withCloseable { zip ->
+                new java.util.zip.ZipOutputStream(new FileOutputStream(staged)).withCloseable { output ->
+                    zip.entries().each { entry ->
+                        output.putNextEntry(new java.util.zip.ZipEntry(entry.name))
+                        if (entry.name == 'mismatchedleggings.silentgear-effects.mixins.json') {
+                            def config = new groovy.json.JsonSlurper().parse(zip.getInputStream(entry))
+                            config.mixinPriority = order == 'before' ? 900 : 1100
+                            output.write(groovy.json.JsonOutput.toJson(config).getBytes('UTF-8'))
+                        } else { zip.getInputStream(entry).withCloseable { output.write(it.bytes) } }
+                        output.closeEntry()
+                    }
+                }
+            }
+            artifacts[0] = staged
+        }
         if (!absent) {
             nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
         }
@@ -52,6 +77,8 @@ neoForge.runs.create('sgFoundation') {
     programArgument('--nogui')
     systemProperty('leggings.test.sgFoundation', 'true')
     systemProperty('leggings.test.sgFoundationAbsent', absent.toString())
+    systemProperty('leggings.test.sgEffectsVariant', variant)
+    systemProperty('leggings.test.sgEffectsOrder', order)
     systemProperty('leggings.test.boots', (graph == 'boots').toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -66,7 +93,8 @@ tasks.register('verifySgFoundation') {
         def log = new File(evidence, 'server.log')
         def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                     "${project.path}:runSgFoundation", "-Pneoforge_version=${neoforge_version}",
-                    "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}"]
+                    "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}",
+                    "-PsgEffectsVariant=${variant}", "-PsgEffectsOrder=${order}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
@@ -82,10 +110,13 @@ tasks.register('verifySgFoundation') {
                     || !errors.first().contains('bonsaitrees2:sapling')) {
                 throw new GradleException("Unexpected SG foundation errors: ${log}")
             }
-            if (log.text.readLines().any { it.contains('WARN') && it.contains('Silent Gear') }) {
+            def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
+            def refused = variant == 'wear-delta' ? 'wear' : variant
+            if (refused in ['repair', 'wear'] ? warnings.size() != 1
+                    || !warnings.first().contains("Silent Gear mixed leggings ${refused} disabled") : !warnings.isEmpty()) {
                 throw new GradleException("Unexpected SG foundation refusal: ${log}")
             }
-            new File(evidence, 'matrix.ok').text = 'packaged SG block-A production foundation passed\n'
+            new File(evidence, 'matrix.ok').text = 'packaged SG A/B production checks passed\n'
         } finally {
             if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
         }

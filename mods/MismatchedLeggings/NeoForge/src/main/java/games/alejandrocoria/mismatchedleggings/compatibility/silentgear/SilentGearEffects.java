@@ -1,0 +1,282 @@
+package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
+
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
+import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.List;
+
+/** Native effect math on disposable carriers; one validated root commit, never native gear wear. */
+public final class SilentGearEffects {
+    private static Api api;
+    private static boolean repairDisabled;
+    private static boolean wearDisabled;
+    private static final ThreadLocal<Repair> REPAIR = new ThreadLocal<>();
+
+    private SilentGearEffects() {
+    }
+
+    public static void initialize(IEventBus bus) {
+        if (ModList.get().isLoaded("silentgear")) {
+            bus.addListener(SilentGearEffects::bind);
+        }
+    }
+
+    private static void bind(RegisterCapabilitiesEvent event) {
+        try {
+            api = new Api();
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            disable(true, "optional effect API unavailable", failure);
+            disable(false, "optional effect API unavailable", null);
+        }
+    }
+
+    public static void tick(ItemStack root, ServerLevel level, Entity entity, EquipmentSlot slot) {
+        Api binding = api;
+        if (binding == null || repairDisabled || !(entity instanceof Player player) || !eligible(root)
+                || !root.isDamaged() || player.hasInfiniteMaterials() || root.has(DataComponents.UNBREAKABLE)) {
+            return;
+        }
+
+        try {
+            var calls = binding.calls(root, true);
+            if (calls.isEmpty()) {
+                return;
+            }
+
+            ItemStack carrier = SilentGearCompatibility.carrier(root);
+            ItemStack before = carrier.copy();
+            if (carrier.isEmpty() || REPAIR.get() != null) {
+                throw new IllegalStateException("Missing/reentrant repair carrier");
+            }
+
+            Repair capture = new Repair(carrier, player);
+            REPAIR.set(capture);
+            try {
+                for (Call call : calls) {
+                    capture.calls = 0;
+                    capture.expected = Math.multiplyExact((int) binding.repair.amount.invoke(call.effect), call.trait.level());
+                    binding.repair.tick.invoke(call.effect,
+                                               binding.context.invoke(player, call.trait.nativeInstance(), carrier),
+                                               level,
+                                               entity,
+                                               slot != null);
+                    if (!ItemStack.matches(before, carrier) || capture.calls > 1) {
+                        throw new IllegalStateException("Native repair escaped its local boundary");
+                    }
+                }
+            } finally {
+                REPAIR.remove();
+            }
+            // No root write occurred during native execution; failure cannot publish a partial multi-trait heal.
+            int repaired = (int) Math.min(root.getDamageValue(), capture.amount);
+            if (repaired > 0) {
+                root.setDamageValue(root.getDamageValue() - repaired);
+            }
+        } catch (Throwable failure) {
+            disable(true, "native repair contract unavailable", failure);
+        }
+    }
+
+    /** Only our exact carrier is intercepted. Native gear and unrelated effect invocations proceed normally. */
+    public static boolean captureRepair(ItemStack stack, int amount, LivingEntity entity) {
+        Repair capture = REPAIR.get();
+        if (capture == null || stack != capture.carrier) {
+            return false;
+        }
+        if (amount >= 0 || -(long) amount != capture.expected || entity != capture.player || capture.calls != 0) {
+            throw new IllegalStateException("Invalid native repair delta/actor");
+        }
+        capture.calls++;
+        capture.amount = Math.addExact(capture.amount, -(long) amount);
+        return true;
+    }
+
+    public static int damage(ItemStack root, int amount, LivingEntity entity) {
+        Api binding = api;
+        if (binding == null || wearDisabled || amount <= 0 || !eligible(root) || !root.isDamageableItem()
+                || entity != null && (entity.level().isClientSide() || entity.hasInfiniteMaterials())) {
+            return amount;
+        }
+
+        try {
+            var calls = binding.calls(root, false);
+            if (calls.isEmpty()) {
+                return amount;
+            }
+
+            ItemStack carrier = SilentGearCompatibility.carrier(root);
+            ItemStack before = carrier.copy();
+            if (carrier.isEmpty()) {
+                throw new IllegalStateException("Missing wear carrier");
+            }
+
+            int result = amount;
+            for (Call call : calls) {
+                // Native GearHelper creates wear contexts with player=null, including for player-owned gear.
+                int next = (int) binding.wear.damage.invoke(call.effect, binding.context.invoke(null, call.trait.nativeInstance(), carrier), result);
+                if (next < 0 || Math.abs((long) next - result) > 1 || !ItemStack.matches(before, carrier)) {
+                    throw new IllegalStateException("Native wear exceeded inspected delta/read-only contract");
+                }
+                result = next;
+            }
+
+            return result; // Vanilla applies Unbreaking, creative exemptions and ordinary destruction afterwards.
+        } catch (Throwable failure) {
+            disable(false, "native durability contract unavailable", failure);
+            return amount;
+        }
+    }
+
+    private static boolean eligible(ItemStack root) {
+        return root.has(SilentGearCompatibility.state())
+                && MixedLeggingsStructure.validData(root).isPresent();
+    }
+
+    private static synchronized void disable(boolean repair, String reason, Throwable failure) {
+        if (repair ? repairDisabled : wearDisabled) {
+            return;
+        }
+        if (repair) {
+            repairDisabled = true;
+        } else {
+            wearDisabled = true;
+        }
+        LeggingsContent.LOG.warn("Silent Gear mixed leggings {} disabled: {}", repair ? "repair" : "wear", reason, failure);
+    }
+
+    private static final class Repair {
+        private final ItemStack carrier;
+        private final Player player;
+        private long amount;
+        private int calls;
+        private int expected;
+
+        private Repair(ItemStack carrier, Player player) {
+            this.carrier = carrier;
+            this.player = player;
+        }
+    }
+
+    private record Call(SilentGearEffectSources.Trait trait, Object effect) {
+    }
+
+    private record RepairApi(Class<?> type, MethodHandle tick, MethodHandle amount, MethodHandle chance) {
+    }
+
+    private record WearApi(Class<?> type, MethodHandle damage, MethodHandle scale, MethodHandle chance) {
+    }
+
+    private static final class Api {
+        private final SilentGearEffectSources sources = new SilentGearEffectSources();
+        private final RepairApi repair;
+        private final WearApi wear;
+        private final MethodHandle context;
+        private final MethodHandle definition;
+        private final MethodHandle effects;
+        private final MethodHandle maxLevel;
+
+        private Api() throws ReflectiveOperationException {
+            var lookup = MethodHandles.publicLookup();
+            Class<?> instance = nativeClass("api.traits.TraitInstance");
+            Class<?> trait = nativeClass("gear.trait.Trait");
+            Class<?> ctx = nativeClass(
+                    "api.traits.TraitActionContext");
+            context = lookup.findConstructor(ctx, MethodType.methodType(void.class, Player.class, instance, ItemStack.class));
+            definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));
+            effects = lookup.findVirtual(trait, "getEffects", MethodType.methodType(List.class));
+            maxLevel = lookup.findVirtual(trait, "getMaxLevel", MethodType.methodType(int.class));
+            RepairApi repairBinding = null;
+            try {
+                Class<?> type = nativeClass("gear.trait.effect.SelfRepairTraitEffect");
+                repairBinding = new RepairApi(type,
+                                              lookup.findVirtual(type,
+                                                                 "inventoryTick",
+                                                                 MethodType.methodType(void.class, ctx, Level.class, Entity.class, boolean.class)),
+                                              MethodHandles.privateLookupIn(type, MethodHandles.lookup())
+                                                           .findGetter(type, "repairAmount", int.class),
+                                              MethodHandles.privateLookupIn(type, MethodHandles.lookup())
+                                                           .findGetter(type, "activationChance", float.class));
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+                disable(true, "optional repair API unavailable", failure);
+            }
+            repair = repairBinding;
+            WearApi wearBinding = null;
+            try {
+                Class<?> type = nativeClass("gear.trait.effect.DurabilityTraitEffect");
+                wearBinding = new WearApi(type, lookup.findVirtual(type, "onDurabilityDamage", MethodType.methodType(int.class, ctx, int.class)),
+                                          MethodHandles.privateLookupIn(type, MethodHandles.lookup()).findGetter(type, "effectScale", int.class),
+                                          MethodHandles.privateLookupIn(type, MethodHandles.lookup()).findGetter(type, "activationChance", float.class));
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+                disable(false, "optional wear API unavailable", failure);
+            }
+            wear = wearBinding;
+        }
+
+        private List<Call> calls(ItemStack root, boolean repairing) throws Throwable {
+            var result = new ArrayList<Call>();
+            for (var trait : sources.traits(root)) {
+                String id = trait.id().toString();
+                if (!(repairing ? List.of("silentgear:renew", "silentgear:stellar")
+                        : List.of("silentgear:bending", "silentgear:brittle", "silentgear:flexible", "silentgear:malleable", "silentgear:sturdy")).contains(id)) {
+                    continue;
+                }
+                Object nativeDefinition = definition.invoke(trait.nativeInstance());
+                int limit = (int) maxLevel.invoke(nativeDefinition);
+                if (limit < 1 || limit > Byte.MAX_VALUE || trait.level() > limit) {
+                    throw new IllegalStateException("Unsupported native trait maximum/level");
+                }
+                var nativeEffects = (List<?>) effects.invoke(nativeDefinition);
+                if (nativeEffects.size() > 32 || nativeEffects.stream().filter(effect ->
+                        (repairing ? repair.type : wear.type).isInstance(effect)).count() != 1) {
+                    throw new IllegalStateException("Unsupported selected native effect definition");
+                }
+                for (Object effect : nativeEffects) {
+                    if (!(repairing ? repair.type.equals(effect.getClass()) : wear.type.equals(effect.getClass()))) {
+                        if ((repairing ? repair.type : wear.type).isInstance(effect)) {
+                            throw new IllegalStateException("Unknown native effect subclass");
+                        }
+                        continue;
+                    }
+                    if (!(effect instanceof SilentGearEffectReadiness proof)
+                            || !(repairing ? proof.mismatchedleggings$sgRepairReady() : proof.mismatchedleggings$sgWearReady())) {
+                        throw new IllegalStateException("Final local effect proof unavailable");
+                    }
+                    float chance = (float) (repairing ? repair.chance : wear.chance).invoke(effect);
+                    if (!Float.isFinite(chance) || chance < 0 || chance > 1) {
+                        throw new IllegalStateException("Unsupported native activation chance");
+                    }
+                    if (repairing) {
+                        int base = (int) repair.amount.invoke(effect);
+                        if (base < 1 || (long) base * trait.level() > Integer.MAX_VALUE) {
+                            throw new IllegalStateException("Unsupported native repair amount");
+                        }
+                    } else if ((int) wear.scale.invoke(effect) != (List.of("silentgear:bending", "silentgear:brittle").contains(id) ? 1 : -1)) {
+                        throw new IllegalStateException("Unsupported native wear scale");
+                    }
+                    result.add(new Call(trait, effect));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    private static Class<?> nativeClass(String name) throws ClassNotFoundException {
+        return Class.forName("net.silentchaos512.gear." + name);
+    }
+}

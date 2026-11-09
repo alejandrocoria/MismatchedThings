@@ -102,6 +102,62 @@ payment/network negatives. Unit cases also cover exact-entry conflict metadata,
 codec limits and existing explicit TOML policies. No live trait dispatch, client,
 disk-reopen or missing-source recovery acceptance is inferred from block A.
 
+## Silent Gear root wear and repair (block B)
+
+The same `verifySgFoundation` gate now runs maintained production B checks after
+A's paid composition controls. It uses pinned native SG/Lib, independently
+seeded native item controls and the registered Leggings item callbacks. No
+research candidate or Wielder dispatch is enabled. Run profiles sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearEffectShapeTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation --offline --console=plain
+foreach ($order in @('before', 'after')) {
+    .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots "-PsgEffectsOrder=$order" --offline --console=plain
+}
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgEffectsOrder=after -PsgEffectsVariant=compatible --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgEffectsOrder=before -PsgEffectsVariant=repair --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgEffectsOrder=after -PsgEffectsVariant=wear --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgEffectsVariant=wear-delta --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationAbsent=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgEffectsOrder=after '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:Common:test :MismatchedLeggings:NeoForge:test :MismatchedLeggings:verifyPackaging :MismatchedBoots:NeoForge:assemble --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation --offline --console=plain
+```
+
+`EffectsChecks` covers Renew/Stellar chance/cadence, idle/worn eligibility,
+healthy/creative/Unbreakable, duplicate and unequal levels, unmatched native
+conditions and both orientations. Wear controls exercise all five definitions,
+all combined Malleable/Brittle roll outcomes, zero/small wear, one real root debit,
+Unbreaking, armor hits and ordinary exhaustion vs native broken survival. It also
+checks the existing Eternal non-damageable projection and actual XP-orb Mending.
+A calibrated native recalculation witness and complete root comparisons prove
+read-only carriers/history and no full native gear recalculation in B dispatch.
+
+Order profiles change only config priority in a disposable packaged Leggings
+copy and assert the actual sorted mixin order; original products are untouched.
+`compatible` inserts harmless NOPs and runs the full gate. `repair` makes only
+Leggings' repair capture call opaque. `wear` alters only Leggings' proof body,
+which must fail final publication. Both refuse twice with exactly one warning,
+leave the other feature active, and prove actual Boots repair/wear on both roots.
+`wear-delta` separately changes the shared native addition into subtraction and
+requires wear refusal in standalone. All transformations have actual class
+markers; these variants never set production disable flags directly.
+
+Automatic B coverage passed on 2026-11-09 for every profile above. The complete
+Common suite (26 cases), NeoForge suite (39 cases, including two new local-shape
+cases), both-loader packaging and current Boots assembly also pass. Original
+`.114` products were restored after `.99`, then standalone native and absent-SG
+profiles passed again on final code.
+
+The ordinary no-SG profile also exercises real item tick/wear dispatch and
+native-independent state codecs. Reports/markers use
+`NeoForge/build/{verification,reports}/<baseline>/sg-foundation-<graph>[-absent][-variant][-order]/`.
+Only the pinned optional Bonsai recipe ERROR is admitted with SG. Absence requires
+zero ERRORs; refusal modes admit exactly their expected single Leggings warning
+and reject any sibling warning. C's live armor/oxidation, D's persistence/client
+matrix and owner gameplay acceptance remain pending.
+
 ## Silent Gear bounded research gate
 
 The [isolated spike guide](../../../spikes/silentgear-leggings/README.md) documents
