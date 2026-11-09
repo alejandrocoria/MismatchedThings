@@ -10,6 +10,10 @@ import net.minecraft.resources.Identifier;
 public final class SkeletonTestFabric implements ModInitializer {
     @Override
     public void onInitialize() {
+        if (games.alejandrocoria.mismatchedleggings.test.mysticalrefunds.RefundChecks.enabled()) {
+            ServerTickEvents.END_SERVER_TICK.register(games.alejandrocoria.mismatchedleggings.test.mysticalrefunds.RefundChecks::tick);
+            return;
+        }
         if (games.alejandrocoria.mismatchedleggings.test.mysticaleffects.EffectsChecks.enabled()) {
             ServerTickEvents.END_SERVER_TICK.register(games.alejandrocoria.mismatchedleggings.test.mysticaleffects.EffectsChecks::seed);
             return;

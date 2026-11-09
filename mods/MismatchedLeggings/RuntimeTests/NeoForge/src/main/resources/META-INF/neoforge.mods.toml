@@ -43,3 +43,6 @@ side="BOTH"
 
 [[mixins]]
 config="leggings-mystical-effects-test.mixins.json"
+
+[[mixins]]
+config="leggings-mystical-refunds-test.mixins.json"

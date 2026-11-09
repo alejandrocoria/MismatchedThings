@@ -10,7 +10,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -104,6 +106,41 @@ public final class MysticalAugmentsCompatibility {
             return List.of(); // A malformed/foreign source is not authorization; never repair its data here.
         }
     }
+
+    /** Original physical purchases owned by this orientation, independent of effect readiness. */
+    static RefundView refunds(ItemStack root) {
+        var data = MixedLeggingsStructure.validData(root).orElse(null);
+        if (data == null || !nativeLeggings(data.left().source())) {
+            return null;
+        }
+        Binding api = bindings();
+        if (api == null) {
+            return null;
+        }
+        ItemStack source = data.left().source();
+        var purchases = installed(source, api);
+        if (purchases.isEmpty()) {
+            return null;
+        }
+        try {
+            Method getItem = Class.forName(PREFIX + "api.tinkering.Augment").getMethod("getItem");
+            var items = new ArrayList<Item>();
+            for (var purchase : purchases) {
+                Object value = getItem.invoke(api.augments.get(purchase.id()));
+                if (!(value instanceof Item item) || item == Items.AIR
+                        || BuiltInRegistries.ITEM.get(BuiltInRegistries.ITEM.getKey(item)).orElseThrow().value() != item) {
+                    return null;
+                }
+                items.add(item);
+            }
+            return new RefundView(source.getItem(), List.copyOf((List<?>) source.get(api.component)), List.copyOf(items));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            MysticalRefundCompatibility.unavailable(failure);
+            return null;
+        }
+    }
+
+    record RefundView(Item sourceItem, List<?> installed, List<Item> items) {}
 
     public static List<Object> equipment(Player player, ItemStack stack, List<Object> ordinary) {
         if (player.getItemBySlot(EquipmentSlot.LEGS) != stack) {

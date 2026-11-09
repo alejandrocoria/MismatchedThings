@@ -1,6 +1,11 @@
 # Leggings / Mystical Agriculture research fixture
 
-Test-only candidate. No production mod contains these classes/resources and no
+Historical test-only candidate. B now installs a production refund observer;
+do not stack these candidate refunds on current JARs or treat a new research run
+as current acceptance. Use the [maintained refund fixture](../../mods/MismatchedLeggings/RuntimeTests/README.md#mystical-agriculture-conserved-refunds-block-b).
+Block C owns retirement of this executable and its hooks together.
+
+No production mod contains these classes/resources and no
 indev instance is an input. Native JARs use the shared hash-checked resolver.
 The original NeoForge mod and unofficial Fabric port are separate targets.
 

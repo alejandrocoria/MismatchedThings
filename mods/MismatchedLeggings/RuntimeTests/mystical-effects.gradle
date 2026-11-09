@@ -7,7 +7,7 @@ def graph = providers.gradleProperty('leggingsMaGraph').getOrElse('alone')
 def absent = providers.gradleProperty('leggingsMaAbsent').getOrElse('false').toBoolean()
 def focus = providers.gradleProperty('leggingsMaFocus').getOrElse('full')
 def variant = providers.gradleProperty('leggingsMaVariant').getOrElse('normal')
-if (!(graph in ['alone', 'current']) || !(focus in ['full', 'lifecycle']) || !(variant in ['normal', 'compatible', 'armor', 'equipment', 'health'])) {
+if (!(graph in ['alone', 'current', 'published']) || !(focus in ['full', 'lifecycle']) || !(variant in ['normal', 'compatible', 'armor', 'equipment', 'health'])) {
     throw new GradleException('Unknown Mystical effects graph/focus/variant')
 }
 def label = "mystical-effects-${graph}-${variant}" + (absent ? '-absent' : '') + (focus == 'lifecycle' ? '-lifecycle' : '')
@@ -23,6 +23,7 @@ def fileOperations = objects.newInstance(FixtureFileOperations).files
         dependsOn tasks.named('classes'), product.tasks.named('assemble')
         if (graph == 'current') { dependsOn boots.tasks.named('assemble') }
         doLast {
+            if (graph == 'published') { throw new GradleException('Published Boots graph belongs to verifyMysticalRefunds, not the effects profile') }
             def target = new File(directory, phase.toLowerCase(Locale.ROOT))
             def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
             if (!absent) {

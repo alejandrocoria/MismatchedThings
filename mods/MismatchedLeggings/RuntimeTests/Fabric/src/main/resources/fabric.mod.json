@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "name": "Leggings skeleton tests",
     "environment": "*",
-    "mixins": ["leggings-test.mixins.json", "leggings-mystical-effects-test.mixins.json", "leggings-test.fabric.mixins.json", "leggings-mystical-spike.mixins.json"],
+    "mixins": ["leggings-test.mixins.json", "leggings-mystical-refunds-test.mixins.json", "leggings-mystical-effects-test.mixins.json", "leggings-test.fabric.mixins.json", "leggings-mystical-spike.mixins.json"],
     "entrypoints": {
         "main": ["games.alejandrocoria.mismatchedleggings.test.SkeletonTestFabric"],
         "client": ["games.alejandrocoria.mismatchedleggings.test.SkeletonClientFabric"],

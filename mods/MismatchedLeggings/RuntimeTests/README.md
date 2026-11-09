@@ -67,8 +67,9 @@ source removal/reinstallation, and both products together with optional viewers.
 
 This maintained profile uses packaged Leggings and the resolver-pinned original
 NeoForge MA/Cucumber or independent Fabric port. Its mixed effects are production
-code; it enables no research candidate, refund router or observer. The research
-spike remains separately available until block C retires it.
+code; it enables no research candidate. The production refund observer from B
+is also present; this effects profile does not certify its refund matrix. The
+dated research fixture remains until block C retires it.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalEffects --offline --console=plain
@@ -124,6 +125,59 @@ Partial samples are diagnostic only. Unexpected runtime ERRORs, binding/refund
 refusals, bad exit, missing markers and timeouts fail verification. This profile
 establishes no refunds, native table support, actual saved mixed-item reopening,
 dedicated-client transport, rendering or owner acceptance.
+
+## Mystical Agriculture conserved refunds (block B)
+
+This maintained **server-only** profile loads packaged production Leggings with
+resolver-pinned original NeoForge MA/Cucumber or the independent Fabric port.
+It enables no research candidate or second shrink router. Run profiles, loaders
+and baselines sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyMysticalRefunds '-PleggingsMaGraph=current' '-PleggingsMaOrder=after' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds '-PleggingsMaGraph=published' '-PleggingsNeoForgeBootsJar=<unchanged-1.0.0.jar>' --offline --console=plain
+```
+
+`leggingsMaGraph=alone|current|published` selects Leggings alone, current built
+Boots or the unchanged loader-specific 1.0.0 binary. Published inputs require
+`leggingsFabricBootsJar` or `leggingsNeoForgeBootsJar` and must match the committed
+[release pins](fixtures/boots-1.0.0.json); there is no rebuild or indev fallback.
+`leggingsMaOrder=before|after` selects observer priority 1100/900 around Boots'
+1000. The second order instruments **only the observer annotation in the staged
+Leggings copy**; production outputs and every Boots byte remain unchanged. The
+fixture checks actual exported merged-method priorities and live final readiness.
+
+`leggingsMaRefundVariant=normal|compatible|flow` selects the normal final code,
+unrelated NOP instructions, or an opaque but runtime-equivalent broken predicate.
+The last must refuse only mixed Leggings refunds with one expected diagnostic:
+ordinary consumption, the native refund positive and independent selection stay
+active. Use that control alone. `-PleggingsMaAbsent=true` checks ordinary actual
+breaks and quiet optional absence. `-Pneoforge_version=26.1.2.99` selects the floor;
+restore normal `.114` outputs afterward.
+
+The fixture uses actual `ServerPlayer` instances with test packet listeners in a
+disposable dedicated world. It exercises both orientations, weaker owned purchases,
+two equal purchases in distinct valid slots, empty/ordinary sources and unchanged
+history. High-tier break fixtures remove only the live root's `UNBREAKABLE`
+component to exercise damageable survival destruction; source snapshots remain
+exact. Real native inventory insertion and accepted `ItemEntity` overflow spawns
+are observed. Timing witnesses reject delivery before consumption. Malformed slots,
+unknown IDs, insufficient tiers, bare roots and copied root components cannot
+invent refunds. Cancelled/throwing calls, pre/post source mutation, replacement,
+movement between slots, damage mutation, creative/spectator changes, direct
+deletion, removal, nonterminal wear, same-root/nested-root reentry and cancelled/
+throwing delivery are checked. Aborted calls must not leak into later genuine
+breaks; dispatched purchases are never retried. Both products are worn and broken
+on the same player in coexistence cases, preserving each purchase separately.
+
+Reports: `<Loader>/build/reports/<baseline>/mystical-refunds-<graph>-<order>-<variant>`
+with optional `-absent`; require `server.ok`, `refunds.txt` and `matrix.ok` in the
+matching `build/verification/...` directory. Unexpected runtime ERRORs, any Boots
+refund refusal, unexpected Leggings/effect/binding refusals, bad exits, missing
+markers and timeouts fail verification. This is bounded actual-break evidence,
+not dedicated-client transport, saved-item reopening, arbitrary drop pipelines,
+Tinkering Table support or owner acceptance; consolidation remains C.
 
 ## Undergarden Rogdorium state
 

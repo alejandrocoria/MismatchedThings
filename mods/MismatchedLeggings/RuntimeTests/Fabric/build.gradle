@@ -65,3 +65,5 @@ tasks.named('test', Test) {
 }
 
 apply from: '../mystical-effects.gradle'
+
+apply from: '../mystical-refunds.gradle'

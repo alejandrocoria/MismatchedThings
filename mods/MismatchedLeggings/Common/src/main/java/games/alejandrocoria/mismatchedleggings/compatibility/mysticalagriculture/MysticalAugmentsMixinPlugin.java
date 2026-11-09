@@ -16,6 +16,8 @@ import java.util.Set;
 
 public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IExtension {
 
+    private MysticalRefundShape refundShape;
+
     @Override
     public void onLoad(String name) {
         Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
@@ -34,12 +36,28 @@ public final class MysticalAugmentsMixinPlugin implements IMixinConfigPlugin, IE
             LeggingsContent.LOG.warn("Could not inspect Mystical Agriculture augment API", failure);
             return List.of();
         }
-        return List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin");
+        var selected = new java.util.ArrayList<>(List.of("MysticalEquipmentMixin", "MysticalArmorTickProofMixin", "MysticalHealthCleanupMixin"));
+        try {
+            var stack = MixinService.getService().getBytecodeProvider().getClassNode(MysticalRefundShape.OWNER);
+            refundShape = new MysticalRefundShape(stack.methods.stream().noneMatch(m -> m.name.equals("applyDamage") && m.desc.contains("/LivingEntity;")));
+            if (refundShape.entry(stack)) { selected.add("MysticalRefundMixin"); }
+            else {
+                refundShape = null;
+                // Config discovery must not initialize game-facing helpers before mixins are prepared.
+                org.slf4j.LoggerFactory.getLogger("mismatchedleggings").warn("Mystical Agriculture leggings refund flow incompatible; ordinary breakage retained without augment refunds");
+            }
+        } catch (Exception | LinkageError failure) {
+            refundShape = null;
+            org.slf4j.LoggerFactory.getLogger("mismatchedleggings").warn("Could not inspect Mystical Agriculture leggings refund boundary", failure);
+        }
+        return selected;
     }
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
-        if (node.name.equals(MysticalAugmentsShape.UTILS)) {
+        if (node.name.equals(MysticalRefundShape.OWNER)) {
+            if (refundShape != null && !refundShape.publish(node)) { MysticalRefundCompatibility.unavailable(null); }
+        } else if (node.name.equals(MysticalAugmentsShape.UTILS)) {
             MysticalAugmentsShape.publish(node, MysticalAugmentsCompatibility.EQUIPMENT_PROOF, MysticalAugmentsShape.equipment(node));
         } else {
             if (node.name.equals(MysticalAugments.Family.HEALTH_BOOST.nativeClass().replace('.', '/'))) {

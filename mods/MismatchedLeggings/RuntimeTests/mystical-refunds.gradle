@@ -1,0 +1,131 @@
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.tree.ClassNode
+
+import java.util.concurrent.TimeUnit
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies { classpath 'org.ow2.asm:asm-tree:9.9.1' }
+}
+
+// Actual production observer, with only its relative mixin priority instrumented for the second order.
+def fabric = project.name == 'Fabric'
+def loader = project.name
+def baseline = fabric ? fabric_loader_version : neoforge_version
+def graph = providers.gradleProperty('leggingsMaGraph').getOrElse('alone')
+def order = providers.gradleProperty('leggingsMaOrder').getOrElse('before')
+def variant = providers.gradleProperty('leggingsMaRefundVariant').getOrElse('normal')
+def absent = providers.gradleProperty('leggingsMaAbsent').getOrElse('false').toBoolean()
+if (!(graph in ['alone', 'current', 'published']) || !(order in ['before', 'after']) || !(variant in ['normal', 'compatible', 'flow'])) {
+    throw new GradleException('Unknown Mystical refunds graph/order/variant')
+}
+def label = "mystical-refunds-${graph}-${order}-${variant}" + (absent ? '-absent' : '')
+def reports = layout.buildDirectory.dir("reports/${baseline}/${label}").get().asFile
+def directory = layout.buildDirectory.dir("run/${baseline}/${label}/server").get().asFile
+def product = project(":MismatchedLeggings:${loader}")
+def boots = project(":MismatchedBoots:${loader}")
+
+tasks.register('prepareMysticalRefundsServer') {
+    dependsOn tasks.named('classes'), product.tasks.named('assemble')
+    if (graph == 'current') { dependsOn boots.tasks.named('assemble') }
+    doLast {
+        def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
+        if (!absent) {
+            (fabric ? ['MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar', 'Cucumber-Fabric-26.1.2-9.0.6.2.jar']
+                    : ['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']).each {
+                artifacts.add(project(':MismatchedThings').testModArtifacts.resolve(loader, it))
+            }
+        }
+        if (graph == 'current') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        if (graph == 'published') {
+            def pin = new groovy.json.JsonSlurper().parse(project(':MismatchedLeggings:RuntimeTests').file('fixtures/boots-1.0.0.json'))[loader]
+            def binary = rootProject.file(providers.gradleProperty("leggings${loader}BootsJar").get())
+            if (java.security.MessageDigest.getInstance('SHA-256').digest(binary.bytes).encodeHex().toString() != pin.sha256) {
+                throw new GradleException('Unchanged published Boots fixture hash mismatch')
+            }
+            artifacts.add(binary)
+        }
+        def mods = new File(directory, 'mods'); mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) { throw new GradleException("Unexpected ${mods}") }
+        copy { from artifacts; into mods }
+        if (order == 'after') {
+            def staged = new File(mods, artifacts.first().name)
+            def changed = new File(directory, 'priority-instrumented.jar')
+            int edits = 0
+            new ZipFile(staged).withCloseable { zip ->
+                new ZipOutputStream(new FileOutputStream(changed)).withCloseable { output ->
+                    zip.entries().each { entry ->
+                        byte[] bytes = zip.getInputStream(entry).bytes
+                        if (entry.name == 'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalRefundMixin.class') {
+                            def node = new ClassNode(); new ClassReader(bytes).accept(node, 0)
+                            def annotation = node.invisibleAnnotations.find { it.desc == 'Lorg/spongepowered/asm/mixin/Mixin;' }
+                            int index = annotation.values.indexOf('priority') + 1
+                            if (index == 0 || annotation.values[index] != 1100) { throw new GradleException('Unexpected observer priority') }
+                            annotation.values[index] = 900
+                            def writer = new ClassWriter(0); node.accept(writer); bytes = writer.toByteArray(); edits++
+                        }
+                        output.putNextEntry(new ZipEntry(entry.name)); output.write(bytes); output.closeEntry()
+                    }
+                }
+            }
+            if (edits != 1) { throw new GradleException('Observer priority instrument missing') }
+            java.nio.file.Files.move(changed.toPath(), staged.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'refunds.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=refunds\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+def properties = ['leggings.test.mysticalRefunds': 'true', 'leggings.test.maGraph': graph,
+                  'leggings.test.maOrder': order, 'leggings.test.maRefundVariant': variant, 'leggings.test.maAbsent': absent.toString(),
+                  'leggings.test.report': reports.absolutePath, 'mixin.debug.export': 'true',
+                  'mixin.debug.export.filter': 'net.minecraft.world.item.ItemStack']
+if (fabric) {
+    loom.runs.create('mysticalRefundsServer') {
+        server(); ideConfigGenerated(false); runDir(project.relativePath(directory))
+        properties.each { key, value -> property(key, value) }; programArg('--nogui'); vmArg('-Xmx1G')
+    }
+} else {
+    neoForge.runs.create('mysticalRefundsServer') {
+        server(); disableIdeRun(); gameDirectory = directory
+        properties.each { key, value -> systemProperty(key, value) }; programArgument('--nogui'); jvmArgument('-Xmx1G')
+    }
+}
+tasks.named('runMysticalRefundsServer') { dependsOn 'prepareMysticalRefundsServer' }
+tasks.register('verifyMysticalRefunds') {
+    group = 'verification'
+    doLast {
+        def logs = layout.buildDirectory.dir("verification/${baseline}/${label}").get().asFile; logs.mkdirs()
+        new File(logs, 'matrix.ok').delete()
+        def log = new File(logs, 'server.log')
+        def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                    "${project.path}:runMysticalRefundsServer", "-PleggingsMaGraph=${graph}", "-PleggingsMaOrder=${order}",
+                    "-PleggingsMaRefundVariant=${variant}", "-PleggingsMaAbsent=${absent}", "-Pneoforge_version=${neoforge_version}"]
+        if (graph == 'published') { args.add("-Pleggings${loader}BootsJar=${providers.gradleProperty("leggings${loader}BootsJar").get()}") }
+        if (gradle.startParameter.offline) { args.add('--offline') }
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0 || !new File(reports, 'server.ok').isFile()
+                    || new File(reports, 'server.failure.txt').exists() || !new File(reports, 'refunds.txt').isFile()) {
+                throw new GradleException("Mystical refunds failed: ${log}")
+            }
+            def text = log.text
+            int expected = variant == 'flow' && !absent ? 1 : 0
+            if (text.contains('/ERROR]') || (text =~ /Mystical Agriculture leggings refund flow incompatible/).count != expected
+                    || text.contains('Mystical Agriculture refund flow incompatible') || text.contains('refund binding unavailable')
+                    || text.contains('mixed augment disabled') || text.contains('mixed augment API unavailable')
+                    || absent && text.readLines().any { it.contains('WARN') && (it.contains('Mystical') || it.contains('Cucumber')) }) {
+                throw new GradleException("Unexpected Mystical refund diagnostics: ${log}")
+            }
+            new File(logs, 'matrix.ok').text = 'production observer; actual server-player breaks; bounded refund scope\n'
+        } finally {
+            if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
+        }
+    }
+}

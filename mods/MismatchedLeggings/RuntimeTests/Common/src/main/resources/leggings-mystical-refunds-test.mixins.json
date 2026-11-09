@@ -1,0 +1,7 @@
+{
+    "required": true,
+    "package": "games.alejandrocoria.mismatchedleggings.test.mysticalrefunds.mixin",
+    "plugin": "games.alejandrocoria.mismatchedleggings.test.mysticalrefunds.RefundPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": []
+}
