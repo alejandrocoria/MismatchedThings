@@ -45,3 +45,6 @@ config="leggings-mystical-effects-test.mixins.json"
 config="leggings-mystical-refunds-test.mixins.json"
 [[mixins]]
 config="leggings-awakened-set-test.mixins.json"
+
+[[mixins]]
+config="leggings-iaf-spike.mixins.json"

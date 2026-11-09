@@ -1,0 +1,9 @@
+{
+    "required": true,
+    "package": "games.alejandrocoria.mismatchedleggings.test.iafspike.mixin",
+    "plugin": "games.alejandrocoria.mismatchedleggings.test.iafspike.SpikePlugin",
+    "compatibilityLevel": "JAVA_25",
+    "mixinPriority": ${iafPriority},
+    "mixins": [],
+    "injectors": { "defaultRequire": 1 }
+}

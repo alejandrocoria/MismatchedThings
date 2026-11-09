@@ -149,6 +149,9 @@ public final class NativeEquipmentChecks {
                     "Pinned decorated source fell back: " + id);
         }
         EquippedChecks.require(replacements == 30 && decorated == 13, "Pinned decorated coverage changed");
+        if (Boolean.getBoolean("leggings.test.iafSpikeRender")) {
+            IceAndFireRenderingSpike.verify(original);
+        }
     }
 
     private static HumanoidRenderState crouching() {

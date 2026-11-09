@@ -1587,6 +1587,11 @@ No equipped-armor or arbitrary transparency guarantee is implied.
 
 ## Equipped rendering
 
+The temporary [Ice and Fire Leggings research spike](../../../spikes/leggings-ice-and-fire/README.md)
+reuses this profile with opt-in extra native source pairs. Its separate gameplay
+candidate is not production support or part of ordinary product acceptance;
+retire its hooks with the executable spike after production consolidation.
+
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyEquipped --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyEquipped --offline --console=plain
