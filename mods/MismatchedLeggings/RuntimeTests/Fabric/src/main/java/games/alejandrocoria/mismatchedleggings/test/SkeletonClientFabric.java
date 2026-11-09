@@ -26,10 +26,6 @@ public final class SkeletonClientFabric implements ClientModInitializer {
             ClientTickEvents.END_CLIENT_TICK.register(games.alejandrocoria.mismatchedleggings.test.mysticaleffects.EffectsClient::tick);
             return;
         }
-        if (games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.enabled()) {
-            ClientTickEvents.END_CLIENT_TICK.register(games.alejandrocoria.mismatchedleggings.test.mystical.SpikeClient::tick);
-            return;
-        }
         if (Boolean.getBoolean("leggings.test.betterEnd")) {
             BetterEndClientChecks.renderChecks = CrystaliteCaptureChecks::run;
         }

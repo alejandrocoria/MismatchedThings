@@ -69,7 +69,7 @@ This maintained profile uses packaged Leggings and the resolver-pinned original
 NeoForge MA/Cucumber or independent Fabric port. Its mixed effects are production
 code; it enables no research candidate. The production refund observer from B
 is also present; this effects profile does not certify its refund matrix. The
-dated research fixture remains until block C retires it.
+executable research fixture and all its launch hooks have been retired.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalEffects --offline --console=plain
@@ -79,7 +79,7 @@ dated research fixture remains until block C retires it.
 ```
 
 Run profiles/loaders/baselines sequentially. `leggingsMaGraph=alone|current`
-selects Leggings alone or current packaged Boots. `leggingsMaFocus=full|lifecycle`
+selects Leggings alone or current packaged Boots. `leggingsMaFocus=full|lifecycle|consolidation`
 selects the real keyboard movement matrix or focused effects/cache checks.
 `leggingsMaVariant=normal|compatible|armor|equipment|health` selects unmodified
 native operations, an unrelated instruction, or a runtime-identical but unproved
@@ -177,7 +177,61 @@ matching `build/verification/...` directory. Unexpected runtime ERRORs, any Boot
 refund refusal, unexpected Leggings/effect/binding refusals, bad exits, missing
 markers and timeouts fail verification. This is bounded actual-break evidence,
 not dedicated-client transport, saved-item reopening, arbitrary drop pipelines,
-Tinkering Table support or owner acceptance; consolidation remains C.
+Tinkering Table support or owner acceptance; broader consolidation is covered below.
+
+## Mystical Agriculture presentation and consolidation (block C)
+
+The maintained effects driver also owns production-only consolidation. Run each
+loader/graph/baseline sequentially with exact shared resolver pins:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalEffects '-PleggingsMaFocus=consolidation' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyMysticalEffects '-PleggingsMaFocus=consolidation' '-PleggingsMaGraph=current' --offline --console=plain
+```
+
+Use both `alone` and `current` on each loader, with focused current-Boots
+`-Pneoforge_version=26.1.2.99`, then restore normal `.114` artifacts. Consolidation
+requires native MA/Cucumber and the normal variant. Keep the existing lifecycle
+absence/refusal controls and B's unchanged-published-Boots refund evidence separate.
+
+The seed dedicated JVM exercises all six Essence families in both orientations:
+paid workbench extraction in either order, paid-partner close and unpaid return,
+paid donor anvil/book, native enchanting candidates, crafting/grindstone donor
+repair/disenchanting, paid trims preserving native augment history, and actual
+native Tinkering Table slot rejection with original armor as the positive control.
+It stores four fully composed roots in a world chest and records their full codec
+values plus process ID. The second JVM opens that saved world, verifies a different
+process and exact root/source history, strongest unions, worn Fire Resistance and
+actual connected-player breaks returning precisely each left owner's purchases.
+
+The real client connection retains A's activation/removal, attribute synchronization,
+Health V actual-break liveness and lower native/mixed Boots entitlement. The
+extended sequence also removes lower Boots first, retaining the stronger mixed
+LEGS contribution, then removes Leggings. Consolidation omits the unchanged full
+movement matrix: A's NeoForge native Speed positive and Fabric native limitation
+remain the relevant evidence.
+
+Native augment component trees (including style) must occur beneath their original
+source, including weaker purchases, with no effective root list. Checks include
+ordinary/F3+H, crouch/Shift key state, hidden sources/root and null tooltip player.
+All six families render in both orientations and all item contexts with original
+textures, live glint and dyed/trimmed leather partners. Native equipment submissions
+must retain materials, dye, trims/glint, anatomical leg and nonempty clipped waist
+while walking/crouching. Assertions repeat after a real resource reload with a new
+native renderer and geometry-cache generation; `presentation-panel.png` supports
+bounded visual QA. No new production renderer, tooltip producer or native assets
+are added.
+
+Require `server.ok`, `client.ok`, `lifecycle.txt`, `saved.json`, `reopened.txt`,
+`movement.txt`, `presentation.txt`, `presentation-panel.png` and `matrix.ok` under
+the effects profile paths with `-consolidation`. Missing markers, unexpected runtime
+ERRORs and any effect/refund/binding refusal fail the gate. The saved-world handoff
+uses a dedicated seed and an integrated client in separate JVMs; it does not claim
+dedicated-client transport or owner gameplay/presentation acceptance. The final
+[owner checklist](../local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md#7-owner-checklist)
+remains separate and was confirmed complete by the owner on both loaders on
+2026-11-09, closing the bounded integration. Ordinary no-flag `verifySkeleton`
+profiles verify prototype retirement.
 
 ## Undergarden Rogdorium state
 

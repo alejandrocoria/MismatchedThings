@@ -1,9 +1,0 @@
-{
-    "required": true,
-    "mixinPriority": ${maPriority},
-    "package": "games.alejandrocoria.mismatchedleggings.test.mystical.mixin",
-    "plugin": "games.alejandrocoria.mismatchedleggings.test.mystical.SpikePlugin",
-    "compatibilityLevel": "JAVA_25",
-    "mixins": [],
-    "injectors": { "defaultRequire": 1 }
-}

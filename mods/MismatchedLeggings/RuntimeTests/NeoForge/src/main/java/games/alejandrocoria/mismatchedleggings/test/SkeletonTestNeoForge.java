@@ -22,11 +22,6 @@ public final class SkeletonTestNeoForge {
             if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
             return;
         }
-        if (games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.enabled()) {
-            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> games.alejandrocoria.mismatchedleggings.test.mystical.SpikeChecks.seed(event.getServer()));
-            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
-            return;
-        }
         if (Boolean.getBoolean("leggings.test.rogdoriumPresentation")) {
             if (FMLEnvironment.getDist().isClient()) {
                 bus.addListener(SkeletonClientNeoForge::setup);

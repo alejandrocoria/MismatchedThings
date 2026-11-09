@@ -74,6 +74,25 @@ grants its native piglin-ignore recognition in both outputs while Better Nether'
 option is enabled. No full set or original armor piece is required. Other native
 reasons for piglins to remain neutral are preserved, as are provocation rules.
 
+The bounded Mystical Agriculture adapter reads the six original Essence leggings'
+immutable installed augments. Both outputs inherit the strongest supported native
+rank per family (10 built-in families/22 IDs); capacity remains local to each
+source. Abilities require the actual worn LEGS root. Native player equipment order,
+Health Boost/Step Assist arbitration and Absorption timing are preserved, including
+optional mixed Boots. Health cleanup clamps safely after removal or actual break.
+Each broken survival output refunds only its left source's valid physical purchases,
+including weaker ranks and repeated IDs in distinct slots; copied root augment data
+does not grant effects or refunds. Source tooltips retain native purchase names/styles
+without a second effective augment list at the root. No new persistent state is used.
+
+The original NeoForge MA `9.0.11`/Cucumber `9.0.7` and independent Fabric port
+`9.0.10.3`/`9.0.6.2` are separate targets. NeoForge's real-input Speed positive is
+retained; the pinned Fabric port has no native connected-input acceleration and
+mixed leggings preserve that limitation. Tinkering Table editing/admission,
+Awakened full-set recognition and addon augments are excluded. See the
+[implementation contract and acceptance status](local-docs/MYSTICAL-AGRICULTURE-AUGMENTS-IMPLEMENTATION.md)
+and [maintained testing coverage](RuntimeTests/README.md#mystical-agriculture-presentation-and-consolidation-block-c).
+
 Equipped rendering keeps each native leg and splits standard waist geometry.
 Unsupported geometry may fall back to a complete left-owner appearance, then to
 neutral leggings. Unsupported item models fall back to two superimposed complete

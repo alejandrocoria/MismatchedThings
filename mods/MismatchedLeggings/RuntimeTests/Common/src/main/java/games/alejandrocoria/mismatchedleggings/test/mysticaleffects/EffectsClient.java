@@ -34,6 +34,12 @@ public final class EffectsClient {
     private static boolean finished;
     private static double x;
     private static double z;
+    private static PresentationChecks.Panel panel;
+    private static java.util.concurrent.CompletableFuture<Void> reload;
+    private static net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer oldRenderer;
+    private static long generation;
+    private static volatile boolean captured;
+    private static volatile Throwable captureFailure;
 
     private EffectsClient() {}
 
@@ -71,13 +77,14 @@ public final class EffectsClient {
                 if (healthScene == 4 && System.getProperty("leggings.test.maGraph").equals("alone")
                         && (EffectsChecks.variant("normal") || EffectsChecks.variant("compatible"))) { healthScene = 8; }
                 if (healthScene == 20 && System.getProperty("leggings.test.maGraph").equals("alone")) { healthScene = 22; }
+                if (healthScene == 23 && System.getProperty("leggings.test.maGraph").equals("alone")) { healthScene = 29; }
                 int following = healthScene;
                 require(client.player.isAlive() && client.player.getHealth() <= client.player.getMaxHealth(), "Client health death/overflow scene=" + current + " health=" + client.player.getHealth() + " max=" + client.player.getMaxHealth());
                 require(Math.abs(client.player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT) - EffectsChecks.expectedStep(current)) < .001, "Step sync/crouch mismatch");
                 require(Math.abs(client.player.getMaxHealth() - EffectsChecks.expectedHealth(current)) < .001, "Health attribute packet/client cache mismatch");
                 client.options.keyShift.setDown(following == 14);
-                int scenes = EffectsChecks.variant("normal") || EffectsChecks.variant("compatible") ? 23 : 4;
-                boolean focused = System.getProperty("leggings.test.maFocus", "full").equals("lifecycle");
+                int scenes = EffectsChecks.variant("normal") || EffectsChecks.variant("compatible") ? 29 : 4;
+                boolean focused = !System.getProperty("leggings.test.maFocus", "full").equals("full");
                 queue(client, () -> {
                     EffectsChecks.verifyHealth(owner(client), current);
                     if (following < scenes) { EffectsChecks.health(owner(client), following); }
@@ -107,9 +114,35 @@ public final class EffectsClient {
             } else if (phase == 7) {
                 keys(client, false);
                 finish();
+                if (Boolean.getBoolean("leggings.test.maConsolidation")) {
+                    panel = new PresentationChecks.Panel(client); client.setScreen(panel); phase = 9; return;
+                }
                 client.disconnectWithSavingScreen();
                 phase = 8; age = 0;
+            } else if (phase == 9 && panel.frames >= 8) {
+                PresentationChecks.verify(client);
+                oldRenderer = games.alejandrocoria.mismatchedleggings.test.render.EquippedClient.renderer;
+                generation = games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache.statistics().generation();
+                net.minecraft.client.Screenshot.takeScreenshot(client.getMainRenderTarget(), image -> {
+                    try (image) {
+                        image.writeToFile(java.nio.file.Path.of(System.getProperty("leggings.test.report"), "presentation-panel.png"));
+                        captured = true;
+                    } catch (Throwable failure) { captureFailure = failure; }
+                });
+                phase = 10;
+            } else if (phase == 10 && captured) {
+                games.alejandrocoria.mismatchedleggings.test.render.EquippedClient.renderer = null;
+                reload = client.reloadResourcePacks(); phase = 11;
+            } else if (phase == 11 && reload.isDone() && client.getOverlay() == null) {
+                reload.join(); panel = new PresentationChecks.Panel(client); client.setScreen(panel); phase = 12;
+            } else if (phase == 12 && panel.frames >= 8) {
+                require(generation < games.alejandrocoria.mismatchedleggings.client.render.LeggingsGeometryCache.statistics().generation()
+                        && oldRenderer != games.alejandrocoria.mismatchedleggings.test.render.EquippedClient.renderer, "Resource reload did not replace native renderer/cache");
+                PresentationChecks.verify(client);
+                EffectsChecks.write("presentation.txt", "Native source augment component trees/styles, physical weaker/stronger lists, normal/F3+H/Shift and hidden/null-player controls; six Essence families both orientations, item contexts, native dye/trim/glint and moving/crouched legs/waist submissions; repeated after real resource reload\n");
+                client.disconnectWithSavingScreen(); phase = 8; age = 0;
             }
+            if (captureFailure != null) { throw new AssertionError("Presentation capture failed", captureFailure); }
         } catch (Throwable failure) {
             keys(client, false);
             SkeletonChecks.failed("client", failure);

@@ -39,6 +39,9 @@ public final class EffectsChecks {
         try {
             server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
                     "setworldspawn 0 " + (server.overworld().getMinY() + 1) + " 0");
+            if (Boolean.getBoolean("leggings.test.maConsolidation")) {
+                games.alejandrocoria.mismatchedleggings.test.MysticalLifecycleChecks.seed(server);
+            }
             server.saveEverything(true, true, true);
             SkeletonChecks.passed("server");
         } catch (Throwable failure) { SkeletonChecks.failed("server", failure); }
@@ -53,6 +56,9 @@ public final class EffectsChecks {
         player.connection.teleport(.5, player.level().getMinY() + 1, .5, 0, 0);
         player.getInventory().clearContent();
         player.getFoodData().setFoodLevel(20);
+        if (Boolean.getBoolean("leggings.test.maConsolidation")) {
+            games.alejandrocoria.mismatchedleggings.test.MysticalLifecycleChecks.reopened(player);
+        }
         if (absent()) {
             var pair = games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory.createPair(new ItemStack(Items.IRON_LEGGINGS), new ItemStack(Items.DIAMOND_LEGGINGS));
             require(!pair.primary().isEmpty(), "Optional absence broke ordinary composition");
@@ -219,6 +225,10 @@ public final class EffectsChecks {
         // -1: real worn armor callbacks; 0..3: native/primary/inverse/removal;
         // 4..7: original/mixed Boots coexistence, then removing each contribution.
         player.setHealth(player.getMaxHealth());
+        if (scene == 24 || scene == 27) {
+            player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+            return;
+        }
         if (scene == 9 || scene == 18 || scene == 21) {
             var root = player.getItemBySlot(EquipmentSlot.LEGS);
             root.remove(net.minecraft.core.component.DataComponents.UNBREAKABLE);
@@ -263,6 +273,18 @@ public final class EffectsChecks {
             }
             player.setItemSlot(EquipmentSlot.FEET, feet);
         }
+        if (scene == 23 || scene == 26) {
+            var roots = MixedLeggingsFactory.createPair(NativeAugments.item("awakened_supremium_leggings", "HEALTH_BOOST_V", "STEP_ASSIST"),
+                    NativeAugments.item("inferium_leggings", "HEALTH_BOOST_I"));
+            player.setItemSlot(EquipmentSlot.LEGS, scene == 23 ? roots.primary() : roots.inverse());
+            var feet = NativeAugments.item("inferium_boots", "HEALTH_BOOST_I");
+            if (scene == 26) {
+                var factory = Class.forName("games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory");
+                var pair = factory.getMethod("createPair", ItemStack.class, ItemStack.class).invoke(null, feet, new ItemStack(Items.IRON_BOOTS));
+                feet = (ItemStack) pair.getClass().getMethod("primary").invoke(pair);
+            }
+            player.setItemSlot(EquipmentSlot.FEET, feet);
+        }
         if (scene == 8) { player.setItemSlot(EquipmentSlot.LEGS, MixedLeggingsFactory.createPair(
                 NativeAugments.item("awakened_supremium_leggings", "HEALTH_BOOST_V", "STEP_ASSIST"), new ItemStack(Items.IRON_LEGGINGS)).inverse()); }
         if (scene == 10) { player.setItemSlot(EquipmentSlot.LEGS, NativeAugments.item("awakened_supremium_leggings", "HEALTH_BOOST_III", "STEP_ASSIST")); }
@@ -293,7 +315,7 @@ public final class EffectsChecks {
     }
 
     public static int expectedHealth(int scene) {
-        if (scene == 8 || scene == 17 || scene == 20) { return 40; }
+        if (scene == 8 || scene == 17 || scene == 20 || scene == 23 || scene == 24 || scene == 26 || scene == 27) { return 40; }
         if (scene == 18 || scene == 21) { return 24; }
         if (scene == 10 || scene == 11 || scene == 14 || scene == 15) { return 32; }
         if (scene == 12) { return 24; }
@@ -301,7 +323,7 @@ public final class EffectsChecks {
     }
 
     public static double expectedStep(int scene) {
-        return scene >= 0 && (scene == 0 || !variant("equipment")) && (scene < 3 || scene == 4 || scene == 5 || scene == 8 || scene == 10 || scene == 11 || scene == 15 || scene == 17 || scene == 20) ? 1.6 : .6;
+        return scene >= 0 && (scene == 0 || !variant("equipment")) && (scene < 3 || scene == 4 || scene == 5 || scene == 8 || scene == 10 || scene == 11 || scene == 15 || scene == 17 || scene == 20 || scene == 23 || scene == 24 || scene == 26 || scene == 27) ? 1.6 : .6;
     }
 
     public static void write(String name, String value) throws Exception {
