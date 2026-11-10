@@ -48,6 +48,7 @@ public final class SpikeChecks {
         if (finished) { return; }
         finished = true;
         try {
+            WearerContracts.run(server, REPORT);
             sets(server);
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "silentgear.txt"), REPORT);
             SkeletonChecks.passed("server");
@@ -61,55 +62,61 @@ public final class SpikeChecks {
     }
 
     private static void sets(MinecraftServer server) throws Exception {
-        var source = armor("leggings", "legging_plates", "refined_iron");
-        var trait = TraitHelper.getTraits(source).stream().filter(t -> t.getTraitId().getPath().equals("stellar")).findFirst().orElseThrow();
-        var effect = trait.getTrait().getEffects().stream().filter(e -> e instanceof WielderEffectTraitEffect).findFirst().orElseThrow();
-        var access = (SetAccess) effect;
-        boolean ready = !List.of("baseline", "refuse").contains(System.getProperty("leggings.test.sgSetProofMode"));
-        require(access.spike$ready() == ready, "Final LEGS local guard differs from expected candidate/refusal");
-        require(SpikePlugin.actualOrder != null, "Actual sorted mixin order was not observed");
-        REPORT.append("SET actual order ").append(SpikePlugin.actualOrder).append(" ready=").append(ready).append('\n');
-        boolean boots = Boolean.getBoolean("leggings.test.boots");
-        if (boots) {
-            require((boolean) effect.getClass().getMethod("mismatchedboots$sgSetReady").invoke(effect), "Current Boots final set proof refused compatible LEGS hook");
-        }
-        var roots = new ArrayList<>(pair(source, new ItemStack(Items.DIAMOND_LEGGINGS)));
-        roots.addAll(pair(source, source));
-        for (var root : roots) {
-            for (int pieces = 1; pieces <= 4; pieces++) {
-                var subject = player(server);
-                var control = player(server);
-                subject.tickCount = 20;
-                control.tickCount = 20;
-                var before = root.copy();
-                var slots = List.of(EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.HEAD, EquipmentSlot.CHEST);
-                var nativePieces = List.of(source, armor("boots", "boot_plates", "refined_iron"),
-                        armor("helmet", "helmet_plates", "refined_iron"), armor("chestplate", "chestplate_plates", "refined_iron"));
-                for (int i = 0; i < pieces; i++) {
-                    var nativePiece = nativePieces.get(i).copy();
-                    subject.setItemSlot(slots.get(i), i == 0 ? root : i == 1 && boots ? mixedBoots(nativePiece) : nativePiece);
-                    if (i != 0 || ready) { control.setItemSlot(slots.get(i), nativePiece.copy()); }
-                }
-                var context = new TraitActionContext(subject, trait, SetCandidate.carrier(root));
-                int expectedCount = pieces - (ready ? 0 : 1);
-                require(access.spike$count(context, GearTypes.ARMOR.get(), subject) == expectedCount, "Native count must recognize each mixed slot once");
-                SetCandidate.calls = 0;
-                for (int i = 0; i < pieces; i++) {
-                    var stack = subject.getItemBySlot(slots.get(i));
-                    if (i == 0) { SetCandidate.wearer(root, subject); }
-                    else if (i == 1 && boots) { stack.inventoryTick(subject.level(), subject, EquipmentSlot.FEET); }
-                    else { effect.inventoryTick(new TraitActionContext(subject, trait, stack), subject.level(), subject, true); }
-                    var original = control.getItemBySlot(slots.get(i));
-                    if (!original.isEmpty()) { effect.inventoryTick(new TraitActionContext(control, trait, original), control.level(), control, true); }
-                }
-                require(SetCandidate.calls == (ready ? 1 : 0), "Duplicate-source Wielder dispatch was not once per trait");
-                require(effects(subject).equals(effects(control)), "Native/mixed Wielder effect parameters differ: " + effects(subject) + " vs " + effects(control));
-                require(ItemStack.matches(root, before) && subject.getItemBySlot(EquipmentSlot.LEGS) == root, "Wielder replaced real equipment or changed root/history");
-                REPORT.append("SET pieces=").append(pieces).append(" count=").append(expectedCount).append(" effects=").append(effects(subject)).append('\n');
+        for (var family : WearerContracts.FAMILIES) {
+            var source = armor("leggings", "legging_plates", family[1]);
+            var trait = TraitHelper.getTraits(source).stream().filter(t -> t.getTraitId().getPath().equals(family[0])).findFirst().orElseThrow();
+            var effect = trait.getTrait().getEffects().stream().filter(e -> e instanceof WielderEffectTraitEffect).findFirst().orElseThrow();
+            var access = (SetAccess) effect;
+            boolean ready = !List.of("baseline", "refuse", "refuse-type").contains(System.getProperty("leggings.test.sgSetProofMode"));
+            require(access.spike$ready() == ready, "Final LEGS local guard differs from expected candidate/refusal");
+            require(SpikePlugin.actualOrder != null, "Actual sorted mixin order was not observed");
+            REPORT.append("SET ").append(family[0]).append(" actual order ").append(SpikePlugin.actualOrder).append(" ready=").append(ready).append('\n');
+            boolean boots = Boolean.getBoolean("leggings.test.boots");
+            if (boots) {
+                require((boolean) effect.getClass().getMethod("mismatchedboots$sgSetReady").invoke(effect), "Current Boots final set proof refused compatible LEGS hook");
             }
-            var player = player(server);
-            require(!SetCandidate.recognizes(new TraitActionContext(player, trait, source), EquipmentSlot.MAINHAND, root), "Held root counted as LEGS");
-            require(!SetCandidate.recognizes(new TraitActionContext(player, trait, source), EquipmentSlot.LEGS, new ItemStack(Items.DIAMOND_LEGGINGS)), "Foreign root recognized");
+            var roots = new ArrayList<>(pair(source, new ItemStack(Items.DIAMOND_LEGGINGS)));
+            roots.addAll(pair(source, source));
+            for (var root : roots) {
+                for (int pieces = 1; pieces <= 4; pieces++) {
+                    var subject = player(server);
+                    var control = player(server);
+                    subject.tickCount = 20;
+                    control.tickCount = 20;
+                    var before = root.copy();
+                    var slots = List.of(EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.HEAD, EquipmentSlot.CHEST);
+                    var nativePieces = List.of(source, armor("boots", "boot_plates", family[1]),
+                            armor("helmet", "helmet_plates", family[1]), armor("chestplate", "chestplate_plates", family[1]));
+                    for (int i = 0; i < pieces; i++) {
+                        var nativePiece = nativePieces.get(i).copy();
+                        subject.setItemSlot(slots.get(i), i == 0 ? root : i == 1 && boots ? mixedBoots(nativePiece) : nativePiece);
+                        if (i != 0 || ready) { control.setItemSlot(slots.get(i), nativePiece.copy()); }
+                    }
+                    var context = new TraitActionContext(subject, trait, SetCandidate.carrier(root));
+                    int expectedCount = pieces - (ready ? 0 : 1);
+                    require(access.spike$count(context, GearTypes.ARMOR.get(), subject) == expectedCount, "Native count must recognize each mixed slot once");
+                    SetCandidate.calls = 0;
+                    for (int i = 0; i < pieces; i++) {
+                        var stack = subject.getItemBySlot(slots.get(i));
+                        if (i == 0) {
+                            WearerContracts.observing = true;
+                            try { SetCandidate.wearer(root, subject); }
+                            finally { WearerContracts.observing = false; }
+                        }
+                        else if (i == 1 && boots) { stack.inventoryTick(subject.level(), subject, EquipmentSlot.FEET); }
+                        else { effect.inventoryTick(new TraitActionContext(subject, trait, stack), subject.level(), subject, true); }
+                        var original = control.getItemBySlot(slots.get(i));
+                        if (!original.isEmpty()) { effect.inventoryTick(new TraitActionContext(control, trait, original), control.level(), control, true); }
+                    }
+                    require(SetCandidate.calls == (ready ? 1 : 0), "Duplicate-source Wielder dispatch was not once per trait");
+                    require(effects(subject).equals(effects(control)), "Native/mixed Wielder effect parameters differ: " + effects(subject) + " vs " + effects(control));
+                    require(ItemStack.matches(root, before) && subject.getItemBySlot(EquipmentSlot.LEGS) == root, "Wielder replaced real equipment or changed root/history");
+                    REPORT.append("SET pieces=").append(pieces).append(" count=").append(expectedCount).append(" effects=").append(effects(subject)).append('\n');
+                }
+                var player = player(server);
+                require(!SetCandidate.recognizes(new TraitActionContext(player, trait, source), EquipmentSlot.MAINHAND, root), "Held root counted as LEGS");
+                require(!SetCandidate.recognizes(new TraitActionContext(player, trait, source), EquipmentSlot.LEGS, new ItemStack(Items.DIAMOND_LEGGINGS)), "Foreign root recognized");
+            }
         }
     }
 
@@ -128,19 +135,19 @@ public final class SpikeChecks {
         return List.of(pair.primary(), pair.inverse());
     }
 
-    private static ItemStack armor(String name, String plates, String material, String... extra) throws Exception {
+    static ItemStack armor(String name, String plates, String material, String... extra) throws Exception {
         var parts = new ArrayList<PartInstance>();
         parts.add(PartInstance.from(part(plates, material)));
         for (int i = 0; i < extra.length; i += 2) { parts.add(PartInstance.from(part(extra[i], extra[i + 1]))); }
         return ((GearItem) BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:" + name))).construct(parts);
     }
 
-    private static ItemStack part(String name, String material) throws Exception {
+    static ItemStack part(String name, String material) throws Exception {
         var item = BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:" + name));
         return (ItemStack) item.getClass().getMethod("create", List.class).invoke(item, List.of(MaterialInstance.of(DataResource.material("silentgear:" + material))));
     }
 
-    private static ServerPlayer player(MinecraftServer server) throws Exception {
+    static ServerPlayer player(MinecraftServer server) throws Exception {
         var profile = new GameProfile(UUID.randomUUID(), "SgLegsSpike");
         var player = new ServerPlayer(server, server.overworld(), profile, ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player, CommonListenerCookie.createInitial(profile, false));

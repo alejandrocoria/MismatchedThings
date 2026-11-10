@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.spike.silentgear;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearSetShape;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
@@ -17,7 +18,7 @@ public final class SetPoint extends InjectionPoint {
 
     @Override
     public boolean find(String descriptor, InsnList instructions, Collection<AbstractInsnNode> nodes) {
-        var pair = SetShape.pair(descriptor, instructions, false);
+        var pair = SilentGearSetShape.pair(descriptor, instructions, false, "leggings$sgSetProofType", "leggings$sgSetProofTrait");
         if (pair == null) {
             return false;
         }

@@ -1,0 +1,215 @@
+package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
+
+import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
+
+/** Inert optional bindings for B/C. No initialization, tick or item/event routing in block A. */
+public final class SilentGearWearerApi {
+    static final Set<String> WIELDER_IDS = Set.of("silentgear:adamant", "silentgear:aquatic", "silentgear:flame_ward", "silentgear:stellar");
+    private final Class<?> wielder;
+    private final MethodHandle context;
+    private final MethodHandle definition;
+    private final MethodHandle effects;
+    private final MethodHandle trait;
+    private final MethodHandle id;
+    private final MethodHandle maxLevel;
+    private final MethodHandle level;
+    private final Carriers carriers;
+    private final Field potions;
+    private final Field potionType;
+    private final Field potionEffect;
+    private final Field potionDuration;
+    private final Field potionLevels;
+    private final Class<?> potionData;
+    private final Object armorType;
+
+    public SilentGearWearerApi() throws ReflectiveOperationException {
+        var lookup = MethodHandles.publicLookup();
+        carriers = new Carriers();
+        wielder = nativeClass("gear.trait.effect.WielderEffectTraitEffect");
+        Class<?> instance = nativeClass("api.traits.TraitInstance");
+        Class<?> ctx = nativeClass("api.traits.TraitActionContext");
+        Class<?> nativeTrait = nativeClass("gear.trait.Trait");
+        context = lookup.findConstructor(ctx, MethodType.methodType(void.class, Player.class, instance, ItemStack.class));
+        definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(nativeTrait));
+        id = lookup.findVirtual(instance, "getTraitId", MethodType.methodType(Identifier.class));
+        trait = lookup.findVirtual(ctx, "trait", MethodType.methodType(nativeTrait));
+        effects = lookup.findVirtual(nativeTrait, "getEffects", MethodType.methodType(List.class));
+        level = lookup.findVirtual(instance, "getLevel", MethodType.methodType(int.class));
+        maxLevel = lookup.findVirtual(nativeTrait, "getMaxLevel", MethodType.methodType(int.class));
+        potions = field(wielder, "potions");
+        potionData = nativeClass("gear.trait.effect.WielderEffectTraitEffect$PotionData");
+        potionType = field(potionData, "type");
+        potionEffect = field(potionData, "effect");
+        potionDuration = field(potionData, "duration");
+        potionLevels = field(potionData, "levels");
+        armorType = ((Supplier<?>) nativeClass("setup.gear.GearTypes").getField("ARMOR").get(null)).get();
+    }
+
+    public ItemStack carrier(ItemStack root) throws Throwable {
+        return carriers.carrier(root);
+    }
+
+    public record Trait(Identifier id, int level, Object nativeInstance) {}
+
+    public List<Trait> traits(ItemStack root) throws ReflectiveOperationException {
+        if (MixedLeggingsStructure.validData(root).isEmpty()) {
+            return List.of();
+        }
+        return carriers.sources.traits(root).stream()
+                .map(t -> new Trait(t.id(), t.level(), t.nativeInstance())).toList();
+    }
+
+    public boolean recognizes(ItemStack root, Object ctx) throws Throwable {
+        Object requested = trait.invoke(ctx);
+        for (var entry : traits(root)) {
+            if (WIELDER_IDS.contains(entry.id().toString()) && definition.invoke(entry.nativeInstance()) == requested) {
+                admittedEffects(entry.nativeInstance());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<?> effects(Object instance) throws Throwable {
+        return (List<?>) effects.invoke(definition.invoke(instance));
+    }
+
+    public boolean isWielder(Object effect) {
+        return effect.getClass() == wielder;
+    }
+
+    /** Read current definitions (including reloads), never cache a potion table or dispatch every trait effect. */
+    public List<?> admittedEffects(Object instance) throws Throwable {
+        String name = id.invoke(instance).toString();
+        if (!WIELDER_IDS.contains(name)) {
+            throw new IllegalArgumentException("Unaudited wearer trait");
+        }
+
+        Object nativeDefinition = definition.invoke(instance);
+        int limit = (int) maxLevel.invoke(nativeDefinition);
+        int traitLevel = (int) level.invoke(instance);
+        if (limit < 1 || limit > Byte.MAX_VALUE || traitLevel < 1 || traitLevel > limit) {
+            throw new IllegalStateException("Unsupported native trait level");
+        }
+        var all = effects(instance);
+        Class<?> companion = nativeClass("gear.trait.effect." + switch (name) {
+            case "silentgear:adamant", "silentgear:aquatic" -> "ExtraDamageTraitEffect";
+            case "silentgear:flame_ward" -> "FireproofTraitEffect";
+            case "silentgear:stellar" -> "SelfRepairTraitEffect";
+            default -> throw new IllegalArgumentException(name);
+        });
+        if (all.size() != 2 || all.stream().filter(e -> e.getClass() == companion).count() != 1) {
+            throw new IllegalStateException("Changed Wielder companions");
+        }
+        var calls = all.stream().filter(this::isWielder).toList();
+        if (calls.size() != 1) {
+            throw new IllegalStateException("Changed Wielder definition count");
+        }
+
+        var map = (Map<?, ?>) potions.get(calls.getFirst());
+        if (map.size() != 1 || !map.containsKey(armorType) || !(map.get(armorType) instanceof List<?> entries)) {
+            throw new IllegalStateException("Changed Wielder gear branch");
+        }
+
+        List<String> expected = switch (name) {
+            case "silentgear:adamant" -> List.of("resistance");
+            case "silentgear:aquatic" -> List.of("water_breathing");
+            case "silentgear:flame_ward" -> List.of("fire_resistance");
+            case "silentgear:stellar" -> List.of("speed", "jump_boost");
+            default -> throw new IllegalArgumentException(name);
+        };
+        if (entries.size() != expected.size()) {
+            throw new IllegalStateException("Changed Wielder potion count");
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            Object entry = entries.get(i);
+            String type = name.equals("silentgear:aquatic") || name.equals("silentgear:flame_ward") ? "FULL_SET_ONLY" : "PIECE_COUNT";
+            if (entry.getClass() != potionData || !((Enum<?>) potionType.get(entry)).name().equals(type)
+                    || !(potionEffect.get(entry) instanceof Holder<?> holder)
+                    || !holder.is(Identifier.withDefaultNamespace(expected.get(i)))
+                    || potionDuration.getInt(entry) < 1 || potionDuration.getInt(entry) > 1200
+                    || !(potionLevels.get(entry) instanceof List<?> levels) || levels.isEmpty() || levels.size() > 4
+                    || levels.stream().anyMatch(value -> !(value instanceof Integer level) || level < 0 || level > 256)) {
+                throw new IllegalStateException("Unaudited Wielder potion definition");
+            }
+        }
+
+        return calls;
+    }
+
+    /** Preparation only: no native tick, set extension or actor callback is activated in block A. */
+    public Object context(Player player, Object instance, ItemStack carrier) throws Throwable {
+        if (carrier.isEmpty() || carrier.getItem().getClass() != carriers.armor
+                || !SilentGearCompatibility.leggings(carrier)) {
+            throw new IllegalArgumentException("Unsupported native wearer receiver");
+        }
+        return context.invoke(player, instance, carrier);
+    }
+
+    /** Brilliant can bind this read-only subset without requiring Wielder classes or contexts. */
+    public static final class Carriers {
+        private final SilentGearEffectSources sources = new SilentGearEffectSources();
+        private final Class<?> armor;
+        private final MethodHandle properties;
+        private final MethodHandle propertiesConstructor;
+        private final MethodHandle traitList;
+        private final DataComponentType<Object> component;
+        private final Object traitKey;
+
+        @SuppressWarnings("unchecked")
+        public Carriers() throws ReflectiveOperationException {
+            var lookup = MethodHandles.publicLookup();
+            armor = nativeClass("item.gear.GearArmorItem");
+            Class<?> props = nativeClass("core.component.GearPropertiesData");
+            properties = lookup.findVirtual(props, "properties", MethodType.methodType(Map.class));
+            propertiesConstructor = lookup.findConstructor(props, MethodType.methodType(void.class, Map.class));
+            traitList = lookup.findConstructor(nativeClass("api.property.TraitListPropertyValue"), MethodType.methodType(void.class, List.class));
+            component = (DataComponentType<Object>) ((Supplier<?>) nativeClass("setup.SgDataComponents").getField("GEAR_PROPERTIES").get(null)).get();
+            traitKey = ((Supplier<?>) nativeClass("setup.gear.GearProperties").getField("TRAITS").get(null)).get();
+        }
+
+        public ItemStack carrier(ItemStack root) throws Throwable {
+            if (MixedLeggingsStructure.validData(root).isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            var traits = sources.traits(root);
+            if (traits.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack copy = SilentGearCompatibility.carrier(root);
+            // Foreign GearArmor implementations may override the callback with unrelated behavior.
+            if (copy.isEmpty() || copy.getItem().getClass() != armor || !copy.has(component)) {
+                throw new IllegalStateException("Unsupported native wearer receiver");
+            }
+            var values = new HashMap<Object, Object>((Map<?, ?>) properties.invoke(copy.get(component)));
+            values.put(traitKey, traitList.invoke(traits.stream().map(SilentGearEffectSources.Trait::nativeInstance).toList()));
+            copy.set(component, propertiesConstructor.invoke(values));
+            return copy;
+        }
+    }
+
+    private static Class<?> nativeClass(String name) throws ClassNotFoundException {
+        return Class.forName("net.silentchaos512.gear." + name);
+    }
+
+    private static Field field(Class<?> owner, String name) throws NoSuchFieldException {
+        Field field = owner.getDeclaredField(name);
+        field.setAccessible(true);
+        return field;
+    }
+}

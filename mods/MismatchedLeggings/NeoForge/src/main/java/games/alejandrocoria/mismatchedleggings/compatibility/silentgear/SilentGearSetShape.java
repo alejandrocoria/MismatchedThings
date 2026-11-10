@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedleggings.spike.silentgear;
+package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -13,21 +13,22 @@ import org.objectweb.asm.tree.VarInsnNode;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Research copy of Boots' local paired predicate grammar, not a production admission policy. */
-final class SetShape implements Opcodes {
-    static final String PREFIX = "net/silentchaos512/gear/";
-    static final String OWNER = PREFIX + "gear/trait/effect/WielderEffectTraitEffect";
-    static final String CONTEXT = PREFIX + "api/traits/TraitActionContext";
-    static final String STACK = "net/minecraft/world/item/ItemStack";
-    static final String SLOT = "net/minecraft/world/entity/EquipmentSlot";
-    static final String PLAYER = "net/minecraft/world/entity/player/Player";
-    static final String CALLBACK = "(ZLjava/lang/Object;Ljava/lang/Object;L" + PLAYER + ";L" + SLOT + ";L" + STACK + ";)Z";
-    static final String COUNT = "(L" + CONTEXT + ";L" + PREFIX + "api/item/GearType;L" + PLAYER + ";)I";
-    static final String CANDIDATE = "games/alejandrocoria/mismatchedleggings/spike/silentgear/SetCandidate";
+/** Local paired set proof; inert until an owner installs and validates both result hooks. */
+public final class SilentGearSetShape implements Opcodes {
+    public static final String PREFIX = "net/silentchaos512/gear/";
+    public static final String OWNER = PREFIX + "gear/trait/effect/WielderEffectTraitEffect";
+    public static final String CONTEXT = PREFIX + "api/traits/TraitActionContext";
+    public static final String STACK = "net/minecraft/world/item/ItemStack";
+    public static final String SLOT = "net/minecraft/world/entity/EquipmentSlot";
+    public static final String PLAYER = "net/minecraft/world/entity/player/Player";
+    public static final String CALLBACK = "(ZLjava/lang/Object;Ljava/lang/Object;L" + PLAYER + ";L" + SLOT + ";L" + STACK + ";)Z";
+    public static final String COUNT = "(L" + CONTEXT + ";L" + PREFIX + "api/item/GearType;L" + PLAYER + ";)I";
 
-    record Pair(AbstractInsnNode type, AbstractInsnNode trait) {}
+    private SilentGearSetShape() {}
 
-    static Pair pair(String descriptor, InsnList instructions, boolean finalGraph) {
+    public record Pair(AbstractInsnNode type, AbstractInsnNode trait) {}
+
+    public static Pair pair(String descriptor, InsnList instructions, boolean finalGraph, String typeHook, String traitHook) {
         if (!COUNT.equals(descriptor)) { return null; }
         var code = code(instructions);
         Pair found = null;
@@ -39,13 +40,13 @@ final class SetShape implements Opcodes {
                     || !call(code.get(i - 4), PLAYER, "getItemBySlot", "(L" + SLOT + ";)L" + STACK + ";")
                     || !load(code.get(i - 3), ASTORE, 7) || !load(code.get(i - 2), ALOAD, 7)
                     || !call(code.get(i - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) { continue; }
-            int cursor = handlers(code, i + 1, "leggings$sgSetProofType", finalGraph);
+            int cursor = handlers(code, i + 1, typeHook, finalGraph);
             if (cursor < 0 || cursor + 5 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode noType) || noType.getOpcode() != IFEQ
                     || !load(code.get(cursor + 1), ALOAD, 7) || !load(code.get(cursor + 2), ALOAD, 1)
                     || !call(code.get(cursor + 3), CONTEXT, "trait", "()L" + PREFIX + "gear/trait/Trait;")
                     || !call(code.get(cursor + 4), PREFIX + "util/TraitHelper", "hasTrait", "(Lnet/minecraft/world/item/ItemInstance;L" + PREFIX + "gear/trait/Trait;)Z")) { continue; }
             var trait = code.get(cursor + 4);
-            cursor = handlers(code, cursor + 5, "leggings$sgSetProofTrait", finalGraph);
+            cursor = handlers(code, cursor + 5, traitHook, finalGraph);
             if (cursor < 0 || cursor + 2 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode noTrait)
                     || noTrait.getOpcode() != IFEQ || noType.label != noTrait.label
                     || !(code.get(cursor + 1) instanceof IincInsnNode inc) || inc.var != 4 || inc.incr != 1
@@ -57,13 +58,30 @@ final class SetShape implements Opcodes {
         return found;
     }
 
-    static boolean finalGraph(ClassNode node) {
+    public static boolean finalGraph(ClassNode node, String typeHook, String traitHook, String callbackOwner, String readyGetter) {
         var methods = node.methods.stream().filter(m -> m.name.equals("getSetPieceCount") && m.desc.equals(COUNT)).toList();
-        if (methods.size() != 1 || pair(COUNT, methods.getFirst().instructions, true) == null) { return false; }
-        for (String name : List.of("leggings$sgSetProofType", "leggings$sgSetProofTrait")) {
+        if (methods.size() != 1 || !methods.getFirst().tryCatchBlocks.isEmpty() || pair(COUNT, methods.getFirst().instructions, true, typeHook, traitHook) == null) { return false; }
+        var gates = node.methods.stream().filter(m -> m.name.equals(readyGetter) && m.desc.equals("()Z")).toList();
+        if (gates.size() != 1 || !gates.getFirst().tryCatchBlocks.isEmpty()) { return false; }
+        var gate = code(gates.getFirst().instructions);
+        if (gate.size() != 2 || gate.getFirst().getOpcode() != ICONST_0 || gate.get(1).getOpcode() != IRETURN) { return false; }
+        for (String name : List.of(typeHook, traitHook)) {
             var handlers = node.methods.stream().filter(m -> m.name.contains(name) && m.desc.equals(CALLBACK)).toList();
-            if (handlers.size() != 1 || code(handlers.getFirst().instructions).stream().filter(n -> n instanceof MethodInsnNode call
-                    && call.owner.equals(CANDIDATE) && call.name.equals("recognizes")).count() != 1) { return false; }
+            if (handlers.size() != 1 || !handlers.getFirst().tryCatchBlocks.isEmpty()) { return false; }
+            var body = code(handlers.getFirst().instructions);
+            // original || ready && recognizes(the same context, slot, stack), with no other reachable calls/writes.
+            if (body.size() != 13 || !load(body.get(0), ILOAD, 1)
+                    || !(body.get(1) instanceof JumpInsnNode original) || original.getOpcode() != IFNE
+                    || !call(body.get(2), node.name, readyGetter, "()Z") || body.get(2).getOpcode() != INVOKESTATIC
+                    || !(body.get(3) instanceof JumpInsnNode unavailable) || unavailable.getOpcode() != IFEQ
+                    || !load(body.get(4), ALOAD, 2) || !load(body.get(5), ALOAD, 5) || !load(body.get(6), ALOAD, 6)
+                    || !call(body.get(7), callbackOwner, "recognizes", "(Ljava/lang/Object;L" + SLOT + ";L" + STACK + ";)Z")
+                    || body.get(7).getOpcode() != INVOKESTATIC
+                    || !(body.get(8) instanceof JumpInsnNode noTrait) || noTrait.getOpcode() != IFEQ
+                    || body.get(9).getOpcode() != ICONST_1 || next(original.label) != body.get(9)
+                    || !(body.get(10) instanceof JumpInsnNode done) || done.getOpcode() != GOTO
+                    || body.get(11).getOpcode() != ICONST_0 || next(unavailable.label) != body.get(11) || next(noTrait.label) != body.get(11)
+                    || body.get(12).getOpcode() != IRETURN || next(done.label) != body.get(12)) { return false; }
         }
         return true;
     }

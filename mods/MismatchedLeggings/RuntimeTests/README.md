@@ -275,14 +275,19 @@ a final standalone native gate. The owner separately confirmed the complete
 manual checklist on 2026-11-09, closing the bounded attributes/state plan; see
 [the acceptance record](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md#d-owner-acceptance--2026-11-09).
 
-## Silent Gear isolated Stellar set proof
+## Silent Gear wearer foundation and isolated set proof
 
-The [remaining research guide](../../../spikes/silentgear-leggings/README.md)
-uses `verifySgSetProof` solely for native Stellar piece counting/Wielder feasibility,
-actual sibling edit order, compatible peers and local refusal. The superseded
-numeric/state engine and CUSTOM_DATA prototype are removed, with no legacy task
-aliases. Production A–D checks never enable this proof; wearer/set/potion effects
-and source-detail presentation remain outside the attributes/state plan.
+The [research/runtime guide](../../../spikes/silentgear-leggings/README.md)
+uses `verifySgSetProof` for wearer block A's native four-family contracts,
+read-only optional carrier/admission and final paired-set proof. It extends the
+remaining Stellar experiment without creating another candidate engine.
+`baseline`, current-Boots before/after, compatible same-input and independent
+trait/type refusal modes remain dedicated-server-only. The guide lists exact
+commands, output/diagnostic requirements and verified native manual fixtures.
+
+Production Brilliant, LEGS set extensions and wearer ticks remain inactive in A.
+The completed production attributes/state suites never enable these research hooks.
+B/C own later gameplay activation; D owns full remaining-spike retirement.
 
 ## Ice and Fire damage and Lightning (block A)
 

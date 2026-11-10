@@ -4,6 +4,10 @@
   "package": "games.alejandrocoria.mismatchedleggings.spike.silentgear.mixin",
   "plugin": "games.alejandrocoria.mismatchedleggings.spike.silentgear.SpikePlugin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["SetMixin"],
+  "mixins": [
+      "NativeContractMixin",
+      "RecalculationMixin",
+      "SetMixin"
+  ],
   "injectors": {"defaultRequire": 1}
 }

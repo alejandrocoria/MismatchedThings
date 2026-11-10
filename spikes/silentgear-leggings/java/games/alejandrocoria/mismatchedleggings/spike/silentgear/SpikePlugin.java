@@ -1,5 +1,8 @@
 package games.alejandrocoria.mismatchedleggings.spike.silentgear;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearBrilliantShape;
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearSetShape;
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearWielderShape;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -21,6 +24,19 @@ import java.util.Set;
 
 public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcodes {
     public static String actualOrder;
+    static final java.util.Map<String, Boolean> nativeProof = new java.util.LinkedHashMap<>();
+
+    static void finalGraph(ClassNode node) {
+        Boolean ready = switch (node.name) {
+            case SilentGearBrilliantShape.OWNER -> SilentGearBrilliantShape.ready(node);
+            case SilentGearSetShape.OWNER -> SilentGearWielderShape.effects(node);
+            case SilentGearSetShape.OWNER + "$PotionData" -> SilentGearWielderShape.potion(node);
+            case "net/silentchaos512/gear/util/TraitHelper" -> SilentGearWielderShape.query(node);
+            case "net/silentchaos512/gear/util/GearHelper" -> SilentGearWielderShape.identity(node);
+            default -> null;
+        };
+        if (ready != null) { nativeProof.put(node.name, ready); }
+    }
 
     @Override
     public void onLoad(String name) {
@@ -34,7 +50,7 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
 
     @Override
     public void preApply(ITargetClassContext context) {
-        if (!context.getClassNode().name.equals(SetShape.OWNER)) { return; }
+        if (!context.getClassNode().name.equals(SilentGearSetShape.OWNER)) { return; }
         try {
             var field = context.getClass().getDeclaredField("mixins");
             field.setAccessible(true);
@@ -59,27 +75,28 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (!node.name.equals(SilentGearSetShape.OWNER)) { return; }
         String mode = System.getProperty("leggings.test.sgSetProofMode");
-        if (mode.equals("refuse")) {
+        if (mode.equals("refuse") || mode.equals("refuse-type")) {
             // Runtime-identical opaque callback: refuse our final proof, not Boots' set slice.
             for (var method : node.methods) {
-                if (method.name.contains("leggings$sgSetProofTrait")) {
+                if (method.name.contains(mode.equals("refuse-type") ? "leggings$sgSetProofType" : "leggings$sgSetProofTrait")) {
                     for (var instruction : method.instructions) {
-                        if (instruction instanceof MethodInsnNode call && call.owner.equals(SetShape.CANDIDATE) && call.name.equals("recognizes")) {
+                        if (instruction instanceof MethodInsnNode call && call.owner.equals("games/alejandrocoria/mismatchedleggings/spike/silentgear/SetCandidate") && call.name.equals("recognizes")) {
                             call.name = "unrecognized";
                         }
                     }
                 }
             }
         } else if (mode.equals("compatible")) {
-            var method = new MethodNode(ACC_PRIVATE, "spike$peer", SetShape.CALLBACK, null, null);
+            var method = new MethodNode(ACC_PRIVATE, "spike$peer", SilentGearSetShape.CALLBACK, null, null);
             method.instructions.add(new VarInsnNode(ILOAD, 1));
             method.instructions.add(new InsnNode(IRETURN));
             method.maxLocals = 7;
             method.maxStack = 1;
             node.methods.add(method);
             var count = node.methods.stream().filter(m -> m.name.equals("getSetPieceCount")).findFirst().orElseThrow();
-            var pair = SetShape.pair(count.desc, count.instructions, false);
+            var pair = SilentGearSetShape.pair(count.desc, count.instructions, false, "leggings$sgSetProofType", "leggings$sgSetProofTrait");
             if (pair == null) { throw new AssertionError("Missing compatible-peer target"); }
             for (var producer : List.of(pair.type(), pair.trait())) {
                 var chain = new InsnList();
@@ -94,8 +111,9 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
-        if (!node.name.equals(SetShape.OWNER)) { return; }
-        boolean ready = !System.getProperty("leggings.test.sgSetProofMode").equals("baseline") && SetShape.finalGraph(node);
+        finalGraph(node);
+        if (!node.name.equals(SilentGearSetShape.OWNER)) { return; }
+        boolean ready = !System.getProperty("leggings.test.sgSetProofMode").equals("baseline") && SilentGearSetShape.finalGraph(node, "leggings$sgSetProofType", "leggings$sgSetProofTrait", "games/alejandrocoria/mismatchedleggings/spike/silentgear/SetCandidate", "leggings$sgSetProofReady");
         var getter = node.methods.stream().filter(m -> m.name.equals("leggings$sgSetProofReady")).findFirst().orElseThrow();
         getter.instructions.clear();
         getter.instructions.add(new InsnNode(ready ? ICONST_1 : ICONST_0));
