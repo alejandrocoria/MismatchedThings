@@ -76,12 +76,15 @@ public final class FoundationChecks {
             require(ModList.get().isLoaded("silentgear") != absent, "Wrong native graph");
             var player = player(server);
             ordinary(server, player);
-            if (!absent) {
+            if (!absent && System.getProperty("leggings.test.sgLiveVariant", "").equals("boundary")) {
+                LiveStateChecks.refusal(player, REPORT);
+            } else if (!absent) {
                 numeric(server, player);
                 clocks(server, player);
                 rejection(player);
                 EffectsChecks.run(player, REPORT);
                 if (ModList.get().isLoaded("mismatchedboots")) { sibling(); }
+                LiveStateChecks.run(player, REPORT);
             }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");
@@ -207,8 +210,8 @@ public final class FoundationChecks {
                 var recomposed = MixedLeggingsRecomposer.recompose(root, trimLeft, data.right().source());
                 require(state.equals(recomposed.get(SilentGearCompatibility.state())), "Trim reset clocks/ownership");
                 var before = root.copy();
-                root.inventoryTick(player.level(), player, null);
-                require(ItemStack.matches(root, before), "Block A activated a live state writer");
+                root.inventoryTick(player.level(), player, EquipmentSlot.LEGS);
+                require(ItemStack.matches(root, before), "Selected tick changed an unchanged projection/clock");
                 roundtrip(server, root);
                 root.remove(SilentGearCompatibility.state());
                 var missing = MixedLeggingsRecomposer.recompose(root, trimLeft, data.right().source());
@@ -354,6 +357,9 @@ public final class FoundationChecks {
         var profile = new GameProfile(UUID.randomUUID(), "SgFoundation");
         var player = new ServerPlayer(server, server.overworld(), profile, ClientInformation.createDefault());
         new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player, CommonListenerCookie.createInitial(profile, false));
+        if (Boolean.getBoolean("leggings.test.sgLiveInfusion")) {
+            new io.netty.channel.embedded.EmbeddedChannel(player.connection.getConnection());
+        }
         var loaded = ServerGamePacketListenerImpl.class.getDeclaredMethod("markClientLoaded");
         loaded.setAccessible(true);
         loaded.invoke(player.connection);

@@ -38,6 +38,8 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
             SilentGearEffectShape.publish(node, "mismatchedleggings$sgRepairReady", SilentGearEffectShape.repair(node));
         } else if (node.name.equals(SilentGearEffectShape.WEAR)) {
             SilentGearEffectShape.publish(node, "mismatchedleggings$sgWearReady", SilentGearEffectShape.wear(node));
+        } else if (SilentGearLiveShape.target(node.name)) {
+            SilentGearEffectShape.publish(node, "mismatchedleggings$sgLiveReady", SilentGearLiveShape.ready(node));
         }
     }
 

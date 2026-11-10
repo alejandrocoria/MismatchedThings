@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedleggings.compatibility.allthemodium.AllThe
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearEffects;
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearLiveState;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.Holder;
@@ -26,6 +27,7 @@ public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
         super.inventoryTick(stack, level, entity, slot);
         SilentGearEffects.tick(stack, level, entity, slot);
+        SilentGearLiveState.tick(stack, level, entity, slot);
         AllTheModiumLeggings.tick(stack, level, entity, slot);
         RootsTickCompatibility.tick(stack, level, entity, slot);
         IceAndFireTideCompatibility.activate(stack, level, entity, slot);

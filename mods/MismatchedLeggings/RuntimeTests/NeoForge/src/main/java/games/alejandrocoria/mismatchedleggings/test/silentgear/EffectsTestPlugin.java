@@ -18,6 +18,7 @@ public final class EffectsTestPlugin implements IMixinConfigPlugin, org.spongepo
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
         if (!Boolean.getBoolean("leggings.test.sgFoundation") || Boolean.getBoolean("leggings.test.sgFoundationAbsent")) { return false; }
+        if (mixin.endsWith("OxidationBoundaryMixin")) { return System.getProperty("leggings.test.sgLiveVariant", "").equals("boundary"); }
         return !mixin.endsWith("EffectsFaultMixin") || !System.getProperty("leggings.test.sgEffectsVariant", "").isEmpty();
     }
 

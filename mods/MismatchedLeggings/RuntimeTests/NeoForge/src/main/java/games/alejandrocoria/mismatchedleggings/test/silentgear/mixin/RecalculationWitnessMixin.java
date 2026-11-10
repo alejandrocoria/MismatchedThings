@@ -15,5 +15,6 @@ abstract class RecalculationWitnessMixin {
     @Inject(method = "recalculateGearData", at = @At("HEAD"))
     private static void observe(ItemStack stack, Player player, CallbackInfo ci) {
         EffectsChecks.recalculation(stack);
+        games.alejandrocoria.mismatchedleggings.test.silentgear.LiveStateChecks.recalculation(stack);
     }
 }

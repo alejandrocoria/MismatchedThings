@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Construction only. No wear, native recalculation, inventory ticking or gameplay activation. */
+/** Initializes/preserves authority and prepares owned armor against final root wear. */
 public final class NeoForgeSilentGearComposition implements SilentGearComposition {
     private static final AtomicBoolean WARNED = new AtomicBoolean();
     private static SilentGearSourceState reader;
@@ -46,8 +46,10 @@ public final class NeoForgeSilentGearComposition implements SilentGearCompositio
             if (reader == null) {
                 reader = new SilentGearSourceState();
             }
-            var a = old == null ? reader.seed(left) : reader.preserve(left, old.left());
-            var b = old == null ? reader.seed(right) : reader.preserve(right, old.right());
+            // Reject malformed input scalars before settling any pending native work on copies.
+            if (old == null) { reader.seed(left); reader.seed(right); }
+            var a = old == null ? reader.seed(SilentGearLiveState.settledSource(left)) : reader.preserve(left, old.left());
+            var b = old == null ? reader.seed(SilentGearLiveState.settledSource(right)) : reader.preserve(right, old.right());
             var baseline = output.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
             var projection = SilentGearState.Projection.capture(baseline);
             boolean overridden = false;
@@ -61,9 +63,12 @@ public final class NeoForgeSilentGearComposition implements SilentGearCompositio
             }
             var next = new SilentGearState(a, b, rules.attributes().policyFor(SilentGearState.ARMOR), projection,
                     overridden, old == null ? Optional.empty() : old.sample());
-            // Both lanes and the bounded state validate before either output component is written.
-            output.set(DataComponents.ATTRIBUTE_MODIFIERS, baseline);
-            output.set(type, next);
+            var working = output.copy();
+            working.set(DataComponents.ATTRIBUTE_MODIFIERS, baseline);
+            var prepared = SilentGearLiveState.prepare(working, data, next);
+            // Both lanes and the final projection validate before either output component is written.
+            output.remove(SilentGearCompatibility.component("RECALCULATE_FLAG"));
+            SilentGearLiveState.publish(output, prepared);
         } catch (IllegalArgumentException malformed) {
             throw malformed; // Invalid participating data must refuse both outputs before payment.
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {

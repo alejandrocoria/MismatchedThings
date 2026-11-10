@@ -28,23 +28,30 @@ final class SilentGearEffectSources {
         var data = MixedLeggingsStructure.validData(root).orElseThrow();
         var merged = new TreeMap<Identifier, Trait>();
         for (var source : List.of(data.left().source(), data.right().source())) {
-            if (!SilentGearCompatibility.leggings(source)) { continue; }
-            var copy = source.copy();
-            var found = (List<?>) traits.invoke(null, copy);
-            if (found.size() > 128) { throw new IllegalArgumentException("Oversized native trait view"); }
-            var computed = context.invoke(null, copy, parts.invoke(construction.invoke(null, copy)));
-            for (var value : found) {
-                int resolvedLevel = (int) level.invoke(value);
-                if (resolvedLevel < 1 || resolvedLevel > Byte.MAX_VALUE) {
-                    throw new IllegalArgumentException("Invalid native trait level");
-                }
-                if ((boolean) conditions.invoke(value, computed)) {
-                    var trait = new Trait((Identifier) id.invoke(value), resolvedLevel, value);
-                    merged.merge(trait.id(), trait, (a, b) -> a.level() >= b.level() ? a : b);
-                }
+            for (var trait : sourceTraits(source)) {
+                merged.merge(trait.id(), trait, (a, b) -> a.level() >= b.level() ? a : b);
             }
         }
         return List.copyOf(merged.values());
+    }
+
+    List<Trait> sourceTraits(ItemStack source) throws ReflectiveOperationException {
+        if (!SilentGearCompatibility.leggings(source)) { return List.of(); }
+        var result = new java.util.ArrayList<Trait>();
+        var copy = source.copy();
+        var found = (List<?>) traits.invoke(null, copy);
+        if (found.size() > 128) { throw new IllegalArgumentException("Oversized native trait view"); }
+        var computed = context.invoke(null, copy, parts.invoke(construction.invoke(null, copy)));
+        for (var value : found) {
+            int resolvedLevel = (int) level.invoke(value);
+            if (resolvedLevel < 1 || resolvedLevel > Byte.MAX_VALUE) {
+                throw new IllegalArgumentException("Invalid native trait level");
+            }
+            if ((boolean) conditions.invoke(value, computed)) {
+                result.add(new Trait((Identifier) id.invoke(value), resolvedLevel, value));
+            }
+        }
+        return List.copyOf(result);
     }
 
     record Trait(Identifier id, int level, Object nativeInstance) {}

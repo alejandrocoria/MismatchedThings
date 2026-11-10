@@ -155,8 +155,70 @@ native-independent state codecs. Reports/markers use
 `NeoForge/build/{verification,reports}/<baseline>/sg-foundation-<graph>[-absent][-variant][-order]/`.
 Only the pinned optional Bonsai recipe ERROR is admitted with SG. Absence requires
 zero ERRORs; refusal modes admit exactly their expected single Leggings warning
-and reject any sibling warning. C's live armor/oxidation, D's persistence/client
+and reject any sibling warning. C extends this gate below; D's persistence/client
 matrix and owner gameplay acceptance remain pending.
+
+## Silent Gear live armor and oxidation (block C)
+
+The maintained `verifySgFoundation` gate also exercises C through the packaged
+mixed item's inventory callback. Sources and native controls are independent
+copies; research candidates remain disabled. Run profiles sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearLiveShapeTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgLiveInfusion=true --offline --console=plain
+foreach ($variant in @('boundary', 'definition')) {
+    .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots "-PsgLiveVariant=$variant" --offline --console=plain
+}
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationAbsent=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:Common:test :MismatchedLeggings:NeoForge:test :MismatchedLeggings:verifyPackaging :MismatchedBoots:NeoForge:assemble --offline --console=plain
+```
+
+`LiveStateChecks` covers native bone/quartz stale-wear vs explicit recomputation,
+both orientations with average/maximum/separate policies, actual root wear and
+XP-orb Mending, maximum changes, final-wear creation/recomposition, equipped
+armor and frozen policies. Unchanged ticks, attribute queries and tooltips must
+perform zero native recalculations and preserve the complete root. An admitted
+definition change must refresh without damage changes. External managed edits,
+removals and later numeric coincidences keep sticky ownership overrides;
+unrelated modifiers/components survive owned refresh.
+
+Clock controls cover selected/idle cadence, unequal one/two-sided clocks, native
+Polished transition, already-oxidized inputs, coating, pending native work and
+the repeated native Oxidized-I reset. Boundary counters are **accelerated fixture
+inputs**, not changed production timings. Terminal Oxidized III is supplied
+separately; no normal reachability is inferred. A computed Chipping/copper fixture
+isolates the unchanged tick immediately following a phase change. Trim keeps live
+lane orientation/clocks and the original source histories.
+
+The `boundary` profile installs a competing native oxidation write at startup.
+Final local admission refuses the changed call surface **before invocation** on
+an explicitly preinitialized valid root fixture; it does not pretend that this
+JVM can safely create a new copper root. `definition` changes the second source's
+native armor definition after initialization. Both retain the complete previous
+root, produce exactly one C warning across repeated ticks, and prove that B repair
+and current Boots oxidation still work. Native scalar/write validation also
+checks every admitted clock callback before any root publication. Focused unit
+controls read the actual pinned native methods, admit harmless NOPs, and reject
+changed callback calls or number math.
+
+The ordinary matrix retains Eternal's existing non-damageable projection plus
+the product's independent Eternal/Soulbound flags, including a real zero-maximum
+refresh sample/codec. This is not an additional native FA lifecycle claim.
+`sgLiveInfusion=true` adds pinned Undergarden `0.9.8` on `.114`, proving its actual
+registered live root-only reserve survives armor refresh/recomposition. The
+synthetic player then uses an embedded network channel for native attachment
+events. No native infusion mod is required on the focused `.99` graph.
+
+Markers/diagnostic rules are unchanged. Labels append `-live-boundary`,
+`-live-definition` or `-infusion`; reports include the exact C controls exercised.
+Automatic C coverage passed on 2026-11-09 for the profiles above, together with
+all 26 Common and 41 NeoForge unit cases and both-loader packaging. Normal `.114`
+product artifacts are restored after the focused `.99` run.
+D owns disk-reopen/recovery, client synchronization consolidation and owner
+gameplay acceptance. No C result claims those gates or full SG trait support.
 
 ## Silent Gear bounded research gate
 

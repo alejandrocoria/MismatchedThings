@@ -102,14 +102,14 @@ public record SilentGearState(Optional<Oxidation> left, Optional<Oxidation> righ
 
     public record Sample(int damage, int maximum, String definition) {
         public static final Codec<Sample> CODEC = RawSample.CODEC.comapFlatMap(value -> {
-            if (value.damage < 0 || value.maximum < 1 || value.damage > value.maximum || value.definition.length() > 512) {
+            if (value.damage < 0 || value.maximum < 0 || value.damage > value.maximum || value.definition.length() > 512) {
                 return DataResult.error(() -> "Invalid SG refresh sample");
             }
             return DataResult.success(new Sample(value.damage, value.maximum, value.definition));
         }, value -> new RawSample(value.damage, value.maximum, value.definition));
 
         public Sample {
-            if (damage < 0 || maximum < 1 || damage > maximum || definition.length() > 512) {
+            if (damage < 0 || maximum < 0 || damage > maximum || definition.length() > 512) {
                 throw new IllegalArgumentException("Invalid SG refresh sample");
             }
         }
@@ -118,7 +118,7 @@ public record SilentGearState(Optional<Oxidation> left, Optional<Oxidation> righ
     private record RawSample(int damage, int maximum, String definition) {
         private static final Codec<RawSample> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.intRange(0, Integer.MAX_VALUE).fieldOf("damage").forGetter(RawSample::damage),
-                Codec.intRange(1, Integer.MAX_VALUE).fieldOf("maximum").forGetter(RawSample::maximum),
+                Codec.intRange(0, Integer.MAX_VALUE).fieldOf("maximum").forGetter(RawSample::maximum),
                 Codec.STRING.validate(value -> value.length() <= 512 ? DataResult.success(value)
                         : DataResult.error(() -> "Oversized SG definition sample"))
                         .fieldOf("definition").forGetter(RawSample::definition)
