@@ -36,6 +36,17 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         if (node.name.equals(SilentGearBrilliantShape.OWNER)) {
             SilentGearEffectShape.publish(node, "mismatchedleggings$sgBrilliantReady", SilentGearBrilliantShape.ready(node));
+        } else if (node.name.equals(SilentGearSetShape.OWNER)) {
+            boolean ready = SilentGearSetShape.finalGraph(node, "mismatchedleggings$sgSetType", "mismatchedleggings$sgSetTrait",
+                    "games/alejandrocoria/mismatchedleggings/compatibility/silentgear/SilentGearWearer", "mismatchedleggings$sgWielderReady")
+                    && SilentGearWielderShape.effects(node);
+            SilentGearEffectShape.publish(node, "mismatchedleggings$sgWielderReady", ready);
+        } else if (node.name.equals(SilentGearWielderShape.DATA)) {
+            SilentGearEffectShape.publish(node, "mismatchedleggings$sgWielderReady", SilentGearWielderShape.potion(node));
+        } else if (node.name.equals(SilentGearWielderShape.QUERY)) {
+            SilentGearEffectShape.publish(node, "mismatchedleggings$sgWielderReady", SilentGearWielderShape.query(node));
+        } else if (node.name.equals(SilentGearSetShape.PREFIX + "util/GearHelper")) {
+            SilentGearEffectShape.publish(node, "mismatchedleggings$sgWielderReady", SilentGearWielderShape.identity(node));
         } else if (node.name.equals(SilentGearEffectShape.REPAIR)) {
             SilentGearEffectShape.publish(node, "mismatchedleggings$sgRepairReady", SilentGearEffectShape.repair(node));
         } else if (node.name.equals(SilentGearEffectShape.WEAR)) {

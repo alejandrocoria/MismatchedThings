@@ -4,8 +4,10 @@ import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -17,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/** Inert optional bindings for B/C. No initialization, tick or item/event routing in block A. */
+/** Optional native bindings; read-only carriers and selected Wielder calls have separate owners. */
 public final class SilentGearWearerApi {
     static final Set<String> WIELDER_IDS = Set.of("silentgear:adamant", "silentgear:aquatic", "silentgear:flame_ward", "silentgear:stellar");
     private final Class<?> wielder;
@@ -28,6 +30,7 @@ public final class SilentGearWearerApi {
     private final MethodHandle id;
     private final MethodHandle maxLevel;
     private final MethodHandle level;
+    private final MethodHandle tick;
     private final Carriers carriers;
     private final Field potions;
     private final Field potionType;
@@ -51,6 +54,7 @@ public final class SilentGearWearerApi {
         effects = lookup.findVirtual(nativeTrait, "getEffects", MethodType.methodType(List.class));
         level = lookup.findVirtual(instance, "getLevel", MethodType.methodType(int.class));
         maxLevel = lookup.findVirtual(nativeTrait, "getMaxLevel", MethodType.methodType(int.class));
+        tick = lookup.findVirtual(wielder, "inventoryTick", MethodType.methodType(void.class, ctx, Level.class, Entity.class, boolean.class));
         potions = field(wielder, "potions");
         potionData = nativeClass("gear.trait.effect.WielderEffectTraitEffect$PotionData");
         potionType = field(potionData, "type");
@@ -152,7 +156,21 @@ public final class SilentGearWearerApi {
         return calls;
     }
 
-    /** Preparation only: no native tick, set extension or actor callback is activated in block A. */
+    public void requireProof() throws Throwable {
+        for (String path : List.of("gear.trait.effect.WielderEffectTraitEffect", "gear.trait.effect.WielderEffectTraitEffect$PotionData",
+                "util.TraitHelper", "util.GearHelper")) {
+            var type = nativeClass(path);
+            if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup())
+                    .findStatic(type, "mismatchedleggings$sgWielderReady", MethodType.methodType(boolean.class)).invoke()) {
+                throw new IllegalStateException("Final Wielder proof unavailable: " + path);
+            }
+        }
+    }
+
+    public void tick(Object effect, Object context, Player player, boolean selected) throws Throwable {
+        tick.invoke(effect, context, player.level(), player, selected);
+    }
+
     public Object context(Player player, Object instance, ItemStack carrier) throws Throwable {
         if (carrier.isEmpty() || carrier.getItem().getClass() != carriers.armor
                 || !SilentGearCompatibility.leggings(carrier)) {

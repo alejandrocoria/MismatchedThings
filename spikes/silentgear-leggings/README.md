@@ -8,6 +8,13 @@ block B callback; its maintained acceptance gate is documented in the
 [runtime guide](../../mods/MismatchedLeggings/RuntimeTests/README.md#silent-gear-brilliant-wearer-block-b).
 No client is launched.
 
+**C supersedes this executable research gate.** Production now owns LEGS
+recognition and Wielder dispatch. Use the maintained
+[wearer C gate](../../mods/MismatchedLeggings/RuntimeTests/README.md#silent-gear-wielder-and-independent-legs-sets-wearer-block-c),
+which keeps these research hooks disabled. The A commands and measurements below
+are historical; their production-inactivity assertions no longer apply. D still
+owns removal of this entire folder and its three test seams.
+
 ## Run
 
 From the repository root, run profiles sequentially:
@@ -101,8 +108,9 @@ No production debug/reload command or extra ingredient provider is installed.
 
 ## Retirement
 
-Production Wielder tick/set wiring stays inactive through B. When a maintained
-wearer implementation replaces this remaining set proof,
+Production Wielder tick/set wiring stayed inactive through B. C now provides maintained
+production acceptance without enabling this research candidate. When D consolidates
+the remaining native/manual controls,
 remove this folder and its three test-only seams: the apply in RuntimeTests
 NeoForge's build, the early branch in `SkeletonTestNeoForge`, and the mixin entry
 in the test mod metadata. Product JARs never include these sources/resources.

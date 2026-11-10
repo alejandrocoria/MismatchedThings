@@ -16,6 +16,7 @@ abstract class RecalculationWitnessMixin {
     private static void observe(ItemStack stack, Player player, CallbackInfo ci) {
         games.alejandrocoria.mismatchedleggings.test.silentgear.BrilliantChecks.recalculation();
         EffectsChecks.recalculation(stack);
+        games.alejandrocoria.mismatchedleggings.test.silentgear.WielderChecks.recalculation();
         games.alejandrocoria.mismatchedleggings.test.silentgear.LiveStateChecks.recalculation(stack);
     }
 }

@@ -87,6 +87,7 @@ public final class FoundationChecks {
                 if (ModList.get().isLoaded("mismatchedboots")) { sibling(); }
                 LiveStateChecks.run(player, REPORT);
                 BrilliantChecks.run(player, REPORT);
+                WielderChecks.run(player, REPORT);
             }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");

@@ -79,12 +79,20 @@ through refresh, supported recomposition and save/reopen. Ordinary item packets
 synchronize the bounded state and attributes; missing SG sources use complete
 suspension/recovery. The final attributes/state gameplay checklist passed on
 2026-11-09, completing this bounded adapter. The separate
-[wearer follow-up](local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#5-block-b-brilliant)
+[wearer follow-up](local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md)
 adds native Brilliant piglin armor recognition from either valid source, in both
 orientations, preserving existing gold/AllTheModium recognition. Held or idle
 leggings do not count as worn armor; native provocation and brutes keep their
-ordinary behavior. Wielder/set effects remain pending. SG is optional; source
-histories stay immutable.
+ordinary behavior. Selected native Wielder effects also run for Adamant
+(Resistance), Aquatic (full-set Water Breathing), Flame Ward (full-set Fire
+Resistance) and Stellar (Speed/Jump Boost). Each mixed LEGS slot counts once
+per matching trait, independently of optional mixed Boots; native armor callers
+recognize it too. Selected hands follow native activation against the actual
+worn set without adding a piece; idle inventory stops refreshing effects, which
+expire naturally. Duplicate sources use the highest native level once. Flame
+Ward's potion does not change dropped-item fire immunity. SG is optional; source
+histories stay immutable. Wearer lifecycle/client and owner acceptance remain
+in the plan's block D.
 
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman

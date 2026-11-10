@@ -8,7 +8,9 @@
         "SilentGearBrilliantProofMixin",
         "SilentGearDurabilityProofMixin",
         "SilentGearLiveProofMixin",
-        "SilentGearSelfRepairMixin"
+        "SilentGearSelfRepairMixin",
+        "SilentGearSetMixin",
+        "SilentGearWielderProofMixin"
     ],
     "injectors": {
         "defaultRequire": 1

@@ -67,7 +67,8 @@ source removal/reinstallation, and both products together with optional viewers.
 
 Maintained dedicated-server checks load packaged production Leggings and optional
 current Boots, with pinned SG `4.2.3` / Silent Lib `11.2.0` from the shared resolver.
-No research candidate or Wielder hook is enabled. Run profiles sequentially:
+No research candidate is enabled. Production wearer behavior is now active;
+its focused C fixtures are documented below. Run profiles sequentially:
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearFoundationTest' --offline --console=plain
@@ -278,16 +279,17 @@ manual checklist on 2026-11-09, closing the bounded attributes/state plan; see
 ## Silent Gear wearer foundation and isolated set proof
 
 The [research/runtime guide](../../../spikes/silentgear-leggings/README.md)
-uses `verifySgSetProof` for wearer block A's native four-family contracts,
+records `verifySgSetProof` for wearer block A's native four-family contracts,
 read-only optional carrier/admission and final paired-set proof. It extends the
 remaining Stellar experiment without creating another candidate engine.
 `baseline`, current-Boots before/after, compatible same-input and independent
-trait/type refusal modes remain dedicated-server-only. The guide lists exact
-commands, output/diagnostic requirements and verified native manual fixtures.
+trait/type refusal modes were dedicated-server-only. Their original A commands
+and verified native manual fixtures remain historical evidence.
 
-Production Brilliant is now active in B. LEGS set extensions and Wielder ticks
-remain pending C. The production attributes/state suite also checks Brilliant
-without enabling research hooks; D owns full remaining-spike retirement.
+Production Brilliant is active in B; C now activates LEGS set extensions and
+Wielder ticks. Use the maintained wearer C gate below with research recognition
+and dispatch disabled. The A-only research gate's inactivity assertions are no
+longer current production acceptance; D owns full remaining-spike retirement.
 
 ## Silent Gear Brilliant (wearer block B)
 
@@ -2141,6 +2143,68 @@ reports live in `build/reports/<baseline>/`. No test IDE configurations are gene
 Development authentication/profile lookup warnings, the loopback server's explicit
 offline-mode warning and native loader/Gradle warnings are not skeleton failures.
 Inspect new errors rather than treating a zero exit code alone as acceptance.
+
+## Silent Gear Wielder and independent LEGS sets (wearer block C)
+
+The maintained `verifySgFoundation` gate enables `sgWielderVariant` fixtures for
+the actual packaged production tick and native callers. Research recognition
+and dispatch remain disabled. Run sequentially from the repository root:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearWearerFoundationTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgWielderVariant=normal --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgEffectsOrder=before -PsgWielderVariant=normal --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgEffectsOrder=after -PsgWielderVariant=normal --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=compatible --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=type --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=trait --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgWielderVariant=callback --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgWielderVariant=potion --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=definition --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=actor --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationAbsent=true -PsgWielderVariant=normal --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearWearerFoundationTest' :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=normal '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationGraph=boots -PsgWielderVariant=trait '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationAbsent=true -PsgWielderVariant=normal '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:assemble :MismatchedLeggings:NeoForge:assemble --offline --console=plain
+```
+
+`before`/`after` change only the mixin priority in a disposable packaged copy;
+the fixture inspects the actual sorted production mixins. `compatible` inserts
+same-input identity chains at both native predicates. `type`/`trait` change only
+one local callback's provenance and must disable both LEGS recognition and its
+dispatcher, retaining current Boots, Brilliant and existing state/repair/wear.
+`callback`/`potion` add an opaque runtime-identical call in the native Wielder /
+PotionData boundary and run standalone because they also violate Boots' own
+native contracts. `definition` replaces
+current native potion data with supported duration changes, restores it, then
+checks an unsupported branch revokes production work before any actor call.
+`actor` throws at the product boundary after a native potion change and requires
+one call, no replay/rollback/erasure and coherent runtime set revocation.
+
+Independent native controls cover each family's 0..4 thresholds, non-armor and
+gear branches, exact potions/visibility/duration, selected hands/equipment,
+cadence, refresh and expiry. Both paid orientations, duplicate/unequal/conditional
+sources, disjoint traits, missing state and invalid roots traverse real item
+ticks. Mixed-only LEGS/FEET count as two; native head/chest reach four. Carried
+copies add zero. Scoped carrier/equipment/root snapshots and a calibrated
+recalculation tripwire exclude wearer writes; seeded combined Stellar ticks
+retain exactly the existing repair roll/heal. Unknown companions, Wielder and
+PotionData subclasses, unsafe receivers and unsupported data refuse admission.
+Flame Ward retains the existing `damage_resistant` composition.
+
+Reports use `sg-foundation-<graph>[-<order>]-wielder-<variant>` (with `-absent`
+after the graph for native absence) under NeoForge's `build/reports/<baseline>`
+and `build/verification/<baseline>`. Require fresh `server.ok`, `foundation.txt`,
+successful bounded child exit, no failure marker and fresh `matrix.ok`. The gate
+permits exactly the pinned Bonsai recipe ERROR and one specifically expected
+Leggings Wielder warning in refusal profiles; other ERRORs or SG warnings fail.
+Data checks replace current native instances and run the actual SG trait-resource
+reload listener against the server's loaded resources, retaining paid roots and
+trait instances across definition replacement. This is not filesystem datapack
+discovery or a complete server/client reload. D owns connected clients, complete
+reload/save/reopen/reconnect, owner
+acceptance and entire remaining-spike retirement.
 
 ## Client window contract
 
