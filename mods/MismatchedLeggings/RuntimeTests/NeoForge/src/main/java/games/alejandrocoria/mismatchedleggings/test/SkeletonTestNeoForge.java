@@ -24,6 +24,17 @@ public final class SkeletonTestNeoForge {
                     games.alejandrocoria.mismatchedleggings.test.silentgear.FoundationChecks.tick(event.getServer()));
             return;
         }
+        if (Boolean.getBoolean("leggings.test.sgMagnetSpike")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
+                try {
+                    Class.forName("games.alejandrocoria.mismatchedleggings.test.silentgear.SilentGearMagnetSpike")
+                            .getMethod("tick", net.minecraft.server.MinecraftServer.class).invoke(null, event.getServer());
+                } catch (ReflectiveOperationException failure) {
+                    throw new IllegalStateException("Silent Gear magnet spike fixture is unavailable", failure);
+                }
+            });
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.iafTide")) {
             games.alejandrocoria.mismatchedleggings.test.iceandfire.TideChecks.register();
             return;

@@ -63,6 +63,21 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Silent Gear Magnetic/Greedy spike
+
+The isolated [magnet spike](../../../spikes/silentgear-leggings-magnet/README.md)
+is compiled only with `-PleggingsSgMagnetSpike=true`. Run
+`:MismatchedLeggings:RuntimeTests:NeoForge:verifySgLeggingsMagnetSpike` with that
+property; `-PleggingsSgMagnetGraph=boots` adds only current packaged Boots to
+Leggings/nested Things and pinned SG/Silent Lib. Run profiles sequentially, never
+against indev instances. The spike uses dedicated server fixtures, not clients.
+
+Standalone/current-Boots `.114` and focused standalone `.99` controls passed on
+2026-11-10. Native acquisition, direct callback/queue controls and limitations are
+recorded in the [exploration](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md#7-bounded-runtime-spike-results).
+No production magnet dispatch or final transformed-hook/client acceptance is
+implied. Retire the executable candidate when maintained production checks replace it.
+
 ## Silent Gear foundation (block A)
 
 Maintained dedicated-server checks load packaged production Leggings and optional

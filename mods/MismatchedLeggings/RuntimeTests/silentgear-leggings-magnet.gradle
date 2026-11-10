@@ -1,0 +1,111 @@
+import java.util.concurrent.TimeUnit
+
+def enabled = providers.gradleProperty('leggingsSgMagnetSpike').map { it.toBoolean() }.getOrElse(false)
+def graph = providers.gradleProperty('leggingsSgMagnetGraph').getOrElse('alone')
+if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown leggings SG magnet graph') }
+
+def spikeSource = rootProject.file('spikes/silentgear-leggings-magnet/src/main/java')
+def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
+if (enabled) {
+    sourceSets.main.java.srcDir(spikeSource)
+    dependencies.add('compileOnly', files(providers.provider {
+        nativeNames.collect { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it) }
+    }))
+}
+
+tasks.named('compileJava') {
+    outputs.upToDateWhen {
+        enabled || fileTree(destinationDirectory).matching { include '**/SilentGearMagnetSpike*.class' }.isEmpty()
+    }
+    doLast {
+        if (!enabled) {
+            delete(fileTree(destinationDirectory).matching { include '**/SilentGearMagnetSpike*.class' })
+        }
+    }
+}
+
+def label = "sg-leggings-magnet-spike-${graph}"
+def product = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+
+tasks.register('prepareSgLeggingsMagnetSpike') {
+    onlyIf { enabled }
+    dependsOn tasks.named('classes'), product.tasks.named('assemble')
+    if (graph == 'boots') { dependsOn boots.tasks.named('assemble') }
+    doLast {
+        def productJar = product.tasks.named('jar').get().archiveFile.get().asFile
+        new java.util.zip.ZipFile(productJar).withCloseable { zip ->
+            def names = zip.entries().findAll { !it.directory }.collect { it.name }
+            if (names.any { it.contains('/magnetspike/') || it.contains('/spike/') || it.contains('/test/') }) {
+                throw new GradleException('Research fixture leaked into the Leggings product artifact')
+            }
+        }
+        def artifacts = [productJar]
+        nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
+        if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
+            throw new GradleException("Unexpected artifact in disposable ${mods}")
+        }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'magnet-spike.txt'].each { new File(reports, it).delete() }
+        evidence.mkdirs()
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=magnet-spike\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+        new File(reports, 'artifacts.txt').text = artifacts.collect {
+            it.name + ' ' + java.security.MessageDigest.getInstance('SHA-256').digest(it.bytes).encodeHex()
+        }.join('\n') + '\n'
+    }
+}
+
+neoForge.runs.create('sgLeggingsMagnetSpike') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.sgMagnetSpike', enabled.toString())
+    systemProperty('leggings.test.boots', (graph == 'boots').toString())
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runSgLeggingsMagnetSpike') { dependsOn 'prepareSgLeggingsMagnetSpike' }
+
+tasks.register('verifySgLeggingsMagnetSpike') {
+    group = 'verification'
+    description = 'Runs the opt-in test-only Silent Gear leggings magnet spike in an isolated server profile.'
+    doLast {
+        if (!enabled) { throw new GradleException('Opt in with -PleggingsSgMagnetSpike=true') }
+        evidence.mkdirs()
+        ['matrix.ok', 'server.log'].each { new File(evidence, it).delete() }
+        def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                    "${project.path}:runSgLeggingsMagnetSpike", "-Pneoforge_version=${neoforge_version}",
+                    '-PleggingsSgMagnetSpike=true', "-PleggingsSgMagnetGraph=${graph}"]
+        if (gradle.startParameter.offline) { args.add('--offline') }
+        def log = new File(evidence, 'server.log')
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
+                .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
+                    || !new File(reports, 'server.ok').isFile() || !new File(reports, 'magnet-spike.txt').isFile()
+                    || new File(reports, 'server.failure.txt').exists()) {
+                throw new GradleException("Silent Gear leggings magnet spike failed: ${log}")
+            }
+            def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
+            if (errors.size() != 1 || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                    || !errors.first().contains('bonsaitrees2:sapling')) {
+                throw new GradleException("Unexpected NeoForge/native diagnostics: ${log}")
+            }
+            new File(evidence, 'matrix.ok').text = 'opt-in SG leggings magnet spike passed\n'
+        } finally {
+            if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
+        }
+    }
+}
