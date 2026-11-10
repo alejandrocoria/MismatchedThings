@@ -11,12 +11,15 @@ def variant = providers.gradleProperty('sgEffectsVariant').getOrElse('')
 def order = providers.gradleProperty('sgEffectsOrder').getOrElse('default')
 def liveVariant = providers.gradleProperty('sgLiveVariant').getOrElse('')
 def liveInfusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean() }.getOrElse(false)
+def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse('')
+if (!(brilliantVariant in ['', 'normal', 'compatible', 'callback', 'proof'])) { throw new GradleException('Unknown Brilliant variant') }
+if (brilliantVariant == 'callback' && graph == 'boots') { throw new GradleException('Callback mutation also violates Boots native contract; use the local proof variant with Boots') }
 if (!(liveVariant in ['', 'definition', 'boundary'])) { throw new GradleException('Unknown SG live variant') }
 if (!(variant in ['', 'repair', 'wear', 'wear-delta', 'compatible']) || !(order in ['default', 'before', 'after'])) {
     throw new GradleException('Unknown SG effects variant/order')
 }
 if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foundation graph') }
-def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}") + (liveVariant ? "-live-${liveVariant}" : '') + (liveInfusion ? '-infusion' : '')
+def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}") + (liveVariant ? "-live-${liveVariant}" : '') + (liveInfusion ? '-infusion' : '') + (brilliantVariant ? "-brilliant-${brilliantVariant}" : '')
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -59,6 +62,11 @@ tasks.register('prepareSgFoundation') {
         if (!absent) {
             nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
         }
+        if (brilliantVariant) {
+            ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar', 'geckolib-neoforge-26.1.2-5.5.2.jar'].each {
+                artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
+            }
+        }
         if (liveInfusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')) }
         def mods = new File(directory, 'mods')
         mods.mkdirs()
@@ -85,6 +93,7 @@ neoForge.runs.create('sgFoundation') {
     systemProperty('leggings.test.sgEffectsOrder', order)
     systemProperty('leggings.test.sgLiveVariant', liveVariant)
     systemProperty('leggings.test.sgLiveInfusion', liveInfusion.toString())
+    systemProperty('leggings.test.sgBrilliantVariant', brilliantVariant)
     systemProperty('leggings.test.boots', (graph == 'boots').toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -100,7 +109,8 @@ tasks.register('verifySgFoundation') {
         def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                     "${project.path}:runSgFoundation", "-Pneoforge_version=${neoforge_version}",
                     "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}",
-                    "-PsgEffectsVariant=${variant}", "-PsgEffectsOrder=${order}", "-PsgLiveVariant=${liveVariant}", "-PsgLiveInfusion=${liveInfusion}"]
+                    "-PsgEffectsVariant=${variant}", "-PsgEffectsOrder=${order}", "-PsgLiveVariant=${liveVariant}", "-PsgLiveInfusion=${liveInfusion}",
+                    "-PsgBrilliantVariant=${brilliantVariant}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
@@ -118,7 +128,7 @@ tasks.register('verifySgFoundation') {
             }
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
             def refused = variant == 'wear-delta' ? 'wear' : variant
-            if (liveVariant ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings live state disabled') : refused in ['repair', 'wear'] ? warnings.size() != 1
+            if (brilliantVariant in ['callback', 'proof'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings brilliant disabled') : liveVariant ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings live state disabled') : refused in ['repair', 'wear'] ? warnings.size() != 1
                     || !warnings.first().contains("Silent Gear mixed leggings ${refused} disabled") : !warnings.isEmpty()) {
                 throw new GradleException("Unexpected SG foundation refusal: ${log}")
             }

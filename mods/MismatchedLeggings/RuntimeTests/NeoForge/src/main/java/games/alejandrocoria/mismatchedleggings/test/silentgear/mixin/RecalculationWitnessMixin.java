@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class RecalculationWitnessMixin {
     @Inject(method = "recalculateGearData", at = @At("HEAD"))
     private static void observe(ItemStack stack, Player player, CallbackInfo ci) {
+        games.alejandrocoria.mismatchedleggings.test.silentgear.BrilliantChecks.recalculation();
         EffectsChecks.recalculation(stack);
         games.alejandrocoria.mismatchedleggings.test.silentgear.LiveStateChecks.recalculation(stack);
     }

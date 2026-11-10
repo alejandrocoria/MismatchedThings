@@ -5,6 +5,7 @@
     "plugin": "games.alejandrocoria.mismatchedleggings.test.silentgear.EffectsTestPlugin",
     "compatibilityLevel": "JAVA_25",
     "mixins": [
+        "BrilliantBoundaryMixin",
         "EffectsFaultMixin",
         "OxidationBoundaryMixin",
         "RecalculationWitnessMixin"

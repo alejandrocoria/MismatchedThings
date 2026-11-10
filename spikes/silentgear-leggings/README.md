@@ -3,7 +3,10 @@
 Block A **dedicated-server** native wearer controls and isolated Wielder/set proof with SG 4.2.3 /
 Silent Lib 11.2.0 on Minecraft 26.1.2. Numeric/state candidates and prototype
 CUSTOM_DATA were retired by attributes/state block D. This extends the remaining Stellar proof to all four selected Wielder families;
-it never activates production wearer effects. No client is launched.
+it never activates production Wielder effects. Brilliant now uses the production
+block B callback; its maintained acceptance gate is documented in the
+[runtime guide](../../mods/MismatchedLeggings/RuntimeTests/README.md#silent-gear-brilliant-wearer-block-b).
+No client is launched.
 
 ## Run
 
@@ -57,7 +60,7 @@ remain in the full child log.
   identity; queries do not mutate sources/history/root or recalculate native gear.
   The recalculation tripwire is positively calibrated in every run.
 - Independent native Brilliant controls, both effective carrier orientations and
-  duplicates, with production Brilliant/Wielder explicitly still inactive.
+  duplicates, with production Brilliant active and Wielder still inactive.
 - Final transformed native Brilliant, Wielder, potion, non-gear query and gear
   identity boundaries. Changed definition branches refuse before invocation and
   restored definitions are re-read. Product-local pair helpers validate both
@@ -77,8 +80,9 @@ change the trait / type callback provenance without changing its runtime meaning
 the final LEGS gate must refuse while native/Boots recognition stays usable.
 This bounded grammar and definition revalidation establish A's inert foundation,
 not production dispatch, actual resource-reload acceptance or arbitrary third-party
-mixin compatibility. B/C must install and publish their own independent final
-proofs and bounded refusal handling before enabling gameplay.
+mixin compatibility. B now publishes its independent Brilliant proof and bounded
+refusal handling. C must publish its own final Wielder/set proofs before enabling
+that gameplay.
 
 ## Verified manual native fixtures
 
@@ -97,7 +101,7 @@ No production debug/reload command or extra ingredient provider is installed.
 
 ## Retirement
 
-Production item/tick/mixin wiring stays inactive through A. When a maintained
+Production Wielder tick/set wiring stays inactive through B. When a maintained
 wearer implementation replaces this remaining set proof,
 remove this folder and its three test-only seams: the apply in RuntimeTests
 NeoForge's build, the early branch in `SkeletonTestNeoForge`, and the mixin entry

@@ -5,6 +5,7 @@ import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFi
 import games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearLiveState;
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearRecognition;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.Holder;
@@ -40,7 +41,8 @@ public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
 
     @Override
     public boolean makesPiglinsNeutral(ItemStack stack, LivingEntity wearer) {
-        return super.makesPiglinsNeutral(stack, wearer) || AllTheModiumLeggings.eligible(stack);
+        return SilentGearRecognition.brilliant(stack, wearer,
+                super.makesPiglinsNeutral(stack, wearer) || AllTheModiumLeggings.eligible(stack));
     }
 
     @Override

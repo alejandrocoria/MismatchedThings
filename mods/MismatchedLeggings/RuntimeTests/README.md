@@ -285,9 +285,46 @@ remaining Stellar experiment without creating another candidate engine.
 trait/type refusal modes remain dedicated-server-only. The guide lists exact
 commands, output/diagnostic requirements and verified native manual fixtures.
 
-Production Brilliant, LEGS set extensions and wearer ticks remain inactive in A.
-The completed production attributes/state suites never enable these research hooks.
-B/C own later gameplay activation; D owns full remaining-spike retirement.
+Production Brilliant is now active in B. LEGS set extensions and Wielder ticks
+remain pending C. The production attributes/state suite also checks Brilliant
+without enabling research hooks; D owns full remaining-spike retirement.
+
+## Silent Gear Brilliant (wearer block B)
+
+The maintained `verifySgFoundation` gate traverses the packaged production item
+and `PiglinAi.isWearingSafeArmor`, alongside existing repair/wear/live-state
+regressions. `sgBrilliantVariant` adds pinned AllTheModium/AllTheOres/GeckoLib to
+verify actual ordinary positive results even with SG absent or refused.
+Run profiles and baselines sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearWearerFoundationTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=normal --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=normal -PsgFoundationGraph=boots --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=compatible -PsgFoundationGraph=boots --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=callback --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=proof -PsgFoundationGraph=boots --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=normal -PsgFoundationAbsent=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearWearerFoundationTest' :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=normal -PsgFoundationGraph=boots '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=proof -PsgFoundationGraph=boots '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgBrilliantVariant=normal -PsgFoundationAbsent=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:assemble :MismatchedLeggings:NeoForge:assemble --offline --console=plain
+```
+
+Both paid orientations, duplicate/plain/conditional sources, missing SG live
+state, malformed/bare/suspended/quarantined/foreign/wrong-slot roots and held/idle
+copies are covered. A calibrated recalculation tripwire and full stack/equipment
+snapshots witness the read-only boundary. The final callback fault preserves its
+runtime answer through an opaque result; the independent own-proof fault leaves
+the native callback and current Boots usable. Each refuses only Leggings Brilliant
+with one warning; ordinary gold/AllTheModium still pass. `compatible` inserts a
+callback NOP and an unrelated executable method. No Wielder/set candidate runs.
+
+Reports and logs use `sg-foundation-<graph>[-absent]-brilliant-<variant>` under
+`NeoForge/build/{reports,verification}/<baseline>/`. Require fresh `server.ok`,
+`foundation.txt`, `matrix.ok`, no failure marker, bounded successful child exit,
+quiet SG absence and exactly one warning in either refusal profile. The gate
+admits only SG's pinned optional Bonsai recipe ERROR when SG is installed.
 
 ## Ice and Fire damage and Lightning (block A)
 

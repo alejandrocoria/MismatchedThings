@@ -76,6 +76,7 @@ public final class FoundationChecks {
             require(ModList.get().isLoaded("silentgear") != absent, "Wrong native graph");
             var player = player(server);
             ordinary(server, player);
+            BrilliantChecks.ordinary(player, REPORT);
             if (!absent && System.getProperty("leggings.test.sgLiveVariant", "").equals("boundary")) {
                 LiveStateChecks.refusal(player, REPORT);
             } else if (!absent) {
@@ -85,6 +86,7 @@ public final class FoundationChecks {
                 EffectsChecks.run(player, REPORT);
                 if (ModList.get().isLoaded("mismatchedboots")) { sibling(); }
                 LiveStateChecks.run(player, REPORT);
+                BrilliantChecks.run(player, REPORT);
             }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");

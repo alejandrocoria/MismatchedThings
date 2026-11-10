@@ -20,6 +20,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SilentGearWearerFoundationTest implements Opcodes {
     @Test
+    void brilliantRejectsChangedInputsWritesAndResultsButAllowsUnrelatedEdits() throws Exception {
+        var compatible = read(SilentGearBrilliantShape.OWNER);
+        compatible.methods.forEach(m -> m.instructions.insert(new InsnNode(NOP)));
+        compatible.methods.removeIf(m -> m.name.equals("inventoryTick"));
+        assertTrue(SilentGearBrilliantShape.ready(compatible));
+        for (String fault : List.of("actor", "trait", "query", "result", "write")) {
+            var node = read(SilentGearBrilliantShape.OWNER);
+            var method = node.methods.stream().filter(m -> m.name.equals("makesPiglinsNeutral")).findFirst().orElseThrow();
+            var code = SilentGearSetShape.code(method.instructions);
+            switch (fault) {
+                case "actor" -> ((VarInsnNode) code.getFirst()).var = 2;
+                case "trait" -> ((org.objectweb.asm.tree.FieldInsnNode) code.get(1)).name = "STELLAR";
+                case "query" -> ((MethodInsnNode) code.get(2)).name = "changedQuery";
+                case "result" -> method.instructions.insertBefore(code.getLast(), new InsnNode(INEG));
+                case "write" -> method.instructions.insert(new MethodInsnNode(INVOKESTATIC, "foreign/Actor", "write", "()V", false));
+                default -> throw new AssertionError(fault);
+            }
+            assertFalse(SilentGearBrilliantShape.ready(node), fault);
+        }
+    }
+
+    @Test
     void pinnedIndependentNativeBoundariesAreAdmitted() throws Exception {
         assertTrue(SilentGearBrilliantShape.ready(read(SilentGearBrilliantShape.OWNER)));
         assertTrue(SilentGearWielderShape.effects(read(SilentGearSetShape.OWNER)));

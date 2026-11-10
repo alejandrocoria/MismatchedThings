@@ -217,7 +217,7 @@ public final class WearerContracts {
                     var carrier = new games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearWearerApi.Carriers().carrier(root);
                     var carrierBefore = carrier.copy();
                     require(carrier.getItem().makesPiglinsNeutral(carrier, player), "Effective native carrier lost Brilliant");
-                    require(!root.getItem().makesPiglinsNeutral(root, player), "Block A activated production Brilliant");
+                    require(root.getItem().makesPiglinsNeutral(root, player), "Production block B Brilliant unavailable");
                     require(ItemStack.matches(before, root) && ItemStack.matches(carrierBefore, carrier), "Brilliant query mutated gear");
                 } finally { observing = false; }
             }

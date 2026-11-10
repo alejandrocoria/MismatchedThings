@@ -18,12 +18,38 @@ public final class EffectsTestPlugin implements IMixinConfigPlugin, org.spongepo
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
         if (!Boolean.getBoolean("leggings.test.sgFoundation") || Boolean.getBoolean("leggings.test.sgFoundationAbsent")) { return false; }
+        if (mixin.endsWith("BrilliantBoundaryMixin")) {
+            return List.of("compatible", "callback", "proof").contains(System.getProperty("leggings.test.sgBrilliantVariant", ""));
+        }
         if (mixin.endsWith("OxidationBoundaryMixin")) { return System.getProperty("leggings.test.sgLiveVariant", "").equals("boundary"); }
         return !mixin.endsWith("EffectsFaultMixin") || !System.getProperty("leggings.test.sgEffectsVariant", "").isEmpty();
     }
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.endsWith("BrilliantBoundaryMixin")) {
+            String brilliant = System.getProperty("leggings.test.sgBrilliantVariant", "");
+            // A runtime-identical opaque result refuses the final callback boundary.
+            for (var method : node.methods) {
+                if (method.name.equals("makesPiglinsNeutral")) {
+                    if (brilliant.equals("callback")) {
+                        for (var instruction : method.instructions) {
+                            if (instruction.getOpcode() == IRETURN) {
+                                method.instructions.insertBefore(instruction, new MethodInsnNode(INVOKESTATIC,
+                                        "java/lang/Boolean", "logicalOr", "(ZZ)Z", false));
+                                method.instructions.insertBefore(instruction.getPrevious(), new InsnNode(ICONST_0));
+                            }
+                        }
+                    } else { method.instructions.insert(new InsnNode(NOP)); }
+                }
+            }
+            var marker = new MethodNode(ACC_PUBLIC | ACC_STATIC, "sgtest$brilliantModified", "()Z", null, null);
+            marker.instructions.add(new InsnNode(ICONST_1));
+            marker.instructions.add(new InsnNode(IRETURN));
+            marker.maxStack = 1;
+            node.methods.add(marker);
+            return;
+        }
         String variant = System.getProperty("leggings.test.sgEffectsVariant");
         if (!mixin.endsWith("EffectsFaultMixin")) { return; }
         for (MethodNode method : node.methods) {
@@ -74,7 +100,20 @@ public final class EffectsTestPlugin implements IMixinConfigPlugin, org.spongepo
     }
 
     @Override public boolean checkActive(org.spongepowered.asm.mixin.MixinEnvironment environment) { return true; }
-    @Override public void postApply(org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext context) {}
+    @Override public void postApply(org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext context) {
+        if (!context.getClassNode().name.endsWith("/GearArmorItem")
+                || !System.getProperty("leggings.test.sgBrilliantVariant", "").equals("proof")) { return; }
+        for (var method : context.getClassNode().methods) {
+            if (method.name.equals("mismatchedleggings$sgBrilliantReady")) {
+                for (var instruction : method.instructions) {
+                    if (instruction.getOpcode() == ICONST_0) {
+                        method.instructions.set(instruction, new MethodInsnNode(INVOKESTATIC,
+                                "games/alejandrocoria/mismatchedleggings/test/silentgear/EffectsChecks", "falseAlias", "()Z", false));
+                    }
+                }
+            }
+        }
+    }
     @Override public void export(org.spongepowered.asm.mixin.MixinEnvironment environment, String name, boolean force, ClassNode node) {}
 
     @Override public void preApply(org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext context) {

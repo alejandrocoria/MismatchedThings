@@ -38,6 +38,7 @@ public final class SilentGearCompatibility {
     public static void initialize(IEventBus bus) {
         TYPES.register(bus);
         SilentGearEffects.initialize(bus);
+        SilentGearRecognition.initialize(bus);
         if (ModList.get().isLoaded("silentgear")) {
             bus.addListener((RegisterCapabilitiesEvent event) -> {
                 try {

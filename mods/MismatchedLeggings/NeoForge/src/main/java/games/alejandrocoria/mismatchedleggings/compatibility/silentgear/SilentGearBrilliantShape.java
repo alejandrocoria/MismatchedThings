@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-/** Independent read-only native armor callback, without linking native classes or enabling recognition. */
+/** Independent read-only native armor callback, without linking native classes. */
 public final class SilentGearBrilliantShape implements Opcodes {
     public static final String OWNER = SilentGearSetShape.PREFIX + "item/gear/GearArmorItem";
 

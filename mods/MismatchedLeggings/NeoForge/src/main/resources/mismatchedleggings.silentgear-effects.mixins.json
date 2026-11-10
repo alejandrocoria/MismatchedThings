@@ -5,6 +5,7 @@
     "plugin": "games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearEffectsMixinPlugin",
     "compatibilityLevel": "JAVA_25",
     "mixins": [
+        "SilentGearBrilliantProofMixin",
         "SilentGearDurabilityProofMixin",
         "SilentGearLiveProofMixin",
         "SilentGearSelfRepairMixin"
