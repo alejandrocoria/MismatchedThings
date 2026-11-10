@@ -141,6 +141,25 @@ public final class SilentGearLiveState {
         return new ItemAttributeModifiers(attributes.modifiers().stream().filter(SilentGearState::managed).toList());
     }
 
+    private static String armorSample(ItemAttributeModifiers attributes) {
+        // Holder/display toString values can contain JVM identities. Persist only the managed fields.
+        return jsonSample(SilentGearState.Projection.CODEC.listOf().encodeStart(JsonOps.INSTANCE,
+                SilentGearState.Projection.capture(attributes)).getOrThrow());
+    }
+
+    private static String jsonSample(com.google.gson.JsonElement value) {
+        if (value.isJsonObject()) {
+            return value.getAsJsonObject().keySet().stream().sorted()
+                    .map(key -> new com.google.gson.JsonPrimitive(key) + ":" + jsonSample(value.getAsJsonObject().get(key)))
+                    .collect(java.util.stream.Collectors.joining(",", "{", "}"));
+        }
+        if (value.isJsonArray()) {
+            return value.getAsJsonArray().asList().stream().map(SilentGearLiveState::jsonSample)
+                    .collect(java.util.stream.Collectors.joining(",", "[", "]"));
+        }
+        return value.toString();
+    }
+
     private static String digest(String input) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(input.getBytes(StandardCharsets.UTF_8)));
@@ -197,11 +216,11 @@ public final class SilentGearLiveState {
         private Profile profile(ItemStack source, Optional<SilentGearState.Oxidation> lane) throws ReflectiveOperationException {
             if (!SilentGearCompatibility.leggings(source)) {
                 if (lane.isPresent()) { throw new IllegalStateException("Oxidation lane lost native source identity"); }
-                return new Profile(false, armor(ATTRIBUTES.query(source)).toString());
+                return new Profile(false, armorSample(ATTRIBUTES.query(source)));
             }
             boolean dynamic = false;
             var inputs = new StringBuilder().append(source.getMaxDamage()).append('/').append(source.getDamageValue())
-                    .append(armor(ATTRIBUTES.query(source)));
+                    .append(armorSample(ATTRIBUTES.query(source)));
             for (var value : sources.sourceTraits(source)) {
                 Object resolved = definition.invoke(value.nativeInstance());
                 if (value.id().equals(Identifier.parse("silentgear:chipping")) || value.id().equals(Identifier.parse("silentgear:crushing"))) {
@@ -213,7 +232,7 @@ public final class SilentGearLiveState {
                     dynamic = true;
                 }
                 if (value.id().equals(Identifier.parse("silentgear:chipping")) || value.id().equals(Identifier.parse("silentgear:crushing"))) {
-                    inputs.append(value.id()).append('@').append(value.level()).append(traitCodec.encodeStart(JsonOps.INSTANCE, resolved).getOrThrow());
+                    inputs.append(value.id()).append('@').append(value.level()).append(jsonSample(traitCodec.encodeStart(JsonOps.INSTANCE, resolved).getOrThrow()));
                 }
             }
             if (lane.isPresent()) {
@@ -221,7 +240,7 @@ public final class SilentGearLiveState {
                 // Validate phase companions and successor even on selected/unchanged ticks.
                 Object resolved = phase(lane.get());
                 oxidationEffect(resolved);
-                inputs.append(traitCodec.encodeStart(JsonOps.INSTANCE, resolved).getOrThrow());
+                inputs.append(jsonSample(traitCodec.encodeStart(JsonOps.INSTANCE, resolved).getOrThrow()));
                 lanes.seed(copy).orElseThrow();
             }
             return new Profile(dynamic, inputs.toString());

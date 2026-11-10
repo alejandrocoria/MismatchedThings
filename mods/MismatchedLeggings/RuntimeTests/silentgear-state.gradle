@@ -1,0 +1,151 @@
+import java.util.concurrent.TimeUnit
+
+// One disposable world, independent game JVMs, actual dedicated-client item packets.
+def graph = providers.gradleProperty('sgFoundationGraph').getOrElse('alone')
+def stage = providers.gradleProperty('sgStateStage').getOrElse('write')
+def stages = ['write', 'reopen', 'absent', 'absentagain', 'restore', 'reconnect']
+if (!(graph in ['alone', 'boots']) || !(stage in stages)) { throw new GradleException('Unknown SG state graph/stage') }
+def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
+def infusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean() }.getOrElse(false)
+def label = "sg-state-${graph}" + (infusion ? '-infusion' : '')
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def markers = new File(reports, stage)
+def port = providers.gradleProperty('sgStatePort').getOrElse('25586')
+def product = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+def checkedDelete = { File target ->
+    if (!target.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+        throw new GradleException('SG state reset escaped disposable build directory')
+    }
+    delete target
+}
+
+['server', 'client'].each { endpoint ->
+    tasks.register("prepareSgState${endpoint.capitalize()}") {
+        dependsOn tasks.named('classes'), product.tasks.named('assemble')
+        if (graph == 'boots') { dependsOn boots.tasks.named('assemble') }
+        doLast {
+            if (endpoint == 'server') {
+                if (stage == 'write') {
+                    [directory, reports].each { checkedDelete(it) }
+                } else if (!new File(directory, 'server/world/level.dat').isFile()) {
+                    throw new GradleException('SG state requires the preceding saved world')
+                }
+                checkedDelete(markers)
+                new java.util.zip.ZipFile(product.tasks.named('jar').get().archiveFile.get().asFile).withCloseable { zip ->
+                    def names = zip.entries().findAll { !it.directory }.collect { it.name }
+                    if (names.any { it.startsWith('net/silentchaos512/') || it.contains('/spike/') || it.contains('/test/') }
+                            || !names.contains('games/alejandrocoria/mismatchedleggings/compatibility/silentgear/SilentGearState.class')) {
+                        throw new GradleException('Incorrect optional SG production packaging')
+                    }
+                }
+            }
+            markers.mkdirs()
+            def run = new File(directory, endpoint)
+            def mods = new File(run, 'mods')
+            mods.mkdirs()
+            // Remove only the pinned optional artifacts between actual process launches.
+            nativeNames.each { delete new File(mods, it) }
+            def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
+            if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+            if (!stage.startsWith('absent')) {
+                nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
+            }
+            if (infusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')) }
+            if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
+                throw new GradleException("Unexpected artifact in disposable ${mods}")
+            }
+            copy { from artifacts; into mods }
+            new File(run, 'config').mkdirs()
+            new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (endpoint == 'server') {
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = "online-mode=false\nserver-ip=127.0.0.1\nserver-port=${port}\nlevel-name=world\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={\"biome\":\"minecraft:plains\",\"layers\":[{\"height\":1,\"block\":\"minecraft:bedrock\"}],\"structure_overrides\":[]}\n"
+            } else {
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\nguiScale:2\n'
+            }
+        }
+    }
+    neoForge.runs.create("sgState${endpoint.capitalize()}") {
+        if (endpoint == 'server') { server(); programArgument('--nogui') } else {
+            client()
+            programArgument('--quickPlayMultiplayer'); programArgument("127.0.0.1:${port}")
+            programArgument('--username'); programArgument('SgState')
+        }
+        disableIdeRun()
+        gameDirectory = new File(directory, endpoint)
+        systemProperty('leggings.test.sgState', stage)
+        systemProperty('leggings.test.sgStateBaseline', reports.absolutePath)
+        systemProperty('leggings.test.boots', (graph == 'boots').toString())
+        systemProperty('leggings.test.report', markers.absolutePath)
+        jvmArgument('-Xmx1G')
+    }
+    tasks.named("runSgState${endpoint.capitalize()}") { dependsOn "prepareSgState${endpoint.capitalize()}" }
+}
+
+tasks.register('verifySgState') {
+    group = 'verification'
+    description = 'Checks SG disk reopen, native removal/reinstallation, ordinary TCP item sync and presentation.'
+    doLast {
+        def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
+        evidence.mkdirs()
+        new File(evidence, 'matrix.ok').delete()
+        def selected = providers.gradleProperty('sgStateStages').getOrElse(stages.join(',')).split(',').toList()
+        if (selected.any { !(it in stages) }) { throw new GradleException('Unknown SG state stage selection') }
+        selected.each { current ->
+            int selectedPort
+            new ServerSocket(0).withCloseable { selectedPort = it.localPort }
+            def currentMarkers = new File(reports, current)
+            checkedDelete(currentMarkers)
+            def start = { String endpoint ->
+                def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                            "${project.path}:runSgState${endpoint.capitalize()}", "-Pneoforge_version=${neoforge_version}",
+                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}"]
+                if (gradle.startParameter.offline) { args.add('--offline') }
+                new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
+                        .redirectErrorStream(true).redirectOutput(new File(evidence, "${current}-${endpoint}.log")).start()
+            }
+            def stop = { Process child ->
+                if (child != null && child.isAlive()) { child.toHandle().descendants().forEach { it.destroyForcibly() }; child.destroyForcibly() }
+            }
+            logger.lifecycle("SG state ${neoforge_version}/${graph}/${current}")
+            def server = start('server')
+            Process client = null
+            try {
+                if (current in ['write', 'absent', 'restore', 'reconnect']) {
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(150)
+                    while (server.isAlive() && !new File(currentMarkers, 'ready.txt').isFile()
+                            && !new File(currentMarkers, 'server.failure.txt').isFile() && System.nanoTime() < deadline) { Thread.sleep(500) }
+                    if (!new File(currentMarkers, 'ready.txt').isFile()) { throw new GradleException("SG server not ready: ${evidence}/${current}-server.log") }
+                    client = start('client')
+                    if (!client.waitFor(300, TimeUnit.SECONDS) || client.exitValue() != 0
+                            || !new File(currentMarkers, 'client.ok').isFile() || new File(currentMarkers, 'client.failure.txt').exists()) {
+                        throw new GradleException("SG client failed: ${evidence}/${current}-client.log")
+                    }
+                }
+                if (!server.waitFor(180, TimeUnit.SECONDS) || server.exitValue() != 0
+                        || !new File(currentMarkers, 'server.ok').isFile() || new File(currentMarkers, 'server.failure.txt').exists()
+                        || !new File(currentMarkers, 'state.txt').isFile()) { throw new GradleException("SG state failed: ${evidence}/${current}-server.log") }
+                ['server', 'client'].each { endpoint ->
+                    def log = new File(evidence, "${current}-${endpoint}.log")
+                    if (endpoint == 'client' && client == null) { return }
+                    def errors = log.readLines().findAll { it.contains('/ERROR]') }
+                    boolean absent = current.startsWith('absent')
+                    boolean subtitles = endpoint == 'client' && !absent
+                    // Pinned native missing translations, independently recorded by Boots' SG client gates.
+                    if (subtitles ? errors.size() != 4 || ['hammer', 'knife'].any { sound ->
+                        errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != 2
+                    } : absent ? !errors.isEmpty() : errors.size() != 1
+                            || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                            || !errors.first().contains('bonsaitrees2:sapling')) { throw new GradleException("Unexpected SG state errors: ${log}") }
+                    if (log.readLines().any { it.contains('WARN') && it.contains('Silent Gear')
+                            || absent && it.contains('Error loading class: net/silentchaos512/') }) {
+                        throw new GradleException("Unexpected SG refusal/absence diagnostic: ${log}")
+                    }
+                }
+            } finally { stop(client); stop(server) }
+        }
+        new File(evidence, selected == stages ? 'matrix.ok' : 'subset.ok').text = "SG production state stages=${selected}; graph=${graph}\n"
+    }
+}

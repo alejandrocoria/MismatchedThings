@@ -8,19 +8,19 @@ dependencies.add('compileOnly', files(providers.provider {
     }
 }))
 
-def graph = providers.gradleProperty('sgSpikeGraph').getOrElse('alone')
-def order = providers.gradleProperty('sgSpikeOrder').getOrElse('before')
-def mode = providers.gradleProperty('sgSpikeMode').getOrElse('candidate')
+def graph = providers.gradleProperty('sgSetProofGraph').getOrElse('alone')
+def order = providers.gradleProperty('sgSetProofOrder').getOrElse('before')
+def mode = providers.gradleProperty('sgSetProofMode').getOrElse('candidate')
 if (!(graph in ['alone', 'boots']) || !(order in ['before', 'after']) || !(mode in ['baseline', 'candidate', 'compatible', 'refuse'])) {
     throw new GradleException('Unknown Silent Gear leggings spike graph/order/mode')
 }
-def label = "sg-spike-${graph}-${order}-${mode}"
+def label = "sg-set-proof-${graph}-${order}-${mode}"
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
 def boots = project(':MismatchedBoots:NeoForge')
 tasks.named('processResources') {
-    inputs.property('sgSpikeOrder', order)
+    inputs.property('sgSetProofOrder', order)
     doLast {
         def target = new File(destinationDir, 'leggings-sg-spike.mixins.json')
         def config = new groovy.json.JsonSlurper().parse(target)
@@ -29,7 +29,7 @@ tasks.named('processResources') {
     }
 }
 
-tasks.register('prepareSgSpike') {
+tasks.register('prepareSgSetProof') {
     dependsOn tasks.named('classes'), product.tasks.named('assemble')
     if (graph == 'boots') { dependsOn boots.tasks.named('assemble') }
     doLast {
@@ -52,21 +52,21 @@ tasks.register('prepareSgSpike') {
         new File(directory, 'eula.txt').text = 'eula=true\n'
     }
 }
-neoForge.runs.create('sgSpike') {
+neoForge.runs.create('sgSetProof') {
     server()
     disableIdeRun()
     gameDirectory = directory
     programArgument('--nogui')
-    systemProperty('leggings.test.sgSpike', 'true')
-    systemProperty('leggings.test.sgSpikeMode', mode)
-    systemProperty('leggings.test.sgSpikeOrder', order)
+    systemProperty('leggings.test.sgSetProof', 'true')
+    systemProperty('leggings.test.sgSetProofMode', mode)
+    systemProperty('leggings.test.sgSetProofOrder', order)
     systemProperty('leggings.test.boots', (graph == 'boots').toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
 }
-tasks.named('runSgSpike') { dependsOn 'prepareSgSpike' }
+tasks.named('runSgSetProof') { dependsOn 'prepareSgSetProof' }
 
-tasks.register('verifySgSpike') {
+tasks.register('verifySgSetProof') {
     group = 'verification'
     doLast {
         def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
@@ -74,8 +74,8 @@ tasks.register('verifySgSpike') {
         new File(evidence, 'matrix.ok').delete()
         def log = new File(evidence, 'server.log')
         def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
-                    "${project.path}:runSgSpike", "-Pneoforge_version=${neoforge_version}",
-                    "-PsgSpikeGraph=${graph}", "-PsgSpikeOrder=${order}", "-PsgSpikeMode=${mode}"]
+                    "${project.path}:runSgSetProof", "-Pneoforge_version=${neoforge_version}",
+                    "-PsgSetProofGraph=${graph}", "-PsgSetProofOrder=${order}", "-PsgSetProofMode=${mode}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
@@ -91,7 +91,7 @@ tasks.register('verifySgSpike') {
                     || log.text.readLines().any { it.contains('WARN') && it.contains('Silent Gear mixed') }) {
                 throw new GradleException("Unexpected SG diagnostics: ${log}")
             }
-            new File(evidence, 'matrix.ok').text = 'research-only numeric/state and native Wielder set gate passed\n'
+            new File(evidence, 'matrix.ok').text = 'research-only native Stellar Wielder set proof passed\n'
         } finally {
             if (process.isAlive()) { process.toHandle().descendants().forEach { it.destroyForcibly() }; process.destroyForcibly() }
         }

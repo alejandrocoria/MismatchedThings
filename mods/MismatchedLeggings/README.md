@@ -67,7 +67,7 @@ orientation, and Flutter is averaged normally. Magic Armor averages by default;
 an explicit server policy wins, and native players still lack that attribute
 instance. A bounded product component seeds independent source oxidation clocks
 and preserves live state through supported recomposition. The
-[selected attributes/state adapter (blocks A–C)](local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md)
+[selected attributes/state adapter (blocks A–D)](local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md)
 uses Renew/Stellar repair and Bending/Brittle/Flexible/Malleable/Sturdy wear math
 once on the live root. Unbreaking, creative, Unbreakable/Eternal and ordinary
 mixed destruction keep their existing behavior. Chipping/Crushing armor follows
@@ -75,8 +75,11 @@ live damage/repair on the next server inventory tick, using the pair's captured
 attribute policy. Copper clocks advance independently while idle in inventory;
 hands, armor and native coatings pause them. Native repeated Oxidized-I resets
 are preserved. External edits to the managed armor modifier remain authoritative
-through refresh and supported recomposition. Persistence/client consolidation
-and wearer/set effects remain pending. SG is optional; source histories stay immutable.
+through refresh, supported recomposition and save/reopen. Ordinary item packets
+synchronize the bounded state and attributes; missing SG sources use complete
+suspension/recovery. The final attributes/state gameplay checklist passed on
+2026-11-09, completing this bounded adapter. Later wearer/set effects remain
+outside its scope. SG is optional; source histories stay immutable.
 
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman

@@ -13,12 +13,18 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (!games.alejandrocoria.mismatchedleggings.test.silentgear.StateChecks.stage().isEmpty()) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
+                    games.alejandrocoria.mismatchedleggings.test.silentgear.StateChecks.tick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.sgFoundation")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.silentgear.FoundationChecks.tick(event.getServer()));
             return;
         }
-        if (Boolean.getBoolean("leggings.test.sgSpike")) {
+        if (Boolean.getBoolean("leggings.test.sgSetProof")) {
             games.alejandrocoria.mismatchedleggings.spike.silentgear.SpikeChecks.register();
             return;
         }

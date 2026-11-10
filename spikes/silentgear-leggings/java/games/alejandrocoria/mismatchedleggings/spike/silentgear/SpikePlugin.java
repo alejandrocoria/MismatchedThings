@@ -24,12 +24,12 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
 
     @Override
     public void onLoad(String name) {
-        if (Boolean.getBoolean("leggings.test.sgSpike")) {
+        if (Boolean.getBoolean("leggings.test.sgSetProof")) {
             ((Extensions) ((IMixinTransformer) MixinEnvironment.getCurrentEnvironment().getActiveTransformer()).getExtensions()).add(this);
         }
     }
 
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return Boolean.getBoolean("leggings.test.sgSpike"); }
+    @Override public boolean shouldApplyMixin(String target, String mixin) { return Boolean.getBoolean("leggings.test.sgSetProof"); }
     @Override public boolean checkActive(MixinEnvironment environment) { return true; }
 
     @Override
@@ -49,7 +49,7 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
                 if (info.getClassName().endsWith(".SilentGearSetMixin")) { boots = index; }
                 index++;
             }
-            boolean before = System.getProperty("leggings.test.sgSpikeOrder").equals("before");
+            boolean before = System.getProperty("leggings.test.sgSetProofOrder").equals("before");
             if (legs < 0 || Boolean.getBoolean("leggings.test.boots") && (boots < 0 || (legs < boots) != before)) {
                 throw new AssertionError("Unexpected actual set order " + names);
             }
@@ -59,11 +59,11 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        String mode = System.getProperty("leggings.test.sgSpikeMode");
+        String mode = System.getProperty("leggings.test.sgSetProofMode");
         if (mode.equals("refuse")) {
             // Runtime-identical opaque callback: refuse our final proof, not Boots' set slice.
             for (var method : node.methods) {
-                if (method.name.contains("leggings$sgSpikeTrait")) {
+                if (method.name.contains("leggings$sgSetProofTrait")) {
                     for (var instruction : method.instructions) {
                         if (instruction instanceof MethodInsnNode call && call.owner.equals(SetShape.CANDIDATE) && call.name.equals("recognizes")) {
                             call.name = "unrecognized";
@@ -95,8 +95,8 @@ public final class SpikePlugin implements IMixinConfigPlugin, IExtension, Opcode
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
         if (!node.name.equals(SetShape.OWNER)) { return; }
-        boolean ready = !System.getProperty("leggings.test.sgSpikeMode").equals("baseline") && SetShape.finalGraph(node);
-        var getter = node.methods.stream().filter(m -> m.name.equals("leggings$sgSpikeReady")).findFirst().orElseThrow();
+        boolean ready = !System.getProperty("leggings.test.sgSetProofMode").equals("baseline") && SetShape.finalGraph(node);
+        var getter = node.methods.stream().filter(m -> m.name.equals("leggings$sgSetProofReady")).findFirst().orElseThrow();
         getter.instructions.clear();
         getter.instructions.add(new InsnNode(ready ? ICONST_1 : ICONST_0));
         getter.instructions.add(new InsnNode(IRETURN));

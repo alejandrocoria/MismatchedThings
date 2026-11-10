@@ -220,13 +220,69 @@ product artifacts are restored after the focused `.99` run.
 D owns disk-reopen/recovery, client synchronization consolidation and owner
 gameplay acceptance. No C result claims those gates or full SG trait support.
 
-## Silent Gear bounded research gate
+## Silent Gear persistence and synchronization (block D)
 
-The [isolated spike guide](../../../spikes/silentgear-leggings/README.md) documents
-the temporary dedicated-server numeric/live-state and native Stellar set probe,
-its current-Boots transformation-order/refusal controls and `.99` boundary.
-Use the shared pinned artifact resolver, not indev JARs. This is feasibility
-evidence, not production SG support or the complete compatibility test matrix.
+`verifySgState` uses one disposable saved world and independent dedicated game
+JVMs for `write,reopen,absent,absentagain,restore,reconnect`. SG and Silent Lib
+are physically removed and reinstalled between loads. Run sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgFoundationGraph=boots -PsgLiveInfusion=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgFoundationGraph=boots '-PsgStateStages=write,reopen' '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:Common:test :MismatchedLeggings:NeoForge:test :MismatchedLeggings:verifyPackaging :MismatchedBoots:NeoForge:assemble --offline --console=plain
+```
+
+The four paid roots retain transitioned unequal copper lanes, worn armor,
+non-default maximum policy and a sticky external armor removal. Paid donor
+repair/enchantment and trim precede saving, retaining external Soulbound flags
+and, on the `.114` infusion graph, native root-only reserve `53/3600`. Full raw roots and complete source
+components are compared after disk reopening; repeated absence must preserve
+the raw suspended archive. Bare/vanilla controls use the same saved-world loader.
+No migration, new packet or production backup mechanism is added.
+
+`write`, `absent`, `restore` and `reconnect` each launch a separate hidden/muted
+TCP client. It compares complete received item snapshots, actual equipped armor,
+ordinary inventory/equipment moves and read-only normal/advanced queries.
+Representative native source item/waist/leg/trim/glint submissions repeat after
+resource reload. Player items are also compared across restart/reconnection.
+These checks do not certify pixels or replace the owner's gameplay checklist.
+
+Reports: `NeoForge/build/reports/<baseline>/sg-state-<graph>[-infusion]/<stage>/`.
+Logs and full-run `matrix.ok`: matching `build/verification/` directory. Every
+stage requires fresh markers, bounded successful exits and no failure marker.
+Native servers admit only the pinned optional Bonsai recipe ERROR. Native TCP
+clients require exactly the two known SG Stone Anvil subtitle ERRORs at startup
+and again after resource reload (four total), independently documented in
+[Boots' native diagnostics](../../MismatchedBoots/RuntimeTests/docs/silent-gear.md#known-native-diagnostics-and-acceptance-records).
+Absence requires zero ERRORs and all profiles reject SG refusal warnings.
+For targeted reruns, `-PsgStateStages=reopen` selects existing-world stages and
+writes `subset.ok`, without claiming the complete matrix. `write` resets only
+its resolved disposable profile. `write/manual-fixtures.txt` contains chat-sized
+native part commands, parsed and crafted by the real server for Light/Flutter,
+Renew, Malleable/Brittle, Chipping/Crushing and copper. They are prepared test
+materials, not a survival-acquisition promise. The fixture world
+`build/run/<baseline>/sg-state-<graph>[-infusion]/server/world` contains the saved
+barrel at `0 65 0`; its copper clocks are explicitly accelerated.
+Restore normal `.114` artifacts after `.99`.
+
+Automatic D coverage passed on 2026-11-09: all six stages/four actual TCP
+clients on `.114` standalone and current Boots + infusion; focused `.99` current
+Boots write/reopen/client/idle continuation. Full A/B/C, local C/B refusals, quiet
+absence, the remaining set proof, Common (26)/NeoForge (41) unit cases and
+both-loader packaging pass. Normal `.114` products are restored, followed by
+a final standalone native gate. The owner separately confirmed the complete
+manual checklist on 2026-11-09, closing the bounded attributes/state plan; see
+[the acceptance record](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md#d-owner-acceptance--2026-11-09).
+
+## Silent Gear isolated Stellar set proof
+
+The [remaining research guide](../../../spikes/silentgear-leggings/README.md)
+uses `verifySgSetProof` solely for native Stellar piece counting/Wielder feasibility,
+actual sibling edit order, compatible peers and local refusal. The superseded
+numeric/state engine and CUSTOM_DATA prototype are removed, with no legacy task
+aliases. Production A–D checks never enable this proof; wearer/set/potion effects
+and source-detail presentation remain outside the attributes/state plan.
 
 ## Ice and Fire damage and Lightning (block A)
 

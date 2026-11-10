@@ -23,7 +23,7 @@ final class SetShape implements Opcodes {
     static final String PLAYER = "net/minecraft/world/entity/player/Player";
     static final String CALLBACK = "(ZLjava/lang/Object;Ljava/lang/Object;L" + PLAYER + ";L" + SLOT + ";L" + STACK + ";)Z";
     static final String COUNT = "(L" + CONTEXT + ";L" + PREFIX + "api/item/GearType;L" + PLAYER + ";)I";
-    static final String CANDIDATE = "games/alejandrocoria/mismatchedleggings/spike/silentgear/Candidate";
+    static final String CANDIDATE = "games/alejandrocoria/mismatchedleggings/spike/silentgear/SetCandidate";
 
     record Pair(AbstractInsnNode type, AbstractInsnNode trait) {}
 
@@ -39,13 +39,13 @@ final class SetShape implements Opcodes {
                     || !call(code.get(i - 4), PLAYER, "getItemBySlot", "(L" + SLOT + ";)L" + STACK + ";")
                     || !load(code.get(i - 3), ASTORE, 7) || !load(code.get(i - 2), ALOAD, 7)
                     || !call(code.get(i - 1), STACK, "getItem", "()Lnet/minecraft/world/item/Item;")) { continue; }
-            int cursor = handlers(code, i + 1, "leggings$sgSpikeType", finalGraph);
+            int cursor = handlers(code, i + 1, "leggings$sgSetProofType", finalGraph);
             if (cursor < 0 || cursor + 5 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode noType) || noType.getOpcode() != IFEQ
                     || !load(code.get(cursor + 1), ALOAD, 7) || !load(code.get(cursor + 2), ALOAD, 1)
                     || !call(code.get(cursor + 3), CONTEXT, "trait", "()L" + PREFIX + "gear/trait/Trait;")
                     || !call(code.get(cursor + 4), PREFIX + "util/TraitHelper", "hasTrait", "(Lnet/minecraft/world/item/ItemInstance;L" + PREFIX + "gear/trait/Trait;)Z")) { continue; }
             var trait = code.get(cursor + 4);
-            cursor = handlers(code, cursor + 5, "leggings$sgSpikeTrait", finalGraph);
+            cursor = handlers(code, cursor + 5, "leggings$sgSetProofTrait", finalGraph);
             if (cursor < 0 || cursor + 2 >= code.size() || !(code.get(cursor) instanceof JumpInsnNode noTrait)
                     || noTrait.getOpcode() != IFEQ || noType.label != noTrait.label
                     || !(code.get(cursor + 1) instanceof IincInsnNode inc) || inc.var != 4 || inc.incr != 1
@@ -60,7 +60,7 @@ final class SetShape implements Opcodes {
     static boolean finalGraph(ClassNode node) {
         var methods = node.methods.stream().filter(m -> m.name.equals("getSetPieceCount") && m.desc.equals(COUNT)).toList();
         if (methods.size() != 1 || pair(COUNT, methods.getFirst().instructions, true) == null) { return false; }
-        for (String name : List.of("leggings$sgSpikeType", "leggings$sgSpikeTrait")) {
+        for (String name : List.of("leggings$sgSetProofType", "leggings$sgSetProofTrait")) {
             var handlers = node.methods.stream().filter(m -> m.name.contains(name) && m.desc.equals(CALLBACK)).toList();
             if (handlers.size() != 1 || code(handlers.getFirst().instructions).stream().filter(n -> n instanceof MethodInsnNode call
                     && call.owner.equals(CANDIDATE) && call.name.equals("recognizes")).count() != 1) { return false; }

@@ -11,6 +11,10 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (!games.alejandrocoria.mismatchedleggings.test.silentgear.StateChecks.stage().isEmpty()) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> games.alejandrocoria.mismatchedleggings.test.silentgear.StateClient.tick(Minecraft.getInstance()));
+            return;
+        }
         if (games.alejandrocoria.mismatchedleggings.test.mysticaleffects.EffectsChecks.enabled()) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> games.alejandrocoria.mismatchedleggings.test.mysticaleffects.EffectsClient.tick(Minecraft.getInstance()));
             return;
