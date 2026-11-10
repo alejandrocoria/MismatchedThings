@@ -91,8 +91,12 @@ recognize it too. Selected hands follow native activation against the actual
 worn set without adding a piece; idle inventory stops refreshing effects, which
 expire naturally. Duplicate sources use the highest native level once. Flame
 Ward's potion does not change dropped-item fire immunity. SG is optional; source
-histories stay immutable. Wearer lifecycle/client and owner acceptance remain
-in the plan's block D.
+histories stay immutable. Block D adds maintained dedicated TCP effect/movement/jump,
+paid repair/trim, resource reload and actual save/reopen/reconnect checks; the
+remaining executable set spike is retired. Controlled `.114`/focused `.99`
+lifecycle checks pass. The captured integration graph's strict log gate is refused
+by native viewer/configuration errors; its gameplay assertions and the owner's
+complete manual acceptance on 2026-11-10 are recorded separately in the plan.
 
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman

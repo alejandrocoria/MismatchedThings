@@ -78,7 +78,7 @@ tasks.register('prepareSgFoundation') {
         }
         copy { from artifacts; into mods }
         reports.mkdirs()
-        ['server.ok', 'server.failure.txt', 'foundation.txt'].each { new File(reports, it).delete() }
+        ['server.ok', 'server.failure.txt', 'foundation.txt', 'wearer-manual.txt'].each { new File(reports, it).delete() }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
         new File(directory, 'eula.txt').text = 'eula=true\n'
@@ -124,6 +124,7 @@ tasks.register('verifySgFoundation') {
                     || new File(reports, 'server.failure.txt').exists()) {
                 throw new GradleException("Silent Gear foundation failed: ${log}")
             }
+            if (wielderVariant && !absent && !new File(reports, 'wearer-manual.txt').isFile()) { throw new GradleException('Missing verified native wearer commands') }
             def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
             if (absent ? !errors.isEmpty() : errors.size() != 1
                     || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")

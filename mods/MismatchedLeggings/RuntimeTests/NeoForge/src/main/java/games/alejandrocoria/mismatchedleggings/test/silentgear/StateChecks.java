@@ -65,7 +65,9 @@ public final class StateChecks {
                 require(ModList.get().isLoaded("silentgear") != absent(), "Wrong native state graph");
                 require(ModList.get().isLoaded("mismatchedboots") == Boolean.getBoolean("leggings.test.boots"), "Wrong sibling graph");
                 server.overworld().getChunkAt(STORAGE);
-                if (stage().equals("write")) { seed(server); } else { reopen(server); }
+                if (stage().equals("write")) {
+                    seed(server, FoundationChecks.player(server));
+                } else { reopen(server); }
                 initialized = true;
                 if (stage().equals("reopen") || stage().equals("absentagain")) { finish(server); return; }
                 Files.writeString(report("ready.txt"), "SG dedicated server ready\n");
@@ -80,8 +82,13 @@ public final class StateChecks {
             if (phase == 0) {
                 if (stage().equals("reconnect")) {
                     require(snapshot(player).equals(read(baseline("player.nbt"))), "Restart/reconnect changed saved player items");
+                    if (WearerLifecycle.enabled()) {
+                        require(WearerLifecycle.snapshot(player).equals(read(baseline("wearer-player.nbt"))), "Reconnect changed wearer equipment/paid roots");
+                        if (!WearerLifecycle.rejoined(player)) { return; }
+                    }
                 }
                 player.getInventory().clearContent();
+                for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
                 player.setNoGravity(true);
                 player.setInvulnerable(true);
                 player.connection.teleport(.5, 68, .5, 0, 0);
@@ -101,8 +108,17 @@ public final class StateChecks {
                 publish(player, "moved");
                 phase = 2;
             } else if (phase == 2 && Files.exists(report("client-moved.ok"))) {
+                if (WearerLifecycle.enabled() && !absent()) {
+                    WearerLifecycle.start(player, barrel(server));
+                    phase = 4;
+                    return;
+                }
                 NbtIo.writeCompressed(snapshot(player), baseline("player.nbt"));
                 Files.writeString(report("finish.txt"), "TCP equipment/inventory accepted\n");
+                phase = 3;
+            } else if (phase == 4 && WearerLifecycle.tick(player, barrel(server))) {
+                NbtIo.writeCompressed(snapshot(player), baseline("player.nbt"));
+                Files.writeString(report("finish.txt"), "TCP state and native wearer lifecycle accepted\n");
                 phase = 3;
             }
         } catch (Throwable failure) {
@@ -112,8 +128,7 @@ public final class StateChecks {
         }
     }
 
-    private static void seed(MinecraftServer server) throws Exception {
-        var player = FoundationChecks.player(server);
+    private static void seed(MinecraftServer server, ServerPlayer player) throws Exception {
         player.giveExperienceLevels(100);
         var older = FoundationChecks.armor("copper");
         older.set(SgDataComponents.OXIDATION_COUNTER.get(), 1199); // Accelerated fixture, never production time.
@@ -166,11 +181,12 @@ public final class StateChecks {
         saved.put("root4", encode(barrel(server).getItem(4), server.registryAccess()));
         saved.put("root5", encode(barrel(server).getItem(5), server.registryAccess()));
         barrel(server).setChanged();
+        if (WearerLifecycle.enabled()) { WearerLifecycle.seed(player, barrel(server), saved); }
         NbtIo.writeCompressed(saved, baseline("roots.nbt"));
         ManualFixtures.write(player);
     }
 
-    private static ItemStack workstations(ServerPlayer player, ItemStack root, int index) {
+    static ItemStack workstations(ServerPlayer player, ItemStack root, int index) {
         var previous = games.alejandrocoria.mismatchedleggings.config.CompositionRuleState.server();
         var rules = new CompositionRules(new AttributeRuleSet(AttributePolicy.SEPARATE,
                 Map.of(SilentGearState.ARMOR, root.get(SilentGearCompatibility.state()).armorPolicy())), CompositionRules.defaults().components());
@@ -211,10 +227,10 @@ public final class StateChecks {
         var after = trimmed.get(SilentGearCompatibility.state());
         require(after.left().equals(state.left()) && after.right().equals(state.right()) && after.armorOverridden() == state.armorOverridden()
                 && after.armorPolicy() == state.armorPolicy(), "Paid menus reset lanes/overrides/policy");
-        require(root.get(LeggingsContent.forbiddenModifiersType()).equals(trimmed.get(LeggingsContent.forbiddenModifiersType())), "Paid menus changed external Soulbound state");
+        require(java.util.Objects.equals(root.get(LeggingsContent.forbiddenModifiersType()), trimmed.get(LeggingsContent.forbiddenModifiersType())), "Paid menus changed external Soulbound state");
         if (ModList.get().isLoaded("undergarden")) {
             var type = net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(net.minecraft.resources.Identifier.parse("undergarden:rogdorium_infusion"));
-            require(root.get(type).equals(trimmed.get(type)), "Paid menus changed external live infusion");
+            require(java.util.Objects.equals(root.get(type), trimmed.get(type)), "Paid menus changed external live infusion");
         }
         require(MixedLeggingsStructure.validData(trimmed).orElseThrow().left().source().has(DataComponents.TRIM)
                 && MixedLeggingsStructure.validData(trimmed).orElseThrow().right().source().has(DataComponents.TRIM), "Native source trim missing");
@@ -260,6 +276,7 @@ public final class StateChecks {
                 parked.put("root" + i, encode(root, server.registryAccess()));
             }
         }
+        if (WearerLifecycle.enabled() && !absent()) { WearerLifecycle.reopen(FoundationChecks.player(server), barrel(server), expected); }
         if (stage().equals("absent")) { NbtIo.writeCompressed(parked, baseline("parked.nbt")); }
         if (stage().equals("absentagain")) { require(parked.equals(read(baseline("parked.nbt"))), "Second absent save changed raw archive"); }
     }

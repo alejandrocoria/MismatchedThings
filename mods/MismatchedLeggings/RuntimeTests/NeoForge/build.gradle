@@ -61,6 +61,5 @@ apply from: '../ice-and-fire-damage.gradle'
 
 apply from: '../ice-and-fire-tide.gradle'
 
-apply from: rootProject.file('spikes/silentgear-leggings/set-proof.gradle')
 apply from: '../silentgear-foundation.gradle'
 apply from: '../silentgear-state.gradle'

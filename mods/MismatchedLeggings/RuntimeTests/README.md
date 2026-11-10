@@ -276,20 +276,14 @@ a final standalone native gate. The owner separately confirmed the complete
 manual checklist on 2026-11-09, closing the bounded attributes/state plan; see
 [the acceptance record](../local-docs/SILENT-GEAR-STATE-IMPLEMENTATION.md#d-owner-acceptance--2026-11-09).
 
-## Silent Gear wearer foundation and isolated set proof
+## Silent Gear wearer foundation
 
-The [research/runtime guide](../../../spikes/silentgear-leggings/README.md)
-records `verifySgSetProof` for wearer block A's native four-family contracts,
-read-only optional carrier/admission and final paired-set proof. It extends the
-remaining Stellar experiment without creating another candidate engine.
-`baseline`, current-Boots before/after, compatible same-input and independent
-trait/type refusal modes were dedicated-server-only. Their original A commands
-and verified native manual fixtures remain historical evidence.
-
-Production Brilliant is active in B; C now activates LEGS set extensions and
-Wielder ticks. Use the maintained wearer C gate below with research recognition
-and dispatch disabled. The A-only research gate's inactivity assertions are no
-longer current production acceptance; D owns full remaining-spike retirement.
+Wearer A's independent native/API controls are maintained by `WielderChecks`,
+`BrilliantChecks` and `SilentGearWearerFoundationTest`. The original isolated
+set proof was superseded by production C and completely retired in wearer D,
+including its Gradle apply, constructor branch and metadata entry. Historical
+measurements remain in the [private execution record](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#10-block-a-execution-record--2026-11-10).
+No research dispatcher, mixin, task or property is needed.
 
 ## Silent Gear Brilliant (wearer block B)
 
@@ -2202,9 +2196,82 @@ Leggings Wielder warning in refusal profiles; other ERRORs or SG warnings fail.
 Data checks replace current native instances and run the actual SG trait-resource
 reload listener against the server's loaded resources, retaining paid roots and
 trait instances across definition replacement. This is not filesystem datapack
-discovery or a complete server/client reload. D owns connected clients, complete
-reload/save/reopen/reconnect, owner
-acceptance and entire remaining-spike retirement.
+discovery or a complete server/client reload. The maintained D lifecycle below adds connected clients, complete server reload,
+save/reopen/reconnect and full spike retirement. Owner acceptance is separate.
+
+## Silent Gear wearer lifecycle (wearer block D)
+
+Reuse `verifySgState` with `-PsgWearerLifecycle=true`. Its default stages become
+`write,reopen,reconnect`, in independent dedicated JVMs with the same saved world
+and fixed TCP username. The ordinary attributes/state gate retains its six stages.
+Run sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgWearerLifecycle=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgWearerLifecycle=true -PsgFoundationGraph=boots -PsgLiveInfusion=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgWearerLifecycle=true -PsgFoundationGraph=boots '-PsgStateStages=write,reopen' '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgWielderVariant=normal -PsgBrilliantVariant=normal -PsgFoundationGraph=boots --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgWielderVariant=trait -PsgFoundationGraph=boots --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgFoundationAbsent=true -PsgFoundationGraph=boots -PsgWielderVariant=normal -PsgBrilliantVariant=normal --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGear*Test' :MismatchedLeggings:verifyPackaging :MismatchedBoots:NeoForge:assemble --offline --console=plain
+```
+
+Eight additional paid leggings preserve both orientations of each Wielder family,
+with native repair/enchantment and trim before disk save. Stellar's second source
+is Brilliant gold. Saved native head/chest and native or optional mixed Boots
+supply full sets. The reopened barrel and reconnecting player's full equipment,
+sources and state must match their saved manifest before fixture setup. Reconnect
+then retains the original saved worn roots for 60 actual player ticks and requires
+ordinary effect packets on the client before replacing any gear for later cases.
+Reopened Stellar success/nonactivation seeds each consume exactly one existing repair roll.
+An Unbreakable fixture marker freezes incidental repair during packet comparisons;
+it is removed only on disposable copies for the seeded repair check.
+
+Each connected client observes 24 cases: native full-set control, both paid
+orientations, selected offhand with three equipped members, idle natural expiry,
+and mixed-only LEGS/optional FEET for each family. Each case waits 60 actual
+server-player ticks, beyond the native 38-tick potion lifetime. Exact native
+levels/visibility, ordinary TCP item/effect packets and Stellar's actual movement
+attribute/jump impulse are checked without client effect synthesis. Moving gear
+never removes the external Luck potion. Full root snapshots detect writes across
+ordinary ticks and client queries. A complete server resource reload retains the
+paid roots and revalidates effects. Existing state client presentation and resource
+reload checks still run, with no native SG detail-tooltip work or pixel acceptance.
+
+These are targeted SG profiles, not an all-modpack integration matrix. Stage the
+real packaged Leggings JAR and its nested Things, SG/Silent Lib and optionally
+current Boots. The existing `-PsgLiveInfusion=true` control adds only Undergarden
+for its specific live-reserve regression. Each endpoint records staged artifact
+hashes in `<endpoint>-graph.txt`; no indev artifacts/worlds or viewer/configuration
+mods are added for this plan.
+
+Paths use `sg-state-<graph>[-infusion]-wearer`. Every stage needs fresh `server.ok`,
+`state.txt`, no failure marker and successful bounded exits. Connected stages also
+need `client.ok`, all 24 `wearer-<n>.ok`, `wearer.txt` and `wearer-reload.ok`.
+Reconnect additionally requires `wearer-rejoin.ok` for the original saved player
+items. Full default runs write fresh `matrix.ok`; explicit subsets write `subset.ok`.
+`write/wearer-manual.txt` contains 20 verified native part commands for five traits
+and four slots, plus actual ingredient-tag contents. Native construction is a
+prepared API fixture, not a promise of stock material acquisition.
+
+Diagnostics remain strict: connected native servers require exactly two pinned
+Bonsai recipe errors (startup and complete server reload); reopen requires one.
+TCP clients require the four known Stone Anvil subtitle errors (startup and local
+resource reload). Absent profiles require zero errors. Other errors and unexpected
+SG refusal warnings fail. The separate foundation refusal/absence commands retain
+all prior state/repair/projection checks. This automatic evidence and the owner's
+[manual checklist](../local-docs/SILENT-GEAR-WEARER-IMPLEMENTATION.md#8-validation-and-manual-checklist)
+are recorded independently.
+
+Automatic controlled coverage passed on 2026-11-10: full `.114` standalone
+and current-Boots + infusion write/reopen/reconnect; focused `.99` current-Boots
+write/reopen; 13 SG units, both-loader packaging and final current-Boots normal,
+independent type/trait/Brilliant refusal and quiet absence profiles. Ordinary
+`.114` products are restored; no native SG/Lib or test/spike content is bundled.
+The owner confirmed the complete separate manual checklist on 2026-11-10,
+covering Brilliant, the four Wielder families, joint slot counting, Stellar
+repair ownership and save/reopen/dedicated reconnect. Broad modpack/viewer
+integration is outside this bounded SG acceptance, not a pending gate.
 
 ## Client window contract
 

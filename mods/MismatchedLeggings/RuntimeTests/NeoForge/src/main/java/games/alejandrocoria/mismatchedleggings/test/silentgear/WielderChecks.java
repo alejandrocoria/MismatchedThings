@@ -91,7 +91,6 @@ public final class WielderChecks {
     static void run(ServerPlayer player, StringBuilder report) throws Throwable {
         String variant = System.getProperty("leggings.test.sgWielderVariant", "");
         if (variant.isEmpty()) { return; }
-        require(!Boolean.getBoolean("leggings.test.sgSetProof"), "Research recognition/dispatcher must be disabled");
         require(WielderTestPlugin.actualOrder != null, "Missing actual production set order");
         report.append("C actual set mixin order ").append(WielderTestPlugin.actualOrder).append('\n');
         boolean ready = !List.of("type", "trait", "callback", "potion").contains(variant);
@@ -156,6 +155,7 @@ public final class WielderChecks {
         combinedRepair(player, ready, report);
         definitions(player, api, ready, report);
         if (ready && variant.equals("actor")) { actorFailure(player, report); }
+        ManualFixtures.wearer(player);
         clear(player);
         report.append("C production variant=").append(variant).append(" passed; research dispatcher/recognition disabled\n");
     }
@@ -465,7 +465,7 @@ public final class WielderChecks {
         return copy;
     }
 
-    private static ItemStack armor(String item, String part, String material) throws Exception {
+    static ItemStack armor(String item, String part, String material) throws Exception {
         return ((GearItem) BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:" + item)))
                 .construct(List.of(PartInstance.from(FoundationChecks.part(part, material))));
     }

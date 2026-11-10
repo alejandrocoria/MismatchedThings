@@ -7,7 +7,9 @@ def stages = ['write', 'reopen', 'absent', 'absentagain', 'restore', 'reconnect'
 if (!(graph in ['alone', 'boots']) || !(stage in stages)) { throw new GradleException('Unknown SG state graph/stage') }
 def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
 def infusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean() }.getOrElse(false)
-def label = "sg-state-${graph}" + (infusion ? '-infusion' : '')
+def wearer = providers.gradleProperty('sgWearerLifecycle').map { it.toBoolean() }.getOrElse(false)
+def defaultStages = wearer ? ['write', 'reopen', 'reconnect'] : stages
+def label = "sg-state-${graph}" + (infusion ? '-infusion' : '') + (wearer ? '-wearer' : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def markers = new File(reports, stage)
@@ -57,6 +59,9 @@ def checkedDelete = { File target ->
                 throw new GradleException("Unexpected artifact in disposable ${mods}")
             }
             copy { from artifacts; into mods }
+            new File(markers, "${endpoint}-graph.txt").text = artifacts.unique().collect {
+                it.name + ' ' + java.security.MessageDigest.getInstance('SHA-256').digest(it.bytes).encodeHex()
+            }.join('\n') + '\n'
             new File(run, 'config').mkdirs()
             new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
             if (endpoint == 'server') {
@@ -75,6 +80,7 @@ def checkedDelete = { File target ->
         }
         disableIdeRun()
         gameDirectory = new File(directory, endpoint)
+        systemProperty('leggings.test.sgWearerLifecycle', wearer.toString())
         systemProperty('leggings.test.sgState', stage)
         systemProperty('leggings.test.sgStateBaseline', reports.absolutePath)
         systemProperty('leggings.test.boots', (graph == 'boots').toString())
@@ -90,8 +96,8 @@ tasks.register('verifySgState') {
     doLast {
         def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
         evidence.mkdirs()
-        new File(evidence, 'matrix.ok').delete()
-        def selected = providers.gradleProperty('sgStateStages').getOrElse(stages.join(',')).split(',').toList()
+        ['matrix.ok', 'subset.ok'].each { new File(evidence, it).delete() }
+        def selected = providers.gradleProperty('sgStateStages').getOrElse(defaultStages.join(',')).split(',').toList()
         if (selected.any { !(it in stages) }) { throw new GradleException('Unknown SG state stage selection') }
         selected.each { current ->
             int selectedPort
@@ -101,7 +107,7 @@ tasks.register('verifySgState') {
             def start = { String endpoint ->
                 def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                             "${project.path}:runSgState${endpoint.capitalize()}", "-Pneoforge_version=${neoforge_version}",
-                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}"]
+                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}", "-PsgWearerLifecycle=${wearer}"]
                 if (gradle.startParameter.offline) { args.add('--offline') }
                 new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
                         .redirectErrorStream(true).redirectOutput(new File(evidence, "${current}-${endpoint}.log")).start()
@@ -127,18 +133,27 @@ tasks.register('verifySgState') {
                 if (!server.waitFor(180, TimeUnit.SECONDS) || server.exitValue() != 0
                         || !new File(currentMarkers, 'server.ok').isFile() || new File(currentMarkers, 'server.failure.txt').exists()
                         || !new File(currentMarkers, 'state.txt').isFile()) { throw new GradleException("SG state failed: ${evidence}/${current}-server.log") }
+                if (wearer && current in ['write', 'restore', 'reconnect']) {
+                    if (!(0..<24).every { new File(currentMarkers, "wearer-${it}.ok").isFile() }
+                            || !new File(currentMarkers, 'wearer.txt').isFile() || !new File(currentMarkers, 'wearer-reload.ok').isFile()) {
+                        throw new GradleException("Missing connected wearer evidence: ${currentMarkers}")
+                    }
+                }
+                if (wearer && current == 'reconnect' && !new File(currentMarkers, 'wearer-rejoin.ok').isFile()) {
+                    throw new GradleException('Missing original saved-player wearer resume evidence')
+                }
                 ['server', 'client'].each { endpoint ->
                     def log = new File(evidence, "${current}-${endpoint}.log")
                     if (endpoint == 'client' && client == null) { return }
                     def errors = log.readLines().findAll { it.contains('/ERROR]') }
                     boolean absent = current.startsWith('absent')
                     boolean subtitles = endpoint == 'client' && !absent
+                    int recipeErrors = wearer && current in ['write', 'restore', 'reconnect'] ? 2 : 1
                     // Pinned native missing translations, independently recorded by Boots' SG client gates.
                     if (subtitles ? errors.size() != 4 || ['hammer', 'knife'].any { sound ->
                         errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != 2
-                    } : absent ? !errors.isEmpty() : errors.size() != 1
-                            || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
-                            || !errors.first().contains('bonsaitrees2:sapling')) { throw new GradleException("Unexpected SG state errors: ${log}") }
+                    } : absent ? !errors.isEmpty() : errors.size() != recipeErrors
+                            || !errors.every { it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'") && it.contains('bonsaitrees2:sapling') }) { throw new GradleException("Unexpected SG state errors: ${log}") }
                     if (log.readLines().any { it.contains('WARN') && it.contains('Silent Gear')
                             || absent && it.contains('Error loading class: net/silentchaos512/') }) {
                         throw new GradleException("Unexpected SG refusal/absence diagnostic: ${log}")
@@ -146,6 +161,6 @@ tasks.register('verifySgState') {
                 }
             } finally { stop(client); stop(server) }
         }
-        new File(evidence, selected == stages ? 'matrix.ok' : 'subset.ok').text = "SG production state stages=${selected}; graph=${graph}\n"
+        new File(evidence, selected == defaultStages ? 'matrix.ok' : 'subset.ok').text = "SG production state stages=${selected}; graph=${graph}\n"
     }
 }

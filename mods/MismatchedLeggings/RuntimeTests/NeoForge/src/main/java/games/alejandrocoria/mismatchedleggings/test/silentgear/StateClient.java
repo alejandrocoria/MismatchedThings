@@ -33,6 +33,7 @@ public final class StateClient {
             require(!Files.exists(StateChecks.report("server.failure.txt")), "SG dedicated server failed");
             if (client.player == null || client.level == null || client.getOverlay() != null) { return; }
             require(client.getSingleplayerServer() == null, "SG synchronization accidentally used integrated server");
+            if (phase == 0 && WearerLifecycle.enabled() && StateChecks.stage().equals("reconnect")) { WearerLifecycleClient.rejoined(client); }
             if (phase == 0 && matches(client, "initial")) {
                 verify(client);
                 Files.writeString(StateChecks.report("client-initial.ok"), "Full native state/projection/history packet matched\n");
@@ -49,7 +50,9 @@ public final class StateClient {
                 if (!StateChecks.absent()) { StateRendering.verify(client, List.of(client.player.getItemBySlot(EquipmentSlot.LEGS), client.player.getInventory().getItem(1))); }
                 Files.writeString(StateChecks.report("client-moved.ok"), "Inventory/equipment moves, read-only queries and resource reload passed\n");
                 phase = 3;
-            } else if (phase == 3 && Files.exists(StateChecks.report("finish.txt"))) {
+            } else if (phase == 3) {
+                if (WearerLifecycle.enabled() && !StateChecks.absent()) { WearerLifecycleClient.tick(client); }
+                if (!Files.exists(StateChecks.report("finish.txt"))) { return; }
                 Files.writeString(StateChecks.report("client.txt"), "Actual hidden/muted dedicated TCP client; complete ordinary inventory/equipment packets, live state/attributes, moves and reconnect stage; native source item/waist/legs/trim/glint submissions before/after resource reload; no pixel/owner acceptance claimed\n");
                 finished = true;
                 SkeletonChecks.passed("client");

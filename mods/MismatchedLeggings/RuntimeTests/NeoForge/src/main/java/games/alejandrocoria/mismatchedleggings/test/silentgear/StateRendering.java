@@ -33,7 +33,7 @@ final class StateRendering {
         model.body.visible = true;
         model.leftLeg.visible = true;
         model.rightLeg.visible = true;
-        String family = "SG bone/diamond";
+        String family = "SG native source pair";
         for (var received : roots) {
             var root = received.copy();
             root.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
@@ -43,17 +43,26 @@ final class StateRendering {
             for (var context : List.of(ItemDisplayContext.GUI, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)) {
                 var faces = ItemChecks.faces(ItemChecks.resolve(root, context));
                 require(!faces.isEmpty() && faces.stream().allMatch(ItemChecks.Face::foil), "Item glint missing");
-                int side = 0;
-                for (var history : List.of(data.left().source(), data.right().source())) {
-                    var textures = ItemChecks.faces(ItemChecks.resolve(history, context)).stream().map(ItemChecks.Face::texture).collect(Collectors.toSet());
+                var sources = List.of(data.left().source(), data.right().source());
+                var texturesBySide = sources.stream().map(source -> ItemChecks.faces(ItemChecks.resolve(source, context))
+                        .stream().map(ItemChecks.Face::texture).collect(Collectors.toSet())).toList();
+                for (int side = 0; side < 2; side++) {
+                    var textures = texturesBySide.get(side);
+                    var otherTextures = texturesBySide.get(1 - side);
                     var selected = faces.stream().filter(face -> textures.contains(face.texture())).toList();
                     require(!selected.isEmpty(), "Missing native texture " + family);
+                    final boolean left = side == 0;
+                    require(selected.stream().anyMatch(face -> face.vertices().stream()
+                            .allMatch(vertex -> left ? vertex.x >= .4999F : vertex.x <= .5001F)), "Missing native source half");
                     for (var face : selected) {
-                        for (var vertex : face.vertices()) {
-                            require(side == 0 ? vertex.x >= .4999F : vertex.x <= .5001F, "Wrong source side");
+                        // Native SG sources can share the same atlas texture. Geometry still must be clipped,
+                        // but that shared texture alone cannot identify which source produced a face.
+                        require(face.vertices().stream().allMatch(vertex -> vertex.x >= .4999F)
+                                || face.vertices().stream().allMatch(vertex -> vertex.x <= .5001F), "Unclipped source face");
+                        if (!otherTextures.contains(face.texture())) {
+                            require(face.vertices().stream().allMatch(vertex -> left ? vertex.x >= .4999F : vertex.x <= .5001F), "Wrong source side");
                         }
                     }
-                    side++;
                 }
             }
             for (boolean crouched : List.of(false, true)) {

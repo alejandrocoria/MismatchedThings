@@ -24,10 +24,6 @@ public final class SkeletonTestNeoForge {
                     games.alejandrocoria.mismatchedleggings.test.silentgear.FoundationChecks.tick(event.getServer()));
             return;
         }
-        if (Boolean.getBoolean("leggings.test.sgSetProof")) {
-            games.alejandrocoria.mismatchedleggings.spike.silentgear.SpikeChecks.register();
-            return;
-        }
         if (Boolean.getBoolean("leggings.test.iafTide")) {
             games.alejandrocoria.mismatchedleggings.test.iceandfire.TideChecks.register();
             return;
