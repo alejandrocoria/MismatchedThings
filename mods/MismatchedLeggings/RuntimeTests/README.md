@@ -63,6 +63,56 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Silent Gear cure contracts
+
+The maintained foundation profile tests packaged production Cure Poison/Wither
+through real server inventory ticks and one actual server resource reload. No
+research candidate participates:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgCureVariant=normal -PsgFoundationGraph=alone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgCureVariant=normal -PsgFoundationGraph=boots --offline --console=plain
+```
+
+These traits have **synthetic acquisition**: shipped SG data assigns neither cure
+to a material/recipe. Tests install them in native gear properties, then perform
+paid composition. Native and mixed inverse/duplicate/distinct sources check
+LEGS and each hand on ticks 11/12, idle/wrong-slot/non-player/mismatched-level and
+invalid/suspended negatives, exact removal/leaf counts, disposable root copies
+and unchanged histories/Luck. The non-player control must acquire both targets
+first. Native forced-HEAD activation is preserved; mixed HEAD is inactive.
+Separate native/mixed Boots retain their own ticks, with no actor-global dedup.
+
+Use one isolated `sgCureVariant` per run:
+
+- `compatible`: harmless native-leaf NOPs remain admitted.
+- `proof`: only Leggings' final permission placeholder is corrupted. Both cures
+  decline with one warning each; native/Boots and Void Ward remain functional.
+- `target`: Poison's current cancellation target becomes Luck. Admission rejects
+  it before callback and permanently declines only Poison, preserving Wither.
+- `definition`: Wither's current effect list becomes unsupported; only Wither
+  declines, preserving Poison.
+- `callback`: a test-only hook fails after the native Poison removal. That mutation
+  remains, Wither still runs, and later ticks/reload never retry Poison.
+
+All native-data mutations are restored. Admission also checks missing/duplicate/
+foreign effects, single exact target, definition/instance conditions and maximum
+level through the actual private binding, without adding a public test API.
+A retained root must read new effect receivers after real reload; previously
+declined IDs stay declined. Observers neither rewrite the native leaf nor grant
+readiness. Exactly two existing Bonsai optional-recipe errors are expected for a
+native run (initial load and one reload); no unrelated error/refusal is accepted.
+
+`sgFoundationAbsent=true` checks quiet absence without reload;
+`'-Pneoforge_version=26.1.2.99'` selects the focused floor boundary. Run profiles
+sequentially; cached catalog artifacts are independent of indev. Evidence is
+`NeoForge/build/reports/<baseline>/sg-foundation-<graph>-cure-<variant>/`
+(add `-absent` after the graph when selected), with `foundation.txt`/`server.ok`
+and matching verification logs/fresh `matrix.ok`. This is controlled server
+acceptance, not C's connected potion synchronization or owner gameplay review.
+No client or screenshot is needed for these B profiles; item ticking is already
+server-only by the native `inventoryTick(..., ServerLevel, ...)` entry point.
+
 ## Silent Gear Void Ward contracts
 
 The maintained foundation profile exercises the packaged production LEGS query
@@ -137,9 +187,10 @@ subtitle errors. No Silent Gear refusal warning is accepted as coexistence.
 Evidence uses `NeoForge/build/reports/<baseline>/sg-state-<graph>-remaining-<order>[-headless]/write/`
 and matching verification child logs. **`probe.ok` is feasibility only**, never
 `matrix.ok`. The private remaining-effects exploration owns results and limits;
-The production Void Ward profile above now owns its independent guard and
-quiet-absence checks; cures, connected production acceptance and manual checks
-remain later work. The candidate must not run with production Void Ward tests.
+The production profiles above now own independent Void Ward and cure guards,
+controlled server acceptance and quiet-absence checks; connected production
+acceptance and manual checks remain C work. The candidate must not run with
+production remaining-effects tests.
 The bounded spike passed on 2026-11-11: standalone and both current-Boots `.114`
 orders with actual remote rescue, plus focused headless `.99`. Cure cases use
 controlled server item ticks, not a claim of connected cure presentation.

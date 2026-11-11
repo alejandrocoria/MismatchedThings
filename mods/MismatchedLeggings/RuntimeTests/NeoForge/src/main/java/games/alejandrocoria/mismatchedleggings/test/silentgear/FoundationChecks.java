@@ -91,6 +91,9 @@ public final class FoundationChecks {
                     && !Boolean.getBoolean("leggings.test.sgFoundationAbsent") && !DefenseBounceChecks.step(server, REPORT)) {
                 return;
             }
+            if (!CureChecks.step(server, REPORT)) {
+                return;
+            }
             finished = true;
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");

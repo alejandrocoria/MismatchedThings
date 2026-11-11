@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings;
 import games.alejandrocoria.mismatchedleggings.compatibility.allthemodium.AllTheModiumLeggings;
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic.RootsTickCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearCures;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearEffects;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearLiveState;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearMagnet;
@@ -33,6 +34,7 @@ public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
         SilentGearLiveState.tick(stack, level, entity, slot);
         SilentGearWearer.tick(stack, level, entity, slot);
         SilentGearMagnet.tick(stack, level, entity, slot);
+        SilentGearCures.tick(stack, level, entity, slot);
         AllTheModiumLeggings.tick(stack, level, entity, slot);
         RootsTickCompatibility.tick(stack, level, entity, slot);
         IceAndFireTideCompatibility.activate(stack, level, entity, slot);

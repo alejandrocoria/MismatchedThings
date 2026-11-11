@@ -16,6 +16,13 @@ def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
 def defenseVariant = providers.gradleProperty('sgDefenseVariant').getOrElse('')
 def voidVariant = providers.gradleProperty('sgVoidVariant').getOrElse('')
+def cureVariant = providers.gradleProperty('sgCureVariant').getOrElse('')
+if (!(cureVariant in ['', 'normal', 'compatible', 'proof', 'target', 'definition', 'callback'])) {
+    throw new GradleException('Unknown SG cure production variant')
+}
+if (cureVariant && (variant || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant || defenseVariant || voidVariant)) {
+    throw new GradleException('Cure production controls are isolated from other feature mutations')
+}
 if (!(voidVariant in ['', 'normal', 'compatible', 'permission', 'event'])) {
     throw new GradleException('Unknown SG Void Ward production variant')
 }
@@ -45,6 +52,7 @@ if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foun
 def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}") + (liveVariant ? "-live-${liveVariant}" : '') + (liveInfusion ? '-infusion' : '') + (brilliantVariant ? "-brilliant-${brilliantVariant}" : '') + (wielderVariant ? "-wielder-${wielderVariant}" : '') + (magnetVariant ? "-magnet-${magnetVariant}" : '')
 if (defenseVariant) { label += "-defense-contract-${defenseVariant}" }
 if (voidVariant) { label += "-void-${voidVariant}" }
+if (cureVariant) { label += "-cure-${cureVariant}" }
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -123,6 +131,7 @@ neoForge.runs.create('sgFoundation') {
     systemProperty('leggings.test.sgMagnetVariant', magnetVariant)
     systemProperty('leggings.test.sgDefenseVariant', defenseVariant)
     systemProperty('leggings.test.sgVoidVariant', voidVariant)
+    systemProperty('leggings.test.sgCureVariant', cureVariant)
     systemProperty('leggings.test.boots', (graph == 'boots').toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -140,7 +149,7 @@ tasks.register('verifySgFoundation') {
                     "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}",
                     "-PsgEffectsVariant=${variant}", "-PsgEffectsOrder=${order}", "-PsgLiveVariant=${liveVariant}", "-PsgLiveInfusion=${liveInfusion}",
                     "-PsgBrilliantVariant=${brilliantVariant}", "-PsgWielderVariant=${wielderVariant}", "-PsgMagnetVariant=${magnetVariant}", "-PsgDefenseVariant=${defenseVariant}",
-                    "-PsgVoidVariant=${voidVariant}"]
+                    "-PsgVoidVariant=${voidVariant}", "-PsgCureVariant=${cureVariant}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
@@ -156,12 +165,30 @@ tasks.register('verifySgFoundation') {
                 throw new GradleException('Missing maintained Bounce event/real scheduler evidence')
             }
             def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
-            if (absent ? !errors.isEmpty() : errors.size() != 1
-                    || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
-                    || !errors.first().contains('bonsaitrees2:sapling')) {
+            int expectedErrors = cureVariant ? 2 : 1 // Cure acceptance performs exactly one real server resource reload.
+            if (absent ? !errors.isEmpty() : errors.size() != expectedErrors
+                    || errors.any { !it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                    || !it.contains('bonsaitrees2:sapling') }) {
                 throw new GradleException("Unexpected SG foundation errors: ${log}")
             }
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
+            if (cureVariant) {
+                def reportText = new File(reports, 'foundation.txt').text
+                if (absent ? !reportText.contains('Cures: quiet optional absence')
+                        : !reportText.contains('Cures production:') || !reportText.contains('Cures reload:')) {
+                    throw new GradleException('Missing maintained cure item-tick/reload evidence')
+                }
+                def targets = cureVariant == 'proof' ? ['poison', 'wither']
+                        : cureVariant in ['target', 'callback'] ? ['poison'] : cureVariant == 'definition' ? ['wither'] : []
+                if (!absent && targets) {
+                    if (warnings.size() != targets.size() || targets.any { target ->
+                        warnings.count { it.contains("Silent Gear mixed leggings cure ${target} disabled") } != 1
+                    }) {
+                        throw new GradleException("Unexpected independent cure refusal: ${log}")
+                    }
+                    warnings = []
+                }
+            }
             if (voidVariant && !new File(reports, 'foundation.txt').text.contains(absent
                     ? 'Void Ward: quiet optional absence' : 'Void Ward production:')) {
                 throw new GradleException('Missing maintained Void Ward event evidence')

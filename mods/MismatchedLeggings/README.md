@@ -117,7 +117,15 @@ upward push and potions; mixed Boots and Leggings contribute to one native rescu
 branch, not one per piece. Held/idle and invalid or suspended roots do not add a
 contribution. The [remaining-effects plan](local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md)
 tracks controlled server acceptance separately from pending connected/manual
-consolidation. Cure Poison/Wither and source detail tooltips remain later work.
+consolidation. Cure Poison and Cure Wither also invoke their selected native
+cancellation callbacks every server inventory tick while worn in LEGS or held
+in either hand; idle inventory does not activate them. Duplicate source IDs run
+once per mixed item, without suppressing other native/mixed items' own ticks.
+Definitions are read anew after resource reload; an unsupported or failed cure
+declines independently without undoing prior removals or retrying them. Stock SG
+data does not assign these traits to a material/recipe: acquisition here depends
+on datapacks/addons, not new survival recipes. Source detail tooltips remain later
+work; connected/manual acceptance and spike retirement remain in block C.
 
 Heat Resistant and Bounce now contribute their selected native incoming-damage
 reductions while mixed leggings are worn, in both orientations. Each source

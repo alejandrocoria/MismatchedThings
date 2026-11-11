@@ -68,4 +68,7 @@ config="leggings-sg-defense-test.mixins.json"
 config="leggings-sg-void-test.mixins.json"
 
 [[mixins]]
+config="leggings-sg-cures-test.mixins.json"
+
+[[mixins]]
 config="leggings-sg-remaining-spike.mixins.json"
