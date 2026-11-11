@@ -78,10 +78,10 @@ recorded in the [exploration](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md#7-
 No production magnet dispatch or final transformed-hook/client acceptance is
 implied. Retire the executable candidate when maintained production checks replace it.
 
-## Silent Gear magnet binding (magnet block A)
+## Silent Gear magnet binding and dispatch (magnet blocks A/B)
 
-The maintained foundation runner also checks the optional production magnet
-binding, without enabling ordinary mixed-item attraction or loading the research
+The maintained foundation runner checks the optional production magnet binding
+and actual mixed-item inventory callbacks, without loading the research
 candidate. Run sequentially from the repository root:
 
 ```powershell
@@ -94,7 +94,12 @@ Use `-PsgFoundationGraph=boots` for current packaged Boots and
 `-PsgMagnetVariant=compatible` adds native NOPs; `callback` (standalone only)
 adds a runtime-identical but unaudited native call; `proof` removes only Leggings'
 readiness method, preserving Boots/native behavior. The two refusal variants
-require exactly one Leggings magnet warning. `-PsgFoundationAbsent=true` omits
+require exactly one Leggings magnet warning. `definition` removes the second
+selected effect before real item dispatch, requiring zero partial queue writes;
+`late` throws at the mod-owned boundary after the first real native call, requiring
+bounded revocation without replay, rollback or foreign queue cleanup. These two
+runtime refusal variants also require exactly one magnet warning and may run with
+current Boots. `-PsgFoundationAbsent=true` omits
 SG/Lib and requires quiet unavailable readiness. Quote the floor argument as
 `'-Pneoforge_version=26.1.2.99'`; restore normal `.114` outputs afterwards.
 
@@ -102,20 +107,35 @@ Reports/verification reuse `sg-foundation-<graph>...-magnet-<variant>` beneath
 `NeoForge/build/{reports,verification}/<baseline>/`. Require fresh `foundation.txt`,
 `server.ok` and `matrix.ok`, successful bounded exits, no failure marker and the
 existing strict diagnostics. The profile keeps its unconnected fixture player's
-origin chunk forced before entity-query checks, then releases it on exit.
+origin and neighboring chunks forced before entity-query checks, then releases
+them on exit. No connected client is launched by this server-only gate.
 
-Native recipe/construction positives, guarded direct movement, current effect
-count/class/finite/stale-definition admission, actual mixin order and unchanged
-root/carrier/Boots controls are distinct from ordinary dispatch, which remains
-inert in both paid orientations. Existing foundation/repair/live-state/Brilliant
-controls still run. This is server binding acceptance, not client movement/pickup,
-natural equipment ticking or source-detail tooltip support. See the
+Native recipe/construction positives and native item ticks are independent of
+the mixed production route. Both paid orientations exercise Magnetic/Greedy alone,
+combined and duplicated; the lower-level Magnetic II duplicate is explicitly a
+fixture, not a stock recipe. A test-only witness counts actual mod-owned native
+invocations and snapshots disposable carriers without modifying native code or
+granting readiness. Slot/actor/invalid/no-source negatives, native filtering,
+sphere/range/vertical/delay/prevention/crouch, overlapping native/mixed/current-Boots
+ticks, real native trait-resource reload and retained paid roots are checked.
+Root/source/equipment snapshots and the existing recalculation witness guard
+read-only dispatch. Existing foundation/repair/live-state/Brilliant controls and
+a representative Wielder-plus-magnet root remain independent. This is dedicated
+server dispatch acceptance using synthetic native level-post events, not connected
+client movement/pickup, natural equipment ticking or source-detail tooltip support. See the
 [implementation record](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
 
 Automatic magnet A acceptance passed on 2026-11-10: eight scoped `.114`/`.99`
 present/order/compatible/refusal/absence profiles, 18 targeted SG units, runtime
 compilation and both-loader packaging. Normal `.114` outputs are restored.
-Ordinary Leggings magnet dispatch remains off; owner/client acceptance is later.
+A's original inert-route assertions are superseded by B's actual item dispatch;
+owner/connected-client acceptance and full spike retirement belong to C.
+Automatic B acceptance passed on 2026-11-10: `.114` standalone/current-Boots
+normal, current-Boots definition/late/proof refusal, quiet standalone absence,
+and focused `.99` current-Boots normal. The targeted 18 SG unit tests pass
+(zero failures/errors), both-loader packaging is verified, and normal `.114`
+product/runtime outputs are restored. A's unchanged order/harmless-edit and
+floor-absence evidence remains applicable without repeating its entire matrix.
 
 ## Silent Gear foundation (block A)
 

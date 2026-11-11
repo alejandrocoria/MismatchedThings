@@ -18,5 +18,6 @@ abstract class RecalculationWitnessMixin {
         EffectsChecks.recalculation(stack);
         games.alejandrocoria.mismatchedleggings.test.silentgear.WielderChecks.recalculation();
         games.alejandrocoria.mismatchedleggings.test.silentgear.LiveStateChecks.recalculation(stack);
+        games.alejandrocoria.mismatchedleggings.test.silentgear.MagnetDispatchProbe.recalculation();
     }
 }

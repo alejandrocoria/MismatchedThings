@@ -98,6 +98,16 @@ lifecycle checks pass. The owner's complete manual acceptance on 2026-11-10 is
 recorded separately in the plan. The broader optional modpack profile was removed
 after scope clarification; its foreign diagnostics are not a pending SG gate.
 
+Magnetic and Greedy now invoke their selected native item-attraction effects
+while mixed leggings are equipped or held in either hand. Idle inventory is
+inactive. Duplicate source traits use their highest native level once; distinct
+Magnetic/Greedy effects coexist. SG retains its live filters, crouch setting,
+range, pickup-delay checks and shared strongest-vector queue, including alongside
+optional mixed Boots. Source histories remain immutable; no general native gear
+tick, Greedy mining bonus or mixed part/upgrade editing is added. Connected
+movement/pickup acceptance remains a separate final gate in the
+[magnet plan](local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
+
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman
 staring, and Diamond supplies all three. No full set is required; different

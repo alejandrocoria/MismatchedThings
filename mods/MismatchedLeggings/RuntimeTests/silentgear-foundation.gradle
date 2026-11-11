@@ -14,7 +14,7 @@ def liveInfusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean
 def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse('')
 def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
-if (!(magnetVariant in ['', 'normal', 'compatible', 'callback', 'proof'])) { throw new GradleException('Unknown SG magnet variant') }
+if (!(magnetVariant in ['', 'normal', 'compatible', 'callback', 'proof', 'definition', 'late'])) { throw new GradleException('Unknown SG magnet variant') }
 if (magnetVariant == 'callback' && graph == 'boots') { throw new GradleException('Native magnet mutation also violates Boots contract; use the local proof variant with Boots') }
 if (!(wielderVariant in ['', 'normal', 'compatible', 'type', 'trait', 'callback', 'potion', 'definition', 'actor'])) { throw new GradleException('Unknown Wielder variant') }
 if (wielderVariant in ['callback', 'potion'] && graph == 'boots') { throw new GradleException('Native callback/potion mutation also violates Boots contract; use local type/trait variants with Boots') }
@@ -137,7 +137,7 @@ tasks.register('verifySgFoundation') {
             }
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
             def refused = variant == 'wear-delta' ? 'wear' : variant
-            if (magnetVariant in ['callback', 'proof'] && !absent ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings magnet disabled') : wielderVariant in ['type', 'trait', 'callback', 'potion', 'definition', 'actor'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings wielder disabled') : brilliantVariant in ['callback', 'proof'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings brilliant disabled') : liveVariant ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings live state disabled') : refused in ['repair', 'wear'] ? warnings.size() != 1
+            if (magnetVariant in ['callback', 'proof', 'definition', 'late'] && !absent ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings magnet disabled') : wielderVariant in ['type', 'trait', 'callback', 'potion', 'definition', 'actor'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings wielder disabled') : brilliantVariant in ['callback', 'proof'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings brilliant disabled') : liveVariant ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings live state disabled') : refused in ['repair', 'wear'] ? warnings.size() != 1
                     || !warnings.first().contains("Silent Gear mixed leggings ${refused} disabled") : !warnings.isEmpty()) {
                 throw new GradleException("Unexpected SG foundation refusal: ${log}")
             }

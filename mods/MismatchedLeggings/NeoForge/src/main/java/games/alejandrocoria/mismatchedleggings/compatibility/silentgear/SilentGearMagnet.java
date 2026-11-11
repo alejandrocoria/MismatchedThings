@@ -1,11 +1,19 @@
 package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
 
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
+import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
-/** Optional magnet readiness only; ordinary mixed-item dispatch is not enabled yet. */
+import java.util.ArrayList;
+
+/** Selected mixed-item magnets only; native gear ticking and the shared queue retain their owners. */
 public final class SilentGearMagnet {
     private static volatile SilentGearMagnetApi api;
     private static volatile boolean disabled;
@@ -35,6 +43,40 @@ public final class SilentGearMagnet {
         return api != null && !disabled;
     }
 
+    public static void tick(ItemStack root, ServerLevel level, Entity entity, EquipmentSlot slot) {
+        var binding = api;
+        if (binding == null || disabled || level.isClientSide() || !(entity instanceof Player player)
+                || player.level() != level || slot != EquipmentSlot.LEGS && slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND
+                || MixedLeggingsStructure.validData(root).isEmpty()) {
+            return;
+        }
+
+        try {
+            var calls = new ArrayList<Call>();
+            // Admit the complete max-by-ID batch before any native request. No Wielder cadence.
+            for (var trait : binding.traits(root)) {
+                if (SilentGearMagnetApi.IDS.contains(trait.id().toString())) {
+                    calls.add(new Call(trait.nativeInstance(), binding.admittedEffect(trait.nativeInstance())));
+                }
+            }
+            if (calls.isEmpty()) {
+                return;
+            }
+            binding.requireProof();
+            ItemStack carrier = binding.carrier(root);
+            ItemStack before = carrier.copy();
+            for (var call : calls) {
+                binding.tick(call.effect, player, call.instance, carrier, true);
+                if (!ItemStack.matches(before, carrier)) {
+                    throw new IllegalStateException("Magnet callback changed its carrier");
+                }
+            }
+        } catch (Throwable failure) {
+            // Earlier requests may still publish: never retry or clear another item's shared queue.
+            disable(failure);
+        }
+    }
+
     static synchronized void disable(Throwable failure) {
         api = null;
         if (disabled) {
@@ -43,4 +85,6 @@ public final class SilentGearMagnet {
         disabled = true;
         LeggingsContent.LOG.warn("Silent Gear mixed leggings magnet disabled: native magnet contract unavailable", failure);
     }
+
+    private record Call(Object instance, Object effect) {}
 }

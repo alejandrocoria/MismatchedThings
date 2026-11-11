@@ -71,8 +71,12 @@ public final class FoundationChecks {
         if (!finished && !magnetChunkPrepared && !System.getProperty("leggings.test.sgMagnetVariant", "").isEmpty()
                 && !Boolean.getBoolean("leggings.test.sgFoundationAbsent")) {
             // The fixture player is not connected: keep its origin chunk tracked before querying real item entities.
-            server.overworld().setChunkForced(0, 0, true);
-            server.overworld().getChunk(0, 0);
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    server.overworld().setChunkForced(x, z, true);
+                    server.overworld().getChunk(x, z);
+                }
+            }
             magnetChunkPrepared = true;
             return;
         }
@@ -104,7 +108,11 @@ public final class FoundationChecks {
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
         } finally {
-            if (magnetChunkPrepared) { server.overworld().setChunkForced(0, 0, false); }
+            if (magnetChunkPrepared) {
+                for (int x = -1; x <= 1; x++) {
+                    for (int z = -1; z <= 1; z++) { server.overworld().setChunkForced(x, z, false); }
+                }
+            }
             server.halt(false);
         }
     }

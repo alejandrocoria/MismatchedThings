@@ -24,7 +24,7 @@ import java.util.Optional;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Maintained inert-binding controls: native item ticks are the oracle, never the research candidate. */
+/** Maintained binding controls: native item ticks are the oracle, never the research candidate. */
 public final class MagnetChecks {
     private MagnetChecks() {}
 
@@ -49,14 +49,14 @@ public final class MagnetChecks {
         Vec3 nativePush = measure(player, () -> magnetic.copy().inventoryTick(player.level(), player, EquipmentSlot.LEGS));
         require(nativePush.lengthSqr() > 0, "Independent native magnet control is inert");
         var roots = FoundationChecks.paid(player, magnetic, greedy);
+        boolean refused = variant.equals("callback") || variant.equals("proof");
         for (var root : roots) {
             ItemStack before = root.copy();
-            require(measure(player, () -> root.inventoryTick(player.level(), player, EquipmentSlot.LEGS)).equals(Vec3.ZERO),
-                    "Block A enabled ordinary mixed magnet dispatch");
-            require(ItemStack.matches(before, root), "Inert mixed tick changed root/history");
+            var push = measure(player, () -> root.inventoryTick(player.level(), player, EquipmentSlot.LEGS));
+            require(refused ? push.equals(Vec3.ZERO) : push.distanceToSqr(nativePush) < 1E-20,
+                    "Ordinary mixed dispatch disagrees with final readiness/native movement");
+            require(ItemStack.matches(before, root), "Mixed magnet tick changed root/history");
         }
-
-        boolean refused = variant.equals("callback") || variant.equals("proof");
         require(SilentGearMagnet.available() != refused, "Final magnet readiness disagrees with controlled mutation");
         if (refused) {
             expectRejected(() -> new SilentGearMagnetApi().requireProof());
@@ -86,9 +86,10 @@ public final class MagnetChecks {
         if (Boolean.getBoolean("leggings.test.boots")) {
             sibling(player, nativePush);
         }
-        report.append("Magnet A: native Magnetic V recipe/Greedy III construction; guarded binding ")
+        report.append("Magnet A/B: native Magnetic V recipe/Greedy III construction; guarded binding ")
                 .append(refused ? "refused locally; native controls/earlier SG retained" : "matches native movement/current definitions")
-                .append("; ordinary mixed dispatch remains inert; actual order=").append(MagnetTestPlugin.actualOrder).append('\n');
+                .append("; ordinary mixed dispatch follows readiness; actual order=").append(MagnetTestPlugin.actualOrder).append('\n');
+        if (!refused) { MagnetDispatchChecks.run(player, magnetic, greedy, report); }
     }
 
     private static void definitions(SilentGearMagnetApi api, TraitInstance magnetic, TraitInstance greedy,
@@ -139,7 +140,7 @@ public final class MagnetChecks {
         require(ItemStack.matches(before, boots), "Leggings binding changed current Boots data");
     }
 
-    private static ItemStack magnetic(ItemStack source, ServerPlayer player) throws Exception {
+    static ItemStack magnetic(ItemStack source, ServerPlayer player) throws Exception {
         var recipeClass = Class.forName("net.silentchaos512.gear.crafting.recipe.GearPartSwapRecipe");
         Object recipe = recipeClass.getField("INSTANCE").get(null);
         var upgrade = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:magnetic_upgrade")));
@@ -152,7 +153,7 @@ public final class MagnetChecks {
         return result;
     }
 
-    private static TraitInstance trait(ItemStack source, String id) {
+    static TraitInstance trait(ItemStack source, String id) {
         return TraitHelper.getTraits(source).stream().filter(t -> t.getTraitId().toString().equals("silentgear:" + id)).findFirst().orElseThrow();
     }
 

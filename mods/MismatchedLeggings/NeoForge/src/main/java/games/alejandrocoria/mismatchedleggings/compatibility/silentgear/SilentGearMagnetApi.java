@@ -29,6 +29,7 @@ public final class SilentGearMagnetApi {
     private final Field range;
     private final Field affected;
     private final List<MethodHandle> proofs;
+    private final SilentGearEffectSources sources = new SilentGearEffectSources();
     private final SilentGearWearerApi.Carriers carriers = new SilentGearWearerApi.Carriers();
 
     public SilentGearMagnetApi() throws ReflectiveOperationException {
@@ -60,6 +61,10 @@ public final class SilentGearMagnetApi {
 
     public ItemStack carrier(ItemStack root) throws Throwable {
         return carriers.carrier(root);
+    }
+
+    List<SilentGearEffectSources.Trait> traits(ItemStack root) throws ReflectiveOperationException {
+        return sources.traits(root);
     }
 
     public Object admittedEffect(Object instance) throws Throwable {
