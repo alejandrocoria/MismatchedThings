@@ -1,18 +1,21 @@
 # MismatchedBoots
 
-MismatchedBoots combines any two pairs of boots into two oppositely oriented
+MismatchedBoots combines two pairs of boots into two oppositely oriented
 mixed pairs on Fabric and NeoForge.
 
+## Installation
+
 Install it on both the client and the server, using the same mod loader on both
-sides. Cross-loader connections are not supported.
+sides. Cross-loader connections are not supported. Fabric also requires Fabric API.
+
+MismatchedThings is bundled; no separate core download is required. Other
+Mismatched armor mods are optional: installed together, they share one workbench
+while keeping their own items and configuration.
 
 ## Crafting
 
-The workbench is provided by the bundled MismatchedThings core. It comes with
-Boots; no separate dependency download is required.
-
-Craft a **Mismatched Workbench** with six planks (any combination), shears, and
-a diamond in this 3x3 arrangement:
+Craft a **Mismatched Workbench** with six planks (any combination), shears and a
+diamond in this 3x3 arrangement:
 
 ```text
 plank  shears   plank
@@ -20,14 +23,14 @@ plank  diamond  plank
 plank  empty    plank
 ```
 
-Place one ordinary, feet-equippable boot stack in each workbench input. The left
-input supplies the left boot of the primary output; the right supplies its right
-boot. Both inverse pairs are visible as separate results. Taking either consumes
-the two inputs once; the other result remains available until taken or returned
-when the screen closes. Existing MismatchedBoots cannot be composition inputs.
+Place one ordinary pair of boots in each workbench input. The left input
+supplies the left side of the primary output; the right supplies its right side.
+Both inverse pairs are visible as separate results. Taking either consumes the
+two inputs once; the other result remains available until taken or returned
+when the screen closes. Existing mixed pairs cannot be composition inputs.
 
 Crafting grids and Crafters do not combine boots. They can instead repair an
-existing mixed pair with an ordinary boot matching either stored source.
+existing mixed pair with ordinary boots matching either stored source.
 
 ## Combined behavior
 
@@ -41,14 +44,14 @@ existing mixed pair with an ordinary boot matching either stored source.
 - Unknown components are inherited from the left source of each result by
   default; supported component policies can be configured on the server.
 
-An anvil repairs the live mixed pair with a material or ordinary boot matching
-either source, and supports renaming and compatible enchantments. A grindstone
-can disenchant one mixed pair or repair it with a matching ordinary boot; its
-XP payout is bounded and occurs only on extraction. Smithing applies loaded
-trim and upgrade recipes to each eligible source, using one template and one
-addition for the mixed result. Combining two mixed pairs in an anvil or
-grindstone remains unsupported, as do opaque smithing side effects outside the
-assembled item's identity and components.
+An anvil repairs the live mixed pair with a material or ordinary boots
+matching either source, and supports renaming and compatible enchantments.
+A grindstone can disenchant one mixed pair or repair it with matching ordinary
+boots; its XP payout is bounded and occurs only on extraction. Smithing applies
+loaded trim and upgrade recipes to each eligible source, using one template where
+required and one addition for the mixed result. Combining two mixed pairs in an
+anvil or grindstone remains unsupported, as do opaque smithing side effects outside
+the assembled item's identity and components.
 
 Enchantments newly granted by a source upgrade also reach the live pair, without
 restoring old source enchantments removed from the root. Repeated grants keep the
@@ -56,20 +59,26 @@ higher granted/live level rather than applying the composition-time level bonus.
 
 ## Rendering and compatibility
 
-Item views display both source pairs side by side. Equipped standard humanoid
-armor is split by leg. Custom item or armor renderers are best-effort: when a
-safe split is unavailable, the renderer may show the complete owner appearance
-and the tooltip still identifies the left and right sources.
+Item views combine both source appearances; the artwork is front-facing, so the
+wearer's left appears on the viewer's right.
 
-Compatibility is automatic when other mods use normal feet-equipment semantics,
-data components, attributes, durability, enchantments, and standard equipment
-models. Behavior implemented only in a custom source `Item` class cannot be
+Equipped standard humanoid armor is split by leg, preserving native animation,
+dye and trims.
+
+Custom item or armor renderers are best-effort: when a safe split is unavailable,
+the renderer may show a complete source appearance instead. Unsupported item
+geometry can fall back to two superimposed complete source models. The tooltip
+still identifies the left and right sources.
+
+Compatibility is automatic when other mods use normal equipment semantics,
+data components, attributes, durability, enchantments and standard equipment
+models. Behavior implemented only in a custom source item or event cannot be
 generically transferred.
 
 The bare registry item has no valid source data, so it is intentionally absent
 from creative tabs. Commands that create a bare stack produce an invalid item
 with a diagnostic tooltip and a workbench hint rather than inventing source boots.
-Such a bare stack cannot be equipped through ordinary use, armor slots, or a
+Such a bare stack cannot be equipped through ordinary use, armor slots or a
 dispenser; valid crafted pairs remain equippable.
 
 ## Optional recipe viewers
@@ -77,9 +86,8 @@ dispenser; valid crafted pairs remain equippable.
 JEI and REI show examples in the shared **Mismatched Workbench** category supplied
 by Things. Each current family product contributes its own inputs and both ordered
 results only when installed, using loaded recipes and synchronized server rules.
-This development build shares the category with Leggings; published Boots 1.0.0
-keeps its separate legacy category when used with newer family products.
-There is no automatic recipe-transfer integration.
+Published Boots 1.0.0 keeps its separate legacy category when used with newer
+family products. There is no automatic recipe-transfer integration.
 
 ## Development
 
@@ -89,7 +97,12 @@ Gradle wrapper from the repository root, not this directory. See
 
 The production client tasks are `:MismatchedBoots:Fabric:runClient` and
 `:MismatchedBoots:NeoForge:runClient`. Generated IntelliJ launch names identify
-the mod, loader and side. Release metadata belongs to [mod.properties](mod.properties).
+the mod, loader and side. Each loader has its own `runs/client` and `runs/server`,
+separate from other family mods. Mod identity and version live in
+[mod.properties](mod.properties).
+
+Build both loader artifacts with `:MismatchedBoots:Fabric:assemble` and
+`:MismatchedBoots:NeoForge:assemble`.
 
 For promotional photos and Replay Mod recordings, use the separate
 [Fabric media client](media/README.md), not the ordinary indev client.
@@ -100,12 +113,15 @@ are owned here as well; their outputs are under this directory's `build/`.
 
 ### Release changelogs
 
+All family mods use one change list for the upcoming release, without version
+headings or accumulated beta history. Use `Added:` followed by the new functionality
+as a natural continuation of "Added", `Changed:` for the new observable behavior,
+and `Fixed:` for the problem that occurred, normally without implementation details.
+New compatibilities belong in a separate generated section, not duplicate `Added:`
+entries. Only compatibilities added in that release belong there; an empty loader
+list must omit the entire section.
+
 [doc/changelog.md](doc/changelog.md) is the shared release template. The
-changes form one list without version headings. Use `Added:` followed by the new
-functionality as a natural continuation of "Added", `Changed:` for the new
-observable behavior, and `Fixed:` for the problem that occurred, normally without
-implementation details. New compatibilities belong in the generated section,
-not duplicate `Added:` entries. The
 [Fabric](doc/compatibility/fabric.md) and [NeoForge](doc/compatibility/neoforge.md)
 fragments contain only Markdown list entries for compatibility added in the
 release being prepared, not a cumulative catalog. Replace their contents for
