@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.function.Consumer;
 
@@ -20,5 +21,10 @@ abstract class TooltipBaselineMixin {
         if (TooltipClient.omitPresentation()) {
             callback.cancel();
         }
+    }
+
+    @Inject(method = "nativeClass", at = @At("HEAD"))
+    private static void binding(String name, CallbackInfoReturnable<Class<?>> callback) throws ClassNotFoundException {
+        TooltipClient.bindingFault();
     }
 }

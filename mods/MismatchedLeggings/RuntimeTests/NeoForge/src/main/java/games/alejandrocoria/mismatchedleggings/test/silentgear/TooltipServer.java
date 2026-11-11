@@ -47,10 +47,13 @@ public final class TooltipServer {
                 if (ticks < 20) {
                     return;
                 }
-                require(ModList.get().isLoaded("silentgear") && ModList.get().isLoaded("mismatchedboots")
+                boolean absent = System.getProperty("leggings.test.sgTooltipVariant", "normal").equals("absent");
+                require(ModList.get().isLoaded("silentgear") != absent && ModList.get().isLoaded("mismatchedboots")
                         == Boolean.getBoolean("leggings.test.boots"), "Wrong tooltip graph");
-                samples = samples(server);
+                samples = absent ? FoundationChecks.paid(FoundationChecks.player(server),
+                        new ItemStack(Items.GOLDEN_LEGGINGS), new ItemStack(Items.DIAMOND_LEGGINGS)) : samples(server);
                 snapshots = samples.stream().map(ItemStack::copy).toList();
+                TooltipFixtures.save(server, samples, absent);
                 initialized = true;
                 Files.writeString(StateChecks.report("ready.txt"), "Production tooltip fixtures ready\n");
             }
@@ -63,6 +66,7 @@ public final class TooltipServer {
                     require(ItemStack.matches(samples.get(i), snapshots.get(i)), "Tooltip changed server paid root/history");
                 }
                 Files.writeString(StateChecks.report("state.txt"), "Paid inverse source roots sent by actual menu packets; unchanged server snapshots\n");
+                server.saveEverything(true, true, true);
                 SkeletonChecks.passed("server");
                 finished = true;
                 server.halt(false);
@@ -110,6 +114,9 @@ public final class TooltipServer {
         result.addAll(FoundationChecks.paid(owner, iron, new ItemStack(Items.DIAMOND_LEGGINGS)));
         result.addAll(FoundationChecks.paid(owner, lined, plain));
         result.addAll(FoundationChecks.paid(owner, coated, upgraded));
+        if (Boolean.getBoolean("leggings.test.boots")) {
+            result.addAll(TooltipFixtures.boots(owner));
+        }
         return result;
     }
 }

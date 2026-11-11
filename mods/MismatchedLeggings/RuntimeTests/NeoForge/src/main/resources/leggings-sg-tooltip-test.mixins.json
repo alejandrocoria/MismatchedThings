@@ -6,6 +6,8 @@
     "compatibilityLevel": "JAVA_25",
     "client": [
         "TooltipBaselineMixin",
+        "TooltipBootsBaselineMixin",
+        "TooltipFormatterFaultMixin",
         "TooltipInputMixin"
     ],
     "injectors": { "defaultRequire": 1 }

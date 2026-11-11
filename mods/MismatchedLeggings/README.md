@@ -131,7 +131,12 @@ Its A appender now restores native SG properties/traits/construction under each
 source, without extra source headings. Native keys/styles and original cached
 source values are retained, while effective root attributes/durability stay in
 their existing region. Focused `.114` client comparisons pass without native
-recalculation; B consolidation and owner visual acceptance remain pending.
+recalculation in covered routes. B's visibility/style/rebinding, isolated failures,
+absence and current-Boots `.114`/focused `.99` checks also pass, along with existing
+Aether/Aquaculture presentation regressions. The pre-existing complete advanced
+durability query on a source missing properties is explicitly deferred; the new
+appender does not rebuild that cache. Owner visual acceptance passed in the indev
+world on 2026-11-11, closing the bounded presentation plan.
 The executable remaining-effects spike is fully retired; the bounded gameplay plan
 is closed. Maintained tests provide a saved fixture world for reproducible checks.
 

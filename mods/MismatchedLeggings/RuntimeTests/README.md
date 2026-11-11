@@ -70,17 +70,20 @@ not a candidate renderer or complete native-event replay in production:
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgTooltipClient=true -PsgFoundationGraph=alone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgTooltipClient=true -PsgFoundationGraph=boots --offline --console=plain
 ```
 
 This is one `write` stage in the existing state driver, not a state/release matrix.
 The dedicated server pays for six inverse mixed outputs: named/lore SG + vanilla,
-lined SG + unequal SG, and coated SG + a native magnetic upgrade. Ordinary chest
+lined SG + unequal SG, and coated SG + a native magnetic upgrade. The `boots`
+graph adds two paid current-Boots outputs and verifies that product's own native
+source adapter as well. Ordinary chest
 menu packets carry the full roots/caches to an independent hidden-before-GLFW,
 muted client; the early loader window stays disabled. No indev JARs or screenshots
 are required. Shared catalog artifacts are downloaded/cached by the maintained
 resolver; run profiles sequentially.
 
-Focused A acceptance compares structured components/styles from the independent
+The maintained acceptance compares structured components/styles from the independent
 native SG event oracle with production insertion into the complete mixed tooltip.
 It checks compact/Ctrl/Ctrl+Shift/Alt/combined branches, normal/advanced flags,
 nonempty native upgrade summaries, sources with no ordinary lines, identities/
@@ -89,17 +92,61 @@ never renders a replacement block. Capture-only window polling exercises native
 keybindings, and the existing recalculation witness requires zero recalculations;
 fixture setup is outside that observation scope. Settings/mappings are restored.
 
-Evidence is under `NeoForge/build/reports/<baseline>/sg-state-alone-tooltip/write/`:
+B adds vanilla-style mode and P/T/C rebinding, independently hidden groups/source/
+root, missing/empty caches, unresolved part references, Broken-source controls and
+later healthy positives. The native hidden-group oracle deliberately uses summary-
+free main/lining controls; a separate positive requires a nonempty upgrade summary.
+The normal profile expects exactly one bounded malformed-source diagnostic, not
+a global presentation failure. Rebinding also controls/restores SG's description
+`KeyMapping` down state, which SG reads for ordinary keys rather than modifier polling.
+
+Missing-properties controls check the complete normal tooltip and the isolated
+advanced production appender. NeoForge's existing advanced durability details
+can indirectly make SG rebuild missing properties on a disposable source copy;
+this exceptional pre-existing route is deferred. The profile does not claim
+zero recalculations for that complete F3+H path or repair persisted source caches.
+The reason is the cost/scope of safely persisting SG's wider derived writes,
+not a general prohibition against populating caches during reads.
+
+Use isolated `-PsgTooltipVariant=binding` or `formatter` for a failure at native
+class binding or after native scratch-list population. Each must try once, publish
+no partial block, stay disabled on repeated hover and preserve ordinary/root output,
+Boots' independent appender when present, and an actual gold-source Brilliant
+query. The tripwires are scoped to Leggings production captures, not the independent
+native oracle or Boots. `-PsgTooltipVariant=absent` stages no SG/Lib and checks
+ordinary mixed tooltips without resolving the optional bindings. Repeat focused
+native/failure boundaries with `'-Pneoforge_version=26.1.2.99'`; restore `.114`
+afterward. Do not run these profiles concurrently or expand them into a release graph.
+
+Evidence is under `NeoForge/build/reports/<baseline>/sg-state-<graph>-tooltip[-<variant>]/write/`:
 `tooltip-samples.json`, `tooltip-client.txt`, `tooltip-compact.txt`, `state.txt`
-and normal server/client success markers. Matching `build/verification/<baseline>/sg-state-alone-tooltip/`
+and normal server/client success markers. Matching `build/verification/<baseline>/<label>/`
 holds child logs and fresh bounded-profile `matrix.ok`. Expected native diagnostics
 are one server Bonsai optional-recipe error and the two pinned client Stone Anvil
-subtitle errors; no SG adapter warning is accepted in this normal profile.
+subtitle errors. Normal clients require exactly one malformed-source warning;
+fault clients exactly one presentation-disable warning. Absent profiles require
+neither native errors nor SG warnings. These are exact per-profile allowances,
+not permission to ignore unrelated adapter failures.
+
+As an optional helper, `tooltip-manual.txt` includes the absolute source world path and
+copy-to-`saves` instructions. The generated world is under
+`NeoForge/build/run/<baseline>/sg-state-<graph>-tooltip[-<variant>]/server/world`.
+Copy it only after the test server exits. A saved barrel at **5 81 5**, above a
+stone platform, contains paid inverse roots, native controls and prepared missing/
+empty/Broken-source examples. `/tp @s 8 82 8` reaches it. No production debug command
+or test item/component is needed; unresolved part-reference probes are unsaved
+automatic controls, not distributed manual fixtures.
+
+The owner completed the visual checklist in the existing indev world on
+2026-11-11; copying this generated world was not required. Reserve manual-world
+preparation/guides for difficult setup such as properties unavailable through
+crafting, rather than every checklist. Automatic disposable worlds are separate.
 
 The private [implementation plan](../local-docs/SILENT-GEAR-TOOLTIP-IMPLEMENTATION.md)
-owns actual execution status. B separately owns remaining visibility/settings,
-failure/coexistence/floor consolidation and owner visual acceptance; this focused
-command does not claim those checks or any screenshot/save/rejoin acceptance.
+owns actual execution status and separate owner visual acceptance. Structured
+captures do not claim pixel/physical-input or save/rejoin acceptance. The relevant
+existing Aether and Aquaculture presentation regressions are run separately, not
+silently included in this profile's `matrix.ok`.
 
 ## Silent Gear cure contracts
 

@@ -19,13 +19,17 @@ if (remaining && (magnet || defense || wearer || infusion || stage != 'write')) 
     throw new GradleException('The bounded remaining-effects client uses only its own write stage')
 }
 def tooltip = providers.gradleProperty('sgTooltipClient').map { it.toBoolean() }.getOrElse(false)
+def tooltipVariant = providers.gradleProperty('sgTooltipVariant').getOrElse('normal')
+if (!(tooltipVariant in ['normal', 'binding', 'formatter', 'absent']) || !tooltip && tooltipVariant != 'normal') {
+    throw new GradleException('Unknown or unselected SG tooltip variant')
+}
 if (tooltip && (magnet || defense || remaining || wearer || infusion || stage != 'write')) {
     throw new GradleException('The bounded tooltip client uses only its own write stage')
 }
 def defaultStages = magnet || defense || remaining || tooltip ? ['write'] : wearer ? ['write', 'reopen', 'reconnect'] : stages
 def label = "sg-state-${graph}" + (infusion ? '-infusion' : '') + (wearer ? '-wearer' : '') + (magnet ? '-magnet' : '') + (defense ? '-defense' : '')
 if (remaining) { label += '-remaining' }
-if (tooltip) { label += '-tooltip' }
+if (tooltip) { label += '-tooltip' + (tooltipVariant == 'normal' ? '' : "-${tooltipVariant}") }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def markers = new File(reports, stage)
@@ -67,7 +71,7 @@ def checkedDelete = { File target ->
             nativeNames.each { delete new File(mods, it) }
             def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
             if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
-            if (!stage.startsWith('absent')) {
+            if (!stage.startsWith('absent') && !(tooltip && tooltipVariant == 'absent')) {
                 nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
             }
             if (infusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')) }
@@ -102,6 +106,7 @@ def checkedDelete = { File target ->
         systemProperty('leggings.test.sgDefenseVariant', defense ? 'normal' : '')
         systemProperty('leggings.test.sgRemainingClient', remaining.toString())
         systemProperty('leggings.test.sgTooltipClient', tooltip.toString())
+        systemProperty('leggings.test.sgTooltipVariant', tooltipVariant)
         systemProperty('leggings.test.sgState', stage)
         systemProperty('leggings.test.sgStateBaseline', reports.absolutePath)
         systemProperty('leggings.test.boots', (graph == 'boots').toString())
@@ -133,7 +138,7 @@ tasks.register('verifySgState') {
                 def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                             "${project.path}:runSgState${endpoint.capitalize()}", "-Pneoforge_version=${neoforge_version}",
                             "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}", "-PsgWearerLifecycle=${wearer}", "-PsgMagnetClient=${magnet}", "-PsgDefenseClient=${defense}",
-                            "-PsgRemainingClient=${remaining}", "-PsgTooltipClient=${tooltip}"]
+                            "-PsgRemainingClient=${remaining}", "-PsgTooltipClient=${tooltip}", "-PsgTooltipVariant=${tooltipVariant}"]
                 if (gradle.startParameter.offline) { args.add('--offline') }
                 new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
                         .redirectErrorStream(true).redirectOutput(new File(evidence, "${current}-${endpoint}.log")).start()
@@ -182,7 +187,7 @@ tasks.register('verifySgState') {
                         || !new File(currentMarkers, 'remaining-client.txt').isFile() || !new File(currentMarkers, 'remaining-manual.txt').isFile())) {
                     throw new GradleException("Missing connected production remaining-effects evidence: ${currentMarkers}")
                 }
-                if (tooltip && ['tooltip-samples.json', 'tooltip-client.txt', 'tooltip-compact.txt'].any {
+                if (tooltip && ['tooltip-samples.json', 'tooltip-client.txt', 'tooltip-compact.txt', 'tooltip-manual.txt'].any {
                     !new File(currentMarkers, it).isFile()
                 }) {
                     throw new GradleException("Missing production tooltip comparison evidence: ${currentMarkers}")
@@ -191,7 +196,7 @@ tasks.register('verifySgState') {
                     def log = new File(evidence, "${current}-${endpoint}.log")
                     if (endpoint == 'client' && client == null) { return }
                     def errors = log.readLines().findAll { it.contains('/ERROR]') }
-                    boolean absent = current.startsWith('absent')
+                    boolean absent = current.startsWith('absent') || tooltip && tooltipVariant == 'absent'
                     boolean subtitles = endpoint == 'client' && !absent
                     int recipeErrors = wearer && current in ['write', 'restore', 'reconnect'] ? 2 : 1
                     // Pinned native missing translations, independently recorded by Boots' SG client gates.
@@ -199,8 +204,12 @@ tasks.register('verifySgState') {
                         errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != (magnet || defense || remaining || tooltip ? 1 : 2)
                     } : absent ? !errors.isEmpty() : errors.size() != recipeErrors
                             || !errors.every { it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'") && it.contains('bonsaitrees2:sapling') }) { throw new GradleException("Unexpected SG state errors: ${log}") }
-                    if (log.readLines().any { it.contains('WARN') && it.contains('Silent Gear')
-                            || absent && it.contains('Error loading class: net/silentchaos512/') }) {
+                    def warnings = log.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
+                    int tooltipWarnings = tooltip && endpoint == 'client' && !absent ? 1 : 0
+                    String expectedTooltipWarning = tooltipVariant == 'normal' ? 'Silent Gear source tooltip data unavailable; affected source details omitted'
+                            : 'Silent Gear source tooltips disabled: native presentation unavailable'
+                    if (warnings.size() != tooltipWarnings || tooltipWarnings > 0 && !warnings.every { it.contains(expectedTooltipWarning) }
+                            || absent && log.readLines().any { it.contains('Error loading class: net/silentchaos512/') }) {
                         throw new GradleException("Unexpected SG refusal/absence diagnostic: ${log}")
                     }
                 }

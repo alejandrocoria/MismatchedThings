@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings.test.silentgear;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.service.MixinService;
 
 import java.util.List;
 import java.util.Set;
@@ -11,7 +12,20 @@ import java.util.Set;
 public final class TooltipTestPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
-        return Boolean.getBoolean("leggings.test.sgTooltipClient");
+        if (!Boolean.getBoolean("leggings.test.sgTooltipClient")) {
+            return false;
+        }
+        if (mixin.endsWith("TooltipFormatterFaultMixin")) {
+            return System.getProperty("leggings.test.sgTooltipVariant", "normal").equals("formatter");
+        }
+        if (mixin.endsWith("TooltipBootsBaselineMixin")) {
+            try {
+                MixinService.getService().getBytecodeProvider().getClassNode(target);
+            } catch (Exception | LinkageError absent) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
