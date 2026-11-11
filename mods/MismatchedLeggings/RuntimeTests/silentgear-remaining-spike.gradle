@@ -1,0 +1,22 @@
+// Temporary feasibility code: never part of an armor product or an ordinary runtime profile.
+def enabled = providers.gradleProperty('sgRemainingSpike').map { it.toBoolean() }.getOrElse(false)
+def order = providers.gradleProperty('sgRemainingOrder').getOrElse('before')
+if (!(order in ['before', 'after'])) { throw new GradleException('Unknown remaining-effects spike order') }
+if (enabled) { sourceSets.main.java.srcDir(rootProject.file('spikes/silentgear-leggings-remaining/src/main/java')) }
+tasks.named('compileJava') {
+    inputs.property('sgRemainingSpike', enabled)
+    doFirst {
+        if (!enabled) {
+            delete fileTree(destinationDirectory) {
+                include '**/SilentGearRemainingCandidate*.class', '**/RemainingSpike.class', '**/RemainingSpike$*.class',
+                        '**/RemainingSpikeClient*.class', '**/remaining/*.class'
+            }
+        }
+    }
+}
+tasks.named('processResources') {
+    inputs.property('sgRemainingOrder', order)
+    filesMatching('leggings-sg-remaining-spike.mixins.json') {
+        filter { line -> line.replace('"mixinPriority": 900', '"mixinPriority": ' + (order == 'before' ? '900' : '1100')) }
+    }
+}

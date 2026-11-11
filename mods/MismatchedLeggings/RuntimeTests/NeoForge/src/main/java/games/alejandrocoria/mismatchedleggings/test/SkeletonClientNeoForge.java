@@ -11,6 +11,15 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (Boolean.getBoolean("leggings.test.sgRemainingSpike")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> {
+                try {
+                    Class.forName("games.alejandrocoria.mismatchedleggings.test.silentgear.RemainingSpikeClient")
+                            .getMethod("tick", Minecraft.class).invoke(null, Minecraft.getInstance());
+                } catch (ReflectiveOperationException failure) { throw new IllegalStateException("Remaining-effects client spike unavailable", failure); }
+            });
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.sgDefenseClient")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> games.alejandrocoria.mismatchedleggings.test.silentgear.DefenseLifecycleClient.tick(Minecraft.getInstance()));
             return;

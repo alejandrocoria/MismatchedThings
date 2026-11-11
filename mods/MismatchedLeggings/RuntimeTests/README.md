@@ -63,6 +63,43 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Temporary Silent Gear remaining-effects spike
+
+This is optional feasibility code, not production support or owner acceptance.
+Candidate sources live in root `spikes/silentgear-leggings-remaining`, compiled
+only with `sgRemainingSpike=true`. Ordinary builds remove stale candidate classes;
+the default test config/plugin is inert. Armor product JARs remain unchanged.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=alone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=boots -PsgRemainingOrder=before --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=boots -PsgRemainingOrder=after --offline --console=plain
+```
+
+The bounded existing state driver runs only `write`, with native Tyrian Steel
+LEGS, paid inverses, strict threshold and ownership negatives, candidate-local
+refusal/native-peer preservation, and controlled native/synthetic cure item
+ticks. Cures check both hands/LEGS versus idle/wrong-slot, duplicates/distinct IDs,
+unrelated effects, root preservation, actual server resource reload and a local
+post-callback failure without replay. A passive, hidden-before-creation/muted
+dedicated client observes native and mixed rescue trajectories/potion/equipment
+packets. Both actual sibling orders and Boots' independent final guards are
+checked. The candidate changes only the native Void Ward query result; observers
+never supply movement or drain native queues. Cures do not replay a full gear tick.
+
+`sgRemainingHeadless=true` runs only controlled server/reload/failure checks;
+use that bounded mode for the focused `.99` proof/linkage boundary, not another
+connected matrix. The normal native Bonsai error is expected once per server
+load/reload (two here), and connected clients retain the two pinned Stone Anvil
+subtitle errors. No Silent Gear refusal warning is accepted as coexistence.
+Evidence uses `NeoForge/build/reports/<baseline>/sg-state-<graph>-remaining-<order>[-headless]/write/`
+and matching verification child logs. **`probe.ok` is feasibility only**, never
+`matrix.ok`. The private remaining-effects exploration owns results and limits;
+new production guards, quiet-absence acceptance and manual checks are later work.
+The bounded spike passed on 2026-11-11: standalone and both current-Boots `.114`
+orders with actual remote rescue, plus focused headless `.99`. Cure cases use
+controlled server item ticks, not a claim of connected cure presentation.
+
 ## Silent Gear defensive contracts
 
 The maintained foundation profile verifies production Heat Resistant/Bounce

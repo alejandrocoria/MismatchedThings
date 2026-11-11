@@ -14,8 +14,15 @@ if (magnet && (wearer || infusion || stage != 'write')) { throw new GradleExcept
 def defense = providers.gradleProperty('sgDefenseClient').map { it.toBoolean() }.getOrElse(false)
 if (defense && (magnet || wearer || infusion || stage != 'write')) { throw new GradleException('The bounded defensive client uses only its own write stage') }
 
-def defaultStages = magnet || defense ? ['write'] : wearer ? ['write', 'reopen', 'reconnect'] : stages
+def remaining = providers.gradleProperty('sgRemainingSpike').map { it.toBoolean() }.getOrElse(false)
+def remainingHeadless = providers.gradleProperty('sgRemainingHeadless').map { it.toBoolean() }.getOrElse(false)
+def remainingOrder = providers.gradleProperty('sgRemainingOrder').getOrElse('before')
+if (remaining && (magnet || defense || wearer || infusion || stage != 'write') || remainingHeadless && !remaining) {
+    throw new GradleException('Remaining-effects research uses only its own write stage')
+}
+def defaultStages = magnet || defense || remaining ? ['write'] : wearer ? ['write', 'reopen', 'reconnect'] : stages
 def label = "sg-state-${graph}" + (infusion ? '-infusion' : '') + (wearer ? '-wearer' : '') + (magnet ? '-magnet' : '') + (defense ? '-defense' : '')
+if (remaining) { label += "-remaining-${remainingOrder}" + (remainingHeadless ? '-headless' : '') }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def markers = new File(reports, stage)
@@ -90,6 +97,9 @@ def checkedDelete = { File target ->
         systemProperty('leggings.test.sgMagnetClient', magnet.toString())
         systemProperty('leggings.test.sgDefenseClient', defense.toString())
         systemProperty('leggings.test.sgDefenseVariant', defense ? 'normal' : '')
+        systemProperty('leggings.test.sgRemainingSpike', remaining.toString())
+        systemProperty('leggings.test.sgRemainingHeadless', remainingHeadless.toString())
+        systemProperty('leggings.test.sgRemainingOrder', remainingOrder)
         systemProperty('leggings.test.sgState', stage)
         systemProperty('leggings.test.sgStateBaseline', reports.absolutePath)
         systemProperty('leggings.test.boots', (graph == 'boots').toString())
@@ -105,11 +115,12 @@ tasks.register('verifySgState') {
     doLast {
         def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
         evidence.mkdirs()
-        ['matrix.ok', 'subset.ok'].each { new File(evidence, it).delete() }
+        ['matrix.ok', 'subset.ok', 'probe.ok'].each { new File(evidence, it).delete() }
         def selected = providers.gradleProperty('sgStateStages').getOrElse(defaultStages.join(',')).split(',').toList()
         if (selected.any { !(it in stages) }) { throw new GradleException('Unknown SG state stage selection') }
         if (magnet && selected != ['write']) { throw new GradleException('Magnet acceptance is a single connected stage, not the state lifecycle matrix') }
         if (defense && selected != ['write']) { throw new GradleException('Defensive acceptance is a single connected stage, not the state lifecycle matrix') }
+        if (remaining && selected != ['write']) { throw new GradleException('Remaining research is not the state lifecycle matrix') }
         selected.each { current ->
             int selectedPort
             new ServerSocket(0).withCloseable { selectedPort = it.localPort }
@@ -118,7 +129,8 @@ tasks.register('verifySgState') {
             def start = { String endpoint ->
                 def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                             "${project.path}:runSgState${endpoint.capitalize()}", "-Pneoforge_version=${neoforge_version}",
-                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}", "-PsgWearerLifecycle=${wearer}", "-PsgMagnetClient=${magnet}", "-PsgDefenseClient=${defense}"]
+                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}", "-PsgWearerLifecycle=${wearer}", "-PsgMagnetClient=${magnet}", "-PsgDefenseClient=${defense}",
+                            "-PsgRemainingSpike=${remaining}", "-PsgRemainingHeadless=${remainingHeadless}", "-PsgRemainingOrder=${remainingOrder}"]
                 if (gradle.startParameter.offline) { args.add('--offline') }
                 new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
                         .redirectErrorStream(true).redirectOutput(new File(evidence, "${current}-${endpoint}.log")).start()
@@ -130,7 +142,7 @@ tasks.register('verifySgState') {
             def server = start('server')
             Process client = null
             try {
-                if (current in ['write', 'absent', 'restore', 'reconnect']) {
+                if (!remainingHeadless && current in ['write', 'absent', 'restore', 'reconnect']) {
                     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(150)
                     while (server.isAlive() && !new File(currentMarkers, 'ready.txt').isFile()
                             && !new File(currentMarkers, 'server.failure.txt').isFile() && System.nanoTime() < deadline) { Thread.sleep(500) }
@@ -161,16 +173,21 @@ tasks.register('verifySgState') {
                         || !new File(currentMarkers, 'defense-server.txt').isFile() || !new File(currentMarkers, 'defense-client.txt').isFile())) {
                     throw new GradleException("Missing connected defensive evidence: ${currentMarkers}")
                 }
+                if (remaining && (!new File(currentMarkers, 'remaining-server.txt').isFile()
+                        || !remainingHeadless && (!(0..<(graph == 'boots' ? 5 : 3)).every { new File(currentMarkers, "remaining-${it}.used.ok").isFile() }
+                        || !new File(currentMarkers, 'remaining-client.txt').isFile()))) {
+                    throw new GradleException("Missing remaining-effects research evidence: ${currentMarkers}")
+                }
                 ['server', 'client'].each { endpoint ->
                     def log = new File(evidence, "${current}-${endpoint}.log")
                     if (endpoint == 'client' && client == null) { return }
                     def errors = log.readLines().findAll { it.contains('/ERROR]') }
                     boolean absent = current.startsWith('absent')
                     boolean subtitles = endpoint == 'client' && !absent
-                    int recipeErrors = wearer && current in ['write', 'restore', 'reconnect'] ? 2 : 1
+                    int recipeErrors = remaining || wearer && current in ['write', 'restore', 'reconnect'] ? 2 : 1
                     // Pinned native missing translations, independently recorded by Boots' SG client gates.
-                    if (subtitles ? errors.size() != (magnet || defense ? 2 : 4) || ['hammer', 'knife'].any { sound ->
-                        errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != (magnet || defense ? 1 : 2)
+                    if (subtitles ? errors.size() != (magnet || defense || remaining ? 2 : 4) || ['hammer', 'knife'].any { sound ->
+                        errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != (magnet || defense || remaining ? 1 : 2)
                     } : absent ? !errors.isEmpty() : errors.size() != recipeErrors
                             || !errors.every { it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'") && it.contains('bonsaitrees2:sapling') }) { throw new GradleException("Unexpected SG state errors: ${log}") }
                     if (log.readLines().any { it.contains('WARN') && it.contains('Silent Gear')
@@ -180,6 +197,6 @@ tasks.register('verifySgState') {
                 }
             } finally { stop(client); stop(server) }
         }
-        new File(evidence, selected == defaultStages ? 'matrix.ok' : 'subset.ok').text = "SG production ${defense ? 'connected defenses' : magnet ? 'connected magnets' : 'state'} stages=${selected}; graph=${graph}\n"
+        new File(evidence, remaining ? 'probe.ok' : selected == defaultStages ? 'matrix.ok' : 'subset.ok').text = "SG ${remaining ? 'remaining-effects feasibility' : 'production ' + (defense ? 'connected defenses' : magnet ? 'connected magnets' : 'state')} stages=${selected}; graph=${graph}\n"
     }
 }
