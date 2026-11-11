@@ -1,0 +1,51 @@
+// Temporary opt-in research. A completed observation is not a production acceptance marker.
+def mode = providers.gradleProperty('sgDefenseSpike').getOrElse('')
+def order = providers.gradleProperty('sgDefenseOrder').getOrElse('before')
+def mutation = providers.gradleProperty('sgDefenseMutation').getOrElse('')
+if (mode) { sourceSets.main.java.srcDir(rootProject.file('spikes/silentgear-leggings-defense/src/main/java')) }
+
+tasks.named('compileJava') {
+    doFirst {
+        if (!mode) {
+            delete fileTree(destinationDirectory) { include '**/SilentGearDefenseSpike*.class' }
+        }
+    }
+}
+tasks.named('processResources') {
+    inputs.property('sgDefenseOrder', order)
+    filesMatching('leggings-sg-defense-spike.mixins.json') {
+        filter { line -> line.replace('"mixinPriority": 1000', '"mixinPriority": ' + (order == 'before' ? 900 : 1100)) }
+    }
+}
+
+tasks.register('verifySgDefenseSpike') {
+    group = 'verification'
+    dependsOn 'runSgFoundation'
+    doLast {
+        if (!mode) { throw new GradleException('Select -PsgDefenseSpike=off, incoming or full') }
+        def graph = providers.gradleProperty('sgFoundationGraph').getOrElse('alone')
+        def label = "sg-foundation-${graph}-defense-${mode}-${order}"
+        if (mutation) { label += "-${mutation}" }
+        def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+        def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+        if (!new File(reports, 'probe.ok').isFile() || !new File(reports, 'server.ok').isFile()
+                || new File(reports, 'server.failure.txt').exists()) { throw new GradleException("Incomplete defensive observation: ${reports}") }
+        def log = new File(directory, 'logs/latest.log').text.readLines()
+        def errors = log.findAll { it.contains('/ERROR]') }
+        if (errors.size() != 1 || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                || !errors.first().contains('bonsaitrees2:sapling')) { throw new GradleException("Unexpected defensive spike error: ${directory}") }
+        def refused = new File(reports, 'defense-spike.txt').text.contains('boots.incoming=false')
+        def details = new File(reports, 'defense-spike.txt').text
+        if (mode in ['off', 'full'] && !details.contains('actual next server-pre-tick additive push')
+                || mode == 'full' && !details.contains('LEGS incoming: paid duplicates/inverses')) {
+            throw new GradleException("Missing extended defensive evidence: ${reports}")
+        }
+        if (refused != (mutation == 'routing')) { throw new GradleException("Unexpected coexistence outcome: ${reports}") }
+        def warnings = log.findAll { it.contains('WARN') && it.contains('Silent Gear') }
+        if (mutation == 'safety' ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed safe fall disabled')
+                : refused ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed incoming disabled') : !warnings.isEmpty()) {
+            throw new GradleException("Unexpected defensive refusal: ${directory}")
+        }
+        logger.lifecycle("Defensive observation complete; ${refused ? 'invalid event routing refused as expected' : 'incoming coexistence retained'}: ${reports}")
+    }
+}

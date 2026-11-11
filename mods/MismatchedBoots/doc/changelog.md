@@ -12,6 +12,7 @@
 * Fixed: Mixed boots with a leather source did not protect against freezing or allow walking on powder snow.
 * Fixed: Upgrading mixed boots to Fireruby did not grant Ruby Fire.
 * Fixed: Create Fly source tooltips on Fabric remained visible when Create's tooltips were disabled.
+* Fixed: Silent Gear damage reductions on mixed boots could be disabled by compatible armor hooks from another mod.
 
 ${added_compatibility}
 

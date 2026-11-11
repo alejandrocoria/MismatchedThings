@@ -1,23 +1,99 @@
 package games.alejandrocoria.mismatchedboots.compatibility.silentgear;
 
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SilentGearDefenseShapeTest implements Opcodes {
+    @Test
+    void incomingOperationTransportRequiresNativeArgumentLanesAndTerminal() {
+        var owner = new ClassNode();
+        owner.name = SilentGearDefenseShape.EVENTS;
+        var dynamic = operationBridge(owner, false);
+        var body = owner.methods.getLast();
+        assertNotNull(SilentGearDefenseShape.incomingOperationBridge(owner, dynamic, false));
+        var lane = (IntInsnNode) body.instructions.get(11);
+        lane.operand = 0;
+        assertNull(SilentGearDefenseShape.incomingOperationBridge(owner, dynamic, false));
+        lane.operand = 1;
+        var terminal = (MethodInsnNode) body.instructions.get(21);
+        terminal.name = "differentDispatcher";
+        assertNull(SilentGearDefenseShape.incomingOperationBridge(owner, dynamic, false));
+    }
+
+    @Test
+    void nestedIncomingTransportRequiresUnchangedEventAndReferenceCaptures() {
+        var owner = new ClassNode();
+        owner.name = SilentGearDefenseShape.EVENTS;
+        var dynamic = operationBridge(owner, true);
+        var body = owner.methods.getLast();
+        assertNotNull(SilentGearDefenseShape.incomingOperationBridge(owner, dynamic, true));
+        var event = (VarInsnNode) body.instructions.get(22);
+        event.var = 2;
+        assertNull(SilentGearDefenseShape.incomingOperationBridge(owner, dynamic, true));
+        event.var = 1;
+        var target = (MethodInsnNode) body.instructions.get(24);
+        target.owner = "unrelated/Owner";
+        assertNull(SilentGearDefenseShape.incomingOperationBridge(owner, dynamic, true));
+    }
+
+    private static InvokeDynamicInsnNode operationBridge(ClassNode owner, boolean wrapped) {
+        String operation = "Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;";
+        String event = "Lnet/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent;";
+        String ref = "Lcom/llamalad7/mixinextras/sugar/ref/LocalFloatRef;";
+        String captures = wrapped ? operation + event + ref : "";
+        var body = new MethodNode(ACC_STATIC, "transport", "(" + captures + "[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        owner.methods.add(body);
+        var code = body.instructions;
+        code.add(new VarInsnNode(ALOAD, wrapped ? 3 : 0));
+        code.add(new IntInsnNode(BIPUSH, 3));
+        code.add(new LdcInsnNode("native armor arguments"));
+        code.add(new MethodInsnNode(INVOKESTATIC, "com/llamalad7/mixinextras/injector/wrapoperation/WrapOperationRuntime",
+                "checkArgumentCount", "([Ljava/lang/Object;ILjava/lang/String;)V", false));
+        code.add(new VarInsnNode(ALOAD, wrapped ? 3 : 0));
+        String[] types = {SilentGearDefenseShape.STACK, "java/lang/Object", SilentGearDefenseShape.P + "api/traits/TraitFunction"};
+        for (int i = 0; i < 3; i++) {
+            code.add(new InsnNode(DUP));
+            code.add(new IntInsnNode(BIPUSH, i));
+            code.add(new InsnNode(AALOAD));
+            code.add(new TypeInsnNode(CHECKCAST, types[i]));
+            code.add(new InsnNode(SWAP));
+        }
+        code.add(new InsnNode(POP));
+        if (wrapped) {
+            for (int i = 0; i < 3; i++) { code.add(new VarInsnNode(ALOAD, i)); }
+        }
+        code.add(new MethodInsnNode(INVOKESTATIC, wrapped ? owner.name : SilentGearDefenseShape.P + "util/TraitHelper",
+                wrapped ? "captureBridge" : "activateTraits",
+                "(L" + SilentGearDefenseShape.STACK + ";Ljava/lang/Object;" + (wrapped ? "Ljava/lang/Object;" + captures : "L" + types[2] + ";") + ")Ljava/lang/Object;", false));
+        code.add(new InsnNode(ARETURN));
+        var sam = Type.getMethodType("([Ljava/lang/Object;)Ljava/lang/Object;");
+        return new InvokeDynamicInsnNode("call", "(" + captures + ")" + operation,
+                new Handle(H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory",
+                        "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
+                sam, new Handle(H_INVOKESTATIC, owner.name, body.name, body.desc, false), sam);
+    }
+
     @Test
     void bounceSelectionRequiresTheChosenIdAndTheCorrectArmorQueryScope() {
         String p = SilentGearDefenseShape.P;

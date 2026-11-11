@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
@@ -50,6 +51,11 @@ final class SilentGearDefenseShape implements Opcodes {
     private static final String ARMOR_LAMBDA = "(L" + STACK + ";L" + ACTOR + ";Lnet/minecraft/world/damagesource/DamageSource;F)L" + P + "api/traits/TraitFunction;";
     private static final String ADAPTER = "games/alejandrocoria/mismatchedboots/compatibility/silentgear/SilentGearDefense";
     private static final String CALLBACK = "org/spongepowered/asm/mixin/injection/callback/CallbackInfo";
+    private static final String INCOMING_EVENT = "net/neoforged/neoforge/event/entity/living/LivingIncomingDamageEvent";
+    private static final String OPERATION = "Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;";
+    private static final String FLOAT_REF = "Lcom/llamalad7/mixinextras/sugar/ref/LocalFloatRef;";
+    private static final String INCOMING_BRIDGE = "(L" + STACK + ";Ljava/lang/Object;Ljava/lang/Object;"
+            + OPERATION + "L" + INCOMING_EVENT + ";" + FLOAT_REF + ")Ljava/lang/Object;";
 
     private SilentGearDefenseShape() {
     }
@@ -503,7 +509,7 @@ final class SilentGearDefenseShape implements Opcodes {
                      .filter(n -> n instanceof MethodInsnNode h && h.owner.equals(EVENTS) && h.name.contains("mismatchedboots$sgIncomingArmor"))
                      .toList();
         var hooks = c.stream()
-                     .filter(n -> n instanceof MethodInsnNode h && h.owner.equals(EVENTS) && h.name.contains("mismatchedboots$sgIncomingCall"))
+                     .filter(n -> n instanceof MethodInsnNode h && h.getOpcode() == INVOKESTATIC && h.owner.equals(EVENTS) && h.desc.equals(INCOMING_BRIDGE))
                      .toList();
         if (gates.size() != 1 || hooks.size() != 1) {
             return false;
@@ -511,8 +517,7 @@ final class SilentGearDefenseShape implements Opcodes {
 
         var gate = (MethodInsnNode) gates.getFirst();
         var hook = (MethodInsnNode) hooks.getFirst();
-        if (!incomingRouting(owner, gate, "armor", new int[]{ILOAD, ALOAD, ALOAD, ALOAD}, IRETURN)
-                || !incomingBridge(owner, hook)) {
+        if (!incomingRouting(owner, gate, "armor", new int[]{ILOAD, ALOAD, ALOAD, ALOAD}, IRETURN)) {
             return false;
         }
         // The actual final wrapper receives the selected stack, event, slot and the lambda's captured common base.
@@ -535,11 +540,11 @@ final class SilentGearDefenseShape implements Opcodes {
                 var root = flow.origin(flow.argument(hook, 0, 6));
                 var slot = flow.origin(flow.argument(gate, 2, 4));
                 var item = flow.origin(flow.argument(c.get(selected), 0, 1));
-                commonBase = incomingBase(m, c, dynamic, hook, flow)
+                commonBase = incomingWrappers(owner, flow, hook) && incomingBase(m, c, dynamic, hook, flow)
                         && call(item, STACK, "getItem", "()Lnet/minecraft/world/item/Item;") && flow.origin(flow.argument(item, 0, 1)) == root
                         && flow.origin(flow.argument(dynamic, 0, 4)) == root
                         && flow.origin(flow.argument(hook, 2, 6)) == dynamic
-                        && flow.origin(flow.argument(gate, 0, 4)) == c.get(selected)
+                        && incomingPredicate(flow, flow.origin(flow.argument(gate, 0, 4)), c.get(selected), root, slot)
                         && flow.origin(flow.argument(gate, 3, 4)) == root
                         && flow.parameter(flow.argument(hook, 4, 6), 0) && flow.parameter(flow.argument(gate, 1, 4), 0)
                         && call(root, ACTOR, "getItemBySlot", "(L" + SLOT + ";)L" + STACK + ";")
@@ -564,6 +569,98 @@ final class SilentGearDefenseShape implements Opcodes {
         }
 
         return false;
+    }
+
+    /** Result peers may precede our predicate, but must carry the same native armor context. */
+    private static boolean incomingPredicate(Flow flow, AbstractInsnNode value, AbstractInsnNode nativePredicate,
+                                              AbstractInsnNode root, AbstractInsnNode slot) {
+        String descriptor = "(ZL" + INCOMING_EVENT + ";L" + SLOT + ";L" + STACK + ";)Z";
+        var seen = new HashSet<AbstractInsnNode>();
+        while (value != nativePredicate) {
+            if (!seen.add(value) || !(value instanceof MethodInsnNode peer) || peer.getOpcode() != INVOKESTATIC
+                    || !peer.desc.equals(descriptor) || !flow.parameter(flow.argument(peer, 1, 4), 0)
+                    || flow.origin(flow.argument(peer, 2, 4)) != slot || flow.origin(flow.argument(peer, 3, 4)) != root) {
+                return false;
+            }
+            value = flow.origin(flow.argument(peer, 0, 4));
+        }
+        return true;
+    }
+
+    /** Follow only the generated transport seam, not arbitrary peer bodies or their semantic policy. */
+    private static boolean incomingWrappers(ClassNode owner, Flow flow, MethodInsnNode outer) {
+        if (!flow.parameter(flow.argument(outer, 4, 6), 0)) { return false; }
+        var ref = flow.origin(flow.argument(outer, 5, 6));
+        var operation = flow.origin(flow.argument(outer, 3, 6));
+        MethodInsnNode bridge = outer;
+        var seen = new HashSet<AbstractInsnNode>();
+        int own = 0;
+        while (true) {
+            if (incomingCaptureBridge(owner, bridge) == null) { return false; }
+            if (bridge.name.contains("mismatchedboots$sgIncomingCall")) {
+                if (!incomingBridge(owner, bridge) || ++own != 1) { return false; }
+            }
+            if (!(operation instanceof InvokeDynamicInsnNode dynamic) || !seen.add(operation)) { return false; }
+            if (dynamic.desc.equals("()" + OPERATION)) {
+                return own == 1 && incomingOperationBridge(owner, dynamic, false) != null;
+            }
+            if (!dynamic.desc.equals("(" + OPERATION + "L" + INCOMING_EVENT + ";" + FLOAT_REF + ")" + OPERATION)
+                    || !flow.parameter(flow.argument(dynamic, 1, 3), 0) || flow.origin(flow.argument(dynamic, 2, 3)) != ref) {
+                return false;
+            }
+            bridge = incomingOperationBridge(owner, dynamic, true);
+            if (bridge == null) { return false; }
+            operation = flow.origin(flow.argument(dynamic, 0, 3));
+        }
+    }
+
+    /** Exact three-argument array transport, with optional unchanged operation/event/ref captures. */
+    static MethodInsnNode incomingOperationBridge(ClassNode owner, InvokeDynamicInsnNode dynamic, boolean wrapped) {
+        String arrayMethod = "([Ljava/lang/Object;)Ljava/lang/Object;";
+        String captures = wrapped ? OPERATION + "L" + INCOMING_EVENT + ";" + FLOAT_REF : "";
+        String dynamicDescriptor = "(" + captures + ")" + OPERATION;
+        var sam = org.objectweb.asm.Type.getMethodType(arrayMethod);
+        if (!dynamic.name.equals("call") || !dynamic.desc.equals(dynamicDescriptor) || dynamic.bsmArgs.length != 3
+                || !sam.equals(dynamic.bsmArgs[0]) || !sam.equals(dynamic.bsmArgs[2])) {
+            return null;
+        }
+        var body = lambda(owner, dynamic);
+        if (body == null || (body.access & ACC_STATIC) == 0 || !body.desc.equals("(" + captures + "[Ljava/lang/Object;)Ljava/lang/Object;")
+                || !body.tryCatchBlocks.isEmpty()) {
+            return null;
+        }
+        var c = code(body.instructions);
+        int array = wrapped ? 3 : 0;
+        int target = wrapped ? 24 : 21;
+        if (c.size() != target + 2 || !load(c.get(0), ALOAD, array) || !integer(c.get(1), 3)
+                || !(c.get(2) instanceof LdcInsnNode constant) || !(constant.cst instanceof String)
+                || !call(c.get(3), "com/llamalad7/mixinextras/injector/wrapoperation/WrapOperationRuntime", "checkArgumentCount", "([Ljava/lang/Object;ILjava/lang/String;)V")
+                || c.get(3).getOpcode() != INVOKESTATIC || !load(c.get(4), ALOAD, array)) {
+            return null;
+        }
+        var types = List.of(STACK, "java/lang/Object", P + "api/traits/TraitFunction");
+        for (int i = 0; i < 3; i++) {
+            int at = 5 + 5 * i;
+            if (c.get(at).getOpcode() != DUP || !integer(c.get(at + 1), i) || c.get(at + 2).getOpcode() != AALOAD
+                    || !(c.get(at + 3) instanceof TypeInsnNode cast) || cast.getOpcode() != CHECKCAST || !cast.desc.equals(types.get(i))
+                    || c.get(at + 4).getOpcode() != SWAP) {
+                return null;
+            }
+        }
+        if (c.get(20).getOpcode() != POP || c.getLast().getOpcode() != ARETURN
+                || !(c.get(target) instanceof MethodInsnNode call) || call.getOpcode() != INVOKESTATIC) {
+            return null;
+        }
+        if (wrapped) {
+            return load(c.get(21), ALOAD, 0) && load(c.get(22), ALOAD, 1) && load(c.get(23), ALOAD, 2)
+                    && call.owner.equals(EVENTS) && call.desc.equals(INCOMING_BRIDGE) ? call : null;
+        }
+        return call(call, P + "util/TraitHelper", "activateTraits", ACTIVATION) ? call : null;
+    }
+
+    private static boolean integer(AbstractInsnNode node, int value) {
+        return node.getOpcode() == ICONST_0 + value || node instanceof IntInsnNode number
+                && (number.getOpcode() == BIPUSH || number.getOpcode() == SIPUSH) && number.operand == value;
     }
 
     static boolean incomingLambda(ClassNode owner, MethodNode lambda) {
@@ -593,26 +690,33 @@ final class SilentGearDefenseShape implements Opcodes {
 
     /** MixinExtras passes a read-only float capture through its generated ref bridge and round-trip store. */
     static boolean incomingBridge(ClassNode owner, MethodInsnNode hook) {
+        var inner = incomingCaptureBridge(owner, hook);
+        return inner != null && incomingRouting(owner, inner, "incoming", new int[]{ALOAD, ALOAD, ALOAD, ALOAD, ALOAD, FLOAD}, ARETURN);
+    }
+
+    private static MethodInsnNode incomingCaptureBridge(ClassNode owner, MethodInsnNode hook) {
+        if (hook.getOpcode() != INVOKESTATIC || !hook.owner.equals(EVENTS) || !hook.desc.equals(INCOMING_BRIDGE)) { return null; }
         var body = method(owner, hook.name, hook.desc);
-        if (body == null || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) {
-            return false;
+        if (body == null || (body.access & ACC_STATIC) == 0 || body.tryCatchBlocks != null && !body.tryCatchBlocks.isEmpty()) {
+            return null;
         }
 
         var c = code(body.instructions);
         if (c.size() != 9) {
-            return false;
+            return null;
         }
         for (int i = 0; i < 6; i++) {
             if (!load(c.get(i), ALOAD, i)) {
-                return false;
+                return null;
             }
         }
         if (!call(c.get(6), "com/llamalad7/mixinextras/sugar/ref/LocalFloatRef", "get", "()F")
-                || !(c.get(7) instanceof MethodInsnNode inner) || !inner.owner.equals(EVENTS) || c.get(8).getOpcode() != ARETURN) {
-            return false;
+                || !(c.get(7) instanceof MethodInsnNode inner) || inner.getOpcode() != INVOKESTATIC || !inner.owner.equals(EVENTS)
+                || !inner.desc.equals(INCOMING_BRIDGE.replace(FLOAT_REF + ")", "F)")) || c.get(8).getOpcode() != ARETURN) {
+            return null;
         }
 
-        return incomingRouting(owner, inner, "incoming", new int[]{ALOAD, ALOAD, ALOAD, ALOAD, ALOAD, FLOAD}, ARETURN);
+        return inner;
     }
 
     private static boolean incomingBase(MethodNode m, List<AbstractInsnNode> c, InvokeDynamicInsnNode dynamic, MethodInsnNode hook, Flow flow) {

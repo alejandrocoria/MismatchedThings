@@ -13,6 +13,17 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (!System.getProperty("leggings.test.sgDefenseSpike", "").isEmpty()) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
+                try {
+                    Class.forName("games.alejandrocoria.mismatchedleggings.test.silentgear.SilentGearDefenseSpike")
+                            .getMethod("tick", net.minecraft.server.MinecraftServer.class).invoke(null, event.getServer());
+                } catch (ReflectiveOperationException failure) {
+                    throw new IllegalStateException("Opt-in defensive spike unavailable", failure);
+                }
+            });
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.sgMagnetClient")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.silentgear.MagnetLifecycle.tick(event.getServer()));

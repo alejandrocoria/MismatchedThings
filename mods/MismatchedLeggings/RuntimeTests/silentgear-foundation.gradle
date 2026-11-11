@@ -14,6 +14,19 @@ def liveInfusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean
 def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse('')
 def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
+def defenseSpike = providers.gradleProperty('sgDefenseSpike').getOrElse('')
+def defenseOrder = providers.gradleProperty('sgDefenseOrder').getOrElse('before')
+def defenseMutation = providers.gradleProperty('sgDefenseMutation').getOrElse('')
+if (!(defenseSpike in ['', 'off', 'incoming', 'full']) || !(defenseOrder in ['before', 'after'])) { throw new GradleException('Unknown defensive spike mode/order') }
+if (!(defenseMutation in ['', 'routing', 'safety', 'fall-query', 'retaliation-query', 'compatible'])
+        || defenseMutation == 'routing' && (defenseSpike != 'incoming' || defenseOrder != 'after' || graph != 'boots')
+        || defenseMutation && defenseMutation != 'routing' && defenseSpike != 'full'
+        || defenseMutation == 'safety' && graph != 'boots') {
+    throw new GradleException('Invalid defensive spike mutation scope')
+}
+if (defenseSpike && (absent || variant || order != 'default' || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant)) {
+    throw new GradleException('The defensive spike is isolated from other foundation variants')
+}
 if (!(magnetVariant in ['', 'normal', 'compatible', 'callback', 'proof', 'definition', 'late'])) { throw new GradleException('Unknown SG magnet variant') }
 if (magnetVariant == 'callback' && graph == 'boots') { throw new GradleException('Native magnet mutation also violates Boots contract; use the local proof variant with Boots') }
 if (!(wielderVariant in ['', 'normal', 'compatible', 'type', 'trait', 'callback', 'potion', 'definition', 'actor'])) { throw new GradleException('Unknown Wielder variant') }
@@ -26,6 +39,8 @@ if (!(variant in ['', 'repair', 'wear', 'wear-delta', 'compatible']) || !(order 
 }
 if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foundation graph') }
 def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}") + (liveVariant ? "-live-${liveVariant}" : '') + (liveInfusion ? '-infusion' : '') + (brilliantVariant ? "-brilliant-${brilliantVariant}" : '') + (wielderVariant ? "-wielder-${wielderVariant}" : '') + (magnetVariant ? "-magnet-${magnetVariant}" : '')
+if (defenseSpike) { label += "-defense-${defenseSpike}-${defenseOrder}" }
+if (defenseMutation) { label += "-${defenseMutation}" }
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -81,7 +96,7 @@ tasks.register('prepareSgFoundation') {
         }
         copy { from artifacts; into mods }
         reports.mkdirs()
-        ['server.ok', 'server.failure.txt', 'foundation.txt', 'wearer-manual.txt'].each { new File(reports, it).delete() }
+        ['server.ok', 'server.failure.txt', 'foundation.txt', 'wearer-manual.txt', 'defense-spike.txt', 'defense-flow.txt', 'probe.ok'].each { new File(reports, it).delete() }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
         new File(directory, 'eula.txt').text = 'eula=true\n'
@@ -102,6 +117,9 @@ neoForge.runs.create('sgFoundation') {
     systemProperty('leggings.test.sgBrilliantVariant', brilliantVariant)
     systemProperty('leggings.test.sgWielderVariant', wielderVariant)
     systemProperty('leggings.test.sgMagnetVariant', magnetVariant)
+    systemProperty('leggings.test.sgDefenseSpike', defenseSpike)
+    systemProperty('leggings.test.sgDefenseOrder', defenseOrder)
+    systemProperty('leggings.test.sgDefenseMutation', defenseMutation)
     systemProperty('leggings.test.boots', (graph == 'boots').toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -110,6 +128,7 @@ tasks.named('runSgFoundation') { dependsOn 'prepareSgFoundation' }
 tasks.register('verifySgFoundation') {
     group = 'verification'
     doLast {
+        if (defenseSpike) { throw new GradleException('Use verifySgDefenseSpike for research; this production gate does not accept a refused sibling feature') }
         def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/${label}").get().asFile
         evidence.mkdirs()
         new File(evidence, 'matrix.ok').delete()
