@@ -63,21 +63,6 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
-## Silent Gear Magnetic/Greedy spike
-
-The isolated [magnet spike](../../../spikes/silentgear-leggings-magnet/README.md)
-is compiled only with `-PleggingsSgMagnetSpike=true`. Run
-`:MismatchedLeggings:RuntimeTests:NeoForge:verifySgLeggingsMagnetSpike` with that
-property; `-PleggingsSgMagnetGraph=boots` adds only current packaged Boots to
-Leggings/nested Things and pinned SG/Silent Lib. Run profiles sequentially, never
-against indev instances. The spike uses dedicated server fixtures, not clients.
-
-Standalone/current-Boots `.114` and focused standalone `.99` controls passed on
-2026-11-10. Native acquisition, direct callback/queue controls and limitations are
-recorded in the [exploration](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md#7-bounded-runtime-spike-results).
-No production magnet dispatch or final transformed-hook/client acceptance is
-implied. Retire the executable candidate when maintained production checks replace it.
-
 ## Silent Gear magnet binding and dispatch (magnet blocks A/B)
 
 The maintained foundation runner checks the optional production magnet binding
@@ -129,13 +114,68 @@ Automatic magnet A acceptance passed on 2026-11-10: eight scoped `.114`/`.99`
 present/order/compatible/refusal/absence profiles, 18 targeted SG units, runtime
 compilation and both-loader packaging. Normal `.114` outputs are restored.
 A's original inert-route assertions are superseded by B's actual item dispatch;
-owner/connected-client acceptance and full spike retirement belong to C.
+connected-client acceptance and full spike retirement are documented in C below,
+with owner acceptance tracked separately.
 Automatic B acceptance passed on 2026-11-10: `.114` standalone/current-Boots
 normal, current-Boots definition/late/proof refusal, quiet standalone absence,
 and focused `.99` current-Boots normal. The targeted 18 SG unit tests pass
 (zero failures/errors), both-loader packaging is verified, and normal `.114`
 product/runtime outputs are restored. A's unchanged order/harmless-edit and
 floor-absence evidence remains applicable without repeating its entire matrix.
+
+## Silent Gear connected magnet acceptance (magnet block C)
+
+Use the existing dedicated state driver in its bounded magnet mode, not the full
+state lifecycle matrix. Run the two graphs sequentially:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgMagnetClient=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgMagnetClient=true -PsgFoundationGraph=boots --offline --console=plain
+```
+
+This mode uses only `write`, disallows wearer/infusion/later-state stages, and
+isolates worlds and evidence under `sg-state-<alone|boots>-magnet`. Server/client
+JVMs contain packaged Leggings/nested Things, pinned SG/Lib and optionally current
+packaged Boots. The client is hidden before GLFW creation, remains muted and
+requires a dedicated TCP connection. There are no screenshots or indev inputs.
+
+Six samples cover native Magnetic/Greedy and both paid mixed orientations. The
+server waits for actual equipment/teleport receipt before spawning items; normal
+player/item ticks and SG's registered post-level handler alone drive attraction.
+It compares early mixed trajectories against the corresponding native sample,
+then requires exact ordinary diamond/gold pickup counts, an observed pickup-delay
+negative and retained dirt (Greedy filter or `PreventRemoteMovement`). The client
+independently observes entity movement, removals, inventory counts and unchanged
+received roots. Moving roots to idle stops attraction of a newly spawned item;
+existing momentum is not forcibly reset. The current-Boots graph also wears a
+magnetic mixed FEET pair for one Magnetic overlap sample, moving both roots idle
+before its stop check. No test invokes a magnet callback/queue flush, teleports
+an item, injects client velocity or synthesizes movement/pickup packets here.
+
+Require `magnet-0.ok` through `magnet-5.ok`, `magnet-server.txt`, `magnet-client.txt`,
+both endpoint `.ok` files and `state.txt` in the `write` report directory, plus
+`verification/<baseline>/sg-state-<graph>-magnet/matrix.ok`. The driver requires
+bounded successful exits, no failure markers and its strict native diagnostics:
+one server Bonsai recipe ERROR and one client missing translation for each of
+the two native Stone Anvil subtitles (no resource reload in this mode).
+
+The entire executable magnet spike, Gradle include/apply, source path, run/tasks,
+reflection entry and candidate-only properties are retired. Its useful independent
+unequal-vector tracker arbitration/drain control now lives in
+[MagnetDispatchChecks](NeoForge/src/main/java/games/alejandrocoria/mismatchedleggings/test/silentgear/MagnetDispatchChecks.java),
+alongside the maintained A/B native controls. Historical measurements remain in
+the [exploration](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md#7-bounded-runtime-spike-results),
+not as executable research code. C changes no production/API boundary, so reuse
+A/B's focused `.99` evidence rather than launching another connected floor matrix.
+
+Automatic C acceptance passed on 2026-11-10: both `.114` connected graphs and
+the current-Boots dedicated/quiet-absence regressions. All six sample markers,
+endpoint reports and driver matrices are fresh. The unchanged 18 SG unit results
+remain green; both-loader packaging/default compilation pass. Recursive inspection
+of eight product/nested JARs found no test/spike/SG implementation, and no compiled
+magnet candidate remains. Normal `.114` outputs are retained. The owner separately
+confirmed the complete [plan checklist](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md#7-validation-scope-and-owner-checklist)
+on 2026-11-11, closing the bounded magnet plan.
 
 ## Silent Gear foundation (block A)
 

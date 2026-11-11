@@ -8,8 +8,11 @@ if (!(graph in ['alone', 'boots']) || !(stage in stages)) { throw new GradleExce
 def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
 def infusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean() }.getOrElse(false)
 def wearer = providers.gradleProperty('sgWearerLifecycle').map { it.toBoolean() }.getOrElse(false)
-def defaultStages = wearer ? ['write', 'reopen', 'reconnect'] : stages
-def label = "sg-state-${graph}" + (infusion ? '-infusion' : '') + (wearer ? '-wearer' : '')
+def magnet = providers.gradleProperty('sgMagnetClient').map { it.toBoolean() }.getOrElse(false)
+if (magnet && (wearer || infusion || stage != 'write')) { throw new GradleException('The bounded magnet client uses only its own write stage') }
+
+def defaultStages = magnet ? ['write'] : wearer ? ['write', 'reopen', 'reconnect'] : stages
+def label = "sg-state-${graph}" + (infusion ? '-infusion' : '') + (wearer ? '-wearer' : '') + (magnet ? '-magnet' : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def markers = new File(reports, stage)
@@ -81,6 +84,7 @@ def checkedDelete = { File target ->
         disableIdeRun()
         gameDirectory = new File(directory, endpoint)
         systemProperty('leggings.test.sgWearerLifecycle', wearer.toString())
+        systemProperty('leggings.test.sgMagnetClient', magnet.toString())
         systemProperty('leggings.test.sgState', stage)
         systemProperty('leggings.test.sgStateBaseline', reports.absolutePath)
         systemProperty('leggings.test.boots', (graph == 'boots').toString())
@@ -99,6 +103,7 @@ tasks.register('verifySgState') {
         ['matrix.ok', 'subset.ok'].each { new File(evidence, it).delete() }
         def selected = providers.gradleProperty('sgStateStages').getOrElse(defaultStages.join(',')).split(',').toList()
         if (selected.any { !(it in stages) }) { throw new GradleException('Unknown SG state stage selection') }
+        if (magnet && selected != ['write']) { throw new GradleException('Magnet acceptance is a single connected stage, not the state lifecycle matrix') }
         selected.each { current ->
             int selectedPort
             new ServerSocket(0).withCloseable { selectedPort = it.localPort }
@@ -107,7 +112,7 @@ tasks.register('verifySgState') {
             def start = { String endpoint ->
                 def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                             "${project.path}:runSgState${endpoint.capitalize()}", "-Pneoforge_version=${neoforge_version}",
-                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}", "-PsgWearerLifecycle=${wearer}"]
+                            "-PsgFoundationGraph=${graph}", "-PsgStateStage=${current}", "-PsgStatePort=${selectedPort}", "-PsgLiveInfusion=${infusion}", "-PsgWearerLifecycle=${wearer}", "-PsgMagnetClient=${magnet}"]
                 if (gradle.startParameter.offline) { args.add('--offline') }
                 new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
                         .redirectErrorStream(true).redirectOutput(new File(evidence, "${current}-${endpoint}.log")).start()
@@ -142,6 +147,10 @@ tasks.register('verifySgState') {
                 if (wearer && current == 'reconnect' && !new File(currentMarkers, 'wearer-rejoin.ok').isFile()) {
                     throw new GradleException('Missing original saved-player wearer resume evidence')
                 }
+                if (magnet && (!(0..<6).every { new File(currentMarkers, "magnet-${it}.ok").isFile() }
+                        || !new File(currentMarkers, 'magnet-server.txt').isFile() || !new File(currentMarkers, 'magnet-client.txt').isFile())) {
+                    throw new GradleException("Missing connected magnet evidence: ${currentMarkers}")
+                }
                 ['server', 'client'].each { endpoint ->
                     def log = new File(evidence, "${current}-${endpoint}.log")
                     if (endpoint == 'client' && client == null) { return }
@@ -150,8 +159,8 @@ tasks.register('verifySgState') {
                     boolean subtitles = endpoint == 'client' && !absent
                     int recipeErrors = wearer && current in ['write', 'restore', 'reconnect'] ? 2 : 1
                     // Pinned native missing translations, independently recorded by Boots' SG client gates.
-                    if (subtitles ? errors.size() != 4 || ['hammer', 'knife'].any { sound ->
-                        errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != 2
+                    if (subtitles ? errors.size() != (magnet ? 2 : 4) || ['hammer', 'knife'].any { sound ->
+                        errors.count { it.endsWith("Missing subtitle translation{key='subtitles.block.silentgear.stone_anvil.${sound}', args=[]} for sound event: silentgear:block.silentgear.stone_anvil.${sound}") } != (magnet ? 1 : 2)
                     } : absent ? !errors.isEmpty() : errors.size() != recipeErrors
                             || !errors.every { it.contains("Couldn't parse data file 'silentgear:sapling/netherwood'") && it.contains('bonsaitrees2:sapling') }) { throw new GradleException("Unexpected SG state errors: ${log}") }
                     if (log.readLines().any { it.contains('WARN') && it.contains('Silent Gear')
@@ -161,6 +170,6 @@ tasks.register('verifySgState') {
                 }
             } finally { stop(client); stop(server) }
         }
-        new File(evidence, selected == defaultStages ? 'matrix.ok' : 'subset.ok').text = "SG production state stages=${selected}; graph=${graph}\n"
+        new File(evidence, selected == defaultStages ? 'matrix.ok' : 'subset.ok').text = "SG production ${magnet ? 'connected magnets' : 'state'} stages=${selected}; graph=${graph}\n"
     }
 }

@@ -13,6 +13,12 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.sgMagnetClient")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
+                    games.alejandrocoria.mismatchedleggings.test.silentgear.MagnetLifecycle.tick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
+            return;
+        }
         if (!games.alejandrocoria.mismatchedleggings.test.silentgear.StateChecks.stage().isEmpty()) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.silentgear.StateChecks.tick(event.getServer()));
@@ -22,17 +28,6 @@ public final class SkeletonTestNeoForge {
         if (Boolean.getBoolean("leggings.test.sgFoundation")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.silentgear.FoundationChecks.tick(event.getServer()));
-            return;
-        }
-        if (Boolean.getBoolean("leggings.test.sgMagnetSpike")) {
-            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
-                try {
-                    Class.forName("games.alejandrocoria.mismatchedleggings.test.silentgear.SilentGearMagnetSpike")
-                            .getMethod("tick", net.minecraft.server.MinecraftServer.class).invoke(null, event.getServer());
-                } catch (ReflectiveOperationException failure) {
-                    throw new IllegalStateException("Silent Gear magnet spike fixture is unavailable", failure);
-                }
-            });
             return;
         }
         if (Boolean.getBoolean("leggings.test.iafTide")) {

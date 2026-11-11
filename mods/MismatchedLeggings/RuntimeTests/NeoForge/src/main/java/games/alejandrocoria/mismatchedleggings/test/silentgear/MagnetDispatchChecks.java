@@ -72,6 +72,7 @@ final class MagnetDispatchChecks {
         negatives(player, root);
         crouch(player, root);
         reload(player, root, greedy, report);
+        trackerControl(player, report);
         overlap(player, magnetic, root, report);
         wearerControl(player, true);
         report.append("Magnet B: paid inverse single/combined/duplicate/unequal-level sources, fixed invocation counts; LEGS/both hands vs idle/wrong-slot/non-player/invalid/no-source; native filter/radius/sphere/above-below/delay/prevention/crouch and immutable root/source/carrier/equipment controls pass\n");
@@ -192,6 +193,26 @@ final class MagnetDispatchChecks {
         catch (IllegalArgumentException expected) { staleRejected = true; }
         require(staleRejected && queue().isEmpty(), "Stale pre-reload effect queued work");
         report.append("Magnet B: supported live filter update plus real native trait-resource reload; retained paid roots resolve new definitions/filter; stale pre-reload callback refused before publication\n");
+    }
+
+    private static void trackerControl(ServerPlayer player, StringBuilder report) throws Throwable {
+        var item = new ItemEntity(player.level(), player.getX() + 2, player.getY(), player.getZ(), new ItemStack(Items.DIAMOND));
+        item.setDeltaMovement(Vec3.ZERO);
+        require(player.level().addFreshEntity(item), "Could not spawn native queue arbitration control");
+        try {
+            flush(player);
+            var strongest = new Vec3(.08, 0, 0);
+            net.silentchaos512.gear.gear.util.MagnetPullTracker.pushItem(item, new Vec3(.02, 0, 0));
+            net.silentchaos512.gear.gear.util.MagnetPullTracker.pushItem(item, strongest);
+            net.silentchaos512.gear.gear.util.MagnetPullTracker.pushItem(item, new Vec3(.04, 0, 0));
+            require(item.getDeltaMovement().equals(Vec3.ZERO), "Native tracker published before its level-post event");
+            flush(player);
+            require(item.getDeltaMovement().equals(strongest) && queue().isEmpty(), "Native queue did not retain strongest request and drain once");
+        } finally {
+            item.discard();
+            flush(player);
+        }
+        report.append("Magnet C consolidation: independent native unequal-vector arbitration/drain control retained from retired spike\n");
     }
 
     private static void overlap(ServerPlayer player, ItemStack magnetic, ItemStack root, StringBuilder report) throws Throwable {

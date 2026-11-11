@@ -105,8 +105,11 @@ Magnetic/Greedy effects coexist. SG retains its live filters, crouch setting,
 range, pickup-delay checks and shared strongest-vector queue, including alongside
 optional mixed Boots. Source histories remain immutable; no general native gear
 tick, Greedy mining bonus or mixed part/upgrade editing is added. Connected
-movement/pickup acceptance remains a separate final gate in the
-[magnet plan](local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
+movement/pickup acceptance now passes with a hidden dedicated TCP client,
+standalone and with current Boots: both orientations match native motion/pickup,
+respect filter/delay negatives and stop new attraction when idle. The executable
+magnet spike is retired. The owner confirmed the complete gameplay checklist on
+2026-11-11, closing the [magnet plan](local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
 
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman
