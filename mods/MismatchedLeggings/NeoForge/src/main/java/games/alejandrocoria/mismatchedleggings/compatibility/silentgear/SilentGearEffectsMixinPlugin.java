@@ -34,6 +34,7 @@ public final class SilentGearEffectsMixinPlugin implements IMixinConfigPlugin, I
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
+        SilentGearMagnetShape.publish(node);
         if (node.name.equals(SilentGearBrilliantShape.OWNER)) {
             SilentGearEffectShape.publish(node, "mismatchedleggings$sgBrilliantReady", SilentGearBrilliantShape.ready(node));
         } else if (node.name.equals(SilentGearSetShape.OWNER)) {

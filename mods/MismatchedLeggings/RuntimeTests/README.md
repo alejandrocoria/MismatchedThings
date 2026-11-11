@@ -78,6 +78,45 @@ recorded in the [exploration](../local-docs/SILENT-GEAR-MAGNET-EXPLORATION.md#7-
 No production magnet dispatch or final transformed-hook/client acceptance is
 implied. Retire the executable candidate when maintained production checks replace it.
 
+## Silent Gear magnet binding (magnet block A)
+
+The maintained foundation runner also checks the optional production magnet
+binding, without enabling ordinary mixed-item attraction or loading the research
+candidate. Run sequentially from the repository root:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*SilentGearMagnetShapeTest' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgMagnetVariant=normal --offline --console=plain
+```
+
+Use `-PsgFoundationGraph=boots` for current packaged Boots and
+`-PsgEffectsOrder=before|after` for the existing disposable priority/order control.
+`-PsgMagnetVariant=compatible` adds native NOPs; `callback` (standalone only)
+adds a runtime-identical but unaudited native call; `proof` removes only Leggings'
+readiness method, preserving Boots/native behavior. The two refusal variants
+require exactly one Leggings magnet warning. `-PsgFoundationAbsent=true` omits
+SG/Lib and requires quiet unavailable readiness. Quote the floor argument as
+`'-Pneoforge_version=26.1.2.99'`; restore normal `.114` outputs afterwards.
+
+Reports/verification reuse `sg-foundation-<graph>...-magnet-<variant>` beneath
+`NeoForge/build/{reports,verification}/<baseline>/`. Require fresh `foundation.txt`,
+`server.ok` and `matrix.ok`, successful bounded exits, no failure marker and the
+existing strict diagnostics. The profile keeps its unconnected fixture player's
+origin chunk forced before entity-query checks, then releases it on exit.
+
+Native recipe/construction positives, guarded direct movement, current effect
+count/class/finite/stale-definition admission, actual mixin order and unchanged
+root/carrier/Boots controls are distinct from ordinary dispatch, which remains
+inert in both paid orientations. Existing foundation/repair/live-state/Brilliant
+controls still run. This is server binding acceptance, not client movement/pickup,
+natural equipment ticking or source-detail tooltip support. See the
+[implementation record](../local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
+
+Automatic magnet A acceptance passed on 2026-11-10: eight scoped `.114`/`.99`
+present/order/compatible/refusal/absence profiles, 18 targeted SG units, runtime
+compilation and both-loader packaging. Normal `.114` outputs are restored.
+Ordinary Leggings magnet dispatch remains off; owner/client acceptance is later.
+
 ## Silent Gear foundation (block A)
 
 Maintained dedicated-server checks load packaged production Leggings and optional

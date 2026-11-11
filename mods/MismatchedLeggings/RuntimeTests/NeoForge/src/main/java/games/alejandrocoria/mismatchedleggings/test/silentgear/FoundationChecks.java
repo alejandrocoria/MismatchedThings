@@ -62,11 +62,20 @@ import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.requir
 /** Native controls and real paid extraction exercise the packaged production adapter, never the spike. */
 public final class FoundationChecks {
     private static boolean finished;
+    private static boolean magnetChunkPrepared;
     private static final StringBuilder REPORT = new StringBuilder();
 
     private FoundationChecks() {}
 
     public static void tick(MinecraftServer server) {
+        if (!finished && !magnetChunkPrepared && !System.getProperty("leggings.test.sgMagnetVariant", "").isEmpty()
+                && !Boolean.getBoolean("leggings.test.sgFoundationAbsent")) {
+            // The fixture player is not connected: keep its origin chunk tracked before querying real item entities.
+            server.overworld().setChunkForced(0, 0, true);
+            server.overworld().getChunk(0, 0);
+            magnetChunkPrepared = true;
+            return;
+        }
         if (finished || server.getTickCount() < 20) { return; }
         finished = true;
         try {
@@ -89,11 +98,13 @@ public final class FoundationChecks {
                 BrilliantChecks.run(player, REPORT);
                 WielderChecks.run(player, REPORT);
             }
+            MagnetChecks.run(player, REPORT, absent);
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
         } finally {
+            if (magnetChunkPrepared) { server.overworld().setChunkForced(0, 0, false); }
             server.halt(false);
         }
     }

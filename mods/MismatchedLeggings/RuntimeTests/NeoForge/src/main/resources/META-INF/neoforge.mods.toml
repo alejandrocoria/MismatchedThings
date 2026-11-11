@@ -57,3 +57,6 @@ config="leggings-sg-effects-test.mixins.json"
 
 [[mixins]]
 config="leggings-sg-wielder-test.mixins.json"
+
+[[mixins]]
+config="leggings-sg-magnet-test.mixins.json"
