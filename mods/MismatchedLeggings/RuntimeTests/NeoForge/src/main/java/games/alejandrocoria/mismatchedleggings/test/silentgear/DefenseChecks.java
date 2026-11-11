@@ -82,22 +82,24 @@ public final class DefenseChecks {
                     && resolved.stream().filter(t -> t.getTraitId().toString().equals("silentgear:bounce")).count() == 1,
                     "Actual source admission lost/duplicated selected traits");
             player.setItemSlot(EquipmentSlot.LEGS, root);
-            hit(player, player.damageSources().lava(), 20);
-            hit(player, player.damageSources().flyIntoWall(), 20);
+            hit(player, player.damageSources().lava(), variant.equals("routing") ? 20 : 16.8F);
+            hit(player, player.damageSources().flyIntoWall(), variant.equals("routing") ? 20 : 16);
+            hit(player, player.damageSources().generic(), 20);
+            hit(player, player.damageSources().fall(), 20);
             var fall = new LivingFallEvent(player, 12, 1);
             NeoForge.EVENT_BUS.post(fall);
-            require(!fall.isCanceled(), "Block A enabled mixed Bounce gameplay");
-            require(SilentGearDefense.retaliationLevel(2, null, true) == 2, "Block A changed retaliation level");
+            require(!fall.isCanceled(), "Incoming support unexpectedly enabled mixed Bounce query gameplay");
+            require(SilentGearDefense.retaliationLevel(2, null, true) == 2, "Incoming support changed retaliation level");
             if (!variant.equals("routing")) {
                 var effect = api.admittedEffect(heatTrait);
                 float amount = api.incoming(heatTrait, effect, root.copy(), player, player.damageSources().lava(), 12, 20);
                 require(Math.abs(amount - 8.8F) < .0001F, "Guarded native leaf lost common-base arithmetic");
             }
-            // Even a foreign predicate admitting our item cannot route it into full native activateTraits.
+            // A refused own route must never delegate to full native activateTraits.
             var event = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 20));
             Object unchanged = SilentGearDefense.incoming(root, 20F, null,
-                    arguments -> { throw new AssertionError("Mixed root reached full native trait dispatcher"); }, event, 20, true);
-            require(unchanged.equals(20F) && ItemStack.matches(before, root), "Inert mixed routing changed root/history");
+                    arguments -> { throw new AssertionError("Mixed root reached full native trait dispatcher"); }, event, 20, false);
+            require(unchanged.equals(20F) && ItemStack.matches(before, root), "Refused mixed routing changed root/history");
             player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
         }
         var duplicates = FoundationChecks.paid(player, lined, lined.copy());
@@ -107,9 +109,56 @@ public final class DefenseChecks {
         if (Boolean.getBoolean("leggings.test.boots")) {
             sibling(player, lined);
         }
-        report.append("Defense A: native Heat IV/slime-lining Bounce I; live exact definitions/common-base leaf; paid inverse/duplicate source admission; ")
-                .append("production incoming/fall/retaliation routes remain inert; independent variant=").append(variant)
+        if (!variant.equals("routing")) {
+            DefenseIncomingChecks.run(player.level().getServer(), report);
+            if (variant.equals("heat-definition") || variant.equals("callback")) {
+                failure(player, lined, variant, report);
+            }
+        }
+        report.append("Defense A/B: native Heat IV/slime-lining Bounce I; live exact definitions/common-base leaf; paid inverse/duplicate source admission; ")
+                .append("production incoming active; Bounce fall/retaliation queries remain inert; independent variant=").append(variant)
                 .append("; actual order=").append(DefenseTestPlugin.actualOrder).append('\n');
+    }
+
+    private static void failure(ServerPlayer player, ItemStack lined, String variant, StringBuilder report) throws Exception {
+        DefenseIncomingChecks.clear(player);
+        var root = FoundationChecks.paid(player, lined, new ItemStack(Items.DIAMOND_LEGGINGS)).getFirst();
+        var before = root.copy();
+        player.setItemSlot(EquipmentSlot.LEGS, root);
+        if (variant.equals("callback")) {
+            DefenseProbe.calls = 0;
+            DefenseProbe.failSecond = true;
+            try {
+                // Bounce reduces the running wall hit first; failing Heat must not publish that partial result.
+                hit(player, player.damageSources().flyIntoWall(), 20);
+                require(DefenseProbe.calls == 2 && !SilentGearDefense.incomingAvailable(), "Failed callback did not revoke the incoming flow");
+            } finally {
+                DefenseProbe.failSecond = false;
+            }
+            DefenseProbe.calls = 0;
+            hit(player, player.damageSources().flyIntoWall(), 20);
+            require(DefenseProbe.calls == 0, "Refused incoming flow retried native callbacks");
+        } else {
+            var heat = trait(lined, "heat_resistant").getTrait();
+            Field effects = field(heat.getClass(), "effects");
+            Object prior = effects.get(heat);
+            try {
+                effects.set(heat, List.of(new Object()));
+                hit(player, player.damageSources().lava(), 20);
+                hit(player, player.damageSources().flyIntoWall(), 16);
+            } finally {
+                effects.set(heat, prior);
+            }
+            hit(player, player.damageSources().lava(), 20); // Process-lifetime refusal is not rearmed by restoring data.
+            DefenseProbe.calls = 0;
+            hit(player, player.damageSources().flyIntoWall(), 16);
+            require(DefenseProbe.calls == 1 && SilentGearDefense.incomingAvailable(), "Refusing Heat also disabled admitted Bounce");
+        }
+        require(SilentGearDefense.fallAvailable() && SilentGearDefense.retaliationAvailable()
+                && ItemStack.matches(before, root), "Incoming failure leaked to independent query contracts/root data");
+        player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+        report.append("Incoming B failure: ").append(variant)
+                .append("; no partial publication/replay, bounded independent refusal and unchanged root passed\n");
     }
 
     private static void definitions(SilentGearDefenseApi api, TraitInstance heat, TraitInstance bounce) throws Throwable {
@@ -154,8 +203,17 @@ public final class DefenseChecks {
         var nativeBoots = gear.construct(List.of(PartInstance.from(FoundationChecks.part("boot_plates", "crimson_iron"))));
         var pair = factory.getMethod("createPair", ItemStack.class, ItemStack.class).invoke(null, nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
         var root = (ItemStack) pair.getClass().getMethod("primary").invoke(pair);
+        var mixedLegs = FoundationChecks.paid(player, lined, new ItemStack(Items.DIAMOND_LEGGINGS));
+        player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
         player.setItemSlot(EquipmentSlot.FEET, root);
         hit(player, player.damageSources().lava(), 16.8F);
+        var feetBefore = root.copy();
+        for (var legs : mixedLegs) {
+            var legsBefore = legs.copy();
+            player.setItemSlot(EquipmentSlot.LEGS, legs);
+            hit(player, player.damageSources().lava(), SilentGearDefense.incomingAvailable() ? 13.6F : 16.8F);
+            require(ItemStack.matches(feetBefore, root) && ItemStack.matches(legsBefore, legs), "Joint mixed incoming changed either root/history");
+        }
         var plainPair = factory.getMethod("createPair", ItemStack.class, ItemStack.class)
                 .invoke(null, new ItemStack(Items.IRON_BOOTS), new ItemStack(Items.DIAMOND_BOOTS));
         var plain = (ItemStack) plainPair.getClass().getMethod("primary").invoke(plainPair);

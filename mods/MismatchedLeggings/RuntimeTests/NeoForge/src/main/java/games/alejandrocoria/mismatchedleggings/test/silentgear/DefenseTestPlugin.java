@@ -97,7 +97,11 @@ public final class DefenseTestPlugin implements IMixinConfigPlugin, IExtension {
         }
     }
 
-    @Override public boolean shouldApplyMixin(String target, String mixin) { return false; }
+    @Override
+    public boolean shouldApplyMixin(String target, String mixin) {
+        return !System.getProperty("leggings.test.sgDefenseVariant", "").isEmpty()
+                && !Boolean.getBoolean("leggings.test.sgFoundationAbsent");
+    }
     @Override public boolean checkActive(MixinEnvironment environment) { return true; }
     @Override public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {}
     @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}

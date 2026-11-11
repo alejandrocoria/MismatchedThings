@@ -15,7 +15,7 @@ def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse(
 def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
 def defenseVariant = providers.gradleProperty('sgDefenseVariant').getOrElse('')
-if (!(defenseVariant in ['', 'normal', 'compatible', 'routing', 'fall-query', 'retaliation-query'])) {
+if (!(defenseVariant in ['', 'normal', 'compatible', 'routing', 'fall-query', 'retaliation-query', 'heat-definition', 'callback'])) {
     throw new GradleException('Unknown SG defensive production variant')
 }
 if (defenseVariant && (variant || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant)) {
@@ -164,7 +164,8 @@ tasks.register('verifySgFoundation') {
                 throw new GradleException("Unexpected SG foundation errors: ${log}")
             }
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
-            def defenseRefusal = ['routing': 'incoming', 'fall-query': 'bounce recognition', 'retaliation-query': 'retaliation'][defenseVariant]
+            def defenseRefusal = ['routing': 'incoming', 'fall-query': 'bounce recognition', 'retaliation-query': 'retaliation',
+                                  'heat-definition': 'incoming trait', 'callback': 'incoming'][defenseVariant]
             if (defenseRefusal && !absent) {
                 if (warnings.size() != 1 || !warnings.first().contains("Silent Gear mixed leggings ${defenseRefusal} disabled")) {
                     throw new GradleException("Unexpected SG defensive refusal: ${log}")

@@ -65,9 +65,10 @@ source removal/reinstallation, and both products together with optional viewers.
 
 ## Silent Gear defensive contracts
 
-The maintained foundation profile verifies the inert production contracts for
-Heat Resistant/Bounce. It does **not** enable the mixed LEGS gameplay planned
-for the following implementation blocks. No research candidate is loaded.
+The maintained foundation profile verifies production Heat Resistant/Bounce
+incoming reductions and their independent contracts. Bounce's fall/retaliation
+query contributions remain inert until their separate implementation block.
+No research candidate is loaded.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgDefenseVariant=normal -PsgFoundationGraph=boots -PsgEffectsOrder=after --offline --console=plain
@@ -81,11 +82,20 @@ is unchanged; only a disposable staged copy receives the alternate test priority
 owned route before final proof. Each must refuse exactly its own group with one
 matching diagnostic, preserving the other groups, Boots' incoming reduction and
 its single ordinary mixed-FEET fall bill. The witness never grants readiness.
+`heat-definition` refuses only Heat's unsupported definition, retaining Bounce
+and the independent query contracts even after that data is restored. `callback`
+fails the second selected invocation: the piece must publish no partial result,
+revoke incoming availability and never retry the hit.
 
 Native Crimson Iron Heat IV/slime-lining Bounce I, current definition admission,
 finite common-base math, paid inverses/duplicate source selection and unchanged
-root history are checked. Mixed event routes must remain inert in this block;
-the selected direct binding is exercised only by the test. Add
+root history are checked. Production event controls also cover native armor
+peers, both mixed slots together, a changed entering amount, the real offensive
+GearTool branch, live tags/fresh definition receivers, zero clamp and living
+non-player/held/idle/wrong-slot/malformed cases with fixed leaf counts. A native
+writer tripwire is calibrated on a sacrificial native piece and rejects mixed
+recalculation. Observers target the mod-owned call boundary, never weaken the
+audited native leaf or grant readiness. Add
 `-PsgFoundationAbsent=true` to the normal variant for quiet optional absence.
 The focused floor uses `'-Pneoforge_version=26.1.2.99'`; detailed controls use
 `.114`. Research flags and other feature mutations cannot be combined with this
@@ -97,6 +107,11 @@ foundation entry point also checks successful child exit, fresh markers and
 strict native errors/refusal diagnostics.
 
 ## Temporary Silent Gear defensive coexistence probe
+
+Historical feasibility entry point, retained until the plan's D retirement.
+B's production incoming hooks now supersede its original baseline/call-count
+assumptions: use the maintained defensive profile above for current regression,
+not this candidate command. The observations below record the pre-production spike.
 
 The defensive spike's initial Boots incoming-proof conflict is resolved by a
 local production guard adaptation, not new Leggings production support. It uses the maintained foundation dedicated

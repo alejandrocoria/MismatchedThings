@@ -111,6 +111,14 @@ respect filter/delay negatives and stop new attraction when idle. The executable
 magnet spike is retired. The owner confirmed the complete gameplay checklist on
 2026-11-11, closing the [magnet plan](local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
 
+Heat Resistant and Bounce now contribute their selected native incoming-damage
+reductions while mixed leggings are worn, in both orientations. Each source
+trait uses its highest level once. Native damage tags/scales, the common
+post-attacking-tool base and other armor contributions retain their behavior;
+no source history is modified. This does not grant dropped-item fire immunity
+from a single source. Bounce's fall rebound and retaliation remain a separate
+pending scope in the [defensive plan](local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md).
+
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman
 staring, and Diamond supplies all three. No full set is required; different

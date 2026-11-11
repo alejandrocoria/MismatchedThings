@@ -89,6 +89,12 @@ public final class SilentGearDefenseApi {
         require("gear.trait.effect.NegateDamageTraitEffect", "mismatchedleggings$sgNegateReady");
         require("event.GearEvents", "mismatchedleggings$sgIncomingReady");
         validate(instance, effect, current, base);
+        return invoke(instance, effect, context, actor, source, current, base);
+    }
+
+    // The maintained test witness observes this mod-owned boundary, never changes the audited native leaf.
+    private float invoke(Object instance, Object effect, ItemStack context, LivingEntity actor,
+                          DamageSource source, float current, float base) throws Throwable {
         return (float) incoming.invoke(effect, context, (int) level.invoke(instance), actor, source, current, base);
     }
 
