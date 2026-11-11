@@ -63,6 +63,44 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Silent Gear source tooltip acceptance
+
+The bounded maintained profile exercises the packaged production source appender,
+not a candidate renderer or complete native-event replay in production:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgTooltipClient=true -PsgFoundationGraph=alone --offline --console=plain
+```
+
+This is one `write` stage in the existing state driver, not a state/release matrix.
+The dedicated server pays for six inverse mixed outputs: named/lore SG + vanilla,
+lined SG + unequal SG, and coated SG + a native magnetic upgrade. Ordinary chest
+menu packets carry the full roots/caches to an independent hidden-before-GLFW,
+muted client; the early loader window stays disabled. No indev JARs or screenshots
+are required. Shared catalog artifacts are downloaded/cached by the maintained
+resolver; run profiles sequentially.
+
+Focused A acceptance compares structured components/styles from the independent
+native SG event oracle with production insertion into the complete mixed tooltip.
+It checks compact/Ctrl/Ctrl+Shift/Alt/combined branches, normal/advanced flags,
+nonempty native upgrade summaries, sources with no ordinary lines, identities/
+IDs/lore/separators and unchanged root/source snapshots. Scoped baseline suppression
+never renders a replacement block. Capture-only window polling exercises native
+keybindings, and the existing recalculation witness requires zero recalculations;
+fixture setup is outside that observation scope. Settings/mappings are restored.
+
+Evidence is under `NeoForge/build/reports/<baseline>/sg-state-alone-tooltip/write/`:
+`tooltip-samples.json`, `tooltip-client.txt`, `tooltip-compact.txt`, `state.txt`
+and normal server/client success markers. Matching `build/verification/<baseline>/sg-state-alone-tooltip/`
+holds child logs and fresh bounded-profile `matrix.ok`. Expected native diagnostics
+are one server Bonsai optional-recipe error and the two pinned client Stone Anvil
+subtitle errors; no SG adapter warning is accepted in this normal profile.
+
+The private [implementation plan](../local-docs/SILENT-GEAR-TOOLTIP-IMPLEMENTATION.md)
+owns actual execution status. B separately owns remaining visibility/settings,
+failure/coexistence/floor consolidation and owner visual acceptance; this focused
+command does not claim those checks or any screenshot/save/rejoin acceptance.
+
 ## Silent Gear cure contracts
 
 The maintained foundation profile tests packaged production Cure Poison/Wither

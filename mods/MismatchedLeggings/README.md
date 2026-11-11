@@ -125,8 +125,14 @@ once per mixed item, without suppressing other native/mixed items' own ticks.
 Definitions are read anew after resource reload; an unsupported or failed cure
 declines independently without undoing prior removals or retrying them. Stock SG
 data does not assign these traits to a material/recipe: acquisition here depends
-on datapacks/addons, not new survival recipes. Source detail tooltips remain later
-work. The executable remaining-effects spike is fully retired; the bounded plan
+on datapacks/addons, not new survival recipes. Source detail tooltips are tracked
+in a separate [presentation plan](local-docs/SILENT-GEAR-TOOLTIP-IMPLEMENTATION.md).
+Its A appender now restores native SG properties/traits/construction under each
+source, without extra source headings. Native keys/styles and original cached
+source values are retained, while effective root attributes/durability stay in
+their existing region. Focused `.114` client comparisons pass without native
+recalculation; B consolidation and owner visual acceptance remain pending.
+The executable remaining-effects spike is fully retired; the bounded gameplay plan
 is closed. Maintained tests provide a saved fixture world for reproducible checks.
 
 Heat Resistant and Bounce now contribute their selected native incoming-damage

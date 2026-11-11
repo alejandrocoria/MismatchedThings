@@ -19,6 +19,7 @@
         "SilentGearVoidWardMixin",
         "SilentGearWielderProofMixin"
     ],
+    "client": ["SilentGearSourceTooltipMixin"],
     "injectors": {
         "defaultRequire": 1
     }

@@ -17,6 +17,9 @@ public final class EffectsTestPlugin implements IMixinConfigPlugin, org.spongepo
 
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (Boolean.getBoolean("leggings.test.sgTooltipClient")) {
+            return mixin.endsWith("RecalculationWitnessMixin");
+        }
         if (!Boolean.getBoolean("leggings.test.sgFoundation") || Boolean.getBoolean("leggings.test.sgFoundationAbsent")) { return false; }
         if (mixin.endsWith("BrilliantBoundaryMixin")) {
             return List.of("compatible", "callback", "proof").contains(System.getProperty("leggings.test.sgBrilliantVariant", ""));

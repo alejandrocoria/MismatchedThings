@@ -69,3 +69,6 @@ config="leggings-sg-void-test.mixins.json"
 
 [[mixins]]
 config="leggings-sg-cures-test.mixins.json"
+
+[[mixins]]
+config="leggings-sg-tooltip-test.mixins.json"

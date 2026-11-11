@@ -1,0 +1,12 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedleggings.test.silentgear.tooltip",
+    "plugin": "games.alejandrocoria.mismatchedleggings.test.silentgear.TooltipTestPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "TooltipBaselineMixin",
+        "TooltipInputMixin"
+    ],
+    "injectors": { "defaultRequire": 1 }
+}
