@@ -63,12 +63,54 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Silent Gear Void Ward contracts
+
+The maintained foundation profile exercises the packaged production LEGS query
+extension, with the remaining-effects research candidate disabled:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgVoidVariant=normal -PsgFoundationGraph=alone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgVoidVariant=normal -PsgFoundationGraph=boots -PsgEffectsOrder=before --offline --console=plain
+```
+
+Use `sgEffectsOrder=after` for the other actual sibling transformation order.
+Only a disposable product copy changes priority; original packaged products stay
+unchanged. `sgVoidVariant=compatible` inserts harmless native-tick instructions;
+`permission` and `event` corrupt only the owned Leggings permission/event-argument
+forwarding before final proof. They must decline only Leggings Void Ward
+with one matching diagnostic, preserving native/Boots positives and independent
+Brilliant/defensive readiness. The test plugin never grants readiness. Unit proofs
+also reject destroyed original-result forwarding; a refusal does not restore an
+incoming native value already overwritten by a foreign transformation.
+
+Native Tyrian Steel Void Ward I, paid inverse/duplicate sources, exact native
+push/potions, strict height boundary and two successive qualifying native events
+are checked. Held/idle mixed items, wrong slots, bare/count-two/foreign/malformed,
+suspended/quarantined and no-trait roots contribute nothing; ordinary negatives
+do not disable later positives. A native piece forcibly placed in HEAD retains
+its original all-armor-slot query behavior. Original pushes are witnessed, not
+replayed. Roots/source histories and unrelated effects remain unchanged.
+
+Add `sgFoundationAbsent=true` for quiet optional absence, or
+`'-Pneoforge_version=26.1.2.99'` for the focused floor boundary. Keep variants and
+other feature mutations isolated; run profiles/baselines sequentially. Evidence
+is in `NeoForge/build/reports/<baseline>/sg-foundation-<graph>[-absent][-<order>]-void-<variant>/`
+and matching verification logs/fresh `matrix.ok`. These are controlled server
+event tests, not connected motion/potion or owner gameplay acceptance. The later
+remaining-effects C block owns connected consolidation and complete spike removal.
+
 ## Temporary Silent Gear remaining-effects spike
 
 This is optional feasibility code, not production support or owner acceptance.
 Candidate sources live in root `spikes/silentgear-leggings-remaining`, compiled
 only with `sgRemainingSpike=true`. Ordinary builds remove stale candidate classes;
 the default test config/plugin is inert. Armor product JARs remain unchanged.
+
+The commands below record the **pre-production-A feasibility setup**. A now
+activates production Void Ward independently of the candidate's refusal flag, so
+those candidate-isolation controls are historical, not a current production gate
+or a candidate-only rerun. Use the maintained profile above for A; C must retire
+the entire executable spike after promoting the useful remaining cure controls.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=alone --offline --console=plain
@@ -95,7 +137,9 @@ subtitle errors. No Silent Gear refusal warning is accepted as coexistence.
 Evidence uses `NeoForge/build/reports/<baseline>/sg-state-<graph>-remaining-<order>[-headless]/write/`
 and matching verification child logs. **`probe.ok` is feasibility only**, never
 `matrix.ok`. The private remaining-effects exploration owns results and limits;
-new production guards, quiet-absence acceptance and manual checks are later work.
+The production Void Ward profile above now owns its independent guard and
+quiet-absence checks; cures, connected production acceptance and manual checks
+remain later work. The candidate must not run with production Void Ward tests.
 The bounded spike passed on 2026-11-11: standalone and both current-Boots `.114`
 orders with actual remote rescue, plus focused headless `.99`. Cure cases use
 controlled server item ticks, not a claim of connected cure presentation.

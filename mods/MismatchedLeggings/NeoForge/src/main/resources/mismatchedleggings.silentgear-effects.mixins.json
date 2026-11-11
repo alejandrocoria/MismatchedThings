@@ -15,6 +15,7 @@
         "SilentGearNegateProofMixin",
         "SilentGearSelfRepairMixin",
         "SilentGearSetMixin",
+        "SilentGearVoidWardMixin",
         "SilentGearWielderProofMixin"
     ],
     "injectors": {

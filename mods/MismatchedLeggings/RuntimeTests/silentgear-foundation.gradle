@@ -15,6 +15,13 @@ def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse(
 def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
 def defenseVariant = providers.gradleProperty('sgDefenseVariant').getOrElse('')
+def voidVariant = providers.gradleProperty('sgVoidVariant').getOrElse('')
+if (!(voidVariant in ['', 'normal', 'compatible', 'permission', 'event'])) {
+    throw new GradleException('Unknown SG Void Ward production variant')
+}
+if (voidVariant && (variant || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant || defenseVariant)) {
+    throw new GradleException('Void Ward production controls are isolated from other feature mutations')
+}
 if (!(defenseVariant in ['', 'normal', 'compatible', 'routing', 'fall-query', 'retaliation-query', 'heat-definition', 'callback', 'safety'])) {
     throw new GradleException('Unknown SG defensive production variant')
 }
@@ -37,6 +44,7 @@ if (!(variant in ['', 'repair', 'wear', 'wear-delta', 'compatible']) || !(order 
 if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foundation graph') }
 def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}") + (liveVariant ? "-live-${liveVariant}" : '') + (liveInfusion ? '-infusion' : '') + (brilliantVariant ? "-brilliant-${brilliantVariant}" : '') + (wielderVariant ? "-wielder-${wielderVariant}" : '') + (magnetVariant ? "-magnet-${magnetVariant}" : '')
 if (defenseVariant) { label += "-defense-contract-${defenseVariant}" }
+if (voidVariant) { label += "-void-${voidVariant}" }
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -114,6 +122,7 @@ neoForge.runs.create('sgFoundation') {
     systemProperty('leggings.test.sgWielderVariant', wielderVariant)
     systemProperty('leggings.test.sgMagnetVariant', magnetVariant)
     systemProperty('leggings.test.sgDefenseVariant', defenseVariant)
+    systemProperty('leggings.test.sgVoidVariant', voidVariant)
     systemProperty('leggings.test.boots', (graph == 'boots').toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -130,7 +139,8 @@ tasks.register('verifySgFoundation') {
                     "${project.path}:runSgFoundation", "-Pneoforge_version=${neoforge_version}",
                     "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}",
                     "-PsgEffectsVariant=${variant}", "-PsgEffectsOrder=${order}", "-PsgLiveVariant=${liveVariant}", "-PsgLiveInfusion=${liveInfusion}",
-                    "-PsgBrilliantVariant=${brilliantVariant}", "-PsgWielderVariant=${wielderVariant}", "-PsgMagnetVariant=${magnetVariant}", "-PsgDefenseVariant=${defenseVariant}"]
+                    "-PsgBrilliantVariant=${brilliantVariant}", "-PsgWielderVariant=${wielderVariant}", "-PsgMagnetVariant=${magnetVariant}", "-PsgDefenseVariant=${defenseVariant}",
+                    "-PsgVoidVariant=${voidVariant}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
@@ -152,6 +162,16 @@ tasks.register('verifySgFoundation') {
                 throw new GradleException("Unexpected SG foundation errors: ${log}")
             }
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
+            if (voidVariant && !new File(reports, 'foundation.txt').text.contains(absent
+                    ? 'Void Ward: quiet optional absence' : 'Void Ward production:')) {
+                throw new GradleException('Missing maintained Void Ward event evidence')
+            }
+            if (voidVariant in ['permission', 'event'] && !absent) {
+                if (warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings void ward disabled')) {
+                    throw new GradleException("Unexpected local Void Ward refusal: ${log}")
+                }
+                warnings = []
+            }
             def defenseRefusal = ['routing': 'incoming', 'fall-query': 'bounce recognition', 'retaliation-query': 'retaliation',
                                   'heat-definition': 'incoming trait', 'callback': 'incoming'][defenseVariant]
             if (defenseVariant == 'safety' && !absent) {

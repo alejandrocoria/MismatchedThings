@@ -111,6 +111,14 @@ respect filter/delay negatives and stop new attraction when idle. The executable
 magnet spike is retired. The owner confirmed the complete gameplay checklist on
 2026-11-11, closing the [magnet plan](local-docs/SILENT-GEAR-MAGNET-IMPLEMENTATION.md).
 
+Void Ward now recognizes either valid SG source when mixed leggings are worn in
+LEGS. Silent Gear retains its strict below-world height trigger, repeated rescue,
+upward push and potions; mixed Boots and Leggings contribute to one native rescue
+branch, not one per piece. Held/idle and invalid or suspended roots do not add a
+contribution. The [remaining-effects plan](local-docs/SILENT-GEAR-REMAINING-EFFECTS-IMPLEMENTATION.md)
+tracks controlled server acceptance separately from pending connected/manual
+consolidation. Cure Poison/Wither and source detail tooltips remain later work.
+
 Heat Resistant and Bounce now contribute their selected native incoming-damage
 reductions while mixed leggings are worn, in both orientations. Each source
 trait uses its highest level once. Native damage tags/scales, the common

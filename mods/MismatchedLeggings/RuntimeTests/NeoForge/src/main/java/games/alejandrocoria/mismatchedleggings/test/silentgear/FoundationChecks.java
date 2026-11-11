@@ -133,6 +133,7 @@ public final class FoundationChecks {
         }
         MagnetChecks.run(player, REPORT, absent);
         DefenseChecks.run(player, REPORT, absent);
+        VoidWardChecks.run(player, REPORT, absent);
     }
 
     private static void ordinary(MinecraftServer server, ServerPlayer player) {

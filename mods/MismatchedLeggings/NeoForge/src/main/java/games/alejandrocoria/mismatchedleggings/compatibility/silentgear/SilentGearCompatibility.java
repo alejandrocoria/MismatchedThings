@@ -39,6 +39,7 @@ public final class SilentGearCompatibility {
         TYPES.register(bus);
         SilentGearEffects.initialize(bus);
         SilentGearRecognition.initialize(bus);
+        SilentGearVoidWard.initialize(bus);
         SilentGearWearer.initialize(bus);
         SilentGearMagnet.initialize(bus);
         SilentGearDefense.initialize(bus);
