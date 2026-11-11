@@ -121,77 +121,45 @@ strict native errors/refusal diagnostics, plus explicit native Bounce event and
 next-pre-tick evidence. Foundation setup runs once while the tick driver remains
 alive for the deferred observations; ordinary profiles retain their single-stage run.
 
-## Temporary Silent Gear defensive coexistence probe
+## Silent Gear connected defensive acceptance (defensive block D)
 
-Historical feasibility entry point, retained until the plan's D retirement.
-B's production incoming hooks now supersede its original baseline/call-count
-assumptions: use the maintained defensive profile above for current regression,
-not this candidate command. The observations below record the pre-production spike.
-
-The defensive spike's initial Boots incoming-proof conflict is resolved by a
-local production guard adaptation, not new Leggings production support. It uses the maintained foundation dedicated
-run, shared pinned artifacts and paid Workbench fixtures, never indev JARs.
+**Accepted native limitation:** original SG LEGS have no visible rebound on a
+separate dedicated client (`rise=0`, two native sound requests, one sound-engine
+request). The owner chose to preserve that behavior. The driver observes twenty
+real client ticks after landing and requires mixed/native motion parity, not an
+artificial positive rebound. See the
+[execution record](../local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md#13-block-d-execution-record--2026-11-11).
 
 ```powershell
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgDefenseSpike --offline --console=plain -PsgFoundationGraph=boots -PsgDefenseSpike=full -PsgDefenseOrder=after
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgDefenseClient=true -PsgFoundationGraph=alone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgDefenseClient=true -PsgFoundationGraph=boots --offline --console=plain
 ```
 
-`sgDefenseSpike=off` observes the baseline without injecting candidate hooks;
-`sgFoundationGraph=alone` checks the isolated candidate. `sgDefenseOrder=before`
-and `after` change only the test mixin config (900/1100 around current Boots'
-1000). The plugin records the actual order, final incoming flow and runtime
-readiness; it never grants a proof. Candidate sources are opt-in from root
-`spikes/silentgear-leggings-defense`, excluded and stale-class-cleaned by default.
-The runner stages packaged production JARs unchanged; none may contain research code.
-`full` adds the Bounce query candidate and remaining incoming/event cases;
-`incoming` retains the earlier focused proof probe. In standalone `off`, no
-candidate/sibling Events mixin is needed, so its transformation witness may be
-empty; active/sibling profiles require the actual witness. Native writer/wear
-observers remain opt-in and never authorize or pay an effect.
+This bounded mode reuses the dedicated TCP state driver, pinned artifact cache
+and current packaged products. It runs only `write`, independently of the disk
+removal/reinstallation matrix. Native Crimson Iron/slime-lining LEGS and both
+paid mixed orientations receive actual lava/wall hits and real zombie melee;
+the passive client checks ordinary health/equipment packets and moving attacker.
+Natural landings must match native server/client motion, request the native sound
+with its normal parameters, cancel damage, pay one FEET bill, and preserve LEGS/source history.
+The Boots graph includes mixed FEET with and without an SG source. No test
+manufactures rebound motion or invokes the native deferred queue.
 
-Reports are under `NeoForge/build/reports/<baseline>/sg-foundation-<graph>-defense-<mode>-<order>/`.
-Read `defense-spike.txt` and `defense-flow.txt`: **`probe.ok` means a completed
-observation, not successful coexistence**. There is no production `matrix.ok`.
-Normal profiles require Boots incoming readiness and no SG refusal warning.
-`-PsgDefenseMutation=routing` (incoming/after/boots only, report suffix `-routing`)
-deliberately changes the owned predicate's event forwarding before final proof
-publication: it must refuse incoming, emit exactly one matching warning and
-preserve independent FEET safety. No readiness is forced. The classifier always
-requires the one known native Bonsai recipe error.
-The maintained `verifySgFoundation` gate explicitly rejects research flags.
+Clients are hidden before GLFW creation, muted and have early loader windows
+disabled. No screenshot or owner acceptance is implied. Save/rejoin remains an
+explicit owner check; D adds no saved data or extra persistence matrix.
+Evidence is `NeoForge/build/reports/<baseline>/sg-state-<graph>-defense/write/`
+(`defense-server.txt`, `defense-client.txt`, fresh sample acknowledgments) and
+the matching `build/verification/<baseline>/<label>/matrix.ok`. The driver
+requires successful child exits, no failure markers and strict pinned native
+diagnostics: one server Bonsai parse error and exactly the two known client
+Stone Anvil subtitle errors; no Silent Gear proof refusal is accepted.
 
-On `.114`, native Heat IV/Bounce I acquisition, paid inverse fire/wall positives,
-generic/fall negatives and unchanged state pass. Current Boots' incoming
-reduction now survives both @900 and @1100 candidates; other observed
-Boots guards and one ordinary mixed-FEET fall charge remain intact, including
-during the deliberate incoming-only refusal. The guard follows generated
-operation/capture routing to the native terminal rather than fixing priority.
-The bounded remaining spike now passes too. `full` additionally requires paid
-duplicate/unequal/shared-base/offensive incoming evidence and real registered
-next-pre-tick additive native rebound plus following-tick stability. It observes
-native sound/retaliation, positive/negative scope, native/vanilla/empty/mixed FEET,
-one ordinary mixed bill, a real damage-factor band, destruction versus native
-repairable survival and creative/Unbreakable exemptions. No test drains the
-native queue or invokes its Runnables. See the private defensive exploration
-for exact scope. No client/screenshots or release graph are part of this spike.
-
-For `full`, `-PsgDefenseMutation=fall-query|retaliation-query` declines only that
-local LEGS query contribution; these are independent admission controls, not
-different stock Bounce traits. `compatible` inserts harmless native NOPs.
-`safety` requires Boots, invalidates the owned fall-gate contract before final
-proof and requires exactly one safe-fall warning; even native LEGS peers must
-then leave mixed FEET without Bounce sound, queue or bill. Other profiles allow
-no SG warning. Append `-<mutation>` to the normal report label. Normal runs never
-accept an unexpected refusal as coexistence success.
-
-The joint guard follow-up also passes the focused `.99` `incoming/after/boots`
-profile. The expanded `full/after/boots` profile also passes on `.99`; this is
-focused minimum-loader coverage, not all mutation/order cases on `.99`.
-Standalone off/full, current Boots off/full before/after and the four full
-mutation cases pass on `.114`. Boots' maintained `.114` `defense-foundation`,
-`defense-compatible` and `defense-incoming` variants pass independently through
-`:MismatchedBoots:RuntimeTests:NeoForge:verifySilentGear` with
-`-PsilentGearEffectVariant=<variant>`.
+The executable defensive spike and its candidate sources/configuration have
+been retired. Production foundation controls above remain maintained.
+The owner separately confirmed the complete manual defensive checklist on
+2026-11-11, including prepared-item save/reopen and dedicated rejoin, closing the
+bounded plan. Those manual results are not implied by running this profile.
 
 ## Silent Gear magnet binding and dispatch (magnet blocks A/B)
 

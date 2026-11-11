@@ -122,8 +122,11 @@ and direct-melee attacker knockback. Its native fall bill targets FEET, not
 leggings. With mixed Boots, Boots' existing safety gate and single ordinary
 root-wear payment remain authoritative, even when Bounce comes only from LEGS.
 Duplicates across sources or slots do not add levels. Native-event checks pass
-standalone/with current Boots on `.114` and focused `.99`; connected gameplay
-and owner acceptance remain the final block of the
+standalone/with current Boots on `.114` and focused `.99`. Dedicated TCP checks
+also pass on `.114`, including actual health/retaliation, sound and FEET wear.
+Like original SG leggings, mixed leggings produce fall sound but no visible
+rebound on the separate dedicated client; no movement workaround is added.
+The owner confirmed the gameplay/save/rejoin checklist on 2026-11-11, closing the
 [defensive plan](local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md).
 
 Advanced Netherite pacification is inherited from either source: Iron protects

@@ -11,6 +11,10 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (Boolean.getBoolean("leggings.test.sgDefenseClient")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> games.alejandrocoria.mismatchedleggings.test.silentgear.DefenseLifecycleClient.tick(Minecraft.getInstance()));
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.sgMagnetClient")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> games.alejandrocoria.mismatchedleggings.test.silentgear.MagnetLifecycleClient.tick(Minecraft.getInstance()));
             return;

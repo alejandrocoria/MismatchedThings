@@ -62,7 +62,4 @@ config="leggings-sg-wielder-test.mixins.json"
 config="leggings-sg-magnet-test.mixins.json"
 
 [[mixins]]
-config="leggings-sg-defense-spike.mixins.json"
-
-[[mixins]]
 config="leggings-sg-defense-test.mixins.json"
