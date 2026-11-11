@@ -63,4 +63,3 @@ apply from: '../ice-and-fire-tide.gradle'
 
 apply from: '../silentgear-foundation.gradle'
 apply from: '../silentgear-state.gradle'
-apply from: '../silentgear-remaining-spike.gradle'

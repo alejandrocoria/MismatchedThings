@@ -109,14 +109,15 @@ sequentially; cached catalog artifacts are independent of indev. Evidence is
 `NeoForge/build/reports/<baseline>/sg-foundation-<graph>-cure-<variant>/`
 (add `-absent` after the graph when selected), with `foundation.txt`/`server.ok`
 and matching verification logs/fresh `matrix.ok`. This is controlled server
-acceptance, not C's connected potion synchronization or owner gameplay review.
+acceptance; the [connected profile](#silent-gear-remaining-effects-connected-acceptance)
+below owns potion synchronization. Owner gameplay review remains separate.
 No client or screenshot is needed for these B profiles; item ticking is already
 server-only by the native `inventoryTick(..., ServerLevel, ...)` entry point.
 
 ## Silent Gear Void Ward contracts
 
 The maintained foundation profile exercises the packaged production LEGS query
-extension, with the remaining-effects research candidate disabled:
+extension, without a research candidate:
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgVoidVariant=normal -PsgFoundationGraph=alone --offline --console=plain
@@ -146,54 +147,59 @@ Add `sgFoundationAbsent=true` for quiet optional absence, or
 other feature mutations isolated; run profiles/baselines sequentially. Evidence
 is in `NeoForge/build/reports/<baseline>/sg-foundation-<graph>[-absent][-<order>]-void-<variant>/`
 and matching verification logs/fresh `matrix.ok`. These are controlled server
-event tests, not connected motion/potion or owner gameplay acceptance. The later
-remaining-effects C block owns connected consolidation and complete spike removal.
+event tests, not connected motion/potion or owner gameplay acceptance. Use the
+connected profile below for production synchronization; the executable spike is retired.
 
-## Temporary Silent Gear remaining-effects spike
+## Silent Gear remaining-effects connected acceptance
 
-This is optional feasibility code, not production support or owner acceptance.
-Candidate sources live in root `spikes/silentgear-leggings-remaining`, compiled
-only with `sgRemainingSpike=true`. Ordinary builds remove stale candidate classes;
-the default test config/plugin is inert. Armor product JARs remain unchanged.
-
-The commands below record the **pre-production-A feasibility setup**. A now
-activates production Void Ward independently of the candidate's refusal flag, so
-those candidate-isolation controls are historical, not a current production gate
-or a candidate-only rerun. Use the maintained profile above for A; C must retire
-the entire executable spike after promoting the useful remaining cure controls.
+This bounded maintained profile exercises packaged production Void Ward and
+Cure Poison/Wither over a real dedicated TCP connection, without a research
+candidate. Run the two graphs sequentially using cached catalog artifacts:
 
 ```powershell
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=alone --offline --console=plain
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=boots -PsgRemainingOrder=before --offline --console=plain
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingSpike=true -PsgFoundationGraph=boots -PsgRemainingOrder=after --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingClient=true -PsgFoundationGraph=alone --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgState -PsgRemainingClient=true -PsgFoundationGraph=boots --offline --console=plain
 ```
 
-The bounded existing state driver runs only `write`, with native Tyrian Steel
-LEGS, paid inverses, strict threshold and ownership negatives, candidate-local
-refusal/native-peer preservation, and controlled native/synthetic cure item
-ticks. Cures check both hands/LEGS versus idle/wrong-slot, duplicates/distinct IDs,
-unrelated effects, root preservation, actual server resource reload and a local
-post-callback failure without replay. A passive, hidden-before-creation/muted
-dedicated client observes native and mixed rescue trajectories/potion/equipment
-packets. Both actual sibling orders and Boots' independent final guards are
-checked. The candidate changes only the native Void Ward query result; observers
-never supply movement or drain native queues. Cures do not replay a full gear tick.
+The existing state driver runs only `write`. Native Tyrian Steel LEGS establish
+the rescue baseline before paid inverse mixed outputs; current Boots adds joint
+mixed armor and mixed-FEET-only controls. Consecutive samples settle on real
+ground before ordinary teleport/release. Native callbacks alone supply rescue:
+observers verify exact push parameters, at most one original push per real tick,
+actual rise and synchronized Levitation/Slow Falling, without fixing a total
+rescue count. Both products' independent final guards must be ready.
 
-`sgRemainingHeadless=true` runs only controlled server/reload/failure checks;
-use that bounded mode for the focused `.99` proof/linkage boundary, not another
-connected matrix. The normal native Bonsai error is expected once per server
-load/reload (two here), and connected clients retain the two pinned Stone Anvil
-subtitle errors. No Silent Gear refusal warning is accepted as coexistence.
-Evidence uses `NeoForge/build/reports/<baseline>/sg-state-<graph>-remaining-<order>[-headless]/write/`
-and matching verification child logs. **`probe.ok` is feasibility only**, never
-`matrix.ok`. The private remaining-effects exploration owns results and limits;
-The production profiles above now own independent Void Ward and cure guards,
-controlled server acceptance and quiet-absence checks; connected production
-acceptance and manual checks remain C work. The candidate must not run with
-production remaining-effects tests.
-The bounded spike passed on 2026-11-11: standalone and both current-Boots `.114`
-orders with actual remote rescue, plus focused headless `.99`. Cure cases use
-controlled server item ticks, not a claim of connected cure presentation.
+Nine cure samples establish synthetic native baselines in LEGS and each hand,
+then both paid mixed orientations in those slots. Each sample observes Poison
+and Wither on both peers while idle, their removal by real selected inventory
+ticks, and their reappearance after returning the item to idle. Luck and complete
+root/source data remain unchanged. Per-tick removal cadence must match the native
+baseline; packet coalescing need not expose a one-frame removed effect icon.
+Fixtures add synthetic traits, not stock acquisition recipes.
+
+The client is hidden before GLFW creation and muted, with the early loader window
+disabled. No screenshots, client motion/effect injection or production debug
+commands are used. Controlled proof/failure/reload and focused `.99` evidence
+remain in the foundation profiles above; this profile does not repeat that matrix
+or claim save/rejoin acceptance. One existing Bonsai optional-recipe server error
+and the two pinned Stone Anvil client subtitle errors are expected. No Silent
+Gear refusal warning is accepted.
+
+Evidence lives in `NeoForge/build/reports/<baseline>/sg-state-<graph>-remaining/write/`:
+`remaining-server.txt`, `remaining-client.txt`, full-root sample acknowledgments
+and normal `server.ok`/`client.ok`. Matching verification child logs and fresh
+`matrix.ok` certify only this bounded connected profile, not a release graph.
+
+For owner gameplay checks, copy the generated disposable server world from
+`NeoForge/build/run/26.1.2.114/sg-state-boots-remaining/server/world` and follow
+`remaining-manual.txt` in its report directory. A saved barrel at **5 81 5** holds
+native/paid inverse Ward leggings, synthetic cure leggings and native/mixed Ward
+Boots. Use copies/backups for void trials; Resistance is not void protection.
+Saving/reopening and same-loader dedicated reconnect are separate owner checks,
+not coverage of this single-stage automatic profile. The owner confirmed the full
+remaining-effects gameplay/save/rejoin checklist on 2026-11-11.
+The complete executable remaining-effects spike, old flags and loader shim are
+removed; only private historical findings/reports remain.
 
 ## Silent Gear defensive contracts
 

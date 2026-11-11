@@ -21,7 +21,7 @@ public final class CureTestPlugin implements IMixinConfigPlugin, IExtension {
     static int mutations;
 
     private static boolean enabled() {
-        return !System.getProperty("leggings.test.sgCureVariant", "").isEmpty()
+        return (!System.getProperty("leggings.test.sgCureVariant", "").isEmpty() || Boolean.getBoolean("leggings.test.sgRemainingClient"))
                 && !Boolean.getBoolean("leggings.test.sgFoundationAbsent");
     }
 

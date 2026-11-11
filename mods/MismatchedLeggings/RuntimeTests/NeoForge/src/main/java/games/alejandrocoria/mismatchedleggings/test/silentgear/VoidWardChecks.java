@@ -31,6 +31,7 @@ public final class VoidWardChecks {
     private VoidWardChecks() {}
 
     public static void push(Player player, double x, double y, double z) {
+        RemainingLifecycle.push(player, x, y, z);
         if (player == watched) {
             require(x == 0 && y == 20 && z == 0, "Native Void Ward push parameters changed");
             pushes++;
@@ -42,7 +43,6 @@ public final class VoidWardChecks {
         if (variant.isEmpty()) {
             return;
         }
-        require(!Boolean.getBoolean("leggings.test.sgRemainingSpike"), "Research candidate must not participate in production acceptance");
         var event = new PlayerTickEvent.Pre(player);
         require(SilentGearVoidWard.recognize(true, event, false), "Void Ward lost an original true result");
         if (absent) {

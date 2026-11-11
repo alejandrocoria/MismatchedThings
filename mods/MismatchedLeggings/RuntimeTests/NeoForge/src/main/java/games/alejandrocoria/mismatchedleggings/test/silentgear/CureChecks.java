@@ -56,6 +56,7 @@ public final class CureChecks {
     private CureChecks() {}
 
     public static void removal(LivingEntity actor, Holder<MobEffect> effect) {
+        RemainingLifecycle.removal(actor, effect);
         if (actor != watched) { return; }
         if (effect.equals(MobEffects.POISON)) { poison++; }
         if (effect.equals(MobEffects.WITHER)) { wither++; }
@@ -77,7 +78,6 @@ public final class CureChecks {
     static boolean step(MinecraftServer server, StringBuilder report) throws Exception {
         String variant = System.getProperty("leggings.test.sgCureVariant", "");
         if (variant.isEmpty() || finished) { return true; }
-        require(!Boolean.getBoolean("leggings.test.sgRemainingSpike"), "Research candidate must not supply cure acceptance");
         if (Boolean.getBoolean("leggings.test.sgFoundationAbsent")) {
             report.append("Cures: quiet optional absence; ordinary item ticks unchanged\n");
             finished = true;
