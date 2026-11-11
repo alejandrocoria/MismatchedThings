@@ -62,6 +62,7 @@ import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.requir
 /** Native controls and real paid extraction exercise the packaged production adapter, never the spike. */
 public final class FoundationChecks {
     private static boolean finished;
+    private static boolean started;
     private static boolean magnetChunkPrepared;
     private static final StringBuilder REPORT = new StringBuilder();
 
@@ -81,41 +82,57 @@ public final class FoundationChecks {
             return;
         }
         if (finished || server.getTickCount() < 20) { return; }
-        finished = true;
         try {
-            SkeletonChecks.verify();
-            require(ModList.get().isLoaded("mismatchedboots") == Boolean.getBoolean("leggings.test.boots"), "Wrong sibling graph");
-            boolean absent = Boolean.getBoolean("leggings.test.sgFoundationAbsent");
-            require(ModList.get().isLoaded("silentgear") != absent, "Wrong native graph");
-            var player = player(server);
-            ordinary(server, player);
-            BrilliantChecks.ordinary(player, REPORT);
-            if (!absent && System.getProperty("leggings.test.sgLiveVariant", "").equals("boundary")) {
-                LiveStateChecks.refusal(player, REPORT);
-            } else if (!absent) {
-                numeric(server, player);
-                clocks(server, player);
-                rejection(player);
-                EffectsChecks.run(player, REPORT);
-                if (ModList.get().isLoaded("mismatchedboots")) { sibling(); }
-                LiveStateChecks.run(player, REPORT);
-                BrilliantChecks.run(player, REPORT);
-                WielderChecks.run(player, REPORT);
+            if (!started) {
+                started = true;
+                initial(server);
             }
-            MagnetChecks.run(player, REPORT, absent);
-            DefenseChecks.run(player, REPORT, absent);
+            if (!System.getProperty("leggings.test.sgDefenseVariant", "").isEmpty()
+                    && !Boolean.getBoolean("leggings.test.sgFoundationAbsent") && !DefenseBounceChecks.step(server, REPORT)) {
+                return;
+            }
+            finished = true;
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
+            finished = true;
             SkeletonChecks.failed("server", failure);
         } finally {
-            if (magnetChunkPrepared) {
-                for (int x = -1; x <= 1; x++) {
-                    for (int z = -1; z <= 1; z++) { server.overworld().setChunkForced(x, z, false); }
+            if (finished) {
+                if (magnetChunkPrepared) {
+                    for (int x = -1; x <= 1; x++) {
+                        for (int z = -1; z <= 1; z++) {
+                            server.overworld().setChunkForced(x, z, false);
+                        }
+                    }
                 }
+                server.halt(false);
             }
-            server.halt(false);
         }
+    }
+
+    private static void initial(MinecraftServer server) throws Throwable {
+        SkeletonChecks.verify();
+        require(ModList.get().isLoaded("mismatchedboots") == Boolean.getBoolean("leggings.test.boots"), "Wrong sibling graph");
+        boolean absent = Boolean.getBoolean("leggings.test.sgFoundationAbsent");
+        require(ModList.get().isLoaded("silentgear") != absent, "Wrong native graph");
+        var player = player(server);
+        ordinary(server, player);
+        BrilliantChecks.ordinary(player, REPORT);
+        if (!absent && System.getProperty("leggings.test.sgLiveVariant", "").equals("boundary")) {
+            LiveStateChecks.refusal(player, REPORT);
+        } else if (!absent) {
+            numeric(server, player);
+            clocks(server, player);
+            rejection(player);
+            EffectsChecks.run(player, REPORT);
+            if (ModList.get().isLoaded("mismatchedboots")) { sibling(); }
+            LiveStateChecks.run(player, REPORT);
+            BrilliantChecks.run(player, REPORT);
+            WielderChecks.run(player, REPORT);
+        }
+        MagnetChecks.run(player, REPORT, absent);
+        DefenseChecks.run(player, REPORT, absent);
     }
 
     private static void ordinary(MinecraftServer server, ServerPlayer player) {

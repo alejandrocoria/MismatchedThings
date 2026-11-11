@@ -116,8 +116,15 @@ reductions while mixed leggings are worn, in both orientations. Each source
 trait uses its highest level once. Native damage tags/scales, the common
 post-attacking-tool base and other armor contributions retain their behavior;
 no source history is modified. This does not grant dropped-item fire immunity
-from a single source. Bounce's fall rebound and retaliation remain a separate
-pending scope in the [defensive plan](local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md).
+from a single source. Bounce also contributes its highest level to the native
+fall and retaliation queries: SG still owns the rebound, sound, cancellation
+and direct-melee attacker knockback. Its native fall bill targets FEET, not
+leggings. With mixed Boots, Boots' existing safety gate and single ordinary
+root-wear payment remain authoritative, even when Bounce comes only from LEGS.
+Duplicates across sources or slots do not add levels. Native-event checks pass
+standalone/with current Boots on `.114` and focused `.99`; connected gameplay
+and owner acceptance remain the final block of the
+[defensive plan](local-docs/SILENT-GEAR-DEFENSIVE-EFFECTS-IMPLEMENTATION.md).
 
 Advanced Netherite pacification is inherited from either source: Iron protects
 against unprovoked phantoms, Gold against piglins, Emerald against enderman

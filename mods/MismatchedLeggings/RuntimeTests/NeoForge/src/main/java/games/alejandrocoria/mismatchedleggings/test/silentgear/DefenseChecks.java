@@ -46,7 +46,7 @@ public final class DefenseChecks {
         require(SilentGearDefense.incomingAvailable() != variant.equals("routing"), "Wrong independent incoming readiness");
         require(SilentGearDefense.fallAvailable() != variant.equals("fall-query"), "Wrong independent fall readiness");
         require(SilentGearDefense.retaliationAvailable() != variant.equals("retaliation-query"), "Wrong independent retaliation readiness");
-        require(DefenseTestPlugin.mutations == (List.of("routing", "fall-query", "retaliation-query").contains(variant) ? 1 : 0),
+        require(DefenseTestPlugin.mutations == (List.of("routing", "fall-query", "retaliation-query", "safety").contains(variant) ? 1 : 0),
                 "Missing/unexpected defensive corruption");
         require(ready("gear.trait.effect.NegateDamageTraitEffect", "mismatchedleggings$sgNegateReady"), "Native negate leaf refused");
 
@@ -88,8 +88,7 @@ public final class DefenseChecks {
             hit(player, player.damageSources().fall(), 20);
             var fall = new LivingFallEvent(player, 12, 1);
             NeoForge.EVENT_BUS.post(fall);
-            require(!fall.isCanceled(), "Incoming support unexpectedly enabled mixed Bounce query gameplay");
-            require(SilentGearDefense.retaliationLevel(2, null, true) == 2, "Incoming support changed retaliation level");
+            require(fall.isCanceled() == SilentGearDefense.fallAvailable(), "Mixed Bounce fall does not follow its independent query permission");
             if (!variant.equals("routing")) {
                 var effect = api.admittedEffect(heatTrait);
                 float amount = api.incoming(heatTrait, effect, root.copy(), player, player.damageSources().lava(), 12, 20);
@@ -116,7 +115,7 @@ public final class DefenseChecks {
             }
         }
         report.append("Defense A/B: native Heat IV/slime-lining Bounce I; live exact definitions/common-base leaf; paid inverse/duplicate source admission; ")
-                .append("production incoming active; Bounce fall/retaliation queries remain inert; independent variant=").append(variant)
+                .append("production incoming and Bounce queries active subject to independent permissions; variant=").append(variant)
                 .append("; actual order=").append(DefenseTestPlugin.actualOrder).append('\n');
     }
 
@@ -196,7 +195,8 @@ public final class DefenseChecks {
 
     private static void sibling(ServerPlayer player, ItemStack lined) throws Exception {
         for (String group : List.of("Incoming", "SafeFall", "BounceFall", "Retaliation")) {
-            require(ready("event.GearEvents", "mismatchedboots$sg" + group + "Ready"), "Boots defensive group lost: " + group);
+            boolean expected = !group.equals("SafeFall") || !System.getProperty("leggings.test.sgDefenseVariant", "").equals("safety");
+            require(ready("event.GearEvents", "mismatchedboots$sg" + group + "Ready") == expected, "Unexpected Boots defensive group: " + group);
         }
         var factory = Class.forName("games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory");
         var gear = (GearItem) BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:boots"));
@@ -222,8 +222,9 @@ public final class DefenseChecks {
         var before = plain.copy();
         var fall = new LivingFallEvent(player, 12, 1);
         NeoForge.EVENT_BUS.post(fall);
-        before.setDamageValue(before.getDamageValue() + 3);
-        require(fall.isCanceled() && ItemStack.matches(before, plain), "Native LEGS peer lost Boots' ordinary safe FEET bill");
+        boolean safe = !System.getProperty("leggings.test.sgDefenseVariant", "").equals("safety");
+        before.setDamageValue(before.getDamageValue() + (safe ? 3 : 0));
+        require(fall.isCanceled() == safe && ItemStack.matches(before, plain), "Native LEGS peer bypassed/lost Boots' safe FEET bill");
         player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
         player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
     }

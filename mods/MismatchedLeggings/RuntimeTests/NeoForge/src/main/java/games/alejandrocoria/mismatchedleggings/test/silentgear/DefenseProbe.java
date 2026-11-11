@@ -24,6 +24,7 @@ public final class DefenseProbe {
     }
 
     public static void recalculation(ItemStack stack) {
+        DefenseBounceChecks.recalculation(stack);
         if (stack == calibration || MixedLeggingsStructure.isMixedItem(stack)) {
             throw new AssertionError("Native gear recalculation received a protected defense context");
         }

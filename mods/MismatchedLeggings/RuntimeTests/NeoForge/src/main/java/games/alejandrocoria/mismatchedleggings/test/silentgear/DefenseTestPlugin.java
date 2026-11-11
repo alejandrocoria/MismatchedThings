@@ -73,6 +73,14 @@ public final class DefenseTestPlugin implements IMixinConfigPlugin, IExtension {
         }
         String variant = System.getProperty("leggings.test.sgDefenseVariant", "");
         for (var method : node.methods) {
+            if (variant.equals("safety") && method.name.contains("mismatchedboots$sgFallGate")) {
+                for (var instruction : method.instructions) {
+                    if (instruction instanceof MethodInsnNode getter && getter.name.equals("mismatchedboots$sgSafeFallReady")) {
+                        getter.name = "mismatchedboots$sgIncomingReady";
+                        mutations++;
+                    }
+                }
+            }
             if (variant.equals("compatible") && List.of("onLivingIncomingDamage", "onLivingFall", "onPlayerHurt").contains(method.name)) {
                 method.instructions.insert(new InsnNode(NOP));
             }

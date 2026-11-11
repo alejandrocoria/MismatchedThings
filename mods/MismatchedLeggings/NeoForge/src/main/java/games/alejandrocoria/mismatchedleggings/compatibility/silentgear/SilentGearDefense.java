@@ -5,6 +5,8 @@ import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
@@ -25,6 +27,7 @@ public final class SilentGearDefense {
     private static volatile boolean fallDisabled;
     private static volatile boolean retaliationReady;
     private static volatile boolean retaliationDisabled;
+    private static volatile SilentGearEffectSources bounceSources;
     private static final Set<String> INCOMING_TRAITS = Set.of("silentgear:heat_resistant", "silentgear:bounce");
     private static final Set<String> refusedTraits = new HashSet<>();
 
@@ -49,6 +52,9 @@ public final class SilentGearDefense {
         if (!fallDisabled) {
             try {
                 SilentGearDefenseApi.require("event.GearEvents", "mismatchedleggings$sgBounceFallReady");
+                if (bounceSources == null) {
+                    bounceSources = new SilentGearEffectSources();
+                }
                 fallReady = true;
             } catch (Throwable failure) {
                 disableQuery(false, failure);
@@ -57,6 +63,9 @@ public final class SilentGearDefense {
         if (!retaliationDisabled) {
             try {
                 SilentGearDefenseApi.require("event.GearEvents", "mismatchedleggings$sgRetaliationReady");
+                if (bounceSources == null) {
+                    bounceSources = new SilentGearEffectSources();
+                }
                 retaliationReady = true;
             } catch (Throwable failure) {
                 disableQuery(true, failure);
@@ -134,12 +143,38 @@ public final class SilentGearDefense {
     }
 
     public static int fallLevel(int original, LivingFallEvent event, boolean proof) {
-        // Recognition remains inert until the native Bounce query block is enabled.
-        return original;
+        if (!proof || !fallAvailable() || event.isCanceled() || event.getDistance() <= 0 || !(event.getEntity() instanceof Player)) {
+            return original;
+        }
+        try {
+            return Math.max(original, bounce(event.getEntity()));
+        } catch (Throwable failure) {
+            disableQuery(false, failure);
+            return original;
+        }
     }
 
     public static int retaliationLevel(int original, LivingDamageEvent.Post event, boolean proof) {
-        return original;
+        if (!proof || !retaliationAvailable() || event.getEntity().level().isClientSide() || !(event.getEntity() instanceof Player)) {
+            return original;
+        }
+        try {
+            return Math.max(original, bounce(event.getEntity()));
+        } catch (Throwable failure) {
+            disableQuery(true, failure);
+            return original;
+        }
+    }
+
+    private static int bounce(LivingEntity actor) throws ReflectiveOperationException {
+        ItemStack root = actor.getItemBySlot(EquipmentSlot.LEGS);
+        if (MixedLeggingsStructure.validData(root).isEmpty()) {
+            return 0;
+        }
+        // Native local falls also own client motion/sound. This query is read-only on both sides;
+        // installed Boots alone protects mixed FEET and decides whether that native branch may run.
+        return bounceSources.traits(root).stream().filter(trait -> trait.id().toString().equals("silentgear:bounce"))
+                .mapToInt(SilentGearEffectSources.Trait::level).max().orElse(0);
     }
 
     private static synchronized void refuseTrait(String id, Throwable failure) {

@@ -15,8 +15,11 @@ def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse(
 def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
 def defenseVariant = providers.gradleProperty('sgDefenseVariant').getOrElse('')
-if (!(defenseVariant in ['', 'normal', 'compatible', 'routing', 'fall-query', 'retaliation-query', 'heat-definition', 'callback'])) {
+if (!(defenseVariant in ['', 'normal', 'compatible', 'routing', 'fall-query', 'retaliation-query', 'heat-definition', 'callback', 'safety'])) {
     throw new GradleException('Unknown SG defensive production variant')
+}
+if (defenseVariant == 'safety' && graph != 'boots') {
+    throw new GradleException('The defensive safety control requires current Boots')
 }
 if (defenseVariant && (variant || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant)) {
     throw new GradleException('Defensive production controls are isolated from other feature mutations')
@@ -157,6 +160,10 @@ tasks.register('verifySgFoundation') {
                 throw new GradleException("Silent Gear foundation failed: ${log}")
             }
             if (wielderVariant && !absent && !new File(reports, 'wearer-manual.txt').isFile()) { throw new GradleException('Missing verified native wearer commands') }
+            if (defenseVariant && !absent && (!new File(reports, 'foundation.txt').text.contains('Production Bounce C:')
+                    || !new File(reports, 'foundation.txt').text.contains('actual next server-pre-tick additive push'))) {
+                throw new GradleException('Missing maintained Bounce event/real scheduler evidence')
+            }
             def errors = log.text.readLines().findAll { it.contains('/ERROR]') }
             if (absent ? !errors.isEmpty() : errors.size() != 1
                     || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
@@ -166,7 +173,12 @@ tasks.register('verifySgFoundation') {
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
             def defenseRefusal = ['routing': 'incoming', 'fall-query': 'bounce recognition', 'retaliation-query': 'retaliation',
                                   'heat-definition': 'incoming trait', 'callback': 'incoming'][defenseVariant]
-            if (defenseRefusal && !absent) {
+            if (defenseVariant == 'safety' && !absent) {
+                if (warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed safe fall disabled')) {
+                    throw new GradleException("Unexpected Boots safe-FEET refusal: ${log}")
+                }
+                warnings = []
+            } else if (defenseRefusal && !absent) {
                 if (warnings.size() != 1 || !warnings.first().contains("Silent Gear mixed leggings ${defenseRefusal} disabled")) {
                     throw new GradleException("Unexpected SG defensive refusal: ${log}")
                 }

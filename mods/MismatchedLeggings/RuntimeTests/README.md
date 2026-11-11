@@ -66,9 +66,8 @@ source removal/reinstallation, and both products together with optional viewers.
 ## Silent Gear defensive contracts
 
 The maintained foundation profile verifies production Heat Resistant/Bounce
-incoming reductions and their independent contracts. Bounce's fall/retaliation
-query contributions remain inert until their separate implementation block.
-No research candidate is loaded.
+incoming reductions and Bounce's native fall/retaliation query contributions,
+with independent contracts. No research candidate is loaded.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgDefenseVariant=normal -PsgFoundationGraph=boots -PsgEffectsOrder=after --offline --console=plain
@@ -86,6 +85,9 @@ its single ordinary mixed-FEET fall bill. The witness never grants readiness.
 and the independent query contracts even after that data is restored. `callback`
 fails the second selected invocation: the piece must publish no partial result,
 revoke incoming availability and never retry the hit.
+`safety` requires current Boots and corrupts only its owned fall-gate permission
+route before final proof. Boots must refuse safe fall wear, and mixed FEET must
+receive no Bounce scheduling/sound/cancellation/payment, even from native peers.
 
 Native Crimson Iron Heat IV/slime-lining Bounce I, current definition admission,
 finite common-base math, paid inverses/duplicate source selection and unchanged
@@ -101,10 +103,23 @@ The focused floor uses `'-Pneoforge_version=26.1.2.99'`; detailed controls use
 `.114`. Research flags and other feature mutations cannot be combined with this
 profile. No connected client, screenshot or manual acceptance is implied.
 
+The same maintained run now spans real server ticks. Native Bounce controls
+cover both mixed orientations, duplicate sources/slots, a higher native peer,
+native/vanilla/empty/mixed FEET, one bill and a real durability-factor band,
+ordinary mixed destruction versus native repairable survival, Moonwalker-before-
+cost and creative/Unbreakable. Native sound parameters, actual melee retaliation
+and projectile/environment/non-player negatives are observed. Negative initial
+Y queues exactly one native action; the next registered pre-tick adds its
+captured push to changed current motion, and the following tick is stable with
+no second charge. Tests never drain the queue or execute its Runnables. Incoming
+refusal and each query refusal must leave the other permitted groups functional.
+
 Evidence uses `NeoForge/build/reports/<baseline>/sg-foundation-<graph>[-absent][-<order>]-defense-contract-<variant>/foundation.txt`
 and the matching `build/verification/<baseline>/<label>/matrix.ok`. The ordinary
 foundation entry point also checks successful child exit, fresh markers and
-strict native errors/refusal diagnostics.
+strict native errors/refusal diagnostics, plus explicit native Bounce event and
+next-pre-tick evidence. Foundation setup runs once while the tick driver remains
+alive for the deferred observations; ordinary profiles retain their single-stage run.
 
 ## Temporary Silent Gear defensive coexistence probe
 
