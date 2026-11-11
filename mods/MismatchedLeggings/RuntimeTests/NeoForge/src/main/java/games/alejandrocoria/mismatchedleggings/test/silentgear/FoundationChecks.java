@@ -103,6 +103,7 @@ public final class FoundationChecks {
                 WielderChecks.run(player, REPORT);
             }
             MagnetChecks.run(player, REPORT, absent);
+            DefenseChecks.run(player, REPORT, absent);
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), REPORT);
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {

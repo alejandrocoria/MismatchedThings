@@ -63,6 +63,39 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Silent Gear defensive contracts
+
+The maintained foundation profile verifies the inert production contracts for
+Heat Resistant/Bounce. It does **not** enable the mixed LEGS gameplay planned
+for the following implementation blocks. No research candidate is loaded.
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifySgFoundation -PsgDefenseVariant=normal -PsgFoundationGraph=boots -PsgEffectsOrder=after --offline --console=plain
+```
+
+Use `sgFoundationGraph=alone|boots`, and `sgEffectsOrder=before|after` to check
+both actual application orders with current built Boots. The normal product JAR
+is unchanged; only a disposable staged copy receives the alternate test priority.
+`sgDefenseVariant=compatible` adds inert instructions before final proof;
+`routing`, `fall-query` and `retaliation-query` corrupt only the corresponding
+owned route before final proof. Each must refuse exactly its own group with one
+matching diagnostic, preserving the other groups, Boots' incoming reduction and
+its single ordinary mixed-FEET fall bill. The witness never grants readiness.
+
+Native Crimson Iron Heat IV/slime-lining Bounce I, current definition admission,
+finite common-base math, paid inverses/duplicate source selection and unchanged
+root history are checked. Mixed event routes must remain inert in this block;
+the selected direct binding is exercised only by the test. Add
+`-PsgFoundationAbsent=true` to the normal variant for quiet optional absence.
+The focused floor uses `'-Pneoforge_version=26.1.2.99'`; detailed controls use
+`.114`. Research flags and other feature mutations cannot be combined with this
+profile. No connected client, screenshot or manual acceptance is implied.
+
+Evidence uses `NeoForge/build/reports/<baseline>/sg-foundation-<graph>[-absent][-<order>]-defense-contract-<variant>/foundation.txt`
+and the matching `build/verification/<baseline>/<label>/matrix.ok`. The ordinary
+foundation entry point also checks successful child exit, fresh markers and
+strict native errors/refusal diagnostics.
+
 ## Temporary Silent Gear defensive coexistence probe
 
 The defensive spike's initial Boots incoming-proof conflict is resolved by a

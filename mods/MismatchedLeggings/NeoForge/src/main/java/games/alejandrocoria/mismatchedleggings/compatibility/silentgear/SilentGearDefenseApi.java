@@ -1,0 +1,125 @@
+package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
+
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Set;
+
+/** Optional selected read-only effects; definitions and receivers are re-admitted for every hit. */
+public final class SilentGearDefenseApi {
+    private final Class<?> negate;
+    private final Class<?> fireproof;
+    private final MethodHandle definition;
+    private final MethodHandle effects;
+    private final MethodHandle id;
+    private final MethodHandle level;
+    private final MethodHandle incoming;
+    private final Field tag;
+    private final Field scale;
+    private final SilentGearEffectSources sources = new SilentGearEffectSources();
+
+    public SilentGearDefenseApi() throws ReflectiveOperationException {
+        negate = nativeClass("gear.trait.effect.NegateDamageTraitEffect");
+        fireproof = nativeClass("gear.trait.effect.FireproofTraitEffect");
+        Class<?> instance = nativeClass("api.traits.TraitInstance");
+        Class<?> trait = nativeClass("gear.trait.Trait");
+        var lookup = MethodHandles.publicLookup();
+        definition = lookup.findVirtual(instance, "getTrait", MethodType.methodType(trait));
+        effects = lookup.findVirtual(trait, "getEffects", MethodType.methodType(List.class));
+        id = lookup.findVirtual(instance, "getTraitId", MethodType.methodType(Identifier.class));
+        level = lookup.findVirtual(instance, "getLevel", MethodType.methodType(int.class));
+        incoming = lookup.findVirtual(negate, "onEntityIncomingDamage", MethodType.methodType(float.class,
+                                                                                              ItemStack.class,
+                                                                                              int.class,
+                                                                                              LivingEntity.class,
+                                                                                              DamageSource.class,
+                                                                                              float.class,
+                                                                                              float.class));
+        tag = field(negate, "damageType");
+        scale = field(negate, "negatedDamageScale");
+    }
+
+    List<SilentGearEffectSources.Trait> traits(ItemStack root) throws ReflectiveOperationException {
+        return sources.traits(root);
+    }
+
+    public Object admittedEffect(Object instance) throws Throwable {
+        String name = id.invoke(instance).toString();
+        if (!Set.of("silentgear:heat_resistant", "silentgear:bounce").contains(name)) {
+            throw new IllegalArgumentException("Unaudited defensive trait");
+        }
+
+        var list = (List<?>) effects.invoke(definition.invoke(instance));
+        Object selected = null;
+        int companions = 0;
+        for (var effect : list) {
+            if (effect.getClass() == negate && selected == null) {
+                selected = effect;
+            } else if (name.equals("silentgear:heat_resistant") && effect.getClass() == fireproof && companions++ == 0) {
+                // The known companion is admitted, never dispatched during a hit.
+            } else {
+                throw new IllegalStateException("Changed defensive effect count/class");
+            }
+        }
+        if (selected == null || name.equals("silentgear:heat_resistant") && companions != 1
+                || !(tag.get(selected) instanceof TagKey<?> key) || !key.registry().equals(Registries.DAMAGE_TYPE)
+                || !parameters(scale.getFloat(selected), (int) level.invoke(instance))) {
+            throw new IllegalStateException("Unsupported defensive effect parameters");
+        }
+
+        return selected;
+    }
+
+    public float incoming(Object instance,
+                          Object effect,
+                          ItemStack context,
+                          LivingEntity actor,
+                          DamageSource source,
+                          float current,
+                          float base) throws Throwable {
+        require("gear.trait.effect.NegateDamageTraitEffect", "mismatchedleggings$sgNegateReady");
+        require("event.GearEvents", "mismatchedleggings$sgIncomingReady");
+        validate(instance, effect, current, base);
+        return (float) incoming.invoke(effect, context, (int) level.invoke(instance), actor, source, current, base);
+    }
+
+    /** Admission of the entire piece precedes its first native call, including derived arithmetic. */
+    public void validate(Object instance, Object effect, float current, float base) throws Throwable {
+        if (effect != admittedEffect(instance) || !Float.isFinite(current) || !Float.isFinite(base) || current < 0 || base < 0
+                || !Float.isFinite(base * scale.getFloat(effect) * (int) level.invoke(instance))) {
+            throw new IllegalArgumentException("Stale effect/unsupported damage");
+        }
+    }
+
+    static boolean parameters(float scale, int level) {
+        return Float.isFinite(scale) && scale >= 0 && level > 0 && level <= Byte.MAX_VALUE && Float.isFinite(scale * level);
+    }
+
+    public static void require(String owner, String getter) throws Throwable {
+        Class<?> type = nativeClass(owner);
+        if (!(boolean) MethodHandles.privateLookupIn(type, MethodHandles.lookup())
+                                    .findStatic(type, getter, MethodType.methodType(boolean.class))
+                                    .invoke()) {
+            throw new IllegalStateException("Final defensive proof unavailable: " + getter);
+        }
+    }
+
+    private static Field field(Class<?> type, String name) throws NoSuchFieldException {
+        var field = type.getDeclaredField(name);
+        field.setAccessible(true);
+        return field;
+    }
+
+    private static Class<?> nativeClass(String name) throws ClassNotFoundException {
+        return Class.forName("net.silentchaos512.gear." + name);
+    }
+}

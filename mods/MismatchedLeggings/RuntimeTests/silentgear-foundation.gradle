@@ -14,6 +14,13 @@ def liveInfusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean
 def brilliantVariant = providers.gradleProperty('sgBrilliantVariant').getOrElse('')
 def wielderVariant = providers.gradleProperty('sgWielderVariant').getOrElse('')
 def magnetVariant = providers.gradleProperty('sgMagnetVariant').getOrElse('')
+def defenseVariant = providers.gradleProperty('sgDefenseVariant').getOrElse('')
+if (!(defenseVariant in ['', 'normal', 'compatible', 'routing', 'fall-query', 'retaliation-query'])) {
+    throw new GradleException('Unknown SG defensive production variant')
+}
+if (defenseVariant && (variant || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant)) {
+    throw new GradleException('Defensive production controls are isolated from other feature mutations')
+}
 def defenseSpike = providers.gradleProperty('sgDefenseSpike').getOrElse('')
 def defenseOrder = providers.gradleProperty('sgDefenseOrder').getOrElse('before')
 def defenseMutation = providers.gradleProperty('sgDefenseMutation').getOrElse('')
@@ -24,7 +31,7 @@ if (!(defenseMutation in ['', 'routing', 'safety', 'fall-query', 'retaliation-qu
         || defenseMutation == 'safety' && graph != 'boots') {
     throw new GradleException('Invalid defensive spike mutation scope')
 }
-if (defenseSpike && (absent || variant || order != 'default' || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant)) {
+if (defenseSpike && (absent || variant || order != 'default' || liveVariant || liveInfusion || brilliantVariant || wielderVariant || magnetVariant || defenseVariant)) {
     throw new GradleException('The defensive spike is isolated from other foundation variants')
 }
 if (!(magnetVariant in ['', 'normal', 'compatible', 'callback', 'proof', 'definition', 'late'])) { throw new GradleException('Unknown SG magnet variant') }
@@ -41,6 +48,7 @@ if (!(graph in ['alone', 'boots'])) { throw new GradleException('Unknown SG foun
 def label = "sg-foundation-${graph}" + (absent ? '-absent' : '') + (variant ? "-${variant}" : '') + (order == 'default' ? '' : "-${order}") + (liveVariant ? "-live-${liveVariant}" : '') + (liveInfusion ? '-infusion' : '') + (brilliantVariant ? "-brilliant-${brilliantVariant}" : '') + (wielderVariant ? "-wielder-${wielderVariant}" : '') + (magnetVariant ? "-magnet-${magnetVariant}" : '')
 if (defenseSpike) { label += "-defense-${defenseSpike}-${defenseOrder}" }
 if (defenseMutation) { label += "-${defenseMutation}" }
+if (defenseVariant) { label += "-defense-contract-${defenseVariant}" }
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -117,6 +125,7 @@ neoForge.runs.create('sgFoundation') {
     systemProperty('leggings.test.sgBrilliantVariant', brilliantVariant)
     systemProperty('leggings.test.sgWielderVariant', wielderVariant)
     systemProperty('leggings.test.sgMagnetVariant', magnetVariant)
+    systemProperty('leggings.test.sgDefenseVariant', defenseVariant)
     systemProperty('leggings.test.sgDefenseSpike', defenseSpike)
     systemProperty('leggings.test.sgDefenseOrder', defenseOrder)
     systemProperty('leggings.test.sgDefenseMutation', defenseMutation)
@@ -137,7 +146,7 @@ tasks.register('verifySgFoundation') {
                     "${project.path}:runSgFoundation", "-Pneoforge_version=${neoforge_version}",
                     "-PsgFoundationGraph=${graph}", "-PsgFoundationAbsent=${absent}",
                     "-PsgEffectsVariant=${variant}", "-PsgEffectsOrder=${order}", "-PsgLiveVariant=${liveVariant}", "-PsgLiveInfusion=${liveInfusion}",
-                    "-PsgBrilliantVariant=${brilliantVariant}", "-PsgWielderVariant=${wielderVariant}", "-PsgMagnetVariant=${magnetVariant}"]
+                    "-PsgBrilliantVariant=${brilliantVariant}", "-PsgWielderVariant=${wielderVariant}", "-PsgMagnetVariant=${magnetVariant}", "-PsgDefenseVariant=${defenseVariant}"]
         if (gradle.startParameter.offline) { args.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()
@@ -155,6 +164,13 @@ tasks.register('verifySgFoundation') {
                 throw new GradleException("Unexpected SG foundation errors: ${log}")
             }
             def warnings = log.text.readLines().findAll { it.contains('WARN') && it.contains('Silent Gear') }
+            def defenseRefusal = ['routing': 'incoming', 'fall-query': 'bounce recognition', 'retaliation-query': 'retaliation'][defenseVariant]
+            if (defenseRefusal && !absent) {
+                if (warnings.size() != 1 || !warnings.first().contains("Silent Gear mixed leggings ${defenseRefusal} disabled")) {
+                    throw new GradleException("Unexpected SG defensive refusal: ${log}")
+                }
+                warnings = [] // The selected refusal was checked exactly; no unrelated warning was accepted.
+            }
             def refused = variant == 'wear-delta' ? 'wear' : variant
             if (magnetVariant in ['callback', 'proof', 'definition', 'late'] && !absent ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings magnet disabled') : wielderVariant in ['type', 'trait', 'callback', 'potion', 'definition', 'actor'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings wielder disabled') : brilliantVariant in ['callback', 'proof'] ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings brilliant disabled') : liveVariant ? warnings.size() != 1 || !warnings.first().contains('Silent Gear mixed leggings live state disabled') : refused in ['repair', 'wear'] ? warnings.size() != 1
                     || !warnings.first().contains("Silent Gear mixed leggings ${refused} disabled") : !warnings.isEmpty()) {
