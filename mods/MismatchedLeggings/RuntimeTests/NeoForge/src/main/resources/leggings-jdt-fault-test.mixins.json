@@ -1,0 +1,7 @@
+{
+  "required": false,
+  "package": "games.alejandrocoria.mismatchedleggings.test.mixin",
+  "plugin": "games.alejandrocoria.mismatchedleggings.test.JustDireFaultPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["JustDireFaultMixin"]
+}

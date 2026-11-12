@@ -2,6 +2,8 @@ package games.alejandrocoria.mismatchedleggings.compatibility.silentgear;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireAttributeProjections;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireAttributes;
 import games.alejandrocoria.mismatchedleggings.composition.NeoForgeCompositionAttributes;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
@@ -88,6 +90,9 @@ public final class SilentGearLiveState {
         if (!next.state().equals(root.get(SilentGearCompatibility.state()))) {
             root.set(SilentGearCompatibility.state(), next.state());
         }
+        if (next.justDire() != null) {
+            root.set(JustDireAttributes.projections(), next.justDire());
+        }
     }
 
     private static Prepared calculate(ItemStack root, MixedLeggingsData data, SilentGearState old,
@@ -115,15 +120,19 @@ public final class SilentGearLiveState {
         boolean overridden = old.armorOverridden() || !SilentGearState.Projection.capture(current).equals(old.armorProjection());
         var attributes = current;
         var projection = old.armorProjection();
+        JustDireAttributeProjections justDire = null;
         if (refresh && dynamic && !overridden) {
             var first = nativeApi.attributes(left, root, leftLane, a.dynamic());
             var second = nativeApi.attributes(right, root, rightLane, b.dynamic());
             var calculated = AttributeMerger.merge(first, second, id -> old.armorPolicy()).primary();
+            justDire = JustDireAttributes.withSourceArmor(
+                    root, data, old.armorPolicy(), first, second);
+            if (justDire != null) { calculated = justDire.states().getFirst(); }
             projection = SilentGearState.Projection.capture(calculated);
             attributes = replace(current, calculated);
         }
         var state = new SilentGearState(leftLane, rightLane, old.armorPolicy(), projection, overridden, sample);
-        return new Prepared(attributes, state);
+        return new Prepared(attributes, state, justDire);
     }
 
     private static boolean phaseChanged(Optional<SilentGearState.Oxidation> before, Optional<SilentGearState.Oxidation> after) {
@@ -171,7 +180,10 @@ public final class SilentGearLiveState {
         return api;
     }
 
-    record Prepared(ItemAttributeModifiers attributes, SilentGearState state) {}
+    record Prepared(ItemAttributeModifiers attributes, SilentGearState state,
+                    JustDireAttributeProjections justDire) {
+        Prepared(ItemAttributeModifiers attributes, SilentGearState state) { this(attributes, state, null); }
+    }
     private record Profile(boolean dynamic, String inputs) {}
 
     private static final class Native {

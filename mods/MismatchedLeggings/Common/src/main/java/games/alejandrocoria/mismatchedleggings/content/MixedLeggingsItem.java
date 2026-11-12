@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.content;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireComposition;
 import games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture.MysticalAugmentsCompatibility;
 import games.alejandrocoria.mismatchedleggings.interaction.LeggingsRepair;
 import games.alejandrocoria.mismatchedleggings.tooltip.MixedLeggingsTooltipFormatter;
@@ -28,6 +29,9 @@ public class MixedLeggingsItem extends Item {
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
         super.inventoryTick(stack, level, entity, slot);
         MysticalAugmentsCompatibility.tick(stack, level, entity, slot);
+        if (slot == EquipmentSlot.LEGS && entity instanceof Player player) {
+            JustDireComposition.INSTANCE.wornTick(player);
+        }
     }
 
     /** Loader-local eligibility, including the native combine-repair veto on NeoForge. */

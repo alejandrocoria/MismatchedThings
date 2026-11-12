@@ -97,6 +97,54 @@ This is foundation A only, not acceptance for movement, live powered armor/Phase
 native UI/input, tooltip/bar presentation or Decoy execution. It is not a full
 loader-floor, coexistence or release-graph matrix.
 
+## Just Dire Things passives and live attributes
+
+Foundation B extends the same maintained JDT profile with native movement,
+policy-aware live armor/Phase and the narrow shared armor boundary with SG:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*JustDire*' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtPassives=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtPassives=true -PleggingsJdtFault=movement --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtPassives=true -PleggingsJdtFault=attributes --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtPassives=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtBoots=true --offline --console=plain
+```
+
+Native JDT, SG and Silent Lib come from the shared catalog/cache. Optional Boots
+is the current ordinary packaged artifact, not a published release-graph fixture.
+The six JDT unit cases cover local argument flow, compatible additions and denied
+seams. Dedicated checks retain foundation A and add native movement on all four
+tiers, both orientations/unequal/duplicate roots, root versus historical flags,
+range bounds, free empty-FE motion and native environmental/off/config predicates.
+Physical armor and Phase are compared with native source composition at
+0/49/50/49,999/50,000 FE, with explicit Phase policies, charged creation/depletion,
+config-off creation/restore and real worn attribute refresh without stack edits.
+A breakable glass deny-tag fixture distinguishes native tag exclusion from
+unbreakable-block/floor collision controls. SG's paid inverse roots exercise live
+damage/oxidation, changed FE and a shared-armor override; no full SG matrix runs.
+
+The connected driver starts an independent dedicated server and hidden-before-
+GLFW, muted client, with the early loader window disabled. Ordinary game packets
+carry paid roots and worn attributes through eight server-controlled FE/global/
+Phase-toggle/orientation transitions. Client controls measure one native movement
+callback and actual Phase collision/lightmap/block-overlay consumers; the Boots
+variant also retains its independent FEET Step Assist. Files only acknowledge
+observations, never replace item or attribute packets. No screenshots or manual
+fixture world are generated.
+
+Dedicated reports are `NeoForge/build/reports/<baseline>/jdt-passives/` (fault
+variants append `-movement`/`-attributes`), requiring the ordinary server success
+plus fresh movement/Phase/armor/shared-armor summaries. Each fault requires its
+own `fault.txt`, exactly one bounded refusal and independent healthy behavior.
+Connected reports are `jdt-connected[-boots]/`, with eight `case-<n>.ok` markers,
+`server.ok`, `client.ok`, `connected.txt` and no failure markers. The driver records
+logs and `connected.ok` under `NeoForge/build/verification/<baseline>/`.
+Run all profiles sequentially and restore `.114` packaging after the floor check.
+This does not implement the native settings screen, input bindings, root
+tooltip/bar presentation, Decoy, Lava Repair or FE-backed armor wear.
+
 ## Silent Gear source tooltip acceptance
 
 The bounded maintained profile exercises the packaged production source appender,

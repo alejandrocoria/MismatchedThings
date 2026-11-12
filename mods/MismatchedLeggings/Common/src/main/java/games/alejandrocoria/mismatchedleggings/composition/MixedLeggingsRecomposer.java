@@ -67,6 +67,7 @@ public final class MixedLeggingsRecomposer {
         RogdoriumInfusionService.INSTANCE.preserveState(root, output);
         var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
         JustDireComposition.INSTANCE.prepare(root, finalized, data);
+        JustDireComposition.INSTANCE.prepareAttributes(root, finalized, data, rules);
         SilentGearComposition.INSTANCE.prepare(root, finalized, data, rules);
         MixedLeggingsStructure.apply(finalized, data);
         return finalized;

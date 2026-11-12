@@ -67,6 +67,10 @@ tasks.named('test', Test) {
             .tasks.named('jar').flatMap { it.archiveFile }.get().asFile.absolutePath
     def artifacts = project(':MismatchedThings').testModArtifacts
     def silentGear = 'silent-gear-26.1.2-neoforge-4.2.3.jar'
+    def justDire = 'justdirethings-1.6.11.jar'
+    inputs.file(providers.provider { artifacts.resolve('NeoForge', justDire) })
+            .withPropertyName('justDireGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
+    systemProperty 'mismatchedleggings.test.jdtJar', artifacts.path('NeoForge', justDire).absolutePath
     inputs.file(providers.provider { artifacts.resolve('NeoForge', silentGear) })
             .withPropertyName('silentGearLiveGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.sgLiveJar', artifacts.path('NeoForge', silentGear).absolutePath

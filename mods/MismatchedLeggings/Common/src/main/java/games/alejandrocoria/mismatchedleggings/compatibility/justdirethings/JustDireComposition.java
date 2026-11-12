@@ -1,8 +1,10 @@
 package games.alejandrocoria.mismatchedleggings.compatibility.justdirethings;
 
+import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
 import games.alejandrocoria.mismatchedleggings.interaction.LeggingsSmithing;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
@@ -14,6 +16,12 @@ public interface JustDireComposition {
     JustDireComposition INSTANCE = ServiceLoader.load(JustDireComposition.class).findFirst().orElse(new JustDireComposition() {});
 
     default void prepare(@Nullable ItemStack previous, ItemStack output, MixedLeggingsData data) {
+    }
+
+    default void prepareAttributes(@Nullable ItemStack previous, ItemStack output, MixedLeggingsData data, CompositionRules rules) {
+    }
+
+    default void wornTick(Player player) {
     }
 
     default SmithingDecision smithing(ServerLevel level, ItemStack template, ItemStack root, ItemStack addition) {

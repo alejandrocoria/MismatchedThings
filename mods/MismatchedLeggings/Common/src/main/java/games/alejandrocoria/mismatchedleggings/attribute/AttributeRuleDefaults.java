@@ -70,6 +70,7 @@ public final class AttributeRuleDefaults {
         put(rules, "neoforge", "nametag_distance", AttributePolicy.AVERAGE);
         put(rules, "neoforge", "creative_flight", AttributePolicy.SEPARATE);
         put(rules, "silentgear", "magic_armor", AttributePolicy.AVERAGE);
+        put(rules, "justdirethings", "phase", AttributePolicy.MAXIMUM);
         return Collections.unmodifiableMap(rules);
     }
 

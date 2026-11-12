@@ -11,6 +11,9 @@ displayName="Leggings skeleton tests"
 config="leggings-test.mixins.json"
 
 [[mixins]]
+config="leggings-jdt-fault-test.mixins.json"
+
+[[mixins]]
 config="leggings-allthemodium-test.mixins.json"
 
 [[mixins]]

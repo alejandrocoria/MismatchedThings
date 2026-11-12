@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings.compatibility.justdirethings;
 
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
+import games.alejandrocoria.mismatchedleggings.config.CompositionRules;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
@@ -10,6 +11,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -66,6 +68,17 @@ public final class JustDireState implements JustDireComposition {
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             LeggingsContent.LOG.warn("Could not bind Just Dire Things leggings upgrades; root installation disabled", failure);
         }
+    }
+
+    @Override
+    public void prepareAttributes(@Nullable ItemStack previous, ItemStack output, MixedLeggingsData data,
+                                  CompositionRules rules) {
+        JustDireAttributes.prepare(previous, output, data, rules.attributes());
+    }
+
+    @Override
+    public void wornTick(Player player) {
+        JustDireAbilities.movement(player);
     }
 
     @Override

@@ -45,6 +45,12 @@ config="mismatchedleggings.iceandfire-tide.mixins.json"
 [[mixins]]
 config="mismatchedleggings.silentgear-effects.mixins.json"
 
+[[mixins]]
+config="mismatchedleggings.justdirethings-attributes.mixins.json"
+
+[[mixins]]
+config="mismatchedleggings.justdirethings-movement.mixins.json"
+
 [[mods]]
 modId="${mod_id}"
 version="${version}"

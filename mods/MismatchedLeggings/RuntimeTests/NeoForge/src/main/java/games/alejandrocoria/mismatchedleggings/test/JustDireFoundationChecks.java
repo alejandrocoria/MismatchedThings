@@ -50,7 +50,8 @@ final class JustDireFoundationChecks {
         try {
             SkeletonChecks.verify();
             boolean absent = Boolean.getBoolean("leggings.test.jdtAbsent");
-            require(ModList.get().isLoaded("justdirethings") != absent && !ModList.get().isLoaded("mismatchedboots"), "Wrong JDT foundation graph");
+            require(ModList.get().isLoaded("justdirethings") != absent
+                    && ModList.get().isLoaded("mismatchedboots") == Boolean.getBoolean("leggings.test.jdtBoots"), "Wrong JDT foundation graph");
             var player = RepairFixtures.player(server);
             if (absent) {
                 var root = MixedLeggingsFactory.createPair(new ItemStack(Items.IRON_LEGGINGS), new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
@@ -61,6 +62,15 @@ final class JustDireFoundationChecks {
                 preservation(server);
                 smithing(server, player);
                 malformed();
+                if (Boolean.getBoolean("leggings.test.jdtPassives")) {
+                    if (!System.getProperty("leggings.test.jdtFault", "").isEmpty()) { JustDirePassiveChecks.fault(player); }
+                    else {
+                        JustDirePassiveChecks.movement(player, false);
+                        JustDirePassiveChecks.phase(player);
+                        JustDirePassiveChecks.armor(player);
+                        games.alejandrocoria.mismatchedleggings.test.silentgear.JustDireArmorChecks.run(player);
+                    }
+                }
             }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "foundation.txt"), absent
                     ? "Quiet optional absence and ordinary packaged composition passed\n"

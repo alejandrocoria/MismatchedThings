@@ -109,6 +109,7 @@ public final class MixedLeggingsFactory {
         RogdoriumInfusionService.INSTANCE.initializeCreation(output, data.left().source(), data.right().source());
         var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
         JustDireComposition.INSTANCE.prepare(null, finalized, data);
+        JustDireComposition.INSTANCE.prepareAttributes(null, finalized, data, rules);
         SilentGearComposition.INSTANCE.prepare(null, finalized, data, rules);
         // Structural installation is last and strictly validates the complete native stack.
         MixedLeggingsStructure.apply(finalized, data);
