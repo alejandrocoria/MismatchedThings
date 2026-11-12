@@ -1,0 +1,81 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+def leggings = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+def things = project(':MismatchedThings:NeoForge')
+[things, boots, leggings].each { evaluationDependsOn(it.path) }
+def withBoots = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
+def nativeJar = providers.provider {
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar')
+}
+dependencies {
+    compileOnly files(nativeJar, leggings.tasks.named('jar').flatMap { it.archiveFile },
+            boots.tasks.named('jar').flatMap { it.archiveFile }, things.tasks.named('jar').flatMap { it.archiveFile })
+}
+
+// Reuse the maintained pre-GLFW hiding hook without importing the large test mod.
+sourceSets.main.java {
+    srcDir '../../mods/MismatchedLeggings/RuntimeTests/Common/src/main/java'
+    include 'games/alejandrocoria/jdtspike/**'
+    include 'games/alejandrocoria/mismatchedleggings/test/mixin/HiddenWindowMixin.java'
+}
+
+def label = "${neoforge_version}/" + (withBoots ? 'boots' : 'alone')
+def runRoot = layout.buildDirectory.dir("run/${label}").get().asFile
+def reports = layout.buildDirectory.dir("reports/${label}").get().asFile
+neoForge {
+    version = neoforge_version
+    mods { leggings_jdt_spike { sourceSet sourceSets.main } }
+}
+['server', 'client'].each { phase ->
+    tasks.register("prepare${phase.capitalize()}") {
+        dependsOn tasks.named('classes'), leggings.tasks.named('assemble')
+        if (withBoots) { dependsOn boots.tasks.named('assemble') }
+        doLast {
+            def run = new File(runRoot, phase)
+            def mods = new File(run, 'mods')
+            mods.mkdirs()
+            def artifacts = [nativeJar.get(), leggings.tasks.named('jar').get().archiveFile.get().asFile]
+            if (withBoots) { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+            if (mods.listFiles().any { existing -> !artifacts.any { it.name == existing.name } }) {
+                throw new GradleException("Unexpected artifact in ${mods}")
+            }
+            copy { from artifacts; into mods }
+            reports.mkdirs()
+            ["${phase}.ok", "${phase}.failure.txt"].each { new File(reports, it).delete() }
+            new File(run, 'config').mkdirs()
+            new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (phase == 'server') {
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=spike\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+            } else {
+                def world = new File(runRoot, 'server/spike')
+                if (!new File(world, 'level.dat').isFile()) { throw new GradleException('Run spike server first') }
+                copy { from world; into new File(run, 'saves/spike') }
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+            }
+        }
+    }
+    neoForge.runs.create("spike${phase.capitalize()}") {
+        if (phase == 'server') { server(); programArgument('--nogui') }
+        else { client(); programArguments.addAll('--quickPlaySingleplayer', 'spike') }
+        disableIdeRun()
+        gameDirectory = new File(runRoot, phase)
+        systemProperty('jdt.spike.report', reports.absolutePath)
+        systemProperty('jdt.spike.boots', withBoots.toString())
+        jvmArgument('-Xmx1G')
+    }
+    tasks.named("runSpike${phase.capitalize()}") {
+        dependsOn "prepare${phase.capitalize()}"
+        doLast {
+            if (!new File(reports, "${phase}.ok").isFile() || new File(reports, "${phase}.failure.txt").exists()) {
+                throw new GradleException("Spike failed; inspect ${reports}")
+            }
+        }
+    }
+}

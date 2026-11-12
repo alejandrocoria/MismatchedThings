@@ -1,0 +1,17 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+[[mods]]
+modId="leggings_jdt_spike"
+version="1.0.0"
+displayName="Leggings JDT feasibility spike (not production)"
+[[mixins]]
+config="leggings-jdt-spike.mixins.json"
+[[mixins]]
+config="leggings-jdt-spike-window.mixins.json"
+[[dependencies.leggings_jdt_spike]]
+modId="justdirethings"
+type="required"
+versionRange="[1.6.11]"
+ordering="AFTER"
+side="BOTH"
