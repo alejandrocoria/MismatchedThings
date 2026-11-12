@@ -15,12 +15,14 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String target, String mixin) {
         String fault = System.getProperty("leggings.test.jdtFault", "");
         return fault.equals("movement") && target.endsWith("AbilityMethods")
-                || fault.equals("attributes") && target.endsWith("CommonHooks");
+                || fault.equals("attributes") && target.endsWith("CommonHooks")
+                || fault.equals("screen") && target.endsWith("ToolSettingScreen");
     }
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        String getter = target.endsWith("AbilityMethods") ? "mismatchedleggings$jdtMovementReady" : "mismatchedleggings$justDireAttributesReady";
+        String getter = target.endsWith("AbilityMethods") ? "mismatchedleggings$jdtMovementReady"
+                : target.endsWith("ToolSettingScreen") ? "mismatchedleggings$jdtSettingsReady" : "mismatchedleggings$justDireAttributesReady";
         var method = node.methods.stream().filter(value -> value.name.equals(getter)).findFirst().orElseThrow();
         method.instructions.set(method.instructions.getFirst(), new InsnNode(Opcodes.ICONST_1));
     }

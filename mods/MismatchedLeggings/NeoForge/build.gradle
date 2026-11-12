@@ -71,6 +71,11 @@ tasks.named('test', Test) {
     inputs.file(providers.provider { artifacts.resolve('NeoForge', justDire) })
             .withPropertyName('justDireGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.jdtJar', artifacts.path('NeoForge', justDire).absolutePath
+    if (providers.gradleProperty('leggingsJdtSettingsClass').isPresent()) {
+        def screenClass = file(providers.gradleProperty('leggingsJdtSettingsClass').get())
+        inputs.file(screenClass).withPropertyName('justDireSettingsTransformedClass').withPathSensitivity(PathSensitivity.NONE)
+        systemProperty 'mismatchedleggings.test.justDireSettingsTransformedClass', screenClass.absolutePath
+    }
     inputs.file(providers.provider { artifacts.resolve('NeoForge', silentGear) })
             .withPropertyName('silentGearLiveGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.sgLiveJar', artifacts.path('NeoForge', silentGear).absolutePath

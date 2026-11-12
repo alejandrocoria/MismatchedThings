@@ -114,7 +114,7 @@ policy-aware live armor/Phase and the narrow shared armor boundary with SG:
 
 Native JDT, SG and Silent Lib come from the shared catalog/cache. Optional Boots
 is the current ordinary packaged artifact, not a published release-graph fixture.
-The six JDT unit cases cover local argument flow, compatible additions and denied
+The six B guard cases cover local argument flow, compatible additions and denied
 seams. Dedicated checks retain foundation A and add native movement on all four
 tiers, both orientations/unequal/duplicate roots, root versus historical flags,
 range bounds, free empty-FE motion and native environmental/off/config predicates.
@@ -142,8 +142,49 @@ Connected reports are `jdt-connected[-boots]/`, with eight `case-<n>.ok` markers
 `server.ok`, `client.ok`, `connected.txt` and no failure markers. The driver records
 logs and `connected.ok` under `NeoForge/build/verification/<baseline>/`.
 Run all profiles sequentially and restore `.114` packaging after the floor check.
-This does not implement the native settings screen, input bindings, root
+This B profile does not cover the native settings screen, input bindings, root
 tooltip/bar presentation, Decoy, Lava Repair or FE-backed armor wear.
+
+## Just Dire Things native settings
+
+Foundation C reuses the existing independent connected driver with a settings
+profile, not a new screen or a client-authoritative candidate:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtSettings=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtSettings=true -PleggingsJdtBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtSettings=true -PleggingsJdtBoots=true -PleggingsJdtFault=screen --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtSettings=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+Only pinned JDT and packaged Leggings/current optional Boots are staged; this
+profile does not stage SG or run the full passive/armor matrix. A dedicated
+endpoint checks native empty-hand menu construction, selection tokens, replay,
+closed/replaced menus, replaced/moved/count-invalid roots, wrong slots/products,
+native tier/config/installation eligibility, unsupported edits and bounded
+payload codecs. Its hidden-before-GLFW, muted client uses the actual native
+screen, movement sliders/Phase toggle, keyboard/mouse capture and location
+records. Ordinary packets return authoritative roots/replies through charge,
+native/inverse/sibling selection, LEGS/offhand slots, refresh and menu reopening.
+Queued pre-token edits are canceled on selection changes. The screen fault
+refuses only Leggings selection; native and Boots controls remain positive
+controls. Bindings are stored here; gameplay input execution is foundation D.
+
+Reports are `NeoForge/build/reports/<baseline>/jdt-settings[-boots][-screen]/`:
+fresh `settings-security.txt`, eight `case-<n>.ok` files, both endpoint success
+markers and `connected.txt`, without failure markers. The fault also requires
+exactly one local refusal. Driver logs/`connected.ok` use the corresponding
+`NeoForge/build/verification/<baseline>/` directory. No screenshots or new manual
+fixture world are generated. Run profiles sequentially; restore `.114` afterward.
+
+Client runs export the transformed native screen under their
+`build/run/<baseline>/<profile>/client/.mixin.out/class/` directory. Pass that
+`com/direwolf20/justdirethings/client/screens/ToolSettingScreen.class` file to
+`-PleggingsJdtSettingsClass=<file>` when running `:MismatchedLeggings:NeoForge:test
+--tests '*JustDireSettings*'`. It is a declared test input for the final owned-
+hook proof, including stacked sibling wrappers and deliberate missing/foreign
+handlers. Without that explicit runtime witness, only this final-export case is
+skipped; native JAR seam characterization still runs normally.
 
 ## Silent Gear source tooltip acceptance
 

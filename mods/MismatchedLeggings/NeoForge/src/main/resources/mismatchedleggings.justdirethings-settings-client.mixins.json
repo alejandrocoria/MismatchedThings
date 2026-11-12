@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedleggings.mixin.compatibility.justdirethings",
+    "plugin": "games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsScreenMixinPlugin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "JustDireSettingsScreenMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 0
+    }
+}

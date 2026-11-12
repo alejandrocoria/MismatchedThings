@@ -11,6 +11,10 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (Boolean.getBoolean("leggings.test.jdtSettings")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> JustDireSettingsClientChecks.tick(Minecraft.getInstance()));
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtConnected")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> JustDireConnectedClient.tick(Minecraft.getInstance()));
             return;

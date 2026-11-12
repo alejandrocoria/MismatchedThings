@@ -3,13 +3,16 @@ package games.alejandrocoria.mismatchedleggings.client;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.aether.AetherSourceCharms;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.aether.AetherTooltipClient;
 import games.alejandrocoria.mismatchedleggings.client.compatibility.forbiddenarcanus.ForbiddenModifierTooltip;
+import games.alejandrocoria.mismatchedleggings.client.compatibility.justdirethings.JustDireSettingsClient;
 import games.alejandrocoria.mismatchedleggings.compatibility.MismatchedWorkbenchClientRecipes;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.network.ClientReadyPayload;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
@@ -21,6 +24,8 @@ public final class MismatchedLeggingsClientNeoForge {
 
     public static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            JustDireSettingsNetwork.clientReplies(JustDireSettingsClient::reply);
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> JustDireSettingsClient.tick());
             if (ModList.get().isLoaded("aether_ii")) {
                 NeoForge.EVENT_BUS.addListener(AetherSourceCharms::gather);
                 NeoForge.EVENT_BUS.addListener(AetherTooltipClient::attributes);
@@ -38,6 +43,7 @@ public final class MismatchedLeggingsClientNeoForge {
                 }
             });
             NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> {
+                JustDireSettingsClient.reset();
                 CompositionRuleState.resetPreview();
                 MismatchedWorkbenchClientRecipes.reset();
             });

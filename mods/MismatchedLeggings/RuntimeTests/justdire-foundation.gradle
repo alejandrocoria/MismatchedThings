@@ -7,13 +7,16 @@ def absent = providers.gradleProperty('leggingsJdtAbsent').map { it.toBoolean() 
 def passives = providers.gradleProperty('leggingsJdtPassives').map { it.toBoolean() }.getOrElse(false)
 def withBoots = providers.gradleProperty('leggingsJdtBoots').map { it.toBoolean() }.getOrElse(false)
 def connected = providers.gradleProperty('leggingsJdtConnected').map { it.toBoolean() }.getOrElse(false)
+
+def settings = providers.gradleProperty('leggingsJdtSettings').map { it.toBoolean() }.getOrElse(false)
 def port = providers.gradleProperty('leggingsJdtPort').getOrElse('25587')
 def fault = providers.gradleProperty('leggingsJdtFault').getOrElse('')
-if (!(fault in ['', 'movement', 'attributes']) || !fault.isEmpty() && (connected || absent || !passives)) {
+if (!(fault in ['', 'movement', 'attributes', 'screen'])
+        || !fault.isEmpty() && (fault == 'screen' ? !settings : connected || absent || !passives)) {
     throw new GradleException('JDT fault controls require only the dedicated passive profile')
 }
 if (connected && (absent || !passives)) { throw new GradleException('Connected JDT acceptance requires native passives') }
-def label = (connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
+def label = (settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
 if (!fault.isEmpty()) { label += "-${fault}" }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
@@ -26,7 +29,7 @@ tasks.register('prepareJustDireFoundation') {
         def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
         if (!absent) { artifacts.add(nativeJar.get()) }
         if (withBoots) { artifacts.add(project(':MismatchedBoots:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
-        if (passives && !absent) {
+        if (passives && !absent && !settings) {
             ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar'].each {
                 artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
             }
@@ -43,7 +46,7 @@ tasks.register('prepareJustDireFoundation') {
         copy { from artifacts; into mods }
         reports.mkdirs()
         ['server.ok', 'server.failure.txt', 'foundation.txt', 'server-movement.txt', 'phase.txt', 'armor.txt', 'shared-armor.txt',
-         'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt'].each { new File(reports, it).delete() }
+         'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt', 'settings-security.txt'].each { new File(reports, it).delete() }
         (0..<8).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
@@ -64,6 +67,7 @@ neoForge.runs.create('justDireFoundation') {
     systemProperty('leggings.test.jdtPassives', passives.toString())
     systemProperty('leggings.test.jdtBoots', withBoots.toString())
     systemProperty('leggings.test.jdtConnected', connected.toString())
+    systemProperty('leggings.test.jdtSettings', settings.toString())
     systemProperty('leggings.test.jdtFault', fault)
     systemProperty('leggings.test.jdtAbsent', absent.toString())
     systemProperty('leggings.test.report', reports.absolutePath)
@@ -76,7 +80,7 @@ tasks.named('runJustDireFoundation') {
                 || new File(reports, 'server.failure.txt').exists()) {
             throw new GradleException("Just Dire Things foundation failed: ${reports}")
         }
-        if (!fault.isEmpty()) {
+        if (!fault.isEmpty() && !settings) {
             def warnings = new File(directory, 'logs/latest.log').readLines().findAll {
                 it.contains('WARN') && it.contains('Just Dire Things transformed') && it.contains('incompatible')
             }
@@ -111,6 +115,9 @@ neoForge.runs.create('justDirePassiveClient') {
     gameDirectory = clientDirectory
     programArguments.addAll('--quickPlayMultiplayer', "127.0.0.1:${port}")
     systemProperty('leggings.test.jdtConnected', 'true')
+    systemProperty('leggings.test.jdtSettings', settings.toString())
+    systemProperty('leggings.test.jdtFault', fault)
+    if (settings) { systemProperty('mixin.debug.export', 'true') }
     systemProperty('leggings.test.jdtBoots', withBoots.toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -119,18 +126,21 @@ tasks.named('runJustDirePassiveClient') { dependsOn 'prepareJustDirePassiveClien
 
 tasks.register('verifyJustDirePassives') {
     group = 'verification'
-    description = 'Bounded independent dedicated/client passive and Phase synchronization acceptance.'
+    description = settings ? 'Bounded independent native-menu authoritative settings acceptance.'
+            : 'Bounded independent dedicated/client passive and Phase synchronization acceptance.'
     doLast {
         int selectedPort
         new ServerSocket(0).withCloseable { selectedPort = it.localPort }
-        def logs = layout.buildDirectory.dir("verification/${neoforge_version}/jdt-connected" + (withBoots ? '-boots' : '')).get().asFile
+        def profile = (settings ? 'jdt-settings' : 'jdt-connected') + (withBoots ? '-boots' : '') + (fault ? "-${fault}" : '')
+        def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${profile}").get().asFile
         logs.mkdirs()
         new File(logs, 'connected.ok').delete()
         def child = { String endpoint ->
             def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
                         "${project.path}:" + (endpoint == 'server' ? 'runJustDireFoundation' : 'runJustDirePassiveClient'),
                         "-Pneoforge_version=${neoforge_version}", '-PleggingsJdtConnected=true', '-PleggingsJdtPassives=true',
-                        "-PleggingsJdtPort=${selectedPort}", "-PleggingsJdtBoots=${withBoots}"]
+                        "-PleggingsJdtPort=${selectedPort}", "-PleggingsJdtBoots=${withBoots}",
+                        "-PleggingsJdtSettings=${settings}", "-PleggingsJdtFault=${fault}"]
             if (gradle.startParameter.offline) { args.add('--offline') }
             new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
                     .redirectErrorStream(true).redirectOutput(new File(logs, "${endpoint}.log")).start()
@@ -140,7 +150,7 @@ tasks.register('verifyJustDirePassives') {
         }
         def server = child('server')
         Process client = null
-        def markers = layout.buildDirectory.dir("reports/${neoforge_version}/jdt-connected" + (withBoots ? '-boots' : '')).get().asFile
+        def markers = layout.buildDirectory.dir("reports/${neoforge_version}/${profile}").get().asFile
         try {
             long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(150)
             // A previous run's marker is removed by preparation. Wait for this child's fresh publication.
@@ -160,7 +170,16 @@ tasks.register('verifyJustDirePassives') {
                     || !new File(markers, 'connected.txt').isFile() || !(0..<8).every { new File(markers, "case-${it}.ok").isFile() }) {
                 throw new GradleException("JDT connected server failed: ${logs}")
             }
-            new File(logs, 'connected.ok').text = 'Packaged roots, ordinary item/attribute packets and native motion/Phase consumers passed\n'
+            if (settings && !new File(markers, 'settings-security.txt').isFile()) { throw new GradleException('Missing server settings security evidence') }
+            if (settings && fault == 'screen') {
+                def warnings = new File(clientDirectory, 'logs/latest.log').readLines().findAll {
+                    it.contains('WARN') && it.contains('native settings transformed hooks incomplete')
+                }
+                if (warnings.size() != 1) { throw new GradleException('Expected exactly one bounded settings refusal') }
+            }
+            new File(logs, 'connected.ok').text = settings
+                    ? 'Native settings widgets, authoritative edits and bounded selection/refusal controls passed\n'
+                    : 'Packaged roots, ordinary item/attribute packets and native motion/Phase consumers passed\n'
         } finally { stop(client); stop(server) }
     }
 }
