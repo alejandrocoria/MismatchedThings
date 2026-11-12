@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.composition;
 
 import games.alejandrocoria.mismatchedleggings.compatibility.forbiddenarcanus.ForbiddenModifierAdapter;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireComposition;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearComposition;
 import games.alejandrocoria.mismatchedleggings.component.ComponentProjection;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
@@ -65,6 +66,7 @@ public final class MixedLeggingsRecomposer {
         NeoVitaeInfusionService.INSTANCE.preserveState(root, output);
         RogdoriumInfusionService.INSTANCE.preserveState(root, output);
         var finalized = ForbiddenModifierAdapter.INSTANCE.finish(output, registries);
+        JustDireComposition.INSTANCE.prepare(root, finalized, data);
         SilentGearComposition.INSTANCE.prepare(root, finalized, data, rules);
         MixedLeggingsStructure.apply(finalized, data);
         return finalized;

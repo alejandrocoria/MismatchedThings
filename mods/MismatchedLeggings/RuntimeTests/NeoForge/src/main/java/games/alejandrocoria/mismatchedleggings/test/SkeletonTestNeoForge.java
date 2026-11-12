@@ -13,6 +13,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.jdtFoundation")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> JustDireFoundationChecks.tick(event.getServer()));
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.sgTooltipClient")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.silentgear.TooltipServer.tick(event.getServer()));

@@ -63,6 +63,40 @@ close cleanup, both visual orientations and item contexts, vanilla enchantments
 and workstations, save/rejoin and matching-loader dedicated play, controlled
 source removal/reinstallation, and both products together with optional viewers.
 
+## Just Dire Things foundation acceptance
+
+The bounded dedicated-server profile exercises the packaged production root
+state, transactional FE and native smithing integration on NeoForge `.114`:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtAbsent=true --offline --console=plain
+```
+
+The shared artifact resolver downloads/caches pinned JDT 1.6.11; omit `--offline`
+when first resolving it. Only the ordinary packaged Leggings JAR (including its
+nested Things) and that optional native artifact are staged, never indev JARs,
+Boots or research candidate hooks. Run profiles sequentially. No client/window,
+screenshots or prepared manual world are involved.
+
+Reports are under `NeoForge/build/reports/<baseline>/jdt-foundation/` and
+`jdt-foundation-absent/`: success requires `server.ok` and `foundation.txt`, with
+no `server.failure.txt`. A clean server exit alone is not acceptance.
+
+Coverage includes native positive controls, paid inverse Workbench outputs,
+eligible installed union and owner controls, maximum capacity/conserved initial
+FE, independent root wallets, nested/aborted/committed transfers and retained
+slot-access validation. Real smithing menus cover all 14 native ability recipes,
+one-addition payment/recipe credit, repeated preview, duplicates/config/tier
+refusal and all three native tier upgrades. Root false/zero/absence/equality,
+dormant flags, capacity clamping/no historical refill, forged/malformed state,
+NBT and network-codec round trips are checked without changing source histories
+except through a real tier transformation. Absence checks quiet no-op behavior.
+
+This is foundation A only, not acceptance for movement, live powered armor/Phase,
+native UI/input, tooltip/bar presentation or Decoy execution. It is not a full
+loader-floor, coexistence or release-graph matrix.
+
 ## Silent Gear source tooltip acceptance
 
 The bounded maintained profile exercises the packaged production source appender,

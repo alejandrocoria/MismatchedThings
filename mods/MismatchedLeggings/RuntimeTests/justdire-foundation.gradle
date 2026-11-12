@@ -1,0 +1,49 @@
+// Focused production foundation gate; no research candidate source set or indev artifacts.
+def nativeJar = providers.provider {
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar')
+}
+dependencies.add('compileOnly', files(nativeJar))
+def absent = providers.gradleProperty('leggingsJdtAbsent').map { it.toBoolean() }.getOrElse(false)
+def label = 'jdt-foundation' + (absent ? '-absent' : '')
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def product = project(':MismatchedLeggings:NeoForge')
+
+tasks.register('prepareJustDireFoundation') {
+    dependsOn tasks.named('classes'), product.tasks.named('assemble')
+    doLast {
+        def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
+        if (!absent) { artifacts.add(nativeJar.get()) }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { existing -> !artifacts.any { it.name == existing.name } }) {
+            throw new GradleException("Unexpected artifact in ${mods}")
+        }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'foundation.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=foundation\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('justDireFoundation') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.jdtFoundation', 'true')
+    systemProperty('leggings.test.jdtAbsent', absent.toString())
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runJustDireFoundation') {
+    dependsOn 'prepareJustDireFoundation'
+    doLast {
+        if (!new File(reports, 'server.ok').isFile() || !new File(reports, 'foundation.txt').isFile()
+                || new File(reports, 'server.failure.txt').exists()) {
+            throw new GradleException("Just Dire Things foundation failed: ${reports}")
+        }
+    }
+}

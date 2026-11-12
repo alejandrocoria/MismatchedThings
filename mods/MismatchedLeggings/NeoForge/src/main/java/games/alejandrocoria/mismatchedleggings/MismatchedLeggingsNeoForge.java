@@ -2,6 +2,8 @@ package games.alejandrocoria.mismatchedleggings;
 
 import games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientNeoForge;
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireResources;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireState;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearCompatibility;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRulesLifecycle;
@@ -46,6 +48,8 @@ public final class MismatchedLeggingsNeoForge {
         CompositionRulesLifecycle.registerContributor();
         IceAndFireTideCompatibility.initialize();
         SilentGearCompatibility.initialize(bus);
+        JustDireState.initialize(bus);
+        JustDireResources.initialize(bus);
 
         bus.addListener((RegisterPayloadHandlersEvent event) -> {
             var registrar = event.registrar("1");

@@ -16,7 +16,7 @@ public final class SmithingCredits {
 
     public static void crafted(ServerPlayer player, RecipeHolder<?> recipe) {
         if (Boolean.getBoolean("leggings.test.smithing") || Boolean.getBoolean("leggings.test.forbiddenArcanus")
-                || Boolean.getBoolean("leggings.test.forbiddenRecovery")) {
+                || Boolean.getBoolean("leggings.test.forbiddenRecovery") || Boolean.getBoolean("leggings.test.jdtFoundation")) {
             COUNTS.computeIfAbsent(player.getUUID(), ignored -> new HashMap<>()).merge(recipe.id().identifier(), 1, Integer::sum);
         }
     }

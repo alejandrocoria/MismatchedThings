@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.interaction;
 
 import games.alejandrocoria.mismatchedleggings.compatibility.forbiddenarcanus.ForbiddenModifierAdapter;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireComposition;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsRecomposer;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
@@ -31,6 +32,10 @@ public final class LeggingsSmithing {
         var modifiers = ForbiddenModifierAdapter.INSTANCE.smithing(level, template, root, addition);
         if (modifiers.handled()) {
             return modifiers.result();
+        }
+        var upgrades = JustDireComposition.INSTANCE.smithing(level, template, root, addition);
+        if (upgrades.handled()) {
+            return upgrades.result();
         }
         var left = source(level, template, data.left().source(), addition);
         var right = source(level, template, data.right().source(), addition);
