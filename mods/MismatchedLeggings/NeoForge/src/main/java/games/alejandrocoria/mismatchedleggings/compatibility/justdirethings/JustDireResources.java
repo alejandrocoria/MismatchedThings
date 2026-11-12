@@ -128,6 +128,17 @@ public final class JustDireResources {
         }
     }
 
+    /** Native item rendering reads this root's capability; the receiver supplies code, not state. */
+    public static Item energyBarReceiver(ItemStack root) {
+        Api binding = api;
+        if (binding == null || root.getCount() != 1 || rootCapacity(root, binding) <= 0) {
+            return null;
+        }
+        var data = MixedLeggingsStructure.validData(root).orElseThrow();
+        return data.left().source().getItem() == binding.eclipse || data.right().source().getItem() == binding.eclipse
+                ? binding.eclipse : binding.celestigem;
+    }
+
     private static int sourceCapacity(ItemStack source, Api binding) {
         if (source.getItem() != binding.celestigem && source.getItem() != binding.eclipse) {
             return 0;

@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings;
 
 import games.alejandrocoria.mismatchedleggings.compatibility.allthemodium.AllTheModiumLeggings;
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireTooltipCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearCures;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearEffects;
@@ -12,12 +13,15 @@ import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGe
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.enchantment.Enchantment;
 
 import java.util.function.Consumer;
@@ -25,6 +29,13 @@ import java.util.function.Consumer;
 public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
     public NeoForgeMixedLeggingsItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
+        JustDireTooltipCompatibility.appendRootState(stack, display, tooltip);
     }
 
     @Override

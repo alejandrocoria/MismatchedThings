@@ -6,6 +6,8 @@ issueTrackerURL="${mod_issues}"
 [[mixins]]
 config = "mismatchedleggings.justdirethings-settings.mixins.json"
 [[mixins]]
+config = "mismatchedleggings.justdirethings-tooltips.mixins.json"
+[[mixins]]
 config = "mismatchedleggings.justdirethings-settings-client.mixins.json"
 [[mixins]]
 config="mismatchedleggings.mysticalagriculture.mixins.json"

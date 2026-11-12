@@ -186,6 +186,38 @@ hook proof, including stacked sibling wrappers and deliberate missing/foreign
 handlers. Without that explicit runtime witness, only this final-export case is
 skipped; native JAR seam characterization still runs normally.
 
+## Just Dire Things passive input and presentation
+
+Foundation D uses the same independent connected driver:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtPresentation=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtPresentation=true -PleggingsJdtBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtPresentation=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+The dedicated endpoint checks free passive batches, equipped/inventory records,
+identity/snapshot refusal, replay, malformed packets, invalid products/counts,
+and native-held priority. The hidden-before-GLFW, muted client posts gameplay
+press/release/repeat events through production listeners: two matching roots,
+worn/offhand locations, actual keyboard/mouse Toggle Tool rebindings, native
+priority and independent current-Boots routing. Ordinary packets return state.
+GUI input is suppressed; custom passives exclude ordinary mouse buttons 0/1.
+
+Structured native translations, number formats and Component styles cover
+both orientations, saved switches/missing upgrades, actual Shift versus F3+H,
+source lore/IDs, hidden fields and read-only histories. Extraction of the
+registered item decorator measures FE/durability lanes, including healthy,
+worn, Unbreakable and full-charge controls; no screenshot is needed.
+
+Reports use `NeoForge/build/reports/<baseline>/jdt-presentation[-boots]/`:
+`input-security.txt`, `presentation.txt`, eight acknowledged `case-<n>.ok`
+files, `connected.txt`, both endpoint success markers and no failure marker.
+Driver logs/`connected.ok` live under the matching `build/verification/`
+directory. Artifacts use the shared pin/cache, never indev JARs. Run profiles
+sequentially and restore ordinary .114 outputs afterward. No manual fixture
+world is created. Decoy, Lava Repair and powered wear remain outside this gate.
+
 ## Silent Gear source tooltip acceptance
 
 The bounded maintained profile exercises the packaged production source appender,

@@ -108,7 +108,7 @@ public final class JustDireSettingsNetwork {
         return reply(request, accepted ? session.token : NONE, accepted);
     }
 
-    private static ItemStack snapshot(ItemStack root) {
+    static ItemStack snapshot(ItemStack root) {
         var copy = root.copy();
         // Charging, ordinary wear and derived equipment projection do not replace the selected pair.
         copy.remove(DataComponents.DAMAGE);

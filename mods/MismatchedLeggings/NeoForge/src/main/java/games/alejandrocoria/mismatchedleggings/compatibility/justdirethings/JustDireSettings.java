@@ -7,7 +7,9 @@ import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -73,6 +75,7 @@ public final class JustDireSettings {
                           getter(lookup, params, "minSlider", int.class), getter(lookup, params, "maxSlider", int.class),
                           getter(lookup, params, "increment", int.class), getter(lookup, params, "defaultValue", int.class),
                           accessor(lookup, record, "abilityName", String.class), accessor(lookup, record, "requireEquipped", boolean.class),
+                          accessor(lookup, record, "key", int.class), accessor(lookup, record, "isMouse", boolean.class),
                           lookup.findConstructor(record, MethodType.methodType(void.class, String.class, int.class, boolean.class, boolean.class))
                                 .asType(MethodType.methodType(Object.class, String.class, int.class, boolean.class, boolean.class)),
                           bindings);
@@ -152,6 +155,53 @@ public final class JustDireSettings {
     /** GLFW key/button bounds, excluding the native mouse route's ordinary left/right clicks. */
     public static boolean validBindingInput(int key, boolean mouse) {
         return mouse ? key >= 2 && key <= 7 : key >= 32 && key <= 348;
+    }
+
+    /** Native passive order, once per family, independent of global enablement or charge. */
+    public static List<String> boundPassives(ItemStack root, int key, boolean mouse, boolean equipped) {
+        Api binding = api;
+        if (binding == null || !mixed(root) || !validBindingInput(key, mouse)) {
+            return List.of();
+        }
+        try {
+            var names = new ArrayList<String>();
+            for (Setting setting : binding.settings) {
+                if (!root.getOrDefault(setting.installed, false) || root.getOrDefault(setting.mode, 0) != 2
+                        || metadata(root, setting.name) == null) {
+                    continue;
+                }
+                for (Object record : root.getOrDefault(binding.bindings, List.of())) {
+                    if (setting.name.equals((String) binding.name.invokeExact(record))
+                            && key == (int) binding.key.invokeExact(record) && mouse == (boolean) binding.mouse.invokeExact(record)
+                            && (equipped || !(boolean) binding.equipped.invokeExact(record))) {
+                        names.add(setting.name);
+                        break;
+                    }
+                }
+            }
+            return api == binding ? List.copyOf(names) : List.of();
+        } catch (Throwable failure) {
+            disable(binding, failure);
+            return List.of();
+        }
+    }
+
+    static boolean toggleBoundPassives(ServerPlayer player, ItemStack root, int key, boolean mouse, boolean equipped) {
+        Api binding = api;
+        var names = boundPassives(root, key, mouse, equipped);
+        if (binding == null || names.isEmpty() || api != binding) {
+            return false;
+        }
+        for (Setting setting : binding.settings) {
+            if (names.contains(setting.name)) {
+                boolean enabled = !root.getOrDefault(setting.toggle, true);
+                root.set(setting.toggle, enabled);
+                player.sendOverlayMessage(Component.translatable("justdirethings.ability",
+                        Component.translatable("justdirethings.ability." + setting.name),
+                        Component.translatable(enabled ? "justdirethings.enabled" : "justdirethings.disabled")));
+            }
+        }
+        return true;
     }
 
     /** Native callbacks retain a per-row record as well as the live root; keep their local view coherent. */
@@ -361,7 +411,7 @@ public final class JustDireSettings {
 
     private record Api(Class<?> menu, Class<?> tool, List<Setting> settings, MethodHandle abilities, MethodHandle params,
                        MethodHandle minimum, MethodHandle maximum, MethodHandle increment, MethodHandle defaultValue,
-                       MethodHandle name, MethodHandle equipped, MethodHandle create,
+                       MethodHandle name, MethodHandle equipped, MethodHandle key, MethodHandle mouse, MethodHandle create,
                        DataComponentType<List<Object>> bindings) {
     }
 }

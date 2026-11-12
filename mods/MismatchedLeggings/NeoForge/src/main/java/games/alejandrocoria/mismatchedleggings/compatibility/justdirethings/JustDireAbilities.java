@@ -65,7 +65,7 @@ public final class JustDireAbilities {
         }
     }
 
-    static boolean nativeItem(ItemStack stack) {
+    public static boolean nativeItem(ItemStack stack) {
         var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return stack.getCount() == 1 && id.getNamespace().equals("justdirethings")
                 && List.of("ferricore_leggings", "blazegold_leggings", "celestigem_leggings", "eclipsealloy_leggings").contains(id.getPath());

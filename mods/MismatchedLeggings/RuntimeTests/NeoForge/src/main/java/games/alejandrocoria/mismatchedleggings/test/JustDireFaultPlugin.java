@@ -13,6 +13,9 @@ import java.util.Set;
 public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("JustDirePresentationInputProbe")) {
+            return Boolean.getBoolean("leggings.test.jdtPresentation");
+        }
         String fault = System.getProperty("leggings.test.jdtFault", "");
         return fault.equals("movement") && target.endsWith("AbilityMethods")
                 || fault.equals("attributes") && target.endsWith("CommonHooks")
@@ -21,6 +24,7 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.endsWith("JustDirePresentationInputProbe")) { return; }
         String getter = target.endsWith("AbilityMethods") ? "mismatchedleggings$jdtMovementReady"
                 : target.endsWith("ToolSettingScreen") ? "mismatchedleggings$jdtSettingsReady" : "mismatchedleggings$justDireAttributesReady";
         var method = node.methods.stream().filter(value -> value.name.equals(getter)).findFirst().orElseThrow();

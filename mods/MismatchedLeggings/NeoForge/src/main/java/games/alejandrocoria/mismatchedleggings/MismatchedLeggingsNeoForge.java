@@ -4,6 +4,8 @@ import games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientNe
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireAbilities;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireAttributes;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireHeldToggleCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireInputNetwork;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireResources;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettings;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork;
@@ -57,6 +59,9 @@ public final class MismatchedLeggingsNeoForge {
         JustDireAbilities.initialize(bus);
         JustDireAttributes.initialize(bus);
         JustDireSettings.initialize(bus);
+        JustDireHeldToggleCompatibility.initialize(bus);
+        JustDireInputNetwork.initialize();
+        bus.addListener(JustDireInputNetwork::register);
         JustDireSettingsNetwork.initialize();
         bus.addListener(JustDireSettingsNetwork::register);
 
@@ -75,6 +80,7 @@ public final class MismatchedLeggingsNeoForge {
         if (FMLEnvironment.getDist().isClient()) {
             bus.addListener(MismatchedLeggingsClientNeoForge::setup);
             bus.addListener(MismatchedLeggingsClientNeoForge::registerTooltipFactories);
+            bus.addListener(MismatchedLeggingsClientNeoForge::registerDecorators);
         }
     }
 }
