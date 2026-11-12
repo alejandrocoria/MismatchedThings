@@ -51,7 +51,7 @@ tasks.register('prepareJustDireFoundation') {
         reports.mkdirs()
         ['server.ok', 'server.failure.txt', 'foundation.txt', 'server-movement.txt', 'phase.txt', 'armor.txt', 'shared-armor.txt',
          'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt', 'settings-security.txt',
-         'input-security.txt', 'presentation.txt'].each { new File(reports, it).delete() }
+         'input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt'].each { new File(reports, it).delete() }
         (0..<8).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
@@ -85,6 +85,9 @@ tasks.named('runJustDireFoundation') {
         if (!new File(reports, 'server.ok').isFile() || !new File(reports, connected ? 'connected.txt' : 'foundation.txt').isFile()
                 || new File(reports, 'server.failure.txt').exists()) {
             throw new GradleException("Just Dire Things foundation failed: ${reports}")
+        }
+        if (!absent && !connected && fault.isEmpty() && !new File(reports, 'jdt-lifecycle.txt').isFile()) {
+            throw new GradleException('Missing paid live JDT lifecycle evidence')
         }
         if (!fault.isEmpty() && !settings) {
             def warnings = new File(directory, 'logs/latest.log').readLines().findAll {

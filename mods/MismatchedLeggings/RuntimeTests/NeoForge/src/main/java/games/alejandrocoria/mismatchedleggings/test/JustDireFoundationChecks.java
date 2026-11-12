@@ -50,8 +50,7 @@ final class JustDireFoundationChecks {
         try {
             SkeletonChecks.verify();
             boolean absent = Boolean.getBoolean("leggings.test.jdtAbsent");
-            require(ModList.get().isLoaded("justdirethings") != absent
-                    && ModList.get().isLoaded("mismatchedboots") == Boolean.getBoolean("leggings.test.jdtBoots"), "Wrong JDT foundation graph");
+            graph();
             var player = RepairFixtures.player(server);
             if (absent) {
                 var root = MixedLeggingsFactory.createPair(new ItemStack(Items.IRON_LEGGINGS), new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
@@ -61,6 +60,9 @@ final class JustDireFoundationChecks {
                 transfers(player);
                 preservation(server);
                 smithing(server, player);
+                if (System.getProperty("leggings.test.jdtFault", "").isEmpty()) {
+                    JustDireLifecycleChecks.roots(server);
+                }
                 malformed();
                 if (Boolean.getBoolean("leggings.test.jdtPassives")) {
                     if (!System.getProperty("leggings.test.jdtFault", "").isEmpty()) { JustDirePassiveChecks.fault(player); }
@@ -85,6 +87,14 @@ final class JustDireFoundationChecks {
 
     private static ItemStack item(String path) {
         return new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow().value());
+    }
+
+    static void graph() {
+        var mods = ModList.get();
+        require(mods.isLoaded("justdirethings") != Boolean.getBoolean("leggings.test.jdtAbsent")
+                        && mods.isLoaded("mismatchedboots") == Boolean.getBoolean("leggings.test.jdtBoots")
+                        && mods.getMods().stream().filter(mod -> mod.getModId().equals("mismatchedthings")).count() == 1,
+                "Wrong JDT graph or duplicate nested Things");
     }
 
     private static void install(ItemStack stack, String name, boolean installed) {
@@ -322,10 +332,14 @@ final class JustDireFoundationChecks {
             require(energy(output).insert(777, transaction) == 777, "Live tier fixture charging");
             transaction.commit();
         }
+        var binding = List.of(new ToolRecords.AbilityBinding("walkspeed", 5, true, false));
+        output.set(JustDireDataComponents.ABILITY_BINDINGS, binding);
         menu = SmithingChecks.ready(player, item("template_eclipsealloy"), output, item("eclipsealloy_ingot"));
         output = menu.getSlot(3).safeTake(1, 1, player);
         require(!output.isEmpty() && energy(output).getAmountAsLong() == 777 && energy(output).getCapacityAsLong() == 500000
                 && installed(output, "walkspeed") && !output.get(JustDireDataComponents.TOOL_ENABLED)
+                && binding.equals(output.get(JustDireDataComponents.ABILITY_BINDINGS))
+                && !output.get(LeggingsContent.mixedLeggingsDataType()).left().source().has(JustDireDataComponents.ABILITY_BINDINGS)
                 && !menu.getSlot(0).hasItem() && !menu.getSlot(2).hasItem(), "Paid powered tier upgrade refilled/reset state");
     }
 

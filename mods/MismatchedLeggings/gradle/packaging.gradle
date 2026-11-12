@@ -25,6 +25,7 @@ gradle.projectsEvaluated {
                     if (names.any { it.startsWith('com/blakebr0/mysticalagriculture/') || it.startsWith('com/blakebr0/cucumber/')
                             || it.startsWith('com/autovw/advancednetherite/')
                             || it.startsWith('com/zurrtum/create/') || it.startsWith('com/iafenvoy/')
+                            || it.startsWith('com/direwolf20/') || it.contains('jdtspike') || it.contains('jdt-spike')
                             || it.contains('mismatchedboots') || it.contains('/test/') || it.contains('/spike/')
                             || it.contains('leggingsspike') || it.contains('leggings-spike') || it.contains('leggings_test')
                             || it.startsWith('games/alejandrocoria/mismatchedthings/')

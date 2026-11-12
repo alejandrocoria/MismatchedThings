@@ -70,6 +70,14 @@ final class RecoveryClientChecks {
             return false;
         }
         var expected = RecoveryChecks.read(file);
+        if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
+            for (int index = 0; index < 2; index++) {
+                if (!expected.get("jdt" + index).equals(RecoveryChecks.encode(client.player.getInventory().getItem(1 + index),
+                        client.level.registryAccess()))) {
+                    return false;
+                }
+            }
+        }
         return expected.get("legs").equals(RecoveryChecks.encode(client.player.getItemBySlot(EquipmentSlot.LEGS), client.level.registryAccess()))
                 && expected.get("inventory").equals(RecoveryChecks.encode(client.player.getInventory().getItem(0), client.level.registryAccess()));
     }

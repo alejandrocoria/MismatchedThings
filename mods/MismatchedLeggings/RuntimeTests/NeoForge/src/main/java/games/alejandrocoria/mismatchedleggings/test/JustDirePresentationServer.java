@@ -34,6 +34,7 @@ final class JustDirePresentationServer {
             require(++ticks < 4000, "JDT presentation server timeout at " + stage);
             require(!Files.exists(JustDireConnectedServer.report("client.failure.txt")), "Presentation client failed");
             if (!ready && ticks > 20) {
+                JustDireFoundationChecks.graph();
                 JustDireInputChecks.run(RepairFixtures.player(server));
                 Files.writeString(JustDireConnectedServer.report("ready.txt"), "Input security passed\n");
                 ready = true;

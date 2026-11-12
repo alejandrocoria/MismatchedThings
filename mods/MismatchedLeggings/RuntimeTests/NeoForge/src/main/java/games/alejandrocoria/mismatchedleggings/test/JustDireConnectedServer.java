@@ -49,6 +49,11 @@ final class JustDireConnectedServer {
                 ready = true;
             }
             var players = server.getPlayerList().getPlayers();
+            // The last observation may arrive in the same tick as the client's disconnect.
+            // Consume that acknowledgement before requiring a player for another transition.
+            if (selected == 7 && Files.exists(report("case-7.ok"))) {
+                selected = 8;
+            }
             if (selected == 8) {
                 if (players.isEmpty() && Files.exists(report("client.ok"))) {
                     Files.writeString(report("connected.txt"), "Eight authoritative root transitions synchronized through ordinary packets; paid inverse roots, physical/Phase attributes, free movement and native consumers passed\n");

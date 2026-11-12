@@ -60,9 +60,3 @@ project(':MismatchedLeggings').projectDir = file('mods/MismatchedLeggings')
 ['Common', 'Fabric', 'NeoForge', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
     include("MismatchedLeggings:${path}")
 }
-
-// Disposable JDT feasibility candidate; never part of normal builds or publication.
-if (providers.gradleProperty('leggingsJdtSpike').map { it.toBoolean() }.getOrElse(false)) {
-    include('LeggingsJdtSpike')
-    project(':LeggingsJdtSpike').projectDir = file('spikes/leggings-justdirethings')
-}

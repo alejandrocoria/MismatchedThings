@@ -103,6 +103,10 @@ public final class RecoveryChecks {
                 }
                 // Real combat and Mending must not wear/repair parked state before native death.
                 RecoveryModelChecks.inactiveWear(server, player);
+                if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
+                    player.getInventory().setItem(1, ItemStack.EMPTY);
+                    player.getInventory().setItem(2, ItemStack.EMPTY);
+                }
                 edit(player.getItemBySlot(EquipmentSlot.LEGS), 0);
                 edit(player.getInventory().getItem(0), 1);
                 player.setInvulnerable(false);
@@ -186,6 +190,10 @@ public final class RecoveryChecks {
         }
         if (Boolean.getBoolean("leggings.test.forbiddenRecovery")) {
             Class.forName("games.alejandrocoria.mismatchedleggings.test.ForbiddenModifierRecoveryChecks")
+                    .getMethod("stored", MinecraftServer.class).invoke(null, server);
+        }
+        if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
+            Class.forName("games.alejandrocoria.mismatchedleggings.test.JustDireRecoveryChecks")
                     .getMethod("stored", MinecraftServer.class).invoke(null, server);
         }
     }
@@ -288,6 +296,10 @@ public final class RecoveryChecks {
             require(drop instanceof ItemEntity entity && ItemStack.matches(entity.getItem(), expected(server, 0, true)),
                     "Saved native death-drop did not fully recover");
         }
+        if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
+            Class.forName("games.alejandrocoria.mismatchedleggings.test.JustDireRecoveryChecks")
+                    .getMethod("connected", MinecraftServer.class, ServerPlayer.class).invoke(null, server, player);
+        }
         player.inventoryMenu.broadcastChanges();
     }
 
@@ -330,6 +342,11 @@ public final class RecoveryChecks {
         var value = new CompoundTag();
         value.put("legs", encode(player.getItemBySlot(EquipmentSlot.LEGS), player.registryAccess()));
         value.put("inventory", encode(player.getInventory().getItem(0), player.registryAccess()));
+        if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
+            for (int index = 0; index < 2; index++) {
+                value.put("jdt" + index, encode(player.getInventory().getItem(1 + index), player.registryAccess()));
+            }
+        }
         NbtIo.writeCompressed(value, report(name));
         Files.writeString(report(name + ".ready"), "complete snapshot\n");
     }

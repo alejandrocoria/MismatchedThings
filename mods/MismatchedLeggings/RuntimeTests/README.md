@@ -80,7 +80,8 @@ Boots or research candidate hooks. Run profiles sequentially. No client/window,
 screenshots or prepared manual world are involved.
 
 Reports are under `NeoForge/build/reports/<baseline>/jdt-foundation/` and
-`jdt-foundation-absent/`: success requires `server.ok` and `foundation.txt`, with
+`jdt-foundation-absent/`: success requires `server.ok` and `foundation.txt` (plus
+`jdt-lifecycle.txt` in healthy native-present runs), with
 no `server.failure.txt`. A clean server exit alone is not acceptance.
 
 Coverage includes native positive controls, paid inverse Workbench outputs,
@@ -93,9 +94,13 @@ dormant flags, capacity clamping/no historical refill, forged/malformed state,
 NBT and network-codec round trips are checked without changing source histories
 except through a real tier transformation. Absence checks quiet no-op behavior.
 
-This is foundation A only, not acceptance for movement, live powered armor/Phase,
-native UI/input, tooltip/bar presentation or Decoy execution. It is not a full
-loader-floor, coexistence or release-graph matrix.
+The cumulative state gate also chains paid inverse extraction, all three tier
+transformations, root-only upgrade installation, authoritative native-menu edits,
+committed charging, ordinary wear/material repair and real trims. Native source
+histories retain their old controls/flags/charge except for the intentional
+tier/trim changes. Loaded-root worn Phase reactivation/global-off is checked.
+Movement, UI/input and presentation use the focused profiles below; no Decoy
+execution or full release-graph matrix is claimed.
 
 ## Just Dire Things passives and live attributes
 
@@ -217,6 +222,41 @@ Driver logs/`connected.ok` live under the matching `build/verification/`
 directory. Artifacts use the shared pin/cache, never indev JARs. Run profiles
 sequentially and restore ordinary .114 outputs afterward. No manual fixture
 world is created. Decoy, Lava Repair and powered wear remain outside this gate.
+
+## Just Dire Things foundation consolidation and recovery
+
+Use the same maintained state/passive, settings and presentation profiles above,
+not the retired feasibility candidate. Run the `.114` standalone profiles and
+smaller current-Boots settings/input controls sequentially. Target `.99` at native
+API/local guard and connected-state regressions rather than repeating every
+permutation. Restore `.114` outputs afterwards. The ordinary packaging gate checks
+both products' nested-core contract; no published-Boots fixture is added for JDT.
+
+The existing native-world recovery driver adds one focused real JDT source witness:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyRecovery -PleggingsJdtRecovery=true '-PleggingsRecoveryStages=write,absent,absentagain,restore,reloaded' --offline --console=plain
+```
+
+Only the pinned JDT JAR is removed/reinstalled between those independent JVMs.
+Both paid inverse roots retain live installed upgrades, edited switches/values/
+mouse binding, committed FE, repaired durability and transformed/trimmed histories.
+Full native NBT equality is required after restoration and another reopen; the
+absent archive must remain identical over repeated saves and expose no native
+live components. Loaded copies must regain worn Phase and respect global off.
+The existing generic recovery/death controls are reused, not expanded into a new
+missing-mod matrix. During `write`, `absent` and `restore`, additional barrel
+copies travel in ordinary inventory packets to an independent hidden/muted TCP
+client and are compared completely; they are cleared before the generic death
+witness. Restoration reads the saved barrel, not a newly composed fixture.
+
+Reports/logs use `recovery-jdt` under the existing baseline `build/reports/` and
+`build/verification/` directories. Require every selected stage's `server.ok`,
+`jdt-recovery.txt`, the connected stages' `client.ok`, no failures/unexpected
+errors and the driver's `matrix.ok`. That marker names only the selected subset.
+No screenshots, indev artifacts or prepared owner world are used. Consolidated
+owner acceptance is recorded separately in the private plan. Decoy, Lava Repair,
+powered incoming wear, refunds and broader charger discovery remain deferred.
 
 ## Silent Gear source tooltip acceptance
 
