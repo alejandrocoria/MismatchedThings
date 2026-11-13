@@ -13,6 +13,10 @@ def presentation = providers.gradleProperty('leggingsJdtPresentation').map { it.
 def decoy = providers.gradleProperty('leggingsJdtDecoy').map { it.toBoolean() }.getOrElse(false)
 def hud = providers.gradleProperty('leggingsJdtHud').map { it.toBoolean() }.getOrElse(false)
 def wear = providers.gradleProperty('leggingsJdtWear').map { it.toBoolean() }.getOrElse(false)
+def wearQuery = providers.gradleProperty('leggingsJdtWearQuery').getOrElse('')
+if (!(wearQuery in ['', 'legs', 'boots']) || !wearQuery.isEmpty() && (!wear || !withBoots)) {
+    throw new GradleException('Wear query refusal requires the joint dedicated wear profile and legs|boots')
+}
 if (wear && (hud || decoy || presentation || settings || connected || passives || absent
         || !providers.gradleProperty('leggingsJdtFault').getOrElse('').isEmpty())) {
     throw new GradleException('Incoming wear uses its own dedicated production profile')
@@ -35,6 +39,7 @@ if (!(fault in ['', 'movement', 'attributes', 'screen', 'hud'])
 if (connected && (absent || !passives)) { throw new GradleException('Connected JDT acceptance requires native passives') }
 def label = (hud ? 'jdt-hud' : decoy ? 'jdt-decoy' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
 if (wear) { label = 'jdt-wear' + (withBoots ? '-boots' : '') }
+if (!wearQuery.isEmpty()) { label += "-query-${wearQuery}" }
 if (!fault.isEmpty()) { label += "-${fault}" }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
@@ -91,6 +96,7 @@ neoForge.runs.create('justDireFoundation') {
     systemProperty('leggings.test.jdtPresentation', presentation.toString())
     systemProperty('leggings.test.jdtHud', hud.toString())
     systemProperty('leggings.test.jdtWear', wear.toString())
+    systemProperty('leggings.test.jdtWearQuery', wearQuery)
     systemProperty('leggings.test.jdtDecoy', decoy.toString())
     systemProperty('leggings.test.jdtFault', fault)
     systemProperty('leggings.test.jdtAbsent', absent.toString())
@@ -109,8 +115,11 @@ tasks.named('runJustDireFoundation') {
         }
         if (wear) {
             def log = new File(directory, 'logs/latest.log').readLines()
+            def queryWarnings = log.findAll { it.contains('WARN') && it.contains('armor wear query failed') }
             if (!new File(reports, 'armor-wear.tsv').isFile()
-                    || log.any { it.contains('ERROR') || it.contains('armor wear') && (it.contains('failed') || it.contains('incompatible')) }) {
+                    || queryWarnings.size() != (wearQuery.isEmpty() ? 0 : 1)
+                    || !wearQuery.isEmpty() && !queryWarnings.first().contains(wearQuery == 'legs' ? '[mismatchedleggings/' : '[mismatchedboots/')
+                    || log.any { it.contains('ERROR') || it.contains('armor wear flow incompatible') }) {
                 throw new GradleException('Missing production incoming wear evidence or unexpected wear failure')
             }
         }

@@ -18,12 +18,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
@@ -55,6 +57,10 @@ final class JustDireFoundationChecks {
             if (absent) {
                 var root = MixedLeggingsFactory.createPair(new ItemStack(Items.IRON_LEGGINGS), new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
                 require(energy(root) == null && MixedLeggingsStructure.validData(root).isPresent(), "Optional absence changed ordinary composition");
+                player.setItemSlot(EquipmentSlot.LEGS, root);
+                CommonHooks.onArmorHurt(player.damageSources().generic(),
+                        new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, player);
+                require(root.getDamageValue() == 2, "Absent JDT changed ordinary incoming Leggings wear");
             } else {
                 creation(player);
                 transfers(player);

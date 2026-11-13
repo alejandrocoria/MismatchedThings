@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
+import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -9,9 +10,11 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.CommonHooks;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +48,13 @@ public final class JustDireRecoveryChecks {
                             "JDT reinstall/reopen partially recovered paid root/history");
                     JustDireLifecycleChecks.verify(root);
                     JustDireLifecycleChecks.verifyWearer(server, root);
+                    var equipped = root.copy();
+                    var player = RepairFixtures.player(server);
+                    player.setItemSlot(EquipmentSlot.LEGS, equipped);
+                    CommonHooks.onArmorHurt(player.damageSources().generic(), new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, player);
+                    var paid = root.copy();
+                    paid.set(JustDireDataComponents.FORGE_ENERGY, 88_480);
+                    require(ItemStack.matches(equipped, paid), "Recovered root did not resume incoming FE payment with unchanged history/settings");
                 } else {
                     RecoveryChecks.inactive(root);
                     require(root.getComponents().keySet().stream().noneMatch(JustDireRecoveryChecks::nativeComponent)
@@ -59,7 +69,8 @@ public final class JustDireRecoveryChecks {
         }
         barrel.setChanged();
         Files.writeString(RecoveryChecks.report("jdt-recovery.txt"), RecoveryFixture.stage()
-                + ": paid inverse roots, installed upgrades, edited controls, live charge/Decoy clocks, tier/trim histories and complete native archive passed\n");
+                + ": paid inverse roots, installed upgrades, edited controls, live charge/Decoy clocks, tier/trim histories and complete native archive passed"
+                + (present && !RecoveryFixture.stage().equals("write") ? "; reopened incoming FE payment passed\n" : "\n"));
     }
 
     public static void connected(MinecraftServer server, ServerPlayer player) {

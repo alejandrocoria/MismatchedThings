@@ -6,13 +6,11 @@ compatibility matrix uses a frozen copy of the current packaged Boots artifact.
 Indev JARs/configuration/worlds are never dependencies. Test mods and the additive
 test API never enter released core artifacts.
 
-The opt-in [shared incoming wear spike](../../../spikes/shared-armor-wear/README.md)
-is disposable research for one Things-owned NeoForge hook and symmetric product
-registration. Its Fabric run checks native optional-version metadata only. Enable
-with `-PsharedWearSpike=true`; candidate JAR rewrites stay under fixture `build/`
-directories. Production now owns the shared seam; this research remains only until
-the armor-wear plan's consolidation block retires both spikes. Do not enable it
-for production acceptance.
+The shared incoming-wear research is retired. Production owns the single optional
+NeoForge hook and independent slot registration. Maintained product wear controls
+are described in the [Leggings runtime guide](../../MismatchedLeggings/RuntimeTests/README.md#just-dire-things-incoming-armor-wear);
+this suite retains independent core loading, compiled API-v1 callers and native
+version-selection/old-data upgrade coverage, not a second wear implementation.
 
 ## Third-party test artifacts
 
@@ -163,6 +161,7 @@ An optional unchanged Boots release adds an original-core seed and native refusa
 | Both | Boots, frozen baseline and sibling | Next compatible minor |
 | Upgrade | Same current joint graph, reading the preserved Boots server world | Next compatible minor |
 | Previous (optional) | Unchanged published Boots, server seed only | Original embedded 1.0.0 |
+| Legacy alone (Fabric, optional) | Unchanged published Boots plus explicit current core, no current product requirement | Safe original 1.0.0 selected |
 | Legacy (optional) | Unchanged published Boots and newer-core sibling | Native old-Boots refusal |
 | Incompatible | Synthetic consumer requiring API major 2 | Native loader refusal |
 
@@ -203,7 +202,10 @@ remains in every positive newer-core graph. The previous binary runs only with
 its original embedded core to create the saved-data seed, and as a native refusal
 input when a sibling requires the newer core. The upgrade client reads that seed
 using current Boots and the newer core. Child runs receive the same property;
-the original binary is read-only. Without this option, current Boots seeds the
+the original binary is read-only. Fabric also checks `legacy-alone`: with no new
+product forcing 1.1.0, the native resolver can retain original 1.0.0 instead of
+the conflicting explicit newer core. This is not newer-core coexistence.
+Without this option, current Boots seeds the
 upgrade too. Boots below 1.1.0 is not supported with Things 1.1.0 or newer.
 
 ## Focused runs and evidence
@@ -233,6 +235,8 @@ An upgrade client additionally uses `-PworkbenchUpgrade=true` with case `both`;
 it requires the existing `previous` server seed when `workbenchPreviousBootsJar`
 is supplied, otherwise `boots`. Optional focused `previous`/`legacy` server runs
 also require that property and frozen inputs; `legacy` must fail before gameplay.
+Fabric-only `legacy-alone` instead requires a successful server with expected
+version 1.0.0, proving the safe native downgrade separately from forced rejection.
 Prefer the matrix for final
 acceptance: focused runs alone do not enforce the across-stage hash guard.
 

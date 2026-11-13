@@ -2,6 +2,8 @@ package games.alejandrocoria.mismatchedleggings.test;
 
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
+import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -9,13 +11,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Unit;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.DamageResistant;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.GameType;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.CommonHooks;
@@ -40,6 +46,7 @@ public final class JustDireArmorWearChecks {
     private static int receipt;
     private static String mutation = "none";
     private static boolean finished;
+    private static boolean queryFailure;
 
     private JustDireArmorWearChecks() {
     }
@@ -72,6 +79,16 @@ public final class JustDireArmorWearChecks {
             require((boolean) getter.invoke(null), "Production shared incoming wear guard refused");
             require(java.util.Arrays.stream(CommonHooks.class.getDeclaredMethods())
                     .noneMatch(method -> method.getName().equals("mismatchedboots$justDireArmorWearReady")), "Retired Boots hook remains");
+
+            String query = System.getProperty("leggings.test.jdtWearQuery", "");
+            if (!query.isEmpty()) {
+                queryFailure = true;
+                var slot = query.equals("legs") ? EquipmentSlot.LEGS : EquipmentSlot.FEET;
+                joint(server, "first real query failure", 1000, 2000, slot);
+                joint(server, "remembered local query refusal", 1000, 2000, slot);
+                passed();
+                return;
+            }
 
             for (String tier : List.of("celestigem", "eclipsealloy")) {
                 for (int charge : List.of(1000, 199, 0)) {
@@ -110,15 +127,92 @@ public final class JustDireArmorWearChecks {
             direct(server);
             transactions(server);
             coexistence(server);
-            Files.writeString(report("armor-wear.tsv"), rows.toString());
-            Files.writeString(report("foundation.txt"), "Production incoming wear, independent payments and transactional refusals passed\n");
-            SkeletonChecks.passed("server");
+            boundaries(server);
+            passed();
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
         } finally {
             observed = null;
             fault = "";
             server.halt(false);
+        }
+    }
+
+    public static void query(ItemStack root) {
+        boolean legs = root.getItem() instanceof MixedLeggingsItem;
+        if (queryFailure && legs == System.getProperty("leggings.test.jdtWearQuery").equals("legs")) {
+            throw new IllegalStateException("Isolated product wear query failure");
+        }
+    }
+
+    private static void passed() throws Exception {
+        Files.writeString(report("armor-wear.tsv"), rows.toString());
+        Files.writeString(report("foundation.txt"), "Production incoming wear, independent payments and transactional refusals passed\n");
+        SkeletonChecks.passed("server");
+    }
+
+    private static void boundaries(MinecraftServer server) {
+        for (var mode : List.of(GameType.CREATIVE, GameType.SPECTATOR)) {
+            var player = player(server);
+            player.setGameMode(mode);
+            var root = mixed("celestigem", false, 1000, false);
+            player.setItemSlot(EquipmentSlot.LEGS, root);
+            var before = root.copy();
+            require(!player.hurtServer(player.level(), player.damageSources().mobAttack(new Zombie(EntityType.ZOMBIE, player.level())), 8)
+                    && ItemStack.matches(root, before), "Mode immunity changed: " + mode);
+            rows.append(mode).append("\t1000\t0\n");
+        }
+        var root = mixed("celestigem", false, 1000, false);
+        root.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+        hit(server, "unbreakable", root, 1000, 0);
+        root = mixed("celestigem", false, 1000, false);
+        root.remove(DataComponents.MAX_DAMAGE);
+        root.remove(DataComponents.DAMAGE);
+        var before = root.copy();
+        var player = player(server);
+        player.setItemSlot(EquipmentSlot.LEGS, root);
+        CommonHooks.onArmorHurt(player.damageSources().generic(), new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, player);
+        require(ItemStack.matches(root, before), "Non-damageable root billed or changed");
+        rows.append("non-damageable\t1000\t0\n");
+
+        root = mixed("celestigem", false, 1000, false);
+        before = root.copy();
+        var zombie = new Zombie(EntityType.ZOMBIE, player.level());
+        zombie.setItemSlot(EquipmentSlot.LEGS, root);
+        CommonHooks.onArmorHurt(player.damageSources().generic(), new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, zombie);
+        state("non-player", root, before, 1000, 2);
+        for (boolean bare : List.of(false, true)) {
+            root = bare ? new ItemStack(BuiltInRegistries.ITEM.getValue(LeggingsContent.MIXED_LEGGINGS_ID))
+                    : mixed("celestigem", false, 1000, false);
+            root.set(JustDireDataComponents.FORGE_ENERGY, 1000);
+            root.set(DataComponents.MAX_DAMAGE, 200);
+            root.setDamageValue(0);
+            if (!bare) {
+                root.setCount(2);
+            }
+            before = root.copy();
+            player.setItemSlot(EquipmentSlot.LEGS, root);
+            CommonHooks.onArmorHurt(player.damageSources().generic(), new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, player);
+            // A bare diagnostic has no armor slot, so the native event does not create a wear entry.
+            require(!bare || !root.has(DataComponents.EQUIPPABLE), "Bare root unexpectedly gained an armor slot");
+            state(bare ? "missing source data" : "invalid root count", root, before, 1000, bare ? 0 : 2);
+        }
+
+        root = mixed("celestigem", false, 1000, false);
+        root.set(DataComponents.DAMAGE_RESISTANT, new DamageResistant(player.registryAccess()
+                .lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageTypeTags.IS_FIRE)));
+        player.setItemSlot(EquipmentSlot.LEGS, root);
+        before = root.copy();
+        CommonHooks.onArmorHurt(player.damageSources().lava(), new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, player);
+        state("protected fire entry", root, before, 1000, 0);
+        observed = player;
+        mutation = "3.5";
+        try {
+            CommonHooks.onArmorHurt(player.damageSources().lava(), new EquipmentSlot[]{EquipmentSlot.LEGS}, 2, player);
+            state("foreign revived protected entry", root, before, 1000, 3);
+        } finally {
+            observed = null;
+            mutation = "none";
         }
     }
 
@@ -244,7 +338,7 @@ public final class JustDireArmorWearChecks {
         var legs = mixed("celestigem", false, legsCharge, true);
         boolean bootsInstalled = ModList.get().isLoaded("mismatchedboots");
         var boots = bootsInstalled ? boots(bootsCharge) : new ItemStack(Items.DIAMOND_BOOTS);
-        Field field = disabled == null ? null : binding(disabled);
+        Field field = disabled == null || queryFailure ? null : binding(disabled);
         Object original = field == null ? null : field.get(null);
         player.setItemSlot(EquipmentSlot.LEGS, legs);
         player.setItemSlot(EquipmentSlot.FEET, boots);

@@ -13,14 +13,13 @@ import java.util.Set;
 
 /** Corrupt only this product's unpublished permission seam; native callbacks remain healthy controls. */
 public final class JustDireFaultPlugin implements IMixinConfigPlugin {
-    private IMixinConfigPlugin wearSpike;
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
         if (mixin.endsWith("JustDireArmorWearDebitProbe")) {
             return Boolean.getBoolean("leggings.test.jdtWear");
         }
-        if (mixin.contains("WearSpike")) {
-            return wearSpike != null && wearSpike.shouldApplyMixin(target, mixin);
+        if (mixin.endsWith("JustDireArmorWearQueryProbe")) {
+            return !System.getProperty("leggings.test.jdtWearQuery", "").isEmpty();
         }
         if (mixin.contains("JustDireHud")) {
             return Boolean.getBoolean("leggings.test.jdtHud")
@@ -41,11 +40,7 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        if (mixin.endsWith("JustDireArmorWearDebitProbe")) {
-            return;
-        }
-        if (mixin.contains("WearSpike")) {
-            wearSpike.postApply(target, node, mixin, info);
+        if (mixin.endsWith("JustDireArmorWearDebitProbe") || mixin.endsWith("JustDireArmorWearQueryProbe")) {
             return;
         }
         if (mixin.endsWith("JustDireHudFaultProbe")) {
@@ -72,23 +67,12 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     }
 
     @Override public void onLoad(String name) {
-        if (Boolean.getBoolean("leggings.test.wearSpike")) {
-            try {
-                wearSpike = (IMixinConfigPlugin) Class.forName("games.alejandrocoria.mismatchedleggings.test.WearSpikePlugin")
-                        .getConstructor().newInstance();
-                wearSpike.onLoad(name);
-            } catch (ReflectiveOperationException failure) {
-                throw new IllegalStateException("Missing isolated wear spike plugin", failure);
-            }
-        }
     }
     @Override public String getRefMapperConfig() { return null; }
     @Override public List<String> getMixins() {
         if (Boolean.getBoolean("leggings.test.jdtWear")) {
-            return List.of("JustDireArmorWearDebitProbe");
-        }
-        if (wearSpike != null) {
-            return wearSpike.getMixins();
+            return System.getProperty("leggings.test.jdtWearQuery", "").isEmpty()
+                    ? List.of("JustDireArmorWearDebitProbe") : List.of("JustDireArmorWearQueryProbe");
         }
         if (Boolean.getBoolean("leggings.test.jdtHud")) {
             if (!net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()) {

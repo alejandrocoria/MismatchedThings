@@ -52,7 +52,3 @@ loom {
 
 tasks.named('runWorkbenchServer') { dependsOn 'prepareWorkbenchServer' }
 tasks.named('runWorkbenchClient') { dependsOn 'prepareWorkbenchClient' }
-
-if (providers.gradleProperty('sharedWearSpike').map { it.toBoolean() }.getOrElse(false)) {
-    apply from: rootProject.file('spikes/shared-armor-wear/spike.gradle')
-}

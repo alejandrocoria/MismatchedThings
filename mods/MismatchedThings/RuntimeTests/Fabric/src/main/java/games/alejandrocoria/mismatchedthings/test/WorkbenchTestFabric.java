@@ -10,14 +10,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 public final class WorkbenchTestFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        if (Boolean.getBoolean("sharedwear.spike")) {
-            try {
-                Class.forName("games.alejandrocoria.mismatchedthings.test.SharedWearFabricChecks").getMethod("register").invoke(null);
-            } catch (ReflectiveOperationException failure) {
-                throw new IllegalStateException("Missing shared wear metadata research", failure);
-            }
-            return;
-        }
         var loader = FabricLoader.getInstance();
         WorkbenchCoexistence.coreContainers = (int) loader.getAllMods().stream()
                 .filter(mod -> mod.getMetadata().getId().equals("mismatchedthings")).count();

@@ -127,6 +127,8 @@ the focused profiles below; this is not an execution or full release-graph gate.
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtWear=true --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtWear=true -PleggingsJdtBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtWear=true -PleggingsJdtBoots=true -PleggingsJdtWearQuery=legs --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtWear=true -PleggingsJdtBoots=true -PleggingsJdtWearQuery=boots --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*JustDireArmorWearCompatibilityTest' --offline --console=plain
 ```
 
@@ -149,14 +151,22 @@ equipment and independent root edits must roll back or preserve committed state
 without a second payment or damage to stale equipment. Complete root comparisons
 check source history and unrelated fields. Current-Boots hits check both wallets
 and local binding refusal independently; standalone checks ordinary unregistered
-FEET wear. Unit tests retain overflow/unsupported-price controls.
+FEET wear. The maintained boundary controls cover creative/spectator, unbreakable,
+non-damageable/non-player/count-invalid/bare roots, fire-protected entries and
+foreign revival of their zero wear without inventing an FE bill. Unit tests
+retain overflow/unsupported-price controls.
+
+The joint query variants throw from the selected product's actual wear query,
+then repeat a hit to require one bounded diagnostic and remembered local refusal;
+the other slot must still pay independently. These are separate JVMs, not a
+production permission switch or forced core readiness.
 
 Runs/reports use `jdt-wear[-boots]` under the normal NeoForge
 `build/{run,reports}/<baseline>/` directories. Require `server.ok`, `foundation.txt`,
 `armor-wear.tsv`, no `server.failure.txt`, zero ERRORs and no unexpected wear
-refusal/query diagnostic. Normal `.114` is the targeted development baseline;
-the shared armor-wear plan's consolidation owns the narrow `.99` regression,
-optional absence and persistence controls. Foundation and Decoy selections keep
+refusal/query diagnostic. A query variant admits exactly one warning from only
+the selected product. Add `'-Pneoforge_version=26.1.2.99'` for focused floor
+acceptance and restore `.114` artifacts afterward. Foundation and Decoy selections keep
 their existing lifecycle assertions; this profile does not replace them.
 
 ## Just Dire Things passives and live attributes
@@ -313,6 +323,10 @@ repaired durability and transformed/trimmed histories.
 Full native NBT equality is required after restoration and another reopen; the
 absent archive must remain identical over repeated saves and expose no native
 live components. Loaded copies must regain worn Phase and respect global off.
+Reopened/restored copies also pass a real shared incoming-wear request: the
+88,680-FE wallet pays 200 FE with durability, settings, clocks and source history
+unchanged. Only detached test copies are worn; the preserved barrel baseline is
+not modified by this check.
 The existing generic recovery/death controls are reused, not expanded into a new
 missing-mod matrix. During `write`, `absent` and `restore`, additional barrel
 copies travel in ordinary inventory packets to an independent hidden/muted TCP
@@ -426,24 +440,6 @@ artifacts. All clients retain the existing hidden/muted contract. Inspect
 scoped errors/warnings and profile-specific markers, not just process exits.
 Owner save/rejoin and matching-loader dedicated acceptance is recorded
 separately in the private plan.
-
-## Just Dire Things incoming wear research
-
-The selected direction is now the opt-in
-[symmetric shared-core spike](../../../spikes/shared-armor-wear/README.md): one
-Things interceptor, independently registered product payments and native rejection
-of unsupported Boots versions. It uses only disposable JAR copies, dedicated
-servers and `-PsharedWearSpike=true`; it is not production wear acceptance.
-
-The opt-in [isolated wear spike](../../../spikes/leggings-jdt-wear/README.md)
-characterizes actual native/current hits and a candidate incoming-only FE
-consumer, including current and unchanged published Boots coexistence. Enable
-only with `-PleggingsJdtWearSpike=true`; its source set, run task and research
-mixins do not exist in ordinary production source sets. The spike README owns
-the bounded variants, required markers and complete retirement scope. It is not
-maintained production wear acceptance. Its asymmetric bridge is superseded, not
-the selected production architecture. Only dedicated servers run; no client,
-screenshots or prepared manual world is required.
 
 ## Silent Gear source tooltip acceptance
 

@@ -120,6 +120,27 @@ class JustDireArmorWearShapeTest implements Opcodes {
     }
 
     @Test
+    void finalRouterRequiresTheActualSlotAndOwnedConsumer() throws Exception {
+        var wrongSlot = transformed();
+        var handler = wrongSlot.methods.stream().filter(m -> m.desc.equals(JustDireArmorWearShape.HANDLER_DESC)).findFirst().orElseThrow();
+        int replaced = 0;
+        for (var instruction : handler.instructions) {
+            if (instruction instanceof VarInsnNode load && load.getOpcode() == ALOAD && load.var == 3) {
+                handler.instructions.set(load, new FieldInsnNode(GETSTATIC, "net/minecraft/world/entity/EquipmentSlot", "FEET",
+                        "Lnet/minecraft/world/entity/EquipmentSlot;"));
+                replaced++;
+            }
+        }
+        assertEquals(1, replaced, "The fixture must corrupt the actual routed slot, not an unrelated local");
+        assertFalse(JustDireArmorWearShape.publish(wrongSlot));
+
+        var foreign = transformed();
+        foreign.methods.stream().filter(m -> m.desc.equals(JustDireArmorWearShape.HANDLER_DESC)).findFirst().orElseThrow()
+                .visibleAnnotations.clear();
+        assertFalse(JustDireArmorWearShape.publish(foreign));
+    }
+
+    @Test
     void bothActualForwardingOrdersPublishButChangedArgumentsAndRepeatedCallsDoNot() throws Exception {
         String baseline = System.getProperty("mismatchedthings.test.justDireArmorWearTransformedClass", "");
         assumeTrue(!baseline.isEmpty(), "Supply the production gate's actual final exports");

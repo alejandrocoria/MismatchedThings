@@ -21,7 +21,7 @@ ext.workbenchTestRecipes = providers.gradleProperty('workbenchTestRecipes').map 
 def recipes = workbenchTestRecipes
 def compatibilityCase = providers.gradleProperty('workbenchCase').getOrElse('')
 def upgrade = providers.gradleProperty('workbenchUpgrade').getOrElse('false').toBoolean()
-if (compatibilityCase && !(compatibilityCase in ['core', 'boots', 'previous', 'legacy', 'baseline', 'sibling', 'both', 'incompatible'])) {
+if (compatibilityCase && !(compatibilityCase in ['core', 'boots', 'previous', 'legacy', 'legacy-alone', 'baseline', 'sibling', 'both', 'incompatible'])) {
     throw new GradleException("Unknown workbench compatibility case: ${compatibilityCase}")
 }
 if (upgrade && compatibilityCase != 'both') {

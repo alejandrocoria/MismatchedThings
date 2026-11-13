@@ -1,9 +1,0 @@
-{
-    "required": true,
-    "minVersion": "0.8",
-    "package": "games.alejandrocoria.mismatchedthings.wearspike.mixin",
-    "plugin": "games.alejandrocoria.mismatchedthings.wearspike.SharedWearPlugin",
-    "compatibilityLevel": "JAVA_25",
-    "mixins": ["SharedWearMixin"],
-    "injectors": { "defaultRequire": 1 }
-}

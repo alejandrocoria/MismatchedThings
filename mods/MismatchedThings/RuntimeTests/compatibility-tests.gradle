@@ -74,13 +74,17 @@ def checkPinned = {
 
 ext.workbenchCompatibilityArtifacts = {
     checkPinned()
-    if (caseName in ['previous', 'legacy'] && !previousBoots.isPresent()) {
+    if (caseName in ['previous', 'legacy', 'legacy-alone'] && !previousBoots.isPresent()) {
         throw new GradleException('Previous/legacy profiles require workbenchPreviousBootsJar')
     }
     def files = switch (caseName) {
         case 'core' -> [new File(frozen, 'core.jar')]
         case 'boots' -> [new File(frozen, 'boots.jar')]
         case 'previous' -> [new File(frozen, 'previous-boots.jar')]
+        case 'legacy-alone' -> {
+            if (loader != 'fabric') { throw new GradleException('Safe legacy-core selection is a Fabric-only control') }
+            yield [new File(frozen, 'previous-boots.jar'), new File(frozen, 'core.jar')]
+        }
         case 'legacy' -> [new File(frozen, 'previous-boots.jar'), new File(frozen, 'sibling.jar')]
         case 'baseline' -> [pinned]
         case 'sibling' -> [new File(frozen, 'sibling.jar')]
@@ -164,6 +168,15 @@ tasks.register('verifyWorkbenchCompatibility') {
                 throw new GradleException('Original Boots graph did not create the preserved upgrade seed')
             }
             checkUnchanged()
+            if (loader == 'fabric') {
+                runChild(["${ownerPath}:runWorkbenchServer", '-PworkbenchCase=legacy-alone',
+                          '-PworkbenchExpectedVersion=1.0.0'], new File(logs, 'legacy-alone-server.log'), true)
+                File legacy = output.dir("reports/${baseline}/compatibility/legacy-alone").get().asFile
+                if (!new File(legacy, 'server.ok').isFile() || new File(legacy, 'failure.txt').exists()) {
+                    throw new GradleException('Fabric did not retain the safe original core for old Boots alone')
+                }
+                checkUnchanged()
+            }
             runChild(["${ownerPath}:runWorkbenchServer", '-PworkbenchCase=legacy'], new File(logs, 'legacy-server.log'), false)
             String refusal = new File(logs, 'legacy-server.log').text
             File refused = output.dir("reports/${baseline}/compatibility/legacy").get().asFile

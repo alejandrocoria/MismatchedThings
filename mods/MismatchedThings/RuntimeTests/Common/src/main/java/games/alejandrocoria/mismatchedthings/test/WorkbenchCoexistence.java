@@ -58,7 +58,7 @@ public final class WorkbenchCoexistence {
         }
         WorkbenchChecks.require(coreContainers == 1, "Loader did not resolve exactly one core container");
         WorkbenchChecks.require(REGISTRATIONS.get() == 1, "Core registration did not initialize exactly once: " + REGISTRATIONS.get());
-        WorkbenchChecks.require(boots == (CASE.equals("boots") || CASE.equals("previous") || CASE.equals("both")), "Wrong Boots presence");
+        WorkbenchChecks.require(boots == (CASE.equals("boots") || CASE.equals("previous") || CASE.equals("legacy-alone") || CASE.equals("both")), "Wrong Boots presence");
         WorkbenchChecks.require(baseline == (CASE.equals("baseline") || CASE.equals("both")), "Wrong frozen consumer presence");
         WorkbenchChecks.require(sibling == (CASE.equals("sibling") || CASE.equals("both")), "Wrong sibling presence");
         WorkbenchChecks.require(selectedVersion.equals(System.getProperty("workbench.test.expectedVersion")),
