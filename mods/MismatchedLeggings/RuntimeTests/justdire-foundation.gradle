@@ -12,6 +12,11 @@ def settings = providers.gradleProperty('leggingsJdtSettings').map { it.toBoolea
 def presentation = providers.gradleProperty('leggingsJdtPresentation').map { it.toBoolean() }.getOrElse(false)
 def decoy = providers.gradleProperty('leggingsJdtDecoy').map { it.toBoolean() }.getOrElse(false)
 def hud = providers.gradleProperty('leggingsJdtHud').map { it.toBoolean() }.getOrElse(false)
+def wear = providers.gradleProperty('leggingsJdtWear').map { it.toBoolean() }.getOrElse(false)
+if (wear && (hud || decoy || presentation || settings || connected || passives || absent
+        || !providers.gradleProperty('leggingsJdtFault').getOrElse('').isEmpty())) {
+    throw new GradleException('Incoming wear uses its own dedicated production profile')
+}
 if (hud && (decoy || settings || presentation || absent)) {
     throw new GradleException('Decoy HUD uses its own connected production profile')
 }
@@ -29,6 +34,7 @@ if (!(fault in ['', 'movement', 'attributes', 'screen', 'hud'])
 }
 if (connected && (absent || !passives)) { throw new GradleException('Connected JDT acceptance requires native passives') }
 def label = (hud ? 'jdt-hud' : decoy ? 'jdt-decoy' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
+if (wear) { label = 'jdt-wear' + (withBoots ? '-boots' : '') }
 if (!fault.isEmpty()) { label += "-${fault}" }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
@@ -60,7 +66,7 @@ tasks.register('prepareJustDireFoundation') {
         reports.mkdirs()
         ['server.ok', 'server.failure.txt', 'foundation.txt', 'server-movement.txt', 'phase.txt', 'armor.txt', 'shared-armor.txt',
          'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt', 'settings-security.txt',
-         'input-security.txt', 'decoy-input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-action.txt', 'decoy-feedback.txt', 'decoy-hud.txt'].each { new File(reports, it).delete() }
+         'input-security.txt', 'decoy-input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-action.txt', 'decoy-feedback.txt', 'decoy-hud.txt', 'armor-wear.tsv'].each { new File(reports, it).delete() }
         (0..<12).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
@@ -84,6 +90,7 @@ neoForge.runs.create('justDireFoundation') {
     systemProperty('leggings.test.jdtSettings', settings.toString())
     systemProperty('leggings.test.jdtPresentation', presentation.toString())
     systemProperty('leggings.test.jdtHud', hud.toString())
+    systemProperty('leggings.test.jdtWear', wear.toString())
     systemProperty('leggings.test.jdtDecoy', decoy.toString())
     systemProperty('leggings.test.jdtFault', fault)
     systemProperty('leggings.test.jdtAbsent', absent.toString())
@@ -97,8 +104,15 @@ tasks.named('runJustDireFoundation') {
                 || new File(reports, 'server.failure.txt').exists()) {
             throw new GradleException("Just Dire Things foundation failed: ${reports}")
         }
-        if (!absent && !connected && !decoy && fault.isEmpty() && !new File(reports, 'jdt-lifecycle.txt').isFile()) {
+        if (!absent && !connected && !decoy && !wear && fault.isEmpty() && !new File(reports, 'jdt-lifecycle.txt').isFile()) {
             throw new GradleException('Missing paid live JDT lifecycle evidence')
+        }
+        if (wear) {
+            def log = new File(directory, 'logs/latest.log').readLines()
+            if (!new File(reports, 'armor-wear.tsv').isFile()
+                    || log.any { it.contains('ERROR') || it.contains('armor wear') && (it.contains('failed') || it.contains('incompatible')) }) {
+                throw new GradleException('Missing production incoming wear evidence or unexpected wear failure')
+            }
         }
         if (decoy && !new File(reports, 'decoy-action.txt').isFile()) {
             throw new GradleException('Missing production Decoy action/clock evidence')

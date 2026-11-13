@@ -122,6 +122,43 @@ A paid two-provider Workbench control checks effective-tier inherited clocks in
 both outputs and both extraction orders. Movement, UI/input and presentation use
 the focused profiles below; this is not an execution or full release-graph gate.
 
+## Just Dire Things incoming armor wear
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtWear=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtWear=true -PleggingsJdtBoots=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:NeoForge:test --tests '*JustDireArmorWearCompatibilityTest' --offline --console=plain
+```
+
+This dedicated selection loads packaged products and catalog JDT through their
+normal initialization. Things owns one guarded incoming-wear consumer; each
+product registers its own slot. No spike flag, fixture handler registration,
+product JAR rewrite or sibling verifier is used. Do not combine this selection
+with passive/Decoy/connected/fault profiles. It creates no client or owner world.
+
+Actual native and mixed incoming hits cover both powered tiers, both orientations,
+one/two/no providers, full/partial/empty FE, root FE without entitlement, linear
+Unbreaking, cancellation/final fractional wear and global-off physical protection.
+A hybrid pays the entire discounted bill or takes ordinary wear without losing
+residual FE; two powered sources suppress incoming wear even empty. Direct wear
+retains its separate price, including the existing seven-wear/88,680-FE witness.
+
+The fixture probes the real retained energy handler, not a replacement wallet:
+short actual transfer, extra staged debit, binding invalidation, reentry, replaced
+equipment and independent root edits must roll back or preserve committed state
+without a second payment or damage to stale equipment. Complete root comparisons
+check source history and unrelated fields. Current-Boots hits check both wallets
+and local binding refusal independently; standalone checks ordinary unregistered
+FEET wear. Unit tests retain overflow/unsupported-price controls.
+
+Runs/reports use `jdt-wear[-boots]` under the normal NeoForge
+`build/{run,reports}/<baseline>/` directories. Require `server.ok`, `foundation.txt`,
+`armor-wear.tsv`, no `server.failure.txt`, zero ERRORs and no unexpected wear
+refusal/query diagnostic. Normal `.114` is the targeted development baseline;
+the shared armor-wear plan's consolidation owns the narrow `.99` regression,
+optional absence and persistence controls. Foundation and Decoy selections keep
+their existing lifecycle assertions; this profile does not replace them.
+
 ## Just Dire Things passives and live attributes
 
 Foundation B extends the same maintained JDT profile with native movement,

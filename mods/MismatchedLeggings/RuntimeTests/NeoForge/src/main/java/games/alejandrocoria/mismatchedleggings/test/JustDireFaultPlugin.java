@@ -16,6 +16,9 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     private IMixinConfigPlugin wearSpike;
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.endsWith("JustDireArmorWearDebitProbe")) {
+            return Boolean.getBoolean("leggings.test.jdtWear");
+        }
         if (mixin.contains("WearSpike")) {
             return wearSpike != null && wearSpike.shouldApplyMixin(target, mixin);
         }
@@ -38,6 +41,9 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.endsWith("JustDireArmorWearDebitProbe")) {
+            return;
+        }
         if (mixin.contains("WearSpike")) {
             wearSpike.postApply(target, node, mixin, info);
             return;
@@ -78,6 +84,9 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     }
     @Override public String getRefMapperConfig() { return null; }
     @Override public List<String> getMixins() {
+        if (Boolean.getBoolean("leggings.test.jdtWear")) {
+            return List.of("JustDireArmorWearDebitProbe");
+        }
         if (wearSpike != null) {
             return wearSpike.getMixins();
         }

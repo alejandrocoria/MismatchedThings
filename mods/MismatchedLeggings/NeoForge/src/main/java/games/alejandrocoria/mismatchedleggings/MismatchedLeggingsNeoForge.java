@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings;
 import games.alejandrocoria.mismatchedleggings.client.MismatchedLeggingsClientNeoForge;
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireAbilities;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireArmorWearCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireAttributes;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireDecoy;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireHeldToggleCompatibility;
@@ -57,6 +58,7 @@ public final class MismatchedLeggingsNeoForge {
         SilentGearCompatibility.initialize(bus);
         JustDireState.initialize(bus);
         JustDireResources.initialize(bus);
+        JustDireArmorWearCompatibility.initialize();
         JustDireDecoy.initialize(bus);
         JustDireAbilities.initialize(bus);
         JustDireAttributes.initialize(bus);

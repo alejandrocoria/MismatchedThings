@@ -139,6 +139,29 @@ public final class JustDireResources {
                 ? binding.eclipse : binding.celestigem;
     }
 
+    /** Incoming wear shares storage's audited item identities, component and binding generation. */
+    static WearProfile wearProfile(ItemStack root) {
+        Api binding = api;
+        if (binding == null || root.getCount() != 1 || rootCapacity(root, binding) <= 0 || api != binding) {
+            return null;
+        }
+        var data = MixedLeggingsStructure.validData(root).orElseThrow();
+        int providers = 0;
+        for (var source : java.util.List.of(data.left().source(), data.right().source())) {
+            if (source.getItem() == binding.celestigem || source.getItem() == binding.eclipse) {
+                providers++;
+            }
+        }
+        return new WearProfile(providers, binding.energy, binding);
+    }
+
+    static boolean current(WearProfile profile) {
+        return api == profile.binding;
+    }
+
+    record WearProfile(int providers, DataComponentType<Integer> energy, Object binding) {
+    }
+
     private static int sourceCapacity(ItemStack source, Api binding) {
         if (source.getItem() != binding.celestigem && source.getItem() != binding.eclipse) {
             return 0;
