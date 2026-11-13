@@ -374,6 +374,24 @@ scoped errors/warnings and profile-specific markers, not just process exits.
 Owner save/rejoin and matching-loader dedicated acceptance is recorded
 separately in the private plan.
 
+## Just Dire Things incoming wear research
+
+The selected direction is now the opt-in
+[symmetric shared-core spike](../../../spikes/shared-armor-wear/README.md): one
+Things interceptor, independently registered product payments and native rejection
+of unsupported Boots versions. It uses only disposable JAR copies, dedicated
+servers and `-PsharedWearSpike=true`; it is not production wear acceptance.
+
+The opt-in [isolated wear spike](../../../spikes/leggings-jdt-wear/README.md)
+characterizes actual native/current hits and a candidate incoming-only FE
+consumer, including current and unchanged published Boots coexistence. Enable
+only with `-PleggingsJdtWearSpike=true`; its source set, run task and research
+mixins do not exist in ordinary production source sets. The spike README owns
+the bounded variants, required markers and complete retirement scope. It is not
+maintained production wear acceptance. Its asymmetric bridge is superseded, not
+the selected production architecture. Only dedicated servers run; no client,
+screenshots or prepared manual world is required.
+
 ## Silent Gear source tooltip acceptance
 
 The bounded maintained profile exercises the packaged production source appender,

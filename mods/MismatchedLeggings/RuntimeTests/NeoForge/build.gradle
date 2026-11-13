@@ -64,3 +64,11 @@ apply from: '../ice-and-fire-tide.gradle'
 apply from: '../silentgear-foundation.gradle'
 apply from: '../silentgear-state.gradle'
 apply from: '../justdire-foundation.gradle'
+
+if (providers.gradleProperty('leggingsJdtWearSpike').map { it.toBoolean() }.getOrElse(false)) {
+    apply from: '../justdire-wear-spike.gradle'
+}
+
+if (providers.gradleProperty('sharedWearSpike').map { it.toBoolean() }.getOrElse(false)) {
+    apply from: rootProject.file('spikes/shared-armor-wear/spike.gradle')
+}

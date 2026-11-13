@@ -1,0 +1,67 @@
+// Disposable research only. Does not register a production consumer or a release-graph matrix.
+def graph = providers.gradleProperty('leggingsJdtWearBoots').getOrElse('alone')
+def variant = providers.gradleProperty('leggingsJdtWearVariant').getOrElse('candidate')
+def transform = providers.gradleProperty('leggingsJdtWearTransform').getOrElse('plain')
+if (!(graph in ['alone', 'current', 'published']) || !(variant in ['baseline', 'candidate', 'naive', 'refused'])
+        || !(transform in ['plain', 'transparent'])) {
+    throw new GradleException('Unknown isolated JDT wear spike selection')
+}
+sourceSets.main.java.srcDir(rootProject.file('spikes/leggings-jdt-wear/src/main/java'))
+def label = "jdt-wear-spike-${graph}-${variant}-${transform}"
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def leggings = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+
+tasks.register('prepareJustDireWearSpike') {
+    dependsOn tasks.named('classes'), leggings.tasks.named('assemble')
+    if (graph == 'current') { dependsOn boots.tasks.named('assemble') }
+    doLast {
+        def artifacts = [leggings.tasks.named('jar').get().archiveFile.get().asFile,
+                         project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar')]
+        if (graph == 'current') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        if (graph == 'published') {
+            def pin = new groovy.json.JsonSlurper().parse(project(':MismatchedLeggings:RuntimeTests').file('fixtures/boots-1.0.0.json')).NeoForge
+            def binary = providers.gradleProperty('leggingsJdtWearBootsJar').map { rootProject.file(it) }
+                    .getOrElse(project(':MismatchedLeggings').file("build/verification/product/inputs/${pin.filename}"))
+            if (!binary.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(binary.bytes).encodeHex().toString() != pin.sha256) {
+                throw new GradleException('Supply the unchanged pinned published Boots JAR; no indev discovery or replacement rebuild')
+            }
+            artifacts.add(binary)
+        }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { existing -> !artifacts.any { it.name == existing.name } }) {
+            throw new GradleException("Unexpected spike artifact in ${mods}")
+        }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'wear-spike.tsv'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=wear-spike\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('justDireWearSpike') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.wearSpike', 'true')
+    systemProperty('leggings.test.wearBoots', graph)
+    systemProperty('leggings.test.wearVariant', variant)
+    systemProperty('leggings.test.wearTransform', transform)
+    systemProperty('leggings.test.report', reports.absolutePath)
+    systemProperty('mixin.debug.export', 'true')
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runJustDireWearSpike') {
+    dependsOn 'prepareJustDireWearSpike'
+    doLast {
+        if (!new File(reports, 'server.ok').isFile() || !new File(reports, 'wear-spike.tsv').isFile()
+                || new File(reports, 'server.failure.txt').exists()) {
+            throw new GradleException("JDT wear spike failed: ${reports}")
+        }
+    }
+}

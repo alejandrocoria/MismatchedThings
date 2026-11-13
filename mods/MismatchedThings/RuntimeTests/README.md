@@ -6,6 +6,13 @@ compatibility matrix uses a frozen copy of the current packaged Boots artifact.
 Indev JARs/configuration/worlds are never dependencies. Test mods and the additive
 test API never enter released core artifacts.
 
+The opt-in [shared incoming wear spike](../../../spikes/shared-armor-wear/README.md)
+is disposable research for one Things-owned NeoForge hook and symmetric product
+registration. Its Fabric run checks native optional-version metadata only. Enable
+with `-PsharedWearSpike=true`; candidate JAR rewrites stay under fixture `build/`
+directories. Ordinary workbench/API-v1 compatibility profiles are unchanged until
+the production plan deliberately updates unsupported published-Boots expectations.
+
 ## Third-party test artifacts
 
 The family-wide [catalog](mod-artifacts.json) and [resolver](mod-artifacts.gradle)

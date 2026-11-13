@@ -13,8 +13,12 @@ import java.util.Set;
 
 /** Corrupt only this product's unpublished permission seam; native callbacks remain healthy controls. */
 public final class JustDireFaultPlugin implements IMixinConfigPlugin {
+    private IMixinConfigPlugin wearSpike;
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.contains("WearSpike")) {
+            return wearSpike != null && wearSpike.shouldApplyMixin(target, mixin);
+        }
         if (mixin.contains("JustDireHud")) {
             return Boolean.getBoolean("leggings.test.jdtHud")
                     && (!mixin.endsWith("FaultProbe") || System.getProperty("leggings.test.jdtFault", "").equals("hud"));
@@ -34,6 +38,10 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.contains("WearSpike")) {
+            wearSpike.postApply(target, node, mixin, info);
+            return;
+        }
         if (mixin.endsWith("JustDireHudFaultProbe")) {
             var handler = node.methods.stream().filter(method -> method.name.contains("mismatchedleggings$justDireCooldownView")).findFirst().orElseThrow();
             for (var instruction : handler.instructions) {
@@ -57,9 +65,22 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
         method.instructions.set(method.instructions.getFirst(), new InsnNode(Opcodes.ICONST_1));
     }
 
-    @Override public void onLoad(String name) {}
+    @Override public void onLoad(String name) {
+        if (Boolean.getBoolean("leggings.test.wearSpike")) {
+            try {
+                wearSpike = (IMixinConfigPlugin) Class.forName("games.alejandrocoria.mismatchedleggings.test.WearSpikePlugin")
+                        .getConstructor().newInstance();
+                wearSpike.onLoad(name);
+            } catch (ReflectiveOperationException failure) {
+                throw new IllegalStateException("Missing isolated wear spike plugin", failure);
+            }
+        }
+    }
     @Override public String getRefMapperConfig() { return null; }
     @Override public List<String> getMixins() {
+        if (wearSpike != null) {
+            return wearSpike.getMixins();
+        }
         if (Boolean.getBoolean("leggings.test.jdtHud")) {
             if (!net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()) {
                 return List.of("JustDireDecoySoundProbe");

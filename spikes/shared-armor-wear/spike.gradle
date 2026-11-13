@@ -1,0 +1,188 @@
+// Disposable opt-in build: all patched JARs stay under build/, never in product outputs.
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.security.MessageDigest
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+
+def fabric = project.name == 'Fabric'
+def graph = providers.gradleProperty('sharedWearGraph').getOrElse('both')
+if (!(graph in ['core', 'boots', 'leggings', 'both', 'legacy', 'legacy-alone'])) {
+    throw new GradleException('Unknown shared wear spike graph')
+}
+if (providers.gradleProperty('leggingsJdtWearSpike').map { it.toBoolean() }.getOrElse(false)) {
+    throw new GradleException('Do not combine the discarded bridge and shared wear candidates')
+}
+def refused = providers.gradleProperty('sharedWearRefused').map { it.toBoolean() }.getOrElse(false)
+def transparent = providers.gradleProperty('sharedWearTransparent').map { it.toBoolean() }.getOrElse(false)
+def absent = providers.gradleProperty('sharedWearAbsent').map { it.toBoolean() }.getOrElse(false)
+def loader = project.name
+def core = project(":MismatchedThings:${loader}")
+def boots = project(":MismatchedBoots:${loader}")
+def leggings = project(":MismatchedLeggings:${loader}")
+evaluationDependsOn(boots.path)
+evaluationDependsOn(leggings.path)
+def spikeRoot = rootProject.file('spikes/shared-armor-wear')
+def label = "shared-wear-${graph}" + (refused ? '-refused' : '') + (transparent ? '-transparent' : '') + (absent ? '-absent' : '')
+def baseline = fabric ? fabric_loader_version : neoforge_version
+def directory = layout.buildDirectory.dir("run/${baseline}/${label}/server").get().asFile
+def reports = layout.buildDirectory.dir("reports/${baseline}/${label}").get().asFile
+def artifactsDirectory = layout.buildDirectory.dir("shared-wear/${baseline}/${label}").get().asFile
+def coreJar = core.tasks.named('jar').flatMap { it.archiveFile }
+
+if (fabric) {
+    sourceSets.main.java.srcDir(new File(spikeRoot, 'fabric'))
+} else {
+    def research = core.sourceSets.create('sharedWearSpike') {
+        java.srcDir(new File(spikeRoot, 'core'))
+        compileClasspath += core.sourceSets.main.compileClasspath + core.sourceSets.main.output
+    }
+    dependencies.add('compileOnly', files(research.output))
+    sourceSets.main.java.srcDir(new File(spikeRoot, 'neoforge'))
+}
+
+def rewrite = { File input, File output, Map<String, byte[]> replacements ->
+    output.parentFile.mkdirs()
+    new ZipFile(input).withCloseable { zip ->
+        new ZipOutputStream(new FileOutputStream(output)).withCloseable { target ->
+            zip.entries().each { entry ->
+                if (!entry.directory) {
+                    target.putNextEntry(new ZipEntry(entry.name))
+                    target.write(replacements.containsKey(entry.name) ? replacements.remove(entry.name) : zip.getInputStream(entry).bytes)
+                    target.closeEntry()
+                }
+            }
+            replacements.each { name, bytes ->
+                target.putNextEntry(new ZipEntry(name))
+                target.write(bytes)
+                target.closeEntry()
+            }
+        }
+    }
+}
+def nestedCore = { File input, File candidate ->
+    def replacements = [:]
+    new ZipFile(input).withCloseable { zip ->
+        def entries = zip.entries().findAll { !it.directory && it.name.toLowerCase(Locale.ROOT).contains('mismatchedthings') && it.name.endsWith('.jar') }
+        if (entries.size() != 1) { throw new GradleException('Expected exactly one nested Things artifact') }
+        replacements[entries[0].name] = candidate.bytes
+        if (!fabric && input.name.contains('Boots')) {
+            String metadata = zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
+            if (!metadata.contains('mismatchedboots.justdirethings-armor-wear.mixins.json')) {
+                throw new GradleException('Missing legacy wear consumer to retire in the candidate Boots copy')
+            }
+            metadata = metadata.replaceAll(/\[\[mixins\]\]\r?\n\s*config="mismatchedboots\.justdirethings-armor-wear\.mixins\.json"\r?\n/, '')
+            replacements['META-INF/neoforge.mods.toml'] = metadata.getBytes('UTF-8')
+        }
+        if (fabric && input.name.contains('Leggings')) {
+            // Also name the conflicting root product directly: otherwise Fabric may suggest
+            // replacing Things by the same version when its nested selection is unsatisfiable.
+            def metadata = new JsonSlurper().parseText(zip.getInputStream(zip.getEntry('fabric.mod.json')).getText('UTF-8'))
+            metadata.breaks = (metadata.breaks ?: [:]) + [mismatchedboots: '<1.1.0']
+            replacements['fabric.mod.json'] = JsonOutput.prettyPrint(JsonOutput.toJson(metadata)).getBytes('UTF-8')
+        }
+    }
+    replacements
+}
+
+tasks.register('prepareSharedWearSpike') {
+    dependsOn tasks.named('classes'), core.tasks.named('jar')
+    if (!fabric) { dependsOn core.tasks.named('sharedWearSpikeClasses') }
+    if (graph in ['boots', 'both']) { dependsOn boots.tasks.named('assemble') }
+    if (graph in ['leggings', 'both', 'legacy']) { dependsOn leggings.tasks.named('assemble') }
+    doLast {
+        artifactsDirectory.mkdirs()
+        def additions = [:]
+        new ZipFile(coreJar.get().asFile).withCloseable { zip ->
+            String name = fabric ? 'fabric.mod.json' : 'META-INF/neoforge.mods.toml'
+            String metadata = zip.getInputStream(zip.getEntry(name)).getText('UTF-8')
+            if (fabric) {
+                def json = new JsonSlurper().parseText(metadata)
+                json.breaks = (json.breaks ?: [:]) + [mismatchedboots: '<1.1.0']
+                metadata = JsonOutput.prettyPrint(JsonOutput.toJson(json))
+            } else {
+                metadata += '\n[[dependencies.mismatchedthings]]\nmodId="mismatchedboots"\ntype="incompatible"\nversionRange="(,1.1.0)"\nordering="NONE"\nside="BOTH"\n'
+                metadata += '\n[[mixins]]\nconfig="shared-wear-spike.mixins.json"\n'
+            }
+            additions[name] = metadata.getBytes('UTF-8')
+        }
+        if (!fabric) {
+            core.sourceSets.sharedWearSpike.output.classesDirs.files.each { classes ->
+                fileTree(classes).files.each { entry -> additions[classes.toPath().relativize(entry.toPath()).toString().replace('\\', '/')] = entry.bytes }
+            }
+            additions['shared-wear-spike.mixins.json'] = new File(spikeRoot, 'core-resources/shared-wear-spike.mixins.json').bytes
+        }
+        def candidateCore = new File(artifactsDirectory, 'candidate-things.jar')
+        rewrite(coreJar.get().asFile, candidateCore, additions)
+        def staged = [candidateCore]
+        [boots: boots, leggings: leggings].each { key, product ->
+            if (graph == key || graph == 'both' || graph == 'legacy' && key == 'leggings') {
+                def input = product.tasks.named('jar').get().archiveFile.get().asFile
+                def output = new File(artifactsDirectory, "candidate-${key}.jar")
+                rewrite(input, output, nestedCore(input, candidateCore))
+                staged.add(output)
+            }
+        }
+        if (graph in ['legacy', 'legacy-alone']) {
+            def pin = new JsonSlurper().parse(project(':MismatchedLeggings:RuntimeTests').file('fixtures/boots-1.0.0.json'))[loader]
+            def release = project(':MismatchedLeggings').file("build/verification/product/inputs/${pin.filename}")
+            if (!release.isFile() || MessageDigest.getInstance('SHA-256').digest(release.bytes).encodeHex().toString() != pin.sha256) {
+                throw new GradleException('Missing unchanged pinned Boots 1.0.0 release; never substitute an indev artifact')
+            }
+            staged.add(release)
+        }
+        if (!fabric && !absent) {
+            staged.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar'))
+        }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { existing -> !staged.any { it.name == existing.name } }) {
+            throw new GradleException("Unexpected artifact in ${mods}")
+        }
+        copy { from staged; into mods }
+        reports.mkdirs()
+        ['shared-wear.ok', 'shared-wear.failure.txt', 'shared-wear.tsv'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=shared-wear\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+if (fabric) {
+    loom.runs.create('sharedWearSpike') {
+        server()
+        ideConfigGenerated(false)
+        runDir(project.relativePath(directory))
+        property('sharedwear.spike', 'true')
+        property('sharedwear.graph', graph)
+        property('sharedwear.report', reports.absolutePath)
+        programArg('--nogui')
+        vmArg('-Xmx1G')
+    }
+} else {
+    neoForge.runs.create('sharedWearSpike') {
+        server()
+        disableIdeRun()
+        gameDirectory = directory
+        systemProperty('sharedwear.spike', 'true')
+        systemProperty('sharedwear.graph', graph)
+        systemProperty('sharedwear.refused', refused.toString())
+        systemProperty('sharedwear.transparent', transparent.toString())
+        systemProperty('sharedwear.absent', absent.toString())
+        systemProperty('sharedwear.report', reports.absolutePath)
+        systemProperty('mixin.debug.export', 'true')
+        programArgument('--nogui')
+        jvmArgument('-Xmx1G')
+    }
+}
+tasks.named('runSharedWearSpike') {
+    dependsOn 'prepareSharedWearSpike'
+    doLast {
+        if (!new File(reports, 'shared-wear.ok').isFile() || new File(reports, 'shared-wear.failure.txt').exists()) {
+            throw new GradleException("Missing fresh shared wear acceptance: ${reports}")
+        }
+    }
+}

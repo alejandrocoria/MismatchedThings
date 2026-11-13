@@ -13,6 +13,22 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("sharedwear.spike")) {
+            try {
+                Class.forName("games.alejandrocoria.mismatchedleggings.test.SharedWearChecks").getMethod("register").invoke(null);
+            } catch (ReflectiveOperationException failure) {
+                throw new IllegalStateException("Missing shared wear research", failure);
+            }
+            return;
+        }
+        if (Boolean.getBoolean("leggings.test.wearSpike")) {
+            try {
+                Class.forName("games.alejandrocoria.mismatchedleggings.test.WearSpike").getMethod("register").invoke(null);
+            } catch (ReflectiveOperationException failure) {
+                throw new IllegalStateException("Missing isolated wear spike", failure);
+            }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtHud")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> JustDireHudServer.tick(event.getServer()));
             if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
