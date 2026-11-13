@@ -13,6 +13,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.jdtDecoy")) {
+            JustDireDecoyChecks.register();
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtDecoySpike")) {
             try {
                 Class.forName("games.alejandrocoria.mismatchedleggings.test.DecoySpike").getMethod("register").invoke(null);

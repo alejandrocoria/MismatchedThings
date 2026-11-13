@@ -13,6 +13,7 @@ import java.util.Set;
 public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.contains("JustDireDecoy") && mixin.endsWith("Probe")) { return Boolean.getBoolean("leggings.test.jdtDecoy"); }
         if (mixin.contains("DecoySpike")) { return Boolean.getBoolean("leggings.test.jdtDecoySpike"); }
         if (mixin.endsWith("JustDirePresentationInputProbe")) {
             return Boolean.getBoolean("leggings.test.jdtPresentation");
@@ -25,6 +26,7 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.contains("JustDireDecoy") && mixin.endsWith("Probe")) { return; }
         if (mixin.contains("DecoySpike")) { return; }
         if (mixin.endsWith("JustDirePresentationInputProbe")) { return; }
         String getter = target.endsWith("AbilityMethods") ? "mismatchedleggings$jdtMovementReady"
@@ -36,6 +38,7 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     @Override public void onLoad(String name) {}
     @Override public String getRefMapperConfig() { return null; }
     @Override public List<String> getMixins() {
+        if (Boolean.getBoolean("leggings.test.jdtDecoy")) { return List.of("JustDireDecoySoundProbe", "JustDireDecoyDebitProbe"); }
         if (!Boolean.getBoolean("leggings.test.jdtDecoySpike")) { return null; }
         return net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()
                 ? List.of("DecoySpikeSoundMixin", "DecoySpikeHudMixin", "DecoySpikeDrawMixin")

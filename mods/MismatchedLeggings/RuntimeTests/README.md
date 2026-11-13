@@ -258,14 +258,39 @@ No screenshots, indev artifacts or prepared owner world are used. Consolidated
 owner acceptance is recorded separately in the private plan. Decoy, Lava Repair,
 powered incoming wear, refunds and broader charger discovery remain deferred.
 
-## Just Dire Things Decoy research (opt-in)
+## Just Dire Things Decoy action and clock
 
-The isolated [Decoy spike](../../../spikes/leggings-jdt-decoy/README.md) reuses
+The maintained dedicated profile exercises the packaged production adapter, not
+the research candidate. It does not yet validate gameplay bindings or the HUD:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtDecoy=true --offline --console=plain
+```
+
+Uses catalog-pinned JDT 1.6.11, no indev artifacts, client, screenshots or manual
+fixture world. Reports are under
+`NeoForge/build/reports/<baseline>/jdt-decoy/`: require `server.ok`,
+`foundation.txt`, `decoy-action.txt` and no `server.failure.txt`.
+Native controls cover both tiers/orientations, nominal FE versus discounted
+payment, native entity ownership/attraction/lifetime, real cancellation and
+staged partial-debit rollback, slot replacement, worn-only phases/completion
+sounds, both-output inherited clocks, paid tier changes and invalid lockouts.
+The malformed-clock cases intentionally emit one bounded preservation warning.
+The sound probe checks native emission calls, not manual audibility. The partial
+transfer probe changes only the test handler request; production owns rollback.
+
+## Just Dire Things Decoy research (opt-in, pre-production evidence)
+
+The isolated [Decoy spike](../../../spikes/leggings-jdt-decoy/README.md) originally used
 `verifyJustDirePassives` with `-PleggingsJdtDecoySpike=true` for native action,
 payment/clock/entity and native HUD feasibility. Its source set and dynamic
 research mixins are excluded without that property. This is not production
 Decoy settings/input support or foundation acceptance; use that README for
-the three bounded profiles, markers and complete retirement scope.
+the three bounded profiles, markers and complete retirement scope. Its captured
+results describe the pre-production baseline: owner-only clock characterization
+and held client clock fixtures are superseded by production ticking/import.
+Use the maintained profile above for action/state validation. Remaining useful
+client/HUD controls will be promoted before the complete spike is removed.
 
 ## Silent Gear source tooltip acceptance
 

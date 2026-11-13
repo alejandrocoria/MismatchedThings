@@ -79,6 +79,7 @@ public final class JustDireState implements JustDireComposition {
     @Override
     public void wornTick(Player player) {
         JustDireAbilities.movement(player);
+        JustDireDecoy.tick(player);
     }
 
     @Override
@@ -89,6 +90,9 @@ public final class JustDireState implements JustDireComposition {
             preserveControls(previous, output);
         }
         JustDireResources.prepare(previous, output, data);
+        if (previous == null) {
+            JustDireDecoy.prepare(output, data);
+        }
     }
 
     private static void initializeUpgrades(ItemStack output, MixedLeggingsData data) {

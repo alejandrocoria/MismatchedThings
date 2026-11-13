@@ -11,6 +11,10 @@ def connected = providers.gradleProperty('leggingsJdtConnected').map { it.toBool
 def settings = providers.gradleProperty('leggingsJdtSettings').map { it.toBoolean() }.getOrElse(false)
 def presentation = providers.gradleProperty('leggingsJdtPresentation').map { it.toBoolean() }.getOrElse(false)
 def decoySpike = providers.gradleProperty('leggingsJdtDecoySpike').map { it.toBoolean() }.getOrElse(false)
+def decoy = providers.gradleProperty('leggingsJdtDecoy').map { it.toBoolean() }.getOrElse(false)
+if (decoy && (decoySpike || settings || presentation || absent || passives || connected || !providers.gradleProperty('leggingsJdtFault').getOrElse('').isEmpty())) {
+    throw new GradleException('Production Decoy action acceptance uses its own dedicated profile')
+}
 if (decoySpike) {
     sourceSets.main.java.srcDir(rootProject.file('spikes/leggings-jdt-decoy/src/main/java'))
 }
@@ -27,7 +31,7 @@ if (!(fault in ['', 'movement', 'attributes', 'screen'])
     throw new GradleException('JDT fault controls require only the dedicated passive profile')
 }
 if (connected && (absent || !passives)) { throw new GradleException('Connected JDT acceptance requires native passives') }
-def label = (decoySpike ? 'jdt-decoy-spike' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
+def label = (decoy ? 'jdt-decoy' : decoySpike ? 'jdt-decoy-spike' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
 if (!fault.isEmpty()) { label += "-${fault}" }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
@@ -59,7 +63,7 @@ tasks.register('prepareJustDireFoundation') {
         reports.mkdirs()
         ['server.ok', 'server.failure.txt', 'foundation.txt', 'server-movement.txt', 'phase.txt', 'armor.txt', 'shared-armor.txt',
          'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt', 'settings-security.txt',
-         'input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-spike.txt', 'decoy-client.txt'].each { new File(reports, it).delete() }
+         'input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-spike.txt', 'decoy-client.txt', 'decoy-action.txt'].each { new File(reports, it).delete() }
         (0..<8).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
@@ -83,6 +87,7 @@ neoForge.runs.create('justDireFoundation') {
     systemProperty('leggings.test.jdtSettings', settings.toString())
     systemProperty('leggings.test.jdtPresentation', presentation.toString())
     systemProperty('leggings.test.jdtDecoySpike', decoySpike.toString())
+    systemProperty('leggings.test.jdtDecoy', decoy.toString())
     systemProperty('leggings.test.jdtFault', fault)
     systemProperty('leggings.test.jdtAbsent', absent.toString())
     systemProperty('leggings.test.report', reports.absolutePath)
@@ -95,8 +100,11 @@ tasks.named('runJustDireFoundation') {
                 || new File(reports, 'server.failure.txt').exists()) {
             throw new GradleException("Just Dire Things foundation failed: ${reports}")
         }
-        if (!absent && !connected && fault.isEmpty() && !new File(reports, 'jdt-lifecycle.txt').isFile()) {
+        if (!absent && !connected && !decoy && fault.isEmpty() && !new File(reports, 'jdt-lifecycle.txt').isFile()) {
             throw new GradleException('Missing paid live JDT lifecycle evidence')
+        }
+        if (decoy && !new File(reports, 'decoy-action.txt').isFile()) {
+            throw new GradleException('Missing production Decoy action/clock evidence')
         }
         if (!fault.isEmpty() && !settings) {
             def warnings = new File(directory, 'logs/latest.log').readLines().findAll {

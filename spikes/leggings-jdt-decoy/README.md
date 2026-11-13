@@ -3,6 +3,14 @@
 Disposable candidate, not production support. The private Decoy exploration
 owns findings, policy proposals and actual execution results.
 
+Production block A now replaces action/clock/import behavior. The commands below
+describe the original research baseline, not maintained current-product gates:
+its owner-only clock characterization and held client clocks predate production
+import/ticking. Use the RuntimeTests README's maintained Decoy action profile.
+Keep remaining native HUD controls as implementation references until the plan
+retires this entire folder and its opt-in wiring; do not claim a fresh pass from
+the historical results.
+
 From the repository root, run sequentially:
 
 ```powershell
