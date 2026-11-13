@@ -52,7 +52,7 @@ public final class JustDireInputClient {
         for (int slot = 0; slot < client.player.getInventory().getContainerSize(); slot++) {
             if (!JustDireSettingsNetwork.supportedSlot(slot)) { continue; }
             var root = client.player.getInventory().getItem(slot);
-            if (!JustDireSettings.boundPassives(root, key, mouse, slot == JustDireInputNetwork.legsSlot()).isEmpty()) {
+            if (!JustDireSettings.boundAbilities(root, key, mouse, slot == JustDireInputNetwork.legsSlot()).isEmpty()) {
                 targets.add(new Intent(slot, JustDireInputNetwork.snapshot(root)));
             }
         }
@@ -83,7 +83,7 @@ public final class JustDireInputClient {
         pending.targets.removeIf(target -> {
             var root = client.player.getInventory().getItem(target.slot);
             return !ItemStack.matches(target.snapshot, JustDireInputNetwork.snapshot(root))
-                    || JustDireSettings.boundPassives(root, pending.key, pending.mouse, target.slot == JustDireInputNetwork.legsSlot()).isEmpty();
+                    || JustDireSettings.boundAbilities(root, pending.key, pending.mouse, target.slot == JustDireInputNetwork.legsSlot()).isEmpty();
         });
         if (pending.targets.isEmpty()) { pending = null; }
     }

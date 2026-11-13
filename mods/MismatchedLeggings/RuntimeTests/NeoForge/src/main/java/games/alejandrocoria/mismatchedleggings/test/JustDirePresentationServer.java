@@ -3,6 +3,8 @@ package games.alejandrocoria.mismatchedleggings.test;
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
 import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -11,6 +13,7 @@ import net.minecraft.world.item.Items;
 
 import java.nio.file.Files;
 import java.util.List;
+import java.util.UUID;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
@@ -25,6 +28,7 @@ final class JustDirePresentationServer {
     private static ItemStack worn;
     private static ItemStack offhand;
     private static ItemStack boots;
+    private static UUID firstDecoy;
 
     private JustDirePresentationServer() {}
 
@@ -40,7 +44,7 @@ final class JustDirePresentationServer {
                 ready = true;
             }
             if (seeded && Files.exists(JustDireConnectedServer.report("client.ok"))) {
-                Files.writeString(JustDireConnectedServer.report("connected.txt"), "Independent keyboard/mouse passive batches, actual rebindings and held sibling/native priority passed\n");
+                Files.writeString(JustDireConnectedServer.report("connected.txt"), "Independent keyboard/mouse passive and paid Decoy batches, actual rebindings and held sibling/native priority passed\n");
                 SkeletonChecks.passed("server");
                 finished = true;
                 server.halt(false);
@@ -76,6 +80,34 @@ final class JustDirePresentationServer {
                 if (boots != null) { require(!boots.getOrDefault(JustDireDataComponents.TOOL_ENABLED, true), "Boots independent toggle lost"); }
             } else if (stage == 7) {
                 require(!JustDireInputChecks.on(inverse, Ability.WALKSPEED), "GUI passive input was not suppressed");
+                var probe = RepairFixtures.player(server);
+                probe.setPos(player.position());
+                JustDireDecoyInputChecks.run(probe);
+                seedDecoy(player);
+            } else if (stage == 8) {
+                require(JustDireDecoyInputChecks.entities(player).isEmpty()
+                                && main.get(JustDireDataComponents.FORGE_ENERGY) == 10000
+                                && inverse.get(JustDireDataComponents.FORGE_ENERGY) == 10000,
+                        "Equipped-only stored binding or ordinary mouse buttons activated Decoy");
+                player.getInventory().setItem(0, ItemStack.EMPTY);
+                player.setItemSlot(EquipmentSlot.LEGS, main);
+                worn = main;
+            } else if (stage == 9) {
+                var entities = JustDireDecoyInputChecks.entities(player);
+                require(entities.size() == 1 && worn.get(JustDireDataComponents.FORGE_ENERGY) == 5000
+                                && worn.has(JustDireDataComponents.ABILITY_COOLDOWNS)
+                                && JustDireInputChecks.on(worn, Ability.DECOY),
+                        "Connected keyboard action did not spawn/pay exactly once or toggled Decoy");
+                firstDecoy = entities.getFirst().getUUID();
+            } else if (stage == 10) {
+                require(inverse.get(JustDireDataComponents.FORGE_ENERGY) == 5000
+                                && inverse.has(JustDireDataComponents.ABILITY_COOLDOWNS)
+                                && JustDireDecoyInputChecks.entities(player).stream().anyMatch(entity -> !entity.getUUID().equals(firstDecoy)),
+                        "Connected inventory mouse action did not use its own wallet/entity");
+            } else if (stage == 11) {
+                require(worn.get(JustDireDataComponents.FORGE_ENERGY) == 5000 && inverse.get(JustDireDataComponents.FORGE_ENERGY) == 5000
+                                && JustDireInputChecks.on(worn, Ability.DECOY) && JustDireInputChecks.on(inverse, Ability.DECOY),
+                        "Cooldown press spent another debit or toggled the ability");
             }
             player.inventoryMenu.broadcastChanges();
             Files.writeString(JustDireConnectedServer.report("case-" + stage + ".ready"), "Authoritative stage " + stage + " passed\n");
@@ -112,6 +144,16 @@ final class JustDirePresentationServer {
             boots = (ItemStack) pair.getClass().getMethod("primary").invoke(pair);
             player.getInventory().setItem(3, boots);
         }
+        player.inventoryMenu.broadcastChanges();
+    }
+
+    private static void seedDecoy(ServerPlayer player) {
+        player.getInventory().clearContent();
+        main = JustDireDecoyInputChecks.root(true, false, 71, false, true);
+        main.set(DataComponents.CUSTOM_NAME, Component.literal("Decoy controls"));
+        inverse = JustDireDecoyInputChecks.root(false, true, 4, true, false);
+        player.getInventory().setItem(0, main);
+        player.getInventory().setItem(2, inverse);
         player.inventoryMenu.broadcastChanges();
     }
 }

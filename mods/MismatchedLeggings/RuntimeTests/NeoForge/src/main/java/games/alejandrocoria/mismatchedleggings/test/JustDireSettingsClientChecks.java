@@ -53,6 +53,12 @@ public final class JustDireSettingsClientChecks {
                         widgets(screen);
                         screen.setSetting("walkspeed", 3);
                         screen.toggleSetting("phase");
+                        screen.toggleSetting("decoy");
+                        field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.DECOY));
+                        field(screen, "requireEquipped").setBoolean(screen, true);
+                        field(screen, "bindingEnabled").setBoolean(screen, true);
+                        screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_G, 0, 0));
+                        require(!field(screen, "bindingEnabled").getBoolean(screen), "Decoy native key capture stayed active");
                         // Exercise native mouse capture, including its row-local binding record.
                         field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.WALKSPEED));
                         field(screen, "requireEquipped").setBoolean(screen, false);
@@ -149,6 +155,10 @@ public final class JustDireSettingsClientChecks {
                         field(screen, "bindingEnabled").setBoolean(screen, true);
                         screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_G, 0, 0));
                         require(!field(screen, "bindingEnabled").getBoolean(screen), "Native keyboard capture stayed active");
+                        field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.DECOY));
+                        field(screen, "requireEquipped").setBoolean(screen, false);
+                        field(screen, "bindingEnabled").setBoolean(screen, true);
+                        screen.mouseClicked(mouse(4), false);
                     }
                     sent = true;
                 }
@@ -156,6 +166,10 @@ public final class JustDireSettingsClientChecks {
                         .getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
                         .noneMatch(record -> record.abilityName().equals("runspeed") && record.key() == GLFW.GLFW_KEY_G
                                 && !record.isMouse() && !record.requireEquipped())) { return; }
+                if (!fault && client.player.getInventory().getItem(0)
+                        .getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
+                        .noneMatch(record -> record.abilityName().equals("decoy") && record.key() == 4 && record.isMouse()
+                                && !record.requireEquipped())) { return; }
                 done(7);
                 finished = true;
                 Files.writeString(JustDireConnectedServer.report("client.ok"), "Native screen and authoritative received edits passed\n");
@@ -186,10 +200,11 @@ public final class JustDireSettingsClientChecks {
 
     private static void widgets(ToolSettingScreen screen) throws Exception {
         require(((JustDireSettingsScreenAccess) screen).mismatchedleggings$jdtReady(), "Local transformed guard not published");
-        require(buttons(screen).values().containsAll(List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE))
-                && buttons(screen).size() == 4, "Unsupported/missing mixed ability widgets");
+        require(buttons(screen).values().containsAll(List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE, Ability.DECOY))
+                && buttons(screen).size() == 5, "Unsupported/missing mixed ability widgets");
         var sliders = (Map<?, ?>) field(screen, "sliders").get(screen);
-        require(sliders.size() == 3 && !sliders.containsKey(icon(screen, Ability.PHASE)), "Movement sliders/Phase presentation changed");
+        require(sliders.size() == 3 && !sliders.containsKey(icon(screen, Ability.PHASE))
+                && !sliders.containsKey(icon(screen, Ability.DECOY)), "Movement sliders/toggle-only presentation changed");
     }
 
     private static void select(ToolSettingScreen screen, int index) throws Exception {

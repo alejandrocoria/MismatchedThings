@@ -65,8 +65,11 @@ final class JustDireSettingsServer {
             boolean fault = System.getProperty("leggings.test.jdtFault", "").equals("screen");
             if (stage == 0 && (fault || primary.getOrDefault(JustDireDataComponents.ABILITY_VALUES.get(Ability.WALKSPEED), 0) == 3
                     && !primary.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.PHASE), true)
+                    && !primary.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY), true)
                     && primary.getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
-                    .anyMatch(record -> record.abilityName().equals("walkspeed") && record.key() == 4 && record.isMouse() && !record.requireEquipped()))) {
+                    .anyMatch(record -> record.abilityName().equals("walkspeed") && record.key() == 4 && record.isMouse() && !record.requireEquipped())
+                    && primary.getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
+                    .anyMatch(record -> record.abilityName().equals("decoy") && record.key() == 71 && !record.isMouse() && record.requireEquipped()))) {
                 primary.set(JustDireDataComponents.FORGE_ENERGY, 888);
                 player.inventoryMenu.broadcastChanges();
                 Files.writeString(JustDireConnectedServer.report("case-0.ready"), "Root edits reached server; charging same pair\n");

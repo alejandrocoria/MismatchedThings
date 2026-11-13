@@ -44,6 +44,10 @@ public final class JustDireDecoy {
 
     private JustDireDecoy() {}
 
+    public static boolean available() {
+        return api != null;
+    }
+
     public static void initialize(IEventBus bus) {
         if (ModList.get().isLoaded("justdirethings")) {
             bus.addListener((RegisterCapabilitiesEvent event) -> bind());

@@ -38,7 +38,7 @@ final class JustDireInputChecks {
 
     static void bind(ItemStack root, List<ToolRecords.AbilityBinding> records) {
         root.set(JustDireDataComponents.ABILITY_BINDINGS, records);
-        for (var ability : List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE)) {
+        for (var ability : List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE, Ability.DECOY)) {
             root.set(JustDireDataComponents.ABILITY_BINDING_MODES.get(ability), 2);
         }
     }
@@ -107,7 +107,8 @@ final class JustDireInputChecks {
         var stacked = root.copyWithCount(2);
         require(JustDireSettings.boundPassives(stacked, 71, false, true).isEmpty(), "Count-two root accepted");
         bind(root, List.of(new ToolRecords.AbilityBinding("decoy", 71, false, false)));
-        require(JustDireSettings.boundPassives(root, 71, false, true).isEmpty(), "Deferred Decoy executed");
+        require(JustDireSettings.boundPassives(root, 71, false, true).isEmpty()
+                && JustDireSettings.boundAbilities(root, 71, false, true).equals(List.of("decoy")), "Active Decoy was treated as a passive switch");
 
         player.getInventory().clearContent();
         player.setItemInHand(InteractionHand.MAIN_HAND, root);

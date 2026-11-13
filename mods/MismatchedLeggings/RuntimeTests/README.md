@@ -168,12 +168,14 @@ endpoint checks native empty-hand menu construction, selection tokens, replay,
 closed/replaced menus, replaced/moved/count-invalid roots, wrong slots/products,
 native tier/config/installation eligibility, unsupported edits and bounded
 payload codecs. Its hidden-before-GLFW, muted client uses the actual native
-screen, movement sliders/Phase toggle, keyboard/mouse capture and location
+screen, movement sliders and Phase/Decoy toggles, keyboard/mouse capture and location
 records. Ordinary packets return authoritative roots/replies through charge,
 native/inverse/sibling selection, LEGS/offhand slots, refresh and menu reopening.
 Queued pre-token edits are canceled on selection changes. The screen fault
 refuses only Leggings selection; native and Boots controls remain positive
-controls. Bindings are stored here; gameplay input execution is foundation D.
+controls. Decoy's fixed 1..1 metadata must not add a slider. Its toggle, keyboard
+binding and later mouse/inventory-location rebinding are observed on authoritative
+roots. Gameplay execution is validated by the presentation/input profile below.
 
 Reports are `NeoForge/build/reports/<baseline>/jdt-settings[-boots][-screen]/`:
 fresh `settings-security.txt`, eight `case-<n>.ok` files, both endpoint success
@@ -208,6 +210,14 @@ press/release/repeat events through production listeners: two matching roots,
 worn/offhand locations, actual keyboard/mouse Toggle Tool rebindings, native
 priority and independent current-Boots routing. Ordinary packets return state.
 GUI input is suppressed; custom passives exclude ordinary mouse buttons 0/1.
+The profile also covers paid Decoy input: dedicated negatives for stale identity,
+slot/binding/location, replay/duplicate batches, switches/config, changed FE and
+existing cooldown; one active action beside a passive sharing its key; and two
+independent active roots in the same batch. The real connected client activates
+equipped duplicate-provider leggings by keyboard and inverse stored leggings by
+mouse, observing ordinary FE/clock synchronization and the actual native entity.
+An equipped-only stored pair and mouse buttons 0/1 must not activate; repeated
+cooldown presses must not debit again or toggle the Decoy switch.
 
 Structured native translations, number formats and Component styles cover
 both orientations, saved switches/missing upgrades, actual Shift versus F3+H,
@@ -216,12 +226,13 @@ registered item decorator measures FE/durability lanes, including healthy,
 worn, Unbreakable and full-charge controls; no screenshot is needed.
 
 Reports use `NeoForge/build/reports/<baseline>/jdt-presentation[-boots]/`:
-`input-security.txt`, `presentation.txt`, eight acknowledged `case-<n>.ok`
+`input-security.txt`, `decoy-input-security.txt`, `presentation.txt`, twelve acknowledged `case-<n>.ok`
 files, `connected.txt`, both endpoint success markers and no failure marker.
 Driver logs/`connected.ok` live under the matching `build/verification/`
 directory. Artifacts use the shared pin/cache, never indev JARs. Run profiles
 sequentially and restore ordinary .114 outputs afterward. No manual fixture
-world is created. Decoy, Lava Repair and powered wear remain outside this gate.
+world is created. Decoy's HUD is outside this gate, as are Lava Repair and powered
+wear. This is automatic control/presentation coverage, not owner acceptance.
 
 ## Just Dire Things foundation consolidation and recovery
 

@@ -63,8 +63,8 @@ tasks.register('prepareJustDireFoundation') {
         reports.mkdirs()
         ['server.ok', 'server.failure.txt', 'foundation.txt', 'server-movement.txt', 'phase.txt', 'armor.txt', 'shared-armor.txt',
          'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt', 'settings-security.txt',
-         'input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-spike.txt', 'decoy-client.txt', 'decoy-action.txt'].each { new File(reports, it).delete() }
-        (0..<8).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
+         'input-security.txt', 'decoy-input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-spike.txt', 'decoy-client.txt', 'decoy-action.txt'].each { new File(reports, it).delete() }
+        (0..<12).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
         new File(directory, 'eula.txt').text = 'eula=true\n'
@@ -198,11 +198,11 @@ tasks.register('verifyJustDirePassives') {
             }
             if (!server.waitFor(120, java.util.concurrent.TimeUnit.SECONDS) || server.exitValue() != 0
                     || !new File(markers, 'server.ok').isFile() || new File(markers, 'server.failure.txt').exists()
-                    || !new File(markers, 'connected.txt').isFile() || !(0..<(decoySpike ? 3 : 8)).every { new File(markers, "case-${it}.ok").isFile() }) {
+                    || !new File(markers, 'connected.txt').isFile() || !(0..<(decoySpike ? 3 : presentation ? 12 : 8)).every { new File(markers, "case-${it}.ok").isFile() }) {
                 throw new GradleException("JDT connected server failed: ${logs}")
             }
             if (settings && !new File(markers, 'settings-security.txt').isFile()) { throw new GradleException('Missing server settings security evidence') }
-            if (presentation && ['input-security.txt', 'presentation.txt'].any { !new File(markers, it).isFile() }) {
+            if (presentation && ['input-security.txt', 'decoy-input-security.txt', 'presentation.txt'].any { !new File(markers, it).isFile() }) {
                 throw new GradleException('Missing JDT input/presentation evidence')
             }
             if (decoySpike && ['decoy-spike.txt', 'decoy-client.txt'].any { !new File(markers, it).isFile() }) {
@@ -215,7 +215,7 @@ tasks.register('verifyJustDirePassives') {
                 if (warnings.size() != 1) { throw new GradleException('Expected exactly one bounded settings refusal') }
             }
             new File(logs, 'connected.ok').text = decoySpike ? 'Test-only Decoy action/payment/clock/entity/native HUD proof passed\n' : presentation
-                    ? 'Passive input batches, held native/sibling routes, root tooltip and registered item bars passed\n'
+                    ? 'Passive and paid Decoy input batches, held native/sibling routes, root tooltip and registered item bars passed\n'
                     : settings
                     ? 'Native settings widgets, authoritative edits and bounded selection/refusal controls passed\n'
                     : 'Packaged roots, ordinary item/attribute packets and native motion/Phase consumers passed\n'

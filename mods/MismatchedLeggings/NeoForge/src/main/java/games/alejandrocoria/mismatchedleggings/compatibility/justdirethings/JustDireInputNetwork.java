@@ -74,7 +74,7 @@ public final class JustDireInputNetwork {
             for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
                 if (!JustDireSettingsNetwork.supportedSlot(slot)) { continue; }
                 var root = player.getInventory().getItem(slot);
-                if (!JustDireSettings.boundPassives(root, packet.key, packet.mouse, slot == legsSlot()).isEmpty()) {
+                if (!JustDireSettings.boundAbilities(root, packet.key, packet.mouse, slot == legsSlot()).isEmpty()) {
                     targets.add(new Target(slot, root, snapshot(root)));
                 }
             }
@@ -93,7 +93,12 @@ public final class JustDireInputNetwork {
             if (!packet.slots.contains(target.slot)) { continue; }
             var root = player.getInventory().getItem(target.slot);
             if (root == target.root && ItemStack.matches(target.snapshot, snapshot(root))) {
+                var abilities = JustDireSettings.boundAbilities(root, packet.key, packet.mouse, target.slot == legsSlot());
                 JustDireSettings.toggleBoundPassives(player, root, packet.key, packet.mouse, target.slot == legsSlot());
+                // Mode 2 describes a custom binding, not necessarily a passive toggle.
+                if (abilities.contains("decoy")) {
+                    JustDireDecoy.activate(player, target.slot, root);
+                }
             }
         }
         return rejected;
@@ -113,7 +118,7 @@ public final class JustDireInputNetwork {
 
     private static List<Integer> readSlots(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
-        if (size < 0 || size > 38) { throw new DecoderException("Invalid JDT passive batch length"); }
+        if (size < 0 || size > 38) { throw new DecoderException("Invalid JDT input batch length"); }
         var slots = new ArrayList<Integer>();
         for (int i = 0; i < size; i++) { slots.add(buffer.readVarInt()); }
         if (buffer.isReadable()) { throw new DecoderException("Trailing JDT input bytes"); }

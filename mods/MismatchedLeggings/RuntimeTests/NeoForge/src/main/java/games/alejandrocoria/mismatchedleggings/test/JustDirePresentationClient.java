@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.test;
 
 import com.direwolf20.justdirethings.client.KeyBindings;
+import com.direwolf20.justdirethings.common.entities.DecoyEntity;
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
 import com.direwolf20.justdirethings.util.MagicHelpers;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -84,6 +86,22 @@ public final class JustDirePresentationClient {
                     client.setScreen(new InventoryScreen(client.player));
                     key(71, GLFW.GLFW_PRESS);
                     client.setScreen(null);
+                } else if (stage == 8) {
+                    var root = client.player.getMainHandItem();
+                    if (!root.getHoverName().getString().equals("Decoy controls")) { return; }
+                    key(71, GLFW.GLFW_RELEASE);
+                    key(71, GLFW.GLFW_REPEAT);
+                    key(71, GLFW.GLFW_PRESS); // Stored root is equipped-only.
+                    mouse(0);
+                    mouse(1);
+                } else if (stage == 9) {
+                    if (!client.player.getItemBySlot(EquipmentSlot.LEGS).getHoverName().getString().equals("Decoy controls")) { return; }
+                    key(71, GLFW.GLFW_PRESS);
+                } else if (stage == 10) {
+                    mouse(4);
+                } else if (stage == 11) {
+                    key(71, GLFW.GLFW_PRESS);
+                    mouse(4);
                 }
                 sent = true;
                 wait = 0;
@@ -97,11 +115,19 @@ public final class JustDirePresentationClient {
                 if (stage == 3 && !root.getOrDefault(JustDireDataComponents.TOOL_ENABLED, false)) { return; }
                 if (stage == 4 && root.getOrDefault(JustDireDataComponents.TOOL_ENABLED, true)) { return; }
                 if (stage == 6 && !client.player.getOffhandItem().getOrDefault(JustDireDataComponents.TOOL_ENABLED, false)) { return; }
+                if (stage == 9 || stage == 10) {
+                    var active = stage == 9 ? client.player.getItemBySlot(EquipmentSlot.LEGS) : inverse;
+                    if (active.getOrDefault(JustDireDataComponents.FORGE_ENERGY, 10000) != 5000
+                            || !active.has(JustDireDataComponents.ABILITY_COOLDOWNS)
+                            || client.level.getEntitiesOfClass(DecoyEntity.class,
+                                    client.player.getBoundingBox().inflate(16)).stream()
+                                    .noneMatch(entity -> entity.getOwnerUUID().filter(client.player.getUUID()::equals).isPresent())) { return; }
+                }
                 Files.writeString(JustDireConnectedServer.report("case-" + stage + ".ok"), "Client stage " + stage + " observed\n");
                 return; // The server may replace the slot after acknowledging this observation.
             }
             sent = false;
-            if (++stage == 8) {
+            if (++stage == 12) {
                 KeyBindings.toggleTool.setKey(InputConstants.Type.KEYSYM.getOrCreate(86));
                 SkeletonChecks.passed("client");
                 finished = true;
@@ -145,18 +171,27 @@ public final class JustDirePresentationClient {
             var full = lines(client, root, TooltipFlag.NORMAL);
             require(keyLines(full, "justdirethings.festored").getFirst().getString().contains(MagicHelpers.formatted(88_680)), "Not native full FE");
             require(keyLines(full, "justdirethings.shiftmoreinfo").isEmpty(), "Empty/redundant Shift hints");
-            var names = List.of("walkspeed", "runspeed", "swimspeed", "phase");
+            var names = List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy");
             var rows = full.stream().filter(line -> names.stream().anyMatch(name -> has(line, "justdirethings.ability." + name))).toList();
-            require(rows.size() == 4, "Ability rows duplicated or missing");
-            for (int index = 0; index < 4; index++) {
+            require(rows.size() == 5, "Ability rows duplicated or missing");
+            for (int index = 0; index < 5; index++) {
                 var row = rows.get(index);
                 int color = index == 2 ? ChatFormatting.GRAY.getColor() : index == 3 ? ChatFormatting.DARK_RED.getColor() : ChatFormatting.GREEN.getColor();
                 require(has(row, "justdirethings.ability." + names.get(index)) && row.getStyle().getColor().getValue() == color, "Ability order/saved toggle color");
             }
-            require(keyLines(full, "justdirethings.ability.decoy").isEmpty() && keyLines(full, "justdirethings.ability.lavarepair").isEmpty(), "Deferred ability claimed");
+            require(keyLines(full, "justdirethings.ability.lavarepair").isEmpty(), "Deferred Lava Repair claimed");
             require(ItemStack.matches(root, before), "Tooltip mutated root/history");
+            root.set(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY), false);
+            require(keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.ability.decoy").getFirst()
+                    .getStyle().getColor().getValue() == ChatFormatting.DARK_RED.getColor(), "Decoy disabled row is not native red");
+            root.remove(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY));
+            root.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.DECOY), false);
+            var missingDecoy = keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.ability.decoy").getFirst();
+            require(has(missingDecoy, "justdirethings.missingupgrade") && missingDecoy.getStyle().getColor().getValue() == ChatFormatting.GRAY.getColor(),
+                    "Decoy missing row is not native gray/text");
+            root.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.DECOY), true);
             var hidden = TooltipDisplay.DEFAULT;
-            for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase")) {
+            for (String name : names) {
                 var ability = Ability.valueOf(name.toUpperCase(java.util.Locale.ROOT));
                 hidden = hidden.withHidden(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(ability).get(), true);
             }

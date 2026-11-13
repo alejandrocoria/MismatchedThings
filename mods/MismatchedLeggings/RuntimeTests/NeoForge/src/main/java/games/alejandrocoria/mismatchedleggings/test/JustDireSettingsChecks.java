@@ -63,7 +63,7 @@ final class JustDireSettingsChecks {
 
         for (var bad : List.of(
                 new Control(VALUE, "walkspeed", 999, -1, false), new Control(VALUE, "phase", 1, -1, false),
-                new Control(TOGGLE, "decoy", 0, -1, false), new Control(TOGGLE, "lavarepair", 0, -1, false),
+                new Control(VALUE, "decoy", 1, -1, false), new Control(TOGGLE, "lavarepair", 0, -1, false),
                 new Control(BINDING, "walkspeed", 1, 71, false), new Control(BINDING, "walkspeed", 2, 0, true),
                 new Control(BINDING, "walkspeed", 2, 8, true), new Control(BINDING, "walkspeed", 2, 999, false),
                 new Control(PARTICLES, "walkspeed", 0, -1, false), new Control(99, "walkspeed", 0, -1, false))) {
@@ -77,6 +77,13 @@ final class JustDireSettingsChecks {
         require(edit(player, request(player, 0, selected.token(), BINDING, "walkspeed", 2, 4, true, false)).accepted(), "Valid mouse binding refused");
         var records = root.get(JustDireDataComponents.ABILITY_BINDINGS);
         require(records.size() == 1 && records.getFirst().isMouse() && !records.getFirst().requireEquipped(), "Native binding/location not stored");
+        selected = select(player, 0);
+        require(edit(player, request(player, 0, selected.token(), TOGGLE, "decoy", 0, -1, false, true)).accepted()
+                        && !root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY), true)
+                        && !JustDireSettings.metadata(root, "decoy").hasSlider(),
+                "Decoy toggle/fixed metadata not supported");
+        selected = select(player, 0);
+        require(edit(player, request(player, 0, selected.token(), BINDING, "decoy", 2, 71, false, true)).accepted(), "Decoy keyboard binding refused");
         var replyBuffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), player.registryAccess());
         try {
             SettingsReply.CODEC.encode(replyBuffer, selected);

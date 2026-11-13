@@ -51,9 +51,10 @@ public final class JustDireSettings {
 
             var lookup = MethodHandles.publicLookup();
             var abilities = new ArrayList<Setting>();
-            for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase")) {
+            for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy")) {
                 abilities.add(new Setting(name, ability.getField(name.toUpperCase(Locale.ROOT)).get(null),
-                                          scalar(name + "_upgrade_installed", false), scalar(name + "_toggle", true), name.equals("phase") ? null : scalar(name + "_value", 1),
+                                          scalar(name + "_upgrade_installed", false), scalar(name + "_toggle", true),
+                                          name.equals("phase") || name.equals("decoy") ? null : scalar(name + "_value", 1),
                                           scalar(name + "_bindingmode", 0)));
             }
 
@@ -100,7 +101,7 @@ public final class JustDireSettings {
 
     private static Profile profile(ItemStack root, String name) {
         Api binding = api;
-        if (binding == null || !mixed(root)) {
+        if (binding == null || !mixed(root) || name.equals("decoy") && !JustDireDecoy.available()) {
             return null;
         }
 
@@ -124,7 +125,8 @@ public final class JustDireSettings {
 
                 Object params = binding.params.invokeExact(source.getItem(), setting.ability);
                 Metadata metadata = nativeMetadata(binding, params, name.equals("phase"));
-                if (selected == null || metadata.maximum > selected.metadata.maximum) {
+                if (selected == null || metadata.maximum > selected.metadata.maximum
+                        || name.equals("decoy") && BuiltInRegistries.ITEM.getKey(source.getItem()).equals(JustDireState.id("eclipsealloy_leggings"))) {
                     selected = new Profile(source.getItem(), metadata, params);
                 }
             }
@@ -157,8 +159,13 @@ public final class JustDireSettings {
         return mouse ? key >= 2 && key <= 7 : key >= 32 && key <= 348;
     }
 
-    /** Native passive order, once per family, independent of global enablement or charge. */
+    /** Passive switches stay independent of global enablement/charge; active actions are dispatched separately. */
     public static List<String> boundPassives(ItemStack root, int key, boolean mouse, boolean equipped) {
+        return boundAbilities(root, key, mouse, equipped).stream().filter(name -> !name.equals("decoy")).toList();
+    }
+
+    /** Match native records against the real root's location, not a detached native item's equipment identity. */
+    public static List<String> boundAbilities(ItemStack root, int key, boolean mouse, boolean equipped) {
         Api binding = api;
         if (binding == null || !mixed(root) || !validBindingInput(key, mouse)) {
             return List.of();
@@ -233,7 +240,7 @@ public final class JustDireSettings {
 
     /** UI-only admission identity; never replace the selected inventory stack with this item. */
     public static Item metadataItem(ItemStack root) {
-        for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase")) {
+        for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy")) {
             Profile profile = profile(root, name);
             if (profile != null) {
                 return profile.item;
@@ -279,8 +286,8 @@ public final class JustDireSettings {
         if (binding == null || metadata == null) {
             return 0;
         }
-        if (name.equals("phase")) { return metadata.defaultValue; }
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElseThrow();
+        if (setting.value == null) { return metadata.defaultValue; }
         return Math.clamp(root.getOrDefault(setting.value, metadata.defaultValue), metadata.minimum, metadata.maximum);
     }
 

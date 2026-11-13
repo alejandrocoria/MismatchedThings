@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 
 /** Native text/number formatting, but eligibility and all displayed state belong to the mixed root. */
 public final class JustDireTooltipClient {
-    private static final List<String> UPGRADES = List.of("walkspeed", "runspeed", "swimspeed", "phase");
+    private static final List<String> UPGRADES = List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy");
     private static Formats formats;
     private static boolean formatsFailed;
 
