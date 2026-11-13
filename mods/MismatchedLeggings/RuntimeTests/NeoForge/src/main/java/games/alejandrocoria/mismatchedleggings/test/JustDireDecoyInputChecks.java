@@ -47,6 +47,9 @@ final class JustDireDecoyInputChecks {
     }
 
     static void run(ServerPlayer player) throws Exception {
+        // The disposable world can retain live decoys from the previous connected run.
+        int carriedDecoys = entities(player).size();
+        clear(player);
         player.containerMenu = player.inventoryMenu;
         player.getInventory().clearContent();
         var root = root(true, false, 71, false, false);
@@ -64,7 +67,8 @@ final class JustDireDecoyInputChecks {
                         && root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY), true)
                         && !root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.WALKSPEED), true)
                         && history.equals(root.get(LeggingsContent.mixedLeggingsDataType())),
-                "Shared key duplicated active action or toggled Decoy instead of the passive");
+                "Shared key duplicated active action or toggled Decoy instead of the passive: FE="
+                        + root.get(JustDireDataComponents.FORGE_ENERGY) + ", decoys=" + entities(player).size());
         JustDireInputNetwork.handle(player, action);
         send(player, 71, false);
         require(root.get(JustDireDataComponents.FORGE_ENERGY) == 5000 && entities(player).size() == 1, "Replay/cooldown caused another cast");
@@ -131,7 +135,7 @@ final class JustDireDecoyInputChecks {
                 "Normal mouse buttons or Decoy passive dispatch accepted");
         player.getInventory().clearContent();
         Files.writeString(JustDireConnectedServer.report("decoy-input-security.txt"),
-                "Production Decoy batch dispatch, shared passive key, duplicates/replay/stale identity/move/binding/location/config/switch/FE/clock and mouse exclusions passed\n");
+                "Production Decoy batch dispatch, shared passive key, duplicates/replay/stale identity/move/binding/location/config/switch/FE/clock and mouse exclusions passed; initial fixture decoys removed: " + carriedDecoys + "\n");
     }
 
     private static JustDireInputNetwork.InputReply prepare(ServerPlayer player, int key, boolean mouse) {

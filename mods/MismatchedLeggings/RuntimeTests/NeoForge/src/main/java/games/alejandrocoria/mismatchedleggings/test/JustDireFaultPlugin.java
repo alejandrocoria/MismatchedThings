@@ -23,7 +23,6 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
             return Boolean.getBoolean("leggings.test.jdtDecoy") || Boolean.getBoolean("leggings.test.jdtHud");
         }
         if (mixin.endsWith("JustDireDecoyDebitProbe")) { return Boolean.getBoolean("leggings.test.jdtDecoy"); }
-        if (mixin.contains("DecoySpike")) { return Boolean.getBoolean("leggings.test.jdtDecoySpike"); }
         if (mixin.endsWith("JustDirePresentationInputProbe")) {
             return Boolean.getBoolean("leggings.test.jdtPresentation");
         }
@@ -51,7 +50,6 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
             return;
         }
         if (mixin.contains("JustDireDecoy") && mixin.endsWith("Probe")) { return; }
-        if (mixin.contains("DecoySpike")) { return; }
         if (mixin.endsWith("JustDirePresentationInputProbe")) { return; }
         String getter = target.endsWith("AbilityMethods") ? "mismatchedleggings$jdtMovementReady"
                 : target.endsWith("ToolSettingScreen") ? "mismatchedleggings$jdtSettingsReady" : "mismatchedleggings$justDireAttributesReady";
@@ -72,10 +70,7 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
                     : List.of("JustDireHudTransparentProbe", "JustDireHudDrawProbe");
         }
         if (Boolean.getBoolean("leggings.test.jdtDecoy")) { return List.of("JustDireDecoySoundProbe", "JustDireDecoyDebitProbe"); }
-        if (!Boolean.getBoolean("leggings.test.jdtDecoySpike")) { return null; }
-        return net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()
-                ? List.of("DecoySpikeSoundMixin", "DecoySpikeHudMixin", "DecoySpikeDrawMixin")
-                : List.of("DecoySpikeSoundMixin");
+        return null;
     }
     @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
     @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}

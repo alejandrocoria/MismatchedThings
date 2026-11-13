@@ -3,6 +3,8 @@ package games.alejandrocoria.mismatchedleggings.test;
 import com.direwolf20.justdirethings.common.containers.ToolSettingContainer;
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
+import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords.AbilityBinding;
+import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords.AbilityCooldown;
 import com.direwolf20.justdirethings.setup.JDTRegistration;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireHeldToggleCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork;
@@ -77,6 +79,12 @@ final class JustDireLifecycleChecks {
                                 && !newNative.get(JustDireDataComponents.TOOL_ENABLED)
                                 && oldNative.get(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.WALKSPEED)),
                         "Native tier transformation lost source history");
+                if (tier.equals("celestigem")) {
+                    root = take(player, root, ItemStack.EMPTY, nativeItem("upgrade_decoy"));
+                    root.set(JustDireDataComponents.ABILITY_COOLDOWNS, List.of(new AbilityCooldown("decoy", 137, true)));
+                } else if (tier.equals("eclipsealloy")) {
+                    verifyClock(root);
+                }
             }
             var history = root.get(LeggingsContent.mixedLeggingsDataType());
             for (String name : List.of("runspeed", "swimspeed", "phase")) {
@@ -92,6 +100,8 @@ final class JustDireLifecycleChecks {
             edit(player, JustDireSettingsNetwork.TOGGLE, "walkspeed", 0, -1, false);
             edit(player, JustDireSettingsNetwork.BINDING, "walkspeed", 2, 4, true);
             edit(player, JustDireSettingsNetwork.VALUE, "runspeed", 3, -1, false);
+            edit(player, JustDireSettingsNetwork.TOGGLE, "decoy", 0, -1, false);
+            edit(player, JustDireSettingsNetwork.BINDING, "decoy", 2, 72, false);
             player.containerMenu = player.inventoryMenu;
             boolean enabled = root.getOrDefault(JustDireDataComponents.TOOL_ENABLED, true);
             require(JustDireHeldToggleCompatibility.toggle(player, InteractionHand.MAIN_HAND), "Live global toggle refused");
@@ -132,8 +142,9 @@ final class JustDireLifecycleChecks {
         }
         require(ItemStack.matches(source, sourceBefore), "Paid lifecycle mutated its native input snapshot");
         player.getInventory().clearContent();
+        inheritedClocks(player);
         Files.writeString(JustDireConnectedServer.report("jdt-lifecycle.txt"),
-                "Paid inverse extraction, native tier/upgrade/trim smithing, authoritative settings, committed charge, ordinary wear/repair and unchanged histories passed\n");
+                "Paid inverse extraction and both-output Decoy inheritance, tier/upgrade/trim smithing, authoritative settings, charge, wear/repair and live clock/history preservation passed\n");
         return roots;
     }
 
@@ -147,7 +158,11 @@ final class JustDireLifecycleChecks {
                         && !root.get(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.WALKSPEED))
                         && root.get(JustDireDataComponents.ABILITY_BINDINGS).getFirst().isMouse(),
                 "Live root settings/FE did not survive lifecycle");
-        for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase")) {
+        verifyClock(root);
+        require(!root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY), true)
+                        && root.get(JustDireDataComponents.ABILITY_BINDINGS).contains(new AbilityBinding("decoy", 72, false, false)),
+                "Live Decoy controls did not survive lifecycle");
+        for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy")) {
             require(root.getOrDefault(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.byName(name)), false),
                     "Lifecycle lost installed " + name);
         }
@@ -156,8 +171,48 @@ final class JustDireLifecycleChecks {
                         && !source.get(JustDireDataComponents.TOOL_ENABLED)
                         && !source.has(JustDireDataComponents.FORGE_ENERGY)
                         && !source.has(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.RUNSPEED))
+                        && !source.has(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.DECOY))
+                        && !source.has(JustDireDataComponents.ABILITY_COOLDOWNS)
                         && !source.has(JustDireDataComponents.ABILITY_BINDINGS),
                 "Live state was copied into source history");
+    }
+
+    private static void verifyClock(ItemStack root) {
+        require(root.getOrDefault(JustDireDataComponents.ABILITY_COOLDOWNS, List.of())
+                        .equals(List.of(new AbilityCooldown("decoy", 137, true))),
+                "Live Decoy clock changed during transformation or stored-world lifecycle");
+    }
+
+    private static void inheritedClocks(ServerPlayer player) {
+        var celestigem = nativeItem("celestigem_leggings");
+        var eclipse = nativeItem("eclipsealloy_leggings");
+        celestigem.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.DECOY), true);
+        eclipse.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.DECOY), true);
+        // Effective Eclipse parameters make active-137 a 1,337-tick restriction, longer than inactive-1,100.
+        celestigem.set(JustDireDataComponents.ABILITY_COOLDOWNS, List.of(new AbilityCooldown("decoy", 137, true)));
+        eclipse.set(JustDireDataComponents.ABILITY_COOLDOWNS, List.of(new AbilityCooldown("decoy", 1100, false)));
+        var leftBefore = celestigem.copy();
+        var rightBefore = eclipse.copy();
+        for (int output : List.of(2, 3)) {
+            player.getInventory().clearContent();
+            var menu = new WorkbenchMenu(982, player.getInventory());
+            menu.getSlot(0).set(celestigem.copy());
+            menu.getSlot(1).set(eclipse.copy());
+            var companion = menu.getSlot(output == 2 ? 3 : 2).getItem().copy();
+            menu.clicked(output, 0, ContainerInput.PICKUP, player);
+            var taken = menu.getCarried().copy();
+            require(!taken.isEmpty() && !menu.getSlot(0).hasItem() && !menu.getSlot(1).hasItem(),
+                    "Inherited Decoy extraction was unpaid");
+            verifyClock(taken);
+            verifyClock(companion);
+            menu.setCarried(ItemStack.EMPTY);
+            menu.removed(player);
+            require(WorkbenchChecks.inventory(player).size() == 1 && WorkbenchChecks.contains(player, companion),
+                    "Inherited Decoy companion was lost or duplicated");
+        }
+        require(ItemStack.matches(celestigem, leftBefore) && ItemStack.matches(eclipse, rightBefore),
+                "Inherited Decoy extraction mutated native inputs");
+        player.getInventory().clearContent();
     }
 
     static void verifyWearer(MinecraftServer server, ItemStack saved) {

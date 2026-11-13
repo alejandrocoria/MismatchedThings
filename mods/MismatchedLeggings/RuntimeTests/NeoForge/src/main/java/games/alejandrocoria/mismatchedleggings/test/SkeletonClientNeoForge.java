@@ -15,12 +15,6 @@ public final class SkeletonClientNeoForge {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> JustDireHudClient.tick(Minecraft.getInstance()));
             return;
         }
-        if (Boolean.getBoolean("leggings.test.jdtDecoySpike")) {
-            try {
-                Class.forName("games.alejandrocoria.mismatchedleggings.test.DecoySpikeClient").getMethod("register").invoke(null);
-            } catch (ReflectiveOperationException failure) { throw new IllegalStateException("Missing opt-in Decoy client research", failure); }
-            return;
-        }
         if (Boolean.getBoolean("leggings.test.jdtPresentation")) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> JustDirePresentationClient.tick(Minecraft.getInstance()));
             return;

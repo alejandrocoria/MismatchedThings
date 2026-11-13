@@ -99,8 +99,12 @@ transformations, root-only upgrade installation, authoritative native-menu edits
 committed charging, ordinary wear/material repair and real trims. Native source
 histories retain their old controls/flags/charge except for the intentional
 tier/trim changes. Loaded-root worn Phase reactivation/global-off is checked.
-Movement, UI/input and presentation use the focused profiles below; no Decoy
-execution or full release-graph matrix is claimed.
+The same lifecycle witness now installs Decoy through paid smithing before the
+Celestigem-to-Eclipse upgrade. Its active clock and edited switch/binding must
+survive that upgrade, later ability installation, charging, repair and trims.
+A paid two-provider Workbench control checks effective-tier inherited clocks in
+both outputs and both extraction orders. Movement, UI/input and presentation use
+the focused profiles below; this is not an execution or full release-graph gate.
 
 ## Just Dire Things passives and live attributes
 
@@ -251,7 +255,8 @@ The existing native-world recovery driver adds one focused real JDT source witne
 
 Only the pinned JDT JAR is removed/reinstalled between those independent JVMs.
 Both paid inverse roots retain live installed upgrades, edited switches/values/
-mouse binding, committed FE, repaired durability and transformed/trimmed histories.
+mouse binding, committed FE, a nonempty Decoy clock with independent switch/key,
+repaired durability and transformed/trimmed histories.
 Full native NBT equality is required after restoration and another reopen; the
 absent archive must remain identical over repeated saves and expose no native
 live components. Loaded copies must regain worn Phase and respect global off.
@@ -266,7 +271,7 @@ Reports/logs use `recovery-jdt` under the existing baseline `build/reports/` and
 `jdt-recovery.txt`, the connected stages' `client.ok`, no failures/unexpected
 errors and the driver's `matrix.ok`. That marker names only the selected subset.
 No screenshots, indev artifacts or prepared owner world are used. Consolidated
-owner acceptance is recorded separately in the private plan. Decoy, Lava Repair,
+owner acceptance is recorded separately in the private plan. Lava Repair,
 powered incoming wear, refunds and broader charger discovery remain deferred.
 
 ## Just Dire Things Decoy action and clock
@@ -335,19 +340,39 @@ test. These declared inputs enable final-wrapper positive/negative controls;
 without them, final-export tests are explicitly skipped. Native entry controls
 use the catalog fixture independently.
 
-## Just Dire Things Decoy research (opt-in, pre-production evidence)
+## Just Dire Things Decoy consolidation
 
-The isolated [Decoy spike](../../../spikes/leggings-jdt-decoy/README.md) originally used
-`verifyJustDirePassives` with `-PleggingsJdtDecoySpike=true` for native action,
-payment/clock/entity and native HUD feasibility. Its source set and dynamic
-research mixins are excluded without that property. This is not production
-Decoy settings/input support or foundation acceptance; use that README for
-the three bounded profiles, markers and complete retirement scope. Its captured
-results describe the pre-production baseline: owner-only clock characterization
-and held client clock fixtures are superseded by production ticking/import.
-Use the maintained profiles above for action/state and native HUD validation.
-The complete spike and its optional wiring are retired by the consolidation
-block, not retained as an alternative production acceptance route.
+Reuse the maintained foundation lifecycle, native-world recovery, input and HUD
+profiles above; the Decoy spike and all of its executable wiring are retired.
+No separate release-graph driver or manual fixture world is required.
+
+The input-security preflight clears nearby decoys left in its disposable world
+by a previous connected run before counting fresh casts. The success marker
+records that initial cleanup count; repeated runs need not reset the world.
+
+The bounded closure uses `.114` foundation/recovery and standalone HUD, plus
+current-Boots input and HUD controls. The foundation lifecycle and the five
+`leggingsJdtRecovery` stages above now preserve an installed Decoy, edited
+switch/key and active clock through actual workstations, saved-world reopen and
+JDT disappearance/restoration, including ordinary client inventory packets.
+
+The smaller `.99` floor uses these existing gates, not the full historical
+compatibility or injected-fault matrix:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtDecoy=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtPresentation=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtHud=true '-Pneoforge_version=26.1.2.99' --offline --console=plain
+```
+
+Use the ordinary foundation `leggingsJdtAbsent=true` gate and standalone
+`:MismatchedLeggings:RuntimeTests:<loader>:verifySkeleton` on both loaders for
+optional-absence loading. Finish with relevant Common tests and
+`:MismatchedLeggings:verifyPackaging` on normal `.114`, restoring ordinary
+artifacts. All clients retain the existing hidden/muted contract. Inspect
+scoped errors/warnings and profile-specific markers, not just process exits.
+Owner save/rejoin and matching-loader dedicated acceptance is recorded
+separately in the private plan.
 
 ## Silent Gear source tooltip acceptance
 

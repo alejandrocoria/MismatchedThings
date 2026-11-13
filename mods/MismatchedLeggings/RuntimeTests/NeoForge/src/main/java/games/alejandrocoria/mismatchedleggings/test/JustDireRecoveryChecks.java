@@ -59,7 +59,7 @@ public final class JustDireRecoveryChecks {
         }
         barrel.setChanged();
         Files.writeString(RecoveryChecks.report("jdt-recovery.txt"), RecoveryFixture.stage()
-                + ": paid inverse roots, installed upgrades, edited controls, live charge, tier/trim histories and complete native archive passed\n");
+                + ": paid inverse roots, installed upgrades, edited controls, live charge/Decoy clocks, tier/trim histories and complete native archive passed\n");
     }
 
     public static void connected(MinecraftServer server, ServerPlayer player) {
