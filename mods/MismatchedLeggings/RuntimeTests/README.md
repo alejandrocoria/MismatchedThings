@@ -272,7 +272,8 @@ powered incoming wear, refunds and broader charger discovery remain deferred.
 ## Just Dire Things Decoy action and clock
 
 The maintained dedicated profile exercises the packaged production adapter, not
-the research candidate. It does not yet validate gameplay bindings or the HUD:
+the research candidate. Gameplay bindings and the HUD use separate connected
+profiles, not this dedicated action gate:
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireFoundation -PleggingsJdtDecoy=true --offline --console=plain
@@ -290,6 +291,50 @@ The malformed-clock cases intentionally emit one bounded preservation warning.
 The sound probe checks native emission calls, not manual audibility. The partial
 transfer probe changes only the test handler request; production owns rollback.
 
+## Just Dire Things Decoy HUD and feedback
+
+The maintained connected profile compares the actual native overlay's extraction
+against independently constructed native leggings, using the packaged products:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtHud=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyJustDirePassives -PleggingsJdtHud=true -PleggingsJdtBoots=true --offline --console=plain
+```
+
+Add `-PleggingsJdtFault=hud` to either command to corrupt only the owned Leggings
+HUD slot argument. Both healthy and refused runs retain a transparent outer
+equipment wrapper. Healthy runs require both products' guards/icons; refused
+runs require no Leggings icon, one bounded refusal warning, unchanged Boots
+icons and healthy settings, production activation, ticking and native sounds.
+
+Uses catalog-pinned JDT 1.6.11, ordinary item synchronization, an independent
+hidden-before-GLFW/muted client and disabled NeoForge early window. Run these
+profiles sequentially. No screenshots or prepared owner world are needed.
+Reports: `NeoForge/build/reports/<baseline>/jdt-hud[-boots][-hud]/`; require fresh
+`server.ok`, `client.ok`, `connected.txt`, `settings-security.txt`,
+`decoy-feedback.txt`, `decoy-hud.txt`, three `case-<n>.ok` acknowledgements and
+no failure files. The matching `build/verification/<baseline>/<profile>/`
+directory contains endpoint logs and driver `connected.ok`.
+
+The server casts through the production action, then shortens two fixture
+counters to one tick so natural worn ticks perform the active/inactive/cleared
+transitions. Native sound-helper calls must emit summon, active completion and
+readiness once each; this is not an audibility claim. The client checks exact
+textures/coordinates/UVs/sizes, both tiers/output owners, effective Eclipse
+parameters, maximum-positive bounds, foreign/invalid clock filtering, read-only
+roots and shared icon positions with Boots. Invalid clocks intentionally emit
+one bounded preservation warning, separate from the injected HUD refusal.
+
+For final bytecode guard regression, the real healthy current-Boots client export
+is under `build/run/<baseline>/jdt-hud-boots/client/.mixin.out/class/` at
+`com/direwolf20/justdirethings/client/overlays/AbilityCooldownOverlay.class`.
+Pass its absolute path as `-PleggingsJdtHudClass=<export>` to
+`:MismatchedLeggings:NeoForge:test --tests '*JustDireCooldownHudShapeTest'`, and
+as `-PjustDireCooldownHudTransformedClass=<export>` to the corresponding Boots
+test. These declared inputs enable final-wrapper positive/negative controls;
+without them, final-export tests are explicitly skipped. Native entry controls
+use the catalog fixture independently.
+
 ## Just Dire Things Decoy research (opt-in, pre-production evidence)
 
 The isolated [Decoy spike](../../../spikes/leggings-jdt-decoy/README.md) originally used
@@ -300,8 +345,9 @@ Decoy settings/input support or foundation acceptance; use that README for
 the three bounded profiles, markers and complete retirement scope. Its captured
 results describe the pre-production baseline: owner-only clock characterization
 and held client clock fixtures are superseded by production ticking/import.
-Use the maintained profile above for action/state validation. Remaining useful
-client/HUD controls will be promoted before the complete spike is removed.
+Use the maintained profiles above for action/state and native HUD validation.
+The complete spike and its optional wiring are retired by the consolidation
+block, not retained as an alternative production acceptance route.
 
 ## Silent Gear source tooltip acceptance
 

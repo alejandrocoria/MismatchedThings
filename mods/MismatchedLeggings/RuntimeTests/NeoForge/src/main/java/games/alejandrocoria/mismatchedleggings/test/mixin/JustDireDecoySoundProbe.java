@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.test.mixin;
 
 import games.alejandrocoria.mismatchedleggings.test.JustDireDecoyChecks;
+import games.alejandrocoria.mismatchedleggings.test.JustDireHudServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,6 +15,11 @@ public abstract class JustDireDecoySoundProbe {
     @Inject(method = "playSoundToAll(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/sounds/SoundEvent;FF)V",
             at = @At("HEAD"), cancellable = true, require = 1)
     private static void sound(Player player, SoundEvent sound, float volume, float pitch, CallbackInfo callback) {
+        if (JustDireHudServer.captureSounds) {
+            JustDireHudServer.sounds.add(sound.location());
+            callback.cancel();
+            return;
+        }
         if (JustDireDecoyChecks.captureSounds) {
             JustDireDecoyChecks.sounds.add(sound.location());
             callback.cancel();

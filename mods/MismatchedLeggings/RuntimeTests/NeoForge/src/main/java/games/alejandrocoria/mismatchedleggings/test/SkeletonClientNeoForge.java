@@ -11,6 +11,10 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (Boolean.getBoolean("leggings.test.jdtHud")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> JustDireHudClient.tick(Minecraft.getInstance()));
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtDecoySpike")) {
             try {
                 Class.forName("games.alejandrocoria.mismatchedleggings.test.DecoySpikeClient").getMethod("register").invoke(null);

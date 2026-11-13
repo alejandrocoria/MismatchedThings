@@ -12,6 +12,10 @@ def settings = providers.gradleProperty('leggingsJdtSettings').map { it.toBoolea
 def presentation = providers.gradleProperty('leggingsJdtPresentation').map { it.toBoolean() }.getOrElse(false)
 def decoySpike = providers.gradleProperty('leggingsJdtDecoySpike').map { it.toBoolean() }.getOrElse(false)
 def decoy = providers.gradleProperty('leggingsJdtDecoy').map { it.toBoolean() }.getOrElse(false)
+def hud = providers.gradleProperty('leggingsJdtHud').map { it.toBoolean() }.getOrElse(false)
+if (hud && (decoy || decoySpike || settings || presentation || absent)) {
+    throw new GradleException('Decoy HUD uses its own connected production profile')
+}
 if (decoy && (decoySpike || settings || presentation || absent || passives || connected || !providers.gradleProperty('leggingsJdtFault').getOrElse('').isEmpty())) {
     throw new GradleException('Production Decoy action acceptance uses its own dedicated profile')
 }
@@ -26,12 +30,12 @@ if (decoySpike && (settings || presentation || absent || !fault.isEmpty())) {
 if (presentation && (settings || absent || !fault.isEmpty())) {
     throw new GradleException('JDT presentation uses its own healthy connected profile')
 }
-if (!(fault in ['', 'movement', 'attributes', 'screen'])
-        || !fault.isEmpty() && (fault == 'screen' ? !settings : connected || absent || !passives)) {
+if (!(fault in ['', 'movement', 'attributes', 'screen', 'hud'])
+        || !fault.isEmpty() && (fault == 'hud' ? !hud : fault == 'screen' ? !settings : connected || absent || !passives)) {
     throw new GradleException('JDT fault controls require only the dedicated passive profile')
 }
 if (connected && (absent || !passives)) { throw new GradleException('Connected JDT acceptance requires native passives') }
-def label = (decoy ? 'jdt-decoy' : decoySpike ? 'jdt-decoy-spike' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
+def label = (hud ? 'jdt-hud' : decoy ? 'jdt-decoy' : decoySpike ? 'jdt-decoy-spike' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : connected ? 'jdt-connected' : passives ? 'jdt-passives' : 'jdt-foundation') + (withBoots ? '-boots' : '') + (absent ? '-absent' : '')
 if (!fault.isEmpty()) { label += "-${fault}" }
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
@@ -41,11 +45,11 @@ tasks.register('prepareJustDireFoundation') {
     dependsOn tasks.named('classes'), product.tasks.named('assemble')
     if (withBoots) { dependsOn project(':MismatchedBoots:NeoForge').tasks.named('assemble') }
     doLast {
-        if (decoySpike && !connected) { throw new GradleException('Run Decoy research through verifyJustDirePassives') }
+        if ((decoySpike || hud) && !connected) { throw new GradleException('Run Decoy research through verifyJustDirePassives') }
         def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
         if (!absent) { artifacts.add(nativeJar.get()) }
         if (withBoots) { artifacts.add(project(':MismatchedBoots:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
-        if (passives && !absent && !settings && !presentation && !decoySpike) {
+        if (passives && !absent && !settings && !presentation && !decoySpike && !hud) {
             ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar'].each {
                 artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
             }
@@ -63,7 +67,7 @@ tasks.register('prepareJustDireFoundation') {
         reports.mkdirs()
         ['server.ok', 'server.failure.txt', 'foundation.txt', 'server-movement.txt', 'phase.txt', 'armor.txt', 'shared-armor.txt',
          'fault.txt', 'ready.txt', 'client.ok', 'client.failure.txt', 'connected.txt', 'settings-security.txt',
-         'input-security.txt', 'decoy-input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-spike.txt', 'decoy-client.txt', 'decoy-action.txt'].each { new File(reports, it).delete() }
+         'input-security.txt', 'decoy-input-security.txt', 'presentation.txt', 'jdt-lifecycle.txt', 'decoy-spike.txt', 'decoy-client.txt', 'decoy-action.txt', 'decoy-feedback.txt', 'decoy-hud.txt'].each { new File(reports, it).delete() }
         (0..<12).each { index -> ['ready', 'ok'].each { new File(reports, "case-${index}.${it}").delete() } }
         new File(directory, 'config').mkdirs()
         new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
@@ -87,6 +91,7 @@ neoForge.runs.create('justDireFoundation') {
     systemProperty('leggings.test.jdtSettings', settings.toString())
     systemProperty('leggings.test.jdtPresentation', presentation.toString())
     systemProperty('leggings.test.jdtDecoySpike', decoySpike.toString())
+    systemProperty('leggings.test.jdtHud', hud.toString())
     systemProperty('leggings.test.jdtDecoy', decoy.toString())
     systemProperty('leggings.test.jdtFault', fault)
     systemProperty('leggings.test.jdtAbsent', absent.toString())
@@ -106,7 +111,7 @@ tasks.named('runJustDireFoundation') {
         if (decoy && !new File(reports, 'decoy-action.txt').isFile()) {
             throw new GradleException('Missing production Decoy action/clock evidence')
         }
-        if (!fault.isEmpty() && !settings) {
+        if (!fault.isEmpty() && !settings && !hud) {
             def warnings = new File(directory, 'logs/latest.log').readLines().findAll {
                 it.contains('WARN') && it.contains('Just Dire Things transformed') && it.contains('incompatible')
             }
@@ -144,8 +149,9 @@ neoForge.runs.create('justDirePassiveClient') {
     systemProperty('leggings.test.jdtSettings', settings.toString())
     systemProperty('leggings.test.jdtPresentation', presentation.toString())
     systemProperty('leggings.test.jdtDecoySpike', decoySpike.toString())
+    systemProperty('leggings.test.jdtHud', hud.toString())
     systemProperty('leggings.test.jdtFault', fault)
-    if (settings || decoySpike) { systemProperty('mixin.debug.export', 'true') }
+    if (settings || decoySpike || hud) { systemProperty('mixin.debug.export', 'true') }
     systemProperty('leggings.test.jdtBoots', withBoots.toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
@@ -154,14 +160,15 @@ tasks.named('runJustDirePassiveClient') { dependsOn 'prepareJustDirePassiveClien
 
 tasks.register('verifyJustDirePassives') {
     group = 'verification'
-    description = decoySpike ? 'Opt-in Decoy action/entity/clock/native HUD feasibility, not production acceptance.'
+    description = hud ? 'Native Decoy HUD, production transitions/sounds and independent scoped refusal.'
+            : decoySpike ? 'Opt-in Decoy action/entity/clock/native HUD feasibility, not production acceptance.'
             : presentation ? 'Bounded connected passive input, native tooltip and registered item-bar acceptance.'
             : settings ? 'Bounded independent native-menu authoritative settings acceptance.'
             : 'Bounded independent dedicated/client passive and Phase synchronization acceptance.'
     doLast {
         int selectedPort
         new ServerSocket(0).withCloseable { selectedPort = it.localPort }
-        def profile = (decoySpike ? 'jdt-decoy-spike' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : 'jdt-connected') + (withBoots ? '-boots' : '') + (fault ? "-${fault}" : '')
+        def profile = (hud ? 'jdt-hud' : decoySpike ? 'jdt-decoy-spike' : presentation ? 'jdt-presentation' : settings ? 'jdt-settings' : 'jdt-connected') + (withBoots ? '-boots' : '') + (fault ? "-${fault}" : '')
         def logs = layout.buildDirectory.dir("verification/${neoforge_version}/${profile}").get().asFile
         logs.mkdirs()
         new File(logs, 'connected.ok').delete()
@@ -171,7 +178,7 @@ tasks.register('verifyJustDirePassives') {
                         "-Pneoforge_version=${neoforge_version}", '-PleggingsJdtConnected=true', '-PleggingsJdtPassives=true',
                         "-PleggingsJdtPort=${selectedPort}", "-PleggingsJdtBoots=${withBoots}",
                         "-PleggingsJdtSettings=${settings}", "-PleggingsJdtFault=${fault}", "-PleggingsJdtPresentation=${presentation}",
-                        "-PleggingsJdtDecoySpike=${decoySpike}"]
+                        "-PleggingsJdtDecoySpike=${decoySpike}", "-PleggingsJdtHud=${hud}"]
             if (gradle.startParameter.offline) { args.add('--offline') }
             new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
                     .redirectErrorStream(true).redirectOutput(new File(logs, "${endpoint}.log")).start()
@@ -198,7 +205,7 @@ tasks.register('verifyJustDirePassives') {
             }
             if (!server.waitFor(120, java.util.concurrent.TimeUnit.SECONDS) || server.exitValue() != 0
                     || !new File(markers, 'server.ok').isFile() || new File(markers, 'server.failure.txt').exists()
-                    || !new File(markers, 'connected.txt').isFile() || !(0..<(decoySpike ? 3 : presentation ? 12 : 8)).every { new File(markers, "case-${it}.ok").isFile() }) {
+                    || !new File(markers, 'connected.txt').isFile() || !(0..<(decoySpike || hud ? 3 : presentation ? 12 : 8)).every { new File(markers, "case-${it}.ok").isFile() }) {
                 throw new GradleException("JDT connected server failed: ${logs}")
             }
             if (settings && !new File(markers, 'settings-security.txt').isFile()) { throw new GradleException('Missing server settings security evidence') }
@@ -208,13 +215,23 @@ tasks.register('verifyJustDirePassives') {
             if (decoySpike && ['decoy-spike.txt', 'decoy-client.txt'].any { !new File(markers, it).isFile() }) {
                 throw new GradleException('Missing bounded Decoy research evidence')
             }
+            if (hud && ['decoy-feedback.txt', 'decoy-hud.txt', 'settings-security.txt'].any { !new File(markers, it).isFile() }) {
+                throw new GradleException('Missing production HUD/feedback or independent settings evidence')
+            }
+            if (hud) {
+                def refusals = new File(clientDirectory, 'logs/latest.log').readLines().findAll {
+                    it.contains('WARN') && it.contains('cooldown HUD transformed flow incompatible; leggings HUD disabled')
+                }
+                if (refusals.size() != (fault == 'hud' ? 1 : 0)) { throw new GradleException('Unexpected HUD guard refusal count') }
+            }
             if (settings && fault == 'screen') {
                 def warnings = new File(clientDirectory, 'logs/latest.log').readLines().findAll {
                     it.contains('WARN') && it.contains('native settings transformed hooks incomplete')
                 }
                 if (warnings.size() != 1) { throw new GradleException('Expected exactly one bounded settings refusal') }
             }
-            new File(logs, 'connected.ok').text = decoySpike ? 'Test-only Decoy action/payment/clock/entity/native HUD proof passed\n' : presentation
+            new File(logs, 'connected.ok').text = hud ? 'Production Decoy native HUD, transition sounds and scoped guard controls passed\n'
+                    : decoySpike ? 'Test-only Decoy action/payment/clock/entity/native HUD proof passed\n' : presentation
                     ? 'Passive and paid Decoy input batches, held native/sibling routes, root tooltip and registered item bars passed\n'
                     : settings
                     ? 'Native settings widgets, authoritative edits and bounded selection/refusal controls passed\n'

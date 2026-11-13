@@ -13,6 +13,11 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.jdtHud")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> JustDireHudServer.tick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtDecoy")) {
             JustDireDecoyChecks.register();
             return;

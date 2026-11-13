@@ -10,6 +10,8 @@ config = "mismatchedleggings.justdirethings-tooltips.mixins.json"
 [[mixins]]
 config = "mismatchedleggings.justdirethings-settings-client.mixins.json"
 [[mixins]]
+config = "mismatchedleggings.justdirethings-cooldown-client.mixins.json"
+[[mixins]]
 config="mismatchedleggings.mysticalagriculture.mixins.json"
 
 [[mixins]]

@@ -260,7 +260,7 @@ public final class JustDireCooldownHudShape implements Opcodes {
                                              frames,
                                              readFrame.getStack(readFrame.getStackSize() - arguments.length + argument),
                                              new HashSet<>());
-                    if (operation instanceof InvokeDynamicInsnNode lambda && lambdaReads(node, lambda, new HashSet<>())) {
+                    if (operation instanceof InvokeDynamicInsnNode lambda && operationReads(node, render, frames, lambda, new HashSet<>())) {
                         return true;
                     }
                 }
@@ -269,6 +269,36 @@ public final class JustDireCooldownHudShape implements Opcodes {
             }
         } catch (AnalyzerException | RuntimeException incompatible) {
             return false;
+        }
+
+        return false;
+    }
+
+    /** Nested wrappers capture their original Operation; its native read need not be in the outer bridge body. */
+    private static boolean operationReads(ClassNode node, MethodNode method, Frame<SourceValue>[] frames,
+                                          InvokeDynamicInsnNode lambda, Set<AbstractInsnNode> seen) {
+        if (!seen.add(lambda)) {
+            return false;
+        }
+        if (lambdaReads(node, lambda, new HashSet<>())) {
+            return true;
+        }
+
+        var at = frames[method.instructions.indexOf(lambda)];
+        if (at == null) {
+            return false;
+        }
+
+        var arguments = Type.getArgumentTypes(lambda.desc);
+        for (int index = 0; index < arguments.length; index++) {
+            if (!arguments[index].getDescriptor().equals("Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;")) {
+                continue;
+            }
+
+            var captured = terminal(method, frames, at.getStack(at.getStackSize() - arguments.length + index), new HashSet<>());
+            if (captured instanceof InvokeDynamicInsnNode nested && operationReads(node, method, frames, nested, seen)) {
+                return true;
+            }
         }
 
         return false;

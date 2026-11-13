@@ -41,6 +41,7 @@ public final class JustDireDecoy {
     private static final AtomicBoolean SOUND_WARNED = new AtomicBoolean();
     private static volatile Api api;
     private static volatile boolean soundFailed;
+    private static volatile boolean hudFailed;
 
     private JustDireDecoy() {}
 
@@ -325,6 +326,39 @@ public final class JustDireDecoy {
             if (SOUND_WARNED.compareAndSet(false, true)) {
                 LeggingsContent.LOG.warn("Just Dire Things Decoy feedback failed; leggings sounds disabled without retrying action", failure);
             }
+        }
+    }
+
+    /** Filter/clamp a detached HUD view only; a presentation failure must not disable paid actions or clocks. */
+    public static ItemStack hudView(ItemStack root) {
+        Api binding = api;
+        if (binding == null || hudFailed) {
+            return root;
+        }
+
+        try {
+            Profile profile = profile(root, binding);
+            if (profile == null) {
+                return root;
+            }
+
+            var state = read(records(root, binding), binding);
+            var view = new ItemStack(profile.item);
+            view.applyComponents(root.getComponents());
+            if (!state.valid || state.own == null) {
+                view.remove(binding.clocks);
+            } else {
+                int duration = state.own.active ? profile.active : profile.cooldown;
+                write(view, binding, List.of(clock(binding, Math.min(duration, state.own.ticks), state.own.active)));
+            }
+            return view;
+        } catch (Throwable failure) {
+            fatal(failure);
+            if (!hudFailed) {
+                hudFailed = true;
+                LeggingsContent.LOG.warn("Just Dire Things Decoy HUD query failed; leggings HUD disabled without changing action/clock", failure);
+            }
+            return root;
         }
     }
 

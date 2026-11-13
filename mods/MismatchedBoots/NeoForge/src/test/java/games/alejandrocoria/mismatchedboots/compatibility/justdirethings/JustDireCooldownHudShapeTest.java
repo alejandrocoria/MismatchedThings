@@ -2,11 +2,13 @@ package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -17,6 +19,7 @@ import java.util.jar.JarFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -95,6 +98,27 @@ class JustDireCooldownHudShapeTest implements Opcodes {
         drop.add(new InsnNode(POP));
         drop.add(new InsnNode(ACONST_NULL));
         method.instructions.insert(route, drop);
+        deny(node);
+    }
+
+    @Test
+    void capturedOriginalEquipmentReadMustSurviveCompatibleWrapperChains() throws Exception {
+        var node = reset(finalBytes());
+        assertTrue(JustDireCooldownHudShape.publish(node));
+        node = reset(finalBytes());
+        InvokeDynamicInsnNode original = null;
+        for (var instruction : render(node).instructions) {
+            if (!(instruction instanceof InvokeDynamicInsnNode lambda)) {
+                continue;
+            }
+            for (Object argument : lambda.bsmArgs) {
+                if (argument instanceof Handle handle && handle.getName().startsWith("mixinextras$bridge$getItemBySlot$")) {
+                    original = lambda;
+                }
+            }
+        }
+        assertNotNull(original, "The real export must contain the captured native equipment operation");
+        render(node).instructions.set(original, new InsnNode(ACONST_NULL));
         deny(node);
     }
 
