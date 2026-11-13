@@ -10,6 +10,16 @@ displayName="${mod_name}"
 authors="${mod_author}"
 description="${mod_description}"
 
+[[mixins]]
+config="mismatchedthings.justdirethings-armor-wear.mixins.json"
+
+[[dependencies.${mod_id}]]
+modId="mismatchedboots"
+type="incompatible"
+versionRange="(,1.1.0)"
+ordering="NONE"
+side="BOTH"
+
 [[dependencies.${mod_id}]]
 modId="neoforge"
 type="required"

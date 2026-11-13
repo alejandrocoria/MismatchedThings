@@ -13,6 +13,20 @@ dependencies {
     compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
     compileOnly "dev.architectury:architectury-neoforge:${architectury_version}"
     compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}"
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    def wearExport = providers.gradleProperty('justDireArmorWearTransformedClass')
+    if (wearExport.isPresent()) {
+        def exported = rootProject.file(wearExport.get())
+        inputs.files(exported, new File(exported.parentFile, 'WrapperBefore-CommonHooks.class'),
+                new File(exported.parentFile, 'WrapperAfter-CommonHooks.class'))
+        systemProperty 'mismatchedthings.test.justDireArmorWearTransformedClass', exported.absolutePath
+    }
 }
 
 configurations.create('workbenchElements') {
@@ -33,6 +47,10 @@ neoForge {
     accessTransformers.from(project(':MismatchedThings:Common').file('src/main/resources/META-INF/accesstransformer.cfg'))
     mods {
         mismatchedthings { sourceSet sourceSets.main }
+    }
+    unitTest {
+        enable()
+        testedMod = mods.mismatchedthings
     }
 }
 

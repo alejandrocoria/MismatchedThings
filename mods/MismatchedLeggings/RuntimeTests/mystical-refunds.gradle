@@ -99,6 +99,9 @@ tasks.named('runMysticalRefundsServer') { dependsOn 'prepareMysticalRefundsServe
 tasks.register('verifyMysticalRefunds') {
     group = 'verification'
     doLast {
+        if (graph == 'published') {
+            throw new GradleException('Boots 1.0.0 is not a positive refund graph; use leggingsMaGraph=current or verifyLegacyBootsRefusal with leggingsBootsJar')
+        }
         def logs = layout.buildDirectory.dir("verification/${baseline}/${label}").get().asFile; logs.mkdirs()
         new File(logs, 'matrix.ok').delete()
         def log = new File(logs, 'server.log')

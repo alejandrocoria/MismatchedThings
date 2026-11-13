@@ -70,9 +70,6 @@ issueTrackerURL="${mod_issues}"
     config="mismatchedboots.justdirethings-attributes.mixins.json"
 
 [[mixins]]
-    config="mismatchedboots.justdirethings-armor-wear.mixins.json"
-
-[[mixins]]
     config="mismatchedboots.justdirethings-refunds.mixins.json"
 
 [[mixins]]

@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -35,12 +35,12 @@ public final class JustDireArmorWearShape implements Opcodes {
     static final String SLOT = "Lnet/minecraft/world/entity/EquipmentSlot;";
     static final String OPERATION = "Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;";
     static final String LAMBDA = "lambda$onArmorHurt$0";
-    static final String GETTER = "mismatchedboots$justDireArmorWearReady";
+    static final String GETTER = "mismatchedthings$justDireArmorWearReady";
     static final String DAMAGE_DESC = "(I" + ENTITY + SLOT + ")V";
     static final String HANDLER_DESC = "(" + STACK + "I" + ENTITY + SLOT + OPERATION + ENTITY + SLOT + ENTRY + ")V";
     private static final String FORWARD_DESC = "(" + STACK + "I" + ENTITY + SLOT + OPERATION + ")V";
     static final String ROUTE_DESC = "(Z" + STACK + "I" + ENTITY + SLOT + OPERATION + "F)V";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireArmorWearMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedthings.internal.mixin.compatibility.justdirethings.JustDireArmorWearMixin";
 
     private JustDireArmorWearShape() {
     }
@@ -104,7 +104,7 @@ public final class JustDireArmorWearShape implements Opcodes {
             handler.instructions.add(new VarInsnNode(ALOAD, 4));
             handler.instructions.add(new InsnNode(FCONST_0));
             handler.instructions.add(new MethodInsnNode(INVOKESTATIC,
-                                                        "games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireArmorWearCompatibility",
+                                                        "games/alejandrocoria/mismatchedthings/internal/compatibility/justdirethings/JustDireArmorWearRouter",
                                                         "route",
                                                         ROUTE_DESC,
                                                         false));
@@ -429,7 +429,7 @@ public final class JustDireArmorWearShape implements Opcodes {
                 getters++;
                 continue;
             }
-            if (!call.owner.equals("games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireArmorWearCompatibility")
+            if (!call.owner.equals("games/alejandrocoria/mismatchedthings/internal/compatibility/justdirethings/JustDireArmorWearRouter")
                     || !call.name.equals("route") || !call.desc.equals(ROUTE_DESC)) {
                 return false;
             }

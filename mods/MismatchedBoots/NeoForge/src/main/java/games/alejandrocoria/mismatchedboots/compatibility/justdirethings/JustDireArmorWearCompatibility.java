@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
+import games.alejandrocoria.mismatchedthings.api.compatibility.justdirethings.JustDireArmorWear;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameType;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -27,9 +29,15 @@ public final class JustDireArmorWearCompatibility {
     private JustDireArmorWearCompatibility() {
     }
 
-    public static void route(boolean ready, ItemStack root, int amount, LivingEntity entity, EquipmentSlot slot,
-                             Operation<Void> ordinary, float originalDamage) {
-        if (!ready || !consume(root, amount, entity, slot, originalDamage)) {
+    public static void initialize() {
+        if (ModList.get().isLoaded("justdirethings")) {
+            JustDireArmorWear.register(EquipmentSlot.FEET, JustDireArmorWearCompatibility::handle);
+        }
+    }
+
+    private static void handle(ItemStack root, int amount, LivingEntity entity, EquipmentSlot slot,
+                               Operation<Void> ordinary, float originalDamage) {
+        if (!consume(root, amount, entity, slot, originalDamage)) {
             ordinary.call(root, amount, entity, slot);
         }
     }

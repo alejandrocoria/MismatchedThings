@@ -7,9 +7,24 @@ dependency, not loose core classes or a separately staged core JAR. Boots and
 indev mods/configuration/worlds are excluded.
 
 The additional client profiles can also stage the **current built** Boots JAR
-for coexistence, or an explicitly supplied unchanged published Boots binary.
-Neither route reads the indev directory. A viewer compatibility check against a
-published binary does not replace the broader final-product release-graph gates.
+for coexistence. Published Boots 1.0.0 is no longer a supported positive graph
+with the current core: retain its unchanged binary for native refusal and
+original-core saved-data upgrade checks. Neither route reads the indev directory.
+
+For focused native rejection, run the corresponding loader's
+`verifyLegacyBootsRefusal` with its unchanged pinned binary:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyLegacyBootsRefusal '-PleggingsBootsJar=<published-fabric-boots.jar>' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyLegacyBootsRefusal '-PleggingsBootsJar=<published-neoforge-boots.jar>' --offline --console=plain
+```
+
+This uses the existing packaged workbench launch and requires native version
+rejection before any gameplay observer starts. Evidence is under
+`<loader>/build/verification/<baseline>/legacy-boots-refusal/`, including
+`server.log` and `refusal.ok`. Published Boots is no longer a positive viewer,
+recovery or refund input; older command examples using previous/published graph
+options describe historical acceptance, not supported current coexistence.
 
 ## Final packaged product acceptance
 
@@ -29,10 +44,11 @@ The bounded matrix runs sequentially on Fabric and NeoForge `.99`/`.114`:
 
 - Common tests for all three modules, packaging and corrupted-artifact controls.
 - Standalone core endpoints and its compiled-consumer/version-evolution matrix,
-  including saved Boots state and the refused incompatible-core-major control.
+  including original-core old-Boots seeds upgraded to current Boots/core, native
+  old-Boots refusal and the refused incompatible-core-major control.
 - Standalone Leggings schema/composition, workbench, equipped and item profiles.
 - Workbench, equipped/item rendering, presentation, repair, grindstone, smithing,
-  recovery and separate JEI/REI profiles with unchanged Boots.
+  recovery and separate JEI/REI profiles with current packaged Boots.
 - The optional native Ice and Fire waist profile on `.114`, then final packaging
   and NeoForge Mixin binary checks. Normal outputs are left on `.114`.
 
@@ -47,9 +63,9 @@ input copies, per-case logs, completed cases and final product/core JAR hashes.
 is not acceptance. Child profiles retain their own detailed reports. Publication
 tasks do not depend on this matrix.
 
-For a targeted rerun, `-PleggingsProductCases=legacy-repair,legacy-grindstone`
+For a targeted rerun, `-PleggingsProductCases=current-repair,current-grindstone`
 selects those case names on every baseline. A fully qualified selector such as
-`NeoForge/26.1.2.114/legacy-recovery` restricts one case to one baseline. Case names
+`NeoForge/26.1.2.114/current-recovery` restricts one case to one baseline. Case names
 are the labels printed during a full run. Final packaging always runs to restore
 normal `.114` outputs; unknown/unmatched selectors fail verification. Focused
 evidence goes to `../build/verification/product-focused/<selection-hash>/`, with
@@ -1369,13 +1385,12 @@ and baselines sequentially:
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyMysticalRefunds '-PleggingsMaGraph=current' '-PleggingsMaOrder=after' --offline --console=plain
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds '-PleggingsMaGraph=published' '-PleggingsNeoForgeBootsJar=<unchanged-1.0.0.jar>' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds '-PleggingsMaGraph=current' --offline --console=plain
 ```
 
-`leggingsMaGraph=alone|current|published` selects Leggings alone, current built
-Boots or the unchanged loader-specific 1.0.0 binary. Published inputs require
-`leggingsFabricBootsJar` or `leggingsNeoForgeBootsJar` and must match the committed
-[release pins](fixtures/boots-1.0.0.json); there is no rebuild or indev fallback.
+`leggingsMaGraph=alone|current` selects Leggings alone or current built Boots.
+The historical `published` positive is refused by the verifier: use the native
+rejection command above for unchanged Boots 1.0.0, not a refund gameplay run.
 `leggingsMaOrder=before|after` selects observer priority 1100/900 around Boots'
 1000. The second order instruments **only the observer annotation in the staged
 Leggings copy**; production outputs and every Boots byte remain unchanged. The
@@ -2412,16 +2427,14 @@ Evidence uses `betterEnd[-boots]` beneath the usual
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=rei -PleggingsBoots=true --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=none --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=jei -PleggingsViewerBootsOnly=true --offline --console=plain
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:Fabric:verifyViewers -PleggingsViewer=jei -PleggingsBoots=true '-PleggingsBootsJar=<published-boots.jar>' --offline --console=plain
 ```
 
 Use the same `verifyViewers` commands on NeoForge, sequentially on .99 and .114.
 Pass `-Pneoforge_version=26.1.2.99` for the floor and leave normal outputs on .114.
-Boots can be omitted or supplied as the explicit unchanged binary with the usual
-`-PleggingsBootsJar=<path>` switch. JEI and REI are tested individually, never
+Boots can be omitted or supplied as the current packaged build. JEI and REI are tested individually, never
 together. Run each viewer with no Boots flag (Leggings alone), `-PleggingsBoots=true`
 (both current products), `-PleggingsViewerBootsOnly=true` (Boots alone, no Leggings
-product staged), and the explicit published JAR. The no-viewer control covers both
+product staged). The no-viewer control covers both
 standalone products. Paths use `viewers-<none|jei|rei>[-boots|-previous-boots|-boots-only]`. The disposable
 client world is reset before copying the dedicated server's seed. Clients stay
 hidden before GLFW creation, muted, with NeoForge's early window disabled. No
@@ -2446,15 +2459,14 @@ The profile starts packaged dedicated and integrated endpoints. Actual JEI/REI
 queries and screens verify one linked cycle, both orientations, repeated opening
 while already open, closing/reopening, and independent product contributions in
 one Things-owned category. It rejects separate current-product categories and
-checks the shared cycle count against installed products. Published Boots keeps
-its old category, which is explicitly checked rather than treated as a duplicate.
+checks the shared cycle count against installed products. The historical
+published-Boots category control is not a supported current-core graph.
 For current products, REI additionally obtains both output slots from the actual
 category widgets, collects their hovered tooltips and invokes the installed
 platform tooltip renderer. It requires the two source boundaries and rendered
 text, and rejects a boundary classified as both text and image (which would append
 duplicate separators). These checks repeat across recipe reloads and reconnect;
-the Boots-only control also renders both tooltips. Published Boots' own legacy
-separator is outside this Things-marker regression, not claimed as hover coverage.
+the Boots-only control also renders both tooltips.
 A real datapack overrides the Leggings recipe with an ordinary crafting recipe, then a
 fixture workbench recipe that reverses its results, then restores the native
 recipe. Fresh examples must disappear/change/return accordingly, without touching
@@ -2471,10 +2483,9 @@ Fixture loader metadata therefore requires Things, with explicit product-graph
 assertions selecting the appropriate profile. Server and client checks stay in
 separate classes so dedicated startup never resolves client screen classes.
 
-For an explicit previous binary, the profile checks its SHA-256 before/after the
-run and stages the current core without modifying the input JAR. Record provenance
-and the hash with acceptance evidence; a locally rebuilt 1.0.0 is not the published
-release. Published binary paths are supplied explicitly, not inferred from indev.
+The verifier rejects the historical explicit-previous-Boots positive option.
+Use `verifyLegacyBootsRefusal` for native rejection instead; persisted old data
+is tested through Things' original-core seed/current-product upgrade path.
 
 Both loaders use Things' shared SHA-256-pinned
 [catalog and resolver](../../MismatchedThings/RuntimeTests/README.md#third-party-test-artifacts).
@@ -2732,12 +2743,10 @@ The client really reloads resources, requires a new native model identity and
 repeats assertions and actual submissions. One `items-panel.png` is relevant
 visual evidence; automated/agent inspection is not owner manual acceptance.
 
-For an unchanged earlier Boots binary, pass `-PleggingsBoots=true` and
-`-PleggingsBootsJar=<path>`. It is copied read-only and hash-checked after the
-run; this variant uses `items-previous-boots`. It also stages the candidate core
-explicitly so an equally numbered earlier unpublished nested build cannot win
-selection. This focused coexistence check does not replace the final published-
-consumer evolution matrix. Normal profiles still load Things only from Leggings.
+The earlier `items-previous-boots` positive is retired with the native old-Boots
+constraint. Use current Boots for item coexistence, the focused native-refusal
+gate for the old binary, and Things' seed/upgrade driver for its saved data.
+Normal profiles still load Things only from Leggings.
 
 ### Opt-in empty-source item-model regression
 

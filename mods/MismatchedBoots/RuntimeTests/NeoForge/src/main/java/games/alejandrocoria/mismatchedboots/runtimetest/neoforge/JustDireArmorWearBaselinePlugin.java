@@ -110,17 +110,17 @@ public final class JustDireArmorWearBaselinePlugin implements IMixinConfigPlugin
         var consumer = method(node, "lambda$onArmorHurt$0");
         int changed = 0;
         if (variant.equals("publication")) {
-            var getter = method(node, "mismatchedboots$justDireArmorWearReady");
+            var getter = method(node, "mismatchedthings$justDireArmorWearReady");
             getter.instructions.set(getter.instructions.getFirst(), new InsnNode(Opcodes.ICONST_1));
             changed++;
         } else if (variant.equals("router")) {
             for (var method : node.methods) {
                 for (var instruction : method.instructions) {
                     if (instruction instanceof MethodInsnNode call && call.name.equals("route")
-                            && call.owner.endsWith("/JustDireArmorWearCompatibility")) {
+                            && call.owner.endsWith("/JustDireArmorWearRouter")) {
                         // Keep executable ordinary fallback, but replace the owned permission argument.
                         for (var candidate : method.instructions) {
-                            if (candidate instanceof MethodInsnNode getter && getter.name.equals("mismatchedboots$justDireArmorWearReady")) {
+                            if (candidate instanceof MethodInsnNode getter && getter.name.equals("mismatchedthings$justDireArmorWearReady")) {
                                 method.instructions.set(getter, new InsnNode(Opcodes.ICONST_1));
                                 changed++;
                                 break;

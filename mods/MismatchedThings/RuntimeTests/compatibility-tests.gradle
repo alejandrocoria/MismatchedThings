@@ -74,9 +74,14 @@ def checkPinned = {
 
 ext.workbenchCompatibilityArtifacts = {
     checkPinned()
+    if (caseName in ['previous', 'legacy'] && !previousBoots.isPresent()) {
+        throw new GradleException('Previous/legacy profiles require workbenchPreviousBootsJar')
+    }
     def files = switch (caseName) {
         case 'core' -> [new File(frozen, 'core.jar')]
-        case 'boots' -> [new File(frozen, 'boots.jar')] + (previousBoots.isPresent() ? [new File(frozen, 'core.jar')] : [])
+        case 'boots' -> [new File(frozen, 'boots.jar')]
+        case 'previous' -> [new File(frozen, 'previous-boots.jar')]
+        case 'legacy' -> [new File(frozen, 'previous-boots.jar'), new File(frozen, 'sibling.jar')]
         case 'baseline' -> [pinned]
         case 'sibling' -> [new File(frozen, 'sibling.jar')]
         case 'both' -> [new File(frozen, 'boots.jar'), pinned, new File(frozen, 'sibling.jar')]
@@ -96,10 +101,19 @@ def freeze = tasks.register('freezeWorkbenchConsumers') {
     dependsOn core.tasks.named('jar'), boots.tasks.named('jar'), consumer.tasks.named('jar'), tasks.named('classes')
     doLast {
         checkPinned()
+        if (previousBoots.isPresent()) {
+            def releasePin = new JsonSlurper().parse(project(':MismatchedLeggings:RuntimeTests').file('fixtures/boots-1.0.0.json'))[project.name]
+            if (!previousBoots.get().isFile() || digest(previousBoots.get()) != releasePin.sha256) {
+                throw new GradleException('Supply the unchanged published Boots 1.0.0 JAR; this input seeds old data and refusal, not positive coexistence')
+            }
+        }
         frozen.mkdirs()
-        [[coreJar.get().asFile, 'core.jar'], [previousBoots.getOrElse(bootsJar.get().asFile), 'boots.jar'],
+        [[coreJar.get().asFile, 'core.jar'], [bootsJar.get().asFile, 'boots.jar'],
          [siblingJar.get().asFile, 'sibling.jar']].each { pair ->
             operations.copy { from pair[0]; into frozen; rename { pair[1] } }
+        }
+        if (previousBoots.isPresent()) {
+            operations.copy { from previousBoots.get(); into frozen; rename { 'previous-boots.jar' } }
         }
         // Native include/jarJar must embed the exact candidate, never a second copied station implementation.
         new ZipFile(new File(frozen, 'sibling.jar')).withCloseable { zip ->
@@ -131,11 +145,36 @@ tasks.register('verifyWorkbenchCompatibility') {
         // Capture once, before any world/profile runs. Never refresh this snapshot inside the matrix.
         def files = [new File(frozen, 'core.jar'), new File(frozen, 'boots.jar'), pinned, provenance,
                      new File(frozen, 'sibling.jar'), new File(frozen, 'incompatible.jar')]
+        if (previousBoots.isPresent()) {
+            files += [previousBoots.get(), new File(frozen, 'previous-boots.jar')]
+        }
         def hashes = files.collectEntries { [(it.absolutePath): digest(it)] }
         new File(frozen, 'sha256.json').text = JsonOutput.prettyPrint(JsonOutput.toJson(hashes)) + '\n'
         def checkUnchanged = {
             checkPinned()
             files.each { if (digest(it) != hashes[it.absolutePath]) { throw new GradleException("Frozen input changed: ${it}") } }
+        }
+
+        if (previousBoots.isPresent()) {
+            // Seed only with the original embedded core; upgrade later uses CURRENT Boots.
+            runChild(["${ownerPath}:runWorkbenchServer", '-PworkbenchCase=previous',
+                      '-PworkbenchExpectedVersion=1.0.0'], new File(logs, 'previous-server.log'), true)
+            File seed = output.dir("reports/${baseline}/compatibility/previous").get().asFile
+            if (!new File(seed, 'server.ok').isFile() || !new File(seed, 'saved-boots.json').isFile() || new File(seed, 'failure.txt').exists()) {
+                throw new GradleException('Original Boots graph did not create the preserved upgrade seed')
+            }
+            checkUnchanged()
+            runChild(["${ownerPath}:runWorkbenchServer", '-PworkbenchCase=legacy'], new File(logs, 'legacy-server.log'), false)
+            String refusal = new File(logs, 'legacy-server.log').text
+            File refused = output.dir("reports/${baseline}/compatibility/legacy").get().asFile
+            boolean nativeConflict = loader == 'fabric'
+                    ? refusal.contains('NEG_HARD_DEP mismatchedthings') && refusal.contains('breaks mismatchedboots')
+                    : refusal.contains("Mod 'mismatchedthings' is incompatible with 'mismatchedboots'")
+            if (!nativeConflict || !refusal.contains('1.0.0') || !refusal.contains('1.1.0')
+                    || new File(refused, 'server.ok').exists() || new File(refused, 'failure.txt').exists()) {
+                throw new GradleException('Old Boots was not rejected by native dependency resolution')
+            }
+            checkUnchanged()
         }
 
         ['core', 'boots', 'baseline', 'sibling', 'both'].each { name ->
@@ -175,6 +214,7 @@ tasks.register('verifyWorkbenchCompatibility') {
             throw new GradleException('Incompatible major did not fail at native dependency resolution')
         }
         checkUnchanged()
-        marker.text = 'five server/client graphs, frozen API-v1/new API selection, full saved Boots root and native major refusal passed\n'
+        marker.text = 'current consumer graphs, frozen API-v1/new API selection, full saved Boots root and native major refusal passed\n'
+        if (previousBoots.isPresent()) { marker << 'unchanged Boots 1.0.0 original-core seed and native new-core refusal passed\n' }
     }
 }

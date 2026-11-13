@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedboots;
 import games.alejandrocoria.mismatchedboots.client.MismatchedBootsClientNeoForge;
 import games.alejandrocoria.mismatchedboots.compatibility.iceandfire.IceAndFireTideCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireActiveNetwork;
+import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireArmorWearCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireAttributesCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireEarthquakeCompatibility;
 import games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireGroundStompCompatibility;
@@ -40,6 +41,7 @@ public class MismatchedBootsNeoForge {
         MismatchedBoots.init();
         IceAndFireTideCompatibility.initialize();
         JustDireResourcesCompatibility.initialize(eventBus);
+        JustDireArmorWearCompatibility.initialize();
         JustDireUpgradesCompatibility.initialize(eventBus);
         JustDireGroundStompCompatibility.initialize(eventBus);
         JustDireEarthquakeCompatibility.initialize(eventBus);

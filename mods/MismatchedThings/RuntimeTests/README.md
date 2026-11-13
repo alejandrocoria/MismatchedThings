@@ -10,8 +10,9 @@ The opt-in [shared incoming wear spike](../../../spikes/shared-armor-wear/README
 is disposable research for one Things-owned NeoForge hook and symmetric product
 registration. Its Fabric run checks native optional-version metadata only. Enable
 with `-PsharedWearSpike=true`; candidate JAR rewrites stay under fixture `build/`
-directories. Ordinary workbench/API-v1 compatibility profiles are unchanged until
-the production plan deliberately updates unsupported published-Boots expectations.
+directories. Production now owns the shared seam; this research remains only until
+the armor-wear plan's consolidation block retires both spikes. Do not enable it
+for production acceptance.
 
 ## Third-party test artifacts
 
@@ -149,8 +150,9 @@ into a fixture. This check does not provide cross-loader registry interoperabili
 
 ### Native consumer matrix
 
-`verifyWorkbenchCompatibility` runs five server/client graphs, an additional
-saved-world upgrade client, then one intentionally refused server launch:
+`verifyWorkbenchCompatibility` runs five current server/client graphs, an additional
+saved-world upgrade client, then an intentionally refused major-version launch.
+An optional unchanged Boots release adds an original-core seed and native refusal:
 
 | Graph | Installed consumers | Selected core |
 | --- | --- | --- |
@@ -159,7 +161,9 @@ saved-world upgrade client, then one intentionally refused server launch:
 | Baseline | Committed API-v1 compiled consumer | Original 1.0.0 |
 | Sibling | Synthetic helmet consumer, no Boots classes/items | Next compatible minor |
 | Both | Boots, frozen baseline and sibling | Next compatible minor |
-| Upgrade | Same joint graph, reading the Boots-only server world | Next compatible minor |
+| Upgrade | Same current joint graph, reading the preserved Boots server world | Next compatible minor |
+| Previous (optional) | Unchanged published Boots, server seed only | Original embedded 1.0.0 |
+| Legacy (optional) | Unchanged published Boots and newer-core sibling | Native old-Boots refusal |
 | Incompatible | Synthetic consumer requiring API major 2 | Native loader refusal |
 
 Consumers use Loom `include` or ModDevGradle `jarJar`, not hand-written nested-JAR
@@ -192,11 +196,15 @@ loader baselines, independently of the four-profile standalone verifier.
 
 For an actual older Boots release, preserve its loader JAR outside normal build
 outputs, then pass `-PworkbenchPreviousBootsJar=<repo-relative-or-absolute-path>`
-to that loader's `verifyWorkbenchCompatibility`. The matrix copies and hash-freezes
-that unchanged binary instead of current Boots. Its Boots-only graph also installs
-the current production core directly, so the old embedded core cannot stand in
-for the upgrade being tested. Child runs receive the same property. The original
-file is read-only; normal verification without this option still tests current Boots.
+to that loader's `verifyWorkbenchCompatibility`. It must match the loader's
+[published release pin](../../MismatchedLeggings/RuntimeTests/fixtures/boots-1.0.0.json).
+The matrix freezes both current Boots and that unchanged binary. Current Boots
+remains in every positive newer-core graph. The previous binary runs only with
+its original embedded core to create the saved-data seed, and as a native refusal
+input when a sibling requires the newer core. The upgrade client reads that seed
+using current Boots and the newer core. Child runs receive the same property;
+the original binary is read-only. Without this option, current Boots seeds the
+upgrade too. Boots below 1.1.0 is not supported with Things 1.1.0 or newer.
 
 ## Focused runs and evidence
 
@@ -222,7 +230,10 @@ For a focused compatibility rerun, retain the matrix's frozen artifacts and run
 `baseline`, `sibling` or `both`, plus `'-PworkbenchExpectedVersion=<version>'`
 (quote dotted property values in PowerShell).
 An upgrade client additionally uses `-PworkbenchUpgrade=true` with case `both`;
-it requires the existing Boots-only server seed. Prefer the matrix for final
+it requires the existing `previous` server seed when `workbenchPreviousBootsJar`
+is supplied, otherwise `boots`. Optional focused `previous`/`legacy` server runs
+also require that property and frozen inputs; `legacy` must fail before gameplay.
+Prefer the matrix for final
 acceptance: focused runs alone do not enforce the across-stage hash guard.
 
 Focused server reruns clear their matching live report directory. To reuse an

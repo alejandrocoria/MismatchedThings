@@ -101,7 +101,7 @@ public final class NeoForgeJustDireArmorWearTest {
         String variant = System.getProperty("mismatchedboots.runtimetest.justDireArmorWearVariant", "live");
         boolean ready;
         try {
-            var getter = CommonHooks.class.getDeclaredMethod("mismatchedboots$justDireArmorWearReady");
+            var getter = CommonHooks.class.getDeclaredMethod("mismatchedthings$justDireArmorWearReady");
             getter.setAccessible(true);
             ready = (boolean) getter.invoke(null);
         } catch (NoSuchMethodException absent) {

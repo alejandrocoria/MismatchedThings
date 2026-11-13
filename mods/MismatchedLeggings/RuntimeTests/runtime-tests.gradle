@@ -62,6 +62,49 @@ def ownerPath = project.path
 def rootDirectory = rootProject.projectDir
 def launcher = rootProject.file('gradlew.bat')
 def offline = gradle.startParameter.offline
+
+tasks.register('verifyLegacyBootsRefusal') {
+    group = 'verification'
+    description = 'Checks native rejection of unchanged Boots 1.0.0 with current Leggings/core.'
+    doLast {
+        def release = providers.gradleProperty('leggingsBootsJar').map { rootProject.file(it) }.orNull
+        def pin = new groovy.json.JsonSlurper().parse(project(':MismatchedLeggings:RuntimeTests').file('fixtures/boots-1.0.0.json'))[project.name]
+        def digest = { File file -> java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString() }
+        if (release == null || !release.isFile() || digest(release) != pin.sha256) {
+            throw new GradleException('Provide -PleggingsBootsJar=<unchanged pinned Boots 1.0.0 JAR> for native refusal')
+        }
+        def logs = layout.buildDirectory.dir("verification/${baseline}/legacy-boots-refusal").get().asFile
+        logs.mkdirs()
+        def marker = new File(logs, 'refusal.ok')
+        marker.delete()
+        def log = new File(logs, 'server.log')
+        def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                         "${ownerPath}:runWorkbenchServer", '-PleggingsBoots=true', "-PleggingsBootsJar=${release.absolutePath}"]
+        if (offline) { arguments.add('--offline') }
+        if (project.name == 'NeoForge') { arguments.add("-Pneoforge_version=${neoforge_version}") }
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS)) { throw new GradleException("Legacy refusal timed out: ${log}") }
+            String text = log.text
+            boolean nativeConflict = project.name == 'Fabric'
+                    ? text.contains('Incompatible mods found!') && text.contains('breaks mismatchedboots')
+                    : text.contains("Mod 'mismatchedthings' is incompatible with 'mismatchedboots'")
+            def reports = layout.buildDirectory.dir("reports/${baseline}/workbench-previous-boots").get().asFile
+            if (process.exitValue() == 0 || !nativeConflict || !text.contains('1.0.0') || !text.contains('1.1.0')
+                    || new File(reports, 'server.ok').exists() || new File(reports, 'server.failure.txt').exists()
+                    || digest(release) != pin.sha256) {
+                throw new GradleException("Expected native optional Boots version conflict, not a gameplay failure: ${log}")
+            }
+            marker.text = 'native old-Boots/current-Leggings conflict; release hash unchanged\n'
+        } finally {
+            if (process.isAlive()) {
+                process.toHandle().descendants().forEach { it.destroyForcibly() }
+                process.destroyForcibly()
+            }
+        }
+    }
+}
 def neoForge = project.name == 'NeoForge'
 
 tasks.register('verifySkeleton') {

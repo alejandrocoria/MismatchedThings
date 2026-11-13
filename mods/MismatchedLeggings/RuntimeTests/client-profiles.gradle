@@ -372,6 +372,9 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : 'Checks Leggings workbench transactions, rule synchronization and optional Boots coexistence.'
         dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
         doLast {
+            if (previousBoots != null) {
+                throw new GradleException('Old-Boots positive coexistence is retired; omit leggingsBootsJar for current Boots, or run verifyLegacyBootsRefusal')
+            }
             def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
             logs.mkdirs()
             new File(logs, 'matrix.ok').delete()

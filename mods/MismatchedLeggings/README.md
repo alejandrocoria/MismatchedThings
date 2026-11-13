@@ -12,6 +12,9 @@ MismatchedThings is bundled; no separate core download is required. Other
 Mismatched armor mods are optional: installed together, they share one workbench
 while keeping their own items and configuration.
 
+With the bundled MismatchedThings 1.1.0 core, installed MismatchedBoots must be
+version 1.1.0 or newer.
+
 ## Crafting
 
 Craft a **Mismatched Workbench** with six planks (any combination), shears and a
@@ -89,8 +92,7 @@ dispenser; valid crafted pairs remain equippable.
 JEI and REI show examples in the shared **Mismatched Workbench** category supplied
 by Things. Each current family product contributes its own inputs and both ordered
 results only when installed, using loaded recipes and synchronized server rules.
-Published Boots 1.0.0 keeps its separate legacy category when used with newer
-family products. There is no automatic recipe-transfer integration.
+There is no automatic recipe-transfer integration.
 
 ## Development
 

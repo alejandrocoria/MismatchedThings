@@ -1,7 +1,8 @@
-package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
-import games.alejandrocoria.mismatchedboots.Constants;
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class JustDireArmorWearMixinPlugin implements IMixinConfigPlugin, IExtension {
+    private static final Logger LOG = LoggerFactory.getLogger("mismatchedthings/justdirethings");
     private boolean available;
     private boolean warned;
 
@@ -45,7 +47,7 @@ public final class JustDireArmorWearMixinPlugin implements IMixinConfigPlugin, I
     private void warn() {
         if (!warned) {
             warned = true;
-            Constants.LOG.warn("Just Dire Things armor wear flow incompatible; ordinary wear retained");
+            LOG.warn("Just Dire Things armor wear flow incompatible; ordinary wear retained");
         }
     }
 

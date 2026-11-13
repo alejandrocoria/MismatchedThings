@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
@@ -100,17 +100,6 @@ class JustDireArmorWearShapeTest implements Opcodes {
     }
 
     @Test
-    void auditedWearPriceUsesOneIntegerRequestAndNativeLinearDiscount() {
-        assertEquals(200, JustDireArmorWearCompatibility.bill(2, 0));
-        assertEquals(180, JustDireArmorWearCompatibility.bill(2, 1));
-        assertEquals(140, JustDireArmorWearCompatibility.bill(2, 3));
-        assertEquals(0, JustDireArmorWearCompatibility.bill(2, 10));
-        assertEquals(0, JustDireArmorWearCompatibility.bill(0, 0));
-        assertEquals(-1, JustDireArmorWearCompatibility.bill(Integer.MAX_VALUE, 0));
-        assertEquals(-1, JustDireArmorWearCompatibility.bill(2, -1));
-    }
-
-    @Test
     void finalRefusalNeutralizesAnOwnedRouterThatBypassesOrLosesItsGetter() throws Exception {
         var bypass = transformed();
         var handler = bypass.methods.stream().filter(m -> m.desc.equals(JustDireArmorWearShape.HANDLER_DESC)).findFirst().orElseThrow();
@@ -132,7 +121,7 @@ class JustDireArmorWearShapeTest implements Opcodes {
 
     @Test
     void bothActualForwardingOrdersPublishButChangedArgumentsAndRepeatedCallsDoNot() throws Exception {
-        String baseline = System.getProperty("mismatchedboots.test.justDireArmorWearTransformedClass", "");
+        String baseline = System.getProperty("mismatchedthings.test.justDireArmorWearTransformedClass", "");
         assumeTrue(!baseline.isEmpty(), "Supply the production gate's actual final exports");
         for (String variant : java.util.List.of("WrapperBefore", "WrapperAfter")) {
             var path = Path.of(baseline).resolveSibling(variant + "-CommonHooks.class");
@@ -184,7 +173,7 @@ class JustDireArmorWearShapeTest implements Opcodes {
     }
 
     private static ClassNode transformed() throws Exception {
-        String path = System.getProperty("mismatchedboots.test.justDireArmorWearTransformedClass", "");
+        String path = System.getProperty("mismatchedthings.test.justDireArmorWearTransformedClass", "");
         assumeTrue(!path.isEmpty(), "Supply an actual runtime export for final-shape acceptance");
         return exported(Path.of(path));
     }

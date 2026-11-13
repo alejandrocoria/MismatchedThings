@@ -4,6 +4,7 @@
 * Added: Eternal and Soulbound support for Forbidden Arcanus, including both effects together, smithing upgrades and native tooltip titles on mixed boots.
 * Changed: Rogdorium infusion from The Undergarden is shared evenly between newly combined boots, preserving the reservoir capacity.
 * Changed: Client and server now require the updated Mismatched Boots network protocol to connect.
+* Changed: Mismatched Boots must be updated to 1.1.0 or newer when using the updated MismatchedThings core.
 * Fixed: Rogdorium infusion tooltips could show outdated or duplicate charge from the original boots.
 * Fixed: Existing Eternal mixed boots could retain finite durability instead of their native protection from wear.
 * Fixed: Hovering over mixed boots recipe outputs in REI could crash the Fabric client.

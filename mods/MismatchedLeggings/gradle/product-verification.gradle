@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 // Deliberately sequential: child builds share loader outputs and generated launch arguments.
 tasks.register('verifyProduct') {
     group = 'verification'
-    description = 'Runs bounded final packaged Leggings/core acceptance with pinned unchanged Boots 1.0.0.'
+    description = 'Runs packaged Leggings/current-Boots acceptance, old-release refusal and saved-data upgrades.'
     dependsOn 'verifyPackaging', ':MismatchedThings:Common:test', ':MismatchedLeggings:Common:test',
             ':MismatchedBoots:Common:test', ':MismatchedBoots:verifySharedWorkbenchPackagingChecks'
 
@@ -105,20 +105,22 @@ tasks.register('verifyProduct') {
             String productTests = ":MismatchedLeggings:RuntimeTests:${loader}"
             String coreTests = ":MismatchedThings:RuntimeTests:${loader}"
             String previous = inputs[loader].frozen
-            def joint = ['-PleggingsBoots=true', "-PleggingsBootsJar=${previous}"]
+            def joint = ['-PleggingsBoots=true']
 
             run(loader, baseline, 'core-standalone', "${coreTests}:verifyWorkbench", [])
             run(loader, baseline, 'core-evolution', "${coreTests}:verifyWorkbenchCompatibility",
                     ["-PworkbenchPreviousBootsJar=${previous}"])
+            run(loader, baseline, 'legacy-refusal', "${productTests}:verifyLegacyBootsRefusal",
+                    ["-PleggingsBootsJar=${previous}"])
             run(loader, baseline, 'product-standalone', "${productTests}:verifySkeleton", [])
             ['Workbench', 'Equipped', 'Items'].each { profile ->
                 run(loader, baseline, "standalone-${profile.toLowerCase(Locale.ROOT)}", "${productTests}:verify${profile}", [])
             }
             ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Recovery'].each { profile ->
-                run(loader, baseline, "legacy-${profile.toLowerCase(Locale.ROOT)}", "${productTests}:verify${profile}", joint)
+                run(loader, baseline, "current-${profile.toLowerCase(Locale.ROOT)}", "${productTests}:verify${profile}", joint)
             }
             ['jei', 'rei'].each { viewer ->
-                run(loader, baseline, "legacy-${viewer}", "${productTests}:verifyViewers", joint + ["-PleggingsViewer=${viewer}"])
+                run(loader, baseline, "current-${viewer}", "${productTests}:verifyViewers", joint + ["-PleggingsViewer=${viewer}"])
             }
             if (loader == 'NeoForge' && baseline == '26.1.2.114') {
                 run(loader, baseline, 'native-waists', "${productTests}:verifyEquipped", joint + ['-PleggingsIceAndFire=true'])

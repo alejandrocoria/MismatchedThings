@@ -21,6 +21,9 @@
         "minecraft": "${minecraft_version}",
         "java": ">=${java_version}"
     },
+    "breaks": {
+        "mismatchedboots": "<1.1.0"
+    },
     "custom": {
         "modmenu": {
             "badges": ["library"]

@@ -10,10 +10,15 @@ synchronized by its protocol. Fabric API already rejects clients that do not
 support Fabric registry synchronization. Integrated singleplayer connections
 share registries and are unaffected.
 
+Things 1.1.0 is incompatible with Boots below 1.1.0. Boots and all other armor
+products remain optional; this is a native loading constraint, not a saved-data
+migration. Compiled consumers of the original workbench API remain supported.
+
 Boots contributes admission and composition through API v1; it no longer owns
 a second station. Permanent native coexistence/version-evolution controls now
 cover Fabric and NeoForge .99/.114, including compiled API-v1 consumers and
-unchanged Boots binaries across a core upgrade. Consolidated automated integration,
+unchanged Boots binaries as original-core upgrade seeds and native-refusal inputs.
+The original extraction's automated integration,
 viewer and dedicated networking checks have passed. The owner also accepted the
 final ordinary-client checklist on Fabric and NeoForge on 2026-10-27, completing
 the shared workbench extraction/namespace plan. Leggings now has its own source
@@ -91,6 +96,20 @@ Renderer classes and
 loader hooks under `internal` are not consumer API.
 
 ## Contribution boundary
+
+### Optional NeoForge incoming armor wear (since 1.1.0)
+
+`api.compatibility.justdirethings.JustDireArmorWear.register(slot, handler)`
+registers one product-local callback per humanoid armor slot. Things owns the
+single guarded post-event NeoForge consumer and delegates unregistered/refused
+slots normally. Products register once during initialization, retain their own
+eligibility/resource bindings and either settle payment or delegate ordinary
+wear exactly once. Duplicate registrations reject without replacing the owner;
+publication is safe across concurrent product construction.
+
+The callback is not used for direct item damage. No product class, source schema
+or wallet is bound by the core, and JDT remains optional. This API is NeoForge-
+local; there is no Fabric JDT gameplay implementation or sibling dependency.
 
 ### Optional Forbidden Arcanus operations (since 1.1.0)
 

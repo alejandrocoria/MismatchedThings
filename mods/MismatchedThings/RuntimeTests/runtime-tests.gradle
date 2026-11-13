@@ -21,7 +21,7 @@ ext.workbenchTestRecipes = providers.gradleProperty('workbenchTestRecipes').map 
 def recipes = workbenchTestRecipes
 def compatibilityCase = providers.gradleProperty('workbenchCase').getOrElse('')
 def upgrade = providers.gradleProperty('workbenchUpgrade').getOrElse('false').toBoolean()
-if (compatibilityCase && !(compatibilityCase in ['core', 'boots', 'baseline', 'sibling', 'both', 'incompatible'])) {
+if (compatibilityCase && !(compatibilityCase in ['core', 'boots', 'previous', 'legacy', 'baseline', 'sibling', 'both', 'incompatible'])) {
     throw new GradleException("Unknown workbench compatibility case: ${compatibilityCase}")
 }
 if (upgrade && compatibilityCase != 'both') {
@@ -33,7 +33,8 @@ if (compatibilityCase && recipes) {
 def scenario = compatibilityCase ? "compatibility/${compatibilityCase}${upgrade ? '-upgrade' : ''}" : recipes ? 'recipes' : 'core'
 ext.workbenchRunDirectory = layout.buildDirectory.dir("run/${baseline}/${scenario}").get()
 ext.workbenchReportDirectory = layout.buildDirectory.dir("reports/${baseline}/${scenario}").get()
-ext.workbenchSeedReport = layout.buildDirectory.dir("reports/${baseline}/compatibility/boots").get()
+def seedCase = providers.gradleProperty('workbenchPreviousBootsJar').isPresent() ? 'previous' : 'boots'
+ext.workbenchSeedReport = layout.buildDirectory.dir("reports/${baseline}/compatibility/${seedCase}").get()
 def runDirectory = workbenchRunDirectory
 def reportDirectory = workbenchReportDirectory
 
@@ -151,7 +152,7 @@ tasks.register('prepareWorkbenchClient') {
     dependsOn packaging, tasks.named('classes')
     doLast {
         def directory = runDirectory.dir('client').asFile
-        def seedDirectory = upgrade ? outputDirectory.dir("run/${baseline}/compatibility/boots").get() : runDirectory
+        def seedDirectory = upgrade ? outputDirectory.dir("run/${baseline}/compatibility/${seedCase}").get() : runDirectory
         def seedReports = upgrade ? workbenchSeedReport : reportDirectory
         def savedWorld = seedDirectory.dir('server/workbench').asFile
         if (!new File(seedReports.asFile, 'server.ok').isFile() || !savedWorld.isDirectory()) {

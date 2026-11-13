@@ -145,9 +145,12 @@ def offline = gradle.startParameter.offline
 def neoForgeLoader = project.name == 'NeoForge'
 tasks.register('verifyRecovery') {
     group = 'verification'
-    description = 'Checks staged missing-source preservation, native lifecycle/TCP recovery and optional unchanged Boots.'
+    description = 'Checks staged missing-source preservation, native lifecycle/TCP recovery and optional current Boots.'
     dependsOn ':MismatchedLeggings:verifyPackaging', tasks.named('classes')
     doLast {
+        if (previousBoots != null) {
+            throw new GradleException('Recovery with old Boots/new core is unsupported; use current Boots or verifyLegacyBootsRefusal')
+        }
         def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
         logs.mkdirs()
         new File(logs, 'matrix.ok').delete()
