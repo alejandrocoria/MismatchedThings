@@ -13,6 +13,7 @@ import java.util.Set;
 public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.contains("DecoySpike")) { return Boolean.getBoolean("leggings.test.jdtDecoySpike"); }
         if (mixin.endsWith("JustDirePresentationInputProbe")) {
             return Boolean.getBoolean("leggings.test.jdtPresentation");
         }
@@ -24,6 +25,7 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.contains("DecoySpike")) { return; }
         if (mixin.endsWith("JustDirePresentationInputProbe")) { return; }
         String getter = target.endsWith("AbilityMethods") ? "mismatchedleggings$jdtMovementReady"
                 : target.endsWith("ToolSettingScreen") ? "mismatchedleggings$jdtSettingsReady" : "mismatchedleggings$justDireAttributesReady";
@@ -33,7 +35,12 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override public void onLoad(String name) {}
     @Override public String getRefMapperConfig() { return null; }
-    @Override public List<String> getMixins() { return null; }
+    @Override public List<String> getMixins() {
+        if (!Boolean.getBoolean("leggings.test.jdtDecoySpike")) { return null; }
+        return net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()
+                ? List.of("DecoySpikeSoundMixin", "DecoySpikeHudMixin", "DecoySpikeDrawMixin")
+                : List.of("DecoySpikeSoundMixin");
+    }
     @Override public void acceptTargets(Set<String> mine, Set<String> others) {}
     @Override public void preApply(String target, ClassNode node, String mixin, IMixinInfo info) {}
 }

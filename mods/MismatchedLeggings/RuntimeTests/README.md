@@ -258,6 +258,15 @@ No screenshots, indev artifacts or prepared owner world are used. Consolidated
 owner acceptance is recorded separately in the private plan. Decoy, Lava Repair,
 powered incoming wear, refunds and broader charger discovery remain deferred.
 
+## Just Dire Things Decoy research (opt-in)
+
+The isolated [Decoy spike](../../../spikes/leggings-jdt-decoy/README.md) reuses
+`verifyJustDirePassives` with `-PleggingsJdtDecoySpike=true` for native action,
+payment/clock/entity and native HUD feasibility. Its source set and dynamic
+research mixins are excluded without that property. This is not production
+Decoy settings/input support or foundation acceptance; use that README for
+the three bounded profiles, markers and complete retirement scope.
+
 ## Silent Gear source tooltip acceptance
 
 The bounded maintained profile exercises the packaged production source appender,

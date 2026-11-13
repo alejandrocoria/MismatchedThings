@@ -13,6 +13,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.jdtDecoySpike")) {
+            try {
+                Class.forName("games.alejandrocoria.mismatchedleggings.test.DecoySpike").getMethod("register").invoke(null);
+            } catch (ReflectiveOperationException failure) { throw new IllegalStateException("Missing opt-in Decoy research", failure); }
+            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtPresentation")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> JustDirePresentationServer.tick(event.getServer()));
             if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
