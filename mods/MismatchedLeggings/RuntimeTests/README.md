@@ -169,7 +169,51 @@ the selected product. Add `'-Pneoforge_version=26.1.2.99'` for focused floor
 acceptance and restore `.114` artifacts afterward. Foundation and Decoy selections keep
 their existing lifecycle assertions; this profile does not replace them.
 
-## Just Dire Things Lava Repair research
+## Just Dire Things Lava Repair
+
+The bounded production profile uses the ordinary packaged Leggings callbacks,
+without the research item-hook mixin or generated candidate:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaClient --offline --console=plain
+```
+
+Run server before client, sequentially. Add `-PleggingsJdtBoots=true` to both for
+current Boots coexistence. The existing shared resolver provides pinned JDT
+1.6.11, never indev files. The client remains hidden before window creation and
+muted; it copies the disposable server world to exercise real entity/particle
+packets, not to prepare an owner test world. No screenshots are required.
+
+Evidence is under `NeoForge/build/reports/<baseline>/jdt-lava[-boots]/`:
+`server.ok`/`server.txt` and `client.ok`/`client.txt`, without failure markers.
+Server controls cover native/mixed healthy and damaged roots, both orientations,
+one/two providers, fire protection and disabled/config/invalid controls, preserved
+FE/history, imported progress, flowing/removed lava, denied block receipts and
+independent Boots. Observers check native particle metadata and server completion
+sound. Native originals may also emit from their cleared/default anchor outside
+a ritual; only their comparison permits that idle behavior. Mixed emissions must
+always originate from their validated source. The hidden client checks the actual
+native factory, synchronized repair and smooth early ascent.
+
+Focused dedicated controls:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtAbsent=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtBoots=true -PleggingsLavaFault=api --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtBoots=true -PleggingsLavaFault=particles --offline --console=plain
+```
+
+API/particle failures occur inside the real local binding, with exactly one
+owned warning and healthy independent settings/Boots. Add
+`'-Pneoforge_version=26.1.2.99'` to the joint healthy server for the smaller floor
+gate, then restore normal `.114` outputs. Block A does not implement the Lava
+settings row/root tooltip; their acceptance is separate.
+
+### Retained research
+
+Block A's maintained production profiles above supersede this research as an
+acceptance gate. The research tree is retained only until C's complete retirement.
 
 The opt-in [bounded Lava Repair spike](../../../spikes/leggings-jdt-lava/README.md)
 adapts the existing Boots ritual through fixture-only candidate item callbacks.

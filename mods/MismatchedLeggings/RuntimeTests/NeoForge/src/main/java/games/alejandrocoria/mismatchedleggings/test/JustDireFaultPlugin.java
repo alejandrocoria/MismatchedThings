@@ -15,6 +15,9 @@ import java.util.Set;
 public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.contains("JustDireLava")) {
+            return Boolean.getBoolean("leggings.test.jdtLava") && !Boolean.getBoolean("leggings.test.jdtAbsent");
+        }
         if (mixin.endsWith("JustDireArmorWearDebitProbe")) {
             return Boolean.getBoolean("leggings.test.jdtWear");
         }
@@ -40,6 +43,9 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
+        if (mixin.contains("JustDireLava")) {
+            return;
+        }
         if (mixin.endsWith("JustDireArmorWearDebitProbe") || mixin.endsWith("JustDireArmorWearQueryProbe")) {
             return;
         }
@@ -70,6 +76,16 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
     }
     @Override public String getRefMapperConfig() { return null; }
     @Override public List<String> getMixins() {
+        if (Boolean.getBoolean("leggings.test.jdtLava") && !Boolean.getBoolean("leggings.test.jdtAbsent")) {
+            var probes = new java.util.ArrayList<>(List.of("JustDireLavaWorldProbe", "JustDireLavaEffectsProbe"));
+            if (net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()) {
+                probes.add("JustDireLavaParticleProbe");
+            }
+            if (!System.getProperty("leggings.test.lavaFault", "").isEmpty()) {
+                probes.add("JustDireLavaApiProbe");
+            }
+            return probes;
+        }
         if (Boolean.getBoolean("leggings.test.jdtWear")) {
             return System.getProperty("leggings.test.jdtWearQuery", "").isEmpty()
                     ? List.of("JustDireArmorWearDebitProbe") : List.of("JustDireArmorWearQueryProbe");

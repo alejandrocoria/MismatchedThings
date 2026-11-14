@@ -93,6 +93,7 @@ public final class JustDireState implements JustDireComposition {
         if (previous == null) {
             JustDireDecoy.prepare(output, data);
         }
+        JustDireLavaRepair.sanitizeProgress(output);
     }
 
     private static void initializeUpgrades(ItemStack output, MixedLeggingsData data) {

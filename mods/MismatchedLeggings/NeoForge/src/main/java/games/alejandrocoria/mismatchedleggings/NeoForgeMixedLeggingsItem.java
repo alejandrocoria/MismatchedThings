@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings;
 
 import games.alejandrocoria.mismatchedleggings.compatibility.allthemodium.AllTheModiumLeggings;
 import games.alejandrocoria.mismatchedleggings.compatibility.iceandfire.IceAndFireTideCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireLavaRepair;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireTooltipCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.rootsclassic.RootsTickCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearCures;
@@ -15,9 +16,12 @@ import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -49,6 +53,18 @@ public final class NeoForgeMixedLeggingsItem extends MixedLeggingsItem {
         AllTheModiumLeggings.tick(stack, level, entity, slot);
         RootsTickCompatibility.tick(stack, level, entity, slot);
         IceAndFireTideCompatibility.activate(stack, level, entity, slot);
+    }
+
+    @Override
+    public boolean canBeHurtBy(ItemStack stack, DamageSource source) {
+        return !(source.is(DamageTypeTags.IS_FIRE) && JustDireLavaRepair.eligible(stack))
+                && super.canBeHurtBy(stack, source);
+    }
+
+    @Override
+    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity) {
+        JustDireLavaRepair.tick(stack, entity);
+        return false;
     }
 
     @Override

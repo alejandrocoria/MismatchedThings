@@ -4,6 +4,12 @@ Opt-in research, not production support. Adapts Boots' accepted transient ritual
 to strict mixed Leggings validation, through fixture-only item hooks. No product
 source, registry ID, schema, version or published JAR is patched.
 
+**Production A supersedes this candidate as an acceptance gate.** Use the
+[maintained Lava profile](../../mods/MismatchedLeggings/RuntimeTests/README.md#just-dire-things-lava-repair)
+without `leggingsLavaSpike`. This tree remains only until block C's mandatory
+complete retirement; commands below describe the research baseline, not current
+production validation.
+
 The [exploration](../../mods/MismatchedLeggings/local-docs/JUST-DIRE-THINGS-LAVA-REPAIR-EXPLORATION.md)
 owns policies, findings, evidence and remaining production work.
 

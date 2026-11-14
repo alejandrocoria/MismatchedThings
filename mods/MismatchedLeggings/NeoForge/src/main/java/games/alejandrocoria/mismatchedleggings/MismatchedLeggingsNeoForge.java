@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.Just
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireDecoy;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireHeldToggleCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireInputNetwork;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireLavaRepair;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireResources;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettings;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork;
@@ -58,6 +59,7 @@ public final class MismatchedLeggingsNeoForge {
         SilentGearCompatibility.initialize(bus);
         JustDireState.initialize(bus);
         JustDireResources.initialize(bus);
+        JustDireLavaRepair.initialize(bus);
         JustDireArmorWearCompatibility.initialize();
         JustDireDecoy.initialize(bus);
         JustDireAbilities.initialize(bus);
@@ -78,7 +80,10 @@ public final class MismatchedLeggingsNeoForge {
         });
         var configDirectory = FMLPaths.CONFIGDIR.get();
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> CompositionRulesLifecycle.load(configDirectory));
-        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> CompositionRulesLifecycle.stopped());
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
+            JustDireLavaRepair.clearEpisodes();
+            CompositionRulesLifecycle.stopped();
+        });
         NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent event) -> event.sendRecipes(MismatchedWorkbench.recipeType()));
 
         if (FMLEnvironment.getDist().isClient()) {

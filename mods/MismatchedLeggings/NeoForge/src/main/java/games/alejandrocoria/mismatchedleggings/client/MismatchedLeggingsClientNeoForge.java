@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedleggings.client.compatibility.justdirethin
 import games.alejandrocoria.mismatchedleggings.client.compatibility.justdirethings.JustDireSettingsClient;
 import games.alejandrocoria.mismatchedleggings.compatibility.MismatchedWorkbenchClientRecipes;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireInputNetwork;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireLavaRepair;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
@@ -23,6 +24,7 @@ import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactori
 import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.LevelEvent;
 
 public final class MismatchedLeggingsClientNeoForge {
     private MismatchedLeggingsClientNeoForge() {
@@ -53,10 +55,16 @@ public final class MismatchedLeggingsClientNeoForge {
                 }
             });
             NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut logout) -> {
+                JustDireLavaRepair.clearClientEpisodes();
                 JustDireSettingsClient.reset();
                 JustDireInputClient.reset();
                 CompositionRuleState.resetPreview();
                 MismatchedWorkbenchClientRecipes.reset();
+            });
+            NeoForge.EVENT_BUS.addListener((LevelEvent.Unload unload) -> {
+                if (unload.getLevel().isClientSide()) {
+                    JustDireLavaRepair.clearClientEpisodes();
+                }
             });
         });
     }
