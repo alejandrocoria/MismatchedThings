@@ -26,6 +26,19 @@ rejection before any gameplay observer starts. Evidence is under
 recovery or refund input; older command examples using previous/published graph
 options describe historical acceptance, not supported current coexistence.
 
+## Temporary JDT refund research
+
+The opt-in [shared-consumption spike](../../../spikes/leggings-jdt-refunds/README.md)
+is dedicated-server-only and separate from maintained production acceptance:
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runRefundSpike -PleggingsRefundSpike=true --offline --console=plain
+```
+
+Its fixture JAR copies adapt the old refund hook/MA guards without changing
+production artifacts. Retire the entire spike, this section and its opt-in
+entry points when maintained production tests supersede it.
+
 ## Final packaged product acceptance
 
 Run from the repository root, supplying the unchanged Boots 1.0.0 releases:

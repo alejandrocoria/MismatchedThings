@@ -13,6 +13,15 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.refundSpike")) {
+            try {
+                Class.forName("games.alejandrocoria.mismatchedleggings.test.RefundSpike")
+                        .getMethod("register", IEventBus.class).invoke(null, bus);
+            } catch (ReflectiveOperationException failure) {
+                throw new IllegalStateException("Cannot start the isolated refund spike", failure);
+            }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtLava")) {
             JustDireLavaChecks.register(bus);
             return;

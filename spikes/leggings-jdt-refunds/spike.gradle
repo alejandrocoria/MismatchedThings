@@ -1,0 +1,222 @@
+// Opt-in research only. No candidate classes/resources enter a product artifact.
+if (!providers.gradleProperty('leggingsRefundSpike').map { it.toBoolean() }.getOrElse(false)) { return }
+
+def spikeRoot = rootProject.file('spikes/leggings-jdt-refunds')
+def boots = project(':MismatchedBoots:NeoForge')
+evaluationDependsOn(boots.path)
+def bootJar = boots.tasks.named('jar').flatMap { it.archiveFile }
+dependencies.add('compileOnly', files(bootJar))
+def generated = layout.buildDirectory.dir('generated/refund-spike')
+sourceSets.main.java.srcDirs(new File(spikeRoot, 'src'), generated)
+sourceSets.main.resources.srcDir(new File(spikeRoot, 'resources'))
+tasks.named('processResources') {
+    filesMatching('META-INF/neoforge.mods.toml') {
+        filter { line -> line == '[[mods]]' ? '[[mixins]]\nconfig="refund-spike.mixins.json"\n[[mixins]]\nconfig="refund-spike-fault.mixins.json"\n\n[[mods]]' : line }
+    }
+}
+
+tasks.register('generateRefundSpike') {
+    inputs.dir(boots.file('src/main/java/games/alejandrocoria/mismatchedboots/compatibility/justdirethings'))
+    outputs.dir(generated)
+    doLast {
+        def target = generated.get().asFile
+        target.mkdirs()
+        def original = boots.file('src/main/java/games/alejandrocoria/mismatchedboots/compatibility/justdirethings')
+        def oldPackage = 'games.alejandrocoria.mismatchedboots.compatibility.justdirethings'
+        def newPackage = 'games.alejandrocoria.mismatchedleggings.test.refundspike'
+        ['JustDireRefundShape', 'JustDireRefundMixinPlugin'].each { name ->
+            def code = new File(original, "${name}.java").text.replace(oldPackage, newPackage)
+                    .replace('import games.alejandrocoria.mismatchedboots.Constants;', '')
+                    .replace('Constants.LOG', 'SpikeLog.LOG')
+                    .replace('mismatchedboots$justDireRefundReady', 'refundspike$ready')
+                    .replace('games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireRefundCompatibility',
+                             'games/alejandrocoria/mismatchedleggings/test/refundspike/SharedConsumption')
+                    .replace('games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireRefundMixin',
+                             newPackage + '.mixin.ConsumptionMixin')
+            if (name == 'JustDireRefundShape') {
+                code = code.replace('private static boolean observer(MethodNode handler)', 'public static boolean recognizes(MethodNode handler)')
+                        .replace('!observer(handler)', '!recognizes(handler)')
+                        .replace('    static boolean entry(ClassNode node) {', '''    public static boolean boundary(ClassNode node) {
+        try { return slice(node, true); }
+        catch (AnalyzerException | RuntimeException incompatible) { return false; }
+    }
+
+    static boolean entry(ClassNode node) {''')
+                code = code.replace('    private static boolean forwardingOperation(ClassNode node, Flow parent, AbstractInsnNode producer, boolean ownedInside) throws AnalyzerException {', '''    public static boolean siteHandler(ClassNode node, MethodNode handler) throws AnalyzerException {
+        return handler.desc.equals(HANDLER) && recognizes(handler)
+                || handler.desc.equals(FORWARD) && forwarder(node, handler);
+    }
+
+    private static boolean forwardingOperation(ClassNode node, Flow parent, AbstractInsnNode producer, boolean ownedInside) throws AnalyzerException {
+        return forwardingOperation(node, parent, producer, ownedInside, 1);
+    }
+
+    // Two bridge layers cover shared + existing MA + one forwarder without an unbounded analyzer.
+    private static boolean forwardingOperation(ClassNode node, Flow parent, AbstractInsnNode producer, boolean ownedInside, int depth) throws AnalyzerException {''')
+                def nested = '!operation(node, parent.origin(parent.argument(indy, 1, captures)))'
+                code = code.replace(nested, '''!(operation(node, parent.origin(parent.argument(indy, 1, captures)))
+                        || depth < 2 && (forwardingOperation(node, parent, parent.origin(parent.argument(indy, 1, captures)), false, depth + 1)
+                        || forwardingOperation(node, parent, parent.origin(parent.argument(indy, 1, captures)), true, depth + 1)))''')
+            }
+            new File(target, "${name}.java").text = code
+        }
+        // Reuse the existing receipt algorithm, not a second design. Leggings credits are a disposable witness.
+        def code = new File(original, 'JustDireRefundCompatibility.java').text
+                .replace(oldPackage, newPackage)
+                .replace('import games.alejandrocoria.mismatchedboots.Constants;', '')
+                .replace('import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;', 'import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsItem;')
+                .replace('import games.alejandrocoria.mismatchedboots.content.ModContent;', 'import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;')
+                .replace('JustDireRefundCompatibility', 'LeggingsWitness')
+                .replace('Constants.MOD_ID', '"leggings_skeleton_test"').replace('Constants.LOG', 'SpikeLog.LOG')
+                .replace('MixedBootsItem', 'MixedLeggingsItem')
+                .replace('ModContent.getMixedBootsData(root)', 'MixedLeggingsStructure.validData(root)')
+                .replace('JustDireUpgradesCompatibility.installedFlag(name)', 'WitnessSupport.flag(name)')
+                .replace('JustDireAbilityTarget', 'WitnessSupport.Target')
+                .replace('JustDireActiveState.snapshot(root)', 'WitnessSupport.snapshot(root)')
+        new File(target, 'LeggingsWitness.java').text = code
+        code = new File(original, 'JustDireRefundCredits.java').text.replace(oldPackage, newPackage)
+                .replace('"stepheight", "jumpboost", "groundstomp", "negatefalldamage", "earthquake"',
+                         '"walkspeed", "runspeed", "swimspeed", "decoy", "phase"')
+        new File(target, 'JustDireRefundCredits.java').text = code
+    }
+}
+tasks.named('compileJava') { dependsOn 'generateRefundSpike', boots.tasks.named('jar') }
+
+// Isolated peer-guard migration: keep MA's own eligibility/completion and strict local proof.
+// Only the shared candidate owns wrapper-chain recognition; no Leggings/Boots JDT peer list.
+def guards = layout.buildDirectory.dir('generated/refund-spike-peer-guards')
+def guardClasses = layout.buildDirectory.dir('classes/refund-spike-peer-guards')
+tasks.register('generateRefundPeerGuards') {
+    inputs.files(rootProject.file('mods/MismatchedBoots/Common/src/main/java/games/alejandrocoria/mismatchedboots/compatibility/mysticalagriculture/MysticalRefundShape.java'),
+                 rootProject.file('mods/MismatchedLeggings/Common/src/main/java/games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalRefundShape.java'))
+    outputs.dir(guards)
+    doLast {
+        ['boots', 'leggings'].each { product ->
+            def original = rootProject.file("mods/Mismatched${product.capitalize()}/Common/src/main/java/games/alejandrocoria/mismatched${product}/compatibility/mysticalagriculture/MysticalRefundShape.java").text
+            def code = original
+            if (product == 'boots') {
+                code = code.replace('intact && slice(node, true)',
+                                    'intact && games.alejandrocoria.mismatchedleggings.test.refundspike.JustDireRefundShape.boundary(node)')
+                        .replace('catch (AnalyzerException | RuntimeException incompatible) {\n            // Keep independent ordinary consumption.',
+                                 'catch (RuntimeException incompatible) {\n            // Keep independent ordinary consumption.')
+            } else {
+                def start = code.indexOf('    private boolean boots(MethodNode handler) {')
+                def end = code.indexOf('    private boolean consumption(ClassNode node)', start)
+                if (start < 0 || end < 0) { throw new GradleException('Leggings MA guard changed') }
+                code = code.substring(0, start) + '''    private boolean boots(MethodNode handler) {
+        return games.alejandrocoria.mismatchedleggings.test.refundspike.JustDireRefundShape.recognizes(handler);
+    }
+
+''' + code.substring(end)
+                def expression = '!operation(node, flow.origin(flow.argument(call, 2, 6)))'
+                if (code.count(expression) != 1) { throw new GradleException('Leggings MA operation proof changed') }
+                code = code.replace(expression, '!games.alejandrocoria.mismatchedleggings.test.refundspike.JustDireRefundShape.boundary(node)')
+                        .replace('handler != null && call.desc.equals(HANDLER) && boots(handler)',
+                                 'handler != null && games.alejandrocoria.mismatchedleggings.test.refundspike.JustDireRefundShape.siteHandler(node, handler)')
+                def nextBranch = '} else if (call.owner.equals(OWNER) && call.desc.equals(OBSERVER)'
+                code = code.replace(nextBranch, '''} else if (transformed && call.owner.equals(OWNER) && method(node, call.name, call.desc) != null
+                    && games.alejandrocoria.mismatchedleggings.test.refundspike.JustDireRefundShape.siteHandler(node, method(node, call.name, call.desc))) {
+                if (site != null || !games.alejandrocoria.mismatchedleggings.test.refundspike.JustDireRefundShape.boundary(node)) { return false; }
+                site = call;
+            ''' + nextBranch)
+            }
+            def target = new File(guards.get().asFile, "${product}/MysticalRefundShape.java")
+            target.parentFile.mkdirs()
+            target.text = code
+        }
+    }
+}
+tasks.register('compileRefundPeerGuards', JavaCompile) {
+    dependsOn 'generateRefundPeerGuards', 'compileJava'
+    source guards
+    destinationDirectory = guardClasses
+    classpath = sourceSets.main.compileClasspath + files(sourceSets.main.output.classesDirs)
+    javaCompiler = javaToolchains.compilerFor(java.toolchain)
+}
+
+def graph = providers.gradleProperty('refundGraph').getOrElse('both')
+def fault = providers.gradleProperty('refundFault').getOrElse('')
+if (!(graph in ['legs', 'boots', 'both']) || !(fault in ['', 'binding', 'shape', 'forward', 'absent'])) {
+    throw new GradleException('refundGraph=legs|boots|both; refundFault=binding|shape|forward|absent')
+}
+def label = "jdt-refund-spike-${graph}-shared-ma" + (fault ? "-${fault}" : '')
+def run = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def report = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def fixture = layout.buildDirectory.file('refund-spike/boots-without-refund-hook.jar')
+
+tasks.register('stageRefundSpikeBoots', Zip) {
+    dependsOn boots.tasks.named('jar'), 'compileRefundPeerGuards'
+    archiveFileName = fixture.get().asFile.name
+    destinationDirectory = layout.buildDirectory.dir('refund-spike')
+    from({ zipTree(bootJar.get().asFile) }) {
+        exclude 'META-INF/neoforge.mods.toml', 'mismatchedboots.justdirethings-refunds.mixins.json'
+        exclude 'games/alejandrocoria/mismatchedboots/compatibility/mysticalagriculture/MysticalRefundShape*.class'
+    }
+    from(guardClasses) { include 'games/alejandrocoria/mismatchedboots/**' }
+    def metadata = layout.buildDirectory.file('refund-spike/metadata/neoforge.mods.toml')
+    from(metadata) { into 'META-INF' }
+    doFirst {
+        def original = zipTree(bootJar.get().asFile).matching { include 'META-INF/neoforge.mods.toml' }.singleFile.text
+        def pattern = /(?m)\[\[mixins\]\]\r?\n\s*config="mismatchedboots\.justdirethings-refunds\.mixins\.json"\r?\n/
+        if ((original =~ pattern).count != 1) { throw new GradleException('Boots hook metadata changed') }
+        metadata.get().asFile.parentFile.mkdirs()
+        metadata.get().asFile.text = original.replaceFirst(pattern, '')
+    }
+}
+tasks.register('stageRefundSpikeLeggings', Zip) {
+    dependsOn project(':MismatchedLeggings:NeoForge').tasks.named('jar'), 'compileRefundPeerGuards'
+    archiveFileName = 'leggings-shared-refund-guard.jar'
+    destinationDirectory = layout.buildDirectory.dir('refund-spike')
+    from({ zipTree(project(':MismatchedLeggings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }) {
+        exclude 'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalRefundShape*.class'
+    }
+    from(guardClasses) { include 'games/alejandrocoria/mismatchedleggings/**' }
+}
+tasks.register('prepareRefundSpike') {
+    dependsOn tasks.named('classes'), project(':MismatchedLeggings:NeoForge').tasks.named('assemble'), 'stageRefundSpikeBoots', 'stageRefundSpikeLeggings'
+    doLast {
+        def artifacts = []
+        if (graph != 'boots') { artifacts.add(tasks.named('stageRefundSpikeLeggings').get().archiveFile.get().asFile) }
+        if (graph != 'legs') { artifacts.add(fixture.get().asFile) }
+        if (graph == 'boots') { artifacts.add(project(':MismatchedThings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
+        def optionalArtifacts = ['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']
+        if (fault != 'absent') { optionalArtifacts.add('justdirethings-1.6.11.jar') }
+        optionalArtifacts.each {
+                artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
+        }
+        def mods = new File(run, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) { throw new GradleException("Unexpected artifact in ${mods}") }
+        copy { from artifacts; into mods }
+        report.mkdirs()
+        ['server.ok', 'server.failure.txt', 'spike.txt'].each { new File(report, it).delete() }
+        new File(run, 'config').mkdirs()
+        new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(run, 'eula.txt').text = 'eula=true\n'
+        new File(run, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=refund\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\npause-when-empty-seconds=0\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('refundSpike') {
+    server()
+    disableIdeRun()
+    gameDirectory = run
+    programArgument('--nogui')
+    systemProperty('leggings.test.refundSpike', 'true')
+    systemProperty('refund.spike.graph', graph)
+    systemProperty('refund.spike.fault', fault)
+    systemProperty('leggings.test.report', report.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runRefundSpike') {
+    dependsOn 'prepareRefundSpike'
+    doLast {
+        if (!new File(report, 'server.ok').isFile() || new File(report, 'server.failure.txt').exists()) {
+            throw new GradleException("Refund spike failed: ${report}")
+        }
+        def log = new File(run, 'logs/latest.log').readLines()
+        def ownWarnings = log.findAll { it.contains('/WARN] [refund-spike/') }
+        if (ownWarnings.size() != (fault == 'shape' ? 1 : 0) || log.any { it.contains('/ERROR]') || it.contains('/FATAL]') }) {
+            throw new GradleException('Unexpected refund-spike diagnostic')
+        }
+    }
+}
