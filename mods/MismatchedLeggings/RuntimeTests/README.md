@@ -187,6 +187,12 @@ packets, not to prepare an owner test world. No screenshots are required.
 
 Evidence is under `NeoForge/build/reports/<baseline>/jdt-lava[-boots]/`:
 `server.ok`/`server.txt` and `client.ok`/`client.txt`, without failure markers.
+The healthy server saves a live in-flight actor and `lifecycle.nbt`; the client
+reopens that world in a separate process before any other case clears episode
+maps. It requires `lifecycle.txt`: airborne legacy progress cannot resume a
+ritual, natural pickup/redrop acquires a fresh one, and replacing the live root
+or removing/returning lava cancels old authority. Normal entity ticks run these
+cases, not direct calls into the adapter's episode map.
 Server controls cover native/mixed healthy and damaged roots, both orientations,
 one/two providers, fire protection and disabled/config/invalid controls, preserved
 FE/history, imported progress, flowing/removed lava, denied block receipts and
@@ -214,19 +220,6 @@ leaves all five installable rows, item protection and repair available. Add
 `'-Pneoforge_version=26.1.2.99'` to the joint healthy server for the smaller floor
 gate, then restore normal `.114` outputs. The connected settings/presentation
 profiles below cover the native Lava row, its input and root tooltip separately.
-
-### Retained research
-
-Block A's maintained production profiles above supersede this research as an
-acceptance gate. The research tree is retained only until C's complete retirement.
-
-The opt-in [bounded Lava Repair spike](../../../spikes/leggings-jdt-lava/README.md)
-adapts the existing Boots ritual through fixture-only candidate item callbacks.
-It has standalone/current-Boots server and hidden/muted client profiles, using
-the shared cached JDT pin and ordinary packaged products, not indev artifacts.
-This is not production Lava Repair acceptance. Its README owns commands and
-markers; remove the whole candidate and entry branch when maintained production
-tests replace it. Normal fixture runs do not enable those candidate mixins.
 
 ## Just Dire Things passives and live attributes
 
@@ -394,6 +387,11 @@ Reopened/restored copies also pass a real shared incoming-wear request: the
 88,680-FE wallet pays 200 FE with durability, settings, clocks and source history
 unchanged. Only detached test copies are worn; the preserved barrel baseline is
 not modified by this check.
+Two additional Blazegold/Eclipse orientations carry explicit Lava/global switches,
+keyboard/mouse/location preferences, FE and native progress in historical sources.
+Their full roots and archives pass the same repeated-absence/restoration/reopen
+and ordinary TCP snapshots. Restored copies retain protection/settings and run
+a fresh checked ritual after re-enabling, without changing the saved baseline.
 The existing generic recovery/death controls are reused, not expanded into a new
 missing-mod matrix. During `write`, `absent` and `restore`, additional barrel
 copies travel in ordinary inventory packets to an independent hidden/muted TCP
@@ -405,8 +403,8 @@ Reports/logs use `recovery-jdt` under the existing baseline `build/reports/` and
 `jdt-recovery.txt`, the connected stages' `client.ok`, no failures/unexpected
 errors and the driver's `matrix.ok`. That marker names only the selected subset.
 No screenshots, indev artifacts or prepared owner world are used. Consolidated
-owner acceptance is recorded separately in the private plan. Lava Repair,
-powered incoming wear, refunds and broader charger discovery remain deferred.
+owner acceptance is recorded separately in the private plan. The focused Lava
+and incoming-wear checks above do not cover refunds or broader charger discovery.
 
 ## Just Dire Things Decoy action and clock
 

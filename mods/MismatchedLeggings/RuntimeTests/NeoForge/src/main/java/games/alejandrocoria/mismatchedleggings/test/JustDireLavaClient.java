@@ -59,6 +59,18 @@ public final class JustDireLavaClient {
                 job = null;
             }
             if (!running) {
+                if (!JustDireLavaLifecycleChecks.finished()) {
+                    var server = client.getSingleplayerServer();
+                    var uuid = client.player.getUUID();
+                    job = server.submit(() -> {
+                        try {
+                            JustDireLavaLifecycleChecks.tick(server.getPlayerList().getPlayer(uuid));
+                        } catch (Exception failure) {
+                            throw new IllegalStateException("Live Lava lifecycle failed", failure);
+                        }
+                    });
+                    return;
+                }
                 if (selected == (Boolean.getBoolean("leggings.test.jdtBoots") ? 7 : 6)) {
                     Files.writeString(JustDireLavaChecks.report("client.txt"), evidence);
                     SkeletonChecks.passed("client");

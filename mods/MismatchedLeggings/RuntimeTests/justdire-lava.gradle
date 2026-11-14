@@ -15,9 +15,6 @@ def nativeJar = providers.provider { project(':MismatchedThings').testModArtifac
         dependsOn tasks.named('classes'), project(':MismatchedLeggings:NeoForge').tasks.named('assemble')
         if (withBoots) { dependsOn project(':MismatchedBoots:NeoForge').tasks.named('assemble') }
         doLast {
-            if (providers.gradleProperty('leggingsLavaSpike').map { it.toBoolean() }.getOrElse(false)) {
-                throw new GradleException('Production Lava acceptance cannot load the research candidate')
-            }
             if (endpoint == 'client' && (absent || !fault.isEmpty())) {
                 throw new GradleException('The Lava visual profile requires healthy native bindings')
             }
@@ -33,6 +30,7 @@ def nativeJar = providers.provider { project(':MismatchedThings').testModArtifac
             copy { from artifacts; into mods }
             reports.mkdirs()
             ["${endpoint}.ok", "${endpoint}.failure.txt", "${endpoint}.txt"].each { new File(reports, it).delete() }
+            new File(reports, endpoint == 'server' ? 'lifecycle.nbt' : 'lifecycle.txt').delete()
             new File(run, 'config').mkdirs()
             new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
             if (endpoint == 'server') {
@@ -69,6 +67,8 @@ def nativeJar = providers.provider { project(':MismatchedThings').testModArtifac
         dependsOn "prepareJustDireLava${endpoint.capitalize()}"
         doLast {
             if (!new File(reports, "${endpoint}.ok").isFile() || !new File(reports, "${endpoint}.txt").isFile()
+                    || endpoint == 'client' && !new File(reports, 'lifecycle.txt').isFile()
+                    || endpoint == 'server' && !absent && fault.isEmpty() && !new File(reports, 'lifecycle.nbt').isFile()
                     || new File(reports, "${endpoint}.failure.txt").exists()) {
                 throw new GradleException("Production Lava ${endpoint} failed: ${reports}")
             }

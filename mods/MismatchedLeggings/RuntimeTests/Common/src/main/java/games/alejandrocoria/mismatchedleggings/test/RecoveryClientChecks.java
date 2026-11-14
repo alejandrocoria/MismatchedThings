@@ -71,7 +71,7 @@ final class RecoveryClientChecks {
         }
         var expected = RecoveryChecks.read(file);
         if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
-            for (int index = 0; index < 2; index++) {
+            for (int index = 0; index < RecoveryChecks.JDT_ROOTS; index++) {
                 if (!expected.get("jdt" + index).equals(RecoveryChecks.encode(client.player.getInventory().getItem(1 + index),
                         client.level.registryAccess()))) {
                     return false;

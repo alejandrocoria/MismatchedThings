@@ -43,6 +43,7 @@ import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.requir
 
 /** Persistent native world/player/entity loads across independent dedicated servers and TCP clients. */
 public final class RecoveryChecks {
+    static final int JDT_ROOTS = 4;
     private static final BlockPos STORAGE = new BlockPos(0, 65, 0);
     private static final long PAID = 9_007_199_254_740_993L;
     private static boolean initialized;
@@ -104,8 +105,9 @@ public final class RecoveryChecks {
                 // Real combat and Mending must not wear/repair parked state before native death.
                 RecoveryModelChecks.inactiveWear(server, player);
                 if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
-                    player.getInventory().setItem(1, ItemStack.EMPTY);
-                    player.getInventory().setItem(2, ItemStack.EMPTY);
+                    for (int index = 0; index < JDT_ROOTS; index++) {
+                        player.getInventory().setItem(1 + index, ItemStack.EMPTY);
+                    }
                 }
                 edit(player.getItemBySlot(EquipmentSlot.LEGS), 0);
                 edit(player.getInventory().getItem(0), 1);
@@ -343,7 +345,7 @@ public final class RecoveryChecks {
         value.put("legs", encode(player.getItemBySlot(EquipmentSlot.LEGS), player.registryAccess()));
         value.put("inventory", encode(player.getInventory().getItem(0), player.registryAccess()));
         if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
-            for (int index = 0; index < 2; index++) {
+            for (int index = 0; index < JDT_ROOTS; index++) {
                 value.put("jdt" + index, encode(player.getInventory().getItem(1 + index), player.registryAccess()));
             }
         }

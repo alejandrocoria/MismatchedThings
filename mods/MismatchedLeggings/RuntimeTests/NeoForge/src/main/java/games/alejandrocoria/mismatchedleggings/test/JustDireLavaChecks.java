@@ -154,6 +154,8 @@ public final class JustDireLavaChecks {
             if (Boolean.getBoolean("leggings.test.jdtBoots")) {
                 coexistence(level);
             }
+            JustDireLavaLifecycleChecks.saveInFlight(level);
+            evidence.append("In-flight live entity saved for an independent world reopen\n");
             passed();
         } catch (Throwable failure) {
             SkeletonChecks.failed("server", failure);
@@ -239,7 +241,28 @@ public final class JustDireLavaChecks {
         second.discard();
         complete(level, "Leggings after sibling", mixed(true, false), false);
         complete(level, "Boots independent", root, false);
-        evidence.append("Boots independent callbacks; shared source pays one repair\n");
+        for (boolean disabledLeggings : List.of(false, true)) {
+            var sibling = boots();
+            var own = mixed(false, false);
+            sibling.setDamageValue(30);
+            own.setDamageValue(30);
+            set(disabledLeggings ? own : sibling, disabledLeggings ? "lavarepair_toggle" : "tool_enabled", false);
+            var expectedBoots = sibling.copy();
+            var expectedLeggings = own.copy();
+            (disabledLeggings ? expectedBoots : expectedLeggings).setDamageValue(0);
+            var bootsEntity = spawn(level, sibling, SOURCE);
+            var legsEntity = new ItemEntity(level, SOURCE.getX() + .5, SOURCE.getY() + .2, SOURCE.getZ() + .5, own);
+            for (int tick = 0; tick < 170; tick++) {
+                bootsEntity.tick();
+                legsEntity.tick();
+            }
+            require(ItemStack.matches(expectedBoots, bootsEntity.getItem()) && ItemStack.matches(expectedLeggings, legsEntity.getItem())
+                            && level.getBlockState(SOURCE).is(Blocks.OBSIDIAN) && JustDireLavaObservations.sounds == 1,
+                    "Sibling/root switch leaked across products or changed unrelated FE/history");
+            bootsEntity.discard();
+            legsEntity.discard();
+        }
+        evidence.append("Boots independent callbacks/switches/FE/history; shared source pays one repair\n");
     }
 
     static ItemStack boots() throws ReflectiveOperationException {
