@@ -12,7 +12,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.nio.file.Files;
 import java.util.List;
@@ -46,6 +45,9 @@ final class JustDireSettingsServer {
                 require(ItemStack.matches(history, primary.get(LeggingsContent.mixedLeggingsDataType()).left().source()), "GUI altered source history");
                 if (!System.getProperty("leggings.test.jdtFault", "").equals("screen")) {
                     require(primary.get(JustDireDataComponents.ABILITY_VALUES.get(Ability.WALKSPEED)) == 4, "Canceled pending selection edited previous pair");
+                    require(!primary.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true)
+                                    && primary.get(JustDireDataComponents.ABILITY_BINDINGS).stream().anyMatch(record -> record.abilityName().equals("lavarepair")
+                                    && record.key() == 4 && record.isMouse() && !record.requireEquipped()), "Reopened intrinsic controls were lost");
                 }
                 Files.writeString(JustDireConnectedServer.report("connected.txt"), "Actual native settings widgets, authoritative edit packets/replies, charge, inverse/native/sibling selections and reopen passed\n");
                 SkeletonChecks.passed("server");
@@ -70,6 +72,11 @@ final class JustDireSettingsServer {
                     .anyMatch(record -> record.abilityName().equals("walkspeed") && record.key() == 4 && record.isMouse() && !record.requireEquipped())
                     && primary.getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
                     .anyMatch(record -> record.abilityName().equals("decoy") && record.key() == 71 && !record.isMouse() && record.requireEquipped()))) {
+                if (!fault && (primary.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true)
+                        || primary.getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
+                        .noneMatch(record -> record.abilityName().equals("lavarepair") && record.key() == 72 && !record.isMouse() && record.requireEquipped()))) {
+                    return;
+                }
                 primary.set(JustDireDataComponents.FORGE_ENERGY, 888);
                 player.inventoryMenu.broadcastChanges();
                 Files.writeString(JustDireConnectedServer.report("case-0.ready"), "Root edits reached server; charging same pair\n");
@@ -100,7 +107,7 @@ final class JustDireSettingsServer {
     private static void seed(ServerPlayer player) throws Exception {
         player.getInventory().clearContent();
         for (var slot : EquipmentSlot.values()) { player.setItemSlot(slot, ItemStack.EMPTY); }
-        var pair = MixedLeggingsFactory.createPair(JustDirePassiveChecks.nativeStack("eclipsealloy"), new ItemStack(Items.DIAMOND_LEGGINGS));
+        var pair = MixedLeggingsFactory.createPair(JustDirePassiveChecks.nativeStack("eclipsealloy"), JustDireLavaChecks.nativeItem("blazegold_leggings"));
         primary = pair.primary();
         history = primary.get(LeggingsContent.mixedLeggingsDataType()).left().source().copy();
         player.getInventory().setItem(0, primary);
@@ -112,7 +119,7 @@ final class JustDireSettingsServer {
             var nativeBoots = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("justdirethings:eclipsealloy_boots")));
             nativeBoots.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.JUMPBOOST), true);
             var factory = Class.forName("games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory");
-            var bootsPair = factory.getMethod("createPair", ItemStack.class, ItemStack.class).invoke(null, nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
+            var bootsPair = factory.getMethod("createPair", ItemStack.class, ItemStack.class).invoke(null, nativeBoots, JustDireLavaChecks.nativeItem("blazegold_boots"));
             player.getInventory().setItem(3, (ItemStack) bootsPair.getClass().getMethod("primary").invoke(bootsPair));
         }
         player.inventoryMenu.broadcastChanges();

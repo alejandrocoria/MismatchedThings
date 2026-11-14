@@ -2,8 +2,8 @@
 def withBoots = providers.gradleProperty('leggingsJdtBoots').map { it.toBoolean() }.getOrElse(false)
 def absent = providers.gradleProperty('leggingsJdtAbsent').map { it.toBoolean() }.getOrElse(false)
 def fault = providers.gradleProperty('leggingsLavaFault').getOrElse('')
-if (!(fault in ['', 'api', 'particles']) || absent && !fault.isEmpty()) {
-    throw new GradleException('Lava fault must be api|particles with JDT present')
+if (!(fault in ['', 'api', 'particles', 'settings']) || absent && !fault.isEmpty()) {
+    throw new GradleException('Lava fault must be api|particles|settings with JDT present')
 }
 def label = 'jdt-lava' + (withBoots ? '-boots' : '') + (absent ? '-absent' : '') + (fault ? "-${fault}" : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile

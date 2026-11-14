@@ -29,6 +29,8 @@ import java.util.Set;
 /** Bounded server settings contract. Native UI hooks/input are a separate readiness boundary. */
 public final class JustDireSettings {
     private static volatile Api api;
+    private static volatile Setting lavaSetting;
+    private static volatile boolean lavaSettingsFailed;
 
     private JustDireSettings() {
     }
@@ -82,6 +84,19 @@ public final class JustDireSettings {
                           bindings);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             LeggingsContent.LOG.warn("Could not bind Just Dire Things mixed settings API; leggings settings disabled", failure);
+            return;
+        }
+        bindLava();
+    }
+
+    private static void bindLava() {
+        try {
+            var ability = Class.forName("com.direwolf20.justdirethings.common.items.interfaces.Ability");
+            // Intrinsic: no installed flag or unused numeric value belongs to this row.
+            lavaSetting = new Setting("lavarepair", ability.getField("LAVAREPAIR").get(null), null,
+                                      scalar("lavarepair_toggle", true), null, scalar("lavarepair_bindingmode", 0));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            lavaSettingsFailure(failure);
         }
     }
 
@@ -103,6 +118,9 @@ public final class JustDireSettings {
         Api binding = api;
         if (binding == null || !mixed(root) || name.equals("decoy") && !JustDireDecoy.available()) {
             return null;
+        }
+        if (name.equals("lavarepair")) {
+            return lavaProfile(root, binding);
         }
 
         Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElse(null);
@@ -150,6 +168,45 @@ public final class JustDireSettings {
         return new Metadata(min, max, increment, defaults);
     }
 
+    private static Profile lavaProfile(ItemStack root, Api binding) {
+        Setting setting = lavaSetting;
+        if (setting == null || lavaSettingsFailed || !JustDireLavaRepair.eligible(root)) {
+            return null;
+        }
+        try {
+            Item provider = BuiltInRegistries.ITEM.get(JustDireState.id("blazegold_leggings")).orElseThrow().value();
+            Object params = binding.params.invokeExact(provider, setting.ability);
+            Metadata metadata = nativeMetadata(binding, params, true);
+            if (metadata.minimum != -1 || metadata.maximum != -1 || metadata.increment != -1 || metadata.defaultValue != -1) {
+                throw new IllegalStateException("Unsupported native Lava Repair settings range");
+            }
+            return api == binding && lavaSetting == setting && !lavaSettingsFailed ? new Profile(provider, metadata, params) : null;
+        } catch (Throwable failure) {
+            lavaSettingsFailure(failure);
+            return null;
+        }
+    }
+
+    private static synchronized void lavaSettingsFailure(Throwable failure) {
+        if (failure instanceof Error fatal && !(fatal instanceof LinkageError)) {
+            throw fatal;
+        }
+        if (!lavaSettingsFailed) {
+            lavaSettingsFailed = true;
+            LeggingsContent.LOG.warn("Just Dire Things Lava Repair mixed settings unavailable; Lava metadata/input disabled", failure);
+        }
+    }
+
+    private static List<Setting> settings(Api binding) {
+        Setting intrinsic = lavaSetting;
+        if (intrinsic == null || lavaSettingsFailed) {
+            return binding.settings;
+        }
+        var settings = new ArrayList<>(binding.settings);
+        settings.add(intrinsic);
+        return settings;
+    }
+
     public static boolean mixed(ItemStack root) {
         return root.getCount() == 1 && MixedLeggingsStructure.validData(root).isPresent();
     }
@@ -172,8 +229,8 @@ public final class JustDireSettings {
         }
         try {
             var names = new ArrayList<String>();
-            for (Setting setting : binding.settings) {
-                if (!root.getOrDefault(setting.installed, false) || root.getOrDefault(setting.mode, 0) != 2
+            for (Setting setting : settings(binding)) {
+                if (setting.installed != null && !root.getOrDefault(setting.installed, false) || root.getOrDefault(setting.mode, 0) != 2
                         || metadata(root, setting.name) == null) {
                     continue;
                 }
@@ -199,7 +256,7 @@ public final class JustDireSettings {
         if (binding == null || names.isEmpty() || api != binding) {
             return false;
         }
-        for (Setting setting : binding.settings) {
+        for (Setting setting : settings(binding)) {
             if (names.contains(setting.name)) {
                 boolean enabled = !root.getOrDefault(setting.toggle, true);
                 root.set(setting.toggle, enabled);
@@ -240,7 +297,7 @@ public final class JustDireSettings {
 
     /** UI-only admission identity; never replace the selected inventory stack with this item. */
     public static Item metadataItem(ItemStack root) {
-        for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy")) {
+        for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy", "lavarepair")) {
             Profile profile = profile(root, name);
             if (profile != null) {
                 return profile.item;
@@ -257,7 +314,7 @@ public final class JustDireSettings {
         }
 
         EnumSet result = EnumSet.noneOf(((Enum) binding.settings.getFirst().ability).getDeclaringClass());
-        for (Setting setting : binding.settings) {
+        for (Setting setting : settings(binding)) {
             if (metadata(root, setting.name) != null) {
                 result.add((Enum) setting.ability);
             }
@@ -272,7 +329,7 @@ public final class JustDireSettings {
         if (binding == null) {
             return null;
         }
-        Setting setting = binding.settings.stream().filter(candidate -> candidate.ability == ability).findFirst().orElse(null);
+        Setting setting = settings(binding).stream().filter(candidate -> candidate.ability == ability).findFirst().orElse(null);
         Profile profile = setting == null ? null : profile(root, setting.name);
         if (profile == null || api != binding) {
             return null;
@@ -286,7 +343,7 @@ public final class JustDireSettings {
         if (binding == null || metadata == null) {
             return 0;
         }
-        Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElseThrow();
+        Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(name)).findFirst().orElseThrow();
         if (setting.value == null) { return metadata.defaultValue; }
         return Math.clamp(root.getOrDefault(setting.value, metadata.defaultValue), metadata.minimum, metadata.maximum);
     }
@@ -300,7 +357,7 @@ public final class JustDireSettings {
 
         ItemStack changed = root.copy();
         try {
-            Setting setting = binding.settings.stream().filter(candidate -> candidate.name.equals(request.ability())).findFirst().orElse(null);
+            Setting setting = settings(binding).stream().filter(candidate -> candidate.name.equals(request.ability())).findFirst().orElse(null);
             Metadata metadata = metadata(root, request.ability());
             if (setting == null || metadata == null || setting.installed != null && !root.getOrDefault(setting.installed, false)) {
                 return false;
@@ -344,7 +401,7 @@ public final class JustDireSettings {
             return false;
         }
         // Only the allowed root-owned fields are published. Sources, resources and timers are never edits.
-        for (Setting setting : binding.settings) {
+        for (Setting setting : settings(binding)) {
             copyField(changed, root, setting.toggle);
             if (setting.value != null) {
                 copyField(changed, root, setting.value);

@@ -38,7 +38,7 @@ final class JustDireInputChecks {
 
     static void bind(ItemStack root, List<ToolRecords.AbilityBinding> records) {
         root.set(JustDireDataComponents.ABILITY_BINDINGS, records);
-        for (var ability : List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE, Ability.DECOY)) {
+        for (var ability : List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE, Ability.DECOY, Ability.LAVAREPAIR)) {
             root.set(JustDireDataComponents.ABILITY_BINDING_MODES.get(ability), 2);
         }
     }

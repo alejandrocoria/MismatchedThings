@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings.test;
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
 import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords;
+import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -58,14 +59,18 @@ final class JustDirePresentationServer {
             if (!Files.exists(JustDireConnectedServer.report("case-" + stage + ".ok"))) { return; }
             if (stage == 0) {
                 require(JustDireInputChecks.on(main, Ability.WALKSPEED), "Release/repeat/GUI toggled");
+                require(JustDireInputChecks.on(main, Ability.LAVAREPAIR), "Release/repeat/GUI toggled intrinsic switch");
             } else if (stage == 1) {
                 require(!JustDireInputChecks.on(main, Ability.WALKSPEED) && JustDireInputChecks.on(main, Ability.RUNSPEED)
                         && !JustDireInputChecks.on(inverse, Ability.WALKSPEED)
                         && !JustDireInputChecks.on(worn, Ability.RUNSPEED)
                         && !JustDireInputChecks.on(worn, Ability.WALKSPEED)
                         && JustDireInputChecks.on(offhand, Ability.PHASE), "Keyboard batch/equipment mismatch");
+                require(!JustDireInputChecks.on(main, Ability.LAVAREPAIR) && !JustDireInputChecks.on(worn, Ability.LAVAREPAIR)
+                        && JustDireInputChecks.on(offhand, Ability.LAVAREPAIR), "Intrinsic keyboard/equipment admission mismatch");
             } else if (stage == 2) {
                 require(!JustDireInputChecks.on(inverse, Ability.SWIMSPEED) && !JustDireInputChecks.on(offhand, Ability.SWIMSPEED), "Inventory mouse batch failed");
+                require(!JustDireInputChecks.on(inverse, Ability.LAVAREPAIR) && JustDireInputChecks.on(offhand, Ability.LAVAREPAIR), "Intrinsic mouse/equipment admission mismatch");
             } else if (stage == 3) {
                 require(main.getOrDefault(JustDireDataComponents.TOOL_ENABLED, false), "Rebound global key failed");
             } else if (stage == 4) {
@@ -80,6 +85,7 @@ final class JustDirePresentationServer {
                 if (boots != null) { require(!boots.getOrDefault(JustDireDataComponents.TOOL_ENABLED, true), "Boots independent toggle lost"); }
             } else if (stage == 7) {
                 require(!JustDireInputChecks.on(inverse, Ability.WALKSPEED), "GUI passive input was not suppressed");
+                require(!JustDireInputChecks.on(inverse, Ability.LAVAREPAIR), "GUI toggled intrinsic switch");
                 var probe = RepairFixtures.player(server);
                 probe.setPos(player.position());
                 JustDireDecoyInputChecks.run(probe);
@@ -121,18 +127,21 @@ final class JustDirePresentationServer {
 
     private static void seed(ServerPlayer player) throws Exception {
         player.getInventory().clearContent();
-        main = JustDireInputChecks.root();
+        main = MixedLeggingsFactory.createPair(
+                JustDirePassiveChecks.nativeStack("eclipsealloy"), JustDireLavaChecks.nativeItem("blazegold_leggings")).primary();
+        main.set(JustDireDataComponents.FORGE_ENERGY, 0);
+        main.set(JustDireDataComponents.TOOL_ENABLED, false);
         inverse = main.copy();
         worn = main.copy();
         offhand = main.copy();
         JustDireInputChecks.bind(main, List.of(new ToolRecords.AbilityBinding("walkspeed", 71, false, false),
-                new ToolRecords.AbilityBinding("runspeed", 71, false, true)));
+                new ToolRecords.AbilityBinding("runspeed", 71, false, true), new ToolRecords.AbilityBinding("lavarepair", 71, false, false)));
         JustDireInputChecks.bind(inverse, List.of(new ToolRecords.AbilityBinding("walkspeed", 71, false, false),
-                new ToolRecords.AbilityBinding("swimspeed", 4, true, false)));
+                new ToolRecords.AbilityBinding("swimspeed", 4, true, false), new ToolRecords.AbilityBinding("lavarepair", 4, true, false)));
         JustDireInputChecks.bind(worn, List.of(new ToolRecords.AbilityBinding("walkspeed", 71, false, true),
-                new ToolRecords.AbilityBinding("runspeed", 71, false, true)));
+                new ToolRecords.AbilityBinding("runspeed", 71, false, true), new ToolRecords.AbilityBinding("lavarepair", 71, false, true)));
         JustDireInputChecks.bind(offhand, List.of(new ToolRecords.AbilityBinding("swimspeed", 4, true, false),
-                new ToolRecords.AbilityBinding("phase", 71, false, true)));
+                new ToolRecords.AbilityBinding("phase", 71, false, true), new ToolRecords.AbilityBinding("lavarepair", 4, true, true)));
         player.getInventory().setItem(0, main);
         player.getInventory().setItem(2, inverse);
         player.setItemSlot(EquipmentSlot.LEGS, worn);

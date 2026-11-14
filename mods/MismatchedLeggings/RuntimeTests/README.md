@@ -195,6 +195,9 @@ sound. Native originals may also emit from their cleared/default anchor outside
 a ritual; only their comparison permits that idle behavior. Mixed emissions must
 always originate from their validated source. The hidden client checks the actual
 native factory, synchronized repair and smooth early ascent.
+The healthy server also exercises authoritative intrinsic controls, keyboard/
+mouse location admission, saved/network round trips and dormant preferences
+through a paid tier transformation; it does not need a client for these checks.
 
 Focused dedicated controls:
 
@@ -202,13 +205,15 @@ Focused dedicated controls:
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtAbsent=true --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtBoots=true -PleggingsLavaFault=api --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtBoots=true -PleggingsLavaFault=particles --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireLavaServer -PleggingsJdtBoots=true -PleggingsLavaFault=settings --offline --console=plain
 ```
 
-API/particle failures occur inside the real local binding, with exactly one
-owned warning and healthy independent settings/Boots. Add
+API/particle/settings failures occur inside the real local binding, with exactly
+one owned warning and healthy independent settings/Boots. The settings refusal
+leaves all five installable rows, item protection and repair available. Add
 `'-Pneoforge_version=26.1.2.99'` to the joint healthy server for the smaller floor
-gate, then restore normal `.114` outputs. Block A does not implement the Lava
-settings row/root tooltip; their acceptance is separate.
+gate, then restore normal `.114` outputs. The connected settings/presentation
+profiles below cover the native Lava row, its input and root tooltip separately.
 
 ### Retained research
 
@@ -289,7 +294,7 @@ endpoint checks native empty-hand menu construction, selection tokens, replay,
 closed/replaced menus, replaced/moved/count-invalid roots, wrong slots/products,
 native tier/config/installation eligibility, unsupported edits and bounded
 payload codecs. Its hidden-before-GLFW, muted client uses the actual native
-screen, movement sliders and Phase/Decoy toggles, keyboard/mouse capture and location
+screen, movement sliders and Phase/Decoy/Lava toggles, keyboard/mouse capture and location
 records. Ordinary packets return authoritative roots/replies through charge,
 native/inverse/sibling selection, LEGS/offhand slots, refresh and menu reopening.
 Queued pre-token edits are canceled on selection changes. The screen fault
@@ -297,6 +302,9 @@ refuses only Leggings selection; native and Boots controls remain positive
 controls. Decoy's fixed 1..1 metadata must not add a slider. Its toggle, keyboard
 binding and later mouse/inventory-location rebinding are observed on authoritative
 roots. Gameplay execution is validated by the presentation/input profile below.
+Lava Repair has native intrinsic toggle-only metadata, no purchase flag or
+slider. Its keyboard binding survives reopening and can be changed to a mouse/
+inventory binding; selecting the other output or Boots keeps controls independent.
 
 Reports are `NeoForge/build/reports/<baseline>/jdt-settings[-boots][-screen]/`:
 fresh `settings-security.txt`, eight `case-<n>.ok` files, both endpoint success
@@ -331,6 +339,8 @@ press/release/repeat events through production listeners: two matching roots,
 worn/offhand locations, actual keyboard/mouse Toggle Tool rebindings, native
 priority and independent current-Boots routing. Ordinary packets return state.
 GUI input is suppressed; custom passives exclude ordinary mouse buttons 0/1.
+Lava Repair participates as a free passive switch in the same real keyboard/
+mouse batches, respecting equipped-only records without requiring FE.
 The profile also covers paid Decoy input: dedicated negatives for stale identity,
 slot/binding/location, replay/duplicate batches, switches/config, changed FE and
 existing cooldown; one active action beside a passive sharing its key; and two
@@ -342,7 +352,10 @@ cooldown presses must not debit again or toggle the Decoy switch.
 
 Structured native translations, number formats and Component styles cover
 both orientations, saved switches/missing upgrades, actual Shift versus F3+H,
-source lore/IDs, hidden fields and read-only histories. Extraction of the
+source lore/IDs, hidden fields and read-only histories. The native Lava row is
+checked for its final position after installable abilities, saved
+green/red color, default-on absence and intrinsic-only details hint; source lore
+does not duplicate it. Extraction of the
 registered item decorator measures FE/durability lanes, including healthy,
 worn, Unbreakable and full-charge controls; no screenshot is needed.
 
@@ -352,8 +365,8 @@ files, `connected.txt`, both endpoint success markers and no failure marker.
 Driver logs/`connected.ok` live under the matching `build/verification/`
 directory. Artifacts use the shared pin/cache, never indev JARs. Run profiles
 sequentially and restore ordinary .114 outputs afterward. No manual fixture
-world is created. Decoy's HUD is outside this gate, as are Lava Repair and powered
-wear. This is automatic control/presentation coverage, not owner acceptance.
+world is created. Decoy's HUD, Lava Repair's dropped-item ritual and powered wear
+are outside this gate. This is automatic control/presentation coverage, not owner acceptance.
 
 ## Just Dire Things foundation consolidation and recovery
 

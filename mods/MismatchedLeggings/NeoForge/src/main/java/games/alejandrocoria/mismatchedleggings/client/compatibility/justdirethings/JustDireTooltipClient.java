@@ -73,6 +73,12 @@ public final class JustDireTooltipClient {
             abilities.add(ability);
         }
 
+        var lava = JustDireTooltipClient.<Boolean>component("lavarepair_toggle");
+        if (lava != null && display.shows(lava) && JustDireSettings.metadata(root, "lavarepair") != null) {
+            abilities.add(Component.translatable("justdirethings.ability.lavarepair")
+                                   .withStyle(root.getOrDefault(lava, true) ? ChatFormatting.GREEN : ChatFormatting.DARK_RED));
+        }
+
         if (shift) {
             abilities.forEach(tooltip);
         } else if (!abilities.isEmpty()) {

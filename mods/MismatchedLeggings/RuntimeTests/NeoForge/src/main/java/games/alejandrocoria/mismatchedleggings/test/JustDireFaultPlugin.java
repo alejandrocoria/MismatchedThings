@@ -81,8 +81,12 @@ public final class JustDireFaultPlugin implements IMixinConfigPlugin {
             if (net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()) {
                 probes.add("JustDireLavaParticleProbe");
             }
-            if (!System.getProperty("leggings.test.lavaFault", "").isEmpty()) {
+            String fault = System.getProperty("leggings.test.lavaFault", "");
+            if (fault.equals("api") || fault.equals("particles")) {
                 probes.add("JustDireLavaApiProbe");
+            }
+            if (fault.equals("settings")) {
+                probes.add("JustDireLavaSettingsProbe");
             }
             return probes;
         }

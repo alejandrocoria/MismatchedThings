@@ -146,7 +146,7 @@ public final class JustDirePresentationClient {
         var source = JustDirePassiveChecks.nativeStack("eclipsealloy");
         source.set(JustDireDataComponents.FORGE_ENERGY, 400_000);
         source.set(DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(List.of(Component.literal("Preserved source lore"))));
-        var pair = MixedLeggingsFactory.createPair(source, new ItemStack(Items.DIAMOND_LEGGINGS));
+        var pair = MixedLeggingsFactory.createPair(source, JustDireLavaChecks.nativeItem("blazegold_leggings"));
         for (var root : List.of(pair.primary(), pair.inverse())) {
             root.set(JustDireDataComponents.FORGE_ENERGY, 88_680);
             root.set(JustDireDataComponents.TOOL_ENABLED, false);
@@ -179,8 +179,17 @@ public final class JustDirePresentationClient {
                 int color = index == 2 ? ChatFormatting.GRAY.getColor() : index == 3 ? ChatFormatting.DARK_RED.getColor() : ChatFormatting.GREEN.getColor();
                 require(has(row, "justdirethings.ability." + names.get(index)) && row.getStyle().getColor().getValue() == color, "Ability order/saved toggle color");
             }
-            require(keyLines(full, "justdirethings.ability.lavarepair").isEmpty(), "Deferred Lava Repair claimed");
+            var lava = keyLines(full, "justdirethings.ability.lavarepair");
+            require(lava.size() == 1 && full.indexOf(lava.getFirst()) > full.indexOf(rows.getLast())
+                    && lava.getFirst().getStyle().getColor().getValue() == ChatFormatting.GREEN.getColor()
+                    && !has(lava.getFirst(), "justdirethings.missingupgrade"), "Intrinsic row order/style or duplicate source lore");
             require(ItemStack.matches(root, before), "Tooltip mutated root/history");
+            root.set(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), false);
+            require(keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.ability.lavarepair").getFirst()
+                    .getStyle().getColor().getValue() == ChatFormatting.DARK_RED.getColor(), "Intrinsic disabled row is not native red");
+            root.remove(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR));
+            require(keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.ability.lavarepair").getFirst()
+                    .getStyle().getColor().getValue() == ChatFormatting.GREEN.getColor(), "Absent intrinsic switch is not enabled");
             root.set(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.DECOY), false);
             require(keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.ability.decoy").getFirst()
                     .getStyle().getColor().getValue() == ChatFormatting.DARK_RED.getColor(), "Decoy disabled row is not native red");
@@ -198,6 +207,8 @@ public final class JustDirePresentationClient {
             hidden = hidden.withHidden(JustDireDataComponents.FORGE_ENERGY.get(), true).withHidden(JustDireDataComponents.TOOL_ENABLED.get(), true);
             root.set(DataComponents.TOOLTIP_DISPLAY, hidden);
             shift = false;
+            require(keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.shiftmoreinfo").size() == 1, "Intrinsic-only details hint missing");
+            root.set(DataComponents.TOOLTIP_DISPLAY, hidden.withHidden(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR).get(), true));
             require(keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.shiftmoreinfo").isEmpty()
                     && keyLines(lines(client, root, TooltipFlag.NORMAL), "justdirethings.festored").isEmpty(), "Hidden components/hint leaked");
             root.remove(DataComponents.TOOLTIP_DISPLAY);
@@ -212,6 +223,9 @@ public final class JustDirePresentationClient {
         }
         var nativeLines = lines(client, source, TooltipFlag.NORMAL);
         require(!keyLines(nativeLines, "justdirethings.festored").isEmpty(), "Native presentation changed");
+        shift = true;
+        var withoutLava = MixedLeggingsFactory.createPair(source, new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
+        require(keyLines(lines(client, withoutLava, TooltipFlag.NORMAL), "justdirethings.ability.lavarepair").isEmpty(), "Non-provider exposes intrinsic row");
         var bare = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
                 net.minecraft.resources.Identifier.parse("mismatchedleggings:mixed_leggings")));
         require(keyLines(lines(client, bare, TooltipFlag.NORMAL), "justdirethings.festored").isEmpty(), "Invalid root exposes JDT state");

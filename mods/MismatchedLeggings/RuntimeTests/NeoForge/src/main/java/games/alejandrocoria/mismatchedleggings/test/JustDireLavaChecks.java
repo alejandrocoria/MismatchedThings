@@ -70,17 +70,32 @@ public final class JustDireLavaChecks {
                 require(JustDireSettings.available(), "Lava failure disabled independent settings");
                 if (fault.equals("api")) {
                     require(!JustDireLavaRepair.eligible(root) && root.canBeHurtBy(level.damageSources().lava()), "Failed API granted capability");
+                } else if (fault.equals("settings")) {
+                    var hybrid = mixed(false, false);
+                    require(JustDireSettings.metadata(hybrid, "lavarepair") == null, "Failed intrinsic binding remained available");
+                    for (String name : List.of("walkspeed", "runspeed", "swimspeed", "phase", "decoy")) {
+                        require(JustDireSettings.metadata(hybrid, name) != null, "Intrinsic binding failure disabled " + name);
+                    }
+                    complete(level, "settings failure retains repair/protection", root, false);
                 } else {
                     complete(level, "particle failure retains repair/protection", root, false);
                     require(JustDireLavaObservations.particleCount() == 0, "Failed particle binding still emitted");
                 }
                 if (Boolean.getBoolean("leggings.test.jdtBoots")) {
-                    complete(level, "healthy sibling after local failure", boots(), false);
+                    var sibling = boots();
+                    if (fault.equals("settings")) {
+                        var settings = Class.forName("games.alejandrocoria.mismatchedboots.compatibility.justdirethings.JustDireSettingsCompatibility");
+                        require(settings.getMethod("metadata", ItemStack.class, String.class).invoke(null, sibling, "lavarepair") != null,
+                                "Local intrinsic binding failure disabled sibling metadata");
+                    }
+                    complete(level, "healthy sibling after local failure", sibling, false);
                 }
                 evidence.append("Isolated ").append(fault).append(" failure; other settings/sibling preserved\n");
                 passed();
                 return;
             }
+            JustDireSettingsChecks.run(RepairFixtures.player(server));
+            evidence.append("Native settings, intrinsic keyboard/mouse admission and dormant preferences passed\n");
             for (boolean healthy : List.of(false, true)) {
                 complete(level, "native healthy=" + healthy, nativeItem("blazegold_leggings"), healthy);
                 for (boolean inverse : List.of(false, true)) {

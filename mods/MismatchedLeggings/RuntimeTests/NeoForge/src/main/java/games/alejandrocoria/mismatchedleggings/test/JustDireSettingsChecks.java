@@ -3,12 +3,18 @@ package games.alejandrocoria.mismatchedleggings.test;
 import com.direwolf20.justdirethings.common.containers.ToolSettingContainer;
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
+import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords;
 import com.direwolf20.justdirethings.setup.Config;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireInputNetwork;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireLavaRepair;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettings;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork.SettingsRequest;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
+import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsRecomposer;
+import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -153,6 +159,7 @@ final class JustDireSettingsChecks {
         } finally { config.set(configured); }
         require(ItemStack.matches(snapshot.get(games.alejandrocoria.mismatchedleggings.content.LeggingsContent.mixedLeggingsDataType()).left().source(),
                 root.get(games.alejandrocoria.mismatchedleggings.content.LeggingsContent.mixedLeggingsDataType()).left().source()), "Settings changed source history");
+        lava(player);
         player.containerMenu = player.inventoryMenu;
         player.getInventory().clearContent();
         Files.writeString(JustDireConnectedServer.report("settings-security.txt"), "Native empty menu, live root edits, token/replay/slot/menu/identity/config/installation refusals and bounded codecs passed\n");
@@ -161,6 +168,83 @@ final class JustDireSettingsChecks {
     private static SettingsReply select(ServerPlayer player, int slot) {
         selection++;
         return edit(player, request(player, slot, NONE, SELECT, "", 0, -1, false, true));
+    }
+
+    private static void lava(ServerPlayer player) throws Exception {
+        int inputSequence = 100;
+        for (boolean inverse : List.of(false, true)) {
+            var pair = MixedLeggingsFactory.createPair(JustDireLavaChecks.nativeItem("blazegold_leggings"), new ItemStack(Items.DIAMOND_LEGGINGS));
+            var root = inverse ? pair.inverse() : pair.primary();
+            var history = root.get(LeggingsContent.mixedLeggingsDataType());
+            player.getInventory().setItem(0, root);
+            var metadata = JustDireSettings.metadata(root, "lavarepair");
+            require(metadata != null && !metadata.hasSlider() && metadata.minimum() == -1, "Intrinsic toggle-only metadata missing");
+            var selected = select(player, 0);
+            require(edit(player, roundtrip(player, request(player, 0, selected.token(), TOGGLE, "lavarepair", 0, -1, false, true))).accepted()
+                            && !root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true),
+                    "Intrinsic switch requires a nonexistent purchase");
+            require(!root.canBeHurtBy(player.damageSources().lava()), "Disabled intrinsic switch lost permanent item protection");
+            for (boolean mouse : List.of(false, true)) {
+                int key = mouse ? 4 : 71;
+                selected = select(player, 0);
+                require(edit(player, request(player, 0, selected.token(), BINDING, "lavarepair", 2, key, mouse, true)).accepted(), "Intrinsic binding refused");
+                require(!JustDireSettings.boundAbilities(root, key, mouse, false).contains("lavarepair")
+                                && JustDireSettings.boundAbilities(root, key, mouse, true).contains("lavarepair"), "Intrinsic equipped input admission lost");
+                require(edit(player, request(player, 0, selected.token(), BINDING, "lavarepair", 2, key, mouse, false)).accepted(), "Intrinsic location edit refused");
+                boolean before = root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true);
+                var menu = player.containerMenu;
+                player.containerMenu = player.inventoryMenu;
+                var intent = new JustDireInputNetwork.InputRequest(++inputSequence, key, mouse, NONE, List.of());
+                var batch = JustDireInputNetwork.handle(player, intent);
+                require(batch.slots().contains(0), "Intrinsic input batch omitted inventory root");
+                JustDireInputNetwork.handle(player, new JustDireInputNetwork.InputRequest(inputSequence, key, mouse, batch.token(), List.of(0)));
+                require(root.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true) != before
+                                && !root.has(JustDireDataComponents.ABILITY_COOLDOWNS), "Intrinsic input became a paid action or failed to toggle");
+                player.containerMenu = menu;
+            }
+            selected = select(player, 0);
+            var unchanged = root.copy();
+            require(!edit(player, request(player, 0, selected.token(), VALUE, "lavarepair", 1, -1, false, true)).accepted()
+                            && ItemStack.matches(root, unchanged), "Intrinsic row accepted a slider value");
+            var configuration = Config.AVAILABLE_ABILITY_MAP.get(Ability.LAVAREPAIR);
+            boolean enabled = configuration.get();
+            try {
+                configuration.set(false);
+                require(JustDireSettings.metadata(root, "lavarepair") == null
+                                && ItemStack.matches(root, unchanged), "Configured-off intrinsic exposed metadata or erased preferences");
+            } finally {
+                configuration.set(enabled);
+            }
+            require(history.equals(root.get(LeggingsContent.mixedLeggingsDataType())), "Lava controls edited historical sources");
+            var ops = player.registryAccess().createSerializationContext(NbtOps.INSTANCE);
+            require(ItemStack.matches(root, ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, root).getOrThrow()).getOrThrow()),
+                    "Intrinsic settings lost in saved item round trip");
+            var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), player.registryAccess());
+            try {
+                ItemStack.STREAM_CODEC.encode(buffer, root);
+                require(ItemStack.matches(root, ItemStack.STREAM_CODEC.decode(buffer)), "Intrinsic settings lost in item synchronization");
+            } finally {
+                buffer.release();
+            }
+        }
+
+        // Paid native tier changes can remove capability without deleting the user's dormant settings.
+        var root = MixedLeggingsFactory.createPair(JustDireLavaChecks.nativeItem("blazegold_leggings"), new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
+        root.set(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), false);
+        root.set(JustDireDataComponents.ABILITY_BINDING_MODES.get(Ability.LAVAREPAIR), 2);
+        var bindings = List.of(new ToolRecords.AbilityBinding("lavarepair", 4, true, false));
+        root.set(JustDireDataComponents.ABILITY_BINDINGS, bindings);
+        var menu = SmithingChecks.ready(player, JustDireLavaChecks.nativeItem("template_celestigem"), root, JustDireLavaChecks.nativeItem("celestigem"));
+        var upgraded = menu.getSlot(3).safeTake(1, 1, player);
+        require(!upgraded.isEmpty() && !menu.getSlot(0).hasItem() && !menu.getSlot(2).hasItem()
+                        && JustDireSettings.metadata(upgraded, "lavarepair") == null && !JustDireLavaRepair.eligible(upgraded), "Paid tier did not remove Lava capability");
+        var restored = MixedLeggingsRecomposer.recompose(upgraded, JustDireLavaChecks.nativeItem("blazegold_leggings"), new ItemStack(Items.DIAMOND_LEGGINGS), player.registryAccess());
+        for (var item : List.of(upgraded, restored)) {
+            require(!item.getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true)
+                            && item.getOrDefault(JustDireDataComponents.ABILITY_BINDING_MODES.get(Ability.LAVAREPAIR), 0) == 2
+                            && bindings.equals(item.get(JustDireDataComponents.ABILITY_BINDINGS)), "Tier/recomposition reset dormant intrinsic controls");
+        }
+        require(JustDireSettings.metadata(restored, "lavarepair") != null, "Restored provider did not recover intrinsic row");
     }
 
     private static SettingsRequest request(ServerPlayer player, int slot, UUID token, int operation, String ability,

@@ -54,6 +54,12 @@ public final class JustDireSettingsClientChecks {
                         screen.setSetting("walkspeed", 3);
                         screen.toggleSetting("phase");
                         screen.toggleSetting("decoy");
+                        screen.toggleSetting("lavarepair");
+                        field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.LAVAREPAIR));
+                        field(screen, "requireEquipped").setBoolean(screen, true);
+                        field(screen, "bindingEnabled").setBoolean(screen, true);
+                        screen.keyPressed(new KeyEvent(72, 0, 0));
+                        require(!field(screen, "bindingEnabled").getBoolean(screen), "Intrinsic keyboard capture stayed active");
                         field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.DECOY));
                         field(screen, "requireEquipped").setBoolean(screen, true);
                         field(screen, "bindingEnabled").setBoolean(screen, true);
@@ -93,6 +99,7 @@ public final class JustDireSettingsClientChecks {
                     if (!fault) {
                         widgets(screen);
                         require(access.mismatchedleggings$jdtTool().getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.PHASE), true), "Primary toggle leaked to inverse");
+                        require(access.mismatchedleggings$jdtTool().getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true), "Intrinsic toggle leaked to inverse");
                         screen.setSetting("walkspeed", 2);
                     }
                     sent = true;
@@ -107,11 +114,15 @@ public final class JustDireSettingsClientChecks {
                         require((boolean) sibling.invoke(screen), "Leggings hooks disabled Boots guard");
                         require(buttons(screen).containsValue(Ability.JUMPBOOST) && !buttons(screen).containsValue(Ability.WALKSPEED), "Sibling controls conflated");
                         screen.setSetting("jumpboost", 2);
+                        require(buttons(screen).containsValue(Ability.LAVAREPAIR), "Sibling intrinsic row disappeared");
+                        screen.toggleSetting("lavarepair");
                     } else { select(screen, 1); }
                     sent = true;
                 }
                 if (Boolean.getBoolean("leggings.test.jdtBoots") && client.player.getInventory().getItem(3)
                         .getOrDefault(JustDireDataComponents.ABILITY_VALUES.get(Ability.JUMPBOOST), 0) != 2) { return; }
+                if (Boolean.getBoolean("leggings.test.jdtBoots") && client.player.getInventory().getItem(3)
+                        .getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true)) { return; }
                 done(4);
                 client.player.closeContainer();
             } else if (stage == 5) {
@@ -146,6 +157,7 @@ public final class JustDireSettingsClientChecks {
                         screen.refreshButtons();
                         require(!field(screen, "bindingEnabled").getBoolean(screen), "Widget refresh retained capture");
                         widgets(screen);
+                        require(!access.mismatchedleggings$jdtTool().getOrDefault(JustDireDataComponents.ABILITY_TOGGLES.get(Ability.LAVAREPAIR), true), "Reopen reset intrinsic switch");
                         // Escape on an unbound row must retain its location preference, not reset to equipped-only.
                         field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.RUNSPEED));
                         field(screen, "requireEquipped").setBoolean(screen, false);
@@ -159,6 +171,10 @@ public final class JustDireSettingsClientChecks {
                         field(screen, "requireEquipped").setBoolean(screen, false);
                         field(screen, "bindingEnabled").setBoolean(screen, true);
                         screen.mouseClicked(mouse(4), false);
+                        field(screen, "shownAbilityButton").set(screen, icon(screen, Ability.LAVAREPAIR));
+                        field(screen, "requireEquipped").setBoolean(screen, false);
+                        field(screen, "bindingEnabled").setBoolean(screen, true);
+                        screen.mouseClicked(mouse(4), false);
                     }
                     sent = true;
                 }
@@ -169,6 +185,10 @@ public final class JustDireSettingsClientChecks {
                 if (!fault && client.player.getInventory().getItem(0)
                         .getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
                         .noneMatch(record -> record.abilityName().equals("decoy") && record.key() == 4 && record.isMouse()
+                                && !record.requireEquipped())) { return; }
+                if (!fault && client.player.getInventory().getItem(0)
+                        .getOrDefault(JustDireDataComponents.ABILITY_BINDINGS.get(), List.<ToolRecords.AbilityBinding>of()).stream()
+                        .noneMatch(record -> record.abilityName().equals("lavarepair") && record.key() == 4 && record.isMouse()
                                 && !record.requireEquipped())) { return; }
                 done(7);
                 finished = true;
@@ -200,11 +220,11 @@ public final class JustDireSettingsClientChecks {
 
     private static void widgets(ToolSettingScreen screen) throws Exception {
         require(((JustDireSettingsScreenAccess) screen).mismatchedleggings$jdtReady(), "Local transformed guard not published");
-        require(buttons(screen).values().containsAll(List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE, Ability.DECOY))
-                && buttons(screen).size() == 5, "Unsupported/missing mixed ability widgets");
+        require(buttons(screen).values().containsAll(List.of(Ability.WALKSPEED, Ability.RUNSPEED, Ability.SWIMSPEED, Ability.PHASE, Ability.DECOY, Ability.LAVAREPAIR))
+                && buttons(screen).size() == 6, "Unsupported/missing mixed ability widgets");
         var sliders = (Map<?, ?>) field(screen, "sliders").get(screen);
         require(sliders.size() == 3 && !sliders.containsKey(icon(screen, Ability.PHASE))
-                && !sliders.containsKey(icon(screen, Ability.DECOY)), "Movement sliders/toggle-only presentation changed");
+                && !sliders.containsKey(icon(screen, Ability.DECOY)) && !sliders.containsKey(icon(screen, Ability.LAVAREPAIR)), "Movement sliders/toggle-only presentation changed");
     }
 
     private static void select(ToolSettingScreen screen, int index) throws Exception {
