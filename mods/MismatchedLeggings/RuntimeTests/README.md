@@ -169,6 +169,16 @@ the selected product. Add `'-Pneoforge_version=26.1.2.99'` for focused floor
 acceptance and restore `.114` artifacts afterward. Foundation and Decoy selections keep
 their existing lifecycle assertions; this profile does not replace them.
 
+## Just Dire Things Lava Repair research
+
+The opt-in [bounded Lava Repair spike](../../../spikes/leggings-jdt-lava/README.md)
+adapts the existing Boots ritual through fixture-only candidate item callbacks.
+It has standalone/current-Boots server and hidden/muted client profiles, using
+the shared cached JDT pin and ordinary packaged products, not indev artifacts.
+This is not production Lava Repair acceptance. Its README owns commands and
+markers; remove the whole candidate and entry branch when maintained production
+tests replace it. Normal fixture runs do not enable those candidate mixins.
+
 ## Just Dire Things passives and live attributes
 
 Foundation B extends the same maintained JDT profile with native movement,

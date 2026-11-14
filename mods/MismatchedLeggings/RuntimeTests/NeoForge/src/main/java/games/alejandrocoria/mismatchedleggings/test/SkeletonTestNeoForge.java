@@ -13,6 +13,15 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.lavaSpike")) {
+            try {
+                Class.forName("games.alejandrocoria.mismatchedleggings.test.lavaspike.LavaChecks")
+                     .getMethod("register", IEventBus.class).invoke(null, bus);
+            } catch (ReflectiveOperationException failure) {
+                throw new IllegalStateException("Cannot start isolated Lava Repair spike", failure);
+            }
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.jdtWear")) {
             JustDireArmorWearChecks.register();
             return;

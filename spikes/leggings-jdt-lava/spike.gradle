@@ -1,0 +1,95 @@
+// Research only. Production JARs are assembled unchanged; candidate hooks live in the fixture.
+def active = providers.gradleProperty('leggingsLavaSpike').map { it.toBoolean() }.getOrElse(false)
+tasks.named('processResources') { inputs.property('leggingsLavaSpike', active) }
+if (!active) { return }
+
+def spike = rootProject.file('spikes/leggings-jdt-lava')
+def generated = layout.buildDirectory.dir('generated/lava-spike')
+def original = project(':MismatchedBoots:NeoForge').file('src/main/java/games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireLavaRepairCompatibility.java')
+tasks.register('generateLavaCandidate') {
+    inputs.file(original)
+    outputs.dir(generated)
+    doLast {
+        // Exact existing episode/particle implementation, with product identity/validation substituted.
+        // This is evidence for an independent LEGS adapter, not a dependency on a loaded Boots mod.
+        def text = original.getText('UTF-8').replace('\r\n', '\n')
+                .replace('package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;',
+                         'package games.alejandrocoria.mismatchedleggings.test.lavaspike;')
+                .replace('import games.alejandrocoria.mismatchedboots.Constants;',
+                         'import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;\nimport games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;')
+                .replace('import games.alejandrocoria.mismatchedboots.content.ModContent;\n', '')
+                .replace('import games.alejandrocoria.mismatchedboots.data.BootHalf;\n', '')
+                .replace('games.alejandrocoria.mismatchedboots.', 'games.alejandrocoria.mismatchedleggings.')
+                .replace('JustDireLavaRepairCompatibility', 'LavaCandidate')
+                .replace('MixedBoots', 'MixedLeggings')
+                .replace('Constants.LOG', 'LeggingsContent.LOG')
+                .replace('ModContent.getMixedLeggingsData', 'MixedLeggingsStructure.validData')
+                .replace('blazegold_boots', 'blazegold_leggings')
+        text = text.replaceAll('(?s)        if \\(!BootHalf\\.isValidSource.*?\\n        }\\n', '')
+        def target = new File(generated.get().asFile, 'LavaCandidate.java')
+        target.parentFile.mkdirs()
+        target.setText(text, 'UTF-8')
+    }
+}
+sourceSets.main.java.srcDir(new File(spike, 'src'))
+sourceSets.main.java.srcDir(generated)
+sourceSets.main.resources.srcDir(new File(spike, 'resources'))
+tasks.named('compileJava') { dependsOn 'generateLavaCandidate' }
+tasks.named('processResources') {
+    doLast {
+        new File(destinationDir, 'META-INF/neoforge.mods.toml').append('\n[[mixins]]\nconfig="leggings-lava-spike.mixins.json"\n', 'UTF-8')
+    }
+}
+
+def withBoots = providers.gradleProperty('leggingsLavaBoots').map { it.toBoolean() }.getOrElse(false)
+def label = 'lava-spike' + (withBoots ? '-boots' : '')
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def nativeJar = providers.provider { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar') }
+
+['server', 'client'].each { endpoint ->
+    tasks.register("prepareLavaSpike${endpoint.capitalize()}") {
+        dependsOn tasks.named('classes'), project(':MismatchedLeggings:NeoForge').tasks.named('assemble')
+        if (withBoots) { dependsOn project(':MismatchedBoots:NeoForge').tasks.named('assemble') }
+        doLast {
+            def run = new File(directory, endpoint)
+            def artifacts = [project(':MismatchedLeggings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile, nativeJar.get()]
+            if (withBoots) { artifacts.add(project(':MismatchedBoots:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
+            def mods = new File(run, 'mods')
+            mods.mkdirs()
+            if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) { throw new GradleException("Unexpected artifact in ${mods}") }
+            copy { from artifacts; into mods }
+            reports.mkdirs()
+            ["${endpoint}.ok", "${endpoint}.failure.txt", "${endpoint}.txt"].each { new File(reports, it).delete() }
+            new File(run, 'config').mkdirs()
+            new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (endpoint == 'server') {
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=lava\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\npause-when-empty-seconds=0\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+            } else {
+                def saved = new File(directory, 'server/lava')
+                if (!new File(saved, 'level.dat').isFile() || !new File(reports, 'server.ok').isFile()) { throw new GradleException('Run the spike server before its hidden client') }
+                copy { from saved; into new File(run, 'saves/lava') }
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\n'
+            }
+        }
+    }
+    neoForge.runs.create("lavaSpike${endpoint.capitalize()}") {
+        if (endpoint == 'server') { server(); programArgument('--nogui') }
+        else { client(); programArguments.addAll('--quickPlaySingleplayer', 'lava') }
+        disableIdeRun()
+        gameDirectory = new File(directory, endpoint)
+        systemProperty('leggings.test.lavaSpike', 'true')
+        systemProperty('leggings.test.lavaBoots', withBoots.toString())
+        systemProperty('leggings.test.report', reports.absolutePath)
+        jvmArgument('-Xmx1G')
+    }
+    tasks.named("runLavaSpike${endpoint.capitalize()}") {
+        dependsOn "prepareLavaSpike${endpoint.capitalize()}"
+        doLast {
+            if (!new File(reports, "${endpoint}.ok").isFile() || new File(reports, "${endpoint}.failure.txt").exists()) {
+                throw new GradleException("Lava spike ${endpoint} failed: ${reports}")
+            }
+        }
+    }
+}
