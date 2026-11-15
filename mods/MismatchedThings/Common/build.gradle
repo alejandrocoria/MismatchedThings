@@ -10,6 +10,8 @@ neoForge {
 neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
+    // Optional shared plugins use only the loader-provided Mixin API.
+    compileOnly 'org.spongepowered:mixin:0.8.5'
     // Both loaders provide ASM; pure early-mixin proofs must not bundle another copy.
     compileOnly 'org.ow2.asm:asm-analysis:9.9.1'
     testImplementation 'org.ow2.asm:asm-analysis:9.9.1'
