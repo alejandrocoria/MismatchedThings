@@ -1,0 +1,138 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+
+// Explicit opt-in only. Normal product sources, JARs, fixture classes and build scripts stay unchanged.
+gradle.projectsEvaluated {
+    def root = gradle.rootProject
+    if (root.findProject(':MismatchedLeggings:RuntimeTests:Fabric') == null) { return }
+    def loader = root.providers.gradleProperty('entryLoader').get()
+    def graph = root.providers.gradleProperty('entryGraph').getOrElse('both')
+    def mode = root.providers.gradleProperty('entryMode').getOrElse('candidate')
+    def order = root.providers.gradleProperty('entryOrder').getOrElse('before')
+    def forward = root.providers.gradleProperty('entryForward').getOrElse('false')
+    def nativeModels = root.providers.gradleProperty('entryNative').getOrElse('false')
+    if (!(loader in ['Fabric', 'NeoForge']) || !(graph in ['boots', 'legs', 'both'])
+            || !(mode in ['candidate', 'baseline']) || !(order in ['before', 'after'])) {
+        throw new GradleException('Unknown entry spike loader/graph/mode/order')
+    }
+    def p = root.project(":MismatchedLeggings:RuntimeTests:${loader}")
+    def spike = root.file('spikes/equipped-entry')
+    def generated = new File(spike, "build/${loader}-${order}/generated")
+    def classes = new File(spike, "build/${loader}-${order}/classes")
+    def metadata = new File(spike, "build/${loader}-${order}/metadata")
+    def generatedSources = p.tasks.register('generateEntrySpike') {
+        doLast {
+            def target = new File(generated, 'games/alejandrocoria/entryspike/mixin/BootsEntryMixin.java')
+            target.parentFile.mkdirs()
+            target.text = new File(spike, 'src/games/alejandrocoria/entryspike/mixin/BootsEntryMixin.java').text
+                    .replace('priority = 1100', "priority = ${order == 'before' ? 1100 : 900}")
+            metadata.mkdirs()
+            def mixins = ['BootsEntryMixin', 'TickMixin', 'LayerProbeMixin', 'EquipmentProbeMixin', 'ForeignForwardMixin']
+            if (loader == 'NeoForge') { mixins.add('NativeModelProbeMixin') }
+            new File(metadata, 'entry-spike.mixins.json').text = JsonOutput.toJson([
+                    required: true, package: 'games.alejandrocoria.entryspike.mixin',
+                    plugin: 'games.alejandrocoria.entryspike.EntryPlugin', compatibilityLevel: 'JAVA_25', client: mixins,
+                    injectors: [defaultRequire: 1]])
+            if (loader == 'Fabric') {
+                new File(metadata, 'fabric.mod.json').text = JsonOutput.toJson([
+                        schemaVersion: 1, id: 'equipped_entry_spike', version: '1.0.0',
+                        name: 'Disposable equipped entry spike', environment: '*', mixins: ['entry-spike.mixins.json'],
+                        depends: [mismatchedthings: '>=1.1.0 <2.0.0']])
+            } else {
+                def descriptor = new File(metadata, 'META-INF/neoforge.mods.toml')
+                descriptor.parentFile.mkdirs()
+                descriptor.text = '''modLoader="javafml"
+loaderVersion="[1,)"
+license="All Rights Reserved"
+[[mods]]
+modId="equipped_entry_spike"
+version="1.0.0"
+displayName="Disposable equipped entry spike"
+[[mixins]]
+config="entry-spike.mixins.json"
+'''
+            }
+        }
+    }
+    def compile = p.tasks.register('compileEntrySpike', JavaCompile) {
+        dependsOn p.tasks.named('classes'), generatedSources
+        source p.fileTree(new File(spike, 'src')) { exclude '**/BootsEntryMixin.java' }
+        source new File(spike, loader)
+        source generated
+        classpath = p.sourceSets.main.compileClasspath + p.sourceSets.main.output
+        destinationDirectory = classes
+        javaCompiler = p.tasks.named('compileJava').get().javaCompiler
+        options.encoding = 'UTF-8'
+    }
+    def spikeJar = p.tasks.register('entrySpikeJar', Jar) {
+        dependsOn compile
+        archiveFileName = 'entry-spike.jar'
+        destinationDirectory = new File(spike, "build/${loader}-${order}")
+        from classes
+        from metadata
+    }
+    def baseline = loader == 'Fabric' ? root.property('fabric_loader_version') : root.property('neoforge_version')
+    def coexistence = graph != 'legs'
+    def variant = 'equipped' + (coexistence ? '-boots' : '') + (nativeModels == 'true' ? '-ice-and-fire' : '')
+    ['server', 'client'].each { phase ->
+        def run = new File(p.layout.buildDirectory.get().asFile, "run/${baseline}/${variant}/${phase}")
+        def mods = new File(run, 'mods')
+        p.tasks.named("prepareEquipped${phase.capitalize()}") {
+            dependsOn spikeJar
+            doFirst {
+                // Only artifacts this opt-in spike added; all other staging admission stays intact.
+                p.delete(new File(mods, 'entry-spike.jar'))
+                if (nativeModels == 'true') { p.delete(new File(mods, 'RootsClassic-26.1.2-1.6.7.jar')) }
+            }
+            doLast {
+                if (graph == 'boots') {
+                    p.delete(new File(mods, root.project(":MismatchedLeggings:${loader}").tasks.named('jar').get().archiveFile.get().asFile.name))
+                }
+                if (nativeModels == 'true') {
+                    p.copy { from root.project(':MismatchedThings').testModArtifacts.resolve(loader, 'RootsClassic-26.1.2-1.6.7.jar'); into mods }
+                }
+                if (mode == 'candidate' && coexistence) {
+                    def bootsName = root.project(":MismatchedBoots:${loader}").tasks.named('jar').get().archiveFile.get().asFile.name
+                    def boots = new File(mods, bootsName)
+                    def temporary = new File(mods, bootsName + '.entry-tmp')
+                    int edits = 0
+                    new ZipFile(boots).withCloseable { zip ->
+                        new ZipOutputStream(new FileOutputStream(temporary)).withCloseable { output ->
+                            zip.entries().each { entry ->
+                                byte[] bytes = zip.getInputStream(entry).bytes
+                                if (entry.name == 'mismatchedboots.client.mixins.json') {
+                                    def config = new JsonSlurper().parseText(new String(bytes, 'UTF-8'))
+                                    if (!config.client.remove('HumanoidArmorLayerMixin')) { throw new GradleException('Expected original Boots entry') }
+                                    bytes = JsonOutput.toJson(config).getBytes('UTF-8')
+                                    edits++
+                                }
+                                output.putNextEntry(new ZipEntry(entry.name)); output.write(bytes); output.closeEntry()
+                            }
+                        }
+                    }
+                    if (edits != 1) { throw new GradleException('Candidate must disable exactly one staged Boots entry') }
+                    java.nio.file.Files.move(temporary.toPath(), boots.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                }
+                p.copy { from spikeJar.get().archiveFile; into mods }
+                new File(p.layout.buildDirectory.get().asFile, "reports/${baseline}/${variant}/entry-spike.txt").delete()
+            }
+        }
+        def properties = ['entry.spike.graph': graph, 'entry.spike.mode': mode, 'entry.spike.order': order,
+                          'entry.spike.forward': forward, 'entry.spike.native': nativeModels,
+                          'entry.spike.neoforge': (loader == 'NeoForge').toString(),
+                          'leggings.test.viewerBootsOnly': (graph == 'boots').toString(),
+                          'mixin.debug.export': 'true', 'mixin.debug.export.filter': 'net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer']
+        if (loader == 'Fabric') {
+            p.loom.runs.getByName("equipped${phase.capitalize()}") {
+                properties.each { key, value -> property(key, value) }
+            }
+        } else {
+            p.neoForge.runs.getByName("equipped${phase.capitalize()}") {
+                properties.each { key, value -> systemProperty(key, value) }
+            }
+        }
+    }
+}
