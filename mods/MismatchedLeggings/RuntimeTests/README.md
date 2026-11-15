@@ -26,18 +26,25 @@ rejection before any gameplay observer starts. Evidence is under
 recovery or refund input; older command examples using previous/published graph
 options describe historical acceptance, not supported current coexistence.
 
-## Temporary JDT refund research
+## Shared JDT refund boundary
 
-The opt-in [shared-consumption spike](../../../spikes/leggings-jdt-refunds/README.md)
-is dedicated-server-only and separate from maintained production acceptance:
+Maintained server-only acceptance uses ordinary packaged products and the shared
+pinned JDT/MA/Cucumber cache. It never patches product JARs or registers candidate
+callbacks. Block A checks Boots refunds and both MA observers; Leggings has no
+JDT credit component/refunds yet.
 
 ```powershell
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runRefundSpike -PleggingsRefundSpike=true --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireRefundSeam --offline --console=plain
 ```
 
-Its fixture JAR copies adapt the old refund hook/MA guards without changing
-production artifacts. Retire the entire spike, this section and its opt-in
-entry points when maintained production tests supersede it.
+Use `-PleggingsRefundGraph=core|legs|boots|both` (default `both`) and optional
+`-PleggingsRefundFault=forward|shape|jdtAbsent|maAbsent`. For `.99`, quote
+`'-Pneoforge_version=26.1.2.99'`. Run profiles sequentially and restore `.114`.
+Reports/markers live under `NeoForge/build/reports/<baseline>/jdt-refunds-<graph>[-<fault>]/`;
+actual wear/drop, MA inventory/overflow, one selected core and original callback
+checks are authoritative, not just readiness markers. There is no client/window.
+The old spike entry is retired; its remaining research source tree is removed
+at final consolidation.
 
 ## Final packaged product acceptance
 

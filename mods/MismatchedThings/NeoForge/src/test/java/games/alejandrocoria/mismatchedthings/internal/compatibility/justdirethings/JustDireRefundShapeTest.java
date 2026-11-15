@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -150,7 +149,7 @@ class JustDireRefundShapeTest implements Opcodes {
     }
 
     private static ClassNode exported(String variant) throws Exception {
-        String file = System.getProperty("mismatchedboots.test.justDireRefundTransformedClass", "");
+        String file = System.getProperty("mismatchedthings.test.justDireRefundTransformedClass", "");
         assumeTrue(!file.isEmpty(), "Supply actual production exports for final-shape acceptance");
         var path = Path.of(file).resolveSibling(variant + "-ItemStack.class");
         assertTrue(Files.isRegularFile(path), "Missing actual " + variant + " export");

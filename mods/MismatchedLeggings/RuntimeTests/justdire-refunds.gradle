@@ -1,0 +1,60 @@
+// Maintained shared-boundary acceptance: ordinary packaged products, no patched JARs or witness credits.
+def graph = providers.gradleProperty('leggingsRefundGraph').getOrElse('both')
+def fault = providers.gradleProperty('leggingsRefundFault').getOrElse('')
+if (!(graph in ['core', 'legs', 'boots', 'both']) || !(fault in ['', 'shape', 'forward', 'jdtAbsent', 'maAbsent'])) {
+    throw new GradleException('leggingsRefundGraph=core|legs|boots|both; leggingsRefundFault=shape|forward|jdtAbsent|maAbsent')
+}
+def label = "jdt-refunds-${graph}" + (fault ? "-${fault}" : '')
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
+def boots = project(':MismatchedBoots:NeoForge')
+evaluationDependsOn(boots.path)
+dependencies.add('compileOnly', files(boots.tasks.named('jar').flatMap { it.archiveFile }))
+
+tasks.register('prepareJustDireRefundSeam') {
+    dependsOn tasks.named('classes'), boots.tasks.named('assemble'), project(':MismatchedLeggings:NeoForge').tasks.named('assemble')
+    doLast {
+        def artifacts = []
+        if (graph in ['legs', 'both']) { artifacts.add(project(':MismatchedLeggings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
+        if (graph in ['boots', 'both']) { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
+        if (graph == 'core') { artifacts.add(project(':MismatchedThings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
+        def optionalArtifacts = []
+        if (fault != 'jdtAbsent') { optionalArtifacts.add('justdirethings-1.6.11.jar') }
+        if (fault != 'maAbsent') { optionalArtifacts.addAll(['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']) }
+        optionalArtifacts.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) { throw new GradleException("Unexpected artifact in ${mods}") }
+        copy { from artifacts; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'refunds.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=refunds\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\npause-when-empty-seconds=0\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('justDireRefundSeam') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.jdtRefunds', 'true')
+    systemProperty('leggings.test.refundGraph', graph)
+    systemProperty('leggings.test.refundFault', fault)
+    systemProperty('leggings.test.report', reports.absolutePath)
+    systemProperty('mixin.debug.export', 'true')
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runJustDireRefundSeam') {
+    dependsOn 'prepareJustDireRefundSeam'
+    doLast {
+        if (!new File(reports, 'server.ok').isFile() || !new File(reports, 'refunds.txt').isFile()
+                || new File(reports, 'server.failure.txt').exists()) { throw new GradleException("JDT refund seam failed: ${reports}") }
+        def log = new File(directory, 'logs/latest.log').readLines()
+        def flowWarnings = log.findAll { it.contains('Just Dire Things refund flow incompatible') }
+        if (flowWarnings.size() != (fault == 'shape' ? 1 : 0) || log.any { it.contains('/ERROR]') || it.contains('/FATAL]') }) {
+            throw new GradleException('Unexpected production refund-seam diagnostic')
+        }
+    }
+}

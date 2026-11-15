@@ -123,7 +123,7 @@ public final class JustDireRefundTestPlugin implements IMixinConfigPlugin {
         String variant = variant();
         int changed = 0;
         for (var method : node.methods) {
-            if (variant.equals("publication") && method.name.equals("mismatchedboots$justDireRefundReady")) {
+            if (variant.equals("publication") && method.name.equals("mismatchedthings$justDireRefundReady")) {
                 method.instructions.set(method.instructions.getFirst(), new InsnNode(Opcodes.ICONST_1));
                 changed++;
                 continue;
@@ -132,10 +132,10 @@ public final class JustDireRefundTestPlugin implements IMixinConfigPlugin {
                 if (!(instruction instanceof MethodInsnNode call)) {
                     continue;
                 }
-                if (variant.equals("router") && call.name.equals("mismatchedboots$justDireRefundReady")) {
+                if (variant.equals("router") && call.name.equals("mismatchedthings$justDireRefundReady")) {
                     method.instructions.set(call, new InsnNode(Opcodes.ICONST_1));
                     changed++;
-                } else if (variant.equals("operation") && call.owner.endsWith("/JustDireRefundCompatibility") && call.name.equals("route")) {
+                } else if (variant.equals("operation") && call.owner.endsWith("/JustDireRefundRouter") && call.name.equals("route")) {
                     method.instructions.insertBefore(call, new MethodInsnNode(Opcodes.INVOKESTATIC,
                                                                               PROBE,
                                                                               "operation",

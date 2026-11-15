@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.compatibility.justdirethings.JustDireRefunds;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,6 +16,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -42,6 +45,12 @@ public final class JustDireRefundCompatibility {
 
     public static void initialize(IEventBus bus) {
         TYPES.register(bus);
+        if (ModList.get().isLoaded("justdirethings")) {
+            // Register after item registries, independently of optional refund-item binding success.
+            bus.addListener((RegisterCapabilitiesEvent event) -> JustDireRefunds.register(
+                    BuiltInRegistries.ITEM.get(ModContent.MIXED_BOOTS_ID).orElseThrow().value(),
+                    (root, count, owner, ordinary) -> route(true, root, count, owner, ordinary)));
+        }
     }
 
     public static DataComponentType<JustDireRefundCredits> component() {

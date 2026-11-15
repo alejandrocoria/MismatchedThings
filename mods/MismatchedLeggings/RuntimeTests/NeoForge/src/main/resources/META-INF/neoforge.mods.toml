@@ -8,6 +8,9 @@ version="1.0.0"
 displayName="Leggings skeleton tests"
 
 [[mixins]]
+config="leggings-jdt-refunds-test.mixins.json"
+
+[[mixins]]
 config="leggings-test.mixins.json"
 
 [[mixins]]

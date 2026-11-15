@@ -1,6 +1,5 @@
-package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
-import games.alejandrocoria.mismatchedboots.Constants;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -45,7 +44,7 @@ public final class JustDireRefundMixinPlugin implements IMixinConfigPlugin, IExt
     private void warn() {
         if (!warned) {
             warned = true;
-            Constants.LOG.warn("Just Dire Things refund flow incompatible; ordinary breakage retained without upgrade refunds");
+            org.slf4j.LoggerFactory.getLogger("mismatchedthings").warn("Just Dire Things refund flow incompatible; ordinary breakage retained without upgrade refunds");
         }
     }
 

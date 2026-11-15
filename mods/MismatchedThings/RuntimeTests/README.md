@@ -208,6 +208,21 @@ the conflicting explicit newer core. This is not newer-core coexistence.
 Without this option, current Boots seeds the
 upgrade too. Boots below 1.1.0 is not supported with Things 1.1.0 or newer.
 
+## Shared JDT actual-consumption proof
+
+The early pure-ASM facade is Common; the observer/router and its shape/export
+tests are NeoForge-owned. The relocated `JustDireRefundShapeTest` can consume
+real production exports from the existing Boots refund driver using
+`-PjustDireRefundTransformedClass=<Live-ItemStack.class>` on
+`:MismatchedThings:NeoForge:test`. Without exports, only the export-dependent
+cases skip; native-shape/router tests still run.
+
+Cross-product server acceptance is in the
+[Leggings runtime fixture](../../MismatchedLeggings/RuntimeTests/README.md#shared-jdt-refund-boundary),
+including a core-only graph, exact product registration, real Boots refunds,
+MA inventory/overflow delivery, optional absence and refused/forwarding wrappers.
+No candidate hook, patched JAR, indev artifact or release-graph framework is used.
+
 ## Focused runs and evidence
 
 For a single profile, run `runWorkbenchServer`, then `runWorkbenchClient` on

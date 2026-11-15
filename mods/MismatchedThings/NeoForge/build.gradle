@@ -20,6 +20,12 @@ dependencies {
 
 tasks.named('test', Test) {
     useJUnitPlatform()
+    def refundExport = providers.gradleProperty('justDireRefundTransformedClass')
+    if (refundExport.isPresent()) {
+        def exported = rootProject.file(refundExport.get())
+        inputs.files(exported.parentFile.listFiles().findAll { it.name.endsWith('-ItemStack.class') })
+        systemProperty 'mismatchedthings.test.justDireRefundTransformedClass', exported.absolutePath
+    }
     def wearExport = providers.gradleProperty('justDireArmorWearTransformedClass')
     if (wearExport.isPresent()) {
         def exported = rootProject.file(wearExport.get())

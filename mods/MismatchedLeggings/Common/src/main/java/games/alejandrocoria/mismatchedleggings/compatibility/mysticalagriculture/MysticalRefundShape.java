@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture;
 
+import games.alejandrocoria.mismatchedthings.api.compatibility.justdirethings.NeoForgeItemConsumptionProof;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -26,7 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Final local consumption and observation proof. Only the audited Boots router is admitted. */
+/** Local MA observation/receipt proof; NeoForge's wrapper boundary is shared, not its purchase policy. */
 public final class MysticalRefundShape implements Opcodes {
     static final String OWNER = "net/minecraft/world/item/ItemStack";
     static final String STACK = "L" + OWNER + ";";
@@ -40,8 +41,10 @@ public final class MysticalRefundShape implements Opcodes {
     final String APPLY;
     final String HANDLER;
     private final String OBSERVER;
+    private final boolean neoForge;
 
     public MysticalRefundShape(boolean fabric) {
+        neoForge = !fabric;
         ENTITY = fabric ? "Lnet/minecraft/server/level/ServerPlayer;" : "Lnet/minecraft/world/entity/LivingEntity;";
         APPLY = "(I" + ENTITY + "Ljava/util/function/Consumer;)V";
         HANDLER = "(" + STACK + "I" + OP + "I" + ENTITY + "Ljava/util/function/Consumer;)V";
@@ -91,7 +94,8 @@ public final class MysticalRefundShape implements Opcodes {
             if (handler != null && "arm".equals(observer(handler))) {
                 if (arm != null) { return false; } arm = call;
             }
-            if (shrink(call) || handler != null && call.desc.equals(HANDLER) && boots(handler)) {
+            if (shrink(call) || handler != null && (neoForge ? NeoForgeItemConsumptionProof.siteHandler(node, handler)
+                    : call.desc.equals(HANDLER) && boots(handler))) {
                 if (site != null) { return false; } site = call;
             }
         }
@@ -143,7 +147,12 @@ public final class MysticalRefundShape implements Opcodes {
                         || !flow.parameter(flow.receiver(call, 6), 0) || !flow.parameter(flow.argument(call, 0, 6), 0)
                         || flow.constant(flow.argument(call, 1, 6)) != 1 || !flow.parameter(flow.argument(call, 3, 6), 1)
                         || !flow.parameter(flow.argument(call, 4, 6), 2) || !flow.parameter(flow.argument(call, 5, 6), 3)
-                        || !operation(node, flow.origin(flow.argument(call, 2, 6)))) { return false; }
+                        || (neoForge ? !NeoForgeItemConsumptionProof.boundary(node)
+                        : !operation(node, flow.origin(flow.argument(call, 2, 6))))) { return false; }
+                site = call;
+            } else if (neoForge && transformed && call.owner.equals(OWNER) && method(node, call.name, call.desc) != null
+                    && NeoForgeItemConsumptionProof.siteHandler(node, method(node, call.name, call.desc))) {
+                if (site != null || !NeoForgeItemConsumptionProof.boundary(node)) { return false; }
                 site = call;
             } else if (call.owner.equals(OWNER) && call.desc.equals(OBSERVER)
                     && method(node, call.name, call.desc) != null && owned(method(node, call.name, call.desc))) {
@@ -220,6 +229,10 @@ public final class MysticalRefundShape implements Opcodes {
     }
 
     private boolean boots(MethodNode handler) {
+        // Share only the audited site/router proof; the four local observations remain mandatory.
+        if (neoForge) {
+            return NeoForgeItemConsumptionProof.observer(handler);
+        }
         String peer = "games.alejandrocoria.mismatchedboots.mixin.compatibility.mysticalagriculture.MysticalRefundMixin";
         if (handler.visibleAnnotations == null || handler.visibleAnnotations.stream().noneMatch(a ->
                 a.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;") && a.values != null && a.values.contains(peer))

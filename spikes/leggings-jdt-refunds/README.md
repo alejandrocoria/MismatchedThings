@@ -1,5 +1,11 @@
 # JDT conserved-refund shared-hook spike
 
+The shared-hook portion is superseded by production block A. Its opt-in Gradle
+apply/reflective entry have been removed: the commands below describe historical
+acceptance and no longer launch a candidate. The source-generator inputs moved
+to Things. Use the maintained `runJustDireRefundSeam` profile documented in the
+Leggings runtime README. Retire this remaining research tree completely in C.
+
 Opt-in NeoForge **server-only** research. No candidate code or resources enter a
 product JAR. See the private Leggings refund exploration/spike for decisions and
 acceptance; this directory contains executable evidence, not shipped support.

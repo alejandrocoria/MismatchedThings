@@ -10,6 +10,9 @@ neoForge {
 neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
+    // Both loaders provide ASM; pure early-mixin proofs must not bundle another copy.
+    compileOnly 'org.ow2.asm:asm-analysis:9.9.1'
+    testImplementation 'org.ow2.asm:asm-analysis:9.9.1'
     // Optional viewer APIs are never bundled or required for ordinary play.
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-api:${rei_version}"

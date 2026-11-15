@@ -36,7 +36,7 @@ final class MysticalAugmentsServer implements MysticalAugmentsProbe.Platform {
 
     @Override
     public void coexist(net.minecraft.server.MinecraftServer server) throws Exception {
-        for (String name : java.util.List.of("mismatchedboots$maRefundReady", "mismatchedboots$justDireRefundReady")) {
+        for (String name : java.util.List.of("mismatchedboots$maRefundReady", "mismatchedthings$justDireRefundReady")) {
             var marker = net.minecraft.world.item.ItemStack.class.getDeclaredMethod(name);
             marker.setAccessible(true);
             if (!Boolean.TRUE.equals(marker.invoke(null))) {

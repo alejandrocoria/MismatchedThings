@@ -13,6 +13,9 @@ description="${mod_description}"
 [[mixins]]
 config="mismatchedthings.justdirethings-armor-wear.mixins.json"
 
+[[mixins]]
+config="mismatchedthings.justdirethings-refunds.mixins.json"
+
 [[dependencies.${mod_id}]]
 modId="mismatchedboots"
 type="incompatible"

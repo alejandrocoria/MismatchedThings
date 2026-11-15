@@ -1,4 +1,4 @@
-package games.alejandrocoria.mismatchedboots.compatibility.justdirethings;
+package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -35,15 +35,15 @@ public final class JustDireRefundShape implements Opcodes {
     static final String APPLY = "(I" + ENTITY + "Ljava/util/function/Consumer;)V";
     static final String HANDLER = "(" + STACK + "I" + OP + "I" + ENTITY + "Ljava/util/function/Consumer;)V";
     private static final String FORWARD = "(" + STACK + "I" + OP + ")V";
-    static final String READY = "mismatchedboots$justDireRefundReady";
-    private static final String COMPAT = "games/alejandrocoria/mismatchedboots/compatibility/justdirethings/JustDireRefundCompatibility";
+    static final String READY = "mismatchedthings$justDireRefundReady";
+    private static final String COMPAT = "games/alejandrocoria/mismatchedthings/internal/compatibility/justdirethings/JustDireRefundRouter";
     private static final String ROUTE = "(Z" + STACK + "I" + ENTITY + OP + ")V";
-    private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.justdirethings.JustDireRefundMixin";
+    private static final String MIXIN = "games.alejandrocoria.mismatchedthings.mixin.compatibility.justdirethings.JustDireRefundMixin";
 
     private JustDireRefundShape() {
     }
 
-    static boolean entry(ClassNode node) {
+    public static boolean entry(ClassNode node) {
         try {
             return slice(node, false);
         } catch (AnalyzerException | RuntimeException incompatible) {
@@ -51,7 +51,7 @@ public final class JustDireRefundShape implements Opcodes {
         }
     }
 
-    static boolean publish(ClassNode node) {
+    public static boolean publish(ClassNode node) {
         var getter = method(node, READY, "()Z");
         boolean intact = getter != null && owned(getter) && getter.access == (ACC_PRIVATE | ACC_STATIC)
                 && getter.tryCatchBlocks.isEmpty() && real(getter).size() == 2
@@ -93,6 +93,24 @@ public final class JustDireRefundShape implements Opcodes {
         }
 
         return false;
+    }
+
+    /** Read-only boundary proof used by independent MA guards, also when JDT is absent. */
+    public static boolean boundary(ClassNode node) {
+        try {
+            return slice(node, true);
+        } catch (AnalyzerException | RuntimeException incompatible) {
+            return false;
+        }
+    }
+
+    public static boolean siteHandler(ClassNode node, MethodNode handler) {
+        try {
+            return handler.desc.equals(HANDLER) && observer(handler)
+                    || handler.desc.equals(FORWARD) && forwarder(node, handler);
+        } catch (AnalyzerException | RuntimeException incompatible) {
+            return false;
+        }
     }
 
     private static boolean slice(ClassNode node, boolean transformed) throws AnalyzerException {
@@ -189,7 +207,7 @@ public final class JustDireRefundShape implements Opcodes {
         return false;
     }
 
-    private static boolean observer(MethodNode handler) {
+    public static boolean observer(MethodNode handler) {
         if (owned(handler)) {
             return router(handler);
         }
@@ -270,14 +288,21 @@ public final class JustDireRefundShape implements Opcodes {
         return calls == 1;
     }
 
-    /** One unchanged forwarding wrapper inside OR outside our router, not an arbitrary wrapper analyzer. */
+    /** A bounded chain of known observers/straight forwarding, never an arbitrary wrapper analyzer. */
     private static boolean forwardingOperation(ClassNode node, Flow parent, AbstractInsnNode producer, boolean ownedInside) throws AnalyzerException {
+        return forwardingOperation(node, parent, producer, ownedInside, 1);
+    }
+
+    // Two bridge layers cover the shared observer, existing MA observer and one forwarder.
+    private static boolean forwardingOperation(ClassNode node, Flow parent, AbstractInsnNode producer, boolean ownedInside, int depth) throws AnalyzerException {
         int captures = ownedInside ? 5 : 2;
         String captured = STACK + OP + (ownedInside ? "I" + ENTITY + "Ljava/util/function/Consumer;" : "");
         if (!(producer instanceof InvokeDynamicInsnNode indy) || !indy.desc.equals("(" + captured + ")" + OP)
                 || !indy.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory")
                 || !parent.parameter(parent.argument(indy, 0, captures), 0)
-                || !operation(node, parent.origin(parent.argument(indy, 1, captures)))) {
+                || !(operation(node, parent.origin(parent.argument(indy, 1, captures)))
+                        || depth < 2 && (forwardingOperation(node, parent, parent.origin(parent.argument(indy, 1, captures)), false, depth + 1)
+                        || forwardingOperation(node, parent, parent.origin(parent.argument(indy, 1, captures)), true, depth + 1)))) {
             return false;
         }
         if (ownedInside) {

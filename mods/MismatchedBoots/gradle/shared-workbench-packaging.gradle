@@ -43,6 +43,9 @@ gradle.projectsEvaluated {
                     'config/ConfigEntry', 'config/EnumConfigEntry', 'config/DynamicConfigPart', 'config/TomlConfigIO',
                     'composition/EnchantmentMerger', 'composition/RepairableComposer', 'composition/DurabilityMerger',
                     'composition/RepairCostMerger', 'component/DurabilityPolicy', 'component/RepairCostPolicy',
+                    'compatibility/justdirethings/JustDireRefundShape',
+                    'compatibility/justdirethings/JustDireRefundMixinPlugin',
+                    'mixin/compatibility/justdirethings/JustDireRefundMixin',
                     'compatibility/neovitae/NeoVitaeInfusionCompatibility$Binding',
                     'compatibility/neovitae/NeoVitaeInfusionCompatibility$Infusion',
                     'tooltip/TooltipSeparator', 'client/tooltip/TooltipSeparatorComponent',
@@ -102,6 +105,25 @@ gradle.projectsEvaluated {
                 throw new GradleException('Wrong nested core ownership')
             }
             def infusionService = 'META-INF/services/games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeInfusionService'
+            def refundProof = 'games/alejandrocoria/mismatchedthings/api/compatibility/justdirethings/NeoForgeItemConsumptionProof.class'
+            def refundRuntime = [
+                    'games/alejandrocoria/mismatchedthings/api/compatibility/justdirethings/JustDireRefunds.class',
+                    'games/alejandrocoria/mismatchedthings/internal/compatibility/justdirethings/JustDireRefundRouter.class',
+                    'games/alejandrocoria/mismatchedthings/internal/compatibility/justdirethings/JustDireRefundMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedthings/mixin/compatibility/justdirethings/JustDireRefundMixin.class',
+                    'mismatchedthings.justdirethings-refunds.mixins.json'
+            ]
+            if (!nested.containsKey(refundProof) || names.contains('mismatchedboots.justdirethings-refunds.mixins.json')) {
+                throw new GradleException('Wrong shared refund proof/hook ownership')
+            }
+            if (loader == 'neoforge') {
+                if (!refundRuntime.every { nested.containsKey(it) }
+                        || new String(nested['META-INF/neoforge.mods.toml'], 'UTF-8').count('config="mismatchedthings.justdirethings-refunds.mixins.json"') != 1) {
+                    throw new GradleException('Missing or duplicated shared NeoForge refund hook')
+                }
+            } else if (refundRuntime.any { nested.containsKey(it) }) {
+                throw new GradleException('NeoForge refund runtime leaked into Fabric')
+            }
             def infusionProvider = 'games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.NeoForgeNeoVitaeInfusionService'
             if (loader == 'neoforge') {
                 if (!nested.containsKey(infusionProvider.replace('.', '/') + '.class')

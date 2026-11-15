@@ -1,0 +1,17 @@
+package games.alejandrocoria.mismatchedleggings.test.refunds.mixin;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.world.item.ItemStack;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
+@Mixin(value = ItemStack.class, priority = 1100)
+abstract class ShapeFaultMixin {
+    @WrapOperation(method = "applyDamage(ILnet/minecraft/world/entity/LivingEntity;Ljava/util/function/Consumer;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V"))
+    private void refundTest$unknown(ItemStack root, int count, Operation<Void> ordinary) {
+        // Same ordinary result, but outside the deliberately bounded forwarding proof.
+        ordinary.call(root, Math.max(1, count));
+    }
+}

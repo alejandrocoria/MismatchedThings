@@ -102,10 +102,6 @@ tasks.named('test', Test).configure {
     }
 
     def justDireTransformed = providers.gradleProperty('justDireTransformedClass')
-    def justDireRefundTransformed = providers.gradleProperty('justDireRefundTransformedClass')
-    if (justDireRefundTransformed.isPresent()) {
-        systemProperty 'mismatchedboots.test.justDireRefundTransformedClass', rootProject.file(justDireRefundTransformed.get()).absolutePath
-    }
     if (justDireTransformed.isPresent()) {
         systemProperty 'mismatchedboots.test.justDireTransformedClass', rootProject.file(justDireTransformed.get()).absolutePath
     }

@@ -208,7 +208,8 @@ armor-wear/FE A/B/C plan.
 ```powershell
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireRefunds --console=plain
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyJustDireResources --console=plain
-.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
+.\gradlew.bat :MismatchedBoots:NeoForge:test --tests '*JustDireRefundCreditsTest' --console=plain
+.\gradlew.bat :MismatchedThings:NeoForge:test --tests '*JustDireRefund*Test' "-PjustDireRefundTransformedClass=mods/MismatchedBoots/RuntimeTests/NeoForge/build/reports/just-dire-refunds-production/26.1.2.114/Live-ItemStack.class" --console=plain
 ```
 
 Repeat on .99 and restore default .114. This maintained production gate uses the

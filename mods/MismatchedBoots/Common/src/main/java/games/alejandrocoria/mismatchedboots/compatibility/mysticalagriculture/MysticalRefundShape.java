@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots.compatibility.mysticalagriculture;
 
+import games.alejandrocoria.mismatchedthings.api.compatibility.justdirethings.NeoForgeItemConsumptionProof;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -39,8 +40,10 @@ public final class MysticalRefundShape implements Opcodes {
     private static final String COMPAT = "games/alejandrocoria/mismatchedboots/compatibility/mysticalagriculture/MysticalRefundCompatibility";
     private final String ROUTE;
     private static final String MIXIN = "games.alejandrocoria.mismatchedboots.mixin.compatibility.mysticalagriculture.MysticalRefundMixin";
+    private final boolean neoForge;
 
     public MysticalRefundShape(boolean fabric) {
+        neoForge = !fabric;
         ENTITY = fabric ? "Lnet/minecraft/server/level/ServerPlayer;" : "Lnet/minecraft/world/entity/LivingEntity;";
         APPLY = "(I" + ENTITY + "Ljava/util/function/Consumer;)V";
         HANDLER = "(" + STACK + "I" + OP + "I" + ENTITY + "Ljava/util/function/Consumer;)V";
@@ -68,7 +71,8 @@ public final class MysticalRefundShape implements Opcodes {
             getter.instructions.add(new InsnNode(IRETURN));
         }
         try {
-            if (intact && slice(node, true)) {
+            // Only the NeoForge consumption chain is shared. MA still owns this marker and its receipt.
+            if (intact && (neoForge ? NeoForgeItemConsumptionProof.boundary(node) : slice(node, true))) {
                 getter.instructions.set(getter.instructions.getFirst(), new InsnNode(ICONST_1));
                 return true;
             }

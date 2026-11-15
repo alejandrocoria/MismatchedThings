@@ -15,6 +15,7 @@
 * Fixed: Create Fly source tooltips on Fabric remained visible when Create's tooltips were disabled.
 * Fixed: Silent Gear damage reductions on mixed boots could be disabled by compatible armor hooks from another mod.
 * Fixed: Just Dire Things cooldown indicators on mixed boots could disappear when compatible HUD hooks were combined.
+* Fixed: Just Dire Things upgrade refunds on mixed boots could be disabled when multiple compatible item-consumption hooks were combined.
 
 ${added_compatibility}
 

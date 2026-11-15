@@ -111,6 +111,23 @@ The callback is not used for direct item damage. No product class, source schema
 or wallet is bound by the core, and JDT remains optional. This API is NeoForge-
 local; there is no Fabric JDT gameplay implementation or sibling dependency.
 
+### Optional NeoForge actual-consumption refunds (since 1.1.0)
+
+`api.compatibility.justdirethings.JustDireRefunds.register(item, handler)` registers
+one callback for an exact product item after item registries are available.
+Things owns the single guarded JDT durability-consumption observer, not purchase
+state. Duplicate registration rejects; unclaimed/refused operations delegate
+once. Product callbacks retain their supported locations, native bindings,
+credit codecs, reentry/receipt checks and native item delivery. A throwing
+callback is never retried through ordinary consumption.
+
+`api.compatibility.justdirethings.NeoForgeItemConsumptionProof` is a pure ASM
+facade in Common for early local MA guards. It checks the NeoForge bytecode
+boundary without loading game/optional classes. Those consumers retain their
+own marker and observation/receipt proofs; Fabric keeps its existing MA path.
+The runtime observer/dispatch API is NeoForge-only. JDT and sibling products
+remain optional, and no refund data changes namespace.
+
 ### Optional Forbidden Arcanus operations (since 1.1.0)
 
 `api.compatibility.forbiddenarcanus` provides the immutable `ForbiddenModifiers`
