@@ -23,10 +23,13 @@ import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearR
 import games.alejandrocoria.mismatchedboots.compatibility.silentgear.SilentGearWearer;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
+import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.NeoForgeCompositionRulesNetwork;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -36,6 +39,9 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 public class MismatchedBootsNeoForge {
     public MismatchedBootsNeoForge(IEventBus eventBus) {
         ModRegistries.register(eventBus);
+        eventBus.addListener((RegisterCapabilitiesEvent event) ->
+                games.alejandrocoria.mismatchedboots.compatibility.mysticalagriculture.MysticalRefundCompatibility.register(
+                        BuiltInRegistries.ITEM.get(ModContent.MIXED_BOOTS_ID).orElseThrow().value()));
         eventBus.addListener(NeoForgeCompositionRulesNetwork::register);
         JustDireRefundCompatibility.initialize(eventBus);
         MismatchedBoots.init();

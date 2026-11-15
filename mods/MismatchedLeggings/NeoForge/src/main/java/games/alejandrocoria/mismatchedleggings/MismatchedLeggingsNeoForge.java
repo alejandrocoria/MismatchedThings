@@ -24,6 +24,7 @@ import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsRepairRecipe;
 import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsSmithingBaseRecipe;
 import games.alejandrocoria.mismatchedleggings.recipe.MixedLeggingsWorkbenchRecipe;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +32,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -50,6 +52,9 @@ public final class MismatchedLeggingsNeoForge {
         var items = DeferredRegister.createItems(LeggingsContent.MOD_ID);
         items.register("mixed_leggings", () -> LeggingsContent.createItem(NeoForgeMixedLeggingsItem::new));
         items.register(bus);
+        bus.addListener((RegisterCapabilitiesEvent event) ->
+                games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture.MysticalRefundCompatibility.register(
+                        BuiltInRegistries.ITEM.get(LeggingsContent.MIXED_LEGGINGS_ID).orElseThrow().value()));
         var serializers = DeferredRegister.create(Registries.RECIPE_SERIALIZER, LeggingsContent.MOD_ID);
         serializers.register("mixed_leggings_workbench", () -> MixedLeggingsWorkbenchRecipe.SERIALIZER);
         serializers.register("mixed_leggings_repair", () -> new MixedLeggingsRepairRecipe(ItemStack::isCombineRepairable).getSerializer());

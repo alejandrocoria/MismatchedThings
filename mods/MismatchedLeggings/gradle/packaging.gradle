@@ -22,6 +22,9 @@ gradle.projectsEvaluated {
                     if ('data/minecraft/tags/item/leg_armor.json' in names) {
                         throw new GradleException('Broad armor classification would advertise invalid mixed smithing examples')
                     }
+                    if (names.any { it.endsWith('/MysticalRefundShape.class') || it.endsWith('/MysticalRefundMixin.class') }) {
+                        throw new GradleException('MA refund observation and its proof belong to Things, not the product')
+                    }
                     if (names.any { it.startsWith('com/blakebr0/mysticalagriculture/') || it.startsWith('com/blakebr0/cucumber/')
                             || it.startsWith('com/autovw/advancednetherite/')
                             || it.startsWith('com/zurrtum/create/') || it.startsWith('com/iafenvoy/')
@@ -73,9 +76,7 @@ gradle.projectsEvaluated {
                      'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAwakenedSetShape.class',
                      'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAwakenedSetCompatibility.class',
                      'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalAwakenedSetTargetMixin.class',
-                     'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalRefundShape.class',
                      'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalRefundCompatibility.class',
-                     'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalRefundMixin.class',
                      'games/alejandrocoria/mismatchedleggings/compatibility/mysticalagriculture/MysticalAugmentsMixinPlugin.class',
                      'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalEquipmentMixin.class',
                      'games/alejandrocoria/mismatchedleggings/mixin/compatibility/mysticalagriculture/MysticalArmorTickProofMixin.class',

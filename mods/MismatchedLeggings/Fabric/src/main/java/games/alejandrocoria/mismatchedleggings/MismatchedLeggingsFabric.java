@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedleggings;
 
+import games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture.MysticalRefundCompatibility;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRuleState;
 import games.alejandrocoria.mismatchedleggings.config.CompositionRulesLifecycle;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
@@ -24,6 +25,7 @@ public final class MismatchedLeggingsFabric implements ModInitializer {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, LeggingsContent.SUSPENDED_LEGGINGS_ID, LeggingsContent.createSuspendedDataType());
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, LeggingsContent.FORBIDDEN_MODIFIERS_ID, LeggingsContent.createForbiddenModifiersType());
         Registry.register(BuiltInRegistries.ITEM, LeggingsContent.MIXED_LEGGINGS_ID, LeggingsContent.createItem());
+        MysticalRefundCompatibility.register(BuiltInRegistries.ITEM.get(LeggingsContent.MIXED_LEGGINGS_ID).orElseThrow().value());
         Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MixedLeggingsWorkbenchRecipe.ID, MixedLeggingsWorkbenchRecipe.SERIALIZER);
         RecipeSynchronization.synchronizeRecipeSerializer(MixedLeggingsWorkbenchRecipe.SERIALIZER);
         var repairSerializer = new MixedLeggingsRepairRecipe(stack -> true).getSerializer();

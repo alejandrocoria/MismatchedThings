@@ -227,7 +227,27 @@ Cross-product server acceptance is in the
 [Leggings runtime fixture](../../MismatchedLeggings/RuntimeTests/README.md#shared-jdt-refund-boundary),
 including a core-only graph, exact product registration, real Boots refunds,
 MA inventory/overflow delivery, optional absence and refused/forwarding wrappers.
-No candidate hook, patched JAR, indev artifact or release-graph framework is used.
+Normal profiles use unmodified packaged artifacts, not a candidate hook, indev
+artifact or release-graph framework. The optional MA relative-order control
+described below builds only a test-local Things variant, never modified armor JARs.
+
+## Shared MA break observation
+
+Common shape tests and the same tests on Fabric use the actual native loader
+signatures. NeoForge lifecycle tests cover exact owner dispatch, decline isolation,
+ordered one-shot callbacks, exceptions and reentry. Run `:MismatchedThings:Common:test`,
+`:MismatchedThings:Fabric:test` and `:MismatchedThings:NeoForge:test` sequentially.
+These are unit/proof checks, not a substitute for actual product receipts.
+
+The maintained [MA actual-break profile](../../MismatchedLeggings/RuntimeTests/README.md#mystical-agriculture-conserved-refunds-block-b)
+checks Boots alone, Leggings alone and both, with both orientations, native controls,
+physical purchase conservation, malformed/mutated authority, throwing callbacks,
+real inventory insertion and overflow. The existing JDT refund seam also covers
+both paid credit kinds on one root. `leggingsMaOrder=after` builds a separate
+test-only core copy with MA priority 900 and a next-patch descriptor for native
+selection; normal code uses 1100. Product JARs and normal core outputs remain
+unchanged. The witness reads the actual merged core handlers/stages/priorities
+and verifies there are no legacy product MA hooks. No init script is required.
 
 ## Focused runs and evidence
 

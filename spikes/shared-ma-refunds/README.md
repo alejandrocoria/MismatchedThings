@@ -6,6 +6,11 @@ Not production integration or a new maintained runtime suite.
 The [joint implementation plan](../../local-docs/MYSTICAL-AGRICULTURE-SHARED-REFUNDS-IMPLEMENTATION.md)
 requires complete executable-spike retirement in C after maintained tests replace it.
 
+**Historical after production block B (2026-11-15).** The live products now use
+Things' maintained observer. This candidate's generated-source inputs include
+retired product guards, so its commands below are research history, not current
+launch instructions. Do not repair or run the alternate route; C removes this tree.
+
 Run from the repository root with the normal JDK/cache permissions:
 
 ```powershell

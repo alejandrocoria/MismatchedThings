@@ -70,6 +70,12 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
                     'games/alejandrocoria/mismatchedthings/api/config/TomlConfigIO.class',
                     'games/alejandrocoria/mismatchedthings/api/composition/EnchantmentMerger.class',
                     'games/alejandrocoria/mismatchedthings/api/tooltip/TooltipSeparator.class',
+                    'games/alejandrocoria/mismatchedthings/api/compatibility/mysticalagriculture/MysticalRefunds.class',
+                    'games/alejandrocoria/mismatchedthings/internal/compatibility/mysticalagriculture/MysticalRefundObserver.class',
+                    'games/alejandrocoria/mismatchedthings/internal/compatibility/mysticalagriculture/MysticalRefundShape.class',
+                    'games/alejandrocoria/mismatchedthings/internal/compatibility/mysticalagriculture/MysticalRefundMixinPlugin.class',
+                    'games/alejandrocoria/mismatchedthings/mixin/compatibility/mysticalagriculture/MysticalRefundMixin.class',
+                    'mismatchedthings.mysticalagriculture-refunds.mixins.json',
                     'games/alejandrocoria/mismatchedthings/internal/client/WorkbenchScreen.class',
                     'assets/mismatchedthings/blockstates/mismatched_workbench.json',
                     'assets/mismatchedthings/items/mismatched_workbench.json',
@@ -106,9 +112,13 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
             if (loader == 'fabric') {
                 def descriptor = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
                 if (descriptor.id != 'mismatchedthings' || descriptor.version != coreProject.version.toString()
-                        || descriptor.depends.containsKey('mismatchedboots')) {
+                        || descriptor.depends.containsKey('mismatchedboots')
+                        || !descriptor.mixins.contains('mismatchedthings.mysticalagriculture-refunds.mixins.json')) {
                     throw new GradleException('Wrong standalone core metadata')
                 }
+            } else if (!zip.getInputStream(zip.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
+                    .contains('config="mismatchedthings.mysticalagriculture-refunds.mixins.json"')) {
+                throw new GradleException('Shared MA observation is missing from NeoForge metadata')
             }
         }
     }

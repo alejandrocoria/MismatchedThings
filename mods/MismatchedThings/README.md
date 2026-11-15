@@ -121,12 +121,31 @@ once. Product callbacks retain their supported locations, native bindings,
 credit codecs, reentry/receipt checks and native item delivery. A throwing
 callback is never retried through ordinary consumption.
 
-`api.compatibility.justdirethings.NeoForgeItemConsumptionProof` is a pure ASM
-facade in Common for early local MA guards. It checks the NeoForge bytecode
-boundary without loading game/optional classes. Those consumers retain their
-own marker and observation/receipt proofs; Fabric keeps its existing MA path.
-The runtime observer/dispatch API is NeoForge-only. JDT and sibling products
+`api.compatibility.justdirethings.NeoForgeItemConsumptionProof` remains a pure ASM
+facade in Common for the NeoForge consumption boundary, without loading game or
+optional classes. Shared MA observation uses the core's internal consumed-site
+proof but retains its own marker and stage checks. The JDT runtime
+observer/dispatch API is NeoForge-only. JDT and sibling products
 remain optional, and no refund data changes namespace.
+
+### Optional Mystical Agriculture break observation (since 1.1.0)
+
+`api.compatibility.mysticalagriculture.MysticalRefunds.register(item, factory)`
+registers one exact item owner after its registry identity is stable, independently
+of optional native binding success. Concurrent registrations are safe; duplicates
+reject without replacing the first owner. A factory returns a product-local typed
+receipt or declines. Things owns one guarded four-stage observer on each loader:
+entry capture, the last check before actual consumption, consumption observation
+and completion on normal `applyDamage` return. Damage is the proposed value,
+not a delta. Stage authorization closes before external callbacks; exceptions
+are not retried, rolled back or converted into refunds.
+
+Products retain supported locations, physical purchase/source authority, live
+component checks, native bindings and inventory/overflow delivery. No shared
+wallet, receipt ledger, product lookup or saved-data migration is added. A native
+callback that throws after consumption prevents completion for both products.
+MA absence is quiet; incompatible shared flow refuses MA refunds without replacing
+ordinary breakage or independently proved effects. The JDT hook remains separate.
 
 ### Optional Forbidden Arcanus operations (since 1.1.0)
 

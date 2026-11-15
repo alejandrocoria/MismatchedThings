@@ -1509,7 +1509,7 @@ dedicated-client transport, rendering or owner acceptance.
 
 ## Mystical Agriculture conserved refunds (block B)
 
-This maintained **server-only** profile loads packaged production Leggings with
+This maintained **server-only** profile loads the selected packaged armor products with
 resolver-pinned original NeoForge MA/Cucumber or the independent Fabric port.
 It enables no research candidate or second shrink router. Run profiles, loaders
 and baselines sequentially:
@@ -1520,17 +1520,21 @@ and baselines sequentially:
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds '-PleggingsMaGraph=current' --offline --console=plain
 ```
 
-`leggingsMaGraph=alone|current` selects Leggings alone or current built Boots.
+`leggingsMaGraph=alone|boots|current` selects Leggings alone, Boots alone or both current products.
 The historical `published` positive is refused by the verifier: use the native
 rejection command above for unchanged Boots 1.0.0, not a refund gameplay run.
-`leggingsMaOrder=before|after` selects observer priority 1100/900 around Boots'
-1000. The second order instruments **only the observer annotation in the staged
-Leggings copy**; production outputs and every Boots byte remain unchanged. The
-fixture checks actual exported merged-method priorities and live final readiness.
+`leggingsMaOrder=before|after` selects the shared MA observer's priority 1100/900,
+on either side of the core JDT wrapper's 1000 when JDT is present. The second
+order builds a standalone **test-only Things JAR**: only its MA annotation priority
+and descriptor version (next patch, for native selection over nested copies)
+change. Neither armor JAR is rewritten, and normal Things outputs are untouched.
+The fixture checks the actual exported owned stages, priorities, absence of
+legacy product hooks and live final readiness. Both products use independent
+normal-initialization registrations and product-local typed purchase receipts.
 
 `leggingsMaRefundVariant=normal|compatible|flow` selects the normal final code,
 unrelated NOP instructions, or an opaque but runtime-equivalent broken predicate.
-The last must refuse only mixed Leggings refunds with one expected diagnostic:
+The last must refuse shared mixed MA refunds with one expected core diagnostic:
 ordinary consumption, the native refund positive and independent selection stay
 active. Use that control alone. `-PleggingsMaAbsent=true` checks ordinary actual
 breaks and quiet optional absence. `-Pneoforge_version=26.1.2.99` selects the floor;
@@ -1553,8 +1557,8 @@ on the same player in coexistence cases, preserving each purchase separately.
 
 Reports: `<Loader>/build/reports/<baseline>/mystical-refunds-<graph>-<order>-<variant>`
 with optional `-absent`; require `server.ok`, `refunds.txt` and `matrix.ok` in the
-matching `build/verification/...` directory. Unexpected runtime ERRORs, any Boots
-refund refusal, unexpected Leggings/effect/binding refusals, bad exits, missing
+matching `build/verification/...` directory. Unexpected runtime ERRORs, unexpected
+shared/effect/binding refusals, bad exits, missing
 markers and timeouts fail verification. This is bounded actual-break evidence,
 not dedicated-client transport, saved-item reopening, arbitrary drop pipelines,
 Tinkering Table support or owner acceptance; broader consolidation is covered below.

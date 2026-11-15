@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings.compatibility.mysticalagricultur
 
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
+import games.alejandrocoria.mismatchedthings.api.compatibility.mysticalagriculture.MysticalRefunds;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,85 +12,52 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-/** Observations only: the native/Boots consumption operation is never replaced or replayed. */
+/** Product-local purchase authority and delivery through Things' normal-return MA observer. */
 public final class MysticalRefundCompatibility {
     private static boolean warned;
 
-    private MysticalRefundCompatibility() {}
+    private MysticalRefundCompatibility() {
+    }
+
+    /** Called once after the loader has registered this product's item, without resolving native MA bindings. */
+    public static void register(Item item) {
+        MysticalRefunds.register(item, MysticalRefundCompatibility::capture);
+    }
 
     static synchronized void unavailable(Throwable failure) {
-        if (warned) { return; }
-        warned = true;
-        if (failure == null) {
-            LeggingsContent.LOG.warn("Mystical Agriculture leggings refund flow incompatible; ordinary breakage retained without augment refunds");
-        } else {
-            LeggingsContent.LOG.warn("Mystical Agriculture leggings refund binding unavailable", failure);
+        if (!warned) {
+            warned = true;
+            LeggingsContent.LOG.warn("Mystical Agriculture augment refund binding unavailable", failure);
         }
     }
 
-    public static Capture capture(boolean ready, ItemStack root, int damage, LivingEntity owner) {
-        if (!ready || !(owner instanceof ServerPlayer player) || player.hasInfiniteMaterials() || player.isSpectator()
+    private static Receipt capture(ItemStack root, int damage, LivingEntity owner) {
+        if (!(owner instanceof ServerPlayer player) || player.hasInfiniteMaterials() || player.isSpectator()
                 || root.getCount() != 1 || !root.isDamageableItem() || root.getMaxDamage() <= 0
                 || damage < root.getMaxDamage()) {
             return null;
         }
+
         Inventory inventory = player.getInventory();
         int slot = -1;
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            if (inventory.getItem(i) == root) {
-                if (slot >= 0) { return null; } // Ambiguous physical ownership is not a purchase.
-                slot = i;
+        for (int index = 0; index < inventory.getContainerSize(); index++) {
+            if (inventory.getItem(index) == root) {
+                if (slot >= 0) {
+                    return null; // Ambiguous physical ownership is not a purchase.
+                }
+                slot = index;
             }
         }
-        if (slot < 0) { return null; }
+        if (slot < 0) {
+            return null;
+        }
+
         var purchases = MysticalAugmentsCompatibility.refunds(root);
-        return purchases == null ? null : new Capture(root, root.getItem(), player, inventory, slot,
+        return purchases == null ? null : new Receipt(root, root.getItem(), player, inventory, slot,
                 root.getMaxDamage(), root.getComponents(), root.get(LeggingsContent.mixedLeggingsDataType()), purchases);
     }
 
-    /** Runs after native pre-break events, immediately before the proved one-item consumption. */
-    public static void arm(Capture capture) {
-        if (capture == null || capture.stage != 0) { return; }
-        capture.stage = -1;
-        if (eligible(capture) && capture.root.getCount() == 1 && capture.root.getItem() == capture.item
-                && capture.root.isDamageableItem() && capture.root.getDamageValue() == capture.maximum
-                && capture.root.getMaxDamage() == capture.maximum && unchanged(capture)) {
-            capture.stage = 1;
-        }
-    }
-
-    public static void consumed(Capture capture) {
-        if (capture == null || capture.stage != 1) { return; }
-        capture.stage = eligible(capture) && capture.root.getCount() == 0 && unchanged(capture) ? 2 : -1;
-    }
-
-    /** Called only on normal applyDamage return; consume authorization before inventory/drop callbacks. */
-    public static void complete(Capture capture) {
-        if (capture == null || capture.stage != 2) { return; }
-        capture.stage = -1;
-        if (!eligible(capture) || capture.root.getCount() != 0 || !unchanged(capture)) { return; }
-        for (Item item : capture.purchases.items()) {
-            capture.inventory.placeItemBackInInventory(new ItemStack(item));
-        }
-    }
-
-    private static boolean eligible(Capture capture) {
-        return capture.player.getInventory() == capture.inventory && capture.inventory.getItem(capture.slot) == capture.root
-                && !capture.player.hasInfiniteMaterials() && !capture.player.isSpectator();
-    }
-
-    private static boolean unchanged(Capture capture) {
-        // Empty-stack getters hide components; retain the live map, not a stale pre-break copy.
-        var shadow = new ItemStack(capture.item, 1);
-        List.copyOf(shadow.getComponents().keySet()).forEach(shadow::remove);
-        shadow.applyComponents(capture.live);
-        return shadow.getDamageValue() == capture.maximum && shadow.getMaxDamage() == capture.maximum
-                && capture.data.equals(shadow.get(LeggingsContent.mixedLeggingsDataType()))
-                && capture.purchases.equals(MysticalAugmentsCompatibility.refunds(shadow));
-    }
-
-    /** Invocation-local state held by @Share; no thread-local or persistent credit survives a throw. */
-    public static final class Capture {
+    private static final class Receipt implements MysticalRefunds.Receipt {
         private final ItemStack root;
         private final Item item;
         private final ServerPlayer player;
@@ -99,12 +67,62 @@ public final class MysticalRefundCompatibility {
         private final DataComponentMap live;
         private final MixedLeggingsData data;
         private final MysticalAugmentsCompatibility.RefundView purchases;
-        private int stage;
+        private boolean armed;
+        private boolean consumed;
 
-        private Capture(ItemStack root, Item item, ServerPlayer player, Inventory inventory, int slot,
+        private Receipt(ItemStack root, Item item, ServerPlayer player, Inventory inventory, int slot,
                         int maximum, DataComponentMap live, MixedLeggingsData data, MysticalAugmentsCompatibility.RefundView purchases) {
-            this.root = root; this.item = item; this.player = player; this.inventory = inventory;
-            this.slot = slot; this.maximum = maximum; this.live = live; this.data = data; this.purchases = purchases;
+            this.root = root;
+            this.item = item;
+            this.player = player;
+            this.inventory = inventory;
+            this.slot = slot;
+            this.maximum = maximum;
+            this.live = live;
+            this.data = data;
+            this.purchases = purchases;
+        }
+
+        @Override
+        public void arm() {
+            armed = eligible() && root.getCount() == 1 && root.getItem() == item
+                    && root.isDamageableItem() && root.getDamageValue() == maximum
+                    && root.getMaxDamage() == maximum && unchanged();
+        }
+
+        @Override
+        public void consumed() {
+            consumed = armed && eligible() && root.getCount() == 0 && unchanged();
+        }
+
+        @Override
+        public void complete() {
+            boolean authorized = consumed;
+            consumed = false;
+            armed = false;
+            if (!authorized || !eligible() || root.getCount() != 0 || !unchanged()) {
+                return;
+            }
+
+            // Authorization is already closed before external insertion/drop callbacks. Never retry delivery.
+            for (Item purchase : purchases.items()) {
+                inventory.placeItemBackInInventory(new ItemStack(purchase));
+            }
+        }
+
+        private boolean eligible() {
+            return player.getInventory() == inventory && inventory.getItem(slot) == root
+                    && !player.hasInfiniteMaterials() && !player.isSpectator();
+        }
+
+        private boolean unchanged() {
+            // Empty-stack getters hide components; retain the live map, not a stale pre-break copy.
+            var shadow = new ItemStack(item, 1);
+            List.copyOf(shadow.getComponents().keySet()).forEach(shadow::remove);
+            shadow.applyComponents(live);
+            return shadow.getDamageValue() == maximum && shadow.getMaxDamage() == maximum
+                    && data.equals(shadow.get(LeggingsContent.mixedLeggingsDataType()))
+                    && purchases.equals(MysticalAugmentsCompatibility.refunds(shadow));
         }
     }
 }

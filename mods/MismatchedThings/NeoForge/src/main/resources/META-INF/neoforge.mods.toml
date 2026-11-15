@@ -16,6 +16,9 @@ config="mismatchedthings.justdirethings-armor-wear.mixins.json"
 [[mixins]]
 config="mismatchedthings.justdirethings-refunds.mixins.json"
 
+[[mixins]]
+config="mismatchedthings.mysticalagriculture-refunds.mixins.json"
+
 [[dependencies.${mod_id}]]
 modId="mismatchedboots"
 type="incompatible"

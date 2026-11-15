@@ -5,7 +5,7 @@ if (!(graph in ['core', 'legs', 'boots', 'both']) || !(fault in ['', 'shape', 'f
         || fault in ['binding', 'receipts'] && !(graph in ['legs', 'both'])) {
     throw new GradleException('leggingsRefundGraph=core|legs|boots|both; leggingsRefundFault=shape|forward|binding|receipts|jdtAbsent|maAbsent (binding/receipts need Leggings)')
 }
-def label = "jdt-refunds-${graph}" + (fault ? "-${fault}" : '')
+def label = "jdt-refunds-${graph}" + (fault ? "-${fault}" : '') + (maRefundOrder == 'after' ? '-ma-after' : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def boots = project(':MismatchedBoots:NeoForge')
@@ -14,11 +14,13 @@ dependencies.add('compileOnly', files(boots.tasks.named('jar').flatMap { it.arch
 
 tasks.register('prepareJustDireRefundSeam') {
     dependsOn tasks.named('classes'), boots.tasks.named('assemble'), project(':MismatchedLeggings:NeoForge').tasks.named('assemble')
+    if (maRefundOrder == 'after') { dependsOn maRefundOrderTask }
     doLast {
         def artifacts = []
+        if (maRefundOrder == 'after') { artifacts.add(maRefundOrderCore.get().asFile) }
         if (graph in ['legs', 'both']) { artifacts.add(project(':MismatchedLeggings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
         if (graph in ['boots', 'both']) { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
-        if (graph == 'core') { artifacts.add(project(':MismatchedThings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
+        if (graph == 'core' && maRefundOrder != 'after') { artifacts.add(project(':MismatchedThings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
         def optionalArtifacts = []
         if (fault != 'jdtAbsent') { optionalArtifacts.add('justdirethings-1.6.11.jar') }
         // MA proves shrink itself is unchanged. JDT's foreign-consumption faults need a separate no-MA profile.
@@ -44,6 +46,7 @@ neoForge.runs.create('justDireRefundSeam') {
     systemProperty('leggings.test.jdtRefunds', 'true')
     systemProperty('leggings.test.refundGraph', graph)
     systemProperty('leggings.test.refundFault', fault)
+    systemProperty('leggings.test.maOrder', maRefundOrder)
     systemProperty('leggings.test.report', reports.absolutePath)
     systemProperty('mixin.debug.export', 'true')
     jvmArgument('-Xmx1G')

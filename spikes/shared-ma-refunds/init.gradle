@@ -3,6 +3,7 @@ initscript {
     dependencies { classpath 'org.ow2.asm:asm-tree:9.9.1' }
 }
 
+
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
@@ -10,9 +11,10 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.VarInsnNode
+
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import java.util.zip.ZipEntry
 
 // Explicit opt-in init script. Production sources/artifacts are never overwritten.
 gradle.projectsEvaluated {

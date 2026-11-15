@@ -208,19 +208,7 @@ public final class JustDireRefundShape implements Opcodes {
     }
 
     public static boolean observer(MethodNode handler) {
-        if (owned(handler)) {
-            return router(handler);
-        }
-        // Recognize our independent MA consumption observer, not its eligibility or refund items.
-        String peer = "games.alejandrocoria.mismatchedboots.mixin.compatibility.mysticalagriculture.MysticalRefundMixin";
-        if (handler.visibleAnnotations == null
-                || handler.visibleAnnotations.stream().noneMatch(annotation ->
-                        annotation.desc.equals("Lorg/spongepowered/asm/mixin/transformer/meta/MixinMerged;")
-                                && annotation.values != null && annotation.values.contains(peer))) {
-            return false;
-        }
-        return routerCode(handler, "mismatchedboots$maRefundReady",
-                          "games/alejandrocoria/mismatchedboots/compatibility/mysticalagriculture/MysticalRefundCompatibility");
+        return owned(handler) && router(handler);
     }
 
     private static boolean router(MethodNode handler) {

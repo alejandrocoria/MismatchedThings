@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedboots;
 
+import games.alejandrocoria.mismatchedboots.compatibility.mysticalagriculture.MysticalRefundCompatibility;
 import games.alejandrocoria.mismatchedboots.config.AttributeRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
@@ -23,6 +24,7 @@ public class MismatchedBootsFabric implements ModInitializer {
                 BuiltInRegistries.ITEM,
                 ModContent.MIXED_BOOTS_ID,
                 new FabricMixedBootsItem(ModContent.mixedBootsProperties().setId(ModContent.MIXED_BOOTS_KEY)));
+        MysticalRefundCompatibility.register(BuiltInRegistries.ITEM.get(ModContent.MIXED_BOOTS_ID).orElseThrow().value());
         Registry.register(
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent.SMITHING_BASE_RECIPE_ID,

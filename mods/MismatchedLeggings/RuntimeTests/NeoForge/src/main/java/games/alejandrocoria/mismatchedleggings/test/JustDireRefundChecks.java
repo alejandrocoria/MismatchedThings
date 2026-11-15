@@ -5,6 +5,7 @@ import com.direwolf20.justdirethings.common.items.interfaces.Ability;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCompatibility;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.test.mysticaleffects.NativeAugments;
+import games.alejandrocoria.mismatchedleggings.test.mysticalrefunds.SharedRefundWitness;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -117,12 +118,15 @@ final class JustDireRefundChecks {
                 require(jdtDrops == 0 && augmentDrops == 0, "Unclaimed core-only item refunded");
                 REPORT.append("Independent core; one verified observer and ordinary unclaimed consumption/callback\n");
             }
+            if (ma && !fault().equals("shape")) {
+                REPORT.append(SharedRefundWitness.verify(true));
+            }
             for (boolean leggings : List.of(true, false)) {
                 if (leggings ? !legs : !boots) {
                     continue;
                 }
                 if (ma && !fault().equals("shape")) {
-                    require(ready(leggings ? "mismatchedleggings$maRefundReady" : "mismatchedboots$maRefundReady"), "MA final observer regressed");
+                    require(ready("mismatchedthings$maRefundReady"), "MA final observer regressed");
                 }
                 var vanilla = new ItemStack(leggings ? Items.DIAMOND_LEGGINGS : Items.DIAMOND_BOOTS);
                 if (jdt) {
