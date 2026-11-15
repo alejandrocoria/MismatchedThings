@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Native installation flags are live root state; historical source flags are imported only at creation. */
 public final class JustDireState implements JustDireComposition {
-    private static final List<String> NAMES = List.of("walkspeed", "runspeed", "swimspeed", "decoy", "phase");
+    static final List<String> NAMES = List.of("walkspeed", "runspeed", "swimspeed", "decoy", "phase");
     private static final List<String> ITEMS = List.of("ferricore_leggings", "blazegold_leggings", "celestigem_leggings", "eclipsealloy_leggings");
     private static final AtomicBoolean RECIPE_WARNED = new AtomicBoolean();
     private static volatile Api api;
@@ -65,6 +65,7 @@ public final class JustDireState implements JustDireComposition {
             api = new Api(items, List.copyOf(upgrades), MethodHandles.publicLookup()
                     .findVirtual(tool, "getAllAbilities", MethodType.methodType(java.util.EnumSet.class))
                     .asType(MethodType.methodType(Set.class, Item.class)));
+            JustDireRefundCompatibility.bindItems();
         } catch (ReflectiveOperationException | RuntimeException | LinkageError failure) {
             LeggingsContent.LOG.warn("Could not bind Just Dire Things leggings upgrades; root installation disabled", failure);
         }
@@ -88,6 +89,7 @@ public final class JustDireState implements JustDireComposition {
             initializeUpgrades(output, data);
         } else {
             preserveControls(previous, output);
+            JustDireRefundCompatibility.preserve(previous, output);
         }
         JustDireResources.prepare(previous, output, data);
         if (previous == null) {
@@ -97,6 +99,7 @@ public final class JustDireState implements JustDireComposition {
     }
 
     private static void initializeUpgrades(ItemStack output, MixedLeggingsData data) {
+        JustDireRefundCompatibility.initializeCredits(output, List.of());
         Api binding = api;
         var sources = List.of(data.left().source(), data.right().source());
         if (binding == null) {
@@ -106,6 +109,7 @@ public final class JustDireState implements JustDireComposition {
             return;
         }
         var imported = new ArrayList<DataComponentType<Boolean>>();
+        var ownerPurchases = new ArrayList<String>();
         try {
             for (var source : sources) {
                 if (!binding.items.contains(source.getItem())) {
@@ -115,6 +119,9 @@ public final class JustDireState implements JustDireComposition {
                 for (var upgrade : binding.upgrades) {
                     if (abilities.contains(upgrade.ability) && source.getOrDefault(upgrade.flag, false)) {
                         imported.add(upgrade.flag);
+                        if (source == sources.getFirst()) {
+                            ownerPurchases.add(upgrade.name);
+                        }
                     }
                 }
             }
@@ -127,6 +134,7 @@ public final class JustDireState implements JustDireComposition {
         }
         binding.upgrades.forEach(upgrade -> output.remove(upgrade.flag));
         imported.forEach(flag -> output.set(flag, true));
+        JustDireRefundCompatibility.initializeCredits(output, ownerPurchases);
         // Explicit user controls follow the owner, not a configured numeric/boolean projection.
         preserveControls(data.left().source(), output, false);
     }
@@ -205,6 +213,7 @@ public final class JustDireState implements JustDireComposition {
                 }
                 var changed = root.copy();
                 changed.set(upgrade.flag, true);
+                JustDireRefundCompatibility.addInstallation(changed, name);
                 // A root-only installation must not rebuild unrelated source-derived components.
                 var output = changed.copy();
                 prepare(changed, output, data);

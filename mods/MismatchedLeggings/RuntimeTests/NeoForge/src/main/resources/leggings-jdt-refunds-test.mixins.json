@@ -3,5 +3,10 @@
     "package": "games.alejandrocoria.mismatchedleggings.test.refunds.mixin",
     "plugin": "games.alejandrocoria.mismatchedleggings.test.refunds.RefundFaultPlugin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["ForwardMixin", "ShapeFaultMixin"]
+    "mixins": [
+        "BindingRefusalMixin",
+        "ConsumptionMutationsMixin",
+        "ForwardMixin",
+        "ShapeFaultMixin"
+    ]
 }

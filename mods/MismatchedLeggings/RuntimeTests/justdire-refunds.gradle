@@ -1,8 +1,9 @@
 // Maintained shared-boundary acceptance: ordinary packaged products, no patched JARs or witness credits.
 def graph = providers.gradleProperty('leggingsRefundGraph').getOrElse('both')
 def fault = providers.gradleProperty('leggingsRefundFault').getOrElse('')
-if (!(graph in ['core', 'legs', 'boots', 'both']) || !(fault in ['', 'shape', 'forward', 'jdtAbsent', 'maAbsent'])) {
-    throw new GradleException('leggingsRefundGraph=core|legs|boots|both; leggingsRefundFault=shape|forward|jdtAbsent|maAbsent')
+if (!(graph in ['core', 'legs', 'boots', 'both']) || !(fault in ['', 'shape', 'forward', 'binding', 'receipts', 'jdtAbsent', 'maAbsent'])
+        || fault in ['binding', 'receipts'] && !(graph in ['legs', 'both'])) {
+    throw new GradleException('leggingsRefundGraph=core|legs|boots|both; leggingsRefundFault=shape|forward|binding|receipts|jdtAbsent|maAbsent (binding/receipts need Leggings)')
 }
 def label = "jdt-refunds-${graph}" + (fault ? "-${fault}" : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
@@ -20,7 +21,8 @@ tasks.register('prepareJustDireRefundSeam') {
         if (graph == 'core') { artifacts.add(project(':MismatchedThings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
         def optionalArtifacts = []
         if (fault != 'jdtAbsent') { optionalArtifacts.add('justdirethings-1.6.11.jar') }
-        if (fault != 'maAbsent') { optionalArtifacts.addAll(['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']) }
+        // MA proves shrink itself is unchanged. JDT's foreign-consumption faults need a separate no-MA profile.
+        if (!(fault in ['maAbsent', 'receipts'])) { optionalArtifacts.addAll(['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']) }
         optionalArtifacts.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
         def mods = new File(directory, 'mods')
         mods.mkdirs()
@@ -53,7 +55,12 @@ tasks.named('runJustDireRefundSeam') {
                 || new File(reports, 'server.failure.txt').exists()) { throw new GradleException("JDT refund seam failed: ${reports}") }
         def log = new File(directory, 'logs/latest.log').readLines()
         def flowWarnings = log.findAll { it.contains('Just Dire Things refund flow incompatible') }
-        if (flowWarnings.size() != (fault == 'shape' ? 1 : 0) || log.any { it.contains('/ERROR]') || it.contains('/FATAL]') }) {
+        def errors = log.findAll { it.contains('/ERROR]') || it.contains('/FATAL]') }
+        // The delivery exception deliberately crosses the real event bus, which logs it before rethrowing.
+        def expectedDeliveryError = fault == 'receipts' && errors.size() == 1
+                && errors.first().contains('Exception caught during firing event: controlled delivery')
+        if (flowWarnings.size() != (fault == 'shape' ? 1 : 0) || !errors.isEmpty() && !expectedDeliveryError
+                || fault == 'receipts' && !expectedDeliveryError) {
             throw new GradleException('Unexpected production refund-seam diagnostic')
         }
     }

@@ -20,6 +20,12 @@ public final class RefundFaultPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String target, String name) {
         String fault = System.getProperty("leggings.test.refundFault", "");
+        if (name.endsWith("ConsumptionMutationsMixin")) {
+            return fault.equals("receipts");
+        }
+        if (name.endsWith("BindingRefusalMixin")) {
+            return fault.equals("binding");
+        }
         return name.endsWith("ShapeFaultMixin") ? fault.equals("shape") : fault.equals("forward");
     }
 

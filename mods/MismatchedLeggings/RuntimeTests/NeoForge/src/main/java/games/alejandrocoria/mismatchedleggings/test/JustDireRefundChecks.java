@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedleggings.test;
 
 import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataComponents;
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCompatibility;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.test.mysticaleffects.NativeAugments;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -28,11 +29,12 @@ import java.util.List;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Actual packaged initialization/refunds; no candidate registration, local credits or patched JARs. */
+/** Actual packaged initialization/refunds; no candidate registration or patched JARs. */
 final class JustDireRefundChecks {
     private static final StringBuilder REPORT = new StringBuilder();
-    private static ItemStack observed;
-    private static int jdtDrops;
+    static ItemStack observed;
+    static int jdtDrops;
+    static final java.util.List<String> returnedUpgrades = new java.util.ArrayList<>();
     private static int augmentDrops;
     private static int callbacks;
     private static boolean cancel;
@@ -56,6 +58,8 @@ final class JustDireRefundChecks {
             require(entity.getItem().getCount() == 1, "Unexpected refund count");
             if (jdt) {
                 jdtDrops++;
+                returnedUpgrades.add(id.getPath().substring("upgrade_".length()));
+                JustDireRefundCreditChecks.delivery(event);
             } else {
                 augmentDrops++;
             }
@@ -82,7 +86,7 @@ final class JustDireRefundChecks {
             boolean legs = graph.equals("legs") || graph.equals("both");
             boolean boots = graph.equals("boots") || graph.equals("both");
             boolean jdt = !fault().equals("jdtAbsent");
-            boolean ma = !fault().equals("maAbsent");
+            boolean ma = !fault().equals("maAbsent") && !fault().equals("receipts");
             require(ModList.get().isLoaded("mismatchedleggings") == legs && ModList.get().isLoaded("mismatchedboots") == boots
                             && ModList.get().isLoaded("justdirethings") == jdt && ModList.get().isLoaded("mysticalagriculture") == ma,
                     "Wrong packaged product/optional graph");
@@ -99,8 +103,9 @@ final class JustDireRefundChecks {
                         "Absent JDT loaded the optional observer");
             }
             if (legs) {
-                require(BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.parse("mismatchedleggings:jdt_refundable_upgrades")).isEmpty(),
-                        "Block A unexpectedly introduced Leggings JDT credits");
+                require(BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.parse("mismatchedleggings:jdt_refundable_upgrades")).isPresent(),
+                        "Own credit component must exist even without JDT");
+                require(JustDireRefundCompatibility.available() == (jdt && !fault().equals("binding")), "Wrong local binding permission");
             }
             if (graph.equals("core")) {
                 var root = new ItemStack(Items.DIAMOND_BOOTS);
@@ -125,9 +130,12 @@ final class JustDireRefundChecks {
                     }
                     for (int orientation = 0; orientation < 2; orientation++) {
                         destroy(server, roots.get(orientation), leggings, false);
-                        require(jdtDrops == (!leggings && orientation == 0 && !fault().equals("shape") ? 1 : 0), "Wrong owner JDT refund");
+                        require(jdtDrops == (orientation == 0 && refundsEnabled(leggings) ? 1 : 0), "Wrong owner JDT refund");
                     }
                     cancelledAndFunded(server, leggings);
+                    if (leggings && refundsEnabled(true)) {
+                        JustDireRefundCreditChecks.run(server, REPORT);
+                    }
                 }
                 if (ma && !fault().equals("shape")) {
                     for (boolean overflow : List.of(false, true)) {
@@ -145,11 +153,11 @@ final class JustDireRefundChecks {
                             }
                             require(inventory + augmentDrops == (orientation == 0 ? 1 : 0), "MA purchase lost/duplicated");
                             require(augmentDrops == (overflow && orientation == 0 ? 1 : 0), "MA overflow route not exercised");
-                            require(jdtDrops == (jdt && !leggings && orientation == 1 ? 1 : 0), "MA/JDT owner credits interfered");
+                            require(jdtDrops == (jdt && orientation == 1 && refundsEnabled(leggings) ? 1 : 0), "MA/JDT owner credits interfered");
                         }
                     }
-                    if (jdt && !leggings) {
-                        paidBootsWithBothRefunds(server);
+                    if (jdt && refundsEnabled(leggings)) {
+                        paidWithBothRefunds(server, leggings);
                     }
                 }
                 REPORT.append(leggings ? "Leggings" : "Boots").append(": real initialized product; owner JDT drops, cancellation/funded FE and MA inventory/overflow checked where present\n");
@@ -169,11 +177,11 @@ final class JustDireRefundChecks {
         return (boolean) getter.invoke(null);
     }
 
-    private static void paidBootsWithBothRefunds(MinecraftServer server) throws Exception {
-        var source = NativeAugments.item("awakened_supremium_boots", "LUCK_I");
-        var root = pair(false, source, nativeJdt(false)).getFirst();
+    private static void paidWithBothRefunds(MinecraftServer server, boolean leggings) throws Exception {
+        var source = NativeAugments.item(leggings ? "awakened_supremium_leggings" : "awakened_supremium_boots", "LUCK_I");
+        var root = pair(leggings, source, nativeJdt(leggings)).getFirst();
         var player = RepairFixtures.player(server);
-        var upgrade = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("justdirethings:upgrade_jumpboost")));
+        var upgrade = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("justdirethings:upgrade_" + (leggings ? "runspeed" : "jumpboost"))));
         var menu = SmithingChecks.ready(player, ItemStack.EMPTY, root, upgrade);
         var paid = menu.getSlot(3).safeTake(1, 1, player);
         require(!paid.isEmpty() && !menu.getSlot(1).hasItem() && !menu.getSlot(2).hasItem(), "Joint-credit upgrade not actually paid");
@@ -194,7 +202,7 @@ final class JustDireRefundChecks {
         }
         require(paid.isEmpty() && callbacks == 1 && jdtDrops == 1 && returned + augmentDrops == 1,
                 "Paid Boots inventory destruction lost one of its simultaneous JDT/MA refunds");
-        REPORT.append("Boots: a paid root owning both credit kinds refunds both after actual inventory destruction\n");
+        REPORT.append(leggings ? "Leggings" : "Boots").append(": a paid root owning both credit kinds refunds both after actual inventory destruction\n");
     }
 
     private static List<ItemStack> pair(boolean leggings, ItemStack first, ItemStack second) throws Exception {
@@ -248,7 +256,7 @@ final class JustDireRefundChecks {
         }
         require(!root.isEmpty() && jdtDrops == 0, "Late cancelled wear consumed/refunded root");
         hit(player, leggings);
-        require(root.isEmpty() && jdtDrops == (!leggings && !fault().equals("shape") ? 1 : 0), "Actual equipped wear/refund changed");
+        require(root.isEmpty() && jdtDrops == (refundsEnabled(leggings) ? 1 : 0), "Actual equipped wear/refund changed");
         var powered = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("justdirethings:celestigem_" + (leggings ? "leggings" : "boots"))));
         powered.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.byName(leggings ? "walkspeed" : "stepheight")), true);
         root = pair(leggings, powered, other).getFirst();
@@ -262,5 +270,9 @@ final class JustDireRefundChecks {
 
     private static void hit(ServerPlayer player, boolean leggings) {
         CommonHooks.onArmorHurt(player.damageSources().generic(), new EquipmentSlot[]{leggings ? EquipmentSlot.LEGS : EquipmentSlot.FEET}, 2, player);
+    }
+
+    private static boolean refundsEnabled(boolean leggings) {
+        return !fault().equals("shape") && !(leggings && fault().equals("binding"));
     }
 }

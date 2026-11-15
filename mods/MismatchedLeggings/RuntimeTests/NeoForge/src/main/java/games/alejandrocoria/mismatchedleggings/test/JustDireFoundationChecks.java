@@ -4,6 +4,8 @@ import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataCom
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
 import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords;
 import com.direwolf20.justdirethings.setup.Config;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCredits;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsRecomposer;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
@@ -269,7 +271,7 @@ final class JustDireFoundationChecks {
                 "Equality with an old source projection was mistaken for live ownership");
     }
 
-    private static void smithing(MinecraftServer server, ServerPlayer player) {
+    static void smithing(MinecraftServer server, ServerPlayer player) {
         int count = 0;
         for (String tier : List.of("ferricore", "blazegold", "celestigem", "eclipsealloy")) {
             var nativeStack = item(tier + "_leggings");
@@ -292,8 +294,9 @@ final class JustDireFoundationChecks {
                     require(!result.isEmpty() && installed(result, name), "Native root upgrade missing: " + tier + '/' + name);
                     var expected = original.copy();
                     install(expected, name, true);
+                    expected.set(JustDireRefundCompatibility.component(), new JustDireRefundCredits(List.of(name)));
                     require(ItemStack.matches(result, expected) && ItemStack.matches(root, original),
-                            "Root installation changed more than its flag: " + tier + '/' + name + ' ' + differences(expected, result));
+                            "Root installation changed more than its flag and purchase: " + tier + '/' + name + ' ' + differences(expected, result));
                     menu.createResult();
                     require(ItemStack.matches(menu.getSlot(3).getItem(), expected), "Repeated smithing preview changed result");
                     var recipe = ((ResultContainer) menu.getSlot(3).container).getRecipeUsed().id().identifier();

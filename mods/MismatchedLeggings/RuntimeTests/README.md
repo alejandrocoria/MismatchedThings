@@ -30,15 +30,22 @@ options describe historical acceptance, not supported current coexistence.
 
 Maintained server-only acceptance uses ordinary packaged products and the shared
 pinned JDT/MA/Cucumber cache. It never patches product JARs or registers candidate
-callbacks. Block A checks Boots refunds and both MA observers; Leggings has no
-JDT credit component/refunds yet.
+callbacks. Both products use the one shared observer with local purchase state.
+The fixture checks owner-based Leggings imports and paid smithing, real drops,
+supported slots, dormant/disabled credits, typed synchronization and MA coexistence.
 
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:runJustDireRefundSeam --offline --console=plain
 ```
 
 Use `-PleggingsRefundGraph=core|legs|boots|both` (default `both`) and optional
-`-PleggingsRefundFault=forward|shape|jdtAbsent|maAbsent`. For `.99`, quote
+`-PleggingsRefundFault=forward|shape|binding|receipts|jdtAbsent|maAbsent`. `binding`
+refuses only Leggings' native item binding; `receipts` runs foreign consumption
+and delivery mutations with MA absent (MA deliberately proves `shrink` unchanged).
+Those two profiles require Leggings. The receipt profile expects exactly one
+event-bus error for its deliberate throwing-delivery control; other runtime errors
+are rejected. All cases exercise production-created/paid roots, not a credit witness.
+For `.99`, quote
 `'-Pneoforge_version=26.1.2.99'`. Run profiles sequentially and restore `.114`.
 Reports/markers live under `NeoForge/build/reports/<baseline>/jdt-refunds-<graph>[-<fault>]/`;
 actual wear/drop, MA inventory/overflow, one selected core and original callback
