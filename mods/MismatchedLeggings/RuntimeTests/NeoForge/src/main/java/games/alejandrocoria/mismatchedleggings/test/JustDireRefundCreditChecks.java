@@ -71,6 +71,23 @@ final class JustDireRefundCreditChecks {
         }
     }
 
+    static void reopened(MinecraftServer server, ItemStack stored) {
+        var credits = stored.get(JustDireRefundCompatibility.component());
+        var expected = credits == null ? List.<String>of() : credits.names();
+        var root = stored.copy();
+        if (root.has(JustDireDataComponents.FORGE_ENERGY)) {
+            root.set(JustDireDataComponents.FORGE_ENERGY, 0);
+        }
+        var player = equip(server, root, LEGS);
+        try {
+            wear(player, root);
+            require(root.isEmpty() && callbacks == 1, "Recovered root did not really break exactly once");
+            returned(expected.toArray(String[]::new));
+        } finally {
+            JustDireRefundChecks.observed = null;
+        }
+    }
+
     private static ItemStack item(String path) {
         return new ItemStack(BuiltInRegistries.ITEM.get(Identifier.fromNamespaceAndPath("justdirethings", path)).orElseThrow().value());
     }

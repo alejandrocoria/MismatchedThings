@@ -44,8 +44,18 @@ final class JustDireRefundChecks {
     }
 
     static void register() {
+        registerDrops();
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ArmorHurtEvent event) -> {
+            if (cancel) {
+                event.setCanceled(true);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
+    }
+
+    static void registerDrops() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (EntityJoinLevelEvent event) -> {
-            if (!(event.getEntity() instanceof ItemEntity entity)) {
+            if (observed == null || event.getLevel().isClientSide() || !(event.getEntity() instanceof ItemEntity entity)) {
                 return;
             }
             var id = BuiltInRegistries.ITEM.getKey(entity.getItem().getItem());
@@ -64,12 +74,6 @@ final class JustDireRefundChecks {
                 augmentDrops++;
             }
         });
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ArmorHurtEvent event) -> {
-            if (cancel) {
-                event.setCanceled(true);
-            }
-        });
-        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
     }
 
     private static String fault() {

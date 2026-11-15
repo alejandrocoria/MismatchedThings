@@ -1,11 +1,13 @@
 package games.alejandrocoria.mismatchedthings.test;
 
 import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import games.alejandrocoria.mismatchedthings.api.WorkbenchInput;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchContributors;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -121,6 +123,10 @@ public final class WorkbenchCoexistence {
             ItemStack root = WorkbenchRoute.BOOTS.assemble(level).primary();
             root.set(DataComponents.CUSTOM_NAME, Component.literal("Saved mixed boots"));
             root.set(DataComponents.REPAIR_COST, 7);
+            // NeoForge registers this own component even without JDT. Seed it with the
+            // installed Boots binary's codec, never a current-product class or a copied schema.
+            BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.parse("mismatchedboots:jdt_refundable_upgrades"))
+                    .ifPresent(holder -> seedRefundCredits(root, holder.value()));
             barrel.setItem(1, root);
             WorkbenchChecks.write("saved-boots.json", WorkbenchChecks.encode(root, level));
         }
@@ -134,5 +140,9 @@ public final class WorkbenchCoexistence {
         String expected = Files.readString(Path.of(System.getProperty("workbench.test.seedReport"), "saved-boots.json"));
         WorkbenchChecks.require(JsonParser.parseString(expected).equals(JsonParser.parseString(WorkbenchChecks.encode(barrel.getItem(1), level))),
                 "Complete saved Boots root changed during a core upgrade");
+    }
+
+    private static <T> void seedRefundCredits(ItemStack root, DataComponentType<T> type) {
+        root.set(type, type.codec().parse(JsonOps.INSTANCE, JsonParser.parseString("[\"earthquake\",\"stepheight\"]")).getOrThrow());
     }
 }

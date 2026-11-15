@@ -7,6 +7,7 @@ import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords.Ability
 import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords.AbilityCooldown;
 import com.direwolf20.justdirethings.setup.JDTRegistration;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireHeldToggleCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCompatibility;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettingsNetwork;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
@@ -150,6 +151,12 @@ final class JustDireLifecycleChecks {
 
     static void verify(ItemStack root) {
         var data = MixedLeggingsStructure.validData(root).orElseThrow();
+        var credit = root.get(JustDireRefundCompatibility.component());
+        var purchases = new ArrayList<>(List.of("walkspeed", "runspeed", "swimspeed", "decoy", "phase"));
+        if (data.left().source().is(Items.DIAMOND_LEGGINGS)) {
+            purchases.remove("walkspeed");
+        }
+        require(credit != null && credit.names().equals(purchases), "Lifecycle lost owner or later paid purchases");
         var handler = ItemAccess.forStack(root).getCapability(Capabilities.Energy.ITEM);
         require(handler != null && handler.getCapacityAsLong() == 500000 && handler.getAmountAsLong() == 88680
                         && root.get(JustDireDataComponents.TOOL_ENABLED)

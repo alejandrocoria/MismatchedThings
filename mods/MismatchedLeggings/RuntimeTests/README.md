@@ -50,8 +50,8 @@ For `.99`, quote
 Reports/markers live under `NeoForge/build/reports/<baseline>/jdt-refunds-<graph>[-<fault>]/`;
 actual wear/drop, MA inventory/overflow, one selected core and original callback
 checks are authoritative, not just readiness markers. There is no client/window.
-The old spike entry is retired; its remaining research source tree is removed
-at final consolidation.
+The complete `leggings-jdt-refunds` executable spike is retired; no candidate
+sources, generated products or opt-in entry are needed by maintained acceptance.
 
 ## Final packaged product acceptance
 
@@ -395,7 +395,8 @@ not the retired feasibility candidate. Run the `.114` standalone profiles and
 smaller current-Boots settings/input controls sequentially. Target `.99` at native
 API/local guard and connected-state regressions rather than repeating every
 permutation. Restore `.114` outputs afterwards. The ordinary packaging gate checks
-both products' nested-core contract; no published-Boots fixture is added for JDT.
+both products' nested-core contract. The original-core published Boots save
+upgrade remains in Things' existing consumer fixture, not this JDT recovery graph.
 
 The existing native-world recovery driver adds one focused real JDT source witness:
 
@@ -407,6 +408,11 @@ Only the pinned JDT JAR is removed/reinstalled between those independent JVMs.
 Both paid inverse roots retain live installed upgrades, edited switches/values/
 mouse binding, committed FE, a nonempty Decoy clock with independent switch/key,
 repaired durability and transformed/trimmed histories.
+They also retain the exact conserved owner and later paid JDT purchases. Three
+additional roots preserve a paid dormant Phase credit, an explicitly empty list
+and an absent legacy component despite installed Walk Speed/source history.
+Restoration/reopen destruct copies of all seven roots through real durability
+consumption and compare exact returned native items, including zero-refund controls.
 Full native NBT equality is required after restoration and another reopen; the
 absent archive must remain identical over repeated saves and expose no native
 live components. Loaded copies must regain worn Phase and respect global off.
@@ -431,7 +437,8 @@ Reports/logs use `recovery-jdt` under the existing baseline `build/reports/` and
 errors and the driver's `matrix.ok`. That marker names only the selected subset.
 No screenshots, indev artifacts or prepared owner world are used. Consolidated
 owner acceptance is recorded separately in the private plan. The focused Lava
-and incoming-wear checks above do not cover refunds or broader charger discovery.
+and incoming-wear checks above remain separate from broader charger discovery.
+Refund consolidation uses these same worlds/packets, not another lifecycle driver.
 
 ## Just Dire Things Decoy action and clock
 

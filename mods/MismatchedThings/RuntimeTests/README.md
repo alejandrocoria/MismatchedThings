@@ -186,6 +186,12 @@ are hash-checked before and after every child run; the snapshot is captured once
 not refreshed between stages. Incompatible-major acceptance requires a nonzero
 native launch, the relevant version-refusal diagnostic and no observer success.
 
+On NeoForge the seed also includes conserved JDT refund credits, created through
+the installed Boots binary's own registered codec without requiring native JDT.
+With a pinned previous release, the old binary writes those data and the current
+Boots/newer-core graph reads the same whole-stack seed. This checks the published
+component contract, not old/current JDT gameplay coexistence or a recompiled old mod.
+
 The two committed [API-v1 fixtures](fixtures/api-v1/README.md) are deliberate narrow
 binary test inputs, not a cache. Normal verification never recompiles or replaces
 them. `Consumers` contains their source provenance and the maintained synthetic

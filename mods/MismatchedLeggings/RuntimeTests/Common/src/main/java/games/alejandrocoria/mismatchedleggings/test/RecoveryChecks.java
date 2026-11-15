@@ -43,7 +43,7 @@ import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.requir
 
 /** Persistent native world/player/entity loads across independent dedicated servers and TCP clients. */
 public final class RecoveryChecks {
-    static final int JDT_ROOTS = 4;
+    static final int JDT_ROOTS = 7;
     private static final BlockPos STORAGE = new BlockPos(0, 65, 0);
     private static final long PAID = 9_007_199_254_740_993L;
     private static boolean initialized;

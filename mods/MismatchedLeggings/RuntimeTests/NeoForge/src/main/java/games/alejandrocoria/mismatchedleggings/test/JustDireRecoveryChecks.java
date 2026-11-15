@@ -4,8 +4,11 @@ import com.direwolf20.justdirethings.common.items.datacomponents.JustDireDataCom
 import com.direwolf20.justdirethings.common.items.interfaces.Ability;
 import com.direwolf20.justdirethings.common.items.interfaces.ToolRecords;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireLavaRepair;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCompatibility;
+import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireRefundCredits;
 import games.alejandrocoria.mismatchedleggings.compatibility.justdirethings.JustDireSettings;
 import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsFactory;
+import games.alejandrocoria.mismatchedleggings.composition.MixedLeggingsRecomposer;
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -17,6 +20,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.neoforged.fml.ModList;
@@ -41,6 +45,7 @@ public final class JustDireRecoveryChecks {
         if (RecoveryFixture.stage().equals("write")) {
             var roots = new ArrayList<>(JustDireLifecycleChecks.roots(server));
             roots.addAll(lavaRoots());
+            roots.addAll(refundRoots(server));
             require(roots.size() == RecoveryChecks.JDT_ROOTS, "Recovery snapshot omitted a JDT witness");
             var encoded = new CompoundTag();
             for (int index = 0; index < roots.size(); index++) {
@@ -66,9 +71,13 @@ public final class JustDireRecoveryChecks {
                         var paid = root.copy();
                         paid.set(JustDireDataComponents.FORGE_ENERGY, 88_480);
                         require(ItemStack.matches(equipped, paid), "Recovered root did not resume incoming FE payment with unchanged history/settings");
-                    } else {
+                    } else if (index < 4) {
                         verifyLava(server, root);
+                    } else {
+                        verifyRefundRoot(root, index);
                     }
+                    // Destruct only copies: the saved roots must survive the next independent JVM.
+                    JustDireRefundCreditChecks.reopened(server, root);
                 } else {
                     RecoveryChecks.inactive(root);
                     require(root.getComponents().keySet().stream().noneMatch(JustDireRecoveryChecks::nativeComponent)
@@ -83,8 +92,8 @@ public final class JustDireRecoveryChecks {
         }
         barrel.setChanged();
         Files.writeString(RecoveryChecks.report("jdt-recovery.txt"), RecoveryFixture.stage()
-                + ": paid inverse roots, installed upgrades, edited controls, live charge/Decoy clocks, tier/trim histories, Lava providers/preferences and complete native archive passed"
-                + (present && !RecoveryFixture.stage().equals("write") ? "; reopened incoming FE payment passed\n" : "\n"));
+                + ": paid inverse roots, installed upgrades, owner/later purchases, dormant/empty/absent credits, edited controls, live charge/Decoy clocks, tier/trim histories, Lava providers/preferences and complete native archive passed"
+                + (present && !RecoveryFixture.stage().equals("write") ? "; reopened incoming FE payment and exact actual-break refunds passed\n" : "\n"));
     }
 
     public static void connected(MinecraftServer server, ServerPlayer player) {
@@ -116,6 +125,42 @@ public final class JustDireRecoveryChecks {
             root.set(JustDireDataComponents.ABILITY_BINDINGS, List.of(new ToolRecords.AbilityBinding("lavarepair", index == 0 ? 71 : 4, index != 0, index == 0)));
         }
         return roots;
+    }
+
+    private static List<ItemStack> refundRoots(MinecraftServer server) {
+        var nativeRoot = JustDireLavaChecks.nativeItem("eclipsealloy_leggings");
+        var root = MixedLeggingsFactory.createPair(nativeRoot, new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
+        var player = RepairFixtures.player(server);
+        var menu = SmithingChecks.ready(player, ItemStack.EMPTY, root, JustDireLavaChecks.nativeItem("upgrade_phase"));
+        var paid = menu.getSlot(3).safeTake(1, 1, player);
+        require(!paid.isEmpty() && !menu.getSlot(1).hasItem() && !menu.getSlot(2).hasItem(), "Dormant recovery credit was not purchased");
+        var dormant = MixedLeggingsRecomposer.recompose(paid, JustDireLavaChecks.nativeItem("ferricore_leggings"),
+                new ItemStack(Items.DIAMOND_LEGGINGS), server.registryAccess());
+        var source = JustDireLavaChecks.nativeItem("ferricore_leggings");
+        source.set(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.WALKSPEED), true);
+        var empty = MixedLeggingsFactory.createPair(source, new ItemStack(Items.DIAMOND_LEGGINGS)).primary();
+        empty.set(JustDireRefundCompatibility.component(), new JustDireRefundCredits(List.of()));
+        var absent = empty.copy();
+        absent.remove(JustDireRefundCompatibility.component());
+        var roots = List.of(dormant, empty, absent);
+        for (int index = 0; index < roots.size(); index++) {
+            verifyRefundRoot(roots.get(index), 4 + index);
+        }
+        return roots;
+    }
+
+    private static void verifyRefundRoot(ItemStack root, int index) {
+        var type = JustDireRefundCompatibility.component();
+        require(root.has(type) == (index != 6), "Recovery backfilled an absent purchase component");
+        if (index == 4) {
+            require(root.get(type).names().equals(List.of("phase"))
+                            && root.getOrDefault(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.PHASE), false),
+                    "Recovery lost a dormant paid purchase");
+        } else {
+            require((index == 6 || root.get(type).names().isEmpty())
+                            && root.getOrDefault(JustDireDataComponents.ABILITY_UPGRADE_INSTALLS.get(Ability.WALKSPEED), false),
+                    "Recovery reconstructed empty/absent credits from installed capability/history");
+        }
     }
 
     private static void verifyLava(MinecraftServer server, ItemStack stored) {

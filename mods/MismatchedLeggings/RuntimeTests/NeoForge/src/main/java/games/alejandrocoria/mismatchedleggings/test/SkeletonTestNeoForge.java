@@ -13,6 +13,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (Boolean.getBoolean("leggings.test.jdtRecovery")) {
+            JustDireRefundChecks.registerDrops();
+        }
         if (Boolean.getBoolean("leggings.test.jdtRefunds")) {
             JustDireRefundChecks.register();
             return;
