@@ -1520,7 +1520,8 @@ and baselines sequentially:
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyMysticalRefunds '-PleggingsMaGraph=current' --offline --console=plain
 ```
 
-`leggingsMaGraph=alone|boots|current` selects Leggings alone, Boots alone or both current products.
+`leggingsMaGraph=alone|boots|current|core` selects Leggings alone, Boots alone, both
+current products or independent Things without either armor product.
 The historical `published` positive is refused by the verifier: use the native
 rejection command above for unchanged Boots 1.0.0, not a refund gameplay run.
 `leggingsMaOrder=before|after` selects the shared MA observer's priority 1100/900,
@@ -1532,11 +1533,15 @@ The fixture checks the actual exported owned stages, priorities, absence of
 legacy product hooks and live final readiness. Both products use independent
 normal-initialization registrations and product-local typed purchase receipts.
 
-`leggingsMaRefundVariant=normal|compatible|flow` selects the normal final code,
+`leggingsMaRefundVariant=normal|compatible|flow|decline` selects the normal final code,
 unrelated NOP instructions, or an opaque but runtime-equivalent broken predicate.
 The last must refuse shared mixed MA refunds with one expected core diagnostic:
 ordinary consumption, the native refund positive and independent selection stay
-active. Use that control alone. `-PleggingsMaAbsent=true` checks ordinary actual
+active. `decline` requires `current` and native MA: only the registered Leggings
+capture returns no receipt, while Boots still runs its complete actual-break
+matrix and the shared marker remains ready. It is quiet receipt refusal, not a
+simulated native binding exception. Use these controls separately.
+`-PleggingsMaAbsent=true` checks ordinary actual
 breaks and quiet optional absence. `-Pneoforge_version=26.1.2.99` selects the floor;
 restore normal `.114` outputs afterward.
 
@@ -1562,6 +1567,27 @@ shared/effect/binding refusals, bad exits, missing
 markers and timeouts fail verification. This is bounded actual-break evidence,
 not dedicated-client transport, saved-item reopening, arbitrary drop pipelines,
 Tinkering Table support or owner acceptance; broader consolidation is covered below.
+
+The shared-observer consolidation adds exact restoration through each product's
+existing archive codec, followed by real breaks of both orientations. This uses
+valid archived patches with native sources available; it does not claim a new
+missing-mod world matrix. Existing Boots `verifyMysticalAugmentsLifecycle` and
+Leggings `verifyMysticalEffects -PleggingsMaFocus=consolidation` retain separate
+JVM save/reopen and subsequent native-purchase refund coverage.
+
+The shared JDT seam accepts `-PleggingsRefundFault=maMarker`: only MA's owned
+readiness body is damaged before final publication. Both products must decline
+MA refunds, but still refund actually paid JDT upgrades once. `shape` changes
+the common consumption flow and may refuse both facilities; `forward` preserves
+the audited transparent chain. Each refusal requires exactly its bounded core
+diagnostic, not a globally silent or disabled test graph.
+
+The Mixin debug export precedes final-proof extensions. Its stages establish
+merged ownership and relative priority; the live marker and real break/delivery
+assertions establish permission/refusal. Do not treat the debug file as final
+neutralized-handler bytecode. Pure core shape tests separately inspect that
+neutralization. The complete shared-refund executable spike is retired; no init
+script, alternate adapter or generated-source hook remains.
 
 ## Mystical Agriculture presentation and consolidation (block C)
 

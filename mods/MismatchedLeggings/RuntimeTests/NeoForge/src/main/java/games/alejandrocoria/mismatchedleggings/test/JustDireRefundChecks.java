@@ -118,15 +118,15 @@ final class JustDireRefundChecks {
                 require(jdtDrops == 0 && augmentDrops == 0, "Unclaimed core-only item refunded");
                 REPORT.append("Independent core; one verified observer and ordinary unclaimed consumption/callback\n");
             }
-            if (ma && !fault().equals("shape")) {
-                REPORT.append(SharedRefundWitness.verify(true));
+            if (ma) {
+                REPORT.append(SharedRefundWitness.verify(maReady()));
             }
             for (boolean leggings : List.of(true, false)) {
                 if (leggings ? !legs : !boots) {
                     continue;
                 }
-                if (ma && !fault().equals("shape")) {
-                    require(ready("mismatchedthings$maRefundReady"), "MA final observer regressed");
+                if (ma) {
+                    require(ready("mismatchedthings$maRefundReady") == maReady(), "MA final observer regressed");
                 }
                 var vanilla = new ItemStack(leggings ? Items.DIAMOND_LEGGINGS : Items.DIAMOND_BOOTS);
                 if (jdt) {
@@ -145,7 +145,7 @@ final class JustDireRefundChecks {
                         JustDireRefundCreditChecks.run(server, REPORT);
                     }
                 }
-                if (ma && !fault().equals("shape")) {
+                if (ma) {
                     for (boolean overflow : List.of(false, true)) {
                         var source = NativeAugments.item(leggings ? "awakened_supremium_leggings" : "awakened_supremium_boots", "LUCK_I");
                         var roots = pair(leggings, source, jdt ? nativeJdt(leggings) : vanilla);
@@ -159,8 +159,8 @@ final class JustDireRefundChecks {
                                     inventory += stack.getCount();
                                 }
                             }
-                            require(inventory + augmentDrops == (orientation == 0 ? 1 : 0), "MA purchase lost/duplicated");
-                            require(augmentDrops == (overflow && orientation == 0 ? 1 : 0), "MA overflow route not exercised");
+                            require(inventory + augmentDrops == (orientation == 0 && maReady() ? 1 : 0), "MA purchase lost/duplicated");
+                            require(augmentDrops == (overflow && orientation == 0 && maReady() ? 1 : 0), "MA overflow route not exercised");
                             require(jdtDrops == (jdt && orientation == 1 && refundsEnabled(leggings) ? 1 : 0), "MA/JDT owner credits interfered");
                         }
                     }
@@ -183,6 +183,10 @@ final class JustDireRefundChecks {
         var getter = ItemStack.class.getDeclaredMethod(name);
         getter.setAccessible(true);
         return (boolean) getter.invoke(null);
+    }
+
+    private static boolean maReady() {
+        return !fault().equals("shape") && !fault().equals("maMarker");
     }
 
     private static void paidWithBothRefunds(MinecraftServer server, boolean leggings) throws Exception {
@@ -208,9 +212,9 @@ final class JustDireRefundChecks {
                 returned += stack.getCount();
             }
         }
-        require(paid.isEmpty() && callbacks == 1 && jdtDrops == 1 && returned + augmentDrops == 1,
+        require(paid.isEmpty() && callbacks == 1 && jdtDrops == 1 && returned + augmentDrops == (maReady() ? 1 : 0),
                 "Paid Boots inventory destruction lost one of its simultaneous JDT/MA refunds");
-        REPORT.append(leggings ? "Leggings" : "Boots").append(": a paid root owning both credit kinds refunds both after actual inventory destruction\n");
+        REPORT.append(leggings ? "Leggings" : "Boots").append(": paid joint-credit root; JDT delivered once, MA delivered=").append(maReady()).append('\n');
     }
 
     private static List<ItemStack> pair(boolean leggings, ItemStack first, ItemStack second) throws Exception {

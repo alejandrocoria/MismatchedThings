@@ -15,7 +15,12 @@ public final class RefundPlugin implements IMixinConfigPlugin, Opcodes {
     public String getRefMapperConfig() { return null; }
     public boolean shouldApplyMixin(String target, String name) { return true; }
     public void acceptTargets(Set<String> mine, Set<String> others) {}
-    public List<String> getMixins() { return Boolean.getBoolean("leggings.test.mysticalRefunds") ? List.of("RefundPathsMixin", "DeliveryMixin", "DropWitnessMixin") : List.of(); }
+    public List<String> getMixins() {
+        if (!Boolean.getBoolean("leggings.test.mysticalRefunds")) { return List.of(); }
+        return System.getProperty("leggings.test.maRefundVariant", "normal").equals("decline")
+                ? List.of("RefundPathsMixin", "DeliveryMixin", "DropWitnessMixin", "ReceiptDeclineMixin")
+                : List.of("RefundPathsMixin", "DeliveryMixin", "DropWitnessMixin");
+    }
     public void preApply(String name, ClassNode node, String mixin, IMixinInfo info) {
         String variant = System.getProperty("leggings.test.maRefundVariant", "normal");
         if (!node.name.equals("net/minecraft/world/item/ItemStack")) { return; }

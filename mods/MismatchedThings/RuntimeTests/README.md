@@ -249,6 +249,18 @@ selection; normal code uses 1100. Product JARs and normal core outputs remain
 unchanged. The witness reads the actual merged core handlers/stages/priorities
 and verifies there are no legacy product MA hooks. No init script is required.
 
+Shared-observer consolidation also uses `leggingsMaGraph=core` for independent
+startup on each loader, current-product quiet absence, local Leggings receipt
+decline and shared unsafe-flow refusal. The JDT seam's `maMarker` fault damages
+only MA's owned permission marker: real paid JDT refunds must still work for
+both products. Its `shape` fault instead changes their common consumption flow.
+Keep that distinction when interpreting refusal diagnostics.
+
+Mixin's debug export precedes the final-proof extension: exported stages prove
+merged ownership/order, while the live marker and actual-break assertions prove
+permission and delivery. Core unit tests inspect refused-handler neutralization.
+The original executable spike is removed, not an alternative supported launcher.
+
 ## Focused runs and evidence
 
 For a single profile, run `runWorkbenchServer`, then `runWorkbenchClient` on

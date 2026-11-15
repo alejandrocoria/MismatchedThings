@@ -145,7 +145,11 @@ component checks, native bindings and inventory/overflow delivery. No shared
 wallet, receipt ledger, product lookup or saved-data migration is added. A native
 callback that throws after consumption prevents completion for both products.
 MA absence is quiet; incompatible shared flow refuses MA refunds without replacing
-ordinary breakage or independently proved effects. The JDT hook remains separate.
+ordinary breakage or independently proved effects. A product's declined receipt
+does not disable the shared observer or another item's owner. An MA-owned guard
+fault does not revoke independently proved JDT refunds; unsafe common consumption
+can refuse both. The JDT hook remains separate. There is no legacy Boots-specific
+MA routing branch; Boots below 1.1.0 is already excluded by core metadata.
 
 ### Optional Forbidden Arcanus operations (since 1.1.0)
 

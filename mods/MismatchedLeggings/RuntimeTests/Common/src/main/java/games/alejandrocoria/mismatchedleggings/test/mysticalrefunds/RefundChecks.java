@@ -6,6 +6,8 @@ import games.alejandrocoria.mismatchedleggings.test.mysticaleffects.NativeAugmen
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
@@ -48,10 +50,26 @@ public final class RefundChecks {
         try {
             boolean absent = Boolean.getBoolean("leggings.test.maAbsent");
             String graph = System.getProperty("leggings.test.maGraph", "alone");
-            require(RefundProduct.BOOTS.installed() == !graph.equals("alone")
-                    && RefundProduct.LEGGINGS.installed() == !graph.equals("boots"), "Wrong installed MA product graph");
+            require(RefundProduct.BOOTS.installed() == List.of("boots", "current").contains(graph)
+                    && RefundProduct.LEGGINGS.installed() == List.of("alone", "current").contains(graph), "Wrong installed MA product graph");
             if (!absent) {
                 REPORT.append(SharedRefundWitness.verify(!System.getProperty("leggings.test.maRefundVariant", "normal").equals("flow")));
+            } else {
+                require(java.util.Arrays.stream(ItemStack.class.getDeclaredMethods()).noneMatch(method -> method.getName().equals("mismatchedthings$maRefundReady")),
+                        "Optional absence loaded the MA hook");
+                require(RefundChecks.class.getClassLoader().getResource("com/blakebr0/mysticalagriculture/api/util/AugmentUtils.class") == null,
+                        "Absent profile retained native MA classes");
+            }
+            if (graph.equals("core")) {
+                var player = player(server);
+                var root = new ItemStack(Items.DIAMOND_BOOTS);
+                player.setItemSlot(EquipmentSlot.FEET, root);
+                destroy(root, player);
+                require(root.isEmpty() && delivered(player).isEmpty(), "Unclaimed core-only item refunded or survived break");
+                if (!absent) {
+                    new RefundChecks(RefundProduct.BOOTS).nativeControl(server, false);
+                }
+                REPORT.append("Independent core, no armor products, ordinary unclaimed consumption and optional admission passed.\n");
             }
             for (var product : RefundProduct.values()) {
                 if (!product.installed()) {
@@ -65,7 +83,12 @@ public final class RefundChecks {
                     checks.run(server);
                 }
             }
-            if (!absent && graph.equals("current") && !System.getProperty("leggings.test.maRefundVariant", "normal").equals("flow")) {
+            if (System.getProperty("leggings.test.maRefundVariant", "normal").equals("decline")) {
+                REPORT.append("After Leggings declined: ").append(SharedRefundWitness.verify(true));
+                new RefundChecks(RefundProduct.BOOTS).checkPair(server,
+                        RefundProduct.BOOTS.nativeItem("inferium_leggings", "HEALTH_BOOST_I"), new ItemStack(Items.DIAMOND_BOOTS), false);
+            }
+            if (!absent && graph.equals("current") && List.of("normal", "compatible").contains(System.getProperty("leggings.test.maRefundVariant", "normal"))) {
                 jointRoots(server);
             }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "refunds.txt"), REPORT.toString());
@@ -110,14 +133,16 @@ public final class RefundChecks {
 
     private void run(MinecraftServer server) throws Exception {
         boolean refused = System.getProperty("leggings.test.maRefundVariant", "normal").equals("flow");
-        if (refused) {
+        boolean declined = product == RefundProduct.LEGGINGS && System.getProperty("leggings.test.maRefundVariant", "normal").equals("decline");
+        if (refused || declined) {
             nativeControl(server, false);
             var player = player(server);
             var root = pair("HEALTH_BOOST_I"); player.setItemSlot(product.slot(), root);
             require(product.selected(root), "Refund refusal disabled independent selection");
             destroy(root, player);
             require(root.isEmpty() && delivered(player).isEmpty(), "Opaque final predicate authorized refund or suppressed ordinary break");
-            REPORT.append("Changed final break predicate refused locally; effect reader retained.\n"); return;
+            REPORT.append(declined ? "Registered Leggings receipt declined; independent selection and ordinary break retained.\n"
+                    : "Changed final break predicate refused shared refunds; effect reader retained.\n"); return;
         }
         nativeControl(server, false); nativeControl(server, true);
         checkPair(server, product.nativeItem("inferium_leggings", "HEALTH_BOOST_I"), new ItemStack(product.diamond()), false);
@@ -129,6 +154,28 @@ public final class RefundChecks {
         checkPair(server, new ItemStack(product.iron()), new ItemStack(product.diamond()), false);
         checkPair(server, product.nativeItem("inferium_leggings", "LUCK_I"), product.nativeItem("inferium_leggings", "HEALTH_BOOST_I"), true);
         failures(server);
+        restoredPurchases(server);
+    }
+
+    private void restoredPurchases(MinecraftServer server) throws Exception {
+        var roots = product.pair(product.nativeItem("awakened_supremium_leggings", "HEALTH_BOOST_I"),
+                product.nativeItem("awakened_supremium_leggings", "HEALTH_BOOST_V", "STEP_ASSIST"));
+        var ops = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
+        for (int orientation = 0; orientation < roots.size(); orientation++) {
+            var original = roots.get(orientation);
+            var encoded = (CompoundTag) ItemStack.CODEC.encodeStart(ops, original).getOrThrow();
+            var restored = ItemStack.CODEC.parse(ops, product.archived(encoded)).getOrThrow();
+            require(ItemStack.matches(original, restored), "Archive restore changed full root/purchase history");
+            var player = player(server);
+            player.setItemSlot(product.slot(), restored);
+            RefundControl.reset(restored, player.getInventory());
+            destroy(restored, player);
+            var expected = orientation == 0 ? Map.of(augmentItem("HEALTH_BOOST_I"), 1)
+                    : Map.of(augmentItem("HEALTH_BOOST_V"), 1, augmentItem("STEP_ASSIST"), 1);
+            require(restored.isEmpty() && delivered(player).equals(expected), "Restored root did not retain physical left-owner purchases");
+        }
+        REPORT.append("Existing archive codec restores exact roots; subsequent actual breaks retain physical purchases in both orientations (not a mod-removal world matrix).\n");
+        RefundControl.reset(null, null);
     }
 
     private static ServerPlayer player(MinecraftServer server) throws Exception {

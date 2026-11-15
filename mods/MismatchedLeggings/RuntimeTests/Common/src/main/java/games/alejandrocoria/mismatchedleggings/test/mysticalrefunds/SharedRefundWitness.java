@@ -12,7 +12,7 @@ import java.util.Map;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Read the real exported merged class, not just a requested priority or a test readiness flag. */
+/** The debug export establishes merged ownership/order; the live marker establishes final permission. */
 public final class SharedRefundWitness {
     private static final String MIXIN = "games.alejandrocoria.mismatchedthings.mixin.compatibility.mysticalagriculture.MysticalRefundMixin";
     private static final String OBSERVER = "games/alejandrocoria/mismatchedthings/internal/compatibility/mysticalagriculture/MysticalRefundObserver";
@@ -60,13 +60,15 @@ public final class SharedRefundWitness {
         int expected = System.getProperty("leggings.test.maOrder", "before").equals("after") ? 900 : 1100;
         require(priorities.get(MIXIN) != null && priorities.get(MIXIN) == expected, "Shared MA relative priority not exercised");
         require(owned == 5, "Expected one marker and exactly four core-owned MA handlers");
-        require(ready ? stages.equals(Map.of("capture", 1, "arm", 1, "consumed", 1, "complete", 1)) : stages.isEmpty(),
-                "Shared MA stages missing, duplicated or not neutralized: " + stages);
+        // Mixin's debug exporter runs before the core's final-proof extension. Refused handlers are
+        // neutralized later: the live false marker and actual no-refund breaks prove that outcome.
+        require(stages.equals(Map.of("capture", 1, "arm", 1, "consumed", 1, "complete", 1)),
+                "Merged shared MA stages missing or duplicated: " + stages);
         String jdt = "games.alejandrocoria.mismatchedthings.mixin.compatibility.justdirethings.JustDireRefundMixin";
         if (priorities.containsKey(jdt)) {
             require(priorities.get(jdt) == 1000, "Unexpected JDT consumption priority");
         }
-        return "Exported shared MA priority=" + expected + "; JDT=" + priorities.get(jdt) + "; ready=" + ready + "; stages=" + stages
+        return "Exported shared MA priority=" + expected + "; JDT=" + priorities.get(jdt) + "; live ready=" + ready + "; pre-publication stages=" + stages
                 + "; legacy product MA hooks=0\n";
     }
 }

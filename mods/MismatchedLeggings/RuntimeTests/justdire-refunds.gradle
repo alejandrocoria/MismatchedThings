@@ -1,9 +1,9 @@
 // Maintained shared-boundary acceptance: ordinary packaged products, no patched JARs or witness credits.
 def graph = providers.gradleProperty('leggingsRefundGraph').getOrElse('both')
 def fault = providers.gradleProperty('leggingsRefundFault').getOrElse('')
-if (!(graph in ['core', 'legs', 'boots', 'both']) || !(fault in ['', 'shape', 'forward', 'binding', 'receipts', 'jdtAbsent', 'maAbsent'])
+if (!(graph in ['core', 'legs', 'boots', 'both']) || !(fault in ['', 'shape', 'forward', 'binding', 'receipts', 'jdtAbsent', 'maAbsent', 'maMarker'])
         || fault in ['binding', 'receipts'] && !(graph in ['legs', 'both'])) {
-    throw new GradleException('leggingsRefundGraph=core|legs|boots|both; leggingsRefundFault=shape|forward|binding|receipts|jdtAbsent|maAbsent (binding/receipts need Leggings)')
+    throw new GradleException('leggingsRefundGraph=core|legs|boots|both; leggingsRefundFault=shape|forward|binding|receipts|jdtAbsent|maAbsent|maMarker (binding/receipts need Leggings)')
 }
 def label = "jdt-refunds-${graph}" + (fault ? "-${fault}" : '') + (maRefundOrder == 'after' ? '-ma-after' : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
@@ -59,10 +59,12 @@ tasks.named('runJustDireRefundSeam') {
         def log = new File(directory, 'logs/latest.log').readLines()
         def flowWarnings = log.findAll { it.contains('Just Dire Things refund flow incompatible') }
         def errors = log.findAll { it.contains('/ERROR]') || it.contains('/FATAL]') }
+        def maWarnings = log.findAll { it.contains('Mystical Agriculture refund flow incompatible') }
         // The delivery exception deliberately crosses the real event bus, which logs it before rethrowing.
         def expectedDeliveryError = fault == 'receipts' && errors.size() == 1
                 && errors.first().contains('Exception caught during firing event: controlled delivery')
-        if (flowWarnings.size() != (fault == 'shape' ? 1 : 0) || !errors.isEmpty() && !expectedDeliveryError
+        if (flowWarnings.size() != (fault == 'shape' ? 1 : 0) || maWarnings.size() != (fault in ['shape', 'maMarker'] ? 1 : 0)
+                || !errors.isEmpty() && !expectedDeliveryError
                 || fault == 'receipts' && !expectedDeliveryError) {
             throw new GradleException('Unexpected production refund-seam diagnostic')
         }

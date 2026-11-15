@@ -11,6 +11,8 @@ import games.alejandrocoria.mismatchedleggings.data.MixedLeggingsData;
 import games.alejandrocoria.mismatchedleggings.test.mysticaleffects.NativeAugments;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
@@ -61,6 +63,22 @@ enum RefundProduct {
 
     DataComponentType<?> dataType() {
         return this == BOOTS ? ModContent.mixedBootsDataType().orElseThrow() : LeggingsContent.mixedLeggingsDataType();
+    }
+
+    /** Existing archive contract, with available sources: decoding must restore, not recompose purchases. */
+    CompoundTag archived(CompoundTag encoded) {
+        var patch = encoded.getCompoundOrEmpty("components");
+        var components = new CompoundTag();
+        if (this == BOOTS) {
+            var archive = games.alejandrocoria.mismatchedboots.data.SuspendedBootsData.of(patch, new CompoundTag(), new CompoundTag());
+            components.put("mismatchedboots:suspended_boots", games.alejandrocoria.mismatchedboots.data.SuspendedBootsData.CODEC.encodeStart(NbtOps.INSTANCE, archive).getOrThrow());
+        } else {
+            var archive = games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData.of(patch, new CompoundTag(), new CompoundTag());
+            components.put("mismatchedleggings:suspended_leggings", games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData.CODEC.encodeStart(NbtOps.INSTANCE, archive).getOrThrow());
+        }
+        var shell = encoded.copy();
+        shell.put("components", components);
+        return shell;
     }
 
     boolean selected(ItemStack root) {

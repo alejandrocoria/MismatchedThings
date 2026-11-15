@@ -20,8 +20,11 @@ def graph = providers.gradleProperty('leggingsMaGraph').getOrElse('alone')
 def order = providers.gradleProperty('leggingsMaOrder').getOrElse('before')
 def variant = providers.gradleProperty('leggingsMaRefundVariant').getOrElse('normal')
 def absent = providers.gradleProperty('leggingsMaAbsent').getOrElse('false').toBoolean()
-if (!(graph in ['alone', 'current', 'boots', 'published']) || !(order in ['before', 'after']) || !(variant in ['normal', 'compatible', 'flow'])) {
+if (!(graph in ['alone', 'current', 'boots', 'core', 'published']) || !(order in ['before', 'after']) || !(variant in ['normal', 'compatible', 'flow', 'decline'])) {
     throw new GradleException('Unknown Mystical refunds graph/order/variant')
+}
+if (variant == 'decline' && (graph != 'current' || absent)) {
+    throw new GradleException('The local receipt-decline control requires both products and native MA')
 }
 def label = "mystical-refunds-${graph}-${order}-${variant}" + (absent ? '-absent' : '')
 def reports = layout.buildDirectory.dir("reports/${baseline}/${label}").get().asFile
@@ -97,7 +100,8 @@ tasks.register('prepareMysticalRefundsServer') {
     if (order == 'after') { dependsOn maRefundOrderTask }
     doLast {
         if (graph == 'published') { throw new GradleException('Boots 1.0.0 is not a positive refund graph; use current products') }
-        def artifacts = graph == 'boots' ? [] : [product.tasks.named('jar').get().archiveFile.get().asFile]
+        def artifacts = graph in ['boots', 'core'] ? [] : [product.tasks.named('jar').get().archiveFile.get().asFile]
+        if (graph == 'core' && order != 'after') { artifacts.add(coreJar.get().asFile) }
         if (order == 'after') { artifacts.add(maRefundOrderCore.get().asFile) }
         if (!absent) {
             ['mysticalagriculture', 'cucumber'].each {
