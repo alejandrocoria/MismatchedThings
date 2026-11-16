@@ -588,6 +588,10 @@ once-per-source provider resolution and serialized histories before/after reload
 No optional artifacts are required by the baseline geometry run, and no new pins
 or launch profile are introduced.
 
+The equipped-entry symmetry spike is fully retired. All entry/fallback and
+replacement checks above use maintained fixtures and ordinary production JARs;
+there is no opt-in candidate, patched staging route or executable spike dependency.
+
 The Fabric equipped GameTest and NeoForge geometry client additionally invoke the
 actual baked `HumanoidArmorLayer` entry. Shared checks cover both source orders,
 native other slots, age/armor-stand selection, material submissions, foreign copied

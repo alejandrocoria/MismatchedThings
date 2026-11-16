@@ -15,7 +15,7 @@ tasks.named(compatibilitySources.compileJavaTaskName, JavaCompile) {
 def publication = tasks.named('jar').flatMap { it.archiveFile }
 def verifyBinary = tasks.register('verifyMixinBinaryCompatibility', JavaExec) {
     group = 'verification'
-    description = 'Checks published Redirect bytecode against MixinExtras 0.5.4, including an incompatible-format control.'
+    description = 'Checks any published Redirect bytecode against MixinExtras 0.5.4, including a control when present.'
     dependsOn tasks.named('jar'), tasks.named(compatibilitySources.classesTaskName)
     inputs.file(publication)
     classpath = compatibilitySources.runtimeClasspath

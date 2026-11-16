@@ -2,8 +2,9 @@
 
 Run commands from the repository root. This checks the actual NeoForge
 publication, rather than inferring compatibility from a rebuild against an older
-loader. It covers the armor-rendering Redirect format rejected by MixinExtras
-0.5.4 when newly compiled against Fabric Mixin 0.17.4.
+loader. It guards the Redirect annotation format rejected by MixinExtras 0.5.4
+when newly compiled against Fabric Mixin 0.17.4. The armor entry now uses HEAD
+injection; current publications need not contain any Redirects.
 
 ## Binary regression
 
@@ -13,9 +14,13 @@ loader. It covers the armor-rendering Redirect format rejected by MixinExtras
 
 The isolated `mixinBinaryCompatibility` source set scans the published JAR and
 passes its Redirects through the real MixinExtras 0.5.4 transformer. Its negative
-control changes a copy to the newer array-form annotation and requires rejection.
-No retained broken JAR or user instance is required. The task prints the artifact's
-SHA-256 and fails if no Redirect was exercised or its format is incompatible.
+control changes a copy of a class containing a Redirect to the newer array-form
+annotation and requires rejection. If none is present, the scan reports that the
+format control is not applicable instead of requiring an obsolete armor hook.
+Any present incompatible Redirect still fails the check. No retained broken JAR
+or user instance is required. The task always prints the artifact's SHA-256;
+zero Redirects is not runtime acceptance of HEAD injection, which has separate
+maintained equipped-entry tests.
 
 This check is included in NeoForge `check`/`build` and Boots'
 `verifyPackagedDependencies`. The old Mixin/MixinExtras used by the check are

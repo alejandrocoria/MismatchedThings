@@ -2973,6 +2973,10 @@ separately covers native armor-layer entry for Sylvan, Wildwood and Dragonsteel
 Fire Boots, with native positives and both orientations. The ordinary joint scene
 does not need those extra mods, another gallery or a release-graph manifest.
 
+The equipped-entry symmetry spike is fully retired. These maintained profiles
+use ordinary packaged products without an init script, candidate mixin, patched
+JAR or legacy spike acceptance marker.
+
 Focused checks retain the spike's native vertex-area/UV/normal, mirrored/rotated
 child, empty ancestor, independently animated child, crouch/seated/player/slim/
 baby/stand and queued A → B → A controls. They also verify all buffered native
