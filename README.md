@@ -18,6 +18,10 @@ This branch targets Minecraft 26.1.2 with Fabric and NeoForge.
 
 ## Development
 
+The optional [joint development runs](DevelopmentRuns/README.md) provide Fabric
+and NeoForge clients/servers with all current family projects and pinned armor
+compatibility mods, plus JEI-only clients. Individual product runs remain available.
+
 Run Gradle from this repository root using the checked-in wrapper. Boots sources,
 resources and test fixtures live under `mods/MismatchedBoots/`, with projects
 under `:MismatchedBoots` such as `:MismatchedBoots:Fabric` and

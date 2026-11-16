@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Map;
 
-/** Test-only pinned downloads. Never reads or writes the owner's indev instances. */
+/** Pinned test/development downloads. Never reads or writes the owner's indev instances. */
 public final class TestModArtifacts {
     public record Artifact(File target, Configuration configuration, String sha256) {}
 

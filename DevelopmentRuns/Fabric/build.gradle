@@ -1,0 +1,67 @@
+plugins {
+    id 'java-library'
+    id 'net.fabricmc.fabric-loom'
+    id 'idea'
+}
+
+apply from: '../runtime.gradle'
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+loom {
+    mixin { useLegacyMixinAp = false }
+    splitEnvironmentSourceSets()
+    mods {
+        familyProjects.each { id, member ->
+            register(id) { sourceSet('main', member.path) }
+        }
+    }
+    runs {
+        configureEach {
+            appendProjectPathToConfigName.set(false)
+            ideConfigGenerated(true)
+        }
+        client {
+            client()
+            setConfigName('MismatchedThings — Fabric Client')
+            runDir('runs/client')
+            programArgs('--username', 'Dev')
+        }
+        server {
+            server()
+            setConfigName('MismatchedThings — Fabric Server')
+            runDir('runs/server')
+            programArg('nogui')
+        }
+    }
+}
+
+dependencies { clientRuntimeOnly clientDevelopmentMods }
+
+tasks.named('runClient') { dependsOn tasks.named('prepareClient') }
+tasks.named('runServer') { dependsOn tasks.named('prepareServer') }
+
+// Loom's Application configurations otherwise run only IntelliJ Make, not Gradle preparation.
+tasks.named('ideaSyncTask') {
+    doLast {
+        def directory = rootProject.file('.idea/runConfigurations')
+        ['Client', 'Server'].each { side ->
+            def name = "MismatchedThings — Fabric ${side}"
+            def filename = name.replaceAll('[^a-zA-Z0-9$_]', '_') + '_DevelopmentRuns_Fabric.xml'
+            def target = new File(directory, filename)
+            def document = new groovy.xml.XmlParser().parse(target)
+            def method = document.configuration.method[0]
+            def preparation = ":DevelopmentRuns:Fabric:prepare${side}"
+            if (!method.option.any { it.@name == 'Gradle.BeforeRunTask' && it.@tasks == preparation }) {
+                method.appendNode('option', [name: 'Gradle.BeforeRunTask', enabled: 'true',
+                        tasks: preparation, externalProjectPath: '$PROJECT_DIR$',
+                        vmOptions: '', scriptParameters: ''])
+                target.text = groovy.xml.XmlUtil.serialize(document)
+            }
+        }
+    }
+}

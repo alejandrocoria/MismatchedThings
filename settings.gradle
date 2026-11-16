@@ -60,3 +60,5 @@ project(':MismatchedLeggings').projectDir = file('mods/MismatchedLeggings')
 ['Common', 'Fabric', 'NeoForge', 'RuntimeTests:Fabric', 'RuntimeTests:NeoForge'].each { path ->
     include("MismatchedLeggings:${path}")
 }
+
+include('DevelopmentRuns', 'DevelopmentRuns:Fabric', 'DevelopmentRuns:NeoForge')

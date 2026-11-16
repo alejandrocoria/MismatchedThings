@@ -19,6 +19,10 @@ belong to Things' development tooling, not its released JAR. Boots and Leggings
 select their required artifacts in their own test profiles; listing a mod here
 does not certify compatibility or make it a production dependency.
 
+The optional [joint development runs](../../../DevelopmentRuns/README.md) select
+these same pins for persistent manual clients/servers. Their loader/side lists
+are independent of each isolated test profile; neither reads indev JARs.
+
 Catalog entries can expose a stable, loader-scoped `id`. New profiles select
 that ID, for example `testModArtifacts.resolve(loader, 'mysticalagriculture')`,
 instead of repeating versioned JAR filenames, URLs or hashes in Gradle scripts.

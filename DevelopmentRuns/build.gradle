@@ -1,0 +1,7 @@
+// A development application, not a fourth published mod.
+tasks.register('prepare') {
+    group = 'development'
+    description = 'Prepares both joint clients and servers without starting Minecraft.'
+    dependsOn ':DevelopmentRuns:Fabric:prepareClient', ':DevelopmentRuns:Fabric:prepareServer',
+            ':DevelopmentRuns:NeoForge:prepareClient', ':DevelopmentRuns:NeoForge:prepareServer'
+}

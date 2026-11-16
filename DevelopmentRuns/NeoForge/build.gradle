@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+    id 'idea'
+}
+
+apply from: '../runtime.gradle'
+
+sourceSets { client }
+configurations.clientRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+
+neoForge {
+    version = neoforge_version
+    addModdingDependenciesTo(sourceSets.client)
+    familyProjects.values().each { member ->
+        def transformer = member.file('../Common/src/main/resources/META-INF/accesstransformer.cfg')
+        if (transformer.isFile()) { accessTransformers.from(transformer) }
+    }
+    mods {
+        familyProjects.each { id, member ->
+            register(id) { sourceSet member.sourceSets.main }
+        }
+    }
+    runs {
+        client {
+            client()
+            sourceSet = sourceSets.client
+            ideName = 'MismatchedThings — NeoForge Client'
+            gameDirectory = project.file('runs/client')
+            taskBefore tasks.named('prepareClient')
+        }
+        server {
+            server()
+            ideName = 'MismatchedThings — NeoForge Server'
+            gameDirectory = project.file('runs/server')
+            programArgument('--nogui')
+            taskBefore tasks.named('prepareServer')
+        }
+    }
+}
+
+dependencies { clientRuntimeOnly clientDevelopmentMods }

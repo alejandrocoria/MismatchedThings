@@ -1,0 +1,94 @@
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net' }
+    maven {
+        url = 'https://jm.gserv.me/repository/maven-public/'
+        content { includeGroup('mysticdrew') }
+    }
+}
+
+// Explicit family membership; loader outputs already contain each product's Common code.
+ext.familyProjects = [mismatchedthings: 'MismatchedThings', mismatchedboots: 'MismatchedBoots',
+                      mismatchedleggings: 'MismatchedLeggings'].collectEntries { id, product ->
+    def member = project(":${product}:${project.name}")
+    evaluationDependsOn(member.path)
+    [(id): member]
+}
+
+evaluationDependsOn(':MismatchedThings')
+def artifacts = project(':MismatchedThings').testModArtifacts
+def selections = new groovy.json.JsonSlurper().parse(file('../mods.json'))[project.name]
+ext.commonDevelopmentMods = files(selections.common.collect { artifacts.path(project.name, it) })
+ext.clientDevelopmentMods = files(selections.client.collect { artifacts.path(project.name, it) })
+
+dependencies {
+    // Output dependencies carry their compile/processResources tasks, but no nested product JARs.
+    familyProjects.values().each { member -> runtimeOnly files(member.sourceSets.main.output) }
+    runtimeOnly "com.electronwill.night-config:core:${nightconfig_version}"
+    runtimeOnly "com.electronwill.night-config:toml:${nightconfig_version}"
+    runtimeOnly "mysticdrew:common-networking-${project.name.toLowerCase(Locale.ROOT)}:${common_networking_version}"
+    runtimeOnly commonDevelopmentMods
+}
+
+['client', 'server'].each { side ->
+    def selectors = selections.common + (side == 'client' ? selections.client : [])
+    tasks.register("prepare${side.capitalize()}") {
+        group = 'development'
+        description = "Builds current family outputs and verifies pinned ${project.name} ${side} mods."
+        dependsOn familyProjects.values().collect { it.tasks.named('classes') }
+        dependsOn(side == 'client' ? 'clientClasses' : 'classes')
+        // Files are known at import; resolution/download happens only in this launch preparation.
+        doLast {
+            selectors.each { artifacts.resolve(project.name, it) }
+            // Empty launcher source sets still appear on native/IDE classpaths.
+            def outputs = sourceSets.main.output.files + (side == 'client' ? sourceSets.client.output.files : [])
+            outputs.each { directory ->
+                if (!directory.isDirectory() && !directory.mkdirs()) {
+                    throw new GradleException("Cannot create launcher output directory: ${directory}")
+                }
+            }
+            logger.lifecycle("${project.name} ${side}: ${familyProjects.size()} family projects, "
+                    + "${selectors.size()} verified external artifacts")
+        }
+    }
+}
+
+tasks.register('verifyRuntime') {
+    group = 'verification'
+    description = 'Checks the joint runtime classpaths without launching Minecraft or changing indev data.'
+    dependsOn 'prepareClient', 'prepareServer'
+    doLast {
+        def serverFiles = sourceSets.main.runtimeClasspath.files
+        def clientFiles = sourceSets.client.runtimeClasspath.files
+        def familyOutputs = familyProjects.values().collectMany { it.sourceSets.main.output.files.toList() }
+        [server: serverFiles, client: clientFiles].each { side, classpath ->
+            def missing = classpath.findAll { !it.exists() }
+            if (!missing.isEmpty()) {
+                throw new GradleException("Missing ${project.name} ${side} classpath entries: ${missing}")
+            }
+            if (!classpath.containsAll(familyOutputs) || !classpath.containsAll(commonDevelopmentMods.files)) {
+                throw new GradleException("Missing family output or content mod on ${project.name} ${side}")
+            }
+            if (classpath.any { it.name.startsWith('RoughlyEnoughItems') }) {
+                throw new GradleException("Unexpected REI on ${project.name} ${side}")
+            }
+            // Product JARs would load a second copy of a loose development mod or its nested core.
+            if (classpath.any { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('mismatched')
+                    && it.name.endsWith('.jar') }) {
+                throw new GradleException("Packaged family mod on ${project.name} ${side} development classpath")
+            }
+            def report = layout.buildDirectory.file("development/${side}-classpath.txt").get().asFile
+            report.parentFile.mkdirs()
+            report.text = classpath.collect { it.absolutePath }.sort().join('\n') + '\n'
+        }
+        if (!clientFiles.containsAll(clientDevelopmentMods.files)
+                || serverFiles.any { it in clientDevelopmentMods.files }) {
+            throw new GradleException("Client-only selection leaked or is missing on ${project.name}")
+        }
+        logger.lifecycle("Verified ${project.name} client/server runtime separation and family outputs")
+    }
+}
+
+idea.module.excludeDirs += file('runs')

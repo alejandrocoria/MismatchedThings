@@ -20,12 +20,14 @@
   },
   {
     "loader": "Fabric",
+    "id": "iceberg",
     "filename": "Iceberg-26.1.2-fabric-1.4.1.2.jar",
     "sha256": "c0ec9b2f7659183c5c44ea83007c6653eb7ca9ddd3c4dd9cdab5c6f08e97a9a9",
     "url": "https://cdn.modrinth.com/data/5faXoLqX/versions/UujfCDsB/Iceberg-26.1.2-fabric-1.4.1.2.jar"
   },
   {
     "loader": "Fabric",
+    "id": "jei",
     "filename": "jei-26.1.2-fabric-29.43.0.106.jar",
     "sha256": "352c594fecc491e30ed96e427e6c0617ea95ec134cb3482fce0c57ff9e65e739",
     "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/nkjaeEro/jei-26.1.2-fabric-29.43.0.106.jar"
@@ -39,6 +41,7 @@
   },
   {
     "loader": "Fabric",
+    "id": "prism",
     "filename": "Prism-26.1.2-fabric-1.1.1.jar",
     "sha256": "8b28502c7096f832253ea7ec4b968b5f608865a4009d2c37b96e67bfd26a2fc3",
     "url": "https://cdn.modrinth.com/data/1OE8wbN0/versions/uxupbyjR/Prism-26.1.2-fabric-1.1.1.jar"
@@ -51,12 +54,14 @@
   },
   {
     "loader": "NeoForge",
+    "id": "aether_ii",
     "filename": "aether_ii-26.1.2-alpha.4.1-neoforge.jar",
     "sha256": "97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6",
     "url": "https://cdn.modrinth.com/data/JD2NSu5O/versions/soZ6Sulf/aether_ii-26.1.2-alpha.4.1-neoforge.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "athena",
     "filename": "athena-4.7.3.jar",
     "sha256": "e0cf1eb366d8ada36c3f03cddae01be2b11b90a6684849e829b89c0ffac15888",
     "url": "https://cdn.modrinth.com/data/b1ZV3DIJ/versions/8KRMFzZ7/athena-4.7.3.jar"
@@ -70,24 +75,28 @@
   },
   {
     "loader": "NeoForge",
+    "id": "geckolib",
     "filename": "geckolib-neoforge-26.1.2-5.5.2.jar",
     "sha256": "e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d",
     "url": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/xfVfPcoC/geckolib-neoforge-26.1.2-5.5.2.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "iceandfire",
     "filename": "iceandfire-2.2-beta.3.jar",
     "sha256": "ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2",
     "url": "https://edge.forgecdn.net/files/8929/527/iceandfire-2.2-beta.3.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "iceberg",
     "filename": "Iceberg-26.1.2-neoforge-1.4.1.2.jar",
     "sha256": "78435ca80bb18b2d49c7e9fd53226ad457cc50227cf84c8837673e47fe2f97fc",
     "url": "https://cdn.modrinth.com/data/5faXoLqX/versions/cG60lq2b/Iceberg-26.1.2-neoforge-1.4.1.2.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "jupiter",
     "filename": "jupiter-2.4.3-26.1.2-universal.jar",
     "sha256": "fc2f273c02788c5ff6736439de8cef9a7eb2662f768e8ee1ac23c57323ee740c",
     "url": "https://edge.forgecdn.net/files/8621/734/jupiter-2.4.3-26.1.2-universal.jar"
@@ -101,12 +110,14 @@
   },
   {
     "loader": "NeoForge",
+    "id": "legendarytooltips",
     "filename": "LegendaryTooltips-26.1.2-neoforge-1.6.1.jar",
     "sha256": "6202faca671187b4deb6d25a4f7a75bb7155caeeb2502dc584d2ac636a59b5a5",
     "url": "https://cdn.modrinth.com/data/atHH8NyV/versions/ZaJ1nyhV/LegendaryTooltips-26.1.2-neoforge-1.6.1.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "modonomicon",
     "filename": "modonomicon-26.1.2-neoforge-2.16.0.jar",
     "sha256": "658d75ac71ef2e49eaeaa944f7ee82f407424df09f42adf459dd20cc98a57710",
     "url": "https://cdn.modrinth.com/data/692GClaE/versions/h0y6qRv4/modonomicon-26.1.2-neoforge-2.16.0.jar"
@@ -120,90 +131,105 @@
   },
   {
     "loader": "NeoForge",
+    "id": "neovitae",
     "filename": "neovitae-26.1.2-1.1.31.jar",
     "sha256": "55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92",
     "url": "https://cdn.modrinth.com/data/rvaW4C93/versions/QJXvo8Q1/neovitae-26.1.2-1.1.31.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "oritech",
     "filename": "oritech-2.0.0-exp6.jar",
     "sha256": "caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b",
     "url": "https://cdn.modrinth.com/data/4sYI62kA/versions/2xLWeZUn/oritech-2.0.0-exp6.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "prism",
     "filename": "Prism-26.1.2-neoforge-1.1.1.jar",
     "sha256": "1b36583c1fd8cba02bdfee0e01c6be762cc030144c7f701f76741dcdea05f6b0",
     "url": "https://cdn.modrinth.com/data/1OE8wbN0/versions/DQFL8qWA/Prism-26.1.2-neoforge-1.1.1.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "rootsclassic",
     "filename": "RootsClassic-26.1.2-1.6.7.jar",
     "sha256": "1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d",
     "url": "https://edge.forgecdn.net/files/8757/288/RootsClassic-26.1.2-1.6.7.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "silentgear",
     "filename": "silent-gear-26.1.2-neoforge-4.2.3.jar",
     "sha256": "2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf",
     "url": "https://cdn.modrinth.com/data/73mSSnCf/versions/eG4f2c3T/silent-gear-26.1.2-neoforge-4.2.3.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "silentlib",
     "filename": "silent-lib-26.1.2-neoforge-11.2.0.jar",
     "sha256": "0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655",
     "url": "https://cdn.modrinth.com/data/BQhuHQo4/versions/Rc4eCDXl/silent-lib-26.1.2-neoforge-11.2.0.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "undergarden",
     "filename": "The_Undergarden-26.1.2-0.9.8.jar",
     "sha256": "5a9c449b01327b8f368bfd8a70e5dd5707362a3e3211ea7735e751dff4c258dc",
     "url": "https://cdn.modrinth.com/data/Ejfl5qDL/versions/e8zLw9Sq/The_Undergarden-26.1.2-0.9.8.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "uranus",
     "filename": "uranus-3.0-alpha.1.jar",
     "sha256": "ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000",
     "url": "https://edge.forgecdn.net/files/8689/800/uranus-3.0-alpha.1.jar"
   },
   {
     "loader": "Fabric",
+    "id": "legendarytooltips",
     "filename": "LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar",
     "sha256": "1f464710ca16c7dd069aa0c54088ddd1b72c1fff33609c13fce547f1ae444d41",
     "url": "https://cdn.modrinth.com/data/atHH8NyV/versions/f02TIUcN/LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "allthemodium",
     "filename": "allthemodium-26.1.2-4.1.1.jar",
     "sha256": "59e24aa1f26e752faf86ced677547a72403d81c395b5193e9e2598bd23b033ff",
     "url": "https://edge.forgecdn.net/files/9052/575/allthemodium-26.1.2-4.1.1.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "alltheores",
     "filename": "alltheores-4.0.4.jar",
     "sha256": "c6f8c4bffcf41a650ce0bdb18235aa94cd579bae0e80c56e25f240f6157f3a4f",
     "url": "https://edge.forgecdn.net/files/8023/670/alltheores-4.0.4.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "aquaculture",
     "filename": "Aquaculture-26.1.1-2.9.2.jar",
     "sha256": "ef3cde416d554aff527abe89125f02389bd420ea86c2be651ff3ee81207f00ed",
     "url": "https://cdn.modrinth.com/data/Vl1uNAuy/versions/I2FfOQUM/Aquaculture-26.1.1-2.9.2.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "forbiddenarcanus",
     "filename": "forbidden_arcanus-26.1.2-2.7.2.jar",
     "sha256": "ced3714330a023f84d24d550d3cd82376d70797fff59b0c1d2b21200c0cf5d3a",
     "url": "https://cdn.modrinth.com/data/MdlnLS7Q/versions/o5OOKrZw/forbidden_arcanus-26.1.2-2.7.2.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "valhelsiacore",
     "filename": "valhelsia_core-neoforge-26.1.2-1.1.6.jar",
     "sha256": "d130c1e93f019c8dac5e3704ad299033f24b030681c1f8afe3127716c03b1446",
     "url": "https://cdn.modrinth.com/data/HsdNFinx/versions/l4EKYaUc/valhelsia_core-neoforge-26.1.2-1.1.6.jar"
   },
   {
     "loader": "NeoForge",
+    "id": "jei",
     "filename": "jei-26.1.2-neoforge-29.43.0.106.jar",
     "sha256": "a66fd1b3a258fc02f24a1068c9a7809ea4118cfae2414ace8f84a6fade8a1903",
     "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/iub7wR3J/jei-26.1.2-neoforge-29.43.0.106.jar"
@@ -225,5 +251,54 @@
     "filename": "cloth-config-26.1.154.jar",
     "sha256": "d9147c8549fedad478bd18e2ddeef172ef290a081f80bd4d242d54e027ecd9d8",
     "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/TimoYzse/cloth-config-26.1.154.jar"
+  },
+  {
+    "loader": "Fabric",
+    "id": "advancednetherite",
+    "filename": "CFX9ftUJ-vudH2Rjv.jar",
+    "sha256": "22b1ac273c95a5403ace2e0dca0981df3348b4d645864ba6552574521470adb1",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/CFX9ftUJ/vudH2Rjv/CFX9ftUJ-vudH2Rjv.jar"
+  },
+  {
+    "loader": "NeoForge",
+    "id": "advancednetherite",
+    "filename": "CFX9ftUJ-yvbzX6CA.jar",
+    "sha256": "da94547f5a33884b016cd26e5d3a6e2be352eb663ad1aa9b1f5398bee97e083b",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/CFX9ftUJ/yvbzX6CA/CFX9ftUJ-yvbzX6CA.jar"
+  },
+  {
+    "loader": "Fabric",
+    "id": "betterend",
+    "filename": "gc8OEnCC-8dlasiJv.jar",
+    "sha256": "432f99ec0218504c8dcfaebcd6cd37970b400ff1f4a396888b697e447036ab2f",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/gc8OEnCC/8dlasiJv/gc8OEnCC-8dlasiJv.jar"
+  },
+  {
+    "loader": "Fabric",
+    "id": "betternether",
+    "filename": "MpzVLzy5-MUV7eOIE.jar",
+    "sha256": "3f9af3b5d301a7de79d3126989c762e61276b1b4d0dc851fbbaf6008d928c85d",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/MpzVLzy5/MUV7eOIE/MpzVLzy5-MUV7eOIE.jar"
+  },
+  {
+    "loader": "Fabric",
+    "id": "bclib",
+    "filename": "BgNRHReB-TZEtveQ9.jar",
+    "sha256": "29c9eab8d5192c3549dff1879fb27f2ce5a1632cb22845daa7cc00bd225ee7d7",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/BgNRHReB/TZEtveQ9/BgNRHReB-TZEtveQ9.jar"
+  },
+  {
+    "loader": "Fabric",
+    "id": "wover",
+    "filename": "RiN8rDVs-UoxStTIn.jar",
+    "sha256": "07a48a932851157e131fa92caa0f1db46b4a895ae5400a7a36bae0aeec6159dc",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/RiN8rDVs/UoxStTIn/RiN8rDVs-UoxStTIn.jar"
+  },
+  {
+    "loader": "Fabric",
+    "id": "createfly",
+    "filename": "dKvj0eNn-wV5IQLKg.jar",
+    "sha256": "de1633a2de5dc93878ca660bbdfdeb682a9a1ac1edcde97cb8b52624cc9fe42d",
+    "url": "https://api.modrinth.com/maven/maven/modrinth/dKvj0eNn/wV5IQLKg/dKvj0eNn-wV5IQLKg.jar"
   }
 ]
