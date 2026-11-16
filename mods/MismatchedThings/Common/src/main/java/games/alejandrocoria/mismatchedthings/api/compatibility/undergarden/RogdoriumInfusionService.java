@@ -6,7 +6,9 @@ import java.util.ServiceLoader;
 
 /** Optional native reservoir policy; products retain source extraction and transaction ownership. */
 public interface RogdoriumInfusionService {
-    RogdoriumInfusionService INSTANCE = ServiceLoader.load(RogdoriumInfusionService.class).findFirst()
+    // A caller's thread context loader may bypass transformed mod classes.
+    RogdoriumInfusionService INSTANCE = ServiceLoader.load(RogdoriumInfusionService.class, RogdoriumInfusionService.class.getClassLoader())
+            .findFirst()
             .orElseGet(() -> new RogdoriumInfusionService() {});
 
     /** Initializes a disposable new orientation. Inputs are read-only; discard output on failure. */

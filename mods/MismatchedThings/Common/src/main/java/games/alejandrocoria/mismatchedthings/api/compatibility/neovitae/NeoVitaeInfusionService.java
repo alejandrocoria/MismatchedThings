@@ -6,7 +6,9 @@ import java.util.ServiceLoader;
 
 /** Optional native infusion policy; products retain source extraction, transactions and structural validation. */
 public interface NeoVitaeInfusionService {
-    NeoVitaeInfusionService INSTANCE = ServiceLoader.load(NeoVitaeInfusionService.class).findFirst()
+    // A caller's thread context loader may bypass transformed mod classes.
+    NeoVitaeInfusionService INSTANCE = ServiceLoader.load(NeoVitaeInfusionService.class, NeoVitaeInfusionService.class.getClassLoader())
+            .findFirst()
             .orElseGet(() -> new NeoVitaeInfusionService() {});
 
     /** Finalizes a disposable new orientation; both source stacks are read-only. Discard the output on failure. */

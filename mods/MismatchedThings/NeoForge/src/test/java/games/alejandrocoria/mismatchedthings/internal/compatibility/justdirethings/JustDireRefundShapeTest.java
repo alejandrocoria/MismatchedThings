@@ -1,5 +1,6 @@
 package games.alejandrocoria.mismatchedthings.internal.compatibility.justdirethings;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
@@ -23,7 +24,7 @@ class JustDireRefundShapeTest implements Opcodes {
     void nativeConsumptionSliceIgnoresUnrelatedMethodsButCannotPublishPermission() throws Exception {
         var node = nativeClass();
         assertTrue(JustDireRefundShape.entry(node));
-        assertFalse(JustDireRefundShape.publish(node));
+        Assertions.assertFalse(JustDireRefundShape.publish(node));
         var unrelated = new MethodNode(ACC_PRIVATE | ACC_STATIC, "foreignUnrelated", "()V", null, null);
         unrelated.instructions.add(new InsnNode(RETURN));
         node.methods.add(unrelated);
@@ -64,7 +65,7 @@ class JustDireRefundShapeTest implements Opcodes {
                 }
             }
             assertEquals(1, changed);
-            assertFalse(JustDireRefundShape.entry(node), fault);
+            Assertions.assertFalse(JustDireRefundShape.entry(node), fault);
         }
     }
 
@@ -90,7 +91,7 @@ class JustDireRefundShapeTest implements Opcodes {
                 }
             }
             assertEquals(1, changed);
-            assertFalse(JustDireRefundShape.publish(node), variant + " altered forwarding");
+            Assertions.assertFalse(JustDireRefundShape.publish(node), variant + " altered forwarding");
         }
     }
 
@@ -113,7 +114,7 @@ class JustDireRefundShapeTest implements Opcodes {
                 }
             }
             assertEquals(1, changed);
-            assertFalse(JustDireRefundShape.publish(node));
+            Assertions.assertFalse(JustDireRefundShape.publish(node));
             var handler = node.methods.stream().filter(m -> m.desc.equals(JustDireRefundShape.HANDLER)).findFirst().orElseThrow();
             assertEquals(ICONST_0, handler.instructions.getFirst().getOpcode());
             assertEquals(ICONST_0, getter(node).instructions.getFirst().getOpcode());
@@ -135,7 +136,7 @@ class JustDireRefundShapeTest implements Opcodes {
             }
         }
         assertEquals(1, changed);
-        assertFalse(JustDireRefundShape.publish(node));
+        Assertions.assertFalse(JustDireRefundShape.publish(node));
         assertEquals(ICONST_0, getter(node).instructions.getFirst().getOpcode());
     }
 

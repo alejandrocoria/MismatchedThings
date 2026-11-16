@@ -14,7 +14,9 @@ import java.util.ServiceLoader;
 
 /** Optional native operations only; products own state registration, admission and transactions. */
 public interface ForbiddenModifierService {
-    ForbiddenModifierService INSTANCE = ServiceLoader.load(ForbiddenModifierService.class).findFirst()
+    // A caller's thread context loader may bypass transformed mod classes.
+    ForbiddenModifierService INSTANCE = ServiceLoader.load(ForbiddenModifierService.class, ForbiddenModifierService.class.getClassLoader())
+            .findFirst()
             .orElseGet(() -> new ForbiddenModifierService() {});
 
     default ForbiddenModifiers read(ItemStack stack) {
