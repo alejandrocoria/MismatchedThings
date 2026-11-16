@@ -68,6 +68,13 @@ such as `jarTask.flatMap { it.archiveFile }`, not prematurely extracted paths.
 An absent provider uses the default; a present missing file fails. Overrides may
 intentionally be mutated and are not checked against the official pin.
 
+Boots and Leggings use these bindings for their NeoForge native guard JARs and
+Common MA checks on both loaders. Existing Boots alternate-JAR switches remain
+root-relative; each product keeps its own transformed-class options and path
+interpretation. The packaged Boots witness used by Leggings is a producer-backed
+test input, not a catalog entry. Things' transformed-class-only controls stay
+local; they do not need an artificial mod-artifact binding.
+
 For an external file that *must* match the official publication, use
 `verify(loader, id, file)`. It verifies in place and never repairs/replaces that
 file or falls back to a downloaded copy. Property names, test variants and

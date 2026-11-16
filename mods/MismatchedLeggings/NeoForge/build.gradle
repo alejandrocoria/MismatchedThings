@@ -11,6 +11,8 @@ def optionalGeckoApi = files(providers.provider {
     project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'geckolib-neoforge-26.1.2-5.5.2.jar')
 })
 
+def bootsWitnessJar = project(':MismatchedBoots:NeoForge').tasks.named('jar').flatMap { it.archiveFile }
+
 dependencies {
     compileOnly files(providers.provider {
         project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')
@@ -22,7 +24,7 @@ dependencies {
     testImplementation 'org.ow2.asm:asm-analysis:9.9.1'
     testImplementation 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
     // Actual sibling bytecode is a test witness, never a production dependency.
-    testRuntimeOnly files(project(':MismatchedBoots:NeoForge').tasks.named('jar').flatMap { it.archiveFile })
+    testRuntimeOnly files(bootsWitnessJar)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // Optional viewer APIs carry Fabric environment annotations even on their common surface.
     compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
@@ -60,44 +62,27 @@ idea.module.excludeDirs += file('runs')
 tasks.named('assemble') { dependsOn tasks.named('jarJar') }
 jar { from(rootProject.file('LICENSE')) }
 
-tasks.named('test', Test) {
+def artifactBindings = project(':MismatchedThings').testModArtifactBindings
+def guardFixtures = [
+        jdtJar: 'justdirethings',
+        sgLiveJar: 'silentgear',
+        rootsGuardJar: 'rootsclassic',
+        aetherGuardJar: 'aether_ii',
+        undergardenGuardJar: 'undergarden',
+        iceAndFireGuardJar: 'iceandfire'
+]
+
+tasks.named('test', Test) { test ->
     useJUnitPlatform()
     // The modded JUnit loader hides Mixin resources; ASM reads this witness directly from the packaged sibling.
-    systemProperty 'mismatchedleggings.test.bootsWitnessJar', project(':MismatchedBoots:NeoForge')
-            .tasks.named('jar').flatMap { it.archiveFile }.get().asFile.absolutePath
-    def artifacts = project(':MismatchedThings').testModArtifacts
-    def silentGear = 'silent-gear-26.1.2-neoforge-4.2.3.jar'
-    def justDire = 'justdirethings-1.6.11.jar'
-    inputs.file(providers.provider { artifacts.resolve('NeoForge', justDire) })
-            .withPropertyName('justDireGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
-    systemProperty 'mismatchedleggings.test.jdtJar', artifacts.path('NeoForge', justDire).absolutePath
-    if (providers.gradleProperty('leggingsJdtHudClass').isPresent()) {
-        def hudClass = file(providers.gradleProperty('leggingsJdtHudClass').get())
-        inputs.file(hudClass).withPropertyName('justDireHudTransformedClass').withPathSensitivity(PathSensitivity.NONE)
-        systemProperty 'mismatchedleggings.test.jdtHudClass', hudClass.absolutePath
+    inputs.file(bootsWitnessJar).withPropertyName('bootsWitnessArtifact').withPathSensitivity(PathSensitivity.NONE)
+    systemProperty 'mismatchedleggings.test.bootsWitnessJar', bootsWitnessJar.get().asFile.absolutePath
+    artifactBindings.bind(test, 'NeoForge', 'mismatchedleggings.test.', guardFixtures)
+    [leggingsJdtHudClass: 'jdtHudClass', leggingsJdtSettingsClass: 'justDireSettingsTransformedClass'].each { option, property ->
+        def supplied = providers.gradleProperty(option).map { file(it) }
+        if (supplied.isPresent()) {
+            test.inputs.file(supplied).withPropertyName(property).withPathSensitivity(PathSensitivity.NONE)
+            test.systemProperty "mismatchedleggings.test.${property}", supplied.get().absolutePath
+        }
     }
-    if (providers.gradleProperty('leggingsJdtSettingsClass').isPresent()) {
-        def screenClass = file(providers.gradleProperty('leggingsJdtSettingsClass').get())
-        inputs.file(screenClass).withPropertyName('justDireSettingsTransformedClass').withPathSensitivity(PathSensitivity.NONE)
-        systemProperty 'mismatchedleggings.test.justDireSettingsTransformedClass', screenClass.absolutePath
-    }
-    inputs.file(providers.provider { artifacts.resolve('NeoForge', silentGear) })
-            .withPropertyName('silentGearLiveGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
-    systemProperty 'mismatchedleggings.test.sgLiveJar', artifacts.path('NeoForge', silentGear).absolutePath
-    def roots = 'RootsClassic-26.1.2-1.6.7.jar'
-    inputs.file(providers.provider { artifacts.resolve('NeoForge', roots) })
-            .withPropertyName('rootsGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
-    systemProperty 'mismatchedleggings.test.rootsGuardJar', artifacts.path('NeoForge', roots).absolutePath
-    def aether = 'aether_ii-26.1.2-alpha.4.1-neoforge.jar'
-    inputs.file(providers.provider { artifacts.resolve('NeoForge', aether) })
-            .withPropertyName('aetherGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
-    systemProperty 'mismatchedleggings.test.aetherGuardJar', artifacts.path('NeoForge', aether).absolutePath
-    def undergarden = 'The_Undergarden-26.1.2-0.9.8.jar'
-    inputs.file(providers.provider { artifacts.resolve('NeoForge', undergarden) })
-            .withPropertyName('undergardenGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
-    systemProperty 'mismatchedleggings.test.undergardenGuardJar', artifacts.path('NeoForge', undergarden).absolutePath
-    def iceAndFire = 'iceandfire-2.2-beta.3.jar'
-    inputs.file(providers.provider { artifacts.resolve('NeoForge', iceAndFire) })
-            .withPropertyName('iceAndFireGuardArtifact').withPathSensitivity(PathSensitivity.NONE)
-    systemProperty 'mismatchedleggings.test.iceAndFireGuardJar', artifacts.path('NeoForge', iceAndFire).absolutePath
 }
