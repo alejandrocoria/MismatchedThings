@@ -1,0 +1,12 @@
+[
+  {
+    "loader": "NeoForge",
+    "id": "iceandfire",
+    "requires": ["uranus", "jupiter"]
+  },
+  {
+    "loader": "NeoForge",
+    "id": "oritech",
+    "clientRequires": ["athena"]
+  }
+]

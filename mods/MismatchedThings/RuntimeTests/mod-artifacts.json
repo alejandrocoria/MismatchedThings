@@ -83,6 +83,7 @@
   {
     "loader": "NeoForge",
     "id": "iceandfire",
+    "requires": ["uranus", "jupiter"],
     "filename": "iceandfire-2.2-beta.3.jar",
     "sha256": "ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2",
     "url": "https://edge.forgecdn.net/files/8929/527/iceandfire-2.2-beta.3.jar"
@@ -139,6 +140,7 @@
   {
     "loader": "NeoForge",
     "id": "oritech",
+    "clientRequires": ["athena"],
     "filename": "oritech-2.0.0-exp6.jar",
     "sha256": "caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b",
     "url": "https://cdn.modrinth.com/data/4sYI62kA/versions/2xLWeZUn/oritech-2.0.0-exp6.jar"

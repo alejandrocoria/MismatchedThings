@@ -32,6 +32,49 @@ supported for existing profiles, with unchanged download-cache coordinates.
 Mystical Agriculture/Cucumber profiles and their JDT coexistence/recovery
 selection use IDs; `verifyTestModArtifacts` also checks their alias/path identity.
 
+### Selection and test bindings
+
+Use direct selection for bytecode guards or deliberately incomplete graphs:
+`paths(loader, ids)` only returns paths, and `resolveAll(loader, ids)` verifies/
+prepares exactly those publications. The single-artifact methods remain direct.
+ID/filename aliases are deduplicated in selection order.
+
+For an audited runtime graph, `runtimePaths(loader, side, roots)` returns the
+selected paths without resolving them; `resolveRuntime(loader, side, roots)`
+verifies/prepares the same closure. `side` is explicitly `client` or `server`.
+Catalog `requires` lists apply on both sides; `clientRequires` lists apply only
+on clients. Dependencies reference loader-local pinned entries, not version
+ranges or an upstream API. An explicitly selected extra is still included.
+Unknown references, malformed dependency lists and cycles fail during catalog
+registration, without downloads. Currently the audited edges are IAF → Uranus/
+Jupiter and client Oritech → Athena; other profiles keep their existing lists
+until audited/migrated. Nested libraries do not need separate downloads.
+
+The shared `testModArtifactBindings` helper binds a small caller-owned property
+map to a `Test` task, for example inside its configuration closure:
+
+```groovy
+def bindings = project(':MismatchedThings').testModArtifactBindings
+bindings.bind(delegate, 'NeoForge', 'example.test.', [rootsGuardJar: 'rootsclassic'])
+```
+
+It uses a JVM argument provider whose chosen file is a byte-sensitive task input;
+it does not eagerly add resolved paths to the task's `systemProperties` map.
+Defaults resolve only when consumed. A fifth optional map associates property
+suffixes with `Provider<RegularFile>` overrides. Callers choose how to interpret
+override paths, for example `layout.file(providers.gradleProperty('rootsGuardJar')
+.map { rootProject.file(it) })`. Keep generated files as producer-backed providers
+such as `jarTask.flatMap { it.archiveFile }`, not prematurely extracted paths.
+An absent provider uses the default; a present missing file fails. Overrides may
+intentionally be mutated and are not checked against the official pin.
+
+For an external file that *must* match the official publication, use
+`verify(loader, id, file)`. It verifies in place and never repairs/replaces that
+file or falls back to a downloaded copy. Property names, test variants and
+transformed-class controls remain local rather than catalog metadata.
+
+### Preparation and verification
+
 Exact official download URLs and SHA-256 pins are resolved lazily through Gradle's
 artifact cache, then staged in `mods/MismatchedThings/build/test-mods/<loader>/`.
 Both loaders' JEI/REI fixtures use the same mechanism. Existing Maven-pinned
@@ -43,11 +86,15 @@ Run from the repository root:
 ```powershell
 .\gradlew.bat :MismatchedThings:prepareTestModArtifacts --console=plain
 .\gradlew.bat :MismatchedThings:verifyTestModArtifacts --offline --console=plain
+.\gradlew.bat :buildSrc:test --offline --console=plain
 ```
 
 The first task prefetches all catalog entries; individual suites normally resolve
 only their own selections. The second also checks damaged staging recovery and
-checksum rejection. The root tasks with the same names delegate here. Tests can
+checksum rejection, including non-replacement of explicit supplied files. The
+third runs focused model checks and tiny Java-only Gradle builds for JVM binding,
+incremental inputs and generated-file dependencies, without Minecraft. The root
+tasks with the first two names delegate here. Tests can
 run offline once their required dependencies are cached. Old Boots staging files
 are no longer read; Gradle's existing download cache remains reusable. The
 resolver retains its historical `mismatchedboots.test-fixtures` cache coordinates

@@ -27,7 +27,8 @@ pins.eachWithIndex { pin, index ->
         }
     }
     def target = layout.buildDirectory.file("test-mods/${pin.loader}/${pin.filename}").get().asFile
-    def entry = TestModArtifacts.entry(target, configuration, pin.sha256)
+    def entry = TestModArtifacts.entry(target, configuration, pin.sha256,
+            pin.getOrDefault('requires', []), pin.getOrDefault('clientRequires', []))
     def selectors = [pin.filename]
     if (pin.id) { selectors.add(pin.id) }
     selectors.each { selector ->
@@ -40,6 +41,7 @@ pins.eachWithIndex { pin, index ->
 
 def testMods = new TestModArtifacts(artifacts)
 ext.testModArtifacts = testMods
+ext.testModArtifactBindings = new TestModArtifactBindings(testMods, layout, providers)
 
 tasks.register('prepareTestModArtifacts') {
     group = 'verification'
@@ -86,6 +88,20 @@ tasks.register('verifyTestModArtifacts') {
         }
         if (!java.util.Arrays.equals(target.bytes, original.target().bytes)) {
             throw new GradleException('Rejected fixture changed staged bytes')
+        }
+
+        testMods.verify(pin.loader, pin.filename, target)
+        target.bytes = [0, 1, 2] as byte[]
+        try {
+            testMods.verify(pin.loader, pin.filename, target)
+            throw new GradleException('Fixture verifier accepted damaged supplied bytes')
+        } catch (GradleException expected) {
+            if (!expected.message.startsWith('Unexpected SHA-256 for test mod ')) {
+                throw expected
+            }
+        }
+        if (!java.util.Arrays.equals(target.bytes, [0, 1, 2] as byte[])) {
+            throw new GradleException('Fixture verifier replaced the explicitly supplied file')
         }
     }
 }
