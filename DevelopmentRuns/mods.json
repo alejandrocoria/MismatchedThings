@@ -1,18 +1,16 @@
 {
   "Fabric": {
     "common": [
-      "advancednetherite", "betterend", "betternether", "bclib", "wover", "createfly",
-      "mysticalagriculture", "cucumber"
+      "advancednetherite", "betterend", "betternether", "createfly", "mysticalagriculture"
     ],
-    "client": ["jei", "legendarytooltips", "iceberg", "prism"]
+    "client": ["jei", "legendarytooltips"]
   },
   "NeoForge": {
     "common": [
-      "advancednetherite", "allthemodium", "alltheores", "aquaculture", "forbiddenarcanus",
-      "valhelsiacore", "iceandfire", "uranus", "jupiter", "justdirethings",
-      "mysticalagriculture", "cucumber", "neovitae", "modonomicon", "oritech",
-      "rootsclassic", "silentgear", "silentlib", "aether_ii", "undergarden", "geckolib"
+      "advancednetherite", "allthemodium", "aquaculture", "forbiddenarcanus",
+      "iceandfire", "justdirethings", "mysticalagriculture", "neovitae", "oritech",
+      "rootsclassic", "silentgear", "aether_ii", "undergarden"
     ],
-    "client": ["jei", "legendarytooltips", "iceberg", "prism", "athena"]
+    "client": ["jei", "legendarytooltips"]
   }
 }

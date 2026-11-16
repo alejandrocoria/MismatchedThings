@@ -108,25 +108,9 @@ tasks.register('verifyBetterXCompatibility') {
     description = 'Runs production compatibility acceptance against exact BetterX 26.101.2 artifacts.'
     dependsOn("${modPath}:Fabric:jar", betterXCompatibilityTestJar)
     doLast {
-        def betterEndArtifact = configurations.betterEndFabric.resolvedConfiguration.resolvedArtifacts.find {
-            it.moduleVersion.id.group == 'maven.modrinth' &&
-                    it.moduleVersion.id.name == 'gc8OEnCC' &&
-                    it.moduleVersion.id.version == 'tBdZGZeX'
-        }
-        def betterEndJar = betterEndArtifact?.file
-        if (betterEndJar == null) {
-            throw new GradleException('Exact Better End artifact is missing from the tag-consumer audit')
-        }
-
-        def betterNetherArtifact = configurations.betterXFabric.resolvedConfiguration.resolvedArtifacts.find {
-            it.moduleVersion.id.group == 'maven.modrinth' &&
-                    it.moduleVersion.id.name == 'MpzVLzy5' &&
-                    it.moduleVersion.id.version == 'gDLNJy17'
-        }
-        if (betterNetherArtifact == null) {
-            throw new GradleException(
-                    'Exact Better Nether artifact is missing from the piglin adapter audit')
-        }
+        def testMods = project(':MismatchedThings').testModArtifacts
+        def betterEndJar = testMods.resolve('Fabric', 'betterend-26.101.2')
+        testMods.resolve('Fabric', 'betternether-26.101.2')
 
         def owner = 'org/betterx/betterend/registry/EndTags'
         def field = 'CRYSTALITE_SET'

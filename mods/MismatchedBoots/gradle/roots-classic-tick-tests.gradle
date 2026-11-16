@@ -8,8 +8,7 @@ def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def reports = layout.buildDirectory.dir("reports/roots-ticks/${neoforge_version}")
 def runs = layout.buildDirectory.dir("run/rootsTicks/${neoforge_version}")
-def artifact = testMods.path('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar')
-def expectedHash = '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d'
+def artifact = testMods.path('NeoForge', 'rootsclassic')
 
 ['Live', 'Receiver', 'Helper', 'Staff', 'Crystal', 'Healing', 'Absent'].each { variant ->
     def name = variant.toLowerCase(Locale.ROOT)
@@ -30,10 +29,7 @@ def expectedHash = '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a9
             if (variant != 'Absent') {
                 testMods.resolve('NeoForge', artifact.name)
             }
-            if (variant != 'Absent' && (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                    .digest(artifact.bytes).encodeHex().toString() != expectedHash)) {
-                throw new GradleException("Missing/unexpected pinned Roots Classic fixture: ${artifact}")
-            }
+
             fixtureFiles.delete { delete directory, markers }
             fixtureFiles.copy {
                 from(productionJar, fixtureJar)

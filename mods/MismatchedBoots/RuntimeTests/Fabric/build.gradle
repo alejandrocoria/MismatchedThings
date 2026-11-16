@@ -45,6 +45,8 @@ tasks.named('test', Test) {
     useJUnitPlatform()
 }
 
+def testMods = project(':MismatchedThings').testModArtifacts
+
 configurations {
     advancedNetheriteFabric {
         canBeConsumed = false
@@ -66,30 +68,13 @@ configurations {
 }
 
 dependencies {
-    // Advanced Netherite 2.4.1 Fabric; https://modrinth.com/mod/CFX9ftUJ/version/vudH2Rjv
-    advancedNetheriteFabric('maven.modrinth:CFX9ftUJ:vudH2Rjv') {
-        transitive = false
-    }
-    // Better End 26.101.2; https://modrinth.com/mod/gc8OEnCC/version/tBdZGZeX
-    betterEndFabric('maven.modrinth:gc8OEnCC:tBdZGZeX') {
-        transitive = false
-    }
-    // Better Nether; https://modrinth.com/mod/MpzVLzy5/version/gDLNJy17
-    betterXFabric('maven.modrinth:MpzVLzy5:gDLNJy17') {
-        transitive = false
-    }
-    // BCLib 26.101.2; https://modrinth.com/mod/BgNRHReB/version/vBV7w4o0
-    betterEndFabric('maven.modrinth:BgNRHReB:vBV7w4o0') {
-        transitive = false
-    }
-    // WorldWeaver (Wover) 26.101.2; https://modrinth.com/mod/RiN8rDVs/version/MSzkHfJp
-    betterEndFabric('maven.modrinth:RiN8rDVs:MSzkHfJp') {
-        transitive = false
-    }
-    // Create Fly 6.0.9-4; https://modrinth.com/mod/dKvj0eNn/version/wV5IQLKg
-    createFlyFabric('maven.modrinth:dKvj0eNn:wV5IQLKg') {
-        transitive = false
-    }
+    advancedNetheriteFabric files(providers.provider { testMods.resolveAll('Fabric', ['advancednetherite']) })
+    // Historical 26.101.2 controls intentionally differ from the current development graph.
+    betterEndFabric files(providers.provider {
+        testMods.resolveAll('Fabric', ['betterend-26.101.2', 'bclib-26.101.2', 'wover-26.101.2'])
+    })
+    betterXFabric files(providers.provider { testMods.resolveAll('Fabric', ['betternether-26.101.2']) })
+    createFlyFabric files(providers.provider { testMods.resolveAll('Fabric', ['createfly']) })
 }
 
 sourceSets {

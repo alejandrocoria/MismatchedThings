@@ -22,7 +22,7 @@ def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile
 def justDireArtifactOverride = providers.gradleProperty('justDireThingsTestJar').isPresent()
 
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
-        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings'))
 
 neoForge.runs {
     justDireItemBarsServer {
@@ -67,10 +67,7 @@ tasks.register('prepareJustDireItemBarsServer') {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
         }
-        if (!justDireSmithingArtifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                .digest(justDireSmithingArtifact.bytes).encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
-            throw new GradleException("Missing/unexpected pinned JDT fixture: ${justDireSmithingArtifact}")
-        }
+        testMods.verify('NeoForge', 'justdirethings', justDireSmithingArtifact)
 
         def directory = justDireItemBarsDirectory.get().dir('server').asFile
         def success = new File(justDireItemBarsMarkers.get().asFile, 'just-dire-item-bars-server-success.txt')

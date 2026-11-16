@@ -15,15 +15,8 @@ dependencies {
 ext.leggingsViewerArtifacts = { String viewer ->
     if (viewer == 'none') { return [] }
     def resolver = project(':MismatchedThings').testModArtifacts
-    def names
-    if (project.name == 'Fabric') {
-        names = viewer == 'jei' ? ['jei-26.1.2-fabric-29.43.0.106.jar']
-                : ['RoughlyEnoughItems-26.1.819 (Fabric).jar', 'architectury-fabric-20.1.16.jar', 'cloth-config-26.1.154 (Fabric).jar']
-    } else {
-        names = viewer == 'jei' ? ['jei-26.1.2-neoforge-29.43.0.106.jar']
-                : ['RoughlyEnoughItems-26.1.819.jar', 'architectury-neoforge-20.1.16.jar', 'cloth-config-26.1.154.jar']
-    }
-    return names.collect { resolver.resolve(project.name, it) }
+    def ids = viewer == 'jei' ? ['jei'] : ['rei', 'architectury', 'clothconfig']
+    return resolver.resolveAll(project.name, ids)
 }
 
 tasks.register('prepareViewerArtifacts') {

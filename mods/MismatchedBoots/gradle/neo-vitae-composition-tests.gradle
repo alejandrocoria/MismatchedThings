@@ -9,11 +9,7 @@ def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 def loaderVersion = neoforge_version.toString()
 def reports = layout.buildDirectory.dir("reports/neo-vitae-composition/${loaderVersion}")
 def runs = layout.buildDirectory.dir("run/neoVitaeComposition/${loaderVersion}")
-def nativeArtifacts = [
-        'neovitae-26.1.2-1.1.31.jar'            : '55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92',
-        'modonomicon-26.1.2-neoforge-2.16.0.jar': '658d75ac71ef2e49eaeaa944f7ee82f407424df09f42adf459dd20cc98a57710',
-        'geckolib-neoforge-26.1.2-5.5.2.jar'    : 'e335e5392274016c0e50d52f867b8975c6ee9d21035b45e4baf853a4d2d9dd2d'
-].collectEntries { name, hash -> [(testMods.path('NeoForge', name)): hash] }
+def nativeArtifacts = testMods.paths('NeoForge', ['neovitae', 'modonomicon', 'geckolib'])
 
 ['Live', 'Absent'].each { variant ->
     def directory = runs.map { it.dir(variant.toLowerCase(Locale.ROOT)) }
@@ -35,19 +31,13 @@ def nativeArtifacts = [
                 if (loaderVersion.tokenize('.').last().toInteger() < 109) {
                     throw new GradleException('Pinned Modonomicon requires NeoForge 26.1.2.109+; use .114 for the native gate')
                 }
-                nativeArtifacts.each { artifact, hash ->
-                    testMods.resolve('NeoForge', artifact.name)
-                    if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                            .digest(artifact.bytes).encodeHex().toString() != hash) {
-                        throw new GradleException("Missing/unexpected pinned Neo Vitae fixture: ${artifact}")
-                    }
-                }
+                nativeArtifacts.each { artifact -> testMods.resolve('NeoForge', artifact.name) }
             }
             fixtureFiles.delete { delete directory, markers }
             fixtureFiles.copy {
                 from(productionJar, fixtureJar)
                 if (variant == 'Live') {
-                    from(nativeArtifacts.keySet())
+                    from(nativeArtifacts)
                 }
                 into(new File(directory.get().asFile, 'mods'))
             }

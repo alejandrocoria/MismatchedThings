@@ -1,29 +1,45 @@
 // Exact third-party runtime fixtures; isolated from production dependencies/publication.
 def pins = new groovy.json.JsonSlurper().parse(file('RuntimeTests/mod-artifacts.json'))
+// Historical Maven publications retain their original coordinates and Gradle cache entries.
+repositories.maven {
+    name = 'TestModMaven'
+    url = 'https://api.modrinth.com/maven'
+    content {
+        pins.findAll { it.maven }.each { pin ->
+            def coordinate = pin.maven.tokenize(':')
+            includeModule(coordinate[0], coordinate[1])
+        }
+    }
+}
+
 def artifacts = [:]
 pins.eachWithIndex { pin, index ->
-    def uri = URI.create(pin.url)
-    def filename = uri.path.substring(uri.path.lastIndexOf('/') + 1)
-    def module = "fixture-${index}"
-    // Preserve existing Gradle cache coordinates; this is not a published mod namespace.
-    def group = 'mismatchedboots.test-fixtures'
-    repositories.ivy {
-        name = "TestMod${index}"
-        url = pin.url.substring(0, pin.url.lastIndexOf('/') + 1)
-        patternLayout { artifact '[artifact].[ext]' }
-        metadataSources { artifact() }
-        content { includeModule(group, module) }
-    }
     def configuration = configurations.create("testMod${index}") {
         canBeConsumed = false
         canBeResolved = true
         transitive = false
     }
-    dependencies.add(configuration.name, "${group}:${module}:1") {
-        artifact {
-            name = filename.substring(0, filename.length() - '.jar'.length())
-            extension = 'jar'
-            type = 'jar'
+    if (pin.maven) {
+        dependencies.add(configuration.name, pin.maven)
+    } else {
+        def uri = URI.create(pin.url)
+        def filename = uri.path.substring(uri.path.lastIndexOf('/') + 1)
+        def module = "fixture-${index}"
+        // Preserve existing Gradle cache coordinates; this is not a published mod namespace.
+        def group = 'mismatchedboots.test-fixtures'
+        repositories.ivy {
+            name = "TestMod${index}"
+            url = pin.url.substring(0, pin.url.lastIndexOf('/') + 1)
+            patternLayout { artifact '[artifact].[ext]' }
+            metadataSources { artifact() }
+            content { includeModule(group, module) }
+        }
+        dependencies.add(configuration.name, "${group}:${module}:1") {
+            artifact {
+                name = filename.substring(0, filename.length() - '.jar'.length())
+                extension = 'jar'
+                type = 'jar'
+            }
         }
     }
     def target = layout.buildDirectory.file("test-mods/${pin.loader}/${pin.filename}").get().asFile
@@ -57,6 +73,37 @@ tasks.register('verifyTestModArtifacts') {
     dependsOn tasks.named('prepareTestModArtifacts')
     def damaged = layout.buildDirectory.file('test-mod-checks/damaged.jar')
     doLast {
+        // Check real catalog wiring too, not only the synthetic buildSrc graph fixtures.
+        def runtimeCases = [
+                [loader: 'Fabric', root: 'betterend', ids: ['betterend', 'bclib', 'wover']],
+                [loader: 'Fabric', root: 'betternether', ids: ['betternether', 'bclib', 'wover']],
+                [loader: 'Fabric', root: 'rei', ids: ['rei', 'architectury']],
+                [loader: 'NeoForge', root: 'rei', ids: ['rei', 'architectury', 'clothconfig']],
+                [loader: 'NeoForge', root: 'iceandfire', ids: ['iceandfire', 'uranus', 'jupiter']],
+                [loader: 'NeoForge', root: 'allthemodium', ids: ['allthemodium', 'alltheores', 'geckolib']],
+                [loader: 'NeoForge', root: 'neovitae', ids: ['neovitae', 'modonomicon', 'geckolib']],
+                [loader: 'NeoForge', root: 'silentgear', ids: ['silentgear', 'silentlib']],
+                [loader: 'NeoForge', root: 'forbiddenarcanus', ids: ['forbiddenarcanus', 'valhelsiacore']]
+        ]
+        ['Fabric', 'NeoForge'].each { loader ->
+            runtimeCases.addAll([
+                    [loader: loader, root: 'mysticalagriculture', ids: ['mysticalagriculture', 'cucumber']],
+                    [loader: loader, root: 'legendarytooltips', ids: ['legendarytooltips', 'iceberg', 'prism']]
+            ])
+        }
+        runtimeCases.each { spec ->
+            ['client', 'server'].each { side ->
+                if (testMods.runtimePaths(spec.loader, side, [spec.root]).toSet()
+                        != testMods.paths(spec.loader, spec.ids).toSet()) {
+                    throw new GradleException("Unexpected catalog closure: ${spec.loader}/${side}/${spec.root}")
+                }
+            }
+        }
+        ['client': ['oritech', 'athena'], 'server': ['oritech']].each { side, ids ->
+            if (testMods.runtimePaths('NeoForge', side, ['oritech']) != testMods.paths('NeoForge', ids)) {
+                throw new GradleException("Oritech's client-only Athena edge changed on ${side}")
+            }
+        }
         pins.findAll { it.id }.each { pin ->
             if (testMods.path(pin.loader, pin.id) != testMods.path(pin.loader, pin.filename)
                     || testMods.resolve(pin.loader, pin.id) != testMods.resolve(pin.loader, pin.filename)) {

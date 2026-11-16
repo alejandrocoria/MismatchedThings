@@ -1,9 +1,9 @@
 import java.util.concurrent.TimeUnit
 
 // Maintained production gate; defensive feasibility candidates have been retired.
-def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
+def nativeIds = ['silentgear', 'silentlib']
 dependencies.add('compileOnly', files(providers.provider {
-    nativeNames.collect { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it) }
+    project(':MismatchedThings').testModArtifacts.resolveAll('NeoForge', nativeIds)
 }))
 def graph = providers.gradleProperty('sgFoundationGraph').getOrElse('alone')
 def absent = providers.gradleProperty('sgFoundationAbsent').map { it.toBoolean() }.getOrElse(false)
@@ -93,14 +93,14 @@ tasks.register('prepareSgFoundation') {
             artifacts[0] = staged
         }
         if (!absent) {
-            nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
+            artifacts.addAll(project(':MismatchedThings').testModArtifacts.resolveAll('NeoForge', nativeIds))
         }
         if (brilliantVariant) {
-            ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar', 'geckolib-neoforge-26.1.2-5.5.2.jar'].each {
+            ['allthemodium', 'alltheores', 'geckolib'].each {
                 artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
             }
         }
-        if (liveInfusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')) }
+        if (liveInfusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'undergarden')) }
         def mods = new File(directory, 'mods')
         mods.mkdirs()
         if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {

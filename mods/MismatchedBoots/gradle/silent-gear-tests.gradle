@@ -28,13 +28,11 @@ def reports = layout.buildDirectory.dir(effectVariant ? "reports/silent-gear-eff
         : "reports/silent-gear-stats/${neoforge_version}")
 def directory = layout.buildDirectory.dir(effectVariant ? "run/silentGearEffects/${neoforge_version}/${effectVariant}"
         : "run/silentGearStats/${neoforge_version}")
-def artifacts = [
-        'silent-gear-26.1.2-neoforge-4.2.3.jar': '2e08d9822ccf78fad669a82f341987ba498289f60e0d12a863402527ae6742bf',
-        'silent-lib-26.1.2-neoforge-11.2.0.jar': '0a1f987abbcb9cf1f5f45752fb569009af56553d397ec406c1a54451a7b1a655'
-]
-def justDireArtifact = ['justdirethings-1.6.11.jar': '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436']
+def artifacts = ['silentgear', 'silentlib']
+
+def justDireArtifact = ['justdirethings']
 if (effectVariant in ['joint', 'magnet-server', 'defense-joint']) {
-    artifacts.putAll(justDireArtifact)
+    artifacts.addAll(justDireArtifact)
 }
 
 neoForge.runs.create('silentGearStats') {
@@ -51,14 +49,7 @@ neoForge.runs.create('silentGearStats') {
 tasks.register('prepareSilentGearStats') {
     dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
-        def jars = artifacts.collect { filename, hash ->
-            def jar = testMods.resolve('NeoForge', filename)
-            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                    .digest(jar.bytes).encodeHex().toString() != hash) {
-                throw new GradleException("Missing/unexpected pinned Silent Gear fixture: ${jar}")
-            }
-            jar
-        }
+        def jars = testMods.resolveAll('NeoForge', artifacts)
         fixtureFiles.delete { delete directory, reports }
         fixtureFiles.copy {
             from(productionJar, fixtureJar, jars)
@@ -239,13 +230,7 @@ neoForge.runs.create('silentGearRemaining') {
 tasks.register('prepareSilentGearRemainingSeed') {
     dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
-        def jars = artifacts.findAll { name, hash -> name.startsWith('silent-') }.collect { name, hash ->
-            def jar = testMods.resolve('NeoForge', name)
-            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
-                throw new GradleException("Missing/unexpected SG remaining fixture: ${jar}")
-            }
-            jar
-        }
+        def jars = testMods.resolveAll('NeoForge', ['silentgear', 'silentlib'])
         fixtureFiles.delete { delete remainingRun, remainingReports }
         def server = remainingRun.get().dir('server').asFile
         fixtureFiles.copy {
@@ -316,11 +301,7 @@ neoForge.runs.create('silentGearTooltip') {
 tasks.register('prepareSilentGearTooltip') {
     dependsOn('prepareSilentGearRemaining')
     doLast {
-        justDireArtifact.each { name, hash ->
-            def jar = testMods.resolve('NeoForge', name)
-            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
-                throw new GradleException("Missing/unexpected JDT tooltip coexistence fixture: ${jar}")
-            }
+        testMods.resolveAll('NeoForge', justDireArtifact).each { jar ->
             fixtureFiles.copy {
                 from(jar)
                 into(remainingRun.get().dir('client/mods'))
@@ -425,13 +406,7 @@ tasks.register('verifySilentGearRemaining') {
 tasks.register('prepareSilentGearSave') {
     dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
     doLast {
-        def jars = (artifacts + justDireArtifact).collect { name, hash ->
-            def jar = testMods.resolve('NeoForge', name)
-            if (!jar.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString() != hash) {
-                throw new GradleException("Missing/unexpected pinned SG lifecycle artifact: ${jar}")
-            }
-            jar
-        }
+        def jars = testMods.resolveAll('NeoForge', artifacts + justDireArtifact)
         fixtureFiles.delete { delete lifecycleRun, lifecycleReports }
         fixtureFiles.copy {
             from(productionJar, fixtureJar, jars)

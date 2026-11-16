@@ -43,10 +43,11 @@ the runtime classpath: leave their manually copied duplicates out of `mods`.
 
 ## Included external mods
 
-[mods.json](mods.json) is the explicit loader/side selection. It references IDs
+[mods.json](mods.json) selects loader/side roots and intentional extras. It references IDs
 in the shared [artifact catalog](../mods/MismatchedThings/RuntimeTests/mod-artifacts.json),
-which owns exact publications and SHA-256 hashes. Required nested libraries
-remain supplied by their upstream JARs.
+which owns exact publications, SHA-256 hashes and audited external dependency
+edges. Preparation expands these roots per side. Required nested libraries
+remain supplied by their upstream JARs; they are not separate catalog entries.
 
 - Fabric: Advanced Netherite, Better End, Better Nether, Create Fly and the
   unofficial Mystical Agriculture port, plus BCLib, WorldWeaver and Cucumber.
@@ -92,6 +93,7 @@ runtime libraries and access rules consistent with the product projects, without
 adding their packaged JARs or nested core copies to the same run.
 
 For another compatibility mod, add/reuse a shared pinned catalog entry, select
-its ID in `mods.json`, include mandatory dependencies on the appropriate side,
+its ID in `mods.json`, audit its external dependency edges in the catalog,
+keep deliberate extras explicit rather than inventing native dependencies,
 and repeat preparation/classpath checks plus the relevant actual startup. Do not
 make it a production dependency or read JARs from a developer's installation.

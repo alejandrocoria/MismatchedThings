@@ -20,7 +20,7 @@ tasks.register('prepareIafDamageServer') {
         def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
         if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
         if (variant != 'absent') {
-            ['iceandfire-2.2-beta.3.jar', 'uranus-3.0-alpha.1.jar', 'jupiter-2.4.3-26.1.2-universal.jar'].each {
+            ['iceandfire', 'uranus', 'jupiter'].each {
                 artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
             }
         }

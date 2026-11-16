@@ -44,21 +44,10 @@ configurations {
         canBeConsumed = false
         canBeResolved = true
     }
-    journeyMapNeoForge {
-        canBeConsumed = false
-        canBeResolved = true
-    }
 }
 
 dependencies {
-    // Advanced Netherite 2.4.1 NeoForge; https://modrinth.com/mod/CFX9ftUJ/version/yvbzX6CA
-    advancedNetheriteNeoForge('maven.modrinth:CFX9ftUJ:yvbzX6CA') {
-        transitive = false
-    }
-    // JourneyMap 26.1.2-6.0.4 NeoForge; https://modrinth.com/mod/lfHFW1mp/version/MYF1fYGU
-    journeyMapNeoForge('maven.modrinth:lfHFW1mp:MYF1fYGU') {
-        transitive = false
-    }
+    advancedNetheriteNeoForge files(providers.provider { testMods.resolveAll('NeoForge', ['advancednetherite']) })
 }
 
 sourceSets {
@@ -95,40 +84,22 @@ def geometryProductionArchive = providers.gradleProperty('geometryProductionJar'
         .orElse(productionArchive.map { it.asFile })
 def iceAndFireTest = providers.gradleProperty('iceAndFireTest').map { it.toBoolean() }.getOrElse(false)
 def rootsRenderingTest = providers.gradleProperty('rootsRenderingTest').map { it.toBoolean() }.getOrElse(false)
-def rootsRenderingArtifact = testMods.path('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar')
+def rootsRenderingArtifact = testMods.path('NeoForge', 'rootsclassic')
 def iceAndFireModsOverride = providers.gradleProperty('iceAndFireTestModsDirectory').isPresent()
 
 def iceAndFireModsDirectory = providers.gradleProperty('iceAndFireTestModsDirectory')
         .map { rootProject.file(it) }.getOrElse(project(':MismatchedThings').layout.buildDirectory.dir('test-mods/NeoForge').get().asFile)
-def iceAndFireArtifacts = [
-        'iceandfire-2.2-beta.3.jar'         : 'ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2',
-        'uranus-3.0-alpha.1.jar'            : 'ce0ab47d27783a872f5486208884a2946b1c4e39d94bce2c80b1142defde3000',
-        'jupiter-2.4.3-26.1.2-universal.jar': 'fc2f273c02788c5ff6736439de8cef9a7eb2662f768e8ee1ac23c57323ee740c'
-]
-def verifiedIceAndFireArtifacts = {
-    iceAndFireArtifacts.collect { filename, expectedHash ->
-        def artifact = new File(iceAndFireModsDirectory, filename)
-        if (!iceAndFireModsOverride) {
-            testMods.resolve('NeoForge', filename)
-        }
-        if (!artifact.isFile()) {
-            throw new GradleException("Missing optional Ice and Fire fixture: ${artifact}")
-        }
+def iceAndFireArtifacts = ['iceandfire', 'uranus', 'jupiter']
 
-        def digest = java.security.MessageDigest.getInstance('SHA-256')
-        artifact.withInputStream { stream ->
-            byte[] buffer = new byte[8192]
-            int count
-            while ((count = stream.read(buffer)) != -1) {
-                digest.update(buffer, 0, count)
-            }
-        }
-        if (digest.digest().encodeHex().toString() != expectedHash) {
-            throw new GradleException("Unexpected optional Ice and Fire artifact: ${artifact}")
-        }
-        artifact
+def verifiedIceAndFireArtifacts = {
+    if (!iceAndFireModsOverride) {
+        return testMods.resolveAll('NeoForge', iceAndFireArtifacts)
+    }
+    iceAndFireArtifacts.collect { id ->
+        testMods.verify('NeoForge', id, new File(iceAndFireModsDirectory, testMods.path('NeoForge', id).name))
     }
 }
+
 def iceAndFireDamageMarkers = fixtureBuildDirectory.dir('ice-and-fire-damage-markers')
 def iceAndFireDamageRunDirectory = fixtureBuildDirectory.dir('run/iceAndFireDamageCompatibility')
 def tideMarkers = fixtureBuildDirectory.dir('tide-production-markers')
@@ -296,6 +267,7 @@ spawn-protection=0
 }
 
 def mutatedTideJar = fixtureBuildDirectory.file('tide-api-field/iceandfire-2.2-beta.3.jar')
+def nativeTideJar = new File(iceAndFireModsDirectory, testMods.path('NeoForge', 'iceandfire').name)
 def prepareTideMutationArtifact = tasks.register('prepareTideMutationArtifact') {
     doLast { verifiedIceAndFireArtifacts() }
 }
@@ -304,11 +276,11 @@ def mutateTideApi = tasks.register('mutateTideApi', JavaExec) {
     dependsOn(tasks.named('iceAndFireTideTestClasses'), prepareTideMutationArtifact)
     classpath = sourceSets.iceAndFireTideTest.runtimeClasspath
     mainClass = 'games.alejandrocoria.mismatchedboots.runtimetest.tide.TideJarMutation'
-    inputs.file(new File(iceAndFireModsDirectory, 'iceandfire-2.2-beta.3.jar'))
+    inputs.file(nativeTideJar)
     outputs.file(mutatedTideJar)
     doFirst {
         verifiedIceAndFireArtifacts()
-        setArgs([new File(iceAndFireModsDirectory, 'iceandfire-2.2-beta.3.jar').absolutePath, mutatedTideJar.get().asFile.absolutePath])
+        setArgs([nativeTideJar.absolutePath, mutatedTideJar.get().asFile.absolutePath])
     }
 }
 tideProductionVariants.each { variant ->
@@ -326,7 +298,9 @@ tideProductionVariants.each { variant ->
                 }
             }
             if (variant == 'ApiAbsent') {
-                fixtureFileOperations.delete { delete iceAndFireArtifacts.keySet().collect { new File(mods, it) } }
+                fixtureFileOperations.delete {
+                    delete testMods.paths('NeoForge', iceAndFireArtifacts).collect { new File(mods, it.name) }
+                }
             } else if (variant == 'ApiField') {
                 fixtureFileOperations.copy {
                     from(mutatedTideJar)
@@ -452,11 +426,7 @@ tasks.register('prepareGeometryClient') {
         }
         if (rootsRenderingTest) {
             testMods.resolve('NeoForge', rootsRenderingArtifact.name)
-            if (!rootsRenderingArtifact.isFile()
-                    || java.security.MessageDigest.getInstance('SHA-256').digest(rootsRenderingArtifact.bytes)
-                    .encodeHex().toString() != '1768b172c938de0aa457771e60af9286bcca754e083ebc96f8a229cfe2a95a0d') {
-                throw new GradleException('Missing or unexpected Roots Classic 1.6.7 rendering artifact')
-            }
+
             compatibilityArtifacts += rootsRenderingArtifact
         }
         fixtureFileOperations.delete { delete geometryMarkers }

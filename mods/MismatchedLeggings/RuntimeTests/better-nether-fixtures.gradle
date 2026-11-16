@@ -1,6 +1,4 @@
 // The catalog retains the exact publications and checksum validation of this fixture.
 ext.leggingsBetterNetherArtifacts = {
-    ['betternether', 'bclib', 'wover'].collect {
-        project(':MismatchedThings').testModArtifacts.resolve('Fabric', it)
-    }
+    project(':MismatchedThings').testModArtifacts.resolveRuntime('Fabric', 'server', ['betternether'])
 }

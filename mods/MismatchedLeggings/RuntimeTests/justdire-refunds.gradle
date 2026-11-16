@@ -22,9 +22,9 @@ tasks.register('prepareJustDireRefundSeam') {
         if (graph in ['boots', 'both']) { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
         if (graph == 'core' && maRefundOrder != 'after') { artifacts.add(project(':MismatchedThings:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
         def optionalArtifacts = []
-        if (fault != 'jdtAbsent') { optionalArtifacts.add('justdirethings-1.6.11.jar') }
+        if (fault != 'jdtAbsent') { optionalArtifacts.add('justdirethings') }
         // MA proves shrink itself is unchanged. JDT's foreign-consumption faults need a separate no-MA profile.
-        if (!(fault in ['maAbsent', 'receipts'])) { optionalArtifacts.addAll(['MysticalAgriculture-26.1.2-9.0.11.jar', 'Cucumber-26.1.2-9.0.7.jar']) }
+        if (!(fault in ['maAbsent', 'receipts'])) { optionalArtifacts.addAll(['mysticalagriculture', 'cucumber']) }
         optionalArtifacts.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
         def mods = new File(directory, 'mods')
         mods.mkdirs()

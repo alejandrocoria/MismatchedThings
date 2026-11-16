@@ -10,7 +10,6 @@ def acceptanceFileOperations = objects.newInstance(FixtureFileOperations).files
 def acceptanceProjectDirectory = rootProject.projectDir
 def archiveProviders = [:]
 def endpointDirectories = [:]
-def journeyMapConfiguration
 // Forward selected baselines/scopes: otherwise a minimum-loader or SG fault
 // acceptance command would silently start the default loader or ordinary run.
 def baselineArguments = [
@@ -29,7 +28,6 @@ gradle.projectsEvaluated {
             [(endpoint): runtimeProject.layout.buildDirectory.dir("run/${endpoint}")]
         }
     }
-    journeyMapConfiguration = project("${modPath}:RuntimeTests:NeoForge").configurations.journeyMapNeoForge
 }
 
 def productionArtifact = { String loader ->
@@ -319,40 +317,12 @@ def runLoaderRejection = {
     }
 }
 
-def journeyMapNeoForge = {
-    def artifact = journeyMapConfiguration
-            .resolvedConfiguration
-            .resolvedArtifacts
-            .find {
-                it.moduleVersion.id.group == 'maven.modrinth'
-                        && it.moduleVersion.id.name == 'lfHFW1mp'
-                        && it.moduleVersion.id.version == 'MYF1fYGU'
-            }
-    if (artifact == null) {
-        throw new GradleException('Exact JourneyMap 26.1.2-6.0.4 NeoForge artifact is missing')
-    }
-    artifact.file
-}
-
 def runJourneyMapCoexistence = {
     int port = 25578
     File markers = networkAcceptanceRoot.get().dir('neoforge-journeymap').asFile
     acceptanceFileOperations.delete { delete markers }
     markers.mkdirs()
-    File journeyMapArtifact = journeyMapNeoForge()
-    def digest = java.security.MessageDigest.getInstance('SHA-256')
-    def actualHash = journeyMapArtifact.withInputStream { input ->
-        byte[] buffer = new byte[8192]
-        int count
-        while ((count = input.read(buffer)) >= 0) {
-            digest.update(buffer, 0, count)
-        }
-        digest.digest().encodeHex().toString().toUpperCase(Locale.ROOT)
-    }
-    def expectedHash = '37352BA8D9033841EC787322541B9B48C501B8703B442A2BC9876D64DA188048'
-    if (actualHash != expectedHash) {
-        throw new GradleException("Unexpected JourneyMap artifact hash: ${actualHash}")
-    }
+    File journeyMapArtifact = project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'journeymap')
     prepareEndpoint('neoforge', 'server', port, journeyMapArtifact)
     Process server = null
     try {

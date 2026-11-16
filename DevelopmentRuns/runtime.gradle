@@ -20,8 +20,12 @@ ext.familyProjects = [mismatchedthings: 'MismatchedThings', mismatchedboots: 'Mi
 evaluationDependsOn(':MismatchedThings')
 def artifacts = project(':MismatchedThings').testModArtifacts
 def selections = new groovy.json.JsonSlurper().parse(file('../mods.json'))[project.name]
-ext.commonDevelopmentMods = files(selections.common.collect { artifacts.path(project.name, it) })
-ext.clientDevelopmentMods = files(selections.client.collect { artifacts.path(project.name, it) })
+def serverRoots = selections.common
+def clientRoots = serverRoots + selections.client
+def serverArtifacts = artifacts.runtimePaths(project.name, 'server', serverRoots)
+def clientArtifacts = artifacts.runtimePaths(project.name, 'client', clientRoots)
+ext.commonDevelopmentMods = files(serverArtifacts)
+ext.clientDevelopmentMods = files(clientArtifacts - serverArtifacts)
 
 dependencies {
     // Output dependencies carry their compile/processResources tasks, but no nested product JARs.
@@ -33,7 +37,7 @@ dependencies {
 }
 
 ['client', 'server'].each { side ->
-    def selectors = selections.common + (side == 'client' ? selections.client : [])
+    def roots = side == 'client' ? clientRoots : serverRoots
     tasks.register("prepare${side.capitalize()}") {
         group = 'development'
         description = "Builds current family outputs and verifies pinned ${project.name} ${side} mods."
@@ -41,7 +45,7 @@ dependencies {
         dependsOn(side == 'client' ? 'clientClasses' : 'classes')
         // Files are known at import; resolution/download happens only in this launch preparation.
         doLast {
-            selectors.each { artifacts.resolve(project.name, it) }
+            def selected = artifacts.resolveRuntime(project.name, side, roots)
             // Empty launcher source sets still appear on native/IDE classpaths.
             def outputs = sourceSets.main.output.files + (side == 'client' ? sourceSets.client.output.files : [])
             outputs.each { directory ->
@@ -50,7 +54,7 @@ dependencies {
                 }
             }
             logger.lifecycle("${project.name} ${side}: ${familyProjects.size()} family projects, "
-                    + "${selectors.size()} verified external artifacts")
+                    + "${selected.size()} verified external artifacts")
         }
     }
 }

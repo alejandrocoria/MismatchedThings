@@ -25,7 +25,7 @@ def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile
 def justDireArtifactOverride = providers.gradleProperty('justDireThingsTestJar').isPresent()
 
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
-        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings'))
 
 neoForge.runs {
     justDireRootUpgrades {
@@ -101,21 +101,7 @@ tasks.register('prepareJustDireSmithing') {
         if (!justDireArtifactOverride) {
             testMods.resolve('NeoForge', justDireSmithingArtifact.name)
         }
-        if (!justDireSmithingArtifact.isFile()) {
-            throw new GradleException("Missing optional Just Dire Things fixture: ${justDireSmithingArtifact}")
-        }
-
-        def digest = java.security.MessageDigest.getInstance('SHA-256')
-        justDireSmithingArtifact.withInputStream { stream ->
-            byte[] buffer = new byte[8192]
-            int count
-            while ((count = stream.read(buffer)) != -1) {
-                digest.update(buffer, 0, count)
-            }
-        }
-        if (digest.digest().encodeHex().toString() != '27d26abcba9607b0c069de316541c781aebbbb167b1553aea6ca6934d3219436') {
-            throw new GradleException("Unexpected Just Dire Things fixture: ${justDireSmithingArtifact}")
-        }
+        testMods.verify('NeoForge', 'justdirethings', justDireSmithingArtifact)
         fixtureFileOperations.delete { delete justDireSmithingMarkers, justDireSmithingRunDirectory }
         def directory = justDireSmithingRunDirectory.get().asFile
         fixtureFileOperations.copy {

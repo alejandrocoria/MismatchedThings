@@ -12,7 +12,7 @@ neoForge { version = neoforge_version }
 
 apply from: '../runtime-tests.gradle'
 dependencies.add('compileOnly', files(providers.provider {
-    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'geckolib-neoforge-26.1.2-5.5.2.jar')
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'geckolib')
 }))
 
 neoForge {

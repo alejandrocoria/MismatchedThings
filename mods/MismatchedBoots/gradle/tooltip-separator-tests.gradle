@@ -18,15 +18,7 @@ def reports = layout.buildDirectory.dir("reports/tooltip-separators/${baseline}"
 def runs = layout.buildDirectory.dir("run/tooltipSeparators/${baseline}")
 def plainOnly = providers.gradleProperty('tooltipSeparatorPlainOnly').map { it.toBoolean() }.getOrElse(false)
 def bounded = mismatchedModProject.ext.runBoundedGradleTask
-def artifacts = fabric ? [
-        'LegendaryTooltips-26.1.2-fabric-1.6.1.1.jar': '1f464710ca16c7dd069aa0c54088ddd1b72c1fff33609c13fce547f1ae444d41',
-        'Iceberg-26.1.2-fabric-1.4.1.2.jar'          : 'c0ec9b2f7659183c5c44ea83007c6653eb7ca9ddd3c4dd9cdab5c6f08e97a9a9',
-        'Prism-26.1.2-fabric-1.1.1.jar'              : '8b28502c7096f832253ea7ec4b968b5f608865a4009d2c37b96e67bfd26a2fc3'
-] : [
-        'LegendaryTooltips-26.1.2-neoforge-1.6.1.jar': '6202faca671187b4deb6d25a4f7a75bb7155caeeb2502dc584d2ac636a59b5a5',
-        'Iceberg-26.1.2-neoforge-1.4.1.2.jar'        : '78435ca80bb18b2d49c7e9fd53226ad457cc50227cf84c8837673e47fe2f97fc',
-        'Prism-26.1.2-neoforge-1.1.1.jar'            : '1b36583c1fd8cba02bdfee0e01c6be762cc030144c7f701f76741dcdea05f6b0'
-]
+def artifacts = ['legendarytooltips', 'iceberg', 'prism']
 ['Seed', 'Plain', 'Legendary'].each { phase ->
     def directory = runs.map { it.dir(phase.toLowerCase(Locale.ROOT)) }
     def markers = reports.map { it.dir(phase.toLowerCase(Locale.ROOT)) }
@@ -79,13 +71,7 @@ def artifacts = fabric ? [
                 throw new GradleException('Separator fixture paths must remain inside this runtime build directory')
             }
             filesService.delete { delete target, markers.get().asFile }
-            def mods = phase == 'Legendary' ? artifacts.collect { name, expected ->
-                def artifact = testMods.resolve(loader, name)
-                if (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString() != expected) {
-                    throw new GradleException("Missing/unexpected separator fixture: ${artifact}")
-                }
-                artifact
-            } : []
+            def mods = phase == 'Legendary' ? testMods.resolveAll(loader, artifacts) : []
             filesService.copy {
                 from production, fixture.flatMap { it.archiveFile }, mods
                 into new File(target, 'mods')

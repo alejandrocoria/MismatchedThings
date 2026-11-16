@@ -142,29 +142,7 @@ tasks.register('verifyCreateFlyCompatibility') {
     description = 'Verifies compatibility with the exact Create Fly 6.0.9-4 artifact.'
     dependsOn("${modPath}:Fabric:jar", createFlyCompatibilityTestJar)
     doLast {
-        def artifact = configurations.createFlyFabric.resolvedConfiguration.resolvedArtifacts.find {
-            it.moduleVersion.id.group == 'maven.modrinth' &&
-                    it.moduleVersion.id.name == 'dKvj0eNn' &&
-                    it.moduleVersion.id.version == 'wV5IQLKg'
-        }
-        def createFlyJar = artifact?.file
-        if (createFlyJar == null) {
-            throw new GradleException('Exact Create Fly artifact is missing')
-        }
-
-        def digest = java.security.MessageDigest.getInstance('SHA-256')
-        def actualHash = createFlyJar.withInputStream { input ->
-            byte[] buffer = new byte[8192]
-            int count
-            while ((count = input.read(buffer)) >= 0) {
-                digest.update(buffer, 0, count)
-            }
-            digest.digest().encodeHex().toString().toUpperCase(Locale.ROOT)
-        }
-        def expectedHash = 'DE1633A2DE5DC93878CA660BBDFDEB682A9A1AC1EDCDE97CB8B52624CC9FE42D'
-        if (actualHash != expectedHash) {
-            throw new GradleException("Unexpected Create Fly artifact hash: ${actualHash}")
-        }
+        def createFlyJar = project(':MismatchedThings').testModArtifacts.resolve('Fabric', 'createfly')
 
         def classReferences = { java.util.zip.ZipFile zip, String owner ->
             def references = []

@@ -16,7 +16,7 @@ def justDireSmithingRunDirectory = fixtureBuildDirectory.dir('run/justDireSmithi
 def justDireJumpClientDirectory = fixtureBuildDirectory.dir('run/justDireJumpClient')
 
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
-        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings'))
 
 neoForge.runs {
     justDireGroundStompTransport {

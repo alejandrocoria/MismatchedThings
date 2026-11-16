@@ -5,7 +5,7 @@ def graph = providers.gradleProperty('sgFoundationGraph').getOrElse('alone')
 def stage = providers.gradleProperty('sgStateStage').getOrElse('write')
 def stages = ['write', 'reopen', 'absent', 'absentagain', 'restore', 'reconnect']
 if (!(graph in ['alone', 'boots']) || !(stage in stages)) { throw new GradleException('Unknown SG state graph/stage') }
-def nativeNames = ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar']
+def nativeIds = ['silentgear', 'silentlib']
 def infusion = providers.gradleProperty('sgLiveInfusion').map { it.toBoolean() }.getOrElse(false)
 def wearer = providers.gradleProperty('sgWearerLifecycle').map { it.toBoolean() }.getOrElse(false)
 def magnet = providers.gradleProperty('sgMagnetClient').map { it.toBoolean() }.getOrElse(false)
@@ -68,13 +68,14 @@ def checkedDelete = { File target ->
             def mods = new File(run, 'mods')
             mods.mkdirs()
             // Remove only the pinned optional artifacts between actual process launches.
-            nativeNames.each { delete new File(mods, it) }
+            def resolver = project(':MismatchedThings').testModArtifacts
+            resolver.paths('NeoForge', nativeIds).each { delete new File(mods, it.name) }
             def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
             if (graph == 'boots') { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
             if (!stage.startsWith('absent') && !(tooltip && tooltipVariant == 'absent')) {
-                nativeNames.each { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it)) }
+                artifacts.addAll(resolver.resolveAll('NeoForge', nativeIds))
             }
-            if (infusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')) }
+            if (infusion) { artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'undergarden')) }
             if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
                 throw new GradleException("Unexpected artifact in disposable ${mods}")
             }

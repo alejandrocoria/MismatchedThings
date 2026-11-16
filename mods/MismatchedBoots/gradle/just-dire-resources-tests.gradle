@@ -22,7 +22,7 @@ def justDireSmithingFixtureArchive = tasks.named('jar').flatMap { it.archiveFile
 def justDireArtifactOverride = providers.gradleProperty('justDireThingsTestJar').isPresent()
 
 def justDireSmithingArtifact = providers.gradleProperty('justDireThingsTestJar')
-        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings-1.6.11.jar'))
+        .map { rootProject.file(it) }.getOrElse(testMods.path('NeoForge', 'justdirethings'))
 
 neoForge.runs {
     justDireResources {

@@ -87,24 +87,21 @@ profiles.each { profile ->
                 if (createFly) { artifacts.addAll(project.leggingsCreateFlyArtifacts()) }
                 if (allTheModium) {
                     def resolver = project(':MismatchedThings').testModArtifacts
-                    ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar',
-                     'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name ->
-                        artifacts.add(resolver.resolve('NeoForge', name))
-                    }
+                    artifacts.addAll(resolver.resolveRuntime('NeoForge', phase, ['allthemodium']))
                 }
                 if (aquaculture) {
-                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar'))
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'aquaculture'))
                 }
                 if (rootsTicks && rootsTickVariant != 'absent' || rootsRendering) {
-                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'RootsClassic-26.1.2-1.6.7.jar'))
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'rootsclassic'))
                     if (rootsRendering && phase == 'client') {
                         ['roots-rendering.txt', 'roots-pairs.png'].each { new File(reports, it).delete() }
                     }
                 }
                 if (oritechCapture) {
                     def resolver = project(':MismatchedThings').testModArtifacts
-                    ['oritech-2.0.0-exp6.jar', 'athena-4.7.3.jar',
-                     'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name -> artifacts.add(resolver.resolve('NeoForge', name)) }
+                    // Preserve this profile's explicit server Athena and GeckoLib extras.
+                    artifacts.addAll(resolver.resolveAll('NeoForge', ['oritech', 'athena', 'geckolib']))
                     if (phase == 'client') {
                         ['oritech-capture.txt', 'oritech-pairs.png'].each { new File(reports, it).delete() }
                     } else {
@@ -116,22 +113,17 @@ profiles.each { profile ->
                         throw new GradleException('Pinned Modonomicon requires NeoForge 26.1.2.109+; use .114 for Neo Vitae')
                     }
                     def resolver = project(':MismatchedThings').testModArtifacts
-                    ['neovitae-26.1.2-1.1.31.jar', 'modonomicon-26.1.2-neoforge-2.16.0.jar',
-                     'geckolib-neoforge-26.1.2-5.5.2.jar'].each { name ->
-                        artifacts.add(resolver.resolve('NeoForge', name))
-                    }
+                    artifacts.addAll(resolver.resolveRuntime('NeoForge', phase, ['neovitae']))
                 }
                 if (forbiddenArcanus) {
                     def resolver = project(':MismatchedThings').testModArtifacts
-                    ['forbidden_arcanus-26.1.2-2.7.2.jar', 'valhelsia_core-neoforge-26.1.2-1.1.6.jar'].each { name ->
-                        artifacts.add(resolver.resolve('NeoForge', name))
-                    }
+                    artifacts.addAll(resolver.resolveRuntime('NeoForge', phase, ['forbiddenarcanus']))
                     // FA 2.7.2's unguarded ClientRecipeSync subscriber links JEI even when absent.
                     // Keep that upstream error out of this attribute fixture, not out of its log gate.
                     if (phase == 'client') { artifacts.addAll(project.leggingsViewerArtifacts('jei')) }
                 }
                 if (forbiddenBoots) {
-                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar'))
+                    artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings'))
                 }
                 if (coexistence) { artifacts.add(previousBoots == null ? bootsJar.get().asFile : previousBoots) }
                 if (coexistence && previousBoots != null) {
@@ -144,10 +136,7 @@ profiles.each { profile ->
                         if (!config.exists()) { config.parentFile.mkdirs(); config.text = '{}\n' }
                     }
                     def resolver = project(':MismatchedThings').testModArtifacts
-                    ['iceandfire-2.2-beta.3.jar', 'uranus-3.0-alpha.1.jar',
-                     'jupiter-2.4.3-26.1.2-universal.jar'].each { name ->
-                        artifacts.add(resolver.resolve('NeoForge', name))
-                    }
+                    artifacts.addAll(resolver.resolveRuntime('NeoForge', phase, ['iceandfire']))
                 }
                 if (mods.listFiles().any { candidate -> !artifacts.any { it.name == candidate.name } }) {
                     throw new GradleException("Unexpected artifact in disposable ${mods}")

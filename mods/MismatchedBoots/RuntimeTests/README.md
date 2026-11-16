@@ -86,8 +86,9 @@ are downloaded on demand from exact Modrinth/CurseForge publications and checked
 against their SHA-256 pins. Boots and Leggings use the shared Things
 [catalog and resolver](../../MismatchedThings/RuntimeTests/README.md#third-party-test-artifacts),
 resolved through Gradle's artifact cache and staged in
-`mods/MismatchedThings/build/test-mods/<loader>/`. Other existing test
-configurations retain their exact Maven coordinates.
+`mods/MismatchedThings/build/test-mods/<loader>/`. Fixture-only Maven pins are
+also catalog selections, retaining historical coordinates where needed.
+Runtime profiles select IDs; deliberate old versions and extras stay explicit.
 
 To prefetch and verify the entire fixture catalog:
 

@@ -11,7 +11,7 @@ def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 
 def runBounded = mismatchedModProject.ext.runBoundedGradleTask
 
-def artifacts = ['allthemodium-26.1.2-4.1.1.jar', 'alltheores-4.0.4.jar', 'geckolib-neoforge-26.1.2-5.5.2.jar']
+def artifacts = ['allthemodium', 'alltheores', 'geckolib']
 
 ['Live', 'Chains', 'Absent'].each { variant ->
     def mode = variant.toLowerCase(Locale.ROOT)

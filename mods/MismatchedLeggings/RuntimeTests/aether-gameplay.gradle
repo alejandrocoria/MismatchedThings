@@ -2,7 +2,7 @@ import java.util.concurrent.TimeUnit
 
 // Maintained production-only server profile. Prototype flags/sources are never enabled here.
 def resolver = project(':MismatchedThings').testModArtifacts
-def aetherJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar') }
+def aetherJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii') }
 dependencies.add('compileOnly', files(aetherJar))
 def variant = providers.gradleProperty('leggingsAetherVariant').getOrElse('normal')
 if (!(variant in ['normal', 'sets', 'fluid', 'armor', 'absent'])) {

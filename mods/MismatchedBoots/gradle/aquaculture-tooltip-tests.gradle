@@ -32,7 +32,7 @@ def reports = layout.buildDirectory.dir("reports/aquaculture-tooltips/${neoforge
         dependsOn("${modPath}:NeoForge:jar", tasks.named('jar'))
         doLast {
             def run = directory.get().dir(mode).asFile
-            def nativeJar = phase == 'Absent' ? [] : [testMods.resolve('NeoForge', 'Aquaculture-26.1.1-2.9.2.jar')]
+            def nativeJar = phase == 'Absent' ? [] : [testMods.resolve('NeoForge', 'aquaculture')]
             fixtureFiles.delete { delete run }
             fixtureFiles.delete { delete fileTree(reports) { include "${mode}-*.txt" } }
             fixtureFiles.copy {

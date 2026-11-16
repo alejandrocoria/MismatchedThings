@@ -1,6 +1,4 @@
 // The same pinned bytes serve maintained tests and the family development client/server.
 ext.leggingsBetterEndArtifacts = {
-    ['betterend', 'bclib', 'wover'].collect {
-        project(':MismatchedThings').testModArtifacts.resolve('Fabric', it)
-    }
+    project(':MismatchedThings').testModArtifacts.resolveRuntime('Fabric', 'server', ['betterend'])
 }

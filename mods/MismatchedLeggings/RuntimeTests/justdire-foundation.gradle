@@ -1,6 +1,6 @@
 // Focused production foundation gate; no research candidate source set or indev artifacts.
 def nativeJar = providers.provider {
-    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar')
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings')
 }
 dependencies.add('compileOnly', files(nativeJar))
 def absent = providers.gradleProperty('leggingsJdtAbsent').map { it.toBoolean() }.getOrElse(false)
@@ -54,7 +54,7 @@ tasks.register('prepareJustDireFoundation') {
         if (!absent) { artifacts.add(nativeJar.get()) }
         if (withBoots) { artifacts.add(project(':MismatchedBoots:NeoForge').tasks.named('jar').get().archiveFile.get().asFile) }
         if (passives && !absent && !settings && !presentation && !hud) {
-            ['silent-gear-26.1.2-neoforge-4.2.3.jar', 'silent-lib-26.1.2-neoforge-11.2.0.jar'].each {
+            ['silentgear', 'silentlib'].each {
                 artifacts.add(project(':MismatchedThings').testModArtifacts.resolve('NeoForge', it))
             }
             def pack = new File(directory, 'foundation/datapacks/phase-control')

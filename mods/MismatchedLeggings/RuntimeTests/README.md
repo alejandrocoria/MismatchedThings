@@ -2073,7 +2073,7 @@ property, extra native compile dependency or executable assertion path. The
 separate published-Boots load experiment below is explicitly opt-in.
 
 This NeoForge-only profile stages Forbidden Arcanus 2.7.2 and Valhelsia Core
-1.1.6 through Boots' shared fixture catalog, with pinned download URLs, cached
+1.1.6 through Things' shared fixture catalog, with pinned download URLs, cached
 artifacts and SHA-256 verification. It does not read indev JARs or configuration
 and exercises the local authority/transaction adapter over Things' optional native
 service. The shared flag value retains the product component ID and its persistent
@@ -2319,7 +2319,7 @@ Together with the 2026-11-05 automatic evidence, this closes the bounded integra
 ## AllTheModium compatibility
 
 The NeoForge-only gameplay profile resolves AllTheModium 4.1.1, All the Ores
-4.0.4 and GeckoLib 5.5.2 through Boots' maintained artifact catalog, download
+4.0.4 and GeckoLib 5.5.2 through Things' maintained artifact catalog, download
 cache and SHA-256 pins. It never reads indev JARs. The normal profile runs a
 dedicated endpoint followed by the hidden/muted client. The deliberately broken
 tick control remains server-only. Owner acceptance is separate.

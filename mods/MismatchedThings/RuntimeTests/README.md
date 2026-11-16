@@ -46,9 +46,21 @@ Catalog `requires` lists apply on both sides; `clientRequires` lists apply only
 on clients. Dependencies reference loader-local pinned entries, not version
 ranges or an upstream API. An explicitly selected extra is still included.
 Unknown references, malformed dependency lists and cycles fail during catalog
-registration, without downloads. Currently the audited edges are IAF → Uranus/
-Jupiter and client Oritech → Athena; other profiles keep their existing lists
-until audited/migrated. Nested libraries do not need separate downloads.
+registration, without downloads. Audited edges cover BetterX's external BCLib/
+WorldWeaver, MA → Cucumber, Legendary Tooltips → Iceberg/Prism, REI → Architectury
+(plus Cloth Config on NeoForge), IAF → Uranus/Jupiter, AllTheModium → AllTheOres/
+GeckoLib, Neo Vitae → Modonomicon/GeckoLib, Silent Gear → Silent Lib,
+Forbidden Arcanus → Valhelsia Core and client Oritech → Athena. These were checked
+against the pinned native metadata. Nested libraries (for example WunderLib or
+Fabric's Forge Config API Port) do not need separate downloads.
+
+Runtime scripts use catalog IDs or derived paths/hashes, not their own versioned
+filename/hash lists. Direct lists remain appropriate for historical or fault
+controls: Oritech's older isolated fixtures deliberately include server Athena
+and GeckoLib, and Fabric's viewer fixtures retain Cloth Config as an explicit
+extra. This does not make those artifacts new native dependencies. The joint
+development runs use side-specific closures instead. The Modonomicon `.109`
+loader floor remains a local check in the relevant Neo Vitae fixtures.
 
 The shared `testModArtifactBindings` helper binds a small caller-owned property
 map to a `Test` task, for example inside its configuration closure:
@@ -82,11 +94,16 @@ transformed-class controls remain local rather than catalog metadata.
 
 ### Preparation and verification
 
-Exact official download URLs and SHA-256 pins are resolved lazily through Gradle's
-artifact cache, then staged in `mods/MismatchedThings/build/test-mods/<loader>/`.
-Both loaders' JEI/REI fixtures use the same mechanism. Existing Maven-pinned
-test configurations retain their coordinates. Maintained tests must not depend
-implicitly on indev JARs, configs or worlds.
+Exact official download URLs (or fixture-only `maven` coordinates) and SHA-256
+pins are resolved lazily through Gradle's artifact cache, then staged in
+`mods/MismatchedThings/build/test-mods/<loader>/`. Both loaders' JEI/REI fixtures
+use the same mechanism. Boots' historical BetterX 26.101.2 entries have separate
+IDs and retain their original Maven coordinates; they do not follow the newer
+BetterX development pins. JourneyMap's fixture also retains its Maven coordinate.
+Existing URL entries keep their order/cache coordinates. Append new publications
+rather than inserting them before old entries. Production `compileOnly` API
+dependencies are independent and were not migrated. Maintained tests must not
+depend implicitly on indev JARs, configs or worlds.
 
 Run from the repository root:
 
@@ -98,7 +115,8 @@ Run from the repository root:
 
 The first task prefetches all catalog entries; individual suites normally resolve
 only their own selections. The second also checks damaged staging recovery and
-checksum rejection, including non-replacement of explicit supplied files. The
+checksum rejection, including non-replacement of explicit supplied files, and
+the real catalog's audited runtime closures and side separation. The
 third runs focused model checks and tiny Java-only Gradle builds for JVM binding,
 incremental inputs and generated-file dependencies, without Minecraft. The root
 tasks with the first two names delegate here. Tests can

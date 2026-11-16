@@ -8,7 +8,7 @@ if (!(fault in ['', 'api', 'particles', 'settings']) || absent && !fault.isEmpty
 def label = 'jdt-lava' + (withBoots ? '-boots' : '') + (absent ? '-absent' : '') + (fault ? "-${fault}" : '')
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}").get().asFile
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
-def nativeJar = providers.provider { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings-1.6.11.jar') }
+def nativeJar = providers.provider { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'justdirethings') }
 
 ['server', 'client'].each { endpoint ->
     tasks.register("prepareJustDireLava${endpoint.capitalize()}") {

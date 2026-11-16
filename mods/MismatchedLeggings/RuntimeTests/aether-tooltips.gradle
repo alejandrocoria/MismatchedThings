@@ -2,7 +2,7 @@ import java.util.concurrent.TimeUnit
 
 // Maintained packaged-production presentation profile; no spike sources or candidate hooks.
 def resolver = project(':MismatchedThings').testModArtifacts
-def nativeJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar') }
+def nativeJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii') }
 
 def product = project(':MismatchedLeggings:NeoForge')
 def boots = project(':MismatchedBoots:NeoForge')

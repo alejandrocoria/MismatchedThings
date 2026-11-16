@@ -3,7 +3,7 @@ import java.util.zip.ZipFile
 
 // Packaged product state/Infuser behavior: no spike flags, source directories or candidate mixins.
 def nativeJar = providers.provider {
-    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'The_Undergarden-26.1.2-0.9.8.jar')
+    project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'undergarden')
 }
 dependencies.add('compileOnly', files(nativeJar))
 def boots = project(':MismatchedBoots:NeoForge')

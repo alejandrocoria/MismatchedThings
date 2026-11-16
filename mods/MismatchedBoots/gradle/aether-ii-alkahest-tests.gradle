@@ -6,7 +6,7 @@ def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = mismatchedModProject.ext.runBoundedGradleTask
-def artifact = testMods.path('NeoForge', 'aether_ii-26.1.2-alpha.4.1-neoforge.jar')
+def artifact = testMods.path('NeoForge', 'aether_ii')
 
 def variants = ['Live', 'Chains', 'FluidReceiver', 'FluidSupplier', 'ArmorReceiver', 'ArmorSupplier', 'FluidBinding', 'ArmorBinding', 'Absent']
 variants.each { name ->
@@ -28,10 +28,7 @@ variants.each { name ->
             if (mode != 'absent') {
                 testMods.resolve('NeoForge', artifact.name)
             }
-            if (mode != 'absent' && (!artifact.isFile() || java.security.MessageDigest.getInstance('SHA-256')
-                    .digest(artifact.bytes).encodeHex().toString() != '97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6')) {
-                throw new GradleException('Missing/unexpected pinned Aether II Alkahest fixture')
-            }
+
             fixtureFiles.delete { delete directory }
             fixtureFiles.delete { delete fileTree(reports) { include '*.txt' } }
             fixtureFiles.copy {
