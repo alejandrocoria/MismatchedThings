@@ -69,11 +69,10 @@ configurations {
 
 dependencies {
     advancedNetheriteFabric files(providers.provider { testMods.resolveAll('Fabric', ['advancednetherite']) })
-    // Historical 26.101.2 controls intentionally differ from the current development graph.
     betterEndFabric files(providers.provider {
-        testMods.resolveAll('Fabric', ['betterend-26.101.2', 'bclib-26.101.2', 'wover-26.101.2'])
+        testMods.resolveRuntime('Fabric', 'server', ['betterend'])
     })
-    betterXFabric files(providers.provider { testMods.resolveAll('Fabric', ['betternether-26.101.2']) })
+    betterXFabric files(providers.provider { testMods.resolveAll('Fabric', ['betternether']) })
     createFlyFabric files(providers.provider { testMods.resolveAll('Fabric', ['createfly']) })
 }
 

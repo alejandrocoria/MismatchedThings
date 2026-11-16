@@ -97,9 +97,10 @@ transformed-class controls remain local rather than catalog metadata.
 Exact official download URLs (or fixture-only `maven` coordinates) and SHA-256
 pins are resolved lazily through Gradle's artifact cache, then staged in
 `mods/MismatchedThings/build/test-mods/<loader>/`. Both loaders' JEI/REI fixtures
-use the same mechanism. Boots' historical BetterX 26.101.2 entries have separate
-IDs and retain their original Maven coordinates; they do not follow the newer
-BetterX development pins. JourneyMap's fixture also retains its Maven coordinate.
+use the same mechanism. Boots, Leggings and the joint development runs share
+the current BetterX entries; the superseded 26.101.2 test pins were retired after
+Boots' maintained suite passed on 26.101.4. JourneyMap's fixture retains its
+Maven coordinate.
 Existing URL entries keep their order/cache coordinates. Append new publications
 rather than inserting them before old entries. Production `compileOnly` API
 dependencies are independent and were not migrated. Maintained tests must not

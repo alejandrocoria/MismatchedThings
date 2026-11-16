@@ -361,34 +361,6 @@
     "url": "https://api.modrinth.com/maven/maven/modrinth/dKvj0eNn/wV5IQLKg/dKvj0eNn-wV5IQLKg.jar"
   },
   {
-    "loader": "Fabric",
-    "id": "betterend-26.101.2",
-    "filename": "gc8OEnCC-tBdZGZeX.jar",
-    "sha256": "11bd14f8bf4b7e0a1bc4e2c4ebc26cfc57218f2270516f3d21ed6d5b4e4078ab",
-    "maven": "maven.modrinth:gc8OEnCC:tBdZGZeX"
-  },
-  {
-    "loader": "Fabric",
-    "id": "betternether-26.101.2",
-    "filename": "MpzVLzy5-gDLNJy17.jar",
-    "sha256": "872a6d3bdce2cf812f1c2612665489caa2d9729ba9d048bb27ca5018111aebbe",
-    "maven": "maven.modrinth:MpzVLzy5:gDLNJy17"
-  },
-  {
-    "loader": "Fabric",
-    "id": "bclib-26.101.2",
-    "filename": "BgNRHReB-vBV7w4o0.jar",
-    "sha256": "66afddfd09a82d9451e861037d9e38b6c9b16b94a945ecef3df5e3bfe10b1c41",
-    "maven": "maven.modrinth:BgNRHReB:vBV7w4o0"
-  },
-  {
-    "loader": "Fabric",
-    "id": "wover-26.101.2",
-    "filename": "RiN8rDVs-MSzkHfJp.jar",
-    "sha256": "64179a48069f19339da353c04ae03b7f2c891afe0dc02050609ff0185c949171",
-    "maven": "maven.modrinth:RiN8rDVs:MSzkHfJp"
-  },
-  {
     "loader": "NeoForge",
     "id": "journeymap",
     "filename": "lfHFW1mp-MYF1fYGU.jar",

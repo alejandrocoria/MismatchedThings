@@ -58,10 +58,10 @@ remain supplied by their upstream JARs; they are not separate catalog entries.
 - Both clients add JEI and Legendary Tooltips with Iceberg and Prism. NeoForge
   adds Athena only in the client, as required by Oritech. There is no REI.
 
-The shared pins also serve maintained tests; old Boots BetterX profiles retain
-their older independent controls. These runs use the current Leggings BetterX
-pins. A complete collection starting successfully does not certify every ability
-interaction or replace standalone/product-packaging acceptance.
+The shared pins also serve maintained tests; Boots and Leggings use the same
+BetterX publications as these runs. A complete collection starting successfully
+does not certify every ability interaction or replace standalone/product-packaging
+acceptance.
 
 ## Preparation and checks
 

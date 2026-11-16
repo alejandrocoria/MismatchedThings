@@ -193,7 +193,8 @@ suites use four applied scripts, each with its runs, preparation and verificatio
 - [fabric-advanced-netherite-tests.gradle](../gradle/fabric-advanced-netherite-tests.gradle):
   Advanced Netherite gameplay acceptance and its isolated fixture JAR.
 - [fabric-betterx-tests.gradle](../gradle/fabric-betterx-tests.gradle): BetterX
-  enabled/disabled piglin recognition and production-packaging checks.
+  enabled/disabled piglin recognition and production-packaging checks, using the
+  same catalog pins as Leggings and the joint development runs.
 - [fabric-create-fly-tests.gradle](../gradle/fabric-create-fly-tests.gradle):
   Create Fly server/client acceptance, fault controls and packaging checks.
 

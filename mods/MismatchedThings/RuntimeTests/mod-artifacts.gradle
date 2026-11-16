@@ -1,6 +1,6 @@
 // Exact third-party runtime fixtures; isolated from production dependencies/publication.
 def pins = new groovy.json.JsonSlurper().parse(file('RuntimeTests/mod-artifacts.json'))
-// Historical Maven publications retain their original coordinates and Gradle cache entries.
+// Fixture-only Maven publications retain their original coordinates and Gradle cache entries.
 repositories.maven {
     name = 'TestModMaven'
     url = 'https://api.modrinth.com/maven'
