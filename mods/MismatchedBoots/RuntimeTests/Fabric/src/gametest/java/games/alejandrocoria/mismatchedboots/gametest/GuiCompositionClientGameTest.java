@@ -253,9 +253,13 @@ public final class GuiCompositionClientGameTest implements FabricClientGameTest 
         noModel.remove(DataComponents.ITEM_MODEL);
         ItemStack noModelPair = MixedBootsFactory.createPair(noModel, new ItemStack(Items.GOLDEN_BOOTS)).primary();
         GuiItemSubmissionProbe.Snapshot noModelSnapshot = renderPairWithControl(context, noModelPair);
-        if (!composition(noModelSnapshot.submissions().getFirst()).sources().get(0).isEmpty()) {
-            throw new AssertionError("The model-less source unexpectedly produced geometry");
+        ItemStackRenderState diagnostic = noModelSnapshot.submissions().getFirst().itemStackRenderState();
+        if (diagnostic instanceof MixedBootsGuiRenderState) {
+            throw new AssertionError("The model-less source did not yield to native diagnostic extraction");
         }
+        // Empty-source pairs use the complete diagnostic, not a clipped surviving source.
+        assertSourceSprite(diagnostic, "iron_boots", "model-less source diagnostic");
+        assertSourceSprite(diagnostic, "golden_boots", "model-less source diagnostic");
         assertControlHasNoScissor(noModelSnapshot, "model-less source");
 
         ItemStack missingModel = new ItemStack(Items.IRON_BOOTS);

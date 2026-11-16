@@ -214,12 +214,18 @@ public final class HybridItemRenderingClientGameTest implements FabricClientGame
         ItemStack noModel = new ItemStack(Items.IRON_BOOTS);
         noModel.remove(DataComponents.ITEM_MODEL);
         ItemStack right = modelBoot(Items.GOLDEN_BOOTS, FULL_MODEL);
-        ItemStackRenderState oneSided = resolve(client,
-                                                MixedBootsFactory.createPair(noModel, right).primary(), ItemDisplayContext.FIXED);
-        if (layerCount(oneSided) != 1) {
-            throw new AssertionError("A model-less source produced unexpected layers: " + layerCount(oneSided));
+        ItemStackRenderState emptySourcePair = resolve(client,
+                                                       MixedBootsFactory.createPair(noModel, right).primary(), ItemDisplayContext.FIXED);
+        ItemStackRenderState diagnostic = resolve(client,
+                                                 new ItemStack(BuiltInRegistries.ITEM.getValue(ModContent.MIXED_BOOTS_ID)),
+                                                 ItemDisplayContext.FIXED);
+        if (layerCount(emptySourcePair) != layerCount(diagnostic)) {
+            throw new AssertionError("A model-less source did not use the complete diagnostic model");
         }
-        assertClippedLayer(oneSided, 0, QuadClipper.Side.LEFT, false, "model-less left source");
+        for (int index = 0; index < layerCount(diagnostic); index++) {
+            assertFallbackLayer(layer(diagnostic, index), layer(emptySourcePair, index), 0.0F,
+                                "model-less source diagnostic layer=" + index);
+        }
 
         ItemStack rightOnlyRight = modelBoot(Items.IRON_BOOTS, RIGHT_ONLY_MODEL);
         ItemStackRenderState discarded = resolve(client,
