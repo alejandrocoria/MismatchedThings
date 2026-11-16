@@ -146,6 +146,10 @@ pass representative workbench/craft/equip/presentation/save-rejoin checks.
   is separate from maintained production commands.
 - `Common/src/main/java`: shared loader-server/network acceptance scenarios and helpers.
   This is a shared source directory, not a separate Gradle project.
+- `EquippedRendering/src/main`: shared test-only native armor-layer entry checks
+  and passive probes, compiled into Fabric GameTests and the NeoForge geometry fixture.
+- `EquippedRendering/src/main`: shared test-only native armor-layer entry checks
+  and passive probes, compiled into Fabric GameTests and the NeoForge geometry fixture.
 - `TooltipSeparator/src/main`: shared production-separator scenarios and read-only
   probes, with legacy spike names until consolidation; never packaged in production.
 - `MysticalAugments/src/main`: production MA effect/refund probes, competing-mixin
@@ -553,6 +557,39 @@ entities, custom animation, ordinary/default/non-humanoid controls, exactly one
 resolution per source, source immutability, native dye/overlay/trim/foil,
 extension texture, lighting, and outline parameters. These are actual native
 deferred submissions, not only the earlier recording-renderer fixture.
+
+The Fabric equipped GameTest and NeoForge geometry client additionally invoke the
+actual baked `HumanoidArmorLayer` entry. Shared checks cover both source orders,
+native other slots, age/armor-stand selection, material submissions, foreign copied
+components and absent/bare/invalid/suspended roots. A declined split must make
+one ordinary owner draw despite two cheap model-set lookups; NeoForge counts one
+native provider resolution per draw. Histories are compared as serialized data.
+The geometry client reuses the flat integrated-world setup formerly limited to
+Roots and repeats these checks after resource reload, then disconnects before
+stopping. This baseline gate needs no optional mods or executable spike; it is
+native entry/submission coverage, not a new pixel-level acceptance claim.
+
+To run only the existing Fabric equipped GameTest (including its native-entry
+controls), without the other client GameTests:
+
+```powershell
+.\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyClient -PequippedRenderingClientTestOnly=true --offline --console=plain
+```
+
+This selects its entrypoint through the same fixture metadata mechanism as
+`compositionRulesClientTestOnly`; the two flags are mutually exclusive. Omitting
+both restores the normal full client suite. The production JAR is never patched.
+
+The Fabric equipped GameTest and NeoForge geometry client additionally invoke the
+actual baked `HumanoidArmorLayer` entry. Shared checks cover both source orders,
+native other slots, age/armor-stand selection, material submissions, foreign copied
+components and absent/bare/invalid/suspended roots. A declined split must make
+one ordinary owner draw despite two cheap model-set lookups; NeoForge counts one
+native provider resolution per draw. Histories are compared as serialized data.
+The geometry client reuses the flat integrated-world setup formerly limited to
+Roots and repeats these checks after resource reload, then disconnects before
+stopping. This baseline gate needs no optional mods or executable spike; it is
+native entry/submission coverage, not a new pixel-level acceptance claim.
 
 An optional Ice and Fire CE probe uses the pinned downloaded candidate JARs:
 

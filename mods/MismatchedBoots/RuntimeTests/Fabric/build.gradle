@@ -154,19 +154,27 @@ fabricApi {
 
 // This project's main source set is intentionally empty; only test mods run here.
 sourceSets.gametest.runtimeClasspath -= sourceSets.main.output
+sourceSets.gametest.java.srcDir project("${modPath}:RuntimeTests").file('EquippedRendering/src/main/java')
+sourceSets.gametest.resources.srcDir project("${modPath}:RuntimeTests").file('EquippedRendering/src/main/resources')
 
-// A focused entry point avoids launching unrelated visual GameTests for a rules-only change.
+// Focused entry points reuse the same launch without unrelated visual GameTests.
 def compositionRulesClientTestOnly = providers.gradleProperty('compositionRulesClientTestOnly')
         .map { it.toBoolean() }.getOrElse(false)
+def equippedRenderingClientTestOnly = providers.gradleProperty('equippedRenderingClientTestOnly')
+        .map { it.toBoolean() }.getOrElse(false)
+if (compositionRulesClientTestOnly && equippedRenderingClientTestOnly) {
+    throw new GradleException('Select only one focused client GameTest entrypoint')
+}
 tasks.named('processGametestResources', ProcessResources) {
     inputs.property('compositionRulesClientTestOnly', compositionRulesClientTestOnly)
+    inputs.property('equippedRenderingClientTestOnly', equippedRenderingClientTestOnly)
     doLast {
-        if (compositionRulesClientTestOnly) {
+        if (compositionRulesClientTestOnly || equippedRenderingClientTestOnly) {
             def descriptor = new File(destinationDir, 'fabric.mod.json')
             def metadata = new groovy.json.JsonSlurper().parse(descriptor)
-            metadata.entrypoints['fabric-client-gametest'] = [
-                    'games.alejandrocoria.mismatchedboots.gametest.CompositionRulesClientGameTest'
-            ]
+            metadata.entrypoints['fabric-client-gametest'] = [equippedRenderingClientTestOnly
+                    ? 'games.alejandrocoria.mismatchedboots.client.render.EquippedRenderingClientGameTest'
+                    : 'games.alejandrocoria.mismatchedboots.gametest.CompositionRulesClientGameTest']
             descriptor.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
         }
     }

@@ -81,6 +81,8 @@ sourceSets {
 }
 
 sourceSets.main.java.srcDir project("${modPath}:RuntimeTests").file('Common/src/main/java')
+sourceSets.main.java.srcDir project("${modPath}:RuntimeTests").file('EquippedRendering/src/main/java')
+sourceSets.main.resources.srcDir project("${modPath}:RuntimeTests").file('EquippedRendering/src/main/resources')
 
 def networkTestPort = providers.gradleProperty('networkTestPort').getOrElse('25575')
 def networkTestMarkers = providers.gradleProperty('networkTestMarkers')
@@ -591,6 +593,11 @@ tasks.register('verifyGeometryCharacterization') {
         def report = new File(markerDirectory, 'geometry-report.txt')
         if (!success.exists() || !report.exists()) {
             throw new GradleException('NeoForge geometry characterization did not produce its result markers')
+        }
+        if (!report.text.contains('equipment.entry.nativeLayer=true\n')
+                || !report.text.contains('equipment.entry.ownerFallbackOnce=true\n')
+                || !report.text.contains('equipment.entry.resourceReload=true\n')) {
+            throw new GradleException('Native equipped-entry checks did not complete before/after resource reload')
         }
         if (rootsRenderingTest) {
             if (!report.text.contains('equipment.roots.productionOrderedPairs=8\n')

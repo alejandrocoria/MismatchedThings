@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.client.render;
 
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedboots.runtimetest.equipment.ArmorLayerEntryChecks;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -40,6 +41,7 @@ public final class EquippedRenderingClientGameTest implements FabricClientGameTe
             configureWorld(singleplayer);
             singleplayer.getClientLevel().waitForChunksRender();
 
+            context.runOnClient(client -> ArmorLayerEntryChecks.run(client, false));
             verifyStandardSplit(context, singleplayer);
             verifyVisualComponents(context, singleplayer);
             verifyFallbackAndRecovery(context, singleplayer);

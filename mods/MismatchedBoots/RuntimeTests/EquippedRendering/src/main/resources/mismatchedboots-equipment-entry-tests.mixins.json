@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "games.alejandrocoria.mismatchedboots.runtimetest.equipment.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "ArmorModelLookupMixin",
+        "EquipmentCallMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

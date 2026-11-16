@@ -6,8 +6,6 @@ import games.alejandrocoria.mismatchedboots.client.render.RootsEquipmentRenderin
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelPart;
@@ -27,11 +25,6 @@ import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import net.minecraft.world.item.equipment.trim.MaterialAssetGroup;
 import net.minecraft.world.item.equipment.trim.TrimMaterial;
 import net.minecraft.world.item.equipment.trim.TrimPattern;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.LevelSettings;
-import net.minecraft.world.level.WorldDataConfiguration;
-import net.minecraft.world.level.levelgen.WorldOptions;
-import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
 import java.util.ArrayList;
@@ -43,27 +36,7 @@ import static games.alejandrocoria.mismatchedboots.runtimetest.neoforge.NeoForge
 
 /** Production splitting with real default Roots equipment in a disposable integrated world. */
 public final class RootsEquipmentClientTest {
-    private static boolean worldRequested;
-
     private RootsEquipmentClientTest() {
-    }
-
-    static boolean worldReady(Minecraft client) {
-        if (!worldRequested) {
-            worldRequested = true;
-            client.options.pauseOnLostFocus = false;
-            client.createWorldOpenFlows().createFreshLevel("roots-rendering",
-                                                           new LevelSettings("Roots rendering",
-                                                                             GameType.CREATIVE,
-                                                                             LevelSettings.DifficultySettings.DEFAULT,
-                                                                             true,
-                                                                             WorldDataConfiguration.DEFAULT),
-                                                           new WorldOptions(123L, false, false),
-                                                           WorldPresets::createFlatWorldDimensions,
-                                                           new TitleScreen());
-        }
-
-        return client.player != null && client.level != null && CompositionRulesClientLifecycle.areRulesSynchronized();
     }
 
     private static boolean isRootsModel(Model<?> model) {

@@ -7,13 +7,16 @@ import games.alejandrocoria.mismatchedboots.client.render.MixedBootsGuiRenderSta
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
+import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedboots.runtimetest.equipment.ArmorLayerEntryChecks;
 import games.alejandrocoria.mismatchedthings.api.client.geometry.BakedPolygonTessellator;
 import games.alejandrocoria.mismatchedthings.api.client.geometry.BakedQuadClipper;
 import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -33,6 +36,11 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.Equippable;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.LevelSettings;
+import net.minecraft.world.level.WorldDataConfiguration;
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
@@ -53,7 +61,10 @@ public final class NeoForgeGeometryClientTest {
     private static int ticks;
     private static boolean resourcesLoaded;
     private static boolean finished;
-    private static CompletableFuture<Void> rootsReload;
+    private static CompletableFuture<Void> equipmentReload;
+    private static boolean worldRequested;
+    private static boolean disconnecting;
+    private static int shutdownTicks;
 
     private NeoForgeGeometryClientTest() {
     }
@@ -71,22 +82,30 @@ public final class NeoForgeGeometryClientTest {
         try {
             ticks++;
             assertUnattended(client);
-            if (ticks < STARTUP_TICKS || !resourcesLoaded) {
-                if (ticks > TIMEOUT_TICKS) {
-                    throw new AssertionError("Geometry client timed out before resource loading completed");
+            if (ticks > TIMEOUT_TICKS) {
+                throw new AssertionError("Geometry client timed out");
+            }
+            if (disconnecting) {
+                if (++shutdownTicks >= 5 && client.level == null && !client.hasSingleplayerServer()) {
+                    NetworkAcceptanceFiles.write("geometry-success.txt", "neoforge\n");
+                    finished = true;
+                    client.stop();
                 }
+                return;
+            }
+            if (ticks < STARTUP_TICKS || !resourcesLoaded) {
                 return;
             }
 
             boolean roots = Boolean.getBoolean("mismatchedboots.runtimetest.rootsRenderingTest");
-            if (roots && !RootsEquipmentClientTest.worldReady(client)) {
+            if (!worldReady(client) || client.screen != null || client.getOverlay() != null) {
                 return;
             }
-            if (rootsReload != null) {
-                if (!rootsReload.isDone()) {
+            if (equipmentReload != null) {
+                if (!equipmentReload.isDone()) {
                     return;
                 }
-                rootsReload.join();
+                equipmentReload.join();
             }
 
             GeometryReport red = characterize(client, modelBoot(Items.IRON_BOOTS, RED_MODEL));
@@ -99,10 +118,12 @@ public final class NeoForgeGeometryClientTest {
             assertGuiClipping(client);
             NeoForgeEquipmentRenderingClientTest.assertStandardRoute();
             String equipmentReport = NeoForgeNativeEquipmentClientTest.assertNativeRoute();
-            if (roots && rootsReload == null) {
-                rootsReload = client.reloadResourcePacks();
+            equipmentReport += ArmorLayerEntryChecks.run(client, true);
+            if (equipmentReload == null) {
+                equipmentReload = client.reloadResourcePacks();
                 return;
             }
+            equipmentReport += "equipment.entry.resourceReload=true\n";
             if (roots) {
                 equipmentReport += "equipment.roots.resourceReload=true\n";
             }
@@ -111,14 +132,27 @@ public final class NeoForgeGeometryClientTest {
                     + "gui.canonicalOwnership=true\ngui.depthSharing=true\ngui.atomicFallback=true\n"
                     + "equipment.standardRoute=true\nequipment.rootOwnership=true\n"
                     + "equipment.atomicFallback=true\n" + equipmentReport);
-            NetworkAcceptanceFiles.write("geometry-success.txt", "neoforge\n");
-            finished = true;
-            client.stop();
+            client.disconnectWithSavingScreen();
+            disconnecting = true;
         } catch (Throwable throwable) {
             NetworkAcceptanceFiles.failure("geometry-client", throwable);
             finished = true;
             client.stop();
         }
+    }
+
+    private static boolean worldReady(Minecraft client) {
+        if (!worldRequested) {
+            worldRequested = true;
+            client.options.pauseOnLostFocus = false;
+            // Reuse the flat integrated-world setup previously owned by the optional Roots checks.
+            client.createWorldOpenFlows().createFreshLevel("equipment-rendering",
+                    new LevelSettings("Equipment rendering", GameType.CREATIVE,
+                            LevelSettings.DifficultySettings.DEFAULT, true, WorldDataConfiguration.DEFAULT),
+                    new WorldOptions(123L, false, false), WorldPresets::createFlatWorldDimensions, new TitleScreen());
+        }
+
+        return client.player != null && client.level != null && CompositionRulesClientLifecycle.areRulesSynchronized();
     }
 
     private static GeometryReport characterize(Minecraft client, ItemStack stack) {
