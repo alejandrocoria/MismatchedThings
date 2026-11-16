@@ -605,10 +605,17 @@ tasks.register('verifyGeometryCharacterization') {
                     || !report.text.contains('equipment.roots.resourceReload=true\n')) {
                 throw new GradleException('Roots production equipment checks did not complete')
             }
+            if (!report.text.contains('equipment.entry.custom.rootsclassic:sylvan_boots=2\n')
+                    || !report.text.contains('equipment.entry.custom.rootsclassic:wildwood_boots=2\n')) {
+                throw new GradleException('Roots native armor-layer entry checks did not complete')
+            }
             fixtureFileOperations.copy {
                 from(report, success)
                 into(fixtureBuildDirectory.dir("reports/roots-equipment/${neoforge_version}"))
             }
+        }
+        if (iceAndFireTest && !report.text.contains('equipment.entry.custom.iceandfire:dragonsteel_fire_boots=2\n')) {
+            throw new GradleException('Dragonsteel native armor-layer entry checks did not complete')
         }
         logger.lifecycle("NeoForge geometry characterization:\n${report.text}")
     }

@@ -17,6 +17,7 @@ public final class EquippedClient {
     public static Runnable prepareGallery = () -> {};
     private static int ticks;
     private static int stage;
+    private static int shutdownTicks;
     private static EquippedScene scene;
     private static EquipmentLayerRenderer previousRenderer;
     private static long generation;
@@ -27,13 +28,21 @@ public final class EquippedClient {
     private EquippedClient() {}
 
     public static void tick(Minecraft client) {
-        if (stage == 5) {
+        if (stage == 6) {
             return;
         }
         try {
             EquippedChecks.require(++ticks < 2400, "Equipped client timed out at stage " + stage);
             EquippedChecks.require(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_VISIBLE) == GLFW.GLFW_FALSE,
                     "Automated window became visible");
+            if (stage == 5) {
+                if (++shutdownTicks >= 5 && client.level == null && !client.hasSingleplayerServer()) {
+                    SkeletonChecks.passed("client");
+                    stage = 6;
+                    client.stop();
+                }
+                return;
+            }
             if (stage == 0 && client.level != null && client.player != null && client.screen == null && client.getOverlay() == null) {
                 prepareGallery.run();
                 scene = new EquippedScene();
@@ -41,6 +50,7 @@ public final class EquippedClient {
                 stage = 1;
             } else if (stage == 1 && scene.frames >= 8 && renderer != null) {
                 EquippedChecks.run(client);
+                EquippedEntryChecks.run(client, "before");
                 platformChecks.get();
                 previousRenderer = renderer;
                 generation = LeggingsGeometryCache.statistics().generation();
@@ -67,20 +77,21 @@ public final class EquippedClient {
             } else if (stage == 4 && scene.frames >= 8 && renderer != null) {
                 EquippedChecks.require(previousRenderer != renderer, "Native renderer was not recreated on reload");
                 EquippedChecks.run(client);
+                EquippedEntryChecks.run(client, "after");
                 platformChecks.get();
                 if (Boolean.getBoolean("leggings.test.boots")) {
                     EquippedChecks.require(BootsCoexistence.ironSeen && BootsCoexistence.goldSeen,
                             "Boots did not keep rendering both native feet");
                 }
-                SkeletonChecks.passed("client");
+                client.setScreen(null);
+                client.disconnectWithSavingScreen();
                 stage = 5;
-                client.stop();
             }
             if (captureFailure != null) {
                 throw new AssertionError("Screenshot failed", captureFailure);
             }
         } catch (Throwable failure) {
-            stage = 5;
+            stage = 6;
             SkeletonChecks.failed("client", failure);
             client.stop();
         }

@@ -160,6 +160,9 @@ profiles.each { profile ->
                 }
                 new File(reports, "${phase}.ok").delete()
                 new File(reports, "${phase}.failure.txt").delete()
+                if (equipped && phase == 'client') {
+                    ['armor-entry-before.txt', 'armor-entry-after.txt'].each { new File(reports, it).delete() }
+                }
                 if (neoVitaeRestart) {
                     new File(reports, 'neovitae-restart-server.txt').delete()
                     if (!new File(run, 'skeleton/level.dat').isFile() || !new File(reports, 'neovitae-saved.json').isFile()) {
@@ -525,6 +528,10 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             }) {
                 throw new GradleException('Oritech production-capture evidence missing')
             }
+            if (equipped && ['armor-entry-before.txt', 'armor-entry-after.txt'].any {
+                def proof = new File(reports, it)
+                !proof.isFile() || proof.length() == 0
+            }) { throw new GradleException('Native armor-layer entry/forwarder evidence missing') }
             new File(logs, 'matrix.ok').text = brokenAllTheModium
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'

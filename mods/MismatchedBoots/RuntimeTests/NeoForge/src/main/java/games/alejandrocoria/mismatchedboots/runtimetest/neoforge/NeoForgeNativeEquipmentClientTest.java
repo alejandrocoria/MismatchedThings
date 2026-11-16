@@ -180,8 +180,8 @@ public final class NeoForgeNativeEquipmentClientTest {
             if (!id.getNamespace().equals("iceandfire") || !id.getPath().endsWith("_boots")) {
                 continue;
             }
-            // Before world startup, registry defaults are unbound. A controlled native asset
-            // exercises the real item's model/texture extension, not its gameplay/default assets.
+            // Keep this extension matrix on its original controlled assets, independent of defaults.
+            // Focused native armor-layer samples separately exercise actual default equipment assets.
             ItemStack stack = source(item, EquipmentAssets.IRON);
             Model<?> resolved = IClientItemExtensions.of(stack).getGenericArmorModel(
                     stack, EquipmentClientInfo.LayerType.HUMANOID, original);

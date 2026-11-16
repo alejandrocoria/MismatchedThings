@@ -16,6 +16,7 @@ import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -64,6 +65,8 @@ public final class NeoForgeGeometryClientTest {
     private static CompletableFuture<Void> equipmentReload;
     private static boolean worldRequested;
     private static boolean disconnecting;
+    private static boolean draining;
+    private static int drainTicks;
     private static int shutdownTicks;
 
     private NeoForgeGeometryClientTest() {
@@ -93,6 +96,15 @@ public final class NeoForgeGeometryClientTest {
                 }
                 return;
             }
+            if (draining) {
+                // Let already queued attachment packets finish while their native player still exists.
+                if (client.isPaused() && ++drainTicks >= 5) {
+                    client.disconnectWithSavingScreen();
+                    draining = false;
+                    disconnecting = true;
+                }
+                return;
+            }
             if (ticks < STARTUP_TICKS || !resourcesLoaded) {
                 return;
             }
@@ -119,6 +131,16 @@ public final class NeoForgeGeometryClientTest {
             NeoForgeEquipmentRenderingClientTest.assertStandardRoute();
             String equipmentReport = NeoForgeNativeEquipmentClientTest.assertNativeRoute();
             equipmentReport += ArmorLayerEntryChecks.run(client, true);
+            List<String> customSamples = new ArrayList<>();
+            if (roots) {
+                customSamples.addAll(List.of("rootsclassic:sylvan_boots", "rootsclassic:wildwood_boots"));
+            }
+            if (Boolean.getBoolean("mismatchedboots.runtimetest.iceAndFireTest")) {
+                customSamples.add("iceandfire:dragonsteel_fire_boots");
+            }
+            if (!customSamples.isEmpty()) {
+                equipmentReport += ArmorLayerEntryChecks.customModels(client, customSamples);
+            }
             if (equipmentReload == null) {
                 equipmentReload = client.reloadResourcePacks();
                 return;
@@ -132,8 +154,8 @@ public final class NeoForgeGeometryClientTest {
                     + "gui.canonicalOwnership=true\ngui.depthSharing=true\ngui.atomicFallback=true\n"
                     + "equipment.standardRoute=true\nequipment.rootOwnership=true\n"
                     + "equipment.atomicFallback=true\n" + equipmentReport);
-            client.disconnectWithSavingScreen();
-            disconnecting = true;
+            client.setScreen(new PauseScreen(true));
+            draining = true;
         } catch (Throwable throwable) {
             NetworkAcceptanceFiles.failure("geometry-client", throwable);
             finished = true;

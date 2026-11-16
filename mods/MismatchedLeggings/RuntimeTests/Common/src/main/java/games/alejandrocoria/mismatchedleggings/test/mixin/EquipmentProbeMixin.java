@@ -3,6 +3,7 @@ package games.alejandrocoria.mismatchedleggings.test.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import games.alejandrocoria.mismatchedleggings.test.render.BootsCoexistence;
 import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
+import games.alejandrocoria.mismatchedleggings.test.render.EquippedEntryChecks;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
@@ -37,6 +38,7 @@ abstract class EquipmentProbeMixin {
     private void leggingsTest$observeBoots(EquipmentClientInfo.LayerType type, ResourceKey<EquipmentAsset> asset,
                                            Model<?> model, Object state, ItemStack stack, PoseStack pose,
                                            SubmitNodeCollector collector, int light, int outline, CallbackInfo callback) {
+        EquippedEntryChecks.recordCall(stack, light, outline);
         if (Boolean.getBoolean("leggings.test.equipped")) {
             EquippedClient.renderer = (EquipmentLayerRenderer) (Object) this;
         }

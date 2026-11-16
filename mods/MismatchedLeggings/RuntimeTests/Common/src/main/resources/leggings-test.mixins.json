@@ -15,6 +15,7 @@
         "SmithingReloadPacketProbe"
     ],
     "client": [
+        "ArmorCallForwarderMixin",
         "EquipmentProbeMixin",
         "HiddenWindowMixin",
         "ItemSubmitProbeMixin"

@@ -580,6 +580,14 @@ This selects its entrypoint through the same fixture metadata mechanism as
 `compositionRulesClientTestOnly`; the two flags are mutually exclusive. Omitting
 both restores the normal full client suite. The production JAR is never patched.
 
+With the existing `rootsRenderingTest`/`iceAndFireTest` options, the geometry
+client also checks actual armor-layer entry for Sylvan, Wildwood and Dragonsteel
+Fire Boots. Each has a positive native replacement and both mixed orientations;
+checks retain native material-node counts, visible distinct owned foot geometry,
+once-per-source provider resolution and serialized histories before/after reload.
+No optional artifacts are required by the baseline geometry run, and no new pins
+or launch profile are introduced.
+
 The Fabric equipped GameTest and NeoForge geometry client additionally invoke the
 actual baked `HumanoidArmorLayer` entry. Shared checks cover both source orders,
 native other slots, age/armor-stand selection, material submissions, foreign copied
@@ -607,8 +615,9 @@ in Ice and Fire, not another source JAR. The ordinary run needs none of these mo
 The probe checks all 30 custom-model boot variants and Sheep Boots, each in
 left/vanilla, vanilla/right, and same-item pairs (93 ordered pairs). It uses
 real registered items and their model/texture extensions with controlled native
-equipment assets, because item defaults are not bound before opening a world.
-It does not validate actual default components, gameplay, complete material
+equipment assets, independently of actual item defaults. The focused native-entry
+samples described above additionally use actual default equipment components.
+The controlled-asset matrix does not validate gameplay, complete material
 appearance, unusual animations, or pixel-level visual quality. Current artifacts
 and manual acceptance remain in [COMPATIBILITY.md](../local-docs/COMPATIBILITY.md#ice-and-fire-community-edition).
 
@@ -835,8 +844,10 @@ replacement and Ice and Fire controls run in the same client before/after reload
 No test adapter or selector mixin remains; the old `rootsRenderingSpike` flag is
 retired. The production code delegates native animation without visibility edits.
 
-These are actual deferred-node and emitted-vertex checks, not GPU screenshots or
-the complete player/armor-stand layer path. Qualitative trim/material alignment,
+The eight-pair Roots matrix remains deferred-node/emitted-vertex coverage. The
+additional focused native armor-layer entry controls are described above; neither
+is GPU screenshot acceptance or a complete player/armor-stand visual matrix.
+Qualitative trim/material alignment,
 entity poses and gameplay acceptance remain separate. Native Roots models may
 legitimately retain their own static cache across reload; no fresh native model
 identity is assumed. Current evidence and manual status belong to

@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.runtimetest.equipment;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import games.alejandrocoria.mismatchedboots.client.render.MixedBootsEquipmentRenderer;
 import games.alejandrocoria.mismatchedboots.composition.MixedBootsFactory;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import net.minecraft.client.Minecraft;
@@ -24,6 +25,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
@@ -117,6 +119,58 @@ public final class ArmorLayerEntryChecks {
                     + "equipment.entry.nativeProviders=" + neoForge + "\n";
         } catch (ReflectiveOperationException failure) {
             throw new AssertionError("Cannot obtain native baked armor layer", failure);
+        }
+    }
+
+    /** Optional pinned replacements, through the same real layer entry as the vanilla controls. */
+    public static String customModels(Minecraft client, List<String> samples) {
+        StringBuilder report = new StringBuilder();
+        try {
+            var state = new ZombieRenderState();
+            state.entityType = EntityType.ZOMBIE;
+            state.isCrouching = true;
+            state.outlineColor = 0xFF123456;
+            state.feetEquipment = new ItemStack(Items.IRON_BOOTS);
+            int ordinaryNodes = submit(client, state, true).nodes.size();
+            require(ordinaryNodes > 0, "Ordinary native foot control has no material nodes");
+
+            for (String sample : samples) {
+                Identifier id = Identifier.parse(sample);
+                require(BuiltInRegistries.ITEM.containsKey(id), "Missing pinned custom-model sample: " + sample);
+                var source = new ItemStack(BuiltInRegistries.ITEM.getValue(id));
+                var sourceBefore = snapshot(client, source);
+                state.feetEquipment = source;
+                var nativeOutput = submit(client, state, true);
+                require(CALLS.size() == 1 && !nativeOutput.nodes.isEmpty()
+                                && nativeOutput.nodes.stream().allMatch(node -> node.model != feetModel),
+                        "Native custom-model positive did not replace the original model: " + sample);
+
+                for (boolean inverse : List.of(false, true)) {
+                    var ordinary = new ItemStack(Items.IRON_BOOTS);
+                    state.feetEquipment = inverse ? pair(client, ordinary, source) : pair(client, source, ordinary);
+                    var before = snapshot(client, state.feetEquipment);
+                    var output = submit(client, state, true);
+                    require(CALLS.size() == 2 && lookups == 1 && providers == 2,
+                            "Custom source was omitted or resolved twice: " + sample);
+                    require(CALLS.get(inverse ? 1 : 0).stack.is(source.getItem())
+                                    && CALLS.get(inverse ? 0 : 1).stack.is(Items.IRON_BOOTS),
+                            "Custom source submission order changed: " + sample);
+                    require(output.nodes.size() == nativeOutput.nodes.size() + ordinaryNodes,
+                            "Custom source lost or duplicated native material nodes: " + sample);
+                    require(output.nodes.stream().allMatch(node ->
+                                    node.model.getClass().getEnclosingClass() == MixedBootsEquipmentRenderer.class
+                                            && node.model.root().visible
+                                            && node.model.root().getAllParts().stream().anyMatch(part -> part.visible && !part.isEmpty()))
+                                    && output.nodes.stream().map(node -> node.model.root()).distinct().count() == 2,
+                            "Late replacement lost its distinct visible owned foot views: " + sample);
+                    require(before.equals(snapshot(client, state.feetEquipment)) && sourceBefore.equals(snapshot(client, source)),
+                            "Custom model entry changed source history: " + sample);
+                }
+                report.append("equipment.entry.custom.").append(sample).append("=2\n");
+            }
+            return report.toString();
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError("Cannot obtain native custom-model armor layer", failure);
         }
     }
 

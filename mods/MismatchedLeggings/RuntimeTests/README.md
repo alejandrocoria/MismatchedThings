@@ -2957,6 +2957,22 @@ The server checks the packaged item/recipe setup and saves the disposable world;
 the hidden client loads a copy and renders **real factory-created mixed leggings**
 through the production armor mixin, not the old spike marker/interceptor.
 
+The maintained scene now also runs bounded real `HumanoidArmorLayer.submit`
+accounting with native HEAD/CHEST and both source orders. Standalone Leggings
+keeps FEET native; with current Boots, both mixed slots contribute exactly their
+two source calls, with no root/duplicate draw. A transparent test-only
+`WrapOperation` delegates the original equipment call once and must still see
+only the unclaimed native slots. It never selects priorities or patches a product
+JAR. Serialized histories and light/outline are checked alongside actual deferred
+submissions. These checks repeat after the scene's real resource reload, producing
+fresh `armor-entry-before.txt` and `armor-entry-after.txt`; the verifier requires
+both. The client disconnects the integrated world before stopping.
+
+Boots' existing [optional NeoForge geometry gate](../../MismatchedBoots/RuntimeTests/README.md#roots-classic-production-equipment-rendering)
+separately covers native armor-layer entry for Sylvan, Wildwood and Dragonsteel
+Fire Boots, with native positives and both orientations. The ordinary joint scene
+does not need those extra mods, another gallery or a release-graph manifest.
+
 Focused checks retain the spike's native vertex-area/UV/normal, mirrored/rotated
 child, empty ancestor, independently animated child, crouch/seated/player/slim/
 baby/stand and queued A → B → A controls. They also verify all buffered native
