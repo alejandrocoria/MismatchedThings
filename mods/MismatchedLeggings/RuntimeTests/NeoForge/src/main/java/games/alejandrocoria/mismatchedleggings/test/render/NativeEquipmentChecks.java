@@ -148,7 +148,8 @@ public final class NativeEquipmentChecks {
             EquippedChecks.require(output.nodes.size() >= 2 && output.nodes.stream().allMatch(node -> node.model() instanceof LeggingsView<?>),
                     "Pinned decorated source fell back: " + id);
         }
-        EquippedChecks.require(replacements == 30 && decorated == 13, "Pinned decorated coverage changed");
+        EquippedChecks.require(replacements == 29 && decorated == 13,
+                "Pinned decorated coverage changed: replacements=" + replacements + ", decorated=" + decorated);
         IceAndFireRenderingChecks.verify(original);
         games.alejandrocoria.mismatchedleggings.test.IceAndFireTooltipChecks.verify();
     }

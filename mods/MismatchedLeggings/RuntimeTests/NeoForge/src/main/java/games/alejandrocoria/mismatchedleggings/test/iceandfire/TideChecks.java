@@ -65,6 +65,7 @@ public final class TideChecks {
     private static int tideSteps;
     private static int rootTicks;
     private static boolean cancelEffects;
+    private static boolean effectsEnabled = true;
     private static boolean finished;
 
     private TideChecks() {}
@@ -160,6 +161,9 @@ public final class TideChecks {
             for (var legs : pair(nativeItem("tide_" + color + "_leggings"), nativeItem("tide_blue_leggings"))) {
                 scenario(subject, control, legs, true, false);
             }
+        }
+        if (!refused()) {
+            configurationControl(subject, control);
         }
         clear(subject);
         clear(control);
@@ -277,8 +281,37 @@ public final class TideChecks {
             if (control.getItemBySlot(slot).getItem() instanceof IceAndFireTideArmorAccess access
                     && access.mismatchedleggings$tideArmorType().getSlot() == slot) { pieces++; }
         }
-        require(actual.size() == pieces * (wet ? 2 : 1), "Expected one complete native effect sequence per logical worn piece");
+        require(actual.size() == (effectsEnabled ? pieces * (wet ? 2 : 1) : 0),
+                "Expected one complete native effect sequence per logical worn piece when enabled");
         tideSteps++;
+    }
+
+    private static void configurationControl(ServerPlayer subject, ServerPlayer control) throws Exception {
+        Object toggle = armorOption("tideGuardianEffects");
+        var read = toggle.getClass().getMethod("getValue");
+        var write = toggle.getClass().getMethod("setValue", Object.class);
+        Object previous = read.invoke(toggle);
+        try {
+            for (boolean enabled : new boolean[]{false, true}) {
+                write.invoke(toggle, enabled);
+                effectsEnabled = enabled;
+                clear(subject);
+                clear(control);
+                subject.setItemSlot(EquipmentSlot.LEGS, pair(nativeItem("tide_red_leggings"), new ItemStack(Items.IRON_LEGGINGS)).getFirst());
+                control.setItemSlot(EquipmentSlot.LEGS, nativeItem("tide_red_leggings"));
+                if (BOOTS) {
+                    subject.setItemSlot(EquipmentSlot.FEET, bootsPair(nativeItem("tide_blue_boots"), new ItemStack(Items.IRON_BOOTS)).getLast());
+                    control.setItemSlot(EquipmentSlot.FEET, nativeItem("tide_blue_boots"));
+                }
+                compare(subject, control, true, 1);
+                require(subject.hasEffect(MobEffects.WATER_BREATHING) == enabled
+                        && subject.hasEffect(MobEffects.STRENGTH) == enabled, "Native Tide config ignored");
+            }
+        } finally {
+            write.invoke(toggle, previous);
+            effectsEnabled = true;
+        }
+        REPORT.append("Native Tide toggle off/on: original and mixed effects match, including optional mixed Boots\n");
     }
 
     private static void damageRegression(ServerLevel level) throws Exception {
@@ -295,6 +328,62 @@ public final class TideChecks {
             hit(level, level.damageSources().lightningBolt(), legs, feet, nativeItem("dragonsteel_lightning_helmet"), nativeItem("dragonsteel_lightning_chestplate"), 0F);
         }
         REPORT.append("Independent damage/set native hurtServer regressions=").append(damageCases).append("\n");
+        if (!refused()) {
+            damageConfigurationControl(level);
+        }
+    }
+
+    private static Object armorOption(String name) throws Exception {
+        var config = Class.forName("com.iafenvoy.iceandfire.config.IafCommonConfig");
+        Object armors = config.getField("armors").get(config.getField("INSTANCE").get(null));
+        return armors.getClass().getField(name).get(armors);
+    }
+
+    private static void damageConfigurationControl(ServerLevel level) throws Exception {
+        Object scale = armorOption("dragonScaleBreathReduction");
+        Object steel = armorOption("dragonSteelBreathReduction");
+        Object troll = armorOption("trollProjectileReduction");
+        var read = scale.getClass().getMethod("getValue");
+        var write = scale.getClass().getMethod("setValue", Object.class);
+        Object oldScale = read.invoke(scale);
+        Object oldSteel = read.invoke(steel);
+        Object oldTroll = read.invoke(troll);
+        try {
+            var breath = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(
+                    ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.parse("iceandfire:dragon_fire"))));
+            for (boolean scales : new boolean[]{false, true}) {
+                for (boolean steels : new boolean[]{false, true}) {
+                    write.invoke(scale, scales);
+                    write.invoke(steel, steels);
+                    for (String family : List.of("armor_red", "dragonsteel_fire")) {
+                        boolean enabled = family.equals("armor_red") ? scales : steels;
+                        var original = nativeItem(family + "_leggings");
+                        hit(level, breath, original, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, enabled ? .8F : 1F);
+                        for (var mixed : pair(original, new ItemStack(Items.IRON_LEGGINGS))) {
+                            hit(level, breath, mixed, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, enabled ? .8F : 1F);
+                        }
+                    }
+                    // One logical contribution even when both source classes are present.
+                    for (var mixed : pair(nativeItem("armor_red_leggings"), nativeItem("dragonsteel_fire_leggings"))) {
+                        var feet = BOOTS ? bootsPair(nativeItem("armor_red_boots"), nativeItem("dragonsteel_fire_boots")).getFirst() : ItemStack.EMPTY;
+                        hit(level, breath, mixed, feet, ItemStack.EMPTY, ItemStack.EMPTY,
+                                scales || steels ? (BOOTS ? .7F : .8F) : 1F);
+                    }
+                }
+            }
+            write.invoke(troll, false);
+            var arrow = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageTypes.ARROW));
+            hit(level, arrow, nativeItem("forest_troll_leather_leggings"), ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, 1F);
+            for (var mixed : pair(nativeItem("forest_troll_leather_leggings"), new ItemStack(Items.IRON_LEGGINGS))) {
+                var feet = BOOTS ? bootsPair(nativeItem("forest_troll_leather_boots"), new ItemStack(Items.IRON_BOOTS)).getLast() : ItemStack.EMPTY;
+                hit(level, arrow, mixed, feet, ItemStack.EMPTY, ItemStack.EMPTY, 1F);
+            }
+        } finally {
+            write.invoke(scale, oldScale);
+            write.invoke(steel, oldSteel);
+            write.invoke(troll, oldTroll);
+        }
+        REPORT.append("Native armor config: all Scale/Steel combinations, mixed dual-family once, Troll off, originals and mixed\n");
     }
 
     private static void hit(ServerLevel level, DamageSource source, ItemStack legs, ItemStack feet, ItemStack head, ItemStack chest, float coefficient) {

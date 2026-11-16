@@ -1238,7 +1238,7 @@ admits only SG's pinned optional Bonsai recipe ERROR when SG is installed.
 
 Maintained **server-only** production checks use real `hurtServer`, the native
 Pre-event results and actual health loss. They enable no damage or Tide candidate.
-Native dependencies come from the shared resolver's Ice and Fire `2.2-beta.3`,
+Native dependencies come from the shared resolver's Ice and Fire `2.2`,
 Uranus `3.0-alpha.1` and Jupiter `2.4.3` pins; actual current Boots is optional.
 Run profiles and baselines sequentially:
 
@@ -1261,7 +1261,7 @@ or quiet native absence. Mutations run after ordinary mixin selection, so the
 final proof must independently refuse. Each refused family must warn once;
 native positives and Boots' independent damage/set/Tide readiness remain checked.
 
-All 31 sources, native/both orientations/duplicates, mixed Troll/Dragon sources,
+All 30 sources, native/both orientations/duplicates, mixed Troll/Dragon sources,
 three breaths/projectiles, invalid/suspended/foreign roots, incomplete/incorrect
 Lightning sets and joint LEGS/FEET protection traverse the real event bus.
 Source snapshots and actual equipment identity must remain unchanged. Focused
@@ -1335,6 +1335,12 @@ loader transformers, mutating export extensions or redefinition. These tests
 establish no client transport, saved-world lifecycle, rendering or owner acceptance;
 block C and the final owner checklist remain separate.
 
+Ice and Fire 2.2's native Tide option is checked off/on against original armor.
+The same maintained server fixture exercises all four independent Scale/Steel
+option combinations, dual-family sources counting once and Troll protection
+disabled. Both product adapters retain the audited beta.3 grammar, while current
+runtime acceptance uses the catalog's 2.2 publication.
+
 ## Ice and Fire presentation and lifecycle (block C)
 
 ```powershell
@@ -1347,8 +1353,8 @@ block C and the final owner checklist remain separate.
 
 Run graphs/baselines sequentially; repeat the focused equipped profile with the
 same `.99` override and restore normal `.114` outputs afterward. The equipped
-profile automatically checks all 31 native sources whenever Ice and Fire is loaded:
-30 replacement models, 13 decorated waists, 124 both-orientation moving/crouched
+profile automatically checks all 30 native sources whenever Ice and Fire is loaded:
+29 replacement models, 13 decorated waists, 120 both-orientation moving/crouched
 trimmed native/dyed-leather pairs, exact ordered native materials, live foil,
 GUI/first/third-person item textures, and actual resource reload. Supported pairs
 must use split `LeggingsView` submissions. Native normal/advanced descriptions
@@ -2987,7 +2993,7 @@ pair-wide rejection of unknown submissions, complete-owner/neutral fallbacks and
 native admission of valid pairs whose owner has no asset. Fabric registers a
 synthetic custom renderer that must never be called by mixed rendering. NeoForge
 checks final replacement resolution once per source, unsupported models and,
-optionally, all 30 pinned Ice and Fire replacements/13 decorated waists.
+optionally, all 29 pinned Ice and Fire replacements/13 decorated waists.
 
 Cache controls require only two geometry builds across 30 repeated two-side
 frames with at least 60 hits, bound retention to 128 native waist identities under

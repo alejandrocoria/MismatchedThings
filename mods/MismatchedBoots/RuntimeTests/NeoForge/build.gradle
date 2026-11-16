@@ -266,7 +266,7 @@ spawn-protection=0
     }
 }
 
-def mutatedTideJar = fixtureBuildDirectory.file('tide-api-field/iceandfire-2.2-beta.3.jar')
+def mutatedTideJar = fixtureBuildDirectory.file("tide-api-field/${testMods.path('NeoForge', 'iceandfire').name}")
 def nativeTideJar = new File(iceAndFireModsDirectory, testMods.path('NeoForge', 'iceandfire').name)
 def prepareTideMutationArtifact = tasks.register('prepareTideMutationArtifact') {
     doLast { verifiedIceAndFireArtifacts() }

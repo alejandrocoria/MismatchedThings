@@ -96,9 +96,9 @@
       "uranus",
       "jupiter"
     ],
-    "filename": "iceandfire-2.2-beta.3.jar",
-    "sha256": "ee971bd2d048d9115877c022622d6f9c3e072127ad65108e83807b42effd56b2",
-    "url": "https://edge.forgecdn.net/files/8929/527/iceandfire-2.2-beta.3.jar"
+    "filename": "IceAndFireCE-2.2-26.1.2-neoforge.jar",
+    "sha256": "2341f4c990a1e3ff6351502f63ad8970200937321d057656eba394ac9bdf3e82",
+    "url": "https://edge.forgecdn.net/files/9455/197/IceAndFireCE-2.2-26.1.2-neoforge.jar"
   },
   {
     "loader": "NeoForge",

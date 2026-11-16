@@ -93,7 +93,7 @@ public final class DamageChecks {
             var id = BuiltInRegistries.ITEM.getKey(item);
             return id.getNamespace().equals("iceandfire") && id.getPath().endsWith("_leggings");
         }).toList();
-        require(originals.size() == 31, "Native leggings inventory changed");
+        require(originals.size() == 30, "Native leggings inventory changed: " + originals.size());
         for (var item : originals) {
             var nativeLegs = new ItemStack(item);
             String name = item.getClass().getSimpleName();
@@ -183,7 +183,7 @@ public final class DamageChecks {
             }
         }
         REPORT.append("Real hurtServer damage cases=").append(damageCases)
-                .append("; 31 variants; native/both orientations/duplicates; three breaths/projectiles; Lightning sets; independent local refusal; no synthetic event posting\n");
+                .append("; 30 variants; native/both orientations/duplicates; three breaths/projectiles; Lightning sets; independent local refusal; no synthetic event posting\n");
     }
 
     private static void hit(ServerLevel level, DamageSource source, ItemStack legs, ItemStack feet, ItemStack head, ItemStack chest, float coefficient) {

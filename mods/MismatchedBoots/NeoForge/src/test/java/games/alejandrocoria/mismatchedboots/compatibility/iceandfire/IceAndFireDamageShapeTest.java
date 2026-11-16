@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedboots.compatibility.iceandfire;
 
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -35,6 +36,40 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class IceAndFireDamageShapeTest {
     @Test
+    void independentBreathOptionsRequireNativeProvenanceAndBranchSemantics() throws Exception {
+        String artifact = System.getProperty("mismatchedboots.test.iceAndFireGuardJar");
+        org.junit.jupiter.api.Assumptions.assumeTrue(artifact != null, "Real-artifact characterization is opt-in");
+        for (String mutation : new String[]{"dragonScaleBreathReduction", "dragonSteelBreathReduction", "branch", "overwrite"}) {
+            var owner = new ClassNode();
+            try (var jar = new JarFile(Path.of(artifact).toFile());
+                 var input = jar.getInputStream(jar.getJarEntry(IceAndFireDamageShape.HANDLER + ".class"))) {
+                new ClassReader(input).accept(owner, 0);
+            }
+            var damage = owner.methods.stream().filter(m -> m.name.equals(IceAndFireDamageShape.METHOD)).findFirst().orElseThrow();
+            var selected = IceAndFireDamageShape.feetChecks(damage.instructions);
+            assertEquals(3, selected.size());
+            if (mutation.startsWith("dragon")) {
+                var field = java.util.Arrays.stream(damage.instructions.toArray())
+                        .filter(n -> n instanceof FieldInsnNode f && f.name.equals(mutation))
+                        .map(FieldInsnNode.class::cast).findFirst().orElseThrow();
+                field.name = "unrelatedOption";
+            } else {
+                var scale = selected.stream().filter(n -> n instanceof TypeInsnNode t && t.desc.equals(IceAndFireDamageShape.SCALE)).findFirst().orElseThrow();
+                var code = IceAndFireTideShape.code(damage);
+                int index = code.indexOf(scale);
+                if (mutation.equals("branch")) {
+                    ((JumpInsnNode) code.get(index + 3)).setOpcode(Opcodes.IFEQ);
+                } else {
+                    var toggle = (VarInsnNode) code.get(index + 2);
+                    damage.instructions.insertBefore(toggle, new InsnNode(Opcodes.ICONST_1));
+                    damage.instructions.insertBefore(toggle, new VarInsnNode(Opcodes.ISTORE, toggle.var));
+                }
+            }
+            assertTrue(IceAndFireDamageShape.feetChecks(damage.instructions).isEmpty(), mutation);
+        }
+    }
+
+    @Test
     void installedArtifactIsCharacterizedButBalanceEditsDoNotDisableBootRecognition() throws Exception {
         String artifact = System.getProperty("mismatchedboots.test.iceAndFireGuardJar");
         assumeTrue(artifact != null, "Real-artifact characterization is opt-in");
@@ -42,7 +77,7 @@ class IceAndFireDamageShapeTest {
             ClassNode handler = read(jar, IceAndFireDamageShape.HANDLER);
             MethodNode method = handler.methods.stream()
                                                .filter(node -> IceAndFireDamageShape.METHOD.equals(node.name)).findFirst().orElseThrow();
-            assertEquals("05b8d47b296aa4ad4de6e3aa9c1a477fc14789d5265617a5c518b1553d1bbdc9", fingerprint(method));
+            assertEquals("a384d3af8fe7db616612d198b87cba5cb894059ba27bf79a1043a2f251f416cc", fingerprint(method));
             assertTrue(IceAndFireDamageShape.isCompatible(handler, read(jar, IceAndFireDamageShape.SCALE),
                                                           read(jar, IceAndFireDamageShape.STEEL), read(jar, IceAndFireDamageShape.TROLL)));
             assertTrue(IceAndFireDamageFeetInjectionPoint.matchesLocalContract(method.desc, method.instructions));

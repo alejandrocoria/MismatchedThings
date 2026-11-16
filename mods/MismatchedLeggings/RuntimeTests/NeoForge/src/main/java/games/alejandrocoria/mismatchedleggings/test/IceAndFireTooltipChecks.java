@@ -53,10 +53,10 @@ public final class IceAndFireTooltipChecks {
                 }
             }
         }
-        require(variants == 31 && descriptions > 0, "Incomplete native tooltip controls");
+        require(variants == 30 && descriptions > 0, "Incomplete native tooltip controls");
         try {
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "ice-and-fire-tooltip.txt"),
-                    "31 native producers; normal/advanced, both orientations and duplicates; exact styled source descriptions, no root duplicate; immutable history\n");
+                    "30 native producers; normal/advanced, both orientations and duplicates; exact styled source descriptions, no root duplicate; immutable history\n");
         } catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
     }
 }

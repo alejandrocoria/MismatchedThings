@@ -74,10 +74,10 @@ public final class IceAndFireRenderingChecks {
                 }
             }
         }
-        require(variants == 31 && cases == 124, "Incomplete native source render matrix");
+        require(variants == 30 && cases == 120, "Incomplete native source render matrix");
         try {
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "ice-and-fire-render.txt"),
-                    "31 actual sources; 124 both-orientation moving/crouched dyed-leather/trim/glint pairs; exact native materials, no fallback; GUI/first/third-person item textures/foil; repeated through maintained resource reload\n");
+                    "30 actual sources; 120 both-orientation moving/crouched dyed-leather/trim/glint pairs; exact native materials, no fallback; GUI/first/third-person item textures/foil; repeated through maintained resource reload\n");
         } catch (java.io.IOException failure) {
             throw new IllegalStateException(failure);
         }

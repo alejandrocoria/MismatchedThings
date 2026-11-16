@@ -87,6 +87,51 @@ class IceAndFireTideShapeTest implements Opcodes {
     }
 
     @Test
+    void nativeEffectsToggleIsExactAndPreviousUntoggledFlowRemainsSupported() throws Exception {
+        ClassNode accepted = withHook(nativeEntry());
+        assertNull(IceAndFireTideShape.entryFailure(accepted));
+        for (String mutation : new String[]{"field", "read", "branch"}) {
+            ClassNode changed = copy(accepted);
+            boolean mutated = false;
+            for (var instruction : entry(changed).instructions) {
+                if (mutation.equals("field") && instruction instanceof FieldInsnNode field && field.name.equals("tideGuardianEffects")) {
+                    field.name = "unrelatedToggle";
+                    mutated = true;
+                } else if (mutation.equals("read") && instruction instanceof MethodInsnNode call && call.name.equals("booleanValue")) {
+                    call.name = "unrelatedValue";
+                    mutated = true;
+                } else if (mutation.equals("branch") && instruction instanceof MethodInsnNode call && call.name.equals("booleanValue")) {
+                    ((JumpInsnNode) call.getNext()).setOpcode(IFNE);
+                    mutated = true;
+                }
+            }
+            assertTrue(mutated, mutation);
+            assertNotNull(IceAndFireTideShape.entryFailure(changed), mutation);
+        }
+
+        ClassNode legacy = copy(accepted);
+        MethodNode tick = entry(legacy);
+        AbstractInsnNode start = null;
+        for (var instruction : tick.instructions) {
+            if (instruction instanceof FieldInsnNode field && field.owner.equals("com/iafenvoy/iceandfire/config/IafCommonConfig")) {
+                start = field;
+                break;
+            }
+        }
+        assertNotNull(start, "Pinned 2.2 must exercise the native config gate");
+        while (true) {
+            AbstractInsnNode next = start.getNext();
+            boolean branch = start instanceof JumpInsnNode;
+            tick.instructions.remove(start);
+            if (branch) {
+                break;
+            }
+            start = next;
+        }
+        assertNull(IceAndFireTideShape.entryFailure(legacy), "The audited beta.3 flow has no config gate");
+    }
+
+    @Test
     void missingChangedAmbiguousFeetOperationCannotGrantReadiness() throws Exception {
         for (String mutation : new String[]{"missing", "slot", "type", "duplicate"}) {
             ClassNode node = withHook(nativeEntry());

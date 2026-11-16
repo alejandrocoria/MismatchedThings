@@ -17,6 +17,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.BasicInterpreter;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -26,6 +27,40 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IceAndFireDamageShapeTest implements Opcodes {
+    @Test
+    void independentBreathOptionsRequireNativeProvenanceAndBranchSemantics() throws Exception {
+        String artifact = System.getProperty("mismatchedleggings.test.iceAndFireGuardJar");
+        org.junit.jupiter.api.Assumptions.assumeTrue(artifact != null, "Real-artifact characterization is opt-in");
+        for (String mutation : new String[]{"dragonScaleBreathReduction", "dragonSteelBreathReduction", "branch", "overwrite"}) {
+            var owner = new ClassNode();
+            try (var jar = new JarFile(Path.of(artifact).toFile());
+                 var input = jar.getInputStream(jar.getJarEntry(IceAndFireDamageShape.HANDLER + ".class"))) {
+                new ClassReader(input).accept(owner, 0);
+            }
+            var damage = owner.methods.stream().filter(m -> m.name.equals(IceAndFireDamageShape.METHOD)).findFirst().orElseThrow();
+            var selected = IceAndFireDamageShape.legsChecks(damage.instructions);
+            assertEquals(3, selected.size());
+            if (mutation.startsWith("dragon")) {
+                var field = java.util.Arrays.stream(damage.instructions.toArray())
+                        .filter(n -> n instanceof FieldInsnNode f && f.name.equals(mutation))
+                        .map(FieldInsnNode.class::cast).findFirst().orElseThrow();
+                field.name = "unrelatedOption";
+            } else {
+                var scale = selected.stream().filter(n -> n instanceof TypeInsnNode t && t.desc.equals(IceAndFireDamageShape.SCALE)).findFirst().orElseThrow();
+                var code = IceAndFireTideShape.code(damage);
+                int index = code.indexOf(scale);
+                if (mutation.equals("branch")) {
+                    ((JumpInsnNode) code.get(index + 3)).setOpcode(Opcodes.IFEQ);
+                } else {
+                    var toggle = (VarInsnNode) code.get(index + 2);
+                    damage.instructions.insertBefore(toggle, new InsnNode(Opcodes.ICONST_1));
+                    damage.instructions.insertBefore(toggle, new VarInsnNode(Opcodes.ISTORE, toggle.var));
+                }
+            }
+            assertTrue(IceAndFireDamageShape.legsChecks(damage.instructions).isEmpty(), mutation);
+        }
+    }
+
     @Test
     void pinnedApiAndNativeConsumersAreAdmittedAndEditedOnlyOnce() throws Exception {
         var node = nativeClass(IceAndFireDamageShape.HANDLER);

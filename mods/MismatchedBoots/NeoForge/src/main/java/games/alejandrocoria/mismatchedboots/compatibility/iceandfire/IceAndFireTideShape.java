@@ -118,6 +118,18 @@ final class IceAndFireTideShape implements Opcodes {
             require(count >= 5 && locals.add(count), "strength count local");
             c.var(ILOAD, count);
             require(c.jump(IFLT) == exit, "nonempty armor gate");
+            // 2.2 adds a native effects toggle; beta.3 has no toggle. Certify only
+            // this exact read/exit gate, and leave its value and execution native.
+            if (c.opcode() == GETSTATIC) {
+                String config = "com/iafenvoy/iceandfire/config/IafCommonConfig";
+                c.field(GETSTATIC, config, "INSTANCE", "L" + config + ";");
+                c.field(GETFIELD, config, "armors", "L" + config + "$ArmorsConfig;");
+                c.field(GETFIELD, config + "$ArmorsConfig", "tideGuardianEffects", "Lcom/iafenvoy/jupiter/config/entry/BooleanEntry;");
+                c.call(INVOKEVIRTUAL, "com/iafenvoy/jupiter/config/entry/BooleanEntry", "getValue", "()Ljava/lang/Object;");
+                c.type(CHECKCAST, "java/lang/Boolean");
+                c.call(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z");
+                require(c.jump(IFEQ) == exit, "native effects config gate");
+            }
             effect(c, player, "WATER_BREATHING", -1);
             c.var(ALOAD, player);
             c.call(INVOKEVIRTUAL, PLAYER, "isInWaterOrRain", "()Z");

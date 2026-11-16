@@ -202,12 +202,12 @@ public final class NeoForgeNativeEquipmentClientTest {
                 custom++;
             }
         }
-        if (custom != 30 || ordinary != 1) {
+        if (custom != 29 || ordinary != 1) {
             throw new AssertionError("Ice and Fire coverage changed: custom=" + custom + ", ordinary=" + ordinary);
         }
 
-        return "equipment.iceAndFire.customBoots=30\nequipment.iceAndFire.ordinaryBoots=1\n"
-                + "equipment.iceAndFire.orderedPairs=93\n";
+        return "equipment.iceAndFire.customBoots=29\nequipment.iceAndFire.ordinaryBoots=1\n"
+                + "equipment.iceAndFire.orderedPairs=90\n";
     }
 
     private static List<Node> renderPair(ItemStack stack, HumanoidModel<HumanoidRenderState> original) {

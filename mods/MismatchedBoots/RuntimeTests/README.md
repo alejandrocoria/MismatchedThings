@@ -611,15 +611,15 @@ An optional Ice and Fire CE probe uses the pinned downloaded candidate JARs:
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyGeometryCharacterization -PiceAndFireTest=true
 ```
 
-It copies only Ice and Fire 2.2-beta.3, Uranus 3.0-alpha.1, and Jupiter
+It copies only Ice and Fire 2.2, Uranus 3.0-alpha.1, and Jupiter
 2.4.3 into the disposable geometry client, verifies their SHA-256 pins before
 copying, and leaves the development mods directory unchanged. Source JARs
 default to the test artifact cache; override with
 `-PiceAndFireTestModsDirectory=<directory>` if needed. Integration 0.2 is nested
 in Ice and Fire, not another source JAR. The ordinary run needs none of these mods.
 
-The probe checks all 30 custom-model boot variants and Sheep Boots, each in
-left/vanilla, vanilla/right, and same-item pairs (93 ordered pairs). It uses
+The probe checks all 29 custom-model boot variants and Sheep Boots, each in
+left/vanilla, vanilla/right, and same-item pairs (90 ordered pairs). It uses
 real registered items and their model/texture extensions with controlled native
 equipment assets, independently of actual item defaults. The focused native-entry
 samples described above additionally use actual default equipment components.

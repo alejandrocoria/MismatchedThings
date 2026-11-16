@@ -108,7 +108,10 @@ public final class IceAndFireDamageShape {
 
         var scale = result.stream().filter(node -> SCALE.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
         var steel = result.stream().filter(node -> STEEL.equals(((TypeInsnNode) node).desc)).findFirst().orElseThrow();
-        if (nextCode(((JumpInsnNode) nextCode(scale)).label) != nextCode(nextCode(steel))) {
+        AbstractInsnNode scaleTarget = nextCode(((JumpInsnNode) nextCode(scale)).label);
+        int steelIndex = code.indexOf(steel);
+        if (scaleTarget != nextCode(nextCode(steel))
+                && (steelIndex < 4 || scaleTarget != code.get(steelIndex - 4))) {
             return List.of(); // The selected FEET pair itself must share one contribution, not another slot's Steel test.
         }
 
@@ -182,6 +185,12 @@ public final class IceAndFireDamageShape {
             return false;
         }
 
+        // 2.2 gates Scale and Steel independently before their shared subtraction.
+        // Keep beta.3's direct OR below; do not treat arbitrary boolean locals as config.
+        if (!TROLL.equals(type) && predicate + 3 < code.size()
+                && code.get(predicate + 2) instanceof VarInsnNode toggle && toggle.getOpcode() == Opcodes.ILOAD) {
+            return hasConfiguredBreathContribution(code, predicate, type);
+        }
         int contribution = predicate + 2;
         if (SCALE.equals(type)) {
             if (branch.getOpcode() != Opcodes.IFNE) {
@@ -209,6 +218,56 @@ public final class IceAndFireDamageShape {
         }
 
         return nextCode(branch.label) == nextCode(code.get(contribution + 3));
+    }
+
+    private static boolean hasConfiguredBreathContribution(List<AbstractInsnNode> code, int predicate, String type) {
+        boolean scale = SCALE.equals(type);
+        // Scale can fall through Steel's slot lookup and toggle before the shared subtraction.
+        int contribution = predicate + (scale ? 12 : 4);
+        if (contribution + 3 >= code.size()
+                || !(code.get(predicate + 1) instanceof JumpInsnNode branch) || branch.getOpcode() != Opcodes.IFEQ
+                || !(code.get(predicate + 2) instanceof VarInsnNode toggle) || toggle.getOpcode() != Opcodes.ILOAD
+                || !isNativeToggle(code, predicate + 2, toggle.var, scale ? "dragonScaleBreathReduction" : "dragonSteelBreathReduction")
+                || !(code.get(predicate + 3) instanceof JumpInsnNode configBranch)
+                || configBranch.getOpcode() != (scale ? Opcodes.IFNE : Opcodes.IFEQ)
+                || !(code.get(contribution) instanceof VarInsnNode load) || load.getOpcode() != Opcodes.FLOAD
+                || !(code.get(contribution + 1) instanceof LdcInsnNode amount) || !(amount.cst instanceof Float)
+                || code.get(contribution + 2).getOpcode() != Opcodes.FSUB
+                || !(code.get(contribution + 3) instanceof VarInsnNode store) || store.getOpcode() != Opcodes.FSTORE
+                || store.var != load.var) {
+            return false;
+        }
+        AbstractInsnNode end = nextCode(code.get(contribution + 3));
+        if (!scale) {
+            return nextCode(branch.label) == end && nextCode(configBranch.label) == end;
+        }
+        return nextCode(branch.label) == code.get(predicate + 4)
+                && nextCode(configBranch.label) == code.get(contribution)
+                && code.get(contribution - 4) instanceof TypeInsnNode steel
+                && steel.getOpcode() == Opcodes.INSTANCEOF && STEEL.equals(steel.desc)
+                && hasConfiguredBreathContribution(code, contribution - 4, STEEL);
+    }
+
+    /** Prove the last assignment comes from the named native option, not a guessed local ordinal. */
+    private static boolean isNativeToggle(List<AbstractInsnNode> code, int read, int local, String option) {
+        for (int index = read - 1; index >= 0; index--) {
+            if (!(code.get(index) instanceof VarInsnNode store) || store.getOpcode() != Opcodes.ISTORE || store.var != local) {
+                continue;
+            }
+            String config = "com/iafenvoy/iceandfire/config/IafCommonConfig";
+            return index >= 6
+                    && code.get(index - 6) instanceof FieldInsnNode instance && instance.getOpcode() == Opcodes.GETSTATIC
+                    && instance.owner.equals(config) && instance.name.equals("INSTANCE") && instance.desc.equals("L" + config + ";")
+                    && code.get(index - 5) instanceof FieldInsnNode armors && armors.getOpcode() == Opcodes.GETFIELD
+                    && armors.owner.equals(config) && armors.name.equals("armors") && armors.desc.equals("L" + config + "$ArmorsConfig;")
+                    && code.get(index - 4) instanceof FieldInsnNode field && field.getOpcode() == Opcodes.GETFIELD
+                    && field.owner.equals(config + "$ArmorsConfig") && field.name.equals(option)
+                    && field.desc.equals("Lcom/iafenvoy/jupiter/config/entry/BooleanEntry;")
+                    && isCall(code.get(index - 3), "com/iafenvoy/jupiter/config/entry/BooleanEntry", "getValue", "()Ljava/lang/Object;")
+                    && code.get(index - 2) instanceof TypeInsnNode cast && cast.getOpcode() == Opcodes.CHECKCAST && cast.desc.equals("java/lang/Boolean")
+                    && isCall(code.get(index - 1), "java/lang/Boolean", "booleanValue", "()Z");
+        }
+        return false;
     }
 
     private static boolean hasZeroDamageConsumer(List<AbstractInsnNode> code, int predicate) {
