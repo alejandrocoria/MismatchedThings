@@ -1,9 +1,9 @@
 [
   {
     "loader": "Fabric",
-    "filename": "architectury-fabric-20.1.16.jar",
-    "sha256": "a6641789cd7db92d73d3ba7b6b334cc2a2b0fe668475230ab9276be4ea112a5e",
-    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/Y7kRthh0/architectury-fabric-20.1.16.jar",
+    "filename": "architectury-fabric-20.1.18.jar",
+    "sha256": "00de20450947f97f3312fab27e97f90f8097fced8266d466b59e6d3cb3b78bb4",
+    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/ZARvDhhO/architectury-fabric-20.1.18.jar",
     "id": "architectury"
   },
   {
@@ -16,9 +16,9 @@
   {
     "loader": "Fabric",
     "id": "cucumber",
-    "filename": "Cucumber-Fabric-26.1.2-9.0.6.2.jar",
-    "sha256": "7cc2243c7f9f76f75f48d8728f1a668020955a4c3bf1adedccf0d5f19e7782a2",
-    "url": "https://edge.forgecdn.net/files/9060/393/Cucumber-Fabric-26.1.2-9.0.6.2.jar"
+    "filename": "Cucumber-Fabric-26.1.2-9.0.8.1.jar",
+    "sha256": "3d0114547f793a6d564ef381dfb4dfaaf5165f1aeeda8fbc2b6e143b684f500a",
+    "url": "https://edge.forgecdn.net/files/9564/548/Cucumber-Fabric-26.1.2-9.0.8.1.jar"
   },
   {
     "loader": "Fabric",
@@ -30,16 +30,16 @@
   {
     "loader": "Fabric",
     "id": "jei",
-    "filename": "jei-26.1.2-fabric-29.43.0.106.jar",
-    "sha256": "352c594fecc491e30ed96e427e6c0617ea95ec134cb3482fce0c57ff9e65e739",
-    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/nkjaeEro/jei-26.1.2-fabric-29.43.0.106.jar"
+    "filename": "jei-26.1.2-fabric-29.47.0.110.jar",
+    "sha256": "f210f68d13c0be191db4e58ec05aa70dde13cd8a05badc3736399d8d7f660354",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/T8wS82jn/jei-26.1.2-fabric-29.47.0.110.jar"
   },
   {
     "loader": "Fabric",
     "id": "mysticalagriculture",
-    "filename": "MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar",
-    "sha256": "58965751df1f1f772158c9ecf39cd801dd06eb6d81dc75bfd50ac4ed1c4ea278",
-    "url": "https://edge.forgecdn.net/files/9300/969/MysticalAgriculture-Fabric-26.1.2-9.0.10.3.jar",
+    "filename": "MysticalAgriculture-Fabric-26.1.2-9.0.11.2.jar",
+    "sha256": "81440dca0ad748d7ca98560143fe34e9af13bd830e0d9a032756383ae90219a9",
+    "url": "https://edge.forgecdn.net/files/9605/940/MysticalAgriculture-Fabric-26.1.2-9.0.11.2.jar",
     "requires": [
       "cucumber"
     ]
@@ -78,9 +78,9 @@
   {
     "loader": "NeoForge",
     "id": "cucumber",
-    "filename": "Cucumber-26.1.2-9.0.7.jar",
-    "sha256": "8333d53cfd13338f3c60bf02a6b0afa9a937ea9dc06305732026a203c4569821",
-    "url": "https://cdn.modrinth.com/data/Rw1NrDzF/versions/SSzjv5lL/Cucumber-26.1.2-9.0.7.jar"
+    "filename": "Cucumber-26.1.2-9.0.8.jar",
+    "sha256": "d357eb1f9aba950745329a17b483e0fa769af8477937e0e061a628ee8fc982da",
+    "url": "https://cdn.modrinth.com/data/Rw1NrDzF/versions/iK2wtR1s/Cucumber-26.1.2-9.0.8.jar"
   },
   {
     "loader": "NeoForge",
@@ -135,9 +135,9 @@
   {
     "loader": "NeoForge",
     "id": "modonomicon",
-    "filename": "modonomicon-26.1.2-neoforge-2.16.0.jar",
-    "sha256": "658d75ac71ef2e49eaeaa944f7ee82f407424df09f42adf459dd20cc98a57710",
-    "url": "https://cdn.modrinth.com/data/692GClaE/versions/h0y6qRv4/modonomicon-26.1.2-neoforge-2.16.0.jar"
+    "filename": "modonomicon-26.1.2-neoforge-2.20.2.jar",
+    "sha256": "950c332f3c1c9ef78ee48d1260511592441f896067e8c541d8ca36df3847cf77",
+    "url": "https://cdn.modrinth.com/data/692GClaE/versions/TYjBjojy/modonomicon-26.1.2-neoforge-2.20.2.jar"
   },
   {
     "loader": "NeoForge",
@@ -152,9 +152,9 @@
   {
     "loader": "NeoForge",
     "id": "neovitae",
-    "filename": "neovitae-26.1.2-1.1.31.jar",
-    "sha256": "55f35364764a438a45e68e1e74de3164e69f4487932c66af5fb5a6e303951e92",
-    "url": "https://cdn.modrinth.com/data/rvaW4C93/versions/QJXvo8Q1/neovitae-26.1.2-1.1.31.jar",
+    "filename": "neovitae-26.1.2-1.1.53.jar",
+    "sha256": "5fc72f714e8903bd7cd4e4c1120ffd4234495d9c767d2f5e3c89870350e3ca62",
+    "url": "https://cdn.modrinth.com/data/rvaW4C93/versions/nNG1ZJad/neovitae-26.1.2-1.1.53.jar",
     "requires": [
       "modonomicon",
       "geckolib"
@@ -166,9 +166,9 @@
     "clientRequires": [
       "athena"
     ],
-    "filename": "oritech-2.0.0-exp6.jar",
-    "sha256": "caca5a70e76e201584c0dba6950d4470765aa317fcb6a992766ce5276c95148b",
-    "url": "https://cdn.modrinth.com/data/4sYI62kA/versions/2xLWeZUn/oritech-2.0.0-exp6.jar"
+    "filename": "oritech-2.0.0-exp13.jar",
+    "sha256": "70ff0c2130d905e584025c2f37c8cc34b0a546aedc372b2bdace5f23929bf676",
+    "url": "https://cdn.modrinth.com/data/4sYI62kA/versions/z6rSM3hY/oritech-2.0.0-exp13.jar"
   },
   {
     "loader": "NeoForge",
@@ -229,9 +229,9 @@
   {
     "loader": "NeoForge",
     "id": "allthemodium",
-    "filename": "allthemodium-26.1.2-4.1.1.jar",
-    "sha256": "59e24aa1f26e752faf86ced677547a72403d81c395b5193e9e2598bd23b033ff",
-    "url": "https://edge.forgecdn.net/files/9052/575/allthemodium-26.1.2-4.1.1.jar",
+    "filename": "allthemodium-26.1.2-4.3.0.jar",
+    "sha256": "d651847e662c85fbf14dae60a625e0bcaae4f7617d0aa4da6e6146195d8281e8",
+    "url": "https://edge.forgecdn.net/files/9435/802/allthemodium-26.1.2-4.3.0.jar",
     "requires": [
       "alltheores",
       "geckolib"
@@ -247,9 +247,9 @@
   {
     "loader": "NeoForge",
     "id": "aquaculture",
-    "filename": "Aquaculture-26.1.1-2.9.2.jar",
-    "sha256": "ef3cde416d554aff527abe89125f02389bd420ea86c2be651ff3ee81207f00ed",
-    "url": "https://cdn.modrinth.com/data/Vl1uNAuy/versions/I2FfOQUM/Aquaculture-26.1.1-2.9.2.jar"
+    "filename": "Aquaculture-26.1.2-2.9.4.jar",
+    "sha256": "1b21de74cbe78deee48a1c756f0b2c2913818b3bc8cf684f4ebdf36ee484d862",
+    "url": "https://cdn.modrinth.com/data/Vl1uNAuy/versions/FWv4aPCV/Aquaculture-26.1.2-2.9.4.jar"
   },
   {
     "loader": "NeoForge",
@@ -271,9 +271,9 @@
   {
     "loader": "NeoForge",
     "id": "jei",
-    "filename": "jei-26.1.2-neoforge-29.43.0.106.jar",
-    "sha256": "a66fd1b3a258fc02f24a1068c9a7809ea4118cfae2414ace8f84a6fade8a1903",
-    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/iub7wR3J/jei-26.1.2-neoforge-29.43.0.106.jar"
+    "filename": "jei-26.1.2-neoforge-29.47.0.110.jar",
+    "sha256": "588848a720be5c8810d114a8d7e65cc29d6b86dcf7f8c5ad050f6e73321fd09a",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/7qmEzno8/jei-26.1.2-neoforge-29.47.0.110.jar"
   },
   {
     "loader": "NeoForge",
@@ -288,9 +288,9 @@
   },
   {
     "loader": "NeoForge",
-    "filename": "architectury-neoforge-20.1.16.jar",
-    "sha256": "d81e13115ad09ae2f119db595ad5bf1c21284333bcc20db618daf4681fac6cc0",
-    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/9PW5lWrQ/architectury-neoforge-20.1.16.jar",
+    "filename": "architectury-neoforge-20.1.18.jar",
+    "sha256": "037134f59a7dbc86697792563d1b96ed39374a73e044e1ed995e7519dcba3cfb",
+    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/5Bae8CM6/architectury-neoforge-20.1.18.jar",
     "id": "architectury"
   },
   {
@@ -317,9 +317,9 @@
   {
     "loader": "Fabric",
     "id": "betterend",
-    "filename": "gc8OEnCC-8dlasiJv.jar",
-    "sha256": "432f99ec0218504c8dcfaebcd6cd37970b400ff1f4a396888b697e447036ab2f",
-    "url": "https://api.modrinth.com/maven/maven/modrinth/gc8OEnCC/8dlasiJv/gc8OEnCC-8dlasiJv.jar",
+    "filename": "better-end-26.101.6.jar",
+    "sha256": "dfd23e36131686b1a0a338a1d20fd7c385c80ad117961db88c4e717079676332",
+    "url": "https://cdn.modrinth.com/data/gc8OEnCC/versions/yOxiGnmO/better-end-26.101.6.jar",
     "requires": [
       "bclib",
       "wover"
@@ -328,9 +328,9 @@
   {
     "loader": "Fabric",
     "id": "betternether",
-    "filename": "MpzVLzy5-MUV7eOIE.jar",
-    "sha256": "3f9af3b5d301a7de79d3126989c762e61276b1b4d0dc851fbbaf6008d928c85d",
-    "url": "https://api.modrinth.com/maven/maven/modrinth/MpzVLzy5/MUV7eOIE/MpzVLzy5-MUV7eOIE.jar",
+    "filename": "better-nether-26.101.6.jar",
+    "sha256": "fb8a20e091bea2fce775b7eeef51b173beb64fc54d851dba99e22caa7893dfff",
+    "url": "https://cdn.modrinth.com/data/MpzVLzy5/versions/cr4P2ndI/better-nether-26.101.6.jar",
     "requires": [
       "bclib",
       "wover"
@@ -339,9 +339,9 @@
   {
     "loader": "Fabric",
     "id": "bclib",
-    "filename": "BgNRHReB-TZEtveQ9.jar",
-    "sha256": "29c9eab8d5192c3549dff1879fb27f2ce5a1632cb22845daa7cc00bd225ee7d7",
-    "url": "https://api.modrinth.com/maven/maven/modrinth/BgNRHReB/TZEtveQ9/BgNRHReB-TZEtveQ9.jar",
+    "filename": "bclib-26.101.6.jar",
+    "sha256": "31a16c725640adf79de3adc08678d4109a195196386384a217268eaf2700f122",
+    "url": "https://cdn.modrinth.com/data/BgNRHReB/versions/4gPiVIpR/bclib-26.101.6.jar",
     "requires": [
       "wover"
     ]
@@ -349,9 +349,9 @@
   {
     "loader": "Fabric",
     "id": "wover",
-    "filename": "RiN8rDVs-UoxStTIn.jar",
-    "sha256": "07a48a932851157e131fa92caa0f1db46b4a895ae5400a7a36bae0aeec6159dc",
-    "url": "https://api.modrinth.com/maven/maven/modrinth/RiN8rDVs/UoxStTIn/RiN8rDVs-UoxStTIn.jar"
+    "filename": "worldweaver-26.101.6.jar",
+    "sha256": "168cd310ce63530419e659ee8bc7d6c7b1d4d1ee26e397beb9da1c64d82ce472",
+    "url": "https://cdn.modrinth.com/data/RiN8rDVs/versions/WQkCTdhd/worldweaver-26.101.6.jar"
   },
   {
     "loader": "Fabric",
@@ -363,8 +363,8 @@
   {
     "loader": "NeoForge",
     "id": "journeymap",
-    "filename": "lfHFW1mp-MYF1fYGU.jar",
-    "sha256": "37352ba8d9033841ec787322541b9b48c501b8703b442a2bc9876d64da188048",
-    "maven": "maven.modrinth:lfHFW1mp:MYF1fYGU"
+    "filename": "lfHFW1mp-9CsaQLo2.jar",
+    "sha256": "8997f01c253613df6ce19edc9f5722c315ed20f05d8994d4e40b57bc8b0672f6",
+    "maven": "maven.modrinth:lfHFW1mp:9CsaQLo2"
   }
 ]

@@ -14,9 +14,9 @@
         "fabric-api": "*",
         "minecraft": "*",
         "mismatchedboots": "*",
-        "betterend": "26.101.4",
-        "betternether": "26.101.4",
-        "bclib": "26.101.4",
-        "wover": "26.101.4"
+        "betterend": "26.101.6",
+        "betternether": "26.101.6",
+        "bclib": "26.101.6",
+        "wover": "26.101.6"
     }
 }

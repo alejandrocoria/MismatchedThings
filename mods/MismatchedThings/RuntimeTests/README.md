@@ -98,9 +98,8 @@ Exact official download URLs (or fixture-only `maven` coordinates) and SHA-256
 pins are resolved lazily through Gradle's artifact cache, then staged in
 `mods/MismatchedThings/build/test-mods/<loader>/`. Both loaders' JEI/REI fixtures
 use the same mechanism. Boots, Leggings and the joint development runs share
-the current BetterX entries; the superseded 26.101.2 test pins were retired after
-Boots' maintained suite passed on 26.101.4. JourneyMap's fixture retains its
-Maven coordinate.
+the current BetterX entries; the catalog owns their active publication versions.
+JourneyMap's fixture retains its Maven coordinate.
 Existing URL entries keep their order/cache coordinates. Append new publications
 rather than inserting them before old entries. Production `compileOnly` API
 dependencies are independent and were not migrated. Maintained tests must not

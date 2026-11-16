@@ -1494,10 +1494,11 @@ the client checks synchronized attributes and liveness independently. Refusal
 variants run only the short native/mixed/removal control sequence.
 
 Full movement measures forward/strafe/sprint/crouch/ordinary-airborne scenes with
-empty native, Speed I/III and both mixed orientations. NeoForge must demonstrate a
-native positive in the four grounded scenes and mixed/native equality; the
-pinned Fabric port must preserve its native lack of acceleration. Equality alone
-is not functional Speed acceptance. Water and creative flight are not certified.
+empty native, Speed I/III and both mixed orientations. Both loaders must demonstrate
+a native positive in the four grounded scenes and mixed/native equality. The
+current Fabric port fixes its older lack of acceleration; the air control must
+remain negative. Equality alone is not functional Speed acceptance. Water and
+creative flight are not certified.
 
 Reports: `<Loader>/build/reports/<baseline>/mystical-effects-<graph>-<variant>`
 with optional `-absent`/`-lifecycle` suffixes. Require both phase `.ok` markers,
@@ -1618,7 +1619,7 @@ The real client connection retains A's activation/removal, attribute synchroniza
 Health V actual-break liveness and lower native/mixed Boots entitlement. The
 extended sequence also removes lower Boots first, retaining the stronger mixed
 LEGS contribution, then removes Leggings. Consolidation omits the unchanged full
-movement matrix: A's NeoForge native Speed positive and Fabric native limitation
+movement matrix: A's native Speed positives on both loaders with current pins
 remain the relevant evidence.
 
 Native augment component trees (including style) must occur beneath their original
@@ -1992,8 +1993,9 @@ helmet night vision or Boots fall protection by themselves.
 
 Evidence: `NeoForge/build/reports/<baseline>/oritechCapture[-boots]/oritech-capture.txt`
 plus `oritech-gameplay.txt` and `oritech-pairs.png`, with bounded logs under
-`build/verification/<baseline>/oritechCapture[-boots]/`. Add
-`'-Pneoforge_version=26.1.2.99'` for the supported floor; restore `.114` after it.
+`build/verification/<baseline>/oritechCapture[-boots]/`. Use
+the normal `.114` baseline for current Oritech exp13: it requires `.109` or newer,
+so the historical exp6 `.99` acceptance is not a present-pin claim.
 Run profiles sequentially. Owner acceptance is recorded separately from these
 automatic gates; this is bounded Oritech support, not a generic GeckoLib adapter.
 
@@ -2005,8 +2007,8 @@ automatic gates; this is bounded Oritech support, not a generic GeckoLib adapter
 ```
 
 This bounded **dedicated-server-only** profile uses the current packaged products
-and Things' shared artifact resolver: Neo Vitae 1.1.31, Modonomicon 2.16.0 and
-GeckoLib 5.5.2. Prefetch the catalog before the first offline run. Use NeoForge
+and Things' shared artifact resolver for the current Neo Vitae, Modonomicon and
+GeckoLib pins. Prefetch the catalog before the first offline run. Use NeoForge
 `.114`; the pinned Modonomicon requires `.109` or newer. There is no claim of a
 native `.99` run with these dependencies.
 

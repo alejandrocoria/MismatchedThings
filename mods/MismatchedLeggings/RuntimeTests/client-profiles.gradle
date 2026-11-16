@@ -218,8 +218,8 @@ profiles.each { profile ->
                     // The native first-launch welcome blocks quick play before any world is opened.
                     new File(run, 'config/wover').mkdirs()
                     new File(run, 'config/wover/client.json').text = '''{
-  "create_version": "26.101.4",
-  "modify_version": "26.101.4",
+  "create_version": "26.101.6",
+  "modify_version": "26.101.6",
   "internal": { "did_present_welcome_screen": true },
   "general": { "check_for_new_versions": false }
 }

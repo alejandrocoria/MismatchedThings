@@ -217,8 +217,7 @@ public final class EffectsClient {
                 report.append(sample).append('\n');
             }
             boolean positive = nativeHigh > baseline * 1.05;
-            boolean fabric = System.getProperty("leggings.test.maLoader").equals("Fabric");
-            require(positive == (!fabric && !mode.equals("air")), "Native Speed positive/air/port control changed: " + mode);
+            require(positive == !mode.equals("air"), "Native Speed grounded/air control changed: " + mode);
             report.append(mode).append(" native Speed positive=").append(positive).append('\n');
         }
         EffectsChecks.write("movement.txt", report.toString());

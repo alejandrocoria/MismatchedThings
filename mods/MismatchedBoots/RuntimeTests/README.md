@@ -1316,8 +1316,8 @@ and Spanish presentation checks on 2026-10-27, closing the visual handoff.
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyOritechFall :MismatchedBoots:RuntimeTests:NeoForge:verifyOritechFallAbsent --console=plain
 ```
 
-The opt-in server gate hash-checks the installed Oritech 2.0.0-exp6, GeckoLib 5.5.2
-and Athena 4.7.3 and copies them into isolated versioned build directories. Native
+The opt-in server gate hash-checks the current Oritech, GeckoLib and Athena catalog
+pins and copies them into isolated versioned build directories. Native
 damage dispatch checks Exo, mixed/inverse/two-Exo roots, repeated falls, non-fall
 damage, wrong slots and malformed/spoofed roots. Native sound-event observation
 checks one servo cue per protected landing with unchanged parameters. Source
@@ -1326,7 +1326,9 @@ Exo + vanilla orientations: both roots select Exo's sole custom sound. Absent ru
 without these mods and checks an ordinary inverse mixed pair still takes damage.
 There is no replacement Oritech handler or production damage listener.
 
-Commands can use `-Pneoforge_version=26.1.2.99` for the support floor. Reports and
+Current Oritech exp13 requires NeoForge .109+, so use the normal .114 baseline
+for present-mod runs; only the absent profile can still run on .99. The older
+exp6 floor acceptance below remains historical evidence. Reports and
 markers are under `RuntimeTests/NeoForge/build/reports/oritech-fall/<version>/`;
 disposable runs are under that project's `build/run/oritechFall/<version>/`.
 Both processes are bounded and require report/success markers. The
