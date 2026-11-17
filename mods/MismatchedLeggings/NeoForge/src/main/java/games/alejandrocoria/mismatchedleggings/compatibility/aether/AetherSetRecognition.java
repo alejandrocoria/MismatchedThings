@@ -1,6 +1,7 @@
 package games.alejandrocoria.mismatchedleggings.compatibility.aether;
 
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -23,7 +24,8 @@ public final class AetherSetRecognition {
             var type = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(SET).orElseThrow();
             var root = wearer.getItemBySlot(EquipmentSlot.LEGS);
             // The proven native owner comparison already counted matching roots, including duplicates.
-            return root.get(type) != requested && AetherSources.any(root, source -> source.get(type) == requested)
+            return AetherArmorSets.tag(root.get(type)) != requested
+                    && AetherSources.any(root, source -> AetherArmorSets.tag(source.get(type)) == requested)
                     ? original + 1 : original;
         } catch (RuntimeException | LinkageError failure) {
             disable(failure);

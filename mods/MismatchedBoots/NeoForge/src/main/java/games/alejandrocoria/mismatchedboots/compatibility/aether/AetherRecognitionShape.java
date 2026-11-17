@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -30,6 +31,7 @@ final class AetherRecognitionShape implements Opcodes {
     static final String STACK = "net/minecraft/world/item/ItemStack";
     static final String ENTITY = "net/minecraft/world/entity/LivingEntity";
     static final String TAG = "net/minecraft/tags/TagKey";
+    static final String ARMOR = "com/aetherteam/aetherii/item/components/ArmorSet";
     static final String EVENT = "net/neoforged/neoforge/event/entity/living/LivingFallEvent";
     static final String COUNT = "(L" + ENTITY + ";L" + TAG + ";)I";
     static final String FALL = "(L" + EVENT + ";)V";
@@ -69,7 +71,14 @@ final class AetherRecognitionShape implements Opcodes {
         }
 
         InsnList hook = new InsnList();
-        if (sets) {
+        if (sets && selected.operand != null) {
+            hook.add(new VarInsnNode(ALOAD, 1));
+            hook.add(new VarInsnNode(ALOAD, selected.stackLocal));
+            hook.add(new VarInsnNode(ALOAD, 0));
+            hook.add(new MethodInsnNode(INVOKESTATIC, ADAPTER, "setComponent",
+                    "(Ljava/lang/Object;L" + TAG + ";L" + STACK + ";L" + ENTITY + ";)Ljava/lang/Object;", false));
+            method.instructions.insertBefore(selected.operand, hook);
+        } else if (sets) {
             hook.add(new VarInsnNode(ALOAD, selected.stackLocal));
             hook.add(new MethodInsnNode(INVOKESTATIC, ADAPTER, "matchesSet", "(Ljava/lang/Object;L" + TAG + ";L" + STACK + ";)Z", false));
             method.instructions.insertBefore(selected.branch, hook);
@@ -95,7 +104,12 @@ final class AetherRecognitionShape implements Opcodes {
             return null;
         }
 
-        MethodInsnNode query = flow.query(flow.argument(branch, 0, 2), STACK, "get", "(Ljava/util/function/Supplier;)Ljava/lang/Object;");
+        SourceValue component = flow.argument(branch, 0, 2);
+        boolean record = call(flow.origin(component), ARMOR, "armor", "()L" + TAG + ";");
+        if (record) {
+            component = flow.argument(flow.origin(component), 0, 1);
+        }
+        MethodInsnNode query = flow.query(component, STACK, "get", "(Ljava/util/function/Supplier;)Ljava/lang/Object;");
         if (query == null || !field(flow.origin(flow.argument(query, 1, 2)),
                                     "com/aetherteam/aetherii/item/components/AetherIIDataComponents",
                                     "ARMOR_SET",
@@ -124,8 +138,40 @@ final class AetherRecognitionShape implements Opcodes {
             return null;
         }
         // Only this comparison's one-piece increment is ours to admit. Native count seeds/return wrappers are not.
-        int local = flow.local(branch, stack);
-        return local < 0 ? null : new Site(branch, query, local);
+        AbstractInsnNode operand = null;
+        if (record) {
+            JumpInsnNode gate = null;
+            for (var n : flow.method.instructions) {
+                if (n instanceof JumpInsnNode candidate && candidate.getOpcode() == IFNULL
+                        && flow.same(flow.argument(candidate, 0, 1), component)) {
+                    if (gate != null) {
+                        return null;
+                    }
+                    gate = candidate;
+                }
+                if (n instanceof TypeInsnNode cast && cast.getOpcode() == CHECKCAST && cast.desc.equals(ARMOR)
+                        && flow.same(flow.argument(cast, 0, 1), component)) {
+                    if (operand != null) {
+                        return null;
+                    }
+                    operand = cast;
+                }
+            }
+            if (gate == null || operand == null || next(gate.label) != next(increment)
+                    || flow.method.instructions.indexOf(operand) >= flow.method.instructions.indexOf(gate)
+                    || flow.method.instructions.indexOf(gate) >= flow.method.instructions.indexOf(branch)) {
+                return null;
+            }
+            // Between the null gate and equality, only the proven record/tag operands may be loaded.
+            for (var n = next(gate); n != branch; n = next(n)) {
+                if (n == null || !(n instanceof VarInsnNode load && load.getOpcode() == ALOAD)
+                        && !call(n, ARMOR, "armor", "()L" + TAG + ";")) {
+                    return null;
+                }
+            }
+        }
+        int local = flow.local(operand == null ? branch : operand, stack);
+        return local < 0 ? null : new Site(branch, query, local, operand);
     }
 
     private static Site sentrySite(Flow flow, JumpInsnNode branch) {
@@ -157,10 +203,10 @@ final class AetherRecognitionShape implements Opcodes {
             return null;
         }
 
-        return new Site(branch, query, -1);
+        return new Site(branch, query, -1, null);
     }
 
-    private record Site(JumpInsnNode branch, MethodInsnNode query, int stackLocal) {
+    private record Site(JumpInsnNode branch, MethodInsnNode query, int stackLocal, AbstractInsnNode operand) {
     }
 
     private static final class Flow {

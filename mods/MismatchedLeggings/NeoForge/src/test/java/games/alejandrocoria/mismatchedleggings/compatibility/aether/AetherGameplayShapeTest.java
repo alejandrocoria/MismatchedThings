@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -23,6 +24,41 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AetherGameplayShapeTest implements Opcodes {
     @Test
+    void recordNullLaneAndSiblingOperandProvenanceAreRequired() throws Exception {
+        for (String fault : List.of("gate-value", "gate-target", "accessor", "requested", "peer-stack", "peer-wearer")) {
+            var node = nativeClass(AetherSetShape.EQUIPMENT);
+            var count = consumer(node);
+            var gates = Arrays.stream(count.instructions.toArray()).filter(n -> n.getOpcode() == IFNULL)
+                    .map(JumpInsnNode.class::cast).toList();
+            if (gates.isEmpty()) { continue; }
+            var boots = Class.forName("games.alejandrocoria.mismatchedboots.compatibility.aether.AetherRecognitionShape")
+                    .getDeclaredMethod("apply", ClassNode.class);
+            boots.setAccessible(true);
+            assertTrue((boolean) boots.invoke(null, node));
+            var bridge = Arrays.stream(count.instructions.toArray()).filter(n -> n instanceof MethodInsnNode call
+                    && call.name.equals("setComponent")).map(MethodInsnNode.class::cast).findFirst().orElseThrow();
+            switch (fault) {
+                case "gate-value" -> count.instructions.insertBefore(gates.getFirst(), new MethodInsnNode(INVOKESTATIC,
+                        "fixture/Foreign", "value", "(Ljava/lang/Object;)Ljava/lang/Object;", false));
+                case "gate-target" -> gates.getFirst().label = Arrays.stream(count.instructions.toArray())
+                        .filter(n -> n instanceof JumpInsnNode jump && jump.getOpcode() == IFEQ)
+                        .map(JumpInsnNode.class::cast).findFirst().orElseThrow().label;
+                case "accessor" -> Arrays.stream(count.instructions.toArray()).filter(n -> n instanceof MethodInsnNode call
+                        && call.name.equals("armor")).map(MethodInsnNode.class::cast).findFirst().orElseThrow().name = "other";
+                case "requested" -> ((VarInsnNode) previous(previous(previous(bridge)))).var = 0;
+                case "peer-stack" -> {
+                    count.instructions.insertBefore(previous(bridge), new MethodInsnNode(INVOKESTATIC, "fixture/Foreign", "stack",
+                            "(L" + AetherSetShape.STACK + ";)L" + AetherSetShape.STACK + ";", false));
+                }
+                case "peer-wearer" -> count.instructions.insertBefore(bridge, new MethodInsnNode(INVOKESTATIC, "fixture/Foreign", "wearer",
+                        "(L" + AetherSetShape.ENTITY + ";)L" + AetherSetShape.ENTITY + ";", false));
+            }
+            assertFalse(AetherSetShape.apply(node), fault);
+            assertEquals(0, adapters(count), "No partial sibling hook: " + fault);
+        }
+    }
+
+    @Test
     void actualBootsGameplayEditsComposeInBothOrders() throws Exception {
         for (String target : targets()) {
             var shape = Class.forName("games.alejandrocoria.mismatchedboots.compatibility.aether."
@@ -30,16 +66,31 @@ class AetherGameplayShapeTest implements Opcodes {
             var boots = shape.getDeclaredMethod("apply", ClassNode.class);
             boots.setAccessible(true);
             for (boolean bootsFirst : List.of(false, true)) {
-                var node = nativeClass(target);
-                if (bootsFirst) { assertTrue((boolean) boots.invoke(null, node), target); }
-                assertTrue(apply(node), target);
-                if (!bootsFirst) { assertTrue((boolean) boots.invoke(null, node), target); }
-                var method = consumer(node);
-                new Analyzer<>(new BasicInterpreter()).analyze(node.name, method);
-                assertTrue(Arrays.stream(method.instructions.toArray()).anyMatch(n -> n instanceof MethodInsnNode call
-                        && call.owner.contains("/mismatchedboots/")), target);
-                assertTrue(Arrays.stream(method.instructions.toArray()).anyMatch(n -> n instanceof MethodInsnNode call
-                        && call.owner.contains("/mismatchedleggings/")), target);
+                for (boolean wrapped : List.of(false, true)) {
+                    var node = nativeClass(target);
+                    if (wrapped && target.equals(AetherSetShape.EQUIPMENT)) {
+                        var query = Arrays.stream(consumer(node).instructions.toArray()).filter(n -> n instanceof MethodInsnNode call
+                                && call.owner.equals(AetherSetShape.STACK) && call.name.equals("get")).findFirst().orElseThrow();
+                        for (String name : List.of("fixture$first", "fixture$second")) {
+                            var identity = new MethodNode(ACC_PRIVATE | ACC_STATIC, name, "(Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+                            identity.instructions.add(new VarInsnNode(ALOAD, 0));
+                            identity.instructions.add(new InsnNode(ARETURN));
+                            identity.maxLocals = 1;
+                            identity.maxStack = 1;
+                            node.methods.add(identity);
+                            consumer(node).instructions.insert(query, new MethodInsnNode(INVOKESTATIC, node.name, name, identity.desc, false));
+                        }
+                    }
+                    if (bootsFirst) { assertTrue((boolean) boots.invoke(null, node), target); }
+                    assertTrue(apply(node), target);
+                    if (!bootsFirst) { assertTrue((boolean) boots.invoke(null, node), target); }
+                    var method = consumer(node);
+                    new Analyzer<>(new BasicInterpreter()).analyze(node.name, method);
+                    assertTrue(Arrays.stream(method.instructions.toArray()).anyMatch(n -> n instanceof MethodInsnNode call
+                            && call.owner.contains("/mismatchedboots/")), target);
+                    assertTrue(Arrays.stream(method.instructions.toArray()).anyMatch(n -> n instanceof MethodInsnNode call
+                            && call.owner.contains("/mismatchedleggings/")), target);
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedboots.config.ComponentRulesConfig;
 import games.alejandrocoria.mismatchedboots.config.ComponentRulesLifecycle;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
@@ -49,7 +50,7 @@ import java.util.function.Supplier;
 /** Native controls and independently scoped production charm/recognition acceptance. */
 public final class AetherIICompatibilityTest {
     private static boolean finished;
-    private static DataComponentType<TagKey<Item>> armorSet;
+    private static DataComponentType<Object> armorSet;
     private static final String VARIANT = System.getProperty("mismatchedboots.runtimetest.aetherRecognitionVariant", "live");
     private static final boolean SETS = !VARIANT.equals("setchanged");
     private static final boolean SENTRY = !VARIANT.equals("sentrychanged");
@@ -68,8 +69,8 @@ public final class AetherIICompatibilityTest {
         finished = true;
         boolean charmsOnly = Boolean.getBoolean("mismatchedboots.runtimetest.aetherIICharms");
         String prefix = charmsOnly ? "aether-ii-charms" : "aether-ii-recognition";
-        var report = new StringBuilder(charmsOnly ? "Aether II alpha.4.1; production installed charm composition\n"
-                                                  : "Aether II alpha.4.1; production recognition; variant=" + VARIANT + "\n");
+        var report = new StringBuilder(charmsOnly ? "Aether II; production installed charm composition\n"
+                                                  : "Aether II; production recognition; variant=" + VARIANT + "\n");
         try {
             armorSet = component("armor_set");
             var api = new NativeApi();
@@ -112,7 +113,7 @@ public final class AetherIICompatibilityTest {
         try {
             for (String material : List.of("beast_pelt", "burrukai_plate", "zanite", "arkenium", "gravitite", "neptune")) {
                 var boots = item(material + "_boots");
-                var tag = boots.get(armorSet);
+                var tag = set(boots);
                 require(tag != null, "Missing native set " + material);
                 var pair = paidPair(player, boots, new ItemStack(Items.DIAMOND_BOOTS));
                 var duplicate = MixedBootsFactory.createPair(boots, boots).primary();
@@ -144,12 +145,12 @@ public final class AetherIICompatibilityTest {
             clear(subject);
             api.accessories(subject).clearContent();
             var dual = MixedBootsFactory.createPair(item("zanite_boots"), item("neptune_boots"));
-            var zanite = item("zanite_boots").get(armorSet);
-            var neptune = item("neptune_boots").get(armorSet);
+            var zanite = set(item("zanite_boots"));
+            var neptune = set(item("neptune_boots"));
             for (var root : List.of(dual.primary(), dual.inverse())) {
                 subject.setItemSlot(EquipmentSlot.FEET, root);
-                count(api, subject, root.get(armorSet), 1);
-                count(api, subject, root.get(armorSet) == zanite ? neptune : zanite, SETS ? 1 : 0);
+                count(api, subject, set(root), 1);
+                count(api, subject, set(root) == zanite ? neptune : zanite, SETS ? 1 : 0);
             }
             subject.setItemSlot(EquipmentSlot.HEAD, item("zanite_helmet"));
             subject.setItemSlot(EquipmentSlot.CHEST, item("zanite_chestplate"));
@@ -178,6 +179,9 @@ public final class AetherIICompatibilityTest {
             clear(player);
             player.setItemSlot(EquipmentSlot.MAINHAND, inverse);
             count(api, player, zanite, 0);
+            player.setItemSlot(EquipmentSlot.HEAD, inverse);
+            count(api, player, zanite, 0);
+            player.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
             var missing = inverse.copy();
             missing.remove(ModContent.mixedBootsDataType().orElseThrow());
             player.setItemSlot(EquipmentSlot.FEET, missing);
@@ -359,7 +363,7 @@ public final class AetherIICompatibilityTest {
 
         var duplicate = MixedBootsFactory.createPair(source, source).primary();
         player.setItemSlot(EquipmentSlot.FEET, duplicate);
-        count(api, player, source.get(armorSet), 1);
+        count(api, player, set(source), 1);
         close(amount(duplicate.getAttributeModifiers(), Attributes.FALL_DAMAGE_MULTIPLIER), -.75, "Two Sentry numeric");
         fall(player, duplicate, 7.99, SENTRY);
         var missing = pair.get(1).copy();
@@ -455,6 +459,10 @@ public final class AetherIICompatibilityTest {
                                 EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND)) {
             entity.setItemSlot(slot, ItemStack.EMPTY);
         }
+    }
+
+    private static TagKey<Item> set(ItemStack stack) {
+        return AetherArmorSets.tag(stack.get(armorSet));
     }
 
     private static void count(NativeApi api, LivingEntity entity, TagKey<Item> tag, int expected) throws Exception {

@@ -7,17 +7,53 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.jar.JarFile;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-class AetherRecognitionShapeTest {
+class AetherRecognitionShapeTest implements Opcodes {
+    @Test
+    void recordGateMustProtectTheSameOperandAndSkipOnlyItsSinglePieceIncrement() throws Exception {
+        for (String fault : List.of("gate-value", "gate-direction", "gate-target", "accessor", "requested", "cast")) {
+            var node = nativeClass(AetherRecognitionShape.EQUIPMENT);
+            var count = queryMethod(node);
+            var gates = Arrays.stream(count.instructions.toArray()).filter(n -> n.getOpcode() == IFNULL)
+                    .map(JumpInsnNode.class::cast).toList();
+            if (gates.isEmpty()) { continue; } // Old catalog contract until C switches the pin.
+            var branch = gates.getFirst();
+            switch (fault) {
+                case "gate-value" -> count.instructions.insertBefore(branch, new MethodInsnNode(INVOKESTATIC,
+                        "fixture/Foreign", "value", "(Ljava/lang/Object;)Ljava/lang/Object;", false));
+                case "gate-direction" -> branch.setOpcode(IFNONNULL);
+                case "gate-target" -> branch.label = Arrays.stream(count.instructions.toArray())
+                        .filter(n -> n instanceof JumpInsnNode jump && jump.getOpcode() == IFEQ)
+                        .map(JumpInsnNode.class::cast).findFirst().orElseThrow().label;
+                case "accessor" -> accessor(count).name = "other";
+                case "requested" -> ((VarInsnNode) accessor(count).getNext()).var = 6;
+                case "cast" -> Arrays.stream(count.instructions.toArray()).filter(n -> n instanceof TypeInsnNode cast
+                        && cast.desc.equals(AetherRecognitionShape.ARMOR)).map(TypeInsnNode.class::cast)
+                        .findFirst().orElseThrow().desc = "java/lang/Object";
+            }
+            assertFalse(AetherRecognitionShape.apply(node), fault);
+            assertFalse(Arrays.stream(count.instructions.toArray()).anyMatch(n -> n instanceof MethodInsnNode call
+                    && call.owner.equals(AetherRecognitionShape.ADAPTER)), "No partial hook: " + fault);
+        }
+    }
+
+    private static MethodInsnNode accessor(MethodNode method) {
+        return Arrays.stream(method.instructions.toArray()).filter(n -> n instanceof MethodInsnNode call && call.name.equals("armor"))
+                .map(MethodInsnNode.class::cast).findFirst().orElseThrow();
+    }
     @Test
     void nativeLocalSitesAreEditedOnceWithoutDependingOnUnrelatedMethods() throws Exception {
         for (String target : new String[]{AetherRecognitionShape.EQUIPMENT, AetherRecognitionShape.SENTRY}) {

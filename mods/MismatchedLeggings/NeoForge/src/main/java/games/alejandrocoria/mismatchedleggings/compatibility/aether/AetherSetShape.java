@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.SourceValue;
@@ -27,6 +28,7 @@ final class AetherSetShape implements Opcodes {
     static final String SLOT = "net/minecraft/world/entity/EquipmentSlot";
     static final String STACK = "net/minecraft/world/item/ItemStack";
     static final String TAG = "net/minecraft/tags/TagKey";
+    static final String ARMOR = "com/aetherteam/aetherii/item/components/ArmorSet";
     static final String ADAPTER = "games/alejandrocoria/mismatchedleggings/compatibility/aether/AetherSetRecognition";
     static final String COUNT = "(L" + ENTITY + ";L" + TAG + ";)I";
     static final String EQUIPPED = "(L" + ENTITY + ";)Ljava/util/List;";
@@ -68,15 +70,19 @@ final class AetherSetShape implements Opcodes {
 
         var branches = Arrays.stream(count.instructions.toArray()).filter(JumpInsnNode.class::isInstance)
                 .map(JumpInsnNode.class::cast).filter(branch -> branch.getOpcode() != GOTO).toList();
-        if (branches.size() != 2) {
+        if (branches.size() != 2 && branches.size() != 3) {
             return false;
         }
         var predicate = branches.stream().filter(branch -> next(branch) == increment && next(branch.label) == next(increment))
                 .findFirst().orElse(null);
-        if (predicate == null || !setPredicate(flow, predicate)) {
+        if (predicate == null || !setPredicate(flow, predicate, branches, increment)) {
             return false;
         }
-        var loop = branches.stream().filter(branch -> branch != predicate).findFirst().orElseThrow();
+        var loops = branches.stream().filter(branch -> branch != predicate && branch.getOpcode() != IFNULL).toList();
+        if (loops.size() != 1) {
+            return false;
+        }
+        var loop = loops.getFirst();
         var hasNext = flow.origin(flow.argument(loop, 0, 1));
         if (loop.getOpcode() != IFEQ || !call(hasNext, "java/util/Iterator", "hasNext", "()Z")
                 || !equipmentIterator(flow, flow.argument(hasNext, 0, 1))) {
@@ -97,7 +103,8 @@ final class AetherSetShape implements Opcodes {
         return true;
     }
 
-    private static boolean setPredicate(AetherFlow flow, JumpInsnNode branch) throws AnalyzerException {
+    private static boolean setPredicate(AetherFlow flow, JumpInsnNode branch, List<JumpInsnNode> branches,
+                                        IincInsnNode increment) throws AnalyzerException {
         SourceValue component;
         SourceValue requested;
         SourceValue peerStack = null;
@@ -116,10 +123,51 @@ final class AetherSetShape implements Opcodes {
         } else {
             return false;
         }
-        var query = flow.origin(component);
+        boolean record = call(flow.origin(component), ARMOR, "armor", "()L" + TAG + ";");
+        if (record) {
+            component = flow.argument(flow.origin(component), 0, 1);
+            var gates = branches.stream().filter(candidate -> candidate.getOpcode() == IFNULL).toList();
+            if (branches.size() != 3 || gates.size() != 1) {
+                return false;
+            }
+            var gate = gates.getFirst();
+            AbstractInsnNode recordCast = null;
+            for (var n : flow.method.instructions) {
+                if (n instanceof TypeInsnNode cast && cast.getOpcode() == CHECKCAST && cast.desc.equals(ARMOR)
+                        && flow.same(flow.argument(cast, 0, 1), component)) {
+                    if (recordCast != null) {
+                        return false;
+                    }
+                    recordCast = cast;
+                }
+            }
+            if (!flow.same(flow.argument(gate, 0, 1), component) || next(gate.label) != next(increment)
+                    || !before(flow.method, gate, branch) || recordCast == null || !before(flow.method, recordCast, gate)) {
+                return false;
+            }
+            for (var n = next(gate); n != branch; n = next(n)) {
+                if (n == null || !(n instanceof VarInsnNode load && load.getOpcode() == ALOAD)
+                        && !call(n, ARMOR, "armor", "()L" + TAG + ";")) {
+                    return false;
+                }
+            }
+        } else if (branches.size() != 2) {
+            return false;
+        }
+        var query = flow.base(component);
+        if (record && call(query, "games/alejandrocoria/mismatchedboots/compatibility/aether/AetherRecognition", "setComponent",
+                "(Ljava/lang/Object;L" + TAG + ";L" + STACK + ";L" + ENTITY + ";)Ljava/lang/Object;")) {
+            if (!flow.parameter(flow.argument(query, 1, 4), 1) || !flow.parameter(flow.argument(query, 3, 4), 0)) {
+                return false;
+            }
+            peerStack = flow.argument(query, 2, 4);
+            query = flow.base(flow.argument(query, 0, 4));
+        }
         if (!flow.parameter(requested, 1) || !call(query, STACK, "get", "(Ljava/util/function/Supplier;)Ljava/lang/Object;")
                 || !field(flow.origin(flow.argument(query, 1, 2)), "com/aetherteam/aetherii/item/components/AetherIIDataComponents",
-                        "ARMOR_SET")) {
+                        "ARMOR_SET")
+                || !(flow.origin(flow.argument(query, 1, 2)) instanceof FieldInsnNode supplier
+                        && supplier.desc.equals("Lnet/neoforged/neoforge/registries/DeferredHolder;"))) {
             return false;
         }
         var receiver = flow.argument(query, 0, 2);

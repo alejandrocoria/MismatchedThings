@@ -6,6 +6,7 @@ import com.aetherteam.aetherii.item.components.ReinforcementTier;
 import com.aetherteam.aetherii.item.equipment.EquipmentUtil;
 import com.aetherteam.aetherii.item.equipment.armor.abilities.BurrukaiPlateArmor;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedleggings.attribute.AttributeRuleSet;
 import games.alejandrocoria.mismatchedleggings.compatibility.LeggingsBehaviorTags;
 import games.alejandrocoria.mismatchedleggings.compatibility.aether.AetherAlkahestProtection;
@@ -18,6 +19,7 @@ import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.data.SuspendedLeggingsData;
 import games.alejandrocoria.mismatchedleggings.test.SkeletonChecks;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import games.alejandrocoria.mismatchedthings.api.composition.AttributePolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.ComponentPolicy;
 import games.alejandrocoria.mismatchedthings.api.composition.ComponentRule;
@@ -28,9 +30,11 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -39,6 +43,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -99,17 +104,20 @@ public final class AetherGameplayChecks {
         for (String family : FAMILIES) {
             clear(wearer);
             var source = item(family + "_leggings");
-            var set = source.get(AetherIIDataComponents.ARMOR_SET);
+            var set = set(source);
             wearer.setItemSlot(EquipmentSlot.HEAD, item(family + "_helmet"));
             wearer.setItemSlot(EquipmentSlot.CHEST, item(family + "_chestplate"));
             wearer.setItemSlot(EquipmentSlot.LEGS, source);
             require(EquipmentUtil.getArmorCount(wearer, set) == 3 && EquipmentUtil.hasArmorAbility(wearer, set), "Native set control: " + family);
             var roots = pair(source, new ItemStack(Items.IRON_LEGGINGS));
+            require(!roots.get(1).has(AetherIIDataComponents.ARMOR_SET), "Inverse control must reach the native null gate");
             for (int side = 0; side < 2; side++) {
+                String before = snapshot(server, roots.get(side));
                 wearer.setItemSlot(EquipmentSlot.LEGS, roots.get(side));
                 int expected = SETS || side == 0 ? 3 : 2;
                 require(EquipmentUtil.getArmorCount(wearer, set) == expected, "Set orientation count: " + family + "/" + side);
                 require(EquipmentUtil.hasArmorAbility(wearer, set) == (expected >= 3), "Set threshold: " + family);
+                require(before.equals(snapshot(server, roots.get(side))), "Set query modified root or history: " + family);
             }
             wearer.setItemSlot(EquipmentSlot.LEGS, pair(source, source).getFirst());
             require(EquipmentUtil.getArmorCount(wearer, set) == 3, "Duplicate source counted twice: " + family);
@@ -137,7 +145,7 @@ public final class AetherGameplayChecks {
         for (int side = 0; side < 2; side++) {
             wearer.setItemSlot(EquipmentSlot.LEGS, dual.get(side));
             for (int family = 0; family < 2; family++) {
-                var set = (family == 0 ? first : second).get(AetherIIDataComponents.ARMOR_SET);
+                var set = set(family == 0 ? first : second);
                 require(EquipmentUtil.getArmorCount(wearer, set) == (SETS || side == family ? 1 : 0), "Unequal set recognition");
             }
         }
@@ -148,6 +156,9 @@ public final class AetherGameplayChecks {
         BurrukaiPlateArmor.updatePlayerAttributes(new PlayerTickEvent.Pre(wearer));
         require(Math.abs(wearer.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) - (SETS ? .2 : 0)) < 1e-6,
                 "Native Burrukai transient effect not driven by count");
+        BurrukaiPlateArmor.updatePlayerAttributes(new PlayerTickEvent.Pre(wearer));
+        require(Math.abs(wearer.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) - (SETS ? .2 : 0)) < 1e-6,
+                "Repeated native Burrukai tick duplicated the effect");
         wearer.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
         BurrukaiPlateArmor.updatePlayerAttributes(new PlayerTickEvent.Pre(wearer));
         require(wearer.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) == 0, "Native set effect did not clear");
@@ -155,7 +166,7 @@ public final class AetherGameplayChecks {
         var bare = new ItemStack(BuiltInRegistries.ITEM.getValue(LeggingsContent.MIXED_LEGGINGS_ID));
         clear(wearer);
         wearer.setItemSlot(EquipmentSlot.LEGS, bare);
-        require(EquipmentUtil.getArmorCount(wearer, first.get(AetherIIDataComponents.ARMOR_SET)) == 0, "Invalid pair gained a set");
+        require(EquipmentUtil.getArmorCount(wearer, set(first)) == 0, "Invalid pair gained a set");
         if (ModList.get().isLoaded("mismatchedboots")) {
             var boots = bootsPair(item("burrukai_plate_boots"), new ItemStack(Items.IRON_BOOTS));
             var legs = pair(first, new ItemStack(Items.IRON_LEGGINGS));
@@ -164,13 +175,35 @@ public final class AetherGameplayChecks {
                     wearer.setItemSlot(EquipmentSlot.HEAD, item("burrukai_plate_helmet"));
                     wearer.setItemSlot(EquipmentSlot.LEGS, legs.get(leg));
                     wearer.setItemSlot(EquipmentSlot.FEET, foot);
-                    require(EquipmentUtil.getArmorCount(wearer, first.get(AetherIIDataComponents.ARMOR_SET)) == (SETS || leg == 0 ? 3 : 2),
+                    require(EquipmentUtil.getArmorCount(wearer, set(first)) == (SETS || leg == 0 ? 3 : 2),
                             "Mixed LEGS/FEET coexistence count changed");
+                }
+            }
+            var other = bootsPair(item("zanite_boots"), new ItemStack(Items.IRON_BOOTS));
+            clear(wearer);
+            for (var leg : legs) {
+                for (var foot : other) {
+                    String legBefore = snapshot(server, leg);
+                    String footBefore = snapshot(server, foot);
+                    wearer.setItemSlot(EquipmentSlot.LEGS, leg);
+                    wearer.setItemSlot(EquipmentSlot.FEET, foot);
+                    require(EquipmentUtil.getArmorCount(wearer, set(first)) == (SETS || leg == legs.getFirst() ? 1 : 0)
+                            && EquipmentUtil.getArmorCount(wearer, set(second)) == 1, "Unequal sibling sets leaked or doubled");
+                    require(legBefore.equals(snapshot(server, leg)) && footBefore.equals(snapshot(server, foot)),
+                            "Joint native queries changed either root/history");
                 }
             }
         }
         REPORT.append("Six native sets: 3/3, 2/3, both orientations, duplicate/unequal sources, glove and invalid controls; native Burrukai activation/removal; optional mixed LEGS+FEET\n");
         clear(wearer);
+    }
+
+    private static TagKey<Item> set(ItemStack stack) {
+        return AetherArmorSets.tag(stack.get(AetherIIDataComponents.ARMOR_SET));
+    }
+
+    private static String snapshot(MinecraftServer server, ItemStack stack) {
+        return ItemStack.CODEC.encodeStart(RegistryOps.create(JsonOps.INSTANCE, server.registryAccess()), stack).getOrThrow().toString();
     }
 
     private static void charms() {
@@ -307,7 +340,7 @@ public final class AetherGameplayChecks {
         var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("aether_ii:alkahest_resistant_item"));
         for (var invalid : List.of(malformed, foreign, two, suspended, new ItemStack(BuiltInRegistries.ITEM.getValue(LeggingsContent.MIXED_LEGGINGS_ID)))) {
             wearer.setItemSlot(EquipmentSlot.LEGS, invalid);
-            require(EquipmentUtil.getArmorCount(wearer, source.get(AetherIIDataComponents.ARMOR_SET)) == 0, "Invalid root gained a set contribution");
+            require(EquipmentUtil.getArmorCount(wearer, set(source)) == 0, "Invalid root gained a set contribution");
             require(!invalid.is(tag), "Invalid root gained a source tag");
             require(!AetherAlkahestProtection.matches(false, invalid, AetherIIDataComponents.REINFORCEMENT_TIER, false)
                             && !AetherAlkahestProtection.matches(false, invalid, AetherIIDataComponents.REINFORCEMENT_TIER, true),

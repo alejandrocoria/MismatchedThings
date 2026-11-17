@@ -150,7 +150,8 @@ def stopProcess = { Process process ->
     }
 }
 
-ext.runBoundedGradleTask = { String taskPath, File output, long timeoutSeconds ->
+// Boxed timeout avoids Groovy's default-argument bytecode bug after a primitive long.
+ext.runBoundedGradleTask = { String taskPath, File output, Long timeoutSeconds, List<String> additionalArguments = [] ->
     output.parentFile.mkdirs()
     List<String> gradleArguments = [
             gradleLauncher.absolutePath,
@@ -160,6 +161,7 @@ ext.runBoundedGradleTask = { String taskPath, File output, long timeoutSeconds -
             taskPath
     ]
     gradleArguments.addAll(baselineArguments)
+    gradleArguments.addAll(additionalArguments)
     List<String> command = (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
             ? ['cmd.exe', '/d', '/c'] + gradleArguments
             : gradleArguments).collect { it.toString() }

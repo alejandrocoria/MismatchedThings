@@ -3,16 +3,28 @@ import java.util.concurrent.TimeUnit
 // Maintained production-only server profile. Prototype flags/sources are never enabled here.
 def resolver = project(':MismatchedThings').testModArtifacts
 def aetherJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii') }
+def selected = providers.gradleProperty('aetherRuntimeJar').map { rootProject.file(it) }
+def runtimeJar = providers.provider {
+    if (!selected.isPresent()) { return aetherJar.get() }
+    def file = selected.get()
+    if (!file.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
+            != 'f4156bd72b4c85235aa81c571a54646fab264a015b9a44116fe7ccb427b3a2e4') {
+        throw new GradleException("Aether runtime override must be the audited alpha.4.2 binary: ${file}")
+    }
+    return file
+}
+// Binary-stable native entry points; compile on the catalog baseline until C switches the pin.
 dependencies.add('compileOnly', files(aetherJar))
 def variant = providers.gradleProperty('leggingsAetherVariant').getOrElse('normal')
 if (!(variant in ['normal', 'sets', 'fluid', 'armor', 'absent'])) {
     throw new GradleException("Unknown Aether gameplay variant: ${variant}")
 }
 def coexist = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
-if (coexist && !(variant in ['normal', 'absent'])) {
-    throw new GradleException('Unknown native operand fault controls run standalone; sibling composition is verified separately')
+if (coexist && !(variant in ['normal', 'sets', 'absent'])) {
+    throw new GradleException('Alkahest operand fault controls run standalone; set refusal also verifies sibling composition')
 }
-def label = 'aetherGameplay' + (coexist ? '-boots' : '') + (variant == 'normal' ? '' : "-${variant}")
+def label = 'aetherGameplay' + (coexist ? '-boots' : '') + (variant == 'normal' ? '' : "-${variant}") +
+        (selected.isPresent() ? '-candidate' : '')
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${label}").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/${label}/server").get().asFile
 def product = project(':MismatchedLeggings:NeoForge')
@@ -22,7 +34,7 @@ tasks.register('prepareAetherGameplayServer') {
     if (coexist) { dependsOn boots.tasks.named('assemble') }
     doLast {
         def artifacts = [product.tasks.named('jar').get().archiveFile.get().asFile]
-        if (variant != 'absent') { artifacts.add(aetherJar.get()) }
+        if (variant != 'absent') { artifacts.add(runtimeJar.get()) }
         if (coexist) { artifacts.add(boots.tasks.named('jar').get().archiveFile.get().asFile) }
         def mods = new File(directory, 'mods')
         mods.mkdirs()
@@ -71,6 +83,7 @@ tasks.register('verifyAetherGameplay') {
                          '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runAetherGameplayServer",
                          "-Pneoforge_version=${neoforge_version}", "-PleggingsAetherVariant=${variant}", "-PleggingsBoots=${coexist}"]
         if (gradle.startParameter.offline) { arguments.add('--offline') }
+        if (selected.isPresent()) { arguments.add("-PaetherRuntimeJar=${selected.get().absolutePath}") }
         logger.lifecycle("Production Aether gameplay ${neoforge_version}/${label}")
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
                 .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()

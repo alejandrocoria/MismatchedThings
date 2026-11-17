@@ -2,11 +2,14 @@ package games.alejandrocoria.mismatchedboots.compatibility.aether;
 
 import games.alejandrocoria.mismatchedboots.Constants;
 import games.alejandrocoria.mismatchedboots.compatibility.MixedBootsSources;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -32,10 +35,29 @@ public final class AetherRecognition {
         try {
             var type = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(ARMOR_SET).orElseThrow();
             // One boolean for this worn piece, even if both histories carry the same set.
-            return MixedBootsSources.anySource(root, source -> source.get(type) == requested);
+            return MixedBootsSources.anySource(root, source -> AetherArmorSets.tag(source.get(type)) == requested);
         } catch (RuntimeException | LinkageError failure) {
             disable(true, failure);
             return false;
+        }
+    }
+
+    public static Object setComponent(Object original, TagKey<Item> requested, ItemStack root, LivingEntity wearer) {
+        if (setsDisabled || requested == null || !requested.registry().equals(Registries.ITEM)
+                || root != wearer.getItemBySlot(EquipmentSlot.FEET)) {
+            return original;
+        }
+        try {
+            if (AetherArmorSets.tag(original) == requested) {
+                return original;
+            }
+            var type = BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(ARMOR_SET).orElseThrow();
+            // Supply a temporary operand before the native null gate, without changing the worn stack.
+            return MixedBootsSources.anySource(root, source -> AetherArmorSets.tag(source.get(type)) == requested)
+                    ? AetherArmorSets.value(requested) : original;
+        } catch (RuntimeException | LinkageError failure) {
+            disable(true, failure);
+            return original;
         }
     }
 
