@@ -628,7 +628,7 @@ silently included in this profile's `matrix.ok`.
 ## Silent Gear cure contracts
 
 For naturally acquired ATM material traits and both packaged products, use the
-separate [ATM: Compat material gate](docs/silent-gear-atm.md). The smaller profiles
+separate [ATM: Compat material, persistence and presentation gates](docs/silent-gear-atm.md). The smaller profiles
 below intentionally omit the addon and retain synthetic Poison/Wither acquisition.
 
 The maintained foundation profile tests packaged production Cure Poison/Wither

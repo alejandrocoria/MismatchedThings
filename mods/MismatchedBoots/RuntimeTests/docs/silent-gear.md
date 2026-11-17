@@ -8,7 +8,7 @@ otherwise. Explicit file-path `-P` overrides remain repository-relative or absol
 ## Index
 
 - [Silent Gear native stat measurement](#silent-gear-native-stat-measurement)
-- [ATM: Compat material gate](../../../MismatchedLeggings/RuntimeTests/docs/silent-gear-atm.md) — Real native materials and both packaged products; naturally acquired Leggings cures.
+- [ATM: Compat gates](../../../MismatchedLeggings/RuntimeTests/docs/silent-gear-atm.md) — Real materials, both packaged products, naturally acquired Leggings cures, native container reopen and hidden-client presentation/reload.
 - [Parts and recipes audit](#parts-and-recipes-audit)
 - [Source tooltips](#source-tooltips)
 - [Default attribute and state controls](#default-attribute-and-state-controls)

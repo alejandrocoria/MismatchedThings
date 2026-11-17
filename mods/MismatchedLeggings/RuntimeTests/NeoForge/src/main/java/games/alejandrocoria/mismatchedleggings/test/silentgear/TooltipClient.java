@@ -4,9 +4,11 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.test.SkeletonChecks;
+import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
 import games.alejandrocoria.mismatchedthings.api.tooltip.TooltipSeparator;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.sounds.SoundSource;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
@@ -42,6 +45,8 @@ public final class TooltipClient {
     private static boolean finished;
     private static Set<Integer> pressed;
     private static KeyMapping descriptionMapping;
+    private static CompletableFuture<Void> atmReload;
+    private static EquipmentLayerRenderer beforeReload;
 
     private TooltipClient() {
     }
@@ -99,7 +104,23 @@ public final class TooltipClient {
                     return;
                 }
             }
+            if (atmReload != null) {
+                if (!atmReload.isDone()) { return; }
+                atmReload.join();
+                require(beforeReload != EquippedClient.renderer,
+                        "ATM resource reload retained the equipment renderer");
+            }
             run(client, expected.size());
+            if (Boolean.getBoolean("leggings.test.sgAtmPresentation")) {
+                AtmPresentationChecks.verify(client, expected.size());
+                if (atmReload == null) {
+                    beforeReload = EquippedClient.renderer;
+                    atmReload = client.reloadResourcePacks();
+                    return;
+                }
+                Files.writeString(StateChecks.report("atm-presentation.txt"),
+                        "12 paid ATM roots; three materials, both products/orientations; native item/equipment/tint identity and structured normal/Shift/F3+H tooltips; unchanged root/history before/after one actual resource reload\n");
+            }
             SkeletonChecks.passed("client");
             finished = true;
             client.stop();

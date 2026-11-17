@@ -10,6 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -53,7 +54,9 @@ public final class TooltipServer {
                 samples = absent ? FoundationChecks.paid(FoundationChecks.player(server),
                         new ItemStack(Items.GOLDEN_LEGGINGS), new ItemStack(Items.DIAMOND_LEGGINGS)) : samples(server);
                 snapshots = samples.stream().map(ItemStack::copy).toList();
-                TooltipFixtures.save(server, samples, absent);
+                if (!Boolean.getBoolean("leggings.test.sgAtmPresentation")) {
+                    TooltipFixtures.save(server, samples, absent);
+                }
                 initialized = true;
                 Files.writeString(StateChecks.report("ready.txt"), "Production tooltip fixtures ready\n");
             }
@@ -116,6 +119,17 @@ public final class TooltipServer {
         result.addAll(FoundationChecks.paid(owner, coated, upgraded));
         if (Boolean.getBoolean("leggings.test.boots")) {
             result.addAll(TooltipFixtures.boots(owner));
+        }
+        if (Boolean.getBoolean("leggings.test.sgAtmPresentation")) {
+            for (String material : List.of("allthemodium", "vibranium", "unobtainium")) {
+                for (var slot : List.of(EquipmentSlot.FEET, EquipmentSlot.LEGS)) {
+                    var source = AtmMaterialChecks.armor(material, slot);
+                    var other = new ItemStack(slot == EquipmentSlot.FEET ? Items.DIAMOND_BOOTS : Items.DIAMOND_LEGGINGS);
+                    var roots = AtmMaterialChecks.paid(owner, source, other, slot);
+                    roots.forEach(root -> root.setDamageValue(root.getMaxDamage() / 3));
+                    result.addAll(roots);
+                }
+            }
         }
         return result;
     }

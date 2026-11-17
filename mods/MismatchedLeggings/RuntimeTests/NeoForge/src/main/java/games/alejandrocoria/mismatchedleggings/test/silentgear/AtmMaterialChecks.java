@@ -54,11 +54,16 @@ public final class AtmMaterialChecks {
                 require(ModList.get().isLoaded(mod), "Missing actual material graph member: " + mod);
             }
             var player = FoundationChecks.player(server);
-            CureDefinitionChecks.run(List.of("nausea", "levitation"));
-            materials(server, player, report);
-            naturalCures(player, report);
-            ordinary(player, report);
-            refusal(player, report);
+            String stage = System.getProperty("leggings.test.sgAtmStage", "materials");
+            if (stage.equals("materials")) {
+                CureDefinitionChecks.run(List.of("nausea", "levitation"));
+                materials(server, player, report);
+                naturalCures(player, report);
+                ordinary(player, report);
+                refusal(player, report);
+            } else {
+                AtmPersistenceChecks.run(server, player, stage, report);
+            }
             Files.writeString(Path.of(System.getProperty("leggings.test.report"), "materials.txt"), report);
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
@@ -211,13 +216,13 @@ public final class AtmMaterialChecks {
         require(ItemStack.matches(before, stack), "Cure changed complete native/root state");
     }
 
-    private static ItemStack armor(String material, EquipmentSlot slot) throws Exception {
+    static ItemStack armor(String material, EquipmentSlot slot) throws Exception {
         if (slot == EquipmentSlot.LEGS) { return FoundationChecks.armor(material); }
         return ((GearItem) BuiltInRegistries.ITEM.getValue(Identifier.parse("silentgear:boots"))).construct(
                 List.of(PartInstance.from(FoundationChecks.part("boot_plates", material))));
     }
 
-    private static List<ItemStack> paid(ServerPlayer player, ItemStack source, ItemStack vanilla, EquipmentSlot slot) {
+    static List<ItemStack> paid(ServerPlayer player, ItemStack source, ItemStack vanilla, EquipmentSlot slot) {
         if (slot == EquipmentSlot.LEGS) { return FoundationChecks.paid(player, source, vanilla); }
         var pair = MixedBootsFactory.createPair(source, vanilla);
         var roots = List.of(pair.primary(), pair.inverse());

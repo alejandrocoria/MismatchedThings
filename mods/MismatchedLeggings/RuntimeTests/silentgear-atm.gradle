@@ -7,8 +7,14 @@ def refusals = ['normal': [], 'nausea-target': ['nausea'], 'levitation-target': 
 if (!refusals.containsKey(variant)) { throw new GradleException('Unknown ATM material variant') }
 
 def baseline = neoforge_version
-def reports = layout.buildDirectory.dir("reports/${baseline}/sg-atm-${variant}").get().asFile
-def directory = layout.buildDirectory.dir("run/${baseline}/sg-atm-${variant}/server").get().asFile
+def stage = providers.gradleProperty('sgAtmStage').getOrElse('materials')
+if (!(stage in ['materials', 'write', 'reopen']) || stage != 'materials' && variant != 'normal') {
+    throw new GradleException('Unknown or incompatible ATM material stage')
+}
+def label = stage == 'materials' ? "sg-atm-${variant}" : 'sg-atm-persistence'
+def reports = layout.buildDirectory.dir("reports/${baseline}/${label}" + (stage == 'materials' ? '' : "/${stage}")).get().asFile
+def directory = layout.buildDirectory.dir("run/${baseline}/${label}/server").get().asFile
+def expected = new File(directory.parentFile, 'expected.json')
 def leggings = project(':MismatchedLeggings:NeoForge')
 def boots = project(':MismatchedBoots:NeoForge')
 def resolver = project(':MismatchedThings').testModArtifacts
@@ -16,6 +22,10 @@ def resolver = project(':MismatchedThings').testModArtifacts
 tasks.register('prepareSgAtmMaterials') {
     dependsOn tasks.named('classes'), leggings.tasks.named('assemble'), boots.tasks.named('assemble')
     doLast {
+        if (stage == 'write') { expected.delete() }
+        if (stage == 'reopen' && (!expected.isFile() || !new File(directory, 'materials/level.dat').isFile())) {
+            throw new GradleException('ATM container reopen requires its preceding write JVM')
+        }
         def selected = resolver.resolveRuntime('NeoForge', 'server', ['atmcompat', 'allthemodium', 'silentgear'])
         selected += [leggings.tasks.named('jar').get().archiveFile.get().asFile,
                      boots.tasks.named('jar').get().archiveFile.get().asFile]
@@ -40,6 +50,8 @@ neoForge.runs.create('sgAtmMaterials') {
     programArgument('--nogui')
     systemProperty('leggings.test.sgAtmMaterials', 'true')
     systemProperty('leggings.test.sgAtmVariant', variant)
+    systemProperty('leggings.test.sgAtmStage', stage)
+    systemProperty('leggings.test.sgAtmExpected', expected.absolutePath)
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
 }
@@ -49,30 +61,32 @@ def ownerPath = project.path
 def rootDirectory = rootProject.projectDir
 def launcher = rootProject.file('gradlew.bat')
 def offline = gradle.startParameter.offline
-def evidence = layout.buildDirectory.dir("verification/${baseline}/sg-atm-${variant}").get().asFile
-tasks.register('verifySgAtmMaterials') {
-    group = 'verification'
-    description = 'Checks real ATM Silent Gear materials and independent Leggings cures with both packaged products.'
-    doLast {
-        evidence.mkdirs()
-        def marker = new File(evidence, 'matrix.ok')
-        marker.delete()
-        def log = new File(evidence, 'server.log')
+def buildRoot = layout.buildDirectory.get().asFile
+def verifyStages = { List<String> selected ->
+    def selectedLabel = selected == ['materials'] ? "sg-atm-${variant}" : 'sg-atm-persistence'
+    def evidence = new File(buildRoot, "verification/${baseline}/${selectedLabel}")
+    evidence.mkdirs()
+    def marker = new File(evidence, 'matrix.ok')
+    marker.delete()
+    selected.each { current ->
+        def currentReports = new File(buildRoot, "reports/${baseline}/${selectedLabel}" + (current == 'materials' ? '' : "/${current}"))
+        def log = new File(evidence, current == 'materials' ? 'server.log' : "${current}-server.log")
         def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
-                         "${ownerPath}:runSgAtmMaterials", "-Pneoforge_version=${baseline}", "-PsgAtmVariant=${variant}"]
+                         "${ownerPath}:runSgAtmMaterials", "-Pneoforge_version=${baseline}", "-PsgAtmVariant=${variant}", "-PsgAtmStage=${current}"]
         if (offline) { arguments.add('--offline') }
         def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
                 .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
         try {
             if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
-                    || !new File(reports, 'server.ok').isFile() || new File(reports, 'server.failure.txt').exists()
-                    || !new File(reports, 'materials.txt').isFile()) {
+                    || !new File(currentReports, 'server.ok').isFile() || new File(currentReports, 'server.failure.txt').exists()
+                    || !new File(currentReports, 'materials.txt').isFile()) {
                 throw new GradleException("ATM material acceptance failed: ${log}")
             }
-            def text = new File(reports, 'materials.txt').text
-            if (text.readLines().count { it.startsWith('Material ') } != 6
+            def text = new File(currentReports, 'materials.txt').text
+            if (current == 'materials' ? text.readLines().count { it.startsWith('Material ') } != 6
                     || !text.contains('Natural cures:') || !text.contains('Independent native controls:')
-                    || variant != 'normal' && !text.contains("Local refusal ${variant}:")) {
+                    || variant != 'normal' && !text.contains("Local refusal ${variant}:")
+                    : !text.contains("Container ${current}: 18")) {
                 throw new GradleException("Incomplete ATM material evidence: ${log}")
             }
             def lines = log.readLines()
@@ -86,12 +100,27 @@ tasks.register('verifySgAtmMaterials') {
             if (warnings.size() != targets.size() || targets.any { target ->
                 warnings.count { it.contains("mixed leggings cure ${target} disabled") } != 1
             }) { throw new GradleException("Unexpected independent ATM cure refusal: ${log}") }
-            marker.text = 'packaged native material/paid composition and independent production cures passed\n'
         } finally {
             if (process.isAlive()) {
                 process.toHandle().descendants().forEach { it.destroyForcibly() }
                 process.destroyForcibly()
             }
         }
+    }
+    marker.text = "packaged ATM material acceptance passed: ${selected}\n"
+}
+
+tasks.register('verifySgAtmMaterials') {
+    group = 'verification'
+    description = 'Checks real ATM Silent Gear materials and independent Leggings cures with both packaged products.'
+    doLast { verifyStages(['materials']) }
+}
+
+tasks.register('verifySgAtmPersistence') {
+    group = 'verification'
+    description = 'Checks 18 actual material stacks saved in a native barrel and reopened in a separate game JVM.'
+    doLast {
+        if (variant != 'normal') { throw new GradleException('Persistence does not repeat material fault variants') }
+        verifyStages(['write', 'reopen'])
     }
 }
