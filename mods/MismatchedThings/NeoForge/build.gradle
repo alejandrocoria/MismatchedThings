@@ -18,8 +18,11 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+def artifactBindings = project(':MismatchedThings').testModArtifactBindings
+
 tasks.named('test', Test) {
     useJUnitPlatform()
+    artifactBindings.bind(it, 'NeoForge', 'mismatchedthings.test.', [neoVitaeHellforgedJar: 'neovitae'])
     def refundExport = providers.gradleProperty('justDireRefundTransformedClass')
     if (refundExport.isPresent()) {
         def exported = rootProject.file(refundExport.get())

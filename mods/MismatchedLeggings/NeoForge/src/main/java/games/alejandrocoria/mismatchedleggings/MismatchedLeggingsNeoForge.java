@@ -53,6 +53,9 @@ public final class MismatchedLeggingsNeoForge {
         items.register("mixed_leggings", () -> LeggingsContent.createItem(NeoForgeMixedLeggingsItem::new));
         items.register(bus);
         bus.addListener((RegisterCapabilitiesEvent event) ->
+                games.alejandrocoria.mismatchedleggings.compatibility.neovitae.NeoVitaeHellforgedCompatibility.register(
+                        BuiltInRegistries.ITEM.get(LeggingsContent.MIXED_LEGGINGS_ID).orElseThrow().value()));
+        bus.addListener((RegisterCapabilitiesEvent event) ->
                 games.alejandrocoria.mismatchedleggings.compatibility.mysticalagriculture.MysticalRefundCompatibility.register(
                         BuiltInRegistries.ITEM.get(LeggingsContent.MIXED_LEGGINGS_ID).orElseThrow().value()));
         var serializers = DeferredRegister.create(Registries.RECIPE_SERIALIZER, LeggingsContent.MOD_ID);

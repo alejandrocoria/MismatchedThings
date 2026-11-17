@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import games.alejandrocoria.mismatchedthings.client.MismatchedThingsClientNeoForge;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchContent;
 import games.alejandrocoria.mismatchedthings.internal.client.tooltip.NeoForgeTooltipSeparators;
+import games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.NeoForgeNeoVitaeHellforgedService;
 import games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.NeoForgeNeoVitaeInfusionService;
 import games.alejandrocoria.mismatchedthings.internal.compatibility.undergarden.NeoForgeRogdoriumInfusionService;
 import net.minecraft.core.registries.Registries;
@@ -35,6 +36,7 @@ public final class MismatchedThingsNeoForge {
         MENUS.register(bus);
         RECIPES.register(bus);
         NeoForgeNeoVitaeInfusionService.initialize(bus);
+        NeoForgeNeoVitaeHellforgedService.initialize(bus);
         NeoForgeRogdoriumInfusionService.initialize(bus);
         bus.addListener(MismatchedThingsNeoForge::requireNeoForgeClient);
         bus.addListener((BuildCreativeModeTabContentsEvent event) -> {

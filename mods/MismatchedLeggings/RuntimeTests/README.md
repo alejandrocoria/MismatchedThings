@@ -2091,6 +2091,11 @@ automatic gates; this is bounded Oritech support, not a generic GeckoLib adapter
 
 ## Neo Vitae recognition and direct root operations
 
+The separate [Hellforged gameplay guide](docs/neovitae-hellforged.md) covers the
+maintained native ritual, inherited marker, old inverse and logical-side checks
+for Leggings alone/current Boots. It does not replace this existing infusion gate
+or claim new presentation/persistence coverage.
+
 ```powershell
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyNeoVitae --offline --console=plain
 .\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyNeoVitae -PleggingsBoots=true --offline --console=plain

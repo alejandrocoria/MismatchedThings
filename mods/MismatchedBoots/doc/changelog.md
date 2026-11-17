@@ -1,4 +1,5 @@
 * Added: A workbench hint to mixed boots without source data.
+* Added: Hellforging support for mixed boots from Neo Vitae on NeoForge.
 * Added: Awakened Supremium set bonus support for mixed boots from Mystical Agriculture.
 * Added: Rogdorium infusing and recharging of mismatched boots in The Undergarden's Infuser.
 * Added: Eternal and Soulbound support for Forbidden Arcanus, including both effects together, smithing upgrades and native tooltip titles on mixed boots.

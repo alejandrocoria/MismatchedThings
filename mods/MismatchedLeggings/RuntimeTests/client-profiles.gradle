@@ -3,7 +3,7 @@ import java.util.concurrent.TimeUnit
 // Concrete packaged-product profiles share staging and bounded process launching.
 def profiles = ['Workbench', 'Equipped', 'Items', 'Presentation', 'Repair', 'Grindstone', 'Smithing', 'Viewers', 'AdvancedNetherite']
 if (project.name == 'Fabric') { profiles.addAll(['BetterNether', 'BetterEnd', 'CreateFly']) }
-if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'OritechCapture', 'RootsRendering', 'RootsTicks', 'IceAndFire']) }
+if (project.name == 'NeoForge') { profiles.addAll(['AllTheModium', 'Aquaculture', 'ForbiddenArcanus', 'NeoVitae', 'NeoVitaeHellforged', 'OritechCapture', 'RootsRendering', 'RootsTicks', 'IceAndFire']) }
 profiles.each { profile ->
     def rootsRendering = profile == 'RootsRendering'
     def rootsTicks = profile == 'RootsTicks'
@@ -12,7 +12,8 @@ profiles.each { profile ->
         throw new GradleException("Unknown Roots tick variant: ${rootsTickVariant}")
     }
     def oritechCapture = profile == 'OritechCapture'
-    def neoVitae = profile == 'NeoVitae'
+    def hellforged = profile == 'NeoVitaeHellforged'
+    def neoVitae = profile == 'NeoVitae' || hellforged
     def neoVitaeRestart = neoVitae && providers.gradleProperty('leggingsNeoVitaeRestart').map { it.toBoolean() }.getOrElse(false)
     def forbiddenArcanus = profile == 'ForbiddenArcanus'
     def forbiddenBootsOnly = forbiddenArcanus && providers.gradleProperty('leggingsForbiddenBootsOnly')
@@ -179,7 +180,7 @@ profiles.each { profile ->
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
                 if (neoVitae) {
                     ['neovitae-server.txt', 'neovitae-composition-server.txt', 'neovitae-lifecycle-server.txt',
-                     'neovitae-saved.json', 'neovitae-restart-server.txt'].each { name -> new File(reports, name).delete() }
+                     'neovitae-saved.json', 'neovitae-restart-server.txt', 'neovitae-hellforged-server.txt'].each { name -> new File(reports, name).delete() }
                 }
                 if (aquaculture && phase == 'client') {
                     ['aquaculture-tooltip.txt', 'aquaculture-render.txt', 'aquaculture-render-after-reload.txt',
@@ -305,6 +306,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 systemProperty('leggings.test.aquaculture', aquaculture.toString())
                 systemProperty('leggings.test.iceAndFire', iceAndFireLifecycle.toString())
                 systemProperty('leggings.test.neoVitae', neoVitae.toString())
+                systemProperty('leggings.test.neoVitaeHellforged', hellforged.toString())
                 systemProperty('leggings.test.neoVitaeRestart', neoVitaeRestart.toString())
                 systemProperty('leggings.test.forbiddenArcanus', forbiddenArcanus.toString())
                 systemProperty('leggings.test.forbiddenBoots', forbiddenBoots.toString())
@@ -350,6 +352,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : allTheModium ? 'Checks pinned AllTheModium leggings native wearer ticks, piglins and independent Boots coexistence.'
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
+                : hellforged ? 'Checks packaged Hellforging payment, inherited recognition and logical-side rules; gameplay only.'
                 : neoVitae ? 'Checks native Sentient tags, infusion composition, paid workstations and separate-process world reopen.'
                 : oritechCapture ? 'Checks native Exo capture, production pair dispatch, atomic fallbacks, independent poses and reload.'
                 : rootsRendering ? 'Checks production Roots layer selection, native leg geometry, resource priority, fallbacks and reload.'
@@ -370,7 +373,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
             def logs = layout.buildDirectory.dir("verification/${baseline}/${variant}").get().asFile
             logs.mkdirs()
             new File(logs, 'matrix.ok').delete()
-            (neoVitae ? ['server', 'restart'] : phases).each { execution ->
+            (neoVitae && !hellforged ? ['server', 'restart'] : phases).each { execution ->
                 def phase = execution == 'restart' ? 'server' : execution
                 def log = new File(logs, "${execution}.log")
                 def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
@@ -454,7 +457,11 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                         || !new File(reports, "forbidden-${phase}.txt").isFile())) {
                     throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
-                if (neoVitae && (log.text.contains('/ERROR]')
+                if (hellforged && (log.text.contains('/ERROR]')
+                        || !new File(reports, 'neovitae-hellforged-server.txt').isFile())) {
+                    throw new GradleException("Missing Hellforged gameplay evidence or unexpected diagnostics: ${log}")
+                }
+                if (neoVitae && !hellforged && (log.text.contains('/ERROR]')
                         || ['neovitae-server.txt', 'neovitae-composition-server.txt', 'neovitae-lifecycle-server.txt',
                             'neovitae-saved.json'].any { !new File(reports, it).isFile() }
                         || execution == 'restart' && !new File(reports, 'neovitae-restart-server.txt').isFile())) {
@@ -525,6 +532,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     ? 'packaged AllTheModium incompatible-tick control passed\n'
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
                     : forbiddenServerOnly ? 'packaged Forbidden Arcanus dedicated-server checks passed; no client coverage\n'
+                    : hellforged ? 'packaged Hellforging payment, inherited recognition and logical-side isolation passed; no reopen/client coverage\n'
                     : neoVitae ? 'packaged Neo Vitae recognition, infusion composition, paid workstations and independent world reopen passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }

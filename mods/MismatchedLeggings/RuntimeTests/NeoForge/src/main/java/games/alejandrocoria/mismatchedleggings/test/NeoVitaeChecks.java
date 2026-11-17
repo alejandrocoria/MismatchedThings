@@ -47,9 +47,17 @@ public final class NeoVitaeChecks {
         if (finished || !server.isDedicatedServer() || server.getTickCount() < 20) {
             return;
         }
-        finished = true;
         try {
+            if (Boolean.getBoolean("leggings.test.neoVitaeHellforged") && !NeoVitaeHellforgedChecks.ready(server)) {
+                return;
+            }
+            finished = true;
             require(ModList.get().isLoaded("neovitae"), "Missing pinned Neo Vitae fixture");
+            if (Boolean.getBoolean("leggings.test.neoVitaeHellforged")) {
+                NeoVitaeHellforgedChecks.run(server);
+                SkeletonChecks.passed("server");
+                return;
+            }
             if (Boolean.getBoolean("leggings.test.neoVitaeRestart")) {
                 NeoVitaeLifecycleChecks.restart(server);
                 SkeletonChecks.passed("server");
@@ -84,9 +92,12 @@ public final class NeoVitaeChecks {
                             + "Composition/lifecycle/reopen evidence is separate; this marker excludes equipped EV repair and client presentation\n");
             SkeletonChecks.passed("server");
         } catch (Throwable failure) {
+            finished = true;
             SkeletonChecks.failed("server", failure);
         } finally {
-            server.halt(false);
+            if (finished) {
+                server.halt(false);
+            }
         }
     }
 

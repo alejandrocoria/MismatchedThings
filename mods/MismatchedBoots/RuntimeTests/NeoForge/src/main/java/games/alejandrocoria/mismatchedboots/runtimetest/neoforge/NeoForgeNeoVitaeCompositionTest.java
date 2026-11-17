@@ -63,6 +63,7 @@ public final class NeoForgeNeoVitaeCompositionTest {
                 verifyAbsent(server.overworld());
             } else {
                 verifyNative(server.overworld());
+                verifyHellforged(server.overworld());
                 NeoVitaeCompositionLifecycleTest.save(server);
             }
             NetworkAcceptanceFiles.write("neo-vitae-composition-report.txt", absent
@@ -321,6 +322,25 @@ public final class NeoForgeNeoVitaeCompositionTest {
     static <T> DataComponentType<T> component(String path) {
         return (DataComponentType<T>) BuiltInRegistries.DATA_COMPONENT_TYPE
                 .getOptional(Identifier.fromNamespaceAndPath("neovitae", path)).orElseThrow();
+    }
+
+    private static void verifyHellforged(ServerLevel level) throws Exception {
+        var type = NeoForgeNeoVitaeCompositionTest.<Boolean>component("hellforged");
+        var nativeBoots = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("neovitae:sentient_boots")));
+        var helper = Class.forName("com.breakinblocks.neovitae.common.item.soul.HellforgedHelper");
+        helper.getMethod("apply", ItemStack.class, net.minecraft.core.HolderLookup.Provider.class).invoke(null, nativeBoots, level.registryAccess());
+        var read = helper.getMethod("isHellforged", ItemStack.class);
+        var tag = net.minecraft.tags.TagKey.create(Registries.ITEM, Identifier.parse("neovitae:hellforgeable"));
+        var pair = MixedBootsFactory.createPair(nativeBoots, new ItemStack(Items.DIAMOND_BOOTS));
+        for (var root : List.of(pair.primary(), pair.inverse())) {
+            require(Boolean.TRUE.equals(read.invoke(null, root)) && root.is(tag), "Standalone Boots Hellforged registration/defaults failed");
+            var legacy = root.copy();
+            legacy.remove(type);
+            require(Boolean.TRUE.equals(read.invoke(null, legacy)) && !legacy.has(type), "Standalone legacy reader failed or rewrote state");
+            legacy.set(type, false);
+            require(Boolean.FALSE.equals(read.invoke(null, legacy)) && !legacy.is(tag), "Standalone explicit false did not refuse a repeat operation");
+        }
+        NetworkAcceptanceFiles.write("neo-vitae-hellforged-smoke.txt", "Standalone packaged Boots: native apply, shared outputs, read-only legacy recognition, explicit-false tag refusal\n");
     }
 
     private static void require(boolean valid, String message) {

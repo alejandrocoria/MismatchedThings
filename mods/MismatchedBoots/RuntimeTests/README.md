@@ -1200,6 +1200,11 @@ directories and old Fabric test reports are not migrated or deleted.
 
 ## Neo Vitae infusion composition — production creation gate
 
+The Live gate also checks standalone Hellforged registration/shared inheritance,
+read-only old-root recognition and explicit-false ritual-tag refusal. Joint paid
+ritual and logical-side evidence lives in the maintained
+[Hellforged gameplay guide](../../MismatchedLeggings/RuntimeTests/docs/neovitae-hellforged.md).
+
 ```powershell
 .\gradlew.bat :MismatchedThings:Common:test --tests '*NeoVitaeInfusionRulesTest' --console=plain
 .\gradlew.bat :MismatchedBoots:RuntimeTests:NeoForge:verifyNeoVitaeComposition --console=plain
@@ -1260,8 +1265,8 @@ A/B/C plan. This does not establish a manual .99/.114 matrix.
 A/B's earlier creation-only/preview evidence remains historical; current C results
 and per-phase archived reports are in plan section 10.
 
-Live downloads and hash-checks Neo Vitae 1.1.31, GeckoLib 5.5.2 and Modonomicon
-2.16.0 from the test artifact catalog, copying them into disposable
+Live downloads and hash-checks the current Neo Vitae, GeckoLib and Modonomicon
+pins from the shared test artifact catalog, copying them into disposable
 fixture directories. Pinned Modonomicon needs NeoForge .109+, so Live is checked
 on .114, **not .99**; Absent can run on .99/.114 and pure Common policy tests are
 loader-independent. Never

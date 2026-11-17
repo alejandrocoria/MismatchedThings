@@ -201,6 +201,16 @@ Boots and Leggings delegate their creation/preservation boundaries to this servi
 Simply selecting this core does not reinterpret existing mixed items or remix
 their stored resources.
 
+### Optional Neo Vitae Hellforged recognition (since 1.1.0)
+
+`api.compatibility.neovitae.NeoVitaeHellforgedService` registers exact product items
+and read-only source/rule providers. Its NeoForge implementation owns one native
+return hook and guarded ritual-tag admission; products retain validation and
+server versus synchronized-client rule authority. A missing root marker can use
+inherited recognition under `SHARE`; explicit root values and native true results
+are retained. No save rewrite or replacement ritual/attribute engine is installed.
+Fabric/optional absence are no-ops. This binding is independent of Spiritus infusion.
+
 ### Optional Undergarden infusion (since 1.1.0)
 
 `api.compatibility.undergarden.RogdoriumInfusionService` initializes Rogdorium

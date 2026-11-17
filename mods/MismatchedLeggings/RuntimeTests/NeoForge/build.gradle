@@ -12,6 +12,11 @@ repositories { mavenCentral() }
 neoForge { version = neoforge_version }
 
 apply from: '../runtime-tests.gradle'
+
+dependencies.add('compileOnly', files(providers.provider {
+    project(':MismatchedThings').testModArtifacts.resolveRuntime('NeoForge', 'server', ['neovitae'])
+}))
+dependencies.add('compileOnly', files(project(':MismatchedBoots:NeoForge').tasks.named('jar').flatMap { it.archiveFile }))
 dependencies.add('compileOnly', files(providers.provider {
     project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'geckolib')
 }))

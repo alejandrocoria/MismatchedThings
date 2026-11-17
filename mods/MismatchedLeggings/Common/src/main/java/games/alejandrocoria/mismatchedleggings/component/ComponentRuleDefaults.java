@@ -46,6 +46,7 @@ public final class ComponentRuleDefaults {
         put(rules, "custom_model_data", ComponentPolicy.OMIT);
         // Native charm modifiers are already in the source snapshot; live root holders would add them again.
         rules.put(Identifier.parse("aether_ii:charms"), ComponentRule.of(ComponentPolicy.OMIT));
+        rules.put(Identifier.parse("neovitae:hellforged"), ComponentRule.of(ComponentPolicy.SHARE));
         return Collections.unmodifiableMap(rules);
     }
 

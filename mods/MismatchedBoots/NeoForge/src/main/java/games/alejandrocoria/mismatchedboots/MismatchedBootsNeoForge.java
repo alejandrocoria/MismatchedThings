@@ -40,6 +40,9 @@ public class MismatchedBootsNeoForge {
     public MismatchedBootsNeoForge(IEventBus eventBus) {
         ModRegistries.register(eventBus);
         eventBus.addListener((RegisterCapabilitiesEvent event) ->
+                games.alejandrocoria.mismatchedboots.compatibility.neovitae.NeoVitaeHellforgedCompatibility.register(
+                        BuiltInRegistries.ITEM.get(ModContent.MIXED_BOOTS_ID).orElseThrow().value()));
+        eventBus.addListener((RegisterCapabilitiesEvent event) ->
                 games.alejandrocoria.mismatchedboots.compatibility.mysticalagriculture.MysticalRefundCompatibility.register(
                         BuiltInRegistries.ITEM.get(ModContent.MIXED_BOOTS_ID).orElseThrow().value()));
         eventBus.addListener(NeoForgeCompositionRulesNetwork::register);

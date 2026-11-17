@@ -19,6 +19,9 @@ config="mismatchedthings.justdirethings-refunds.mixins.json"
 [[mixins]]
 config="mismatchedthings.mysticalagriculture-refunds.mixins.json"
 
+[[mixins]]
+config="mismatchedthings.neovitae-hellforged.mixins.json"
+
 [[dependencies.${mod_id}]]
 modId="mismatchedboots"
 type="incompatible"

@@ -45,6 +45,7 @@ public final class ComponentRuleDefaults {
         // Installed charm bonuses are already baked from effective source attributes.
         // Live root holders would apply them again under the mixed item's modifier IDs.
         rules.put(Identifier.fromNamespaceAndPath("aether_ii", "charms"), ComponentRule.of(ComponentPolicy.OMIT));
+        rules.put(Identifier.fromNamespaceAndPath("neovitae", "hellforged"), ComponentRule.of(ComponentPolicy.SHARE));
         return Collections.unmodifiableMap(rules);
     }
 

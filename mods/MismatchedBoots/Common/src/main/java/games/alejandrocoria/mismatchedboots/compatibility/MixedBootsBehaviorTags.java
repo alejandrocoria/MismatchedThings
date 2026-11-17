@@ -2,6 +2,7 @@ package games.alejandrocoria.mismatchedboots.compatibility;
 
 import games.alejandrocoria.mismatchedboots.content.MixedBootsItem;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeHellforgedService;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
@@ -12,6 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Set;
 
 public final class MixedBootsBehaviorTags {
+    private static final TagKey<Item> HELLFORGEABLE = TagKey.create(
+            Registries.ITEM, Identifier.fromNamespaceAndPath("neovitae", "hellforgeable"));
     private static final TagKey<Item> CRYSTALITE_SET = TagKey.create(
             Registries.ITEM,
             Identifier.fromNamespaceAndPath("betterend", "armor_set/crystalite"));
@@ -40,6 +43,9 @@ public final class MixedBootsBehaviorTags {
     }
 
     public static boolean projects(ItemStack stack, TagKey<?> tag) {
+        if (HELLFORGEABLE.equals(tag)) {
+            return NeoVitaeHellforgedService.INSTANCE.projects(stack);
+        }
         TagKey<Item> sourceTag = projectedTag(tag);
         if (sourceTag == null
                 || !stack.is(ModContent.MIXED_BOOTS_KEY)
@@ -50,7 +56,7 @@ public final class MixedBootsBehaviorTags {
     }
 
     static boolean isProjected(TagKey<?> tag) {
-        return projectedTag(tag) != null;
+        return HELLFORGEABLE.equals(tag) || projectedTag(tag) != null;
     }
 
     private static TagKey<Item> projectedTag(TagKey<?> tag) {
