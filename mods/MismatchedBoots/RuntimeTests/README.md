@@ -1202,7 +1202,7 @@ directories and old Fabric test reports are not migrated or deleted.
 
 The Live gate also checks standalone Hellforged registration/shared inheritance,
 read-only old-root recognition and explicit-false ritual-tag refusal. Joint paid
-ritual and logical-side evidence, plus paid-workstation/separate-JVM reopen and
+ritual, logical-side, native Sentient upgrade/Deus evidence, plus paid-workstation/separate-JVM reopen and
 hidden-client native tint/tooltip checks, live in the maintained
 [Hellforged guide](../../MismatchedLeggings/RuntimeTests/docs/neovitae-hellforged.md).
 

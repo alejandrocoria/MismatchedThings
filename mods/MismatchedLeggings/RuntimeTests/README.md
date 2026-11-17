@@ -2092,7 +2092,7 @@ automatic gates; this is bounded Oritech support, not a generic GeckoLib adapter
 ## Neo Vitae recognition and direct root operations
 
 The separate [Hellforged guide](docs/neovitae-hellforged.md) covers the maintained
-native ritual, inherited marker, old inverse and logical-side checks, plus paid
+native ritual, Sentient upgrade/Deus, inherited marker, old inverse and logical-side checks, plus paid
 workstations, separate-JVM reopen and hidden-client native tint/tooltips/reload
 for Leggings alone/current Boots. It does not replace this existing infusion gate
 or claim new presentation/persistence coverage.

@@ -182,7 +182,7 @@ profiles.each { profile ->
                 if (aquaculture) { new File(reports, "aquaculture-${phase}.txt").delete() }
                 if (neoVitae) {
                     ['neovitae-server.txt', 'neovitae-composition-server.txt', 'neovitae-lifecycle-server.txt',
-                     'neovitae-saved.json', 'neovitae-restart-server.txt', 'neovitae-hellforged-server.txt'].each { name -> new File(reports, name).delete() }
+                     'neovitae-saved.json', 'neovitae-restart-server.txt', 'neovitae-hellforged-server.txt', 'neovitae-sentient-server.txt'].each { name -> new File(reports, name).delete() }
                 }
                 if (neoVitaePresentation) {
                     def names = phase == 'server'
@@ -362,7 +362,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                 : aquaculture ? 'Checks pinned Aquaculture buoyancy, lifecycle and hidden-client movement with packaged leggings.'
                 : forbiddenArcanus ? 'Checks native Aureal regeneration, canonical holders, client synchronization and saved-world reopening.'
                 : neoVitaePresentation ? 'Checks Hellforged paid workstations, separate-JVM reopen and hidden-client native tint/tooltips/reload.'
-                : hellforged ? 'Checks packaged Hellforging payment, inherited recognition and logical-side rules; gameplay only.'
+                : hellforged ? 'Checks packaged Hellforging, inherited recognition, native Sentient upgrades and Deus; gameplay only.'
                 : neoVitae ? 'Checks native Sentient tags, infusion composition, paid workstations and separate-process world reopen.'
                 : oritechCapture ? 'Checks native Exo capture, production pair dispatch, atomic fallbacks, independent poses and reload.'
                 : rootsRendering ? 'Checks production Roots layer selection, native leg geometry, resource priority, fallbacks and reload.'
@@ -468,7 +468,8 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     throw new GradleException("Missing Aureal evidence or unexpected diagnostics: ${log}")
                 }
                 if (hellforged && (log.text.contains('/ERROR]')
-                        || !new File(reports, 'neovitae-hellforged-server.txt').isFile())) {
+                        || !new File(reports, 'neovitae-hellforged-server.txt').isFile()
+                        || !new File(reports, 'neovitae-sentient-server.txt').isFile())) {
                     throw new GradleException("Missing Hellforged gameplay evidence or unexpected diagnostics: ${log}")
                 }
                 if (neoVitaePresentation) {
@@ -552,7 +553,7 @@ generator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"mi
                     : aquacultureServerOnly ? 'packaged Aquaculture dedicated-server gameplay passed; no client coverage\n'
                     : forbiddenServerOnly ? 'packaged Forbidden Arcanus dedicated-server checks passed; no client coverage\n'
                     : neoVitaePresentation ? 'packaged Hellforged workstations, separate-JVM world reopen and hidden-client native tint/tooltips/reload passed\n'
-                    : hellforged ? 'packaged Hellforging payment, inherited recognition and logical-side isolation passed; no reopen/client coverage\n'
+                    : hellforged ? 'packaged Hellforging, inherited recognition, native Sentient upgrades and Deus passed; no reopen/client coverage\n'
                     : neoVitae ? 'packaged Neo Vitae recognition, infusion composition, paid workstations and independent world reopen passed; no client coverage\n'
                     : "packaged ${profile} server and hidden client passed\n"
         }

@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
-/** Packaged production gameplay only. Presentation/reopen and the native chestplate suite are separate gates. */
+/** Packaged Hellforging and native chestplate regressions; presentation/reopen have a separate gate. */
 final class NeoVitaeHellforgedChecks {
     private static final Identifier MARKER = Identifier.parse("neovitae:hellforged");
     private static int preparedAt = -1;
@@ -73,7 +73,7 @@ final class NeoVitaeHellforgedChecks {
         player.setGameMode(GameType.SURVIVAL);
         player.setPos(48.5, 81, .5);
         var report = new StringBuilder();
-        var rituals = new NeoVitaeHellforgingRituals(server, player, report);
+        var rituals = new NeoVitaeRitualChecks(server, player, report);
         verify(server, player, EquipmentSlot.LEGS, rituals, report);
         if (ModList.get().isLoaded("mismatchedboots")) {
             verify(server, player, EquipmentSlot.FEET, rituals, report);
@@ -81,10 +81,14 @@ final class NeoVitaeHellforgedChecks {
         bindingRefusal(server);
         report.append("Binding refusal: mixed tag/legacy fallback decline; native items and separate Spiritus binding intact\n");
         Files.writeString(Path.of(System.getProperty("leggings.test.report"), "neovitae-hellforged-server.txt"), report);
+        var sentient = new StringBuilder();
+        new NeoVitaeSentientChecks(server, player, sentient).run();
+        new NeoVitaeRitualChecks(server, player, sentient).deus();
+        Files.writeString(Path.of(System.getProperty("leggings.test.report"), "neovitae-sentient-server.txt"), sentient);
     }
 
     private static void verify(MinecraftServer server, ServerPlayer player, EquipmentSlot slot,
-                               NeoVitaeHellforgingRituals rituals, StringBuilder report) throws Exception {
+                               NeoVitaeRitualChecks rituals, StringBuilder report) throws Exception {
         var nativeItem = NeoVitaeChecks.item(slot == EquipmentSlot.FEET ? "sentient_boots" : "sentient_leggings");
         var vanilla = new ItemStack(slot == EquipmentSlot.FEET ? Items.DIAMOND_BOOTS : Items.DIAMOND_LEGGINGS);
         var forged = rituals.hellforge(nativeItem, true);

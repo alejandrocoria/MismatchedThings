@@ -10,8 +10,8 @@ import com.breakinblocks.neovitae.common.item.soul.HellforgedHelper;
 import com.breakinblocks.neovitae.common.tag.NVTags;
 import com.breakinblocks.neovitae.ritual.NVRituals;
 import com.breakinblocks.neovitae.ritual.Ritual;
-import com.breakinblocks.neovitae.ritual.RitualLayouts;
 import com.breakinblocks.neovitae.ritual.RitualHelper;
+import com.breakinblocks.neovitae.ritual.RitualLayouts;
 import com.breakinblocks.neovitae.util.helper.AnimaHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,19 +22,18 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-
-import java.util.List;
+import net.neoforged.fml.ModList;
 
 import static games.alejandrocoria.mismatchedleggings.test.SkeletonChecks.require;
 
 /** Native structure validation, activation, reagent selection and real Anima debits. */
-final class NeoVitaeUpdateRituals {
+final class NeoVitaeRitualChecks {
     private static final BlockPos MASTER = new BlockPos(48, 80, 0);
     private final MinecraftServer server;
     private final ServerPlayer player;
     private final StringBuilder report;
 
-    NeoVitaeUpdateRituals(MinecraftServer server, ServerPlayer player, StringBuilder report) {
+    NeoVitaeRitualChecks(MinecraftServer server, ServerPlayer player, StringBuilder report) {
         this.server = server;
         this.player = player;
         this.report = report;
@@ -101,38 +100,46 @@ final class NeoVitaeUpdateRituals {
         }
     }
 
-    void deus() throws Exception {
+    void deus() {
         for (int orientation = 0; orientation < 2; orientation++) {
-            NeoVitaeUpdateSpike.clear(player);
+            NeoVitaeSentientChecks.clear(player);
             player.setPos(MASTER.getX() + .5, 81, .5);
-            var boots = NeoVitaeUpdateSpike.pair(NeoVitaeUpdateSpike.nativePiece(EquipmentSlot.FEET), new ItemStack(Items.DIAMOND_BOOTS), EquipmentSlot.FEET).get(orientation);
-            var legs = NeoVitaeUpdateSpike.pair(NeoVitaeUpdateSpike.nativePiece(EquipmentSlot.LEGS), new ItemStack(Items.DIAMOND_LEGGINGS), EquipmentSlot.LEGS).get(orientation);
-            var originalBoots = boots.copy();
-            var originalLegs = legs.copy();
-            var chest = NeoVitaeUpdateSpike.item("sentient_plate");
+            var nativeFeet = NeoVitaeChecks.item("sentient_boots");
+            var feet = ModList.get().isLoaded("mismatchedboots")
+                    ? NeoVitaeHellforgedChecks.pair(nativeFeet, new ItemStack(Items.DIAMOND_BOOTS), EquipmentSlot.FEET).get(orientation)
+                    : nativeFeet;
+            var legs = NeoVitaeHellforgedChecks.pair(NeoVitaeChecks.item("sentient_leggings"),
+                    new ItemStack(Items.DIAMOND_LEGGINGS), EquipmentSlot.LEGS).get(orientation);
+            var oldFeet = feet.copy();
+            var oldLegs = legs.copy();
+            var chest = NeoVitaeChecks.item("sentient_plate");
             chest.set(NVDataComponents.CURRENT_MAX_UPGRADE_POINTS.get(), 500);
-            player.setItemSlot(EquipmentSlot.HEAD, NeoVitaeUpdateSpike.item("sentient_helmet"));
+            player.setItemSlot(EquipmentSlot.HEAD, NeoVitaeChecks.item("sentient_helmet"));
             player.setItemSlot(EquipmentSlot.CHEST, chest);
-            player.setItemSlot(EquipmentSlot.FEET, boots);
+            player.setItemSlot(EquipmentSlot.FEET, feet);
             player.setItemSlot(EquipmentSlot.LEGS, legs);
             var master = activate(NVRituals.DEUS_ARMOUR_EVOLVE.get());
-            var network = AnimaHelper.getAnima(player);
-            int before = network.getCurrentEV();
-            int price = master.getCurrentRitual().getRefreshCost();
-            master.getCurrentRitual().performRitual(master);
-            require(chest.get(NVDataComponents.CURRENT_MAX_UPGRADE_POINTS.get()) == 600
-                    && Boolean.TRUE.equals(boots.get(NVDataComponents.BLOOD_MENDING.get()))
-                    && Boolean.TRUE.equals(legs.get(NVDataComponents.BLOOD_MENDING.get()))
-                    && before - network.getCurrentEV() == price, "Native Deus evolution/mixed Blood Mending/payment failed");
-            for (var pair : List.of(List.of(originalBoots, boots), List.of(originalLegs, legs))) {
-                var oldSources = NeoVitaeUpdateSpike.sources(pair.getFirst());
-                var currentSources = NeoVitaeUpdateSpike.sources(pair.getLast());
-                for (int side = 0; side < 2; side++) {
-                    require(ItemStack.matches(oldSources.get(side), currentSources.get(side)), "Deus ritual changed source history");
-                }
+            try {
+                var network = AnimaHelper.getAnima(player);
+                int before = network.getCurrentEV();
+                int price = master.getCurrentRitual().getRefreshCost();
+                var context = RitualHelper.createContext(master, price);
+                require(context != null && context.level().getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
+                        new net.minecraft.world.phys.AABB(MASTER).inflate(1, 2, 1)).contains(player), "Deus cannot see its actual wearer");
+                master.getCurrentRitual().performRitual(master);
+                require(chest.get(NVDataComponents.CURRENT_MAX_UPGRADE_POINTS.get()) == 600
+                        && Boolean.TRUE.equals(feet.get(NVDataComponents.BLOOD_MENDING.get()))
+                        && Boolean.TRUE.equals(legs.get(NVDataComponents.BLOOD_MENDING.get()))
+                        && before - network.getCurrentEV() == price, "Deus evolution/Blood Mending/payment differs");
+                // The native operation may add only Blood Mending to these slots, not source history or upgrade state.
+                oldFeet.set(NVDataComponents.BLOOD_MENDING.get(), true);
+                oldLegs.set(NVDataComponents.BLOOD_MENDING.get(), true);
+                require(ItemStack.matches(oldFeet, feet) && ItemStack.matches(oldLegs, legs), "Deus changed unrelated root/source data");
+            } finally {
+                master.stopRitual(Ritual.BreakType.DEACTIVATE);
             }
         }
-        for (var slot : List.of(EquipmentSlot.FEET, EquipmentSlot.LEGS)) { hellforge(NeoVitaeUpdateSpike.nativePiece(slot), true); }
-        report.append("Deus evolution: real layouts/activation; 500 to 600 chest points; both mixed orientations in feet/legs together; native Blood Mending and operation debit; immutable sources\n");
+        NeoVitaeSentientChecks.clear(player);
+        report.append("Deus: actual native layout/activation, separate operation debit, 500 to 600 capacity, Blood Mending on feet/legs in both orientations; no source writes\n");
     }
 }
