@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "spike.aether.mixin",
+  "plugin": "spike.aether.SpikePlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+      "AttributeProducerMixin",
+      "SetOperandMixin"
+  ],
+  "client": ["HiddenWindowMixin", "TierProducerMixin"],
+  "injectors": {"defaultRequire": 1}
+}

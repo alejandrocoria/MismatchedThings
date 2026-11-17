@@ -1,0 +1,7 @@
+// Opt-in only: the spike never enters the normal project graph.
+settingsEvaluated { settings ->
+    if (new File(settings.settingsDir, 'mods/MismatchedBoots').isDirectory()) {
+        settings.include('Aether42Spike')
+        settings.project(':Aether42Spike').projectDir = new File(settings.settingsDir, 'spikes/aether-4.2')
+    }
+}
