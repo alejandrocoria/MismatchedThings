@@ -1763,6 +1763,47 @@ the small Things service/provider boundary, and requires each product to embed
 the exact current loader-specific core. This packaging gate does not replace the
 core's focused unchanged API-v1 consumer evolution check.
 
+## Aether II old-format persistence
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherPersistence '-PaetherRuntimeJar=build/compatibility-refresh/NeoForge-aether_ii-26.1.2-alpha.4.2-neoforge.jar' --offline --console=plain
+```
+
+The maintained [profile](aether-persistence.gradle) loads both current packaged
+products and reads [frozen alpha.4.1 inputs](fixtures/aether-alpha.4.1-mixed.json)
+directly through production `ItemStack.CODEC`. There is no test preprocessing,
+replacement decoder or prototype hook. The five independent server JVMs cover
+`absent`, `absentagain`, `active`, `restore` and `reopened`. No client/window or
+manual world is created by this profile. This is complete codec-file persistence,
+not the later native-world/container or connected-client acceptance.
+
+Until the catalog update, the example explicitly selects the official
+[alpha.4.2 hVPk1MVE JAR](https://modrinth.com/mod/JD2NSu5O/version/hVPk1MVE),
+which must already exist at the supplied path. The optional root-relative or
+absolute `aetherRuntimeJar` file is checked against the audited SHA-256; a missing
+or altered explicit file fails rather than using another artifact. Without it,
+runtime uses the ordinary catalog resolver/cache. Never copy an indev artifact
+as an unverified substitute. The persistence driver has no native API imports;
+ordinary fixture compilation stays on the catalog baseline, with no duplicate
+old/new Aether classes placed on one classpath.
+
+All 12 inputs cover both products/orientations, absent/default versus explicit
+set components, unequal and duplicate sets, charms/tier, names, damage, repair
+cost, merged attributes and opaque custom NBT. Active/restored results must equal
+the complete expected encoding; native NBT and JSON agree. Negative cases for
+each product cover strict booleans, bad counts/history, absent sources, unreadable
+components, removed fields, native/unrelated/bare items and failed conversion
+preserving the original archive. Conflicted/quarantined archives remain inactive;
+foreign shell edits are not ignored and accepted passive names survive.
+
+Reports/markers are in `NeoForge/build/reports/<baseline>/aetherPersistence/`;
+bounded logs and `matrix.ok` are in the matching `build/verification/` directory.
+Exactly the two existing native server `Toast` errors are expected in present-mod
+stages; other ERRORs fail. No full tooltip calls are made: Nitrogen's separate
+server `I18n` defect is neither suppressed nor repaired. Set/tooltip guards may
+still decline alpha.4.2 until their later implementation blocks; this gate claims
+only old-data migration/recovery. Run sequentially with other runtime profiles.
+
 ## Aether II production gameplay
 
 ```powershell

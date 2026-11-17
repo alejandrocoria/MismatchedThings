@@ -6,6 +6,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 import games.alejandrocoria.mismatchedboots.content.ModContent;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSetFormat;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -80,10 +81,14 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         boolean restoring = patch.contains(ARCHIVE);
         if (!restoring && oneItem && sourcesPresent(patch.get(SOURCES))) {
             // Keep native JSON booleans/numbers intact; NBT is only the archive's storage representation.
-            DataResult<ItemStack> active = decodeNative(ops, input);
+            // Complete source admission belongs to the native/history decoder, not the converted NBT number widths.
+            T migrated = AetherArmorSetFormat.upgradePatch(ops, components, SOURCES);
+            MapLike<T> activeInput = migrated == components ? input : withComponents(ops, input, migrated);
+            DataResult<ItemStack> active = decodeNative(ops, activeInput);
             if (ready(active)) {
                 return active;
             }
+            // Failed conversion/decode must park the original input, never a partially migrated patch.
         }
 
         CompoundTag original;
@@ -143,7 +148,8 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         CompoundTag restored = passive.copy();
         original.keySet().forEach(key -> restored.put(key, original.get(key).copy()));
         if (restoring && !quarantined && conflicts.isEmpty() && oneItem && sourcesPresent(restored.get(SOURCES))) {
-            DataResult<ItemStack> decoded = read(ops, input, restored);
+            CompoundTag migrated = (CompoundTag) AetherArmorSetFormat.upgradePatch(nbtOps(ops), restored, SOURCES);
+            DataResult<ItemStack> decoded = read(ops, input, migrated);
             if (ready(decoded)) {
                 return decoded;
             }
@@ -292,6 +298,11 @@ public final class SuspendedBootsItemCodec extends MapCodec<ItemStack> {
         } catch (RuntimeException unreadable) {
             return false;
         }
+    }
+
+    private static <T> MapLike<T> withComponents(DynamicOps<T> ops, MapLike<T> input, T patch) {
+        return ops.getMap(ops.createMap(input.entries().map(entry -> entry.mapSecond(value ->
+                ops.getStringValue(entry.getFirst()).result().orElse("").equals("components") ? patch : value)))).getOrThrow();
     }
 
     private <T> DataResult<ItemStack> read(DynamicOps<T> ops, MapLike<T> input, CompoundTag patch) {

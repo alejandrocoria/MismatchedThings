@@ -5,6 +5,7 @@ plugins {
 
 tasks.named('processResources') {
     from(project(':MismatchedBoots:RuntimeTests').file('fixtures/forbidden-boots-1.0.0.json'))
+    from(file('../fixtures/aether-alpha.4.1-mixed.json'))
 }
 
 repositories { mavenCentral() }
@@ -46,6 +47,7 @@ apply from: '../advanced-netherite-fixtures.gradle'
 apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 apply from: '../aether-gameplay.gradle'
+apply from: '../aether-persistence.gradle'
 apply from: '../aether-tooltips.gradle'
 apply from: '../undergarden-state.gradle'
 

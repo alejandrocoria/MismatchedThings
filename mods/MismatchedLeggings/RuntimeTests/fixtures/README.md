@@ -1,4 +1,4 @@
-# Historical Boots inputs
+# Historical inputs
 
 [boots-1.0.0.json](boots-1.0.0.json) pins the owner-supplied, unchanged Boots 1.0.0
 artifacts used for packaged sibling/core acceptance. JARs are not committed.
@@ -23,3 +23,24 @@ floating latest release or an indev/rebuilt substitute. Verify the published byt
 against the existing pins; investigate mismatches rather than silently changing
 the accepted baseline. Until implemented, both explicit path properties remain
 required. This is a test-infrastructure follow-up, not a product release blocker.
+
+## Aether II alpha.4.1 mixed data
+
+[aether-alpha.4.1-mixed.json](aether-alpha.4.1-mixed.json) freezes 12 complete
+Boots/Leggings factory outputs from the isolated alpha.4.2 spike's `old` phase.
+They were generated before the production migration, with the generator committed
+as `93070465`, and captured on 2026-11-16. These are native alpha.4.1 format
+inputs, **not** a claim that the current development factories are published
+Boots 1.0.0 binaries.
+
+Native input: `aether_ii-26.1.2-alpha.4.1-neoforge.jar`, Modrinth `soZ6Sulf`,
+SHA-256 `97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6`.
+The frozen fixture's SHA-256 is
+`14f3eb26e696d35930a534b9827d490e412ffa91b69323015be45c980670d36c`.
+
+Both products/orientations include a vanilla partner, unequal sets with an
+explicit source override and a duplicate set, native charms/tier, root/source
+names, damage, repair cost, merged attributes and opaque custom NBT. Maintained
+production persistence tests read these bytes directly, including without Aether;
+they never regenerate them with a current codec or use ignored spike reports.
+Expected alpha.4.2 shape is asserted independently of the production converter.
