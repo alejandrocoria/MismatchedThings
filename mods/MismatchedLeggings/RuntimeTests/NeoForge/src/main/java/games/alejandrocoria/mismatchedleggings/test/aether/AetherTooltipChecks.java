@@ -15,6 +15,7 @@ import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.test.AetherLifecycleChecks;
 import games.alejandrocoria.mismatchedleggings.test.SkeletonChecks;
 import games.alejandrocoria.mismatchedleggings.test.render.EquippedClient;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,6 +25,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
@@ -303,7 +305,8 @@ public final class AetherTooltipChecks {
         root.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new java.util.LinkedHashSet<>()));
         require(lines(client, root, TooltipFlag.NORMAL).isEmpty(), "Whole-root hiding leaked content");
         var changedSet = source.copy();
-        changedSet.set(AetherIIDataComponents.ARMOR_SET, net.minecraft.tags.ItemTags.TRIMMABLE_ARMOR);
+        @SuppressWarnings("unchecked") var setType = (DataComponentType<Object>) (DataComponentType<?>) AetherIIDataComponents.ARMOR_SET.get();
+        changedSet.set(setType, AetherArmorSets.value(net.minecraft.tags.ItemTags.TRIMMABLE_ARMOR));
         var changed = pair(changedSet, new ItemStack(Items.IRON_LEGGINGS)).getFirst();
         require(count(lines(client, changed, TooltipFlag.NORMAL), source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.") == 0,
                 "Known item with altered set key invented native family description");
@@ -319,7 +322,7 @@ public final class AetherTooltipChecks {
         client.player.setItemSlot(EquipmentSlot.HEAD, item("burrukai_plate_helmet"));
         client.player.setItemSlot(EquipmentSlot.FEET, boots);
         client.player.setItemSlot(EquipmentSlot.LEGS, legs);
-        require(EquipmentUtil.getArmorCount(client.player, item("burrukai_plate_leggings").get(AetherIIDataComponents.ARMOR_SET)) == 3, "Mixed LEGS/FEET native count");
+        require(EquipmentUtil.getArmorCount(client.player, AetherArmorSets.tag(item("burrukai_plate_leggings").get(AetherIIDataComponents.ARMOR_SET))) == 3, "Mixed LEGS/FEET native count");
         require(lines(client, legs, TooltipFlag.NORMAL).stream().anyMatch(line -> line.getString().contains("3/3"))
                 && lines(client, boots, TooltipFlag.NORMAL).stream().anyMatch(line -> line.getString().contains("3/3")), "Sibling producer paths no longer coexist");
         clear(client);

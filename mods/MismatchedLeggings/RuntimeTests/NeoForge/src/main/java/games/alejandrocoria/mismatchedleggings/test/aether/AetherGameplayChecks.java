@@ -29,6 +29,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
@@ -46,14 +47,19 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.util.AttributeTooltipContext;
 import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.AddAttributeTooltipsEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
@@ -85,6 +91,9 @@ public final class AetherGameplayChecks {
             charms();
             corrosion(server);
             admission(server);
+            if (Boolean.getBoolean("leggings.test.aetherTooltips")) {
+                serverAttributeTooltips(server);
+            }
             if (Boolean.getBoolean("leggings.test.aetherConsolidation")) {
                 games.alejandrocoria.mismatchedleggings.test.AetherLifecycleChecks.verify(server);
             }
@@ -97,6 +106,43 @@ public final class AetherGameplayChecks {
         } finally {
             server.halt(false);
         }
+    }
+
+    private static void serverAttributeTooltips(MinecraftServer server) throws Exception {
+        var wearer = player(server.overworld());
+        var stacks = new ArrayList<ItemStack>();
+        stacks.add(item("burrukai_plate_leggings"));
+        stacks.addAll(pair(stacks.getFirst(), new ItemStack(Items.IRON_LEGGINGS)));
+        if (ModList.get().isLoaded("mismatchedboots")) {
+            stacks.add(item("burrukai_plate_boots"));
+            stacks.addAll(bootsPair(item("burrukai_plate_boots"), new ItemStack(Items.IRON_BOOTS)));
+        }
+        var nativeEvent = Class.forName("com.aetherteam.aetherii.AetherIIEventListeners")
+                .getMethod("onAddAttributeTooltips", AddAttributeTooltipsEvent.class);
+        for (int index = 0; index < stacks.size(); index++) {
+            var stack = stacks.get(index);
+            clear(wearer);
+            wearer.setItemSlot(EquipmentSlot.HEAD, item("burrukai_plate_helmet"));
+            wearer.setItemSlot(EquipmentSlot.CHEST, item("burrukai_plate_chestplate"));
+            wearer.setItemSlot(index < 3 ? EquipmentSlot.LEGS : EquipmentSlot.FEET, stack);
+            BurrukaiPlateArmor.updatePlayerAttributes(new PlayerTickEvent.Pre(wearer));
+            require(Math.abs(wearer.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) - .2) < 1e-6,
+                    "Common tooltip control requires an active native set");
+            String before = snapshot(server, stack);
+            for (var flag : List.of(TooltipFlag.NORMAL, TooltipFlag.ADVANCED)) {
+                var lines = new ArrayList<Component>();
+                var context = AttributeTooltipContext.of(wearer, Item.TooltipContext.of(server.overworld()), TooltipDisplay.DEFAULT, flag);
+                nativeEvent.invoke(null, new AddAttributeTooltipsEvent(stack, lines::add, context));
+                if (index == 0) {
+                    require(!lines.isEmpty(), "Native common attribute producer was not exercised");
+                }
+            }
+            require(before.equals(snapshot(server, stack)), "Common native attribute event changed saved item data");
+        }
+        clear(wearer);
+        BurrukaiPlateArmor.updatePlayerAttributes(new PlayerTickEvent.Pre(wearer));
+        // Full native tooltips still hit Nitrogen's separately measured client-I18n linkage failure.
+        REPORT.append("Relocated common attribute event is server-safe for native/mixed items and both flags; full server tooltips are not claimed\n");
     }
 
     private static void sets(MinecraftServer server) throws Exception {

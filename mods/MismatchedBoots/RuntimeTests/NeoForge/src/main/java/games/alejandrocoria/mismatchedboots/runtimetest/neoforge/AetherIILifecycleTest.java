@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -160,11 +161,13 @@ final class AetherIILifecycleTest {
                 owner.setItemSlot(EquipmentSlot.HEAD, item("gravitite_helmet"));
                 owner.setItemSlot(EquipmentSlot.CHEST, item("gravitite_chestplate"));
                 owner.setItemSlot(EquipmentSlot.FEET, root);
-                require(api.count(owner, item("gravitite_boots").get(component("armor_set"))) == 3,
+                require(api.count(owner, AetherArmorSets.tag(
+                        item("gravitite_boots").get(component("armor_set")))) == 3,
                         "Restarted Gravitite lost third piece");
                 fall(owner, root, 7.99, true);
                 owner.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
-                require(!api.ability(owner, item("gravitite_boots").get(component("armor_set"))), "Two pieces activated after restart");
+                require(!api.ability(owner, AetherArmorSets.tag(
+                        item("gravitite_boots").get(component("armor_set")))), "Two pieces activated after restart");
             }
         }
         clear(owner);

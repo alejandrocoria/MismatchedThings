@@ -1867,6 +1867,16 @@ nested/exceptional calls restore exact source identity. Local formatting/graphic
 failure controls preserve proven native containment and unrelated presentation.
 The optional sibling case checks native mixed LEGS/FEET counts and both tooltip paths.
 
+For alpha.4.2, the independently guarded native producers are common
+`AetherIIEventListeners` → `AetherIIItems.modifyTooltipAttributes` and client
+`AetherIIClientEventListeners` → `RenderHooks.addReinforcementTooltip`. The server
+also invokes the common attribute event with an active native set, native/mixed
+equipment and both flags, checking saved-data immutability. This is not a claim
+that full server tooltips work: Nitrogen's separately measured client `I18n`
+linkage failure remains outside this profile's common-event acceptance.
+Both products' NeoForge guard suites accept an explicit `-PaetherGuardJar=<path>`;
+ordinary runs use the single shared catalog pin.
+
 Reports are `NeoForge/build/reports/<baseline>/aetherTooltips[-boots]/`, including
 `aether-tooltips.txt`, `aether-tooltip.png`, `server.ok` and `client.ok`; bounded
 process logs and `matrix.ok` are under `build/verification/<baseline>/` with the same

@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedleggings.compatibility.aether.AetherToolti
 import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.content.MixedLeggingsStructure;
 import games.alejandrocoria.mismatchedleggings.data.LeggingHalf;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
@@ -137,7 +138,7 @@ public final class AetherTooltipClient {
         for (var family : FAMILIES) {
             if (source.getItem() == BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("aether_ii", family + "_leggings"))
                     && TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("aether_ii", "armor/" + family))
-                             .equals(source.get(sets.armorSet))) {
+                             .equals(AetherArmorSets.tag(source.get(sets.armorSet)))) {
                 return family;
             }
         }
@@ -159,7 +160,7 @@ public final class AetherTooltipClient {
         var client = Minecraft.getInstance();
         // Set progress describes the player's current equipment, even when this source is only being previewed.
         if (client.player != null && client.level != null) {
-            int count = Math.min(3, (int) sets.count.invoke(null, client.player, source.get(sets.armorSet)));
+            int count = Math.min(3, (int) sets.count.invoke(null, client.player, AetherArmorSets.tag(source.get(sets.armorSet))));
             lines.add(Component.translatable(key + "2", Component.literal(count + "/3")
                                                                  .withStyle(count == 3 ? ChatFormatting.WHITE : ChatFormatting.GRAY)));
         }

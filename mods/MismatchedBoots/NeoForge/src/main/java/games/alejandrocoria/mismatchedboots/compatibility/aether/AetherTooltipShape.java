@@ -24,6 +24,8 @@ import java.util.Set;
 /** Local final-transformed producer arguments; no native effect/helper-body or whole-method fingerprint. */
 final class AetherTooltipShape implements Opcodes {
     static final String EVENTS = "com/aetherteam/aetherii/AetherIIEventListeners";
+    static final String CLIENT_EVENTS = "com/aetherteam/aetherii/client/AetherIIClientEventListeners";
+    static final String ITEMS = "com/aetherteam/aetherii/item/AetherIIItems";
     static final String FORMATTER = "games/alejandrocoria/mismatchedboots/tooltip/MixedBootsTooltipFormatter";
     static final String STATE = "games/alejandrocoria/mismatchedboots/compatibility/aether/AetherTooltipState";
     static final String HOOKS = "com/aetherteam/aetherii/client/event/hooks/RenderHooks";
@@ -42,6 +44,9 @@ final class AetherTooltipShape implements Opcodes {
     }
 
     static boolean producer(ClassNode owner, boolean attributes) throws AnalyzerException {
+        if (!owner.name.equals(attributes ? EVENTS : CLIENT_EVENTS)) {
+            return false;
+        }
         String event = attributes ? ATTRIBUTE_EVENT : TIER_EVENT;
         var method = method(owner, attributes ? "onAddAttributeTooltips" : "onAddTooltipsLowest", "(L" + event + ";)V");
         if (method == null || (method.access & ACC_STATIC) == 0 || hooked(method, attributes ? "suppressAttributes" : "suppressTier")) {
@@ -50,9 +55,9 @@ final class AetherTooltipShape implements Opcodes {
 
         String descriptor = attributes ? "(" + STACK + "Ljava/util/List;" + ATTRIBUTE_CONTEXT + ")V"
                                        : "(" + STACK + "Ljava/util/List;" + CONTEXT + FLAG + ")V";
-        var calls = List.of(method.instructions.toArray()).stream().filter(n -> call(n, HOOKS,
+        var calls = List.of(method.instructions.toArray()).stream().filter(n -> call(n, attributes ? ITEMS : HOOKS,
                                                                                      attributes
-                                                                                     ? "addAbilityAttributeTooltip"
+                                                                                     ? "modifyTooltipAttributes"
                                                                                      : "addReinforcementTooltip", descriptor)).toList();
         if (calls.size() != 1) {
             return false;

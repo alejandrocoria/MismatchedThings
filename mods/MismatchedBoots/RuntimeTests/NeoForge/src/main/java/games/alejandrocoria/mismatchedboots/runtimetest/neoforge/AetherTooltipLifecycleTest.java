@@ -8,6 +8,7 @@ import games.alejandrocoria.mismatchedboots.content.ModContent;
 import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import games.alejandrocoria.mismatchedthings.internal.client.WorkbenchScreen;
 import net.minecraft.client.Minecraft;
@@ -342,7 +343,8 @@ public final class AetherTooltipLifecycleTest {
         var right = data.right().source();
         for (var source : List.of(left, right)) {
             if (source.has(component("armor_set"))) {
-                source.set(component("armor_set"), TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:armor/unknown_fixture_set")));
+                source.set(component("armor_set"), AetherArmorSets.value(
+                        TagKey.create(Registries.ITEM, Identifier.parse("aether_ii:armor/unknown_fixture_set"))));
             }
         }
 

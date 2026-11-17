@@ -4,6 +4,7 @@
 * Added: Eternal and Soulbound support for Forbidden Arcanus, including both effects together, smithing upgrades and native tooltip titles on mixed boots.
 * Changed: Rogdorium infusion from The Undergarden is shared evenly between newly combined boots, preserving the reservoir capacity.
 * Changed: Ice and Fire Community Edition compatibility on NeoForge now supports version 2.2 and its native armor effect settings.
+* Changed: The Aether II compatibility on NeoForge now supports alpha.4.2, including existing mixed boots.
 * Changed: Mystical Agriculture augment refunds now require item breakage to complete successfully.
 * Changed: Client and server now require the updated Mismatched Boots network protocol to connect.
 * Changed: Mismatched Boots must be updated to 1.1.0 or newer when using the updated MismatchedThings core.

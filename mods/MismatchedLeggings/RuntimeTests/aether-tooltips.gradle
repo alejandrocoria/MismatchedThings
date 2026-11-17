@@ -2,13 +2,23 @@ import java.util.concurrent.TimeUnit
 
 // Maintained packaged-production presentation profile; no spike sources or candidate hooks.
 def resolver = project(':MismatchedThings').testModArtifacts
-def nativeJar = providers.provider { resolver.resolve('NeoForge', 'aether_ii') }
+def selected = providers.gradleProperty('aetherRuntimeJar').map { rootProject.file(it) }
+def nativeJar = providers.provider {
+    if (!selected.isPresent()) { return resolver.resolve('NeoForge', 'aether_ii') }
+    def file = selected.get()
+    if (!file.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
+            != 'f4156bd72b4c85235aa81c571a54646fab264a015b9a44116fe7ccb427b3a2e4') {
+        throw new GradleException("Aether runtime override must be the audited alpha.4.2 binary: ${file}")
+    }
+    return file
+}
 
 def product = project(':MismatchedLeggings:NeoForge')
 def boots = project(':MismatchedBoots:NeoForge')
 def coexist = providers.gradleProperty('leggingsBoots').map { it.toBoolean() }.getOrElse(false)
 def consolidation = providers.gradleProperty('leggingsAetherConsolidation').map { it.toBoolean() }.getOrElse(false)
-def variant = (consolidation ? 'aetherCompatibility' : 'aetherTooltips') + (coexist ? '-boots' : '')
+def variant = (consolidation ? 'aetherCompatibility' : 'aetherTooltips') + (coexist ? '-boots' : '') +
+        (selected.isPresent() ? '-candidate' : '')
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/${variant}").get().asFile
 def runRoot = layout.buildDirectory.dir("run/${neoforge_version}/${variant}").get().asFile
 
@@ -85,6 +95,7 @@ tasks.register('verifyAetherTooltips') {
                              "-Pneoforge_version=${neoforge_version}", "-PleggingsBoots=${coexist}"]
             arguments.add("-PleggingsAetherConsolidation=${consolidation}")
             if (gradle.startParameter.offline) { arguments.add('--offline') }
+            if (selected.isPresent()) { arguments.add("-PaetherRuntimeJar=${selected.get().absolutePath}") }
             logger.lifecycle("Aether tooltips ${neoforge_version}/${variant}/${phase}")
             def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
                     .directory(rootProject.projectDir).redirectErrorStream(true).redirectOutput(log).start()

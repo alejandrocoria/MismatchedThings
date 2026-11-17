@@ -29,7 +29,7 @@ class AetherRecognitionShapeTest implements Opcodes {
             var count = queryMethod(node);
             var gates = Arrays.stream(count.instructions.toArray()).filter(n -> n.getOpcode() == IFNULL)
                     .map(JumpInsnNode.class::cast).toList();
-            if (gates.isEmpty()) { continue; } // Old catalog contract until C switches the pin.
+            assertFalse(gates.isEmpty(), "The pinned native input must exercise the record/null contract");
             var branch = gates.getFirst();
             switch (fault) {
                 case "gate-value" -> count.instructions.insertBefore(branch, new MethodInsnNode(INVOKESTATIC,

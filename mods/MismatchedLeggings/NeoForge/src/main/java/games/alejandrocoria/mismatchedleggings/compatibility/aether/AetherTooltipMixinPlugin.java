@@ -43,7 +43,8 @@ public final class AetherTooltipMixinPlugin implements IMixinConfigPlugin, IExte
 
     @Override
     public List<String> getMixins() {
-        return available ? List.of("AetherTooltipEventsTargetMixin", "AetherTooltipFormatterTargetMixin") : List.of();
+        return available ? List.of("AetherTooltipEventsTargetMixin", "AetherTooltipClientEventsTargetMixin",
+                "AetherTooltipFormatterTargetMixin") : List.of();
     }
 
     @Override
@@ -53,7 +54,8 @@ public final class AetherTooltipMixinPlugin implements IMixinConfigPlugin, IExte
 
     @Override
     public void export(MixinEnvironment environment, String name, boolean force, ClassNode node) {
-        if ((!node.name.equals(AetherTooltipShape.FORMATTER) && !node.name.equals(AetherTooltipShape.EVENTS))
+        if ((!node.name.equals(AetherTooltipShape.FORMATTER) && !node.name.equals(AetherTooltipShape.EVENTS)
+                && !node.name.equals(AetherTooltipShape.CLIENT_EVENTS))
                 || !examined.add(node.name)) {
             return;
         }
@@ -67,17 +69,16 @@ public final class AetherTooltipMixinPlugin implements IMixinConfigPlugin, IExte
             } catch (Exception | LinkageError failure) {
                 AetherTooltipState.refuse(true, failure);
             }
-        } else if (node.name.equals(AetherTooltipShape.EVENTS)) {
-            for (boolean attributes : new boolean[]{true, false}) {
-                try {
-                    if (AetherTooltipShape.producer(node, attributes)) {
-                        AetherTooltipState.ready(attributes);
-                    } else {
-                        AetherTooltipState.refuse(attributes, null);
-                    }
-                } catch (Exception | LinkageError failure) {
-                    AetherTooltipState.refuse(attributes, failure);
+        } else if (node.name.equals(AetherTooltipShape.EVENTS) || node.name.equals(AetherTooltipShape.CLIENT_EVENTS)) {
+            boolean attributes = node.name.equals(AetherTooltipShape.EVENTS);
+            try {
+                if (AetherTooltipShape.producer(node, attributes)) {
+                    AetherTooltipState.ready(attributes);
+                } else {
+                    AetherTooltipState.refuse(attributes, null);
                 }
+            } catch (Exception | LinkageError failure) {
+                AetherTooltipState.refuse(attributes, failure);
             }
         }
     }

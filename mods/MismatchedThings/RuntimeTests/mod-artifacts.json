@@ -64,9 +64,9 @@
   {
     "loader": "NeoForge",
     "id": "aether_ii",
-    "filename": "aether_ii-26.1.2-alpha.4.1-neoforge.jar",
-    "sha256": "97760dd75e2dcdf4ecde83a0006d5b3682090e104a3c7bd6d7e4681e33b3f0e6",
-    "url": "https://cdn.modrinth.com/data/JD2NSu5O/versions/soZ6Sulf/aether_ii-26.1.2-alpha.4.1-neoforge.jar"
+    "filename": "aether_ii-26.1.2-alpha.4.2-neoforge.jar",
+    "sha256": "f4156bd72b4c85235aa81c571a54646fab264a015b9a44116fe7ccb427b3a2e4",
+    "url": "https://cdn.modrinth.com/data/JD2NSu5O/versions/hVPk1MVE/aether_ii-26.1.2-alpha.4.2-neoforge.jar"
   },
   {
     "loader": "NeoForge",

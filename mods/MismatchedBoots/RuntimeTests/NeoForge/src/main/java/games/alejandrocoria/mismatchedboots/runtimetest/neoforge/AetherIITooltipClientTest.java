@@ -10,6 +10,7 @@ import games.alejandrocoria.mismatchedboots.data.BootHalf;
 import games.alejandrocoria.mismatchedboots.data.MixedBootsData;
 import games.alejandrocoria.mismatchedboots.network.CompositionRulesClientLifecycle;
 import games.alejandrocoria.mismatchedboots.runtimetest.NetworkAcceptanceFiles;
+import games.alejandrocoria.mismatchedthings.api.compatibility.aether.AetherArmorSets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -399,7 +400,7 @@ final class AetherIITooltipClientTest {
             if (!family.equals("sentry")) {
                 String key = item(family + "_boots").getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.2";
                 var set = component("armor_set");
-                @SuppressWarnings("unchecked") var tag = (net.minecraft.tags.TagKey<net.minecraft.world.item.Item>) item(family + "_boots").get(set);
+                var tag = AetherArmorSets.tag(item(family + "_boots").get(set));
                 int count = Math.min(3, new AetherIICompatibilityTest.NativeApi().count(client.player, tag));
                 require(actual.lines().contains(Component.translatable(key, Component.literal(count + "/3")
                                                                                      .withStyle(count == 3
@@ -585,7 +586,7 @@ final class AetherIITooltipClientTest {
 
             var section = lines.subList((side == 0 ? left : right) + 1, side == 0 ? right : rootAttributes);
             String prefix = source.getItem().getDescriptionId() + ".nitrogen_internals.ability.tooltip.";
-            var set = (net.minecraft.tags.TagKey<net.minecraft.world.item.Item>) source.get(component("armor_set"));
+            var set = AetherArmorSets.tag(source.get(component("armor_set")));
             if (!source.is(item("arkenium_boots").getItem())) {
                 require(section.stream().filter(line -> translated(line, prefix + "1")).count() == 1, "Ability missing from its own source");
             }

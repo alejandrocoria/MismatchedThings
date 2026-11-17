@@ -20,44 +20,47 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class AetherTooltipShapeTest {
     @Test
     void nativeProducerCallsAreGuardedIndependentlyAndExactlyOnce() throws Exception {
-        var owner = nativeEvents();
-        var peer = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "foreignObservation", "()V", null, null);
-        peer.instructions.add(new InsnNode(Opcodes.RETURN));
-        owner.methods.add(peer);
         for (boolean attributes : new boolean[]{true, false}) {
+            var owner = nativeEvents(attributes);
+            var peer = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "foreignObservation", "()V", null, null);
+            peer.instructions.add(new InsnNode(Opcodes.RETURN));
+            owner.methods.add(peer);
             assertTrue(AetherTooltipShape.producer(owner, attributes));
             assertFalse(AetherTooltipShape.producer(owner, attributes), "No duplicate insertion");
+            assertEquals(1, producerCalls(owner, attributes),
+                    "The original native producer remains behind its own condition");
+            assertFalse(AetherTooltipShape.producer(owner, !attributes), "Do not install the other domain on this subscriber");
         }
-        assertEquals(2, calls(owner, AetherTooltipShape.HOOKS), "Original native producers remain, behind their individual conditions");
     }
 
     @Test
     void finalArgumentChainsAndUnrelatedEditsDoNotRequireWholeMethodIdentity() throws Exception {
-        var owner = nativeEvents();
-        for (var method : owner.methods) {
-            if (!method.name.equals("onAddAttributeTooltips") && !method.name.equals("onAddTooltipsLowest")) {
-                continue;
-            }
-            method.instructions.insert(new InsnNode(Opcodes.NOP));
-            var observation = new InsnList();
-            observation.add(new MethodInsnNode(Opcodes.INVOKESTATIC, AetherTooltipShape.STATE, "tiersReady", "()Z", false));
-            observation.add(new InsnNode(Opcodes.POP));
-            method.instructions.insert(observation);
-            for (var node : method.instructions.toArray()) {
-                if (node instanceof MethodInsnNode call && (call.name.equals("getStack") || call.name.equals("getItemStack"))) {
-                    method.instructions.insert(call, new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Peer", "identity",
-                                                                        "(" + AetherTooltipShape.STACK + ")" + AetherTooltipShape.STACK, false));
+        for (boolean attributes : new boolean[]{true, false}) {
+            var owner = nativeEvents(attributes);
+            for (var method : owner.methods) {
+                if (!method.name.equals("onAddAttributeTooltips") && !method.name.equals("onAddTooltipsLowest")) {
+                    continue;
+                }
+                method.instructions.insert(new InsnNode(Opcodes.NOP));
+                var observation = new InsnList();
+                observation.add(new MethodInsnNode(Opcodes.INVOKESTATIC, AetherTooltipShape.STATE, "tiersReady", "()Z", false));
+                observation.add(new InsnNode(Opcodes.POP));
+                method.instructions.insert(observation);
+                for (var node : method.instructions.toArray()) {
+                    if (node instanceof MethodInsnNode call && (call.name.equals("getStack") || call.name.equals("getItemStack"))) {
+                        method.instructions.insert(call, new MethodInsnNode(Opcodes.INVOKESTATIC, "fixture/Peer", "identity",
+                                "(" + AetherTooltipShape.STACK + ")" + AetherTooltipShape.STACK, false));
+                    }
                 }
             }
+            assertTrue(AetherTooltipShape.producer(owner, attributes));
         }
-        assertTrue(AetherTooltipShape.producer(owner, true));
-        assertTrue(AetherTooltipShape.producer(owner, false));
     }
 
     @Test
     void opaqueEventSourcesRefuseOnlyTheirOwnProducer() throws Exception {
         for (boolean attributes : new boolean[]{true, false}) {
-            var owner = nativeEvents();
+            var owner = nativeEvents(attributes);
             var method = owner.methods.stream()
                                       .filter(m -> m.name.equals(attributes ? "onAddAttributeTooltips" : "onAddTooltipsLowest"))
                                       .findFirst()
@@ -68,7 +71,7 @@ class AetherTooltipShapeTest {
                 }
             }
             assertFalse(AetherTooltipShape.producer(owner, attributes));
-            assertTrue(AetherTooltipShape.producer(owner, !attributes));
+            assertTrue(AetherTooltipShape.producer(nativeEvents(!attributes), !attributes));
         }
     }
 
@@ -91,15 +94,26 @@ class AetherTooltipShapeTest {
         assertEquals(0, calls(changed, AetherTooltipShape.STATE), "One unproved branch must not leave the other partially scoped");
     }
 
+    private static long producerCalls(ClassNode owner, boolean attributes) {
+        return owner.methods.stream()
+                .filter(method -> method.name.equals(attributes ? "onAddAttributeTooltips" : "onAddTooltipsLowest")
+                        && method.desc.equals("(L" + (attributes ? AetherTooltipShape.ATTRIBUTE_EVENT : AetherTooltipShape.TIER_EVENT) + ";)V"))
+                .flatMap(method -> java.util.Arrays.stream(method.instructions.toArray()))
+                .filter(node -> node instanceof MethodInsnNode call
+                        && call.owner.equals(attributes ? AetherTooltipShape.ITEMS : AetherTooltipShape.HOOKS)
+                        && call.name.equals(attributes ? "modifyTooltipAttributes" : "addReinforcementTooltip")).count();
+    }
+
     private static long calls(ClassNode owner, String target) {
         return owner.methods.stream().flatMap(method -> java.util.Arrays.stream(method.instructions.toArray()))
                             .filter(node -> node instanceof MethodInsnNode call && call.owner.equals(target)).count();
     }
 
-    private static ClassNode nativeEvents() throws Exception {
+    private static ClassNode nativeEvents(boolean attributes) throws Exception {
         String path = System.getProperty("mismatchedboots.test.aetherGuardJar");
         assumeTrue(path != null, "Native Aether characterization is opt-in");
-        try (var jar = new JarFile(path); var stream = jar.getInputStream(jar.getJarEntry(AetherTooltipShape.EVENTS + ".class"))) {
+        try (var jar = new JarFile(path); var stream = jar.getInputStream(jar.getJarEntry(
+                (attributes ? AetherTooltipShape.EVENTS : AetherTooltipShape.CLIENT_EVENTS) + ".class"))) {
             var node = new ClassNode();
             new ClassReader(stream).accept(node, 0);
             return node;

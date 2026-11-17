@@ -640,7 +640,7 @@ Both production archives must remain free of native Aether classes, fixture
 drivers and experimental query mixins/config. The identifier-only Common default
 is intentionally part of production, not a native dependency leak.
 
-The opt-in server fixture downloads and hash-checks alpha.4.1 (including its
+The opt-in server fixture downloads and hash-checks the catalog-pinned Aether II (including its
 bundled Cumulus/Nitrogen) using the test artifact catalog.
 Ordinary compilation has no Aether dependency. This run uses **normal server
 rules**, no per-creation omission candidate, and never enables the observation/

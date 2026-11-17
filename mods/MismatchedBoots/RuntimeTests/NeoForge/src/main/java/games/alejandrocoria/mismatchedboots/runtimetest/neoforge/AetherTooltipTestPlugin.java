@@ -30,6 +30,7 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
         var result = new ArrayList<>(List.of("AetherTooltipNativeProbeMixin", "AetherTooltipDetailsProbeMixin"));
         if (List.of("chains", "attributechanged", "tierchanged").contains(variant)) {
             result.add("AetherTooltipPeerMixin");
+            result.add("AetherTooltipClientPeerMixin");
         }
         if (variant.startsWith("charmfactory")) {
             result.add("AetherCharmFactoryFaultMixin");
@@ -55,11 +56,12 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
-        if (!target.endsWith("AetherIIEventListeners")) {
+        if (!target.endsWith("AetherIIEventListeners") && !target.endsWith("AetherIIClientEventListeners")) {
             return;
         }
         for (var method : node.methods) {
-            if (!method.name.equals(variant.equals("tierchanged") ? "onAddTooltipsLowest" : "onAddAttributeTooltips")) {
+            if (!(variant.equals("chains") ? List.of("onAddTooltipsLowest", "onAddAttributeTooltips").contains(method.name)
+                    : method.name.equals(variant.equals("tierchanged") ? "onAddTooltipsLowest" : "onAddAttributeTooltips"))) {
                 continue;
             }
             method.instructions.insert(new InsnNode(Opcodes.NOP));
@@ -67,7 +69,7 @@ public final class AetherTooltipTestPlugin implements IMixinConfigPlugin {
                 if (!(n instanceof MethodInsnNode call)) {
                     continue;
                 }
-                if (variant.equals("chains") && call.name.equals("getStack")) {
+                if (variant.equals("chains") && (call.name.equals("getStack") || call.name.equals("getItemStack"))) {
                     method.instructions.insert(call, new MethodInsnNode(Opcodes.INVOKESTATIC,
                                                                         CONTROL,
                                                                         "identity",

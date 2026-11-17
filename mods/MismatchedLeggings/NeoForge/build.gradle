@@ -77,7 +77,8 @@ tasks.named('test', Test) { test ->
     // The modded JUnit loader hides Mixin resources; ASM reads this witness directly from the packaged sibling.
     inputs.file(bootsWitnessJar).withPropertyName('bootsWitnessArtifact').withPathSensitivity(PathSensitivity.NONE)
     systemProperty 'mismatchedleggings.test.bootsWitnessJar', bootsWitnessJar.get().asFile.absolutePath
-    artifactBindings.bind(test, 'NeoForge', 'mismatchedleggings.test.', guardFixtures)
+    artifactBindings.bind(test, 'NeoForge', 'mismatchedleggings.test.', guardFixtures,
+            [aetherGuardJar: layout.file(providers.gradleProperty('aetherGuardJar').map { rootProject.file(it) })])
     [leggingsJdtHudClass: 'jdtHudClass', leggingsJdtSettingsClass: 'justDireSettingsTransformedClass'].each { option, property ->
         def supplied = providers.gradleProperty(option).map { file(it) }
         if (supplied.isPresent()) {

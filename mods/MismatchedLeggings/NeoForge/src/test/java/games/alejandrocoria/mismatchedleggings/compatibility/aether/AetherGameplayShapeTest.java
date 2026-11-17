@@ -30,7 +30,7 @@ class AetherGameplayShapeTest implements Opcodes {
             var count = consumer(node);
             var gates = Arrays.stream(count.instructions.toArray()).filter(n -> n.getOpcode() == IFNULL)
                     .map(JumpInsnNode.class::cast).toList();
-            if (gates.isEmpty()) { continue; }
+            assertEquals(1, gates.size(), "The pinned native input must exercise the record/null contract");
             var boots = Class.forName("games.alejandrocoria.mismatchedboots.compatibility.aether.AetherRecognitionShape")
                     .getDeclaredMethod("apply", ClassNode.class);
             boots.setAccessible(true);
