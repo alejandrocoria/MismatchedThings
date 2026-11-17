@@ -1,0 +1,138 @@
+// Opt-in research only. Ordinary fixture builds do not compile or load this source tree.
+def spike = rootProject.file('spikes/atm-compat')
+sourceSets.main.java.srcDir(new File(spike, 'src'))
+sourceSets.main.resources.srcDir(new File(spike, 'resources'))
+tasks.named('processResources') {
+    doLast {
+        new File(destinationDir, 'META-INF/neoforge.mods.toml').append('\n[[mixins]]\nconfig="atm-spike.mixins.json"\n')
+    }
+}
+
+def mode = providers.gradleProperty('atmSpikeMode').getOrElse('baseline')
+def stage = providers.gradleProperty('atmSpikeStage').getOrElse('write')
+if (!(mode in ['baseline', 'candidate', 'refusal']) || !(stage in ['write', 'reopen'])) {
+    throw new GradleException('Unknown ATM spike mode/stage')
+}
+def leggings = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+evaluationDependsOn(boots.path)
+dependencies.add('compileOnly', files(boots.tasks.named('jar').flatMap { it.archiveFile }))
+
+def generated = layout.buildDirectory.dir('atm-spike/candidate-source')
+def compiled = layout.buildDirectory.dir('atm-spike/candidate-classes')
+def cureSource = leggings.file('src/main/java/games/alejandrocoria/mismatchedleggings/compatibility/silentgear/SilentGearCures.java')
+def relative = 'games/alejandrocoria/mismatchedleggings/compatibility/silentgear/SilentGearCures.java'
+tasks.register('generateAtmCandidate') {
+    inputs.file(cureSource)
+    outputs.dir(generated)
+    doLast {
+        String text = cureSource.text
+        def edits = [
+                'POISON("poison"), WITHER("wither");':
+                        'POISON("poison"), WITHER("wither"), NAUSEA("nausea"), LEVITATION("levitation");',
+                'Cure.POISON.disabled && Cure.WITHER.disabled':
+                        'Cure.POISON.disabled && Cure.WITHER.disabled && Cure.NAUSEA.disabled && Cure.LEVITATION.disabled',
+                'case "silentgear:cure_wither" -> Cure.WITHER;':
+                        'case "silentgear:cure_wither" -> Cure.WITHER;\n                case "silentgear:cure_nausea" -> Cure.NAUSEA;\n                case "silentgear:cure_levitation" -> Cure.LEVITATION;'
+        ]
+        edits.each { before, after ->
+            if (text.count(before) != 1) { throw new GradleException('Cure source no longer matches the bounded candidate') }
+            text = text.replace(before, after)
+        }
+        def output = generated.get().file(relative).asFile
+        output.parentFile.mkdirs()
+        output.text = text
+    }
+}
+tasks.register('compileAtmCandidate', JavaCompile) {
+    dependsOn 'generateAtmCandidate', leggings.tasks.named('classes')
+    source generated
+    classpath = leggings.sourceSets.main.compileClasspath + leggings.sourceSets.main.output
+    destinationDirectory = compiled
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(java_version) }
+    options.encoding = 'UTF-8'
+    options.release = java_version.toInteger()
+    options.compilerArgs.add('-proc:none')
+}
+
+def directory = layout.buildDirectory.dir("atm-spike/${neoforge_version}/${mode}/server").get().asFile
+def reports = layout.buildDirectory.dir("atm-spike/${neoforge_version}/${mode}/reports/${stage}").get().asFile
+tasks.register('prepareAtmSpike') {
+    dependsOn tasks.named('classes'), leggings.tasks.named('assemble'), boots.tasks.named('assemble')
+    if (mode != 'baseline') { dependsOn 'compileAtmCandidate' }
+    doLast {
+        def resolver = project(':MismatchedThings').testModArtifacts
+        def selected = resolver.resolveRuntime('NeoForge', 'server', ['atmcompat', 'allthemodium', 'silentgear'])
+        def original = leggings.tasks.named('jar').get().archiveFile.get().asFile
+        def product = original
+        if (mode != 'baseline') {
+            product = layout.buildDirectory.file("atm-spike/${neoforge_version}/${mode}/${original.name}").get().asFile
+            product.parentFile.mkdirs()
+            def replacements = fileTree(compiled).matching { include '**/SilentGearCures*.class' }.files
+            if (replacements.size() != 2) { throw new GradleException('Unexpected candidate class set') }
+            def names = replacements.collectEntries { file ->
+                [(compiled.get().asFile.toPath().relativize(file.toPath()).toString().replace('\\', '/')): file]
+            }
+            new java.util.zip.ZipFile(original).withCloseable { zip ->
+                new java.util.zip.ZipOutputStream(new FileOutputStream(product)).withCloseable { output ->
+                    zip.entries().each { entry ->
+                        output.putNextEntry(new java.util.zip.ZipEntry(entry.name))
+                        if (names.containsKey(entry.name)) { output.write(names.remove(entry.name).bytes) }
+                        else { zip.getInputStream(entry).withCloseable { output.write(it.bytes) } }
+                        output.closeEntry()
+                    }
+                }
+            }
+            if (names) { throw new GradleException('Candidate attempted to add an unrelated class') }
+        }
+        selected += [product, boots.tasks.named('jar').get().archiveFile.get().asFile]
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { existing -> !selected.any { it.name == existing.name } }) {
+            throw new GradleException("Unexpected file in disposable ${mods}")
+        }
+        copy { from selected; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'materials.txt'].each { new File(reports, it).delete() }
+        if (stage == 'reopen' && !new File(directory, 'atm/level.dat').isFile()) {
+            throw new GradleException('Write the ATM spike world first')
+        }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=atm\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('atmSpike') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.sgFoundation', 'true')
+    systemProperty('atm.spike.mode', mode)
+    systemProperty('atm.spike.stage', stage)
+    systemProperty('atm.spike.expected', new File(directory.parentFile, 'expected.json').absolutePath)
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runAtmSpike') {
+    dependsOn 'prepareAtmSpike'
+    doLast {
+        if (!new File(reports, 'server.ok').isFile() || new File(reports, 'server.failure.txt').exists()
+                || !new File(reports, 'materials.txt').isFile()) {
+            throw new GradleException("ATM spike failed: ${reports}")
+        }
+        def lines = new File(directory, 'logs/latest.log').readLines()
+        def errors = lines.findAll { it.contains('/ERROR]') }
+        if (errors.size() != 1 || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                || !errors.first().contains('bonsaitrees2:sapling')) {
+            throw new GradleException('Unexpected ATM spike native errors')
+        }
+        def warnings = lines.findAll { it.contains('WARN') && it.contains('Silent Gear') }
+        if (mode == 'refusal' && stage == 'write') {
+            if (warnings.size() != 1 || !warnings.first().contains('mixed leggings cure nausea disabled')) {
+                throw new GradleException('Expected exactly one independent Nausea refusal')
+            }
+        } else if (warnings) { throw new GradleException('Unexpected Silent Gear refusal') }
+    }
+}

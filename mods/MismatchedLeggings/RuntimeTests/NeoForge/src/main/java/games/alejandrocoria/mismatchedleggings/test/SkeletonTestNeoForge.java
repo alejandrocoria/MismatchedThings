@@ -97,6 +97,11 @@ public final class SkeletonTestNeoForge {
             if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
             return;
         }
+        if (Boolean.getBoolean("leggings.test.sgAtmMaterials")) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
+                    games.alejandrocoria.mismatchedleggings.test.silentgear.AtmMaterialChecks.tick(event.getServer()));
+            return;
+        }
         if (Boolean.getBoolean("leggings.test.sgFoundation")) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.silentgear.FoundationChecks.tick(event.getServer()));

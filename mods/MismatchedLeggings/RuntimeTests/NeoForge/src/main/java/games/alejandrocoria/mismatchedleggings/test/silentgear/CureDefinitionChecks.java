@@ -19,13 +19,17 @@ final class CureDefinitionChecks {
     private CureDefinitionChecks() {}
 
     static void run() throws Exception {
+        run(List.of("poison", "wither"));
+    }
+
+    static void run(List<String> selectedTargets) throws Exception {
         var apiField = Class.forName("games.alejandrocoria.mismatchedleggings.compatibility.silentgear.SilentGearCures").getDeclaredField("api");
         apiField.setAccessible(true);
         Object api = apiField.get(null);
         require(api != null, "Cure binding is absent despite readiness");
         var admitted = api.getClass().getDeclaredMethod("admitted", Object.class, String.class);
         admitted.setAccessible(true);
-        for (String target : List.of("poison", "wither")) {
+        for (String target : selectedTargets) {
             var instance = trait("cure_" + target, 1);
             var definition = instance.getTrait();
             var effect = definition.getEffects().getFirst();

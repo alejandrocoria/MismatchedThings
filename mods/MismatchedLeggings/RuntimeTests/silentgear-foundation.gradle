@@ -178,7 +178,7 @@ tasks.register('verifySgFoundation') {
                         : !reportText.contains('Cures production:') || !reportText.contains('Cures reload:')) {
                     throw new GradleException('Missing maintained cure item-tick/reload evidence')
                 }
-                def targets = cureVariant == 'proof' ? ['poison', 'wither']
+                def targets = cureVariant == 'proof' ? ['poison', 'wither', 'nausea', 'levitation']
                         : cureVariant in ['target', 'callback'] ? ['poison'] : cureVariant == 'definition' ? ['wither'] : []
                 if (!absent && targets) {
                     if (warnings.size() != targets.size() || targets.any { target ->

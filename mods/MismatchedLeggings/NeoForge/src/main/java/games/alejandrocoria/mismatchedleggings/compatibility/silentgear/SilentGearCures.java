@@ -18,7 +18,7 @@ public final class SilentGearCures {
     private static volatile SilentGearCureApi api;
 
     private enum Cure {
-        POISON("poison"), WITHER("wither");
+        POISON("poison"), WITHER("wither"), NAUSEA("nausea"), LEVITATION("levitation");
 
         final String target;
         volatile boolean disabled;
@@ -56,7 +56,8 @@ public final class SilentGearCures {
 
     public static void tick(ItemStack root, ServerLevel level, Entity entity, EquipmentSlot slot) {
         var binding = api;
-        if (binding == null || Cure.POISON.disabled && Cure.WITHER.disabled || level.isClientSide()
+        boolean allDisabled = Cure.POISON.disabled && Cure.WITHER.disabled && Cure.NAUSEA.disabled && Cure.LEVITATION.disabled;
+        if (binding == null || allDisabled || level.isClientSide()
                 || !(entity instanceof Player player) || player.level() != level
                 || slot != EquipmentSlot.LEGS && slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND
                 || MixedLeggingsStructure.validData(root).isEmpty()) {
@@ -77,6 +78,8 @@ public final class SilentGearCures {
             Cure cure = switch (trait.id().toString()) {
                 case "silentgear:cure_poison" -> Cure.POISON;
                 case "silentgear:cure_wither" -> Cure.WITHER;
+                case "silentgear:cure_nausea" -> Cure.NAUSEA;
+                case "silentgear:cure_levitation" -> Cure.LEVITATION;
                 default -> null;
             };
             if (cure == null || cure.disabled) {

@@ -54,7 +54,9 @@ remain supplied by their upstream JARs; they are not separate catalog entries.
 - NeoForge: Advanced Netherite, AllTheModium, Aquaculture 2, Forbidden Arcanus,
   Ice and Fire Community Edition, Just Dire Things, Mystical Agriculture,
   Neo Vitae, Oritech, Roots Classic, Silent Gear, The Aether II and The Undergarden,
-  with their required libraries.
+  with their required libraries. ATM: Compat supplies AllTheModium's Silent Gear
+  materials and plates on both sides; it is an explicit optional integration,
+  not a required dependency of either source mod.
 - Both clients add JEI and Legendary Tooltips with Iceberg and Prism. NeoForge
   adds Athena only in the client, as required by Oritech. There is no REI.
 

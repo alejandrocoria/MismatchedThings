@@ -1,0 +1,97 @@
+import java.util.concurrent.TimeUnit
+
+// Optional material acquisition graph, independent of the smaller ordinary SG profiles.
+def variant = providers.gradleProperty('sgAtmVariant').getOrElse('normal')
+def refusals = ['normal': [], 'nausea-target': ['nausea'], 'levitation-target': ['levitation'],
+                'old-targets': ['poison', 'wither']]
+if (!refusals.containsKey(variant)) { throw new GradleException('Unknown ATM material variant') }
+
+def baseline = neoforge_version
+def reports = layout.buildDirectory.dir("reports/${baseline}/sg-atm-${variant}").get().asFile
+def directory = layout.buildDirectory.dir("run/${baseline}/sg-atm-${variant}/server").get().asFile
+def leggings = project(':MismatchedLeggings:NeoForge')
+def boots = project(':MismatchedBoots:NeoForge')
+def resolver = project(':MismatchedThings').testModArtifacts
+
+tasks.register('prepareSgAtmMaterials') {
+    dependsOn tasks.named('classes'), leggings.tasks.named('assemble'), boots.tasks.named('assemble')
+    doLast {
+        def selected = resolver.resolveRuntime('NeoForge', 'server', ['atmcompat', 'allthemodium', 'silentgear'])
+        selected += [leggings.tasks.named('jar').get().archiveFile.get().asFile,
+                     boots.tasks.named('jar').get().archiveFile.get().asFile]
+        def mods = new File(directory, 'mods')
+        mods.mkdirs()
+        if (mods.listFiles().any { existing -> !selected.any { it.name == existing.name } }) {
+            throw new GradleException("Unexpected file in disposable ${mods}")
+        }
+        copy { from selected; into mods }
+        reports.mkdirs()
+        ['server.ok', 'server.failure.txt', 'materials.txt'].each { new File(reports, it).delete() }
+        new File(directory, 'config').mkdirs()
+        new File(directory, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = 'online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-name=materials\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={"biome":"minecraft:plains","layers":[{"height":1,"block":"minecraft:bedrock"}],"structure_overrides":[]}\n'
+    }
+}
+neoForge.runs.create('sgAtmMaterials') {
+    server()
+    disableIdeRun()
+    gameDirectory = directory
+    programArgument('--nogui')
+    systemProperty('leggings.test.sgAtmMaterials', 'true')
+    systemProperty('leggings.test.sgAtmVariant', variant)
+    systemProperty('leggings.test.report', reports.absolutePath)
+    jvmArgument('-Xmx1G')
+}
+tasks.named('runSgAtmMaterials') { dependsOn 'prepareSgAtmMaterials' }
+
+def ownerPath = project.path
+def rootDirectory = rootProject.projectDir
+def launcher = rootProject.file('gradlew.bat')
+def offline = gradle.startParameter.offline
+def evidence = layout.buildDirectory.dir("verification/${baseline}/sg-atm-${variant}").get().asFile
+tasks.register('verifySgAtmMaterials') {
+    group = 'verification'
+    description = 'Checks real ATM Silent Gear materials and independent Leggings cures with both packaged products.'
+    doLast {
+        evidence.mkdirs()
+        def marker = new File(evidence, 'matrix.ok')
+        marker.delete()
+        def log = new File(evidence, 'server.log')
+        def arguments = [launcher.absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                         "${ownerPath}:runSgAtmMaterials", "-Pneoforge_version=${baseline}", "-PsgAtmVariant=${variant}"]
+        if (offline) { arguments.add('--offline') }
+        def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })
+                .directory(rootDirectory).redirectErrorStream(true).redirectOutput(log).start()
+        try {
+            if (!process.waitFor(300, TimeUnit.SECONDS) || process.exitValue() != 0
+                    || !new File(reports, 'server.ok').isFile() || new File(reports, 'server.failure.txt').exists()
+                    || !new File(reports, 'materials.txt').isFile()) {
+                throw new GradleException("ATM material acceptance failed: ${log}")
+            }
+            def text = new File(reports, 'materials.txt').text
+            if (text.readLines().count { it.startsWith('Material ') } != 6
+                    || !text.contains('Natural cures:') || !text.contains('Independent native controls:')
+                    || variant != 'normal' && !text.contains("Local refusal ${variant}:")) {
+                throw new GradleException("Incomplete ATM material evidence: ${log}")
+            }
+            def lines = log.readLines()
+            def errors = lines.findAll { it.contains('/ERROR]') }
+            if (errors.size() != 1 || !errors.first().contains("Couldn't parse data file 'silentgear:sapling/netherwood'")
+                    || !errors.first().contains('bonsaitrees2:sapling')) {
+                throw new GradleException("Unexpected ATM material errors: ${log}")
+            }
+            def warnings = lines.findAll { it.contains('WARN') && it.contains('Silent Gear') }
+            def targets = refusals[variant]
+            if (warnings.size() != targets.size() || targets.any { target ->
+                warnings.count { it.contains("mixed leggings cure ${target} disabled") } != 1
+            }) { throw new GradleException("Unexpected independent ATM cure refusal: ${log}") }
+            marker.text = 'packaged native material/paid composition and independent production cures passed\n'
+        } finally {
+            if (process.isAlive()) {
+                process.toHandle().descendants().forEach { it.destroyForcibly() }
+                process.destroyForcibly()
+            }
+        }
+    }
+}

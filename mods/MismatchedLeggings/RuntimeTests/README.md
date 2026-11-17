@@ -627,6 +627,10 @@ silently included in this profile's `matrix.ok`.
 
 ## Silent Gear cure contracts
 
+For naturally acquired ATM material traits and both packaged products, use the
+separate [ATM: Compat material gate](docs/silent-gear-atm.md). The smaller profiles
+below intentionally omit the addon and retain synthetic Poison/Wither acquisition.
+
 The maintained foundation profile tests packaged production Cure Poison/Wither
 through real server inventory ticks and one actual server resource reload. No
 research candidate participates:
@@ -648,8 +652,9 @@ Separate native/mixed Boots retain their own ticks, with no actor-global dedup.
 Use one isolated `sgCureVariant` per run:
 
 - `compatible`: harmless native-leaf NOPs remain admitted.
-- `proof`: only Leggings' final permission placeholder is corrupted. Both cures
-  decline with one warning each; native/Boots and Void Ward remain functional.
+- `proof`: only Leggings' final permission placeholder is corrupted. All four
+  cure lanes decline with one warning each; the two baseline acquisitions,
+  native/Boots and Void Ward remain independently checked.
 - `target`: Poison's current cancellation target becomes Luck. Admission rejects
   it before callback and permanently declines only Poison, preserving Wither.
 - `definition`: Wither's current effect list becomes unsupported; only Wither

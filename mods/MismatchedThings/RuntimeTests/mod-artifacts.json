@@ -366,5 +366,12 @@
     "filename": "lfHFW1mp-9CsaQLo2.jar",
     "sha256": "8997f01c253613df6ce19edc9f5722c315ed20f05d8994d4e40b57bc8b0672f6",
     "maven": "maven.modrinth:lfHFW1mp:9CsaQLo2"
+  },
+  {
+    "loader": "NeoForge",
+    "id": "atmcompat",
+    "filename": "atmcompat-26.1.2-1.2.0.jar",
+    "sha256": "8ee1f961b3fe03d52d4c9de1716dc6eacd6e70d747426a7723286b7b457d6045",
+    "url": "https://edge.forgecdn.net/files/9631/627/atmcompat-26.1.2-1.2.0.jar"
   }
 ]
