@@ -1,0 +1,133 @@
+import java.util.concurrent.TimeUnit
+
+// One old-data barrel world; seed without Aether, restore, then restart/reconnect over real TCP.
+def stage = providers.gradleProperty('aetherConnectedStage').getOrElse('seed')
+if (!(stage in ['seed', 'restore', 'reconnect'])) { throw new GradleException('Unknown Aether connected stage') }
+def directory = layout.buildDirectory.dir("run/${neoforge_version}/aetherConnected").get().asFile
+def reports = layout.buildDirectory.dir("reports/${neoforge_version}/aetherConnected").get().asFile
+def markers = new File(reports, stage)
+def port = providers.gradleProperty('aetherConnectedPort').getOrElse('25587')
+def products = [project(':MismatchedBoots:NeoForge'), project(':MismatchedLeggings:NeoForge')]
+def resolver = project(':MismatchedThings').testModArtifacts
+def ownerPath = project.path
+
+def checkedDelete = { File target ->
+    if (!target.canonicalFile.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+        throw new GradleException('Aether lifecycle reset escaped disposable build directory')
+    }
+    delete target
+}
+
+['server', 'client'].each { endpoint ->
+    tasks.register("prepareAetherConnected${endpoint.capitalize()}") {
+        dependsOn tasks.named('classes'), products.collect { it.tasks.named('assemble') }
+        doLast {
+            if (endpoint == 'server') {
+                if (stage == 'seed') { [directory, reports].each { checkedDelete(it) } }
+                else if (!new File(directory, 'server/world/level.dat').isFile()) {
+                    throw new GradleException('Run the old-data seed before connected acceptance')
+                }
+                checkedDelete(markers)
+            }
+            markers.mkdirs()
+            def run = new File(directory, endpoint)
+            def mods = new File(run, 'mods')
+            mods.mkdirs()
+            def artifacts = products.collect { it.tasks.named('jar').get().archiveFile.get().asFile }
+            if (stage != 'seed') { artifacts.add(resolver.resolve('NeoForge', 'aether_ii')) }
+            if (mods.listFiles().any { file -> !artifacts.any { it.name == file.name } }) {
+                throw new GradleException("Unexpected artifact in disposable ${mods}")
+            }
+            copy { from artifacts; into mods }
+            new File(markers, "${endpoint}-artifacts.txt").text = artifacts.collect {
+                it.name + ' ' + java.security.MessageDigest.getInstance('SHA-256').digest(it.bytes).encodeHex()
+            }.join('\n') + '\n'
+            new File(run, 'config').mkdirs()
+            new File(run, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+            if (endpoint == 'server') {
+                new File(run, 'eula.txt').text = 'eula=true\n'
+                new File(run, 'server.properties').text = "online-mode=false\nserver-ip=127.0.0.1\nserver-port=${port}\nlevel-name=world\nview-distance=2\nsimulation-distance=2\nmax-tick-time=-1\nlevel-type=minecraft:flat\ngenerator-settings={\"biome\":\"minecraft:plains\",\"layers\":[{\"height\":1,\"block\":\"minecraft:bedrock\"}],\"structure_overrides\":[]}\n"
+            } else {
+                new File(run, 'options.txt').text = 'soundCategory_master:0.0\nnarrator:0\npauseOnLostFocus:false\nguiScale:2\n'
+            }
+        }
+    }
+    neoForge.runs.create("aetherConnected${endpoint.capitalize()}") {
+        if (endpoint == 'server') { server(); programArgument('--nogui') }
+        else {
+            client()
+            programArgument('--quickPlayMultiplayer'); programArgument("127.0.0.1:${port}")
+            programArgument('--username'); programArgument('AetherState')
+        }
+        disableIdeRun()
+        gameDirectory = new File(directory, endpoint)
+        systemProperty('leggings.test.aetherConnected', stage)
+        systemProperty('leggings.test.aetherConnectedBaseline', reports.absolutePath)
+        systemProperty('leggings.test.report', markers.absolutePath)
+        jvmArgument('-Xmx1G')
+    }
+    tasks.named("runAetherConnected${endpoint.capitalize()}") { dependsOn "prepareAetherConnected${endpoint.capitalize()}" }
+}
+
+tasks.register('verifyAetherConnected') {
+    group = 'verification'
+    description = 'Checks old suspended Aether equipment in a real container, dedicated TCP and restart/reconnect.'
+    dependsOn tasks.named('classes'), products.collect { it.tasks.named('assemble') }
+    doLast {
+        def evidence = layout.buildDirectory.dir("verification/${neoforge_version}/aetherConnected").get().asFile
+        evidence.mkdirs()
+        new File(evidence, 'matrix.ok').delete()
+        ['seed', 'restore', 'reconnect'].each { current ->
+            int selectedPort
+            new ServerSocket(0).withCloseable { selectedPort = it.localPort }
+            def currentMarkers = new File(reports, current)
+            checkedDelete(currentMarkers)
+            def start = { String endpoint ->
+                def args = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain', '-Dorg.gradle.jvmargs=-Xmx768m',
+                            "${ownerPath}:runAetherConnected${endpoint.capitalize()}", "-Pneoforge_version=${neoforge_version}",
+                            "-PaetherConnectedStage=${current}", "-PaetherConnectedPort=${selectedPort}"]
+                if (gradle.startParameter.offline) { args.add('--offline') }
+                new ProcessBuilder(['cmd.exe', '/d', '/c'] + args.collect { it.toString() }).directory(rootProject.projectDir)
+                        .redirectErrorStream(true).redirectOutput(new File(evidence, "${current}-${endpoint}.log")).start()
+            }
+            def stop = { Process child ->
+                if (child != null && child.isAlive()) { child.toHandle().descendants().forEach { it.destroyForcibly() }; child.destroyForcibly() }
+            }
+            logger.lifecycle("Aether connected ${neoforge_version}/${current}")
+            def server = start('server')
+            Process client = null
+            try {
+                if (current != 'seed') {
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(150)
+                    while (server.isAlive() && !new File(currentMarkers, 'ready.txt').isFile()
+                            && !new File(currentMarkers, 'server.failure.txt').isFile() && System.nanoTime() < deadline) { Thread.sleep(500) }
+                    if (!new File(currentMarkers, 'ready.txt').isFile()) { throw new GradleException("Aether server not ready: ${evidence}/${current}-server.log") }
+                    client = start('client')
+                    if (!client.waitFor(300, TimeUnit.SECONDS) || client.exitValue() != 0
+                            || !new File(currentMarkers, 'client.ok').isFile() || new File(currentMarkers, 'client.failure.txt').exists()) {
+                        throw new GradleException("Aether connected client failed: ${evidence}/${current}-client.log")
+                    }
+                }
+                if (!server.waitFor(180, TimeUnit.SECONDS) || server.exitValue() != 0
+                        || !new File(currentMarkers, 'server.ok').isFile() || new File(currentMarkers, 'server.failure.txt').exists()) {
+                    throw new GradleException("Aether connected server failed: ${evidence}/${current}-server.log")
+                }
+                if (current == 'reconnect' && !new File(currentMarkers, 'rejoined.ok').isFile()) {
+                    throw new GradleException('Missing saved-player/native-effect reconnect evidence')
+                }
+                ['server', 'client'].each { endpoint ->
+                    if (endpoint == 'client' && client == null) { return }
+                    def lines = new File(evidence, "${current}-${endpoint}.log").readLines()
+                    def errors = lines.findAll { it.contains('/ERROR]') }
+                    def toast = errors.findAll { it.contains('NeoForgeDevDistCleaner/DISTXFORM')
+                            && it.endsWith('Attempted to load class net.minecraft.client.gui.components.toasts.Toast which is not present on the dedicated server') }
+                    if (toast.size() != (endpoint == 'server' && current != 'seed' ? 2 : 0) || !(errors - toast).isEmpty()
+                            || lines.any { it.contains('Aether II ') && (it.contains('disabled:') || it.contains('unavailable:')) }) {
+                        throw new GradleException("Unexpected Aether lifecycle diagnostics: ${evidence}/${current}-${endpoint}.log")
+                    }
+                }
+            } finally { stop(client); stop(server) }
+        }
+        new File(evidence, 'matrix.ok').text = '12 real old suspended roots; native world restoration, both equipped orientations, TCP and restart/reconnect\n'
+    }
+}

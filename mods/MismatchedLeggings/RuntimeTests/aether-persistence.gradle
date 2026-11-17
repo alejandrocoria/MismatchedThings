@@ -5,18 +5,7 @@ def stage = providers.gradleProperty('aetherPersistenceStage').getOrElse('active
 if (!(stage in ['absent', 'absentagain', 'active', 'restore', 'reopened'])) {
     throw new GradleException("Unknown Aether persistence stage ${stage}")
 }
-def selected = providers.gradleProperty('aetherRuntimeJar').map { rootProject.file(it) }
-def nativeJar = providers.provider {
-    if (!selected.isPresent()) {
-        return project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'aether_ii')
-    }
-    def file = selected.get()
-    if (!file.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
-            != 'f4156bd72b4c85235aa81c571a54646fab264a015b9a44116fe7ccb427b3a2e4') {
-        throw new GradleException("Aether runtime override must be the audited alpha.4.2 binary: ${file}")
-    }
-    return file
-}
+def nativeJar = providers.provider { project(':MismatchedThings').testModArtifacts.resolve('NeoForge', 'aether_ii') }
 def absent = stage.startsWith('absent')
 def reports = layout.buildDirectory.dir("reports/${neoforge_version}/aetherPersistence").get().asFile
 def directory = layout.buildDirectory.dir("run/${neoforge_version}/aetherPersistence/${stage}").get().asFile
@@ -61,7 +50,6 @@ neoForge.runs.create('aetherPersistenceServer') {
     gameDirectory = directory
     programArgument('--nogui')
     systemProperty('leggings.test.aetherPersistence', stage)
-    systemProperty('leggings.test.aetherPersistenceRecord', selected.isPresent().toString())
     systemProperty('leggings.test.report', reports.absolutePath)
     jvmArgument('-Xmx1G')
 }
@@ -79,7 +67,6 @@ tasks.register('verifyAetherPersistence') {
             def arguments = [rootProject.file('gradlew.bat').absolutePath, '--no-daemon', '--console=plain',
                              '-Dorg.gradle.jvmargs=-Xmx768m', "${project.path}:runAetherPersistenceServer",
                              "-PaetherPersistenceStage=${phase}", "-Pneoforge_version=${neoforge_version}"]
-            if (selected.isPresent()) { arguments.add("-PaetherRuntimeJar=${selected.get().absolutePath}") }
             if (gradle.startParameter.offline) { arguments.add('--offline') }
             logger.lifecycle("Production Aether persistence ${neoforge_version}/${phase}")
             def process = new ProcessBuilder(['cmd.exe', '/d', '/c'] + arguments.collect { it.toString() })

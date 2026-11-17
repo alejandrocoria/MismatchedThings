@@ -1766,7 +1766,7 @@ core's focused unchanged API-v1 consumer evolution check.
 ## Aether II old-format persistence
 
 ```powershell
-.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherPersistence '-PaetherRuntimeJar=build/compatibility-refresh/NeoForge-aether_ii-26.1.2-alpha.4.2-neoforge.jar' --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherPersistence --offline --console=plain
 ```
 
 The maintained [profile](aether-persistence.gradle) loads both current packaged
@@ -1777,15 +1777,10 @@ replacement decoder or prototype hook. The five independent server JVMs cover
 manual world is created by this profile. This is complete codec-file persistence,
 not the later native-world/container or connected-client acceptance.
 
-Until the catalog update, the example explicitly selects the official
-[alpha.4.2 hVPk1MVE JAR](https://modrinth.com/mod/JD2NSu5O/version/hVPk1MVE),
-which must already exist at the supplied path. The optional root-relative or
-absolute `aetherRuntimeJar` file is checked against the audited SHA-256; a missing
-or altered explicit file fails rather than using another artifact. Without it,
-runtime uses the ordinary catalog resolver/cache. Never copy an indev artifact
-as an unverified substitute. The persistence driver has no native API imports;
-ordinary fixture compilation stays on the catalog baseline, with no duplicate
-old/new Aether classes placed on one classpath.
+The ordinary shared catalog resolves and verifies the pinned alpha.4.2 JAR,
+reusing the cache offline. No candidate path or indev artifact is needed.
+The persistence driver has no native API imports, and no duplicate old/new
+Aether classes are placed on one classpath.
 
 All 12 inputs cover both products/orientations, absent/default versus explicit
 set components, unequal and duplicate sets, charms/tier, names, damage, repair
@@ -1800,9 +1795,42 @@ Reports/markers are in `NeoForge/build/reports/<baseline>/aetherPersistence/`;
 bounded logs and `matrix.ok` are in the matching `build/verification/` directory.
 Exactly the two existing native server `Toast` errors are expected in present-mod
 stages; other ERRORs fail. No full tooltip calls are made: Nitrogen's separate
-server `I18n` defect is neither suppressed nor repaired. Set/tooltip guards may
-still decline alpha.4.2 until their later implementation blocks; this gate claims
-only old-data migration/recovery. Run sequentially with other runtime profiles.
+server `I18n` defect is neither suppressed nor repaired. This gate claims only
+old-data migration/recovery; run sequentially with other runtime profiles.
+
+### Aether II old-container and connected acceptance
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherConnected --offline --console=plain
+```
+
+The [bounded lifecycle](aether-connected.gradle) uses both current packaged
+products, one disposable world and three independent server JVMs. `seed` loads
+the 12 frozen alpha.4.1 roots **without Aether** through production capture and
+saves their suspended state in a real barrel. `restore` reinstalls pinned Aether
+and reads that barrel from disk, comparing complete restored roots against the
+independent expected record encoding. It does not regenerate or replace stored
+items with expected values. This is old suspended-container restoration, not an
+old Aether runtime or a separately authored alpha.4.1 active-world fixture.
+
+`restore` and `reconnect` each connect a hidden-before-creation, muted real client.
+Ordinary inventory/equipment packets must preserve all 12 complete roots, source
+histories, names, wear, charms, tiers and custom data. Both mixed orientations
+equip together with a native Burrukai helmet: native count=3 and knockback=.2
+must agree on server/client. Client normal/F3+H tooltip reads must not alter state.
+An ordinary current-family Burrukai mixed pair separately verifies worn transient
+attribute rows; custom set overrides in frozen sources do not invent a new
+presentation policy. Old equipped roots are restored before saving player state.
+Disconnect/restart/reconnect also verifies complete saved player equipment before
+the test changes it. No integrated server, replacement packet or presentation
+hook is used. The two native server Toast diagnostics remain visible; other
+errors or compatibility refusals fail.
+
+World/client data are confined to `NeoForge/build/run/<baseline>/aetherConnected/`;
+snapshots and markers are in `build/reports/<baseline>/aetherConnected/`, and
+bounded process logs plus `matrix.ok` in the matching `build/verification/` tree.
+The seed resets only this disposable profile. It never touches indev worlds and
+does not create another owner manual showcase world.
 
 ## Aether II production gameplay
 

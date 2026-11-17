@@ -776,6 +776,13 @@ This smoke
 does not certify every native effect body, physical input, multiplayer server
 topologies, native Forge screen UX or deferred presentation/transactions.
 
+The alpha.4.2 update additionally maintains a bounded joint
+[old-container/dedicated-client gate](../../MismatchedLeggings/RuntimeTests/README.md#aether-ii-old-container-and-connected-acceptance):
+`:MismatchedLeggings:RuntimeTests:NeoForge:verifyAetherConnected`.
+It uses the shared pinned artifact, complete frozen old Boots
+and Leggings data, a real barrel and saved player state across separate JVMs.
+This is independent of the original six-root flight smoke above.
+
 ## Aether II Alkahest — production
 
 ```powershell

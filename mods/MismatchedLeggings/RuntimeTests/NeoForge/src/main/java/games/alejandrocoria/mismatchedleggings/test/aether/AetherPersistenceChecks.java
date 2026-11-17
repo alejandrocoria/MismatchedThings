@@ -44,9 +44,7 @@ public final class AetherPersistenceChecks {
             boolean absent = STAGE.startsWith("absent");
             require(ModList.get().isLoaded("aether_ii") != absent, "Native mod not actually removed/reinstalled");
             boolean record = !absent && nativeRecord(server);
-            if (!absent && Boolean.getBoolean("leggings.test.aetherPersistenceRecord")) {
-                require(record, "Candidate did not supply the record codec");
-            }
+            require(absent || record, "Pinned native binary did not supply the record codec");
             String input = switch (STAGE) {
                 case "absentagain" -> "absent-roots.json";
                 case "restore" -> "absentagain-roots.json";
@@ -183,7 +181,7 @@ public final class AetherPersistenceChecks {
     }
 
     /** Independent expected field shape, not a call to the production migration helper. */
-    private static JsonElement expected(JsonElement input, boolean record) {
+    static JsonElement expected(JsonElement input, boolean record) {
         var result = input.deepCopy().getAsJsonObject();
         if (!record) { return result; }
         var patch = result.getAsJsonObject("components");
@@ -242,15 +240,15 @@ public final class AetherPersistenceChecks {
         return (DataComponentType<Object>) BuiltInRegistries.DATA_COMPONENT_TYPE.getOptional(Identifier.parse(key)).orElseThrow();
     }
 
-    private static ItemStack decode(MinecraftServer server, JsonElement raw) {
+    static ItemStack decode(MinecraftServer server, JsonElement raw) {
         return ItemStack.CODEC.parse(server.registryAccess().createSerializationContext(JsonOps.INSTANCE), raw).getOrThrow();
     }
 
-    private static JsonElement encode(MinecraftServer server, ItemStack root) {
+    static JsonElement encode(MinecraftServer server, ItemStack root) {
         return ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(JsonOps.INSTANCE), root).getOrThrow();
     }
 
-    private static JsonArray frozen() throws Exception {
+    static JsonArray frozen() throws Exception {
         try (var stream = AetherPersistenceChecks.class.getResourceAsStream("/aether-alpha.4.1-mixed.json")) {
             require(stream != null, "Frozen alpha.4.1 fixture missing");
             return JsonParser.parseString(new String(stream.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonArray();

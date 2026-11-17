@@ -6,7 +6,6 @@ def fixtureFiles = objects.newInstance(FixtureFileOperations).files
 def productionJar = project("${modPath}:NeoForge").tasks.named('jar').flatMap { it.archiveFile }
 def fixtureJar = tasks.named('jar').flatMap { it.archiveFile }
 def runBounded = mismatchedModProject.ext.runBoundedGradleTask
-def selected = providers.gradleProperty('aetherRuntimeJar').map { rootProject.file(it) }
 def absent = providers.gradleProperty('aetherTooltipAbsent').map { it.toBoolean() }.getOrElse(false)
 def variant = providers.gradleProperty('aetherTooltipVariant').getOrElse('live')
 if (!(variant in ['live', 'chains', 'attributechanged', 'tierchanged', 'charmfactorymissing', 'charmfactoryfailure', 'charmpopulatedfailure',
@@ -77,15 +76,7 @@ tasks.register('prepareAetherTooltipClient') {
             throw new GradleException('Aether tooltip acceptance requires its disposable seed world')
         }
 
-        def jars = testMods.resolveAll('NeoForge', artifacts.findAll { !selected.isPresent() || it != 'aether_ii' }).toList()
-        if (!absent && selected.isPresent()) {
-            def file = selected.get()
-            if (!file.isFile() || java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
-                    != 'f4156bd72b4c85235aa81c571a54646fab264a015b9a44116fe7ccb427b3a2e4') {
-                throw new GradleException("Aether runtime override must be the audited alpha.4.2 binary: ${file}")
-            }
-            jars.add(file)
-        }
+        def jars = testMods.resolveAll('NeoForge', artifacts)
         fixtureFiles.delete { delete client }
         fixtureFiles.copy {
             from(new File(seed, 'world'))
@@ -108,8 +99,7 @@ tasks.register('verifyAetherIITooltips') {
     doLast {
         ['Seed', 'Client'].each { phase ->
             def log = new File(reports.get().asFile, "${phase.toLowerCase(Locale.ROOT)}-process.log")
-            runBounded("${modPath}:RuntimeTests:NeoForge:runAetherTooltip${phase}", log, 300,
-                    selected.isPresent() ? ["-PaetherRuntimeJar=${selected.get().absolutePath}".toString()] : [])
+            runBounded("${modPath}:RuntimeTests:NeoForge:runAetherTooltip${phase}", log, 300)
             if (phase == 'Client') {
                 def failure = new File(reports.get().asFile, 'aether-ii-tooltip-failure.txt')
                 if (failure.isFile()) {

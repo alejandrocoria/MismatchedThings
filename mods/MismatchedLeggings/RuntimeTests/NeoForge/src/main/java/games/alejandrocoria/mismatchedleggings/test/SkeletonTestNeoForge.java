@@ -13,6 +13,12 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod("leggings_skeleton_test")
 public final class SkeletonTestNeoForge {
     public SkeletonTestNeoForge(IEventBus bus) {
+        if (!games.alejandrocoria.mismatchedleggings.test.aether.AetherConnectedChecks.stage().isEmpty()) {
+            NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
+                    games.alejandrocoria.mismatchedleggings.test.aether.AetherConnectedChecks.tick(event.getServer()));
+            if (FMLEnvironment.getDist().isClient()) { bus.addListener(SkeletonClientNeoForge::setup); }
+            return;
+        }
         if (System.getProperty("leggings.test.aetherPersistence") != null) {
             NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) ->
                     games.alejandrocoria.mismatchedleggings.test.aether.AetherPersistenceChecks.tick(event.getServer()));

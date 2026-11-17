@@ -48,6 +48,7 @@ apply from: '../client-profiles.gradle'
 apply from: '../recovery.gradle'
 apply from: '../aether-gameplay.gradle'
 apply from: '../aether-persistence.gradle'
+apply from: '../aether-connected.gradle'
 apply from: '../aether-tooltips.gradle'
 apply from: '../undergarden-state.gradle'
 
