@@ -21,6 +21,11 @@ public interface NeoVitaeHellforgedService {
         return false;
     }
 
+    /** Disposable item-render view; never modifies the root or historical source. */
+    default ItemStack sourceView(ItemStack root, ItemStack source) {
+        return source.copy();
+    }
+
     @FunctionalInterface
     interface SourceProvider {
         /** Read-only sources, or null for invalid data/unavailable rules. The side is logical, not physical. */

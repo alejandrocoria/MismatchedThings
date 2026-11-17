@@ -142,6 +142,22 @@ public final class NeoForgeNeoVitaeHellforgedService implements NeoVitaeHellforg
         return (recognized || !inherited) && (sources.left().is(ELIGIBLE) || sources.right().is(ELIGIBLE));
     }
 
+    @Override
+    public ItemStack sourceView(ItemStack root, ItemStack source) {
+        var view = source.copy();
+        var type = marker;
+        if (type == null || !providers.containsKey(root.getItem()) || !ready(root)) {
+            return view;
+        }
+        var sources = sources(root);
+        // Inherited upgrades keep their original asymmetric colors. Only a root-only
+        // upgrade needs temporary native markers on eligible item-render copies.
+        if (sources != null && Boolean.TRUE.equals(root.get(type)) && !inherited(sources, type) && source.is(ELIGIBLE)) {
+            view.set(type, true);
+        }
+        return view;
+    }
+
     private static final class Probe {
         private boolean observed;
     }

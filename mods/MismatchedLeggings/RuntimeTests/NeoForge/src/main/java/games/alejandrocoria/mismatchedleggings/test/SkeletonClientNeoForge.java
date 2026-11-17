@@ -11,6 +11,10 @@ public final class SkeletonClientNeoForge {
     }
 
     public static void setup(FMLClientSetupEvent event) {
+        if (Boolean.getBoolean("leggings.test.neoVitaePresentation")) {
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) -> NeoVitaeHellforgedClient.tick(Minecraft.getInstance()));
+            return;
+        }
         if (!games.alejandrocoria.mismatchedleggings.test.aether.AetherConnectedChecks.stage().isEmpty()) {
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post tick) ->
                     games.alejandrocoria.mismatchedleggings.test.aether.AetherConnectedClient.tick(Minecraft.getInstance()));

@@ -53,6 +53,15 @@ public final class NeoVitaeChecks {
             }
             finished = true;
             require(ModList.get().isLoaded("neovitae"), "Missing pinned Neo Vitae fixture");
+            if (Boolean.getBoolean("leggings.test.neoVitaePresentation")) {
+                if (Boolean.getBoolean("leggings.test.neoVitaeRestart")) {
+                    NeoVitaeHellforgedLifecycle.restart(server);
+                } else {
+                    NeoVitaeHellforgedLifecycle.save(server);
+                }
+                SkeletonChecks.passed("server");
+                return;
+            }
             if (Boolean.getBoolean("leggings.test.neoVitaeHellforged")) {
                 NeoVitaeHellforgedChecks.run(server);
                 SkeletonChecks.passed("server");

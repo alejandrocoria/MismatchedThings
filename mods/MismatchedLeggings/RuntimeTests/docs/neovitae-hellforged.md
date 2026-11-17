@@ -1,11 +1,12 @@
-# Neo Vitae Hellforged gameplay
+# Neo Vitae Hellforged gameplay and presentation
 
-Maintained, dedicated-server-only acceptance for both products. Use the current
+Maintained acceptance for both products. The gameplay selection is dedicated-server-only;
+the presentation selection adds a separate-JVM reopen and a hidden/muted client. Use the current
 packaged JARs and the shared catalog's `neovitae` dependency closure, never indev
 mods, generated replacement classes or research init scripts. NeoForge `.114` is
 the native baseline; the pinned Modonomicon requires `.109` or newer.
 
-## Commands
+## Gameplay commands
 
 From the repository root, with Java 25 and prepared artifact caches:
 
@@ -69,5 +70,41 @@ their existing meanings.
 
 This gameplay gate does not certify direct-root icon tint, tooltips, native set
 upgrade progression, ritual animation/cadence or a new saved-container reopen.
-Presentation/persistence and consolidated native-set/owner acceptance have separate
-completion boundaries. No screenshots or automated client are launched here.
+No screenshots or automated client are launched by the gameplay selection.
+
+## Presentation and persistence
+
+```powershell
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyNeoVitaePresentation --offline --console=plain
+.\gradlew.bat :MismatchedLeggings:RuntimeTests:NeoForge:verifyNeoVitaePresentation -PleggingsBoots=true --offline --console=plain
+```
+
+Use the same prepared artifacts; run sequentially. This extends the existing
+packaged profile runner, not the research init script or another release graph.
+Evidence is under `NeoForge/build/reports/26.1.2.114/neoVitaePresentation[-boots]/`
+and the corresponding `build/verification/` directory. The runner requires fresh
+`server.ok`, `client.ok`, `matrix.ok`, plus:
+
+- `neovitae-hellforged-lifecycle.txt` and `neovitae-hellforged-saved.json`:
+  12 full samples per slot in a real barrel: native control, both orientations of
+  one inherited/direct source, both inherited/direct sources, legacy inverse,
+  explicit false, and ordinary full-model fallback. Direct/inherited roots retain
+  charge, Blood Mending, damage and glint through paid trim smithing and anvil rename;
+  repeated recomposition retains bonus identities/amounts.
+- `neovitae-hellforged-restart.txt`: another game JVM loads that same barrel and
+  compares complete saved roots/history before querying native recognition and
+  effective attributes. No recipe recreation or silent replacement is used.
+- `neovitae-hellforged-client.txt`: a client opens a disposable copy of the saved
+  world, waits for actual synchronized product rules, and reads its barrel. Native
+  model resolution compares GUI/both-hand tint submissions and split/fallback GUI
+  states. Direct-root views add only eligible temporary native markers; inherited
+  asymmetry, explicit false and synchronized `OWNER`/missing-rule cases are retained.
+  Native equipped layer textures/colors/trims/glint and normal/Shift/F3+H root
+  tooltips are checked without changing complete root/source state. All checks run
+  again after actual resource reload.
+
+The client reuses the test-only pre-GLFW hidden-window hook, muted disposable options
+and disabled NeoForge early window. No screenshot gallery or owner world is created.
+The client/reopen evidence is not a TCP/pixel certification or the owner's consolidated
+acceptance. Native set-upgrade/Deus regression, applicable floor checks, owner review
+and full spike retirement remain separate closeout work.

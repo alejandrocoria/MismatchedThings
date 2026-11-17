@@ -7,6 +7,7 @@ import games.alejandrocoria.mismatchedleggings.mixin.client.ItemStackRenderState
 import games.alejandrocoria.mismatchedleggings.mixin.client.LayerRenderStateAccessor;
 import games.alejandrocoria.mismatchedthings.api.client.geometry.BakedQuadClipper;
 import games.alejandrocoria.mismatchedthings.api.client.geometry.QuadClipper;
+import games.alejandrocoria.mismatchedthings.api.compatibility.neovitae.NeoVitaeHellforgedService;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
@@ -47,10 +48,10 @@ public final class MixedLeggingsItemRenderer {
 
         boolean foil = stack.hasFoil();
         // Item artwork is front-facing: the wearer's left appears on the viewer's right.
-        LayerRange left = appendSource(output, sourceView(data.left().source(), foil), resolver,
+        LayerRange left = appendSource(output, sourceView(stack, data.left().source(), foil), resolver,
                                        displayContext, level, owner, seed, QuadClipper.Side.RIGHT);
         boolean oversized = output.isOversizedInGui();
-        LayerRange right = appendSource(output, sourceView(data.right().source(), foil), resolver,
+        LayerRange right = appendSource(output, sourceView(stack, data.right().source(), foil), resolver,
                                         displayContext, level, owner, seed, QuadClipper.Side.LEFT);
 
         oversized |= output.isOversizedInGui();
@@ -84,11 +85,22 @@ public final class MixedLeggingsItemRenderer {
             @Nullable Level level,
             @Nullable ItemOwner owner,
             int seed) {
+        return prepareGui(ItemStack.EMPTY, data, foil, resolver, level, owner, seed);
+    }
+
+    public static GuiPreparation prepareGui(
+            ItemStack root,
+            MixedLeggingsData data,
+            boolean foil,
+            ItemModelResolver resolver,
+            @Nullable Level level,
+            @Nullable ItemOwner owner,
+            int seed) {
         TrackingItemStackRenderState left = new TrackingItemStackRenderState();
         TrackingItemStackRenderState right = new TrackingItemStackRenderState();
-        resolver.updateForTopItem(left, sourceView(data.left().source(), foil),
+        resolver.updateForTopItem(left, sourceView(root, data.left().source(), foil),
                                   ItemDisplayContext.GUI, level, owner, seed);
-        resolver.updateForTopItem(right, sourceView(data.right().source(), foil),
+        resolver.updateForTopItem(right, sourceView(root, data.right().source(), foil),
                                   ItemDisplayContext.GUI, level, owner, seed);
         return new GuiPreparation(left, right,
                                   clipAtomically(left, wholeSource(left, QuadClipper.Side.RIGHT),
@@ -115,6 +127,12 @@ public final class MixedLeggingsItemRenderer {
 
     public static ItemStack sourceView(ItemStack source, boolean foil) {
         ItemStack view = source.copy();
+        view.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
+        return view;
+    }
+
+    public static ItemStack sourceView(ItemStack root, ItemStack source, boolean foil) {
+        ItemStack view = NeoVitaeHellforgedService.INSTANCE.sourceView(root, source);
         view.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, foil);
         return view;
     }

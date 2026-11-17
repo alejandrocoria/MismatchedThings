@@ -211,6 +211,12 @@ inherited recognition under `SHARE`; explicit root values and native true result
 are retained. No save rewrite or replacement ritual/attribute engine is installed.
 Fabric/optional absence are no-ops. This binding is independent of Spiritus infusion.
 
+`sourceView(root, source)` returns a disposable copy for item rendering. A root-only
+Hellforged upgrade supplies the native marker to eligible copies only when neither
+historical source is already upgraded. Inherited asymmetric colors and equipped
+textures remain native; root/source data is never changed. Product GUI and hand
+renderers pass the root through their additive overloads; older helpers remain available.
+
 ### Optional Undergarden infusion (since 1.1.0)
 
 `api.compatibility.undergarden.RogdoriumInfusionService` initializes Rogdorium

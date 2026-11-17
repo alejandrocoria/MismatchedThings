@@ -64,7 +64,7 @@ abstract class GuiGraphicsExtractorMixin {
 
         GuiGraphicsExtractor graphics = (GuiGraphicsExtractor) (Object) this;
         MixedLeggingsItemRenderer.GuiPreparation prepared = MixedLeggingsItemRenderer.prepareGui(
-                data, stack.hasFoil(), minecraft.getItemModelResolver(), level, owner, seed);
+                stack, data, stack.hasFoil(), minecraft.getItemModelResolver(), level, owner, seed);
         if (prepared.left().isEmpty() || prepared.right().isEmpty()) {
             // Native extraction will use the pair-wide diagnostic model in appendLayers.
             return;

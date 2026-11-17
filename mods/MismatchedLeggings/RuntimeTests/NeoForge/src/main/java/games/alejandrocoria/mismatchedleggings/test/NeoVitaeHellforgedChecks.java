@@ -219,7 +219,7 @@ final class NeoVitaeHellforgedChecks {
         return result;
     }
 
-    private static List<ItemStack> pair(ItemStack left, ItemStack right, EquipmentSlot slot) {
+    static List<ItemStack> pair(ItemStack left, ItemStack right, EquipmentSlot slot) {
         if (slot == EquipmentSlot.FEET) {
             return Boots.pair(left, right);
         }
@@ -227,7 +227,7 @@ final class NeoVitaeHellforgedChecks {
         return List.of(pair.primary(), pair.inverse());
     }
 
-    private static List<ItemStack> sources(ItemStack root, EquipmentSlot slot) {
+    static List<ItemStack> sources(ItemStack root, EquipmentSlot slot) {
         if (slot == EquipmentSlot.FEET) {
             return Boots.sources(root);
         }
@@ -235,7 +235,7 @@ final class NeoVitaeHellforgedChecks {
         return List.of(data.left().source(), data.right().source());
     }
 
-    private static ItemStack recompose(ItemStack root, EquipmentSlot slot) {
+    static ItemStack recompose(ItemStack root, EquipmentSlot slot) {
         var sources = sources(root, slot);
         return slot == EquipmentSlot.FEET ? Boots.recompose(root, sources)
                 : MixedLeggingsRecomposer.recompose(root, sources.getFirst(), sources.get(1));
@@ -250,7 +250,7 @@ final class NeoVitaeHellforgedChecks {
         return new ComponentRules(previous.durability(), previous.repairCost(), declarations, new ComponentRuleSet(effective));
     }
 
-    private static AutoCloseable policy(EquipmentSlot slot, String policy) throws Exception {
+    static AutoCloseable policy(EquipmentSlot slot, String policy) throws Exception {
         if (slot == EquipmentSlot.FEET) {
             return Boots.policy(policy);
         }
@@ -259,7 +259,7 @@ final class NeoVitaeHellforgedChecks {
         return () -> CompositionRuleState.installServer(old);
     }
 
-    private static void preview(EquipmentSlot slot, String policy) {
+    static void preview(EquipmentSlot slot, String policy) {
         if (slot == EquipmentSlot.FEET) {
             Boots.preview(policy);
         } else if (policy == null) {
@@ -274,7 +274,7 @@ final class NeoVitaeHellforgedChecks {
         require(ItemStack.matches(expected.getFirst(), actual.getFirst()) && ItemStack.matches(expected.get(1), actual.get(1)), "Source history mutated");
     }
 
-    private static double total(ItemStack root, Holder<Attribute> attribute) {
+    static double total(ItemStack root, Holder<Attribute> attribute) {
         return root.getAttributeModifiers().modifiers().stream().filter(entry -> entry.attribute().equals(attribute))
                 .mapToDouble(entry -> entry.modifier().amount()).sum();
     }

@@ -23,6 +23,9 @@ config="leggings-allthemodium-test.mixins.json"
 config="leggings-aquaculture-test.mixins.json"
 
 [[mixins]]
+config="leggings-neovitae-test.mixins.json"
+
+[[mixins]]
 config="leggings-forbidden-test.mixins.json"
 
 [[mixins]]
