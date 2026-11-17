@@ -1,0 +1,5 @@
+gradle.afterProject { candidate ->
+    if (candidate.path == ':MismatchedLeggings:RuntimeTests:NeoForge') {
+        candidate.apply from: candidate.rootProject.file('spikes/neovitae-update/runtime.gradle')
+    }
+}
