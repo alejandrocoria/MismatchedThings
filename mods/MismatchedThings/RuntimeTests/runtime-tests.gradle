@@ -80,6 +80,9 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
                     'assets/mismatchedthings/blockstates/mismatched_workbench.json',
                     'assets/mismatchedthings/items/mismatched_workbench.json',
                     'assets/mismatchedthings/models/block/mismatched_workbench.json',
+                    'assets/mismatchedthings/sounds.json',
+                    'assets/mismatchedthings/sounds/workbench_split.ogg',
+                    'CREDITS.md',
                     'assets/mismatchedthings/textures/gui/sprites/container/mismatched_workbench/arrows.png',
                     'data/mismatchedthings/recipe/mismatched_workbench.json',
                     'data/mismatchedthings/loot_table/blocks/mismatched_workbench.json',
@@ -88,6 +91,12 @@ def packaging = tasks.register('verifyWorkbenchArtifact') {
             ]
             required.each { name ->
                 if (!(name in names)) { throw new GradleException("Missing core entry: ${name}") }
+            }
+            def sounds = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('assets/mismatchedthings/sounds.json')))
+            def split = sounds['block.mismatched_workbench.split']
+            if (split?.sounds != ['mismatchedthings:workbench_split']
+                    || split?.subtitle != 'subtitles.mismatchedthings.workbench_split') {
+                throw new GradleException('Wrong workbench cutting sound definition')
             }
             def model = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('assets/mismatchedthings/models/block/mismatched_workbench.json')))
             model.textures.values().findAll { it.startsWith('mismatchedthings:') }.each { texture ->
@@ -204,6 +213,7 @@ tasks.register('verifyWorkbench') {
                     }
                     def reports = outputDirectory.dir("reports/${baseline}/${name}").get().asFile
                     if (process.exitValue() != 0 || !new File(reports, "${phase}.ok").isFile()
+                            || (withRecipes && phase == 'client' && !new File(reports, 'sound.ok').isFile())
                             || new File(reports, 'failure.txt').exists()) {
                         throw new GradleException("Workbench profile failed: ${log}")
                     }

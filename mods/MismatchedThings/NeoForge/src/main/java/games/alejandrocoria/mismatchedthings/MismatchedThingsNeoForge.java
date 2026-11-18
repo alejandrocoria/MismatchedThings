@@ -9,6 +9,7 @@ import games.alejandrocoria.mismatchedthings.internal.compatibility.neovitae.Neo
 import games.alejandrocoria.mismatchedthings.internal.compatibility.undergarden.NeoForgeRogdoriumInfusionService;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -25,16 +26,19 @@ public final class MismatchedThingsNeoForge {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MismatchedWorkbench.MOD_ID);
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MismatchedWorkbench.MOD_ID);
     private static final DeferredRegister<RecipeType<?>> RECIPES = DeferredRegister.create(Registries.RECIPE_TYPE, MismatchedWorkbench.MOD_ID);
+    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, MismatchedWorkbench.MOD_ID);
 
     public MismatchedThingsNeoForge(IEventBus bus) {
         var block = BLOCKS.register("mismatched_workbench", WorkbenchContent::createBlock);
         ITEMS.registerSimpleBlockItem(block, WorkbenchContent::itemProperties);
         MENUS.register("mismatched_workbench", WorkbenchContent::createMenu);
         RECIPES.register("mismatched_workbench", MismatchedWorkbench::recipeType);
+        SOUNDS.register(WorkbenchContent.SPLIT_SOUND.location().getPath(), () -> WorkbenchContent.SPLIT_SOUND);
         BLOCKS.register(bus);
         ITEMS.register(bus);
         MENUS.register(bus);
         RECIPES.register(bus);
+        SOUNDS.register(bus);
         NeoForgeNeoVitaeInfusionService.initialize(bus);
         NeoForgeNeoVitaeHellforgedService.initialize(bus);
         NeoForgeRogdoriumInfusionService.initialize(bus);

@@ -2,7 +2,9 @@ package games.alejandrocoria.mismatchedthings.internal;
 
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
@@ -12,6 +14,9 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 
 public final class WorkbenchContent {
+    public static final SoundEvent SPLIT_SOUND = SoundEvent.createVariableRangeEvent(
+            Identifier.fromNamespaceAndPath(MismatchedWorkbench.MOD_ID, "block.mismatched_workbench.split"));
+
     private WorkbenchContent() {
     }
 

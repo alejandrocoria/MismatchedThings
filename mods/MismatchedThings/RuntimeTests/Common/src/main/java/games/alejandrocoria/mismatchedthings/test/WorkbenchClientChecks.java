@@ -55,6 +55,8 @@ public final class WorkbenchClientChecks {
                     }
                     if (!WorkbenchCoexistence.ACTIVE) {
                         SharedTooltipChecks.verify(client);
+                        WorkbenchChecks.require(client.getSoundManager().getSoundEvent(WorkbenchSoundChecks.SOUND_ID) != null,
+                                "Client did not load the workbench cutting sound");
                     }
                     onServer(client, () -> {
                         var server = client.getSingleplayerServer();
@@ -171,8 +173,11 @@ public final class WorkbenchClientChecks {
                     WorkbenchChecks.require(!menu.isCommitted() && menu.getSlot(0).isActive(), "Completed transaction did not unlock inputs");
                     ready = false;
                     onServer(client, () -> {
-                        WorkbenchChecks.verifyCloseCleanup(client.getSingleplayerServer().getPlayerList().getPlayers().getFirst(),
-                                WorkbenchCoexistence.routes().get(routeIndex));
+                        var player = client.getSingleplayerServer().getPlayerList().getPlayers().getFirst();
+                        if (!WorkbenchCoexistence.ACTIVE) {
+                            WorkbenchSoundChecks.verify(player);
+                        }
+                        WorkbenchChecks.verifyCloseCleanup(player, WorkbenchCoexistence.routes().get(routeIndex));
                         ready = true;
                     });
                     stage = 8;

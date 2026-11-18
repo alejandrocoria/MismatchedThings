@@ -1,4 +1,5 @@
 * Added: A workbench hint to mixed boots without source data.
+* Added: A cutting sound when taking the first result from the Mismatched Workbench.
 * Added: Hellforging support for mixed boots from Neo Vitae on NeoForge.
 * Added: Awakened Supremium set bonus support for mixed boots from Mystical Agriculture.
 * Added: Rogdorium infusing and recharging of mismatched boots in The Undergarden's Infuser.

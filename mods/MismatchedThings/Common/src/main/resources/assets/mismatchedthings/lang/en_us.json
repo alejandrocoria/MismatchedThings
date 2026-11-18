@@ -1,5 +1,6 @@
 {
     "block.mismatchedthings.mismatched_workbench": "Mismatched Workbench",
     "container.mismatchedthings.mismatched_workbench": "Mismatched Workbench",
+    "subtitles.mismatchedthings.workbench_split": "Mismatched Workbench cuts",
     "disconnect.mismatchedthings.loader_mismatch": "This server requires NeoForge. Mismatched mods must use the same loader on the client and server."
 }

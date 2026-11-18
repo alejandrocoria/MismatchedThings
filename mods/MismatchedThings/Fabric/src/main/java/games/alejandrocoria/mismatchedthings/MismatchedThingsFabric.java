@@ -16,6 +16,7 @@ public final class MismatchedThingsFabric implements ModInitializer {
         Registry.register(BuiltInRegistries.ITEM, MismatchedWorkbench.ID, new BlockItem(block, WorkbenchContent.itemProperties()));
         Registry.register(BuiltInRegistries.MENU, MismatchedWorkbench.ID, WorkbenchContent.createMenu());
         Registry.register(BuiltInRegistries.RECIPE_TYPE, MismatchedWorkbench.ID, MismatchedWorkbench.recipeType());
+        Registry.register(BuiltInRegistries.SOUND_EVENT, WorkbenchContent.SPLIT_SOUND.location(), WorkbenchContent.SPLIT_SOUND);
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
                              .register(output -> output.accept(MismatchedWorkbench.item()));
     }

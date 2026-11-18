@@ -1,0 +1,6 @@
+{
+    "block.mismatched_workbench.split": {
+        "subtitle": "subtitles.mismatchedthings.workbench_split",
+        "sounds": ["mismatchedthings:workbench_split"]
+    }
+}

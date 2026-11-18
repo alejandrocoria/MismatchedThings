@@ -297,7 +297,15 @@ recipe reload and JEI/REI acceptance. Preserve it when making additive 1.x chang
 The menu uses ordinary Minecraft transport, commits both inputs once when the
 first output is taken, and retains the other paid output until collected or
 returned by normal close handling. The block has no private saved inventory.
+The first extraction also plays a positional cutting sound at the station;
+collecting the remaining result or closing the menu does not repeat it.
 
 Compatible additive core updates must retain the previous consumer API. A new
 product using that API must not require an old product to update; incompatible
 major versions may require an intentional consumer update.
+
+## Credits
+
+The workbench cutting sound uses **KNIFE - 1** by **SamuelGremaud**, published on
+Freesound under CC0. See the bundled [sound credits](Common/src/main/resources/CREDITS.md)
+for the source and license.

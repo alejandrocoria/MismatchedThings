@@ -169,6 +169,11 @@ Each loader suite checks the emitted artifact and runs four bounded profiles:
   payment, inverse retention/input locking and complete server/client output
   stack equality after both real server transfers. Closing a preview returns
   only the original inputs; closing after payment preserves the remaining result.
+  Server-side checks with the connected recipe client also observe the native
+  cutting-sound broadcast: one at the station on the first extraction in either order, for normal/shift clicks,
+  none for previews, failed transfers, the second output or close cleanup.
+  Packaging includes the sound definition, Ogg and credits; standalone clients
+  require the sound definition to load.
 
 The synthetic recipe names vanilla helmet outputs; it is not a sibling product.
 Its serializer, data and admission are enabled only in the recipe profiles.
