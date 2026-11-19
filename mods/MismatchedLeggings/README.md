@@ -109,6 +109,9 @@ separate from other family mods. Mod identity and version live in
 Build both loader artifacts with `:MismatchedLeggings:Fabric:assemble` and
 `:MismatchedLeggings:NeoForge:assemble`.
 
+For promotional photos and Replay Mod recordings, use the separate
+[shared Fabric media client](../../DevelopmentRuns/media/README.md), not the ordinary indev client.
+
 The packaged product verification entry is `:MismatchedLeggings:verifyProduct`;
 its required inputs and coverage are documented in the runtime guide.
 

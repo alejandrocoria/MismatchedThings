@@ -8,7 +8,7 @@ JARs manually is not required. This directory is tooling, not a published mod.
 ## Launch
 
 Import the repository root Gradle project in IntelliJ. Four additional native
-run configurations are generated; existing per-product and media runs remain:
+run configurations are generated alongside the existing per-product runs:
 
 | IntelliJ configuration | Gradle task |
 | --- | --- |
@@ -16,6 +16,12 @@ run configurations are generated; existing per-product and media runs remain:
 | MismatchedThings — Fabric Server | `:DevelopmentRuns:Fabric:runServer` |
 | MismatchedThings — NeoForge Client | `:DevelopmentRuns:NeoForge:runClient` |
 | MismatchedThings — NeoForge Server | `:DevelopmentRuns:NeoForge:runServer` |
+
+The separate [Fabric media client](media/README.md) adds
+**MismatchedThings — Fabric Media** (`:DevelopmentRuns:Fabric:runMedia`) for
+family-wide screenshots and Replay Mod. It uses `Fabric/runs/media`, all current
+family outputs and the photo packs, without this environment's compatibility
+collection. Its appearance generator still targets boots only.
 
 Run Gradle commands from the repository root, for example:
 

@@ -5,9 +5,10 @@ import java.security.MessageDigest
 import java.util.zip.ZipFile
 
 // Photo-only dependencies: never add these configurations to a production classpath or publication.
-def mediaSources = mismatchedModProject.file('media')
+def mediaProject = project(':DevelopmentRuns')
+def mediaSources = mediaProject.file('media')
 def pins = new JsonSlurper().parse(new File(mediaSources, 'artifacts.json'))
-def mediaBuild = mismatchedModProject.layout.buildDirectory.dir('media')
+def mediaBuild = mediaProject.layout.buildDirectory.dir('media')
 def mediaRun = layout.projectDirectory.dir('runs/media')
 def fileOperations = objects.newInstance(FixtureFileOperations).files
 def artifactConfigurations = [:]
@@ -23,6 +24,7 @@ pins.each { id, pin ->
         url = pin.url.substring(0, pin.url.lastIndexOf('/') + 1)
         patternLayout { artifact('[artifact].[ext]') }
         metadataSources { artifact() }
+        // Keep the original cache coordinates for these unchanged photo-only pins.
         content { includeModule('mismatchedboots.media', id) }
     }
     dependencies.add(configuration.name, "mismatchedboots.media:${id}:pinned") {
@@ -230,7 +232,15 @@ tasks.register('prepareMediaClient') {
     group = 'media'
     description = 'Prepares the isolated media client, preserving its worlds, recordings and settings.'
     dependsOn prepareMediaPacks, mediaDatapack, prepareMediaReplay
+    dependsOn familyProjects.values().collect { it.tasks.named('classes') }
+    dependsOn tasks.named('mediaClasses'), tasks.named('clientClasses')
     doLast {
+        // Native/IDE discovery can include empty launcher output directories as well.
+        (sourceSets.main.output.files + sourceSets.client.output.files + sourceSets.media.output.files).each { output ->
+            if (!output.isDirectory() && !output.mkdirs()) {
+                throw new GradleException("Cannot create media launcher output directory: ${output}")
+            }
+        }
         File directory = mediaRun.asFile
         directory.mkdirs()
         File replay = mediaBuild.get().file("mods/${pins.replay.filename}").asFile
@@ -263,11 +273,37 @@ tasks.register('prepareMediaClient') {
 
 loom.runs.create('media') {
     client()
-    setConfigName("${mod_name} — Fabric Media")
+    source('media')
+    setConfigName('MismatchedThings — Fabric Media')
     ideConfigGenerated(true)
     runDir('runs/media')
+    programArgs('--username', 'Dev')
 }
 
 tasks.named('runMedia') {
     dependsOn tasks.named('prepareMediaClient')
+}
+
+tasks.register('verifyMediaRuntime') {
+    group = 'verification'
+    description = 'Checks that the media client loads current family outputs without the joint compatibility collection.'
+    dependsOn tasks.named('prepareMediaClient')
+    doLast {
+        def classpath = sourceSets.media.runtimeClasspath.files
+        def familyOutputs = familyProjects.values().collectMany { it.sourceSets.main.output.files.toList() }
+        if (!classpath.containsAll(familyOutputs) || classpath.any { !it.exists() }) {
+            throw new GradleException('Missing family or launcher output on the media classpath')
+        }
+        if (classpath.any { it in commonDevelopmentMods.files || it in clientDevelopmentMods.files }) {
+            throw new GradleException('Joint compatibility mods leaked into the media classpath')
+        }
+        if (classpath.any { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('mismatched')
+                && it.name.endsWith('.jar') }) {
+            throw new GradleException('Packaged family mod duplicated a media development output')
+        }
+        def report = layout.buildDirectory.file('development/media-classpath.txt').get().asFile
+        report.parentFile.mkdirs()
+        report.text = classpath.collect { it.absolutePath }.sort().join('\n') + '\n'
+        logger.lifecycle("Verified media isolation with ${familyProjects.size()} current family projects")
+    }
 }

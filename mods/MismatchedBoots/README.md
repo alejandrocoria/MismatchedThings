@@ -107,7 +107,7 @@ Build both loader artifacts with `:MismatchedBoots:Fabric:assemble` and
 `:MismatchedBoots:NeoForge:assemble`.
 
 For promotional photos and Replay Mod recordings, use the separate
-[Fabric media client](media/README.md), not the ordinary indev client.
+[shared Fabric media client](../../DevelopmentRuns/media/README.md), not the ordinary indev client.
 
 The publication entry is `:MismatchedBoots:publishMod` (both loaders). Package
 verification, the pinned runtime artifact catalog and startup/network acceptance

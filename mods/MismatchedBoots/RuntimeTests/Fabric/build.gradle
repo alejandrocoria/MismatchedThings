@@ -293,7 +293,7 @@ apply from: file('../../gradle/rules-protocol-fixtures.gradle')
 apply from: file('../../gradle/fabric-advanced-netherite-tests.gradle')
 apply from: file('../../gradle/fabric-betterx-tests.gradle')
 apply from: file('../../gradle/fabric-create-fly-tests.gradle')
-apply from: file('../../gradle/fabric-media-tests.gradle')
+apply from: rootProject.file('DevelopmentRuns/media/fabric-media-tests.gradle')
 tasks.register('preparePersistenceRestart', Delete) {
     group = 'verification'
     description = 'Deletes the dedicated persistence world before the write run.'

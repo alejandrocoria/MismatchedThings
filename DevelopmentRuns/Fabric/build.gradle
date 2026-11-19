@@ -45,17 +45,27 @@ dependencies { clientRuntimeOnly clientDevelopmentMods }
 tasks.named('runClient') { dependsOn tasks.named('prepareClient') }
 tasks.named('runServer') { dependsOn tasks.named('prepareServer') }
 
+// Media shares the current family outputs, but not the joint client's external content mods.
+sourceSets {
+    media {
+        compileClasspath += sourceSets.client.compileClasspath
+        runtimeClasspath += sourceSets.client.runtimeClasspath - commonDevelopmentMods - clientDevelopmentMods
+    }
+}
+
+apply from: '../media/fabric-media.gradle'
+
 // Loom's Application configurations otherwise run only IntelliJ Make, not Gradle preparation.
 tasks.named('ideaSyncTask') {
     doLast {
         def directory = rootProject.file('.idea/runConfigurations')
-        ['Client', 'Server'].each { side ->
+        [Client: 'prepareClient', Server: 'prepareServer', Media: 'prepareMediaClient'].each { side, task ->
             def name = "MismatchedThings — Fabric ${side}"
             def filename = name.replaceAll('[^a-zA-Z0-9$_]', '_') + '_DevelopmentRuns_Fabric.xml'
             def target = new File(directory, filename)
             def document = new groovy.xml.XmlParser().parse(target)
             def method = document.configuration.method[0]
-            def preparation = ":DevelopmentRuns:Fabric:prepare${side}"
+            def preparation = ":DevelopmentRuns:Fabric:${task}"
             if (!method.option.any { it.@name == 'Gradle.BeforeRunTask' && it.@tasks == preparation }) {
                 method.appendNode('option', [name: 'Gradle.BeforeRunTask', enabled: 'true',
                         tasks: preparation, externalProjectPath: '$PROJECT_DIR$',

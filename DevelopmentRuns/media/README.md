@@ -4,27 +4,33 @@ An isolated photo/replay client, not a gameplay or compatibility test instance.
 Run commands from the repository root:
 
 ```powershell
-.\gradlew.bat :MismatchedBoots:Fabric:prepareMediaClient
+.\gradlew.bat :DevelopmentRuns:Fabric:prepareMediaClient
 ```
 
-Reload the Gradle project in IntelliJ, then select **MismatchedBoots — Fabric Media**.
-Preparation is explicit for IntelliJ: repeat it after a fresh checkout, deleting
-generated files, or updating these sources. Alternatively,
-`:MismatchedBoots:Fabric:runMedia` prepares and launches in one command.
+Reload the Gradle project in IntelliJ, then select **MismatchedThings — Fabric Media**.
+Both IntelliJ and `:DevelopmentRuns:Fabric:runMedia` prepare the packs, pinned
+Replay Mod and current family outputs before launching.
 
 ## World setup
 
 The run directory is [Fabric/runs/media](../Fabric/runs/media). Its worlds,
 settings, recordings, downloaded JARs and generated packs are ignored by Git.
+Existing Boots media data can be moved as a whole from
+`mods/MismatchedBoots/Fabric/runs/media` while the client is closed. Do not merge
+two populated media directories or overwrite worlds/recordings. Pack IDs,
+function IDs and model IDs are unchanged, so existing worlds and recordings
+keep using the same resources after the move.
 The normal `runs/client` and `runs/server` directories are not used or modified.
-Boots, its bundled core and normal required Fabric dependencies come from Loom;
-the only additional mod placed in `media/mods` is the pinned Replay Mod.
+Things, Boots and Leggings load from their current project outputs with their
+required runtime libraries. The joint client's compatibility collection and
+viewers are not loaded automatically. Preparation adds only the pinned Replay
+Mod to `media/mods`, preserving any manually installed extras.
 
 1. Create a creative world with commands enabled. In **Data Packs**, use **Open
    Pack Folder**, copy `runs/media/packs/mismatchedmedia-datapack.zip` into that
    folder, enable it and finish creating the world. For an existing media world,
    copy the ZIP to that world's `datapacks` folder and run `/reload`.
-2. The **MismatchedBoots photo stand-ins** resource pack is enabled on first
+2. The **MismatchedThings photo stand-ins** resource pack is enabled on first
    preparation. If you have changed resource packs since, enable it manually.
    Preparation preserves existing `options.txt` and other user settings.
 3. Run `/function mismatchedmedia:all` for a labeled shulker box per mod and a
@@ -53,6 +59,9 @@ These are **iron boots with photo-only equipment and item-model components**,
 not ports of the original mods. They keep iron stats and the `minecraft:iron_boots`
 registry ID; neither the original mods nor their gameplay code are loaded.
 The source snapshots in mixed boots preserve their distinct appearances.
+Leggings is available for vanilla combinations in the same client; the photo
+appearance generator and catalog still target boots only. Other slots will be
+added separately, not inferred from these presets.
 
 ## Catalog
 
@@ -100,8 +109,8 @@ It also selects the boot items for each mod, with optional `equipment` and `id`
 overrides. Preparation verifies the JARs and reads their selected equipment
 layers, untrimmed base item models and native item names. It copies only the
 referenced textures/animation metadata and generates the adapted resource JSON,
-translations and commands under `build/media`. [resourcepack](resourcepack) and
-[datapack](datapack) provide the pack metadata. `build/media/catalog.json` lists
+translations and commands under `DevelopmentRuns/build/media`. [resourcepack](resourcepack) and
+[datapack](datapack) provide the pack metadata. `DevelopmentRuns/build/media/catalog.json` lists
 the generated IDs and source components for validation.
 
 To add a preset, add the pinned artifact and its `boots` entry after verifying
@@ -122,12 +131,13 @@ or included in the automated test's dependency set.
 ## Targeted validation
 
 ```powershell
+.\gradlew.bat :DevelopmentRuns:Fabric:verifyMediaRuntime
 .\gradlew.bat :MismatchedBoots:RuntimeTests:Fabric:verifyMediaClient
 ```
 
 This opt-in test uses a disposable, hidden and muted client under
-`RuntimeTests/Fabric/build/run/mediaClient`, not the photo world's save folder.
-Its JARs and packs come from the pinned downloads staged in `build/media`,
+`mods/MismatchedBoots/RuntimeTests/Fabric/build/run/mediaClient`, not the photo world's save folder.
+Its JARs and packs come from the pinned downloads staged in `DevelopmentRuns/build/media`,
 never from the user's `runs/media/mods` or ordinary indev instance.
 It loads the actual packs, runs the catalog command, checks all 41 contained
 boot variants and their inventory models, combines each with Neptunium in both
@@ -137,6 +147,11 @@ The two targeted screenshots are `media-equipped` and `media-replay-equipped`
 in the client GameTest screenshot output. It does not validate video export,
 FFmpeg, elaborate camera paths or every Replay Mod control.
 
+The boot-specific recording fixture remains in Boots until the generator is
+expanded; it consumes these shared preparation tasks, not the old Boots media
+directory. `verifyMediaRuntime` separately checks all current family outputs and
+the absence of the joint compatibility selection on the interactive media classpath.
+
 The initial two-appearance acceptance passed on Minecraft 26.1.2 with Replay
 Mod 2.6.28 on 2026-10-28, including visual inspection in the actual replay.
 The owner also confirmed that mixed boots appear correctly in playback.
@@ -145,3 +160,9 @@ in their 13 boxes on server and client, all inventory models resolved without
 missing sprites, each variant retained its source data in both mixed
 orientations, and the Neptunium/Unobtainium recording/playback gate passed.
 This is not an exhaustive manual visual review of every equipped preset.
+
+Shared-location acceptance passed on 2026-11-19: all three current family
+outputs are present on the isolated media classpath, the ordinary joint Fabric
+client/server classpaths retain their selections, IntelliJ prepares the new
+media launch, and the existing 41-appearance recording/playback fixture passes
+using the relocated shared packs and pins.
