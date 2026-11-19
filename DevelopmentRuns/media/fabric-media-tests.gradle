@@ -5,18 +5,25 @@ evaluationDependsOn(mediaClient.path)
 def mediaProject = project(':DevelopmentRuns')
 def mediaPins = new groovy.json.JsonSlurper().parse(mediaProject.file('media/artifacts.json'))
 def mediaBuild = mediaProject.layout.buildDirectory.dir('media')
+def leggings = project(':MismatchedLeggings:Fabric')
+evaluationDependsOn(leggings.path)
+def leggingsJar = leggings.tasks.named('jar').flatMap { it.archiveFile }
 def replayJar = mediaBuild.map { it.file("mods/${mediaPins.replay.filename}") }
 def runDirectory = layout.buildDirectory.dir('run/mediaClient')
 def fileOperations = objects.newInstance(FixtureFileOperations).files
 
 sourceSets {
     mediaTest {
+        java.srcDir mediaProject.file('media/src/test/java')
+        resources.srcDir mediaProject.file('media/src/test/resources')
         compileClasspath += sourceSets.gametest.compileClasspath + sourceSets.gametest.output
+        compileClasspath += files(leggings.sourceSets.main.output)
         compileClasspath += files(replayJar)
     }
 }
 tasks.named('compileMediaTestJava') {
     dependsOn mediaClient.tasks.named('prepareMediaReplay')
+    dependsOn leggings.tasks.named('classes')
 }
 def mediaTestJar = tasks.register('mediaTestJar', Jar) {
     archiveClassifier = 'media-test'
@@ -28,7 +35,7 @@ loom.runs.create('mediaClient') {
     source('gametest')
     ideConfigGenerated(false)
     property('fabric.client.gametest')
-    property('fabric.client.gametest.modid', 'mismatchedboots_media_test')
+    property('fabric.client.gametest.modid', 'mismatchedmedia_test')
     property('mismatchedboots.test.hideClientWindow', 'true')
     runDir('build/run/mediaClient')
     vmArg('-Xmx2G')
@@ -36,7 +43,7 @@ loom.runs.create('mediaClient') {
 
 def prepare = tasks.register('prepareMediaClientTest', Delete) {
     dependsOn mediaTestJar, project("${modPath}:Fabric").tasks.named('jar'), mediaClient.tasks.named('prepareMediaReplay'),
-            mediaClient.tasks.named('prepareMediaPacks'), mediaClient.tasks.named('mediaDatapack')
+            mediaClient.tasks.named('prepareMediaPacks'), mediaClient.tasks.named('mediaDatapack'), leggings.tasks.named('jar')
     delete runDirectory
     doLast {
         File directory = runDirectory.get().asFile
@@ -45,7 +52,7 @@ def prepare = tasks.register('prepareMediaClientTest', Delete) {
         new File(directory, 'options.txt').text =
                 'soundCategory_master:0.0\nresourcePacks:["vanilla","file/mismatchedmedia"]\n'
         fileOperations.copy {
-            from replayJar, mediaTestJar.flatMap { it.archiveFile }
+            from replayJar, mediaTestJar.flatMap { it.archiveFile }, leggingsJar
             into new File(directory, 'mods')
         }
         fileOperations.copy {

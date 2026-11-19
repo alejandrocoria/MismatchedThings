@@ -77,8 +77,11 @@ def prepareMediaPacks = tasks.register('prepareMediaPacks') {
         def allFunctions = []
         def boxColors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink',
                          'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown']
-        pins.findAll { id, pin -> pin.boots }.eachWithIndex { id, pin, groupIndex ->
+        def pieces = [boots: [slot: 'feet', layer: 'humanoid'],
+                      leggings: [slot: 'legs', layer: 'humanoid_leggings']]
+        pins.findAll { id, pin -> pin.boots || pin.leggings }.eachWithIndex { id, pin, groupIndex ->
             def group = []
+            def equipmentAssets = [:]
             new ZipFile(resolveArtifact(id)).withCloseable { archive ->
                 def readJson = { String path ->
                     def entry = archive.getEntry(path)
@@ -122,75 +125,86 @@ def prepareMediaPacks = tasks.register('prepareMediaPacks') {
                     String path = "assets/${id}/lang/${language}.json"
                     nativeNames[language] = archive.getEntry(path) == null ? [:] : readJson(path)
                 }
-                pin.boots.each { definition ->
-                    def boot = definition instanceof String ? [item: definition] : definition
-                    String material = boot.item.replaceFirst(/_boots$/, '')
-                    String name = boot.id ?: "${id}_${material}"
-                    String modelId = "mismatchedmedia:${name}_boots"
-                    def layers = readJson("assets/${id}/equipment/${boot.equipment ?: material}.json").layers
-                    if (!layers.humanoid) {
-                        throw new GradleException("No standard humanoid layer for media boot ${id}:${boot.item}")
-                    }
-                    // The photo catalog targets adult player legs, not other equipment slots or baby mobs.
-                    def equippedLayers = [humanoid: layers.humanoid.collect { layer ->
-                        def result = new LinkedHashMap(layer)
-                        result.texture = copyTexture(layer.texture, 'entity/equipment/humanoid/')
-                        result
-                    }]
-                    writeJson(new File(resources, "assets/mismatchedmedia/equipment/${name}.json"),
-                            [layers: equippedLayers])
-
-                    // Photo presets intentionally use the untrimmed base, not NeoForge-only item-model dispatch.
-                    def base = readJson("assets/${id}/items/${boot.item}.json").model
-                    while (base.type != 'minecraft:model') {
-                        base = base.base_model ?: base.fallback
-                        if (base == null) {
-                            throw new GradleException("Unsupported media item model for ${id}:${boot.item}")
+                pieces.each { kind, piece ->
+                    // Give each piece its own rows without changing the existing order of boots.
+                    int firstSlot = (group.size() + 8).intdiv(9) * 9
+                    (pin[kind] ?: []).eachWithIndex { definition, index ->
+                        int boxSlot = firstSlot + index
+                        if (boxSlot >= 27) {
+                            throw new GradleException("Media catalog for ${id} exceeds one shulker box")
                         }
-                    }
-                    def originalModel = base.model.split(':', 2)
-                    def model = readJson("assets/${originalModel[0]}/models/${originalModel[1]}.json")
-                    if (!(model.parent in ['minecraft:item/generated', 'item/generated']) || model.elements) {
-                        throw new GradleException("Media boot requires a custom item model: ${id}:${boot.item}")
-                    }
-                    model.textures = model.textures.collectEntries { key, texture ->
-                        [(key): copyTexture(texture, '')]
-                    }
-                    writeJson(new File(resources, "assets/mismatchedmedia/models/item/${name}_boots.json"), model)
-                    def itemModel = new LinkedHashMap(base)
-                    itemModel.model = "mismatchedmedia:item/${name}_boots"
-                    writeJson(new File(resources, "assets/mismatchedmedia/items/${name}_boots.json"), [model: itemModel])
+                        def armor = definition instanceof String ? [item: definition] : definition
+                        String material = armor.item.replaceFirst(/_${kind}$/, '')
+                        String name = armor.id ?: "${id}_${material}"
+                        String modelId = "mismatchedmedia:${name}_${kind}"
+                        String layerType = piece.layer
+                        def layers = readJson("assets/${id}/equipment/${armor.equipment ?: material}.json").layers
+                        if (!layers[layerType]) {
+                            throw new GradleException("No standard ${layerType} layer for media ${id}:${armor.item}")
+                        }
+                        // Both pieces can share one material asset, retaining the original boots asset ID.
+                        def equippedLayers = equipmentAssets.computeIfAbsent(name) { [:] }
+                        equippedLayers[layerType] = layers[layerType].collect { layer ->
+                            def result = new LinkedHashMap(layer)
+                            result.texture = copyTexture(layer.texture, "entity/equipment/${layerType}/")
+                            result
+                        }
+                        writeJson(new File(resources, "assets/mismatchedmedia/equipment/${name}.json"),
+                                [layers: equippedLayers])
 
-                    String translation = "item.mismatchedmedia.${name}_boots"
-                    String originalKey = "item.${id}.${boot.item}"
-                    if (!nativeNames.en_us[originalKey]) {
-                        throw new GradleException("Missing media item name ${originalKey}")
+                        // Photo presets intentionally use the untrimmed base, not NeoForge-only item-model dispatch.
+                        def base = readJson("assets/${id}/items/${armor.item}.json").model
+                        while (base.type != 'minecraft:model') {
+                            base = base.base_model ?: base.fallback
+                            if (base == null) {
+                                throw new GradleException("Unsupported media item model for ${id}:${armor.item}")
+                            }
+                        }
+                        def originalModel = base.model.split(':', 2)
+                        def model = readJson("assets/${originalModel[0]}/models/${originalModel[1]}.json")
+                        if (!(model.parent in ['minecraft:item/generated', 'item/generated']) || model.elements) {
+                            throw new GradleException("Media armor requires a custom item model: ${id}:${armor.item}")
+                        }
+                        model.textures = model.textures.collectEntries { key, texture ->
+                            [(key): copyTexture(texture, '')]
+                        }
+                        writeJson(new File(resources, "assets/mismatchedmedia/models/item/${name}_${kind}.json"), model)
+                        def itemModel = new LinkedHashMap(base)
+                        itemModel.model = "mismatchedmedia:item/${name}_${kind}"
+                        writeJson(new File(resources, "assets/mismatchedmedia/items/${name}_${kind}.json"), [model: itemModel])
+
+                        String translation = "item.mismatchedmedia.${name}_${kind}"
+                        String originalKey = "item.${id}.${armor.item}"
+                        if (!nativeNames.en_us[originalKey]) {
+                            throw new GradleException("Missing media item name ${originalKey}")
+                        }
+                        translations.each { language, names ->
+                            names[translation] = nativeNames[language][originalKey] ?: nativeNames.en_us[originalKey]
+                        }
+                        def components = [
+                                'minecraft:item_model': modelId,
+                                'minecraft:item_name': [translate: translation],
+                                'minecraft:equippable': [slot: piece.slot, equip_sound: 'minecraft:item.armor.equip_iron',
+                                                         asset_id: "mismatchedmedia:${name}"]]
+                        String item = "minecraft:iron_${kind}"
+                        File function = new File(datapack, "data/mismatchedmedia/function/${kind}/${name}.mcfunction")
+                        function.parentFile.mkdirs()
+                        function.text = give(item, components) + '\n'
+                        def entry = [id: name, mod: id, kind: kind, item: item, layer: layerType, boxSlot: boxSlot,
+                                     components: components, textures: equippedLayers[layerType]*.texture]
+                        group.add(entry)
+                        catalog.add(entry)
                     }
-                    translations.each { language, names ->
-                        names[translation] = nativeNames[language][originalKey] ?: nativeNames.en_us[originalKey]
-                    }
-                    def components = [
-                            'minecraft:item_model': modelId,
-                            'minecraft:item_name': [translate: translation],
-                            'minecraft:equippable': [slot: 'feet', equip_sound: 'minecraft:item.armor.equip_iron',
-                                                     asset_id: "mismatchedmedia:${name}"]]
-                    File function = new File(datapack, "data/mismatchedmedia/function/boots/${name}.mcfunction")
-                    function.parentFile.mkdirs()
-                    function.text = give('minecraft:iron_boots', components) + '\n'
-                    def entry = [id: name, mod: id, components: components,
-                                 textures: equippedLayers.humanoid*.texture]
-                    group.add(entry)
-                    catalog.add(entry)
                 }
             }
             File functions = new File(datapack, 'data/mismatchedmedia/function')
             new File(functions, 'mods').mkdirs()
             new File(functions, "mods/${id}.mcfunction").text = group.collect {
-                "function mismatchedmedia:boots/${it.id}"
+                "function mismatchedmedia:${it.kind}/${it.id}"
             }.join('\n') + '\n'
             new File(functions, 'catalog').mkdirs()
-            def container = group.withIndex().collect { boot, slot ->
-                [slot: slot, item: [id: 'minecraft:iron_boots', count: 1, components: boot.components]]
+            def container = group.collect { armor ->
+                [slot: armor.boxSlot, item: [id: armor.item, count: 1, components: armor.components]]
             }
             new File(functions, "catalog/${id}.mcfunction").text = give(
                     "minecraft:${boxColors[groupIndex]}_shulker_box",
@@ -203,13 +217,14 @@ def prepareMediaPacks = tasks.register('prepareMediaPacks') {
             writeJson(new File(resources, "assets/mismatchedmedia/lang/${language}.json"), names)
         }
         writeJson(mediaBuild.get().file('catalog.json').asFile, catalog)
-        logger.lifecycle("Prepared ${catalog.size()} media boot appearances from ${allFunctions.size() - 1} mods")
+        logger.lifecycle("Prepared ${catalog.size()} media appearances (${catalog.count { it.kind == 'boots' }} boots, "
+                + "${catalog.count { it.kind == 'leggings' }} leggings) from ${allFunctions.size() - 1} mods")
     }
 }
 
 def mediaDatapack = tasks.register('mediaDatapack', Zip) {
     group = 'media'
-    description = 'Packages the photo boot commands for installation in a media world.'
+    description = 'Packages the photo boots and leggings commands for installation in a media world.'
     dependsOn prepareMediaPacks
     from mediaBuild.map { it.dir('datapack') }
     destinationDirectory = mediaBuild
@@ -306,4 +321,10 @@ tasks.register('verifyMediaRuntime') {
         report.text = classpath.collect { it.absolutePath }.sort().join('\n') + '\n'
         logger.lifecycle("Verified media isolation with ${familyProjects.size()} current family projects")
     }
+}
+
+tasks.register('verifyMediaClient') {
+    group = 'verification'
+    description = 'Checks the shared boots/leggings photo catalog and current-version Replay Mod playback.'
+    dependsOn tasks.named('verifyMediaRuntime'), ':MismatchedBoots:RuntimeTests:Fabric:verifyMediaClient'
 }

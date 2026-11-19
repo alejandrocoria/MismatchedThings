@@ -1,6 +1,6 @@
 {
     "pack": {
-        "description": "MismatchedThings photo boot commands",
+        "description": "MismatchedThings photo armor commands",
         "min_format": [101, 1],
         "max_format": [101, 1]
     }

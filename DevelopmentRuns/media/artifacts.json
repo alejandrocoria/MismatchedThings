@@ -16,6 +16,12 @@
                 "item": "neptunium_boots",
                 "id": "neptunium"
             }
+        ],
+        "leggings": [
+            {
+                "item": "neptunium_leggings",
+                "id": "neptunium"
+            }
         ]
     },
     "allthemodium": {
@@ -29,6 +35,14 @@
             "vibranium_boots",
             {
                 "item": "unobtainium_boots",
+                "id": "unobtainium"
+            }
+        ],
+        "leggings": [
+            "allthemodium_leggings",
+            "vibranium_leggings",
+            {
+                "item": "unobtainium_leggings",
                 "id": "unobtainium"
             }
         ]
@@ -47,6 +61,14 @@
             "neptune_boots",
             "sentry_boots",
             "zanite_boots"
+        ],
+        "leggings": [
+            "arkenium_leggings",
+            "beast_pelt_leggings",
+            "burrukai_plate_leggings",
+            "gravitite_leggings",
+            "neptune_leggings",
+            "zanite_leggings"
         ]
     },
     "justdirethings": {
@@ -60,6 +82,12 @@
             "blazegold_boots",
             "celestigem_boots",
             "eclipsealloy_boots"
+        ],
+        "leggings": [
+            "ferricore_leggings",
+            "blazegold_leggings",
+            "celestigem_leggings",
+            "eclipsealloy_leggings"
         ]
     },
     "mysticalagriculture": {
@@ -75,6 +103,14 @@
             "imperium_boots",
             "supremium_boots",
             "awakened_supremium_boots"
+        ],
+        "leggings": [
+            "inferium_leggings",
+            "prudentium_leggings",
+            "tertium_leggings",
+            "imperium_leggings",
+            "supremium_leggings",
+            "awakened_supremium_leggings"
         ]
     },
     "neovitae": {
@@ -85,6 +121,9 @@
         "label": "Neo Vitae",
         "boots": [
             "sentient_boots"
+        ],
+        "leggings": [
+            "sentient_leggings"
         ]
     },
     "undergarden": {
@@ -97,6 +136,12 @@
             "cloggrum_boots",
             "froststeel_boots",
             "utherium_boots"
+        ],
+        "leggings": [
+            "cloggrum_leggings",
+            "froststeel_leggings",
+            "utherium_leggings",
+            "ancient_leggings"
         ]
     },
     "iceandfire": {
@@ -107,6 +152,9 @@
         "label": "Ice and Fire",
         "boots": [
             "sheep_boots"
+        ],
+        "leggings": [
+            "sheep_leggings"
         ]
     },
     "advancednetherite": {
@@ -120,6 +168,12 @@
             "netherite_gold_boots",
             "netherite_emerald_boots",
             "netherite_diamond_boots"
+        ],
+        "leggings": [
+            "netherite_iron_leggings",
+            "netherite_gold_leggings",
+            "netherite_emerald_leggings",
+            "netherite_diamond_leggings"
         ]
     },
     "betterend": {
@@ -132,6 +186,11 @@
             "thallasium_boots",
             "terminite_boots",
             "aeternium_boots"
+        ],
+        "leggings": [
+            "thallasium_leggings",
+            "terminite_leggings",
+            "aeternium_leggings"
         ]
     },
     "betternether": {
@@ -144,6 +203,11 @@
             "cincinnasite_boots",
             "nether_ruby_boots",
             "flaming_ruby_boots"
+        ],
+        "leggings": [
+            "cincinnasite_leggings",
+            "nether_ruby_leggings",
+            "flaming_ruby_leggings"
         ]
     },
     "create": {
@@ -162,6 +226,9 @@
                 "item": "netherite_diving_boots",
                 "equipment": "netherite"
             }
+        ],
+        "leggings": [
+            "cardboard_leggings"
         ]
     },
     "forbidden_arcanus": {
@@ -173,6 +240,10 @@
         "boots": [
             "draco_arcanus_boots",
             "tyr_boots"
+        ],
+        "leggings": [
+            "draco_arcanus_leggings",
+            "tyr_leggings"
         ]
     }
 }

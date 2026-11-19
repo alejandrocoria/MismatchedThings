@@ -21,7 +21,8 @@ The separate [Fabric media client](media/README.md) adds
 **MismatchedThings — Fabric Media** (`:DevelopmentRuns:Fabric:runMedia`) for
 family-wide screenshots and Replay Mod. It uses `Fabric/runs/media`, all current
 family outputs and the photo packs, without this environment's compatibility
-collection. Its appearance generator still targets boots only.
+collection. Its appearance generator supplies boots and leggings together in
+one labeled shulker box per source mod.
 
 Run Gradle commands from the repository root, for example:
 
