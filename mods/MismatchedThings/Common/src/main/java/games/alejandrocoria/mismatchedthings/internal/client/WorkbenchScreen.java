@@ -1,14 +1,19 @@
 package games.alejandrocoria.mismatchedthings.internal.client;
 
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
+import games.alejandrocoria.mismatchedthings.internal.WorkbenchContributors;
 import games.alejandrocoria.mismatchedthings.internal.WorkbenchMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CyclingSlotBackground;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
 
 public final class WorkbenchScreen extends AbstractContainerScreen<WorkbenchMenu> {
     private static final Identifier BACKGROUND_TEXTURE =
@@ -18,6 +23,9 @@ public final class WorkbenchScreen extends AbstractContainerScreen<WorkbenchMenu
             MismatchedWorkbench.MOD_ID, "container/mismatched_workbench/arrows");
     private static final int BACKGROUND_COLOR = 0xFFC6C6C6;
     private static final int DISABLED_COLOR = 0x80666666;
+
+    private final CyclingSlotBackground leftInputIcon = new CyclingSlotBackground(WorkbenchMenu.INPUT_START);
+    private final CyclingSlotBackground rightInputIcon = new CyclingSlotBackground(WorkbenchMenu.INPUT_START + 1);
 
     public WorkbenchScreen(
             WorkbenchMenu menu, Inventory inventory, Component title) {
@@ -29,6 +37,20 @@ public final class WorkbenchScreen extends AbstractContainerScreen<WorkbenchMenu
     protected void init() {
         super.init();
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
+    }
+
+    @Override
+    public void containerTick() {
+        super.containerTick();
+        ItemStack input = this.menu.getSlot(WorkbenchMenu.INPUT_START).getItem();
+        if (input.isEmpty()) {
+            input = this.menu.getSlot(WorkbenchMenu.INPUT_START + 1).getItem();
+        }
+        List<Identifier> icons = this.menu.isCommitted() ? List.of() : WorkbenchContributors.emptySlotIcons(input);
+        // Native backgrounds reset their index when the list changes. Feed both the same sequence,
+        // even while occupied (native rendering hides it), so their cycles cannot drift apart.
+        leftInputIcon.tick(icons);
+        rightInputIcon.tick(icons);
     }
 
     @Override
@@ -57,6 +79,11 @@ public final class WorkbenchScreen extends AbstractContainerScreen<WorkbenchMenu
 
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED,
                             ARROWS_SPRITE, left + 75, top + 39, 26, 26);
+
+        if (!this.menu.isCommitted()) {
+            leftInputIcon.extractRenderState(this.menu, graphics, partialTick, left, top);
+            rightInputIcon.extractRenderState(this.menu, graphics, partialTick, left, top);
+        }
 
         if (this.menu.isCommitted()) {
             for (int index = WorkbenchMenu.INPUT_START;

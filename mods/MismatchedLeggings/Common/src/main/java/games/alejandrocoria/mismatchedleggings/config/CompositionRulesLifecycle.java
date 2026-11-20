@@ -4,6 +4,7 @@ import games.alejandrocoria.mismatchedleggings.content.LeggingsContent;
 import games.alejandrocoria.mismatchedleggings.data.LeggingHalf;
 import games.alejandrocoria.mismatchedthings.api.MismatchedWorkbench;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.inventory.InventoryMenu;
 
 import java.nio.file.Path;
 
@@ -14,7 +15,8 @@ public final class CompositionRulesLifecycle {
 
     public static void registerContributor() {
         MismatchedWorkbench.registerContributor(
-                Identifier.fromNamespaceAndPath(LeggingsContent.MOD_ID, "leggings"), LeggingHalf::isValidSource);
+                Identifier.fromNamespaceAndPath(LeggingsContent.MOD_ID, "leggings"),
+                LeggingHalf::isValidSource, InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS);
     }
 
     public static void load(Path directory) {

@@ -29,6 +29,7 @@ public final class WorkbenchClientChecks {
     private static boolean boots;
     private static boolean secondSession;
     private static boolean finished;
+    private static boolean iconsChecked;
     private static volatile boolean ready;
     private static volatile Throwable serverFailure;
     private static volatile WorkbenchResult expected;
@@ -109,6 +110,10 @@ public final class WorkbenchClientChecks {
                     if (!(client.player.containerMenu instanceof WorkbenchMenu menu)
                             || !menu.getSlot(31).hasItem() || !menu.getSlot(32).hasItem()) {
                         return;
+                    }
+                    if (!iconsChecked) {
+                        WorkbenchInputIconChecks.verify(client);
+                        iconsChecked = true;
                     }
                     click(client, 31);
                     click(client, 32);

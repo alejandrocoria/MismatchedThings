@@ -4,6 +4,7 @@
 * Added: Awakened Supremium set bonus support for mixed boots from Mystical Agriculture.
 * Added: Rogdorium infusing and recharging of mismatched boots in The Undergarden's Infuser.
 * Added: Eternal and Soulbound support for Forbidden Arcanus, including both effects together, smithing upgrades and native tooltip titles on mixed boots.
+* Changed: Empty workbench input icons now cycle through installed Mismatched mods and match the item in the other input.
 * Changed: Rogdorium infusion from The Undergarden is shared evenly between newly combined boots, preserving the reservoir capacity.
 * Changed: Ice and Fire Community Edition compatibility on NeoForge now supports version 2.2 and its native armor effect settings.
 * Changed: The Aether II compatibility on NeoForge now supports alpha.4.2, including existing mixed boots.

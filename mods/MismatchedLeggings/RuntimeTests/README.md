@@ -3099,6 +3099,14 @@ these are foreign integration warnings, not Leggings renderer/mixin failures.
 
 ## Workbench and synchronization
 
+The client checks also inspect the screen's actual native cycling-icon inputs:
+only installed products contribute sprites, either occupied slot filters its
+partner, unsupported inputs produce no matching hint, source stacks remain
+unchanged, and committed inputs hide hints until the transaction completes.
+The native animation counters and indices must remain synchronized through
+multiple cycles of inserting, removing, and replacing either input.
+Use `-PleggingsBoots=true` to cover both product registrations together.
+
 Run sequentially from the repository root:
 
 ```powershell

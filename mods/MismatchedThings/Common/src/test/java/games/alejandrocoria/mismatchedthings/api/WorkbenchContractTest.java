@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -149,5 +150,35 @@ class WorkbenchContractTest {
             input.set(DataComponents.CUSTOM_NAME, Component.literal("parallel-" + index));
             assertTrue(WorkbenchContributors.accepts(input), "Lost contributor " + index);
         }
+    }
+
+    @Test
+    void contributedIconsAreOrderedDeduplicatedAndFilteredWithoutMutatingInputs() {
+        // Existing two-argument consumers contribute admission, but no implicit visual hint.
+        assertEquals(List.of(), WorkbenchContributors.emptySlotIcons(ItemStack.EMPTY));
+        Identifier boots = Identifier.parse("contract:boots_icon");
+        Identifier leggings = Identifier.parse("contract:leggings_icon");
+        AtomicInteger seenCount = new AtomicInteger();
+        MismatchedWorkbench.registerContributor(Identifier.parse("contract:icons-z"), stack -> {
+            if (!stack.is(Items.APPLE)) {
+                return false;
+            }
+            seenCount.set(stack.getCount());
+            stack.shrink(1);
+            return true;
+        }, boots);
+        MismatchedWorkbench.registerContributor(Identifier.parse("contract:icons-a"), stack -> stack.is(Items.PAPER), leggings);
+        MismatchedWorkbench.registerContributor(Identifier.parse("contract:icons-zz"), stack -> stack.is(Items.APPLE), boots);
+
+        assertEquals(List.of(leggings, boots), WorkbenchContributors.emptySlotIcons(ItemStack.EMPTY));
+        ItemStack input = new ItemStack(Items.APPLE, 8);
+        assertEquals(List.of(boots), WorkbenchContributors.emptySlotIcons(input));
+        assertEquals(1, seenCount.get());
+        assertEquals(8, input.getCount());
+        assertEquals(List.of(leggings), WorkbenchContributors.emptySlotIcons(new ItemStack(Items.PAPER)));
+        assertEquals(List.of(), WorkbenchContributors.emptySlotIcons(new ItemStack(Items.DIRT)));
+        assertThrows(IllegalStateException.class, () -> MismatchedWorkbench.registerContributor(
+                Identifier.parse("contract:icons-a"), stack -> true, boots));
+        assertEquals(List.of(leggings), WorkbenchContributors.emptySlotIcons(new ItemStack(Items.PAPER)));
     }
 }

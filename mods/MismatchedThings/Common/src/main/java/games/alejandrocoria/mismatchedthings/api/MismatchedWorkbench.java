@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /** Shared station identity and contribution entry point; no consumer owns registration of the station itself. */
@@ -22,6 +23,11 @@ public final class MismatchedWorkbench {
     /** Register once during mod initialization. Admission does not replace loaded recipe pair matching. */
     public static void registerContributor(Identifier owner, Predicate<ItemStack> accepts) {
         WorkbenchContributors.register(owner, accepts);
+    }
+
+    /** Optional GUI sprite for empty inputs; matching uses the same defensive admission predicate. */
+    public static void registerContributor(Identifier owner, Predicate<ItemStack> accepts, Identifier emptySlotIcon) {
+        WorkbenchContributors.register(owner, accepts, Objects.requireNonNull(emptySlotIcon, "emptySlotIcon"));
     }
 
     public static RecipeType<WorkbenchRecipe> recipeType() {

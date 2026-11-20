@@ -277,6 +277,14 @@ Use `games.alejandrocoria.mismatchedthings.api`:
    during initialization. Predicates receive a defensive, single-item stack.
    A duplicate owner ID is an error. Predicates should not depend on other
    contributors' registration order.
+   An optional third argument supplies the GUI sprite for empty inputs. The
+   two-argument form contributes no icon. The screen cycles through distinct
+   supplied icons when both inputs are empty; an occupied input filters the
+   opposite slot's hints through these same admission predicates. Both slot
+   backgrounds receive the same sequence, including while occupied, so inserting
+   and removing items cannot desynchronize their animation. Unsupported
+   inputs show no matching hint, and paid/locked inputs show no icons. The core
+   uses Minecraft's smithing-style icon animation without product-specific checks.
 2. Implement `WorkbenchRecipe` and register a concrete serializer/data recipe
    in the consumer's namespace. Use `WorkbenchInput` and ordered
    `WorkbenchResult` outputs. Input records expose the supplied recipe inputs;
